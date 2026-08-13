@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 
 import { colors, theme } from '@/constants/theme';
 import { openClassByJoinCode, saveStudentSession } from '@/lib/student-session/api';
@@ -36,11 +36,11 @@ export default function JoinScreen() {
       studentId: row.student_id,
       displayName: row.display_name,
     });
-    router.replace('/todo');
+    router.push('/todo');
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Join class</Text>
       <Text style={styles.body}>Enter the join code from your teacher, then pick your name.</Text>
       <TextInput
@@ -54,6 +54,7 @@ export default function JoinScreen() {
       <Pressable style={styles.button} onPress={() => void onLookup()}>
         <Text style={styles.buttonText}>Find class</Text>
       </Pressable>
+      {rows.length ? <Text style={styles.section}>Pick your name</Text> : null}
       {rows.map((row) => (
         <Pressable key={row.student_id} style={styles.secondary} onPress={() => void onPick(row)}>
           <Text style={styles.secondaryText}>
@@ -62,17 +63,18 @@ export default function JoinScreen() {
         </Pressable>
       ))}
       {status ? <Text style={styles.error}>{status}</Text> : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    ...theme.screen,
-    justifyContent: 'center',
-  },
+  container: theme.scroll,
   title: theme.title,
   body: theme.body,
+  section: {
+    ...theme.section,
+    marginTop: 8,
+  },
   input: theme.input,
   button: theme.button,
   buttonText: theme.buttonText,

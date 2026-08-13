@@ -395,3 +395,9 @@ Restart `npm run ai:dev` so it knows `transcribe-audio`.
 3. You should see **Heard:** the whole sentence, and the name field filled with **Jamal Washington**.
 4. If that sounds like someone already on the roster (for example Jamal W. vs Jamal Washington), you can **rename** them or **add as a new student**.
 5. Unclear audio does not create a student. Say the name again or type it.
+
+## 22. Skill history
+
+No new SQL. Open a student who has more than one note, gap, or practice.
+
+Under the latest work you should see **Skill history**: newest first, each line a date, what it is (draft / assigned / practice / note), and the skill or note text. The current focus is marked **focus** and also shown under the student’s name.

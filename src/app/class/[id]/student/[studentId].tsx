@@ -12,6 +12,7 @@ import {
   updateGapLabel,
   type StudentCapture,
 } from '@/lib/gaps/api';
+import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/gaps/history';
 import { createParentInvite, parentInviteUrl } from '@/lib/parents/api';
 import { assignPractice, listStudentPractice, savePracticeItems, type StudentPractice } from '@/lib/practice/api';
 import { clearFocusSkill, getStudent } from '@/lib/students/api';
@@ -30,6 +31,7 @@ export default function StudentScreen() {
   const [status, setStatus] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [storedFocusLabel, setStoredFocusLabel] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -51,6 +53,7 @@ export default function StudentScreen() {
       }
     }
     setDraftLabels(labels);
+    setStoredFocusLabel(await loadFocusSkillLabel(nextStudent.current_focus_skill_id));
   }, [studentId]);
 
   useFocusEffect(
@@ -190,10 +193,13 @@ export default function StudentScreen() {
   const canAskGrok =
     Boolean(latest?.photo_asset_id) &&
     (latest?.status === 'attached' || latest?.status === 'draft');
+  const history = buildSkillHistory(student, captures, practice);
+  const focusLabel = focusSkillLabel(student, captures, storedFocusLabel);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{student?.display_name ?? 'Student'}</Text>
+      <Text style={styles.filed}>Focus: {focusLabel ?? 'none yet'}</Text>
       <Text style={styles.body}>
         Grok suggests a gap. Assign it to set {student?.display_name ?? 'this student'}'s focus.
         Then you can give practice. Note only keeps the photo with no grade.
@@ -307,17 +313,21 @@ export default function StudentScreen() {
         <Text style={styles.secondaryText}>Create parent link</Text>
       </Pressable>
       {inviteUrl ? <Text selectable style={styles.meta}>{inviteUrl}</Text> : null}
-      {captures.length > 1 ? (
-        <View style={styles.card}>
-          <Text style={styles.section}>Earlier notes</Text>
-          {captures.slice(1).map((item) => (
-            <Text key={item.id} style={styles.meta}>
-              {new Date(item.created_at).toLocaleString()} · {item.kind} · {item.status}
-              {item.transcript ? ` · ${item.transcript}` : ''}
+      <View style={styles.card}>
+        <Text style={styles.section}>Skill history</Text>
+        {history.length === 0 ? (
+          <Text style={styles.meta}>No gaps, notes, or practice yet.</Text>
+        ) : (
+          history.map((row) => (
+            <Text key={row.id} style={styles.body}>
+              {row.detail}
+              {' · '}
+              {row.label}
+              {row.isFocus ? ' · focus' : ''}
             </Text>
-          ))}
-        </View>
-      ) : null}
+          ))
+        )}
+      </View>
       {practice.length ? (
         <View style={styles.card}>
           <Text style={styles.section}>Practice</Text>
