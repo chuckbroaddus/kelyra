@@ -241,7 +241,7 @@ You do **not** need an xAI key for this check.
 
 1. Capture a photo and file it on Mateo (type the name, or pick him in the inbox).
 2. You should land on **Mateo’s** page with the photo.
-3. AI gaps only appear if `analyze-homework` is deployed with `XAI_API_KEY`. For this review you can **type a gap** (`two-digit regrouping`) → **Add gap**.
+3. AI gaps appear after **Ask Grok** (see section 19). For a no-AI check you can still **type a gap** (`two-digit regrouping`) → **Add gap**.
 4. **Approve**. The page should say Approved.
 5. Open Mateo again from the class roster. It should still say Approved.
 6. Optional: capture another photo, file it, **Note only** — photo stays, no approved gap.
@@ -261,7 +261,7 @@ Then:
 5. Answer the three items → **Submit**. It should say Submitted.
 6. Back on Mateo’s teacher page, practice should show `submitted`.
 
-Items are placeholder prompts unless `generate-practice` is deployed with an xAI key.
+Items come from Grok when the local AI gateway is running (section 19). Otherwise they are placeholder prompts you can edit.
 
 On Mateo’s page, while practice is still **assigned**, you can edit those prompts, **Add item**, then **Save items**. After the student submits, the items are read-only.
 
@@ -324,3 +324,52 @@ No new SQL. Open the class home.
 You should see **This week**: unassigned count, draft count, common approved gaps, and who has a current focus. Tap a name to open that student.
 
 **Copy family update** puts one line per student (focus, practice, teacher sentence) on the clipboard so you can paste into email or Messages. No mail service required.
+
+## 19. Real AI (Grok OAuth — no API key)
+
+Development uses the same **Grok CLI OAuth** session as `grok login`. There is no `XAI_API_KEY`. Tokens stay in `~/.grok/auth.json` on this computer. They are **not** put in the Expo app.
+
+### One-time
+
+1. Confirm you are logged in:
+
+```bash
+grok models
+```
+
+You want `You are logged in with grok.com` and `grok-4.6`. If not: `grok login`.
+
+2. `.env` already has (restart Expo after changing it):
+
+```bash
+EXPO_PUBLIC_AI_DEV_URL=http://localhost:8787
+```
+
+On a phone you do **not** change `.env`. Reload Expo Go after the computer app rebuilds — the phone will use the computer's Wi-Fi address automatically. Keep `npm run ai:dev` running on the computer, same Wi-Fi.
+
+### Every session (two terminals)
+
+Terminal A:
+
+```bash
+cd /Users/chuck/projects/kelyra
+npm run ai:dev
+```
+
+Leave it running. It should print `Kelyra AI — Grok OAuth`.
+
+Terminal B — your usual `npm run web` or `npm start`. **Restart it** if it was already open before you added `EXPO_PUBLIC_AI_DEV_URL`.
+
+### What to click
+
+1. Capture a homework **photo** and file it on Mateo (type his name).
+   - On the computer, **Take photo** opens the laptop/monitor camera. **Snap photo** saves a JPEG.
+   - **Choose photo** still picks a file. iPhone HEIC photos are converted to JPEG automatically — you do not need to change the type.
+2. Open Mateo. Tap **Ask Grok**. The button should say **Asking Grok…**. Wait a few seconds.
+3. You should see 1–3 draft gap labels you can edit, then **Approve**.
+4. **Assign practice** should now fill real items (edit them if you want).
+5. Voice without a typed name uses Grok STT when the gateway is up. If STT fails, type the name as before.
+
+If Ask Grok says it cannot reach Grok, the phone cannot see the computer: same Wi-Fi, `npm run ai:dev` still running, and macOS Firewall allowing Node. Then reload Expo Go.
+
+If it says `grok login`, run that in a terminal, then retry. Do not paste tokens into `.env`.

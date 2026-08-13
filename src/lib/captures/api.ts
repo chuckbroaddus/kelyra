@@ -1,3 +1,4 @@
+import { invokeAi } from '@/lib/ai/invoke';
 import type { NameMatch } from '@/lib/ai/types';
 import { analyzeAttachedCapture } from '@/lib/gaps/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
@@ -66,7 +67,11 @@ export async function attachCapture(captureId: string, studentId: string): Promi
     .single();
   if (error) throw error;
   if (data.kind === 'homework') {
-    await analyzeAttachedCapture(data.id);
+    try {
+      await analyzeAttachedCapture(data.id);
+    } catch {
+      // Filing must succeed even if Grok is offline. Teacher can tap Ask Grok.
+    }
   }
   return data;
 }
@@ -105,18 +110,22 @@ export async function applyTranscriptAndMatch(
     .single();
   if (error) throw error;
   if (data.status === 'attached' && data.kind === 'homework') {
-    await analyzeAttachedCapture(data.id);
+    try {
+      await analyzeAttachedCapture(data.id);
+    } catch {
+      // Filing must succeed even if Grok is offline. Teacher can tap Ask Grok.
+    }
   }
   return data;
 }
 
 export async function transcribeCaptureAudio(captureId: string): Promise<string | null> {
-  const { data, error } = await requireSupabase().functions.invoke('transcribe', {
-    body: { captureId },
-  });
-  if (error) return null;
-  const text = (data as { text?: string } | null)?.text;
-  return text?.trim() ? text : null;
+  try {
+    const data = await invokeAi<{ text?: string }>('transcribe', { captureId });
+    return data.text?.trim() ? data.text : null;
+  } catch {
+    return null;
+  }
 }
 
 export function describeMatch(match: NameMatch): string {

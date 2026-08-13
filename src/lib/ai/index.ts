@@ -1,3 +1,4 @@
+export { invokeAi } from '@/lib/ai/invoke';
 export type {
   AiAdapter,
   DraftGap,

@@ -1,3 +1,4 @@
+import { invokeAi } from '@/lib/ai/invoke';
 import { signedUrlForAsset } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { CaptureRow, SkillGapRow } from '@/lib/supabase/types';
@@ -8,11 +9,10 @@ export type StudentCapture = CaptureRow & {
 };
 
 export async function analyzeAttachedCapture(captureId: string): Promise<boolean> {
-  const { data, error } = await requireSupabase().functions.invoke('analyze-homework', {
-    body: { captureId },
+  const data = await invokeAi<{ ok?: boolean; gaps?: unknown[] }>('analyze-homework', {
+    captureId,
   });
-  if (error) return false;
-  return !(data as { error?: string } | null)?.error;
+  return Boolean(data.ok || data.gaps);
 }
 
 export async function addTeacherGap(captureId: string, studentId: string, label: string) {
@@ -39,7 +39,10 @@ export async function updateGapLabel(gapId: string, label: string) {
   if (error) throw error;
 }
 
-export async function approveCapture(capture: CaptureRow, gaps: SkillGapRow[]) {
+export async function approveCapture(
+  capture: CaptureRow,
+  gaps: SkillGapRow[],
+): Promise<{ skillId: string; skillLabel: string }> {
   if (!capture.student_id) throw new Error('Capture has no student');
   const supabase = requireSupabase();
   const live = gaps.filter((gap) => gap.status !== 'dismissed' && gap.label.trim());
@@ -118,6 +121,8 @@ export async function approveCapture(capture: CaptureRow, gaps: SkillGapRow[]) {
     approved_at: approvedAt,
   });
   if (submissionError) throw submissionError;
+  if (!focusSkillId) throw new Error('Could not assign a focus skill from that gap');
+  return { skillId: focusSkillId, skillLabel: live[0].label };
 }
 
 export async function markNoteOnly(captureId: string) {

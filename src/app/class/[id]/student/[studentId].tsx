@@ -4,6 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 
 import {
   addTeacherGap,
+  analyzeAttachedCapture,
   approveCapture,
   listStudentCaptures,
   markNoteOnly,
@@ -26,6 +27,8 @@ export default function StudentScreen() {
   const [newGap, setNewGap] = useState('');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -59,21 +62,37 @@ export default function StudentScreen() {
 
   const latest = captures[0];
 
-  const onApprove = async () => {
-    if (!latest) return;
-    setStatus(null);
+  const editedGaps = () =>
+    (latest?.gaps ?? []).map((gap) => ({
+      ...gap,
+      label: (draftLabels[gap.id] ?? gap.label).trim(),
+    }));
+
+  const onAssignGap = async (alsoPractice: boolean) => {
+    if (!latest || !studentId || !classId || assigning) return;
+    setAssigning(true);
+    setStatus(alsoPractice ? 'Assigning gap and practice…' : 'Assigning gap…');
     try {
-      const gaps = latest.gaps.map((gap) => ({
-        ...gap,
-        label: (draftLabels[gap.id] ?? gap.label).trim(),
-      }));
+      const gaps = editedGaps();
       for (const gap of gaps) {
         await updateGapLabel(gap.id, gap.label);
       }
-      await approveCapture(latest, gaps);
+      const assigned = await approveCapture(latest, gaps);
+      if (alsoPractice) {
+        await assignPractice({
+          classId,
+          studentId,
+          skillId: assigned.skillId,
+          skillLabel: assigned.skillLabel,
+          captureId: latest.id,
+        });
+      }
       await load();
+      setStatus(null);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not approve');
+      setStatus(err instanceof Error ? err.message : 'Could not assign that gap');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -152,11 +171,31 @@ export default function StudentScreen() {
     }
   };
 
+  const onAskGrok = async () => {
+    if (!latest || asking) return;
+    setAsking(true);
+    setStatus('Asking Grok… this can take a few seconds.');
+    try {
+      await analyzeAttachedCapture(latest.id);
+      await load();
+      setStatus(null);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not analyze');
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const canAskGrok =
+    Boolean(latest?.photo_asset_id) &&
+    (latest?.status === 'attached' || latest?.status === 'draft');
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{student?.display_name ?? 'Student'}</Text>
       <Text style={styles.body}>
-        Review drafted gaps. Approve files the focus skill. Note only keeps the photo with no grade.
+        Grok suggests a gap. Assign it to set {student?.display_name ?? 'this student'}'s focus.
+        Then you can give practice. Note only keeps the photo with no grade.
       </Text>
       {!latest ? (
         <Text style={styles.meta}>No work filed on this student yet.</Text>
@@ -167,27 +206,39 @@ export default function StudentScreen() {
           ) : null}
           {latest.transcript ? <Text style={styles.meta}>Heard: {latest.transcript}</Text> : null}
           {latest.teacher_note ? <Text style={styles.meta}>{latest.teacher_note}</Text> : null}
-          <Text style={styles.section}>Gaps ({latest.status})</Text>
+          <Text style={styles.section}>
+            {latest.status === 'approved' ? 'Assigned gap' : 'Suggested gap'} ({latest.status})
+          </Text>
           {latest.gaps.length === 0 ? (
             <Text style={styles.meta}>
-              No AI gaps yet. Deploy analyze-homework or type a gap below.
+              No AI gaps yet. Tap Ask Grok, or type a gap below.
             </Text>
           ) : (
-            latest.gaps.map((gap) => (
-              <TextInput
-                key={gap.id}
-                style={styles.input}
-                value={draftLabels[gap.id] ?? gap.label}
-                editable={latest.status === 'draft' || latest.status === 'attached'}
-                onChangeText={(value) =>
-                  setDraftLabels((current) => ({ ...current, [gap.id]: value }))
-                }
-              />
-            ))
+            <>
+              {latest.status !== 'approved' && latest.status !== 'note_only' ? (
+                <Text style={styles.meta}>
+                  Not assigned yet. Edit the label if you want, then assign it to{' '}
+                  {student?.display_name ?? 'this student'}.
+                </Text>
+              ) : null}
+              {latest.gaps.map((gap) => (
+                <TextInput
+                  key={gap.id}
+                  style={styles.input}
+                  value={draftLabels[gap.id] ?? gap.label}
+                  editable={latest.status === 'draft' || latest.status === 'attached'}
+                  onChangeText={(value) =>
+                    setDraftLabels((current) => ({ ...current, [gap.id]: value }))
+                  }
+                />
+              ))}
+            </>
           )}
           {latest.status === 'approved' ? (
             <>
-              <Text style={styles.filed}>Approved</Text>
+              <Text style={styles.filed}>
+                Assigned to {student?.display_name ?? 'this student'}
+              </Text>
               <Pressable style={styles.button} onPress={() => void onAssignPractice()}>
                 <Text style={styles.buttonText}>Assign practice</Text>
               </Pressable>
@@ -196,6 +247,38 @@ export default function StudentScreen() {
             <Text style={styles.meta}>Kept as a note only</Text>
           ) : (
             <>
+              {latest.gaps.length ? (
+                <>
+                  <Pressable
+                    disabled={assigning}
+                    style={styles.button}
+                    onPress={() => void onAssignGap(false)}
+                  >
+                    <Text style={styles.buttonText}>
+                      {assigning
+                        ? 'Assigning…'
+                        : `Assign gap to ${student?.display_name ?? 'student'}`}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    disabled={assigning}
+                    style={styles.secondary}
+                    onPress={() => void onAssignGap(true)}
+                  >
+                    <Text style={styles.secondaryText}>Assign gap and give practice</Text>
+                  </Pressable>
+                </>
+              ) : null}
+              {canAskGrok ? (
+                <Pressable
+                  disabled={asking}
+                  style={styles.secondary}
+                  onPress={() => void onAskGrok()}
+                >
+                  <Text style={styles.secondaryText}>{asking ? 'Asking Grok…' : 'Ask Grok'}</Text>
+                </Pressable>
+              ) : null}
+              {status ? <Text style={styles.error}>{status}</Text> : null}
               <TextInput
                 placeholder="Add a gap, e.g. two-digit regrouping"
                 style={styles.input}
@@ -204,9 +287,6 @@ export default function StudentScreen() {
               />
               <Pressable style={styles.secondary} onPress={() => void onAddGap()}>
                 <Text style={styles.secondaryText}>Add gap</Text>
-              </Pressable>
-              <Pressable style={styles.button} onPress={() => void onApprove()}>
-                <Text style={styles.buttonText}>Approve</Text>
               </Pressable>
               <Pressable style={styles.secondary} onPress={() => void onNoteOnly()}>
                 <Text style={styles.secondaryText}>Note only</Text>

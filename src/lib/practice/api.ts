@@ -1,3 +1,4 @@
+import { invokeAi } from '@/lib/ai/invoke';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { PracticeItem, SubmissionRow } from '@/lib/supabase/types';
 
@@ -17,12 +18,14 @@ export async function assignPractice(input: {
 }): Promise<void> {
   const supabase = requireSupabase();
   let items = placeholderItems(input.skillLabel);
-  const { data: generated } = await supabase.functions.invoke('generate-practice', {
-    body: { skillLabel: input.skillLabel, captureId: input.captureId },
-  });
-  const generatedItems = (generated as { items?: PracticeItem[] } | null)?.items;
-  if (generatedItems?.length) {
-    items = generatedItems;
+  try {
+    const generated = await invokeAi<{ items?: PracticeItem[] }>('generate-practice', {
+      skillLabel: input.skillLabel,
+      captureId: input.captureId,
+    });
+    if (generated.items?.length) items = generated.items;
+  } catch {
+    // Keep typed placeholders if Grok is offline so the teacher can still assign.
   }
 
   const { data: set, error: setError } = await supabase

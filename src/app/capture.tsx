@@ -2,7 +2,9 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { WebCameraCapture } from '@/components/WebCameraCapture';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
@@ -13,6 +15,7 @@ import {
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
+import { normalizePhoto } from '@/lib/media/photo';
 import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 import { uploadTeacherAsset } from '@/lib/media/upload';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
@@ -31,6 +34,7 @@ export default function CaptureScreen() {
   const [recording, setRecording] = useState<RecordingHandle | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const preview = useMemo(() => {
     const names = roster.map((student) => ({
@@ -90,8 +94,23 @@ export default function CaptureScreen() {
     );
   }
 
+  const applyPhoto = async (uri: string, mimeType?: string | null) => {
+    try {
+      const prepared = await normalizePhoto(uri, mimeType);
+      setPhotoUri(prepared.uri);
+      setPhotoMime(prepared.mimeType);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not read that photo.');
+    }
+  };
+
   const pickPhoto = async (fromCamera: boolean) => {
     setStatus(null);
+    if (fromCamera && Platform.OS === 'web') {
+      setCameraOpen(true);
+      return;
+    }
+
     const permission = fromCamera
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -109,8 +128,7 @@ export default function CaptureScreen() {
 
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
-    setPhotoUri(asset.uri);
-    setPhotoMime(asset.mimeType ?? 'image/jpeg');
+    await applyPhoto(asset.uri, asset.mimeType);
   };
 
   const startRecording = async () => {
@@ -226,12 +244,24 @@ export default function CaptureScreen() {
         Photo optional. Name each student in their own sentence: Jamal guessed on the quiz. Mateo finished early.
       </Text>
       {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
-      <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
-        <Text style={styles.buttonText}>Take photo</Text>
-      </Pressable>
-      <Pressable style={styles.secondary} onPress={() => void pickPhoto(false)}>
-        <Text style={styles.secondaryText}>Choose photo</Text>
-      </Pressable>
+      {cameraOpen ? (
+        <WebCameraCapture
+          onCapture={(uri, mimeType) => {
+            setCameraOpen(false);
+            void applyPhoto(uri, mimeType);
+          }}
+          onCancel={() => setCameraOpen(false)}
+        />
+      ) : (
+        <>
+          <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
+            <Text style={styles.buttonText}>Take photo</Text>
+          </Pressable>
+          <Pressable style={styles.secondary} onPress={() => void pickPhoto(false)}>
+            <Text style={styles.secondaryText}>Choose photo</Text>
+          </Pressable>
+        </>
+      )}
       {recording ? (
         <Pressable style={styles.danger} onPress={() => void stopRecording()}>
           <Text style={styles.buttonText}>Stop recording</Text>

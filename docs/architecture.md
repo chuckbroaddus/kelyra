@@ -48,7 +48,7 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
 
 **What never happens**
 
-- Model keys in the Expo bundle.
+- Model keys or OAuth tokens in the Expo bundle.
 - Client calling the LLM with the full roster of legal names + raw IEP photos.
 - Auto-insert of a student from a guessed name.
 - Auto-publish of a draft score.
@@ -65,7 +65,7 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
 | **Database** | **Postgres 15+** on Supabase | Schema from `docs/data-model.md`. Relational grade book. `students.metadata jsonb` unused in UI. |
 | **Auth** | Supabase Auth | Teacher: email + magic link or password. Parent: magic link on invite. Student: class `join_code` + pick roster name → signed session with `student_id` claim (custom token or a thin Edge Function). |
 | **Storage** | Supabase Storage (private buckets) | `photos/`, `audio/`. Signed URLs, short TTL. Not public. |
-| **AI** | **SpaceXAI (xAI)** behind a 5-method adapter | Default: **grok-4.6** for image understanding, gap JSON, practice JSON. **Grok Voice STT** for transcripts. `XAI_API_KEY` only in Edge Function secrets. |
+| **AI** | **SpaceXAI (xAI)** behind a 5-method adapter | Default: **grok-4.6** for image understanding, gap JSON, practice JSON. **Grok Voice STT** for transcripts. Local dev: Grok CLI OAuth (`npm run ai:dev`, tokens in `~/.grok/auth.json`). Production: `XAI_API_KEY` only in Edge Function secrets. |
 | **AI fallback (not wired until needed)** | Gemini 3.5 Flash-Lite | Cheapest published all-in-one meter in `research/06`. Swap inside the adapter if handwriting or cost fails. Do **not** add Document AI / Textract in v1. |
 | **Email** | Resend or Postmark | Parent invite link. Not SMS. |
 | **Push** | Skip in v1 | Inbox is pull. FCM only when weekly email/SMS appears. |
