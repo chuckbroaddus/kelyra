@@ -12,7 +12,7 @@ import {
 } from '@/lib/gaps/api';
 import { createParentInvite, parentInviteUrl } from '@/lib/parents/api';
 import { assignPractice, listStudentPractice } from '@/lib/practice/api';
-import { getStudent } from '@/lib/students/api';
+import { clearFocusSkill, getStudent } from '@/lib/students/api';
 import type { StudentRow, SubmissionRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
 
@@ -102,6 +102,17 @@ export default function StudentScreen() {
     }
   };
 
+  const onClearFocus = async () => {
+    if (!studentId) return;
+    setStatus(null);
+    try {
+      await clearFocusSkill(studentId);
+      await load();
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not clear focus');
+    }
+  };
+
   const onInviteParent = async () => {
     if (!studentId) return;
     setStatus(null);
@@ -187,6 +198,11 @@ export default function StudentScreen() {
           )}
         </View>
       )}
+      {student?.current_focus_skill_id ? (
+        <Pressable style={styles.secondary} onPress={() => void onClearFocus()}>
+          <Text style={styles.secondaryText}>Mark focus done</Text>
+        </Pressable>
+      ) : null}
       <Pressable style={styles.secondary} onPress={() => void onInviteParent()}>
         <Text style={styles.secondaryText}>Create parent link</Text>
       </Pressable>

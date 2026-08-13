@@ -30,6 +30,14 @@ export async function listRoster(classId: string): Promise<RosterStudent[]> {
   });
 }
 
+export async function clearFocusSkill(studentId: string) {
+  const { error } = await requireSupabase()
+    .from('students')
+    .update({ current_focus_skill_id: null })
+    .eq('id', studentId);
+  if (error) throw error;
+}
+
 export async function getStudent(studentId: string): Promise<StudentRow> {
   const { data, error } = await requireSupabase()
     .from('students')

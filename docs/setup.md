@@ -277,6 +277,8 @@ You should see a grid:
 
 New Approves also add a work column automatically.
 
+**Export CSV** downloads the grid (web) or opens a share sheet (phone). No new SQL.
+
 ## 15. Parent progress link
 
 Run this SQL in the Supabase SQL Editor:
@@ -292,6 +294,8 @@ Then:
 5. You should **not** see scores, the homework photo, or other students.
 
 Existing Approves may have a focus skill but no sentence. New Approves write “Still working on …”.
+
+On Mateo’s page, **Mark focus done** clears the current focus skill. The parent page will then show “None yet” until you Approve another gap.
 
 ## 16. Note without a photo
 

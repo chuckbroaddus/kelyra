@@ -1,14 +1,16 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { formatCell, gradeCell, loadGradebook, type Gradebook } from '@/lib/gradebook/api';
+import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
 
 export default function GradebookScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [book, setBook] = useState<Gradebook | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -28,6 +30,20 @@ export default function GradebookScreen() {
       <Link href={`/class/${id}`}>
         <Text style={styles.linkText}>Back to class</Text>
       </Link>
+      {book && book.assignments.length > 0 ? (
+        <Pressable
+          onPress={() => {
+            void exportGradebookCsv(book, 'class')
+              .then(() => setExportMessage('Exported.'))
+              .catch((err) => {
+                setStatus(err instanceof Error ? err.message : 'Could not export');
+              });
+          }}
+        >
+          <Text style={styles.linkText}>Export CSV</Text>
+        </Pressable>
+      ) : null}
+      {exportMessage ? <Text style={styles.meta}>{exportMessage}</Text> : null}
       {!book ? (
         <Text style={styles.meta}>{status ?? 'Loading…'}</Text>
       ) : book.assignments.length === 0 ? (
