@@ -97,6 +97,10 @@ const server = createServer(async (req, res) => {
       json(res, await transcribe(supabase, body));
       return;
     }
+    if (route === 'extract-roster') {
+      json(res, await extractRoster(body));
+      return;
+    }
 
     json(res, { error: `unknown function ${route || '(empty)'}` }, 404);
   } catch (err) {
@@ -190,6 +194,41 @@ async function analyzeHomework(supabase, body) {
   if (updateError) throw updateError;
 
   return { ok: true, gaps: draft.gaps };
+}
+
+const rosterPrompt = `You extract student names from a class list, seating chart, or attendance sheet photo.
+Return JSON only, no markdown:
+{"names":[{"name":"First Last","confident":true}]}
+Rules:
+- Only personal names of students. Skip headers, period labels, Present/Absent, dates, room numbers, teacher names, and page titles.
+- Keep the name as printed. Do not invent a student who is not on the page.
+- confident=false if the line is unclear or might not be a student name.
+- 0 to 40 names.`;
+
+async function extractRoster(body) {
+  const imageUrl = String(body.imageUrl ?? '');
+  if (!imageUrl) throw new Error('imageUrl required');
+  const prepared = await prepareImageForGrok(imageUrl);
+  const payload = await xaiResponses(visionModel, [
+    {
+      role: 'user',
+      content: [
+        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_text', text: rosterPrompt },
+      ],
+    },
+  ]);
+  const parsed = extractJson(outputText(payload));
+  const names = Array.isArray(parsed.names)
+    ? parsed.names
+        .map((row) => ({
+          name: String(row?.name ?? '').replace(/\s+/g, ' ').trim(),
+          confident: row?.confident !== false,
+        }))
+        .filter((row) => row.name.length > 1)
+        .slice(0, 40)
+    : [];
+  return { names };
 }
 
 async function generatePractice(body) {

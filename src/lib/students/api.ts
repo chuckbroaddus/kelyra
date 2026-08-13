@@ -1,5 +1,40 @@
+import { invokeAi } from '@/lib/ai/invoke';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { StudentRow } from '@/lib/supabase/types';
+
+export type SuggestedRosterName = {
+  key: string;
+  name: string;
+  selected: boolean;
+  alreadyHere: boolean;
+};
+
+export async function suggestRosterFromPhoto(
+  imageUrl: string,
+  existingNames: string[],
+): Promise<SuggestedRosterName[]> {
+  const data = await invokeAi<{ names?: Array<{ name?: string; confident?: boolean }> }>(
+    'extract-roster',
+    { imageUrl },
+  );
+  const existing = new Set(existingNames.map((name) => normalizeRosterName(name)));
+  const seen = new Set<string>();
+  const suggestions: SuggestedRosterName[] = [];
+  for (const row of data.names ?? []) {
+    const name = String(row.name ?? '').replace(/\s+/g, ' ').trim();
+    const key = normalizeRosterName(name);
+    if (!name || !key || seen.has(key)) continue;
+    seen.add(key);
+    const alreadyHere = existing.has(key);
+    suggestions.push({
+      key,
+      name,
+      selected: !alreadyHere && row.confident !== false,
+      alreadyHere,
+    });
+  }
+  return suggestions;
+}
 
 export type RosterStudent = StudentRow & { enrollment_id: string };
 
@@ -48,22 +83,59 @@ export async function getStudent(studentId: string): Promise<StudentRow> {
   return data;
 }
 
-export async function addTypedStudent(
-  classId: string,
-  teacherId: string,
-  displayName: string,
-): Promise<RosterStudent> {
-  const name = displayName.trim();
-  if (!name) throw new Error('Student name is required');
+function normalizeRosterName(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
+export async function addConfirmedStudents(input: {
+  classId: string;
+  teacherId: string;
+  names: string[];
+  createdVia: 'typed' | 'photo_list' | 'voice';
+}): Promise<{ added: RosterStudent[]; skipped: string[] }> {
+  const roster = await listRoster(input.classId);
+  const existing = new Set(roster.map((student) => normalizeRosterName(student.display_name)));
+  const added: RosterStudent[] = [];
+  const skipped: string[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of input.names) {
+    const name = raw.replace(/\s+/g, ' ').trim();
+    const key = normalizeRosterName(name);
+    if (!name || !key) continue;
+    if (existing.has(key) || seen.has(key)) {
+      skipped.push(name);
+      continue;
+    }
+    seen.add(key);
+    added.push(
+      await insertStudent({
+        classId: input.classId,
+        teacherId: input.teacherId,
+        displayName: name,
+        createdVia: input.createdVia,
+      }),
+    );
+    existing.add(key);
+  }
+
+  return { added, skipped };
+}
+
+async function insertStudent(input: {
+  classId: string;
+  teacherId: string;
+  displayName: string;
+  createdVia: 'typed' | 'photo_list' | 'voice';
+}): Promise<RosterStudent> {
   const supabase = requireSupabase();
   const { data: student, error: studentError } = await supabase
     .from('students')
     .insert({
-      teacher_id: teacherId,
-      display_name: name,
-      sort_name: name,
-      created_via: 'typed',
+      teacher_id: input.teacherId,
+      display_name: input.displayName,
+      sort_name: input.displayName,
+      created_via: input.createdVia,
     })
     .select('*')
     .single();
@@ -71,10 +143,27 @@ export async function addTypedStudent(
 
   const { data: enrollment, error: enrollmentError } = await supabase
     .from('enrollments')
-    .insert({ class_id: classId, student_id: student.id })
+    .insert({ class_id: input.classId, student_id: student.id })
     .select('id')
     .single();
   if (enrollmentError) throw enrollmentError;
 
   return { ...student, enrollment_id: enrollment.id };
+}
+
+export async function addTypedStudent(
+  classId: string,
+  teacherId: string,
+  displayName: string,
+): Promise<RosterStudent> {
+  const name = displayName.trim();
+  if (!name) throw new Error('Student name is required');
+  const { added, skipped } = await addConfirmedStudents({
+    classId,
+    teacherId,
+    names: [name],
+    createdVia: 'typed',
+  });
+  if (added[0]) return added[0];
+  throw new Error(skipped[0] ? `${skipped[0]} is already on this roster.` : 'Student name is required');
 }

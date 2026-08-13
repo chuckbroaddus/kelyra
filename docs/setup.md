@@ -373,3 +373,15 @@ Terminal B — your usual `npm run web` or `npm start`. **Restart it** if it was
 If Ask Grok says it cannot reach Grok, the phone cannot see the computer: same Wi-Fi, `npm run ai:dev` still running, and macOS Firewall allowing Node. Then reload Expo Go.
 
 If it says `grok login`, run that in a terminal, then retry. Do not paste tokens into `.env`.
+
+## 20. Photo of a class list
+
+Restart `npm run ai:dev` so it knows the new `extract-roster` route. Expo can stay running.
+
+1. Open a class.
+2. **Photo of list** (camera) or **Choose list photo** (a screenshot or printed roster).
+3. Wait for the name checklist. Uncheck headers or junk. Fix a misspelling in the box.
+4. Names already on the roster show **already here** and stay off.
+5. **Add N students**. Those names appear on the roster. Nothing is added until this tap.
+
+Grok only suggests names. It does not create a student on its own.

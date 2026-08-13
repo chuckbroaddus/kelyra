@@ -6,7 +6,7 @@ import { requireSupabase } from '@/lib/supabase/client';
  * gateway (`npm run ai:dev`). Later it can hit deployed Edge Functions.
  */
 export async function invokeAi<T extends object>(
-  name: 'analyze-homework' | 'generate-practice' | 'transcribe',
+  name: 'analyze-homework' | 'generate-practice' | 'transcribe' | 'extract-roster',
   body: Record<string, unknown>,
 ): Promise<T> {
   if (aiDevUrl) {
