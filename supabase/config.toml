@@ -1,0 +1,19 @@
+# Minimal Supabase CLI config. Run `supabase link` after creating a project.
+# Schema: docs/data-model.md — no migrations yet.
+
+project_id = "kelyra"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[functions.transcribe]
+verify_jwt = true
+
+[functions.match-and-analyze]
+verify_jwt = true
+
+[functions.generate-practice]
+verify_jwt = true

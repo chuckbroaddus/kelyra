@@ -73,6 +73,21 @@ htmlcov/
 *.log
 logs/
 
+# Expo
+.expo/
+dist/
+web-build/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+
+# Supabase local
+supabase/.temp/
+supabase/.branches/
+
 # Local / misc
 *.local
 tmp/
