@@ -77,9 +77,13 @@ export async function approveCapture(capture: CaptureRow, gaps: SkillGapRow[]) {
   }
 
   if (focusSkillId) {
+    const sentence = `Still working on ${live[0].label}.`;
     const { error } = await supabase
       .from('students')
-      .update({ current_focus_skill_id: focusSkillId })
+      .update({
+        current_focus_skill_id: focusSkillId,
+        parent_sentence: capture.parent_sentence ?? sentence,
+      })
       .eq('id', capture.student_id);
     if (error) throw error;
   }

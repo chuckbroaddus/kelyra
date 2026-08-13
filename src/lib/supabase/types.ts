@@ -256,6 +256,18 @@ export type Database = {
         },
         Partial<Omit<SubmissionRow, 'id' | 'assignment_id' | 'student_id' | 'created_at'>>
       >;
+      parent_accesses: Table<
+        {
+          id: string;
+          student_id: string;
+          token: string;
+          email: string | null;
+          accepted_at: string | null;
+          created_at: string;
+        },
+        { student_id: string; token: string; email?: string | null },
+        Partial<{ email: string | null; accepted_at: string | null }>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -287,6 +299,16 @@ export type Database = {
           p_answers: Record<string, string>;
         };
         Returns: undefined;
+      };
+      parent_open: {
+        Args: { p_token: string };
+        Returns: {
+          display_name: string;
+          class_name: string;
+          focus_label: string | null;
+          practice_status: string | null;
+          parent_sentence: string | null;
+        }[];
       };
     };
     Enums: {

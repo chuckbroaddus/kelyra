@@ -276,3 +276,19 @@ You should see a grid:
 - Other students = **—** or **Assigned** if you assigned them practice
 
 New Approves also add a work column automatically.
+
+## 15. Parent progress link
+
+Run this SQL in the Supabase SQL Editor:
+
+`supabase/migrations/20260813000001_parent_access.sql`
+
+Then:
+
+1. Teacher: open Mateo → **Create parent link**.
+2. Copy the URL that appears (or tap it).
+3. Open that URL in the same browser or a private window.
+4. You should see Mateo’s name, class, focus skill, practice **Done** or **Assigned**, and a one-line teacher note if you Approved after this change.
+5. You should **not** see scores, the homework photo, or other students.
+
+Existing Approves may have a focus skill but no sentence. New Approves write “Still working on …”.

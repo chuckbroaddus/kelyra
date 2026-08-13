@@ -10,6 +10,7 @@ import {
   updateGapLabel,
   type StudentCapture,
 } from '@/lib/gaps/api';
+import { createParentInvite, parentInviteUrl } from '@/lib/parents/api';
 import { assignPractice, listStudentPractice } from '@/lib/practice/api';
 import { getStudent } from '@/lib/students/api';
 import type { StudentRow, SubmissionRow } from '@/lib/supabase/types';
@@ -22,6 +23,7 @@ export default function StudentScreen() {
   const [practice, setPractice] = useState<Array<SubmissionRow & { title: string }>>([]);
   const [draftLabels, setDraftLabels] = useState<Record<string, string>>({});
   const [newGap, setNewGap] = useState('');
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -100,6 +102,17 @@ export default function StudentScreen() {
     }
   };
 
+  const onInviteParent = async () => {
+    if (!studentId) return;
+    setStatus(null);
+    try {
+      const token = await createParentInvite(studentId);
+      setInviteUrl(parentInviteUrl(token));
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not create invite');
+    }
+  };
+
   const onAddGap = async () => {
     if (!latest || !studentId) return;
     try {
@@ -174,6 +187,10 @@ export default function StudentScreen() {
           )}
         </View>
       )}
+      <Pressable style={styles.secondary} onPress={() => void onInviteParent()}>
+        <Text style={styles.secondaryText}>Create parent link</Text>
+      </Pressable>
+      {inviteUrl ? <Text selectable style={styles.meta}>{inviteUrl}</Text> : null}
       {practice.length ? (
         <View style={styles.card}>
           <Text style={styles.section}>Practice</Text>
