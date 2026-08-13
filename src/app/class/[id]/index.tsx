@@ -1,10 +1,11 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
+import { buildFamilyDigest, shareFamilyDigest } from '@/lib/parents/digest';
 import { addTypedStudent, listRoster, type RosterStudent } from '@/lib/students/api';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
@@ -37,6 +38,18 @@ export default function ClassHomeScreen() {
     }, [load]),
   );
 
+  const onCopyDigest = async () => {
+    if (!id || !klass) return;
+    setStatus(null);
+    try {
+      const text = await buildFamilyDigest(id, klass.name);
+      const result = await shareFamilyDigest(text);
+      setStatus(result === 'copied' ? 'Family update copied.' : 'Family update shared.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not copy update');
+    }
+  };
+
   const onAdd = async () => {
     if (!id || !teacher) return;
     setStatus(null);
@@ -50,7 +63,7 @@ export default function ClassHomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>{klass?.name ?? 'Class'}</Text>
       {klass ? <Text style={styles.meta}>Join code {klass.join_code}</Text> : null}
       {overview ? (
@@ -112,16 +125,18 @@ export default function ClassHomeScreen() {
       <Link href={`/class/${id}/gradebook`} style={styles.link}>
         <Text style={styles.linkText}>Grade book</Text>
       </Link>
-    </View>
+      <Pressable onPress={() => void onCopyDigest()}>
+        <Text style={styles.linkText}>Copy family update</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 24,
+    paddingBottom: 48,
     gap: 10,
-    justifyContent: 'center',
   },
   title: {
     fontSize: 24,

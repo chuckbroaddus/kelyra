@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { createClass, listClasses } from '@/lib/classes/api';
@@ -75,7 +75,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Your classes</Text>
       <Text style={styles.body}>{teacher.email}</Text>
       <Link href="/capture" style={styles.link}>
@@ -105,16 +105,15 @@ export default function HomeScreen() {
       <Pressable onPress={() => void signOut()}>
         <Text style={styles.signOut}>Sign out</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 24,
+    paddingBottom: 48,
     gap: 12,
-    justifyContent: 'center',
   },
   title: {
     fontSize: 28,

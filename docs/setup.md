@@ -322,3 +322,5 @@ No new SQL.
 No new SQL. Open the class home.
 
 You should see **This week**: unassigned count, draft count, common approved gaps, and who has a current focus. Tap a name to open that student.
+
+**Copy family update** puts one line per student (focus, practice, teacher sentence) on the clipboard so you can paste into email or Messages. No mail service required.

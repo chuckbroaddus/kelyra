@@ -2,7 +2,7 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
@@ -220,7 +220,7 @@ export default function CaptureScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Capture homework</Text>
       <Text style={styles.body}>
         Photo optional. Name each student in their own sentence: Jamal guessed on the quiz. Mateo finished early.
@@ -255,16 +255,15 @@ export default function CaptureScreen() {
         <Text style={styles.buttonText}>{busy ? 'Saving…' : preview.button}</Text>
       </Pressable>
       {status ? <Text style={styles.error}>{status}</Text> : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 24,
+    paddingBottom: 48,
     gap: 12,
-    justifyContent: 'center',
   },
   title: {
     fontSize: 24,
