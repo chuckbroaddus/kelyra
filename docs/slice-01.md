@@ -26,9 +26,10 @@ That page covers creating the Supabase project, turning off email confirmation, 
 ## Built so far
 
 1. Teacher auth, class, typed roster.
-2. Capture photo (+ optional voice) → private Storage → `captures.status = unassigned`.
-3. Inbox lists those items.
+2. Capture photo (+ optional voice) → private Storage.
+3. Name match: type the name you said (or STT later). Unique first name auto-files. Ambiguous / missing stays Unassigned.
+4. Inbox: pick a roster name to attach. Never creates a student.
 
-Not built: spoken-name match, gap drafts, Approve.
+Not built: gap drafts, Approve, deployed STT (optional).
 
-How to run capture: [setup.md](setup.md) section 10.
+How to run: [setup.md](setup.md).

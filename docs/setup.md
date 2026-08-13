@@ -225,3 +225,16 @@ The photo is **not** assigned to Maya/Jamal/Mateo yet. That is correct.
 4. **Save to Unassigned** → check **Unassigned inbox**.
 
 If save fails with a storage/RLS error, confirm the migration created the `photos` and `audio` buckets (Storage in the Supabase dashboard).
+
+## 11. File a capture on a student (name match)
+
+You do **not** need an xAI key for this check.
+
+1. Capture a photo.
+2. In **Name you said**, type `Mateo` (or record and type it — STT is off until we deploy the function).
+3. **Save to Unassigned**.
+4. Inbox should say **Filed on Mateo**.
+5. Try again with a junk name like `nobody`. It should stay **Unassigned**. Tap **Mateo** on the chip row to attach it by hand.
+6. Two students named Maya would stay Unassigned if you only say “Maya”. That is correct.
+
+Optional later: deploy `supabase/functions/transcribe` and set `XAI_API_KEY` as a function secret to fill the transcript from the recording automatically.

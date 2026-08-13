@@ -2,10 +2,15 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { createUnassignedHomework } from '@/lib/captures/api';
+import {
+  applyTranscriptAndMatch,
+  createUnassignedHomework,
+  describeMatch,
+  transcribeCaptureAudio,
+} from '@/lib/captures/api';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 import { uploadTeacherAsset } from '@/lib/media/upload';
@@ -19,6 +24,7 @@ export default function CaptureScreen() {
   const [photoMime, setPhotoMime] = useState('image/jpeg');
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioMime, setAudioMime] = useState('audio/m4a');
+  const [spokenName, setSpokenName] = useState('');
   const [recording, setRecording] = useState<RecordingHandle | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -108,11 +114,24 @@ export default function CaptureScreen() {
             mimeType: audioMime,
           })
         : null;
-      await createUnassignedHomework({
+      const capture = await createUnassignedHomework({
         classId: klass.id,
         photoAssetId: photo.id,
         audioAssetId: audio?.id,
+        transcript: spokenName.trim() || null,
       });
+
+      let transcript = spokenName.trim();
+      if (!transcript && audio) {
+        transcript = (await transcribeCaptureAudio(capture.id)) ?? '';
+      }
+      if (transcript) {
+        const matched = await applyTranscriptAndMatch(capture, transcript);
+        setStatus(describeMatch({
+          guessedStudentId: matched.student_id,
+          confidence: matched.match_confidence ?? 0,
+        }));
+      }
       router.replace('/inbox');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save capture');
@@ -146,6 +165,12 @@ export default function CaptureScreen() {
         </Pressable>
       )}
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
+      <TextInput
+        placeholder='Name you said, e.g. "Mateo" (used if STT is off)'
+        style={styles.input}
+        value={spokenName}
+        onChangeText={setSpokenName}
+      />
       <Pressable disabled={busy} style={styles.button} onPress={() => void save()}>
         <Text style={styles.buttonText}>{busy ? 'Saving…' : 'Save to Unassigned'}</Text>
       </Pressable>
@@ -209,5 +234,13 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#9b1c1c',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
   },
 });
