@@ -41,20 +41,23 @@ function uniqueSuffix(label: string, index: number): string {
   return String(index + 1);
 }
 
+export async function unlockDeviceLabels(kind: 'audio' | 'video'): Promise<void> {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !navigator.mediaDevices) return;
+  const stream = await navigator.mediaDevices.getUserMedia(
+    kind === 'audio' ? { audio: true, video: false } : { audio: false, video: true },
+  );
+  stream.getTracks().forEach((track) => track.stop());
+}
+
 export async function listMediaDevices(kind: 'audio' | 'video'): Promise<MediaDeviceOption[]> {
   if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !navigator.mediaDevices) {
     return [];
   }
   const list = await navigator.mediaDevices.enumerateDevices();
   const matchKind = kind === 'audio' ? 'audioinput' : 'videoinput';
-  const seenGroups = new Set<string>();
   const raw = list.filter((item) => {
     if (item.kind !== matchKind || !item.deviceId) return false;
     if (item.deviceId === 'default' || item.deviceId === 'communications') return false;
-    if (item.groupId) {
-      if (seenGroups.has(item.groupId)) return false;
-      seenGroups.add(item.groupId);
-    }
     return true;
   });
 

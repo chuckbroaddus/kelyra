@@ -241,7 +241,7 @@ You do **not** need an xAI key for this check.
 
 1. Capture a photo and file it on Mateo (type the name, or pick him in the inbox).
 2. You should land on **Mateo’s** page with the photo.
-3. AI gaps appear after **Ask Grok** (see section 19). For a no-AI check you can still **type a gap** (`two-digit regrouping`) → **Add gap**.
+3. AI gaps appear after **Ask AI** (see section 19). For a no-AI check you can still **type a gap** (`two-digit regrouping`) → **Add gap**.
 4. **Approve**. The page should say Approved.
 5. Open Mateo again from the class roster. It should still say Approved.
 6. Optional: capture another photo, file it, **Note only** — photo stays, no approved gap.
@@ -365,12 +365,12 @@ Terminal B — your usual `npm run web` or `npm start`. **Restart it** if it was
 1. Capture a homework **photo** and file it on Mateo (type his name).
    - On the computer, **Take photo** opens the laptop/monitor camera. **Snap photo** saves a JPEG.
    - **Choose photo** still picks a file. iPhone HEIC photos are converted to JPEG automatically — you do not need to change the type.
-2. Open Mateo. Tap **Ask Grok**. The button should say **Asking Grok…**. Wait a few seconds.
+2. Open Mateo. Tap **Ask AI**. The button should say **Asking AI…**. Wait a few seconds.
 3. You should see 1–3 draft gap labels you can edit, then **Approve**.
 4. **Assign practice** should now fill real items (edit them if you want).
 5. Voice without a typed name uses Grok STT when the gateway is up. If STT fails, type the name as before.
 
-If Ask Grok says it cannot reach Grok, the phone cannot see the computer: same Wi-Fi, `npm run ai:dev` still running, and macOS Firewall allowing Node. Then reload Expo Go.
+If Ask AI says it cannot reach Grok, the phone cannot see the computer: same Wi-Fi, `npm run ai:dev` still running, and macOS Firewall allowing Node. Then reload Expo Go.
 
 If it says `grok login`, run that in a terminal, then retry. Do not paste tokens into `.env`.
 
@@ -401,3 +401,12 @@ Restart `npm run ai:dev` so it knows `transcribe-audio`.
 No new SQL. Open a student who has more than one note, gap, or practice.
 
 Under the latest work you should see **Skill history**: newest first, each line a date, what it is (draft / assigned / practice / note), and the skill or note text. The current focus is marked **focus** and also shown under the student’s name.
+
+## 23. Ask AI before you save a capture
+
+Restart `npm run ai:dev` so it knows `evaluate-homework`.
+
+1. Capture → take or choose a photo, and/or record a name.
+2. **Ask AI** appears. Tap it. Wait for **Asking AI…**.
+3. The save button should become **Save to NAME** if that student is on the roster. Gaps and a draft score appear above the name box.
+4. **Save to NAME** (or Unassigned). Open the student or inbox — the gaps should already be there. You should not need to tap Ask AI again.

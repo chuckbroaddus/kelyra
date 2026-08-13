@@ -11,8 +11,10 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   applyTranscriptAndMatch,
   createCapture,
+  saveCaptureEvaluation,
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
+import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
@@ -33,10 +35,13 @@ export default function CaptureScreen() {
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
   const [micId, setMicId] = useState<string | null>(null);
+  const [cameraId, setCameraId] = useState<string | null>(null);
   const [deviceTick, setDeviceTick] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [evaluation, setEvaluation] = useState<CaptureEvaluation | null>(null);
 
   const preview = useMemo(() => {
     const names = roster.map((student) => ({
@@ -82,6 +87,7 @@ export default function CaptureScreen() {
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
           setRoster(await listRoster(klass.id));
           setMicId(await getPreferredDeviceId('audio'));
+          setCameraId(await getPreferredDeviceId('video'));
         } catch (err) {
           setStatus(err instanceof Error ? err.message : 'Could not load roster');
         }
@@ -102,6 +108,7 @@ export default function CaptureScreen() {
       const prepared = await normalizePhoto(uri, mimeType);
       setPhotoUri(prepared.uri);
       setPhotoMime(prepared.mimeType);
+      setEvaluation(null);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not read that photo.');
     }
@@ -139,6 +146,7 @@ export default function CaptureScreen() {
     try {
       setRecording(await startLiveRecording(micId));
       setAudioUri(null);
+      setEvaluation(null);
       setDeviceTick((value) => value + 1);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not start the microphone.');
@@ -158,6 +166,38 @@ export default function CaptureScreen() {
     }
   };
 
+  const onAskAi = async () => {
+    if ((!photoUri && !audioUri) || asking || recording) return;
+    setAsking(true);
+    setStatus('Asking AI… this can take a few seconds.');
+    try {
+      const result = await evaluateCaptureMedia({
+        teacherId: teacher.id,
+        photoUri,
+        photoMime,
+        audioUri,
+        audioMime,
+        existingPhoto: evaluation?.photoAsset,
+        existingAudio: evaluation?.audioAsset,
+      });
+      setEvaluation(result);
+      if (!spokenName.trim() && result.studentName) {
+        setSpokenName(result.studentName);
+      } else if (!spokenName.trim() && result.transcript) {
+        setSpokenName(result.transcript);
+      }
+      const bits = [];
+      if (result.studentName) bits.push(`Name: ${result.studentName}`);
+      if (result.draftScore != null) bits.push(`Draft score: ${result.draftScore}`);
+      if (result.gaps.length) bits.push(result.gaps.map((gap) => gap.label).join(', '));
+      setStatus(bits.length ? bits.join(' · ') : 'AI finished. Check the save button.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not ask AI');
+    } finally {
+      setAsking(false);
+    }
+  };
+
   const save = async () => {
     if (!photoUri && !spokenName.trim() && !audioUri) {
       setStatus('Add a photo, a name, or a short note.');
@@ -167,22 +207,26 @@ export default function CaptureScreen() {
     setStatus(null);
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
-      const photo = photoUri
-        ? await uploadTeacherAsset({
-            teacherId: teacher.id,
-            kind: 'photo',
-            uri: photoUri,
-            mimeType: photoMime,
-          })
-        : null;
-      const audio = audioUri
-        ? await uploadTeacherAsset({
-            teacherId: teacher.id,
-            kind: 'audio',
-            uri: audioUri,
-            mimeType: audioMime,
-          })
-        : null;
+      const photo = evaluation?.photoAsset
+        ? evaluation.photoAsset
+        : photoUri
+          ? await uploadTeacherAsset({
+              teacherId: teacher.id,
+              kind: 'photo',
+              uri: photoUri,
+              mimeType: photoMime,
+            })
+          : null;
+      const audio = evaluation?.audioAsset
+        ? evaluation.audioAsset
+        : audioUri
+          ? await uploadTeacherAsset({
+              teacherId: teacher.id,
+              kind: 'audio',
+              uri: audioUri,
+              mimeType: audioMime,
+            })
+          : null;
       const first = await createCapture({
         classId: klass.id,
         kind: photo ? 'homework' : 'voice_note',
@@ -192,8 +236,8 @@ export default function CaptureScreen() {
         transcript: spokenName.trim() || null,
       });
 
-      let fullText = spokenName.trim();
-      if (!fullText && audio) {
+      let fullText = spokenName.trim() || evaluation?.transcript?.trim() || '';
+      if (!fullText && audio && !evaluation) {
         fullText = (await transcribeCaptureAudio(first.id)) ?? '';
       }
       const names = roster.map((student) => ({
@@ -205,6 +249,9 @@ export default function CaptureScreen() {
       const texts = segments.length ? segments.map((part) => part.text) : fullText ? [fullText] : [];
       let lastFiledStudentId: string | null = null;
       let anyUnassigned = !texts.length;
+      if (!texts.length && evaluation) {
+        await saveCaptureEvaluation(first.id, evaluation, null);
+      }
 
       for (const [index, segment] of texts.entries()) {
         const row =
@@ -216,7 +263,11 @@ export default function CaptureScreen() {
                 inputSource: 'typed',
                 transcript: segment,
               });
-        const matched = await applyTranscriptAndMatch(row, segment);
+        const matched = await applyTranscriptAndMatch(
+          row,
+          segment,
+          index === 0 ? evaluation : null,
+        );
         if (matched.student_id) lastFiledStudentId = matched.student_id;
         else anyUnassigned = true;
       }
@@ -242,6 +293,7 @@ export default function CaptureScreen() {
       {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
       {cameraOpen ? (
         <WebCameraCapture
+          deviceId={cameraId}
           onCapture={(uri, mimeType) => {
             setCameraOpen(false);
             void applyPhoto(uri, mimeType);
@@ -250,6 +302,15 @@ export default function CaptureScreen() {
         />
       ) : (
         <>
+          <DevicePicker
+            kind="video"
+            selectedId={cameraId}
+            nonce={deviceTick}
+            onSelect={(deviceId) => {
+              setCameraId(deviceId);
+              void setPreferredDeviceId('video', deviceId);
+            }}
+          />
           <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
             <Text style={styles.buttonText}>Take photo</Text>
           </Pressable>
@@ -279,6 +340,18 @@ export default function CaptureScreen() {
         </Pressable>
       )}
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
+      {(photoUri || audioUri) && !recording ? (
+        <Pressable disabled={asking || busy} style={styles.secondary} onPress={() => void onAskAi()}>
+          <Text style={styles.secondaryText}>{asking ? 'Asking AI…' : 'Ask AI'}</Text>
+        </Pressable>
+      ) : null}
+      {status ? <Text style={styles.error}>{status}</Text> : null}
+      {evaluation?.gaps.length ? (
+        <Text style={styles.meta}>
+          Gaps: {evaluation.gaps.map((gap) => gap.label).join(', ')}
+          {evaluation.draftScore != null ? ` · Score ${evaluation.draftScore}` : ''}
+        </Text>
+      ) : null}
       <TextInput
         placeholder="Jamal guessed on the quiz. Mateo finished early."
         placeholderTextColor={colors.muted}

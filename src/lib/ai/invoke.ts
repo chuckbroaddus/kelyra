@@ -12,7 +12,8 @@ export async function invokeAi<T extends object>(
     | 'transcribe'
     | 'extract-roster'
     | 'transcribe-audio'
-    | 'interpret-speech',
+    | 'interpret-speech'
+    | 'evaluate-homework',
   body: Record<string, unknown>,
 ): Promise<T> {
   if (aiDevUrl) {

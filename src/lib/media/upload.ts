@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { requireSupabase } from '@/lib/supabase/client';
 import type { AssetKind, AssetRow } from '@/lib/supabase/types';
 
@@ -12,11 +14,34 @@ function extensionFor(mimeType: string, fallback: string): string {
 }
 
 export async function readUriAsBytes(uri: string): Promise<ArrayBuffer> {
-  const response = await fetch(uri);
-  if (!response.ok) {
-    throw new Error('Could not read the selected file.');
+  try {
+    const response = await fetch(uri);
+    if (response.ok) {
+      const buffer = await response.arrayBuffer();
+      if (buffer.byteLength > 0) return buffer;
+    }
+  } catch {
+    // Native file:// URIs often fail fetch. Fall through to the file API.
   }
-  return response.arrayBuffer();
+
+  if (Platform.OS !== 'web') {
+    const FileSystem = await import('expo-file-system/legacy');
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return base64ToArrayBuffer(base64);
+  }
+
+  throw new Error('Could not read the selected file.');
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = globalThis.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 export async function uploadTeacherAsset(input: {
@@ -25,16 +50,16 @@ export async function uploadTeacherAsset(input: {
   uri: string;
   mimeType: string;
 }): Promise<AssetRow> {
-  const bytes = await readUriAsBytes(input.uri);
+  const bytes = new Uint8Array(await readUriAsBytes(input.uri));
+  if (!bytes.byteLength) throw new Error('That file was empty.');
   const bucket = input.kind === 'photo' ? 'photos' : 'audio';
   const ext = extensionFor(input.mimeType, input.kind === 'photo' ? 'jpg' : 'm4a');
   const storagePath = `${input.teacherId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const blob = new Blob([bytes], { type: input.mimeType });
 
   const supabase = requireSupabase();
   const { error: uploadError } = await supabase.storage
     .from(bucket)
-    .upload(storagePath, blob, { contentType: input.mimeType, upsert: false });
+    .upload(storagePath, bytes, { contentType: input.mimeType, upsert: false });
   if (uploadError) throw uploadError;
 
   const { data, error } = await supabase

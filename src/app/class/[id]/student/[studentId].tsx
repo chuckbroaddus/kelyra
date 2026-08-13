@@ -178,7 +178,7 @@ export default function StudentScreen() {
   const onAskGrok = async () => {
     if (!latest || asking) return;
     setAsking(true);
-    setStatus('Asking Grok… this can take a few seconds.');
+    setStatus('Asking AI… this can take a few seconds.');
     try {
       await analyzeAttachedCapture(latest.id);
       await load();
@@ -218,7 +218,7 @@ export default function StudentScreen() {
           </Text>
           {latest.gaps.length === 0 ? (
             <Text style={styles.meta}>
-              No AI gaps yet. Tap Ask Grok, or type a gap below.
+              No AI gaps yet. Tap Ask AI, or type a gap below.
             </Text>
           ) : (
             <>
@@ -283,7 +283,7 @@ export default function StudentScreen() {
                   style={styles.secondary}
                   onPress={() => void onAskGrok()}
                 >
-                  <Text style={styles.secondaryText}>{asking ? 'Asking Grok…' : 'Ask Grok'}</Text>
+                  <Text style={styles.secondaryText}>{asking ? 'Asking AI…' : 'Ask AI'}</Text>
                 </Pressable>
               ) : null}
               {status ? <Text style={styles.error}>{status}</Text> : null}

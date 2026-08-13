@@ -1,6 +1,6 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import type { NameMatch } from '@/lib/ai/types';
-import { analyzeAttachedCapture } from '@/lib/gaps/api';
+import { analyzeAttachedCapture, draftHasWork, storeCaptureDraft, type StoredHomeworkDraft } from '@/lib/gaps/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { signedUrlForAsset } from '@/lib/media/upload';
 import { listRoster } from '@/lib/students/api';
@@ -67,11 +67,7 @@ export async function attachCapture(captureId: string, studentId: string): Promi
     .single();
   if (error) throw error;
   if (data.kind === 'homework') {
-    try {
-      await analyzeAttachedCapture(data.id);
-    } catch {
-      // Filing must succeed even if Grok is offline. Teacher can tap Ask Grok.
-    }
+    await analyzeOrReuseDraft(data);
   }
   return data;
 }
@@ -79,6 +75,7 @@ export async function attachCapture(captureId: string, studentId: string): Promi
 export async function applyTranscriptAndMatch(
   capture: CaptureRow,
   transcript: string,
+  draft?: StoredHomeworkDraft | null,
 ): Promise<CaptureRow> {
   const roster = await listRoster(capture.class_id);
   const match = matchName(
@@ -109,14 +106,42 @@ export async function applyTranscriptAndMatch(
     .select('*')
     .single();
   if (error) throw error;
+  if (draft && draftHasWork(draft)) {
+    await storeCaptureDraft(data.id, draft, data.student_id);
+    const { data: refreshed } = await requireSupabase()
+      .from('captures')
+      .select('*')
+      .eq('id', data.id)
+      .single();
+    return refreshed ?? data;
+  }
   if (data.status === 'attached' && data.kind === 'homework') {
-    try {
-      await analyzeAttachedCapture(data.id);
-    } catch {
-      // Filing must succeed even if Grok is offline. Teacher can tap Ask Grok.
-    }
+    await analyzeOrReuseDraft(data);
   }
   return data;
+}
+
+export async function saveCaptureEvaluation(
+  captureId: string,
+  draft: StoredHomeworkDraft,
+  studentId?: string | null,
+) {
+  await storeCaptureDraft(captureId, draft, studentId);
+}
+
+async function analyzeOrReuseDraft(capture: CaptureRow) {
+  const stored = capture.model_draft as StoredHomeworkDraft | null;
+  if (stored && draftHasWork(stored)) {
+    if (capture.student_id) {
+      await storeCaptureDraft(capture.id, stored, capture.student_id);
+    }
+    return;
+  }
+  try {
+    await analyzeAttachedCapture(capture.id);
+  } catch {
+    // Filing must succeed even if AI is offline. Teacher can tap Ask AI.
+  }
 }
 
 export async function transcribeCaptureAudio(captureId: string): Promise<string | null> {

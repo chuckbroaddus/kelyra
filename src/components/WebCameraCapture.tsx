@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 export type WebCameraCaptureProps = {
   onCapture: (uri: string, mimeType: string) => void;
   onCancel: () => void;
+  deviceId?: string | null;
 };
 
 /** Native stub. Web uses WebCameraCapture.web.tsx. */

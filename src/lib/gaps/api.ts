@@ -8,6 +8,53 @@ export type StudentCapture = CaptureRow & {
   gaps: SkillGapRow[];
 };
 
+export type StoredHomeworkDraft = {
+  gaps: Array<{ label: string; sortOrder: number }>;
+  draftScore: number | null;
+  teacherNote: string | null;
+  studentName?: string | null;
+  parentSentence?: string | null;
+};
+
+export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
+  return Boolean(
+    draft &&
+      (draft.gaps?.length || draft.teacherNote || draft.draftScore != null || draft.studentName),
+  );
+}
+
+export async function storeCaptureDraft(
+  captureId: string,
+  draft: StoredHomeworkDraft,
+  studentId?: string | null,
+): Promise<void> {
+  const supabase = requireSupabase();
+  await supabase
+    .from('captures')
+    .update({
+      model_draft: draft,
+      draft_score: draft.draftScore,
+      teacher_note: draft.teacherNote,
+      ...(studentId && draft.gaps.length ? { status: 'draft' } : {}),
+    })
+    .eq('id', captureId);
+
+  if (!studentId || !draft.gaps.length) return;
+
+  await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
+  const { error } = await supabase.from('skill_gaps').insert(
+    draft.gaps.map((gap, index) => ({
+      capture_id: captureId,
+      student_id: studentId,
+      label: gap.label,
+      source: 'model',
+      status: 'draft',
+      sort_order: gap.sortOrder ?? index + 1,
+    })),
+  );
+  if (error) throw error;
+}
+
 export async function analyzeAttachedCapture(captureId: string): Promise<boolean> {
   const data = await invokeAi<{ ok?: boolean; gaps?: unknown[] }>('analyze-homework', {
     captureId,

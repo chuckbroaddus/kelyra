@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/constants/theme';
 import {
   listMediaDevices,
+  unlockDeviceLabels,
   type MediaDeviceOption,
 } from '@/lib/media/devices';
 
@@ -18,7 +19,14 @@ export function DevicePicker({ kind, selectedId, onSelect, nonce }: DevicePicker
   const [devices, setDevices] = useState<MediaDeviceOption[]>([]);
 
   useEffect(() => {
-    void listMediaDevices(kind).then(setDevices);
+    void (async () => {
+      try {
+        await unlockDeviceLabels(kind);
+      } catch {
+        // Permission denied — chips stay hidden until the teacher allows access.
+      }
+      setDevices(await listMediaDevices(kind));
+    })();
   }, [kind, selectedId, nonce]);
 
   if (devices.length < 2) return null;

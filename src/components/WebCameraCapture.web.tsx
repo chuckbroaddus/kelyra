@@ -7,11 +7,12 @@ import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices'
 type WebCameraCaptureProps = {
   onCapture: (uri: string, mimeType: string) => void;
   onCancel: () => void;
+  deviceId?: string | null;
 };
 
 type CameraDevice = { deviceId: string; label: string };
 
-export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps) {
+export function WebCameraCapture({ onCapture, onCancel, deviceId: requestedId }: WebCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [devices, setDevices] = useState<CameraDevice[]>([]);
@@ -40,7 +41,13 @@ export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps)
       }
       const list = await navigator.mediaDevices.enumerateDevices();
       const cams = list
-        .filter((item) => item.kind === 'videoinput')
+        .filter(
+          (item) =>
+            item.kind === 'videoinput' &&
+            item.deviceId &&
+            item.deviceId !== 'default' &&
+            item.deviceId !== 'communications',
+        )
         .map((item, index) => ({
           deviceId: item.deviceId,
           label: item.label || `Camera ${index + 1}`,
@@ -60,13 +67,17 @@ export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps)
 
   useEffect(() => {
     void (async () => {
-      const preferred = await getPreferredDeviceId('video');
-      await start(preferred);
+      const preferred = requestedId ?? (await getPreferredDeviceId('video'));
+      try {
+        await start(preferred);
+      } catch {
+        await start(null);
+      }
     })();
     return () => stopStream();
-    // Mount once; switching cameras calls start() directly.
+    // Restart when the teacher picks a different camera chip.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestedId]);
 
   const snap = () => {
     const video = videoRef.current;
