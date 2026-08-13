@@ -12,6 +12,7 @@ import {
 } from '@/lib/captures/api';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
+import { splitByRoster } from '@/lib/matching/splitTranscript';
 import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 import { uploadTeacherAsset } from '@/lib/media/upload';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
@@ -32,23 +33,37 @@ export default function CaptureScreen() {
   const [busy, setBusy] = useState(false);
 
   const preview = useMemo(() => {
-    const match = matchName(
-      spokenName,
-      roster.map((student) => ({
-        studentId: student.id,
-        displayName: student.display_name,
-        aliases: student.name_aliases,
-      })),
-    );
-    const student = roster.find((row) => row.id === match.guessedStudentId);
-    if (shouldAutoAttach(match) && student) {
-      return { button: `Save to ${student.display_name}`, hint: `Will file on ${student.display_name}.` };
+    const names = roster.map((student) => ({
+      studentId: student.id,
+      displayName: student.display_name,
+      aliases: student.name_aliases,
+    }));
+    const parts = splitByRoster(spokenName, names);
+    const lines = parts.map((part) => {
+      const student = roster.find((row) => row.id === part.match.guessedStudentId);
+      const target =
+        shouldAutoAttach(part.match) && student ? student.display_name : 'Unassigned';
+      return `${target}: ${part.text}`;
+    });
+
+    if (parts.length > 1) {
+      return {
+        button: `Save ${parts.length} notes`,
+        hint: lines.join('\n'),
+      };
     }
-    if (spokenName.trim() && match.confidence > 0) {
-      return { button: 'Save to Unassigned', hint: 'Name is unclear. You can pick the student in the inbox.' };
-    }
-    if (spokenName.trim()) {
-      return { button: 'Save to Unassigned', hint: 'No roster match. You can pick the student in the inbox.' };
+    if (lines[0] && parts[0]) {
+      const only = parts[0].match;
+      const student = roster.find((row) => row.id === only.guessedStudentId);
+      if (shouldAutoAttach(only) && student) {
+        return { button: `Save to ${student.display_name}`, hint: lines[0] };
+      }
+      return {
+        button: 'Save to Unassigned',
+        hint: only.confidence > 0
+          ? `${lines[0]} (name unclear — pick in inbox)`
+          : `${lines[0]} (no roster match — pick in inbox)`,
+      };
     }
     return { button: 'Save to Unassigned', hint: 'No name yet — this will stay in Unassigned.' };
   }, [spokenName, roster]);
@@ -154,7 +169,7 @@ export default function CaptureScreen() {
             mimeType: audioMime,
           })
         : null;
-      const capture = await createCapture({
+      const first = await createCapture({
         classId: klass.id,
         kind: photo ? 'homework' : 'voice_note',
         inputSource: photo ? 'camera' : spokenName.trim() ? 'typed' : 'voice',
@@ -163,18 +178,39 @@ export default function CaptureScreen() {
         transcript: spokenName.trim() || null,
       });
 
-      let transcript = spokenName.trim();
-      if (!transcript && audio) {
-        transcript = (await transcribeCaptureAudio(capture.id)) ?? '';
+      let fullText = spokenName.trim();
+      if (!fullText && audio) {
+        fullText = (await transcribeCaptureAudio(first.id)) ?? '';
       }
-      let next = capture;
-      if (transcript) {
-        next = await applyTranscriptAndMatch(capture, transcript);
+      const names = roster.map((student) => ({
+        studentId: student.id,
+        displayName: student.display_name,
+        aliases: student.name_aliases,
+      }));
+      const segments = splitByRoster(fullText, names);
+      const texts = segments.length ? segments.map((part) => part.text) : fullText ? [fullText] : [];
+      let lastFiledStudentId: string | null = null;
+      let anyUnassigned = !texts.length;
+
+      for (const [index, segment] of texts.entries()) {
+        const row =
+          index === 0
+            ? first
+            : await createCapture({
+                classId: klass.id,
+                kind: 'voice_note',
+                inputSource: 'typed',
+                transcript: segment,
+              });
+        const matched = await applyTranscriptAndMatch(row, segment);
+        if (matched.student_id) lastFiledStudentId = matched.student_id;
+        else anyUnassigned = true;
       }
-      if (next.student_id) {
-        router.replace(`/class/${klass.id}/student/${next.student_id}`);
-      } else {
+
+      if (anyUnassigned || !lastFiledStudentId) {
         router.replace('/inbox');
+      } else {
+        router.replace(`/class/${klass.id}/student/${lastFiledStudentId}`);
       }
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save capture');
@@ -187,7 +223,7 @@ export default function CaptureScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Capture homework</Text>
       <Text style={styles.body}>
-        Photo of work, or just a name and a note — no photo required. A unique roster match files on that student.
+        Photo optional. Name each student in their own sentence: Jamal guessed on the quiz. Mateo finished early.
       </Text>
       {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
       <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
@@ -209,7 +245,7 @@ export default function CaptureScreen() {
       )}
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
       <TextInput
-        placeholder='Mateo guessed on regrouping'
+        placeholder="Jamal guessed on the quiz. Mateo finished early."
         style={styles.input}
         value={spokenName}
         onChangeText={setSpokenName}

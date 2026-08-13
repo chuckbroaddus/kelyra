@@ -306,6 +306,15 @@ No new SQL.
 3. Save. You should land on Jamal with that note. No gap/Approve required.
 4. Open Mateo: **Earlier notes** lists older captures under the latest one.
 
+## 18. Split one note across students
+
+No new SQL.
+
+1. Capture, no photo.
+2. Type: `Jamal guessed on the quiz. Mateo finished early.`
+3. Hint should list two lines (Jamal, then Mateo). Button: **Save 2 notes**.
+4. Each student gets their own note.
+
 ## 17. Class overview
 
 No new SQL. Open the class home.
