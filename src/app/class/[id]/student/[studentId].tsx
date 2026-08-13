@@ -191,6 +191,17 @@ export default function StudentScreen() {
         <Text style={styles.secondaryText}>Create parent link</Text>
       </Pressable>
       {inviteUrl ? <Text selectable style={styles.meta}>{inviteUrl}</Text> : null}
+      {captures.length > 1 ? (
+        <View style={styles.card}>
+          <Text style={styles.section}>Earlier notes</Text>
+          {captures.slice(1).map((item) => (
+            <Text key={item.id} style={styles.meta}>
+              {new Date(item.created_at).toLocaleString()} · {item.kind} · {item.status}
+              {item.transcript ? ` · ${item.transcript}` : ''}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       {practice.length ? (
         <View style={styles.card}>
           <Text style={styles.section}>Practice</Text>

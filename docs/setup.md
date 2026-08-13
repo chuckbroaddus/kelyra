@@ -292,3 +292,12 @@ Then:
 5. You should **not** see scores, the homework photo, or other students.
 
 Existing Approves may have a focus skill but no sentence. New Approves write “Still working on …”.
+
+## 16. Note without a photo
+
+No new SQL.
+
+1. Capture → skip the photo.
+2. Type `Jamal guessed on the quiz` (must include the student name).
+3. Save. You should land on Jamal with that note. No gap/Approve required.
+4. Open Mateo: **Earlier notes** lists older captures under the latest one.

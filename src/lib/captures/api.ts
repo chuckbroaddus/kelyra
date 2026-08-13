@@ -11,21 +11,23 @@ export type InboxItem = CaptureRow & {
   matchedName: string | null;
 };
 
-export async function createUnassignedHomework(input: {
+export async function createCapture(input: {
   classId: string;
-  photoAssetId: string;
-  audioAssetId?: string;
+  kind: 'homework' | 'voice_note';
+  inputSource: 'voice' | 'camera' | 'typed';
+  photoAssetId?: string | null;
+  audioAssetId?: string | null;
   transcript?: string | null;
 }): Promise<CaptureRow> {
   const { data, error } = await requireSupabase()
     .from('captures')
     .insert({
       class_id: input.classId,
-      kind: 'homework',
-      input_source: 'camera',
+      kind: input.kind,
+      input_source: input.inputSource,
       status: 'unassigned',
       student_id: null,
-      photo_asset_id: input.photoAssetId,
+      photo_asset_id: input.photoAssetId ?? null,
       audio_asset_id: input.audioAssetId ?? null,
       transcript: input.transcript ?? null,
     })
@@ -33,6 +35,22 @@ export async function createUnassignedHomework(input: {
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function createUnassignedHomework(input: {
+  classId: string;
+  photoAssetId: string;
+  audioAssetId?: string;
+  transcript?: string | null;
+}): Promise<CaptureRow> {
+  return createCapture({
+    classId: input.classId,
+    kind: 'homework',
+    inputSource: 'camera',
+    photoAssetId: input.photoAssetId,
+    audioAssetId: input.audioAssetId,
+    transcript: input.transcript,
+  });
 }
 
 export async function attachCapture(captureId: string, studentId: string): Promise<CaptureRow> {
@@ -47,7 +65,9 @@ export async function attachCapture(captureId: string, studentId: string): Promi
     .select('*')
     .single();
   if (error) throw error;
-  await analyzeAttachedCapture(data.id);
+  if (data.kind === 'homework') {
+    await analyzeAttachedCapture(data.id);
+  }
   return data;
 }
 
@@ -84,7 +104,7 @@ export async function applyTranscriptAndMatch(
     .select('*')
     .single();
   if (error) throw error;
-  if (data.status === 'attached') {
+  if (data.status === 'attached' && data.kind === 'homework') {
     await analyzeAttachedCapture(data.id);
   }
   return data;

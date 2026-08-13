@@ -7,7 +7,7 @@ import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   applyTranscriptAndMatch,
-  createUnassignedHomework,
+  createCapture,
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
 import { resolveCaptureClass } from '@/lib/classes/api';
@@ -130,20 +130,22 @@ export default function CaptureScreen() {
   };
 
   const save = async () => {
-    if (!photoUri) {
-      setStatus('Add a photo of the work first.');
+    if (!photoUri && !spokenName.trim() && !audioUri) {
+      setStatus('Add a photo, a name, or a short note.');
       return;
     }
     setBusy(true);
     setStatus(null);
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
-      const photo = await uploadTeacherAsset({
-        teacherId: teacher.id,
-        kind: 'photo',
-        uri: photoUri,
-        mimeType: photoMime,
-      });
+      const photo = photoUri
+        ? await uploadTeacherAsset({
+            teacherId: teacher.id,
+            kind: 'photo',
+            uri: photoUri,
+            mimeType: photoMime,
+          })
+        : null;
       const audio = audioUri
         ? await uploadTeacherAsset({
             teacherId: teacher.id,
@@ -152,9 +154,11 @@ export default function CaptureScreen() {
             mimeType: audioMime,
           })
         : null;
-      const capture = await createUnassignedHomework({
+      const capture = await createCapture({
         classId: klass.id,
-        photoAssetId: photo.id,
+        kind: photo ? 'homework' : 'voice_note',
+        inputSource: photo ? 'camera' : spokenName.trim() ? 'typed' : 'voice',
+        photoAssetId: photo?.id,
         audioAssetId: audio?.id,
         transcript: spokenName.trim() || null,
       });
@@ -183,7 +187,7 @@ export default function CaptureScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Capture homework</Text>
       <Text style={styles.body}>
-        One student per photo. Type the name you said. A unique roster match files on that student; otherwise it stays Unassigned.
+        Photo of work, or just a name and a note — no photo required. A unique roster match files on that student.
       </Text>
       {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
       <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
@@ -205,7 +209,7 @@ export default function CaptureScreen() {
       )}
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
       <TextInput
-        placeholder='Name you said, e.g. "Mateo" (used if STT is off)'
+        placeholder='Mateo guessed on regrouping'
         style={styles.input}
         value={spokenName}
         onChangeText={setSpokenName}
