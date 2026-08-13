@@ -27,8 +27,7 @@ import { listRoster, type RosterStudent } from '@/lib/students/api';
 export default function CaptureScreen() {
   const router = useRouter();
   const { teacher } = useAuth();
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [photoMime, setPhotoMime] = useState('image/jpeg');
+  const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
@@ -106,8 +105,14 @@ export default function CaptureScreen() {
   const applyPhoto = async (uri: string, mimeType?: string | null) => {
     try {
       const prepared = await normalizePhoto(uri, mimeType);
-      setPhotoUri(prepared.uri);
-      setPhotoMime(prepared.mimeType);
+      setPages((current) => [
+        ...current,
+        {
+          key: `${Date.now()}-${current.length}`,
+          uri: prepared.uri,
+          mimeType: prepared.mimeType,
+        },
+      ]);
       setEvaluation(null);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not read that photo.');
@@ -167,17 +172,19 @@ export default function CaptureScreen() {
   };
 
   const onAskAi = async () => {
-    if ((!photoUri && !audioUri) || asking || recording) return;
+    if ((!pages.length && !audioUri) || asking || recording) return;
     setAsking(true);
     setStatus('Asking AI… this can take a few seconds.');
     try {
       const result = await evaluateCaptureMedia({
         teacherId: teacher.id,
-        photoUri,
-        photoMime,
+        pages: pages.map((page, index) => ({
+          uri: page.uri,
+          mimeType: page.mimeType,
+          asset: evaluation?.photoAssets[index],
+        })),
         audioUri,
         audioMime,
-        existingPhoto: evaluation?.photoAsset,
         existingAudio: evaluation?.audioAsset,
       });
       setEvaluation(result);
@@ -199,7 +206,7 @@ export default function CaptureScreen() {
   };
 
   const save = async () => {
-    if (!photoUri && !spokenName.trim() && !audioUri) {
+    if (!pages.length && !spokenName.trim() && !audioUri) {
       setStatus('Add a photo, a name, or a short note.');
       return;
     }
@@ -207,16 +214,20 @@ export default function CaptureScreen() {
     setStatus(null);
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
-      const photo = evaluation?.photoAsset
-        ? evaluation.photoAsset
-        : photoUri
-          ? await uploadTeacherAsset({
-              teacherId: teacher.id,
-              kind: 'photo',
-              uri: photoUri,
-              mimeType: photoMime,
-            })
-          : null;
+      const photoAssets =
+        evaluation?.photoAssets?.length === pages.length
+          ? evaluation.photoAssets
+          : await Promise.all(
+              pages.map((page) =>
+                uploadTeacherAsset({
+                  teacherId: teacher.id,
+                  kind: 'photo',
+                  uri: page.uri,
+                  mimeType: page.mimeType,
+                }),
+              ),
+            );
+      const photo = photoAssets[0] ?? null;
       const audio = evaluation?.audioAsset
         ? evaluation.audioAsset
         : audioUri
@@ -227,6 +238,17 @@ export default function CaptureScreen() {
               mimeType: audioMime,
             })
           : null;
+      const draftToSave = photoAssets.length
+        ? {
+            gaps: evaluation?.gaps ?? [],
+            draftScore: evaluation?.draftScore ?? null,
+            teacherNote: evaluation?.teacherNote ?? null,
+            studentName: evaluation?.studentName ?? null,
+            parentSentence: evaluation?.parentSentence ?? null,
+            pageAssetIds: photoAssets.map((asset) => asset.id),
+          }
+        : evaluation;
+
       const first = await createCapture({
         classId: klass.id,
         kind: photo ? 'homework' : 'voice_note',
@@ -249,8 +271,8 @@ export default function CaptureScreen() {
       const texts = segments.length ? segments.map((part) => part.text) : fullText ? [fullText] : [];
       let lastFiledStudentId: string | null = null;
       let anyUnassigned = !texts.length;
-      if (!texts.length && evaluation) {
-        await saveCaptureEvaluation(first.id, evaluation, null);
+      if (!texts.length && draftToSave) {
+        await saveCaptureEvaluation(first.id, draftToSave, null);
       }
 
       for (const [index, segment] of texts.entries()) {
@@ -266,7 +288,7 @@ export default function CaptureScreen() {
         const matched = await applyTranscriptAndMatch(
           row,
           segment,
-          index === 0 ? evaluation : null,
+          index === 0 ? draftToSave : null,
         );
         if (matched.student_id) lastFiledStudentId = matched.student_id;
         else anyUnassigned = true;
@@ -288,9 +310,23 @@ export default function CaptureScreen() {
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Capture homework</Text>
       <Text style={styles.body}>
-        Photo optional. Name each student in their own sentence: Jamal guessed on the quiz. Mateo finished early.
+        Photo optional. Add every page of one assignment. Name the student in a sentence, or tap Ask
+        AI.
       </Text>
-      {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
+      {pages.map((page, index) => (
+        <View key={page.key}>
+          <Text style={styles.meta}>Page {index + 1}</Text>
+          <Image source={{ uri: page.uri }} style={styles.preview} />
+          <Pressable
+            onPress={() => {
+              setPages((current) => current.filter((item) => item.key !== page.key));
+              setEvaluation(null);
+            }}
+          >
+            <Text style={styles.secondaryText}>Remove page {index + 1}</Text>
+          </Pressable>
+        </View>
+      ))}
       {cameraOpen ? (
         <WebCameraCapture
           deviceId={cameraId}
@@ -312,10 +348,12 @@ export default function CaptureScreen() {
             }}
           />
           <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
-            <Text style={styles.buttonText}>Take photo</Text>
+            <Text style={styles.buttonText}>{pages.length ? 'Add page with camera' : 'Take photo'}</Text>
           </Pressable>
           <Pressable style={styles.secondary} onPress={() => void pickPhoto(false)}>
-            <Text style={styles.secondaryText}>Choose photo</Text>
+            <Text style={styles.secondaryText}>
+              {pages.length ? 'Add page from files' : 'Choose photo'}
+            </Text>
           </Pressable>
         </>
       )}
@@ -340,7 +378,7 @@ export default function CaptureScreen() {
         </Pressable>
       )}
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
-      {(photoUri || audioUri) && !recording ? (
+      {(pages.length || audioUri) && !recording ? (
         <Pressable disabled={asking || busy} style={styles.secondary} onPress={() => void onAskAi()}>
           <Text style={styles.secondaryText}>{asking ? 'Asking AI…' : 'Ask AI'}</Text>
         </Pressable>

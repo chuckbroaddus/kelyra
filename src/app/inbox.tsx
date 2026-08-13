@@ -85,7 +85,7 @@ export default function InboxScreen() {
             )}
             <Text style={styles.meta}>
               {new Date(item.created_at).toLocaleString()}
-              {item.audio_asset_id ? ' · voice note' : ' · photo only'}
+              {item.pageCount > 1 ? ` · ${item.pageCount} pages` : item.audio_asset_id ? ' · voice note' : ' · photo'}
             </Text>
             {item.transcript ? <Text style={styles.meta}>Heard: {item.transcript}</Text> : null}
             {item.matchedName ? (

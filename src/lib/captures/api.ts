@@ -1,5 +1,6 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import type { NameMatch } from '@/lib/ai/types';
+import { allPhotoAssetIds } from '@/lib/captures/pages';
 import { analyzeAttachedCapture, draftHasWork, storeCaptureDraft, type StoredHomeworkDraft } from '@/lib/gaps/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { signedUrlForAsset } from '@/lib/media/upload';
@@ -9,6 +10,7 @@ import type { CaptureRow } from '@/lib/supabase/types';
 
 export type InboxItem = CaptureRow & {
   photoUrl: string | null;
+  pageCount: number;
   matchedName: string | null;
 };
 
@@ -170,9 +172,7 @@ export async function listInbox(classId: string): Promise<InboxItem[]> {
   if (error) throw error;
   if (!captures?.length) return [];
 
-  const photoIds = captures
-    .map((row) => row.photo_asset_id)
-    .filter((id): id is string => Boolean(id));
+  const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
   const studentIds = captures
     .map((row) => row.student_id)
     .filter((id): id is string => Boolean(id));
@@ -196,10 +196,11 @@ export async function listInbox(classId: string): Promise<InboxItem[]> {
 
   return Promise.all(
     captures.map(async (capture) => {
-      const path = capture.photo_asset_id ? pathById.get(capture.photo_asset_id) : undefined;
+      const firstId = allPhotoAssetIds(capture)[0] ?? capture.photo_asset_id;
+      const path = firstId ? pathById.get(firstId) : undefined;
       const photoUrl = path ? await signedUrlForAsset('photo', path) : null;
       const matchedName = capture.student_id ? (nameById.get(capture.student_id) ?? null) : null;
-      return { ...capture, photoUrl, matchedName };
+      return { ...capture, photoUrl, pageCount: allPhotoAssetIds(capture).length, matchedName };
     }),
   );
 }

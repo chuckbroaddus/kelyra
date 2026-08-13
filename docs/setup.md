@@ -406,7 +406,7 @@ Under the latest work you should see **Skill history**: newest first, each line 
 
 Restart `npm run ai:dev` so it knows `evaluate-homework`.
 
-1. Capture → take or choose a photo, and/or record a name.
+1. Capture → take or choose a photo, and/or record a name. For a multi-page packet, tap **Add page with camera** or **Add page from files** for each extra page.
 2. **Ask AI** appears. Tap it. Wait for **Asking AI…**.
 3. The save button should become **Save to NAME** if that student is on the roster. Gaps and a draft score appear above the name box.
 4. **Save to NAME** (or Unassigned). Open the student or inbox — the gaps should already be there. You should not need to tap Ask AI again.

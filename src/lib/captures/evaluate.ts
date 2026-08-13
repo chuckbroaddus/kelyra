@@ -4,32 +4,42 @@ import { interpretSpokenStudentName } from '@/lib/matching/spokenName';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import type { AssetRow } from '@/lib/supabase/types';
 
+export type CapturePageInput = {
+  uri: string;
+  mimeType: string;
+  asset?: AssetRow | null;
+};
+
 export type CaptureEvaluation = StoredHomeworkDraft & {
   transcript: string | null;
   studentName: string | null;
-  photoAsset: AssetRow | null;
+  photoAssets: AssetRow[];
   audioAsset: AssetRow | null;
 };
 
 export async function evaluateCaptureMedia(input: {
   teacherId: string;
-  photoUri?: string | null;
-  photoMime?: string;
+  pages?: CapturePageInput[];
   audioUri?: string | null;
   audioMime?: string;
-  existingPhoto?: AssetRow | null;
   existingAudio?: AssetRow | null;
 }): Promise<CaptureEvaluation> {
-  const photoAsset =
-    input.existingPhoto ??
-    (input.photoUri
-      ? await uploadTeacherAsset({
-          teacherId: input.teacherId,
-          kind: 'photo',
-          uri: input.photoUri,
-          mimeType: input.photoMime ?? 'image/jpeg',
-        })
-      : null);
+  const photoAssets: AssetRow[] = [];
+  for (const page of input.pages ?? []) {
+    if (page.asset) {
+      photoAssets.push(page.asset);
+      continue;
+    }
+    photoAssets.push(
+      await uploadTeacherAsset({
+        teacherId: input.teacherId,
+        kind: 'photo',
+        uri: page.uri,
+        mimeType: page.mimeType || 'image/jpeg',
+      }),
+    );
+  }
+
   const audioAsset =
     input.existingAudio ??
     (input.audioUri
@@ -56,15 +66,19 @@ export async function evaluateCaptureMedia(input: {
   let gaps: StoredHomeworkDraft['gaps'] = [];
   let draftScore: number | null = null;
   let teacherNote: string | null = null;
-  if (photoAsset) {
-    const imageUrl = await signedUrlForAsset('photo', photoAsset.storage_path);
-    if (!imageUrl) throw new Error('Could not open that photo.');
+  if (photoAssets.length) {
+    const imageUrls: string[] = [];
+    for (const asset of photoAssets) {
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (imageUrl) imageUrls.push(imageUrl);
+    }
+    if (!imageUrls.length) throw new Error('Could not open those photos.');
     const vision = await invokeAi<{
       studentName?: string | null;
       gaps?: StoredHomeworkDraft['gaps'];
       draftScore?: number | null;
       teacherNote?: string | null;
-    }>('evaluate-homework', { imageUrl });
+    }>('evaluate-homework', { imageUrls, imageUrl: imageUrls[0] });
     paperName = vision.studentName?.trim() || null;
     gaps = vision.gaps ?? [];
     draftScore = typeof vision.draftScore === 'number' ? vision.draftScore : null;
@@ -72,7 +86,7 @@ export async function evaluateCaptureMedia(input: {
   }
 
   return {
-    photoAsset,
+    photoAssets,
     audioAsset,
     transcript,
     studentName: spokenName || paperName,
@@ -80,5 +94,6 @@ export async function evaluateCaptureMedia(input: {
     draftScore,
     teacherNote,
     parentSentence: null,
+    pageAssetIds: photoAssets.map((asset) => asset.id),
   };
 }

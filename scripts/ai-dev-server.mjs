@@ -398,26 +398,32 @@ async function rosterKeyterms(supabase, classId) {
 }
 
 const evaluatePrompt = `You are helping a K-12 teacher review one student's work.
-Look only at the photo. Return JSON only, no markdown:
+The images are pages of one assignment, in order. Look at all pages together. Return JSON only, no markdown:
 {"studentName":null,"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
 Rules:
-- studentName is a name printed or written on the page, or null if none is clearly visible. Do not invent a name.
-- 1 to 3 gaps. Labels are short, like "two-digit regrouping" or "thesis clarity".
-- draftScore is a number 0-100 if the page is scored or you can fairly estimate from the work, otherwise null.
-- If the image is blank, unreadable, or not student work, return {"studentName":null,"gaps":[],"draftScore":null,"teacherNote":null}
+- studentName is a name printed or written on any page, or null if none is clearly visible. Do not invent a name.
+- 1 to 3 gaps for the whole assignment. Labels are short, like "two-digit regrouping" or "thesis clarity".
+- draftScore is a number 0-100 if the work is scored or you can fairly estimate, otherwise null.
+- If the images are blank, unreadable, or not student work, return {"studentName":null,"gaps":[],"draftScore":null,"teacherNote":null}
 - Do not invent extra biography.`;
 
 async function evaluateHomework(body) {
-  const imageUrl = String(body.imageUrl ?? '');
-  if (!imageUrl) throw new Error('imageUrl required');
-  const prepared = await prepareImageForGrok(imageUrl);
+  const urls = Array.isArray(body.imageUrls)
+    ? body.imageUrls.map((url) => String(url)).filter(Boolean)
+    : [String(body.imageUrl ?? '')].filter(Boolean);
+  if (!urls.length) throw new Error('imageUrl required');
+  const images = [];
+  for (const url of urls.slice(0, 8)) {
+    images.push({
+      type: 'input_image',
+      image_url: await prepareImageForGrok(url),
+      detail: 'high',
+    });
+  }
   const payload = await xaiResponses(visionModel, [
     {
       role: 'user',
-      content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
-        { type: 'input_text', text: evaluatePrompt },
-      ],
+      content: [...images, { type: 'input_text', text: evaluatePrompt }],
     },
   ]);
   const parsed = extractJson(outputText(payload));

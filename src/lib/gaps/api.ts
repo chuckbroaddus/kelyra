@@ -1,10 +1,12 @@
 import { invokeAi } from '@/lib/ai/invoke';
+import { allPhotoAssetIds } from '@/lib/captures/pages';
 import { signedUrlForAsset } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { CaptureRow, SkillGapRow } from '@/lib/supabase/types';
 
 export type StudentCapture = CaptureRow & {
   photoUrl: string | null;
+  photoUrls: string[];
   gaps: SkillGapRow[];
 };
 
@@ -14,12 +16,17 @@ export type StoredHomeworkDraft = {
   teacherNote: string | null;
   studentName?: string | null;
   parentSentence?: string | null;
+  pageAssetIds?: string[];
 };
 
 export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
   return Boolean(
     draft &&
-      (draft.gaps?.length || draft.teacherNote || draft.draftScore != null || draft.studentName),
+      (draft.gaps?.length ||
+        draft.teacherNote ||
+        draft.draftScore != null ||
+        draft.studentName ||
+        (draft.pageAssetIds?.length ?? 0) > 1),
   );
 }
 
@@ -192,9 +199,7 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
   if (error) throw error;
   if (!captures?.length) return [];
 
-  const photoIds = captures
-    .map((row) => row.photo_asset_id)
-    .filter((id): id is string => Boolean(id));
+  const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
   const [{ data: assets }, { data: gaps }] = await Promise.all([
     supabase
       .from('assets')
@@ -220,10 +225,16 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
 
   return Promise.all(
     captures.map(async (capture) => {
-      const path = capture.photo_asset_id ? pathById.get(capture.photo_asset_id) : undefined;
+      const urls: string[] = [];
+      for (const id of allPhotoAssetIds(capture)) {
+        const path = pathById.get(id);
+        const url = path ? await signedUrlForAsset('photo', path) : null;
+        if (url) urls.push(url);
+      }
       return {
         ...capture,
-        photoUrl: path ? await signedUrlForAsset('photo', path) : null,
+        photoUrl: urls[0] ?? null,
+        photoUrls: urls,
         gaps: gapsByCapture.get(capture.id) ?? [],
       };
     }),

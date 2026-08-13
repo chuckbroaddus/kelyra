@@ -191,7 +191,7 @@ export default function StudentScreen() {
   };
 
   const canAskGrok =
-    Boolean(latest?.photo_asset_id) &&
+    Boolean(latest?.photo_asset_id || latest?.photoUrls?.length) &&
     (latest?.status === 'attached' || latest?.status === 'draft');
   const history = buildSkillHistory(student, captures, practice);
   const focusLabel = focusSkillLabel(student, captures, storedFocusLabel);
@@ -208,9 +208,16 @@ export default function StudentScreen() {
         <Text style={styles.meta}>No work filed on this student yet.</Text>
       ) : (
         <View style={styles.card}>
-          {latest.photoUrl ? (
-            <Image source={{ uri: latest.photoUrl }} style={styles.preview} />
-          ) : null}
+          {(latest.photoUrls?.length ? latest.photoUrls : latest.photoUrl ? [latest.photoUrl] : []).map(
+            (url, index) => (
+              <View key={url}>
+                {latest.photoUrls && latest.photoUrls.length > 1 ? (
+                  <Text style={styles.meta}>Page {index + 1}</Text>
+                ) : null}
+                <Image source={{ uri: url }} style={styles.preview} />
+              </View>
+            ),
+          )}
           {latest.transcript ? <Text style={styles.meta}>Heard: {latest.transcript}</Text> : null}
           {latest.teacher_note ? <Text style={styles.meta}>{latest.teacher_note}</Text> : null}
           <Text style={styles.section}>
