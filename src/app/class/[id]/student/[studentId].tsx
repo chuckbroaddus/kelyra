@@ -10,14 +10,16 @@ import {
   updateGapLabel,
   type StudentCapture,
 } from '@/lib/gaps/api';
+import { assignPractice, listStudentPractice } from '@/lib/practice/api';
 import { getStudent } from '@/lib/students/api';
-import type { StudentRow } from '@/lib/supabase/types';
+import type { StudentRow, SubmissionRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
 
 export default function StudentScreen() {
-  const { studentId } = useLocalSearchParams<{ studentId: string }>();
+  const { id: classId, studentId } = useLocalSearchParams<{ id: string; studentId: string }>();
   const [student, setStudent] = useState<StudentRow | null>(null);
   const [captures, setCaptures] = useState<StudentCapture[]>([]);
+  const [practice, setPractice] = useState<Array<SubmissionRow & { title: string }>>([]);
   const [draftLabels, setDraftLabels] = useState<Record<string, string>>({});
   const [newGap, setNewGap] = useState('');
   const [status, setStatus] = useState<string | null>(null);
@@ -28,6 +30,7 @@ export default function StudentScreen() {
     const nextCaptures = await listStudentCaptures(studentId);
     setStudent(nextStudent);
     setCaptures(nextCaptures);
+    setPractice(await listStudentPractice(studentId));
     const labels: Record<string, string> = {};
     for (const capture of nextCaptures) {
       for (const gap of capture.gaps) {
@@ -72,6 +75,28 @@ export default function StudentScreen() {
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save note');
+    }
+  };
+
+  const onAssignPractice = async () => {
+    if (!latest || !studentId || !classId) return;
+    const gap = latest.gaps.find((item) => item.status === 'approved' && item.skill_id);
+    if (!gap?.skill_id) {
+      setStatus('Approve a gap first so there is a skill to practice.');
+      return;
+    }
+    setStatus(null);
+    try {
+      await assignPractice({
+        classId,
+        studentId,
+        skillId: gap.skill_id,
+        skillLabel: gap.label,
+        captureId: latest.id,
+      });
+      await load();
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not assign practice');
     }
   };
 
@@ -120,7 +145,12 @@ export default function StudentScreen() {
             ))
           )}
           {latest.status === 'approved' ? (
-            <Text style={styles.filed}>Approved</Text>
+            <>
+              <Text style={styles.filed}>Approved</Text>
+              <Pressable style={styles.button} onPress={() => void onAssignPractice()}>
+                <Text style={styles.buttonText}>Assign practice</Text>
+              </Pressable>
+            </>
           ) : latest.status === 'note_only' ? (
             <Text style={styles.meta}>Kept as a note only</Text>
           ) : (
@@ -144,6 +174,16 @@ export default function StudentScreen() {
           )}
         </View>
       )}
+      {practice.length ? (
+        <View style={styles.card}>
+          <Text style={styles.section}>Practice</Text>
+          {practice.map((item) => (
+            <Text key={item.id} style={styles.meta}>
+              {item.title}: {item.status}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       {status ? <Text style={styles.error}>{status}</Text> : null}
     </ScrollView>
   );

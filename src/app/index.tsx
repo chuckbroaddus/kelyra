@@ -84,6 +84,9 @@ export default function HomeScreen() {
       <Link href="/inbox" style={styles.link}>
         <Text style={styles.linkText}>Unassigned inbox</Text>
       </Link>
+      <Link href="/join" style={styles.link}>
+        <Text style={styles.linkText}>Student join</Text>
+      </Link>
       {classes.map((item) => (
         <Link key={item.id} href={`/class/${item.id}`} style={styles.link}>
           <Text style={styles.linkText}>{item.name}</Text>

@@ -246,4 +246,19 @@ You do **not** need an xAI key for this check.
 5. Open Mateo again from the class roster. It should still say Approved.
 6. Optional: capture another photo, file it, **Note only** — photo stays, no approved gap.
 
-That closes Slice 01 without practice or a grade book.
+## 13. Assign practice and student to-do
+
+Run this SQL in the Supabase SQL Editor (same as the first migration):
+
+`supabase/migrations/20260813000000_practice.sql`
+
+Then:
+
+1. As the teacher, open Mateo → **Assign practice**. You should see `Practice: … : assigned`.
+2. Note the class **Join code** on the class screen.
+3. On the same computer, open **Student join** (or http://localhost:8081/join). You can stay signed in.
+4. Enter the join code → **Find class** → tap **Mateo**.
+5. Answer the three items → **Submit**. It should say Submitted.
+6. Back on Mateo’s teacher page, practice should show `submitted`.
+
+Items are placeholder prompts unless `generate-practice` is deployed with an xAI key.

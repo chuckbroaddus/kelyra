@@ -15,6 +15,7 @@ export default function RootLayout() {
         <Stack.Screen name="capture" options={{ title: 'Capture' }} />
         <Stack.Screen name="inbox" options={{ title: 'Inbox' }} />
         <Stack.Screen name="join" options={{ title: 'Join class' }} />
+        <Stack.Screen name="todo" options={{ title: 'My practice' }} />
         <Stack.Screen name="parent" options={{ title: 'Progress' }} />
         <Stack.Screen name="class/[id]/index" options={{ title: 'Class' }} />
         <Stack.Screen name="class/[id]/gradebook" options={{ title: 'Grade book' }} />

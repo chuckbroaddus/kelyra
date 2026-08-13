@@ -11,6 +11,51 @@ export type CaptureStatus =
   | 'note_only';
 export type GapSource = 'model' | 'teacher';
 export type GapStatus = 'draft' | 'approved' | 'dismissed';
+export type PracticeSetStatus = 'preview' | 'assigned' | 'discarded';
+export type AssignmentKind = 'capture' | 'practice';
+export type SubmissionStatus = 'assigned' | 'submitted' | 'draft_scored' | 'approved';
+
+export type PracticeItem = {
+  id: string;
+  prompt: string;
+  answerKey?: string;
+};
+
+export type PracticeSetRow = {
+  id: string;
+  class_id: string;
+  skill_id: string;
+  source_capture_id: string | null;
+  teacher_prompt: string | null;
+  items: PracticeItem[];
+  status: PracticeSetStatus;
+  created_at: string;
+};
+
+export type AssignmentRow = {
+  id: string;
+  class_id: string;
+  title: string;
+  kind: AssignmentKind;
+  capture_id: string | null;
+  practice_set_id: string | null;
+  due_at: string | null;
+  max_score: number | null;
+  created_at: string;
+};
+
+export type SubmissionRow = {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  status: SubmissionStatus;
+  answers: Record<string, string> | null;
+  draft_score: number | null;
+  approved_score: number | null;
+  submitted_at: string | null;
+  approved_at: string | null;
+  created_at: string;
+};
 
 type Row = Record<string, unknown>;
 
@@ -175,9 +220,73 @@ export type Database = {
         },
         Partial<Omit<SkillGapRow, 'id' | 'capture_id' | 'created_at'>>
       >;
+      practice_sets: Table<
+        PracticeSetRow,
+        {
+          class_id: string;
+          skill_id: string;
+          items: PracticeItem[];
+          source_capture_id?: string | null;
+          teacher_prompt?: string | null;
+          status?: PracticeSetStatus;
+        },
+        Partial<Omit<PracticeSetRow, 'id' | 'created_at'>>
+      >;
+      assignments: Table<
+        AssignmentRow,
+        {
+          class_id: string;
+          title: string;
+          kind: AssignmentKind;
+          capture_id?: string | null;
+          practice_set_id?: string | null;
+          due_at?: string | null;
+        },
+        Partial<Omit<AssignmentRow, 'id' | 'created_at'>>
+      >;
+      submissions: Table<
+        SubmissionRow,
+        {
+          assignment_id: string;
+          student_id: string;
+          status?: SubmissionStatus;
+          answers?: Record<string, string> | null;
+        },
+        Partial<Omit<SubmissionRow, 'id' | 'assignment_id' | 'student_id' | 'created_at'>>
+      >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      student_open_class: {
+        Args: { p_join_code: string };
+        Returns: {
+          class_id: string;
+          class_name: string;
+          student_id: string;
+          display_name: string;
+        }[];
+      };
+      student_list_todo: {
+        Args: { p_join_code: string; p_student_id: string };
+        Returns: {
+          submission_id: string;
+          assignment_title: string;
+          status: SubmissionStatus;
+          items: PracticeItem[] | null;
+          answers: Record<string, string> | null;
+          focus_label: string | null;
+        }[];
+      };
+      student_submit: {
+        Args: {
+          p_join_code: string;
+          p_student_id: string;
+          p_submission_id: string;
+          p_answers: Record<string, string>;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: {
       class_name_source: ClassNameSource;
       student_created_via: StudentCreatedVia;
@@ -187,6 +296,9 @@ export type Database = {
       capture_status: CaptureStatus;
       gap_source: GapSource;
       gap_status: GapStatus;
+      practice_set_status: PracticeSetStatus;
+      assignment_kind: AssignmentKind;
+      submission_status: SubmissionStatus;
     };
   };
 };
