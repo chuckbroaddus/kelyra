@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
+import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
 import { addTypedStudent, listRoster, type RosterStudent } from '@/lib/students/api';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
@@ -13,6 +14,7 @@ export default function ClassHomeScreen() {
   const { teacher } = useAuth();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [overview, setOverview] = useState<ClassOverview | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
 
@@ -22,6 +24,7 @@ export default function ClassHomeScreen() {
       const nextClass = await getClass(id);
       setKlass(nextClass);
       setRoster(await listRoster(id));
+      setOverview(await loadClassOverview(id));
       await setActiveClass(teacher.id, id);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not load class');
@@ -50,6 +53,36 @@ export default function ClassHomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>{klass?.name ?? 'Class'}</Text>
       {klass ? <Text style={styles.meta}>Join code {klass.join_code}</Text> : null}
+      {overview ? (
+        <View>
+          <Text style={styles.section}>This week</Text>
+          <Text style={styles.body}>
+            Unassigned {overview.unassignedCount} · Drafts {overview.draftCount}
+          </Text>
+          {overview.commonGaps.length ? (
+            <>
+              <Text style={styles.meta}>Common gaps</Text>
+              {overview.commonGaps.map((gap) => (
+                <Text key={gap.label} style={styles.body}>
+                  {gap.label} · {gap.count}
+                </Text>
+              ))}
+            </>
+          ) : null}
+          {overview.focusStudents.length ? (
+            <>
+              <Text style={styles.meta}>Current focus</Text>
+              {overview.focusStudents.map((row) => (
+                <Link key={row.id} href={`/class/${id}/student/${row.id}`} style={styles.link}>
+                  <Text style={styles.body}>
+                    {row.displayName}: {row.focusLabel}
+                  </Text>
+                </Link>
+              ))}
+            </>
+          ) : null}
+        </View>
+      ) : null}
       <Text style={styles.section}>Roster</Text>
       {roster.length === 0 ? (
         <Text style={styles.body}>No students yet. A student can be only a name.</Text>

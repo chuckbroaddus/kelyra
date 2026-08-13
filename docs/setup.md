@@ -305,3 +305,9 @@ No new SQL.
 2. Type `Jamal guessed on the quiz` (must include the student name).
 3. Save. You should land on Jamal with that note. No gap/Approve required.
 4. Open Mateo: **Earlier notes** lists older captures under the latest one.
+
+## 17. Class overview
+
+No new SQL. Open the class home.
+
+You should see **This week**: unassigned count, draft count, common approved gaps, and who has a current focus. Tap a name to open that student.
