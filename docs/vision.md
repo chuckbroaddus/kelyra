@@ -10,7 +10,7 @@ Kelyra is a hybrid phone-and-web tool for one teacher’s class. The teacher spe
 
 ## Target User
 
-One elementary or middle-school teacher with a single class of about 50–100 students across their sections, using their own phone and a browser. Not a district, not a multi-teacher team, not high-school departmental grade books, and not parents as a primary user in the first version.
+One elementary or middle-school teacher with a single class of about 50–100 students across their sections, using their own phone and a browser. Students and parents get a one-screen progress view (focus skill, assigned / done). Not a district, not a multi-teacher team, and not a high-school departmental grade book.
 
 ## Core Principles
 
@@ -23,14 +23,14 @@ One elementary or middle-school teacher with a single class of about 50–100 st
 
 ## MVP Success Looks Like
 
-A teacher photographs today’s exit tickets (one student at a time), says the name, and later that day on the web sees each piece on the right student with a drafted gap. They approve, generate five practice items for the students who need them, and assign. Those students complete the set from a class link. The teacher has a one-screen grade book of that work and that practice. They did not open a spreadsheet, fill out a student form, or retype the papers.
+A teacher starts a class by saying the name or photographing the printed roster and confirming the names. They photograph today’s exit tickets (one student at a time), say the name, and later that day on the web see each piece on the right student with a drafted gap. They approve, generate five practice items for the students who need them, and assign. Those students complete the set from a class link. The teacher has a one-screen grade book of that work and that practice. A parent with an invite link sees the focus skill and whether practice is done. The teacher did not open a spreadsheet, fill out a student form, or retype the papers.
 
 ## Explicitly Out of Scope for MVP
 
 - Replacing the district SIS or becoming the school’s official grade book
-- Photographing class lists, IEPs, or 504s and extracting fields
+- Photographing IEPs or 504s and extracting fields
 - SIS / LMS sync, CSV export, weighted categories
-- Parent accounts, weekly emails, SMS, points, streaks, or leaderboards
+- Weekly parent emails, SMS, points, streaks, or leaderboards
 - Multi-student packet split, offline capture, or one recording split across many names
 - Student chat tutors, full standards libraries, or 500-rubric grading
 - Auto-publishing AI grades
