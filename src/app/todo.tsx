@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import {
   clearStudentSession,
   listStudentTodo,
@@ -88,6 +89,7 @@ export default function TodoScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Your answer"
+                    placeholderTextColor={colors.muted}
                     value={answers[item.submissionId]?.[practiceItem.id] ?? ''}
                     onChangeText={(value) =>
                       setAnswers((current) => ({
@@ -129,28 +131,13 @@ export default function TodoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    gap: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  section: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
+  container: theme.scroll,
+  title: theme.title,
+  body: theme.body,
+  section: theme.section,
+  meta: theme.meta,
   filed: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -161,29 +148,9 @@ const styles = StyleSheet.create({
   item: {
     gap: 6,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  linkText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#9b1c1c',
-  },
+  input: theme.input,
+  button: theme.button,
+  buttonText: theme.buttonText,
+  linkText: theme.linkText,
+  error: theme.error,
 });

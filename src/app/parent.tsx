@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { theme } from '@/constants/theme';
 import { formatPracticeStatus, loadParentProgress, type ParentProgress } from '@/lib/parents/api';
 import { useFocusEffect } from 'expo-router';
 
@@ -56,23 +57,14 @@ export default function ParentScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 24,
-    gap: 10,
+    ...theme.screen,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
+  title: theme.title,
   section: {
+    ...theme.section,
     marginTop: 8,
     fontSize: 16,
-    fontWeight: '600',
   },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.8,
-  },
+  body: theme.body,
 });

@@ -2,6 +2,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import { formatCell, gradeCell, loadGradebook, type Gradebook } from '@/lib/gradebook/api';
 import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
@@ -78,27 +79,11 @@ export default function GradebookScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    gap: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  linkText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
+  container: theme.scroll,
+  title: theme.title,
+  body: theme.body,
+  meta: theme.meta,
+  linkText: theme.linkText,
   row: {
     flexDirection: 'row',
   },
@@ -106,17 +91,17 @@ const styles = StyleSheet.create({
     width: 140,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
+    color: colors.text,
     fontSize: 13,
   },
   head: {
     fontWeight: '700',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surface,
+    color: colors.text,
   },
   name: {
     width: 120,
   },
-  error: {
-    color: '#9b1c1c',
-  },
+  error: theme.error,
 });

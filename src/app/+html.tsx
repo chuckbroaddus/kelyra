@@ -12,6 +12,12 @@ export default function Root({ children }: { children: ReactNode }) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
         <ScrollViewStyleReset />
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              'html, body, #root { background-color: #0f1419; color: #e7ecf3; } input, textarea { color-scheme: dark; }',
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

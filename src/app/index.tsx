@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { createClass, listClasses } from '@/lib/classes/api';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -94,6 +95,7 @@ export default function HomeScreen() {
       ))}
       <TextInput
         placeholder="Room 14 math"
+        placeholderTextColor={colors.muted}
         style={styles.input}
         value={name}
         onChangeText={setName}
@@ -110,50 +112,25 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    paddingBottom: 48,
-    gap: 12,
-  },
+  container: theme.scroll,
   title: {
+    ...theme.title,
     fontSize: 28,
-    fontWeight: '700',
   },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  error: {
-    color: '#9b1c1c',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  body: theme.body,
+  error: theme.error,
+  input: theme.input,
+  button: theme.button,
+  buttonText: theme.buttonText,
   link: {
     paddingVertical: 4,
   },
   linkText: {
+    ...theme.linkText,
     fontSize: 17,
-    color: '#2e78b7',
   },
   signOut: {
     marginTop: 12,
-    color: '#555',
+    color: colors.muted,
   },
 });

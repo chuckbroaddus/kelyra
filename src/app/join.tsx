@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import { openClassByJoinCode, saveStudentSession } from '@/lib/student-session/api';
 
 export default function JoinScreen() {
@@ -45,6 +46,7 @@ export default function JoinScreen() {
       <TextInput
         autoCapitalize="characters"
         placeholder="Join code"
+        placeholderTextColor={colors.muted}
         style={styles.input}
         value={code}
         onChangeText={setCode}
@@ -66,50 +68,15 @@ export default function JoinScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 24,
-    gap: 12,
+    ...theme.screen,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#9b1c1c',
-  },
+  title: theme.title,
+  body: theme.body,
+  input: theme.input,
+  button: theme.button,
+  buttonText: theme.buttonText,
+  secondary: theme.secondary,
+  secondaryText: theme.secondaryText,
+  error: theme.error,
 });

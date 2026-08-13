@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { WebCameraCapture } from '@/components/WebCameraCapture';
+import { colors, theme } from '@/constants/theme';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
@@ -276,6 +277,7 @@ export default function CaptureScreen() {
       {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
       <TextInput
         placeholder="Jamal guessed on the quiz. Mateo finished early."
+        placeholderTextColor={colors.muted}
         style={styles.input}
         value={spokenName}
         onChangeText={setSpokenName}
@@ -290,66 +292,21 @@ export default function CaptureScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    paddingBottom: 48,
-    gap: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  preview: {
-    width: '100%',
-    height: 220,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-  },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
+  container: theme.scroll,
+  title: theme.title,
+  body: theme.body,
+  meta: theme.meta,
+  preview: theme.preview,
+  button: theme.button,
+  buttonText: theme.buttonText,
+  secondary: theme.secondary,
+  secondaryText: theme.secondaryText,
   danger: {
-    backgroundColor: '#9b1c1c',
+    backgroundColor: colors.dangerBg,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  error: {
-    color: '#9b1c1c',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
+  error: theme.error,
+  input: theme.input,
 });

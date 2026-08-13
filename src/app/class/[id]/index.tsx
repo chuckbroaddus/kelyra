@@ -2,6 +2,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
@@ -108,6 +109,7 @@ export default function ClassHomeScreen() {
       )}
       <TextInput
         placeholder="Maya Chen"
+        placeholderTextColor={colors.muted}
         style={styles.input}
         value={name}
         onChangeText={setName}
@@ -133,58 +135,27 @@ export default function ClassHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    paddingBottom: 48,
-    gap: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.65,
-  },
+  container: theme.scroll,
+  title: theme.title,
+  meta: theme.meta,
   section: {
+    ...theme.section,
     marginTop: 8,
-    fontSize: 18,
-    fontWeight: '600',
   },
-  body: {
-    fontSize: 16,
-    opacity: 0.75,
-  },
+  body: theme.body,
   row: {
+    color: colors.text,
     fontSize: 17,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
+    ...theme.input,
     marginTop: 8,
   },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#9b1c1c',
-  },
+  button: theme.button,
+  buttonText: theme.buttonText,
+  error: theme.error,
   link: {
     paddingVertical: 4,
   },
-  linkText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
+  linkText: theme.linkText,
 });

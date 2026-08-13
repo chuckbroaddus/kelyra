@@ -1,6 +1,8 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
+
 type WebCameraCaptureProps = {
   onCapture: (uri: string, mimeType: string) => void;
   onCancel: () => void;
@@ -104,7 +106,7 @@ export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps)
         style: {
           width: '100%',
           maxHeight: 360,
-          backgroundColor: '#111',
+          backgroundColor: colors.preview,
           borderRadius: 8,
         },
       })}
@@ -153,10 +155,7 @@ const styles = StyleSheet.create({
   wrap: {
     gap: 10,
   },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
+  meta: theme.meta,
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -164,41 +163,22 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: '#1d4ed8',
+    borderColor: colors.accent,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   chipOn: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.chipOn,
   },
   chipText: {
-    color: '#1d4ed8',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: '600',
   },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#9b1c1c',
-  },
+  button: theme.button,
+  buttonText: theme.buttonText,
+  secondary: theme.secondary,
+  secondaryText: theme.secondaryText,
+  error: theme.error,
 });

@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { attachCapture, listInbox, type InboxItem } from '@/lib/captures/api';
 import { resolveCaptureClass } from '@/lib/classes/api';
@@ -127,43 +128,26 @@ export default function InboxScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    gap: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
+  container: theme.scroll,
+  title: theme.title,
+  body: theme.body,
+  meta: theme.meta,
   filed: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
   link: {
     paddingVertical: 4,
   },
-  linkText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
+  linkText: theme.linkText,
   card: {
     gap: 8,
     marginBottom: 16,
   },
   preview: {
-    width: '100%',
+    ...theme.preview,
     height: 180,
-    borderRadius: 8,
-    backgroundColor: '#eee',
   },
   names: {
     flexDirection: 'row',
@@ -172,21 +156,19 @@ const styles = StyleSheet.create({
   },
   nameChip: {
     borderWidth: 1,
-    borderColor: '#1d4ed8',
+    borderColor: colors.accent,
     borderRadius: 16,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   nameChipOn: {
-    backgroundColor: '#1d4ed8',
+    backgroundColor: colors.chipOn,
   },
   nameChipText: {
-    color: '#1d4ed8',
+    color: colors.accent,
   },
   nameChipTextOn: {
-    color: '#fff',
+    color: colors.buttonText,
   },
-  error: {
-    color: '#9b1c1c',
-  },
+  error: theme.error,
 });

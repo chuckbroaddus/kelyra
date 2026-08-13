@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, theme } from '@/constants/theme';
 import {
   addTeacherGap,
   analyzeAttachedCapture,
@@ -226,6 +227,7 @@ export default function StudentScreen() {
                   key={gap.id}
                   style={styles.input}
                   value={draftLabels[gap.id] ?? gap.label}
+                  placeholderTextColor={colors.muted}
                   editable={latest.status === 'draft' || latest.status === 'attached'}
                   onChangeText={(value) =>
                     setDraftLabels((current) => ({ ...current, [gap.id]: value }))
@@ -281,6 +283,7 @@ export default function StudentScreen() {
               {status ? <Text style={styles.error}>{status}</Text> : null}
               <TextInput
                 placeholder="Add a gap, e.g. two-digit regrouping"
+                placeholderTextColor={colors.muted}
                 style={styles.input}
                 value={newGap}
                 onChangeText={setNewGap}
@@ -327,6 +330,7 @@ export default function StudentScreen() {
                 ? (itemDrafts[item.practiceSetId] ?? item.items).map((practiceItem, index) => (
                     <TextInput
                       key={practiceItem.id}
+                      placeholderTextColor={colors.muted}
                       style={styles.input}
                       value={practiceItem.prompt}
                       onChangeText={(value) =>
@@ -379,28 +383,13 @@ export default function StudentScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    gap: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
-  section: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  meta: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
+  container: theme.scroll,
+  title: theme.title,
+  body: theme.body,
+  section: theme.section,
+  meta: theme.meta,
   filed: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -411,42 +400,11 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  preview: {
-    width: '100%',
-    height: 220,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: '#1d4ed8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: '#1d4ed8',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#9b1c1c',
-  },
+  preview: theme.preview,
+  input: theme.input,
+  button: theme.button,
+  buttonText: theme.buttonText,
+  secondary: theme.secondary,
+  secondaryText: theme.secondaryText,
+  error: theme.error,
 });

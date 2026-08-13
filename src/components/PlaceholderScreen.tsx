@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { theme } from '@/constants/theme';
+
 type Props = {
   title: string;
   body: string;
@@ -16,18 +18,13 @@ export function PlaceholderScreen({ title, body }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 24,
+    ...theme.screen,
     justifyContent: 'center',
-    gap: 12,
   },
   title: {
+    ...theme.title,
     fontSize: 22,
     fontWeight: '600',
   },
-  body: {
-    fontSize: 16,
-    lineHeight: 22,
-    opacity: 0.75,
-  },
+  body: theme.body,
 });
