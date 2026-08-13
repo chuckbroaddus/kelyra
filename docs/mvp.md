@@ -6,276 +6,185 @@
 
 Kelyra is the missing join, not another generator:
 
-> voice / photo / short natural language → incomplete fragment → correct student record → gap analysis → short assigned practice → practical grade book → one-sentence parent signal
+> voice / camera → right student record → named gap → short assigned practice → simple grade
 
-No inspected 2026 product owns that whole loop. MagicSchool / Brisk / Diffit / SchoolAI / CoGrader generate lessons and grades. Voice Assess / Pulse / TeachScribe auto-file spoken notes. Seesaw / Classroom / Khan own assign + grades. ClassDojo owns points. The wedge is **auto-filing + a closed practice loop**.
+One busy teacher, one class, this week’s work. No inspected 2026 product owns that loop.
 
 ---
 
-## 1. Prioritized MVP feature list
+## 1. Feature list (tightened)
 
-### Must-have
+### Must-have for MVP
 
-These ship together or the product is just another notes app or another grader.
+Ship only what the core loop needs. If a teacher cannot photograph an exit ticket, have it land on Maya, see “place value,” assign 5 problems, and mark a score — it is not an MVP.
 
-| ID | Feature | Why it is MVP | Research basis |
-|---|---|---|---|
-| M1 | **Class-scoped roster** | Matcher only works against a small name list. Teacher picks the class once, then captures freely. | Voice Assess, TeachScribe MIS lists |
-| M2 | **Form-free capture: voice, camera, short text** | No observation form. Tap record, snap photo, or type one line. Incomplete is valid. | Pulse, Voice Assess, TeachScribe |
-| M3 | **Spoken-name auto-file** | Transcript is matched to the class list. “New note, Maya…” splits one take into per-student fragments. Photos are attributed by the spoken name over the media, not by faces or OCR. | Voice Assess media-first; no product matches photos by face/OCR |
-| M4 | **Unassigned inbox** | If no name matches, park the fragment. Never invent a student. Teacher confirms or types a name later. | Gradescope Unassigned; CoGrader still requires a typed name |
-| M5 | **Sparse student record** | Required: stable `studentId` + class. Everything else (notes, accommodations, IEP fragments, contacts, skills) is optional JSON that grows over time. | OneRoster optional blanks; Postgres `jsonb` |
-| M6 | **Later confirmation, not a form up front** | After capture: review transcript, suggested student, suggested cleanup. Original audio/photo is preserved until the teacher accepts. Uncertain notes stay informal until published. | Voice Assess preview; FERPA sole-possession vs education record |
-| M7 | **Homework photo → draft score + named gaps** | Once filed to a student (and optionally an assignment), one multimodal model drafts criterion comments / skill gaps. Teacher approves before anything is a grade. | CoGrader, Formative Luna, Class Companion |
-| M8 | **Practical grade book** | Relational line items + results keyed to `studentId` + `assignmentId`. Teacher-only. Draft until Return. CSV export. | OneRoster Gradebook; Classroom publication gate |
-| M9 | **Skill attempt history** | Every tagged attempt is kept. Student × skill cell opens as a chronological list (date, source, result). Last-color-only is not enough. | Otus standards history |
-| M10 | **Generate + assign a short focus exercise** | From a named gap, generate 3–8 items that augment (not replace) the current unit. Teacher edits, then assigns to that student. Continues until the teacher marks the focus proficient or dismisses it. | Khan Readiness Mission; CoGrader heatmap → assign |
-| M11 | **Web reports + assign** | Mobile = capture. Web = roster fields, grade book, skill trends, author/assign practice. Grade/return allowed on both. | Brightwheel split; Seesaw is the everything-everywhere outlier |
-| M12 | **One-sentence parent progress note** | After Return: “Maya still needs practice on two-digit regrouping. 4 short problems assigned.” In-app / email first. Improvement-framed, not praise-only, not points. | Kraft & Rogers; Bergman & Chan |
-| M13 | **FERPA-aware publication** | Student work, names, grades, notes are PII once school-maintained. Paid model tier (no training). Strip roster identifiers from model prompts when possible. Teacher approval before parent-visible or grade-book-visible. | 34 CFR §§ 99.3, 99.30, 99.31 |
+| ID | Feature | Why it must ship |
+|---|---|---|
+| M1 | **One class, typed roster** | The matcher only works against a small name list. First + last initial is enough. No photo-of-list, no SIS. |
+| M2 | **Voice + camera capture, no form** | Hold record or snap a photo (then speak the name). Incomplete is fine. This is the only input a busy teacher will use. |
+| M3 | **Auto-file by spoken name** | Transcript is matched to that class list. The photo is attributed by the spoken name, not by faces or OCR. |
+| M4 | **Unassigned inbox** | No match → park it. Never invent a student. One tap to assign later. Without this, auto-file is unsafe. |
+| M5 | **Student record that accepts fragments** | A student exists as soon as they are on the roster. Notes and photos attach even if nothing else is known. No IEP/contact schema in v1. |
+| M6 | **Homework → AI named gaps, teacher approves** | After a student is confirmed, the model drafts 1–3 skill gaps and an optional score. One glance to accept, edit, or keep as a note. Nothing is a grade until the teacher taps Approve. |
+| M7 | **Generate and assign a short practice set** | From one approved gap, generate 3–8 items for *this* skill. Teacher can tweak wording and assigns to that student. This is the product. |
+| M8 | **Student to-do** | That student opens a class link, sees only their assigned set, and submits answers. Practice with no place to do it is theater. |
+| M9 | **Simple grade book** | Teacher-only grid: students × a few columns (captured work + assigned practice). Score or mark after Approve. Draft vs done. No weights, no categories, no CSV yet. |
+| M10 | **Phone captures; web reviews and assigns** | Mobile is record/camera/inbox. Web is student page, generate/assign, grade book. |
 
-### Nice-to-have (not MVP)
+FERPA is a constraint on all of the above, not a feature: paid model tier, no training on student work, teacher Approve before a student sees anything.
 
-Do these only after one teacher can complete the loop above for a week without a spreadsheet.
+### Should-have (right after launch)
+
+Valuable once one teacher is actually using the loop. Do not block launch.
+
+| ID | Feature | Why it waits |
+|---|---|---|
+| S1 | **Typed one-line note** | Voice/camera cover the loop. Type is a fallback when the room is quiet. |
+| S2 | **Split one recording across students** (“New note, Priya…”) | Walk-around gold, but matching bugs multiply. Get one-student-per-capture right first. |
+| S3 | **Line-item editing of generated practice** | v1 can regenerate or discard the set. Per-item editing is polish. |
+| S4 | **Skill history on the student page** | Chronological attempts (Otus-style). MVP only needs current gap + latest score. |
+| S5 | **Class heatmap** | “Who else has this gap?” Nice for grouping; not required to assign to one child. |
+| S6 | **CSV export** | Needed when they trust the book. Not needed to start. |
+| S7 | **Approve / mark done from the phone** | Web is enough for the first week. |
+| S8 | **One-sentence parent note + weekly email** | Best-supported incentive, still not the loop. Student to-do is the only v1 signal: assigned / done / focus skill. |
+| S9 | **Mark focus proficient or dismiss** | Close the Khan-style mission. Until then, teacher just stops assigning. |
+
+### Later / nice-to-have
 
 | ID | Feature | Why later |
 |---|---|---|
-| N1 | Photograph a printed class list / IEP / 504 and extract fields | No education app does this. Needs a caller-defined schema + confirm every field. First roster = type names or CSV. |
-| N2 | SIS / OneRoster / Clever import and grade passback | Right model (sourcedId), wrong first customer (individual teacher). |
-| N3 | LMS sync (Classroom / Canvas / Schoology) | Auto-write only works when already bound to an LMS assignment + known ID. |
-| N4 | Multi-student packet split | CoGrader can try; humans still Combine/Split and type names. Costly and error-prone. |
-| N5 | Offline capture queue (SQLite → sync) | Correct for hallway capture; adds conflict rules. Online-only is acceptable for v1. |
-| N6 | Parent SMS | Best evidence, but A2P 10DLC + per-segment fees. Email / in-app first. |
-| N7 | ClassDojo-style points, Gems, streaks | Weakest evidence for academic outcomes. Don’t build a rewards engine. |
-| N8 | Face match or OCR of a name on the page | No inspected product does this reliably for freeform homework. |
-| N9 | Full state-standards library / 500+ rubrics | Start with teacher-named skills + a few built-in elementary math/ELA foci. |
-| N10 | Student chat tutor / Space | Adjacent (SchoolAI, Khanmigo). Kelyra assigns short practice, it does not become the tutor. |
-| N11 | District admin, multi-teacher, row-level SIS security | Single-teacher SKU first. |
-| N12 | Dedicated Document AI / Textract extractors | $30 / 1k pages. Add only if multimodal extraction of lists/IEPs fails. |
+| L1 | Photograph a class list, IEP, or 504 and extract fields | No education app does this cleanly. High-sensitivity PII. |
+| L2 | SIS / OneRoster / Clever import and grade passback | Right model, wrong first customer. |
+| L3 | LMS sync (Classroom / Canvas / Schoology) | Only works when already bound to an LMS assignment. |
+| L4 | Multi-student packet split | Humans still type names after the split. |
+| L5 | Offline capture queue | Hallway-correct; conflict-heavy. Online-only is fine. |
+| L6 | Parent SMS | Evidence-backed, A2P cost and compliance. |
+| L7 | Points, Gems, streaks, leaderboards | Weak academic evidence. Do not build a rewards engine. |
+| L8 | Face match or OCR of a name on the page | No inspected product does this for freeform homework. |
+| L9 | Full state-standards library / 500+ rubrics | Teacher-named skills are enough. |
+| L10 | Student chat tutor | Adjacent product. Kelyra assigns short practice. |
+| L11 | Extra student metadata (contacts, accommodations cards) | Attachments and notes cover “I need to remember this.” |
+| L12 | Dedicated Document AI / Textract | $30 / 1k pages. Add only if the one model fails at lists. |
+| L13 | Multi-class, multi-teacher, district admin | Single-teacher SKU first. |
 
-### Explicit non-goals for MVP
+### Explicitly out of scope for MVP
 
-- Replacing the district SIS or becoming the grade book of record for the school.
-- Auto-publishing AI grades to students or parents.
-- Live merge of the same grade cell on phone and browser (no CRDT).
-- Training models on student work.
+- Replacing the district SIS or becoming the school’s official grade book of record
+- Auto-publishing AI grades to students or parents
+- Attendance, behavior points, or ClassDojo-style incentives
+- Full IEP / 504 management
+- Live merge of the same grade cell on phone and browser
+- Training models on student work
+- A second AI vendor (separate STT, OCR, or LLM) unless the one model is proven inadequate
 
 ---
 
 ## 2. Core user flows
 
-Identity rule used in every flow: a fragment is not a record until it has a **stable `studentId`**. Matching is **class roster + spoken or confirmed name**. Assignment-linked work also needs **`assignmentId`**.
+Identity rule: a fragment is not a record until it has a **stable `studentId`**. Matching is **class roster + spoken or confirmed name**. Assigned practice also needs **`assignmentId`**.
 
 ```
-[Mobile capture] → [Match or Unassigned] → [Teacher confirm]
+[Mobile: record or photo + name]
         ↓
-[Sparse student record] ← optional metadata (notes, IEP bits, contacts)
+[Match to roster or Unassigned]
         ↓
-[If homework / assessment] → [AI draft score + named gaps] → [Approve]
+[If homework] → [AI drafts 1–3 gaps + optional score] → [Teacher Approve]
         ↓
-[Grade book result] + [Focus skill]
+[Simple grade book] + [Generate 3–8 items] → [Assign to that student]
         ↓
-[Web: generate 3–8 items] → [Assign to that student]
-        ↓
-[Student does practice] → [New attempt on skill history]
-        ↓
-[One-sentence parent note after Return]
+[Student to-do] → [Submit] → [Score on the same row]
 ```
 
 ### A. Teacher mobile capture
 
-**A1. First-run roster (once per class)**
+**A1. First-run roster (once)**  
+Create class. Type student names (first + last initial). Done.
 
-1. Create class (“Room 14, Math”).
-2. Add students by short names (first + last initial is enough). CSV optional.
-3. Photographing a printed list is *not* required for MVP; if offered later, every extracted name lands in Unassigned until confirmed.
+**A2. Voice note**  
+Class already selected. Hold Record: “Mateo is still lining up place value.” On release: suggested student → glance → Save. No name → Unassigned.
 
-**A2. Hallway / desk voice note**
+**A3. Photo of work**  
+One student per shot. Snap, then speak the name (and optionally the issue). Photo files to that student. AI runs only after confirm. Teacher Approves gaps/score on the web (S7 moves this to the phone).
 
-1. Open the class (or last-used class is already selected).
-2. Hold Record. Speak naturally: “Jamal is guessing on regrouping. New note, Priya finished early and helped the table.”
-3. On release: transcript + suggested split + suggested students.
-4. Teacher glances, taps Save. Each fragment writes to that student’s record immediately, even if nothing else is known.
-5. No name recognized → Unassigned, still saved.
+**A4. Inbox**  
+Unassigned items. One tap to pick the student.
 
-**A3. Photo of work, then speak**
+v1 requires network.
 
-1. Snap homework / exit ticket / quiz (one student per shot for MVP).
-2. Speak: “This is Mateo’s exit ticket, still lining up place value.”
-3. Photo + transcript attach to Mateo. If the teacher also says a score or “put this on the fractions quiz,” bind to that assignment if it exists; otherwise create a draft assignment titled from the utterance or “Untitled capture, Aug 12.”
-4. AI runs only after a student is confirmed. Draft: 2–4 named gaps + optional score + 1 Glow / 1 Grow. Teacher edits and Approves, or keeps as a note only.
+### B. Teacher web
 
-**A4. Short natural language (when talking is awkward)**
+**B1. Student page** — timeline of today’s captures, current gap, latest score.  
+**B2. Approve** — draft gaps + optional score; accept / edit / note-only. Approve writes the grade-book cell.  
+**B3. Assign practice** — pick one gap → generate 3–8 items → assign to that student.  
+**B4. Grade book** — students × captured work + practice. Draft vs done. No export yet.
 
-- Type: “Sofia IEP extra time 1.5x” or “need a parent email for Jordan.”
-- Same matcher, same Unassigned fallback, same sparse merge.
+### C. Student (MVP)
 
-**A5. Review on the phone (light)**
-
-- Inbox: Unassigned + “draft grades awaiting Return.”
-- Teacher can Return a single item from the phone (same as Classroom). Deep reports wait for the web.
-
-**Offline (v1):** require network for Save. Queueing is N5.
-
-### B. Teacher web: reports, grade book, assign
-
-**B1. Class home**
-
-- Roster with sparse completeness (how much we know).
-- Unassigned count.
-- Skill heatmap: which named gaps are common this week (CoGrader pattern).
-- Assignments with draft vs returned counts.
-
-**B2. Student record**
-
-- Timeline of fragments (voice, photo, notes), newest first.
-- Optional metadata cards (accommodations, contacts) — empty is fine.
-- Skill history table + sparkline (Otus pattern).
-- Active focus plan, if any.
-- Grade book row for this class.
-
-**B3. Approve AI analysis**
-
-1. Open a captured assignment set.
-2. See per-student draft score, comments, named gaps.
-3. Edit / override / reject.
-4. Return. Only then: write `Result` to the grade book, update skill attempts, enable parent note.
-
-**B4. Create and assign a focus exercise**
-
-1. From a student gap or the class heatmap, choose one skill (“two-digit regrouping”).
-2. Generate 3–8 short items aligned to *this week’s* unit language (teacher can paste a textbook page or type the topic). Exercises augment, they do not replace the core lesson.
-3. Teacher edits items, sets a short due window.
-4. Assign to one student or a small group. Each gets a `StudentSubmission` keyed by `courseId` / `assignmentId` / `userId`.
-5. Practice results write new skill attempts. Focus stays open until the teacher marks Proficient or Dismisses (Khan Mission analog, teacher-gated).
-
-**B5. Grade book**
-
-- Rows = students, columns = line items (assignments + returned practice).
-- Draft vs Returned is visible. Students/parents never see drafts.
-- Export CSV. No live SIS overwrite in MVP.
-
-### C. Student and parent views
-
-**Student (minimal)**
-
-- Sign-in with a class code + roster name the teacher already created (not a free-typed identity). Duplicate first names force last initial.
-- To-do: assigned focus exercises only.
-- After Return: the Glow/Grow the teacher approved — not the raw AI draft.
-- No public leaderboard.
-
-**Parent (minimal)**
-
-- Invite link tied to that student only.
-- Sees: returned comments, active focus skill, and the latest one-sentence “what to work on.”
-- Does not see the grade book, drafts, or other children.
-- Weekly digest email is enough for MVP; SMS is N6.
+Class link + roster name. To-do is the assigned set only. After the teacher Approves, they see the focus skill and whether practice is done. No leaderboard. No parent account in v1 (that is S8).
 
 ---
 
 ## 3. Recommended technical approach and AI stack
 
-Grounded in `research/04` and `research/06`. This is the cost-conscious default for one teacher, not a locked vendor contract.
+Grounded in `research/04` and `research/06`. Cost-conscious default for one teacher, not a locked vendor contract.
 
 ### Client
 
-- **One TypeScript app: Expo (preferred) or Capacitor.** iOS + Android + web. Flutter web is a poor fit for document-heavy reports.
-- **Mobile:** record, camera, inbox, Return.
-- **Web:** grade book, skill trends, generate/assign, roster metadata.
-- **Camera:** first-party plugin (device + web file picker).
-- **Voice:** send audio to the multimodal model for transcription + name extraction. Expo Speech is TTS only; do not add a second STT vendor in v1.
-- **Offline:** skip for MVP. If added, SQLite queue for captures only; refuse assignment send / Return offline.
+- **One TypeScript app: Expo (preferred) or Capacitor.** iOS + Android + web.
+- **Mobile:** record, camera, inbox.
+- **Web:** student page, generate/assign, grade book.
+- **Voice:** send audio to the one multimodal model. No second STT vendor.
+- **Offline:** skip.
 
 ### Data
 
-- **Postgres** (Supabase): relational `users`, `classes`, `enrollments`, `assignments`, `submissions`, `line_items`, `results`.
-- **`students.metadata jsonb`** for sparse, growing fields (GIN on existence/containment).
-- **Grade book ≠ JSON.** OneRoster-shaped `lineItems` + `results`, each result keyed to student + line item.
-- **Fragments table:** raw audio/photo URLs, transcript, matcher confidence, `student_id` nullable, `status` = unassigned | confirmed | published.
-- **Publication gate:** `draft` → teacher `returned`. Parent/student queries only `returned`.
-- **Conflicts:** last timestamp wins on results; never overwrite a teacher-edited grade with a later model write (`pending_manual` if the teacher already touched it).
+- **Postgres** (Supabase): `users`, `classes`, `enrollments`, `assignments`, `submissions`, `line_items`, `results`.
+- **`students.metadata jsonb`** only as a bag for later; v1 does not build a metadata UI.
+- **Grade book ≠ JSON.** One result per student per line item.
+- **Fragments:** audio/photo, transcript, matcher confidence, nullable `student_id`, `unassigned | confirmed | approved`.
+- **Publication gate:** draft until teacher Approve. Students only see approved work.
 
-### Hosting and notifications
+### Hosting
 
 | Piece | Default | Cost (one teacher) |
 |---|---|---|
 | Expo EAS | Free | $0; $19/mo if build limits bite |
 | Supabase | Free, then Pro | $0 (pauses after 1 idle week) or **$25/mo** always-on |
-| Storage | Supabase Storage | photos/audio inside the 1–100 GB plan |
-| Push | Firebase Cloud Messaging | $0 / message |
-| Email digest | Resend / Postmark | pennies; do this before SMS |
+| Push | FCM | $0 / message (needed once S8 exists) |
 | App stores | Apple + Play | $99/year + $25 once |
 
-### AI — one model, not a pile of vendors
+### AI — one model
 
-Use **one paid multimodal API** for: transcribe voice, read a homework photo, extract spoken names against the provided roster, draft gaps/comments, and generate 3–8 practice items.
+One paid multimodal API: transcribe, guess the spoken name against the provided roster, draft gaps/score, generate 3–8 items.
 
-Public 2026 pricing in the research pass: **Gemini 3.5 Flash-Lite** (~$0.30 / $2.50 per 1M in/out; audio ~$0.0006/min) is the cheapest all-in-one meter. **gpt-5-nano** is cheaper if the turn is text-only. Do **not** add Google Speech-to-Text, Document AI Form Parser ($30/1k pages), or a second LLM unless accuracy fails.
+Public 2026 pricing: **Gemini 3.5 Flash-Lite** was the cheapest all-in-one meter; **gpt-5-nano** if the turn is text-only. Do not add Speech-to-Text or Document AI Form Parser ($30/1k pages) unless that model fails.
 
-**Prompt contract (every call):**
+Every call: inject this class’s first names + media + a short JSON schema. Persist output as draft. Teacher Approve mutates the record.
 
-1. Server injects only `{roster first names for this class}` + the media + a short schema.
-2. Strip SIS IDs, parent contacts, and full IEP text unless that field is the point of the call.
-3. Model returns JSON: `{segments: [{studentGuess, confidence, text, gaps[], score?}]}`.
-4. Persist the raw model output as a draft. Teacher accept is what mutates the record.
+### FERPA (constraint, not a feature)
 
-There is **no published monthly AI total** for 50–100 students. Keep the meter visible in the teacher settings. Prefer class-set batching (one homework set per call) over per-photo chatter.
-
-### FERPA path for an individual-teacher MVP
-
-1. Teacher is the customer. Account ToS: we act under the teacher’s direction; student data is used only to provide the service; **not used to train models**.
-2. Use the **paid** model tier (no training). Never send student PII to a free consumer endpoint.
-3. Prefer **de-identified** model calls (roster nicknames + student codes, not legal names) when quality allows.
-4. Draft vs published implements the sole-possession vs education-record fork: unpublished teacher notes can stay teacher-only; published notes/grades are education records.
-5. Parent access is per-child, authenticated, no directory dump.
-6. Do not claim district school-official status until a signed DPA exists. A click-through by one teacher may not bind the school.
+Teacher is the customer. Paid model tier, no training. Prefer de-identified names in prompts when quality allows. Do not claim district school-official status without a signed DPA.
 
 ---
 
 ## 4. Key risks and open questions
 
-Must validate before calling the MVP “done,” or before spending on N-items.
-
-### Product / UX
-
-1. **Spoken-name accuracy in a noisy elementary room**, nicknames (“Sammy” / “Samantha”), and two Mayas in one class. No vendor publishes this matcher. Need a classroom tape test.
-2. **What happens when no name is spoken.** Pulse files incomplete remarks; Voice Assess does not say. Unassigned must feel safe, not like data loss.
-3. **One-student-per-photo vs pile of papers.** Multi-student split is explicitly deferred; will teachers reject that constraint?
-4. **Will teachers confirm drafts?** Every successful analog requires a human accept. If confirm is more than one glance, capture dies.
-5. **Practice quality.** Generated items must match *this week’s* method, not a generic worksheet. Unvalidated. Teacher edit has to be faster than writing from scratch.
-6. **Parent note tone.** Evidence favors “what to improve”; elementary families may hear that as deficit. Need copy tests.
-
-### Technical
-
-7. **No closed-loop analog.** Nobody documents web-generated exercise → later phone photo → same assignment id without an LMS object or a typed name. We are inventing that join.
-8. **Expo has no official STT.** Audio → multimodal API adds latency and a network dependency on every note.
-9. **Web SQLite is alpha.** Online-only v1 avoids this; offline later is two code paths.
-10. **Supabase Free pauses** after a week idle — breaks parent email cron. Budget $25/mo Pro as soon as anyone besides the teacher depends on the app.
-
-### Cost
-
-11. **AI monthly cost is unknown.** Photo-heavy classes could surprise. Need a meter + a per-teacher cap before onboarding a second teacher.
-12. **SMS looks cheap until A2P.** Stay on email until a teacher asks.
-
-### Legal / trust
-
-13. **Individual-teacher FERPA posture is soft.** Vendor marketing ≠ ED determination. School-official + direct control is unclear without a district DPA.
-14. **IEP / 504 photos are high-sensitivity PII.** Keep extraction out of MVP; if a teacher photographs an IEP as “a document,” treat it as a private attachment, not something to send wholesale to a model.
-15. **On-device-only vs school-maintained** changes whether notes are education records. MVP is cloud-synced, so assume they are.
-
-### Competitive
-
-16. **Teachers Tally / Hey Jotty remain unverified.** Recheck before treating them as analogs.
-17. **If Khan or CoGrader ships the closed plan loop,** the wedge shrinks to auto-file + camera. Watch those two.
+1. **Spoken-name accuracy** in a noisy room, nicknames, two Mayas. No vendor publishes this.
+2. **No-name utterances** must feel saved, not lost (Unassigned).
+3. **One-student-per-photo** — will teachers reject that?
+4. **Approve must be one glance** or capture dies.
+5. **Practice quality** must match this week’s method. Unvalidated.
+6. The **closed loop** (photo → gap → assigned practice → same grade row) is not documented in any existing product.
+7. **AI monthly cost is unpublished.** Need a visible meter.
+8. **IEP photos** are high-sensitivity; treat accidental IEP shots as private attachments, do not extract.
 
 ---
 
 ## Suggested build order
 
-1. Class + roster + fragment capture (voice/text) + spoken-name match + Unassigned.
-2. Photo + speak-over-media, same matcher.
-3. Teacher confirm UI + sparse student timeline.
-4. Draft AI gaps/score + Approve/Return + grade book + skill attempts.
-5. Generate 3–8 items + assign + student to-do.
-6. Parent one-sentence view + weekly email.
-7. Then, and only then: list/IEP extract, offline queue, SIS, SMS.
+1. Class + typed roster + voice capture + spoken-name match + Unassigned.
+2. Photo + speak-the-name, same matcher.
+3. Student page + Approve gaps/score + simple grade book.
+4. Generate 3–8 items + assign + student to-do.
+5. Then should-haves: typed notes, split recording, skill history, parent sentence, CSV.
+6. Then later items only if a real teacher asks.
