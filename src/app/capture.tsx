@@ -1,19 +1,20 @@
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   applyTranscriptAndMatch,
   createUnassignedHomework,
-  describeMatch,
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
 import { resolveCaptureClass } from '@/lib/classes/api';
+import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 import { uploadTeacherAsset } from '@/lib/media/upload';
+import { listRoster, type RosterStudent } from '@/lib/students/api';
 
 type RecordingHandle = Audio.Recording;
 
@@ -25,9 +26,46 @@ export default function CaptureScreen() {
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
+  const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [recording, setRecording] = useState<RecordingHandle | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const preview = useMemo(() => {
+    const match = matchName(
+      spokenName,
+      roster.map((student) => ({
+        studentId: student.id,
+        displayName: student.display_name,
+        aliases: student.name_aliases,
+      })),
+    );
+    const student = roster.find((row) => row.id === match.guessedStudentId);
+    if (shouldAutoAttach(match) && student) {
+      return { button: `Save to ${student.display_name}`, hint: `Will file on ${student.display_name}.` };
+    }
+    if (spokenName.trim() && match.confidence > 0) {
+      return { button: 'Save to Unassigned', hint: 'Name is unclear. You can pick the student in the inbox.' };
+    }
+    if (spokenName.trim()) {
+      return { button: 'Save to Unassigned', hint: 'No roster match. You can pick the student in the inbox.' };
+    }
+    return { button: 'Save to Unassigned', hint: 'No name yet — this will stay in Unassigned.' };
+  }, [spokenName, roster]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!teacher) return;
+      void (async () => {
+        try {
+          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+          setRoster(await listRoster(klass.id));
+        } catch (err) {
+          setStatus(err instanceof Error ? err.message : 'Could not load roster');
+        }
+      })();
+    }, [teacher]),
+  );
 
   if (!teacher) {
     return (
@@ -125,14 +163,15 @@ export default function CaptureScreen() {
       if (!transcript && audio) {
         transcript = (await transcribeCaptureAudio(capture.id)) ?? '';
       }
+      let next = capture;
       if (transcript) {
-        const matched = await applyTranscriptAndMatch(capture, transcript);
-        setStatus(describeMatch({
-          guessedStudentId: matched.student_id,
-          confidence: matched.match_confidence ?? 0,
-        }));
+        next = await applyTranscriptAndMatch(capture, transcript);
       }
-      router.replace('/inbox');
+      if (next.student_id) {
+        router.replace(`/class/${klass.id}/student/${next.student_id}`);
+      } else {
+        router.replace('/inbox');
+      }
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save capture');
     } finally {
@@ -144,7 +183,7 @@ export default function CaptureScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Capture homework</Text>
       <Text style={styles.body}>
-        One student per photo. You can skip the voice note — it still saves to Unassigned. No matching yet.
+        One student per photo. Type the name you said. A unique roster match files on that student; otherwise it stays Unassigned.
       </Text>
       {photoUri ? <Image source={{ uri: photoUri }} style={styles.preview} /> : null}
       <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
@@ -171,8 +210,9 @@ export default function CaptureScreen() {
         value={spokenName}
         onChangeText={setSpokenName}
       />
+      <Text style={styles.meta}>{preview.hint}</Text>
       <Pressable disabled={busy} style={styles.button} onPress={() => void save()}>
-        <Text style={styles.buttonText}>{busy ? 'Saving…' : 'Save to Unassigned'}</Text>
+        <Text style={styles.buttonText}>{busy ? 'Saving…' : preview.button}</Text>
       </Pressable>
       {status ? <Text style={styles.error}>{status}</Text> : null}
     </View>

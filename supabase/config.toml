@@ -15,5 +15,8 @@ verify_jwt = true
 [functions.match-and-analyze]
 verify_jwt = true
 
+[functions.analyze-homework]
+verify_jwt = true
+
 [functions.generate-practice]
 verify_jwt = true

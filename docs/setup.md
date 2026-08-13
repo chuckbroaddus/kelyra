@@ -237,4 +237,13 @@ You do **not** need an xAI key for this check.
 5. Try again with a junk name like `nobody`. It should stay **Unassigned**. Tap **Mateo** on the chip row to attach it by hand.
 6. Two students named Maya would stay Unassigned if you only say “Maya”. That is correct.
 
-Optional later: deploy `supabase/functions/transcribe` and set `XAI_API_KEY` as a function secret to fill the transcript from the recording automatically.
+## 12. Review gaps and Approve
+
+1. Capture a photo and file it on Mateo (type the name, or pick him in the inbox).
+2. You should land on **Mateo’s** page with the photo.
+3. AI gaps only appear if `analyze-homework` is deployed with `XAI_API_KEY`. For this review you can **type a gap** (`two-digit regrouping`) → **Add gap**.
+4. **Approve**. The page should say Approved.
+5. Open Mateo again from the class roster. It should still say Approved.
+6. Optional: capture another photo, file it, **Note only** — photo stays, no approved gap.
+
+That closes Slice 01 without practice or a grade book.

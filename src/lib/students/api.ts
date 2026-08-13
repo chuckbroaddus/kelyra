@@ -30,6 +30,16 @@ export async function listRoster(classId: string): Promise<RosterStudent[]> {
   });
 }
 
+export async function getStudent(studentId: string): Promise<StudentRow> {
+  const { data, error } = await requireSupabase()
+    .from('students')
+    .select('*')
+    .eq('id', studentId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function addTypedStudent(
   classId: string,
   teacherId: string,

@@ -1,4 +1,5 @@
 import type { NameMatch } from '@/lib/ai/types';
+import { analyzeAttachedCapture } from '@/lib/gaps/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { signedUrlForAsset } from '@/lib/media/upload';
 import { listRoster } from '@/lib/students/api';
@@ -46,6 +47,7 @@ export async function attachCapture(captureId: string, studentId: string): Promi
     .select('*')
     .single();
   if (error) throw error;
+  await analyzeAttachedCapture(data.id);
   return data;
 }
 
@@ -82,6 +84,9 @@ export async function applyTranscriptAndMatch(
     .select('*')
     .single();
   if (error) throw error;
+  if (data.status === 'attached') {
+    await analyzeAttachedCapture(data.id);
+  }
   return data;
 }
 
@@ -106,7 +111,7 @@ export async function listInbox(classId: string): Promise<InboxItem[]> {
     .from('captures')
     .select('*')
     .eq('class_id', classId)
-    .in('status', ['unassigned', 'attached'])
+    .in('status', ['unassigned', 'attached', 'draft'])
     .order('created_at', { ascending: false });
   if (error) throw error;
   if (!captures?.length) return [];

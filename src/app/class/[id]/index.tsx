@@ -55,9 +55,9 @@ export default function ClassHomeScreen() {
         <Text style={styles.body}>No students yet. A student can be only a name.</Text>
       ) : (
         roster.map((student) => (
-          <Text key={student.id} style={styles.row}>
-            {student.display_name}
-          </Text>
+          <Link key={student.id} href={`/class/${id}/student/${student.id}`} style={styles.link}>
+            <Text style={styles.row}>{student.display_name}</Text>
+          </Link>
         ))
       )}
       <TextInput

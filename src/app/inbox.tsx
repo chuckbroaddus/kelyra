@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -9,9 +9,11 @@ import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useFocusEffect } from 'expo-router';
 
 export default function InboxScreen() {
+  const router = useRouter();
   const { teacher } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [classId, setClassId] = useState<string>('');
   const [className, setClassName] = useState<string>('');
   const [status, setStatus] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -20,6 +22,7 @@ export default function InboxScreen() {
     if (!teacher) return;
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+      setClassId(klass.id);
       setClassName(klass.name);
       setRoster(await listRoster(klass.id));
       setItems(await listInbox(klass.id));
@@ -39,6 +42,10 @@ export default function InboxScreen() {
     setStatus(null);
     try {
       await attachCapture(captureId, studentId);
+      if (classId) {
+        router.push(`/class/${classId}/student/${studentId}`);
+        return;
+      }
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not assign student');
@@ -80,8 +87,12 @@ export default function InboxScreen() {
               {item.audio_asset_id ? ' · voice note' : ' · photo only'}
             </Text>
             {item.transcript ? <Text style={styles.meta}>Heard: {item.transcript}</Text> : null}
-            {item.status === 'attached' && item.matchedName ? (
-              <Text style={styles.filed}>Filed on {item.matchedName}</Text>
+            {item.matchedName ? (
+              <Link href={`/class/${item.class_id}/student/${item.student_id}`}>
+                <Text style={styles.filed}>
+                  {item.status === 'draft' ? 'Review gaps for' : 'Filed on'} {item.matchedName}
+                </Text>
+              </Link>
             ) : (
               <Text style={styles.meta}>Unassigned — pick a student</Text>
             )}
