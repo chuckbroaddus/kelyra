@@ -11,16 +11,17 @@ import {
   type StudentCapture,
 } from '@/lib/gaps/api';
 import { createParentInvite, parentInviteUrl } from '@/lib/parents/api';
-import { assignPractice, listStudentPractice } from '@/lib/practice/api';
+import { assignPractice, listStudentPractice, savePracticeItems, type StudentPractice } from '@/lib/practice/api';
 import { clearFocusSkill, getStudent } from '@/lib/students/api';
-import type { StudentRow, SubmissionRow } from '@/lib/supabase/types';
+import type { PracticeItem, StudentRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
 
 export default function StudentScreen() {
   const { id: classId, studentId } = useLocalSearchParams<{ id: string; studentId: string }>();
   const [student, setStudent] = useState<StudentRow | null>(null);
   const [captures, setCaptures] = useState<StudentCapture[]>([]);
-  const [practice, setPractice] = useState<Array<SubmissionRow & { title: string }>>([]);
+  const [practice, setPractice] = useState<StudentPractice[]>([]);
+  const [itemDrafts, setItemDrafts] = useState<Record<string, PracticeItem[]>>({});
   const [draftLabels, setDraftLabels] = useState<Record<string, string>>({});
   const [newGap, setNewGap] = useState('');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -32,7 +33,13 @@ export default function StudentScreen() {
     const nextCaptures = await listStudentCaptures(studentId);
     setStudent(nextStudent);
     setCaptures(nextCaptures);
-    setPractice(await listStudentPractice(studentId));
+    const nextPractice = await listStudentPractice(studentId);
+    setPractice(nextPractice);
+    const drafts: Record<string, PracticeItem[]> = {};
+    for (const item of nextPractice) {
+      if (item.practiceSetId) drafts[item.practiceSetId] = item.items.map((row) => ({ ...row }));
+    }
+    setItemDrafts(drafts);
     const labels: Record<string, string> = {};
     for (const capture of nextCaptures) {
       for (const gap of capture.gaps) {
@@ -77,6 +84,16 @@ export default function StudentScreen() {
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not save note');
+    }
+  };
+
+  const onSaveItems = async (practiceSetId: string, item: StudentPractice) => {
+    setStatus(null);
+    try {
+      await savePracticeItems(practiceSetId, itemDrafts[practiceSetId] ?? item.items);
+      await load();
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not save items');
     }
   };
 
@@ -222,9 +239,57 @@ export default function StudentScreen() {
         <View style={styles.card}>
           <Text style={styles.section}>Practice</Text>
           {practice.map((item) => (
-            <Text key={item.id} style={styles.meta}>
-              {item.title}: {item.status}
-            </Text>
+            <View key={item.id} style={styles.item}>
+              <Text style={styles.meta}>
+                {item.title}: {item.status}
+              </Text>
+              {item.practiceSetId && item.status === 'assigned'
+                ? (itemDrafts[item.practiceSetId] ?? item.items).map((practiceItem, index) => (
+                    <TextInput
+                      key={practiceItem.id}
+                      style={styles.input}
+                      value={practiceItem.prompt}
+                      onChangeText={(value) =>
+                        setItemDrafts((current) => ({
+                          ...current,
+                          [item.practiceSetId!]: (current[item.practiceSetId!] ?? item.items).map(
+                            (row, rowIndex) =>
+                              rowIndex === index ? { ...row, prompt: value } : row,
+                          ),
+                        }))
+                      }
+                    />
+                  ))
+                : item.items.map((practiceItem) => (
+                    <Text key={practiceItem.id} style={styles.meta}>
+                      {practiceItem.prompt}
+                    </Text>
+                  ))}
+              {item.practiceSetId && item.status === 'assigned' ? (
+                <>
+                  <Pressable
+                    style={styles.secondary}
+                    onPress={() =>
+                      setItemDrafts((current) => ({
+                        ...current,
+                        [item.practiceSetId!]: [
+                          ...(current[item.practiceSetId!] ?? item.items),
+                          { id: `item-${Date.now()}`, prompt: '' },
+                        ],
+                      }))
+                    }
+                  >
+                    <Text style={styles.secondaryText}>Add item</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.button}
+                    onPress={() => void onSaveItems(item.practiceSetId!, item)}
+                  >
+                    <Text style={styles.buttonText}>Save items</Text>
+                  </Pressable>
+                </>
+              ) : null}
+            </View>
           ))}
         </View>
       ) : null}
@@ -261,6 +326,10 @@ const styles = StyleSheet.create({
   },
   card: {
     gap: 10,
+  },
+  item: {
+    gap: 8,
+    marginBottom: 12,
   },
   preview: {
     width: '100%',

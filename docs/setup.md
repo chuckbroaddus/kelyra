@@ -263,6 +263,8 @@ Then:
 
 Items are placeholder prompts unless `generate-practice` is deployed with an xAI key.
 
+On Mateo’s page, while practice is still **assigned**, you can edit those prompts, **Add item**, then **Save items**. After the student submits, the items are read-only.
+
 ## 14. Grade book
 
 No new SQL. Open the class → **Grade book**.

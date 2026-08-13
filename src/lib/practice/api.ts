@@ -59,9 +59,13 @@ export async function assignPractice(input: {
   if (submissionError) throw submissionError;
 }
 
-export async function listStudentPractice(studentId: string): Promise<
-  Array<SubmissionRow & { title: string }>
-> {
+export type StudentPractice = SubmissionRow & {
+  title: string;
+  practiceSetId: string | null;
+  items: PracticeItem[];
+};
+
+export async function listStudentPractice(studentId: string): Promise<StudentPractice[]> {
   const supabase = requireSupabase();
   const { data: submissions, error } = await supabase
     .from('submissions')
@@ -79,9 +83,41 @@ export async function listStudentPractice(studentId: string): Promise<
       submissions.map((row) => row.assignment_id),
     );
   if (assignmentError) throw assignmentError;
-  const titleById = new Map((assignments ?? []).map((row) => [row.id, row.title]));
-  return submissions.map((row) => ({
-    ...row,
-    title: titleById.get(row.assignment_id) ?? 'Practice',
-  }));
+
+  const setIds = (assignments ?? [])
+    .map((row) => row.practice_set_id)
+    .filter((id): id is string => Boolean(id));
+  const { data: sets, error: setError } = setIds.length
+    ? await supabase.from('practice_sets').select('*').in('id', setIds)
+    : { data: [], error: null };
+  if (setError) throw setError;
+
+  const assignmentById = new Map((assignments ?? []).map((row) => [row.id, row]));
+  const setById = new Map((sets ?? []).map((row) => [row.id, row]));
+
+  return submissions.map((row) => {
+    const assignment = assignmentById.get(row.assignment_id);
+    const set = assignment?.practice_set_id ? setById.get(assignment.practice_set_id) : undefined;
+    return {
+      ...row,
+      title: assignment?.title ?? 'Practice',
+      practiceSetId: assignment?.practice_set_id ?? null,
+      items: set?.items ?? [],
+    };
+  });
+}
+
+export async function savePracticeItems(practiceSetId: string, items: PracticeItem[]) {
+  const cleaned = items
+    .map((item, index) => ({
+      id: item.id || `item-${index + 1}`,
+      prompt: item.prompt.trim(),
+    }))
+    .filter((item) => item.prompt);
+  if (!cleaned.length) throw new Error('Keep at least one practice item.');
+  const { error } = await requireSupabase()
+    .from('practice_sets')
+    .update({ items: cleaned })
+    .eq('id', practiceSetId);
+  if (error) throw error;
 }
