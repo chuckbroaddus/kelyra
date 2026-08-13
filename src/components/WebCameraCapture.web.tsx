@@ -2,6 +2,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, theme } from '@/constants/theme';
+import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 
 type WebCameraCaptureProps = {
   onCapture: (uri: string, mimeType: string) => void;
@@ -58,7 +59,10 @@ export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps)
   };
 
   useEffect(() => {
-    void start(null);
+    void (async () => {
+      const preferred = await getPreferredDeviceId('video');
+      await start(preferred);
+    })();
     return () => stopStream();
     // Mount once; switching cameras calls start() directly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,6 +122,7 @@ export function WebCameraCapture({ onCapture, onCancel }: WebCameraCaptureProps)
               style={[styles.chip, device.deviceId === deviceId ? styles.chipOn : null]}
               onPress={() => {
                 setDeviceId(device.deviceId);
+                void setPreferredDeviceId('video', device.deviceId);
                 void start(device.deviceId);
               }}
             >

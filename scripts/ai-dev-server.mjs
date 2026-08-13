@@ -101,6 +101,14 @@ const server = createServer(async (req, res) => {
       json(res, await extractRoster(body));
       return;
     }
+    if (route === 'transcribe-audio') {
+      json(res, await transcribeAudio(body));
+      return;
+    }
+    if (route === 'interpret-speech') {
+      json(res, await interpretSpeech(body));
+      return;
+    }
 
     json(res, { error: `unknown function ${route || '(empty)'}` }, 404);
   } catch (err) {
@@ -231,6 +239,44 @@ async function extractRoster(body) {
   return { names };
 }
 
+const speechPrompt = `You interpret what a K-12 teacher just said.
+Return JSON only, no markdown:
+{"intent":"add_student","studentName":"First Last","skillLabel":null}
+intent is add_student, note, or unknown.
+studentName is a person's name the teacher said, or null.
+skillLabel is a short skill/gap if they mentioned one, or null.
+Rules:
+- Do not invent a student name or skill that was not spoken.
+- For add-a-student talk, ignore filler such as "I'd like to", "add another student named", "please".
+- Example: "I'd like to add another student named Jamal Washington" → {"intent":"add_student","studentName":"Jamal Washington","skillLabel":null}
+- Example: "Mateo is showing a gap in his understanding of long division remainders" → {"intent":"note","studentName":"Mateo","skillLabel":"long division remainders"}
+- If no name is clear, studentName is null and intent is unknown.`;
+
+async function interpretSpeech(body) {
+  const transcript = String(body.transcript ?? '').replace(/\s+/g, ' ').trim();
+  if (!transcript) throw new Error('transcript required');
+  const payload = await xaiResponses(
+    practiceModel,
+    `${speechPrompt}\n\nTeacher said:\n${transcript}`,
+  );
+  const parsed = extractJson(outputText(payload));
+  const studentName =
+    typeof parsed.studentName === 'string' ? parsed.studentName.replace(/\s+/g, ' ').trim() : '';
+  const skillLabel =
+    typeof parsed.skillLabel === 'string' ? parsed.skillLabel.replace(/\s+/g, ' ').trim() : '';
+  const intent =
+    parsed.intent === 'add_student' || parsed.intent === 'note' || parsed.intent === 'unknown'
+      ? parsed.intent
+      : studentName
+        ? 'add_student'
+        : 'unknown';
+  return {
+    intent,
+    studentName: studentName || null,
+    skillLabel: skillLabel || null,
+  };
+}
+
 async function generatePractice(body) {
   const skillLabel = String(body.skillLabel ?? '').trim();
   if (!skillLabel) throw new Error('skillLabel required');
@@ -282,14 +328,58 @@ async function transcribe(supabase, body) {
   for (const term of await rosterKeyterms(supabase, capture.class_id)) {
     form.append('keyterm', term);
   }
-  form.append('url', signed.signedUrl);
+  await appendAudioFile(form, signed.signedUrl);
+  return { text: await sttFromForm(form) };
+}
 
+async function transcribeAudio(body) {
+  const audioUrl = String(body.audioUrl ?? '');
+  if (!audioUrl) throw new Error('audioUrl required');
+  const form = new FormData();
+  form.append('format', 'true');
+  form.append('language', 'en');
+  for (const term of Array.isArray(body.keyterms) ? body.keyterms : []) {
+    if (String(term).length > 1) form.append('keyterm', String(term));
+  }
+  await appendAudioFile(form, audioUrl);
+  return { text: await sttFromForm(form) };
+}
+
+async function appendAudioFile(form, audioUrl) {
+  const response = await fetch(audioUrl);
+  if (!response.ok) throw new Error('Could not download the recording.');
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length < 16) throw new Error('Recording was empty.');
+  const { filename, mime } = sniffAudioFile(bytes);
+  form.append('file', new Blob([bytes], { type: mime }), filename);
+}
+
+function sniffAudioFile(bytes) {
+  if (bytes.length >= 12 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WAVE') {
+    return { filename: 'audio.wav', mime: 'audio/wav' };
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) {
+    return { filename: 'audio.mp3', mime: 'audio/mpeg' };
+  }
+  if (bytes.length >= 4 && bytes.toString('ascii', 0, 4) === 'OggS') {
+    return { filename: 'audio.ogg', mime: 'audio/ogg' };
+  }
+  if (bytes.length >= 12 && bytes.toString('ascii', 4, 8) === 'ftyp') {
+    return { filename: 'audio.m4a', mime: 'audio/mp4' };
+  }
+  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+    return { filename: 'audio.webm', mime: 'audio/webm' };
+  }
+  return { filename: 'audio.wav', mime: 'audio/wav' };
+}
+
+async function sttFromForm(form) {
   const stt = await xaiFetch(`${xaiBaseUrl}/stt`, { method: 'POST', body: form });
   if (!stt.ok) {
     throw new Error(`STT failed: ${stt.status} ${await stt.text()}`);
   }
   const result = await stt.json();
-  return { text: result.text ?? '' };
+  return result.text ?? '';
 }
 
 async function rosterKeyterms(supabase, classId) {

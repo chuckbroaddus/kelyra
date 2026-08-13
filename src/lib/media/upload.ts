@@ -4,6 +4,7 @@ import type { AssetKind, AssetRow } from '@/lib/supabase/types';
 function extensionFor(mimeType: string, fallback: string): string {
   if (mimeType.includes('png')) return 'png';
   if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return 'jpg';
+  if (mimeType.includes('wav')) return 'wav';
   if (mimeType.includes('webm')) return 'webm';
   if (mimeType.includes('mp4')) return 'mp4';
   if (mimeType.includes('m4a') || mimeType.includes('mp4a')) return 'm4a';
@@ -28,11 +29,12 @@ export async function uploadTeacherAsset(input: {
   const bucket = input.kind === 'photo' ? 'photos' : 'audio';
   const ext = extensionFor(input.mimeType, input.kind === 'photo' ? 'jpg' : 'm4a');
   const storagePath = `${input.teacherId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const blob = new Blob([bytes], { type: input.mimeType });
 
   const supabase = requireSupabase();
   const { error: uploadError } = await supabase.storage
     .from(bucket)
-    .upload(storagePath, bytes, { contentType: input.mimeType, upsert: false });
+    .upload(storagePath, blob, { contentType: input.mimeType, upsert: false });
   if (uploadError) throw uploadError;
 
   const { data, error } = await supabase

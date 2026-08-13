@@ -385,3 +385,13 @@ Restart `npm run ai:dev` so it knows the new `extract-roster` route. Expo can st
 5. **Add N students**. Those names appear on the roster. Nothing is added until this tap.
 
 Grok only suggests names. It does not create a student on its own.
+
+## 21. Add one student by voice
+
+Restart `npm run ai:dev` so it knows `transcribe-audio`.
+
+1. Open the class.
+2. **Record a name** → a full sentence is fine: “I'd like to add another student named Jamal Washington.” → **Stop recording**.
+3. You should see **Heard:** the whole sentence, and the name field filled with **Jamal Washington**.
+4. If that sounds like someone already on the roster (for example Jamal W. vs Jamal Washington), you can **rename** them or **add as a new student**.
+5. Unclear audio does not create a student. Say the name again or type it.

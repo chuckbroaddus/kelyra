@@ -1,9 +1,9 @@
-import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { colors, theme } from '@/constants/theme';
 
@@ -16,12 +16,11 @@ import {
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
+import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { normalizePhoto } from '@/lib/media/photo';
-import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
+import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { uploadTeacherAsset } from '@/lib/media/upload';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
-
-type RecordingHandle = Audio.Recording;
 
 export default function CaptureScreen() {
   const router = useRouter();
@@ -32,7 +31,9 @@ export default function CaptureScreen() {
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
-  const [recording, setRecording] = useState<RecordingHandle | null>(null);
+  const [recording, setRecording] = useState<LiveRecording | null>(null);
+  const [micId, setMicId] = useState<string | null>(null);
+  const [deviceTick, setDeviceTick] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -80,6 +81,7 @@ export default function CaptureScreen() {
         try {
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
           setRoster(await listRoster(klass.id));
+          setMicId(await getPreferredDeviceId('audio'));
         } catch (err) {
           setStatus(err instanceof Error ? err.message : 'Could not load roster');
         }
@@ -135,17 +137,9 @@ export default function CaptureScreen() {
   const startRecording = async () => {
     setStatus(null);
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (!permission.granted) {
-        setStatus('Microphone permission is required to record a name.');
-        return;
-      }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const next = new Audio.Recording();
-      await next.prepareToRecordAsync(recordingOptions());
-      await next.startAsync();
-      setRecording(next);
+      setRecording(await startLiveRecording(micId));
       setAudioUri(null);
+      setDeviceTick((value) => value + 1);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not start the microphone.');
     }
@@ -153,14 +147,15 @@ export default function CaptureScreen() {
 
   const stopRecording = async () => {
     if (!recording) return;
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    setRecording(null);
-    if (uri) {
-      setAudioUri(uri);
-      setAudioMime(mimeTypeForRecording());
+    try {
+      const captured = await recording.stop();
+      setRecording(null);
+      setAudioUri(captured.uri);
+      setAudioMime(captured.mimeType);
+    } catch (err) {
+      setRecording(null);
+      setStatus(err instanceof Error ? err.message : 'Could not finish the recording.');
     }
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
   };
 
   const save = async () => {
@@ -263,6 +258,15 @@ export default function CaptureScreen() {
           </Pressable>
         </>
       )}
+      <DevicePicker
+        kind="audio"
+        selectedId={micId}
+        nonce={deviceTick}
+        onSelect={(deviceId) => {
+          setMicId(deviceId);
+          void setPreferredDeviceId('audio', deviceId);
+        }}
+      />
       {recording ? (
         <Pressable style={styles.danger} onPress={() => void stopRecording()}>
           <Text style={styles.buttonText}>Stop recording</Text>

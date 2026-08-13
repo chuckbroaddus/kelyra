@@ -73,6 +73,41 @@ export async function clearFocusSkill(studentId: string) {
   if (error) throw error;
 }
 
+export async function renameStudent(
+  studentId: string,
+  displayName: string,
+  previousName?: string | null,
+): Promise<StudentRow> {
+  const name = displayName.replace(/\s+/g, ' ').trim();
+  if (!name) throw new Error('Student name is required');
+  const supabase = requireSupabase();
+  const { data: current, error: loadError } = await supabase
+    .from('students')
+    .select('name_aliases')
+    .eq('id', studentId)
+    .single();
+  if (loadError) throw loadError;
+
+  const aliases = [...(current?.name_aliases ?? [])];
+  const prior = previousName?.replace(/\s+/g, ' ').trim();
+  if (prior && normalizeRosterName(prior) !== normalizeRosterName(name) && !aliases.includes(prior)) {
+    aliases.push(prior);
+  }
+
+  const { data, error } = await supabase
+    .from('students')
+    .update({
+      display_name: name,
+      sort_name: name,
+      name_aliases: aliases,
+    })
+    .eq('id', studentId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getStudent(studentId: string): Promise<StudentRow> {
   const { data, error } = await requireSupabase()
     .from('students')

@@ -2,19 +2,29 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { colors, theme } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
+import { invokeAi } from '@/lib/ai/invoke';
+import {
+  existingRosterMatch,
+  interpretSpokenStudentName,
+  namesAreEquivalent,
+} from '@/lib/matching/spokenName';
 import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { normalizePhoto } from '@/lib/media/photo';
+import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
+import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { buildFamilyDigest, shareFamilyDigest } from '@/lib/parents/digest';
 import {
   addConfirmedStudents,
   addTypedStudent,
   listRoster,
+  renameStudent,
   suggestRosterFromPhoto,
   type RosterStudent,
   type SuggestedRosterName,
@@ -33,6 +43,16 @@ export default function ClassHomeScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [readingList, setReadingList] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedRosterName[]>([]);
+  const [recording, setRecording] = useState<LiveRecording | null>(null);
+  const [micId, setMicId] = useState<string | null>(null);
+  const [deviceTick, setDeviceTick] = useState(0);
+  const [heard, setHeard] = useState<string | null>(null);
+  const [hearing, setHearing] = useState(false);
+  const [possibleMatch, setPossibleMatch] = useState<{
+    studentId: string;
+    displayName: string;
+    exact: boolean;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -50,6 +70,7 @@ export default function ClassHomeScreen() {
   useFocusEffect(
     useCallback(() => {
       void load();
+      void getPreferredDeviceId('audio').then(setMicId);
     }, [load]),
   );
 
@@ -65,6 +86,81 @@ export default function ClassHomeScreen() {
     }
   };
 
+  const startNameRecording = async () => {
+    if (hearing) return;
+    setStatus(null);
+    setHeard(null);
+    setPossibleMatch(null);
+    try {
+      setRecording(await startLiveRecording(micId));
+      setDeviceTick((value) => value + 1);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not start the microphone.');
+    }
+  };
+
+  const stopNameRecording = async () => {
+    if (!recording || !id || !teacher || hearing) return;
+    setHearing(true);
+    setStatus('Hearing and understanding the name…');
+    try {
+      const captured = await recording.stop();
+      setRecording(null);
+      const asset = await uploadTeacherAsset({
+        teacherId: teacher.id,
+        kind: 'audio',
+        uri: captured.uri,
+        mimeType: captured.mimeType,
+      });
+      const audioUrl = await signedUrlForAsset('audio', asset.storage_path);
+      if (!audioUrl) throw new Error('Could not open that recording.');
+      const { text } = await invokeAi<{ text?: string }>('transcribe-audio', {
+        audioUrl,
+        keyterms: roster.map((student) => student.display_name.split(/\s+/)[0]).filter(Boolean),
+      });
+      const spoken = (text ?? '').trim();
+      setHeard(spoken || null);
+      const extracted = await interpretSpokenStudentName(spoken);
+      if (!extracted) {
+        setName('');
+        setPossibleMatch(null);
+        setStatus('I heard you, but no student name was clear. Say the name again or type it.');
+        return;
+      }
+      setName(extracted);
+      const existing = existingRosterMatch(
+        extracted,
+        roster.map((student) => ({
+          studentId: student.id,
+          displayName: student.display_name,
+          aliases: student.name_aliases,
+        })),
+      );
+      setPossibleMatch(existing);
+      setStatus(null);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not hear that name');
+    } finally {
+      setRecording(null);
+      setHearing(false);
+    }
+  };
+
+  const onRenameMatch = async () => {
+    if (!possibleMatch || !name.trim()) return;
+    setStatus(null);
+    try {
+      await renameStudent(possibleMatch.studentId, name, possibleMatch.displayName);
+      setRoster(await listRoster(id!));
+      setPossibleMatch(null);
+      setHeard(null);
+      setName('');
+      setStatus(`Updated ${possibleMatch.displayName} to ${name.trim()}.`);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not update that name');
+    }
+  };
+
   const onAdd = async () => {
     if (!id || !teacher) return;
     setStatus(null);
@@ -72,6 +168,8 @@ export default function ClassHomeScreen() {
       const student = await addTypedStudent(id, teacher.id, name);
       setRoster((current) => [...current, student]);
       setName('');
+      setHeard(null);
+      setPossibleMatch(null);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not add student');
     }
@@ -149,6 +247,9 @@ export default function ClassHomeScreen() {
   };
 
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
+  const exactMatch = Boolean(
+    possibleMatch && namesAreEquivalent(possibleMatch.displayName, name),
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -261,7 +362,38 @@ export default function ClassHomeScreen() {
           </Pressable>
         </View>
       )}
-      <Text style={styles.section}>Or type one name</Text>
+      <Text style={styles.section}>Or add one name</Text>
+      <DevicePicker
+        kind="audio"
+        selectedId={micId}
+        nonce={deviceTick}
+        onSelect={(deviceId) => {
+          setMicId(deviceId);
+          void setPreferredDeviceId('audio', deviceId);
+        }}
+      />
+      {hearing ? (
+        <Pressable disabled style={styles.secondary}>
+          <Text style={styles.linkText}>Hearing and understanding the name…</Text>
+        </Pressable>
+      ) : recording ? (
+        <Pressable style={styles.danger} onPress={() => void stopNameRecording()}>
+          <Text style={styles.buttonText}>Stop recording</Text>
+        </Pressable>
+      ) : (
+        <Pressable style={styles.secondary} onPress={() => void startNameRecording()}>
+          <Text style={styles.linkText}>Record a name</Text>
+        </Pressable>
+      )}
+      {heard ? <Text style={styles.meta}>Heard: {heard}</Text> : null}
+      {exactMatch ? (
+        <Text style={styles.body}>{possibleMatch?.displayName} is already on this roster.</Text>
+      ) : possibleMatch ? (
+        <Text style={styles.body}>
+          That sounds like {possibleMatch.displayName}. Update their name, or add a new student if
+          this is someone else.
+        </Text>
+      ) : null}
       <TextInput
         placeholder="First and last name"
         placeholderTextColor={colors.muted}
@@ -269,9 +401,27 @@ export default function ClassHomeScreen() {
         value={name}
         onChangeText={setName}
       />
-      <Pressable style={styles.button} onPress={() => void onAdd()}>
-        <Text style={styles.buttonText}>Add student</Text>
-      </Pressable>
+      {!exactMatch && possibleMatch ? (
+        <Pressable style={styles.button} onPress={() => void onRenameMatch()}>
+          <Text style={styles.buttonText}>
+            Rename {possibleMatch.displayName} to {name.trim() || 'this name'}
+          </Text>
+        </Pressable>
+      ) : null}
+      {!exactMatch ? (
+        <Pressable
+          style={possibleMatch ? styles.secondary : styles.button}
+          onPress={() => void onAdd()}
+        >
+          <Text style={possibleMatch ? styles.linkText : styles.buttonText}>
+            {name.trim()
+              ? possibleMatch
+                ? `Add ${name.trim()} as a new student`
+                : `Add ${name.trim()}`
+              : 'Add student'}
+          </Text>
+        </Pressable>
+      ) : null}
       {status ? <Text style={styles.error}>{status}</Text> : null}
       <Link href="/capture" style={styles.link}>
         <Text style={styles.linkText}>Capture homework</Text>
@@ -308,6 +458,12 @@ const styles = StyleSheet.create({
   },
   button: theme.button,
   buttonText: theme.buttonText,
+  danger: {
+    backgroundColor: colors.dangerBg,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
   secondary: theme.secondary,
   card: {
     gap: 10,
