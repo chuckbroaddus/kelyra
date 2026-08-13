@@ -262,3 +262,17 @@ Then:
 6. Back on Mateo’s teacher page, practice should show `submitted`.
 
 Items are placeholder prompts unless `generate-practice` is deployed with an xAI key.
+
+## 14. Grade book
+
+No new SQL. Open the class → **Grade book**.
+
+You should see a grid:
+
+- Rows = students
+- Columns = approved work and assigned practice
+- Mateo’s practice cell = **Submitted** (if you completed the last step)
+- His approved capture = **Done**
+- Other students = **—** or **Assigned** if you assigned them practice
+
+New Approves also add a work column automatically.

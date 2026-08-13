@@ -76,6 +76,9 @@ export default function ClassHomeScreen() {
       <Link href="/inbox" style={styles.link}>
         <Text style={styles.linkText}>Unassigned inbox</Text>
       </Link>
+      <Link href={`/class/${id}/gradebook`} style={styles.link}>
+        <Text style={styles.linkText}>Grade book</Text>
+      </Link>
     </View>
   );
 }

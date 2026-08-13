@@ -251,6 +251,8 @@ export type Database = {
           student_id: string;
           status?: SubmissionStatus;
           answers?: Record<string, string> | null;
+          approved_score?: number | null;
+          approved_at?: string | null;
         },
         Partial<Omit<SubmissionRow, 'id' | 'assignment_id' | 'student_id' | 'created_at'>>
       >;

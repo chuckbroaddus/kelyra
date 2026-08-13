@@ -84,14 +84,36 @@ export async function approveCapture(capture: CaptureRow, gaps: SkillGapRow[]) {
     if (error) throw error;
   }
 
+  const approvedAt = new Date().toISOString();
   const { error } = await supabase
     .from('captures')
     .update({
       status: 'approved',
-      approved_at: new Date().toISOString(),
+      approved_at: approvedAt,
     })
     .eq('id', capture.id);
   if (error) throw error;
+
+  const title = live[0]?.label ? `Work: ${live[0].label}` : 'Approved work';
+  const { data: assignment, error: assignmentError } = await supabase
+    .from('assignments')
+    .insert({
+      class_id: capture.class_id,
+      title,
+      kind: 'capture',
+      capture_id: capture.id,
+    })
+    .select('*')
+    .single();
+  if (assignmentError) throw assignmentError;
+  const { error: submissionError } = await supabase.from('submissions').insert({
+    assignment_id: assignment.id,
+    student_id: capture.student_id,
+    status: 'approved',
+    approved_score: capture.approved_score,
+    approved_at: approvedAt,
+  });
+  if (submissionError) throw submissionError;
 }
 
 export async function markNoteOnly(captureId: string) {
