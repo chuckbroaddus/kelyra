@@ -19,7 +19,7 @@ import { normalizePhoto } from '@/lib/media/photo';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
-import { buildFamilyDigest, shareFamilyDigest } from '@/lib/parents/digest';
+import { buildFamilyDigest, buildWeeklyFamilyDigest, openFamilyEmail, shareFamilyDigest } from '@/lib/parents/digest';
 import {
   addConfirmedStudents,
   addTypedStudent,
@@ -83,6 +83,23 @@ export default function ClassHomeScreen() {
       setStatus(result === 'copied' ? 'Family update copied.' : 'Family update shared.');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not copy update');
+    }
+  };
+
+  const onWeeklyDigest = async (email: boolean) => {
+    if (!id || !klass) return;
+    setStatus(null);
+    try {
+      const text = await buildWeeklyFamilyDigest(id, klass.name);
+      if (email) {
+        await openFamilyEmail(`${klass.name} — this week`, text);
+        setStatus('Opened an email draft. Paste if the body is empty.');
+        return;
+      }
+      const result = await shareFamilyDigest(text);
+      setStatus(result === 'copied' ? "This week's update copied." : "This week's update shared.");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not build this week’s update');
     }
   };
 
@@ -486,6 +503,12 @@ export default function ClassHomeScreen() {
       </Link>
       <Pressable onPress={() => void onCopyDigest()}>
         <Text style={styles.linkText}>Copy family update</Text>
+      </Pressable>
+      <Pressable onPress={() => void onWeeklyDigest(false)}>
+        <Text style={styles.linkText}>This week's family update</Text>
+      </Pressable>
+      <Pressable onPress={() => void onWeeklyDigest(true)}>
+        <Text style={styles.linkText}>Email this week's update</Text>
       </Pressable>
     </ScrollView>
   );

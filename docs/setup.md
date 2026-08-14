@@ -402,6 +402,12 @@ No new SQL. Open a student who has more than one note, gap, or practice.
 
 Under the latest work you should see **Skill history**: newest first, each line a date, what it is (draft / assigned / practice / note), and the skill or note text. The current focus is marked **focus** and also shown under the student’s name.
 
+## 26. This week's family update
+
+No new mail vendor. Open the class.
+
+**This week's family update** copies (or shares) only what changed in the last 7 days. **Email this week's update** opens a mail draft with that text. **Copy family update** is still the full snapshot of every student.
+
 ## 25. Close a focus skill
 
 No new SQL. Open a student who has a current focus.
