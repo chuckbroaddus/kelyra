@@ -297,7 +297,7 @@ Then:
 
 Existing Approves may have a focus skill but no sentence. New Approves write “Still working on …”.
 
-On Mateo’s page, **Mark focus done** clears the current focus skill. The parent page will then show “None yet” until you Approve another gap.
+On Mateo’s page, **Mark [skill] proficient** or **Dismiss focus** closes the current focus. The parent page shows “Proficient in …” after proficient, or the previous sentence after dismiss.
 
 ## 16. Note without a photo
 
@@ -401,6 +401,12 @@ Restart `npm run ai:dev` so it knows `transcribe-audio`.
 No new SQL. Open a student who has more than one note, gap, or practice.
 
 Under the latest work you should see **Skill history**: newest first, each line a date, what it is (draft / assigned / practice / note), and the skill or note text. The current focus is marked **focus** and also shown under the student’s name.
+
+## 25. Close a focus skill
+
+No new SQL. Open a student who has a current focus.
+
+You should see **Mark [skill] proficient** and **Dismiss focus**. Proficient writes a parent sentence and a history line. Dismiss only clears the focus and logs it. The heatmap updates after a reload of the class page.
 
 ## 24. Class heatmap
 

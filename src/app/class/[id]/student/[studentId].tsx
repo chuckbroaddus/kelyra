@@ -15,7 +15,7 @@ import {
 import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/gaps/history';
 import { createParentInvite, parentInviteUrl } from '@/lib/parents/api';
 import { assignPractice, listStudentPractice, savePracticeItems, type StudentPractice } from '@/lib/practice/api';
-import { clearFocusSkill, getStudent } from '@/lib/students/api';
+import { closeFocusSkill, getStudent } from '@/lib/students/api';
 import type { PracticeItem, StudentRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
 
@@ -142,14 +142,14 @@ export default function StudentScreen() {
     }
   };
 
-  const onClearFocus = async () => {
-    if (!studentId) return;
+  const onCloseFocus = async (result: 'proficient' | 'dismissed') => {
+    if (!student || !focusLabel) return;
     setStatus(null);
     try {
-      await clearFocusSkill(studentId);
+      await closeFocusSkill(student, focusLabel, result);
       await load();
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not clear focus');
+      setStatus(err instanceof Error ? err.message : 'Could not update focus');
     }
   };
 
@@ -311,10 +311,15 @@ export default function StudentScreen() {
           )}
         </View>
       )}
-      {student?.current_focus_skill_id ? (
-        <Pressable style={styles.secondary} onPress={() => void onClearFocus()}>
-          <Text style={styles.secondaryText}>Mark focus done</Text>
-        </Pressable>
+      {student?.current_focus_skill_id && focusLabel ? (
+        <>
+          <Pressable style={styles.button} onPress={() => void onCloseFocus('proficient')}>
+            <Text style={styles.buttonText}>Mark {focusLabel} proficient</Text>
+          </Pressable>
+          <Pressable style={styles.secondary} onPress={() => void onCloseFocus('dismissed')}>
+            <Text style={styles.secondaryText}>Dismiss focus</Text>
+          </Pressable>
+        </>
       ) : null}
       <Pressable style={styles.secondary} onPress={() => void onInviteParent()}>
         <Text style={styles.secondaryText}>Create parent link</Text>

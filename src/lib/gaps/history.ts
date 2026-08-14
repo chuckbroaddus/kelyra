@@ -1,5 +1,6 @@
 import type { StudentCapture } from '@/lib/gaps/api';
 import type { StudentPractice } from '@/lib/practice/api';
+import { focusLogFromMetadata } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { StudentRow } from '@/lib/supabase/types';
 
@@ -70,6 +71,16 @@ export function buildSkillHistory(
         isFocus: false,
       });
     }
+  }
+
+  for (const item of focusLogFromMetadata(student?.metadata)) {
+    rows.push({
+      id: `focus-${item.at}-${item.label}`,
+      at: item.at,
+      label: item.label,
+      detail: `${formatWhen(item.at)} · ${item.result}`,
+      isFocus: false,
+    });
   }
 
   for (const item of practice) {

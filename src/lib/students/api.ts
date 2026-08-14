@@ -65,6 +65,57 @@ export async function listRoster(classId: string): Promise<RosterStudent[]> {
   });
 }
 
+export type FocusLogEntry = {
+  skillId: string | null;
+  label: string;
+  result: 'proficient' | 'dismissed';
+  at: string;
+};
+
+export function focusLogFromMetadata(metadata: Record<string, unknown> | null | undefined): FocusLogEntry[] {
+  const raw = metadata?.focusLog;
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const item = row as Record<string, unknown>;
+    if (item.result !== 'proficient' && item.result !== 'dismissed') return [];
+    if (typeof item.label !== 'string' || !item.label.trim()) return [];
+    return [
+      {
+        skillId: typeof item.skillId === 'string' ? item.skillId : null,
+        label: item.label.trim(),
+        result: item.result,
+        at: typeof item.at === 'string' ? item.at : new Date().toISOString(),
+      },
+    ];
+  });
+}
+
+export async function closeFocusSkill(
+  student: StudentRow,
+  label: string,
+  result: 'proficient' | 'dismissed',
+) {
+  const entry: FocusLogEntry = {
+    skillId: student.current_focus_skill_id,
+    label,
+    result,
+    at: new Date().toISOString(),
+  };
+  const log = [...focusLogFromMetadata(student.metadata), entry].slice(-40);
+  const sentence =
+    result === 'proficient' ? `Proficient in ${label}.` : student.parent_sentence;
+  const { error } = await requireSupabase()
+    .from('students')
+    .update({
+      current_focus_skill_id: null,
+      parent_sentence: sentence,
+      metadata: { ...student.metadata, focusLog: log },
+    })
+    .eq('id', student.id);
+  if (error) throw error;
+}
+
 export async function clearFocusSkill(studentId: string) {
   const { error } = await requireSupabase()
     .from('students')
