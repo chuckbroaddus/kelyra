@@ -263,12 +263,64 @@ export default function ClassHomeScreen() {
           </Text>
           {overview.commonGaps.length ? (
             <>
-              <Text style={styles.meta}>Common gaps</Text>
+              <Text style={styles.meta}>Who has which gap</Text>
               {overview.commonGaps.map((gap) => (
-                <Text key={gap.label} style={styles.body}>
-                  {gap.label} · {gap.count}
-                </Text>
+                <View key={gap.key} style={styles.card}>
+                  <Text style={styles.body}>
+                    {gap.label} · {gap.count}
+                  </Text>
+                  {gap.students.map((student) => (
+                    <Link
+                      key={student.id}
+                      href={`/class/${id}/student/${student.id}`}
+                      style={styles.link}
+                    >
+                      <Text style={styles.meta}>{student.displayName}</Text>
+                    </Link>
+                  ))}
+                </View>
               ))}
+            </>
+          ) : null}
+          {overview.heatmapSkills.length && overview.heatmapStudents.length ? (
+            <>
+              <Text style={styles.meta}>Class heatmap</Text>
+              <Text style={styles.meta}>F = focus · • = approved gap</Text>
+              <ScrollView horizontal>
+                <View>
+                  <View style={styles.heatRow}>
+                    <View style={[styles.heatCell, styles.heatHead, styles.heatName]}>
+                      <Text style={styles.heatText}>Student</Text>
+                    </View>
+                    {overview.heatmapSkills.map((skill) => (
+                      <View key={skill.key} style={[styles.heatCell, styles.heatHead]}>
+                        <Text style={styles.heatHeadText}>{skill.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {overview.heatmapStudents.map((student) => (
+                    <View key={student.id} style={styles.heatRow}>
+                      <View style={[styles.heatCell, styles.heatName]}>
+                        <Link href={`/class/${id}/student/${student.id}`}>
+                          <Text style={styles.heatText} numberOfLines={1}>
+                            {student.displayName}
+                          </Text>
+                        </Link>
+                      </View>
+                      {overview.heatmapSkills.map((skill) => {
+                        const mark = overview.heatmap[student.id]?.[skill.key] ?? null;
+                        return (
+                          <View key={skill.key} style={styles.heatCell}>
+                            <Text style={styles.heatMark}>
+                              {mark === 'focus' ? 'F' : mark === 'gap' ? '•' : '—'}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
             </>
           ) : null}
           {overview.focusStudents.length ? (
@@ -499,4 +551,46 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   linkText: theme.linkText,
+  heatRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  heatCell: {
+    width: 108,
+    minWidth: 108,
+    maxWidth: 108,
+    flexGrow: 0,
+    flexShrink: 0,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+  },
+  heatHead: {
+    backgroundColor: colors.surface,
+    minHeight: 92,
+    justifyContent: 'flex-end',
+  },
+  heatName: {
+    width: 112,
+    minWidth: 112,
+    maxWidth: 112,
+    overflow: 'hidden',
+  },
+  heatText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  heatHeadText: {
+    color: colors.text,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600',
+  },
+  heatMark: {
+    color: colors.text,
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });

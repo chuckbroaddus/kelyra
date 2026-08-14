@@ -1,9 +1,18 @@
 import { requireSupabase } from '@/lib/supabase/client';
 
+export type GapStudent = {
+  id: string;
+  displayName: string;
+};
+
 export type GapCount = {
   label: string;
+  key: string;
   count: number;
+  students: GapStudent[];
 };
+
+export type HeatmapCell = 'focus' | 'gap' | null;
 
 export type FocusStudent = {
   id: string;
@@ -16,6 +25,9 @@ export type ClassOverview = {
   draftCount: number;
   focusStudents: FocusStudent[];
   commonGaps: GapCount[];
+  heatmapStudents: GapStudent[];
+  heatmapSkills: Array<{ key: string; label: string }>;
+  heatmap: Record<string, Record<string, HeatmapCell>>;
 };
 
 export async function loadClassOverview(classId: string): Promise<ClassOverview> {
@@ -63,22 +75,63 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
 
   const { data: classCaptures } = await supabase.from('captures').select('id').eq('class_id', classId);
   const captureIds = new Set((classCaptures ?? []).map((row) => row.id));
-  const counts = new Map<string, number>();
+
+  const { data: rosterRows } = studentIds.length
+    ? await supabase.from('students').select('id, display_name, current_focus_skill_id').in('id', studentIds)
+    : { data: [] };
+  const nameById = new Map((rosterRows ?? []).map((row) => [row.id, row.display_name]));
+
+  const byKey = new Map<string, { label: string; studentIds: Set<string> }>();
+  const heatmap: Record<string, Record<string, HeatmapCell>> = {};
+  for (const studentId of studentIds) heatmap[studentId] = {};
+
   for (const gap of gaps ?? []) {
     if (gap.status !== 'approved' || !captureIds.has(gap.capture_id)) continue;
     const label = gap.label.trim();
     if (!label) continue;
-    counts.set(label, (counts.get(label) ?? 0) + 1);
+    const key = normalizeGap(label);
+    const bucket = byKey.get(key) ?? { label, studentIds: new Set<string>() };
+    bucket.studentIds.add(gap.student_id);
+    if (label.length > bucket.label.length) bucket.label = label;
+    byKey.set(key, bucket);
+    if (heatmap[gap.student_id]) heatmap[gap.student_id][key] = 'gap';
   }
-  const commonGaps = [...counts.entries()]
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 6);
+
+  for (const row of focusStudents) {
+    const key = normalizeGap(row.focusLabel);
+    const bucket = byKey.get(key) ?? { label: row.focusLabel, studentIds: new Set<string>() };
+    bucket.studentIds.add(row.id);
+    byKey.set(key, bucket);
+    if (heatmap[row.id]) heatmap[row.id][key] = 'focus';
+  }
+
+  const commonGaps = [...byKey.entries()]
+    .map(([key, bucket]) => ({
+      key,
+      label: bucket.label,
+      count: bucket.studentIds.size,
+      students: [...bucket.studentIds]
+        .map((id) => ({ id, displayName: nameById.get(id) ?? 'Student' }))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const heatmapSkills = commonGaps.slice(0, 8).map((gap) => ({ key: gap.key, label: gap.label }));
+  const heatmapStudents = (rosterRows ?? [])
+    .map((row) => ({ id: row.id, displayName: row.display_name }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
   return {
     unassignedCount: unassignedCount ?? 0,
     draftCount: draftCount ?? 0,
     focusStudents,
-    commonGaps,
+    commonGaps: commonGaps.slice(0, 6),
+    heatmapStudents,
+    heatmapSkills,
+    heatmap,
   };
+}
+
+function normalizeGap(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 }

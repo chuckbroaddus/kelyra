@@ -402,6 +402,12 @@ No new SQL. Open a student who has more than one note, gap, or practice.
 
 Under the latest work you should see **Skill history**: newest first, each line a date, what it is (draft / assigned / practice / note), and the skill or note text. The current focus is marked **focus** and also shown under the student’s name.
 
+## 24. Class heatmap
+
+No new SQL. Open a class that has a few assigned gaps.
+
+Under **This week** you should see **Who has which gap** (names you can tap) and a **Class heatmap**: rows are students, columns are skills, **F** is current focus, **•** is an approved gap.
+
 ## 23. Ask AI before you save a capture
 
 Restart `npm run ai:dev` so it knows `evaluate-homework`.
