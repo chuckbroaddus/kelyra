@@ -10,6 +10,8 @@ export type SkillHistoryRow = {
   label: string;
   detail: string;
   isFocus: boolean;
+  gapId?: string;
+  gapStatus?: string;
 };
 
 export function focusSkillLabel(
@@ -56,10 +58,10 @@ export function buildSkillHistory(
           id: `gap-${gap.id}`,
           at: gap.created_at,
           label: gap.label,
-          detail: `${formatWhen(gap.created_at)} · ${gap.status}${
-            gap.source === 'model' ? ' · from Grok' : ''
-          }`,
+          detail: `${formatWhen(gap.created_at)} · ${humanGapStatus(gap.status)}`,
           isFocus: Boolean(focusId && gap.skill_id === focusId),
+          gapId: gap.id,
+          gapStatus: gap.status,
         });
       }
     } else if (capture.status === 'note_only' || capture.transcript) {
@@ -78,7 +80,7 @@ export function buildSkillHistory(
       id: `focus-${item.at}-${item.label}`,
       at: item.at,
       label: item.label,
-      detail: `${formatWhen(item.at)} · ${item.result}`,
+      detail: `${formatWhen(item.at)} · ${item.result === 'proficient' ? 'Proficient' : 'Stopped focusing'}`,
       isFocus: false,
     });
   }
@@ -89,12 +91,27 @@ export function buildSkillHistory(
       id: `practice-${item.id}`,
       at: item.submitted_at ?? item.created_at,
       label,
-      detail: `${formatWhen(item.submitted_at ?? item.created_at)} · practice ${item.status}`,
+      detail: `${formatWhen(item.submitted_at ?? item.created_at)} · ${humanPracticeStatus(item.status)}`,
       isFocus: false,
     });
   }
 
   return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+}
+
+function humanGapStatus(status: string): string {
+  if (status === 'draft') return 'Review';
+  if (status === 'approved') return 'Approved';
+  if (status === 'note_only') return 'Note';
+  if (status === 'dismissed') return 'Stopped focusing';
+  return status;
+}
+
+function humanPracticeStatus(status: string): string {
+  if (status === 'assigned' || status === 'draft_scored') return 'Assigned';
+  if (status === 'submitted') return 'Turned in';
+  if (status === 'approved') return 'Done';
+  return status;
 }
 
 function formatWhen(value: string): string {

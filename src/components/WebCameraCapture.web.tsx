@@ -1,7 +1,10 @@
 import { createElement, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { Chip } from '@/components/ui/Chip';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { radius, type } from '@/constants/theme';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 
 type WebCameraCaptureProps = {
@@ -13,6 +16,7 @@ type WebCameraCaptureProps = {
 type CameraDevice = { deviceId: string; label: string };
 
 export function WebCameraCapture({ onCapture, onCancel, deviceId: requestedId }: WebCameraCaptureProps) {
+  const { colors } = useTheme();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [devices, setDevices] = useState<CameraDevice[]>([]);
@@ -110,7 +114,9 @@ export function WebCameraCapture({ onCapture, onCancel, deviceId: requestedId }:
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.meta}>Use the laptop or monitor camera, then snap.</Text>
+      <Text style={[type.meta, { color: colors.mute }]}>
+        Listening while you shoot. Say the grade, the name, the mark.
+      </Text>
       {createElement('video', {
         ref: (node: HTMLVideoElement | null) => {
           videoRef.current = node;
@@ -121,40 +127,35 @@ export function WebCameraCapture({ onCapture, onCancel, deviceId: requestedId }:
         style: {
           width: '100%',
           maxHeight: 360,
-          backgroundColor: colors.preview,
-          borderRadius: 8,
+          backgroundColor: colors.wash,
+          borderRadius: radius.lg,
         },
       })}
       {devices.length > 1 ? (
         <View style={styles.row}>
           {devices.map((device) => (
-            <Pressable
+            <Chip
               key={device.deviceId}
-              style={[styles.chip, device.deviceId === deviceId ? styles.chipOn : null]}
+              label={shortCameraLabel(device.label)}
+              selected={device.deviceId === deviceId}
               onPress={() => {
                 setDeviceId(device.deviceId);
                 void setPreferredDeviceId('video', device.deviceId);
                 void start(device.deviceId);
               }}
-            >
-              <Text style={styles.chipText}>{shortCameraLabel(device.label)}</Text>
-            </Pressable>
+            />
           ))}
         </View>
       ) : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={styles.button} onPress={snap}>
-        <Text style={styles.buttonText}>Snap photo</Text>
-      </Pressable>
-      <Pressable
-        style={styles.secondary}
+      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      <PrimaryButton label="Snap photo" onPress={snap} />
+      <SecondaryButton
+        label="Cancel"
         onPress={() => {
           stopStream();
           onCancel();
         }}
-      >
-        <Text style={styles.secondaryText}>Cancel camera</Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -169,32 +170,12 @@ function shortCameraLabel(label: string): string {
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 10,
+    gap: 12,
   },
-  meta: theme.meta,
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chipOn: {
-    backgroundColor: colors.chipOn,
-  },
-  chipText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  button: theme.button,
-  buttonText: theme.buttonText,
-  secondary: theme.secondary,
-  secondaryText: theme.secondaryText,
-  error: theme.error,
+  error: type.body,
 });

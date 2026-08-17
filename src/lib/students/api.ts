@@ -1,6 +1,8 @@
 import { invokeAi } from '@/lib/ai/invoke';
+import { setMetaKey } from '@/lib/people/metadata';
+import { hydratePhotoUrls } from '@/lib/people/photos';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { StudentRow } from '@/lib/supabase/types';
+import type { RosterImportRow, StudentRow } from '@/lib/supabase/types';
 
 export type SuggestedRosterName = {
   key: string;
@@ -36,7 +38,7 @@ export async function suggestRosterFromPhoto(
   return suggestions;
 }
 
-export type RosterStudent = StudentRow & { enrollment_id: string };
+export type RosterStudent = StudentRow & { enrollment_id: string; photoUrl: string | null };
 
 export async function listRoster(classId: string): Promise<RosterStudent[]> {
   const supabase = requireSupabase();
@@ -58,11 +60,12 @@ export async function listRoster(classId: string): Promise<RosterStudent[]> {
   if (studentError) throw studentError;
 
   const byId = new Map((students ?? []).map((student) => [student.id, student]));
-  return enrollments.flatMap((row) => {
+  const roster = enrollments.flatMap((row) => {
     const student = byId.get(row.student_id);
     if (!student) return [];
     return [{ ...student, enrollment_id: row.id }];
   });
+  return hydratePhotoUrls(roster);
 }
 
 export type FocusLogEntry = {
@@ -234,7 +237,77 @@ async function insertStudent(input: {
     .single();
   if (enrollmentError) throw enrollmentError;
 
-  return { ...student, enrollment_id: enrollment.id };
+  return { ...student, enrollment_id: enrollment.id, photoUrl: null };
+}
+
+export async function updateStudentMetadata(
+  student: StudentRow,
+  metadata: Record<string, unknown>,
+): Promise<StudentRow> {
+  const preferred = typeof metadata.preferred_name === 'string' ? metadata.preferred_name.trim() : '';
+  const aliases = [...student.name_aliases];
+  if (preferred && !aliases.some((alias) => normalizeRosterName(alias) === normalizeRosterName(preferred))) {
+    aliases.push(preferred);
+  }
+  const { data, error } = await requireSupabase()
+    .from('students')
+    .update({ metadata, name_aliases: aliases })
+    .eq('id', student.id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function patchStudentMetadata(
+  student: StudentRow,
+  key: string,
+  value: string | null,
+): Promise<StudentRow> {
+  return updateStudentMetadata(student, setMetaKey(student.metadata, key, value));
+}
+
+export async function listPendingRosterImports(classId: string): Promise<RosterImportRow[]> {
+  const { data, error } = await requireSupabase()
+    .from('roster_imports')
+    .select('*')
+    .eq('class_id', classId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createRosterImport(input: {
+  classId: string;
+  photoAssetId: string;
+  suggestions: RosterImportRow['suggestions'];
+}): Promise<RosterImportRow> {
+  const { data, error } = await requireSupabase()
+    .from('roster_imports')
+    .insert({
+      class_id: input.classId,
+      photo_asset_id: input.photoAssetId,
+      status: 'pending',
+      suggestions: input.suggestions,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function markRosterImportConfirmed(importId: string): Promise<void> {
+  const { error } = await requireSupabase()
+    .from('roster_imports')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('id', importId);
+  if (error) throw error;
+}
+
+export async function deleteRosterImport(importId: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('teacher_delete_roster_import', { p_import_id: importId });
+  if (error) throw error;
 }
 
 export async function addTypedStudent(

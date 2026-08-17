@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { colors } from '@/constants/theme';
+import { Chip } from '@/components/ui/Chip';
 import {
   listMediaDevices,
   unlockDeviceLabels,
@@ -34,13 +34,12 @@ export function DevicePicker({ kind, selectedId, onSelect, nonce }: DevicePicker
   return (
     <View style={styles.row}>
       {devices.map((device) => (
-        <Pressable
+        <Chip
           key={device.deviceId}
-          style={[styles.chip, device.deviceId === selectedId ? styles.chipOn : null]}
+          label={device.label}
+          selected={device.deviceId === selectedId}
           onPress={() => onSelect(device.deviceId)}
-        >
-          <Text style={styles.chipText}>{device.label}</Text>
-        </Pressable>
+        />
       ))}
     </View>
   );
@@ -51,20 +50,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chipOn: {
-    backgroundColor: colors.chipOn,
-  },
-  chipText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

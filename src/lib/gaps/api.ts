@@ -1,5 +1,6 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import { allPhotoAssetIds } from '@/lib/captures/pages';
+import { gradeKindLabel, type GradeKind, type ScoreMark } from '@/lib/grade/marks';
 import { signedUrlForAsset } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { CaptureRow, SkillGapRow } from '@/lib/supabase/types';
@@ -17,6 +18,9 @@ export type StoredHomeworkDraft = {
   studentName?: string | null;
   parentSentence?: string | null;
   pageAssetIds?: string[];
+  scoreMark?: ScoreMark;
+  gradeKind?: GradeKind;
+  skipGrade?: boolean;
 };
 
 export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
@@ -26,6 +30,8 @@ export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boo
         draft.teacherNote ||
         draft.draftScore != null ||
         draft.studentName ||
+        draft.scoreMark === 'pass' ||
+        draft.scoreMark === 'fail' ||
         (draft.pageAssetIds?.length ?? 0) > 1),
   );
 }
@@ -93,14 +99,25 @@ export async function updateGapLabel(gapId: string, label: string) {
   if (error) throw error;
 }
 
+function asApprovedScore(value: unknown): number | null {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function approveCapture(
   capture: CaptureRow,
   gaps: SkillGapRow[],
-): Promise<{ skillId: string; skillLabel: string }> {
+  score?: number | null,
+  extras?: { scoreMark?: ScoreMark; gradeKind?: GradeKind; assignmentId?: string | null },
+): Promise<{ skillId: string | null; skillLabel: string | null }> {
   if (!capture.student_id) throw new Error('Capture has no student');
   const supabase = requireSupabase();
   const live = gaps.filter((gap) => gap.status !== 'dismissed' && gap.label.trim());
-  if (!live[0]) throw new Error('Add or keep at least one gap to approve');
+  const draft = (capture.model_draft ?? {}) as StoredHomeworkDraft;
+  const scoreMark: ScoreMark = extras?.scoreMark ?? draft.scoreMark ?? 'numeric';
+  const gradeKind: GradeKind = extras?.gradeKind ?? draft.gradeKind ?? 'homework';
+  const gradeOnly = live.length === 0;
 
   let focusSkillId: string | null = null;
   for (const [index, gap] of live.entries()) {
@@ -146,37 +163,94 @@ export async function approveCapture(
   }
 
   const approvedAt = new Date().toISOString();
+  const approvedScore = scoreMark === 'numeric' ? asApprovedScore(score ?? capture.approved_score ?? capture.draft_score) : null;
+  const targetAssignmentId = extras?.assignmentId || capture.assignment_id || null;
   const { error } = await supabase
     .from('captures')
     .update({
       status: 'approved',
       approved_at: approvedAt,
+      approved_score: approvedScore,
+      model_draft: { ...draft, scoreMark, gradeKind },
+      ...(targetAssignmentId ? { assignment_id: targetAssignmentId } : {}),
     })
     .eq('id', capture.id);
   if (error) throw error;
 
-  const title = live[0]?.label ? `Work: ${live[0].label}` : 'Approved work';
-  const { data: assignment, error: assignmentError } = await supabase
-    .from('assignments')
-    .insert({
-      class_id: capture.class_id,
-      title,
-      kind: 'capture',
-      capture_id: capture.id,
-    })
-    .select('*')
-    .single();
-  if (assignmentError) throw assignmentError;
-  const { error: submissionError } = await supabase.from('submissions').insert({
-    assignment_id: assignment.id,
+  let assignmentId = targetAssignmentId;
+  if (!assignmentId) {
+    const title = live[0]?.label ? `${gradeKindLabel(gradeKind)}: ${live[0].label}` : gradeKindLabel(gradeKind);
+    const { data: assignment, error: assignmentError } = await supabase
+      .from('assignments')
+      .insert({
+        class_id: capture.class_id,
+        title,
+        kind: 'capture',
+        capture_id: capture.id,
+        category: gradeKind,
+      })
+      .select('*')
+      .single();
+    if (assignmentError) {
+      const retry = await supabase
+        .from('assignments')
+        .insert({
+          class_id: capture.class_id,
+          title,
+          kind: 'capture',
+          capture_id: capture.id,
+        })
+        .select('*')
+        .single();
+      if (retry.error) throw retry.error;
+      assignmentId = retry.data.id;
+    } else {
+      assignmentId = assignment.id;
+    }
+  }
+
+  const submission = {
+    assignment_id: assignmentId,
     student_id: capture.student_id,
-    status: 'approved',
-    approved_score: capture.approved_score,
+    status: 'approved' as const,
+    approved_score: approvedScore,
     approved_at: approvedAt,
-  });
-  if (submissionError) throw submissionError;
+    score_mark: scoreMark,
+  };
+  const { data: existing } = await supabase
+    .from('submissions')
+    .select('id')
+    .eq('assignment_id', assignmentId)
+    .eq('student_id', capture.student_id)
+    .maybeSingle();
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('submissions')
+      .update({
+        status: 'approved',
+        approved_score: approvedScore,
+        approved_at: approvedAt,
+        score_mark: scoreMark,
+      })
+      .eq('id', existing.id);
+    if (updateError) {
+      const retry = await supabase
+        .from('submissions')
+        .update({ status: 'approved', approved_score: approvedScore, approved_at: approvedAt })
+        .eq('id', existing.id);
+      if (retry.error) throw retry.error;
+    }
+  } else {
+    const { error: submissionError } = await supabase.from('submissions').insert(submission);
+    if (submissionError) {
+      const { score_mark: _mark, ...withoutMark } = submission;
+      const retry = await supabase.from('submissions').insert(withoutMark);
+      if (retry.error) throw retry.error;
+    }
+  }
+  if (gradeOnly) return { skillId: null, skillLabel: null };
   if (!focusSkillId) throw new Error('Could not assign a focus skill from that gap');
-  return { skillId: focusSkillId, skillLabel: live[0].label };
+  return { skillId: focusSkillId, skillLabel: live[0]!.label };
 }
 
 export async function markNoteOnly(captureId: string) {
@@ -200,7 +274,7 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
   if (!captures?.length) return [];
 
   const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
-  const [{ data: assets }, { data: gaps }] = await Promise.all([
+  const [{ data: assets, error: assetError }, { data: gaps }] = await Promise.all([
     supabase
       .from('assets')
       .select('*')
@@ -214,6 +288,7 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
       )
       .order('sort_order', { ascending: true }),
   ]);
+  if (assetError) throw assetError;
 
   const pathById = new Map((assets ?? []).map((asset) => [asset.id, asset.storage_path]));
   const gapsByCapture = new Map<string, SkillGapRow[]>();

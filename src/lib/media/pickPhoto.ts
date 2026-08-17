@@ -1,10 +1,20 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Platform } from 'react-native';
+import { InteractionManager, Platform } from 'react-native';
 
 import { normalizePhoto } from '@/lib/media/photo';
 
 export function webCameraNeeded(fromCamera: boolean): boolean {
   return fromCamera && Platform.OS === 'web';
+}
+
+/** iOS will not present the camera/library over another Modal. Wait for it to dismiss. */
+export function waitForModalDismiss(): Promise<void> {
+  if (Platform.OS === 'web') return Promise.resolve();
+  return new Promise((resolve) => {
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(resolve, Platform.OS === 'ios' ? 400 : 200);
+    });
+  });
 }
 
 export async function pickNormalizedPhoto(

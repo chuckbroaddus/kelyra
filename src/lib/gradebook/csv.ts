@@ -8,10 +8,12 @@ function escapeCsv(value: string): string {
 }
 
 export function gradebookToCsv(book: Gradebook): string {
-  const header = ['Student', ...book.assignments.map((item) => item.title)];
-  const rows = book.students.map((student) => [
-    student.display_name,
-    ...book.assignments.map((assignment) => formatCell(gradeCell(book, assignment.id, student.id))),
+  const header = ['Assignment', 'Unit', 'Section', ...book.students.map((student) => student.display_name)];
+  const rows = book.assignments.map((assignment) => [
+    assignment.title,
+    assignment.unit ?? '',
+    assignment.section ?? '',
+    ...book.students.map((student) => formatCell(gradeCell(book, assignment.id, student.id))),
   ]);
   return [header, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
 }

@@ -3,7 +3,7 @@
     "name": "Kelyra",
     "slug": "kelyra",
     "version": "0.1.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "kelyra",
     "userInterfaceStyle": "automatic",
@@ -49,7 +49,7 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#F7F3EC"
         }
       ]
     ],

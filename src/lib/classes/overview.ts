@@ -1,8 +1,10 @@
+import { hydratePhotoUrls } from '@/lib/people/photos';
 import { requireSupabase } from '@/lib/supabase/client';
 
 export type GapStudent = {
   id: string;
   displayName: string;
+  photoUrl?: string | null;
 };
 
 export type GapCount = {
@@ -77,7 +79,10 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
   const captureIds = new Set((classCaptures ?? []).map((row) => row.id));
 
   const { data: rosterRows } = studentIds.length
-    ? await supabase.from('students').select('id, display_name, current_focus_skill_id').in('id', studentIds)
+    ? await supabase
+        .from('students')
+        .select('id, display_name, current_focus_skill_id, photo_asset_id')
+        .in('id', studentIds)
     : { data: [] };
   const nameById = new Map((rosterRows ?? []).map((row) => [row.id, row.display_name]));
 
@@ -116,9 +121,10 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
     }))
     .sort((a, b) => b.count - a.count);
 
-  const heatmapSkills = commonGaps.slice(0, 8).map((gap) => ({ key: gap.key, label: gap.label }));
-  const heatmapStudents = (rosterRows ?? [])
-    .map((row) => ({ id: row.id, displayName: row.display_name }))
+  const heatmapSkills = commonGaps.map((gap) => ({ key: gap.key, label: gap.label }));
+  const withPhotos = await hydratePhotoUrls(rosterRows ?? []);
+  const heatmapStudents = withPhotos
+    .map((row) => ({ id: row.id, displayName: row.display_name, photoUrl: row.photoUrl }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
   return {

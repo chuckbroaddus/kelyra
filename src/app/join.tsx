@@ -1,84 +1,130 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { PrimaryButton } from '@/components/ui/Button';
+import { ListRow } from '@/components/ui/ListRow';
+import { Screen } from '@/components/ui/Screen';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { TextField } from '@/components/ui/TextField';
+import { type } from '@/constants/theme';
+import { formatJoinCode, normalizeJoinCode } from '@/lib/classes/joinCode';
+import { signedProfileUrl } from '@/lib/people/photos';
 import { openClassByJoinCode, saveStudentSession } from '@/lib/student-session/api';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function JoinScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
+  const { code: queryCode } = useLocalSearchParams<{ code?: string }>();
   const [code, setCode] = useState('');
+
+  useEffect(() => {
+    if (typeof queryCode === 'string' && queryCode.trim()) {
+      setCode(formatJoinCode(queryCode));
+    }
+  }, [queryCode]);
   const [rows, setRows] = useState<
-    Array<{ class_id: string; class_name: string; student_id: string; display_name: string }>
+    Array<{
+      class_id: string;
+      class_name: string;
+      student_id: string;
+      display_name: string;
+      photo_path: string | null;
+      photoUrl?: string | null;
+    }>
   >([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const onLookup = async () => {
     setStatus(null);
+    setFailed(false);
     try {
-      const next = await openClassByJoinCode(code);
+      const next = await openClassByJoinCode(normalizeJoinCode(code));
       if (!next.length) {
         setStatus('No class matches that code.');
+        setFailed(false);
         setRows([]);
         return;
       }
-      setRows(next);
+      const withPhotos = await Promise.all(
+        next.map(async (row) => ({
+          ...row,
+          photoUrl: await signedProfileUrl(row.photo_path),
+        })),
+      );
+      setRows(withPhotos);
     } catch (err) {
+      setFailed(true);
       setStatus(err instanceof Error ? err.message : 'Could not open class');
     }
   };
 
   const onPick = async (row: (typeof rows)[0]) => {
     await saveStudentSession({
-      joinCode: code.trim().toUpperCase(),
+      joinCode: normalizeJoinCode(code),
       classId: row.class_id,
       className: row.class_name,
       studentId: row.student_id,
       displayName: row.display_name,
+      photoPath: row.photo_path,
     });
     router.push('/todo');
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Join class</Text>
-      <Text style={styles.body}>Enter the join code from your teacher, then pick your name.</Text>
-      <TextInput
+    <Screen maxWidth={400} centered={!rows.length} keyboard>
+      <Text style={[styles.brand, { color: colors.mute }]}>Kelyra</Text>
+      <Text style={[styles.title, { color: colors.ink }]}>Join your class</Text>
+      <Text style={[styles.meta, { color: colors.mute }]}>
+        Type the two words your teacher said, like {formatJoinCode('GENTLE-MAPLE')}.
+      </Text>
+      <TextField
+        variant="join"
         autoCapitalize="characters"
-        placeholder="Join code"
-        placeholderTextColor={colors.muted}
-        style={styles.input}
+        autoCorrect={false}
+        placeholder="Gentle Maple"
         value={code}
         onChangeText={setCode}
+        onSubmitEditing={() => void onLookup()}
       />
-      <Pressable style={styles.button} onPress={() => void onLookup()}>
-        <Text style={styles.buttonText}>Find class</Text>
-      </Pressable>
-      {rows.length ? <Text style={styles.section}>Pick your name</Text> : null}
+      <View style={styles.gap} />
+      <PrimaryButton label="Find class" onPress={() => void onLookup()} />
+      {rows.length ? <SectionHeader label="Pick your name" /> : null}
       {rows.map((row) => (
-        <Pressable key={row.student_id} style={styles.secondary} onPress={() => void onPick(row)}>
-          <Text style={styles.secondaryText}>
-            {row.display_name} · {row.class_name}
-          </Text>
-        </Pressable>
+        <ListRow
+          key={row.student_id}
+          title={row.display_name}
+          status={row.class_name}
+          photoUrl={row.photoUrl}
+          onPress={() => void onPick(row)}
+        />
       ))}
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-    </ScrollView>
+      {status ? (
+        <Text style={[type.body, { color: failed ? colors.danger : colors.mute, marginTop: 12 }]}>
+          {status}
+        </Text>
+      ) : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: theme.scroll,
-  title: theme.title,
-  body: theme.body,
-  section: {
-    ...theme.section,
-    marginTop: 8,
+  brand: {
+    ...type.meta,
+    textAlign: 'center',
   },
-  input: theme.input,
-  button: theme.button,
-  buttonText: theme.buttonText,
-  secondary: theme.secondary,
-  secondaryText: theme.secondaryText,
-  error: theme.error,
+  title: {
+    ...type.title,
+    textAlign: 'center',
+  },
+  meta: {
+    ...type.meta,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  gap: {
+    height: 12,
+  },
 });

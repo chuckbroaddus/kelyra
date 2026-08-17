@@ -1,11 +1,28 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
-import { colors, theme } from '@/constants/theme';
+import {
+  DangerButton,
+  GhostButton,
+  PrimaryButton,
+  SecondaryButton,
+} from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { Card } from '@/components/ui/Card';
+import { PhaseBanner } from '@/components/ui/PhaseBanner';
+import { PhotoPager } from '@/components/ui/PhotoPager';
+import { Screen } from '@/components/ui/Screen';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { TextField } from '@/components/ui/TextField';
+import { WorkingLine } from '@/components/ui/WorkingMark';
+import { type } from '@/constants/theme';
+import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { useLayout } from '@/lib/theme/layout';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
@@ -16,7 +33,7 @@ import {
 } from '@/lib/captures/api';
 import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
 import { resolveCaptureClass } from '@/lib/classes/api';
-import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
+import { shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { normalizePhoto } from '@/lib/media/photo';
@@ -25,6 +42,9 @@ import { uploadTeacherAsset } from '@/lib/media/upload';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 
 export default function CaptureScreen() {
+  const { colors } = useTheme();
+  const layout = useLayout();
+  const chrome = useChrome();
   const router = useRouter();
   const { teacher } = useAuth();
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
@@ -37,6 +57,7 @@ export default function CaptureScreen() {
   const [cameraId, setCameraId] = useState<string | null>(null);
   const [deviceTick, setDeviceTick] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -52,7 +73,7 @@ export default function CaptureScreen() {
     const lines = parts.map((part) => {
       const student = roster.find((row) => row.id === part.match.guessedStudentId);
       const target =
-        shouldAutoAttach(part.match) && student ? student.display_name : 'Unassigned';
+        shouldAutoAttach(part.match) && student ? student.display_name : 'Inbox';
       return `${target}: ${part.text}`;
     });
 
@@ -60,22 +81,33 @@ export default function CaptureScreen() {
       return {
         button: `Save ${parts.length} notes`,
         hint: lines.join('\n'),
+        saved: `${parts.length} notes saved. Next photo whenever you’re ready.`,
       };
     }
     if (lines[0] && parts[0]) {
       const only = parts[0].match;
       const student = roster.find((row) => row.id === only.guessedStudentId);
       if (shouldAutoAttach(only) && student) {
-        return { button: `Save to ${student.display_name}`, hint: lines[0] };
+        return {
+          button: `Save to ${student.display_name}`,
+          hint: `This goes on ${student.display_name}’s record.`,
+          saved: `Saved to ${student.display_name}. Next photo whenever you’re ready.`,
+        };
       }
       return {
-        button: 'Save to Unassigned',
-        hint: only.confidence > 0
-          ? `${lines[0]} (name unclear — pick in inbox)`
-          : `${lines[0]} (no roster match — pick in inbox)`,
+        button: 'Save to Inbox',
+        hint:
+          only.confidence > 0
+            ? 'Name is unclear — it will wait in Inbox.'
+            : 'No name yet — it will wait in Inbox.',
+        saved: 'Saved to Inbox. You can put a name on it after class.',
       };
     }
-    return { button: 'Save to Unassigned', hint: 'No name yet — this will stay in Unassigned.' };
+    return {
+      button: 'Save to Inbox',
+      hint: 'No name is fine — it goes to Inbox.',
+      saved: 'Saved to Inbox. You can put a name on it after class.',
+    };
   }, [spokenName, roster]);
 
   useFocusEffect(
@@ -88,19 +120,36 @@ export default function CaptureScreen() {
           setMicId(await getPreferredDeviceId('audio'));
           setCameraId(await getPreferredDeviceId('video'));
         } catch (err) {
-          setStatus(err instanceof Error ? err.message : 'Could not load roster');
+          setError(err instanceof Error ? err.message : 'Could not load roster');
         }
       })();
     }, [teacher]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      chrome.setForceHidden(cameraOpen);
+      return () => chrome.setForceHidden(false);
+    }, [cameraOpen, chrome]),
+  );
+
   if (!teacher) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.body}>Sign in first, then come back to capture.</Text>
-      </View>
+      <Screen>
+        <Text style={[styles.lead, { color: colors.mute }]}>Sign in first, then come back to capture.</Text>
+        <GhostButton align="left" label="Sign in" onPress={() => router.push('/sign-in')} />
+      </Screen>
     );
   }
+
+  const resetSlip = () => {
+    setPages([]);
+    setAudioUri(null);
+    setSpokenName('');
+    setEvaluation(null);
+    setRecording(null);
+    setCameraOpen(false);
+  };
 
   const applyPhoto = async (uri: string, mimeType?: string | null) => {
     try {
@@ -115,12 +164,13 @@ export default function CaptureScreen() {
       ]);
       setEvaluation(null);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not read that photo.');
+      setError(err instanceof Error ? err.message : 'Could not read that photo.');
     }
   };
 
   const pickPhoto = async (fromCamera: boolean) => {
     setStatus(null);
+    setError(null);
     if (fromCamera && Platform.OS === 'web') {
       setCameraOpen(true);
       return;
@@ -130,7 +180,7 @@ export default function CaptureScreen() {
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setStatus('Camera or photo permission is required.');
+      setError('Camera or photo permission is required.');
       return;
     }
 
@@ -148,13 +198,14 @@ export default function CaptureScreen() {
 
   const startRecording = async () => {
     setStatus(null);
+    setError(null);
     try {
       setRecording(await startLiveRecording(micId));
       setAudioUri(null);
       setEvaluation(null);
       setDeviceTick((value) => value + 1);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not start the microphone.');
+      setError(err instanceof Error ? err.message : 'Could not start the microphone.');
     }
   };
 
@@ -167,13 +218,14 @@ export default function CaptureScreen() {
       setAudioMime(captured.mimeType);
     } catch (err) {
       setRecording(null);
-      setStatus(err instanceof Error ? err.message : 'Could not finish the recording.');
+      setError(err instanceof Error ? err.message : 'Could not finish the recording.');
     }
   };
 
   const onAskAi = async () => {
     if ((!pages.length && !audioUri) || asking || recording) return;
     setAsking(true);
+    setError(null);
     setStatus('Asking AI… this can take a few seconds.');
     try {
       const result = await evaluateCaptureMedia({
@@ -199,7 +251,8 @@ export default function CaptureScreen() {
       if (result.gaps.length) bits.push(result.gaps.map((gap) => gap.label).join(', '));
       setStatus(bits.length ? bits.join(' · ') : 'AI finished. Check the save button.');
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not ask AI');
+      setStatus(null);
+      setError(err instanceof Error ? err.message : 'Could not ask AI');
     } finally {
       setAsking(false);
     }
@@ -207,11 +260,12 @@ export default function CaptureScreen() {
 
   const save = async () => {
     if (!pages.length && !spokenName.trim() && !audioUri) {
-      setStatus('Add a photo, a name, or a short note.');
+      setError('Add a photo, a name, or a short note.');
       return;
     }
     setBusy(true);
     setStatus(null);
+    setError(null);
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
       const photoAssets =
@@ -269,8 +323,6 @@ export default function CaptureScreen() {
       }));
       const segments = splitByRoster(fullText, names);
       const texts = segments.length ? segments.map((part) => part.text) : fullText ? [fullText] : [];
-      let lastFiledStudentId: string | null = null;
-      let anyUnassigned = !texts.length;
       if (!texts.length && draftToSave) {
         await saveCaptureEvaluation(first.id, draftToSave, null);
       }
@@ -285,48 +337,43 @@ export default function CaptureScreen() {
                 inputSource: 'typed',
                 transcript: segment,
               });
-        const matched = await applyTranscriptAndMatch(
-          row,
-          segment,
-          index === 0 ? draftToSave : null,
-        );
-        if (matched.student_id) lastFiledStudentId = matched.student_id;
-        else anyUnassigned = true;
+        await applyTranscriptAndMatch(row, segment, index === 0 ? draftToSave : null);
       }
 
-      if (anyUnassigned || !lastFiledStudentId) {
-        router.replace('/inbox');
-      } else {
-        router.replace(`/class/${klass.id}/student/${lastFiledStudentId}`);
-      }
+      resetSlip();
+      setStatus(preview.saved);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not save capture');
+      setError(err instanceof Error ? err.message : 'Could not save capture');
     } finally {
       setBusy(false);
     }
   };
 
-  return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Capture homework</Text>
-      <Text style={styles.body}>
-        Photo optional. Add every page of one assignment. Name the student in a sentence, or tap Ask
-        AI.
-      </Text>
-      {pages.map((page, index) => (
-        <View key={page.key}>
-          <Text style={styles.meta}>Page {index + 1}</Text>
-          <Image source={{ uri: page.uri }} style={styles.preview} />
-          <Pressable
-            onPress={() => {
-              setPages((current) => current.filter((item) => item.key !== page.key));
-              setEvaluation(null);
-            }}
-          >
-            <Text style={styles.secondaryText}>Remove page {index + 1}</Text>
-          </Pressable>
-        </View>
-      ))}
+  const hasMedia = pages.length > 0 || Boolean(audioUri);
+  const TakeButton = pages.length === 0 ? PrimaryButton : SecondaryButton;
+  const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
+  const sticky = hasMedia || spokenName.trim() ? (
+    <PrimaryButton
+      label={busy ? 'Saving…' : preview.button}
+      disabled={busy}
+      onPress={() => void save()}
+    />
+  ) : undefined;
+
+  const photoBlock = (
+    <View style={styles.block}>
+      {!cameraOpen ? (
+        <PhotoPager
+          empty={pages.length === 0}
+          pages={pages}
+          hero
+          fill={split}
+          onRemove={(key) => {
+            setPages((current) => current.filter((item) => item.key !== key));
+            setEvaluation(null);
+          }}
+        />
+      ) : null}
       {cameraOpen ? (
         <WebCameraCapture
           deviceId={cameraId}
@@ -347,81 +394,126 @@ export default function CaptureScreen() {
               void setPreferredDeviceId('video', deviceId);
             }}
           />
-          <Pressable style={styles.button} onPress={() => void pickPhoto(true)}>
-            <Text style={styles.buttonText}>{pages.length ? 'Add page with camera' : 'Take photo'}</Text>
-          </Pressable>
-          <Pressable style={styles.secondary} onPress={() => void pickPhoto(false)}>
-            <Text style={styles.secondaryText}>
-              {pages.length ? 'Add page from files' : 'Choose photo'}
-            </Text>
-          </Pressable>
+          <TakeButton
+            label={pages.length ? 'Add a page' : 'Take photo'}
+            onPress={() => void pickPhoto(true)}
+          />
+          <GhostButton
+            label={pages.length ? 'Add a page from library' : 'Choose from library'}
+            onPress={() => void pickPhoto(false)}
+          />
         </>
       )}
-      <DevicePicker
-        kind="audio"
-        selectedId={micId}
-        nonce={deviceTick}
-        onSelect={(deviceId) => {
-          setMicId(deviceId);
-          void setPreferredDeviceId('audio', deviceId);
-        }}
-      />
+    </View>
+  );
+
+  const whoBlock = (
+    <View style={styles.block}>
+      <SectionHeader label="Who is this?" first={split} />
       {recording ? (
-        <Pressable style={styles.danger} onPress={() => void stopRecording()}>
-          <Text style={styles.buttonText}>Stop recording</Text>
-        </Pressable>
+        <DangerButton showDot label="Stop recording" onPress={() => void stopRecording()} />
       ) : (
-        <Pressable style={styles.secondary} onPress={() => void startRecording()}>
-          <Text style={styles.secondaryText}>
-            {audioUri ? 'Re-record name' : 'Record name (optional)'}
-          </Text>
-        </Pressable>
+        <SecondaryButton label="Record the name" onPress={() => void startRecording()} />
       )}
-      {audioUri && !recording ? <Text style={styles.meta}>Voice note attached</Text> : null}
-      {(pages.length || audioUri) && !recording ? (
-        <Pressable disabled={asking || busy} style={styles.secondary} onPress={() => void onAskAi()}>
-          <Text style={styles.secondaryText}>{asking ? 'Asking AI…' : 'Ask AI'}</Text>
-        </Pressable>
-      ) : null}
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-      {evaluation?.gaps.length ? (
-        <Text style={styles.meta}>
-          Gaps: {evaluation.gaps.map((gap) => gap.label).join(', ')}
-          {evaluation.draftScore != null ? ` · Score ${evaluation.draftScore}` : ''}
-        </Text>
-      ) : null}
-      <TextInput
-        placeholder="Jamal guessed on the quiz. Mateo finished early."
-        placeholderTextColor={colors.muted}
-        style={styles.input}
+      <TextField
+        multiline
+        placeholder="Maya Chen, still lining up place value"
         value={spokenName}
         onChangeText={setSpokenName}
       />
-      <Text style={styles.meta}>{preview.hint}</Text>
-      <Pressable disabled={busy} style={styles.button} onPress={() => void save()}>
-        <Text style={styles.buttonText}>{busy ? 'Saving…' : preview.button}</Text>
-      </Pressable>
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-    </ScrollView>
+      <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text>
+      {evaluation?.gaps.length ? (
+        <Card>
+          <Text style={[type.section, { color: colors.mute }]}>Suggested gaps</Text>
+          <View style={styles.gaps}>
+            {evaluation.gaps.map((gap) => (
+              <Chip key={gap.label} label={gap.label} />
+            ))}
+          </View>
+          {evaluation.draftScore != null ? (
+            <Text style={[type.meta, { color: colors.mute }]}>Draft score {evaluation.draftScore}</Text>
+          ) : null}
+          {evaluation.teacherNote ? <Text style={[type.meta, { color: colors.mute }]}>{evaluation.teacherNote}</Text> : null}
+        </Card>
+      ) : null}
+      {hasMedia && !recording ? (
+        <GhostButton
+          label={asking ? 'Asking AI…' : 'Ask AI to guess the name'}
+          disabled={asking || busy}
+          onPress={() => void onAskAi()}
+        />
+      ) : null}
+      {asking ? <WorkingLine text="Asking AI…" /> : status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
+      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      {split && sticky ? sticky : null}
+    </View>
+  );
+
+  if (split) {
+    return (
+      <View style={[styles.split, { backgroundColor: colors.bg }]}>
+        <View style={styles.left}>{photoBlock}</View>
+        <View style={styles.right}>
+          <Screen scroll maxWidth={480}>
+            {whoBlock}
+            <PhaseBanner
+              phase={2}
+              compact
+              detail="Photograph one student’s work, then say the name. Incomplete is fine."
+            />
+          </Screen>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Screen keyboard sticky={sticky}>
+      {photoBlock}
+      {whoBlock}
+      <PhaseBanner
+        phase={2}
+        compact
+        detail="Photograph one student’s work, then say the name. Incomplete is fine."
+      />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: theme.scroll,
-  title: theme.title,
-  body: theme.body,
-  meta: theme.meta,
-  preview: theme.preview,
-  button: theme.button,
-  buttonText: theme.buttonText,
-  secondary: theme.secondary,
-  secondaryText: theme.secondaryText,
-  danger: {
-    backgroundColor: colors.dangerBg,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+  lead: {
+    ...type.body,
+    marginBottom: 8,
   },
-  error: theme.error,
-  input: theme.input,
+  block: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  gaps: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  status: {
+    ...type.meta,
+    marginTop: 12,
+  },
+  error: {
+    ...type.body,
+    marginTop: 12,
+  },
+  split: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  left: {
+    flex: 1.2,
+    minWidth: 0,
+    padding: 16,
+  },
+  right: {
+    flex: 1,
+    minWidth: 280,
+    padding: 16,
+  },
 });

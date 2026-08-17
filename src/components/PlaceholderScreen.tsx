@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text } from 'react-native';
 
-import { theme } from '@/constants/theme';
+import { Screen } from '@/components/ui/Screen';
+import { type } from '@/constants/theme';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   title: string;
@@ -8,23 +10,11 @@ type Props = {
 };
 
 export function PlaceholderScreen({ title, body }: Props) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.body}>{body}</Text>
-    </View>
+    <Screen centered>
+      <Text style={[type.title, { color: colors.ink }]}>{title}</Text>
+      <Text style={[type.body, { marginTop: 8, color: colors.mute }]}>{body}</Text>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    ...theme.screen,
-    justifyContent: 'center',
-  },
-  title: {
-    ...theme.title,
-    fontSize: 22,
-    fontWeight: '600',
-  },
-  body: theme.body,
-});

@@ -1,3 +1,4 @@
+import { formatScoreMark, numericScoreForAverage, type ScoreMark } from '@/lib/grade/marks';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
@@ -5,6 +6,8 @@ import type { AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
 export type GradeCell = {
   status: SubmissionRow['status'] | null;
   score: number | null;
+  scoreMark: ScoreMark;
+  submissionId: string | null;
 };
 
 export type Gradebook = {
@@ -42,6 +45,8 @@ export async function loadGradebook(classId: string): Promise<Gradebook> {
       cells[cellKey(row.assignment_id, row.student_id)] = {
         status: row.status,
         score: row.approved_score,
+        scoreMark: row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
+        submissionId: row.id,
       };
     }
   }
@@ -54,17 +59,30 @@ export function gradeCell(
   assignmentId: string,
   studentId: string,
 ): GradeCell {
-  return book.cells[cellKey(assignmentId, studentId)] ?? { status: null, score: null };
+  return book.cells[cellKey(assignmentId, studentId)] ?? { status: null, score: null, scoreMark: 'numeric', submissionId: null };
 }
 
 export function formatCell(cell: GradeCell): string {
   if (!cell.status) return '—';
-  if (cell.score != null) return String(cell.score);
   if (cell.status === 'assigned') return 'Assigned';
-  if (cell.status === 'submitted') return 'Submitted';
-  if (cell.status === 'approved') return 'Done';
+  if (cell.status === 'submitted') return 'In';
+  if (cell.status === 'approved') {
+    const mark = formatScoreMark(cell.scoreMark, cell.score);
+    if (mark) return mark;
+    return 'Done';
+  }
   if (cell.status === 'draft_scored') return 'Draft';
   return cell.status;
+}
+
+export { numericScoreForAverage };
+
+export function cellTone(cell: GradeCell): 'mute' | 'warn' | 'ink' | 'good' | 'inkBold' {
+  if (!cell.status) return 'mute';
+  if (cell.status === 'assigned' || cell.status === 'draft_scored') return 'warn';
+  if (cell.status === 'approved' && cell.score != null) return 'inkBold';
+  if (cell.status === 'approved') return 'good';
+  return 'ink';
 }
 
 async function backfillApprovedCaptures(classId: string) {
@@ -100,13 +118,22 @@ async function backfillApprovedCaptures(classId: string) {
       .select('*')
       .single();
     if (assignmentError) throw assignmentError;
-    const { error: submissionError } = await supabase.from('submissions').insert({
+    const draft = (capture.model_draft ?? {}) as { scoreMark?: string };
+    const scoreMark: 'numeric' | 'pass' | 'fail' =
+      draft.scoreMark === 'pass' || draft.scoreMark === 'fail' ? draft.scoreMark : 'numeric';
+    const row = {
       assignment_id: assignment.id,
       student_id: capture.student_id,
-      status: 'approved',
-      approved_score: capture.approved_score,
+      status: 'approved' as const,
+      approved_score: scoreMark === 'numeric' ? capture.approved_score : null,
       approved_at: capture.approved_at,
-    });
-    if (submissionError) throw submissionError;
+      score_mark: scoreMark,
+    };
+    const { error: submissionError } = await supabase.from('submissions').insert(row);
+    if (submissionError) {
+      const { score_mark: _mark, ...rest } = row;
+      const retry = await supabase.from('submissions').insert(rest);
+      if (retry.error) throw retry.error;
+    }
   }
 }

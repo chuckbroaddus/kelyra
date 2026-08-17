@@ -11,6 +11,7 @@ export type StudentSession = {
   className: string;
   studentId: string;
   displayName: string;
+  photoPath?: string | null;
 };
 
 export type StudentTodo = {

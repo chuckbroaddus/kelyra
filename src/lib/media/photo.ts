@@ -23,7 +23,19 @@ export async function normalizePhoto(
     compress: 0.8,
     format: ImageManipulator.SaveFormat.JPEG,
   });
-  return { uri: result.uri, mimeType: 'image/jpeg' };
+  return persistLocalJpeg(result.uri);
+}
+
+/** iOS deletes ImagePicker temps when the camera closes. Copy to our cache first. */
+async function persistLocalJpeg(uri: string): Promise<{ uri: string; mimeType: string }> {
+  try {
+    const FileSystem = await import('expo-file-system/legacy');
+    const dest = `${FileSystem.cacheDirectory}kelyra-${Date.now()}.jpg`;
+    await FileSystem.copyAsync({ from: uri, to: dest });
+    return { uri: dest, mimeType: 'image/jpeg' };
+  } catch {
+    return { uri, mimeType: 'image/jpeg' };
+  }
 }
 
 function guessMimeFromUri(uri: string): string | null {

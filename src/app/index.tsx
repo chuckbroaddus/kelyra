@@ -1,28 +1,46 @@
-import { Link, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { ListRow } from '@/components/ui/ListRow';
+import { Screen } from '@/components/ui/Screen';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { TextField } from '@/components/ui/TextField';
+import { WorkingLine } from '@/components/ui/WorkingMark';
+import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { createClass, listClasses } from '@/lib/classes/api';
+import { deleteClass } from '@/lib/classes/delete';
 import type { ClassRow } from '@/lib/supabase/types';
-import { useFocusEffect } from 'expo-router';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
-  const { configured, loading, teacher, error, signOut } = useAuth();
-  const [classes, setClasses] = useState<ClassRow[]>([]);
+  const { switch: pick } = useLocalSearchParams<{ switch?: string }>();
+  const { configured, loading, teacher, error } = useAuth();
+  const [classes, setClasses] = useState<ClassRow[] | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [pending, setPending] = useState<ClassRow | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!teacher) return;
     try {
-      setClasses(await listClasses());
+      const next = await listClasses();
+      setClasses(next);
+      if (next.length === 1 && next[0] && !pick) {
+        router.replace(`/class/${next[0].id}`);
+      }
     } catch (err) {
+      setClasses([]);
       setStatus(err instanceof Error ? err.message : 'Could not load classes');
     }
-  }, [teacher]);
+  }, [teacher, router, pick]);
 
   useFocusEffect(
     useCallback(() => {
@@ -32,105 +50,140 @@ export default function HomeScreen() {
 
   if (!configured) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Kelyra</Text>
-        <Text style={styles.body}>
+      <Screen centered maxWidth={480}>
+        <Text style={[type.display, { color: colors.ink }]}>Kelyra</Text>
+        <Text style={[styles.lead, { color: colors.mute }]}>
           Slice 01 needs a Supabase project. Copy .env.example to .env, then apply
           supabase/migrations/20260812000000_slice01_foundation.sql. See docs/slice-01.md.
         </Text>
-      </View>
+      </Screen>
     );
   }
 
-  if (loading) {
+  if (loading || (teacher && classes === null)) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.body}>Loading…</Text>
-      </View>
+      <Screen>
+        <WorkingLine />
+      </Screen>
     );
   }
 
   if (!teacher) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Kelyra</Text>
-        <Text style={styles.body}>Sign in to create a class and type a roster.</Text>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Link href="/sign-in" style={styles.link}>
-          <Text style={styles.linkText}>Sign in</Text>
-        </Link>
-      </View>
+      <Screen centered maxWidth={400}>
+        <Text style={[styles.wordmark, { color: colors.ink }]}>Kelyra</Text>
+        <Text style={[styles.lead, { color: colors.mute }]}>
+          Photograph the work. Approve the gap. Send a short practice set.
+        </Text>
+        {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+        <PrimaryButton label="Teacher sign in" onPress={() => router.push('/sign-in')} />
+        <GhostButton label="Student join" onPress={() => router.push('/join')} />
+      </Screen>
     );
   }
 
   const onCreate = async () => {
     setStatus(null);
+    setCreating(true);
     try {
       const created = await createClass(name, teacher.id);
       setName('');
-      setClasses((current) => [...current, created]);
-      router.push(`/class/${created.id}`);
+      router.replace(`/class/${created.id}/setup`);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not create class');
+    } finally {
+      setCreating(false);
     }
   };
 
+  const empty = (classes ?? []).length === 0;
+
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Your classes</Text>
-      <Text style={styles.body}>{teacher.email}</Text>
-      <Link href="/capture" style={styles.link}>
-        <Text style={styles.linkText}>Capture homework</Text>
-      </Link>
-      <Link href="/inbox" style={styles.link}>
-        <Text style={styles.linkText}>Unassigned inbox</Text>
-      </Link>
-      <Link href="/join" style={styles.link}>
-        <Text style={styles.linkText}>Student join</Text>
-      </Link>
-      {classes.map((item) => (
-        <Link key={item.id} href={`/class/${item.id}`} style={styles.link}>
-          <Text style={styles.linkText}>{item.name}</Text>
-        </Link>
+    <Screen keyboard maxWidth={480}>
+      <Text style={[type.display, { color: colors.ink }]}>{empty ? 'Name your class' : 'Your classes'}</Text>
+      <Text style={[styles.lead, { color: colors.mute }]}>
+        {empty
+          ? 'One field. Then you can photograph work and file it to a student.'
+          : 'Open a class to see what needs you today.'}
+      </Text>
+
+      {(classes ?? []).map((item) => (
+        <ListRow
+          key={item.id}
+          title={item.name}
+          avatarName={item.name}
+          onPress={() => router.push(`/class/${item.id}`)}
+          trailing={[
+            {
+              key: 'delete',
+              label: 'Delete',
+              tone: 'danger',
+              autoCommit: false,
+              onPress: () => setPending(item),
+            },
+          ]}
+        />
       ))}
-      <TextInput
+
+      <SectionHeader label={empty ? 'New class' : 'Another class'} first={empty} />
+      <TextField
         placeholder="Room 14 math"
-        placeholderTextColor={colors.muted}
-        style={styles.input}
         value={name}
         onChangeText={setName}
+        returnKeyType="done"
+        onSubmitEditing={() => void onCreate()}
       />
-      <Pressable style={styles.button} onPress={() => void onCreate()}>
-        <Text style={styles.buttonText}>Create class</Text>
-      </Pressable>
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-      <Pressable onPress={() => void signOut()}>
-        <Text style={styles.signOut}>Sign out</Text>
-      </Pressable>
-    </ScrollView>
+      <View style={styles.gap} />
+      <PrimaryButton
+        label={creating ? 'Creating…' : 'Create class'}
+        disabled={creating}
+        onPress={() => void onCreate()}
+      />
+      {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
+      <ConfirmSheet
+        visible={Boolean(pending)}
+        title={`Delete ${pending?.name ?? 'class'}?`}
+        body="This deletes the class, its homework, practice, and grade book. Students who are only in this class will be deleted. Students who are also in another class will stay on those rosters. This cannot be undone."
+        confirmLabel={`Delete ${pending?.name ?? 'class'}`}
+        typeName={pending?.name}
+        busy={busy}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (!pending) return;
+          setBusy(true);
+          void deleteClass(pending.id)
+            .then(async () => {
+              setPending(null);
+              const remaining = await listClasses();
+              setClasses(remaining);
+              if (remaining[0]) router.replace(`/class/${remaining[0].id}`);
+              else router.replace('/');
+            })
+            .catch((err) => {
+              setStatus(err instanceof Error ? err.message : 'Could not delete class');
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: theme.scroll,
-  title: {
-    ...theme.title,
-    fontSize: 28,
+  wordmark: {
+    ...type.display,
+    textAlign: 'center',
   },
-  body: theme.body,
-  error: theme.error,
-  input: theme.input,
-  button: theme.button,
-  buttonText: theme.buttonText,
-  link: {
-    paddingVertical: 4,
+  lead: {
+    ...type.body,
+    marginTop: 8,
+    marginBottom: 24,
   },
-  linkText: {
-    ...theme.linkText,
-    fontSize: 17,
+  gap: {
+    height: 12,
   },
-  signOut: {
+  error: {
+    ...type.body,
     marginTop: 12,
-    color: colors.muted,
   },
 });

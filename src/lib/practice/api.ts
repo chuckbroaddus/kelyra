@@ -3,10 +3,15 @@ import { requireSupabase } from '@/lib/supabase/client';
 import type { PracticeItem, SubmissionRow } from '@/lib/supabase/types';
 
 function placeholderItems(skillLabel: string): PracticeItem[] {
-  return [1, 2, 3].map((n) => ({
-    id: `item-${n}`,
-    prompt: `Practice ${skillLabel} — item ${n}. Write your work.`,
-  }));
+  return [
+    { id: 'item-1', prompt: `Write one problem for ${skillLabel}.` },
+    { id: 'item-2', prompt: `Write a second problem for ${skillLabel}.` },
+    { id: 'item-3', prompt: `Write a third problem for ${skillLabel}.` },
+  ];
+}
+
+export function practiceTitle(title: string): string {
+  return title.replace(/^Practice:\s*/i, '').trim() || title;
 }
 
 export async function assignPractice(input: {
@@ -98,15 +103,18 @@ export async function listStudentPractice(studentId: string): Promise<StudentPra
   const assignmentById = new Map((assignments ?? []).map((row) => [row.id, row]));
   const setById = new Map((sets ?? []).map((row) => [row.id, row]));
 
-  return submissions.map((row) => {
+  return submissions.flatMap((row) => {
     const assignment = assignmentById.get(row.assignment_id);
-    const set = assignment?.practice_set_id ? setById.get(assignment.practice_set_id) : undefined;
-    return {
-      ...row,
-      title: assignment?.title ?? 'Practice',
-      practiceSetId: assignment?.practice_set_id ?? null,
-      items: set?.items ?? [],
-    };
+    if (!assignment || assignment.kind !== 'practice') return [];
+    const set = assignment.practice_set_id ? setById.get(assignment.practice_set_id) : undefined;
+    return [
+      {
+        ...row,
+        title: assignment.title,
+        practiceSetId: assignment.practice_set_id ?? null,
+        items: set?.items ?? [],
+      },
+    ];
   });
 }
 

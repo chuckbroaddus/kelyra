@@ -1,12 +1,17 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
+import { TextField } from '@/components/ui/TextField';
+import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { signInWithPassword, signUpWithPassword } from '@/lib/auth/api';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function SignInScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { configured, refresh } = useAuth();
   const [email, setEmail] = useState('');
@@ -38,59 +43,62 @@ export default function SignInScreen() {
 
   if (!configured) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Supabase is not configured</Text>
-        <Text style={styles.body}>Copy .env.example to .env and add your project URL and anon key.</Text>
-      </View>
+      <Screen centered maxWidth={400}>
+        <Text style={[type.title, { color: colors.ink }]}>Supabase is not configured</Text>
+        <Text style={[styles.lead, { color: colors.mute }]}>Copy .env.example to .env and add your project URL and anon key.</Text>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Teacher sign in</Text>
-      <TextInput
+    <Screen centered maxWidth={400} keyboard>
+      <Text style={[styles.wordmark, { color: colors.ink }]}>Kelyra</Text>
+      <Text style={[styles.kicker, { color: colors.mute }]}>Teacher sign in</Text>
+      <TextField
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
         placeholder="Email"
-        placeholderTextColor={colors.muted}
-        style={styles.input}
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
+      <View style={styles.gap} />
+      <TextField
         placeholder="Password (6+ characters)"
-        placeholderTextColor={colors.muted}
         secureTextEntry
-        style={styles.input}
         value={password}
         onChangeText={setPassword}
       />
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-      <Pressable disabled={busy} style={styles.button} onPress={() => void run('in')}>
-        <Text style={styles.buttonText}>Sign in</Text>
-      </Pressable>
-      <Pressable disabled={busy} style={styles.secondary} onPress={() => void run('up')}>
-        <Text style={styles.secondaryText}>Create account</Text>
-      </Pressable>
-    </View>
+      {message ? <Text style={[styles.message, { color: colors.danger }]}>{message}</Text> : <View style={styles.gap} />}
+      <PrimaryButton
+        label={busy ? 'Signing in…' : 'Sign in'}
+        disabled={busy}
+        onPress={() => void run('in')}
+      />
+      <GhostButton label="Create account" disabled={busy} onPress={() => void run('up')} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    ...theme.screen,
-    justifyContent: 'center',
+  wordmark: {
+    ...type.display,
+    textAlign: 'center',
   },
-  title: theme.title,
-  body: theme.body,
-  input: theme.input,
-  message: theme.error,
-  button: theme.button,
-  buttonText: theme.buttonText,
-  secondary: {
-    paddingVertical: 8,
-    alignItems: 'center',
+  kicker: {
+    ...type.meta,
+    textAlign: 'center',
+    marginBottom: 24,
   },
-  secondaryText: theme.secondaryText,
+  lead: {
+    ...type.body,
+    marginTop: 8,
+  },
+  message: {
+    ...type.body,
+    marginVertical: 12,
+  },
+  gap: {
+    height: 12,
+  },
 });

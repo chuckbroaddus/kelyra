@@ -10,11 +10,24 @@ function pickWebMimeType(): string | undefined {
 
 export function recordingOptions(): Audio.RecordingOptions {
   const webMime = pickWebMimeType();
+  const high = Audio.RecordingOptionsPresets.HIGH_QUALITY;
+  // Speech, not music. Stereo 44.1k made header-camera clips huge and STT slow.
   return {
-    ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-    web: webMime
-      ? { mimeType: webMime, bitsPerSecond: 128000 }
-      : {},
+    ...high,
+    isMeteringEnabled: false,
+    android: {
+      ...high.android,
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      bitRate: 32000,
+    },
+    ios: {
+      ...high.ios,
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      bitRate: 32000,
+    },
+    web: webMime ? { mimeType: webMime, bitsPerSecond: 24000 } : high.web,
   };
 }
 

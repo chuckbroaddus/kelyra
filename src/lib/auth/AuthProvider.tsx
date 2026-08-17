@@ -13,6 +13,7 @@ type AuthState = {
   teacher: TeacherRow | null;
   error: string | null;
   refresh: () => Promise<void>;
+  refreshTeacher: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -55,6 +56,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, [configured]);
 
+  const refreshTeacher = async () => {
+    if (!configured) return;
+    try {
+      const next = await getSession();
+      setTeacher(next ? await ensureTeacherProfile() : null);
+    } catch {
+      // Keep the current teacher row if a silent refresh fails.
+    }
+  };
+
   const value = useMemo<AuthState>(
     () => ({
       configured,
@@ -63,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       teacher,
       error,
       refresh,
+      refreshTeacher,
       signOut: async () => {
         await signOutRequest();
         setSession(null);

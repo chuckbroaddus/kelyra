@@ -1,22 +1,27 @@
 import { Stack } from 'expo-router';
 
-import { colors } from '@/constants/theme';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ClassStackLayout() {
+  const { colors } = useTheme();
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.header },
-        headerTintColor: colors.text,
-        headerTitleStyle: { color: colors.text },
-        headerShadowVisible: false,
+        headerShown: false,
         contentStyle: { backgroundColor: colors.bg },
+        animation: 'none',
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Class' }} />
-      <Stack.Screen name="gradebook" options={{ title: 'Grade book' }} />
-      <Stack.Screen name="assign" options={{ title: 'Assign practice' }} />
-      <Stack.Screen name="student/[studentId]" options={{ title: 'Student' }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="setup" />
+      <Stack.Screen name="gradebook" />
+      <Stack.Screen name="assignments" />
+      <Stack.Screen name="assignment/[assignmentId]" />
+      <Stack.Screen name="family" />
+      <Stack.Screen name="parents" />
+      <Stack.Screen name="parent/[parentId]" />
+      <Stack.Screen name="assign" />
+      <Stack.Screen name="student/[studentId]" />
     </Stack>
   );
 }

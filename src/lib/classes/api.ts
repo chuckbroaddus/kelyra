@@ -1,3 +1,4 @@
+import { generateJoinCode } from '@/lib/classes/joinCode';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { ClassRow } from '@/lib/supabase/types';
 
@@ -15,15 +16,47 @@ export async function createClass(name: string, teacherId: string): Promise<Clas
   if (!trimmed) throw new Error('Class name is required');
 
   const supabase = requireSupabase();
-  const { data, error } = await supabase
-    .from('classes')
-    .insert({ teacher_id: teacherId, name: trimmed, name_source: 'typed' })
-    .select('*')
-    .single();
-  if (error) throw error;
-
+  const data = await insertClassWithCode(teacherId, trimmed);
   await supabase.from('teachers').update({ active_class_id: data.id }).eq('id', teacherId);
   return data;
+}
+
+async function insertClassWithCode(teacherId: string, name: string): Promise<ClassRow> {
+  const supabase = requireSupabase();
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { data, error } = await supabase
+      .from('classes')
+      .insert({
+        teacher_id: teacherId,
+        name,
+        name_source: 'typed',
+        join_code: generateJoinCode(),
+      })
+      .select('*')
+      .single();
+    if (!error && data) return data;
+    lastError = error ?? new Error('Could not create class');
+    if (error && !/join_code|duplicate|unique/i.test(error.message)) throw error;
+  }
+  throw lastError ?? new Error('Could not create class');
+}
+
+export async function rotateJoinCode(classId: string): Promise<ClassRow> {
+  const supabase = requireSupabase();
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { data, error } = await supabase
+      .from('classes')
+      .update({ join_code: generateJoinCode() })
+      .eq('id', classId)
+      .select('*')
+      .single();
+    if (!error && data) return data;
+    lastError = error ?? new Error('Could not update join code');
+    if (error && !/join_code|duplicate|unique/i.test(error.message)) throw error;
+  }
+  throw lastError ?? new Error('Could not update join code');
 }
 
 export async function getClass(classId: string): Promise<ClassRow> {

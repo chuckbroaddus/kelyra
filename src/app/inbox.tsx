@@ -1,34 +1,54 @@
-import { Link, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { captureBadge } from '@/components/ui/Badge';
+import { ListRow } from '@/components/ui/ListRow';
+import { PhaseBanner } from '@/components/ui/PhaseBanner';
+import { Screen } from '@/components/ui/Screen';
+import { TextField } from '@/components/ui/TextField';
+import { WorkRow } from '@/components/ui/WorkRow';
+import { WorkingLine } from '@/components/ui/WorkingMark';
+import { type } from '@/constants/theme';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { FormSheet } from '@/components/ui/FormSheet';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { attachCapture, listInbox, type InboxItem } from '@/lib/captures/api';
+import { deleteCapture } from '@/lib/captures/delete';
+import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { resolveCaptureClass } from '@/lib/classes/api';
+import { formatWhen } from '@/lib/format';
+import { markNoteOnly } from '@/lib/gaps/api';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
-import { useFocusEffect } from 'expo-router';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function InboxScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
+  const { contextTab } = useChrome();
   const { teacher } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
-  const [classId, setClassId] = useState<string>('');
-  const [className, setClassName] = useState<string>('');
+  const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [picking, setPicking] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
+  const [pending, setPending] = useState<InboxItem | null>(null);
+  const [notePending, setNotePending] = useState<InboxItem | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!teacher) return;
     try {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
       setClassId(klass.id);
-      setClassName(klass.name);
       setRoster(await listRoster(klass.id));
       setItems(await listInbox(klass.id));
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not load inbox');
+    } finally {
+      setLoaded(true);
     }
   }, [teacher]);
 
@@ -38,137 +58,223 @@ export default function InboxScreen() {
     }, [load]),
   );
 
+  const needsName = items.filter((item) => !item.student_id);
+  const toReview = items.filter((item) => Boolean(item.student_id));
+  const chip = contextTab === 'name' || contextTab === 'review' ? contextTab : 'all';
+  const visible = chip === 'name' ? needsName : chip === 'review' ? toReview : items;
+
+  const visibleRoster = useMemo(() => {
+    const needle = filter.trim().toLowerCase();
+    if (!needle) return roster;
+    return roster.filter((student) => student.display_name.toLowerCase().includes(needle));
+  }, [filter, roster]);
+
   const onAssign = async (captureId: string, studentId: string) => {
-    setBusyId(captureId);
     setStatus(null);
     try {
       await attachCapture(captureId, studentId);
-      if (classId) {
-        router.push(`/class/${classId}/student/${studentId}`);
-        return;
-      }
-      await load();
+      setPicking(null);
+      if (classId) router.push(`/class/${classId}/student/${studentId}`);
+      else await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not assign student');
-    } finally {
-      setBusyId(null);
     }
   };
 
   if (!teacher) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.body}>Sign in to see Unassigned captures.</Text>
-      </View>
+      <Screen>
+        <Text style={[type.body, { color: colors.mute }]}>Sign in to see work that still needs a name.</Text>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Inbox</Text>
-      <Text style={styles.body}>
-        {className ? `${className}. ` : ''}
-        Unassigned items need a student. Matching never creates a new student.
-      </Text>
-      <Link href="/capture" style={styles.link}>
-        <Text style={styles.linkText}>Capture another</Text>
-      </Link>
-      {items.length === 0 ? (
-        <Text style={styles.meta}>Inbox is empty.</Text>
-      ) : (
-        items.map((item) => (
-          <View key={item.id} style={styles.card}>
-            {item.photoUrl ? (
-              <Image source={{ uri: item.photoUrl }} style={styles.preview} />
-            ) : (
-              <Text style={styles.meta}>No photo</Text>
-            )}
-            <Text style={styles.meta}>
-              {new Date(item.created_at).toLocaleString()}
-              {item.pageCount > 1 ? ` · ${item.pageCount} pages` : item.audio_asset_id ? ' · voice note' : ' · photo'}
-            </Text>
-            {item.transcript ? <Text style={styles.meta}>Heard: {item.transcript}</Text> : null}
-            {item.matchedName ? (
-              <Link href={`/class/${item.class_id}/student/${item.student_id}`}>
-                <Text style={styles.filed}>
-                  {item.status === 'draft' ? 'Review gaps for' : 'Filed on'} {item.matchedName}
-                </Text>
-              </Link>
-            ) : (
-              <Text style={styles.meta}>Unassigned — pick a student</Text>
-            )}
-            <View style={styles.names}>
-              {roster.map((student) => (
-                <Pressable
-                  key={student.id}
-                  disabled={busyId === item.id}
-                  style={[
-                    styles.nameChip,
-                    item.student_id === student.id ? styles.nameChipOn : null,
-                  ]}
-                  onPress={() => void onAssign(item.id, student.id)}
-                >
-                  <Text
-                    style={[
-                      styles.nameChipText,
-                      item.student_id === student.id ? styles.nameChipTextOn : null,
-                    ]}
-                  >
-                    {student.display_name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ))
-      )}
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-    </ScrollView>
+    <Screen>
+      {!loaded ? <WorkingLine /> : null}
+      {loaded && items.length === 0 ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          Nothing waiting. Work without a clear name lands here.
+        </Text>
+      ) : null}
+      {visible.map((item) => {
+        const unassigned = !item.student_id;
+        return (
+          <WorkRow
+            key={item.id}
+            title={item.matchedName ?? 'Needs a name'}
+            status={item.transcript ? `Heard: ${item.transcript}` : undefined}
+            meta={`${formatWhen(item.created_at)} · ${mediaLabel(item)}`}
+            photoUrl={item.photoUrl}
+            avatarName={item.matchedName ?? '?'}
+            unknown={unassigned && !item.photoUrl}
+            badge={captureBadge(item.status)}
+            onPress={() =>
+              item.student_id
+                ? router.push(`/class/${item.class_id}/student/${item.student_id}`)
+                : setPicking(item.id)
+            }
+            pills={
+              unassigned
+                ? [
+                    { key: 'assign', label: 'Assign name', kind: 'primary', onPress: () => setPicking(item.id) },
+                    { key: 'delete', label: 'Delete', kind: 'ghost', onPress: () => setPending(item) },
+                  ]
+                : [
+                    {
+                      key: 'review',
+                      label: 'Review',
+                      kind: 'primary',
+                      onPress: () => router.push(`/class/${item.class_id}/student/${item.student_id}`),
+                    },
+                    {
+                      key: 'note',
+                      label: 'Note only',
+                      kind: 'ghost',
+                      onPress: () => setNotePending(item),
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Delete',
+                      kind: 'ghost',
+                      onPress: () => setPending(item),
+                    },
+                  ]
+            }
+            trailing={
+              unassigned
+                ? [
+                    { key: 'assign', label: 'Assign', tone: 'brand', onPress: () => setPicking(item.id), autoCommit: false },
+                  ]
+                : [
+                    {
+                      key: 'review',
+                      label: 'Review',
+                      tone: 'brand',
+                      autoCommit: false,
+                      onPress: () => router.push(`/class/${item.class_id}/student/${item.student_id}`),
+                    },
+                  ]
+            }
+            leading={[
+              ...(unassigned
+                ? []
+                : [
+                    {
+                      key: 'note',
+                      label: 'Note',
+                      tone: 'wash' as const,
+                      autoCommit: false,
+                      onPress: () => setNotePending(item),
+                    },
+                  ]),
+              {
+                key: 'delete',
+                label: 'Delete',
+                tone: 'danger',
+                autoCommit: false,
+                onPress: () => setPending(item),
+              },
+            ]}
+          />
+        );
+      })}
+      {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
+      <PhaseBanner
+        phase={2}
+        compact
+        detail="Work without a clear name waits here. Matching never creates a student."
+      />
+
+      <FormSheet visible={Boolean(picking)} title="Who is this?" onClose={() => setPicking(null)}>
+            {roster.length > 8 ? (
+              <TextField placeholder="Find a student" value={filter} onChangeText={setFilter} />
+            ) : null}
+            {visibleRoster.map((student) => (
+              <ListRow
+                key={student.id}
+                title={student.display_name}
+                photoUrl={student.photoUrl}
+                onPress={() => picking && void onAssign(picking, student.id)}
+              />
+            ))}
+            {roster.length > 8 && visibleRoster.length === 0 ? (
+              <Text style={[type.meta, { color: colors.mute }]}>No names match that search.</Text>
+            ) : null}
+      </FormSheet>
+      <ConfirmSheet
+        visible={Boolean(notePending)}
+        title="Keep this as a note?"
+        body="It will not be a grade."
+        confirmLabel="Keep as a note"
+        photoUrl={notePending?.photoUrl}
+        busy={busy}
+        onCancel={() => setNotePending(null)}
+        onConfirm={() => {
+          if (!notePending) return;
+          setBusy(true);
+          void markNoteOnly(notePending.id)
+            .then(() => {
+              setNotePending(null);
+              return load();
+            })
+            .catch((err) => {
+              setStatus(err instanceof Error ? err.message : 'Could not save note');
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
+      <ConfirmSheet
+        visible={Boolean(pending)}
+        title="Delete this work?"
+        body="This removes the photo and is not a grade. This cannot be undone."
+        confirmLabel="Delete"
+        photoUrl={pending?.photoUrl}
+        busy={busy}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (!pending) return;
+          setBusy(true);
+          void deleteCapture(pending.id)
+            .then(() => {
+              setPending(null);
+              return load();
+            })
+            .catch((err) => {
+              setStatus(err instanceof Error ? err.message : 'Could not delete');
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
+    </Screen>
   );
 }
 
+function mediaLabel(item: InboxItem): string {
+  if (item.pageCount > 1) return `${item.pageCount} pages`;
+  if (item.pageCount === 1) return '1 page';
+  return 'Voice note';
+}
+
 const styles = StyleSheet.create({
-  container: theme.scroll,
-  title: theme.title,
-  body: theme.body,
-  meta: theme.meta,
-  filed: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+  empty: {
+    ...type.body,
+    marginTop: 16,
   },
-  link: {
-    paddingVertical: 4,
+  error: {
+    ...type.body,
+    marginTop: 16,
   },
-  linkText: theme.linkText,
-  card: {
-    gap: 8,
-    marginBottom: 16,
+  scrim: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  preview: {
-    ...theme.preview,
-    height: 180,
-  },
-  names: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  nameChip: {
+  sheet: {
+    maxHeight: '70%',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    padding: 16,
+    gap: 8,
   },
-  nameChipOn: {
-    backgroundColor: colors.chipOn,
-  },
-  nameChipText: {
-    color: colors.accent,
-  },
-  nameChipTextOn: {
-    color: colors.buttonText,
-  },
-  error: theme.error,
 });

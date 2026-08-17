@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { Platform } from 'react-native';
 
 import { getPreferredDeviceId } from '@/lib/media/devices';
@@ -7,6 +7,22 @@ import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 export type LiveRecording = {
   stop: () => Promise<{ uri: string; mimeType: string }>;
 };
+
+async function persistLocalAudio(
+  uri: string,
+  mimeType: string,
+): Promise<{ uri: string; mimeType: string }> {
+  if (Platform.OS === 'web') return { uri, mimeType };
+  try {
+    const FileSystem = await import('expo-file-system/legacy');
+    const ext = mimeType.includes('wav') ? 'wav' : 'm4a';
+    const dest = `${FileSystem.cacheDirectory}kelyra-voice-${Date.now()}.${ext}`;
+    await FileSystem.copyAsync({ from: uri, to: dest });
+    return { uri: dest, mimeType };
+  } catch {
+    return { uri, mimeType };
+  }
+}
 
 export async function startLiveRecording(deviceId?: string | null): Promise<LiveRecording> {
   if (Platform.OS === 'web') {
@@ -20,17 +36,33 @@ async function startNativeRecording(): Promise<LiveRecording> {
   if (!permission.granted) {
     throw new Error('Microphone permission is required.');
   }
-  await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+  await Audio.setAudioModeAsync({
+    allowsRecordingIOS: true,
+    playsInSilentModeIOS: true,
+    staysActiveInBackground: true,
+    interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+    interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+    shouldDuckAndroid: true,
+    playThroughEarpieceAndroid: false,
+  });
   const recording = new Audio.Recording();
   await recording.prepareToRecordAsync(recordingOptions());
   await recording.startAsync();
   return {
     async stop() {
       await recording.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
       const uri = recording.getURI();
       if (!uri) throw new Error('No audio was captured.');
-      return { uri, mimeType: mimeTypeForRecording() };
+      return persistLocalAudio(uri, mimeTypeForRecording());
     },
   };
 }
@@ -69,7 +101,7 @@ async function startWebRecording(deviceId?: string | null): Promise<LiveRecordin
       if (!raw.size) throw new Error('No audio was captured.');
       const { audioBlobToWav } = await import('@/lib/media/wav');
       const wav = await audioBlobToWav(raw);
-      return { uri: URL.createObjectURL(wav), mimeType: 'audio/wav' };
+      return persistLocalAudio(URL.createObjectURL(wav), 'audio/wav');
     },
   };
 }

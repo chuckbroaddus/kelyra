@@ -1,23 +1,40 @@
-import { Link } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, theme } from '@/constants/theme';
+import { Badge, practiceBadge } from '@/components/ui/Badge';
+import { PrimaryButton } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { AvatarTray } from '@/components/ui/AvatarTray';
+import { ClassmateSheet } from '@/components/ui/ClassmateSheet';
+import { Screen } from '@/components/ui/Screen';
+import { TextField } from '@/components/ui/TextField';
+import { type } from '@/constants/theme';
+import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { firstName } from '@/lib/format';
+import { signedProfileUrl } from '@/lib/people/photos';
+import { practiceTitle } from '@/lib/practice/api';
 import {
-  clearStudentSession,
   listStudentTodo,
   loadStudentSession,
+  openClassByJoinCode,
   submitStudentTodo,
   type StudentSession,
   type StudentTodo,
 } from '@/lib/student-session/api';
-import { useFocusEffect } from 'expo-router';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function TodoScreen() {
+  const { colors } = useTheme();
+  const router = useRouter();
+  const { contextTab } = useChrome();
   const [session, setSession] = useState<StudentSession | null>(null);
   const [items, setItems] = useState<StudentTodo[]>([]);
+  const [classmates, setClassmates] = useState<{ id: string; name: string; photoUrl?: string | null }[]>([]);
+  const [peer, setPeer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
   const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const next = await loadStudentSession();
@@ -30,6 +47,21 @@ export default function TodoScreen() {
       nextAnswers[item.submissionId] = { ...item.answers };
     }
     setAnswers(nextAnswers);
+    try {
+      const peers = await openClassByJoinCode(next.joinCode);
+      const others = peers.filter((row) => row.student_id !== next.studentId);
+      setClassmates(
+        await Promise.all(
+          others.map(async (row) => ({
+            id: row.student_id,
+            name: firstName(row.display_name),
+            photoUrl: await signedProfileUrl(row.photo_path),
+          })),
+        ),
+      );
+    } catch {
+      setClassmates([]);
+    }
   }, []);
 
   useFocusEffect(
@@ -40,8 +72,16 @@ export default function TodoScreen() {
     }, [load]),
   );
 
+  const assigned = items.find((item) => item.status === 'assigned');
+  const filter = contextTab === 'done' ? 'done' : 'todo';
+  const visible = useMemo(
+    () => items.filter((item) => (filter === 'done' ? item.status !== 'assigned' : item.status === 'assigned')),
+    [items, filter],
+  );
+
   const onSubmit = async (item: StudentTodo) => {
     if (!session) return;
+    setBusy(true);
     setStatus(null);
     try {
       await submitStudentTodo(
@@ -53,104 +93,155 @@ export default function TodoScreen() {
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not submit');
+    } finally {
+      setBusy(false);
     }
   };
 
   if (!session) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.body}>Join a class first.</Text>
-        <Link href="/join">
-          <Text style={styles.linkText}>Join class</Text>
-        </Link>
-      </View>
+      <Screen maxWidth={640} centered>
+        <Text style={[styles.lead, { color: colors.mute }]}>Join a class first.</Text>
+        <PrimaryButton label="Join class" onPress={() => router.push('/join')} />
+      </Screen>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{session.displayName}</Text>
-      <Text style={styles.body}>{session.className}</Text>
+    <Screen
+      maxWidth={720}
+      keyboard
+      sticky={
+        assigned && filter === 'todo' ? (
+          <PrimaryButton
+            label={busy ? 'Turning in…' : 'Turn in'}
+            disabled={busy}
+            onPress={() => void onSubmit(assigned)}
+          />
+        ) : undefined
+      }
+    >
+      <AvatarTray
+        people={classmates}
+        onPress={(person) => setPeer(person.name)}
+      />
+      <Text style={[type.meta, { color: colors.mute }]}>Your practice</Text>
       {items[0]?.focusLabel ? (
-        <Text style={styles.meta}>Focus: {items[0].focusLabel}</Text>
+        <View style={styles.focus}>
+          <Badge variant="focus" />
+          <Text style={[styles.focusLabel, { color: colors.ink }]} numberOfLines={2}>
+            {items[0].focusLabel}
+          </Text>
+        </View>
       ) : null}
-      {items.length === 0 ? (
-        <Text style={styles.meta}>No practice assigned yet.</Text>
+      {visible.length === 0 ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          {filter === 'done'
+            ? 'Nothing turned in yet.'
+            : 'Nothing to do yet. Your teacher will assign a short set.'}
+        </Text>
       ) : (
-        items.map((item) => (
-          <View key={item.submissionId} style={styles.card}>
-            <Text style={styles.section}>
-              {item.title} · {item.status}
-            </Text>
-            {item.items.map((practiceItem) => (
-              <View key={practiceItem.id} style={styles.item}>
-                <Text style={styles.body}>{practiceItem.prompt}</Text>
-                {item.status === 'assigned' ? (
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Your answer"
-                    placeholderTextColor={colors.muted}
-                    value={answers[item.submissionId]?.[practiceItem.id] ?? ''}
-                    onChangeText={(value) =>
-                      setAnswers((current) => ({
-                        ...current,
-                        [item.submissionId]: {
-                          ...(current[item.submissionId] ?? {}),
-                          [practiceItem.id]: value,
-                        },
-                      }))
-                    }
-                  />
-                ) : (
-                  <Text style={styles.meta}>
-                    {item.answers[practiceItem.id] || 'No answer'}
-                  </Text>
-                )}
+        <View style={styles.list}>
+          {visible.map((item) => (
+            <Card key={item.submissionId}>
+              <View style={styles.titleRow}>
+                <Text style={[styles.skill, { color: colors.ink }]} numberOfLines={2}>
+                  {practiceTitle(item.title)}
+                </Text>
+                <Badge variant={practiceBadge(item.status)} />
               </View>
-            ))}
-            {item.status === 'assigned' ? (
-              <Pressable style={styles.button} onPress={() => void onSubmit(item)}>
-                <Text style={styles.buttonText}>Submit</Text>
-              </Pressable>
-            ) : (
-              <Text style={styles.filed}>Submitted</Text>
-            )}
-          </View>
-        ))
+              {item.items.map((practiceItem, index) => (
+                <View key={practiceItem.id} style={styles.item}>
+                  <Text style={[styles.gutter, { color: colors.mute }]}>{index + 1}.</Text>
+                  <View style={styles.prompt}>
+                    <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
+                    {item.status === 'assigned' ? (
+                      <TextField
+                        placeholder="Your answer"
+                        value={answers[item.submissionId]?.[practiceItem.id] ?? ''}
+                        onChangeText={(value) =>
+                          setAnswers((current) => ({
+                            ...current,
+                            [item.submissionId]: {
+                              ...(current[item.submissionId] ?? {}),
+                              [practiceItem.id]: value,
+                            },
+                          }))
+                        }
+                      />
+                    ) : (
+                      <Text style={[type.meta, { color: colors.mute }]}>{item.answers[practiceItem.id] || 'No answer'}</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </Card>
+          ))}
+        </View>
       )}
-      {status ? <Text style={styles.error}>{status}</Text> : null}
-      <Pressable
-        onPress={() => {
-          void clearStudentSession().then(() => setSession(null));
-        }}
-      >
-        <Text style={styles.meta}>Leave class</Text>
-      </Pressable>
-    </ScrollView>
+      {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
+      <ClassmateSheet name={peer} className={session.className} onClose={() => setPeer(null)} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: theme.scroll,
-  title: theme.title,
-  body: theme.body,
-  section: theme.section,
-  meta: theme.meta,
-  filed: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+  lead: {
+    ...type.body,
+    marginBottom: 16,
+    textAlign: 'center',
   },
-  card: {
-    gap: 10,
-    marginBottom: 12,
+  empty: {
+    ...type.body,
+    marginTop: 16,
+  },
+  focus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  focusLabel: {
+    ...type.body,
+    fontWeight: '600',
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  list: {
+    gap: 24,
+    marginTop: 24,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  skill: {
+    ...type.body,
+    fontWeight: '600',
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   item: {
-    gap: 6,
+    flexDirection: 'row',
+    gap: 12,
+    minWidth: 0,
   },
-  input: theme.input,
-  button: theme.button,
-  buttonText: theme.buttonText,
-  linkText: theme.linkText,
-  error: theme.error,
+  gutter: {
+    ...type.meta,
+    width: 24,
+    flexShrink: 0,
+  },
+  prompt: {
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
+  },
+  error: {
+    ...type.body,
+    marginTop: 12,
+  },
 });

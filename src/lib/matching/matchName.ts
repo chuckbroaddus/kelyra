@@ -14,6 +14,28 @@ export function shouldAutoAttach(match: NameMatch): boolean {
   return Boolean(match.guessedStudentId) && match.confidence >= AUTO_ATTACH_MIN;
 }
 
+const SKIP = new Set(['name', 'student', 'date', 'grade', 'class', 'homework', 'assignment', 'the', 'and']);
+
+/** Match a name read off a worksheet to the roster. First name is enough if unique. */
+export function matchPaperName(visible: string, roster: RosterName[]): NameMatch {
+  const direct = matchName(visible, roster);
+  if (direct.guessedStudentId && direct.confidence >= 0.8) return direct;
+  const tokens = normalizeName(visible)
+    .split(' ')
+    .filter((token) => token.length > 2 && !SKIP.has(token));
+  for (const token of tokens) {
+    const part = matchName(token, roster);
+    if (part.guessedStudentId && part.confidence >= 0.85) return part;
+  }
+  const hay = normalizeName(visible);
+  const hits = roster.filter((student) => {
+    const parts = [student.displayName, ...student.aliases].map(normalizeName).filter(Boolean);
+    return parts.some((name) => name.split(' ').some((part) => part.length > 2 && hay.includes(part)));
+  });
+  if (hits.length === 1) return { guessedStudentId: hits[0]!.studentId, confidence: 0.86 };
+  return direct;
+}
+
 export function matchName(transcript: string, roster: RosterName[]): NameMatch {
   const spoken = normalizeName(transcript);
   if (!spoken || roster.length === 0) {

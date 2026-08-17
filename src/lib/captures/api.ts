@@ -10,6 +10,7 @@ import type { CaptureRow } from '@/lib/supabase/types';
 
 export type InboxItem = CaptureRow & {
   photoUrl: string | null;
+  photoUrls: string[];
   pageCount: number;
   matchedName: string | null;
 };
@@ -21,6 +22,7 @@ export async function createCapture(input: {
   photoAssetId?: string | null;
   audioAssetId?: string | null;
   transcript?: string | null;
+  assignmentId?: string | null;
 }): Promise<CaptureRow> {
   const { data, error } = await requireSupabase()
     .from('captures')
@@ -33,6 +35,7 @@ export async function createCapture(input: {
       photo_asset_id: input.photoAssetId ?? null,
       audio_asset_id: input.audioAssetId ?? null,
       transcript: input.transcript ?? null,
+      ...(input.assignmentId ? { assignment_id: input.assignmentId } : {}),
     })
     .select('*')
     .single();
@@ -161,9 +164,111 @@ export function describeMatch(match: NameMatch): string {
   return 'No roster name found. Pick the student in the inbox.';
 }
 
-export async function listInbox(classId: string): Promise<InboxItem[]> {
+export async function countInbox(classId: string): Promise<number> {
+  const { count, error } = await requireSupabase()
+    .from('captures')
+    .select('*', { count: 'exact', head: true })
+    .eq('class_id', classId)
+    .in('status', ['unassigned', 'attached', 'draft']);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function countNeedsYou(classId: string): Promise<number> {
+  const inbox = await countInbox(classId);
+  const supabase = requireSupabase();
+  const { data: assignments, error: assignmentError } = await supabase
+    .from('assignments')
+    .select('id')
+    .eq('class_id', classId);
+  if (assignmentError) throw assignmentError;
+  if (!assignments?.length) return inbox;
+  const { count, error } = await supabase
+    .from('submissions')
+    .select('*', { count: 'exact', head: true })
+    .in(
+      'assignment_id',
+      assignments.map((row) => row.id),
+    )
+    .eq('status', 'submitted');
+  if (error) throw error;
+  return inbox + (count ?? 0);
+}
+
+export type TurnedInItem = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  title: string;
+  submittedAt: string;
+};
+
+export async function listTurnedIn(classId: string): Promise<TurnedInItem[]> {
+  const supabase = requireSupabase();
+  const { data: assignments, error: assignmentError } = await supabase
+    .from('assignments')
+    .select('id, title')
+    .eq('class_id', classId);
+  if (assignmentError) throw assignmentError;
+  if (!assignments?.length) return [];
+  const { data: submissions, error } = await supabase
+    .from('submissions')
+    .select('*')
+    .in(
+      'assignment_id',
+      assignments.map((row) => row.id),
+    )
+    .eq('status', 'submitted')
+    .order('submitted_at', { ascending: false });
+  if (error) throw error;
+  if (!submissions?.length) return [];
+  const studentIds = [...new Set(submissions.map((row) => row.student_id))];
+  const { data: students } = await supabase.from('students').select('id, display_name').in('id', studentIds);
+  const nameById = new Map((students ?? []).map((row) => [row.id, row.display_name]));
+  const titleById = new Map(assignments.map((row) => [row.id, row.title]));
+  return submissions.map((row) => ({
+    id: row.id,
+    studentId: row.student_id,
+    studentName: nameById.get(row.student_id) ?? 'Student',
+    title: titleById.get(row.assignment_id) ?? 'Practice',
+    submittedAt: row.submitted_at ?? row.created_at,
+  }));
+}
+
+export async function listThisWeek(classId: string): Promise<{
+  captures: InboxItem[];
+  practice: TurnedInItem[];
+}> {
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const inbox = await listInbox(classId);
   const supabase = requireSupabase();
   const { data: captures, error } = await supabase
+    .from('captures')
+    .select('*')
+    .eq('class_id', classId)
+    .or(`created_at.gte.${cutoff},approved_at.gte.${cutoff}`)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const extraIds = (captures ?? []).filter((row) => !inbox.some((item) => item.id === row.id));
+  const hydrated = extraIds.length ? await hydrateCaptures(extraIds) : [];
+  const practice = (await listTurnedIn(classId)).filter((item) => item.submittedAt >= cutoff);
+  return { captures: [...inbox, ...hydrated], practice };
+}
+
+export async function returnCaptureToInbox(captureId: string) {
+  const { error } = await requireSupabase()
+    .from('captures')
+    .update({
+      student_id: null,
+      status: 'unassigned',
+      attached_at: null,
+    })
+    .eq('id', captureId);
+  if (error) throw error;
+}
+
+export async function listInbox(classId: string): Promise<InboxItem[]> {
+  const { data: captures, error } = await requireSupabase()
     .from('captures')
     .select('*')
     .eq('class_id', classId)
@@ -171,36 +276,42 @@ export async function listInbox(classId: string): Promise<InboxItem[]> {
     .order('created_at', { ascending: false });
   if (error) throw error;
   if (!captures?.length) return [];
+  return hydrateCaptures(captures);
+}
 
+async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
+  const supabase = requireSupabase();
   const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
-  const studentIds = captures
-    .map((row) => row.student_id)
-    .filter((id): id is string => Boolean(id));
-
-  const [{ data: assets, error: assetError }, { data: students, error: studentError }] =
-    await Promise.all([
-      supabase
-        .from('assets')
-        .select('*')
-        .in('id', photoIds.length ? photoIds : ['00000000-0000-0000-0000-000000000000']),
-      supabase
-        .from('students')
-        .select('id, display_name')
-        .in('id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']),
-    ]);
+  const studentIds = captures.map((row) => row.student_id).filter((id): id is string => Boolean(id));
+  const [{ data: assets, error: assetError }, { data: students }] = await Promise.all([
+    supabase
+      .from('assets')
+      .select('*')
+      .in('id', photoIds.length ? photoIds : ['00000000-0000-0000-0000-000000000000']),
+    supabase
+      .from('students')
+      .select('id, display_name')
+      .in('id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']),
+  ]);
   if (assetError) throw assetError;
-  if (studentError) throw studentError;
-
   const pathById = new Map((assets ?? []).map((asset) => [asset.id, asset.storage_path]));
   const nameById = new Map((students ?? []).map((student) => [student.id, student.display_name]));
-
   return Promise.all(
     captures.map(async (capture) => {
-      const firstId = allPhotoAssetIds(capture)[0] ?? capture.photo_asset_id;
-      const path = firstId ? pathById.get(firstId) : undefined;
-      const photoUrl = path ? await signedUrlForAsset('photo', path) : null;
+      const photoUrls: string[] = [];
+      for (const assetId of allPhotoAssetIds(capture)) {
+        const path = pathById.get(assetId);
+        const url = path ? await signedUrlForAsset('photo', path) : null;
+        if (url) photoUrls.push(url);
+      }
       const matchedName = capture.student_id ? (nameById.get(capture.student_id) ?? null) : null;
-      return { ...capture, photoUrl, pageCount: allPhotoAssetIds(capture).length, matchedName };
+      return {
+        ...capture,
+        photoUrl: photoUrls[0] ?? null,
+        photoUrls,
+        pageCount: photoUrls.length || allPhotoAssetIds(capture).length,
+        matchedName,
+      };
     }),
   );
 }
