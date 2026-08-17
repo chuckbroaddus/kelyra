@@ -2780,7 +2780,7 @@ The caption is **not** a `ScrollView`. No `PanResponder` inside `MarqueeText`. A
 
 Callers pass ink via `style` (`colors.ink`, `colors.brand` when selected, `colors.mute` for Unknown / shelf). `fadeColor` is the **surface**: `colors.bg` on rows, `colors.elevated` in the drawer and classmate sheet, `colors.wash` on table heads, `colors.brandSoft` on a selected `ListRow`.
 
-Rotate relayouts (§6). Re-measure. Flex titles / heroes may go static. **Table student clips stay 72** — do not promise a landscape grade-book name fits. Do not animate the rotate.
+Rotate relayouts (§6). Do not animate the rotate. `MarqueeScrollProvider` listens to `Dimensions` `change`, bumps `layoutEpoch`, and clears scroll-pause for 500 ms. Each `MarqueeText` **invalidates the old clip**, `measure()`s the new width, and does **not** crawl until that remasure lands. If the name now fits, stay static — do not keep the portrait overflow distance. Ink/opacity is JS-driven so a cancelled fade-out cannot leave the string invisible; fade-in always restores opacity 1 if the loop is interrupted. Tray captions stay 64 pt (they still overflow). Flex titles / heroes may go static. **Table student clips stay 72.**
 
 ### 30.5 File
 

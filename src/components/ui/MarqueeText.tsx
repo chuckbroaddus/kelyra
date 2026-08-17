@@ -32,6 +32,8 @@ export type MarqueeAlign = 'start' | 'center';
 export type MarqueeScroll = {
   paused: boolean;
   scrollEpoch: number;
+  /** Bumps on window rotate / resize so clips remasure and crawls restart. */
+  layoutEpoch: number;
   scrollHandlers: Pick<
     ScrollViewProps,
     'onScroll' | 'onScrollBeginDrag' | 'onScrollEndDrag' | 'onMomentumScrollEnd'
@@ -41,6 +43,7 @@ export type MarqueeScroll = {
 const idleScroll: MarqueeScroll = {
   paused: false,
   scrollEpoch: 0,
+  layoutEpoch: 0,
   scrollHandlers: {},
 };
 
@@ -108,6 +111,7 @@ function WebMarquee({
   accessibilityLabel?: string;
   accessible: boolean;
 }) {
+  const { layoutEpoch } = useMarqueeScroll();
   const [measuredClip, setMeasuredClip] = useState(0);
   const [textWidth, setTextWidth] = useState(0);
   const [shift, setShift] = useState(0);
@@ -115,11 +119,16 @@ function WebMarquee({
   const clipFromStyle = typeof layout.width === 'number' ? layout.width : 0;
   const clipWidth = measuredClip || clipFromStyle;
 
+  useEffect(() => {
+    setMeasuredClip(0);
+    setShift(0);
+    setInk(1);
+  }, [layoutEpoch]);
+
   useLayoutEffect(() => {
     const width = measureCssText(text, type);
     if (width > 0) setTextWidth(width);
   }, [text, type]);
-
   const { distance, overflowing } = marqueeMetrics(clipWidth, textWidth);
   const canRun = overflowing && !paused && !parentPaused && clipWidth > 0 && textWidth > 0;
   const rtl = I18nManager.isRTL;
@@ -190,7 +199,7 @@ function WebMarquee({
       live = false;
       cancelAnimationFrame(raf);
     };
-  }, [blankDelay, canRun, delay, distance, endDelay, fadeDuration, rtl]);
+  }, [blankDelay, canRun, delay, distance, endDelay, fadeDuration, layoutEpoch, rtl]);
 
   const spoken = accessibilityLabel ?? text;
 
@@ -235,8 +244,10 @@ function WebMarquee({
 export function MarqueeScrollProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(false);
   const [scrollEpoch, setScrollEpoch] = useState(0);
+  const [layoutEpoch, setLayoutEpoch] = useState(0);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coalesce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ignorePauseUntil = useRef(0);
 
   useEffect(
     () => () => {
@@ -245,6 +256,16 @@ export function MarqueeScrollProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  useEffect(() => {
+    const onChange = () => {
+      ignorePauseUntil.current = Date.now() + 500;
+      setPaused(false);
+      setLayoutEpoch((value) => value + 1);
+    };
+    const sub = Dimensions.addEventListener('change', onChange);
+    return () => sub.remove();
+  }, []);
 
   const bumpEpoch = () => {
     if (coalesce.current) return;
@@ -263,6 +284,7 @@ export function MarqueeScrollProvider({ children }: { children: ReactNode }) {
   const scrollHandlers = useMemo<MarqueeScroll['scrollHandlers']>(
     () => ({
       onScrollBeginDrag: () => {
+        if (Date.now() < ignorePauseUntil.current) return;
         if (settle.current) clearTimeout(settle.current);
         if (Platform.OS === 'web') {
           // Wheel / trackpad on web often never sends endDrag, which would
@@ -279,8 +301,8 @@ export function MarqueeScrollProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ paused, scrollEpoch, scrollHandlers }),
-    [paused, scrollEpoch, scrollHandlers],
+    () => ({ paused, scrollEpoch, layoutEpoch, scrollHandlers }),
+    [paused, scrollEpoch, layoutEpoch, scrollHandlers],
   );
 
   return <MarqueeScrollContext.Provider value={value}>{children}</MarqueeScrollContext.Provider>;
@@ -361,7 +383,7 @@ function NativeMarquee({
   accessible: boolean;
   fadeColor?: string;
 }) {
-  const { scrollEpoch } = useMarqueeScroll();
+  const { scrollEpoch, layoutEpoch } = useMarqueeScroll();
   const clipRef = useRef<View>(null);
   const measureRef = useRef<Text>(null);
   const offset = useRef(new Animated.Value(0)).current;
@@ -369,13 +391,14 @@ function NativeMarquee({
   const [clipWidth, setClipWidth] = useState(0);
   const [textWidth, setTextWidth] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [layoutReady, setLayoutReady] = useState(true);
   const [reduce, setReduce] = useState(false);
   const [reader, setReader] = useState(false);
   const [appActive, setAppActive] = useState(true);
 
   const { distance, duration, overflowing } = marqueeMetrics(clipWidth, textWidth);
   const frozen = paused || parentPaused || reduce || reader || !visible || !appActive;
-  const canRun = overflowing && !frozen && clipWidth > 0 && textWidth > 0;
+  const canRun = overflowing && !frozen && layoutReady && clipWidth > 0 && textWidth > 0;
   const rtl = I18nManager.isRTL;
 
   const takeClip = (width: number) => {
@@ -409,27 +432,43 @@ function NativeMarquee({
   }, []);
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      setVisible(true);
+    setLayoutReady(false);
+    setVisible(true);
+    offset.stopAnimation();
+    ink.stopAnimation();
+    offset.setValue(0);
+    ink.setValue(1);
+    const node = clipRef.current;
+    if (!node) {
+      setLayoutReady(true);
       return;
     }
+    node.measure((_x, _y, width) => {
+      if (width > 0) takeClip(width);
+      setLayoutReady(true);
+    });
+  }, [layoutEpoch]);
+
+  useEffect(() => {
+    setVisible(true);
     let live = true;
     const node = clipRef.current;
     if (!node) return;
     const handle = setTimeout(() => {
       node.measureInWindow((x, y, width, height) => {
         if (!live) return;
-        if (width <= 0 && height <= 0) return;
+        if (width <= 1 || height <= 1) return;
         const win = Dimensions.get('window');
-        const slop = 8;
+        if (win.width < 2 || win.height < 2) return;
+        const slop = 24;
         setVisible(x + width > -slop && y + height > -slop && x < win.width + slop && y < win.height + slop);
       });
-    }, 200);
+    }, 360);
     return () => {
       live = false;
       clearTimeout(handle);
     };
-  }, [scrollEpoch, clipWidth, textWidth, text]);
+  }, [scrollEpoch, layoutEpoch, clipWidth, textWidth, text]);
 
   useEffect(() => {
     offset.stopAnimation();
@@ -444,8 +483,14 @@ function NativeMarquee({
         toValue: value,
         duration: fadeDuration,
         easing: Easing.inOut(Easing.cubic),
-        useNativeDriver: nativeDriver,
+        useNativeDriver: false,
       });
+    const restore = () => {
+      ink.stopAnimation();
+      ink.setValue(1);
+      offset.stopAnimation();
+      offset.setValue(0);
+    };
     const run = () => {
       if (!live) return;
       ink.setValue(1);
@@ -460,10 +505,16 @@ function NativeMarquee({
         Animated.delay(endDelay),
         fade(0),
       ]).start(({ finished }) => {
-        if (!live || !finished) return;
+        if (!live || !finished) {
+          restore();
+          return;
+        }
         offset.setValue(0);
         Animated.sequence([Animated.delay(blankDelay), fade(1)]).start(({ finished: shown }) => {
-          if (!live || !shown) return;
+          if (!live || !shown) {
+            restore();
+            return;
+          }
           run();
         });
       });
@@ -471,10 +522,7 @@ function NativeMarquee({
     run();
     return () => {
       live = false;
-      offset.stopAnimation();
-      ink.stopAnimation();
-      offset.setValue(0);
-      ink.setValue(1);
+      restore();
     };
   }, [blankDelay, canRun, delay, distance, duration, endDelay, fadeDuration, ink, offset, rtl, text]);
 
@@ -519,6 +567,7 @@ function NativeMarquee({
           ref={measureRef}
           accessible={false}
           importantForAccessibility="no"
+          key={layoutEpoch}
           numberOfLines={Platform.OS === 'web' ? undefined : 1}
           ellipsizeMode={Platform.OS === 'web' ? undefined : 'clip'}
           onTextLayout={
@@ -535,7 +584,7 @@ function NativeMarquee({
         </Text>
       </View>
       <View style={[styles.clip, { alignItems, height: lineHeight }]}>
-        <Animated.View pointerEvents="none" style={[styles.ink, { opacity: ink }]}>
+        <Animated.View key={`ink-${layoutEpoch}`} pointerEvents="none" style={[styles.ink, { opacity: ink }]}>
           <Animated.View
             pointerEvents="none"
             style={[styles.track, runWidth ? { width: runWidth } : null, { transform: [{ translateX: offset }] }]}
