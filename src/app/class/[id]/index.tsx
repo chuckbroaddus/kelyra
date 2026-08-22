@@ -18,7 +18,8 @@ import { listInbox, listThisWeek, listTurnedIn, type InboxItem, type TurnedInIte
 import { deleteCapture } from '@/lib/captures/delete';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview } from '@/lib/classes/overview';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { ClassTabs, hrefForClassTab } from '@/components/ui/ClassTabs';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -28,9 +29,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 export default function ClassHomeScreen() {
   const { colors } = useTheme();
   const layout = useLayout();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
-  const { contextTab } = useChrome();
   const { teacher } = useAuth();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
@@ -40,6 +40,7 @@ export default function ClassHomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState<InboxItem | null>(null);
+  usePushedTitle(klass?.name ?? 'Class');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -47,7 +48,13 @@ export default function ClassHomeScreen() {
     try {
       const nextClass = await getClass(id);
       setKlass(nextClass);
-      setRoster(await listRoster(id));
+      try {
+        setRoster(await listRoster(id));
+      } catch (err) {
+        setRoster([]);
+        setError(err instanceof Error ? err.message : 'Could not load roster');
+      }
+      setLoaded(true);
       await loadClassOverview(id);
       setInbox(await listInbox(id));
       setTurned(await listTurnedIn(id));
@@ -55,7 +62,6 @@ export default function ClassHomeScreen() {
       await setActiveClass(teacher.id, id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load class');
-    } finally {
       setLoaded(true);
     }
   }, [id, teacher]);
@@ -67,7 +73,8 @@ export default function ClassHomeScreen() {
   );
 
   const waiting = inbox.length + turned.length;
-  const chip = contextTab || 'today';
+  const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+  const pane = paneRaw === 'week' || paneRaw === 'needs' ? paneRaw : 'today';
   const twoUp = layout.breakpoint === 'tablet';
 
   const openCapture = (item: InboxItem) => {
@@ -77,20 +84,22 @@ export default function ClassHomeScreen() {
 
   return (
     <Screen>
+      {id ? <ClassTabs classId={id} /> : null}
       {!loaded ? <WorkingLine /> : null}
 
-      {chip !== 'needs' && roster.length > 0 ? (
+      {pane !== 'needs' && roster.length > 0 ? (
         <AvatarTray
           people={roster.map((student) => ({
             id: student.id,
             name: student.display_name,
             photoUrl: student.photoUrl,
+            hasPhoto: Boolean(student.photo_asset_id),
           }))}
           onPress={(person) => router.push(`/class/${id}/student/${person.id}`)}
         />
       ) : null}
 
-      {chip === 'today' && inbox.length > 0 ? (
+      {pane === 'today' && inbox.length > 0 ? (
         <WorkShelf
           items={inbox.slice(0, 12).map((item) => ({
             id: item.id,
@@ -106,14 +115,22 @@ export default function ClassHomeScreen() {
         />
       ) : null}
 
-      {chip === 'today' && roster.length === 0 ? (
+      {pane === 'today' ? (
+        <GhostButton
+          align="left"
+          label="Post to class"
+          onPress={() => router.replace(hrefForClassTab(id, 'feed') as never)}
+        />
+      ) : null}
+
+      {pane === 'today' && roster.length === 0 ? (
         <Card>
           <Text style={[styles.empty, { color: colors.mute }]}>No students yet.</Text>
           <GhostButton align="left" label="Add students" onPress={() => router.push(`/class/${id}/setup`)} />
         </Card>
       ) : null}
 
-      {chip === 'week' ? (
+      {pane === 'week' ? (
         <View style={twoUp ? styles.two : styles.one}>
           {(week?.captures ?? []).map((item) => (
             <WorkRow
@@ -164,7 +181,7 @@ export default function ClassHomeScreen() {
         </View>
       ) : null}
 
-      {chip === 'needs' ? (
+      {pane === 'needs' ? (
         <View style={styles.one}>
           {inbox.map((item) => (
             <WorkRow

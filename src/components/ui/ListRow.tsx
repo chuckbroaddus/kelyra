@@ -3,6 +3,8 @@ import { useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
+import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -10,6 +12,7 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 export type ListSwipeAction = {
   key: string;
   label: string;
+  tooltip?: string;
   tone: 'brand' | 'wash' | 'danger';
   onPress: () => void;
   autoCommit?: boolean;
@@ -17,31 +20,44 @@ export type ListSwipeAction = {
 
 type Props = {
   title: string;
+  tooltip?: string;
   status?: string;
   /** Replaces the status line visually. `status` still feeds the spoken name if set. */
   statusNode?: ReactNode;
   avatarName?: string;
   photoUrl?: string | null;
+  hasPhoto?: boolean;
+  /** Replaces the default avatar. */
+  avatar?: ReactNode;
+  /** 22 pt glyph in the 36 avatar slot. Aligns with photo rows. */
+  icon?: IconName;
   unknown?: boolean;
   chevron?: boolean;
   right?: ReactNode;
   onPress?: () => void;
   selected?: boolean;
+  /** Waiting item: heavier title. Spoken as Unread. */
+  unread?: boolean;
   leading?: ListSwipeAction[];
   trailing?: ListSwipeAction[];
 };
 
 export function ListRow({
   title,
+  tooltip,
   status,
   statusNode,
   avatarName,
   photoUrl,
+  hasPhoto,
+  avatar,
+  icon,
   unknown,
   chevron = true,
   right,
   onPress,
   selected,
+  unread,
   leading = [],
   trailing = [],
 }: Props) {
@@ -63,8 +79,15 @@ export function ListRow({
   };
 
   const run = (action: ListSwipeAction) => {
-    snap(0);
-    action.onPress();
+    Animated.timing(x, {
+      toValue: 0,
+      duration: 140,
+      useNativeDriver: true,
+    }).start(() => {
+      start.current = 0;
+      setSwiping(false);
+      action.onPress();
+    });
   };
 
   const responder = useRef(
@@ -111,8 +134,8 @@ export function ListRow({
   ).current;
 
   const tile = (action: ListSwipeAction) => (
+    <HoverTip key={action.key} label={tipIfNew(action.label, action.tooltip)}>
     <Pressable
-      key={action.key}
       onPress={() => run(action)}
       style={[
         styles.tile,
@@ -146,7 +169,18 @@ export function ListRow({
         {action.label}
       </Text>
     </Pressable>
+    </HoverTip>
   );
+
+  const face =
+    avatar ??
+    (icon ? (
+      <View style={styles.glyph}>
+        <Icon name={icon} color={colors.ink} size={22} />
+      </View>
+    ) : (
+      <Avatar name={avatarName ?? title} photoUrl={photoUrl} hasPhoto={hasPhoto} size={36} unknown={unknown} />
+    ));
 
   const body = (
     <View
@@ -159,14 +193,14 @@ export function ListRow({
         },
       ]}
     >
-      <Avatar name={avatarName ?? title} photoUrl={photoUrl} size={36} unknown={unknown} />
+      {face}
       <View style={styles.text}>
         <MarqueeText
           text={title}
           align="start"
           paused={swiping}
           fadeColor={selected ? colors.brandSoft : colors.bg}
-          style={[styles.title, { color: colors.ink }]}
+          style={[styles.title, { color: colors.ink, fontWeight: unread ? '700' : '600' }]}
         />
         {statusNode ??
           (status ? (
@@ -182,8 +216,8 @@ export function ListRow({
     </View>
   );
 
-  const spoken = status ? `${title}. ${status}` : title;
-  const inner = onPress ? (
+  const spoken = `${unread ? 'Unread. ' : ''}${status ? `${title}. ${status}` : title}`;
+  const pressable = onPress ? (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={spoken}
@@ -201,7 +235,7 @@ export function ListRow({
             },
           ]}
         >
-          <Avatar name={avatarName ?? title} photoUrl={photoUrl} size={36} unknown={unknown} />
+          {face}
           <View style={styles.text}>
             <MarqueeText
               text={title}
@@ -224,6 +258,9 @@ export function ListRow({
         </View>
       )}
     </Pressable>
+  ) : null;
+  const inner = onPress ? (
+    tooltip ? <HoverTip label={tooltip} fill>{pressable}</HoverTip> : pressable
   ) : (
     body
   );
@@ -274,6 +311,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  glyph: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     minHeight: 52,

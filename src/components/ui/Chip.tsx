@@ -1,18 +1,21 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
 import { hitSlop, radius } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   label: string;
+  tooltip?: string;
   selected?: boolean;
   disabled?: boolean;
   onPress?: () => void;
 };
 
-export function Chip({ label, selected, disabled, onPress }: Props) {
+export function Chip({ label, tooltip, selected, disabled, onPress }: Props) {
   const { colors } = useTheme();
   return (
+    <HoverTip label={tipIfNew(label, tooltip)}>
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: Boolean(selected), disabled: Boolean(disabled) }}
@@ -36,6 +39,7 @@ export function Chip({ label, selected, disabled, onPress }: Props) {
         {label}
       </Text>
     </Pressable>
+    </HoverTip>
   );
 }
 

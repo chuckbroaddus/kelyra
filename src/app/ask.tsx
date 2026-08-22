@@ -1,34 +1,101 @@
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { GhostButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Icon } from '@/components/ui/Icon';
-import { TextField } from '@/components/ui/TextField';
+import { MessageComposer } from '@/components/ui/MessageComposer';
+import { MessagePayloadView } from '@/components/ui/MessageAttach';
+import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
-import { invokeAi } from '@/lib/ai/invoke';
+import { runAskAgent, type AskChatLine } from '@/lib/ai/askAgent';
+import { ASK_MODEL_TURNS, appendAskMessage, listAskMessages, startAskThread } from '@/lib/ai/askHistory';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { firstName } from '@/lib/format';
+import { signedMessageUrl, type DraftAttach } from '@/lib/messages/attachments';
+import { can } from '@/lib/school/matrix';
+import { isOfficeRole } from '@/lib/school/roles';
 import { listRoster } from '@/lib/students/api';
-import { useLayout } from '@/lib/theme/layout';
+import type { MessagePayload } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-type Bubble = { from: 'user' | 'assistant'; text: string };
+type Bubble = { id?: string; from: 'user' | 'assistant'; text: string; payload?: MessagePayload | null };
+
+async function lineForAi(item: Bubble, attachPhoto: boolean): Promise<AskChatLine> {
+  const note =
+    item.payload?.type === 'link'
+      ? `\nLink: ${item.payload.title} ${item.payload.url}`
+      : item.payload?.type === 'file'
+        ? `\nAttached file: ${item.payload.name}`
+        : item.payload?.type === 'photo' && !attachPhoto
+          ? '\n(Earlier photo omitted.)'
+          : '';
+  const imageUrl =
+    attachPhoto && item.payload?.type === 'photo'
+      ? await signedMessageUrl('photo', item.payload.storage_path)
+      : null;
+  return {
+    from: item.from,
+    text: `${item.text}${note}`,
+    imageUrl,
+    imageMime: attachPhoto && item.payload?.type === 'photo' ? item.payload.mime_type ?? 'image/jpeg' : null,
+  };
+}
 
 export default function AskScreen() {
   const { colors } = useTheme();
   const chrome = useChrome();
-  const layout = useLayout();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { profile, teacher } = useAuth();
+  const scroller = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
-  const [draft, setDraft] = useState('');
+  const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('Asking AI…');
   const [error, setError] = useState<string | null>(null);
-  const [chips, setChips] = useState<string[]>([
-    'Who still needs a name?',
-    'What gaps did I approve this week?',
-  ]);
+  const office = isOfficeRole(profile);
+
+  const loadHistory = useCallback(async () => {
+    if (!profile) {
+      setMessages([]);
+      setReady(true);
+      return;
+    }
+    try {
+      const rows = await listAskMessages();
+      setMessages(
+        rows.map((row) => ({
+          id: row.id,
+          from: row.role,
+          text: row.body,
+          payload: row.payload,
+        })),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load this chat');
+    } finally {
+      setReady(true);
+    }
+  }, [profile]);
 
   useEffect(() => {
+    setReady(false);
+    void loadHistory();
+  }, [loadHistory]);
+  const [chips, setChips] = useState<string[]>(
+    office
+      ? ['Create a parent record', 'List the classes']
+      : ['Who still needs a name?', 'What gaps did I approve this week?'],
+  );
+
+  useEffect(() => {
+    if (office && can(profile, 'parents.invite')) {
+      setChips(['Create a parent record', 'List the classes']);
+      return;
+    }
     if (chrome.role !== 'teacher' || !chrome.classId) return;
     void listRoster(chrome.classId)
       .then((roster) => {
@@ -42,120 +109,126 @@ export default function AskScreen() {
         }
       })
       .catch(() => undefined);
-  }, [chrome.role, chrome.classId]);
+  }, [chrome.role, chrome.classId, office, profile]);
 
-  const send = async (text: string) => {
+  const send = async (text: string, payload: DraftAttach | MessagePayload | null = null) => {
     const trimmed = text.trim();
-    if (!trimmed || busy) return;
-    const next: Bubble[] = [...messages, { from: 'user', text: trimmed }];
+    if ((!trimmed && !payload) || busy) return;
+    const body =
+      trimmed ||
+      (payload?.type === 'photo' ? 'Photo' : payload?.type === 'file' ? payload.name : payload?.type === 'link' ? payload.title : '');
+    const userBubble: Bubble = { from: 'user', text: body, payload };
+    const next: Bubble[] = [...messages, userBubble];
     setMessages(next);
-    setDraft('');
+    setBusy(true);
+    setStatus('Asking AI…');
+    setError(null);
+    try {
+      const savedId = await appendAskMessage('user', body, payload).catch(() => null);
+      if (savedId) userBubble.id = savedId;
+      const forModel = next.slice(-ASK_MODEL_TURNS);
+      const lastPhoto = forModel.findLastIndex((row) => row.payload?.type === 'photo');
+      const reply = await runAskAgent({
+        profile,
+        teacherId: teacher?.id ?? null,
+        classId: chrome.classId,
+        live: {
+          role: profile?.role ?? (chrome.role === 'none' ? 'teacher' : chrome.role),
+          displayName: profile?.display_name ?? null,
+          handle: profile?.username ?? null,
+          classId: chrome.classId,
+          className: chrome.className,
+          classCount: chrome.classes.length,
+          studentId: chrome.studentSession?.studentId ?? null,
+          screen: pathname || '/ask',
+        },
+        messages: await Promise.all(forModel.map((item, index) => lineForAi(item, index === lastPhoto))),
+        onStatus: setStatus,
+      });
+      const bot: Bubble = { from: 'assistant', text: reply.text };
+      setMessages([...next, bot]);
+      const botId = await appendAskMessage('assistant', reply.text, null).catch(() => null);
+      if (botId) bot.id = botId;
+      if (reply.href) router.push(reply.href as never);
+    } catch {
+      setError('Kelyra is offline. Try again in a moment.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onNewChat = async () => {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const reply = await invokeAi<{ text?: string }>('ask-assistant', {
-        role: chrome.role === 'none' ? 'teacher' : chrome.role,
-        classId: chrome.classId,
-        studentId: chrome.studentSession?.studentId,
-        messages: next,
-      });
-      setMessages([...next, { from: 'assistant', text: reply.text?.trim() || 'I can’t tell from what’s saved. Open Inbox or the student’s page.' }]);
-    } catch {
-      setError('Ask is offline. Try again in a moment.');
+      await startAskThread();
+      setMessages([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start a new chat');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg, maxWidth: layout.orientation === 'landscape' ? 640 : undefined, alignSelf: 'center', width: '100%' }]}>
-      <ScrollView
-        style={styles.scroller}
-        contentContainerStyle={[styles.thread, { paddingBottom: chrome.trayPadding + 72 }]}
-        onScroll={chrome.onScroll}
-        scrollEventThrottle={16}
-      >
-        {messages.length === 0 ? (
-          <View style={styles.empty}>
-            {chrome.role === 'teacher'
-              ? chips.map((chip) => (
-                  <Chip key={chip} label={chip} onPress={() => void send(chip)} />
-                ))
-              : (
-                <Text style={[type.body, { color: colors.mute }]}>Ask a question about this week’s work.</Text>
-              )}
-          </View>
-        ) : null}
-        {messages.map((item, index) => (
-          <View
-            key={`${item.from}-${index}`}
-            style={[
-              styles.bubble,
-              item.from === 'user'
-                ? [styles.user, { backgroundColor: colors.brandSoft }]
-                : [styles.bot, { backgroundColor: colors.card, borderColor: colors.line }],
-            ]}
-          >
-            <Text style={[type.body, { color: colors.ink }]}>{item.text}</Text>
-          </View>
-        ))}
-        {busy ? (
-          <View style={[styles.bubble, styles.bot, { backgroundColor: colors.card, borderColor: colors.line }]}>
-            <WorkingLine text="Asking AI…" />
-          </View>
-        ) : null}
-        {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : null}
-        {messages.length ? (
-          <Text style={[type.meta, { color: colors.mute }]}>Ask</Text>
-        ) : null}
-      </ScrollView>
-      <View
-        style={[
-          styles.composer,
-          {
-            backgroundColor: colors.elevated,
-            borderTopColor: colors.line,
-            bottom: chrome.trayRest,
-          },
-        ]}
-      >
-        <View style={styles.field}>
-          <TextField
-            placeholder="Ask…"
-            value={draft}
-            onChangeText={setDraft}
-            onSubmitEditing={() => void send(draft)}
-            returnKeyType="send"
-          />
+    <Screen
+      keyboard
+      maxWidth={640}
+      scrollRef={scroller}
+      onContentSizeChange={() => scroller.current?.scrollToEnd({ animated: true })}
+      sticky={
+        <MessageComposer
+          placeholder="Ask…"
+          busy={busy}
+          onSend={send}
+          onError={setError}
+        />
+      }
+    >
+      {!ready ? <WorkingLine text="Opening Kelyra…" /> : null}
+      {ready && messages.length === 0 ? (
+        <View style={styles.empty}>
+          {chrome.role === 'teacher' || office
+            ? chips.map((chip) => (
+                <Chip key={chip} label={chip} onPress={() => void send(chip)} />
+              ))
+            : (
+              <Text style={[type.body, { color: colors.mute }]}>Ask a question about this week’s work.</Text>
+            )}
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Send"
-          disabled={!draft.trim() || busy}
-          onPress={() => void send(draft)}
-          style={({ pressed }) => [
-            styles.send,
-            { backgroundColor: colors.brand, opacity: !draft.trim() || busy ? 0.4 : pressed ? 0.88 : 1 },
+      ) : null}
+      {messages.map((item, index) => (
+        <View
+          key={item.id ?? `${item.from}-${index}`}
+          style={[
+            styles.bubble,
+            item.from === 'user'
+              ? [styles.user, { backgroundColor: colors.brandSoft }]
+              : [styles.bot, { backgroundColor: colors.card, borderColor: colors.line }],
           ]}
         >
-          <Icon name="send" color={colors.brandInk} size={18} />
-        </Pressable>
-      </View>
-    </View>
+          {item.payload ? (
+            <MessagePayloadView payload={item.payload} body={item.text} onOpenWork={() => {}} />
+          ) : (
+            <Text style={[type.body, { color: colors.ink }]}>{item.text}</Text>
+          )}
+        </View>
+      ))}
+      {busy ? (
+        <View style={[styles.bubble, styles.bot, { backgroundColor: colors.card, borderColor: colors.line }]}>
+          <WorkingLine text={status} />
+        </View>
+      ) : null}
+      {ready && messages.length > 0 ? (
+        <GhostButton label="New chat" align="left" disabled={busy} onPress={() => void onNewChat()} />
+      ) : null}
+      {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  scroller: {
-    flex: 1,
-  },
-  thread: {
-    padding: 16,
-    gap: 10,
-  },
   empty: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -172,26 +245,5 @@ const styles = StyleSheet.create({
   bot: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-  },
-  composer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-  },
-  field: {
-    flex: 1,
-  },
-  send: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

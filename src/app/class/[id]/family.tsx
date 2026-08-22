@@ -1,19 +1,19 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
+import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Card } from '@/components/ui/Card';
-import { JoinCodeCard } from '@/components/ui/JoinCode';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { type } from '@/constants/theme';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { getClass, rotateJoinCode, setActiveClass } from '@/lib/classes/api';
+import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
 import { buildFamilyDigest, buildWeeklyFamilyDigest, openFamilyEmail, shareFamilyDigest } from '@/lib/parents/digest';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
@@ -22,7 +22,6 @@ import { useFocusEffect } from 'expo-router';
 
 export default function FamilyScreen() {
   const { colors } = useTheme();
-  const chrome = useChrome();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { teacher } = useAuth();
@@ -84,26 +83,12 @@ export default function FamilyScreen() {
 
   const focusById = new Map((overview?.focusStudents ?? []).map((row) => [row.id, row.focusLabel]));
 
-  useEffect(() => {
-    chrome.setPushedTitle('Family');
-    return () => chrome.setPushedTitle(null);
-  }, [chrome]);
+  usePushedTitle(klass?.name ?? 'Class');
 
   return (
     <Screen keyboard maxWidth={640}>
-      <SectionHeader label="Student join" first />
-      {klass ? (
-        <JoinCodeCard
-          code={klass.join_code}
-          onRefresh={async () => {
-            const next = await rotateJoinCode(klass.id);
-            setKlass(next);
-            setStatus('New join code is ready. Students will need the new words.');
-          }}
-        />
-      ) : null}
-
-      <SectionHeader label="Send a note home" />
+      {id ? <ClassTabs classId={id} /> : null}
+      <SectionHeader label="Send a note home" first />
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>
           A short class update: focus skill and practice status. No scores, no photos.
@@ -115,12 +100,12 @@ export default function FamilyScreen() {
 
       <ListRow
         title="Parents"
-        status="People and invite links"
+        status="People linked to this class"
         avatarName="Parents"
         onPress={() => router.push(`/class/${id}/parents`)}
       />
 
-      <SectionHeader label="Who to invite" />
+      <SectionHeader label="Who to tell" />
       {roster.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>Add students in Setup first. Then open a child to add a parent.</Text>
       ) : (
@@ -139,7 +124,7 @@ export default function FamilyScreen() {
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       <PhaseBanner
         phase={4}
-        detail="Students join with the class words and pick their name. Parents get a link from a student’s page. They see the focus skill and whether practice is done — nothing else."
+        detail="Parents get a link from a student’s page. They see the focus skill and whether practice is done — nothing else. Students sign in with the login assigned to them."
       />
     </Screen>
   );

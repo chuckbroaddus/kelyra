@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AssignmentMark } from '@/components/ui/AssignmentMark';
+import { HoverTip } from '@/components/ui/HoverTip';
 import { MarqueeText, useMarqueeScroll } from '@/components/ui/MarqueeText';
 import { radius, type } from '@/constants/theme';
 import { assignmentSubtitle } from '@/lib/assignments/api';
@@ -26,6 +27,7 @@ export function AssignmentPicker({ assignments, selectedId, onSelect, onCreate }
       contentContainerStyle={styles.row}
     >
       {onCreate ? (
+        <HoverTip label="Create a new assignment">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="New assignment"
@@ -47,6 +49,7 @@ export function AssignmentPicker({ assignments, selectedId, onSelect, onCreate }
             </>
           )}
         </Pressable>
+        </HoverTip>
       ) : null}
       {assignments.map((row) => {
         const selected = row.id === selectedId;

@@ -129,6 +129,10 @@ const server = createServer(async (req, res) => {
       json(res, await cutoutPortrait(body));
       return;
     }
+    if (route === 'cutout-logo') {
+      json(res, await cutoutLogo(body));
+      return;
+    }
     if (route === 'analyze-answer-key') {
       json(res, await analyzeAnswerKey(body));
       return;
@@ -578,38 +582,82 @@ async function classifyCapture(body) {
   };
 }
 
-async function askAssistant(supabase, body) {
-  const role = body.role === 'student' || body.role === 'parent' ? body.role : 'teacher';
-  const messages = Array.isArray(body.messages) ? body.messages : [];
-  const last = messages
-    .map((item) => `${item?.from === 'assistant' ? 'Ask' : 'User'}: ${String(item?.text ?? '')}`)
-    .join('\n');
-  let context = '';
-  if (role === 'teacher' && body.classId) {
-    const [{ count: unassigned }, { count: drafts }, { data: enrollments }] = await Promise.all([
-      supabase.from('captures').select('*', { count: 'exact', head: true }).eq('class_id', body.classId).eq('status', 'unassigned'),
-      supabase.from('captures').select('*', { count: 'exact', head: true }).eq('class_id', body.classId).eq('status', 'draft'),
-      supabase.from('enrollments').select('student_id').eq('class_id', body.classId),
-    ]);
-    const ids = (enrollments ?? []).map((row) => row.student_id);
-    const { data: students } = ids.length
-      ? await supabase.from('students').select('display_name').in('id', ids)
-      : { data: [] };
-    const firsts = (students ?? []).map((row) => String(row.display_name).split(/\s+/)[0]).filter(Boolean);
-    context = `Teacher of this class. Roster first names: ${firsts.join(', ') || '(none)'}. Needs a name: ${unassigned ?? 0}. Ready to review: ${drafts ?? 0}. You never Approve. You never insert a student. If a name needs filing, tell them to open Inbox.`;
-  } else if (role === 'student') {
-    context =
-      'You help one student with their assigned practice and approved focus skill only. Never mention other students, drafts, scores, or Grok.';
-  } else if (role === 'parent') {
-    context =
-      'You help a parent. You may talk about their child’s approved focus, assigned/done practice, and the published parent sentence only. Never mention scores, photos, drafts, other children, or Grok.';
+const ASK_FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
+
+async function hydrateAskImages(input) {
+  if (!Array.isArray(input)) return input;
+  const next = [];
+  for (const item of input) {
+    if (!item || !Array.isArray(item.content)) {
+      next.push(item);
+      continue;
+    }
+    const content = [];
+    for (const part of item.content) {
+      if (part?.type === 'input_image' && typeof part.image_url === 'string' && !part.image_url.startsWith('data:')) {
+        try {
+          content.push({
+            ...part,
+            image_url: await prepareImageForGrok(part.image_url),
+            detail: part.detail === 'high' || part.detail === 'low' ? part.detail : 'auto',
+          });
+        } catch (err) {
+          console.error(`[ai-dev] ask photo: ${err instanceof Error ? err.message : err}`);
+          content.push({ type: 'input_text', text: '(A photo was attached but could not be opened.)' });
+        }
+      } else {
+        content.push(part);
+      }
+    }
+    next.push({ ...item, content });
   }
-  const payload = await xaiResponses(
-    practiceModel,
-    `You are Ask, a filing assistant for Kelyra. On-screen name is Ask, never the model vendor.\n${context}\nIf unsure: I can’t tell from what’s saved. Open Inbox or the student’s page.\n\n${last}`,
+  return next;
+}
+
+async function askAssistant(_supabase, body) {
+  const started = Date.now();
+  const tools = Array.isArray(body.tools) ? body.tools : [];
+  const extra = {};
+  if (tools.length) extra.tools = tools;
+  if (typeof body.instructions === 'string' && body.instructions.trim()) {
+    extra.instructions = body.instructions;
+  }
+  const raw = Array.isArray(body.input) && body.input.length
+    ? body.input
+    : Array.isArray(body.messages)
+      ? body.messages
+          .map((item) => ({
+            role: item?.from === 'assistant' ? 'assistant' : 'user',
+            content: String(item?.text ?? '').trim(),
+          }))
+          .filter((item) => item.content)
+      : [{ role: 'user', content: 'Hello' }];
+  const input = await hydrateAskImages(raw);
+  const payload = await xaiResponses(practiceModel, input.length ? input : [{ role: 'user', content: 'Hello' }], extra);
+  const calls = functionCallsFrom(payload);
+  const responseId = typeof payload.id === 'string' ? payload.id : undefined;
+  console.log(
+    `[ai-dev] ask-assistant ${Date.now() - started}ms tools=${tools.length} items=${Array.isArray(input) ? input.length : 0} calls=${calls.length}`,
   );
+  if (calls.length) return { toolCalls: calls, responseId };
   const text = outputText(payload).trim();
-  return { text: text || "I can’t tell from what’s saved. Open Inbox or the student’s page." };
+  return { text: text || ASK_FALLBACK, responseId };
+}
+
+function functionCallsFrom(payload) {
+  const output = Array.isArray(payload?.output) ? payload.output : [];
+  return output
+    .filter((item) => item?.type === 'function_call' || item?.type === 'tool_call')
+    .map((item) => {
+      const fn = item.function ?? item;
+      const args = fn.arguments ?? item.arguments;
+      return {
+        call_id: String(item.call_id ?? item.id ?? ''),
+        name: String(fn.name ?? item.name ?? ''),
+        arguments: typeof args === 'string' ? args : JSON.stringify(args ?? {}),
+      };
+    })
+    .filter((item) => item.call_id && item.name);
 }
 
 async function evaluateHomework(body) {
@@ -803,6 +851,291 @@ async function cutoutPortrait(body) {
     imageBase64: framed.toString('base64'),
     mimeType: 'image/png',
   };
+}
+
+const LOGO_SIZE = 512;
+const LOGO_FILL = 0.9;
+
+const logoLayoutPrompt = `You look at a school logo, seal, crest, or wordmark photo. The school needs a transparent mark for a light header — anything that is backdrop, padding, or a solid plate around the mark must go.
+Return JSON only, no markdown:
+{"shape":"circle","cx":0.5,"cy":0.5,"radius":0.48,"bg":[10,16,36],"plate":true}
+Rules:
+- shape is circle if the mark is a circular seal, badge, or round icon (even if it sits on a square photo). roundedRect is a rounded-square app icon. irregular is a wordmark, mascot, or shield that is not a disk.
+- cx, cy: center of the mark, 0–1 from the left and top of the image.
+- radius: outer radius of a circular mark, 0–1 as a fraction of min(image width, image height). Include the full disk (outer ring), not only inner artwork.
+- bg: RGB of the field outside the mark (corners / studio plate). That color must become transparent.
+- plate is true when the mark sits on a solid rectangle or square that should be fully removed, including everything outside a circular mark.
+- If already a cutout, still return the shape; plate false.`;
+
+async function cutoutLogo(body) {
+  const imageUrl = String(body.imageUrl ?? '');
+  if (!imageUrl) throw new Error('imageUrl required');
+  const loaded = await loadImageForGrok(imageUrl);
+  console.log(`[ai-dev] cutout-logo ${loaded.mime}, ${loaded.bytes.length} bytes`);
+  const layoutPromise = detectLogoLayout(loaded.dataUrl).catch((err) => {
+    console.warn(`[ai-dev] cutout-logo layout failed: ${err instanceof Error ? err.message : err}`);
+    return null;
+  });
+  const pngPromise = decodeToRgbaPng(loaded.bytes);
+  const [layout, pngBuffer] = await Promise.all([layoutPromise, pngPromise]);
+  const cut = punchLogoBackground(pngBuffer, layout);
+  const framed = composeLogoSquare(cut);
+  console.log(
+    `[ai-dev] cutout-logo framed ${framed.length} bytes shape=${layout?.shape ?? 'none'} plate=${Boolean(layout?.plate)}`,
+  );
+  return {
+    imageBase64: framed.toString('base64'),
+    mimeType: 'image/png',
+  };
+}
+
+async function detectLogoLayout(prepared) {
+  const payload = await xaiResponses(visionModel, [
+    {
+      role: 'user',
+      content: [
+        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_text', text: logoLayoutPrompt },
+      ],
+    },
+  ]);
+  const parsed = extractJson(outputText(payload));
+  const num = (value, fallback) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const shape =
+    parsed.shape === 'circle' || parsed.shape === 'roundedRect' || parsed.shape === 'irregular'
+      ? parsed.shape
+      : 'irregular';
+  const cx = Math.min(1, Math.max(0, num(parsed.cx, 0.5)));
+  const cy = Math.min(1, Math.max(0, num(parsed.cy, 0.5)));
+  const radius = Math.min(0.5, Math.max(0.08, num(parsed.radius, 0.48)));
+  let bg = null;
+  if (Array.isArray(parsed.bg) && parsed.bg.length >= 3) {
+    bg = parsed.bg.slice(0, 3).map((value) => Math.max(0, Math.min(255, Number(value) || 0)));
+  }
+  console.log(
+    `[ai-dev] logo layout shape=${shape} c=${cx.toFixed(2)},${cy.toFixed(2)} r=${radius.toFixed(2)} plate=${Boolean(parsed.plate)} bg=${bg ? bg.join(',') : '—'}`,
+  );
+  return { shape, cx, cy, radius, bg, plate: Boolean(parsed.plate) };
+}
+
+async function decodeToRgbaPng(bytes) {
+  const sharp = require('sharp');
+  return sharp(bytes).ensureAlpha().png().toBuffer();
+}
+
+function punchLogoBackground(pngBuffer, layout) {
+  const { PNG } = require('pngjs');
+  const src = PNG.sync.read(pngBuffer);
+  const { width, height, data } = src;
+  const sampled = sampleCornerColor(data, width, height);
+  const bg = layout?.bg && colorDist(layout.bg, sampled) < 80 ? layout.bg : sampled;
+  const square = isSquareish(width, height);
+  const uniform = cornersSimilar(data, width, height, 36);
+  // Connected plate first (keeps dark ink inside the seal).
+  floodClearBackground(data, width, height, bg, 58);
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] && colorDist([data[i], data[i + 1], data[i + 2]], bg) < 42) data[i + 3] = 0;
+  }
+  // A circular seal on a square photo: the inscribed circle puts the four
+  // dark corners outside the mark. Never use r > 0.5 or those corners stay.
+  const wantCircle = layout?.shape === 'circle' || layout?.plate || (square && uniform);
+  if (wantCircle) {
+    const cx = layout?.shape === 'circle' ? layout.cx : 0.5;
+    const cy = layout?.shape === 'circle' ? layout.cy : 0.5;
+    const grokR = layout?.shape === 'circle' ? layout.radius : 0.5;
+    const radius = Math.min(0.5, grokR);
+    applyCircleMask(data, width, height, cx, cy, radius, Math.max(1.2, Math.min(width, height) * 0.008));
+  }
+  return PNG.sync.write(src);
+}
+
+function cornersSimilar(data, width, height, maxDist) {
+  const pts = [
+    [1, 1],
+    [width - 2, 1],
+    [1, height - 2],
+    [width - 2, height - 2],
+  ];
+  const baseI = (pts[0][1] * width + pts[0][0]) * 4;
+  const base = [data[baseI], data[baseI + 1], data[baseI + 2]];
+  return pts.every(([x, y]) => {
+    const i = (y * width + x) * 4;
+    return colorDist([data[i], data[i + 1], data[i + 2]], base) <= maxDist;
+  });
+}
+
+function sampleCornerColor(data, width, height) {
+  const pts = [
+    [1, 1],
+    [4, 4],
+    [width - 2, 1],
+    [width - 5, 4],
+    [1, height - 2],
+    [4, height - 5],
+    [width - 2, height - 2],
+    [Math.floor(width / 2), 1],
+    [1, Math.floor(height / 2)],
+  ];
+  const rs = [];
+  const gs = [];
+  const bs = [];
+  for (const [x, y] of pts) {
+    const i = (y * width + x) * 4;
+    rs.push(data[i]);
+    gs.push(data[i + 1]);
+    bs.push(data[i + 2]);
+  }
+  const med = (arr) => [...arr].sort((a, b) => a - b)[Math.floor(arr.length / 2)];
+  return [med(rs), med(gs), med(bs)];
+}
+
+function colorDist(a, b) {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+}
+
+function floodClearBackground(data, width, height, bg, threshold) {
+  const seen = new Uint8Array(width * height);
+  const stack = [];
+  const visit = (x, y) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return;
+    const idx = y * width + x;
+    if (seen[idx]) return;
+    seen[idx] = 1;
+    const i = idx * 4;
+    if (colorDist([data[i], data[i + 1], data[i + 2]], bg) > threshold) return;
+    data[i + 3] = 0;
+    stack.push(x, y);
+  };
+  for (let x = 0; x < width; x += 1) {
+    visit(x, 0);
+    visit(x, height - 1);
+  }
+  for (let y = 0; y < height; y += 1) {
+    visit(0, y);
+    visit(width - 1, y);
+  }
+  while (stack.length) {
+    const y = stack.pop();
+    const x = stack.pop();
+    visit(x + 1, y);
+    visit(x - 1, y);
+    visit(x, y + 1);
+    visit(x, y - 1);
+  }
+}
+
+function applyCircleMask(data, width, height, cx, cy, radius, feather) {
+  const px = cx * width;
+  const py = cy * height;
+  const r = radius * Math.min(width, height);
+  const f = Math.max(1, feather);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const d = Math.hypot(x + 0.5 - px, y + 0.5 - py);
+      let keep = 1;
+      if (d >= r + f) keep = 0;
+      else if (d > r) keep = 1 - (d - r) / f;
+      const i = (y * width + x) * 4 + 3;
+      data[i] = Math.round(data[i] * keep);
+    }
+  }
+}
+
+function opaqueBounds(data, width, height) {
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (data[(y * width + x) * 4 + 3] > 24) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX <= minX || maxY <= minY) {
+    return { minX: 0, minY: 0, maxX: width - 1, maxY: height - 1, w: width, h: height };
+  }
+  return { minX, minY, maxX, maxY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+
+function isSquareish(w, h) {
+  const long = Math.max(w, h);
+  const short = Math.min(w, h);
+  return long > 8 && short / long >= 0.86;
+}
+
+function isMostlyDisk(data, width, height, ink) {
+  const cx = (ink.minX + ink.maxX + 1) / 2;
+  const cy = (ink.minY + ink.maxY + 1) / 2;
+  const r = Math.max(ink.w, ink.h) / 2;
+  if (r < 8) return false;
+  let inside = 0;
+  let opaque = 0;
+  for (let y = ink.minY; y <= ink.maxY; y += 2) {
+    for (let x = ink.minX; x <= ink.maxX; x += 2) {
+      if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) > r) continue;
+      inside += 1;
+      if (data[(y * width + x) * 4 + 3] > 24) opaque += 1;
+    }
+  }
+  return inside > 40 && opaque / inside >= 0.55;
+}
+
+function composeLogoSquare(pngBuffer) {
+  const { PNG } = require('pngjs');
+  const src = PNG.sync.read(pngBuffer);
+  const imgW = src.width;
+  const imgH = src.height;
+  const data = src.data;
+  let minX = imgW;
+  let minY = imgH;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < imgH; y += 1) {
+    for (let x = 0; x < imgW; x += 1) {
+      if (data[(y * imgW + x) * 4 + 3] > 24) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX <= minX || maxY <= minY) {
+    minX = 0;
+    minY = 0;
+    maxX = imgW - 1;
+    maxY = imgH - 1;
+  }
+  const bw = maxX - minX + 1;
+  const bh = maxY - minY + 1;
+  const cx = minX + bw / 2;
+  const cy = minY + bh / 2;
+  const scale = (LOGO_SIZE * LOGO_FILL) / Math.max(bw, bh);
+  const out = new PNG({ width: LOGO_SIZE, height: LOGO_SIZE });
+  const dest = out.data;
+  for (let y = 0; y < LOGO_SIZE; y += 1) {
+    const srcY = Math.round((y - LOGO_SIZE / 2) / scale + cy);
+    if (srcY < 0 || srcY >= imgH) continue;
+    for (let x = 0; x < LOGO_SIZE; x += 1) {
+      const srcX = Math.round((x - LOGO_SIZE / 2) / scale + cx);
+      if (srcX < 0 || srcX >= imgW) continue;
+      const si = (srcY * imgW + srcX) * 4;
+      const di = (y * LOGO_SIZE + x) * 4;
+      dest[di] = data[si];
+      dest[di + 1] = data[si + 1];
+      dest[di + 2] = data[si + 2];
+      dest[di + 3] = data[si + 3];
+    }
+  }
+  return PNG.sync.write(out);
 }
 
 async function detectFaceBox(prepared) {
@@ -1263,8 +1596,17 @@ function parseKeyItemsFromModel(raw) {
     .slice(0, 40);
 }
 
+const imagePrepCache = new Map();
+
 async function prepareImageForGrok(imageUrl) {
+  const hit = imagePrepCache.get(imageUrl);
+  if (hit) return hit;
   const loaded = await loadImageForGrok(imageUrl);
+  imagePrepCache.set(imageUrl, loaded.dataUrl);
+  if (imagePrepCache.size > 24) {
+    const oldest = imagePrepCache.keys().next().value;
+    if (oldest) imagePrepCache.delete(oldest);
+  }
   return loaded.dataUrl;
 }
 
@@ -1328,11 +1670,11 @@ function sniffImage(bytes) {
   return 'unknown';
 }
 
-async function xaiResponses(model, input) {
+async function xaiResponses(model, input, extra = {}) {
   const response = await xaiFetch(`${xaiBaseUrl}/responses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, input }),
+    body: JSON.stringify({ model, input, ...extra }),
   });
   if (!response.ok) {
     throw new Error(`Grok failed: ${response.status} ${await response.text()}`);

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { photoUri } from '@/components/ui/Avatar';
 import { AvatarInitials } from '@/components/ui/AvatarInitials';
 import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { MarqueeText } from '@/components/ui/MarqueeText';
@@ -196,8 +197,8 @@ export function WorkRow({
             <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
               {lead}
             </View>
-          ) : photoUrl ? (
-            <Image source={{ uri: photoUrl }} style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]} />
+          ) : photoUri(photoUrl) ? (
+            <Image source={{ uri: photoUri(photoUrl)! }} style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]} />
           ) : (
             <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
               {unknown ? <UnknownMark size={56} /> : <AvatarInitials name={avatarName ?? title} size={56} />}

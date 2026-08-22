@@ -6,11 +6,13 @@ import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { AvatarTray } from '@/components/ui/AvatarTray';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
-import { DangerButton, GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Card } from '@/components/ui/Card';
-import { JoinCodeCard } from '@/components/ui/JoinCode';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
+import { ClassTabs } from '@/components/ui/ClassTabs';
+import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
@@ -19,7 +21,10 @@ import { radius, type } from '@/constants/theme';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { getClass, listClasses, rotateJoinCode, setActiveClass } from '@/lib/classes/api';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { getClass, setActiveClass } from '@/lib/classes/api';
+import { setClassFeedIcon } from '@/lib/feeds/api';
+import { asFeedIcon, DEFAULT_CLASS_FEED_ICON } from '@/lib/feeds/icons';
 import { deleteClass } from '@/lib/classes/delete';
 import { invokeAi } from '@/lib/ai/invoke';
 import {
@@ -38,6 +43,8 @@ import {
   createRosterImport,
   deleteRosterImport,
   listPendingRosterImports,
+  enrollExistingStudent,
+  listAvailableStudents,
   listRoster,
   markRosterImportConfirmed,
   renameStudent,
@@ -45,7 +52,8 @@ import {
   type RosterStudent,
   type SuggestedRosterName,
 } from '@/lib/students/api';
-import { deleteStudent, listStudentEnrollments, removeEnrollment } from '@/lib/students/delete';
+import type { StudentRow } from '@/lib/supabase/types';
+import { deleteStudent, removeEnrollment } from '@/lib/students/delete';
 import { firstName } from '@/lib/format';
 import type { RosterImportRow } from '@/lib/supabase/types';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -57,8 +65,11 @@ export default function SetupScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { teacher } = useAuth();
+  const chrome = useChrome();
   const [klass, setKlass] = useState<ClassRow | null>(null);
+  usePushedTitle(klass?.name ?? 'Class');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [available, setAvailable] = useState<Array<StudentRow & { photoUrl: string | null }>>([]);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +104,7 @@ export default function SetupScreen() {
       const nextClass = await getClass(id);
       setKlass(nextClass);
       setRoster(await listRoster(id));
+      setAvailable(await listAvailableStudents(id));
       setImports(await listPendingRosterImports(id));
       await setActiveClass(teacher.id, id);
     } catch (err) {
@@ -195,6 +207,12 @@ export default function SetupScreen() {
       setName('');
       setHeard(null);
       setPossibleMatch(null);
+      const login = student.login;
+      setStatus(
+        login?.created && login.tempPassword
+          ? `${student.display_name} is on the roster as @${login.username}. Temporary password ${login.tempPassword} — they must change it on first sign-in.`
+          : `${student.display_name} is on the roster.`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add student');
     }
@@ -283,7 +301,16 @@ export default function SetupScreen() {
       setImports(await listPendingRosterImports(id));
       setName('');
       const extra = result.skipped.length ? ` Skipped already on roster: ${result.skipped.join(', ')}.` : '';
-      setStatus(`Added ${result.added.length} student${result.added.length === 1 ? '' : 's'}.${extra}`);
+      const logins = result.added
+        .map((row) => row.login)
+        .filter((row): row is NonNullable<typeof row> => Boolean(row?.created && row.tempPassword))
+        .map((row) => `@${row.username} ${row.tempPassword}`)
+        .join(' · ');
+      setStatus(
+        `Added ${result.added.length} student${result.added.length === 1 ? '' : 's'}.${extra}${
+          logins ? ` Logins: ${logins}. They must change the password on first sign-in.` : ''
+        }`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add those students');
     }
@@ -294,7 +321,7 @@ export default function SetupScreen() {
 
   const addCard = (
     <View>
-      <SectionHeader label="Add students" />
+      <SectionHeader label="Add students" first />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
         Speak a name, photograph the printed list, or type. Confirm every name.
       </Text>
@@ -353,11 +380,14 @@ export default function SetupScreen() {
             </>
           ) : (
             <>
-              <SecondaryButton
-                disabled={readingList}
-                label="Photo of list"
-                onPress={() => void onPickList(true)}
-              />
+              <View style={styles.mediaHits}>
+                <IconButton
+                  name="capture"
+                  label="Photo of list"
+                  disabled={readingList}
+                  onPress={() => void onPickList(true)}
+                />
+              </View>
               <GhostButton
                 align="left"
                 disabled={readingList}
@@ -376,10 +406,14 @@ export default function SetupScreen() {
               {readingList ? <WorkingLine text="Asking AI…" /> : null}
               {hearing ? (
                 <WorkingLine text="Hearing the name…" />
-              ) : recording ? (
-                <DangerButton showDot label="Stop recording" onPress={() => void stopNameRecording()} />
               ) : (
-                <SecondaryButton label="Record a name" onPress={() => void startNameRecording()} />
+                <IconButton
+                  name="mic"
+                  tone={recording ? 'danger' : 'wash'}
+                  live={Boolean(recording)}
+                  label={recording ? 'Stop recording' : 'Record a name'}
+                  onPress={() => void (recording ? stopNameRecording() : startNameRecording())}
+                />
               )}
               {heard ? <Text style={[type.meta, { color: colors.mute }]}>Heard: {heard}</Text> : null}
               {exactMatch ? (
@@ -431,6 +465,7 @@ export default function SetupScreen() {
               id: student.id,
               name: student.display_name,
               photoUrl: student.photoUrl,
+              hasPhoto: Boolean(student.photo_asset_id),
             }))}
             onPress={(person) => router.push(`/class/${id}/student/${person.id}`)}
           />
@@ -439,19 +474,18 @@ export default function SetupScreen() {
               key={student.id}
               title={student.display_name}
               photoUrl={student.photoUrl}
+              hasPhoto={Boolean(student.photo_asset_id)}
               onPress={() => router.push(`/class/${id}/student/${student.id}`)}
               trailing={[
                 {
-                  key: 'delete',
-                  label: 'Delete',
-                  tone: 'danger',
-                  autoCommit: false,
+                  key: 'remove',
+                  label: 'Remove',
+                  tone: 'wash',
                   onPress: () => {
-                    void listStudentEnrollments(student.id).then((rows) => {
-                      const other = rows.find((row) => row.class_id !== id);
-                      if (other) setConfirm({ kind: 'remove', student, other: other.class_name });
-                      else setConfirm({ kind: 'student', student });
-                    });
+                    if (!id) return;
+                    void removeEnrollment(id, student.id)
+                      .then(() => load())
+                      .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove student'));
                   },
                 },
               ]}
@@ -459,23 +493,54 @@ export default function SetupScreen() {
           ))}
         </>
       )}
+      <SectionHeader label="All students" />
+      {available.length === 0 ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          Students from other classes at this school show up here. Swipe left to add.
+        </Text>
+      ) : null}
+      {available.map((student) => (
+        <ListRow
+          key={student.id}
+          title={student.display_name}
+          photoUrl={student.photoUrl}
+          hasPhoto={Boolean(student.photo_asset_id)}
+          onPress={() => router.push(`/class/${id}/student/${student.id}`)}
+          trailing={[
+            {
+              key: 'add',
+              label: 'Add',
+              tone: 'brand',
+              onPress: () => {
+                if (!id) return;
+                void enrollExistingStudent(id, student.id)
+                  .then(() => load())
+                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not add student'));
+              },
+            },
+          ]}
+        />
+      ))}
     </View>
   );
 
   return (
     <Screen keyboard>
-      <SectionHeader label="Join code" first />
+      {id ? <ClassTabs classId={id} /> : null}
       {klass ? (
-        <JoinCodeCard
-          code={klass.join_code}
-          onRefresh={async () => {
-            const next = await rotateJoinCode(klass.id);
-            setKlass(next);
-            setStatus('New join code is ready. Students will need the new words.');
+        <FeedIconRow
+          value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
+          onPick={async (icon) => {
+            try {
+              await setClassFeedIcon(klass.id, icon);
+              setKlass({ ...klass, feed_icon: icon });
+              chrome.refreshChrome();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Could not save the feed icon');
+            }
           }}
         />
       ) : null}
-
       {layout.isSplit ? (
         <View style={styles.split}>
           <View style={styles.col}>{addCard}</View>
@@ -572,10 +637,8 @@ export default function SetupScreen() {
           void (async () => {
             if (confirm.kind === 'class' && klass) {
               await deleteClass(klass.id);
-              const remaining = await listClasses();
               setConfirm(null);
-              if (remaining[0]) router.replace(`/class/${remaining[0].id}`);
-              else router.replace('/');
+              router.replace('/?switch=1');
               return;
             }
             if (confirm.kind === 'student') await deleteStudent(confirm.student.id);
@@ -601,6 +664,12 @@ export default function SetupScreen() {
 
 const styles = StyleSheet.create({
   empty: type.body,
+  mediaHits: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 4,
+  },
   suggestRow: {
     flexDirection: 'row',
     alignItems: 'center',

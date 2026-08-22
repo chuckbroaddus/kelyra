@@ -2,7 +2,8 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Chip } from '@/components/ui/Chip';
-import { PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { SecondaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
@@ -148,7 +149,9 @@ export function WebCameraCapture({ onCapture, onCancel, deviceId: requestedId }:
         </View>
       ) : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PrimaryButton label="Snap photo" onPress={snap} />
+      <View style={styles.hits}>
+        <IconButton name="capture" size="lg" tone="brand" label="Snap photo" onPress={snap} />
+      </View>
       <SecondaryButton
         label="Cancel"
         onPress={() => {
@@ -176,6 +179,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  hits: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   error: type.body,
 });

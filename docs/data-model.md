@@ -5,6 +5,8 @@
 **Target store:** Postgres (Supabase). UUIDs, `timestamptz`, soft rules below.  
 **This pass adds:** student/parent profile photos, a first-class `parents` person, canonical metadata keys with a UI, and honest hard-delete / cascade rules. Implementer writes `supabase/migrations/20260816000000_people_photos_delete.sql` and runs it by hand (no Supabase CLI in this workflow).
 
+**2026-08-17 also adds:** one-school `profiles` (auth user + `@username` + `school_role`), append-only `audit_events`, and in-app `message_*` tables. See `20260817000005_school_roles.sql`. Roster students and parent people stay; a login is optional until an admin creates one.
+
 Two hard rules:
 
 1. A **student row is allowed to be only a name**. Everything else is optional and arrives later as captures, gaps, photos, metadata, and results.
@@ -38,7 +40,15 @@ teacher ──< class ──< enrollment >── student
 
 `assignment` is the grade-book column. `submission` is the cell. A homework capture, once Approved, gets one assignment + one submission. A practice set gets one assignment and one submission per assigned student.
 
-A **parent** is a teacher-owned person, not an auth user and not an invite token. The invite (`parent_accesses`) points at the parent. The parent then has zero or more children via `parent_students`. Unlinking a child is not deleting the parent. Deleting a parent does not delete the child.
+A **parent** is a school person. The invite (`parent_accesses`) points at the parent. The parent then has zero or more children via `parent_students`. Unlinking a child is not deleting the parent. Deleting a parent does not delete the child. Only Superintendent / Administrator may create that link. A parent login (`profiles.role = parent`, `profiles.parent_id`) is optional.
+
+A person may wear more than one hat on the **same login**. Job of record stays `profiles.role`. Extra hats: `also_administrator` (superintendent only), `also_teacher` (superintendent or administrator), `parent_id` (any staff). Students cannot wear staff or parent hats. Teacher hat uses Capture / Inbox / Class chrome; admin hats keep People / Activity. **My children** opens `/parent` via `parent_open_mine()`.
+
+Login profile details (`display_name`, `username`, `email`, `phone`, `address`, `notes`) are editable on `/profile`. Self may edit own. Superintendent may edit anyone. Administrator may edit anyone except other administrators and superintendents. Teachers edit their students. Parents edit linked children’s identity and details (not teacher academic fields). See `can_edit_profile` / `update_profile_details` in `20260817000009_profile_details.sql`.
+
+`profiles` is 1:1 with `auth.users`. Roles: `superintendent` · `administrator` · `teacher` · `parent` · `student`. Username is unique per school, stored without `@`. `audit_events` is insert-only (via `write_audit`); no role may UPDATE or DELETE.
+
+Kelyra Ask (`/ask`) is **not** Messages. Each profile has one open `ask_threads` row (`cleared_at` null). `ask_messages` are owner-only (RLS). The screen shows the last 100 bubbles; the model sees the last 20 turns. Rows older than 90 days are purged. SQL `20260823000000_ask_history.sql`. **New chat** archives the open thread and starts empty. Nothing Ask writes here is a grade.
 
 ---
 
@@ -68,8 +78,9 @@ The signed-in customer. One auth user.
 | `join_code` * | text | no | unique short code for the student class link |
 | `created_at` * | timestamptz | no | |
 | `name_source` * | enum | no | `voice` \| `typed` |
+| `feed_icon` | text | no | Glyph on the combined inbox tab. Default `feedClass`. Owner (class teacher or office) picks from the catalog in `src/lib/feeds/icons.ts`. SQL `20260821000000_feed_icons.sql`. |
 
-A teacher may own more than one class; capture always uses `teachers.active_class_id`.
+A teacher may own more than one class; capture always uses `teachers.active_class_id`. `schools.feed_icon` (default `feedSchool`) is the school-wide feed glyph; superintendent and administrators pick it. `schools.name` (default `School`) and `schools.logo_asset_id` are the header wordmark; only the superintendent sets them (`set_school_name` / `set_school_logo`, SQL `20260822000000_school_identity.sql`). The logo is a photo asset, shown 22×22 contain next to the name on school home.
 
 ### `students`
 

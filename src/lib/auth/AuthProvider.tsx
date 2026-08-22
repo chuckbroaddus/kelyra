@@ -3,14 +3,17 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { isSupabaseConfigured } from '@/constants/config';
 import { ensureTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
+import { loadMyProfile } from '@/lib/school/api';
+import { isStaffRole, isTeacherRole } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import type { TeacherRow } from '@/lib/supabase/types';
+import type { ProfileRow, TeacherRow } from '@/lib/supabase/types';
 
 type AuthState = {
   configured: boolean;
   loading: boolean;
   session: Session | null;
   teacher: TeacherRow | null;
+  profile: ProfileRow | null;
   error: string | null;
   refresh: () => Promise<void>;
   refreshTeacher: () => Promise<void>;
@@ -24,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(configured);
   const [session, setSession] = useState<Session | null>(null);
   const [teacher, setTeacher] = useState<TeacherRow | null>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -36,7 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const next = await getSession();
       setSession(next);
-      setTeacher(next ? await ensureTeacherProfile() : null);
+      if (!next) {
+        setTeacher(null);
+        setProfile(null);
+      } else {
+        const mine = await loadMyProfile().catch(() => null);
+        setProfile(mine);
+        if (!mine || isStaffRole(mine) || isTeacherRole(mine)) setTeacher(await ensureTeacherProfile());
+        else setTeacher(null);
+      }
     } catch (err) {
       setSession(null);
       setTeacher(null);
@@ -60,7 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!configured) return;
     try {
       const next = await getSession();
-      setTeacher(next ? await ensureTeacherProfile() : null);
+      if (!next) {
+        setTeacher(null);
+        setProfile(null);
+        return;
+      }
+      const mine = await loadMyProfile().catch(() => null);
+      setProfile(mine);
+      if (!mine || isStaffRole(mine) || isTeacherRole(mine)) setTeacher(await ensureTeacherProfile());
+      else setTeacher(null);
     } catch {
       // Keep the current teacher row if a silent refresh fails.
     }
@@ -72,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       session,
       teacher,
+      profile,
       error,
       refresh,
       refreshTeacher,
@@ -79,9 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOutRequest();
         setSession(null);
         setTeacher(null);
+        setProfile(null);
       },
     }),
-    [configured, loading, session, teacher, error],
+    [configured, loading, session, teacher, profile, error],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

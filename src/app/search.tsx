@@ -10,28 +10,39 @@ import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { captureBadge } from '@/components/ui/Badge';
 import { listInbox, type InboxItem } from '@/lib/captures/api';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { loadGradebook } from '@/lib/gradebook/api';
 import { loadParentProgress } from '@/lib/parents/api';
 import { listStudentTodo } from '@/lib/student-session/api';
 import { listParentsForClass, type ClassParent } from '@/lib/parents/api';
+import { listDirectory, type DirectoryPerson } from '@/lib/school/api';
+import { formatHandle, isOfficeRole, isStaffRole, roleLabel } from '@/lib/school/roles';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 const RECENT_KEY = 'kelyra.search.recent';
 
+function haystack(parts: Array<string | null | undefined>): string {
+  return parts.filter(Boolean).join(' ').toLowerCase();
+}
+
 export default function SearchScreen() {
   const { colors } = useTheme();
   const chrome = useChrome();
+  const { profile } = useAuth();
   const router = useRouter();
   const query = chrome.searchQuery.trim().toLowerCase();
+  const office = isOfficeRole(profile);
+  const staff = isStaffRole(profile);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [assignments, setAssignments] = useState<string[]>([]);
   const [practice, setPractice] = useState<string[]>([]);
   const [parentLines, setParentLines] = useState<string[]>([]);
   const [classParents, setClassParents] = useState<ClassParent[]>([]);
+  const [directory, setDirectory] = useState<DirectoryPerson[]>([]);
   const [recents, setRecents] = useState<string[]>([]);
 
   useFocusEffect(
@@ -47,7 +58,12 @@ export default function SearchScreen() {
           }
         }
         try {
-          if (chrome.role === 'teacher' && chrome.classId) {
+          if (office || (staff && !chrome.classId)) {
+            const people = await listDirectory().catch(() => []);
+            if (cancelled) return;
+            setDirectory(people);
+          }
+          if ((chrome.role === 'teacher' || staff) && chrome.classId) {
             const [names, items, book, people] = await Promise.all([
               listRoster(chrome.classId),
               listInbox(chrome.classId),
@@ -61,10 +77,7 @@ export default function SearchScreen() {
             setClassParents([...people.linked, ...people.unlinked]);
           }
           if (chrome.role === 'student' && chrome.studentSession) {
-            const todo = await listStudentTodo(
-              chrome.studentSession.joinCode,
-              chrome.studentSession.studentId,
-            );
+            const todo = await listStudentTodo();
             if (!cancelled) setPractice(todo.map((item) => item.title));
           }
           if (chrome.role === 'parent' && chrome.parentTokens[0]) {
@@ -85,7 +98,7 @@ export default function SearchScreen() {
       return () => {
         cancelled = true;
       };
-    }, [chrome.role, chrome.classId, chrome.studentSession, chrome.parentTokens]),
+    }, [chrome.role, chrome.classId, chrome.studentSession, chrome.parentTokens, office, staff]),
   );
 
   useFocusEffect(
@@ -96,37 +109,51 @@ export default function SearchScreen() {
     }, [query, chrome.searchQuery, recents]),
   );
 
-  const people = useMemo(
-    () => roster.filter((student) => student.display_name.toLowerCase().includes(query)),
-    [roster, query],
-  );
-  const parentPeople = useMemo(
-    () => classParents.filter((parent) => parent.display_name.toLowerCase().includes(query)),
-    [classParents, query],
-  );
+  const directoryHits = useMemo(() => {
+    if (!query) return [];
+    return directory.filter((row) =>
+      haystack([row.display_name, row.username, formatHandle(row.username), row.email]).includes(query),
+    );
+  }, [directory, query]);
+  const people = useMemo(() => {
+    if (!query) return [];
+    const named = new Set(directoryHits.map((row) => row.student_id).filter(Boolean));
+    return roster.filter((student) => {
+      if (named.has(student.id)) return false;
+      return student.display_name.toLowerCase().includes(query);
+    });
+  }, [roster, query, directoryHits]);
+  const parentPeople = useMemo(() => {
+    if (!query) return [];
+    const named = new Set(directoryHits.map((row) => row.parent_id).filter(Boolean));
+    return classParents.filter((parent) => {
+      if (named.has(parent.id)) return false;
+      return parent.display_name.toLowerCase().includes(query);
+    });
+  }, [classParents, query, directoryHits]);
   const captures = useMemo(
     () =>
-      inbox.filter((item) => {
-        const hay = `${item.matchedName ?? ''} ${item.transcript ?? ''}`.toLowerCase();
-        return hay.includes(query);
-      }),
+      query
+        ? inbox.filter((item) => haystack([item.matchedName, item.transcript]).includes(query))
+        : [],
     [inbox, query],
   );
   const assignmentHits = useMemo(
-    () => assignments.filter((title) => title.toLowerCase().includes(query)),
+    () => (query ? assignments.filter((title) => title.toLowerCase().includes(query)) : []),
     [assignments, query],
   );
   const practiceHits = useMemo(
-    () => practice.filter((title) => title.toLowerCase().includes(query)),
+    () => (query ? practice.filter((title) => title.toLowerCase().includes(query)) : []),
     [practice, query],
   );
   const parentHits = useMemo(
-    () => parentLines.filter((line) => line.toLowerCase().includes(query)),
+    () => (query ? parentLines.filter((line) => line.toLowerCase().includes(query)) : []),
     [parentLines, query],
   );
 
   const emptyFilter =
     Boolean(query) &&
+    !directoryHits.length &&
     !people.length &&
     !parentPeople.length &&
     !captures.length &&
@@ -134,10 +161,32 @@ export default function SearchScreen() {
     !practiceHits.length &&
     !parentHits.length;
 
+  const openDirectoryPerson = (row: DirectoryPerson) => {
+    const classId = row.classId ?? chrome.classId ?? chrome.classes[0]?.id ?? null;
+    if (row.student_id && classId) {
+      router.push(`/class/${classId}/student/${row.student_id}`);
+      return;
+    }
+    if (row.parent_id && classId) {
+      router.push(`/class/${classId}/parent/${row.parent_id}`);
+      return;
+    }
+    router.push(`/profile?person=${row.id}` as never);
+  };
+
   return (
     <Screen>
       {!query ? <Text style={[type.meta, { color: colors.mute }]}>Type a name.</Text> : null}
       {emptyFilter ? <Text style={[type.meta, { color: colors.mute }]}>No names match that search.</Text> : null}
+      {directoryHits.map((row) => (
+        <ListRow
+          key={row.id}
+          title={row.display_name || formatHandle(row.username)}
+          status={roleLabel(row.role)}
+          photoUrl={row.photoUrl}
+          onPress={() => openDirectoryPerson(row)}
+        />
+      ))}
       {people.map((student) => (
         <ListRow
           key={student.id}

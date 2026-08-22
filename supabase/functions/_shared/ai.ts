@@ -36,6 +36,7 @@ export async function xaiResponses(
   apiKey: string,
   model: string,
   input: unknown,
+  extra: Record<string, unknown> = {},
 ): Promise<Record<string, unknown>> {
   const response = await fetch(`${xaiBaseUrl}/responses`, {
     method: 'POST',
@@ -43,12 +44,30 @@ export async function xaiResponses(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model, input }),
+    body: JSON.stringify({ model, input, ...extra }),
   });
   if (!response.ok) {
     throw new Error(`Grok failed: ${response.status} ${await response.text()}`);
   }
   return (await response.json()) as Record<string, unknown>;
+}
+
+export type FunctionCall = { call_id: string; name: string; arguments: string };
+
+export function functionCalls(payload: Record<string, unknown>): FunctionCall[] {
+  const output = payload.output as Array<Record<string, unknown>> | undefined;
+  return (output ?? [])
+    .filter((item) => item.type === 'function_call' || item.type === 'tool_call')
+    .map((item) => {
+      const fn = (item.function as Record<string, unknown> | undefined) ?? item;
+      const args = fn.arguments ?? item.arguments;
+      return {
+        call_id: String(item.call_id ?? item.id ?? ''),
+        name: String(fn.name ?? item.name ?? ''),
+        arguments: typeof args === 'string' ? args : JSON.stringify(args ?? {}),
+      };
+    })
+    .filter((item) => item.call_id && item.name);
 }
 
 export function outputText(payload: Record<string, unknown>): string {

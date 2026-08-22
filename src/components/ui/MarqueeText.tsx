@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -27,7 +28,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-export type MarqueeAlign = 'start' | 'center';
+export type MarqueeAlign = 'start' | 'center' | 'end';
 
 export type MarqueeScroll = {
   paused: boolean;
@@ -49,38 +50,92 @@ const idleScroll: MarqueeScroll = {
 
 const MarqueeScrollContext = createContext<MarqueeScroll>(idleScroll);
 
+/** Collapsed chrome (search expand) can report a 2–8 pt clip. Ignore it so a short title does not start crawling. */
+const MIN_CLIP = 24;
+/** Header reflow on push/pop is a few pixels. Real overflow is clearly more than a hairline. */
+const OVERFLOW_SLACK = 8;
+/**
+ * First onLayout after a push is often the text’s intrinsic width (~40pt for “Ask”),
+ * not the flex slot. Keep collecting the MAX clip for this long before crawling.
+ */
+const WARMUP_MS = 400;
+/** After warmup, debounce clip shrinks so a one-frame blip cannot restart a crawl. */
+const STABLE_MS = 80;
+
 export function marqueeMetrics(clipWidth: number, textWidth: number, speed = 30) {
-  const overflowing = textWidth > clipWidth + 2;
+  const overflowing = clipWidth >= MIN_CLIP && textWidth > clipWidth + OVERFLOW_SLACK;
   const distance = Math.max(0, textWidth - clipWidth);
   const duration = (distance / Math.max(1, speed)) * 1000;
   return { distance, duration, overflowing };
 }
 
+function useClipWidth(resetKey: string | number) {
+  const [clip, setClip] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [key, setKey] = useState(resetKey);
+  const maxSeen = useRef(0);
+  const warmupUntil = useRef(0);
+  const stable = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warmup = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  if (resetKey !== key) {
+    maxSeen.current = 0;
+    warmupUntil.current = Date.now() + WARMUP_MS;
+    setKey(resetKey);
+    setClip(0);
+    setReady(false);
+  }
+
+  useLayoutEffect(() => {
+    warmupUntil.current = Date.now() + WARMUP_MS;
+    if (warmup.current) clearTimeout(warmup.current);
+    warmup.current = setTimeout(() => {
+      const next = maxSeen.current;
+      if (next >= MIN_CLIP) setClip(next);
+      setReady(next >= MIN_CLIP);
+    }, WARMUP_MS);
+    return () => {
+      if (warmup.current) clearTimeout(warmup.current);
+      if (stable.current) clearTimeout(stable.current);
+    };
+  }, [resetKey]);
+
+  const take = useCallback((next: number) => {
+    if (!Number.isFinite(next) || next < MIN_CLIP) return;
+    maxSeen.current = Math.max(maxSeen.current, next);
+    if (Date.now() < warmupUntil.current) {
+      const grown = maxSeen.current;
+      setClip((current) => (grown > current + 0.5 ? grown : current));
+      return;
+    }
+    if (stable.current) clearTimeout(stable.current);
+    const sample = next;
+    stable.current = setTimeout(() => {
+      setClip((current) => (Math.abs(current - sample) < 0.5 ? current : sample));
+    }, STABLE_MS);
+  }, []);
+
+  return [clip, ready, take] as const;
+}
+
 const nativeDriver = Platform.OS !== 'web';
 const nowrap = Platform.OS === 'web' ? ({ whiteSpace: 'nowrap' } as TextStyle) : null;
 
-function measureCssText(text: string, face: TextStyle): number {
-  if (Platform.OS !== 'web' || typeof document === 'undefined') return 0;
-  const size = typeof face.fontSize === 'number' ? face.fontSize : 11;
-  const spacing = typeof face.letterSpacing === 'number' ? face.letterSpacing : 0;
-  const family = typeof face.fontFamily === 'string' ? face.fontFamily : 'sans-serif';
-  const weight = String(face.fontWeight ?? '600');
+function hostWidth(node: unknown): number {
+  if (!node || typeof node !== 'object' || typeof document === 'undefined') return 0;
+  const el = node as HTMLElement;
+  if (typeof el.getBoundingClientRect !== 'function') return 0;
   try {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.font = `${weight} ${size}px ${family}`;
-      return ctx.measureText(text).width + spacing * Math.max(0, text.length - 1);
-    }
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const ink = range.getBoundingClientRect().width;
+    if (ink > 1) return ink;
   } catch {
     /* fall through */
   }
-  const el = document.createElement('span');
-  el.textContent = text;
-  el.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;max-width:none;width:max-content;font-size:${size}px;font-weight:${weight};letter-spacing:${spacing}px;font-family:${family}`;
-  document.body.appendChild(el);
-  const width = el.getBoundingClientRect().width;
-  document.body.removeChild(el);
+  const rect = el.getBoundingClientRect().width;
+  const offset = 'offsetWidth' in el ? Number(el.offsetWidth) : 0;
+  const width = [rect, offset].filter((value) => value > 1).sort((a, b) => a - b)[0] ?? 0;
   return Number.isFinite(width) ? width : 0;
 }
 
@@ -112,25 +167,36 @@ function WebMarquee({
   accessible: boolean;
 }) {
   const { layoutEpoch } = useMarqueeScroll();
-  const [measuredClip, setMeasuredClip] = useState(0);
+  const resetKey = `${text}|${layoutEpoch}`;
+  const [clipWidth, ready, takeClip] = useClipWidth(resetKey);
+  const [metricsKey, setMetricsKey] = useState(resetKey);
   const [textWidth, setTextWidth] = useState(0);
   const [shift, setShift] = useState(0);
   const [ink, setInk] = useState(1);
+  const measureRef = useRef<Text>(null);
   const clipFromStyle = typeof layout.width === 'number' ? layout.width : 0;
-  const clipWidth = measuredClip || clipFromStyle;
+  const clip = clipWidth || clipFromStyle;
 
-  useEffect(() => {
-    setMeasuredClip(0);
+  if (metricsKey !== resetKey) {
+    setMetricsKey(resetKey);
+    setTextWidth(0);
     setShift(0);
     setInk(1);
-  }, [layoutEpoch]);
+  }
+
+  const takeText = useCallback((width: number) => {
+    if (width <= 1) return;
+    setTextWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+  }, []);
 
   useLayoutEffect(() => {
-    const width = measureCssText(text, type);
-    if (width > 0) setTextWidth(width);
-  }, [text, type]);
-  const { distance, overflowing } = marqueeMetrics(clipWidth, textWidth);
-  const canRun = overflowing && !paused && !parentPaused && clipWidth > 0 && textWidth > 0;
+    takeText(hostWidth(measureRef.current));
+  }, [takeText, text, resetKey, ready, type.fontFamily, type.fontSize, type.fontWeight, type.letterSpacing]);
+
+  const { distance, overflowing: fitsOverflow } = marqueeMetrics(clip, textWidth);
+  const overflowing = ready && fitsOverflow;
+  const canRun = overflowing && !paused && !parentPaused && clip > 0 && textWidth > 0;
+  const shownShift = canRun ? shift : 0;
   const rtl = I18nManager.isRTL;
   const lineHeight = typeof type.lineHeight === 'number' ? type.lineHeight : undefined;
 
@@ -199,7 +265,7 @@ function WebMarquee({
       live = false;
       cancelAnimationFrame(raf);
     };
-  }, [blankDelay, canRun, delay, distance, endDelay, fadeDuration, layoutEpoch, rtl]);
+  }, [blankDelay, canRun, delay, distance, endDelay, fadeDuration, resetKey, rtl]);
 
   const spoken = accessibilityLabel ?? text;
 
@@ -210,32 +276,46 @@ function WebMarquee({
       accessible={accessible}
       accessibilityRole={accessible ? 'text' : undefined}
       accessibilityLabel={accessible ? spoken : undefined}
-      onLayout={(event) => {
-        const width = event.nativeEvent.layout.width;
-        if (width > 0) setMeasuredClip((current) => (Math.abs(current - width) < 0.5 ? current : width));
-      }}
-      style={[layout as ViewStyle, styles.clip, { height: lineHeight }]}
+      onLayout={(event) => takeClip(event.nativeEvent.layout.width)}
+      style={[layout as ViewStyle, lineHeight ? { minHeight: lineHeight } : null]}
     >
-      <View
-        pointerEvents="none"
-        style={[
-          styles.track,
-          {
-            alignSelf: overflowing ? 'flex-start' : align === 'center' ? 'center' : 'flex-start',
-            width: overflowing ? textWidth : undefined,
-            opacity: ink,
-            transform: [{ translateX: shift }],
-          },
-        ]}
-      >
+      <View pointerEvents="none" style={styles.measureBox} accessibilityElementsHidden>
         <Text
-          pointerEvents="none"
+          ref={measureRef}
           accessible={false}
           importantForAccessibility="no"
-          style={[type, styles.tick, overflowing ? { width: textWidth } : null]}
+          onLayout={(event) => {
+            const width = event.nativeEvent.layout.width;
+            if (width > 3600) return;
+            takeText(width);
+          }}
+          style={[type, styles.measureText]}
         >
           {text}
         </Text>
+      </View>
+      <View style={[styles.clip, lineHeight ? { minHeight: lineHeight } : null]}>
+        <View
+          pointerEvents="none"
+          style={[
+            styles.track,
+            {
+              alignSelf: overflowing ? 'flex-start' : align === 'center' ? 'center' : align === 'end' ? 'flex-end' : 'flex-start',
+              width: overflowing ? textWidth : undefined,
+              opacity: canRun ? ink : 1,
+              transform: [{ translateX: shownShift }],
+            },
+          ]}
+        >
+          <Text
+            pointerEvents="none"
+            accessible={false}
+            importantForAccessibility="no"
+            style={[type, styles.tick, overflowing ? { width: textWidth } : null]}
+          >
+            {text}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -388,23 +468,26 @@ function NativeMarquee({
   const measureRef = useRef<Text>(null);
   const offset = useRef(new Animated.Value(0)).current;
   const ink = useRef(new Animated.Value(1)).current;
-  const [clipWidth, setClipWidth] = useState(0);
+  const resetKey = `${text}|${layoutEpoch}`;
+  const [clipWidth, ready, takeClip] = useClipWidth(resetKey);
+  const [metricsKey, setMetricsKey] = useState(resetKey);
   const [textWidth, setTextWidth] = useState(0);
   const [visible, setVisible] = useState(true);
-  const [layoutReady, setLayoutReady] = useState(true);
   const [reduce, setReduce] = useState(false);
   const [reader, setReader] = useState(false);
   const [appActive, setAppActive] = useState(true);
 
-  const { distance, duration, overflowing } = marqueeMetrics(clipWidth, textWidth);
+  if (metricsKey !== resetKey) {
+    setMetricsKey(resetKey);
+    setTextWidth(0);
+  }
+
+  const { distance, duration, overflowing: fitsOverflow } = marqueeMetrics(clipWidth, textWidth);
+  const overflowing = ready && fitsOverflow;
   const frozen = paused || parentPaused || reduce || reader || !visible || !appActive;
-  const canRun = overflowing && !frozen && layoutReady && clipWidth > 0 && textWidth > 0;
+  const canRun = overflowing && !frozen && clipWidth > 0 && textWidth > 0;
   const rtl = I18nManager.isRTL;
 
-  const takeClip = (width: number) => {
-    if (width <= 0) return;
-    setClipWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
-  };
   const takeText = (width: number) => {
     if (width <= 0) return;
     setTextWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
@@ -431,23 +514,18 @@ function NativeMarquee({
     };
   }, []);
 
-  useEffect(() => {
-    setLayoutReady(false);
-    setVisible(true);
+  useLayoutEffect(() => {
     offset.stopAnimation();
     ink.stopAnimation();
     offset.setValue(0);
     ink.setValue(1);
+    setVisible(true);
     const node = clipRef.current;
-    if (!node) {
-      setLayoutReady(true);
-      return;
-    }
+    if (!node) return;
     node.measure((_x, _y, width) => {
       if (width > 0) takeClip(width);
-      setLayoutReady(true);
     });
-  }, [layoutEpoch]);
+  }, [resetKey, takeClip, offset, ink]);
 
   useEffect(() => {
     setVisible(true);
@@ -547,7 +625,7 @@ function NativeMarquee({
       : 0;
 
   const spoken = accessibilityLabel ?? text;
-  const alignItems = overflowing ? 'flex-start' : align === 'center' ? 'center' : 'flex-start';
+  const alignItems = overflowing ? 'flex-start' : align === 'center' ? 'center' : align === 'end' ? 'flex-end' : 'flex-start';
   const lineHeight = typeof type.lineHeight === 'number' ? type.lineHeight : undefined;
   const runWidth = overflowing && textWidth > 0 ? textWidth : undefined;
 
@@ -583,7 +661,7 @@ function NativeMarquee({
           {text}
         </Text>
       </View>
-      <View style={[styles.clip, { alignItems, height: lineHeight }]}>
+      <View style={[styles.clip, { alignItems }, lineHeight ? { minHeight: lineHeight } : null]}>
         <Animated.View key={`ink-${layoutEpoch}`} pointerEvents="none" style={[styles.ink, { opacity: ink }]}>
           <Animated.View
             pointerEvents="none"
@@ -703,6 +781,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: '100%',
     flexDirection: 'row',
+    ...(Platform.OS === 'web' ? ({ overflowY: 'visible' } as ViewStyle) : null),
   },
   ink: {
     width: '100%',
@@ -714,10 +793,12 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     opacity: 0,
-    ...(Platform.OS === 'web' ? null : { width: 4000 }),
+    alignItems: 'flex-start',
+    width: 4000,
   },
   measureText: {
     flexShrink: 0,
+    alignSelf: 'flex-start',
     ...nowrap,
     ...(Platform.OS === 'web'
       ? ({ width: 'max-content', maxWidth: 'none' } as unknown as TextStyle)

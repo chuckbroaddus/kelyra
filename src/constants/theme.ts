@@ -156,6 +156,20 @@ export const chrome = {
   drawerWidth: 304,
   topBarAt: 720,
   topBarHeight: 48,
+  /** Premium chrome motion — slow enough to read, not so slow it fights a repeat tap. */
+  motion: {
+    tray: 260,
+    trayStagger: 50,
+    searchIn: 280,
+    searchOut: 240,
+    drawerInX: 260,
+    drawerInY: 320,
+    drawerOutY: 240,
+    drawerOutX: 220,
+    menuIn: 280,
+    menuOut: 220,
+    context: 260,
+  },
 };
 
 export const APPEARANCE_KEY = 'kelyra.appearance';

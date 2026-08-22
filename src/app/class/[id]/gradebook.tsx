@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
+import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Avatar } from '@/components/ui/Avatar';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -12,7 +13,7 @@ import { Screen } from '@/components/ui/Screen';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { studentHead } from '@/constants/table';
 import { radius, type } from '@/constants/theme';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
@@ -32,8 +33,9 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
   const layout = useLayout();
-  const { contextTab, className } = useChrome();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { className } = useChrome();
+  const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
+  usePushedTitle(className ?? 'Class');
   const [book, setBook] = useState<Gradebook | null>(null);
   const [overview, setOverview] = useState<ClassOverview | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -68,7 +70,8 @@ export default function GradebookScreen() {
     }, [id]),
   );
 
-  const heatmap = contextTab === 'heatmap';
+  const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+  const heatmap = paneRaw === 'heatmap';
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
   const colWidth = studentHead.colWidth;
   const tree = useMemo(
@@ -128,6 +131,8 @@ export default function GradebookScreen() {
 
   return (
     <Screen maxWidth={1100} scroll={false}>
+      {id ? <ClassTabs classId={id} /> : null}
+      <View style={styles.pane}>
       {heatmap ? (
         overview?.heatmapSkills.length && overview.heatmapStudents.length ? (
           <Heatmap
@@ -252,6 +257,7 @@ export default function GradebookScreen() {
       )}
 
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
+      </View>
 
       <Modal visible={Boolean(headerMenu)} transparent animationType="fade" onRequestClose={() => setHeaderMenu(null)}>
         <View
@@ -363,6 +369,10 @@ export default function GradebookScreen() {
 }
 
 const styles = StyleSheet.create({
+  pane: {
+    flex: 1,
+    minHeight: 0,
+  },
   intro: {
     gap: 8,
     marginBottom: 12,

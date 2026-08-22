@@ -13,7 +13,7 @@ import { groupingLabels } from '@/lib/assignments/tree';
 import { deriveKeyKind, keyMaxScore, parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
 import { takeAssignmentFormSeed } from '@/lib/assignments/session';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { signedProfileUrlForAssetId } from '@/lib/people/photos';
@@ -33,7 +33,6 @@ type KeyAnalysis = {
 
 export default function AssignmentEditScreen() {
   const { colors } = useTheme();
-  const chrome = useChrome();
   const { teacher } = useAuth();
   const router = useRouter();
   const { id, assignmentId } = useLocalSearchParams<{ id: string; assignmentId: string }>();
@@ -104,10 +103,7 @@ export default function AssignmentEditScreen() {
       });
   }, [id]);
 
-  useEffect(() => {
-    chrome.setPushedTitle(creating ? 'New Assignment' : value.title.trim() || 'Edit Assignment');
-    return () => chrome.setPushedTitle(null);
-  }, [chrome, creating, value.title]);
+  usePushedTitle(creating ? 'New Assignment' : value.title.trim() || 'Edit Assignment');
 
   const applyKeyPhoto = async (uri: string, mimeType: string) => {
     if (!teacher) return;

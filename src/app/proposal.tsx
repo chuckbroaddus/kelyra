@@ -4,6 +4,7 @@ import { AppState, StyleSheet, Text, View } from 'react-native';
 
 import { AvatarTray } from '@/components/ui/AvatarTray';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
@@ -841,6 +842,7 @@ export default function ProposalScreen() {
               id: student.id,
               name: student.display_name,
               photoUrl: student.photoUrl,
+              hasPhoto: Boolean(student.photo_asset_id),
             }))}
             onPress={(person) => {
               setStudentId(person.id);
@@ -1124,7 +1126,7 @@ export default function ProposalScreen() {
       ) : null}
 
       {!audioOnly && draft?.spokenAudio ? (
-        <GhostButton align="left" label="Use voice only" onPress={useVoiceOnly} />
+        <IconButton name="mic" label="Use voice only" onPress={useVoiceOnly} />
       ) : null}
       <GhostButton align="left" label="Retake" onPress={retake} />
       <GhostButton align="left" label="Throw away" onPress={discard} />

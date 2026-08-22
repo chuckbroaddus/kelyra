@@ -1,10 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
 import { radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   label: string;
+  tooltip?: string;
   onPress: () => void;
   disabled?: boolean;
   align?: 'center' | 'left';
@@ -14,6 +16,7 @@ type Props = {
 
 function Base({
   label,
+  tooltip,
   onPress,
   disabled,
   style,
@@ -31,6 +34,7 @@ function Base({
 }) {
   const { colors } = useTheme();
   return (
+    <HoverTip label={tipIfNew(label, tooltip)} fill={align !== 'left' && !ghost}>
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
@@ -51,6 +55,7 @@ function Base({
         {label}
       </Text>
     </Pressable>
+    </HoverTip>
   );
 }
 

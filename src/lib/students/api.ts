@@ -1,6 +1,7 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import { setMetaKey } from '@/lib/people/metadata';
 import { hydratePhotoUrls } from '@/lib/people/photos';
+import { provisionStudentLogin, writeAudit, type ProvisionedLogin } from '@/lib/school/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { RosterImportRow, StudentRow } from '@/lib/supabase/types';
 
@@ -38,7 +39,85 @@ export async function suggestRosterFromPhoto(
   return suggestions;
 }
 
-export type RosterStudent = StudentRow & { enrollment_id: string; photoUrl: string | null };
+export type RosterStudent = StudentRow & {
+  enrollment_id: string;
+  photoUrl: string | null;
+  login?: ProvisionedLogin;
+};
+
+export async function listStudentsForLinking(
+  classId?: string | null,
+): Promise<Array<StudentRow & { photoUrl: string | null }>> {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.rpc('school_students_for_link');
+  if (!error && data) {
+    try {
+      return await hydratePhotoUrls(data);
+    } catch {
+      return data.map((row) => ({ ...row, photoUrl: null as string | null }));
+    }
+  }
+  if (classId) {
+    const [roster, available] = await Promise.all([listRoster(classId), listAvailableStudents(classId)]);
+    const seen = new Set<string>();
+    const merged: Array<StudentRow & { photoUrl: string | null }> = [];
+    for (const row of [...roster, ...available]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      merged.push(row);
+    }
+    return merged;
+  }
+  const { data: students, error: studentError } = await supabase
+    .from('students')
+    .select('*')
+    .order('display_name', { ascending: true });
+  if (studentError) throw studentError;
+  try {
+    return await hydratePhotoUrls(students ?? []);
+  } catch {
+    return (students ?? []).map((row) => ({ ...row, photoUrl: null as string | null }));
+  }
+}
+
+export async function listAvailableStudents(classId: string): Promise<Array<StudentRow & { photoUrl: string | null }>> {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.rpc('school_students_not_in_class', { p_class_id: classId });
+  let available = data ?? [];
+  if (error) {
+    const [{ data: enrollments }, { data: students }] = await Promise.all([
+      supabase.from('enrollments').select('student_id').eq('class_id', classId),
+      supabase.from('students').select('*').order('display_name', { ascending: true }),
+    ]);
+    const here = new Set((enrollments ?? []).map((row) => row.student_id));
+    available = (students ?? []).filter((row) => !here.has(row.id));
+  }
+  try {
+    return await hydratePhotoUrls(available);
+  } catch {
+    return available.map((row) => ({ ...row, photoUrl: null as string | null }));
+  }
+}
+
+export async function enrollExistingStudent(classId: string, studentId: string): Promise<void> {
+  const supabase = requireSupabase();
+  const { error } = await supabase.rpc('enroll_school_student', {
+    p_class_id: classId,
+    p_student_id: studentId,
+  });
+  if (error) {
+    const fallback = await supabase.from('enrollments').insert({ class_id: classId, student_id: studentId });
+    if (fallback.error) throw new Error(error.message || fallback.error.message || 'Could not add that student');
+  }
+  await writeAudit({
+    action: 'add_student',
+    entityType: 'student',
+    entityId: studentId,
+    studentId,
+    classId,
+    after: { enrolled: true },
+  }).catch(() => undefined);
+}
 
 export async function listRoster(classId: string): Promise<RosterStudent[]> {
   const supabase = requireSupabase();
@@ -63,9 +142,13 @@ export async function listRoster(classId: string): Promise<RosterStudent[]> {
   const roster = enrollments.flatMap((row) => {
     const student = byId.get(row.student_id);
     if (!student) return [];
-    return [{ ...student, enrollment_id: row.id }];
+    return [{ ...student, enrollment_id: row.id, photoUrl: null as string | null }];
   });
-  return hydratePhotoUrls(roster);
+  try {
+    return await hydratePhotoUrls(roster);
+  } catch {
+    return roster;
+  }
 }
 
 export type FocusLogEntry = {
@@ -237,7 +320,17 @@ async function insertStudent(input: {
     .single();
   if (enrollmentError) throw enrollmentError;
 
-  return { ...student, enrollment_id: enrollment.id, photoUrl: null };
+  await writeAudit({
+    action: 'add_student',
+    entityType: 'student',
+    entityId: student.id,
+    studentId: student.id,
+    classId: input.classId,
+    after: { display_name: student.display_name },
+  }).catch(() => undefined);
+
+  const login = await provisionStudentLogin(student.id);
+  return { ...student, enrollment_id: enrollment.id, photoUrl: null, login };
 }
 
 export async function updateStudentMetadata(

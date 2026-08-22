@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
+import { chrome as chromeTokens } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -24,9 +25,13 @@ type Props = {
   sticky?: ReactNode;
   centered?: boolean;
   keyboard?: boolean;
+  /** When false, the screen does not pad for the keyboard — nested lists handle it. */
+  avoidKeyboard?: boolean;
   scroll?: boolean;
   stickyHeaderIndices?: number[];
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollRef?: RefObject<ScrollView | null>;
+  onContentSizeChange?: (width: number, height: number) => void;
 };
 
 export function useScreenPad() {
@@ -48,18 +53,35 @@ export function Screen({
   sticky,
   centered,
   keyboard,
+  avoidKeyboard = true,
   scroll = true,
   stickyHeaderIndices,
   onScroll,
+  scrollRef,
+  onContentSizeChange,
 }: Props) {
   const { colors } = useTheme();
   const { pad } = useScreenPad();
   const insets = useSafeAreaInsets();
   const chrome = useOptionalChrome();
   const { scrollHandlers } = useMarqueeScroll();
+  const keyboardUp = Boolean(chrome?.keyboardVisible);
   const bottomReserve = chrome?.trayPadding ?? 48;
   const topReserve = chrome?.contextReserve ?? 0;
-  const stickyLift = chrome?.trayRest ?? 12 + (Platform.OS === 'web' ? 0 : insets.bottom);
+  const stickyLift = keyboardUp
+    ? 0
+    : chrome?.trayRest ?? 12 + (Platform.OS === 'web' ? 0 : insets.bottom);
+
+  useEffect(() => {
+    if (!keyboard || !keyboardUp) return;
+    const pin = () => scrollRef?.current?.scrollToEnd({ animated: true });
+    const frame = requestAnimationFrame(pin);
+    const later = setTimeout(pin, 280);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(later);
+    };
+  }, [keyboard, keyboardUp, scrollRef]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     chrome?.onScroll(event);
@@ -72,14 +94,16 @@ export function Screen({
     paddingTop: pad + topReserve,
     // When a sticky CTA is in the layout flow, it already sits above the tray.
     // Extra tray padding here would only push Throw away / Retake under the overlay.
-    paddingBottom: sticky ? 16 : 16 + bottomReserve,
+    paddingBottom: sticky ? 16 : 16 + (keyboardUp ? 12 : bottomReserve),
   };
 
   const body = scroll ? (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroller}
-      keyboardShouldPersistTaps={keyboard ? 'handled' : undefined}
-      keyboardDismissMode={keyboard ? 'on-drag' : undefined}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={keyboard ? 'interactive' : 'on-drag'}
+      automaticallyAdjustKeyboardInsets={!sticky}
       showsVerticalScrollIndicator={false}
       stickyHeaderIndices={stickyHeaderIndices}
       scrollEventThrottle={16}
@@ -87,6 +111,7 @@ export function Screen({
       onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
       onScrollEndDrag={scrollHandlers.onScrollEndDrag}
       onMomentumScrollEnd={scrollHandlers.onMomentumScrollEnd}
+      onContentSizeChange={onContentSizeChange}
       contentContainerStyle={[styles.content, padStyle, centered && styles.centered]}
     >
       {children}
@@ -124,12 +149,15 @@ export function Screen({
     </View>
   );
 
-  if (!keyboard) return column;
+  if (Platform.OS === 'web' || !avoidKeyboard) return column;
 
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Screen sits in the shell body, already below the header. Offsetting by
+      // headerHeight left the composer and last bubbles under the keyboard.
+      keyboardVerticalOffset={0}
     >
       {column}
     </KeyboardAvoidingView>
@@ -159,7 +187,7 @@ function FlushBody({
   useEffect(() => {
     Animated.timing(gap, {
       toValue: visible ? openGap : 0,
-      duration: 180,
+      duration: chromeTokens.motion.context,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();

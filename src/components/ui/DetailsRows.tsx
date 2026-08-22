@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { EmailLink } from '@/components/ui/EmailLink';
 import { type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -21,21 +22,36 @@ export function DetailsRows({ rows, onPress, onClear }: Props) {
     <View>
       {rows.map((row) => {
         const empty = !row.value?.trim();
+        const mail = !empty && (row.key === 'email' || looksLikeEmail(row.value));
         return (
           <View key={row.key} style={[styles.row, { borderBottomColor: colors.line }]}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onPress(row)}
-              style={({ pressed }) => [styles.main, pressed && { opacity: 0.8 }]}
-            >
-              <Text style={[styles.label, { color: colors.mute }]}>{row.label}</Text>
-              <Text
-                style={[styles.value, { color: empty ? colors.mute : colors.ink }]}
-                numberOfLines={3}
+            <View style={styles.main}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => onPress(row)}
+                style={({ pressed }) => [pressed && { opacity: 0.8 }]}
               >
-                {empty ? `Add ${row.label.toLowerCase()}` : row.value}
-              </Text>
-            </Pressable>
+                <Text style={[styles.label, { color: colors.mute }]}>{row.label}</Text>
+              </Pressable>
+              {mail && row.value ? (
+                <View style={styles.value}>
+                  <EmailLink email={row.value} style={styles.value} />
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => onPress(row)}
+                  style={({ pressed }) => [styles.value, pressed && { opacity: 0.8 }]}
+                >
+                  <Text
+                    style={[styles.valueText, { color: empty ? colors.mute : colors.ink }]}
+                    numberOfLines={3}
+                  >
+                    {empty ? `Add ${row.label.toLowerCase()}` : row.value}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
             {!empty && onClear ? (
               <Pressable
                 accessibilityRole="button"
@@ -76,9 +92,11 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   value: {
-    ...type.body,
     flex: 1,
     minWidth: 0,
+  },
+  valueText: {
+    ...type.body,
   },
   clear: {
     minHeight: 32,
@@ -87,3 +105,8 @@ const styles = StyleSheet.create({
   },
   clearLabel: type.meta,
 });
+
+function looksLikeEmail(value: string | null): boolean {
+  if (!value) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}

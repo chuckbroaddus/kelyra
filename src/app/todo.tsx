@@ -3,21 +3,22 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Badge, practiceBadge } from '@/components/ui/Badge';
-import { PrimaryButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AvatarTray } from '@/components/ui/AvatarTray';
 import { ClassmateSheet } from '@/components/ui/ClassmateSheet';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { firstName } from '@/lib/format';
 import { signedProfileUrl } from '@/lib/people/photos';
 import { practiceTitle } from '@/lib/practice/api';
 import {
+  listStudentClassmates,
   listStudentTodo,
   loadStudentSession,
-  openClassByJoinCode,
   submitStudentTodo,
   type StudentSession,
   type StudentTodo,
@@ -28,10 +29,13 @@ export default function TodoScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { contextTab } = useChrome();
+  const { profile } = useAuth();
   const [session, setSession] = useState<StudentSession | null>(null);
   const [items, setItems] = useState<StudentTodo[]>([]);
-  const [classmates, setClassmates] = useState<{ id: string; name: string; photoUrl?: string | null }[]>([]);
-  const [peer, setPeer] = useState<string | null>(null);
+  const [classmates, setClassmates] = useState<
+    { id: string; name: string; photoUrl?: string | null; hasPhoto?: boolean }[]
+  >([]);
+  const [peer, setPeer] = useState<{ name: string; photoUrl?: string | null } | null>(null);
   const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -40,7 +44,7 @@ export default function TodoScreen() {
     const next = await loadStudentSession();
     setSession(next);
     if (!next) return;
-    const todo = await listStudentTodo(next.joinCode, next.studentId);
+    const todo = await listStudentTodo();
     setItems(todo);
     const nextAnswers: Record<string, Record<string, string>> = {};
     for (const item of todo) {
@@ -48,14 +52,14 @@ export default function TodoScreen() {
     }
     setAnswers(nextAnswers);
     try {
-      const peers = await openClassByJoinCode(next.joinCode);
-      const others = peers.filter((row) => row.student_id !== next.studentId);
+      const peers = await listStudentClassmates();
       setClassmates(
         await Promise.all(
-          others.map(async (row) => ({
-            id: row.student_id,
-            name: firstName(row.display_name),
-            photoUrl: await signedProfileUrl(row.photo_path),
+          peers.map(async (row) => ({
+            id: row.studentId,
+            name: firstName(row.displayName),
+            photoUrl: await signedProfileUrl(row.photoPath),
+            hasPhoto: Boolean(row.photoPath),
           })),
         ),
       );
@@ -84,12 +88,7 @@ export default function TodoScreen() {
     setBusy(true);
     setStatus(null);
     try {
-      await submitStudentTodo(
-        session.joinCode,
-        session.studentId,
-        item.submissionId,
-        answers[item.submissionId] ?? {},
-      );
+      await submitStudentTodo(item.submissionId, answers[item.submissionId] ?? {});
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not submit');
@@ -101,8 +100,14 @@ export default function TodoScreen() {
   if (!session) {
     return (
       <Screen maxWidth={640} centered>
-        <Text style={[styles.lead, { color: colors.mute }]}>Join a class first.</Text>
-        <PrimaryButton label="Join class" onPress={() => router.push('/join')} />
+        <Text style={[styles.lead, { color: colors.mute }]}>
+          {profile?.role === 'student'
+            ? 'This login is not assigned to a roster name yet. Ask your teacher to assign it on your student page.'
+            : 'Sign in with the login your school assigned.'}
+        </Text>
+        {profile?.role === 'student' ? null : (
+          <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        )}
       </Screen>
     );
   }
@@ -123,8 +128,9 @@ export default function TodoScreen() {
     >
       <AvatarTray
         people={classmates}
-        onPress={(person) => setPeer(person.name)}
+        onPress={(person) => setPeer({ name: person.name, photoUrl: person.photoUrl })}
       />
+      <GhostButton align="left" label="Class feed" onPress={() => router.push('/feed')} />
       <Text style={[type.meta, { color: colors.mute }]}>Your practice</Text>
       {items[0]?.focusLabel ? (
         <View style={styles.focus}>
@@ -180,7 +186,12 @@ export default function TodoScreen() {
         </View>
       )}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
-      <ClassmateSheet name={peer} className={session.className} onClose={() => setPeer(null)} />
+      <ClassmateSheet
+        name={peer?.name ?? null}
+        photoUrl={peer?.photoUrl}
+        className={session.className ?? 'your class'}
+        onClose={() => setPeer(null)}
+      />
     </Screen>
   );
 }

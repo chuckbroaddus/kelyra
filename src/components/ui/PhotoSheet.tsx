@@ -10,11 +10,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton } from '@/components/ui/Button';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { hitSlop, radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   visible: boolean;
+  title?: string;
   hasPhoto?: boolean;
   showUseHomework?: boolean;
   onTake: () => void;
@@ -36,6 +38,7 @@ function afterDismiss(run: () => void) {
 
 export function PhotoSheet({
   visible,
+  title = 'Photo',
   hasPhoto,
   showUseHomework,
   onTake,
@@ -49,6 +52,12 @@ export function PhotoSheet({
   const web = Platform.OS === 'web';
 
   const run = (action: () => void, waitForPicker = false) => {
+    // Web: fire the picker in this click before unmounting the sheet, or the
+    // file dialog never opens. Native: dismiss first, then wait, then pick.
+    if (waitForPicker && web) {
+      action();
+      return;
+    }
     onCancel();
     if (waitForPicker) afterDismiss(action);
     else action();
@@ -76,8 +85,8 @@ export function PhotoSheet({
             },
           ]}
         >
-          <Text style={[styles.title, { color: colors.ink }]}>Photo</Text>
-          <Row label="Take photo" onPress={() => run(onTake, true)} color={colors.ink} />
+          <Text style={[styles.title, { color: colors.ink }]}>{title}</Text>
+          <Row icon="capture" label="Take photo" onPress={() => run(onTake, true)} color={colors.ink} />
           <Row label="Choose from library" onPress={() => run(onLibrary, true)} color={colors.ink} />
           {showUseHomework ? (
             <Row
@@ -96,7 +105,17 @@ export function PhotoSheet({
   );
 }
 
-function Row({ label, onPress, color }: { label: string; onPress: () => void; color: string }) {
+function Row({
+  label,
+  onPress,
+  color,
+  icon,
+}: {
+  label: string;
+  onPress: () => void;
+  color: string;
+  icon?: IconName;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -104,6 +123,7 @@ function Row({ label, onPress, color }: { label: string; onPress: () => void; co
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
     >
+      {icon ? <Icon name={icon} color={color} size={20} /> : null}
       <Text style={[styles.rowLabel, { color }]}>{label}</Text>
     </Pressable>
   );
@@ -146,7 +166,9 @@ const styles = StyleSheet.create({
   },
   row: {
     minHeight: 48,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   rowLabel: type.body,
 });

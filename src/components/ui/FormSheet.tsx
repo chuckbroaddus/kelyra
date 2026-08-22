@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton } from '@/components/ui/Button';
@@ -24,7 +24,10 @@ export function FormSheet({ visible, title, onClose, children }: Props) {
       presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'fullScreen'}
       onRequestClose={onClose}
     >
-      <View style={[styles.root, { backgroundColor: colors.bg, paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}>
+      <KeyboardAvoidingView
+        style={[styles.root, { backgroundColor: colors.bg, paddingTop: Platform.OS === 'ios' ? 12 : insets.top }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={[styles.header, { borderBottomColor: colors.line }]}>
           <Text style={[styles.title, { color: colors.ink }]} numberOfLines={1}>
             {title}
@@ -33,12 +36,13 @@ export function FormSheet({ visible, title, onClose, children }: Props) {
         </View>
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={[styles.body, { paddingBottom: 32 + insets.bottom }]}
         >
           {children}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

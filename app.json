@@ -11,7 +11,9 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Kelyra uses the camera to photograph class lists and student work.",
-        "NSMicrophoneUsageDescription": "Kelyra uses the microphone to record teacher notes."
+        "NSMicrophoneUsageDescription": "Kelyra uses the microphone to record teacher notes.",
+        "NSPhotoLibraryAddUsageDescription": "Kelyra saves photos from school messages to your Photos.",
+        "NSPhotoLibraryUsageDescription": "Kelyra saves photos from school messages to your Photos."
       }
     },
     "android": {
@@ -22,6 +24,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
@@ -42,6 +45,14 @@
         "expo-av",
         {
           "microphonePermission": "Kelyra uses the microphone to record the student name."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Kelyra saves photos from school messages to your Photos.",
+          "savePhotosPermission": "Kelyra saves photos from school messages to your Photos.",
+          "isAccessMediaLocationEnabled": false
         }
       ],
       [

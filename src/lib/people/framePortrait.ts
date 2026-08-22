@@ -12,6 +12,7 @@ export type FaceBox = {
 
 const SIZE = 640;
 
+/** People avatars only. Group chat photos stay raw — do not call this from Messages. */
 export async function framePortraitFile(
   uri: string,
   imageUrl?: string | null,

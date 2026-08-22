@@ -11,8 +11,10 @@ import { DetailsRows } from '@/components/ui/DetailsRows';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
+import { PersonTabs } from '@/components/ui/PersonTabs';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { Screen } from '@/components/ui/Screen';
@@ -20,22 +22,21 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { firstName, formatWhen } from '@/lib/format';
+import { listClassesForChildren } from '@/lib/classes/api';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { firstName } from '@/lib/format';
+
 import {
-  createParentInvite,
   getParent,
   linkChild,
   listChildrenForParent,
-  listInvitesForParent,
-  parentInviteUrl,
   parentStatusLine,
   patchParentMetadata,
   renameParent,
   updateParentMetadata,
   type ClassParent,
 } from '@/lib/parents/api';
-import { deleteParent, revokeInvite, unlinkChild } from '@/lib/parents/delete';
+import { deleteParent, unlinkChild } from '@/lib/parents/delete';
 import { PARENT_DETAIL_FIELDS, metaString, relationshipLabel, setMetaKey } from '@/lib/people/metadata';
 import {
   clearProfilePhoto,
@@ -43,29 +44,39 @@ import {
   signedProfileUrlForAssetId,
   uploadProfilePhoto,
 } from '@/lib/people/photos';
-import { listRoster, type RosterStudent } from '@/lib/students/api';
-import type { ParentAccessRow, ParentRow, StudentRow } from '@/lib/supabase/types';
+import { listProfiles, setParentCardLink } from '@/lib/school/api';
+import { formatHandle, isAdminRole } from '@/lib/school/roles';
+import { listStudentsForLinking } from '@/lib/students/api';
+import type { ParentRow, ProfileRow, StudentRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+
+type LinkStudent = StudentRow & { photoUrl: string | null };
 
 type ConfirmKind =
   | { kind: 'delete' }
-  | { kind: 'unlink'; student: StudentRow & { photoUrl: string | null } }
-  | { kind: 'revoke'; access: ParentAccessRow }
+  | { kind: 'unlink'; student: LinkStudent }
   | { kind: 'remove-photo' }
   | { kind: 'clear'; key: string; label: string }
-  | { kind: 'link'; student: RosterStudent };
+  | { kind: 'link'; student: LinkStudent }
+  | { kind: 'unlink-login'; login: ProfileRow };
+
+const PARENT_TABS = [
+  { key: 'classes', label: 'Classes', icon: 'classes' as const },
+  { key: 'children', label: 'Children', icon: 'children' as const },
+  { key: 'details', label: 'Details', icon: 'details' as const },
+];
 
 export default function ParentPage() {
-  const { colors, scheme } = useTheme();
-  const chrome = useChrome();
+  const { colors } = useTheme();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, profile } = useAuth();
+  const canLinkChildren = isAdminRole(profile);
+  const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { id: classId, parentId } = useLocalSearchParams<{ id: string; parentId: string }>();
   const [parent, setParent] = useState<ParentRow | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [children, setChildren] = useState<Array<StudentRow & { photoUrl: string | null }>>([]);
-  const [invites, setInvites] = useState<ParentAccessRow[]>([]);
-  const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [children, setChildren] = useState<LinkStudent[]>([]);
+  const [students, setStudents] = useState<LinkStudent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [photoOpen, setPhotoOpen] = useState(false);
@@ -76,18 +87,46 @@ export default function ParentPage() {
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [login, setLogin] = useState<ProfileRow | null>(null);
+  const [loginChoices, setLoginChoices] = useState<ProfileRow[]>([]);
+  const [tab, setTab] = useState('classes');
+  const [childClasses, setChildClasses] = useState<Array<{ id: string; name: string; childNames: string[] }>>(
+    [],
+  );
+
+  useEffect(() => {
+    setTab('classes');
+  }, [parentId]);
 
   const load = useCallback(async () => {
-    if (!parentId || !classId) return;
+    if (!parentId) return;
     const next = await getParent(parentId);
     setParent(next);
     setPhotoUrl(await signedProfileUrlForAssetId(next.photo_asset_id));
-    setChildren(await listChildrenForParent(parentId));
-    setInvites(await listInvitesForParent(parentId));
-    setRoster(await listRoster(classId));
+    const kids = await listChildrenForParent(parentId);
+    setChildren(kids);
+    try {
+      setChildClasses(await listClassesForChildren(kids));
+    } catch {
+      setChildClasses([]);
+    }
+    try {
+      setStudents(await listStudentsForLinking(classId));
+    } catch {
+      setStudents([]);
+    }
+    try {
+      const people = await listProfiles();
+      setLogin(people.find((row) => row.parent_id === parentId) ?? null);
+      setLoginChoices(
+        people.filter((row) => (row.role === 'parent' || Boolean(row.parent_id)) && !row.parent_id),
+      );
+    } catch {
+      setLogin(null);
+      setLoginChoices([]);
+    }
   }, [parentId, classId]);
 
   useFocusEffect(
@@ -98,10 +137,7 @@ export default function ParentPage() {
     }, [load]),
   );
 
-  useEffect(() => {
-    chrome.setPushedTitle(parent?.display_name ?? 'Parent');
-    return () => chrome.setPushedTitle(null);
-  }, [chrome, parent?.display_name]);
+  usePushedTitle(parent?.display_name ?? 'Parent');
 
   const summary: ClassParent | null = parent
     ? {
@@ -112,7 +148,7 @@ export default function ParentPage() {
           display_name: child.display_name,
           photoUrl: child.photoUrl,
         })),
-        inviteCount: invites.length,
+        inviteCount: 0,
       }
     : null;
 
@@ -189,6 +225,26 @@ export default function ParentPage() {
     }
   };
 
+  const openAddChild = () => {
+    setChildFilter('');
+    setPickerOpen(true);
+  };
+
+  const linkNow = async (student: LinkStudent) => {
+    if (!parent) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await linkChild(parent.id, student.id);
+      setPickerOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not link that child');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onConfirm = async () => {
     if (!parent || !confirm) return;
     setBusy(true);
@@ -201,30 +257,19 @@ export default function ParentPage() {
         return;
       }
       if (confirm.kind === 'unlink') await unlinkChild(parent.id, confirm.student.id);
-      if (confirm.kind === 'revoke') await revokeInvite(confirm.access.id);
       if (confirm.kind === 'remove-photo') await clearProfilePhoto('parent', parent.id);
       if (confirm.kind === 'clear') await patchParentMetadata(parent, confirm.key, null);
       if (confirm.kind === 'link') {
         await linkChild(parent.id, confirm.student.id);
         setPickerOpen(false);
       }
+      if (confirm.kind === 'unlink-login') await setParentCardLink(confirm.login.id, null);
       setConfirm(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not finish that');
     } finally {
       setBusy(false);
-    }
-  };
-
-  const onCreateInvite = async () => {
-    if (!parent) return;
-    try {
-      const token = await createParentInvite(parent.id, children[0]?.id);
-      setCopied(parentInviteUrl(token));
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create invite');
     }
   };
 
@@ -249,20 +294,23 @@ export default function ParentPage() {
     setPhotoOpen(true);
   };
 
-  const details = PARENT_DETAIL_FIELDS.map((field) => ({
-    key: field.key,
-    label: field.label,
-    value:
-      field.key === 'relationship'
-        ? relationshipLabel(parent.metadata)
-        : metaString(parent.metadata, field.key),
-  }));
+  const details = [
+    { key: 'display_name', label: 'Name', value: parent.display_name },
+    ...PARENT_DETAIL_FIELDS.map((field) => ({
+      key: field.key,
+      label: field.label,
+      value:
+        field.key === 'relationship'
+          ? relationshipLabel(parent.metadata)
+          : metaString(parent.metadata, field.key),
+    })),
+  ];
 
-  const unlinkedRoster = roster.filter((student) => !children.some((child) => child.id === student.id));
+  const unlinkedStudents = students.filter((student) => !children.some((child) => child.id === student.id));
   const childNeedle = childFilter.trim().toLowerCase();
   const visibleUnlinked = childNeedle
-    ? unlinkedRoster.filter((student) => student.display_name.toLowerCase().includes(childNeedle))
-    : unlinkedRoster;
+    ? unlinkedStudents.filter((student) => student.display_name.toLowerCase().includes(childNeedle))
+    : unlinkedStudents;
 
   return (
     <Screen keyboard maxWidth={640}>
@@ -274,55 +322,124 @@ export default function ParentPage() {
       >
         {({ pressed }) => (
           <>
-        <Avatar name={parent.display_name} photoUrl={photoUrl} size={72} />
-        <View style={styles.heroText}>
-          <MarqueeText
-            text={parent.display_name}
-            align="start"
-            paused={pressed}
-            fadeColor={colors.bg}
-            style={[styles.name, { color: colors.ink }]}
-          />
-          {photoBusy ? (
-            <WorkingLine text="Working…" />
-          ) : (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              {summary ? parentStatusLine(summary) : ''}
-            </Text>
-          )}
-        </View>
+            <Avatar
+              name={parent.display_name}
+              photoUrl={photoUrl}
+              hasPhoto={Boolean(parent.photo_asset_id)}
+              size={72}
+            />
+            <View style={styles.heroText}>
+              <MarqueeText
+                text={parent.display_name}
+                align="start"
+                paused={pressed}
+                fadeColor={colors.bg}
+                style={[styles.heroName, { color: colors.ink }]}
+              />
+              {photoBusy ? (
+                <WorkingLine text="Working…" />
+              ) : (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  {summary ? parentStatusLine(summary) : 'Add details'}
+                </Text>
+              )}
+            </View>
           </>
         )}
       </Pressable>
+      <PersonTabs tabs={PARENT_TABS} value={tab} onChange={setTab} />
 
-      <SectionHeader label="Details" first />
+      {tab === 'classes' ? (
+        <>
+          {childClasses.length === 0 ? (
+            <Text style={[type.meta, { color: colors.mute }]}>
+              No classes yet. Classes show up when a linked child is on a roster.
+            </Text>
+          ) : null}
+          {childClasses.map((klass) => (
+            <ListRow
+              key={klass.id}
+              title={klass.name}
+              status={klass.childNames.join(' · ') || undefined}
+              onPress={() => router.push(`/class/${klass.id}`)}
+            />
+          ))}
+        </>
+      ) : null}
+
+      {tab === 'details' ? (
       <DetailsRows
         rows={details}
         onPress={openEdit}
         onClear={(row) => setConfirm({ kind: 'clear', key: row.key, label: row.label })}
       />
+      ) : null}
 
-      <View style={styles.pills}>
-        <GhostButton align="left" label="Edit" onPress={openEdit} />
-        <GhostButton align="left" label="Photo" disabled={photoBusy} onPress={openPhotoSheet} />
-        <GhostButton
-          align="left"
-          label="Add child"
-          onPress={() => {
-            setChildFilter('');
-            setPickerOpen(true);
-          }}
+      {tab === 'details' ? (
+      <>
+      <SectionHeader label="Login" />
+      {login ? (
+        <ListRow
+          title={formatHandle(login.username)}
+          status={login.email ?? 'Assigned login'}
+          trailing={
+            canAssignLogin
+              ? [
+                  {
+                    key: 'unassign',
+                    label: 'Unassign',
+                    tone: 'wash',
+                    autoCommit: false,
+                    onPress: () => setConfirm({ kind: 'unlink-login', login }),
+                  },
+                ]
+              : []
+          }
         />
-        <GhostButton align="left" label={`Delete ${firstName(parent.display_name)}`} onPress={() => setConfirm({ kind: 'delete' })} />
-      </View>
+      ) : (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          No login assigned. Parents sign in with the account you assign here.
+        </Text>
+      )}
+      {canAssignLogin && !login
+        ? loginChoices.map((choice) => (
+            <ListRow
+              key={choice.id}
+              title={formatHandle(choice.username)}
+              status={choice.display_name || choice.email || 'Unassigned parent login'}
+              onPress={() => {
+                void setParentCardLink(choice.id, parentId)
+                  .then(() => load())
+                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not assign login'));
+              }}
+            />
+          ))
+        : null}
+      {canAssignLogin && !login && loginChoices.length === 0 ? (
+        isAdminRole(profile) ? (
+          <GhostButton align="left" label="Create a login in People" onPress={() => router.push('/?tab=new')} />
+        ) : (
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Ask an administrator to create a parent login in People, then assign it here.
+          </Text>
+        )
+      ) : null}
+      <Text style={[type.meta, { color: colors.mute }]}>
+        They sign in with their parent login. Linked children and the focus skill show up there automatically.
+      </Text>
+      </>
+      ) : null}
 
-      <SectionHeader label="Children" />
+      {tab === 'children' ? (
+      <>
+      <SectionHeader label="Children" first />
       {children.length ? (
         <AvatarTray
           people={children.map((child) => ({
             id: child.id,
             name: child.display_name,
             photoUrl: child.photoUrl,
+            hasPhoto: Boolean(child.photo_asset_id),
           }))}
           onPress={(person) => router.push(`/class/${classId}/student/${person.id}`)}
         />
@@ -335,49 +452,31 @@ export default function ParentPage() {
           title={child.display_name}
           photoUrl={child.photoUrl}
           onPress={() => router.push(`/class/${classId}/student/${child.id}`)}
-          trailing={[
-            {
-              key: 'unlink',
-              label: 'Unlink',
-              tone: 'wash',
-              autoCommit: false,
-              onPress: () => setConfirm({ kind: 'unlink', student: child }),
-            },
-          ]}
+          trailing={
+            canLinkChildren
+              ? [
+                  {
+                    key: 'unlink',
+                    label: 'Unlink',
+                    tone: 'wash',
+                    autoCommit: false,
+                    onPress: () => setConfirm({ kind: 'unlink', student: child }),
+                  },
+                ]
+              : []
+          }
         />
       ))}
-      <GhostButton
-        align="left"
-        label="Add a child"
-        onPress={() => {
-          setChildFilter('');
-          setPickerOpen(true);
-        }}
-      />
+      {canLinkChildren ? <GhostButton align="left" label="Add child" onPress={openAddChild} /> : null}
+      </>
+      ) : null}
 
-      <SectionHeader label="Invite" />
-      {invites.map((access) => (
-        <ListRow
-          key={access.id}
-          title={`Created ${formatWhen(access.created_at)}`}
-          status={access.accepted_at ? 'Opened' : 'Active'}
-          chevron={false}
-          trailing={[
-            {
-              key: 'revoke',
-              label: 'Revoke',
-              tone: 'danger',
-              autoCommit: false,
-              onPress: () => setConfirm({ kind: 'revoke', access }),
-            },
-          ]}
+      {tab === 'details' && parent ? (
+        <GhostButton
+          align="left"
+          label={`Delete ${firstName(parent.display_name)}`}
+          onPress={() => setConfirm({ kind: 'delete' })}
         />
-      ))}
-      <GhostButton align="left" label="Create invite link" onPress={() => void onCreateInvite()} />
-      {copied ? (
-        <Text selectable style={[type.meta, { color: colors.ink }]}>
-          {copied}
-        </Text>
       ) : null}
 
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
@@ -399,86 +498,85 @@ export default function ParentPage() {
         <WebCameraCapture onCapture={(uri, mime) => void onWebCapture(uri, mime)} onCancel={() => setCameraOpen(false)} />
       </Modal>
 
-      <FormSheet visible={editOpen} title="Edit" onClose={() => setEditOpen(false)}>
-            <TextField label="Name" value={draftName} onChangeText={setDraftName} />
-            <Text style={[type.meta, { color: colors.mute }]}>Relationship</Text>
-            <ChipRow>
-              {(['mother', 'father', 'guardian', 'other'] as const).map((rel) => (
-                <Chip
-                  key={rel}
-                  label={rel === 'mother' ? 'Mother' : rel === 'father' ? 'Father' : rel === 'guardian' ? 'Guardian' : 'Other'}
-                  selected={draft.relationship === rel}
-                  onPress={() => setDraft((current) => ({ ...current, relationship: rel }))}
-                />
-              ))}
-            </ChipRow>
-            {draft.relationship === 'other' ? (
-              <TextField
-                label="Relationship"
-                value={draft.relationship_other ?? ''}
-                onChangeText={(value) => setDraft((current) => ({ ...current, relationship_other: value }))}
-              />
-            ) : null}
-            <TextField
-              label="Phone"
-              keyboardType="phone-pad"
-              value={draft.phone ?? ''}
-              onChangeText={(value) => setDraft((current) => ({ ...current, phone: value }))}
+      <FormSheet visible={editOpen} title="Details" onClose={() => setEditOpen(false)}>
+        <TextField label="Name" value={draftName} onChangeText={setDraftName} />
+        <Text style={[type.meta, { color: colors.mute }]}>Relationship</Text>
+        <ChipRow>
+          {(['mother', 'father', 'guardian', 'other'] as const).map((rel) => (
+            <Chip
+              key={rel}
+              label={rel === 'mother' ? 'Mother' : rel === 'father' ? 'Father' : rel === 'guardian' ? 'Guardian' : 'Other'}
+              selected={draft.relationship === rel}
+              onPress={() => setDraft((current) => ({ ...current, relationship: rel }))}
             />
-            <TextField
-              label="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={draft.email ?? ''}
-              onChangeText={(value) => setDraft((current) => ({ ...current, email: value }))}
+          ))}
+        </ChipRow>
+        {draft.relationship === 'other' ? (
+          <TextField
+            label="Relationship"
+            value={draft.relationship_other ?? ''}
+            onChangeText={(value) => setDraft((current) => ({ ...current, relationship_other: value }))}
+          />
+        ) : null}
+        <TextField
+          label="Phone"
+          keyboardType="phone-pad"
+          value={draft.phone ?? ''}
+          onChangeText={(value) => setDraft((current) => ({ ...current, phone: value }))}
+        />
+        <TextField
+          label="Email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={draft.email ?? ''}
+          onChangeText={(value) => setDraft((current) => ({ ...current, email: value }))}
+        />
+        <TextField
+          label="Address"
+          multiline
+          value={draft.address ?? ''}
+          onChangeText={(value) => setDraft((current) => ({ ...current, address: value }))}
+        />
+        <Text style={[type.meta, { color: colors.mute }]}>Preferred contact</Text>
+        <ChipRow>
+          {(['call', 'text', 'email'] as const).map((pref) => (
+            <Chip
+              key={pref}
+              label={pref === 'call' ? 'Call' : pref === 'text' ? 'Text' : 'Email'}
+              selected={draft.preferred_contact === pref}
+              onPress={() => setDraft((current) => ({ ...current, preferred_contact: pref }))}
             />
-            <TextField
-              label="Address"
-              multiline
-              value={draft.address ?? ''}
-              onChangeText={(value) => setDraft((current) => ({ ...current, address: value }))}
-            />
-            <Text style={[type.meta, { color: colors.mute }]}>Preferred contact</Text>
-            <ChipRow>
-              {(['call', 'text', 'email'] as const).map((pref) => (
-                <Chip
-                  key={pref}
-                  label={pref === 'call' ? 'Call' : pref === 'text' ? 'Text' : 'Email'}
-                  selected={draft.preferred_contact === pref}
-                  onPress={() => setDraft((current) => ({ ...current, preferred_contact: pref }))}
-                />
-              ))}
-            </ChipRow>
-            <TextField
-              label="Notes"
-              multiline
-              value={draft.notes ?? ''}
-              onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))}
-            />
-            <Text style={[type.meta, { color: colors.mute }]}>Only you will see this.</Text>
-            <PrimaryButton label={busy ? 'Saving…' : 'Save'} disabled={busy} onPress={() => void saveEdit()} />
+          ))}
+        </ChipRow>
+        <TextField
+          label="Notes"
+          multiline
+          value={draft.notes ?? ''}
+          onChangeText={(value) => setDraft((current) => ({ ...current, notes: value }))}
+        />
+        <Text style={[type.meta, { color: colors.mute }]}>Only you will see this.</Text>
+        <PrimaryButton label={busy ? 'Saving…' : 'Save'} disabled={busy} onPress={() => void saveEdit()} />
       </FormSheet>
 
       <FormSheet visible={pickerOpen} title="Add a child" onClose={() => setPickerOpen(false)}>
-            {unlinkedRoster.length > 8 ? (
-              <TextField placeholder="Find a student" value={childFilter} onChangeText={setChildFilter} />
-            ) : null}
-            {visibleUnlinked.map((student) => (
-              <ListRow
-                key={student.id}
-                title={student.display_name}
-                photoUrl={student.photoUrl}
-                onPress={() => {
-                  setPickerOpen(false);
-                  setConfirm({ kind: 'link', student });
-                }}
-              />
-            ))}
-            {unlinkedRoster.length === 0 ? (
-              <Text style={[type.meta, { color: colors.mute }]}>Every student in this class is already linked.</Text>
-            ) : unlinkedRoster.length > 8 && visibleUnlinked.length === 0 ? (
-              <Text style={[type.meta, { color: colors.mute }]}>No names match that search.</Text>
-            ) : null}
+        {busy ? <WorkingLine text="Linking…" /> : null}
+        {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
+        {unlinkedStudents.length > 8 ? (
+          <TextField placeholder="Find a student" value={childFilter} onChangeText={setChildFilter} />
+        ) : null}
+        {visibleUnlinked.map((student) => (
+          <ListRow
+            key={student.id}
+            title={student.display_name}
+            photoUrl={student.photoUrl}
+            onPress={() => void linkNow(student)}
+          />
+        ))}
+        {unlinkedStudents.length === 0 ? (
+          <Text style={[type.meta, { color: colors.mute }]}>Every student at this school is already linked.</Text>
+        ) : unlinkedStudents.length > 8 && visibleUnlinked.length === 0 ? (
+          <Text style={[type.meta, { color: colors.mute }]}>No names match that search.</Text>
+        ) : null}
       </FormSheet>
 
       <ConfirmSheet
@@ -499,21 +597,23 @@ function confirmTitle(confirm: ConfirmKind | null, parentName: string): string {
   if (!confirm) return '';
   if (confirm.kind === 'delete') return `Delete ${parentName}?`;
   if (confirm.kind === 'unlink') return `Unlink ${firstName(confirm.student.display_name)} from ${parentName}?`;
-  if (confirm.kind === 'revoke') return 'Revoke this invite link?';
   if (confirm.kind === 'remove-photo') return 'Remove this photo?';
   if (confirm.kind === 'clear') return `Clear ${confirm.label}?`;
+  if (confirm.kind === 'unlink-login') return `Unassign ${formatHandle(confirm.login.username)}?`;
   return `Link ${firstName(confirm.student.display_name)} to ${parentName}?`;
 }
 
 function confirmBody(confirm: ConfirmKind | null, parentName: string): string {
   if (!confirm) return '';
-  if (confirm.kind === 'delete') return 'Their invite links die. Students stay. This cannot be undone.';
+  if (confirm.kind === 'delete') return 'The parent card is removed. Students stay. This cannot be undone.';
   if (confirm.kind === 'unlink') {
     return `They will not see ${firstName(confirm.student.display_name)}’s note. This does not delete anyone. This cannot be undone.`;
   }
-  if (confirm.kind === 'revoke') return 'Anyone with the link will lose access. This cannot be undone.';
   if (confirm.kind === 'remove-photo') return `${parentName} stays. This cannot be undone.`;
   if (confirm.kind === 'clear') return 'This cannot be undone.';
+  if (confirm.kind === 'unlink-login') {
+    return `${firstName(parentName)} stays. The login can be assigned to another parent. This cannot be undone.`;
+  }
   return `They will see ${firstName(confirm.student.display_name)}’s note home. This cannot be undone.`;
 }
 
@@ -521,9 +621,9 @@ function confirmLabel(confirm: ConfirmKind | null, parentName: string): string {
   if (!confirm) return 'Delete';
   if (confirm.kind === 'delete') return `Delete ${firstName(parentName)}`;
   if (confirm.kind === 'unlink') return 'Unlink';
-  if (confirm.kind === 'revoke') return 'Revoke';
   if (confirm.kind === 'remove-photo') return 'Remove photo';
   if (confirm.kind === 'clear') return 'Clear';
+  if (confirm.kind === 'unlink-login') return 'Unassign';
   return 'Link';
 }
 
@@ -532,30 +632,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   heroText: {
     flex: 1,
     minWidth: 0,
     gap: 4,
   },
-  name: {
+  heroName: {
     ...type.title,
     width: '100%',
   },
-  pills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 8,
-  },
+
   error: {
     ...type.body,
     marginTop: 12,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
   },
 });

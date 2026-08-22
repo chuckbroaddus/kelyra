@@ -1,9 +1,16 @@
+import { lookupLoginEmail } from '@/lib/school/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { TeacherRow } from '@/lib/supabase/types';
 
-export async function signInWithPassword(email: string, password: string) {
+export async function signInWithPassword(handle: string, password: string) {
+  const raw = handle.trim();
+  const looksLikeEmail = raw.includes('@') && raw.includes('.');
+  const email = looksLikeEmail ? raw : await lookupLoginEmail(raw);
+  if (!email) {
+    throw new Error('No login for that @handle. Check the exact username on People.');
+  }
   const { data, error } = await requireSupabase().auth.signInWithPassword({
-    email: email.trim(),
+    email,
     password,
   });
   if (error) throw error;

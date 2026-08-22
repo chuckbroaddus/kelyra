@@ -1,6 +1,6 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AvatarInitials } from '@/components/ui/AvatarInitials';
+import { Avatar } from '@/components/ui/Avatar';
 import { GhostButton } from '@/components/ui/Button';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { radius, type } from '@/constants/theme';
@@ -8,18 +8,19 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   name: string | null;
+  photoUrl?: string | null;
   className: string;
   onClose: () => void;
 };
 
-export function ClassmateSheet({ name, className, onClose }: Props) {
+export function ClassmateSheet({ name, photoUrl, className, onClose }: Props) {
   const { colors, scheme } = useTheme();
   return (
     <Modal visible={Boolean(name)} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.scrim, { backgroundColor: scheme === 'dark' ? 'rgba(0, 0, 0, 0.55)' : 'rgba(26, 22, 18, 0.40)' }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
         <View style={[styles.sheet, { backgroundColor: colors.elevated, borderColor: colors.line }]}>
-          {name ? <AvatarInitials name={name} size={72} /> : null}
+          {name ? <Avatar name={name} photoUrl={photoUrl} size={72} /> : null}
           {name ? (
             <MarqueeText
               text={name}

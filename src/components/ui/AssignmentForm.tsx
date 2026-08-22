@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { TextField } from '@/components/ui/TextField';
@@ -237,7 +238,11 @@ export function AssignmentForm({
           {keyBusy ? <WorkingLine text="Working…" /> : null}
           {keyStatus ? <Text style={[type.meta, { color: colors.mute }]}>{keyStatus}</Text> : null}
           <ChipRow>
-            <Chip label={value.keyPhotoUrl ? 'Replace photo' : 'Take / choose photo'} onPress={() => onPickKeyPhoto?.()} />
+            <IconButton
+              name="capture"
+              label={value.keyPhotoUrl ? 'Replace photo' : 'Take photo'}
+              onPress={() => onPickKeyPhoto?.()}
+            />
             {value.keyPhotoUrl ? <Chip label="Remove photo" onPress={() => onClearKeyPhoto?.()} /> : null}
           </ChipRow>
         </>

@@ -20,20 +20,71 @@ export function waitForModalDismiss(): Promise<void> {
 export async function pickNormalizedPhoto(
   fromCamera: boolean,
 ): Promise<{ uri: string; mimeType: string } | null> {
-  const permission = fromCamera
-    ? await ImagePicker.requestCameraPermissionsAsync()
-    : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    throw new Error('Camera or photo permission is required.');
+  // Web file inputs only open inside the original click. Do not await
+  // permissions first — they are always granted on web and the extra tick
+  // swallows the picker.
+  if (Platform.OS !== 'web') {
+    const permission = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      throw new Error('Camera or photo permission is required.');
+    }
   }
 
   const result = fromCamera
     ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
     : await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.7,
       });
 
   if (result.canceled || !result.assets[0]) return null;
   return normalizePhoto(result.assets[0].uri, result.assets[0].mimeType);
+}
+
+/**
+ * Camera or library as-is. No face crop, no background cutout.
+ * Use for group chat avatars. People avatars still go through pickNormalizedPhoto + framePortrait.
+ */
+export async function pickRawPhoto(
+  fromCamera: boolean,
+): Promise<{ uri: string; mimeType: string } | null> {
+  if (Platform.OS !== 'web') {
+    const permission = fromCamera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      throw new Error('Camera or photo permission is required.');
+    }
+  }
+
+  const result = fromCamera
+    ? await ImagePicker.launchCameraAsync({ quality: 1, allowsEditing: false, exif: false })
+    : await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 1,
+        allowsEditing: false,
+        exif: false,
+      });
+
+  if (result.canceled || !result.assets[0]) return null;
+  const asset = result.assets[0];
+  const mime = asset.mimeType || 'image/jpeg';
+  if (Platform.OS === 'web') return { uri: asset.uri, mimeType: mime };
+  try {
+    const FileSystem = await import('expo-file-system/legacy');
+    const ext = mime.includes('png')
+      ? 'png'
+      : mime.includes('webp')
+        ? 'webp'
+        : mime.includes('heic') || mime.includes('heif')
+          ? 'heic'
+          : 'jpg';
+    const dest = `${FileSystem.cacheDirectory}kelyra-raw-${Date.now()}.${ext}`;
+    await FileSystem.copyAsync({ from: asset.uri, to: dest });
+    return { uri: dest, mimeType: mime };
+  } catch {
+    return { uri: asset.uri, mimeType: mime };
+  }
 }

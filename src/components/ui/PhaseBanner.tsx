@@ -9,7 +9,7 @@ const PHASES: Record<TeacherPhase, { kicker: string; title: string; body: string
   1: {
     kicker: 'Phase 1 · Setup',
     title: 'Class & students',
-    body: 'Name the class so AI knows the subject. Add students. Share a join code.',
+    body: 'Name the class so AI knows the subject. Add students. Assign a login on the student’s page when they need to sign in.',
   },
   2: {
     kicker: 'Phase 2 · Daily',

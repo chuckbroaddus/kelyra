@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
@@ -18,8 +18,11 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const run = async (mode: 'in' | 'up') => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     setMessage(null);
     try {
@@ -37,6 +40,7 @@ export default function SignInScreen() {
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Sign-in failed');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -53,21 +57,31 @@ export default function SignInScreen() {
   return (
     <Screen centered maxWidth={400} keyboard>
       <Text style={[styles.wordmark, { color: colors.ink }]}>Kelyra</Text>
-      <Text style={[styles.kicker, { color: colors.mute }]}>Teacher sign in</Text>
+      <Text style={[styles.kicker, { color: colors.mute }]}>Sign in with email or @username</Text>
       <TextField
         autoCapitalize="none"
-        autoComplete="email"
-        keyboardType="email-address"
-        placeholder="Email"
+        autoComplete="username"
+        placeholder="Email or @username"
         value={email}
         onChangeText={setEmail}
+        returnKeyType="next"
+        enterKeyHint="next"
+        blurOnSubmit={false}
       />
       <View style={styles.gap} />
       <TextField
         placeholder="Password (6+ characters)"
         secureTextEntry
+        autoComplete="password"
         value={password}
         onChangeText={setPassword}
+        returnKeyType="go"
+        enterKeyHint="go"
+        blurOnSubmit
+        onSubmitEditing={() => void run('in')}
+        onKeyPress={(event) => {
+          if (event.nativeEvent.key === 'Enter') void run('in');
+        }}
       />
       {message ? <Text style={[styles.message, { color: colors.danger }]}>{message}</Text> : <View style={styles.gap} />}
       <PrimaryButton
@@ -75,7 +89,11 @@ export default function SignInScreen() {
         disabled={busy}
         onPress={() => void run('in')}
       />
-      <GhostButton label="Create account" disabled={busy} onPress={() => void run('up')} />
+      <GhostButton label="Create a teacher account" disabled={busy} onPress={() => void run('up')} />
+      <Text style={[styles.hint, { color: colors.mute }]}>
+        First person at a new school: create an account, sign in, then run school_claim_superintendent() in
+        the SQL editor. Dev bootstrap password is only in that SQL file — never in this app.
+      </Text>
     </Screen>
   );
 }
@@ -100,5 +118,9 @@ const styles = StyleSheet.create({
   },
   gap: {
     height: 12,
+  },
+  hint: {
+    ...type.meta,
+    marginTop: 16,
   },
 });

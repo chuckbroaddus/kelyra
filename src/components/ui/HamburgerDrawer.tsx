@@ -1,61 +1,212 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
   Modal,
   PanResponder,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppearanceControl } from '@/components/ui/AppearanceControl';
 import { Avatar } from '@/components/ui/Avatar';
+import { HandleLink } from '@/components/ui/HandleLink';
+import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { SettingsSheet } from '@/components/ui/SettingsSheet';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { Icon } from '@/components/ui/Icon';
+import { KelyraMark } from '@/components/ui/KelyraMark';
 import { ListRow } from '@/components/ui/ListRow';
 import { deleteClass } from '@/lib/classes/delete';
-import { listClasses } from '@/lib/classes/api';
-import { chrome, type } from '@/constants/theme';
+import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { formatHandle, isAdminRole, isAlsoParent, isTeacherRole } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
-import { clearStudentSession } from '@/lib/student-session/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+
+function matches(label: string, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return label.toLowerCase().includes(needle);
+}
 
 export function HamburgerDrawer() {
   const { colors, scheme } = useTheme();
-  const { session, teacher, signOut } = useAuth();
+  const { session, teacher, profile, signOut } = useAuth();
   const chromeState = useChrome();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const drawerW = Math.min(chrome.drawerWidth, width - 56);
-  const x = useRef(new Animated.Value(-drawerW)).current;
+  const peek = Math.max(insets.top + chrome.headerHeight, 72);
+  const x = useRef(new Animated.Value(drawerW)).current;
+  const strip = useRef(new Animated.Value(peek)).current;
+  const [present, setPresent] = useState(false);
+  const presentRef = useRef(false);
+  const trayY = useRef(new Animated.Value(0)).current;
+  const trayVisible = useRef(true);
+  const lastY = useRef(0);
+  const acc = useRef(0);
+  const lastDir = useRef<1 | -1 | 0>(0);
   const [pendingClass, setPendingClass] = useState<{ id: string; name: string } | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const trayH = 56;
+  const trayBottom = 8 + Math.max(insets.bottom, 8);
+  const hideDistance = trayH + trayBottom + 12;
 
   useEffect(() => {
-    Animated.timing(x, {
-      toValue: chromeState.drawerOpen ? 0 : -drawerW,
-      duration: chromeState.drawerOpen ? 220 : 180,
-      easing: chromeState.drawerOpen ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [chromeState.drawerOpen, drawerW, x]);
+    if (chromeState.drawerOpen) {
+      presentRef.current = true;
+      setPresent(true);
+      x.setValue(drawerW);
+      strip.setValue(peek);
+      Animated.sequence([
+        Animated.timing(x, {
+          toValue: 0,
+          duration: chrome.motion.drawerInX,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.timing(strip, {
+          toValue: height,
+          duration: chrome.motion.drawerInY,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+      ]).start();
+      return;
+    }
+    if (!presentRef.current) return;
+    Animated.sequence([
+      Animated.timing(strip, {
+        toValue: peek,
+        duration: chrome.motion.drawerOutY,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(x, {
+        toValue: drawerW,
+        duration: chrome.motion.drawerOutX,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start(({ finished }) => {
+      if (!finished) return;
+      presentRef.current = false;
+      setPresent(false);
+    });
+  }, [chromeState.drawerOpen, drawerW, height, peek, strip, x]);
+
+  useEffect(() => {
+    if (!chromeState.drawerOpen) return;
+    setQuery('');
+    trayVisible.current = true;
+    lastY.current = 0;
+    acc.current = 0;
+    lastDir.current = 0;
+    trayY.setValue(0);
+  }, [chromeState.drawerOpen, trayY]);
 
   const close = () => chromeState.setDrawerOpen(false);
 
+  const hideDrawerNow = () => {
+    presentRef.current = false;
+    x.setValue(drawerW);
+    strip.setValue(peek);
+    setPresent(false);
+    chromeState.setDrawerOpen(false);
+  };
+
+  const openSettings = () => {
+    hideDrawerNow();
+    setSettingsOpen(true);
+  };
+
+  const showTray = () => {
+    if (trayVisible.current) return;
+    trayVisible.current = true;
+    Animated.timing(trayY, {
+      toValue: 0,
+      duration: chrome.motion.tray,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideTray = () => {
+    if (!trayVisible.current) return;
+    trayVisible.current = false;
+    Animated.timing(trayY, {
+      toValue: hideDistance,
+      duration: chrome.motion.tray,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onMenuScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement, velocity } = event.nativeEvent;
+    const y = contentOffset.y;
+    const maxY = Math.max(0, contentSize.height - layoutMeasurement.height);
+    if (y > maxY) {
+      lastY.current = maxY;
+      acc.current = 0;
+      lastDir.current = 0;
+      return;
+    }
+    if (y < 8) {
+      lastY.current = y;
+      acc.current = 0;
+      showTray();
+      return;
+    }
+    const dy = y - lastY.current;
+    lastY.current = y;
+    const vy = velocity?.y ?? 0;
+    if (vy > 1.2) {
+      acc.current = 0;
+      hideTray();
+      return;
+    }
+    if (vy < -1.2) {
+      acc.current = 0;
+      if (y >= maxY - 16) return;
+      showTray();
+      return;
+    }
+    const dir: 1 | -1 | 0 = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    if (dir !== 0 && dir !== lastDir.current) {
+      acc.current = 0;
+      lastDir.current = dir;
+    }
+    acc.current += dy;
+    if (acc.current > 12) {
+      acc.current = 0;
+      hideTray();
+    } else if (acc.current < -8) {
+      acc.current = 0;
+      if (y < maxY - 16) showTray();
+    }
+  };
+
   const swipe = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderRelease: (_, g) => {
-        if (g.dx > 80) close();
+        if (g.dx < -80) close();
       },
     }),
   ).current;
@@ -66,9 +217,20 @@ export function HamburgerDrawer() {
     else router.push(href as never);
   };
 
+  const runSearch = () => {
+    const next = query.trim();
+    chromeState.setSearchFrom('/');
+    chromeState.setSearchQuery(next);
+    go('/search');
+  };
+
+  const staff = chromeState.role === 'teacher' || chromeState.role === 'administrator' || chromeState.role === 'superintendent';
+  const q = query;
+
   return (
+    <>
     <Modal
-      visible={chromeState.drawerOpen}
+      visible={present}
       transparent
       animationType="none"
       onRequestClose={close}
@@ -88,90 +250,130 @@ export function HamburgerDrawer() {
             styles.sheet,
             {
               width: drawerW,
+              height: strip,
               backgroundColor: colors.elevated,
               paddingTop: insets.top + 12,
-              paddingBottom: insets.bottom + 16,
               transform: [{ translateX: x }],
             },
           ]}
         >
-          {chromeState.role === 'teacher' ? (
+          <ScrollView
+            style={styles.scroller}
+            contentContainerStyle={{ paddingBottom: trayH + trayBottom + 16 }}
+            scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            automaticallyAdjustKeyboardInsets
+            onScroll={onMenuScroll}
+          >
+          {staff ? (
             <>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Open profile, ${session?.user.email ?? teacher?.email ?? 'Teacher'}`}
+              {matches(profile?.username ? formatHandle(profile.username) : session?.user.email ?? teacher?.email ?? 'Profile', q) ? (
+              <WhoRow
+                name={teacher?.display_name || profile?.username || session?.user.email || 'Teacher'}
+                photoUrl={chromeState.teacherPhotoUrl}
+                username={profile?.username}
+                profileId={profile?.id}
+                fallback={session?.user.email ?? teacher?.email ?? 'Teacher'}
+                fadeColor={colors.elevated}
+                ink={colors.ink}
                 onPress={() => go('/profile')}
-                style={styles.who}
-              >
-                {({ pressed }) => (
-                  <>
-                    <Avatar
-                      name={teacher?.display_name || session?.user.email || 'Teacher'}
-                      photoUrl={chromeState.teacherPhotoUrl}
-                      size={36}
-                    />
-                    <MarqueeText
-                      text={session?.user.email ?? teacher?.email ?? 'Teacher'}
-                      align="start"
-                      paused={pressed}
-                      fadeColor={colors.elevated}
-                      style={[styles.whoName, { color: colors.ink }]}
-                    />
-                  </>
-                )}
-              </Pressable>
-              {chromeState.classes.map((klass) => (
-                <ListRow
-                  key={klass.id}
-                  title={klass.name}
-                  avatarName={klass.name}
-                  chevron={false}
-                  selected={klass.id === chromeState.classId}
-                  onPress={() => {
-                    if (teacher) void setActiveClass(teacher.id, klass.id);
-                    chromeState.refreshChrome();
-                    go(`/class/${klass.id}`, true);
-                  }}
-                  trailing={[
-                    {
-                      key: 'delete',
-                      label: 'Delete',
-                      tone: 'danger',
-                      autoCommit: false,
-                      onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
-                    },
-                  ]}
-                />
-              ))}
-              <DrawerRow
-                label="Another class"
-                onPress={() => go('/?switch=1')}
               />
-              <Hairline />
-              {chromeState.classId ? (
+              ) : null}
+              {profile?.role === 'superintendent' ? (
                 <>
-                  <DrawerRow
-                    label="Grade book"
-                    onPress={() => {
-                      chromeState.setContextTab('book', `/class/${chromeState.classId}/gradebook`);
-                      go(`/class/${chromeState.classId}/gradebook`);
-                    }}
-                  />
-                  <DrawerRow
-                    label="Parents"
-                    onPress={() => go(`/class/${chromeState.classId}/parents`)}
-                  />
-                  <DrawerRow
-                    label="Family update"
-                    onPress={() => go(`/class/${chromeState.classId}/family`)}
-                  />
+                  {matches('Feed', q) ? (
+                    <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
+                  ) : null}
+                  {matches('Classes', q) ? (
+                    <DrawerRow label="Classes" onPress={() => go('/?tab=classes')} />
+                  ) : null}
+                  {matches('People', q) ? (
+                    <DrawerRow label="People" onPress={() => go('/?tab=people')} />
+                  ) : null}
+                  {matches('Manage', q) || matches('School', q) ? (
+                    <DrawerRow label="Manage" onPress={() => go('/?tab=manage')} />
+                  ) : null}
+                  {matches('Kelyra', q) || matches('Ask', q) ? (
+                    <DrawerRow
+                      label="Kelyra"
+                      onPress={() => go('/ask')}
+                      leading={<KelyraMark size={22} />}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  {chromeState.classes.filter((klass) => matches(klass.name, q)).map((klass) => (
+                    <ListRow
+                      key={klass.id}
+                      title={klass.name}
+                      avatarName={klass.name}
+                      chevron={false}
+                      selected={klass.id === chromeState.classId}
+                      onPress={() => {
+                        if (teacher) void setActiveClass(teacher.id, klass.id);
+                        chromeState.refreshChrome();
+                        go(isTeacherRole(profile) ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
+                      }}
+                      trailing={[
+                        {
+                          key: 'delete',
+                          label: 'Delete',
+                          tone: 'danger',
+                          autoCommit: false,
+                          onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
+                        },
+                      ]}
+                    />
+                  ))}
+                  {isTeacherRole(profile) && matches('Another class', q) ? (
+                    <DrawerRow label="Another class" onPress={() => go('/?switch=1')} />
+                  ) : null}
+                  <Hairline />
+                  {isAdminRole(profile) ? (
+                    <>
+                      {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
+                      {matches('Activity', q) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
+                      {matches('Messages', q) ? <DrawerRow label="Messages" onPress={() => go('/messages')} /> : null}
+                      {matches('Responsibilities', q) ? (
+                        <DrawerRow label="Responsibilities" onPress={() => go('/admin/matrix')} />
+                      ) : null}
+                      <Hairline />
+                    </>
+                  ) : null}
+                  {chromeState.classId && isTeacherRole(profile) ? (
+                    <>
+                      {matches('Grade book', q) ? (
+                      <DrawerRow
+                        label="Grade book"
+                        onPress={() => {
+                          chromeState.setContextTab('book', `/class/${chromeState.classId}/gradebook`);
+                          go(`/class/${chromeState.classId}/gradebook`);
+                        }}
+                      />
+                      ) : null}
+                      {matches('Parents', q) ? (
+                        <DrawerRow label="Parents" onPress={() => go(`/class/${chromeState.classId}/parents`)} />
+                      ) : null}
+                      {matches('Family update', q) ? (
+                        <DrawerRow label="Family update" onPress={() => go(`/class/${chromeState.classId}/family`)} />
+                      ) : null}
+                    </>
+                  ) : null}
+                </>
+              )}
+              {isAlsoParent(profile) && matches('My children', q) ? (
+                <>
+                  <DrawerRow label="My children" onPress={() => go('/parent')} />
+                  <Hairline />
                 </>
               ) : null}
+              {profile && profile.role !== 'student' && profile.role !== 'superintendent' && matches('Feed', q) ? (
+                <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
+              ) : null}
               <Hairline />
-              <Text style={[styles.section, { color: colors.mute }]}>Appearance</Text>
-              <View style={styles.pad}>
-                <AppearanceControl />
-              </View>
+              {matches('Sign out', q) ? (
               <DrawerRow
                 label="Sign out"
                 danger
@@ -180,55 +382,130 @@ export function HamburgerDrawer() {
                   void signOut().then(() => router.replace('/'));
                 }}
               />
+              ) : null}
             </>
           ) : null}
 
           {chromeState.role === 'student' ? (
             <>
-              <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={2}>
-                {chromeState.studentSession
-                  ? `${chromeState.studentSession.displayName}\n${chromeState.studentSession.className}`
-                  : 'Student'}
-              </Text>
-              <DrawerRow
-                label="Leave class"
-                onPress={() => {
-                  close();
-                  void clearStudentSession().then(() => router.replace('/join'));
-                }}
-              />
-              <Hairline />
-              <Text style={[styles.section, { color: colors.mute }]}>Appearance</Text>
-              <View style={styles.pad}>
-                <AppearanceControl />
-              </View>
+              {profile?.username ? (
+                <WhoRow
+                  name={profile.display_name || profile.username}
+                  photoUrl={chromeState.teacherPhotoUrl}
+                  username={profile.username}
+                  profileId={profile.id}
+                  fadeColor={colors.elevated}
+                  ink={colors.ink}
+                  onPress={() => go('/profile')}
+                />
+              ) : (
+                <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={2}>
+                  {chromeState.studentSession?.displayName ?? 'Student'}
+                  {chromeState.studentSession?.className
+                    ? `\n${chromeState.studentSession.className}`
+                    : ''}
+                </Text>
+              )}
+              {matches('My practice', q) ? (
+                <DrawerRow label="My practice" onPress={() => go('/todo')} />
+              ) : null}
+              {matches('Feed', q) ? <DrawerRow label="Feed" onPress={() => go('/feed')} /> : null}
+              {matches('Sign out', q) ? (
+                <DrawerRow
+                  label="Sign out"
+                  danger
+                  onPress={() => {
+                    close();
+                    void signOut().then(() => router.replace('/'));
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
 
           {chromeState.role === 'parent' ? (
             <>
-              <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={3}>
-                Parent
-                {chromeState.parentTokens.length
-                  ? `\n${chromeState.parentTokens.map((child) => child.displayName).join(', ')}`
-                  : ''}
-              </Text>
-              {chromeState.parentTokens.length > 1
-                ? chromeState.parentTokens.map((child) => (
-                    <DrawerRow
-                      key={child.token}
-                      label={child.displayName}
-                      onPress={() => go(`/parent?t=${child.token}`, true)}
-                    />
-                  ))
-                : null}
-              <Hairline />
-              <Text style={[styles.section, { color: colors.mute }]}>Appearance</Text>
-              <View style={styles.pad}>
-                <AppearanceControl />
-              </View>
+              {profile?.username ? (
+                <WhoRow
+                  name={profile.display_name || profile.username}
+                  photoUrl={chromeState.teacherPhotoUrl}
+                  username={profile.username}
+                  profileId={profile.id}
+                  fadeColor={colors.elevated}
+                  ink={colors.ink}
+                  onPress={() => go('/profile')}
+                />
+              ) : (
+                <Text style={[styles.meta, { color: colors.mute }]}>Parent</Text>
+              )}
+              {matches('My children', q) ? (
+                <DrawerRow label="My children" onPress={() => go('/parent')} />
+              ) : null}
+              {matches('Sign out', q) ? (
+                <DrawerRow
+                  label="Sign out"
+                  danger
+                  onPress={() => {
+                    close();
+                    void signOut().then(() => router.replace('/'));
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
+          </ScrollView>
+
+          <Animated.View
+            pointerEvents="box-none"
+            style={[
+              styles.float,
+              {
+                left: 12,
+                right: 12,
+                bottom: trayBottom,
+                transform: [{ translateY: trayY }],
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.tray,
+                {
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.line,
+                  ...(scheme === 'light' ? shadows.light : null),
+                },
+              ]}
+            >
+              <View style={[styles.search, { backgroundColor: colors.wash, borderColor: colors.line }]}>
+                <Icon name="search" color={colors.ink} size={22} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={runSearch}
+                  placeholder="Search"
+                  placeholderTextColor={colors.mute}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="search"
+                  accessibilityLabel="Search"
+                  style={[styles.searchField, { color: colors.ink }]}
+                />
+              </View>
+              <HoverTip label="Settings">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Settings"
+                  onPress={openSettings}
+                  style={({ pressed }) => [styles.gear, pressed && { opacity: 0.7 }]}
+                >
+                  <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="settings" color={colors.ink} size={22} />
+                  </View>
+                </Pressable>
+              </HoverTip>
+            </View>
+          </Animated.View>
         </Animated.View>
         <ConfirmSheet
           visible={Boolean(pendingClass)}
@@ -246,15 +523,54 @@ export function HamburgerDrawer() {
                 setPendingClass(null);
                 close();
                 chromeState.refreshChrome();
-                const remaining = await listClasses();
-                if (remaining[0]) router.replace(`/class/${remaining[0].id}` as never);
-                else router.replace('/');
+                router.replace('/?switch=1' as never);
               })
               .finally(() => setBusy(false));
           }}
         />
       </View>
     </Modal>
+    <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
+  );
+}
+
+function WhoRow({
+  name,
+  photoUrl,
+  username,
+  profileId,
+  fallback,
+  fadeColor,
+  ink,
+  onPress,
+}: {
+  name: string;
+  photoUrl?: string | null;
+  username?: string | null;
+  profileId?: string | null;
+  fallback?: string;
+  fadeColor: string;
+  ink: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.who}>
+      {username ? (
+        <HandleLink username={username} profileId={profileId} style={styles.whoName} />
+      ) : (
+        <Pressable accessibilityRole="button" onPress={onPress} style={styles.whoNameWrap}>
+          <MarqueeText text={fallback || name} align="end" fadeColor={fadeColor} style={[styles.whoName, { color: ink }]} />
+        </Pressable>
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open profile, ${username ? formatHandle(username) : name}`}
+        onPress={onPress}
+      >
+        <Avatar name={name} photoUrl={photoUrl} size={36} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -268,14 +584,19 @@ function DrawerRow({
   onPress,
   danger,
   check,
+  tooltip,
+  leading,
 }: {
   label: string;
   onPress: () => void;
   danger?: boolean;
   check?: boolean;
+  tooltip?: string;
+  leading?: ReactNode;
 }) {
   const { colors } = useTheme();
   return (
+    <HoverTip label={tipIfNew(label, tooltip)} fill>
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
@@ -284,8 +605,10 @@ function DrawerRow({
       <Text style={[styles.rowLabel, { color: danger ? colors.danger : colors.ink }]} numberOfLines={1}>
         {label}
       </Text>
+      {leading}
       {check ? <Icon name="check" color={colors.brand} size={18} /> : null}
     </Pressable>
+    </HoverTip>
   );
 }
 
@@ -294,37 +617,76 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    height: '100%',
+    position: 'absolute',
+    right: 0,
+    top: 0,
     paddingHorizontal: 8,
+    overflow: 'hidden',
+    flexDirection: 'column',
+  },
+  scroller: {
+    flex: 1,
+  },
+  float: {
+    position: 'absolute',
+    zIndex: 16,
+  },
+  tray: {
+    minHeight: 56,
+    borderRadius: chrome.trayRadius,
+    borderWidth: 1,
+    paddingLeft: 10,
+    paddingRight: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  search: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchField: {
+    ...type.body,
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 8,
+  },
+  gear: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   meta: {
     ...type.meta,
     paddingHorizontal: 16,
     marginBottom: 12,
+    textAlign: 'right',
   },
   who: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 8,
   },
-  whoName: {
-    ...type.meta,
-    flex: 1,
+  whoNameWrap: {
+    flexShrink: 1,
     minWidth: 0,
   },
-  section: {
-    ...type.section,
-    textTransform: 'uppercase',
-    paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  pad: {
-    paddingHorizontal: 12,
-    marginBottom: 12,
+  whoName: {
+    ...type.meta,
+    flexShrink: 1,
+    minWidth: 0,
+    textAlign: 'right',
   },
   rule: {
     height: 1,
@@ -336,11 +698,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
   },
   rowLabel: {
     ...type.body,
     fontWeight: '600',
-    flex: 1,
+    flexShrink: 1,
+    textAlign: 'right',
   },
 });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Image,
-  Modal,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DangerButton, GhostButton } from '@/components/ui/Button';
+import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { TextField } from '@/components/ui/TextField';
 import { radius, type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
@@ -58,16 +59,20 @@ export function ConfirmSheet({
     if (!visible) setTyped('');
   }, [visible]);
 
-  if (chrome && chrome.role !== 'teacher') return null;
+  if (chrome && (chrome.role === 'none' || chrome.role === 'student' || chrome.role === 'parent')) {
+    return null;
+  }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View
+    <ScreenOverlay visible={visible} onRequestClose={onCancel}>
+      <KeyboardAvoidingView
         style={[
           styles.root,
           web && styles.center,
           { backgroundColor: scheme === 'dark' ? 'rgba(0,0,0,0.55)' : 'rgba(26,22,18,0.40)' },
         ]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={!web}
       >
         <Pressable style={styles.scrim} onPress={onCancel} accessibilityLabel="Cancel" />
         <View
@@ -103,8 +108,8 @@ export function ConfirmSheet({
           />
           <GhostButton label="Cancel" onPress={onCancel} />
         </View>
-      </View>
-    </Modal>
+      </KeyboardAvoidingView>
+    </ScreenOverlay>
   );
 }
 

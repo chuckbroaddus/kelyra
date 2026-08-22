@@ -5,12 +5,8 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
-import {
-  DangerButton,
-  GhostButton,
-  PrimaryButton,
-  SecondaryButton,
-} from '@/components/ui/Button';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
@@ -350,7 +346,6 @@ export default function CaptureScreen() {
   };
 
   const hasMedia = pages.length > 0 || Boolean(audioUri);
-  const TakeButton = pages.length === 0 ? PrimaryButton : SecondaryButton;
   const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
   const sticky = hasMedia || spokenName.trim() ? (
     <PrimaryButton
@@ -394,10 +389,15 @@ export default function CaptureScreen() {
               void setPreferredDeviceId('video', deviceId);
             }}
           />
-          <TakeButton
-            label={pages.length ? 'Add a page' : 'Take photo'}
-            onPress={() => void pickPhoto(true)}
-          />
+          <View style={styles.mediaHits}>
+            <IconButton
+              name="capture"
+              size="lg"
+              tone="brand"
+              label={pages.length ? 'Add a page' : 'Take photo'}
+              onPress={() => void pickPhoto(true)}
+            />
+          </View>
           <GhostButton
             label={pages.length ? 'Add a page from library' : 'Choose from library'}
             onPress={() => void pickPhoto(false)}
@@ -410,11 +410,14 @@ export default function CaptureScreen() {
   const whoBlock = (
     <View style={styles.block}>
       <SectionHeader label="Who is this?" first={split} />
-      {recording ? (
-        <DangerButton showDot label="Stop recording" onPress={() => void stopRecording()} />
-      ) : (
-        <SecondaryButton label="Record the name" onPress={() => void startRecording()} />
-      )}
+      <IconButton
+        name="mic"
+        size="lg"
+        tone={recording ? 'danger' : 'wash'}
+        live={Boolean(recording)}
+        label={recording ? 'Stop recording' : 'Record the name'}
+        onPress={() => void (recording ? stopRecording() : startRecording())}
+      />
       <TextField
         multiline
         placeholder="Maya Chen, still lining up place value"
@@ -488,6 +491,12 @@ const styles = StyleSheet.create({
   block: {
     gap: 8,
     marginBottom: 8,
+  },
+  mediaHits: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 4,
   },
   gaps: {
     flexDirection: 'row',

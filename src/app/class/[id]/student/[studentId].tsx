@@ -13,9 +13,11 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
+import { PersonTabs } from '@/components/ui/PersonTabs';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
@@ -25,7 +27,9 @@ import { TextField } from '@/components/ui/TextField';
 import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { listProfiles, setStudentLink } from '@/lib/school/api';
+import { formatHandle, isAdminRole } from '@/lib/school/roles';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { deleteCapture } from '@/lib/captures/delete';
 import { returnCaptureToInbox } from '@/lib/captures/api';
 import { firstName, formatWhen } from '@/lib/format';
@@ -42,15 +46,14 @@ import {
 import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/gaps/history';
 import {
   createParent,
-  createParentInvite,
   linkChild,
-  listParentsForClass,
+  listParentsForLinking,
   listParentsForStudent,
-  parentInviteUrl,
   parentStatusLine,
   type ClassParent,
 } from '@/lib/parents/api';
 import { unlinkChild } from '@/lib/parents/delete';
+
 import {
   STUDENT_DETAIL_FIELDS,
   formatBirthdayMd,
@@ -73,9 +76,9 @@ import {
   savePracticeItems,
   type StudentPractice,
 } from '@/lib/practice/api';
-import { closeFocusSkill, getStudent, patchStudentMetadata, updateStudentMetadata } from '@/lib/students/api';
+import { closeFocusSkill, getStudent, patchStudentMetadata, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import { deleteStudent, listStudentEnrollments, removeEnrollment } from '@/lib/students/delete';
-import type { PracticeItem, SkillGapRow, StudentRow } from '@/lib/supabase/types';
+import type { PracticeItem, ProfileRow, SkillGapRow, StudentRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type ConfirmKind =
@@ -87,15 +90,26 @@ type ConfirmKind =
   | { kind: 'delete-set'; practice: StudentPractice }
   | { kind: 'remove-assignment'; practice: StudentPractice }
   | { kind: 'unlink'; parent: ClassParent }
+  | { kind: 'unlink-login'; login: ProfileRow }
   | { kind: 'link-parent'; parent: ClassParent }
   | { kind: 'remove-photo' }
   | { kind: 'clear'; key: string; label: string };
 
+const STUDENT_TABS = [
+  { key: 'focus', label: 'Focus', icon: 'focus' as const },
+  { key: 'history', label: 'Skill history', icon: 'history' as const },
+  { key: 'work', label: 'Work', icon: 'work' as const },
+  { key: 'practice', label: 'Practice', icon: 'practice' as const },
+  { key: 'parents', label: 'Parents', icon: 'parents' as const },
+  { key: 'details', label: 'Details', icon: 'details' as const },
+];
+
 export default function StudentScreen() {
   const { colors, scheme } = useTheme();
-  const chrome = useChrome();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, profile } = useAuth();
+  const canLinkParents = isAdminRole(profile);
+  const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { isSplit } = useScreenPad();
   const { id: classId, studentId, capture: captureParam } = useLocalSearchParams<{
     id: string;
@@ -111,7 +125,6 @@ export default function StudentScreen() {
   const [itemDrafts, setItemDrafts] = useState<Record<string, PracticeItem[]>>({});
   const [draftLabels, setDraftLabels] = useState<Record<string, string>>({});
   const [newGap, setNewGap] = useState('');
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -121,17 +134,22 @@ export default function StudentScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [addParentOpen, setAddParentOpen] = useState(false);
-  const [invitePickOpen, setInvitePickOpen] = useState(false);
   const [parentName, setParentName] = useState('');
   const [parentRel, setParentRel] = useState('mother');
-  const [alsoInvite, setAlsoInvite] = useState(true);
   const [parentFilter, setParentFilter] = useState('');
   const [existingParents, setExistingParents] = useState<ClassParent[]>([]);
+  const [login, setLogin] = useState<ProfileRow | null>(null);
+  const [loginChoices, setLoginChoices] = useState<ProfileRow[]>([]);
   const [score, setScore] = useState('');
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState('focus');
+
+  useEffect(() => {
+    setTab('focus');
+  }, [studentId]);
 
   const load = useCallback(async () => {
     if (!studentId) return;
@@ -142,6 +160,14 @@ export default function StudentScreen() {
     setCaptures(nextCaptures);
     setParents(await listParentsForStudent(studentId));
     setEnrollments(await listStudentEnrollments(studentId));
+    try {
+      const people = await listProfiles();
+      setLogin(people.find((row) => row.student_id === studentId) ?? null);
+      setLoginChoices(people.filter((row) => row.role === 'student' && !row.student_id));
+    } catch {
+      setLogin(null);
+      setLoginChoices([]);
+    }
     const nextPractice = await listStudentPractice(studentId);
     setPractice(nextPractice);
     const drafts: Record<string, PracticeItem[]> = {};
@@ -175,10 +201,7 @@ export default function StudentScreen() {
     }, [load]),
   );
 
-  useEffect(() => {
-    chrome.setPushedTitle(student?.display_name ?? 'Student');
-    return () => chrome.setPushedTitle(null);
-  }, [chrome, student?.display_name]);
+  usePushedTitle(student?.display_name ?? 'Student');
 
   const latest =
     captures.find((item) => item.id === captureParam) ??
@@ -281,23 +304,11 @@ export default function StudentScreen() {
     }
   };
 
-  const onInviteParent = async (parentId?: string) => {
-    const target = parentId ?? parents[0]?.id;
-    if (!target) return;
-    setStatus(null);
-    setError(null);
-    try {
-      const token = await createParentInvite(target, studentId);
-      setInviteUrl(parentInviteUrl(token));
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create invite');
-    }
-  };
-
   const openEdit = () => {
     if (!student) return;
-    const next: Record<string, string> = {};
+    const next: Record<string, string> = {
+      display_name: student.display_name,
+    };
     for (const field of STUDENT_DETAIL_FIELDS) {
       next[field.key] = metaString(student.metadata, field.key) ?? '';
     }
@@ -309,6 +320,10 @@ export default function StudentScreen() {
     if (!student) return;
     setBusy(true);
     try {
+      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
+      if (nextName && nextName !== student.display_name) {
+        await renameStudent(student.id, nextName, student.display_name);
+      }
       let metadata = { ...student.metadata };
       for (const field of STUDENT_DETAIL_FIELDS) {
         const raw = draft[field.key] ?? '';
@@ -398,12 +413,25 @@ export default function StudentScreen() {
   const openAddParent = async () => {
     setAddParentOpen(true);
     setParentFilter('');
-    if (!classId) return;
     try {
-      const next = await listParentsForClass(classId);
-      setExistingParents([...next.linked, ...next.unlinked]);
+      setExistingParents(await listParentsForLinking());
     } catch {
       setExistingParents([]);
+    }
+  };
+
+  const linkNow = async (parent: ClassParent) => {
+    if (!studentId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await linkChild(parent.id, studentId);
+      setAddParentOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not link that parent');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -415,12 +443,10 @@ export default function StudentScreen() {
         teacherId: teacher.id,
         displayName: parentName,
         studentId,
-        alsoInvite,
         metadata: { relationship: parentRel },
       });
       setAddParentOpen(false);
       setParentName('');
-      if (created.token) setInviteUrl(parentInviteUrl(created.token));
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add parent');
@@ -458,6 +484,7 @@ export default function StudentScreen() {
       }
       if (confirm.kind === 'remove-assignment') await deleteSubmission(confirm.practice.id);
       if (confirm.kind === 'unlink') await unlinkChild(confirm.parent.id, student.id);
+      if (confirm.kind === 'unlink-login') await setStudentLink(confirm.login.id, null);
       if (confirm.kind === 'remove-photo') await clearProfilePhoto('student', student.id);
       if (confirm.kind === 'clear') await patchStudentMetadata(student, confirm.key, null);
       setConfirm(null);
@@ -527,14 +554,17 @@ export default function StudentScreen() {
     setPhotoOpen(true);
   };
 
-  const details = STUDENT_DETAIL_FIELDS.map((field) => ({
-    key: field.key,
-    label: field.label,
-    value:
-      field.key === 'birthday'
-        ? metaString(student?.metadata, 'birthday')
-        : metaString(student?.metadata, field.key),
-  }));
+  const details = [
+    { key: 'display_name', label: 'Name', value: student?.display_name ?? null },
+    ...STUDENT_DETAIL_FIELDS.map((field) => ({
+      key: field.key,
+      label: field.label,
+      value:
+        field.key === 'birthday'
+          ? metaString(student?.metadata, 'birthday')
+          : metaString(student?.metadata, field.key),
+    })),
+  ];
 
   return (
     <Screen maxWidth={isSplit ? 900 : 720} keyboard>
@@ -547,7 +577,12 @@ export default function StudentScreen() {
         >
           {({ pressed }) => (
             <>
-          <Avatar name={student.display_name} photoUrl={photoUrl} size={72} />
+          <Avatar
+            name={student.display_name}
+            photoUrl={photoUrl}
+            hasPhoto={Boolean(student.photo_asset_id)}
+            size={72}
+          />
           <View style={styles.heroText}>
             <MarqueeText
               text={student.display_name}
@@ -568,17 +603,16 @@ export default function StudentScreen() {
           )}
         </Pressable>
       ) : null}
-      <View style={styles.pills}>
-        <GhostButton align="left" label="Photo" disabled={photoBusy} onPress={openPhotoSheet} />
-        <GhostButton align="left" label="Edit" onPress={openEdit} />
-        <GhostButton align="left" label="Add parent" onPress={() => void openAddParent()} />
-      </View>
-      <SectionHeader label="Details" />
+      <PersonTabs tabs={STUDENT_TABS} value={tab} onChange={setTab} />
+      {tab === 'details' ? (
       <DetailsRows
         rows={details}
         onPress={openEdit}
         onClear={(row) => setConfirm({ kind: 'clear', key: row.key, label: row.label })}
       />
+      ) : null}
+      {tab === 'focus' ? (
+      <>
       <View style={styles.focusRow}>
         {focusLabel ? (
           <>
@@ -594,7 +628,7 @@ export default function StudentScreen() {
       {!latest ? (
         <>
           <Text style={[styles.empty, { color: colors.mute }]}>No work filed yet.</Text>
-          <GhostButton align="left" label="Photograph work" onPress={() => router.push('/capture')} />
+          <IconButton name="capture" label="Photograph work" onPress={() => router.push('/capture')} />
         </>
       ) : (
         <Card>
@@ -708,14 +742,71 @@ export default function StudentScreen() {
           <GhostButton align="left" label="Dismiss focus" onPress={() => void onCloseFocus('dismissed')} />
         </View>
       ) : null}
+      </>
+      ) : null}
 
-      <SectionHeader label="Parents" />
+      {tab === 'details' ? (
+      <>
+      <SectionHeader label="Login" />
+      {login ? (
+        <ListRow
+          title={formatHandle(login.username)}
+          status={login.email ?? 'Assigned login'}
+          trailing={
+            canAssignLogin
+              ? [
+                  {
+                    key: 'unassign',
+                    label: 'Unassign',
+                    tone: 'wash',
+                    autoCommit: false,
+                    onPress: () => setConfirm({ kind: 'unlink-login', login }),
+                  },
+                ]
+              : []
+          }
+        />
+      ) : (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          No login assigned. Students sign in with the account you assign here — they do not pick a roster name from a class code.
+        </Text>
+      )}
+      {canAssignLogin && !login
+        ? loginChoices.map((choice) => (
+            <ListRow
+              key={choice.id}
+              title={formatHandle(choice.username)}
+              status={choice.display_name || choice.email || 'Unassigned student login'}
+              onPress={() => {
+                void setStudentLink(choice.id, studentId)
+                  .then(() => load())
+                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not assign login'));
+              }}
+            />
+          ))
+        : null}
+      {canAssignLogin && !login && loginChoices.length === 0 ? (
+        isAdminRole(profile) ? (
+          <GhostButton align="left" label="Create a login in People" onPress={() => router.push('/?tab=new')} />
+        ) : (
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Ask an administrator to create a student login in People, then assign it here.
+          </Text>
+        )
+      ) : null}
+      </>
+      ) : null}
+
+      {tab === 'parents' ? (
+      <>
+      <SectionHeader label="Parents" first />
       {parents.length ? (
         <AvatarTray
           people={parents.map((parent) => ({
             id: parent.id,
             name: parent.display_name,
             photoUrl: parent.photoUrl,
+            hasPhoto: Boolean(parent.photo_asset_id),
           }))}
           onPress={(person) => router.push(`/class/${classId}/parent/${person.id}`)}
         />
@@ -726,38 +817,32 @@ export default function StudentScreen() {
           title={parent.display_name}
           status={parentStatusLine(parent)}
           photoUrl={parent.photoUrl}
+          hasPhoto={Boolean(parent.photo_asset_id)}
           onPress={() => router.push(`/class/${classId}/parent/${parent.id}`)}
-          trailing={[
-            {
-              key: 'unlink',
-              label: 'Unlink',
-              tone: 'wash',
-              autoCommit: false,
-              onPress: () => setConfirm({ kind: 'unlink', parent }),
-            },
-          ]}
+          trailing={
+            canLinkParents
+              ? [
+                  {
+                    key: 'unlink',
+                    label: 'Unlink',
+                    tone: 'wash',
+                    autoCommit: false,
+                    onPress: () => setConfirm({ kind: 'unlink', parent }),
+                  },
+                ]
+              : []
+          }
         />
       ))}
-      <GhostButton align="left" label="Add parent" onPress={() => void openAddParent()} />
-      {parents.length ? (
-        <GhostButton
-          align="left"
-          label="Create invite link"
-          onPress={() => {
-            if (parents.length === 1) void onInviteParent(parents[0]!.id);
-            else setInvitePickOpen(true);
-          }}
-        />
+      {canLinkParents ? (
+        <GhostButton align="left" label="Add parent" onPress={() => void openAddParent()} />
       ) : null}
-      {inviteUrl ? (
-        <Card>
-          <Text selectable style={type.meta}>
-            {inviteUrl}
-          </Text>
-        </Card>
+      </>
       ) : null}
 
-      <SectionHeader label="Skill history" />
+      {tab === 'history' ? (
+      <>
+      <SectionHeader label="Skill history" first />
       {history.length === 0 ? (
         <Card>
           <Text style={[type.body, { color: colors.mute }]}>No gaps, notes, or practice yet.</Text>
@@ -801,8 +886,15 @@ export default function StudentScreen() {
           />
         ))
       )}
+      </>
+      ) : null}
 
-      <SectionHeader label="Work" />
+      {tab === 'work' ? (
+      <>
+      <SectionHeader label="Work" first />
+      {captures.length === 0 ? (
+        <Text style={[type.meta, { color: colors.mute }]}>No work filed yet.</Text>
+      ) : null}
       {captures.map((item) => (
         <WorkRow
           key={item.id}
@@ -811,10 +903,21 @@ export default function StudentScreen() {
           meta={formatWhen(item.created_at)}
           photoUrl={item.photoUrl}
           badge={captureBadge(item.status)}
-          onPress={() => router.setParams({ capture: item.id })}
+          onPress={() => {
+            setTab('focus');
+            router.setParams({ capture: item.id });
+          }}
           pills={[
             ...(item.status === 'draft' || item.status === 'attached'
-              ? [{ key: 'approve', label: 'Approve', kind: 'primary' as const, onPress: () => router.setParams({ capture: item.id }) }]
+              ? [{
+                  key: 'approve',
+                  label: 'Approve',
+                  kind: 'primary' as const,
+                  onPress: () => {
+                    setTab('focus');
+                    router.setParams({ capture: item.id });
+                  },
+                }]
               : []),
             {
               key: 'inbox',
@@ -850,9 +953,14 @@ export default function StudentScreen() {
         />
       ))}
 
+      </>
+      ) : null}
+
+      {tab === 'practice' ? (
+      <>
       {practice.length ? (
         <>
-          <SectionHeader label="Practice" />
+          <SectionHeader label="Practice" first />
           {practice.map((item) => (
             <Card key={item.id}>
               <View style={styles.focusRow}>
@@ -919,8 +1027,14 @@ export default function StudentScreen() {
             </Card>
           ))}
         </>
+      ) : (
+        <Text style={[type.meta, { color: colors.mute }]}>No practice assigned.</Text>
+      )}
+      </>
       ) : null}
 
+      {tab === 'details' ? (
+      <>
       {otherClass && classId ? (
         <GhostButton
           align="left"
@@ -934,6 +1048,8 @@ export default function StudentScreen() {
           label={`Delete ${firstName(student.display_name)}`}
           onPress={() => setConfirm({ kind: 'delete-student' })}
         />
+      ) : null}
+      </>
       ) : null}
 
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
@@ -963,6 +1079,11 @@ export default function StudentScreen() {
       </Modal>
 
       <FormSheet visible={editOpen} title="Details" onClose={() => setEditOpen(false)}>
+            <TextField
+              label="Name"
+              value={draft.display_name ?? ''}
+              onChangeText={(value) => setDraft((current) => ({ ...current, display_name: value }))}
+            />
             {STUDENT_DETAIL_FIELDS.map((field) => (
               <TextField
                 key={field.key}
@@ -995,6 +1116,8 @@ export default function StudentScreen() {
       </FormSheet>
 
       <FormSheet visible={addParentOpen} title="Add parent" onClose={() => setAddParentOpen(false)}>
+            {busy ? <WorkingLine text="Linking…" /> : null}
+            {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
             <TextField placeholder="Amina Chen" value={parentName} onChangeText={setParentName} />
             <Text style={[type.meta, { color: colors.mute }]}>Relationship</Text>
             <ChipRow>
@@ -1007,11 +1130,6 @@ export default function StudentScreen() {
                 />
               ))}
             </ChipRow>
-            <Chip
-              label="Also create a link"
-              selected={alsoInvite}
-              onPress={() => setAlsoInvite((value) => !value)}
-            />
             <PrimaryButton
               disabled={busy}
               label={busy ? 'Adding…' : 'Add and link'}
@@ -1031,10 +1149,7 @@ export default function StudentScreen() {
                     title={parent.display_name}
                     status={parentStatusLine(parent)}
                     photoUrl={parent.photoUrl}
-                    onPress={() => {
-                      setAddParentOpen(false);
-                      setConfirm({ kind: 'link-parent', parent });
-                    }}
+                    onPress={() => void linkNow(parent)}
                   />
                 ))}
                 {unlinkedExistingParents.length > 8 && visibleExistingParents.length === 0 ? (
@@ -1042,21 +1157,6 @@ export default function StudentScreen() {
                 ) : null}
               </>
             ) : null}
-      </FormSheet>
-
-      <FormSheet visible={invitePickOpen} title="Create invite for" onClose={() => setInvitePickOpen(false)}>
-            {parents.map((parent) => (
-              <ListRow
-                key={parent.id}
-                title={parent.display_name}
-                status={parentStatusLine(parent)}
-                photoUrl={parent.photoUrl}
-                onPress={() => {
-                  setInvitePickOpen(false);
-                  void onInviteParent(parent.id);
-                }}
-              />
-            ))}
       </FormSheet>
 
       <ConfirmSheet
@@ -1087,6 +1187,7 @@ function studentConfirmTitle(confirm: ConfirmKind | null, name: string): string 
   if (confirm.kind === 'delete-set') return 'Delete this practice set?';
   if (confirm.kind === 'remove-assignment') return `Remove ${firstName(name)} from ${confirm.practice.title}?`;
   if (confirm.kind === 'unlink') return `Unlink ${firstName(name)} from ${confirm.parent.display_name}?`;
+  if (confirm.kind === 'unlink-login') return `Unassign ${formatHandle(confirm.login.username)}?`;
   if (confirm.kind === 'remove-photo') return 'Remove this photo?';
   return `Clear ${confirm.label}?`;
 }
@@ -1117,6 +1218,9 @@ function studentConfirmBody(confirm: ConfirmKind | null, name: string): string {
   if (confirm.kind === 'unlink') {
     return `They will not see ${firstName(name)}’s note. This does not delete anyone. This cannot be undone.`;
   }
+  if (confirm.kind === 'unlink-login') {
+    return `${firstName(name)} stays on the roster. The login can be assigned to another student. This cannot be undone.`;
+  }
   if (confirm.kind === 'remove-photo') return `${name} stays. This cannot be undone.`;
   return 'This cannot be undone.';
 }
@@ -1132,6 +1236,7 @@ function studentConfirmLabel(confirm: ConfirmKind | null, name: string): string 
   if (confirm.kind === 'delete-set') return 'Delete set';
   if (confirm.kind === 'remove-assignment') return 'Remove';
   if (confirm.kind === 'unlink') return 'Unlink';
+  if (confirm.kind === 'unlink-login') return 'Unassign';
   if (confirm.kind === 'remove-photo') return 'Remove photo';
   return 'Clear';
 }
@@ -1209,12 +1314,7 @@ const styles = StyleSheet.create({
     ...type.title,
     width: '100%',
   },
-  pills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginBottom: 8,
-  },
+
   gapRow: {
     flexDirection: 'row',
     alignItems: 'center',

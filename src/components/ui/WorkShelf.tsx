@@ -1,5 +1,6 @@
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { photoUri } from '@/components/ui/Avatar';
 import { AvatarInitials } from '@/components/ui/AvatarInitials';
 import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { MarqueeText, useMarqueeScroll } from '@/components/ui/MarqueeText';
@@ -43,8 +44,8 @@ export function WorkShelf({ items, onPress }: Props) {
           {({ pressed }) => (
             <>
               <View style={[styles.thumb, { borderColor: colors.line, backgroundColor: colors.card }]}>
-                {item.photoUrl ? (
-                  <Image source={{ uri: item.photoUrl }} style={styles.image} />
+                {photoUri(item.photoUrl) ? (
+                  <Image source={{ uri: photoUri(item.photoUrl)! }} style={styles.image} />
                 ) : (
                   <View style={[styles.empty, { backgroundColor: colors.wash }]}>
                     {item.unknown ? <UnknownMark size={40} /> : <AvatarInitials name={item.title} size={40} />}

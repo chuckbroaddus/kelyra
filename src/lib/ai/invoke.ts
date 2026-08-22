@@ -23,6 +23,7 @@ export async function invokeAi<T extends object>(
     | 'classify-capture'
     | 'crop-portrait'
     | 'cutout-portrait'
+    | 'cutout-logo'
     | 'analyze-answer-key'
     | 'match-key',
   body: Record<string, unknown>,

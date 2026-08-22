@@ -1,12 +1,13 @@
 import { usePathname, useRouter } from 'expo-router';
 import { Animated, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { HoverTip } from '@/components/ui/HoverTip';
 import { chrome, radius, type } from '@/constants/theme';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-type ChipSpec = { key: string; label: string; onPress: () => void; selected: boolean };
+type ChipSpec = { key: string; label: string; hint?: string; onPress: () => void; selected: boolean };
 
 export function ContextMenuRow() {
   const { colors } = useTheme();
@@ -51,8 +52,8 @@ export function ContextMenuRow() {
         contentContainerStyle={[styles.row, { paddingHorizontal: layout.pad }]}
       >
         {chips.map((chip) => (
+          <HoverTip key={chip.key} label={chip.hint}>
           <Pressable
-            key={chip.key}
             accessibilityRole="button"
             accessibilityState={{ selected: chip.selected }}
             onPress={chip.onPress}
@@ -62,6 +63,7 @@ export function ContextMenuRow() {
               {chip.label}
             </Text>
           </Pressable>
+          </HoverTip>
         ))}
       </ScrollView>
     </Animated.View>
@@ -77,92 +79,23 @@ function chipsFor(input: {
   parentTokens: { token: string; displayName: string }[];
   router: ReturnType<typeof useRouter>;
 }): ChipSpec[] {
-  const { pathname, role, contextTab, setContextTab, classId, parentTokens, router } = input;
-
-  if (role === 'teacher' && /^\/class\/[^/]+$/.test(pathname)) {
-    const current = contextTab || 'today';
-    const root = classId ? `/class/${classId}` : pathname;
-    return [
-      { key: 'today', label: 'Today', selected: current === 'today', onPress: () => setContextTab('today') },
-      { key: 'week', label: 'This week', selected: current === 'week', onPress: () => setContextTab('week') },
-      { key: 'needs', label: 'Needs you', selected: current === 'needs', onPress: () => setContextTab('needs') },
-    ];
-  }
+  const { pathname, contextTab, setContextTab, parentTokens, router } = input;
 
   if (pathname === '/capture') {
     const current = contextTab || 'photo';
     return [
-      { key: 'photo', label: 'Photo', selected: current === 'photo', onPress: () => setContextTab('photo') },
-      { key: 'voice', label: 'Voice', selected: current === 'voice', onPress: () => setContextTab('voice') },
-      { key: 'pages', label: 'Pages', selected: current === 'pages', onPress: () => setContextTab('pages') },
+      { key: 'photo', label: 'Photo', hint: 'Photograph a page', selected: current === 'photo', onPress: () => setContextTab('photo') },
+      { key: 'voice', label: 'Voice', hint: 'Record a voice note', selected: current === 'voice', onPress: () => setContextTab('voice') },
+      { key: 'pages', label: 'Pages', hint: 'Multi-page capture', selected: current === 'pages', onPress: () => setContextTab('pages') },
     ];
   }
 
   if (pathname === '/inbox') {
     const current = contextTab || 'all';
     return [
-      { key: 'name', label: 'Needs a name', selected: current === 'name', onPress: () => setContextTab('name') },
-      { key: 'review', label: 'Review', selected: current === 'review', onPress: () => setContextTab('review') },
-      { key: 'all', label: 'All', selected: current === 'all', onPress: () => setContextTab('all') },
-    ];
-  }
-
-  if (
-    pathname.endsWith('/setup') ||
-    pathname.includes('/gradebook') ||
-    pathname.includes('/assignment') ||
-    pathname.endsWith('/parents')
-  ) {
-    const onStudents = pathname.endsWith('/setup');
-    const onParents = pathname.endsWith('/parents');
-    const onAssignments = pathname.includes('/assignment');
-    const current = onParents
-      ? 'parents'
-      : onStudents
-        ? 'students'
-        : onAssignments
-          ? 'assignments'
-          : contextTab === 'heatmap'
-            ? 'heatmap'
-            : 'book';
-    const root = classId ? `/class/${classId}` : '/';
-    return [
-      {
-        key: 'book',
-        label: 'Gradebook',
-        selected: current === 'book',
-        onPress: () => {
-          setContextTab('book', `${root}/gradebook`);
-          router.push(`${root}/gradebook` as never);
-        },
-      },
-      {
-        key: 'assignments',
-        label: 'Assignments',
-        selected: current === 'assignments',
-        onPress: () => router.push(`${root}/assignments` as never),
-      },
-      {
-        key: 'heatmap',
-        label: 'Heatmap',
-        selected: current === 'heatmap',
-        onPress: () => {
-          setContextTab('heatmap', `${root}/gradebook`);
-          router.push(`${root}/gradebook` as never);
-        },
-      },
-      {
-        key: 'parents',
-        label: 'Parents',
-        selected: current === 'parents',
-        onPress: () => router.push(`${root}/parents` as never),
-      },
-      {
-        key: 'students',
-        label: 'Students',
-        selected: current === 'students',
-        onPress: () => router.push(`${root}/setup` as never),
-      },
+      { key: 'name', label: 'Needs a name', hint: 'Unassigned work', selected: current === 'name', onPress: () => setContextTab('name') },
+      { key: 'review', label: 'Review', hint: 'Drafts waiting for Approve', selected: current === 'review', onPress: () => setContextTab('review') },
+      { key: 'all', label: 'All', hint: 'Everything in Inbox', selected: current === 'all', onPress: () => setContextTab('all') },
     ];
   }
 

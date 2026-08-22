@@ -46,6 +46,11 @@ function ThemedRoot() {
           <Stack.Screen name="notifications" />
           <Stack.Screen name="search" />
           <Stack.Screen name="proposal" />
+          <Stack.Screen name="password" />
+          <Stack.Screen name="messages" />
+          <Stack.Screen name="feed" />
+          <Stack.Screen name="activity" />
+          <Stack.Screen name="admin" />
           <Stack.Screen name="class/[id]" />
         </Stack>
       </AppShell>

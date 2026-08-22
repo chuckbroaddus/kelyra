@@ -4,6 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { AssignmentMark } from '@/components/ui/AssignmentMark';
+import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { PrimaryButton } from '@/components/ui/Button';
@@ -16,6 +17,7 @@ import { assignmentSubtitle, dueLabel, listClassAssignments } from '@/lib/assign
 import { GRADE_KINDS, gradeKindLabel, weightSummary } from '@/lib/grade/marks';
 import { deleteAssignment } from '@/lib/practice/delete';
 import type { AssignmentRow } from '@/lib/supabase/types';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 
@@ -23,6 +25,8 @@ export default function AssignmentsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { className } = useChrome();
+  usePushedTitle(className ?? 'Class');
   const [rows, setRows] = useState<AssignmentRow[] | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const [status, setStatus] = useState<string | null>(null);
@@ -61,6 +65,7 @@ export default function AssignmentsScreen() {
       maxWidth={720}
       sticky={<PrimaryButton label="New assignment" onPress={() => router.push(`/class/${id}/assignment/new` as never)} />}
     >
+      {id ? <ClassTabs classId={id} /> : null}
       {soon.length ? (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Coming due</Text>

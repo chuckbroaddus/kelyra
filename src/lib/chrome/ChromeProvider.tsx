@@ -12,6 +12,7 @@ import {
 import {
   Alert,
   Animated,
+  AppState,
   Easing,
   Keyboard,
   Platform,
@@ -22,20 +23,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { chrome } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { unreadCount } from '@/lib/messages/api';
+import { isOfficeRole, isStaffRole, isTeacherRole } from '@/lib/school/roles';
 import { countNeedsYou } from '@/lib/captures/api';
+import { countAlertsForMe, markAlertRead, subscribeAlertBell } from '@/lib/posts/api';
 import { listClasses, resolveCaptureClass } from '@/lib/classes/api';
 import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { pickNormalizedPhoto } from '@/lib/media/pickPhoto';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
-import { signedProfileUrlForAssetId } from '@/lib/people/photos';
+import { photoUrlsForProfiles, signedProfileUrlForAssetId } from '@/lib/people/photos';
+import { getSchoolIdentity } from '@/lib/school/identity';
 import { listParentTokens, parentBellCount, type StoredParentChild } from '@/lib/parents/session';
 import { setProposalDraft } from '@/lib/proposal/session';
 import { loadStudentSession, type StudentSession } from '@/lib/student-session/api';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useLayout } from '@/lib/theme/layout';
 
-export type ChromeRole = 'teacher' | 'student' | 'parent' | 'none';
+export type ChromeRole = 'superintendent' | 'administrator' | 'teacher' | 'student' | 'parent' | 'none';
 
 type ChromeValue = {
   role: ChromeRole;
@@ -49,26 +54,39 @@ type ChromeValue = {
   contextTranslate: Animated.Value;
   trayOpacity: Animated.Value;
   contextOpacity: Animated.Value;
+  localTrayTranslate: Animated.Value;
+  localTrayOpacity: Animated.Value;
   trayPadding: number;
   contextReserve: number;
   headerHeight: number;
   trayRest: number;
+  localTray: boolean;
+  setLocalTray: (on: boolean) => void;
+  keepLocalTray: boolean;
+  setKeepLocalTray: (on: boolean) => void;
+  keyboardHeight: number;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   searchFrom: string;
   setSearchFrom: (path: string) => void;
   pushedTitle: string | null;
-  setPushedTitle: (title: string | null) => void;
+  setPushedTitle: (title: string | null, path?: string) => void;
   setPushedBackHandler: (handler: (() => boolean) | null) => void;
   requestPushedBack: () => boolean;
   badgeCount: number;
+  messageCount: number;
   classId: string | null;
   className: string | null;
+  schoolName: string | null;
+  schoolLogoUrl: string | null;
   classes: ClassRow[];
   studentSession: StudentSession | null;
   parentTokens: StoredParentChild[];
+  /** Signed face for the signed-in person (teacher, student, or parent). */
   teacherPhotoUrl: string | null;
   refreshChrome: () => void;
+  /** Drop this alert from the bell without removing it from the inbox. */
+  acknowledgeAlert: (postId: string) => void;
   openHeaderCamera: () => void;
   headerCameraOpen: boolean;
   headerListenOpen: boolean;
@@ -80,14 +98,13 @@ type ChromeValue = {
   cancelHeaderListen: () => void;
   contextTab: string;
   setContextTab: (tab: string, path?: string) => void;
+  keyboardVisible: boolean;
 };
 
 export function defaultContextTab(pathname: string): string {
   if (pathname === '/inbox') return 'all';
   if (pathname === '/capture') return 'photo';
   if (pathname === '/todo') return 'todo';
-  if (pathname.includes('/gradebook')) return 'book';
-  if (/^\/class\/[^/]+$/.test(pathname)) return 'today';
   return '';
 }
 
@@ -96,19 +113,25 @@ const ChromeContext = createContext<ChromeValue | null>(null);
 function isPushedPath(pathname: string): boolean {
   return (
     pathname.includes('/student/') ||
+    pathname === '/parent' ||
     pathname.includes('/parent/') ||
     pathname.includes('/assignment/') ||
     pathname === '/search' ||
+    pathname === '/feed' ||
     pathname === '/notifications' ||
+    pathname.startsWith('/notifications/') ||
     pathname === '/proposal' ||
-    pathname.endsWith('/family')
+    pathname.startsWith('/messages') ||
+    pathname === '/activity' ||
+    pathname.startsWith('/admin') ||
+    pathname === '/password'
   );
 }
 
 export function ChromeProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, profile } = useAuth();
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
@@ -118,10 +141,25 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFrom, setSearchFrom] = useState('/');
-  const [pushedTitle, setPushedTitle] = useState<string | null>(null);
+  const [pushedTitleState, setPushedTitleState] = useState<{ path: string; title: string } | null>(null);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+  const setPushedTitle = useCallback((title: string | null, path?: string) => {
+    const key = path ?? pathnameRef.current;
+    setPushedTitleState((current) => {
+      if (title == null || !title.trim()) {
+        return current?.path === key ? null : current;
+      }
+      return { path: key, title: title.trim() };
+    });
+  }, []);
+  const pushedTitle = pushedTitleState?.path === pathname ? pushedTitleState.title : null;
   const [badgeCount, setBadgeCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [studentSession, setStudentSession] = useState<StudentSession | null>(null);
   const [parentTokens, setParentTokens] = useState<StoredParentChild[]>([]);
@@ -131,15 +169,24 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const [headerListening, setHeaderListening] = useState(false);
   const [tick, setTick] = useState(0);
   const [contextByPath, setContextByPath] = useState<Record<string, string>>({});
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [localTray, setLocalTrayState] = useState(false);
+  const [keepLocalTray, setKeepLocalTrayState] = useState(false);
+  const localTrayRef = useRef(false);
+  const keepLocalRef = useRef(false);
 
   const trayTranslate = useRef(new Animated.Value(0)).current;
   const contextTranslate = useRef(new Animated.Value(0)).current;
   const trayOpacity = useRef(new Animated.Value(1)).current;
   const contextOpacity = useRef(new Animated.Value(1)).current;
+  const localTrayTranslate = useRef(new Animated.Value(0)).current;
+  const localTrayOpacity = useRef(new Animated.Value(1)).current;
   const lastY = useRef(0);
   const acc = useRef(0);
   const lastDir = useRef<1 | -1 | 0>(0);
   const visibleRef = useRef(true);
+  const ignoreScrollUntil = useRef(0);
   const headerVoice = useRef<LiveRecording | null>(null);
   const pushedBackHandler = useRef<(() => boolean) | null>(null);
   const setPushedBackHandler = useCallback((handler: (() => boolean) | null) => {
@@ -159,10 +206,30 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       ? 6 + Math.max(insets.bottom, 6)
       : 8 + Math.max(insets.bottom, 8);
   const trayRest = layout.showTopBar ? 12 : trayHeight + bottomInset;
-  const trayPadding = trayRest + 12;
+  const localExtra = localTray ? trayHeight + 8 : 0;
+  const trayPadding = trayRest + localExtra + 12;
+
+  const setLocalTray = useCallback((on: boolean) => {
+    localTrayRef.current = on;
+    setLocalTrayState(on);
+    if (!on) {
+      keepLocalRef.current = false;
+      setKeepLocalTrayState(false);
+    }
+  }, []);
+  const setKeepLocalTray = useCallback((on: boolean) => {
+    keepLocalRef.current = on;
+    setKeepLocalTrayState(on);
+  }, []);
 
   const role: ChromeRole = useMemo(() => {
-    if (pathname === '/sign-in' || pathname === '/join') return 'none';
+    if (pathname === '/sign-in' || pathname === '/join' || pathname === '/password') return 'none';
+    // Daily workspace: teacher hat uses Capture / Inbox / Class. Admin hats stay
+    // on the profile for People / Activity. Parent is a destination, not a login.
+    if (isTeacherRole(profile)) return 'teacher';
+    if (profile?.role && isStaffRole(profile)) return profile.role;
+    if (profile?.role === 'parent') return 'parent';
+    if (profile?.role === 'student') return 'student';
     if (pathname === '/parent' || pathname.startsWith('/parent')) {
       return parentTokens.length || pathname.includes('t=') ? 'parent' : 'none';
     }
@@ -171,12 +238,14 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     if (studentSession) return 'student';
     if (parentTokens.length) return 'parent';
     return 'none';
-  }, [pathname, teacher, studentSession, parentTokens.length]);
+  }, [pathname, teacher, profile, studentSession, parentTokens.length]);
 
   const contextReserve = useMemo(() => {
     if (role === 'none') return 0;
     if (isPushedPath(pathname)) return 0;
-    if (pathname === '/ask' || pathname === '/profile') return 0;
+    if (pathname === '/ask' || pathname === '/profile' || pathname === '/messages' || pathname === '/activity') return 0;
+    // School home and class desk use in-page PersonTabs, not the Amazon context row.
+    if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname)) return 0;
     return contextH;
   }, [role, pathname, contextH]);
 
@@ -186,81 +255,167 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     setContextByPath((current) => (current[key] === tab ? current : { ...current, [key]: tab }));
   }, [pathname]);
 
-  const hideDistance = trayHeight + bottomInset + 12;
+  const hideDistance =
+    (layout.showTopBar ? 0 : trayHeight) + (localTray ? trayHeight + 8 : 0) + bottomInset + 12;
 
   const animate = useCallback(
-    (show: boolean) => {
-      visibleRef.current = show;
-      setVisible(show);
-      Animated.parallel([
+    (show: boolean, opts?: { system?: boolean; local?: boolean }) => {
+      const moveSystem = opts?.system ?? true;
+      const moveLocal = opts?.local ?? true;
+      if (moveSystem) {
+        visibleRef.current = show;
+        setVisible(show);
+      }
+      const dur = chrome.motion.tray;
+      const stagger = localTrayRef.current ? chrome.motion.trayStagger : 0;
+      const ease = Easing.out(Easing.cubic);
+      const system = Animated.parallel([
         Animated.timing(trayTranslate, {
           toValue: show ? 0 : hideDistance,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
+          duration: dur,
+          easing: ease,
           useNativeDriver: true,
         }),
         Animated.timing(contextTranslate, {
           toValue: show ? 0 : -contextH,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
+          duration: dur,
+          easing: ease,
           useNativeDriver: true,
         }),
         Animated.timing(trayOpacity, {
           toValue: show ? 1 : 0.85,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
+          duration: dur,
+          easing: ease,
           useNativeDriver: true,
         }),
         Animated.timing(contextOpacity, {
           toValue: show ? 1 : 0,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
+          duration: dur,
+          easing: ease,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
+      const local = Animated.parallel([
+        Animated.timing(localTrayTranslate, {
+          toValue: show ? 0 : hideDistance,
+          duration: dur,
+          easing: ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(localTrayOpacity, {
+          toValue: show ? 1 : 0.85,
+          duration: dur,
+          easing: ease,
+          useNativeDriver: true,
+        }),
+      ]);
+      if (!moveLocal) {
+        if (moveSystem) system.start();
+        return;
+      }
+      if (!moveSystem) {
+        local.start();
+        return;
+      }
+      if (show) {
+        Animated.parallel([system, Animated.sequence([Animated.delay(stagger), local])]).start();
+      } else {
+        Animated.parallel([local, Animated.sequence([Animated.delay(stagger), system])]).start();
+      }
     },
-    [contextH, contextOpacity, contextTranslate, hideDistance, trayOpacity, trayTranslate],
+    [
+      contextH,
+      contextOpacity,
+      contextTranslate,
+      hideDistance,
+      localTrayOpacity,
+      localTrayTranslate,
+      trayOpacity,
+      trayTranslate,
+    ],
   );
 
   const showChrome = useCallback(() => animate(true), [animate]);
 
   useEffect(() => {
-    if (forceHidden || drawerOpen || headerCameraOpen) {
-      animate(false);
-    } else {
-      animate(true);
-    }
-  }, [forceHidden, drawerOpen, headerCameraOpen, animate]);
-
-  useEffect(() => {
-    let live = true;
-    if (!teacher?.photo_asset_id) {
-      setTeacherPhotoUrl(null);
-      return;
-    }
-    void signedProfileUrlForAssetId(teacher.photo_asset_id).then((url) => {
-      if (live) setTeacherPhotoUrl(url);
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvt, (event) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
     });
-    return () => {
-      live = false;
-    };
-  }, [teacher?.photo_asset_id]);
-
-  useEffect(() => {
-    if (pathname !== '/search') return;
-    const show = Keyboard.addListener('keyboardDidShow', () => animate(false));
-    const hide = Keyboard.addListener('keyboardDidHide', () => {
-      if (!forceHidden && !drawerOpen) animate(true);
+    const hide = Keyboard.addListener(hideEvt, () => {
+      ignoreScrollUntil.current = Date.now() + 450;
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
     });
     return () => {
       show.remove();
       hide.remove();
     };
-  }, [pathname, animate, forceHidden, drawerOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (forceHidden || drawerOpen || headerCameraOpen) {
+      animate(false);
+      return;
+    }
+    if (keyboardVisible) {
+      animate(false, { system: true, local: false });
+      if (localTrayRef.current) animate(true, { system: false, local: true });
+      return;
+    }
+    animate(true);
+  }, [forceHidden, drawerOpen, headerCameraOpen, keyboardVisible, keepLocalTray, animate]);
+
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      if (profile) {
+        const urls = await photoUrlsForProfiles([profile]);
+        if (live) setTeacherPhotoUrl(urls.get(profile.id) ?? null);
+        return;
+      }
+      if (teacher?.photo_asset_id) {
+        const url = await signedProfileUrlForAssetId(teacher.photo_asset_id);
+        if (live) setTeacherPhotoUrl(url);
+        return;
+      }
+      if (live) setTeacherPhotoUrl(null);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [profile, teacher?.photo_asset_id, tick]);
+
+  useEffect(() => {
+    if (!profile) {
+      setSchoolName(null);
+      setSchoolLogoUrl(null);
+      return;
+    }
+    let live = true;
+    void getSchoolIdentity()
+      .then((row) => {
+        if (!live) return;
+        setSchoolName(row?.name ?? null);
+        setSchoolLogoUrl(row?.logoUrl ?? null);
+      })
+      .catch(() => {
+        if (live) {
+          setSchoolName(null);
+          setSchoolLogoUrl(null);
+        }
+      });
+    return () => {
+      live = false;
+    };
+  }, [profile?.school_id, tick]);
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (forceHidden || drawerOpen || headerCameraOpen) return;
+      if (forceHidden || drawerOpen || headerCameraOpen || keyboardVisible) return;
+      if (Date.now() < ignoreScrollUntil.current) return;
       const { contentOffset, contentSize, layoutMeasurement, velocity } = event.nativeEvent;
       const y = contentOffset.y;
       const maxY = Math.max(0, contentSize.height - layoutMeasurement.height);
@@ -313,7 +468,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
         animate(true);
       }
     },
-    [animate, drawerOpen, forceHidden, headerCameraOpen],
+    [animate, drawerOpen, forceHidden, headerCameraOpen, keyboardVisible],
   );
 
   const refreshChrome = useCallback(() => setTick((value) => value + 1), []);
@@ -321,10 +476,20 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [session, tokens] = await Promise.all([loadStudentSession(), listParentTokens()]);
+      const tokens = await listParentTokens();
       if (cancelled) return;
-      setStudentSession(session);
       setParentTokens(tokens);
+      if (profile?.role === 'student') {
+        try {
+          const session = await loadStudentSession();
+          if (!cancelled) setStudentSession(session);
+        } catch {
+          if (!cancelled) setStudentSession(null);
+        }
+      } else if (!cancelled) {
+        setStudentSession(null);
+      }
+      const alerts = await countAlertsForMe().catch(() => 0);
       if (teacher) {
         try {
           const all = await listClasses();
@@ -334,27 +499,25 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           if (cancelled) return;
           setClassId(klass.id);
           setClassName(klass.name);
-          setBadgeCount(await countNeedsYou(klass.id));
+          const work = isOfficeRole(profile) ? 0 : await countNeedsYou(klass.id).catch(() => 0);
+          if (!cancelled) setBadgeCount(alerts + work);
         } catch {
           if (!cancelled) {
             setClassId(null);
             setClassName(null);
-            setBadgeCount(0);
+            setBadgeCount(alerts);
           }
         }
         return;
       }
-      if (session) {
-        const assigned = 0;
-        setBadgeCount(assigned);
-        return;
-      }
-      setBadgeCount(await parentBellCount(tokens));
+      if (profile?.role === 'student') return;
+      const parentNotes = await parentBellCount(tokens);
+      if (!cancelled) setBadgeCount(alerts + parentNotes);
     })();
     return () => {
       cancelled = true;
     };
-  }, [teacher, pathname, tick]);
+  }, [teacher, profile?.role, pathname, tick]);
 
   useEffect(() => {
     if (!studentSession || role !== 'student') return;
@@ -362,9 +525,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const { listStudentTodo } = await import('@/lib/student-session/api');
-        const items = await listStudentTodo(studentSession.joinCode, studentSession.studentId);
+        const items = await listStudentTodo();
+        const alerts = await countAlertsForMe().catch(() => 0);
         if (!cancelled) {
-          setBadgeCount(items.filter((item) => item.status === 'assigned').length);
+          setBadgeCount(items.filter((item) => item.status === 'assigned').length + alerts);
         }
       } catch {
         if (!cancelled) setBadgeCount(0);
@@ -374,6 +538,86 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [studentSession, role, pathname, tick]);
+
+  const refreshBell = useCallback(async () => {
+    if (role === 'none') {
+      setBadgeCount(0);
+      return;
+    }
+    const alerts = await countAlertsForMe().catch(() => 0);
+    if (role === 'student') {
+      if (!studentSession) {
+        setBadgeCount(alerts);
+        return;
+      }
+      try {
+        const { listStudentTodo } = await import('@/lib/student-session/api');
+        const items = await listStudentTodo();
+        setBadgeCount(items.filter((item) => item.status === 'assigned').length + alerts);
+      } catch {
+        setBadgeCount(alerts);
+      }
+      return;
+    }
+    if (teacher && !isOfficeRole(profile) && classId) {
+      const work = await countNeedsYou(classId).catch(() => 0);
+      setBadgeCount(alerts + work);
+      return;
+    }
+    if (role === 'parent') {
+      const notes = await parentBellCount(parentTokens).catch(() => 0);
+      setBadgeCount(alerts + notes);
+      return;
+    }
+    setBadgeCount(alerts);
+  }, [role, studentSession, teacher, profile, classId, parentTokens]);
+
+  const acknowledgeAlert = useCallback((postId: string) => {
+    void markAlertRead(postId).then((fresh) => {
+      if (!fresh) return;
+      setBadgeCount((n) => Math.max(0, n - 1));
+      void refreshBell();
+    });
+  }, [refreshBell]);
+
+  useEffect(() => {
+    if (role === 'none') return;
+    void refreshBell();
+    const interval = setInterval(() => {
+      void refreshBell();
+    }, 12000);
+    const app = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshBell();
+    });
+    const stop = subscribeAlertBell(() => {
+      void refreshBell();
+    });
+    return () => {
+      clearInterval(interval);
+      app.remove();
+      stop();
+    };
+  }, [role, refreshBell]);
+
+  useEffect(() => {
+    if (!profile || role === 'none') {
+      setMessageCount(0);
+      return;
+    }
+    let cancelled = false;
+    void unreadCount().then((n) => {
+      if (!cancelled) setMessageCount(n);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, role, pathname, tick]);
+
+  useEffect(() => {
+    if (profile?.must_change_password && pathname !== '/password') {
+      router.replace('/password');
+    }
+  }, [profile?.must_change_password, pathname, router]);
 
   const stopHeaderVoice = useCallback(async () => {
     const rec = headerVoice.current;
@@ -435,6 +679,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   );
 
   const openHeaderCamera = useCallback(() => {
+    if (pathnameRef.current.startsWith('/messages')) return;
     void (async () => {
       try {
         headerVoice.current = await startLiveRecording();
@@ -448,6 +693,12 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const onHeaderTakePhoto = useCallback(() => {
+    if (pathnameRef.current.startsWith('/messages')) {
+      void stopHeaderVoice();
+      setHeaderListening(false);
+      setHeaderListenOpen(false);
+      return;
+    }
     setHeaderListenOpen(false);
     if (Platform.OS === 'web') {
       setHeaderCameraOpen(true);
@@ -509,10 +760,17 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       contextTranslate,
       trayOpacity,
       contextOpacity,
+      localTrayTranslate,
+      localTrayOpacity,
       trayPadding: role === 'none' ? 24 : trayPadding,
       contextReserve: role === 'none' ? 0 : contextReserve,
       headerHeight,
       trayRest: role === 'none' ? Math.max(insets.bottom, 12) : trayRest,
+      localTray,
+      setLocalTray,
+      keepLocalTray,
+      setKeepLocalTray,
+      keyboardHeight,
       searchQuery,
       setSearchQuery,
       searchFrom,
@@ -522,13 +780,17 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setPushedBackHandler,
       requestPushedBack,
       badgeCount,
+      messageCount,
       classId,
       className,
+      schoolName,
+      schoolLogoUrl,
       classes,
       studentSession,
       parentTokens,
       teacherPhotoUrl,
       refreshChrome,
+      acknowledgeAlert,
       openHeaderCamera,
       headerCameraOpen,
       headerListenOpen,
@@ -540,6 +802,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       cancelHeaderListen,
       contextTab,
       setContextTab,
+      keyboardVisible,
     }),
     [
       role,
@@ -551,6 +814,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       contextTranslate,
       trayOpacity,
       contextOpacity,
+      localTrayTranslate,
+      localTrayOpacity,
       trayPadding,
       contextReserve,
       headerHeight,
@@ -562,13 +827,17 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setPushedBackHandler,
       requestPushedBack,
       badgeCount,
+      messageCount,
       classId,
       className,
+      schoolName,
+      schoolLogoUrl,
       classes,
       studentSession,
       parentTokens,
       teacherPhotoUrl,
       refreshChrome,
+      acknowledgeAlert,
       openHeaderCamera,
       headerCameraOpen,
       headerListenOpen,
@@ -580,6 +849,12 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       onHeaderPhoto,
       contextTab,
       setContextTab,
+      keyboardVisible,
+      localTray,
+      setLocalTray,
+      keepLocalTray,
+      setKeepLocalTray,
+      keyboardHeight,
     ],
   );
 
@@ -598,4 +873,19 @@ export function useOptionalChrome(): ChromeValue | null {
 
 export function isChromePushed(pathname: string): boolean {
   return isPushedPath(pathname);
+}
+
+/** Homework shutter. Hidden on Messages so a group photo cannot run portrait cutout. */
+export function showHeaderCapture(pathname: string, role: string): boolean {
+  return role === 'teacher' && !pathname.startsWith('/messages');
+}
+
+/** Bind a header title to this screen so leaving it cannot wipe the next screen’s title. */
+export function usePushedTitle(title: string | null) {
+  const { setPushedTitle } = useChrome();
+  const pathname = usePathname();
+  useEffect(() => {
+    setPushedTitle(title, pathname);
+    return () => setPushedTitle(null, pathname);
+  }, [setPushedTitle, title, pathname]);
 }

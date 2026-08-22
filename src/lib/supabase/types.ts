@@ -26,6 +26,124 @@ export type ParentMetadataKey =
 export type ParentRelationship = 'mother' | 'father' | 'guardian' | 'other';
 export type ParentPreferredContact = 'call' | 'text' | 'email';
 export type ProfilePhotoKind = 'student' | 'parent' | 'teacher';
+export type SchoolRole = 'superintendent' | 'administrator' | 'teacher' | 'parent' | 'student';
+
+export type SchoolRow = {
+  id: string;
+  name: string;
+  created_at: string;
+  feed_icon?: string | null;
+  logo_asset_id?: string | null;
+};
+
+export type ProfileRow = {
+  id: string;
+  school_id: string;
+  username: string;
+  email: string | null;
+  display_name: string | null;
+  role: SchoolRole;
+  must_change_password: boolean;
+  student_id: string | null;
+  parent_id: string | null;
+  also_administrator: boolean;
+  also_teacher: boolean;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type AuditEventRow = {
+  id: string;
+  actor_id: string | null;
+  actor_username: string | null;
+  actor_role: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  student_id: string | null;
+  class_id: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type MessageThreadKind = 'direct' | 'group';
+
+export type MessageThreadRow = {
+  id: string;
+  school_id: string;
+  created_at: string;
+  last_message_at: string;
+  kind: MessageThreadKind;
+  title: string | null;
+  student_id: string | null;
+  created_by: string | null;
+  photo_path: string | null;
+};
+
+export type MessageWorkCard = {
+  type: 'work_card';
+  student_id: string;
+  assignment_id?: string | null;
+  practice_set_id?: string | null;
+  notify_parents?: boolean;
+};
+
+export type MessagePhoto = {
+  type: 'photo';
+  storage_path: string;
+  mime_type?: string | null;
+};
+
+export type MessageFile = {
+  type: 'file';
+  storage_path: string;
+  name: string;
+  mime_type?: string | null;
+};
+
+export type MessageLink = {
+  type: 'link';
+  url: string;
+  title: string;
+  description?: string | null;
+  image_url?: string | null;
+};
+
+export type MessagePayload = MessageWorkCard | MessagePhoto | MessageFile | MessageLink;
+
+export type AskMessageRow = {
+  id: string;
+  role: 'user' | 'assistant';
+  body: string;
+  payload: MessagePayload | null;
+  created_at: string;
+};
+
+export type MessageRow = {
+  id: string;
+  thread_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  payload?: MessagePayload | null;
+};
+
+export type PostKind = 'post' | 'alert';
+
+export type PostRow = {
+  id: string;
+  school_id: string;
+  class_id: string | null;
+  author_id: string;
+  kind: PostKind;
+  body: string;
+  payload?: MessagePayload | null;
+  created_at: string;
+};
 export type CaptureKind = 'homework' | 'voice_note';
 export type CaptureInputSource = 'voice' | 'camera' | 'typed';
 export type CaptureStatus =
@@ -128,11 +246,11 @@ export type TeacherRow = {
 
 export type ClassRow = {
   id: string;
-  teacher_id: string;
+  teacher_id: string | null;
   name: string;
-  join_code: string;
   name_source: ClassNameSource;
   created_at: string;
+  feed_icon?: string | null;
 };
 
 export type StudentRow = {
@@ -281,6 +399,103 @@ export type SkillGapRow = {
 export type Database = {
   public: {
     Tables: {
+      schools: Table<
+        SchoolRow,
+        { name?: string; feed_icon?: string | null; logo_asset_id?: string | null },
+        Partial<Pick<SchoolRow, 'name' | 'feed_icon' | 'logo_asset_id'>>
+      >;
+      profiles: Table<
+        ProfileRow,
+        {
+          id: string;
+          school_id: string;
+          username: string;
+          email?: string | null;
+          display_name?: string | null;
+          role?: SchoolRole;
+          must_change_password?: boolean;
+          student_id?: string | null;
+          parent_id?: string | null;
+          created_by?: string | null;
+        },
+        Partial<Omit<ProfileRow, 'id' | 'created_at'>>
+      >;
+      capability_grants: Table<
+        { capability_id: string; role: SchoolRole; access: string; updated_at: string; updated_by: string | null },
+        { capability_id: string; role: SchoolRole; access: string; updated_by?: string | null },
+        Partial<{ access: string; updated_by: string | null }>
+      >;
+      audit_events: Table<
+        AuditEventRow,
+        {
+          action: string;
+          entity_type: string;
+          actor_id?: string | null;
+          actor_username?: string | null;
+          actor_role?: string | null;
+          entity_id?: string | null;
+          student_id?: string | null;
+          class_id?: string | null;
+          before?: Record<string, unknown> | null;
+          after?: Record<string, unknown> | null;
+        },
+        never
+      >;
+      message_threads: Table<
+        MessageThreadRow,
+        {
+          school_id: string;
+          last_message_at?: string;
+          kind?: MessageThreadKind;
+          title?: string | null;
+          student_id?: string | null;
+          created_by?: string | null;
+          photo_path?: string | null;
+        },
+        Partial<Pick<MessageThreadRow, 'last_message_at' | 'title' | 'kind' | 'photo_path'>>
+      >;
+      message_thread_members: Table<
+        {
+          thread_id: string;
+          profile_id: string;
+          last_read_at: string | null;
+          muted_at: string | null;
+          pinned_at: string | null;
+        },
+        {
+          thread_id: string;
+          profile_id: string;
+          last_read_at?: string | null;
+          muted_at?: string | null;
+          pinned_at?: string | null;
+        },
+        Partial<{ last_read_at: string | null; muted_at: string | null; pinned_at: string | null }>
+      >;
+      messages: Table<
+        MessageRow,
+        { thread_id: string; sender_id: string; body: string; payload?: MessagePayload | null },
+        Partial<{ body: string; payload: MessagePayload | null }>
+      >;
+      posts: Table<
+        PostRow,
+        { school_id: string; author_id: string; kind: PostKind; body: string; class_id?: string | null },
+        Partial<Pick<PostRow, 'body' | 'kind'>>
+      >;
+      post_replies: Table<
+        { id: string; post_id: string; author_id: string; body: string; payload?: MessagePayload | null; created_at: string },
+        { post_id: string; author_id: string; body: string; payload?: MessagePayload | null },
+        never
+      >;
+      post_audience_mutes: Table<
+        { profile_id: string; class_id: string | null; muted_at: string },
+        { profile_id: string; class_id?: string | null },
+        never
+      >;
+      post_dismissals: Table<
+        { profile_id: string; post_id: string; dismissed_at: string },
+        { profile_id: string; post_id: string },
+        never
+      >;
       teachers: Table<
         TeacherRow,
         {
@@ -292,10 +507,15 @@ export type Database = {
         },
         Partial<Omit<TeacherRow, 'id' | 'created_at'>>
       >;
+      class_teachers: Table<
+        { class_id: string; teacher_id: string; created_at: string },
+        { class_id: string; teacher_id: string },
+        never
+      >;
       classes: Table<
         ClassRow,
-        { teacher_id: string; name: string; join_code?: string; name_source?: ClassNameSource },
-        Partial<Pick<ClassRow, 'name' | 'name_source' | 'join_code'>>
+        { teacher_id?: string | null; name: string; name_source?: ClassNameSource; feed_icon?: string | null },
+        Partial<Pick<ClassRow, 'name' | 'name_source' | 'teacher_id' | 'feed_icon'>>
       >;
       students: Table<
         StudentRow,
@@ -441,21 +661,46 @@ export type Database = {
         { parent_id: string; token: string; student_id?: string | null; email?: string | null },
         Partial<{ student_id: string | null; email: string | null; accepted_at: string | null }>
       >;
+      ask_threads: Table<
+        { id: string; profile_id: string; school_id: string; created_at: string; cleared_at: string | null },
+        { profile_id: string; school_id: string; cleared_at?: string | null },
+        Partial<{ cleared_at: string | null }>
+      >;
+      ask_messages: Table<
+        {
+          id: string;
+          thread_id: string;
+          role: 'user' | 'assistant';
+          body: string;
+          payload: MessagePayload | null;
+          created_at: string;
+        },
+        { thread_id: string; role: 'user' | 'assistant'; body?: string; payload?: MessagePayload | null },
+        Partial<{ body: string; payload: MessagePayload | null }>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
-      student_open_class: {
-        Args: { p_join_code: string };
+      student_me: {
+        Args: Record<string, never>;
         Returns: {
-          class_id: string;
-          class_name: string;
+          class_id: string | null;
+          class_name: string | null;
+          student_id: string;
+          display_name: string;
+          photo_path: string | null;
+        }[];
+      };
+      student_classmates: {
+        Args: Record<string, never>;
+        Returns: {
           student_id: string;
           display_name: string;
           photo_path: string | null;
         }[];
       };
       student_list_todo: {
-        Args: { p_join_code: string; p_student_id: string };
+        Args: Record<string, never>;
         Returns: {
           submission_id: string;
           assignment_title: string;
@@ -467,12 +712,62 @@ export type Database = {
       };
       student_submit: {
         Args: {
-          p_join_code: string;
-          p_student_id: string;
           p_submission_id: string;
           p_answers: Record<string, string>;
         };
         Returns: undefined;
+      };
+      admin_set_student_link: {
+        Args: { p_profile_id: string; p_student_id: string | null };
+        Returns: undefined;
+      };
+      admin_provision_student_login: {
+        Args: { p_student_id: string };
+        Returns: {
+          profile_id: string;
+          student_id: string;
+          display_name: string;
+          username: string;
+          email: string;
+          temp_password: string | null;
+          created: boolean;
+        }[];
+      };
+      admin_backfill_student_logins: {
+        Args: Record<string, never>;
+        Returns: {
+          profile_id: string;
+          student_id: string;
+          display_name: string;
+          username: string;
+          email: string;
+          temp_password: string | null;
+          created: boolean;
+        }[];
+      };
+      admin_provision_parent_login: {
+        Args: { p_parent_id: string };
+        Returns: {
+          profile_id: string;
+          parent_id: string;
+          display_name: string;
+          username: string;
+          email: string;
+          temp_password: string | null;
+          created: boolean;
+        }[];
+      };
+      admin_backfill_parent_logins: {
+        Args: Record<string, never>;
+        Returns: {
+          profile_id: string;
+          parent_id: string;
+          display_name: string;
+          username: string;
+          email: string;
+          temp_password: string | null;
+          created: boolean;
+        }[];
       };
       parent_open: {
         Args: { p_token: string };
@@ -501,6 +796,217 @@ export type Database = {
       };
       teacher_unref_asset: { Args: { p_asset_id: string }; Returns: undefined };
       teacher_delete_roster_import: { Args: { p_import_id: string }; Returns: undefined };
+      login_identifier: { Args: { p_handle: string }; Returns: string | null };
+      my_role: { Args: Record<string, never>; Returns: SchoolRole | null };
+      is_school_admin: { Args: Record<string, never>; Returns: boolean };
+      school_claim_superintendent: { Args: Record<string, never>; Returns: ProfileRow };
+      admin_create_login: {
+        Args: {
+          p_email: string;
+          p_password: string;
+          p_username: string;
+          p_role: SchoolRole;
+          p_display_name: string;
+          p_must_change?: boolean;
+          p_also_parent?: boolean;
+          p_also_administrator?: boolean;
+          p_also_teacher?: boolean;
+        };
+        Returns: string;
+      };
+      set_capability_grant: {
+        Args: { p_capability: string; p_role: SchoolRole; p_access: string };
+        Returns: undefined;
+      };
+      can_edit_profile: { Args: { p_target: string }; Returns: boolean };
+      update_profile_details: {
+        Args: {
+          p_profile_id: string;
+          p_display_name: string;
+          p_username: string;
+          p_email: string;
+          p_phone: string;
+          p_address: string;
+          p_notes: string;
+        };
+        Returns: ProfileRow;
+      };
+      admin_set_also_hat: {
+        Args: { p_profile_id: string; p_hat: string; p_also: boolean };
+        Returns: undefined;
+      };
+      admin_set_also_parent: {
+        Args: { p_profile_id: string; p_also: boolean };
+        Returns: string | null;
+      };
+      parent_open_mine: { Args: Record<string, never>; Returns: ParentOpenRow[] };
+      admin_set_parent_link: {
+        Args: { p_parent_id: string; p_student_id: string; p_link: boolean };
+        Returns: undefined;
+      };
+      can_link_parent_student: { Args: Record<string, never>; Returns: boolean };
+      create_school_class: { Args: { p_name: string }; Returns: ClassRow };
+      add_teacher_to_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
+      remove_teacher_from_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
+      teaches_class: { Args: { p_class_id: string }; Returns: boolean };
+      school_students_for_link: { Args: Record<string, never>; Returns: StudentRow[] };
+      school_parents_for_link: { Args: Record<string, never>; Returns: ParentRow[] };
+      admin_set_parent_card_link: {
+        Args: { p_profile_id: string; p_parent_id: string | null };
+        Returns: undefined;
+      };
+      student_parents: { Args: { p_student_id: string }; Returns: ParentRow[] };
+      parent_children: { Args: { p_parent_id: string }; Returns: StudentRow[] };
+      dismiss_alert: { Args: { p_post_id: string }; Returns: undefined };
+      count_alerts_for_me: { Args: Record<string, never>; Returns: number };
+      get_alert: {
+        Args: { p_post_id: string };
+        Returns: {
+          id: string;
+          body: string;
+          created_at: string;
+          class_id: string | null;
+          class_name: string | null;
+          author_name: string;
+        }[];
+      };
+      unread_message_count: { Args: Record<string, never>; Returns: number };
+      profile_photo_assets: {
+        Args: { p_ids: string[] };
+        Returns: Array<{ profile_id: string; photo_asset_id: string | null; storage_path: string | null }>;
+      };
+      is_school_profile_photo: { Args: { p_path: string }; Returns: boolean };
+      message_directory: { Args: Record<string, never>; Returns: ProfileRow[] };
+      open_direct_thread: { Args: { p_other: string }; Returns: string };
+      open_group_thread: {
+        Args: { p_title: string; p_member_ids: string[]; p_student_id?: string | null };
+        Returns: string;
+      };
+      set_thread_muted: { Args: { p_thread_id: string; p_muted: boolean }; Returns: undefined };
+      set_thread_title: { Args: { p_thread_id: string; p_title: string }; Returns: undefined };
+      set_thread_photo: { Args: { p_thread_id: string; p_path: string | null }; Returns: undefined };
+      set_thread_pinned: { Args: { p_thread_id: string; p_pinned: boolean }; Returns: undefined };
+      add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
+      remove_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
+      send_message: {
+        Args: { p_thread_id: string; p_body: string; p_payload?: MessagePayload | null };
+        Returns: MessageRow;
+      };
+      unfurl_link: {
+        Args: { p_url: string };
+        Returns: { url: string; title: string; description: string | null; image_url: string | null };
+      };
+      school_students_not_in_class: { Args: { p_class_id: string }; Returns: StudentRow[] };
+      school_parents_not_in_class: { Args: { p_class_id: string }; Returns: ParentRow[] };
+      enroll_school_student: { Args: { p_class_id: string; p_student_id: string }; Returns: undefined };
+      class_parent_directory: {
+        Args: { p_class_id: string };
+        Returns: Array<
+          ParentRow & {
+            pool: string;
+            children: Array<{ id: string; display_name: string; photoUrl: string | null }>;
+          }
+        >;
+      };
+      add_parent_to_class: { Args: { p_class_id: string; p_parent_id: string }; Returns: number };
+      remove_parent_from_class: { Args: { p_class_id: string; p_parent_id: string }; Returns: undefined };
+      get_parent_card: { Args: { p_parent_id: string }; Returns: ParentRow };
+      share_work_card: {
+        Args: {
+          p_student_id: string;
+          p_assignment_id?: string | null;
+          p_practice_set_id?: string | null;
+          p_notify_parents: boolean;
+          p_thread_id?: string | null;
+        };
+        Returns: string;
+      };
+      create_post: {
+        Args: { p_class_id?: string | null; p_kind: string; p_body: string };
+        Returns: PostRow;
+      };
+      create_feed_post: {
+        Args: {
+          p_class_id?: string | null;
+          p_kind: string;
+          p_body: string;
+          p_payload: MessagePayload | null;
+        };
+        Returns: PostRow;
+      };
+      reply_to_post: { Args: { p_post_id: string; p_body: string }; Returns: { id: string } };
+      reply_to_feed_post: {
+        Args: { p_post_id: string; p_body: string; p_payload: MessagePayload | null };
+        Returns: { id: string };
+      };
+      list_my_feeds: {
+        Args: Record<string, never>;
+        Returns: { kind: string; id: string; name: string; icon: string; can_edit: boolean }[];
+      };
+      set_school_feed_icon: { Args: { p_icon: string }; Returns: string };
+      set_school_name: { Args: { p_name: string }; Returns: string };
+      set_school_logo: { Args: { p_asset_id: string | null }; Returns: string | null };
+      ask_open_thread: { Args: Record<string, never>; Returns: string };
+      ask_list_messages: { Args: { p_limit?: number }; Returns: AskMessageRow[] };
+      ask_append_message: {
+        Args: { p_role: 'user' | 'assistant'; p_body: string; p_payload?: MessagePayload | null };
+        Returns: string;
+      };
+      ask_new_thread: { Args: Record<string, never>; Returns: string };
+      ask_purge_old: { Args: Record<string, never>; Returns: undefined };
+      set_class_feed_icon: { Args: { p_class_id: string; p_icon: string }; Returns: string };
+      list_feed: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          class_id: string | null;
+          class_name: string | null;
+          author_id: string;
+          author_name: string;
+          author_username: string;
+          kind: string;
+          body: string;
+          payload?: MessagePayload | null;
+          created_at: string;
+          reply_count: number;
+        }[];
+      };
+      list_post_replies: {
+        Args: { p_post_id: string };
+        Returns: {
+          id: string;
+          author_id: string;
+          author_name: string;
+          body: string;
+          payload?: MessagePayload | null;
+          created_at: string;
+        }[];
+      };
+      set_feed_muted: { Args: { p_class_id?: string | null; p_muted: boolean }; Returns: undefined };
+      list_alerts_for_me: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          title: string;
+          status: string;
+          body: string;
+          created_at: string;
+          class_id: string | null;
+          class_name: string | null;
+        }[];
+      };
+      write_audit: {
+        Args: {
+          p_action: string;
+          p_entity_type: string;
+          p_entity_id?: string | null;
+          p_student_id?: string | null;
+          p_class_id?: string | null;
+          p_before?: Record<string, unknown> | null;
+          p_after?: Record<string, unknown> | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       class_name_source: ClassNameSource;
@@ -516,6 +1022,7 @@ export type Database = {
       practice_set_status: PracticeSetStatus;
       assignment_kind: AssignmentKind;
       submission_status: SubmissionStatus;
+      school_role: SchoolRole;
     };
   };
 };

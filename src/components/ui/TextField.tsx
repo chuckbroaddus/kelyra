@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { radius, type, webFocus } from '@/constants/theme';
@@ -6,16 +6,25 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = TextInputProps & {
   label?: string;
-  variant?: 'default' | 'join';
+  /** Web clipboard paste. Not on the RN TextInput type. */
+  onPaste?: (event: {
+    preventDefault?: () => void;
+    nativeEvent?: { clipboardData?: DataTransfer };
+    clipboardData?: DataTransfer;
+  }) => void;
 };
 
-export function TextField({ label, variant = 'default', style, onFocus, onBlur, ...rest }: Props) {
+export const TextField = forwardRef<TextInput, Props>(function TextField(
+  { label, style, onFocus, onBlur, ...rest },
+  ref,
+) {
   const { colors, scheme } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrap}>
       {label ? <Text style={[styles.label, { color: colors.mute }]}>{label}</Text> : null}
       <TextInput
+        ref={ref}
         placeholderTextColor={colors.mute}
         keyboardAppearance={scheme}
         {...rest}
@@ -35,14 +44,13 @@ export function TextField({ label, variant = 'default', style, onFocus, onBlur, 
             color: colors.ink,
           },
           rest.multiline && styles.multiline,
-          variant === 'join' && styles.join,
           focused && webFocus(colors.brand),
           style,
         ]}
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: {
@@ -65,11 +73,5 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 72,
     textAlignVertical: 'top',
-  },
-  join: {
-    fontSize: 22,
-    fontWeight: '600',
-    letterSpacing: 0.6,
-    textAlign: 'center',
   },
 });

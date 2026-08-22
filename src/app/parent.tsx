@@ -1,79 +1,65 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { AvatarTray } from '@/components/ui/AvatarTray';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { EmailLink } from '@/components/ui/EmailLink';
+import { FormSheet } from '@/components/ui/FormSheet';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
+import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { firstName } from '@/lib/format';
 import {
   formatPracticeStatus,
-  loadParentProgress,
+  loadParentProgressMine,
   type ParentChildProgress,
   type ParentProgress,
 } from '@/lib/parents/api';
-import {
-  listParentTokens,
-  parentFingerprint,
-  rememberParentToken,
-  touchParentLastSeen,
-} from '@/lib/parents/session';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import { isAlsoParent } from '@/lib/school/roles';
+import { touchParentLastSeen } from '@/lib/parents/session';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { parseBirthdayInput, STUDENT_DETAIL_FIELDS, metaString, setMetaKey } from '@/lib/people/metadata';
+import { getStudent, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ParentScreen() {
   const { colors } = useTheme();
   const chrome = useChrome();
-  const { t } = useLocalSearchParams<{ t?: string }>();
+  const { profile } = useAuth();
   const [progress, setProgress] = useState<ParentProgress | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [activeChildId, setActiveChildId] = useState<string | null>(null);
+  const canEditChildren = Boolean(profile?.id && isAlsoParent(profile));
+  const signedInParent = isAlsoParent(profile);
+  const refreshChrome = chrome.refreshChrome;
+  usePushedTitle(progress?.parentName ?? 'Home');
 
   useFocusEffect(
     useCallback(() => {
       void touchParentLastSeen();
-      chrome.refreshChrome();
-      if (!t) {
-        void listParentTokens().then((tokens) => {
-          if (tokens[0]) {
-            void loadParentProgress(tokens[0].token).then((next) => {
-              setProgress(next);
-              setActiveChildId(next?.children[0]?.student_id ?? null);
-            });
-            return;
-          }
-          setStatus('This page needs an invite link from the teacher.');
-        });
+      if (signedInParent) {
+        void loadParentProgressMine()
+          .then((next) => {
+            if (!next) {
+              setStatus('No children are linked to this login yet.');
+              return;
+            }
+            setProgress(next);
+            setActiveChildId((current) => current ?? next.children[0]?.student_id ?? null);
+            refreshChrome();
+          })
+          .catch((err) => {
+            setStatus(err instanceof Error ? err.message : 'Could not load your children');
+          });
         return;
       }
-      void loadParentProgress(t)
-        .then(async (next) => {
-          setProgress(next);
-          if (!next) {
-            setStatus('This invite is not valid.');
-            return;
-          }
-          setActiveChildId(next.children[0]?.student_id ?? null);
-          const first = next.children[0];
-          await rememberParentToken({
-            token: t,
-            displayName: first?.preferred_name || first?.display_name || next.parentName,
-            className: first?.class_name ?? '',
-            fingerprint: parentFingerprint({
-              sentence: first?.parent_sentence ?? null,
-              practiceStatus: first?.practice_status ?? null,
-              focusLabel: first?.focus_label ?? null,
-            }),
-          });
-          chrome.refreshChrome();
-        })
-        .catch((err) => {
-          setStatus(err instanceof Error ? err.message : 'Could not load progress');
-        });
-    }, [t, chrome]),
+      setStatus('Sign in with the parent login the school assigned.');
+    }, [signedInParent, refreshChrome]),
   );
 
   if (!progress) {
@@ -108,15 +94,27 @@ export default function ParentScreen() {
           onPress={(person) => setActiveChildId(person.id)}
         />
       ) : null}
-      {child ? <ChildCard child={child} /> : (
-        <Text style={[styles.empty, { color: colors.mute }]}>No children are linked to this invite.</Text>
+      {child ? (
+        <ChildCard
+          child={child}
+          canEdit={canEditChildren}
+          onSaved={() => {
+            if (isAlsoParent(profile)) {
+              void loadParentProgressMine().then((next) => {
+                if (next) setProgress(next);
+              });
+            }
+          }}
+        />
+      ) : (
+        <Text style={[styles.empty, { color: colors.mute }]}>No children are linked yet.</Text>
       )}
       {progress.phone || progress.email || progress.address || progress.preferredContact ? (
         <View style={styles.block}>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Your contact</Text>
           {progress.relationship ? <Text style={[type.meta, { color: colors.mute }]}>{progress.relationship}</Text> : null}
           {progress.phone ? <Text style={[type.body, { color: colors.ink }]}>{progress.phone}</Text> : null}
-          {progress.email ? <Text style={[type.body, { color: colors.ink }]}>{progress.email}</Text> : null}
+          {progress.email ? <EmailLink email={progress.email} /> : null}
           {progress.address ? <Text style={[type.body, { color: colors.ink }]}>{progress.address}</Text> : null}
           {progress.preferredContact ? (
             <Text style={[type.meta, { color: colors.mute }]}>Prefers {progress.preferredContact}</Text>
@@ -127,14 +125,65 @@ export default function ParentScreen() {
   );
 }
 
-function ChildCard({ child }: { child: ParentChildProgress }) {
+function ChildCard({
+  child,
+  canEdit,
+  onSaved,
+}: {
+  child: ParentChildProgress;
+  canEdit: boolean;
+  onSaved: () => void;
+}) {
   const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const shownName = child.preferred_name || child.display_name;
   const childFirst = firstName(shownName);
   const practice = formatPracticeStatus(child.practice_status);
   const empty = !child.focus_label && !child.parent_sentence && !child.practice_status;
   const practiceColor =
     practice === 'Done' ? colors.good : practice === 'Assigned' ? colors.warn : colors.mute;
+
+  const openEdit = async () => {
+    setError(null);
+    try {
+      const student = await getStudent(child.student_id);
+      const next: Record<string, string> = { display_name: student.display_name };
+      for (const field of STUDENT_DETAIL_FIELDS) {
+        next[field.key] = metaString(student.metadata, field.key) ?? '';
+      }
+      setDraft(next);
+      setOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load child details');
+    }
+  };
+
+  const save = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const student = await getStudent(child.student_id);
+      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
+      if (nextName && nextName !== student.display_name) {
+        await renameStudent(student.id, nextName, student.display_name);
+      }
+      let metadata = { ...student.metadata };
+      for (const field of STUDENT_DETAIL_FIELDS) {
+        const raw = draft[field.key] ?? '';
+        metadata = setMetaKey(metadata, field.key, field.key === 'birthday' ? parseBirthdayInput(raw) ?? raw : raw);
+      }
+      await updateStudentMetadata(student, metadata);
+      setOpen(false);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save child details');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <View style={styles.child}>
@@ -174,6 +223,26 @@ function ChildCard({ child }: { child: ParentChildProgress }) {
           ) : null}
         </>
       )}
+      {canEdit ? <GhostButton label="Edit details" onPress={() => void openEdit()} /> : null}
+      {error && !open ? <Text style={[styles.empty, { color: colors.danger }]}>{error}</Text> : null}
+      <FormSheet visible={open} title={`Edit ${shownName}`} onClose={() => setOpen(false)}>
+        <TextField
+          label="Name"
+          value={draft.display_name ?? ''}
+          onChangeText={(value) => setDraft((current) => ({ ...current, display_name: value }))}
+        />
+        {STUDENT_DETAIL_FIELDS.map((field) => (
+          <TextField
+            key={field.key}
+            label={field.label}
+            value={draft[field.key] ?? ''}
+            multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
+            onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
+          />
+        ))}
+        {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
+        <PrimaryButton label={busy ? 'Saving…' : 'Save'} disabled={busy} onPress={() => void save()} />
+      </FormSheet>
     </View>
   );
 }

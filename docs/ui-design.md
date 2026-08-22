@@ -3,11 +3,13 @@
 **Date:** 2026-08-17
 **Maps to:** `docs/vision.md`, `docs/mvp.md`, `docs/data-model.md`
 **Replaces:** the 2026-08-15 “camera roll + people list” spec (three-tab desk, no hamburger, no hide-on-scroll tray, no AI tab, no camera classifier).
-**This pass adds (do not rip out chrome):** teacher delete-anything, student/parent profile photos, first-class parent records, metadata Details, classifier intents **Portrait** and **Parent/contact card**, and **marquee overflow** for picture-adjacent labels (§10.18, §30). New numbered sections start at §20. Screen recipes in §13 are patched by **deltas** in §25 — do not rewrite a screen whose primary job did not change.
+**This pass adds (do not rip out chrome):** teacher delete-anything, student/parent profile photos, first-class parent records, metadata Details, classifier intents **Portrait** and **Parent/contact card**, **marquee overflow** for picture-adjacent labels (§10.18, §30), and **person-page tabs** on student and parent records (§32). New numbered sections start at §20. Screen recipes in §13 are patched by **deltas** in §25 — do not rewrite a screen whose primary job did not change. Person-page section order is patched again by §32.
 
 This is a visual and interaction redesign of existing Kelyra flows, plus four surfaces the brief named: **Profile**, **Ask** (AI chat), **Notifications**, **Search**, and the **camera-proposal** sheet — and now **Parents** (`/class/{id}/parents`, `/class/{id}/parent/{parentId}`). Matcher never inserts a student. Delete never inserts anyone. Nothing is a grade until the teacher Approves. Appearance and rotation are presentation.
 
 Do not clone Meta blue, Instagram gradients, the Amazon smile, logos, or copy. Steal structure, motion, hierarchy, and muscle memory.
+
+**Web hover tips.** On a pointer with hover (desktop web), every option shows a short tooltip after a brief pause: header icons, tray tabs, context chips, chips, buttons, list rows, drawer rows, appearance, avatar tray, assignment picker. Native and touch: no tooltip (labels and `accessibilityLabel` stay). `HoverTip` / `HoverTip.web.tsx`.
 
 Implementation targets (do not invent new packages):
 
@@ -36,7 +38,7 @@ Researched August 2026 from current App Store listings, official help, Amazon/Me
 
 **Top header.** The home chrome is still a wordmark row, not a system navigation title. On Home the wordmark reads **facebook**. Switching a major bottom destination changes that title to the function’s name (Marketplace is the canonical example). Search is a magnifying glass on the right of the wordmark; tapping it pushes a **search canvas**, not an inline shrinking field. Immediately right of search sits the messages / activity icon with a **small red count badge**. The badge hides at zero.
 
-**Hamburger / Menu.** Official iPhone help still documents **Menu** as a tab-bar destination that opens Settings, shortcuts, and the rest of the IA so the bar itself can stay short. In 2026 Facebook has also been testing a **three-line / More control next to the wordmark at the top left**; an April 2026 user report describes “the more icon next to the Facebook name at the top left corner.” The product owner wants that top-left hamburger. We take it. Menu is a **left sheet over a dimmed scrim**, not a new Settings app.
+**Hamburger / Menu.** The three-line control sits **far right** of the header, after Messages. The school logo and name sit on the left. Pushed screens still put a back chevron on the left (hamburger hides until pop). Menu is a **left sheet over a dimmed scrim**, not a new Settings app.
 
 Sources: [Facebook Help — Personalize your tab bar](https://www.facebook.com/help/www/2741283262582983); [April 2026 iOS/Android tab-move report](https://www.facebook.com/groups/275424204397275/posts/1349023113704040/); [App Store — Facebook](https://apps.apple.com/us/app/facebook/id284882215).
 
@@ -109,7 +111,7 @@ Sources: [WWDC25 — Build a UIKit app with the new design](https://developer.ap
 
 ## 2. Design thesis
 
-Kelyra is the teacher’s **filing app that already lives in their thumbs**. Facebook chrome (hamburger, wordmark that changes per tab, search glass, red-badge bell, house on the left, their face on the far right, a floating tray that gets out of the way). Amazon rows (photo + status + pill actions, swipe-to-act, a header camera that looks at the paper and *proposes* a job, a second context row, a trailing-left AI tab). Instagram people (a row of circles that *are* the class).
+Kelyra is the teacher’s **filing app that already lives in their thumbs**. Facebook chrome (hamburger, wordmark that changes per tab, search glass, red-badge **messages** icon, house on the left, Ask on the far right of the tray). Amazon rows (photo + status + pill actions, swipe-to-act, a header camera that looks at the paper and *proposes* a job, a second context row, a trailing-right AI tab). Instagram people (a row of circles that *are* the class). Profile is **only** in the hamburger. See §34.
 
 It is a real iPhone app. It follows the phone’s Light / Dark setting by default, lets the teacher pin Light or Dark, and works in portrait or landscape. It is not a website in a WebView, not a school-district portal, not a KPI dashboard, and not a classroom toy. Student screens read like a worksheet. Parent screens and anything that leaves the app read like a note home on paper.
 
@@ -139,22 +141,24 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 Every signed-in screen uses this exact header. It is not the React Navigation stack title.
 
 ```
-[ ☰ 44 ]   Wordmark (flex, left)     [ camera 44 ] [ search 44 ] [ bell 44 ]
+[ logo 22 + Wordmark (flex, left, marquee) ]   [ camera 44 ] [ search 44 ] [ messages 44 ] [ ☰ 44 ]
 ```
+
+**Superseded 2026-08-21.** Old slots were camera · search · bell, and search replaced the title with Cancel. See §34. Current recipe:
 
 | Slot | Size | Who sees it | Action |
 |---|---|---|---|
-| Hamburger | 44 × 44, 3-line `menu` icon, `ink` | Teacher, student, parent | Opens the left drawer (§3.3) |
-| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, truncate | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
-| Camera | 44 × 44, `capture` icon | **Teacher only** | Opens the device camera, then `/proposal` (§14) |
-| Search | 44 × 44, new `search` glyph | Teacher, student, parent | Pushes `/search` with the current context |
-| Bell | 44 × 44, new `bell` glyph | Teacher, student, parent | Pushes `/notifications`. Red count badge from real data. Hidden at 0 |
+| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. Optional 22×22 school logo to the left on office home. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
+| Camera | 44 × 44, `capture` icon | **Teacher only**, hidden while search is open | Opens the device camera, then `/proposal` (§14) |
+| Search | 44 × 44, `search` glyph | Teacher, student, parent | Icon slides left; a field slides out from it (§34). Results on `/search` |
+| Messages | 44 × 44, `mail` glyph | Teacher, student, parent | Pushes `/messages`. Red count badge = **unread alerts**, same as the old bell. Hidden at 0 |
+| Hamburger | 44 × 44, 3-line `menu` icon, `ink`, **far right** | Teacher, student, parent | Opens the left drawer (§3.3, two-phase §34). Hidden on pushed screens |
 
-Gap hamburger → wordmark: 8. Gap between trailing icons: 0 (they are 44-wide hits). Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**.
+Wordmark (and school logo, 22×22 contain) starts on the left. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**.
 
-On student / parent the camera slot is omitted; search and bell shift left to the trailing edge.
+On student / parent the camera slot is omitted; search sits immediately left of messages.
 
-This is Facebook’s hamburger + wordmark + glass + badge, with Amazon’s camera inserted **between the wordmark and the glass**. That is the only way five trailing-or-leading hits fit without wrapping. Do not add a sixth header icon. Do not put the camera inside a search field.
+Wordmark (and school logo) on the left. Amazon’s camera sits **between the wordmark and the glass**. Search is immediately left of messages. Hamburger is last. Do not put Profile in the header. Do not restore the bell. Do not put the camera inside a search field.
 
 ### 3.3 Hamburger drawer
 
@@ -165,8 +169,8 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 | Width | `min(304, window.width - 56)` |
 | Height | 100% of window |
 | Scrim | Light `rgba(26, 22, 18, 0.40)` · Dark `rgba(0, 0, 0, 0.55)` |
-| Enter | 220 ms ease-out, `translateX` from `−width` |
-| Exit | 180 ms ease-in, same axis. Tap scrim or swipe left-to-right past 80 pt closes |
+| Enter | **Two phase (§34).** 200 ms ease-out `translateX` from `+width` (a header-height strip slides in from the right), then 260 ms ease-out height `peek → window` (drops down). |
+| Exit | Reverse: 180 ms ease-in height to peek, then 160 ms ease-in `translateX` off right. Tap scrim or swipe right-to-left past 80 pt closes. Modal stays mounted until the exit finishes. |
 | Row height | 52 (44 min hit) |
 | Row pad | 16 |
 | Hairline | `line`, inset 16 |
@@ -181,20 +185,34 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 6. **Parents** → `/class/{active}/parents`
 7. **Family update** → `/class/{active}/family`
 8. Hairline
-9. **Appearance** — the same `AppearanceControl` as Profile (System / Light / Dark). This is one of two homes for the control. Do not also put it on the context row.
+9. **Menu tray** — floating bar at the bottom of the drawer (same hide-on-scroll as the app tray). Search field (magnifying glass + “Search”) filters the menu and submits to `/search`. Gear on the right (tooltip **Settings**) opens `SettingsSheet`. Theme does **not** live on Profile or as a drawer section.
 10. **Sign out** — `danger` label. Signs out, `replace`s to `/`.
+
+**Superintendent rows, in order**
+
+1. Identity (same as teacher): 36 photo + `@handle`, tap → `/profile`.
+2. **Feed** → `/?tab=feed`
+3. **Classes** → `/?tab=classes`
+4. **People** → `/?tab=people`
+5. **Manage** → `/?tab=manage`
+6. **Ask** → `/ask`
+7. **My children** — only with a parent hat → `/parent`
+8. Hairline
+9. **Sign out**
+
+Do not also list Feed in the shared staff Feed row for this seat. Administrator hamburger keeps the class list + People / Activity / Messages / Responsibilities.
 
 **Student rows**
 
 1. Identity: display name + class name, `meta`. **No photo in the current drawer.** Do not marquee this block — it is not picture-adjacent. (Teacher identity next to the 36 photo **does** marquee, §30.)
 2. **Leave class** — clears the student session, `replace`s to `/join`.
-3. **Appearance** — same control. Student follows the resolved scheme; they may pin on this device.
+3. **Settings** — same gear as staff. Theme is in the Settings popup, not inline.
 
 **Parent rows**
 
 1. Identity: parent `display_name` (or “Parent”) + child first names, `meta`. **Current drawer has no 36 circle** (`HamburgerDrawer.tsx` is plain `Text`). Do not marquee this block in this pass. If a parent photo is added later, the name next to it marquees (§30).
 2. **Children** — one row per **linked** child on this parent record (`parent_students`), not per stored device token. Each row focuses that child on `/parent`. One child: omit the section.
-3. **Appearance** — same control.
+3. **Settings** — same gear. Theme is in the Settings popup.
 
 Parent cannot delete a child, revoke their own invite, or edit teacher notes. Leave those controls off this drawer.
 
@@ -202,7 +220,7 @@ Device may still cache more than one invite token (two parents on one phone). If
 
 ### 3.4 Floating tray — icons and order
 
-**Conflict resolution (required).** Facebook puts Profile on the far right. Amazon put Rufus / Alexa on the far right. Kelyra keeps **both**: Profile stays bottom-right (Facebook); Ask sits immediately left of Profile (Amazon Rufus). Do not drop either. Do not put Ask on Profile.
+**Conflict resolution (required, 2026-08-21).** Profile is **not** in the tray. It lives only in the hamburger identity row. Ask is the **last** tray icon (far right). Do not restore a sixth Profile tab. Office **People** uses the `person` glyph (directory, not Profile). See §34 and §36.
 
 Phone (`width < 720`): a **floating frame** over the content, not a system tab bar.
 
@@ -218,13 +236,13 @@ Phone (`width < 720`): a **floating frame** over the content, not a system tab b
 | Bottom inset | `8 + max(insets.bottom, 8)` | `6 + max(insets.bottom, 6)` |
 | Icon | 24 | 22 |
 | Hit | 48 × 48 | 44 × 44 |
-| Labels | **none** (six icons will not fit labels) | none |
+| Labels | **none** | none |
 | Active | `brand` icon, no wash pill | same |
 | Inactive | `mute` icon | same |
 
 Content draws **under** the frame. Last-scroll padding on every tray screen = frame height + bottom inset + 12, so the last row is not trapped.
 
-**Teacher tray (6), left → right**
+**Teacher tray (5), left → right**
 
 | # | Icon (`Icon` name) | Header title | Route | Active when |
 |---|---|---|---|---|
@@ -232,28 +250,27 @@ Content draws **under** the frame. Last-scroll padding on every tray screen = fr
 | 2 | `capture` | **Capture** | `/capture` | `/capture` (not `/proposal`) |
 | 3 | `inbox` | **Inbox** | `/inbox` | `/inbox` |
 | 4 | `records` | **Class** | `/class/{id}/setup` | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` |
-| 5 | `ask` **(new glyph)** | **Ask** | `/ask` | `/ask` |
-| 6 | `person` **(new glyph)** | **Profile** | `/profile` | `/profile` |
+| 5 | `ask` | **Ask** | `/ask` | `/ask` |
 
-House is always the start. Profile is always last. Ask is always immediately left of Profile.
+House is always the start. Ask is always last.
 
-Family, All classes, Appearance, Sign out live in the hamburger, not the tray.
+Family, All classes, Appearance, Profile, Sign out live in the hamburger, not the tray.
 
-**Student tray (3)**
+**Student tray (2)**
 
 | # | Icon | Title | Route |
 |---|---|---|---|
 | 1 | `today` | **Kelyra** | `/todo` |
 | 2 | `ask` | **Ask** | `/ask` |
-| 3 | `person` | **Profile** | `/profile` |
 
-**Parent tray (3)**
+**Parent tray (2)**
 
 | # | Icon | Title | Route |
 |---|---|---|---|
 | 1 | `today` | **Kelyra** | `/parent` |
 | 2 | `ask` | **Ask** | `/ask` |
-| 3 | `person` | **Profile** | `/profile` |
+
+**Office tray (5)** — superintendent / administrator: **Feed** · **Classes** · **People** · **Manage** · **Ask**. See §36. The Feed glyph is the owner-chosen school feed icon. Manage is sliders (`manage`), not the schoolhouse and not Settings.
 
 ### 3.5 Header title per tab
 
@@ -266,9 +283,9 @@ The wordmark is the Facebook title swap:
 | Inbox | `Inbox` |
 | Class | `Class` (class home, roster, heatmap, grade book). Named class destinations keep their name: `Assignments`, `Parents`. |
 | Ask | `Ask` |
-| Profile | `Profile` |
+| Profile (hamburger only) | `Profile` |
 
-Pushed screens (student record, search, notifications, proposal, family, assignment form) keep this header **and** a leading back chevron that replaces the hamburger until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Notifications`, `Look at this`, `Family`, `New Assignment`). Pop restores hamburger + tab title.
+Pushed screens (student record, search, messages, proposal, family, assignment form) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores hamburger + tab title. Do not ellipsis the header title.
 
 ### 3.6 Second header row — context menu
 
@@ -295,7 +312,7 @@ On pushed screens (student record, proposal, family, search, notifications) the 
 |---|---|---|
 | `/profile` | `src/app/profile.tsx` | Bottom-right Profile tab |
 | `/ask` | `src/app/ask.tsx` | Amazon-style AI agent chat |
-| `/notifications` | `src/app/notifications.tsx` | Bell target. Not a chat product |
+| `/notifications/{id}` | `src/app/notifications/[id].tsx` | Alert detail. The list is the last tab on `/messages` |
 | `/search` | `src/app/search.tsx` | Magnifying-glass canvas |
 | `/proposal` | `src/app/proposal.tsx` | Post-camera confirmation sheet |
 | `/class/{id}/parents` | `src/app/class/[id]/parents.tsx` | Class parents directory |
@@ -305,7 +322,7 @@ On pushed screens (student record, proposal, family, search, notifications) the 
 
 ### 3.8 Web / tablet (`width >= 720`)
 
-The floating tray is **replaced** by a slim top bar under the header, height 48, same destinations, labels visible. Ask still sits immediately left of Profile. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
+The floating tray is **replaced** by a slim top bar under the header, height 48, same destinations, labels visible. Ask is last. There is no Profile tab. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
 
 ---
 
@@ -709,14 +726,14 @@ New file `src/components/ui/AppHeader.tsx`. Replaces the stack header on every c
 
 Slots as §3.2. Back chevron (`ink`, 22) replaces hamburger on pushed routes.
 
-Bell badge:
+Count badge (`CountBadge`) on the header mail icon and the Messages-center **Alerts** tab:
 
-- Size 16 × 16 (18 if `99+`).
-- Fill `danger`, label `brandInk` (light) / `#1A120C` (dark if AA needs it).
-- Type `badge` 10 / 700.
-- Position: top-right of the 44-hit, offset `+2, −2`.
-- Cap `99+`.
-- `accessibilityLabel`: `Notifications, {n} waiting` or `Notifications`.
+- Size **12 × 12** (15 wide for 10–99, 18 for `99+`). Not 16 — that covered the glyph.
+- Fill `danger`, label `brandInk` (light) / `#1A120C` (dark).
+- Type `badge` **8 / 700**, line 10.
+- Position: upper-right **of the icon**, `top: −3` `right: −4`. A corner pip, not a plate over the envelope.
+- Cap `99+`. Hidden at 0.
+- `accessibilityLabel`: `Messages, {n} waiting` / `Alerts, {n} waiting`.
 
 Camera `accessibilityLabel`: `Take a photo`. Search: `Search`. Hamburger: `Open menu`.
 
@@ -951,7 +968,7 @@ Extract a shared `Avatar` primitive (`src/components/ui/Avatar.tsx`) that `Avata
 - `accessibilityRole="tablist"` / each segment `tab`.
 - `setMode(...)` immediately. No confirmation.
 
-Homes: teacher Profile, teacher hamburger, student hamburger, parent hamburger. Not on Today’s operational list. Not on the context row.
+Home: **Settings** popup from the hamburger gear. Not on Profile. Not on Today’s operational list. Not on the context row.
 
 ### 10.14b `ConfirmSheet`
 
@@ -1060,7 +1077,7 @@ Suggested empty-state chips (teacher):
 - `Draft a parent sentence for {first roster name}.`
 - `What gaps did I approve this week?`
 
-Composer at the bottom: field + send. Height 48 field, send is a 44-hit `brand` arrow, disabled when empty.
+Composer at the bottom: same `MessageComposer` as Messages (+ · field · send). Photos, files, and links attach like a message. Screen `sticky` so the keyboard lifts the bar; it is not `position: absolute`. Height grows to five lines, then scrolls. Send is the 44-hit `brand` disc, disabled when empty and nothing is attached.
 
 Bubbles: teacher/user right, `brandSoft`; assistant left, `card` + `line`. Radius `lg`, pad 12, `body` 16. Meta timestamp `meta` under the last bubble.
 
@@ -1285,7 +1302,7 @@ Lead stays: `Work without a clear name waits here. Matching never creates a stud
 
 ### 13.6 `/class/[id]/student/[studentId]` — Student record
 
-**Job.** One glance at the work, then Approve. Pushed screen: hamburger becomes back. Wordmark = student name. No context row. **This pass also makes the page the student’s person record** (photo, Details, parents, delete) — Approve stays the primary job; see §25 for the header / Details / Parents / Delete deltas.
+**Job.** One glance at the work, then Approve. Pushed screen: hamburger becomes back. Wordmark = student name. No context row. **This pass also makes the page the student’s person record** (photo, Details, parents, delete) — Approve stays the primary job; see §25 for the header / Details / Parents / Delete deltas. **Delta:** the stacked sections (Details, Focus, Login, Parents, Skill history, Work, Practice) become icon tabs under the hero, Details last, default Focus — §32. Do not keep one long list.
 
 **Primary.**
 
@@ -2078,6 +2095,8 @@ Swipe Delete → type-the-name confirm (§20).
 
 ### 22.3 Parent page — Amazon product-detail
 
+**§32** replaces the Details / Login / Children stack with `PersonTabs`. Default **Login**. Details is last.
+
 Pushed. Back replaces hamburger.
 
 ```
@@ -2094,6 +2113,8 @@ Invite                    ListRow per token (Created {when}). Swipe Revoke.
                           Ghost Create invite link → copy URL (existing parentInviteUrl).
 Pills                     Edit · Photo · Add child · Delete
 ```
+
+**Delta:** those blocks become icon tabs under the hero, Details last, default **Login** — §32. Delete stays on the Details pane. Hero Photo / Edit pills stay.
 
 **Add parent from a student page:** sheet — name field, optional relationship, Primary **Add and link**. Creates `parents` + `parent_students` in one confirm. Does not invent a student.
 
@@ -2149,6 +2170,8 @@ Student page and parent page share this order:
 2. **Details** — `DetailsRows`: label left (`mute` / `meta`), value right (`ink` / `body`). Empty value: `Add {label}` in `mute`. Never `null`, never `—` for a missing phone.
 3. Action pills (Edit, Photo, Add parent / Add child, Delete)
 4. The rest of the page (work, practice, children, …)
+
+**Delta:** Details is no longer item 2 in a stacked page. It is the last person tab; Photo / Edit pills stay on the hero above the tab row (§32).
 
 `Edit` opens a sheet / pushed screen of `TextField`s, not a settings dump. One Save. Cancel pops.
 
@@ -2243,6 +2266,8 @@ Each `WorkRow`: add ghost **Delete** + leading Delete swipe. Confirm simple. Lea
 
 ### 13.6 Student record — **primary job still Approve**; page grows a person header
 
+**§32** replaces the long section stack with `PersonTabs`. Default tab **Focus** (latest work + Approve). Details is last.
+
 Insert **above** the focus row:
 
 ```
@@ -2268,6 +2293,8 @@ Gap fields: add **Remove** on each gap.
 `Create parent link` without a parent person is removed.
 
 Landscape split: person header + Details stay full width above the split; homework | Approve split unchanged.
+
+**Delta:** section order on this page is now the person-tab row (§32). Default **Focus**. Details last. Preferring Details under the header is withdrawn so Approve is not buried — Focus is the first tab.
 
 ### 13.7 Grade book
 
@@ -2302,6 +2329,8 @@ Classmate `AvatarTray` uses profile photos. Student Profile circle uses own phot
 ### 13.14 `/profile`
 
 Teacher: `Avatar` 72, tap or Photo pill → `PhotoSheet`. Same cutout / center / upright framing as student and parent. The face is the Profile tray icon (far right) and sits next to the account email in the hamburger. Initials until a photo is set. The name under the 72 (and the **teacher** hamburger identity next to the 36) **marquees** if it overflows (§30). Student / parent drawer identity has no photo — leave it.
+
+**§32** — staff people (teacher / administrator / superintendent, including `/profile?person=`) use `PersonTabs`: Classes · Role · Children · Details.
 
 Student: `Avatar` 72 with own `photoUrl` if the join RPC returns it. Still **Leave class** only.
 
@@ -2814,3 +2843,652 @@ One `MarqueeScrollProvider` next to `AppShell`. `MarqueeText` reads it. Callers 
 Call sites drop `numberOfLines={1}` on those identity strings. `AssignmentPicker` title **drops 2-line wrap** for 1-line marquee. Student / parent heroes and `/parent` child names that wrap today become 1-line marquee so they obey §5. Teacher hamburger `whoName` marquees. Student / parent drawer identity does not (no photo).
 
 Add `MarqueeText` to the primitives list in §18.d. No new npm packages. No SQL. No AI routes. Matcher still never inserts a student. Nothing is a grade until Approve.
+
+---
+
+## 31. Roles, @username, messages, audit (one school)
+
+**Date:** 2026-08-17. One school. Superintendent is break-glass. Teacher capture / Approve loop is unchanged.
+
+### 31.1 Roles and chrome
+
+| Role | Tray | Header extras | Hidden |
+|---|---|---|---|
+| Superintendent / Administrator | Feed · Classes · People · Manage · Ask | Messages + search. No camera | Parent↔student link is **on** |
+| Teacher | House · Capture · Inbox · Class · Ask · Profile | Camera + messages + search + bell | **Cannot** link parent↔student |
+| Parent | Home · Ask · Profile | Messages + search + bell | Camera, grade book, other children, add-a-child |
+| Student | Home · Ask · Profile | Messages + search + bell | Camera, other students’ grades |
+
+Header cluster is now `[camera?] [mail] [search] [bell]`. Mail is the school messenger, not email. Badge = unread threads.
+
+Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger still adds **People**, **Activity**, **Messages**, **Responsibilities** above Grade book.
+
+### 31.2 @username
+
+X-style. Stored lowercase without `@`. Shown as `@jamalw` on profile, people list, messages, and the audit log. Login accepts email **or** `@username`.
+
+### 31.3 Messaging
+
+`/messages` list + `/messages/{threadId}` thread. 1:1. New message = pick a person from the school directory (RLS later tightens who appears). Composer is a field + Send. Bubbles: mine `brandSoft` right, theirs `wash` left.
+
+Who may start a thread (product first pass): staff ↔ anyone; parent ↔ child’s teachers and admins; student ↔ own teachers and admins. v1 directory may show everyone the profile RLS allows (self + admin see all; later filter).
+
+### 31.4 People admin
+
+People is a school-home tab (`/?tab=people`), not a separate `/admin/people` canvas (`/admin/people` redirects). Nested `PersonTabs`: **Staff** · Parents · Students. Default **Staff**. Create-account lives on school-home **New** with create-class (office). Extra-hat chips on that form: **Also an administrator** (superintendent only), **Also a teacher** (superintendent or administrator), **Also a parent** (any staff). Existing staff: swipe the matching action. Link children from a class Parents list. First login forces `/password`. Teachers never see this screen.
+
+### 31.4b Extra hats (same login)
+
+Teacher hat switches the tray to House · Capture · Inbox · Class (camera on). Admin hats keep People / Activity in the drawer and on Home even when the tray is the teacher loop. Parent hat adds **My children** → `/parent` without switching to the parent-only tray. Parent-only logins still use the parent tray.
+
+### 31.5 Activity (audit)
+
+`/activity`. Read-only. `@actor · role · action · entity`. Nobody can edit or delete, including Superintendent.
+
+### 31.6 Parent / student limits
+
+Parents cannot add children. They may edit linked-child **details** only (birthday, preferred name, contact, allergies, notes). Enrollment, scores, and parent sentence are locked. Teachers still add roster *names* for matching; that is not a login.
+
+### 31.7 Files
+
+`src/lib/school/*`, `src/lib/messages/api.ts`, `src/app/admin/people.tsx`, `src/app/activity.tsx`, `src/app/messages/*`, `src/app/password.tsx`, `supabase/migrations/20260817000005_school_roles.sql`, `supabase/migrations/20260817000007_staff_also_parent.sql`, `supabase/migrations/20260817000008_staff_also_hats.sql`.
+
+---
+
+## 32. Person-page tabs — icon, then the name of the one you are on
+
+**Date:** 2026-08-19. This is a **delta** on the teacher student and parent person pages: `/class/{id}/student/{studentId}` and `/class/{id}/parent/{parentId}`. Not the parent note-home `/parent`, not student `/todo`. Do not rewrite §13.6 or §22.3; this section patches their section order. Hero stays. Bottom floating tray stays. No new packages. Stroke `Icon` + iOS `SymbolView` like camera and mic.
+
+The pages had become one long list. A teacher opening Maya to Approve had to scroll past Details, Login, and Parents first. Tabs keep the 72 hero where it is and show **one job** at a time. This row is not a second app tray and not an iOS `UITabBar`. We steal Instagram Stories-tray compactness (icon circles you swipe) plus the Amazon context row (one selected pill, the rest quiet). We do not steal story rings, underlines, page dots, or Meta blue.
+
+Hero (72 avatar + name + Photo / Edit pills) **stays above** the tab row on every pane. Add parent / Add child / Message pills stay on that hero row too. Tabs switch the section; they do not replace the person.
+
+### 32.1 Tab order (Details last)
+
+The default tab is the **first** tab so the primary job is one tap away. Details is always last. Destructive delete / remove-from-class live only on Details.
+
+| Screen | Tabs, left → right | Default on open |
+|---|---|---|
+| Student | **Focus** · Skill history · Work · Practice · Parents · **Details** | **Focus** |
+| Parent | **Classes** · Children · **Details** | **Classes** |
+| Staff | **Classes** · Role · Children · **Details** | **Classes** |
+| People (`/?tab=people`) | **Staff** · Parents · Students | **Staff** |
+| School (`/`) | **Feed** · Classes · People · Manage · **New** | **Classes** |
+| Class desk (`/class/{id}` and siblings) | **Feed** · Today · This week · Needs you · Students · Parents · Gradebook · Heatmap · Assignments · **Family** | **Today** |
+| Office class (`/admin/class/{id}`) | **Feed** · Roster · **Teacher** | **Teacher** |
+
+Opening a different student or parent resets to that default. Do not remember Details across people. A `?capture=` deep link (swipe Approve from a work row) lands on **Focus** and shows that capture. Switching panes must not discard an unsaved draft score or gap field — that state lives on the screen, not inside the tab control.
+
+Login is not its own tab. Assigned handle, email, assign / unassign, Change password, and Sign out live on **Details**.
+
+### 32.2 Selected vs unselected chrome
+
+Primitive: `src/components/ui/PersonTabs.tsx`. One horizontal `ScrollView` directly under the hero pills. `showsHorizontalScrollIndicator={false}`. No paging, no snap, no page indicators, **no per-tab underline**. A 1 px `line` hairline under the whole row is the only separator from the pane.
+
+Row height 44 (the hit). Gap 4. Leading inset = page pad (16 phone / 24 tablet). Tokens only: paper `bg`, selected fill `brandSoft`, selected ink `brand`, unselected icon `mute`, hairline `line`, `radius.pill`, `type.pill`.
+
+| State | Size | Fill | Icon | Label |
+|---|---|---|---|---|
+| **Unselected** | 44 × 44. `radius.pill` on a square reads as a circle. Pad 11. | None (transparent). No border. | 22, `mute` | Hidden |
+| **Selected** | Height 44, width = 12 pad + 22 icon + 8 gap + label. `radius.pill`. | `brandSoft` | 22, `brand` | `type.pill` 14 / 600, `brand`, `numberOfLines={1}`. **`maxWidth` = 50% of the measured tab row.** The text — not the whole chip — takes at most half the row. |
+| Press | — | Opacity 0.85 | — | — |
+
+Unselected is icon-only. Only the selected tab shows its English name. If the name cannot fit the 50% clip, truncate; do **not** marquee a tab label (§30.1 already bans chips and buttons).
+
+**Scroll into view.** On select, `scrollTo` the tab’s `x` minus a 12 pt lead so the selected pill is not clipped. First tab (Focus / Login) scrolls to `x = 0`. Reduce Motion: jump with `animated: false`. Do not spring. Do not auto-center the way a `UITabBar` would.
+
+**Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Pushed person pages still omit the Amazon Class context row (§3.6). Hide-on-scroll still applies only to the floating tray.
+
+Phone: one column, portrait and landscape. In student landscape (`width >= 640`) the Focus **pane** may still split photo left / Approve right as §13.6; the tab row itself stays one full-width row under the hero. Do not put tabs in a second column.
+
+Pane change is instant. No cross-fade, no spring, no second WorkingMark.
+
+### 32.3 Icon set
+
+Extend `src/components/ui/Icon.tsx`. Custom `View` strokes at 1.5–2 pt (`Math.max(1.5, size * 0.08)`), circles and capsules, same `Box` wrapper as camera / mic / person. iOS may use `SymbolView` monochrome with the named SF Symbol and the View glyph as `fallback`. Do not add an icon package. Do not reuse the camera shutter for Work, the cog for Details, or the Family **house** for both Parents and Children — those two tabs must not share a glyph.
+
+**Focus** — English **Focus**. SF Symbol `scope`. Draw two concentric stroke circles, outer about 72% of `size`, inner about 40%, and a small filled center dot about 12%. That is a target, not a camera well and not a story ring. The filled dot is the only solid paint; the rings stay hollow strokes.
+
+**Parents** — English **Parents**. `IconName` `parents`. Two standing people holding hands: equal circle heads, capsule bodies, and a small U in the gap at chest height (joined hands). The U must not cross the heads. Not a house, not `today`, and not the Class roster `setup` pair.
+
+**Skill history** — English **Skill history**. SF Symbol `clock`. `IconName` `history`. One stroke circle about 68% of `size`. From the center, a short vertical hand (hour) and a longer hand to the right (minute), both `stroke` thick with pill caps. No numerals. A clock is “what already happened,” not a checklist.
+
+**Work** — English **Work**. SF Symbol `doc`. `IconName` `work`. A rounded rectangle page (about 50% × 64% of `size`, radius 3) with two horizontal stroke bars inside, the second shorter. That is a slip of homework, the same page language as `AssignmentMark` homework. Not `capture`’s camera.
+
+**Practice** — English **Practice**. SF Symbol `checklist`. `IconName` `practice`. Two rows. Each row is a 3-radius square box about 18% of `size` plus a stroke bar to the right. Mark the first box with a short inner bar (a tick, not a brand fill). Practice is items to do, not the photo of work.
+
+**Details** — English **Details**. SF Symbol `list.bullet`. `IconName` `details`. Three horizontal stroke bars stacked, widths about 100% / 78% / 56% of a 62% `size` column, gap about 12%. That is label/value rows. Not `settings`’ cog.
+
+**Children** (parent page; staff Children if reused) — English **Children**. `IconName` `children`. Same holding-hands pose as Parents, but the right figure is about 66% and bottom-aligned. The U sits at the child’s chest. One grown-up and one kid. Do not reuse `parents` or the house `today`.
+
+If `/profile` reuses this row, **Classes** uses `classes` (chalkboard on a stand) and **Role** may keep existing `person` (one bust). Those are not student/parent tabs. Grade book stays `records`.
+
+### 32.4 What lives in each pane
+
+The selected tab already names the pane. Omit a duplicate `SectionHeader` inside the pane when it would repeat that name. Sheets (Photo, Edit, pickers, Confirm) stay on the **screen**, not inside a pane.
+
+**Student — Focus** (default, primary job). The focus skill row (`Badge` + label, or `No focus skill yet`). Compact `PhaseBanner` and the lead `Look at the work, then approve. Nothing is a grade until you do.` The **latest homework** (or the `?capture=` one): `PhotoPager`, heard / note, draft score, suggested gaps, **Approve** / **Approve & give practice** / Ask AI / Add gap / Keep as a note. After approve: Give practice. Mark proficient / Dismiss focus. Empty: `No work filed yet.` Ghost **Photograph work**. Landscape split of photo | decision lives here, not on other panes.
+
+**Student — Parents.** Today’s Parents section (§22.4): `AvatarTray`, `ListRow` + Unlink, ghost **Add parent**.
+
+**Student — Skill history.** Timeline `ListRow`s, newest first, focus `Badge` when it is the current skill. Gap Delete swipe stays here.
+
+**Student — Work.** The capture list: every `WorkRow` for this student (Approve pill opens Focus on that capture; Inbox return; Delete). This pane is history of slips, not the Approve stack.
+
+**Student — Practice.** Practice set cards / `WorkRow`s: Open, Save items, Delete set, Remove assignment.
+
+**Student — Details** (last). `DetailsRows` (§23) + the hero’s Edit sheet (rows still tap to Edit). Then **Login**: assigned `@username` `ListRow` (Unassign swipe) or the unassigned-login picker / `Create a login in People`. **End of this pane only:** ghost **Remove from {class}** if they have another enrollment, then **Delete {first}** (type-the-name). Do not leave delete on Focus, Work, or the hero.
+
+**Parent — Classes** (default, far left). Classes linked children are enrolled in. Status line is the child names in that class. Tap opens the class. Empty: no linked child is on a roster yet.
+
+**Parent — Children.** `AvatarTray` of linked students, `ListRow` + Unlink swipe, ghost **Add a child**.
+
+**Parent — Details** (last). `DetailsRows` + Edit. Then **Login**: assigned parent login / assign from People. **End of this pane only:** **Delete {parent}** (type-the-name). Unlink a child stays a Children-pane swipe, not a person delete.
+
+**Staff — Classes** (default). Classes this person teaches. **Staff — Role.** `roleStatus`; office hat toggles. **Staff — Children** (second to last). Linked children when the login is also a parent. **Staff — Details** (last). Name, username, email, phone, address, notes. Own profile: Change password / Sign out.
+
+Nothing on these panes is a grade until Approve. The matcher still never inserts a student. Parent panes never list another family’s children.
+
+### 32.5 ASCII — 390-wide phone, six student tabs, Focus selected
+
+Page pad 16. Row ≈ 358. Unselected hits 44. Selected label max 179 (half the row). Details may clip; swipe the row. No dots. No underline.
+
+```
+|<---------------------------- 390 pt ---------------------------->|
+| 16 |[ ◎ Focus                 ][👥][◷][▭][☑]|≡ | 16
+      |← name ≤ 179 pt →|         44 44 44 44  Details clipped
+       brandSoft pill              mute, no fill, 44×44 circles
+       icon + name                 icon only
+```
+
+Middle tab selected, scrolled into view (still one selected name, everyone else icon-only):
+
+```
+| 16 |[◎][👥][ ◷ Skill history        ][▭][☑][≡]| 16
+```
+
+### 32.6 Accessibility, rotation, files
+
+Every tab: `accessibilityRole="tab"`, `accessibilityLabel` = the English name even when the label is hidden, `accessibilityState.selected` so the selected state is announced. The row wrap may be `tablist`. Web `HoverTip` uses that same description; native / touch have no tooltip. Hit ≥ 44.
+
+Portrait and landscape. Phone stays one column. Relayout on rotate; do not animate the rotate. The tab row must remain tappable below the 56 / 44 header with no overlap.
+
+```
+src/components/ui/PersonTabs.tsx
+src/components/ui/ClassTabs.tsx
+src/components/ui/Icon.tsx          // focus login parents history work practice details children
+src/app/class/[id]/student/[studentId].tsx
+src/app/class/[id]/parent/[parentId].tsx
+src/app/class/[id]/index.tsx
+src/app/class/[id]/feed.tsx
+src/app/class/[id]/setup.tsx
+src/app/class/[id]/parents.tsx
+src/app/class/[id]/gradebook.tsx
+src/app/class/[id]/assignments.tsx
+src/app/class/[id]/family.tsx
+src/app/admin/class/[id].tsx
+```
+
+No new npm packages. No SQL. No `EXPO_PUBLIC_*` keys. Matcher never inserts a student. Nothing is a grade until the teacher Approves.
+
+### 32.7 Class screens — same tab row, not the Amazon chips
+
+**Date:** 2026-08-19. Patches §3.6, §13.3, §13.7–§13.9. The class desk used two Amazon context-chip rows: Today / This week / Needs you on `/class/{id}`, and Gradebook / Assignments / Heatmap / Parents / Students on the records cluster. Those chips are gone. `PersonTabs` via `ClassTabs` sits in the page body under the header — same selected-name / icon-only rule as people.
+
+Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/{id}`) stays pushed.
+
+Default **Today**. Family is last. Switching panes `replace`s so Back does not walk the tab history. Heatmap is `/class/{id}/gradebook?tab=heatmap`. Today / This week / Needs you are `/class/{id}?tab=today|week|needs`.
+
+Office card `/admin/class/{id}` is in-page only: **Feed** · Roster · **Teacher**. Still not the teacher desk. School Feed is school-wide posts; class Feed is that class only. Feed is far left; Teacher is far right. Default on open stays Classes / Today / Teacher.
+
+The Amazon context row remains on Capture, Inbox, student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
+
+---
+
+## 33. Message composer + menu — every row has an icon
+
+**Date:** 2026-08-19. Designer pass for `/messages/{threadId}` attach menu (the **+** to the left of “Write a message”). Patches the implemented composer, not §12.5 Ask.
+
+The + opens a four-row menu: **Photo** · **Camera** · **File** · **Link**. Only Camera had a glyph (`capture`). A mixed icon/no-icon list looks unfinished and the labels do not share a left edge. Every row now has a 18 pt icon, `ink`, 10 pt gap, same `attachRow` (height 44, pad 14). Press opacity 0.88. No new packages. Stroke `Icon` + iOS `SymbolView` like camera and mic.
+
+This menu is **attach**, not Capture-the-homework. Do not send Photo or Camera through `/proposal`. Group-chat avatars stay raw photos (§ already).
+
+### 33.1 Icon set
+
+Extend `src/components/ui/Icon.tsx`. Same rules as §32.3: 1.5–2 pt strokes, `Box` wrapper, iOS `SymbolView` monochrome with the View glyph as `fallback`.
+
+| Row | English | `IconName` | SF Symbol | Draw | Do not |
+|---|---|---|---|---|---|
+| **Photo** | Photo | `photo` | `photo.on.rectangle` | Two landscape rounded rects. Back plate inset up-right (~88% of a 78% × 56% frame). Front plate inset down-left, same size. That is a **stack of library photos**. | `capture` (that is the shutter). No mountain, no sun — they vanish at 18 pt. |
+| **Camera** | Camera | `capture` (existing) | `camera` | Unchanged shutter + well. | A second camera glyph. |
+| **File** | File | `file` | `doc.text` | A page (~50% × 64%, radius 3) with a **dog-ear**: 22% square at the top-right, only left + bottom strokes. Two bars inside, the second shorter. | `work` / SF `doc` — that is the homework Work tab. File is a document you attach. |
+| **Link** | Link | `link` | `link` | Two overlapping stroke circles (diameter ~36% of `size`), overlap ~38% of a circle. A chain, not an arrow-out-of-a-box. | `share`, `mail`, or a globe. |
+
+Unselected/selected does not apply — these are menu rows, not tabs. Icon and label both `ink`. Empty icon slot is banned: if a fourth action is added later, it ships with a glyph on day one.
+
+### 33.2 ASCII — attach menu, 390-wide phone
+
+```
+| 16 |[ + ]  Write a message…                              [send] | 16
+       ↑ opens
+
+| 16 |┌ Photo / Camera / File / Link ─────────────────────┐ | 16
+     |│  [ ▭▭ ]  Photo                                     │
+     |│  [ 📷 ]  Camera                                    │
+     |│  [ ▢ ]  File                                      │
+     |│  [ ∞ ]  Link                                      │
+     |└────────────────────────────────────────────────────┘
+      18 pt icon · 10 gap · type.body. Hit 44.
+```
+
+### 33.3 Files
+
+```
+src/components/ui/Icon.tsx          // photo file link
+src/app/messages/[threadId].tsx     // attach menu rows always pass icon
+```
+
+### 33.4 Feed uses the same composer
+
+**Date:** 2026-08-19. School Feed and class Feed no longer use a lone `TextField` + Post button. They use `MessageComposer`: **+** · field · send. Same attach menu (Photo, Camera, File, Link), same paste/unfurl, same send disc.
+
+Posted attachments render with `MessagePayloadView` like a message bubble: photos tap to `ImageViewer`, files open in the browser, links are title + description + host cards. Alerts may carry the same payload. Replies stay text. Students still cannot post.
+
+SQL: paste `supabase/migrations/20260819000006_feed_attachments.sql` (`posts.payload`, uniquely named `create_feed_post`, `list_feed` returns payload, storage read if `can_see_post`). Do not overload `create_post` — PostgREST cannot pick among overloads.
+
+```
+src/components/ui/MessageComposer.tsx
+src/components/ui/FeedPane.tsx
+src/lib/posts/api.ts
+```
+
+### 33.5 Feed compose tabs — Post · Alert, mute on the right
+
+**Date:** 2026-08-19. Designer pass. The Feed compose strip used Amazon **Post** / **Alert** chips plus a ghost **Mute this feed** under the composer. That is two controls for one job (what you are sending) and a third control that ate a full row. Replace the chips with `PersonTabs` (§32.2). Mute becomes a trailing icon on that same row, far right, not a tab (it does not switch a pane).
+
+| Control | Kind | Default |
+|---|---|---|
+| **Post** | Tab. Icon-first. Selected = `brandSoft` pill + name. Unselected = 44 icon only. | **Post** |
+| **Alert** | Same tab chrome. Tooltip / `accessibilityLabel`: **Alert** — urgent, shows on the bell. | — |
+| **Mute** | 44 × 44 hit, far right of the tab row. Not a tab. Does not take a selected label. | Off |
+
+Staff who can post see Post · Alert + mute. Readers who are not students see mute alone, still far right, same hairline. Students never see this row. Toggling mute calls `set_feed_muted`. Empty list while muted: `This feed is muted.` Unmute restores posts. Hide-on-scroll still tucks this whole dock (§ already).
+
+Do **not** reuse the Feed destination `compose` pencil for Post (that tab means “open the feed”). Do **not** reuse the header `bell` for Alert (that is the inbox). Do **not** reuse `mail`.
+
+**Post** — English **Post**. SF `text.bubble`. `IconName` `post`. A landscape rounded rectangle (about 70% × 48% of `size`, radius ~22% of height) with a small triangular tail at the bottom-left. Two short bars inside, the second shorter. A notice people read, not a camera and not a DM envelope.
+
+**Alert** — English **Alert**. SF `exclamationmark.triangle`. `IconName` `alert`. An isosceles stroke triangle, point up, about 72% of `size` wide. Inside: a short vertical bar (the bang) and a small filled dot under it. Cannot-miss, not the header bell.
+
+**Mute** — English **Mute this feed** / **Unmute this feed**. SF `speaker.slash` when muted, `speaker.wave.2` when live. `IconName` `mute` and `speaker`. Speaker: a small rounded square (the magnet, ~18% of `size`) plus a right-pointing cone. Live: one hollow arc to the right. Muted: no arc; a diagonal slash through the cone, same language as `close`. Icon `mute` (brand) when the feed is muted; `speaker` (`mute` color) when it is live. `HoverTip` uses the English pair.
+
+```
+src/components/ui/Icon.tsx          // post alert speaker mute
+src/components/ui/PersonTabs.tsx    // optional trailing
+src/components/ui/FeedPane.tsx
+```
+
+Replies use the same `MessageComposer` (+ · field · send) as posts. Paste `supabase/migrations/20260819000007_feed_reply_attachments.sql`. Unique RPC `reply_to_feed_post`. `list_post_replies` returns `payload`. Storage read via `is_feed_attachment` on reply paths too.
+
+No new npm packages. Matcher never inserts a student. Nothing is a grade until the teacher Approves.
+
+---
+
+## 34. Chrome and combined inbox (2026-08-21)
+
+**Date:** 2026-08-21. Designer pass. This delta **replaces** the header trailing cluster, tray order, drawer enter, and the split Messages / Notifications destinations. Do not keep a Profile tab in the tray. Do not restore the header bell.
+
+### 34.1 Header — search left of messages, title marquees
+
+```
+[ ☰ / back 44 ]  Wordmark (flex, marquee)  [ camera 44 ] [ search 44 ] [ messages 44 ]
+```
+
+**Messages** uses the existing `mail` glyph. The red **corner** badge is **unread alerts** (`badgeCount`). It is **not** unread DMs. Hidden at 0. Tap → `/messages`. The same count sits on the **Alerts** tab (`alert`) in the Messages-center PersonTabs. Anatomy: §10.1.
+
+**Search sits immediately left of messages.** Camera (teacher only) sits immediately left of search. Do not add a sixth header icon. Do not put Profile in the header.
+
+**Title marquee.** The wordmark is `MarqueeText` in a flex slot with `minWidth: 0` and overflow clip. If the title is longer than the slot (long class names, person names), it crawls with the same physics as §30: 1200 ms hold, 30 pt/s, 800 ms end hold, fade, blank, restart. Reduce Motion and VoiceOver: static, no crawl. Do **not** ellipsis. Do **not** make the title tappable.
+
+**Search slide.** Tap search:
+
+1. Push `/search` (results canvas). Hamburger becomes back.
+2. Camera hides.
+3. The title slot flexes to ~0 and fades (220 ms ease-out cubic).
+4. The search **icon stays where it is in the row**, so as the field grows to its right (between search and messages) the icon travels left into the title space.
+5. The field is a 40-tall `wash` rounded rectangle. Auto-focus. Placeholder still depends on `searchFrom`.
+
+Dismiss is back. No Cancel label. Reduce Motion: snap open/closed, no timing. While the field is open, tapping search again focuses the input.
+
+### 34.2 Tray — Ask last, no Profile
+
+Profile is **only** the identity row in the hamburger (36 photo + handle, already there). The tray never shows a face or `person` tab.
+
+| Role | Tray, left → right | Count |
+|---|---|---|
+| Teacher | House · Capture · Inbox · Class · **Ask** | 5 |
+| Student | House · **Ask** | 2 |
+| Parent | House · **Ask** | 2 |
+| Office | **Feed** · **Classes** · **People** · **Manage** · **Ask** | 5 |
+
+Web/tablet top bar: same order, labels visible. Ask is last.
+
+### 34.3 Hamburger — right, then down
+
+The sheet is still a left column, width `min(304, window − 56)`, full-window content, same scrim.
+
+**Open (two phase, native driver off so height can animate):**
+
+1. Height is pinned to `peek` = `insets.top + headerHeight` (about a header strip). `translateX` from `+width` → `0` in **200 ms** ease-out cubic. The teacher sees a strip slide in from the right (toward the left).
+2. Height `peek` → window height in **260 ms** ease-out cubic. The sheet drops down and reveals the rest of the menu.
+
+**Close:** reverse. Height to peek **180 ms** ease-in, then `translateX` off right **160 ms** ease-in. The `Modal` stays `visible` until the sequence finishes.
+
+Reduce Motion: snap to full height at `translateX: 0`. Rows, identity, search tray, and Settings gear do not change.
+
+### 34.4 Combined inbox — Messages · feeds · Alerts
+
+`/messages` is one screen with `PersonTabs` (§32.2). `/notifications` **redirects** to `/messages?tab=alerts`. Alert **detail** stays at `/notifications/{id}`.
+
+| Order | Tab | Icon | Pane |
+|---|---|---|---|
+| First | **Messages** | `mail` | Existing thread list, favorites, compose, filters |
+| Middle | One tab per feed the user is a member of | Owner-chosen feed glyph | `FeedPane` for that school or class |
+| Last | **Alerts** | `alert` (triangle + bang, not the old bell) | Former Notifications list (alerts + role extras, swipe Dismiss) |
+
+Feed membership (`list_my_feeds`):
+
+- **School feed** — everyone with a profile at the school. First of the middle tabs.
+- **Class feeds** — classes the user teaches, is enrolled in, or has a linked child in. Office (superintendent / administrator) sees every class in the school, because they own school communication.
+- Sort class tabs by class name. Do not show a feed the RLS would hide.
+
+Deep link `?tab=school` · `?tab=class:{id}` · `?tab=alerts`. Default `messages`. Switching tabs must not discard a feed composer draft — that state lives on `FeedPane`.
+
+The header title on this screen is **Messages** even on the Alerts or a class-feed tab. The selected PersonTab already names the pane.
+
+### 34.5 Feed icons — owners pick, catalog is the product
+
+A feed is identified in the inbox by its glyph, not by a long class name (the selected tab still shows the name). Owners pick from a closed catalog. No uploads. No custom SVG. Same stroke language as camera / mic / person: `View` strokes at `Math.max(1.5, size * 0.08)`, iOS `SymbolView` monochrome with the View glyph as `fallback`.
+
+**Who may pick**
+
+| Feed | Default | Who |
+|---|---|---|
+| School | `feedSchool` | Superintendent and administrators (`is_school_admin`) |
+| Class | `feedClass` | Teachers of that class (`teaches_class`) **and** the office |
+
+**Where the picker lives**
+
+- School tab on `/` — row **School feed icon** (office)
+- Office class card Teacher pane — row **Feed icon**
+- Class desk Students (`/class/{id}/setup`) — row **Feed icon**
+- `FeedIconPicker` is a `FormSheet` grid. Selected cell `brandSoft` + `brand` icon and label.
+
+SQL: paste `supabase/migrations/20260821000000_feed_icons.sql` (`schools.feed_icon`, `classes.feed_icon`, `list_my_feeds`, `set_school_feed_icon`, `set_class_feed_icon`). Audit action `set_feed_icon`.
+
+### 34.6 Feed icon catalog
+
+All keys are `IconName` members. Labels are English. Draw recipes are View strokes, not SF.
+
+| Key | Label | For | SF Symbol | Draw |
+|---|---|---|---|---|
+| `feedSchool` | School | Default school-wide feed | `building.columns` | Cupola on a pediment, rectangular body, center door. Campus, not the house `today`. Feed tabs use this glyph; Manage does not. |
+| `feedClass` | Classroom | Default class | `chalkboard` | Landscape rounded rect (board) on a short center post with a wider tray bar under it. |
+| `feedBook` | Reading | Reading, literature | `book` | Two vertical page panels side by side, the left slightly shorter / skewed, a spine between them. |
+| `feedEnglish` | English | English language arts | `textformat` | Capital A: two diagonals and a crossbar. Not the Writing pencil. |
+| `feedLanguage` | Language | World language, ELL | `character.book.closed` | Two offset rounded speech panels, one upper-left and one lower-right. Not `chat` (DMs) and not `post`. |
+| `feedPencil` | Writing | Composition and journals | `pencil` | Rotated −45°: triangular tip on a rectangular shaft. |
+| `feedMath` | Math | Math | `pi` | Pi: a top bar and two short uprights. Not the app `plus` button. |
+| `feedGeom` | Geometry | Geometry | `triangle` | Filled isosceles triangle, point up. |
+| `feedStat` | Statistics | Stats, data | `chart.bar` | Three vertical bars, short / tall / medium. |
+| `feedScience` | Science | General science | `flask` | Narrow neck rectangle sitting on a wider U-bowl with rounded bottom corners. |
+| `feedChem` | Chemistry | Chemistry | `atom` | Two linked circles (a molecule), one slightly smaller. |
+| `feedPhysics` | Physics | Physics | `atom` | Nucleus dot with two tilted elliptical orbits. |
+| `feedBio` | Biology | Biology, life science | `leaf` | Tilted pointed oval with a center vein. |
+| `feedLab` | Lab | Lab, STEM bench | `testtube.2` | Two capsules, left taller, both standing. |
+| `feedGlobe` | Geography | Geography and cultures | `globe` | Circle with a vertical oval meridian and one equator bar. |
+| `feedWorldHistory` | World history | World history | `globe.desk` | Globe (circle + equator) on a short stand bar. |
+| `feedUSHistory` | U.S. history | United States history | `flag` | Flag rectangle: canton in the upper-left, two stripe bars. |
+| `feedStateHistory` | State history | State or local history | `building.columns` | Small capitol: dome cap on a rectangular body. |
+| `feedMap` | History | History survey | `map` | Three adjacent folded panels, the middle one taller. |
+| `feedGov` | Government | Civics | `building.columns` | Entablature bar, three columns, base bar. Not the schoolhouse. |
+| `feedEcon` | Economics | Economics | `chart.line.uptrend.xyaxis` | L-shaped axes with a rising diagonal. |
+| `feedBible` | Bible | Christian Bible class | `cross` | Latin cross: tall upright, shorter beam in the upper third. Not an equal-arm plus. |
+| `feedArt` | Art | Studio | `paintpalette` | Kidney / oval board with one circular thumb hole at the bottom. |
+| `feedMusic` | Music | Band, choir, orchestra | `music.note` | Vertical stem + short top flag + filled oval note-head at the bottom-left of the stem. |
+| `feedTheater` | Drama | Theater | `theatermasks` | Two equal stroke circles (masks) in a row. |
+| `feedSport` | PE | PE, athletics | `figure.run` | Circle (ball) with one diameter bar through it. |
+| `feedCode` | Computers | Coding and media | `chevron.left.forwardslash.chevron.right` | Left chevron, a short slash, right chevron. |
+| `feedRobot` | Robotics | Robotics, engineering | `cpu` | Square head, antenna stub, two eye dots. |
+| `feedShop` | Shop | CTE, industrial arts | `wrench.and.screwdriver` | Open wrench jaw on a vertical handle. |
+| `feedAg` | Agriculture | Ag, horticulture, FFA | `leaf` | Upright stem with two pairs of short side bars (wheat). Distinct from Biology’s leaf. |
+| `feedHealth` | Health | Health, nutrition | `cross.case` | Circle fruit with a short stem. Not the Wellness heart. |
+| `feedNews` | Journalism | Newspaper, yearbook | `newspaper` | Page rectangle with three inner bars. |
+| `feedLibrary` | Library | Library / media center | `books.vertical` | Three standing books on a shelf bar. Distinct from Reading’s open book and History’s folded map. |
+| `feedHeart` | Wellness | Counseling, support | `heart` | Two adjacent circles on a V / inverted-U bowl. |
+| `feedStar` | Honors | Gifted, honors, leadership | `star` | A stroke diamond rotated 45°. Compact stand-in for a star at this size. |
+| `feedSun` | Early years | Pre-K, kindergarten, primary | `sun.max` | Center circle plus four short rays (N/E/S/W). |
+
+The owner-chosen glyph is the Feed tab **everywhere**, not only in Messages: school home Feed, class desk Feed, office class Feed, and Messages-center feed tabs. Do not keep `compose` as the Feed destination icon.
+
+Do not reuse `today` (house) for school, `compose` for a class feed tab, `mail` for a feed, or `bell` anywhere in this catalog. The inbox Messages **tab** is `chat` (two bubbles). The header Messages **icon** stays `mail`. Alerts is `alert`. See §35.
+
+```
+src/components/ui/FloatingTabTray.tsx
+src/components/ui/AppHeader.tsx
+src/components/ui/HamburgerDrawer.tsx
+src/components/ui/Icon.tsx
+src/components/ui/feedIcons.tsx
+src/components/ui/FeedIconPicker.tsx
+src/components/ui/NotificationsPane.tsx
+src/app/messages/index.tsx
+src/app/notifications/index.tsx
+src/lib/feeds/icons.ts
+src/lib/feeds/api.ts
+supabase/migrations/20260821000000_feed_icons.sql
+```
+
+No new npm packages. Matcher never inserts a student. Nothing is a grade until the teacher Approves.
+
+---
+
+## 35. Messages tray, stacked chrome, and slower motion (2026-08-21)
+
+**Date:** 2026-08-21. Designer pass. The combined inbox (§34) still opens from the header **mail** icon with the same alert badge. Inside `/messages`, the Messages **tab** is no longer that envelope — it is a pair of text-message bubbles (`chat`). The old bottom search field becomes a second floating icon tray, stacked above the system tray. Both trays hide and show together. The Messages hamburger is no longer a full-screen FormSheet: it rises from the tray, right-aligned, floating over the thread list.
+
+Do not put Profile in any tray. Do not change the header mail icon. Do not add a sixth header icon.
+
+### 35.1 Tokens — `chrome.motion`
+
+One dialect for chrome. Cubic, no springs, no Reanimated. Reduce Motion: snap to the end state.
+
+| Token | ms | Used for |
+|---|---|---|
+| `tray` | **260** | System tray, messages tray, feed compose dock, drawer inner tray |
+| `trayStagger` | **50** | Gap between the two stacked trays |
+| `context` | **260** | Amazon context row / flush gap |
+| `searchIn` | **280** | Header and messages-tray search expand |
+| `searchOut` | **240** | Search collapse |
+| `drawerInX` | **260** | Hamburger slide-left from the right (phase 1) |
+| `drawerInY` | **320** | Hamburger drop-down (phase 2) |
+| `drawerOutY` | **240** | Hamburger collapse up |
+| `drawerOutX` | **220** | Hamburger slide left |
+| `menuIn` | **280** | Messages filter menu rise |
+| `menuOut` | **220** | Messages filter menu settle down |
+
+These are ~30–40% slower than the 180 / 200 / 220 ms of §9 / §34. Slow enough to read as premium. Fast enough that a teacher tapping through threads does not wait. Swipe-to-act on `WorkRow` / `ListRow` stays **160 ms** — that is a finger-tracking gesture, not chrome.
+
+### 35.2 Search glyph (one drawing)
+
+Every search control uses `Icon` name `search`, **22** on in-field / landscape, **24** on portrait chrome hits. Ink on a tappable icon, not mute. iOS may use SF `magnifyingglass` with the View glyph as fallback.
+
+**Draw.** One hollow circle (lens, ~50% of `size`) sitting upper-left in the box, plus a 45° handle from the 4-o’clock of the lens to the bottom-right corner, `stroke` thick with a pill cap. The lens is **not** a top-left orphan in an uncentered box — that was why the 18 pt mute glass in the old messages field looked like a different icon from the header.
+
+Places: header, messages tray, hamburger drawer field. Do not invent a second magnifying glass.
+
+### 35.3 Messages tab icon = text messages
+
+Header far-right stays **`mail`** (envelope) + alert badge. PersonTabs first tab:
+
+| | Icon | English | SF |
+|---|---|---|---|
+| Header | `mail` | Messages | — |
+| Inbox tab | `chat` | Messages | `bubble.left.and.bubble.right` |
+
+**`chat` draw.** Two overlapping stroke bubbles: a smaller rear bubble upper-right, a larger front bubble lower-left, a small triangular tail at the front-bottom-left. That is iMessage / SMS, not the envelope, not `post` (one bubble with two bars), not `ask` (bubble with a mark), not `compose` (pencil).
+
+### 35.4 Messages icon tray
+
+Only on the **Messages** pane of `/messages` (not Feeds, not Alerts). Same frame as the system tray: `elevated`, radius 22, 1 px `line`, height 56 / 44 landscape, pad 6, hit 48 / 44, whisper shadow in light.
+
+```
+Idle:      [ compose 48 ] ················· [ search 48 ] [ filter 48 ]
+Searching: [ compose 48 ] [ 🔍 | Search………………… ] [ filter 48 ]
+```
+
+| Slot | Icon | Side | Action |
+|---|---|---|---|
+| New message | `compose` | **Far left** | Push `/messages/new` |
+| Search | `search` | Right cluster, **immediately left of filter** | Expand inline (§35.5) |
+| Filter | `filter` | **Far right** | Open the floating filter menu (§35.6). Three bars, wide → narrow. Not the app hamburger. |
+
+Do not put labels on phone. Do not restore a full-width text field as the tray itself.
+
+**Stacking.** Phone: messages tray sits **8 pt above** the system tray (`bottom = trayRest + 8`). Web / tablet (`showTopBar`): the system tray is the top bar, so the messages tray sits alone at the bottom (`8 + max(insets.bottom, 8)`).
+
+Last-row padding on the thread list = system tray rest + messages tray height + 8 + 12.
+
+### 35.5 Tray search expand (same physics as the header)
+
+Tap search. The search **icon slides left**. A 40-tall `wash` field **slides out from the icon toward the compose slot**. Compose stays far left. Menu stays far right.
+
+1. A flex spacer between compose and search shrinks 1 → 0 (280 ms ease-out cubic).
+2. The field between search and menu grows 0 → 1, opacity 0 → 1.
+3. Auto-focus. Placeholder **Search**. Filters the thread list in place — does **not** push `/search`.
+
+Tap search again: collapse (the field slides away even if there is text). Tap anywhere outside the field — thread list, compose, menu, tabs — also collapses. Header search is the same: a second tap on the glass pops `/search` and the field slides shut. Reduce Motion: snap.
+
+While the field is focused the **messages tray stays up** even if the keyboard is showing. The **system tray hides** (keyboard rule). The messages tray lifts to `keyboardHeight + 8` so it sits on the keyboard, not under it. `keepLocalTray` is the chrome flag for this exception.
+
+### 35.6 Filter menu — rises from the tray, stays right
+
+The Messages **filter** control is **not** the app drawer and **not** a `FormSheet`. It is a floating card:
+
+| Token | Value |
+|---|---|
+| Width | `min(280, window − 24)` |
+| Align | Right, inset `max(insets.right, 12)` |
+| Bottom | Top of the messages tray + 8 |
+| Radius | 22 (same as trays) |
+| Scrim | Light `rgba(26, 22, 18, 0.18)` · Dark `rgba(0, 0, 0, 0.28)` — threads stay visible underneath |
+| Enter | `translateY 20 → 0` + opacity 0 → 1, **280 ms** ease-out cubic |
+| Exit | `translateY 0 → 16` + opacity 1 → 0, **220 ms** ease-in cubic |
+
+It should feel like the menu grew **up out of the filter icon** and is hovering over the conversation rows, parked on the right third of the screen. Do not drop it from the header. Do not slide it in from the left. Closing search (second tap on the glass, or tap away) must **leave this tray on screen** — do not tuck it with the keyboard. The system tray may hide while the keyboard is up; the messages tray stays.
+
+Rows (44 hit): **Filter** heading, then **All** · **Unread** · **Groups**, checkmark on the current filter. Hairline. **Groups** heading, then **New group**. No swipe-to-favorite hint. Tap scrim or a row closes.
+
+### 35.7 Two trays hiding — one stack, slight stagger
+
+The teacher now has two floating frames on top of each other. They must not jitter independently.
+
+**Hide (scroll down, or keyboard without search):** the **upper** (messages) tray starts first, then 50 ms later the system tray follows. Both travel `tray` 260 ms ease-out cubic, `translateY` to a hide distance that covers **the whole stack** (system height + 8 + messages height + bottom inset + 12). Opacity 1 → 0.85.
+
+**Show (scroll up, or top of list):** the **system** tray leads, then 50 ms later the messages tray lands on top of it. Building from the home indicator up.
+
+They share one scroll brain (`ChromeProvider.onScroll`). Do not give the messages tray its own velocity tracker.
+
+Reduce Motion: both snap hidden / shown with no stagger.
+
+On web, only the messages tray translates (the system destinations live in the pinned top bar).
+
+### 35.9 Unread threads — ember on the face
+
+**Date:** 2026-08-21. Designer pass. A waiting DM was only a brand timestamp (easy to miss) and a 10 pt dot floating on the favorite cell (easy to clip). Alerts already own **red** `CountBadge`. Unread texts need a different signal that works on a **64 circle** (pinned) and a **52 list face**, and that is not an Instagram story ring (§16 / §942: no rings on people).
+
+**The unread ember.** One `brand` disc sits on the **lower-right** of `ThreadAvatar`, haloed with 2 pt `elevated` so it reads on a photo and on initials.
+
+| | Size | Place |
+|---|---|---|
+| Pinned favorite (64) | 14 disc | `right: −1` `bottom: −1` of the face |
+| List row (52) | 12 disc | same corner |
+
+That is the presence language of an iOS “online” pip, but it means **new text**, not online. Same primitive in both places so pinning a thread does not change how unread looks. Do not put this pip on the upper-right (that corner is `CountBadge` / alerts). Do not use `danger`. Do not animate a pulse — WorkingMark is the only spinner in the app. Opening the thread clears `unread` as today (`last_read_at`). Muted threads stay unmarked.
+
+**Pinned extras.** First-name caption under the circle goes `brand` when unread (idle is `ink`). Spoken name: `Unread. {name}`.
+
+**List extras.** Title `700` (idle `600`). Timestamp `brand` (idle `mute`) — already. Preview stays `mute`. Spoken: `Unread. {name}. {preview}`. No left rail, no row wash (`brandSoft` is **selected**, not unread).
+
+```
+Pinned:   ( face )     List:  ( face )  Maya Chen          2:14
+            •ember              •ember  You: see you after  brand time
+            Maya  brand
+```
+
+Do not badge the header mail icon with unread DMs. That badge is still alerts (§34). The Unread filter in the messages tray still lists only unpinned unread threads (favorites stay in the circle row).
+
+### 35.10 Files
+
+```
+src/constants/theme.ts                 // chrome.motion
+src/lib/chrome/ChromeProvider.tsx      // local tray, stagger, keepLocalTray, keyboardHeight
+src/components/ui/Icon.tsx             // chat + centered search
+src/components/ui/MessagesTray.tsx
+src/components/ui/MessagesMenu.tsx
+src/app/messages/index.tsx
+src/components/ui/ThreadAvatar.tsx     // unread ember
+src/components/ui/ListRow.tsx          // unread title weight
+src/components/ui/AppHeader.tsx        // searchIn / searchOut
+src/components/ui/HamburgerDrawer.tsx  // slower two-phase + search 22
+src/components/ui/FloatingTabTray.tsx  // uses shared trayTranslate (now 260)
+src/components/ui/FeedPane.tsx         // dock 260
+src/components/ui/Screen.tsx           // flush gap 260
+```
+
+No new npm packages. Matcher never inserts a student. Nothing is a grade until the teacher Approves.
+
+---
+
+## 36. Superintendent office IA (2026-08-21)
+
+**Date:** 2026-08-21. Office chrome for superintendent / administrator. Profile stays hamburger-only. Ask stays last in the tray.
+
+### 36.1 Tray — Feed · Classes · People · Manage · Ask
+
+| # | Icon | Label | Route | Active |
+|---|---|---|---|---|
+| 1 | owner-chosen school feed glyph | **Feed** | `/?tab=feed` | `tab=feed` |
+| 2 | `classes` | **Classes** | `/?tab=classes` | `/`, default and `tab=classes`; `/admin/class/{id}` |
+| 3 | `person` | **People** | `/?tab=people` | `tab=people` (and `/admin/people` redirect) |
+| 4 | `manage` | **Manage** | `/?tab=manage` | `tab=manage` (and old `tab=school`); `/activity`; `/admin/matrix` |
+| 5 | `ask` | **Ask** | `/ask` | `/ask` |
+
+Activity is no longer a tray icon. It lives on the School pane. Messages stay in the header mail icon.
+
+### 36.2 Superintendent hamburger
+
+Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Then My children (parent hat) and Sign out. Manage opens `/?tab=manage`. Feed opens `/?tab=feed`.
+
+### 36.3 School home tabs
+
+`PersonTabs` on `/`: **Feed** · **Classes** · **People** · **Manage** · **New**. Default **Classes**. People is office-only. Teachers without an admin hat omit People; their plus tab stays **New class**.
+
+**Manage pane** (not the tray): superintendent **School name** + **School logo**, school feed icon, **Activity**, **Responsibilities** (superintendent). One `ListRow` stack, each with a 36 leading glyph so titles line up. No People row. No Messages row. Parent hat may still show **My children**. `manage` is three slider tracks with knobs — not the Settings cog and not the schoolhouse. `/?tab=school` still opens this pane.
+
+Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The school logo, when set, stays **upper left** on every signed-in header (22×22 contain), including while search is open. Back still leads on pushed screens; the logo sits immediately after it.
+
+**People pane:** nested Staff · Parents · Students. Create-account is not a fourth people tab.
+
+**New pane (office):** nested `PersonTabs` **People** · **Classes** (People first). People is the create-login form. Classes is name + Create class. Teachers without login-create still only see the class field (no nested tabs).
+
+`/admin/people` redirects to `/?tab=people` so the tab group does not disappear.
+
+```
+src/components/ui/FloatingTabTray.tsx
+src/components/ui/HamburgerDrawer.tsx
+src/components/ui/PeopleAdmin.tsx
+src/app/index.tsx
+src/app/admin/people.tsx
+```
+
+

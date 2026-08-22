@@ -3,12 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { PracticeItem, SubmissionStatus } from '@/lib/supabase/types';
 
-const STORAGE_KEY = 'kelyra.student-session';
+const LEGACY_STORAGE_KEY = 'kelyra.student-session';
 
 export type StudentSession = {
-  joinCode: string;
-  classId: string;
-  className: string;
+  classId: string | null;
+  className: string | null;
   studentId: string;
   displayName: string;
   photoPath?: string | null;
@@ -23,37 +22,43 @@ export type StudentTodo = {
   focusLabel: string | null;
 };
 
+export type StudentClassmate = {
+  studentId: string;
+  displayName: string;
+  photoPath: string | null;
+};
+
+export async function clearLegacyStudentSession() {
+  await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+}
+
 export async function loadStudentSession(): Promise<StudentSession | null> {
-  const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as StudentSession;
-  } catch {
-    return null;
-  }
-}
-
-export async function saveStudentSession(session: StudentSession) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-}
-
-export async function clearStudentSession() {
-  await AsyncStorage.removeItem(STORAGE_KEY);
-}
-
-export async function openClassByJoinCode(joinCode: string) {
-  const { data, error } = await requireSupabase().rpc('student_open_class', {
-    p_join_code: joinCode.trim(),
-  });
+  await clearLegacyStudentSession();
+  const { data, error } = await requireSupabase().rpc('student_me');
   if (error) throw error;
-  return data ?? [];
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.student_id) return null;
+  return {
+    classId: row.class_id ?? null,
+    className: row.class_name ?? null,
+    studentId: row.student_id,
+    displayName: row.display_name,
+    photoPath: row.photo_path ?? null,
+  };
 }
 
-export async function listStudentTodo(joinCode: string, studentId: string): Promise<StudentTodo[]> {
-  const { data, error } = await requireSupabase().rpc('student_list_todo', {
-    p_join_code: joinCode,
-    p_student_id: studentId,
-  });
+export async function listStudentClassmates(): Promise<StudentClassmate[]> {
+  const { data, error } = await requireSupabase().rpc('student_classmates');
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    studentId: row.student_id,
+    displayName: row.display_name,
+    photoPath: row.photo_path ?? null,
+  }));
+}
+
+export async function listStudentTodo(): Promise<StudentTodo[]> {
+  const { data, error } = await requireSupabase().rpc('student_list_todo');
   if (error) throw error;
   return (data ?? []).map((row) => ({
     submissionId: row.submission_id,
@@ -65,15 +70,8 @@ export async function listStudentTodo(joinCode: string, studentId: string): Prom
   }));
 }
 
-export async function submitStudentTodo(
-  joinCode: string,
-  studentId: string,
-  submissionId: string,
-  answers: Record<string, string>,
-) {
+export async function submitStudentTodo(submissionId: string, answers: Record<string, string>) {
   const { error } = await requireSupabase().rpc('student_submit', {
-    p_join_code: joinCode,
-    p_student_id: studentId,
     p_submission_id: submissionId,
     p_answers: answers,
   });

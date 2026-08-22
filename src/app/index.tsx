@@ -1,46 +1,77 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { PrimaryButton } from '@/components/ui/Button';
+import { CreateLoginForm, PeopleDirectory } from '@/components/ui/PeopleAdmin';
+import { FeedIconRow } from '@/components/ui/FeedIconPicker';
+import { SchoolIdentityFields } from '@/components/ui/SchoolIdentity';
+import { HandleLink } from '@/components/ui/HandleLink';
 import { ListRow } from '@/components/ui/ListRow';
+import { FeedPane } from '@/components/ui/FeedPane';
+import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
-import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { createClass, listClasses } from '@/lib/classes/api';
+import { can } from '@/lib/school/matrix';
+import { isAdminRole, isAlsoParent, isTeacherRole, roleStatus } from '@/lib/school/roles';
+import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
+import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
+import { getSchoolIdentity, type SchoolIdentity } from '@/lib/school/identity';
 import { deleteClass } from '@/lib/classes/delete';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import type { IconName } from '@/components/ui/Icon';
 
 export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { switch: pick } = useLocalSearchParams<{ switch?: string }>();
-  const { configured, loading, teacher, error } = useAuth();
-  const [classes, setClasses] = useState<ClassRow[] | null>(null);
+  const { switch: pick, tab: tabParam } = useLocalSearchParams<{ switch?: string; tab?: string }>();
+  const { configured, loading, teacher, profile, error } = useAuth();
+  const admin = isAdminRole(profile);
+  const teaches = isTeacherRole(profile);
+  const [classes, setClasses] = useState<Array<ClassRow | SchoolClass> | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [pending, setPending] = useState<ClassRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState('classes');
+  const [newKind, setNewKind] = useState('person');
+  const [schoolFeed, setSchoolFeed] = useState<FeedRef | null>(null);
+  const [schoolIdentity, setSchoolIdentity] = useState<SchoolIdentity | null>(null);
+
+  useEffect(() => {
+    const next = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+    if (next === 'classes' || next === 'feed' || next === 'new' || next === 'people') setTab(next);
+    if (next === 'manage' || next === 'school') setTab('manage');
+  }, [tabParam]);
 
   const load = useCallback(async () => {
-    if (!teacher) return;
+    if (!teacher && !admin) return;
     try {
-      const next = await listClasses();
+      const next = admin && !teaches ? await listSchoolClasses() : await listClasses();
       setClasses(next);
-      if (next.length === 1 && next[0] && !pick) {
+      if (admin && profile) {
+        const feeds = await listMyFeeds(profile);
+        setSchoolFeed(feeds.find((item) => item.kind === 'school') ?? null);
+        try {
+          setSchoolIdentity(await getSchoolIdentity());
+        } catch {
+          setSchoolIdentity(null);
+        }
+      }
+      if (teaches && !admin && next.length === 1 && next[0] && !pick) {
         router.replace(`/class/${next[0].id}`);
       }
     } catch (err) {
       setClasses([]);
       setStatus(err instanceof Error ? err.message : 'Could not load classes');
     }
-  }, [teacher, router, pick]);
+  }, [admin, pick, profile, router, teacher, teaches]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,7 +91,25 @@ export default function HomeScreen() {
     );
   }
 
-  if (loading || (teacher && classes === null)) {
+  if (loading || (teacher && classes === null && !admin)) {
+    return (
+      <Screen>
+        <WorkingLine />
+      </Screen>
+    );
+  }
+
+  if (profile?.role === 'student') {
+    router.replace('/todo');
+    return (
+      <Screen>
+        <WorkingLine />
+      </Screen>
+    );
+  }
+
+  if (profile?.role === 'parent') {
+    router.replace('/parent');
     return (
       <Screen>
         <WorkingLine />
@@ -76,8 +125,7 @@ export default function HomeScreen() {
           Photograph the work. Approve the gap. Send a short practice set.
         </Text>
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-        <PrimaryButton label="Teacher sign in" onPress={() => router.push('/sign-in')} />
-        <GhostButton label="Student join" onPress={() => router.push('/join')} />
+        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
       </Screen>
     );
   }
@@ -86,9 +134,9 @@ export default function HomeScreen() {
     setStatus(null);
     setCreating(true);
     try {
-      const created = await createClass(name, teacher.id);
+      const created = await createClass(name);
       setName('');
-      router.replace(`/class/${created.id}/setup`);
+      router.replace(`/admin/class/${created.id}`);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not create class');
     } finally {
@@ -97,49 +145,174 @@ export default function HomeScreen() {
   };
 
   const empty = (classes ?? []).length === 0;
+  const officeOnly = admin && !teaches;
+  const canCreateClass = teaches || can(profile, 'classes.create');
+  const canCreateLogin = can(profile, 'accounts.create');
+  const canCreate = canCreateClass || canCreateLogin;
+  const openClass = (id: string) => {
+    if (teaches) router.push(`/class/${id}`);
+    else router.push(`/admin/class/${id}`);
+  };
+  const feedIcon = (schoolFeed?.icon ?? 'feedSchool') as IconName;
+  const tabs = schoolHomeTabs({
+    admin,
+    canCreate,
+    canCreateClass,
+    canCreateLogin,
+    feedIcon,
+  });
+  const pane = tabs.some((item) => item.key === tab) ? tab : 'classes';
+  const newTabs: PersonTab[] = [
+    ...(canCreateLogin ? [{ key: 'person', label: 'People', icon: 'person' as const }] : []),
+    ...(canCreateClass ? [{ key: 'class', label: 'Classes', icon: 'classes' as const }] : []),
+  ];
+  const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
   return (
-    <Screen keyboard maxWidth={480}>
-      <Text style={[type.display, { color: colors.ink }]}>{empty ? 'Name your class' : 'Your classes'}</Text>
-      <Text style={[styles.lead, { color: colors.mute }]}>
-        {empty
-          ? 'One field. Then you can photograph work and file it to a student.'
-          : 'Open a class to see what needs you today.'}
-      </Text>
-
-      {(classes ?? []).map((item) => (
-        <ListRow
-          key={item.id}
-          title={item.name}
-          avatarName={item.name}
-          onPress={() => router.push(`/class/${item.id}`)}
-          trailing={[
-            {
-              key: 'delete',
-              label: 'Delete',
-              tone: 'danger',
-              autoCommit: false,
-              onPress: () => setPending(item),
-            },
-          ]}
-        />
-      ))}
-
-      <SectionHeader label={empty ? 'New class' : 'Another class'} first={empty} />
-      <TextField
-        placeholder="Room 14 math"
-        value={name}
-        onChangeText={setName}
-        returnKeyType="done"
-        onSubmitEditing={() => void onCreate()}
-      />
-      <View style={styles.gap} />
-      <PrimaryButton
-        label={creating ? 'Creating…' : 'Create class'}
-        disabled={creating}
-        onPress={() => void onCreate()}
+    <Screen
+      keyboard
+      maxWidth={pane === 'feed' || pane === 'people' ? 640 : 480}
+      scroll={pane !== 'feed'}
+      avoidKeyboard={pane !== 'feed'}
+    >
+      {profile ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          <HandleLink username={profile.username} profileId={profile.id} inline />
+          {` · ${roleStatus(profile)}`}
+        </Text>
+      ) : null}
+      <PersonTabs
+        tabs={tabs}
+        value={pane}
+        onChange={(key) => {
+          setTab(key);
+          router.setParams({ tab: key });
+        }}
       />
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
+
+      {pane === 'manage' ? (
+        <>
+          {profile?.role === 'superintendent' ? (
+            <SchoolIdentityFields
+              identity={schoolIdentity}
+              onChange={setSchoolIdentity}
+              onError={setStatus}
+            />
+          ) : null}
+          {admin && schoolFeed ? (
+            <FeedIconRow
+              title="School feed icon"
+              value={schoolFeed.icon}
+              onPick={async (icon) => {
+                try {
+                  await setSchoolFeedIcon(icon);
+                  setSchoolFeed({ ...schoolFeed, icon });
+                } catch (err) {
+                  setStatus(err instanceof Error ? err.message : 'Could not save the feed icon');
+                }
+              }}
+            />
+          ) : null}
+          {isAlsoParent(profile) ? (
+            <ListRow
+              title="My children"
+              status="Progress for your own kids"
+              icon="children"
+              onPress={() => router.push('/parent')}
+            />
+          ) : null}
+          {admin ? (
+            <>
+              <ListRow
+                title="Activity"
+                status="Immutable change log"
+                icon="history"
+                onPress={() => router.push('/activity')}
+              />
+              {profile?.role === 'superintendent' ? (
+                <ListRow
+                  title="Responsibilities"
+                  status="Who may do what"
+                  icon="details"
+                  onPress={() => router.push('/admin/matrix')}
+                />
+              ) : null}
+            </>
+          ) : null}
+        </>
+      ) : null}
+
+      {pane === 'feed' ? <FeedPane scope="school" fill /> : null}
+
+      {pane === 'people' && admin ? <PeopleDirectory /> : null}
+
+      {pane === 'classes' ? (
+        <>
+          <Text style={[styles.lead, { color: colors.mute }]}>
+            {officeOnly
+              ? empty
+                ? 'Teachers open classes. You will see every class in the school here.'
+                : 'Every class in the school. Open a card for teacher and roster.'
+              : empty
+                ? 'One field. Then you can photograph work and file it to a student.'
+                : 'Open a class to see what needs you today.'}
+          </Text>
+          {empty ? (
+            <Text style={[type.meta, { color: colors.mute }]}>
+              {officeOnly ? 'No classes yet.' : canCreateClass ? 'Name a class on New.' : 'No classes yet.'}
+            </Text>
+          ) : null}
+          {(classes ?? []).map((item) => (
+            <ListRow
+              key={item.id}
+              title={item.name}
+              status={'teacherName' in item ? item.teacherName : undefined}
+              avatarName={item.name}
+              onPress={() => openClass(item.id)}
+              trailing={
+                can(profile, 'classes.delete', teaches ? 'own' : 'school')
+                  ? [
+                      {
+                        key: 'delete',
+                        label: 'Delete',
+                        tone: 'danger',
+                        autoCommit: false,
+                        onPress: () => setPending(item),
+                      },
+                    ]
+                  : []
+              }
+            />
+          ))}
+        </>
+      ) : null}
+
+      {pane === 'new' && canCreate ? (
+        <>
+          {newTabs.length > 1 ? (
+            <PersonTabs tabs={newTabs} value={newPane} onChange={setNewKind} />
+          ) : null}
+          {newPane === 'person' && canCreateLogin ? <CreateLoginForm /> : null}
+          {newPane === 'class' && canCreateClass ? (
+            <>
+              <TextField
+                placeholder="Name of Class"
+                value={name}
+                onChangeText={setName}
+                returnKeyType="done"
+                onSubmitEditing={() => void onCreate()}
+              />
+              <View style={styles.gap} />
+              <PrimaryButton
+                label={creating ? 'Creating…' : 'Create class'}
+                disabled={creating}
+                onPress={() => void onCreate()}
+              />
+            </>
+          ) : null}
+        </>
+      ) : null}
       <ConfirmSheet
         visible={Boolean(pending)}
         title={`Delete ${pending?.name ?? 'class'}?`}
@@ -154,10 +327,9 @@ export default function HomeScreen() {
           void deleteClass(pending.id)
             .then(async () => {
               setPending(null);
-              const remaining = await listClasses();
+              const remaining = admin && !teaches ? await listSchoolClasses() : await listClasses();
               setClasses(remaining);
-              if (remaining[0]) router.replace(`/class/${remaining[0].id}`);
-              else router.replace('/');
+              router.replace('/?switch=1');
             })
             .catch((err) => {
               setStatus(err instanceof Error ? err.message : 'Could not delete class');
@@ -167,6 +339,29 @@ export default function HomeScreen() {
       />
     </Screen>
   );
+}
+
+function schoolHomeTabs(opts: {
+  admin: boolean;
+  canCreate: boolean;
+  canCreateClass: boolean;
+  canCreateLogin: boolean;
+  feedIcon: IconName;
+}): PersonTab[] {
+  const tabs: PersonTab[] = [
+    { key: 'feed', label: 'Feed', icon: opts.feedIcon },
+    { key: 'classes', label: 'Classes', icon: 'classes' },
+  ];
+  if (opts.admin) tabs.push({ key: 'people', label: 'People', icon: 'person' });
+  tabs.push({ key: 'manage', label: 'Manage', icon: 'manage' });
+  if (opts.canCreate) {
+    tabs.push({
+      key: 'new',
+      label: opts.canCreateClass && opts.canCreateLogin ? 'New' : opts.canCreateLogin ? 'New login' : 'New class',
+      icon: 'plus',
+    });
+  }
+  return tabs;
 }
 
 const styles = StyleSheet.create({
