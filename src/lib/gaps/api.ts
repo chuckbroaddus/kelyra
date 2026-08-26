@@ -1,7 +1,8 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import { allPhotoAssetIds } from '@/lib/captures/pages';
 import { gradeKindLabel, type GradeKind, type ScoreMark } from '@/lib/grade/marks';
-import { signedUrlForAsset } from '@/lib/media/upload';
+import { loadPhotoAssetPaths } from '@/lib/media/upload';
+import { signedThumbUrls, signedUrls } from '@/lib/media/signedUrl';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { CaptureRow, SkillGapRow } from '@/lib/supabase/types';
 
@@ -21,6 +22,10 @@ export type StoredHomeworkDraft = {
   scoreMark?: ScoreMark;
   gradeKind?: GradeKind;
   skipGrade?: boolean;
+  costUsd?: number | null;
+  model?: string | null;
+  pass?: string | null;
+  pending?: boolean;
 };
 
 export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
@@ -68,11 +73,33 @@ export async function storeCaptureDraft(
   if (error) throw error;
 }
 
-export async function analyzeAttachedCapture(captureId: string): Promise<boolean> {
-  const data = await invokeAi<{ ok?: boolean; gaps?: unknown[] }>('analyze-homework', {
-    captureId,
-  });
-  return Boolean(data.ok || data.gaps);
+export async function analyzeAttachedCapture(
+  captureId: string,
+  opts?: { pass?: 'cheap' | 'look-again'; queue?: boolean },
+): Promise<boolean> {
+  const data = await invokeAi<{ ok?: boolean; gaps?: unknown[]; queued?: boolean; skipped?: boolean }>(
+    'analyze-homework',
+    {
+      captureId,
+      pass: opts?.pass ?? 'cheap',
+      queue: Boolean(opts?.queue),
+    },
+  );
+  return Boolean(data.ok || data.gaps || data.queued || data.skipped);
+}
+
+export async function lookAgainCapture(captureId: string): Promise<boolean> {
+  return analyzeAttachedCapture(captureId, { pass: 'look-again' });
+}
+
+export async function processQueuedDrafts(): Promise<{ processed: number }> {
+  const data = await invokeAi<{ processed?: number }>('process-ai-jobs', {});
+  return { processed: data.processed ?? 0 };
+}
+
+export function draftCostUsd(draft: StoredHomeworkDraft | null | undefined): number | null {
+  const usd = (draft as { costUsd?: number } | null)?.costUsd;
+  return typeof usd === 'number' && Number.isFinite(usd) ? usd : null;
 }
 
 export async function addTeacherGap(captureId: string, studentId: string, label: string) {
@@ -212,7 +239,7 @@ export async function approveCapture(
   const submission = {
     assignment_id: assignmentId,
     student_id: capture.student_id,
-    status: 'approved' as const,
+    status: 'graded' as const,
     approved_score: approvedScore,
     approved_at: approvedAt,
     score_mark: scoreMark,
@@ -227,7 +254,7 @@ export async function approveCapture(
     const { error: updateError } = await supabase
       .from('submissions')
       .update({
-        status: 'approved',
+        status: 'graded',
         approved_score: approvedScore,
         approved_at: approvedAt,
         score_mark: scoreMark,
@@ -236,7 +263,7 @@ export async function approveCapture(
     if (updateError) {
       const retry = await supabase
         .from('submissions')
-        .update({ status: 'approved', approved_score: approvedScore, approved_at: approvedAt })
+        .update({ status: 'graded', approved_score: approvedScore, approved_at: approvedAt })
         .eq('id', existing.id);
       if (retry.error) throw retry.error;
     }
@@ -274,11 +301,8 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
   if (!captures?.length) return [];
 
   const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
-  const [{ data: assets, error: assetError }, { data: gaps }] = await Promise.all([
-    supabase
-      .from('assets')
-      .select('*')
-      .in('id', photoIds.length ? photoIds : ['00000000-0000-0000-0000-000000000000']),
+  const [assets, { data: gaps }] = await Promise.all([
+    loadPhotoAssetPaths(photoIds),
     supabase
       .from('skill_gaps')
       .select('*')
@@ -288,32 +312,50 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
       )
       .order('sort_order', { ascending: true }),
   ]);
-  if (assetError) throw assetError;
 
-  const pathById = new Map((assets ?? []).map((asset) => [asset.id, asset.storage_path]));
+  const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
+  const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
+  const origPaths = [...pathById.values()];
+  const [thumbUrls, originalUrls] = await Promise.all([
+    signedThumbUrls(origPaths, knownThumbs),
+    signedUrls('photos', origPaths),
+  ]);
   const gapsByCapture = new Map<string, SkillGapRow[]>();
   for (const gap of gaps ?? []) {
+    if (!gap.capture_id) continue;
     const list = gapsByCapture.get(gap.capture_id) ?? [];
     list.push(gap);
     gapsByCapture.set(gap.capture_id, list);
   }
 
-  return Promise.all(
-    captures.map(async (capture) => {
-      const urls: string[] = [];
-      for (const id of allPhotoAssetIds(capture)) {
-        const path = pathById.get(id);
-        const url = path ? await signedUrlForAsset('photo', path) : null;
-        if (url) urls.push(url);
-      }
-      return {
-        ...capture,
-        photoUrl: urls[0] ?? null,
-        photoUrls: urls,
-        gaps: gapsByCapture.get(capture.id) ?? [],
-      };
-    }),
-  );
+  return captures.map((capture) => {
+    const thumbs: string[] = [];
+    const originals: string[] = [];
+    for (const id of allPhotoAssetIds(capture)) {
+      const path = pathById.get(id);
+      if (!path) continue;
+      const thumb = thumbUrls.get(path);
+      const original = originalUrls.get(path);
+      if (thumb) thumbs.push(thumb);
+      if (original) originals.push(original);
+    }
+    return {
+      ...capture,
+      photoUrl: thumbs[0] ?? originals[0] ?? null,
+      photoUrls: originals.length ? originals : thumbs,
+      gaps: gapsByCapture.get(capture.id) ?? [],
+    };
+  });
+}
+
+export async function listStudentGaps(studentId: string): Promise<SkillGapRow[]> {
+  const { data, error } = await requireSupabase()
+    .from('skill_gaps')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
 }
 
 function normalizeSkill(label: string): string {

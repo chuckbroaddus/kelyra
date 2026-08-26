@@ -1,5 +1,5 @@
 import { invokeAi } from '@/lib/ai/invoke';
-import { createAssignment, listClassAssignments } from '@/lib/assignments/api';
+import { createAssignment, getAssignment, listClassAssignments } from '@/lib/assignments/api';
 import { parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
 import {
   addTeacherToClass,
@@ -26,9 +26,12 @@ import {
 } from '@/lib/parents/api';
 import { PARENT_DETAIL_FIELDS, STUDENT_DETAIL_FIELDS, metaString } from '@/lib/people/metadata';
 import { uploadProfilePhoto } from '@/lib/people/photos';
+import { getFollowUpDraft } from '@/lib/practice/followUp';
+import { buildFollowUpPack, loadFollowUpItems } from '@/lib/practice/followUpApi';
 import { listDirectory, writeAudit } from '@/lib/school/api';
 import { can, type Access, type GrantMap } from '@/lib/school/matrix';
-import { isAdminRole } from '@/lib/school/roles';
+import { isAskPasswordToolDenied } from '@/lib/school/resetPassword';
+import { isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import {
   addTypedStudent,
   enrollExistingStudent,
@@ -623,7 +626,7 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: 'function',
       name: 'add_student',
-      description: 'Add a new roster name to a class. Does not Approve work.',
+      description: 'Office only. Create a new student record and put them on a class. Teachers enroll existing students with enroll_student.',
       parameters: {
         type: 'object',
         properties: {
@@ -636,6 +639,7 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office may add a new student.' };
       if (!ctx.teacherId) return { error: 'Staff sign-in is required to add a student.' };
       const displayName = str(args, 'display_name');
       if (!displayName) return { error: 'Student name is required.' };
@@ -1051,10 +1055,57 @@ const TOOLS: Record<string, AskToolSpec> = {
       return { opened: true, href: next.href };
     },
   },
+  revise_practice_page: {
+    capability: 'assignments.manage',
+    def: {
+      type: 'function',
+      name: 'revise_practice_page',
+      description:
+        'Rebuild the follow-up practice webpage for one assignment. All questions stay one assignment. Use after the teacher says what to change.',
+      parameters: {
+        type: 'object',
+        properties: {
+          assignment_id: { type: 'string' },
+          class_id: { type: 'string' },
+          instruction: { type: 'string' },
+        },
+        required: ['assignment_id', 'instruction'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const assignmentId = str(args, 'assignment_id');
+      const instruction = str(args, 'instruction');
+      if (!assignmentId) return { error: 'Need assignment_id.' };
+      if (!instruction) return { error: 'Need instruction for the page.' };
+      const row = await getAssignment(assignmentId);
+      if (!row) return { error: 'That assignment is gone.' };
+      const classId = str(args, 'class_id') || row.class_id || ctx.classId || '';
+      const draft = getFollowUpDraft();
+      const items = draft?.items?.length ? draft.items : await loadFollowUpItems(row.practice_set_id);
+      if (!items.length) return { error: 'No questions on that assignment to rebuild.' };
+      await buildFollowUpPack({
+        classId,
+        studentId: draft?.studentId ?? '',
+        sourceAssignmentId: draft?.sourceAssignmentId ?? row.id,
+        sourceSubmissionId: draft?.sourceSubmissionId ?? '',
+        sourceTitle: row.title,
+        skillLabel: draft?.skillLabel || row.title,
+        items,
+        assignmentId,
+      });
+      return {
+        ok: true,
+        rebuilt: true,
+        href: `/class/${classId}/assignment/${assignmentId}${draft?.studentId ? `?student=${draft.studentId}` : ''}`,
+      };
+    },
+  },
 };
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
   if (!spec.capability) return true;
+  if (spec.def.name === 'add_student') return isOfficeRole(ctx.profile);
   if (spec.def.name === 'link_parent_student') {
     return can(ctx.profile, 'accounts.link_parent', spec.need ?? 'own', ctx.grants) ||
       can(ctx.profile, 'parents.invite', 'own', ctx.grants);
@@ -1076,6 +1127,12 @@ export function askToolsFor(ctx: AskToolContext): {
     defs: specs.map((spec) => spec.def),
     names: specs.map((spec) => spec.def.name),
     run: async (name, rawArgs) => {
+      if (isAskPasswordToolDenied(name)) {
+        return {
+          json: JSON.stringify({ error: 'You cannot reset passwords. Office does that in People.' }),
+          label: labelFor(name),
+        };
+      }
       const spec = TOOLS[name];
       if (!spec || !allowed(spec, ctx)) {
         return { json: JSON.stringify({ error: `You cannot use ${name}.` }), label: labelFor(name) };

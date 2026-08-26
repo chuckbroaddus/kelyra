@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useRef } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -60,49 +60,32 @@ export function StickyTable<T>({
   const { scrollHandlers } = useMarqueeScroll();
   const headRef = useRef<ScrollView>(null);
   const bodyRef = useRef<ScrollView>(null);
-  const driver = useRef<'head' | 'body' | null>(null);
+  const driving = useRef<'none' | 'head' | 'body'>('none');
   const unlock = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const headX = useRef(0);
-  const bodyX = useRef(0);
 
-  const hold = (who: 'head' | 'body') => {
-    driver.current = who;
+  const follow = (who: 'head' | 'body', x: number) => {
+    if (driving.current === (who === 'head' ? 'body' : 'head')) return;
+    driving.current = who;
+    if (who === 'head') bodyRef.current?.scrollTo({ x, y: 0, animated: false });
+    else headRef.current?.scrollTo({ x, y: 0, animated: false });
     if (unlock.current) clearTimeout(unlock.current);
     unlock.current = setTimeout(() => {
-      driver.current = null;
-    }, 160);
+      driving.current = 'none';
+    }, 80);
+  };
+
+  const endH = () => {
+    driving.current = 'none';
+    if (unlock.current) clearTimeout(unlock.current);
   };
 
   const onHead = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = event.nativeEvent.contentOffset.x;
-    headX.current = x;
-    if (driver.current === 'body') return;
-    if (Math.abs(bodyX.current - x) < 0.5) return;
-    hold('head');
-    bodyRef.current?.scrollTo({ x, y: 0, animated: false });
+    follow('head', event.nativeEvent.contentOffset.x);
   };
 
-  const onBody = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = event.nativeEvent.contentOffset.x;
-    bodyX.current = x;
-    if (driver.current === 'head') return;
-    if (Math.abs(headX.current - x) < 0.5) return;
-    hold('body');
-    headRef.current?.scrollTo({ x, y: 0, animated: false });
+  const onBodyH = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    follow('body', event.nativeEvent.contentOffset.x);
   };
-
-  const keepHeadOverBody = () => {
-    if (Math.abs(headX.current - bodyX.current) < 0.5) return;
-    hold('body');
-    headRef.current?.scrollTo({ x: bodyX.current, y: 0, animated: false });
-  };
-
-  useEffect(
-    () => () => {
-      if (unlock.current) clearTimeout(unlock.current);
-    },
-    [],
-  );
 
   if (!rows.length) {
     return (
@@ -118,31 +101,36 @@ export function StickyTable<T>({
 
   const headerCells = (
     <View style={styles.row}>
-      {columns.map((column) => (
-        <Pressable
-          key={column.key}
-          disabled={!column.onHeaderPress}
-          onPress={column.onHeaderPress}
-          style={[
-            styles.headCell,
-            { width: column.width, height: headHeight, backgroundColor: colors.wash, borderColor: colors.line },
-          ]}
-        >
-          {column.renderTitle ? (
-            column.renderTitle()
-          ) : (
-            <Text style={[styles.headText, { color: colors.ink }]} numberOfLines={titleLines}>
-              {column.title}
-            </Text>
-          )}
-        </Pressable>
-      ))}
+      {columns.map((column) => {
+        const inner = column.renderTitle ? (
+          column.renderTitle()
+        ) : (
+          <Text style={[styles.headText, { color: colors.ink }]} numberOfLines={titleLines}>
+            {column.title}
+          </Text>
+        );
+        const box = [
+          styles.headCell,
+          { width: column.width, height: headHeight, backgroundColor: colors.wash, borderColor: colors.line },
+        ];
+        if (column.onHeaderPress) {
+          return (
+            <Pressable key={column.key} onPress={column.onHeaderPress} style={box}>
+              {inner}
+            </Pressable>
+          );
+        }
+        return (
+          <View key={column.key} style={box}>
+            {inner}
+          </View>
+        );
+      })}
     </View>
   );
 
-  // Titles live in a full-width scroller with left padding equal to the name
-  // column. iOS sticky headers pull the nested ScrollView to x=0; the padding
-  // plus an overlayed "Student" cell keeps titles over their columns anyway.
+  const panX = Platform.OS === 'web' ? ({ touchAction: 'pan-x' } as const) : null;
+
   const headerRow = (
     <View
       collapsable={false}
@@ -158,18 +146,22 @@ export function StickyTable<T>({
       <ScrollView
         ref={headRef}
         horizontal
-        showsHorizontalScrollIndicator={false}
-        directionalLockEnabled
         nestedScrollEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
         onScroll={onHead}
         onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
-        onScrollEndDrag={scrollHandlers.onScrollEndDrag}
+        onScrollEndDrag={(event) => {
+          endH();
+          scrollHandlers.onScrollEndDrag?.(event);
+        }}
         onMomentumScrollEnd={(event) => {
-          keepHeadOverBody();
+          endH();
           scrollHandlers.onMomentumScrollEnd?.(event);
         }}
-        style={styles.headScroll}
+        style={[styles.headScroll, panX]}
         contentContainerStyle={{ paddingLeft: frozenWidth }}
       >
         {headerCells}
@@ -203,7 +195,6 @@ export function StickyTable<T>({
         contentContainerStyle={styles.vContent}
         onScroll={(event) => {
           chrome?.onScroll(event);
-          keepHeadOverBody();
         }}
         onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
         onScrollEndDrag={scrollHandlers.onScrollEndDrag}
@@ -250,14 +241,18 @@ export function StickyTable<T>({
                 directionalLockEnabled
                 nestedScrollEnabled
                 scrollEventThrottle={16}
-                onScroll={onBody}
+                keyboardShouldPersistTaps="handled"
+                onScroll={onBodyH}
                 onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
-                onScrollEndDrag={scrollHandlers.onScrollEndDrag}
+                onScrollEndDrag={(event) => {
+                  endH();
+                  scrollHandlers.onScrollEndDrag?.(event);
+                }}
                 onMomentumScrollEnd={(event) => {
-                  keepHeadOverBody();
+                  endH();
                   scrollHandlers.onMomentumScrollEnd?.(event);
                 }}
-                style={[styles.bodyScroll, { height: bodyHeight }]}
+                style={[styles.bodyScroll, panX, { height: bodyHeight }]}
                 contentContainerStyle={{ height: bodyHeight }}
               >
                 <View style={{ height: bodyHeight }}>

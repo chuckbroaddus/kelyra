@@ -13,7 +13,11 @@
         "NSCameraUsageDescription": "Kelyra uses the camera to photograph class lists and student work.",
         "NSMicrophoneUsageDescription": "Kelyra uses the microphone to record teacher notes.",
         "NSPhotoLibraryAddUsageDescription": "Kelyra saves photos from school messages to your Photos.",
-        "NSPhotoLibraryUsageDescription": "Kelyra saves photos from school messages to your Photos."
+        "NSPhotoLibraryUsageDescription": "Kelyra saves photos from school messages to your Photos.",
+        "NSLocalNetworkUsageDescription": "Kelyra opens local lesson pages on your network during development.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {

@@ -1,3 +1,4 @@
+import { asSubmissionStatus, submissionStatusLabel } from '@/lib/assignments/status';
 import { firstName } from '@/lib/format';
 import { metaString, setMetaKey } from '@/lib/people/metadata';
 import { hydratePhotoUrls, signedProfileUrl } from '@/lib/people/photos';
@@ -611,14 +612,19 @@ export function parentInviteUrl(token: string): string {
 }
 
 export function formatPracticeStatus(status: string | null): string {
-  if (status === 'submitted' || status === 'approved') return 'Done';
-  if (status === 'assigned' || status === 'draft_scored') return 'Assigned';
-  return 'None yet';
+  return submissionStatusLabel(status) || 'None yet';
+}
+
+export function formatLessonStatus(status: string | null | undefined): string {
+  return submissionStatusLabel(status) || 'None yet';
 }
 
 export function familyPracticeWords(status: string | null): string {
-  if (status === 'submitted' || status === 'approved') return 'done';
-  if (status === 'assigned' || status === 'draft_scored') return 'assigned';
+  const next = asSubmissionStatus(status);
+  if (next === 'graded') return 'graded';
+  if (next === 'completed') return 'completed';
+  if (next === 'started') return 'started';
+  if (next === 'assigned') return 'assigned';
   return 'none yet';
 }
 

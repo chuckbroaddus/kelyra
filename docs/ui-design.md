@@ -148,13 +148,13 @@ Every signed-in screen uses this exact header. It is not the React Navigation st
 
 | Slot | Size | Who sees it | Action |
 |---|---|---|---|
-| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. Optional 22×22 school logo to the left on office home. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
+| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. **School logo** 22×22 contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
 | Camera | 44 × 44, `capture` icon | **Teacher only**, hidden while search is open | Opens the device camera, then `/proposal` (§14) |
 | Search | 44 × 44, `search` glyph | Teacher, student, parent | Icon slides left; a field slides out from it (§34). Results on `/search` |
 | Messages | 44 × 44, `mail` glyph | Teacher, student, parent | Pushes `/messages`. Red count badge = **unread alerts**, same as the old bell. Hidden at 0 |
 | Hamburger | 44 × 44, 3-line `menu` icon, `ink`, **far right** | Teacher, student, parent | Opens the left drawer (§3.3, two-phase §34). Hidden on pushed screens |
 
-Wordmark (and school logo, 22×22 contain) starts on the left. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**.
+Wordmark starts on the left. When the school has a logo, that **logo** (not an icon) sits 22×22 immediately left of the wordmark for student, parent, teacher, and office. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**. Pushed screens keep the school **logo** immediately right of Back.
 
 On student / parent the camera slot is omitted; search sits immediately left of messages.
 
@@ -274,18 +274,24 @@ Family, All classes, Appearance, Profile, Sign out live in the hamburger, not th
 
 ### 3.5 Header title per tab
 
-The wordmark is the Facebook title swap:
+The wordmark is the Facebook title swap: **it is the same English label as the hamburger (and tray) item for that destination.** Nested in-page tabs (To Do / Done, class chips, PersonTabs) do **not** change the wordmark.
 
-| Selected tray icon | Wordmark text |
-|---|---|
-| House | `Kelyra` |
-| Capture | `Capture` |
-| Inbox | `Inbox` |
-| Class | `Class` (class home, roster, heatmap, grade book). Named class destinations keep their name: `Assignments`, `Parents`. |
-| Ask | `Ask` |
-| Profile (hamburger only) | `Profile` |
+| Destination | Hamburger / tray label | Wordmark |
+|---|---|---|
+| Teacher house | class name in the drawer | `Kelyra` on house; class screens use the class name |
+| Capture | Capture | `Capture` |
+| Inbox | Inbox | `Inbox` |
+| Class (teacher) | class name / Grade book | `Class` on class home; named destinations keep `Assignments`, `Parents`, `Grade book` |
+| Ask | Kelyra | `Kelyra` (Ask slot uses the Kelyra mark, not this string) |
+| Profile (hamburger only) | identity row | `Profile` |
+| Student Assignments | **Assignments** | `Assignments` (`/todo`). To Do / Done stay in-page tabs |
+| Student Feeds | **Feeds** | `Feeds` |
+| Student Classes | **Classes** | `Classes` |
+| Student Grades | **Grades** | `Grades` |
+| Student People | **People** | `People` |
+| Office Feed / Classes / People / Manage | same labels | same labels on those tabs; school **name** only when the office home has no tab (or Manage still uses school name — do not invent a second title) |
 
-Pushed screens (student record, search, messages, proposal, family, assignment form) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores hamburger + tab title. Do not ellipsis the header title.
+Pushed screens (student record, search, messages, proposal, family, assignment form, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`, the assignment title). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores the hamburger / tray label. Do not ellipsis the header title.
 
 ### 3.6 Second header row — context menu
 
@@ -301,7 +307,7 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 | Class | **Roster** · **Parents** · **Heatmap** · **Grade book** | Roster | Navigates `/setup` · `/parents` · `/gradebook?view=heatmap` · `/gradebook?view=book` |
 | Ask | none | — | Empty row collapsed (height 0) |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
-| Student Home | **To-do** · **Done** | To-do | Filters `/todo` |
+| Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
 | Parent Home | none, **or** one chip per **linked child** on this parent | First linked child | Switches the bound child. Never lists other families |
 
 On pushed screens (student record, proposal, family, search, notifications) the context row is **omitted**.
@@ -637,7 +643,7 @@ The grade book stays a **sheet**. A `WorkRow` cannot express students × assignm
 
 ## 8. Status language
 
-Never show raw enums (`draft_scored`, `note_only`, `attached`, `unassigned`, `submitted`).
+Never show raw enums (`completed`, `note_only`, `attached`, `unassigned`, `started`).
 
 | Data | Badge / phrase | Tone | Meaning |
 |---|---|---|---|
@@ -645,18 +651,19 @@ Never show raw enums (`draft_scored`, `note_only`, `attached`, `unassigned`, `su
 | capture `attached` / `draft` | **Review** | `warn` | Approve it |
 | capture `approved` | **Approved** | `good` | It’s a grade |
 | capture `note_only` | **Note** | `mute` / `wash` | Kept, not graded |
-| practice `assigned` / `draft_scored` | **Assigned** | `warn` | Student has work |
-| practice `submitted` | **Turned in** | `warn` | Teacher should look |
-| practice `approved` | **Done** | `good` | Closed |
+| practice `assigned` | **Assigned** | `warn` | Student has work |
+| practice `started` | **Started** | `warn` | Student opened it |
+| practice `completed` | **Completed** | `warn` | Teacher should grade |
+| practice `graded` | **Graded** | `good` | Closed |
 | current focus skill | **Focus** | `brand` | This week’s skill |
 
 The loop the teacher can say out loud:
 
-> Photo → needs a name → review → approved → practice assigned → turned in → done
+> Photo → needs a name → review → approved → practice assigned → started → completed → graded
 
-`formatCell` / CSV already emit `—`, `Assigned`, `In`, a score, `Done`, `Draft`. Keep those strings in lockstep with the grid (§15). `Draft` is teacher-only and only inside the grade book.
+`formatCell` / CSV emit `—`, `Assigned`, `Started`, `Completed`, a score, `Graded`. The on-screen grid uses status **icons** for the first three and the mark after graded. Keep CSV strings in lockstep with `formatCell` (§15).
 
-Skill history (`humanGapStatus`) uses the same phrases: `Review`, `Approved`, `Note`, `Assigned`, `Done`, `Proficient`, `Stopped focusing`.
+Skill history (`humanGapStatus`) uses the same phrases: `Review`, `Approved`, `Note`, `Assigned`, `Started`, `Completed`, `Graded`, `Proficient`, `Stopped focusing`.
 
 ---
 
@@ -824,8 +831,8 @@ New file `src/components/ui/WorkRow.tsx`. The primitive for “a thing I can act
 | Secondary pill | fill `elevated`, 1 px `line`, label `ink` |
 | Ghost pill | transparent, label `mute` |
 | Row pad | 12. Hairline bottom `line`, inset 16 |
-| Press on media / title | opens the destination (student / capture) |
-| Accessibility | each pill is its own button. Swipe actions (§10.7) must duplicate the pills |
+| Press on media / title | **Not for assignments.** Lesson and practice rows open **only** from the **Open** pill (hosted page / student work). Row press must not start a player, mint a lesson URL, or load the pack. Other `WorkRow`s (inbox capture, Needs you) may still use row press for cheap destinations (student page, review). |
+| Accessibility | each pill is its own button. Swipe actions (§10.7) must duplicate the pills. If the row has no `onPress`, the body is not a button — only the pills are. |
 
 **Do not put five filled brand buttons on a row.** If a row has more than three actions, the rest live in swipe or on the destination screen.
 
@@ -978,7 +985,7 @@ New file `src/components/ui/ConfirmSheet.tsx`. The only confirm for delete. Spec
 
 Existing `StickyTable` + `Heatmap`. Theme from tokens.
 
-Grade-book cells: `cell` / tabular, centered. Color via `cellTone`. Strings from `formatCell` only.
+Grade-book cells: centered. **Assigned** / **Started** / **Completed** show the status glyph (`statusAssigned` empty circle, `statusStarted` circle+dot, `statusCompleted` circle+check) — bundled icons, no Storage. **Graded** shows the mark (`formatCell`: number, Pass, Fail, or `Graded`). Empty is `—`. CSV still uses `formatCell` words. Header faces are thumbs only (`fallbackOriginal: false`); the header follows the grid with a transform (one horizontal scroller) so avatars do not re-layout on each tick.
 
 Heatmap: color only. No letters, no `F`, no `•`.
 
@@ -988,7 +995,11 @@ Heatmap: color only. No letters, no `F`, no `•`.
 | Approved gap | `goodSoft` | none |
 | None | `wash` | none |
 
-Students are **columns** (more assignments/gaps than students). Heatmap frozen column is the gap; grade book frozen column is the assignment tree (class ▾ unit ▾ section ▾ work).
+Students are **columns** (more assignments/gaps than students). Heatmap frozen column is the gap; grade book frozen column is the assignment tree (class, **unit · section**, work). Unit and section share one row with a middot. **No chevrons** anywhere in the tree (the 12 pt arrow slot is gone). Tap the **class** name to fold the class; tap the **unit** to fold every section in that unit; tap the **section** to fold only that section’s work.
+
+Under the class tabs, a **Counts toward** `PersonTabs` row (labels only, no glyphs): **All** (leftmost) then Quarter 1–4, Semester 1, Semester 2, Year. Selected name marquees the same as other PersonTabs. Heatmap does not use this row.
+
+Filter rollup: **Quarter** tabs are exact. **Semester 1** includes Quarter 1, Quarter 2, and semester-only work (finals, projects). **Semester 2** includes Quarter 3, Quarter 4, and semester-only work. **Year** includes both semesters plus year-only work. **All** is every column.
 
 | | Frozen label | Student column |
 |---|---|---|
@@ -999,6 +1010,8 @@ Students are **columns** (more assignments/gaps than students). Heatmap frozen c
 Row heights: grade book 44, heatmap 44 / 48. Head: grade book 76, heatmap 80. Implemented head is `studentHead` in `src/constants/table.ts` (96 tall, **72 wide on every breakpoint**, 56 avatar). First name under that avatar is **1 line, marquee** (§30). The 56 / 64 / 72 column table above is leftover — do not grow the student clip in landscape.
 
 `Screen scroll={false}` on the grade-book view; the table `flex: 1`.
+
+Student book (one column): pin that column to the **right**. Frozen assignment tree uses every leftover pixel (`pane − 72`) on phone and web so titles can run as wide as the pane allows. Teacher books keep the 156 / 176 / 200 frozen clip.
 
 ### 10.16 Join code, Phase banner
 
@@ -1046,7 +1059,7 @@ Hide every badge at 0. Cap `99+`.
 ```
 countNeedsYou(classId) =
     count of captures in {unassigned, attached, draft}     // existing countInbox
-  + count of submissions for this class with status submitted
+  + count of submissions for this class with status completed
 ```
 
 Implement as `countNeedsYou` next to `countInbox` in `src/lib/captures/api.ts` (join assignments by `class_id` for the practice half). Do not invent a notifications table.
@@ -1055,7 +1068,7 @@ Implement as `countNeedsYou` next to `countInbox` in `src/lib/captures/api.ts` (
 |---|---|
 | Header bell (teacher) | `countNeedsYou(activeClassId)` |
 | Inbox tray icon | same number |
-| Header bell (student) | count of that student’s submissions with `status = assigned` |
+| Header bell (student) | count of that student’s submissions with `status` in `assigned` · `started` |
 | Header bell (parent) | `1` if the bound child has a `parent_sentence` **or** a practice status of assigned/done **and** `kelyra.parent.lastSeenAt` is older than the newest of those timestamps; else `0`. Persist `lastSeenAt` when `/parent` or `/notifications` focuses. Do not invent unread rows |
 | House icon | never |
 
@@ -1194,7 +1207,7 @@ No chrome. Centered column, `maxWidth` 400, both orientations.
 6. If `listInbox` is non-empty, a short **Needs you** `WorkShelf` (max 12).
 7. Optional quiet `ListRow`s only if we still need a teaching cue: `Add students` → Setup, shown **only** when roster is empty.
 
-**This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = submitted`).
+**This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = completed`).
 
 **Needs you.** Hide the people tray. Vertical `WorkRow` of `listInbox` + turned-in practice. This is the same pile as the bell.
 
@@ -1358,11 +1371,11 @@ Swipe Approve on a work row **opens this same decision**, already scrolled to th
 - **Heatmap** is this file with `?view=heatmap` (or in-page switch): the existing `Heatmap` fills the body.
 - **Grade book** is the existing `StickyTable`.
 
-**Primary.** None. Ghost `Export CSV` when there are columns.
+**Primary.** None. Ghost `Export CSV` floats just above the tray in a rounded `elevated` plate (`trayRadius`, 1 px `line`, same whisper shadow as the tray) so the grid does not show through the letters. On hide-on-scroll it travels farther than the tray so both leave the screen, and Screen’s bottom tray pad collapses so the grid uses the space. No PhaseBanner on this screen.
 
 **Portrait.** Table `flex: 1` (`Screen scroll={false}`). Heatmap same.
 
-**Landscape.** Frozen name 148 / 168. Assignment columns 88 / 96. Student-column names under the 56 avatar **marquee** (§30) — do not wrap. Frozen assignment titles stay 2 lines. Header 44 in `phone-landscape`.
+**Landscape.** Frozen name 148 / 168. Assignment columns 88 / 96. Student-column names under the 56 avatar **marquee** (§30) — do not wrap. Frozen **class** and **assignment** titles **marquee** (§30); unit/section labels do not. Chevrons stay put. Header 44 in `phone-landscape`.
 
 **Empty book.** `No columns yet. Approve work or assign practice.`
 
@@ -1765,16 +1778,17 @@ Numbered. Prompts are `body`. Student placeholder `Your answer`. UI title uses `
 
 ### 15.3 Grade book cells and CSV
 
-`formatCell` and `gradebookToCsv` stay in lockstep:
+`formatCell` and `gradebookToCsv` stay in lockstep. The **grid** shows glyphs for assigned / started / completed (`GradebookCellMark`) and the mark after graded.
 
-| Cell | String |
-|---|---|
-| no submission | `—` |
-| `assigned` | `Assigned` |
-| `submitted` | `In` |
-| `approved` + score | the number, e.g. `8` |
-| `approved` no score | `Done` |
-| `draft_scored` | `Draft` |
+| Cell | CSV / `formatCell` | Grid |
+|---|---|---|
+| no submission | `—` | `—` |
+| `assigned` | `Assigned` | empty circle (`statusAssigned`) |
+| `started` | `Started` | circle + dot (`statusStarted`) |
+| `completed` | `Completed` | circle + check (`statusCompleted`) |
+| `graded` + score | the number, e.g. `8` | same |
+| `graded` pass/fail | `Pass` / `Fail` | same |
+| `graded` no score | `Graded` | same |
 
 CSV header: `Student,` then each `assignment.title`. File name `{class}-gradebook.csv`. Light-surface, UTF-8, no color.
 
@@ -1832,7 +1846,7 @@ Three audiences. Ban internal enums on every surface.
 
 | Surface | Voice | Examples | Never |
 |---|---|---|---|
-| **Teacher** | Short, imperative, filing | `Approve` · `Save to Maya Chen` · `Needs a name` · `Give practice` · `Look at this` · `Ask` | `draft_scored`, `unassigned`, `attachCapture`, `Grok`, `classify-capture` |
+| **Teacher** | Short, imperative, filing | `Approve` · `Save to Maya Chen` · `Needs a name` · `Give practice` · `Look at this` · `Ask` | `completed` (not a grade), `unassigned`, `attachCapture`, `Grok`, `classify-capture` |
 | **Student** | A worksheet | `Join your class` · `Pick your name` · `Your answer` · `Turn in` · `In Room 14 math.` | Scores, other children’s last names + gaps, `submission` |
 | **Parent** | A note home | `This week Maya is working on` · `Assigned` / `Done` / `None yet` · `From the teacher` | Scores, photos, other children, `Grok`, `Inbox`, `Approve` |
 
@@ -2545,7 +2559,7 @@ A teacher-owned **column** on a class. It can exist before anyone turns work in.
 
 | Information | Primitive | Why |
 |---|---|---|
-| The assignment list | `WorkRow` + swipe | Same job as Inbox: a thing I can open or delete |
+| The assignment list | `WorkRow` + swipe | Same job as Inbox: a thing I can act on. **Open** pill starts the work; the row itself does not. |
 | Due-soon strip | `ChipRow` | Horizontal shelf, like Amazon departments |
 | Kind / weight / term / mark | `Chip` in `ChipRow` | Never a wall of `SecondaryButton`s |
 | Capture picker | `AssignmentPicker` (horizontal cards) | Same muscle as `AvatarTray` |
@@ -2591,9 +2605,9 @@ Each `WorkRow`:
 - `lead` = `AssignmentMark` 48
 - Title = assignment title
 - Status = kind · due
-- Meta = weight summary (`Major · Quarter 2` / `15% · Semester`)
+- Meta = weight summary (`Major · Quarter 2` / `15% · Semester 1`). Year is the default and stays off the meta line.
 - Badge `assigned`
-- Pills: **Open** · **Grade book**
+- Pills: **Open** · **Grade book**. **Open** is the only control that starts the assignment (student work or teacher lesson preview). Tapping the media or title does nothing. Cost: do not mint a lesson-host URL or load the pack until **Open**.
 - Swipe trailing **Open**, leading **Delete** (confirm sheet, no type-the-name)
 
 Empty: `No assignments yet. Create one — the column shows up empty until work is in.`
@@ -2602,7 +2616,7 @@ Empty: `No assignments yet. Create one — the column shows up empty until work 
 
 `AssignmentForm` on `/class/{id}/assignment/new` and `/{id}`. Capture **New** uses this exact screen (`returnTo: proposal`).
 
-Every choice row is a **horizontal `ChipRow`**. Title and custom % stay `TextField`. Due date field + chips Tomorrow / Next week / Clear. Optional **Unit** and **Section** fields (plus chips of names already used in the class) nest the grade-book tree.
+Every choice row is a **horizontal `ChipRow`**. Title and custom % stay `TextField`. Due date field + chips Tomorrow / Next week / Clear. Optional **Unit** and **Section** fields (plus chips of names already used in the class) nest the grade-book tree. **Counts toward:** Quarter 1–4, Semester 1, Semester 2, Year. No “This year.” New assignments default to Year. An assignment belongs to one bucket; the grade-book tabs roll up (Semester 1 = Q1 + Q2 + semester-only, Year = both semesters + year-only).
 
 **Answer key** (same form): chips **None · Photo · Typed items**. Photo of a blank worksheet runs `analyze-answer-key` and proposes editable items — teacher taps **Save assignment** to approve. A filled key is extracted, not solved. WorkRow status may include `Key · 12 items`. Capture match pre-selects the assignment when the printed page matches the stored print hash; teacher can change it. Evaluate scores against the key. Nothing is a grade until Approve.
 
@@ -2734,6 +2748,8 @@ We implement Music’s **sweep-and-reset**: hold at the start, crawl until the l
 |---|---|---|
 | `AvatarTray` caption | `firstName` (and `Unknown`) | center |
 | Grade-book + heatmap student heads | `firstName` under the 56 avatar | center |
+| Grade-book frozen **class** title | class name; no chevron | start |
+| Grade-book frozen **assignment** title | assignment title; no chevron slot | start |
 | `WorkShelf` caption | item title under the 72 thumb | center |
 | `AssignmentPicker` title | assignment title under the 56 mark | center |
 | `ListRow` title | name / row title next to 36 `Avatar` | start |
@@ -2742,10 +2758,11 @@ We implement Music’s **sweep-and-reset**: hold at the start, crawl until the l
 | `/profile`, `/parent` stacked names | name under 72 / 56 | center |
 | `HamburgerDrawer` **teacher** identity | display name or email next to 36 photo | start |
 | `ClassmateSheet` name | first name under 72 | center |
+| `PersonTabs` selected label | selected tab name (next to the 22 glyph when the row has icons) | start |
 
 **Do not marquee**
 
-Buttons, chips, context-menu pills, swipe tiles, PhaseBanner, `SectionHeader`, search fields, body / leads / confirm copy, Ask bubbles, `WorkingLine`, the header **wordmark**, `ListRow` **status**, `WorkRow` **status and meta**, AssignmentPicker **meta**, frozen grade-book assignment titles (2 lines), heatmap frozen gap labels (2 lines), `FloatingTabTray` labels.
+Buttons, chips, context-menu pills, swipe tiles, PhaseBanner, `SectionHeader`, search fields, body / leads / confirm copy, Ask bubbles, `WorkingLine`, `ListRow` **status**, `WorkRow` **status and meta**, AssignmentPicker **meta**, grade-book **unit** and **section** labels, heatmap frozen gap labels (2 lines), `FloatingTabTray` labels. The header wordmark **does** marquee (§3.2). Unselected `PersonTabs` have no label.
 
 One identity string per picture. Two tickers in one row is a carnival.
 
@@ -2914,10 +2931,17 @@ The default tab is the **first** tab so the primary job is one tap away. Details
 | Staff | **Classes** · Role · Children · **Details** | **Classes** |
 | People (`/?tab=people`) | **Staff** · Parents · Students | **Staff** |
 | School (`/`) | **Feed** · Classes · People · Manage · **New** | **Classes** |
+| Student assignments (`/todo`) | **To Do** (`practice`) · **Done** (`statusCompleted`, same circle-check as assignment completed) · then **All** · each enrolled class | **To Do** · **All** |
+| Student feed (`/student/feed`) | Each enrolled class feed (feed icons), **school feed last** (school feed mark) | First class |
+| Student class (`/student/class`) | Enrolled classes, then **Feed** · Students · Assignments · Grades. Assignments adds **To Do** (`practice`) · **Done** (`statusCompleted`) | First class · **Feed** |
+| Student grades (`/student/grades`) | **All** · each enrolled class. Body is the class **grade book** (`StickyTable`): assignments nested under class, then **unit · section** on one expandable row. **One student column** (this login) **pinned to the right**; the assignment tree uses the rest of the row so titles are not clipped. Cells: status icons until graded, then the mark. No classmates, no CSV, no delete, no Open-from-cell. Class · Grades is the same book filtered to that class. | **All** |
+| Student people (`/student/people`) | **All** · each class · Teachers · Parents | **All** |
 | Class desk (`/class/{id}` and siblings) | **Feed** · Today · This week · Needs you · Students · Parents · Gradebook · Heatmap · Assignments · **Family** | **Today** |
 | Office class (`/admin/class/{id}`) | **Feed** · Roster · **Teacher** | **Teacher** |
 
 Opening a different student or parent resets to that default. Do not remember Details across people. A `?capture=` deep link (swipe Approve from a work row) lands on **Focus** and shows that capture. Switching panes must not discard an unsaved draft score or gap field — that state lives on the screen, not inside the tab control.
+
+Student People (and Class · Students) open a contact sheet on a name tap. **Message** is shown only when `can_message` allows that pair (student: own teachers + admins). A login on the other person is not enough — classmates and parents stay Close-only. The button uses `message_directory`, the same list as New Message.
 
 Login is not its own tab. Assigned handle, email, assign / unassign, Change password, and Sign out live on **Details**.
 
@@ -2930,18 +2954,37 @@ Row height 44 (the hit). Gap 4. Leading inset = page pad (16 phone / 24 tablet).
 | State | Size | Fill | Icon | Label |
 |---|---|---|---|---|
 | **Unselected** | 44 × 44. `radius.pill` on a square reads as a circle. Pad 11. | None (transparent). No border. | 22, `mute` | Hidden |
-| **Selected** | Height 44, width = 12 pad + 22 icon + 8 gap + label. `radius.pill`. | `brandSoft` | 22, `brand` | `type.pill` 14 / 600, `brand`, `numberOfLines={1}`. **`maxWidth` = 50% of the measured tab row.** The text — not the whole chip — takes at most half the row. |
+| **Selected** | Height 44, width = 22 hit pad + 22 glyph + 8 gap + **title slot**. `radius.pill`. | `brandSoft` | 22, `brand` | `type.pill` 14 / 600, `brand`, `numberOfLines={1}`. Title slot = **min(painted title, max for this row)**. Do not leave empty title space. |
 | Press | — | Opacity 0.85 | — | — |
 
-Unselected is icon-only. Only the selected tab shows its English name. If the name cannot fit the 50% clip, truncate; do **not** marquee a tab label (§30.1 already bans chips and buttons).
+Unselected is icon-only. Only the selected tab shows its English name.
+
+**Counts toward glyphs.** Grade-book period tabs use pie-slice `IconName`s (`termAll` … `termYear`), not a labels-only row. Clock from 12: Quarter 1 = upper-right fill, Q2 lower-right, Q3 lower-left, Q4 upper-left. Semester 1 = right half, Semester 2 = left half. **All** is a solid disk; **Year** is a filled disk inside a rim. Same selected-name / icon-only rule as every other PersonTabs row. Do not use `ChipRow` for this filter.
+
+**Title slot.** The width used for the selected name is the lesser of (1) the painted title at `type.pill` and (2) the max allowed for that row. Subtract the 22 glyph (icon or teacher avatar), 8 gap, 22 hit pad, and 8 row-end pad from the measured tab scroller before the title may grow. Trailing mute / extra chrome sits outside the scroller and is already gone from that width.
+
+- **Several tabs:** max is **50% of the measured tab row** (so unselected 44-hits still fit). Marquee if the title is longer than that half.
+- **One tab in the row:** max is the leftover scroller after the glyph/avatar chrome above — **not** half the row. A short class name hugs the title. A long class name uses the rest of the row and marquees only if it still overflows. Do not ellipsis.
+
+Fade color is the selected pill (`brandSoft`). This is the one exception to §30.1 “no marquee on chips”: `PersonTabs` is icon-first chrome, not a ChipRow. Helper: `src/components/ui/personTabsLayout.ts`.
+
+**Teacher faces only on a class-only row.** The 22 glyph is the class teacher’s `Avatar` (photo if set, else initials) **only** when every tab in that row is a class — student **Classes** (`/student/class`) is the case. Do not use teacher faces on a feed picker, or on a mixed row.
+
+**Feeds use feed icons.** Student **Feeds** (`/student/feed`) is class feeds plus the school-wide feed last. Those tabs are feeds, not classes: each 22 glyph is that feed’s chosen mark (`asFeedIcon`, school default `feedSchool`, class default `feedClass`). Never a teacher avatar, never initials of the school name.
+
+**Mixed class rows use icons.** Assignments, Grades, and People prepend **All** (and People adds **Teachers** / **Parents**). Those rows are not class-only: class chips use the class feed icon; **All** / **Teachers** / **Parents** keep `work` / `grades` / `setup` / `person` / `parents`. Hamburger class rows and the teacher class desk are unchanged.
+
+**Stacked rows** (student Class, Assignments). Consecutive `PersonTabs` share one hairline under the last row. Inner rows set `stacked`: `marginBottom: 0`, no border. No Amazon context row on student screens — those filters are `PersonTabs` in the page, same as school home. Do not use `Chip` / `ChipRow` for student destination filters.
 
 **Scroll into view.** On select, `scrollTo` the tab’s `x` minus a 12 pt lead so the selected pill is not clipped. First tab (Focus / Login) scrolls to `x = 0`. Reduce Motion: jump with `animated: false`. Do not spring. Do not auto-center the way a `UITabBar` would.
 
-**Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Pushed person pages still omit the Amazon Class context row (§3.6). Hide-on-scroll still applies only to the floating tray.
+**Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Student destinations omit the Amazon context row entirely (`contextReserve = 0`) so there is no empty band above the first `PersonTabs`. Pushed person pages still omit the Amazon Class context row (§3.6). Hide-on-scroll still applies only to the floating tray.
 
 Phone: one column, portrait and landscape. In student landscape (`width >= 640`) the Focus **pane** may still split photo left / Approve right as §13.6; the tab row itself stays one full-width row under the hero. Do not put tabs in a second column.
 
 Pane change is instant. No cross-fade, no spring, no second WorkingMark.
+
+**In-page tabs stay on the same screen.** Class chips, Feed / Students / Assignments / Grades, To Do / Done, and People filters update selected state immediately so the pill can animate. Do not `router.replace` the page for those taps — that remounts chrome, flashes WorkingMark, and re-downloads photos. `router.setParams` may update the URL. Keep the `PersonTabs` row mounted while the pane body swaps. Teacher avatars use one batched, cached signed **thumb** per unique photo path (same `RemoteImage` cache key across tokens). Do not `createSignedUrl` the original, and do not re-sign on every tab tap.
 
 ### 32.3 Icon set
 
@@ -2958,6 +3001,21 @@ Extend `src/components/ui/Icon.tsx`. Custom `View` strokes at 1.5–2 pt (`Math.
 **Practice** — English **Practice**. SF Symbol `checklist`. `IconName` `practice`. Two rows. Each row is a 3-radius square box about 18% of `size` plus a stroke bar to the right. Mark the first box with a short inner bar (a tick, not a brand fill). Practice is items to do, not the photo of work.
 
 **Details** — English **Details**. SF Symbol `list.bullet`. `IconName` `details`. Three horizontal stroke bars stacked, widths about 100% / 78% / 56% of a 62% `size` column, gap about 12%. That is label/value rows. Not `settings`’ cog.
+
+**Counts toward** — Grade-book period tabs. One stroke circle (same 22 well as status glyphs). Fill is a clock pie from 12:
+
+| Tab | `IconName` | Fill |
+|---|---|---|
+| All | `termAll` | Solid disk |
+| Quarter 1 | `termQ1` | Upper-right quadrant (12–3) |
+| Quarter 2 | `termQ2` | Lower-right (3–6) |
+| Quarter 3 | `termQ3` | Lower-left (6–9) |
+| Quarter 4 | `termQ4` | Upper-left (9–12) |
+| Semester 1 | `termS1` | Right half (Q1+Q2) |
+| Semester 2 | `termS2` | Left half (Q3+Q4) |
+| Year | `termYear` | Filled disk inside a rim |
+
+Recipes in `scripts/build-icons.mjs`. Do not draw these as View strokes.
 
 **Children** (parent page; staff Children if reused) — English **Children**. `IconName` `children`. Same holding-hands pose as Parents, but the right figure is about 66% and bottom-aligned. The U sits at the child’s chest. One grown-up and one kid. Do not reuse `parents` or the house `today`.
 
@@ -2991,7 +3049,7 @@ Nothing on these panes is a grade until Approve. The matcher still never inserts
 
 ### 32.5 ASCII — 390-wide phone, six student tabs, Focus selected
 
-Page pad 16. Row ≈ 358. Unselected hits 44. Selected label max 179 (half the row). Details may clip; swipe the row. No dots. No underline.
+Page pad 16. Row ≈ 358. Unselected hits 44. Several tabs: selected label max 179 (half the row). One tab: selected label max is the leftover row after the 22 glyph + pad + gap (title hugs a short name). Details may clip; swipe the row. No dots. No underline.
 
 ```
 |<---------------------------- 390 pt ---------------------------->|
@@ -3475,7 +3533,7 @@ Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. 
 
 **Manage pane** (not the tray): superintendent **School name** + **School logo**, school feed icon, **Activity**, **Responsibilities** (superintendent). One `ListRow` stack, each with a 36 leading glyph so titles line up. No People row. No Messages row. Parent hat may still show **My children**. `manage` is three slider tracks with knobs — not the Settings cog and not the schoolhouse. `/?tab=school` still opens this pane.
 
-Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The school logo, when set, stays **upper left** on every signed-in header (22×22 contain), including while search is open. Back still leads on pushed screens; the logo sits immediately after it.
+Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The **school logo** (uploaded mark, circular punch) stays **upper left** on every signed-in header (22×22 contain) — student, parent, teacher, office — including while search is open. Do not draw `feedSchool` or any other glyph in that slot. Back still leads on pushed screens; the logo sits immediately after it.
 
 **People pane:** nested Staff · Parents · Students. Create-account is not a fourth people tab.
 

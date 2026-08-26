@@ -1,8 +1,9 @@
+import { submissionStatusLabel } from '@/lib/assignments/status';
 import type { StudentCapture } from '@/lib/gaps/api';
 import type { StudentPractice } from '@/lib/practice/api';
 import { focusLogFromMetadata } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { StudentRow } from '@/lib/supabase/types';
+import type { SkillGapRow, StudentRow } from '@/lib/supabase/types';
 
 export type SkillHistoryRow = {
   id: string;
@@ -18,17 +19,18 @@ export function focusSkillLabel(
   student: StudentRow | null,
   captures: StudentCapture[],
   storedLabel?: string | null,
+  extraGaps: SkillGapRow[] = [],
 ): string | null {
   if (storedLabel?.trim()) return storedLabel.trim();
   if (!student?.current_focus_skill_id) return null;
   for (const capture of captures) {
     for (const gap of capture.gaps) {
-      if (gap.skill_id === student.current_focus_skill_id || gap.status === 'approved') {
-        return gap.label;
-      }
+      if (gap.skill_id === student.current_focus_skill_id) return gap.label;
     }
   }
-  return null;
+  const fromAssignment = extraGaps.find((gap) => gap.skill_id === student.current_focus_skill_id);
+  if (fromAssignment) return fromAssignment.label;
+  return extraGaps.find((gap) => gap.status === 'approved')?.label ?? null;
 }
 
 export async function loadFocusSkillLabel(skillId: string | null): Promise<string | null> {
@@ -46,6 +48,7 @@ export function buildSkillHistory(
   student: StudentRow | null,
   captures: StudentCapture[],
   practice: StudentPractice[],
+  extraGaps: SkillGapRow[] = [],
 ): SkillHistoryRow[] {
   const focusId = student?.current_focus_skill_id ?? null;
   const rows: SkillHistoryRow[] = [];
@@ -73,6 +76,21 @@ export function buildSkillHistory(
         isFocus: false,
       });
     }
+  }
+
+  const seen = new Set(rows.flatMap((row) => (row.gapId ? [row.gapId] : [])));
+  for (const gap of extraGaps) {
+    if (seen.has(gap.id) || gap.status === 'dismissed' || !gap.label.trim()) continue;
+    seen.add(gap.id);
+    rows.push({
+      id: `gap-${gap.id}`,
+      at: gap.created_at,
+      label: gap.label,
+      detail: `${formatWhen(gap.created_at)} · ${humanGapStatus(gap.status)}${gap.submission_id ? ' · assignment' : ''}`,
+      isFocus: Boolean(focusId && gap.skill_id === focusId),
+      gapId: gap.id,
+      gapStatus: gap.status,
+    });
   }
 
   for (const item of focusLogFromMetadata(student?.metadata)) {
@@ -108,10 +126,7 @@ function humanGapStatus(status: string): string {
 }
 
 function humanPracticeStatus(status: string): string {
-  if (status === 'assigned' || status === 'draft_scored') return 'Assigned';
-  if (status === 'submitted') return 'Turned in';
-  if (status === 'approved') return 'Done';
-  return status;
+  return submissionStatusLabel(status) || status;
 }
 
 function formatWhen(value: string): string {

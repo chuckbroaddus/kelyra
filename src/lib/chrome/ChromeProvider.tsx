@@ -22,6 +22,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { chrome } from '@/constants/theme';
+import { isOpenWork } from '@/lib/assignments/status';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { unreadCount } from '@/lib/messages/api';
 import { isOfficeRole, isStaffRole, isTeacherRole } from '@/lib/school/roles';
@@ -42,15 +43,30 @@ import { useLayout } from '@/lib/theme/layout';
 
 export type ChromeRole = 'superintendent' | 'administrator' | 'teacher' | 'student' | 'parent' | 'none';
 
+export type HeaderChrome = {
+  hideBack?: boolean;
+  hideBackOnNative?: boolean;
+  hideMenu?: boolean;
+  hideSearch?: boolean;
+  hideMail?: boolean;
+  hideCapture?: boolean;
+  showClose?: boolean;
+};
+
 type ChromeValue = {
   role: ChromeRole;
   visible: boolean;
+  forceHidden: boolean;
   setForceHidden: (hidden: boolean) => void;
+  headerChrome: HeaderChrome;
+  setHeaderChrome: (next: HeaderChrome | null) => void;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showChrome: () => void;
   trayTranslate: Animated.Value;
+  /** Distance the tray travels when it hides. Overlay chrome (Export CSV) should travel at least this far plus its own height. */
+  trayHideDistance: number;
   contextTranslate: Animated.Value;
   trayOpacity: Animated.Value;
   contextOpacity: Animated.Value;
@@ -73,6 +89,8 @@ type ChromeValue = {
   setPushedTitle: (title: string | null, path?: string) => void;
   setPushedBackHandler: (handler: (() => boolean) | null) => void;
   requestPushedBack: () => boolean;
+  setHeaderCloseHandler: (handler: (() => void) | null) => void;
+  requestHeaderClose: () => boolean;
   badgeCount: number;
   messageCount: number;
   classId: string | null;
@@ -112,12 +130,14 @@ const ChromeContext = createContext<ChromeValue | null>(null);
 
 function isPushedPath(pathname: string): boolean {
   return (
-    pathname.includes('/student/') ||
+    /\/class\/[^/]+\/student\//.test(pathname) ||
     pathname === '/parent' ||
     pathname.includes('/parent/') ||
     pathname.includes('/assignment/') ||
+    pathname.includes('/lesson') ||
     pathname === '/search' ||
     pathname === '/feed' ||
+    /^\/todo\/[^/]+/.test(pathname) ||
     pathname === '/notifications' ||
     pathname.startsWith('/notifications/') ||
     pathname === '/proposal' ||
@@ -137,6 +157,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
 
   const [forceHidden, setForceHidden] = useState(false);
+  const [headerChrome, setHeaderChromeState] = useState<HeaderChrome>({});
+  const setHeaderChrome = useCallback((next: HeaderChrome | null) => {
+    setHeaderChromeState(next ?? {});
+  }, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,6 +219,15 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const requestPushedBack = useCallback(() => {
     return pushedBackHandler.current ? pushedBackHandler.current() : false;
   }, []);
+  const headerCloseHandler = useRef<(() => void) | null>(null);
+  const setHeaderCloseHandler = useCallback((handler: (() => void) | null) => {
+    headerCloseHandler.current = handler;
+  }, []);
+  const requestHeaderClose = useCallback(() => {
+    if (!headerCloseHandler.current) return false;
+    headerCloseHandler.current();
+    return true;
+  }, []);
 
   const headerHeight =
     (landscape ? chrome.headerHeightLandscape : chrome.headerHeight) + insets.top;
@@ -245,7 +278,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     if (isPushedPath(pathname)) return 0;
     if (pathname === '/ask' || pathname === '/profile' || pathname === '/messages' || pathname === '/activity') return 0;
     // School home and class desk use in-page PersonTabs, not the Amazon context row.
-    if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname)) return 0;
+    if (role === 'student') return 0;
+    if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname) || pathname.startsWith('/student/')) return 0;
     return contextH;
   }, [role, pathname, contextH]);
 
@@ -256,7 +290,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const hideDistance =
-    (layout.showTopBar ? 0 : trayHeight) + (localTray ? trayHeight + 8 : 0) + bottomInset + 12;
+    (layout.showTopBar ? 0 : trayHeight) + (localTray ? trayHeight + 8 : 0) + bottomInset + 28;
 
   const animate = useCallback(
     (show: boolean, opts?: { system?: boolean; local?: boolean }) => {
@@ -283,7 +317,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           useNativeDriver: true,
         }),
         Animated.timing(trayOpacity, {
-          toValue: show ? 1 : 0.85,
+          toValue: show ? 1 : 0,
           duration: dur,
           easing: ease,
           useNativeDriver: true,
@@ -303,7 +337,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           useNativeDriver: true,
         }),
         Animated.timing(localTrayOpacity, {
-          toValue: show ? 1 : 0.85,
+          toValue: show ? 1 : 0,
           duration: dur,
           easing: ease,
           useNativeDriver: true,
@@ -338,6 +372,26 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const showChrome = useCallback(() => animate(true), [animate]);
 
   useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.visualViewport) {
+      const vv = window.visualViewport;
+      const sync = () => {
+        const cover = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        if (cover > 80) {
+          setKeyboardVisible(true);
+          setKeyboardHeight(cover);
+        } else {
+          ignoreScrollUntil.current = Date.now() + 450;
+          setKeyboardVisible(false);
+          setKeyboardHeight(0);
+        }
+      };
+      vv.addEventListener('resize', sync);
+      vv.addEventListener('scroll', sync);
+      return () => {
+        vv.removeEventListener('resize', sync);
+        vv.removeEventListener('scroll', sync);
+      };
+    }
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const show = Keyboard.addListener(showEvt, (event) => {
@@ -528,7 +582,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
         const items = await listStudentTodo();
         const alerts = await countAlertsForMe().catch(() => 0);
         if (!cancelled) {
-          setBadgeCount(items.filter((item) => item.status === 'assigned').length + alerts);
+          setBadgeCount(items.filter((item) => isOpenWork(item.status)).length + alerts);
         }
       } catch {
         if (!cancelled) setBadgeCount(0);
@@ -553,7 +607,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       try {
         const { listStudentTodo } = await import('@/lib/student-session/api');
         const items = await listStudentTodo();
-        setBadgeCount(items.filter((item) => item.status === 'assigned').length + alerts);
+        setBadgeCount(items.filter((item) => isOpenWork(item.status)).length + alerts);
       } catch {
         setBadgeCount(alerts);
       }
@@ -751,12 +805,16 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     () => ({
       role,
       visible,
+      forceHidden,
       setForceHidden,
+      headerChrome,
+      setHeaderChrome,
       drawerOpen,
       setDrawerOpen,
       onScroll,
       showChrome,
       trayTranslate,
+      trayHideDistance: hideDistance,
       contextTranslate,
       trayOpacity,
       contextOpacity,
@@ -779,6 +837,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setPushedTitle,
       setPushedBackHandler,
       requestPushedBack,
+      setHeaderCloseHandler,
+      requestHeaderClose,
       badgeCount,
       messageCount,
       classId,
@@ -807,10 +867,14 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     [
       role,
       visible,
+      forceHidden,
+      headerChrome,
+      setHeaderChrome,
       drawerOpen,
       onScroll,
       showChrome,
       trayTranslate,
+      hideDistance,
       contextTranslate,
       trayOpacity,
       contextOpacity,
@@ -826,6 +890,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       pushedTitle,
       setPushedBackHandler,
       requestPushedBack,
+      setHeaderCloseHandler,
+      requestHeaderClose,
       badgeCount,
       messageCount,
       classId,

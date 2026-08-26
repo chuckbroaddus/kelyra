@@ -30,7 +30,7 @@ Ship only what the core loop needs. If a teacher cannot photograph an exit ticke
 | M8 | **Student to-do** | That student opens a class link, sees only their assigned set, and submits answers. Practice with no place to do it is theater. |
 | M9 | **Simple grade book** | Teacher-only grid: students × a few columns (captured work + assigned practice). Score or mark after Approve. Draft vs done. No weights, no categories, no CSV yet. |
 | M10 | **Phone captures; web reviews and assigns** | Mobile is record/camera/inbox. Web is student page, generate/assign, grade book. |
-| M11 | **Lightweight student/parent progress view** | Student: assigned / done / focus skill. Parent: same, plus the teacher-approved one-liner, via an invite link for that child only. No grade book, no points, no weekly email. |
+| M11 | **Lightweight student/parent progress view** | Student: assigned / started / completed / graded / focus skill. Parent: same, plus the teacher-approved one-liner, via an invite link for that child only. No grade book, no points, no weekly email. |
 
 FERPA is a constraint on all of the above, not a feature: paid model tier, no training on student work, teacher Approve before a student sees anything.
 
@@ -238,7 +238,7 @@ Lightweight. No points, no leaderboard, no weekly email, no grade-book grid.
 2. Home is only:
    - current focus skill (after teacher Approve)
    - practice to-do (items + submit)
-   - last practice: **Done** or **Not started**
+   - last practice: **Assigned** / **Started** / **Completed** / **Graded**
 3. They do not see drafts, other students, or the teacher grade book.
 4. Submit locks the attempt. They cannot edit after submit. Teacher can still change the approved score.
 
@@ -249,14 +249,14 @@ Lightweight. No points, no leaderboard, no weekly email, no grade-book grid.
 3. They see one screen:
    - child’s name and class
    - current focus skill
-   - practice status: assigned / done
+   - practice status: assigned / started / completed / graded
    - the one teacher-approved sentence, if any (“Still working on regrouping. Five problems assigned.”)
 4. They do not see: drafts, scores, the photo of the work, the grade book, or any other child.
 5. If the teacher has not Approved yet, the parent view is empty except the child’s name. Silence is correct.
 
 **4c. What “progress” means in v1**
 
-Assigned → Done on the current focus skill. That is the signal. Trends, streaks, and weekly mail wait.
+Assigned → Started → Completed → Graded on the current work. That is the signal. Trends, streaks, and weekly mail wait.
 
 ---
 

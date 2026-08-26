@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -14,6 +14,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
+import { AssignmentWorkList } from '@/components/ui/AssignmentWorkList';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
@@ -32,13 +33,18 @@ import { formatHandle, isAdminRole } from '@/lib/school/roles';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { deleteCapture } from '@/lib/captures/delete';
 import { returnCaptureToInbox } from '@/lib/captures/api';
+import { formatUsd } from '@/lib/ai/policy';
+import { isOpenWork } from '@/lib/assignments/status';
 import { firstName, formatWhen } from '@/lib/format';
 import { deleteGap } from '@/lib/gaps/delete';
 import {
   addTeacherGap,
   analyzeAttachedCapture,
+  lookAgainCapture,
   approveCapture,
+  draftCostUsd,
   listStudentCaptures,
+  listStudentGaps,
   markNoteOnly as markCaptureNoteOnly,
   updateGapLabel,
   type StudentCapture,
@@ -69,6 +75,7 @@ import {
   uploadProfilePhoto,
 } from '@/lib/people/photos';
 import { deletePracticeSet, deleteSubmission } from '@/lib/practice/delete';
+import { lessonDueText } from '@/lib/lessons/api';
 import {
   assignPractice,
   listStudentPractice,
@@ -76,6 +83,7 @@ import {
   savePracticeItems,
   type StudentPractice,
 } from '@/lib/practice/api';
+import { answerText, submissionReviewPath } from '@/lib/practice/review';
 import { closeFocusSkill, getStudent, patchStudentMetadata, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import { deleteStudent, listStudentEnrollments, removeEnrollment } from '@/lib/students/delete';
 import type { PracticeItem, ProfileRow, SkillGapRow, StudentRow } from '@/lib/supabase/types';
@@ -111,14 +119,16 @@ export default function StudentScreen() {
   const canLinkParents = isAdminRole(profile);
   const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { isSplit } = useScreenPad();
-  const { id: classId, studentId, capture: captureParam } = useLocalSearchParams<{
+  const { id: classId, studentId, capture: captureParam, tab: tabParam } = useLocalSearchParams<{
     id: string;
     studentId: string;
     capture?: string;
+    tab?: string;
   }>();
   const [student, setStudent] = useState<StudentRow | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [captures, setCaptures] = useState<StudentCapture[]>([]);
+  const [gaps, setGaps] = useState<SkillGapRow[]>([]);
   const [practice, setPractice] = useState<StudentPractice[]>([]);
   const [parents, setParents] = useState<ClassParent[]>([]);
   const [enrollments, setEnrollments] = useState<Array<{ class_id: string; class_name: string }>>([]);
@@ -129,6 +139,7 @@ export default function StudentScreen() {
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const assigningRef = useRef(false);
   const [storedFocusLabel, setStoredFocusLabel] = useState<string | null>(null);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -148,16 +159,20 @@ export default function StudentScreen() {
   const [tab, setTab] = useState('focus');
 
   useEffect(() => {
-    setTab('focus');
-  }, [studentId]);
+    const raw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+    const pane = typeof raw === 'string' && STUDENT_TABS.some((item) => item.key === raw) ? raw : 'focus';
+    setTab(pane);
+  }, [studentId, tabParam]);
 
   const load = useCallback(async () => {
     if (!studentId) return;
     const nextStudent = await getStudent(studentId);
     const nextCaptures = await listStudentCaptures(studentId);
+    const nextGaps = await listStudentGaps(studentId);
     setStudent(nextStudent);
     setPhotoUrl(await signedProfileUrlForAssetId(nextStudent.photo_asset_id));
     setCaptures(nextCaptures);
+    setGaps(nextGaps);
     setParents(await listParentsForStudent(studentId));
     setEnrollments(await listStudentEnrollments(studentId));
     try {
@@ -214,7 +229,8 @@ export default function StudentScreen() {
     }));
 
   const onAssignGap = async (alsoPractice: boolean) => {
-    if (!latest || !studentId || !classId || assigning) return;
+    if (!latest || !studentId || !classId || assigningRef.current) return;
+    assigningRef.current = true;
     setAssigning(true);
     setError(null);
     setStatus(alsoPractice ? 'Approving and creating practice…' : 'Approving…');
@@ -244,6 +260,7 @@ export default function StudentScreen() {
       setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not assign that gap');
     } finally {
+      assigningRef.current = false;
       setAssigning(false);
     }
   };
@@ -270,37 +287,57 @@ export default function StudentScreen() {
   };
 
   const onAssignPractice = async () => {
-    if (!latest || !studentId || !classId) return;
-    const gap = latest.gaps.find((item) => item.status === 'approved' && item.skill_id);
-    if (!gap?.skill_id) {
+    if (!studentId || !classId || assigningRef.current) return;
+    const focusGap = gaps.find((item) => item.skill_id && item.skill_id === student?.current_focus_skill_id);
+    const fromCapture = latest?.gaps.find((item) => item.status === 'approved' && item.skill_id);
+    const fromAssignment = gaps.find((item) => item.status === 'approved' && item.skill_id);
+    const skillId = student?.current_focus_skill_id ?? fromCapture?.skill_id ?? fromAssignment?.skill_id;
+    const skillLabel = focusGap?.label ?? storedFocusLabel ?? fromCapture?.label ?? fromAssignment?.label;
+    if (!skillId || !skillLabel) {
       setError('Approve a gap first so there is a skill to practice.');
       return;
     }
-    setStatus(null);
+    assigningRef.current = true;
+    setAssigning(true);
+    setStatus('Creating practice…');
     setError(null);
     try {
-      await assignPractice({
+      const result = await assignPractice({
         classId,
         studentId,
-        skillId: gap.skill_id,
-        skillLabel: gap.label,
-        captureId: latest.id,
+        skillId,
+        skillLabel,
+        captureId: latest?.id,
       });
       await load();
+      setStatus(result.created ? 'Practice assigned.' : `Already has practice for ${skillLabel}.`);
     } catch (err) {
+      setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not assign practice');
+    } finally {
+      assigningRef.current = false;
+      setAssigning(false);
     }
   };
 
   const onCloseFocus = async (result: 'proficient' | 'dismissed') => {
-    if (!student || !focusLabel) return;
-    setStatus(null);
+    if (!student || assigningRef.current) return;
+    const label = storedFocusLabel ?? gaps.find((gap) => gap.skill_id === student.current_focus_skill_id)?.label;
+    if (!label) return;
+    assigningRef.current = true;
+    setAssigning(true);
+    setStatus(result === 'proficient' ? 'Marking proficient…' : 'Dismissing…');
     setError(null);
     try {
-      await closeFocusSkill(student, focusLabel, result);
+      await closeFocusSkill(student, label, result);
       await load();
+      setStatus(null);
     } catch (err) {
+      setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not update focus');
+    } finally {
+      assigningRef.current = false;
+      setAssigning(false);
     }
   };
 
@@ -507,13 +544,14 @@ export default function StudentScreen() {
     }
   };
 
-  const onAskGrok = async () => {
+  const onAskGrok = async (pass: 'cheap' | 'look-again' = 'cheap') => {
     if (!latest || asking) return;
     setAsking(true);
     setError(null);
-    setStatus('Asking AI… this can take a few seconds.');
+    setStatus(pass === 'look-again' ? 'Looking again with the flagship model…' : 'Drafting with the cheap model…');
     try {
-      await analyzeAttachedCapture(latest.id);
+      if (pass === 'look-again') await lookAgainCapture(latest.id);
+      else await analyzeAttachedCapture(latest.id, { pass: 'cheap' });
       await load();
       setStatus(null);
     } catch (err) {
@@ -527,8 +565,9 @@ export default function StudentScreen() {
   const canAskGrok =
     Boolean(latest?.photo_asset_id || latest?.photoUrls?.length) &&
     (latest?.status === 'attached' || latest?.status === 'draft');
-  const history = buildSkillHistory(student, captures, practice);
-  const focusLabel = focusSkillLabel(student, captures, storedFocusLabel);
+  const history = buildSkillHistory(student, captures, practice, gaps);
+  const focusLabel = focusSkillLabel(student, captures, storedFocusLabel, gaps);
+  const assignmentGaps = gaps.filter((gap) => gap.submission_id && gap.status !== 'dismissed' && gap.label.trim());
   const photos = latest?.photoUrls?.length
     ? latest.photoUrls
     : latest?.photoUrl
@@ -603,7 +642,21 @@ export default function StudentScreen() {
           )}
         </Pressable>
       ) : null}
-      <PersonTabs tabs={STUDENT_TABS} value={tab} onChange={setTab} />
+      <PersonTabs
+        tabs={STUDENT_TABS}
+        value={tab}
+        onChange={setTab}
+        trailing={
+          classId && studentId ? (
+            <IconButton
+              name="plus"
+              label="Assign"
+              tone="ghost"
+              onPress={() => router.push(`/class/${classId}/assignment/new?student=${studentId}` as never)}
+            />
+          ) : null
+        }
+      />
       {tab === 'details' ? (
       <DetailsRows
         rows={details}
@@ -625,11 +678,54 @@ export default function StudentScreen() {
           <Text style={[type.meta, { color: colors.mute }]}>No focus skill yet</Text>
         )}
       </View>
+      {assignmentGaps.length ? (
+        <>
+          <SectionHeader label="From assignments" first={!focusLabel} />
+          {assignmentGaps.map((gap) => (
+            <ListRow
+              key={gap.id}
+              title={gap.label}
+              status={gap.status === 'approved' ? 'Approved' : 'Review'}
+              avatarName={gap.label}
+              chevron={Boolean(classId && gap.submission_id)}
+              right={student?.current_focus_skill_id && gap.skill_id === student.current_focus_skill_id ? <Badge variant="focus" /> : null}
+              onPress={
+                classId && gap.submission_id
+                  ? () => router.push(submissionReviewPath(classId, gap.submission_id as string) as never)
+                  : undefined
+              }
+            />
+          ))}
+        </>
+      ) : null}
+      {student?.current_focus_skill_id && focusLabel ? (
+        <View style={styles.block}>
+          <SecondaryButton
+            disabled={assigning}
+            label={assigning ? 'Working…' : `Give practice for ${focusLabel}`}
+            onPress={() => void onAssignPractice()}
+          />
+          <SecondaryButton
+            disabled={assigning}
+            label={`Mark ${focusLabel} proficient`}
+            onPress={() => void onCloseFocus('proficient')}
+          />
+          <GhostButton
+            align="left"
+            disabled={assigning}
+            label="Dismiss focus"
+            onPress={() => void onCloseFocus('dismissed')}
+          />
+          {assigning ? <WorkingLine text={status || 'Working…'} /> : null}
+        </View>
+      ) : null}
       {!latest ? (
+        assignmentGaps.length ? null : (
         <>
           <Text style={[styles.empty, { color: colors.mute }]}>No work filed yet.</Text>
           <IconButton name="capture" label="Photograph work" onPress={() => router.push('/capture')} />
         </>
+        )
       ) : (
         <Card>
           <View style={isSplit ? styles.split : styles.stack}>
@@ -666,7 +762,9 @@ export default function StudentScreen() {
                 <Badge variant={captureBadge(latest.status)} />
               </View>
               {latest.gaps.length === 0 ? (
-                <Text style={[type.meta, { color: colors.mute }]}>No suggested gaps yet. Ask AI, or type one below.</Text>
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  No suggested gaps yet. Draft cheaply, Look again, or type one below.
+                </Text>
               ) : (
                 latest.gaps.map((gap) => (
                   <View key={gap.id} style={styles.gapRow}>
@@ -688,12 +786,9 @@ export default function StudentScreen() {
                 ))
               )}
               {latest.status === 'approved' ? (
-                <>
-                  <Text style={[styles.assigned, { color: colors.ink }]}>
-                    Approved for {student?.display_name ?? 'this student'}
-                  </Text>
-                  <PrimaryButton label="Give practice" onPress={() => void onAssignPractice()} />
-                </>
+                <Text style={[styles.assigned, { color: colors.ink }]}>
+                  Approved for {student?.display_name ?? 'this student'}
+                </Text>
               ) : latest.status === 'note_only' ? (
                 <Text style={[type.meta, { color: colors.mute }]}>Kept as a note</Text>
               ) : (
@@ -713,13 +808,26 @@ export default function StudentScreen() {
                     </>
                   ) : null}
                   {canAskGrok ? (
-                    <SecondaryButton
-                      disabled={asking}
-                      label="Ask AI"
-                      onPress={() => void onAskGrok()}
-                    />
+                    <>
+                      <SecondaryButton
+                        disabled={asking}
+                        label="Draft cheap"
+                        onPress={() => void onAskGrok('cheap')}
+                      />
+                      <GhostButton
+                        align="left"
+                        disabled={asking}
+                        label="Look again"
+                        onPress={() => void onAskGrok('look-again')}
+                      />
+                    </>
                   ) : null}
-                  {asking ? <WorkingLine text="Asking AI…" /> : null}
+                  {draftCostUsd(latest.model_draft as never) != null ? (
+                    <Text style={[type.meta, { color: colors.mute }]}>
+                      Last AI pass {formatUsd(draftCostUsd(latest.model_draft as never))}
+                    </Text>
+                  ) : null}
+                  {asking ? <WorkingLine text={status || 'Drafting…'} /> : null}
                   <TextField
                     placeholder="Add a gap, e.g. two-digit regrouping"
                     value={newGap}
@@ -733,15 +841,6 @@ export default function StudentScreen() {
           </View>
         </Card>
       )}
-      {student?.current_focus_skill_id && focusLabel ? (
-        <View style={styles.block}>
-          <SecondaryButton
-            label={`Mark ${focusLabel} proficient`}
-            onPress={() => void onCloseFocus('proficient')}
-          />
-          <GhostButton align="left" label="Dismiss focus" onPress={() => void onCloseFocus('dismissed')} />
-        </View>
-      ) : null}
       </>
       ) : null}
 
@@ -889,71 +988,77 @@ export default function StudentScreen() {
       </>
       ) : null}
 
-      {tab === 'work' ? (
-      <>
-      <SectionHeader label="Work" first />
-      {captures.length === 0 ? (
-        <Text style={[type.meta, { color: colors.mute }]}>No work filed yet.</Text>
-      ) : null}
-      {captures.map((item) => (
-        <WorkRow
-          key={item.id}
-          title={item.transcript?.trim() || 'Work'}
-          status={item.status === 'approved' ? 'Approved' : item.status === 'note_only' ? 'Note' : 'Review'}
-          meta={formatWhen(item.created_at)}
-          photoUrl={item.photoUrl}
-          badge={captureBadge(item.status)}
-          onPress={() => {
-            setTab('focus');
-            router.setParams({ capture: item.id });
+      {tab === 'work' && classId && studentId ? (
+        <AssignmentWorkList
+          classId={classId}
+          studentId={studentId}
+          renderAfter={(filter) => {
+            if (filter !== 'all' && filter !== 'homework') return null;
+            const loose = captures.filter((item) => item.status !== 'approved');
+            if (!loose.length) return null;
+            return (
+              <>
+                {loose.map((item) => (
+                  <WorkRow
+                    key={item.id}
+                    title={item.transcript?.trim() || 'Work'}
+                    status={item.status === 'note_only' ? 'Note' : 'Review'}
+                    meta={formatWhen(item.created_at)}
+                    photoUrl={item.photoUrl}
+                    badge={captureBadge(item.status)}
+                    onPress={() => {
+                      setTab('focus');
+                      router.setParams({ capture: item.id });
+                    }}
+                    pills={[
+                      ...(item.status === 'draft' || item.status === 'attached'
+                        ? [{
+                            key: 'approve',
+                            label: 'Approve',
+                            kind: 'primary' as const,
+                            onPress: () => {
+                              setTab('focus');
+                              router.setParams({ capture: item.id });
+                            },
+                          }]
+                        : []),
+                      {
+                        key: 'inbox',
+                        label: 'Inbox',
+                        kind: 'ghost' as const,
+                        onPress: () => setConfirm({ kind: 'inbox', capture: item }),
+                      },
+                      {
+                        key: 'delete',
+                        label: 'Delete',
+                        kind: 'ghost' as const,
+                        onPress: () => setConfirm({ kind: 'delete-work', capture: item }),
+                      },
+                    ]}
+                    trailing={[
+                      {
+                        key: 'delete',
+                        label: 'Delete',
+                        tone: 'danger',
+                        autoCommit: false,
+                        onPress: () => setConfirm({ kind: 'delete-work', capture: item }),
+                      },
+                    ]}
+                    leading={[
+                      {
+                        key: 'inbox',
+                        label: 'Inbox',
+                        tone: 'wash',
+                        autoCommit: false,
+                        onPress: () => setConfirm({ kind: 'inbox', capture: item }),
+                      },
+                    ]}
+                  />
+                ))}
+              </>
+            );
           }}
-          pills={[
-            ...(item.status === 'draft' || item.status === 'attached'
-              ? [{
-                  key: 'approve',
-                  label: 'Approve',
-                  kind: 'primary' as const,
-                  onPress: () => {
-                    setTab('focus');
-                    router.setParams({ capture: item.id });
-                  },
-                }]
-              : []),
-            {
-              key: 'inbox',
-              label: 'Inbox',
-              kind: 'ghost' as const,
-              onPress: () => setConfirm({ kind: 'inbox', capture: item }),
-            },
-            {
-              key: 'delete',
-              label: 'Delete',
-              kind: 'ghost' as const,
-              onPress: () => setConfirm({ kind: 'delete-work', capture: item }),
-            },
-          ]}
-          trailing={[
-            {
-              key: 'delete',
-              label: 'Delete',
-              tone: 'danger',
-              autoCommit: false,
-              onPress: () => setConfirm({ kind: 'delete-work', capture: item }),
-            },
-          ]}
-          leading={[
-            {
-              key: 'inbox',
-              label: 'Inbox',
-              tone: 'wash',
-              autoCommit: false,
-              onPress: () => setConfirm({ kind: 'inbox', capture: item }),
-            },
-          ]}
         />
-      ))}
-
-      </>
       ) : null}
 
       {tab === 'practice' ? (
@@ -967,14 +1072,14 @@ export default function StudentScreen() {
                 <Text style={[styles.skill, { color: colors.ink }]}>{practiceTitle(item.title)}</Text>
                 <Badge variant={practiceBadge(item.status)} />
               </View>
-              {(item.practiceSetId && item.status === 'assigned'
+              {(item.practiceSetId && isOpenWork(item.status)
                 ? (itemDrafts[item.practiceSetId] ?? item.items)
                 : item.items
               ).map((practiceItem, index) => (
                 <View key={practiceItem.id} style={styles.item}>
                   <Text style={[styles.gutter, { color: colors.mute }]}>{index + 1}.</Text>
                   <View style={styles.prompt}>
-                    {item.practiceSetId && item.status === 'assigned' ? (
+                    {item.practiceSetId && isOpenWork(item.status) ? (
                       <TextField
                         multiline
                         value={practiceItem.prompt}
@@ -989,12 +1094,25 @@ export default function StudentScreen() {
                         }
                       />
                     ) : (
-                      <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
+                      <>
+                        <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
+                        {!isOpenWork(item.status) ? (
+                          <Text style={[type.meta, { color: colors.mute }]}>
+                            {answerText(item.answers, practiceItem.id) || 'No answer'}
+                          </Text>
+                        ) : null}
+                      </>
                     )}
                   </View>
                 </View>
               ))}
-              {item.practiceSetId && item.status === 'assigned' ? (
+              {item.status === 'completed' ? (
+                <PrimaryButton
+                  label="Review"
+                  onPress={() => classId && router.push(submissionReviewPath(classId, item.id) as never)}
+                />
+              ) : null}
+              {item.practiceSetId && isOpenWork(item.status) ? (
                 <>
                   <GhostButton
                     align="left"
@@ -1210,7 +1328,7 @@ function studentConfirmBody(confirm: ConfirmKind | null, name: string): string {
   }
   if (confirm.kind === 'delete-gap') return 'This cannot be undone.';
   if (confirm.kind === 'delete-set') {
-    return confirm.practice.status === 'assigned'
+    return isOpenWork(confirm.practice.status)
       ? 'Delete this practice set and its grade-book column? Students will lose the to-do. This cannot be undone.'
       : 'This cannot be undone.';
   }
@@ -1271,7 +1389,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   block: {
-    marginTop: 16,
+    marginTop: 8,
+    marginBottom: 16,
     gap: 8,
   },
   skill: {

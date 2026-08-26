@@ -48,6 +48,19 @@ export type IconName =
   | 'alert'
   | 'speaker'
   | 'mute'
+  | 'grades'
+  | 'statusAssigned'
+  | 'statusStarted'
+  | 'statusCompleted'
+  | 'statusGraded'
+  | 'termAll'
+  | 'termQ1'
+  | 'termQ2'
+  | 'termQ3'
+  | 'termQ4'
+  | 'termS1'
+  | 'termS2'
+  | 'termYear'
   | FeedIconName;
 
 type Props = {

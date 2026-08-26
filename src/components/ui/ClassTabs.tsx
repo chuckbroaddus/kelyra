@@ -67,7 +67,7 @@ export function tabsWithFeedIcon(tabs: PersonTab[], icon: IconName): PersonTab[]
 }
 
 /** Icon-first class desk tabs. Selected name, everyone else icon-only — same as people. */
-export function ClassTabs({ classId }: { classId: string }) {
+export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const { tab } = useLocalSearchParams<{ tab?: string }>();
@@ -78,6 +78,7 @@ export function ClassTabs({ classId }: { classId: string }) {
     <PersonTabs
       tabs={tabsWithFeedIcon(CLASS_TABS, feedIcon)}
       value={value}
+      stacked={stacked}
       onChange={(key) => {
         if (key === value) return;
         router.replace(hrefForClassTab(classId, key) as never);

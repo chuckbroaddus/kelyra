@@ -1,7 +1,8 @@
 import { Platform } from 'react-native';
 
 import { pickNormalizedPhoto, pickRawPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { readUriAsBytes } from '@/lib/media/upload';
+import { signedThumbUrl, signedUrl } from '@/lib/media/signedUrl';
+import { readUriAsBytes, uploadPhotoPair } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { MessageFile, MessageLink, MessagePhoto } from '@/lib/supabase/types';
 
@@ -30,11 +31,14 @@ export function linkHost(url: string): string {
   }
 }
 
-export async function signedMessageUrl(kind: 'photo' | 'file', storagePath: string): Promise<string | null> {
-  const bucket = kind === 'photo' ? 'photos' : 'files';
-  const { data, error } = await requireSupabase().storage.from(bucket).createSignedUrl(storagePath, 3600);
-  if (error) return null;
-  return data.signedUrl;
+export async function signedMessageUrl(
+  kind: 'photo' | 'file',
+  storagePath: string,
+  variant: 'thumb' | 'original' = 'original',
+): Promise<string | null> {
+  if (kind === 'file') return signedUrl('files', storagePath);
+  if (variant === 'thumb') return signedThumbUrl(storagePath);
+  return signedUrl('photos', storagePath);
 }
 
 function asLink(url: string, data: { url?: string; title?: string; description?: string | null; image_url?: string | null } | null): MessageLink | null {
@@ -91,20 +95,27 @@ export async function uploadMessageFile(input: {
   name: string;
   kind: 'photo' | 'file';
 }): Promise<DraftAttach> {
+  if (input.kind === 'photo') {
+    const uploaded = await uploadPhotoPair({
+      ownerId: input.ownerId,
+      uri: input.uri,
+      mimeType: input.mimeType,
+      prefix: 'messages',
+    });
+    if (uploaded.byteSize > MAX_BYTES) throw new Error('Keep attachments under 10 MB.');
+    return { type: 'photo', storage_path: uploaded.storagePath, mime_type: uploaded.mimeType };
+  }
   const bytes = new Uint8Array(await readUriAsBytes(input.uri));
   if (!bytes.byteLength) throw new Error('That file was empty.');
   if (bytes.byteLength > MAX_BYTES) throw new Error('Keep attachments under 10 MB.');
-  const bucket = input.kind === 'photo' ? 'photos' : 'files';
-  const ext = extFor(input.mimeType, input.name, input.kind === 'photo' ? 'jpg' : 'bin');
+  const ext = extFor(input.mimeType, input.name, 'bin');
   const storagePath = `${input.ownerId}/messages/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await requireSupabase().storage.from(bucket).upload(storagePath, bytes, {
+  const { error } = await requireSupabase().storage.from('files').upload(storagePath, bytes, {
     contentType: input.mimeType || 'application/octet-stream',
+    cacheControl: '31536000',
     upsert: false,
   });
   if (error) throw new Error(error.message || 'Could not attach that file');
-  if (input.kind === 'photo') {
-    return { type: 'photo', storage_path: storagePath, mime_type: input.mimeType };
-  }
   return { type: 'file', storage_path: storagePath, name: input.name || 'File', mime_type: input.mimeType };
 }
 

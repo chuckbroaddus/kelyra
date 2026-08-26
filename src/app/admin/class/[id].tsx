@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
+import { TextField } from '@/components/ui/TextField';
 import { OFFICE_CLASS_TABS, tabsWithFeedIcon } from '@/components/ui/ClassTabs';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
@@ -29,7 +30,7 @@ import { firstName } from '@/lib/format';
 import { listChildrenForParent, listOfficeClassParents, removeParentFromClass, type ClassParent } from '@/lib/parents/api';
 import { formatHandle, isAdminRole } from '@/lib/school/roles';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { enrollExistingStudent, listAvailableStudents, listRoster, type RosterStudent } from '@/lib/students/api';
+import { addTypedStudent, enrollExistingStudent, listAvailableStudents, listRoster, type RosterStudent } from '@/lib/students/api';
 import { removeEnrollment } from '@/lib/students/delete';
 import type { ClassRow, StudentRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -53,6 +54,8 @@ export default function ClassOfficeScreen() {
   const [pickedKids, setPickedKids] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('teacher');
+  const [newStudentName, setNewStudentName] = useState('');
+  const [creatingStudent, setCreatingStudent] = useState(false);
   usePushedTitle(klass?.name ?? 'Class');
 
   const load = useCallback(async () => {
@@ -107,6 +110,25 @@ export default function ClassOfficeScreen() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add that student');
+    }
+  };
+
+  const addNewStudent = async () => {
+    if (!id || !klass) return;
+    const name = newStudentName.trim();
+    if (!name) return;
+    setCreatingStudent(true);
+    setError(null);
+    try {
+      const ownerId = klass.teacher_id;
+      if (!ownerId) throw new Error('This class has no teacher.');
+      await addTypedStudent(id, ownerId, name);
+      setNewStudentName('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add that student');
+    } finally {
+      setCreatingStudent(false);
     }
   };
 
@@ -307,6 +329,21 @@ export default function ClassOfficeScreen() {
       {pane === 'students' ? (
         <>
           <SectionHeader label="Students" first />
+          <View style={styles.mint}>
+            <Text style={[type.meta, { color: colors.mute }]}>
+              New names on the school roster. Teachers enroll existing students into a class they teach.
+            </Text>
+            <TextField
+              placeholder="First and last name"
+              value={newStudentName}
+              onChangeText={setNewStudentName}
+            />
+            <PrimaryButton
+              label={creatingStudent ? 'Adding…' : newStudentName.trim() ? `Add ${newStudentName.trim()}` : 'Add student'}
+              disabled={creatingStudent || !newStudentName.trim()}
+              onPress={() => void addNewStudent()}
+            />
+          </View>
           {roster == null ? <WorkingLine /> : null}
           {roster && roster.length === 0 ? (
             <Text style={[type.meta, { color: colors.mute }]}>No students yet.</Text>
@@ -424,6 +461,10 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 8,
     marginBottom: 8,
+  },
+  mint: {
+    gap: 12,
+    marginBottom: 16,
   },
   check: {
     width: 22,

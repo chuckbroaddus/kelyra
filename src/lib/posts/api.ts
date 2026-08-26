@@ -97,22 +97,43 @@ export type PostReply = {
   createdAt: string;
 };
 
+let feedCache: FeedPost[] | null = null;
+let feedInflight: Promise<FeedPost[]> | null = null;
+
+export function peekFeed(): FeedPost[] | null {
+  return feedCache;
+}
+
+export function clearFeedCache() {
+  feedCache = null;
+  feedInflight = null;
+}
+
 export async function listFeed(): Promise<FeedPost[]> {
-  const { data, error } = await requireSupabase().rpc('list_feed');
-  if (error) throw new Error(error.message || 'Could not load feed');
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    classId: row.class_id,
-    className: row.class_name,
-    authorId: row.author_id,
-    authorName: row.author_name,
-    authorUsername: row.author_username,
-    kind: row.kind === 'alert' ? 'alert' : 'post',
-    body: row.body,
-    payload: asPayload(row.payload),
-    createdAt: row.created_at,
-    replyCount: row.reply_count,
-  }));
+  if (feedInflight) return feedInflight;
+  const work = (async () => {
+    const { data, error } = await requireSupabase().rpc('list_feed');
+    if (error) throw new Error(error.message || 'Could not load feed');
+    const rows: FeedPost[] = (data ?? []).map((row) => ({
+      id: row.id,
+      classId: row.class_id,
+      className: row.class_name,
+      authorId: row.author_id,
+      authorName: row.author_name,
+      authorUsername: row.author_username,
+      kind: row.kind === 'alert' ? 'alert' : 'post',
+      body: row.body,
+      payload: asPayload(row.payload),
+      createdAt: row.created_at,
+      replyCount: row.reply_count,
+    }));
+    feedCache = rows;
+    return rows;
+  })().finally(() => {
+    if (feedInflight === work) feedInflight = null;
+  });
+  feedInflight = work;
+  return work;
 }
 
 function missingRpc(error: { message?: string; code?: string } | null): boolean {

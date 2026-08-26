@@ -1,0 +1,20 @@
+Chuck said SEND this follow-up. Resume this session. Do not start a new session. --cwd ~/projects/kelyra.
+
+Bug (Chuck, student login, just now): Open a previously completed lesson assignment. The lesson loads, then flashes "This login is not assigned to a roster name yet. Ask your teacher to assign it on your student page." then lands on the student home. The login IS assigned; they already completed the lesson.
+
+Cause (verify, non-binding):
+1) src/lib/lessons/bridgeScript.ts emits complete on load if fomState().finished (and on visibility hidden). Reopen of a saved complete lesson immediately posts kelyra.lesson complete.
+2) src/app/lesson/[assignmentId].tsx onEvent for complete always router.replace('/todo').
+3) src/app/todo.tsx treats !session as "login not assigned to a roster name" even while loadStudentSession is still in flight. That is the flash copy.
+
+Fix:
+- Reopening a completed lesson must stay in the player. Do not navigate away on a complete event that is just restored progress / already-complete cell.
+- Only router.replace('/todo') when the student newly marks finished this visit (Mark I finished / first complete this Open), not when the page loads already finished.
+- bridgeScript: do not emit complete merely because localStorage.finished is true on boot. Complete emit is from the user finishing this visit.
+- todo.tsx: while student session is loading, show working/empty, NOT the roster-name copy. That copy is only when load finished and my_student_id is actually null.
+- X / swipe / persist-on-exit from L3 stay. Do not wipe answers. They can review or run again.
+- Do not touch S1 thumbs. Do not unpublish L4 section packs if they landed; do not revert L4 if in tree.
+
+No SQL expected. If SQL is needed, put a migration and tell Chief of Staff to apply it.
+
+Done when: student Open of a completed lesson stays on the lesson; no roster-name flash; typecheck clean.

@@ -1,6 +1,7 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AvatarInitials } from '@/components/ui/AvatarInitials';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { UnknownMark } from '@/components/ui/UnknownMark';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -12,6 +13,7 @@ type Props = {
   size?: number;
   /** Empty-seat mark. Wins over photo/initials — this is not a person. */
   unknown?: boolean;
+  recyclingKey?: string;
 };
 
 export function photoUri(uri?: string | null): string | null {
@@ -19,7 +21,7 @@ export function photoUri(uri?: string | null): string | null {
   return next ? next : null;
 }
 
-export function Avatar({ name, photoUrl, hasPhoto, size = 36, unknown }: Props) {
+export function Avatar({ name, photoUrl, hasPhoto, size = 36, unknown, recyclingKey }: Props) {
   const { colors } = useTheme();
   const uri = photoUri(photoUrl);
   if (unknown && !uri) {
@@ -40,10 +42,11 @@ export function Avatar({ name, photoUrl, hasPhoto, size = 36, unknown }: Props) 
           },
         ]}
       >
-        <Image
-          key={uri}
-          source={{ uri }}
-          resizeMode="cover"
+        <RemoteImage
+          uri={uri}
+          contentFit="cover"
+          priority="low"
+          recyclingKey={recyclingKey}
           style={{ width: size, height: size, borderRadius: size / 2 }}
         />
       </View>

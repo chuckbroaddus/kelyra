@@ -18,6 +18,8 @@ export default function ClassStackLayout() {
       <Stack.Screen name="gradebook" />
       <Stack.Screen name="assignments" />
       <Stack.Screen name="assignment/[assignmentId]" />
+      <Stack.Screen name="lesson-result/[submissionId]" />
+      <Stack.Screen name="review/[submissionId]" />
       <Stack.Screen name="family" />
       <Stack.Screen name="parents" />
       <Stack.Screen name="parent/[parentId]" />

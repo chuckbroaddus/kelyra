@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { radius, type } from '@/constants/theme';
+import { asSubmissionStatus } from '@/lib/assignments/status';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type BadgeVariant =
@@ -10,6 +11,9 @@ export type BadgeVariant =
   | 'unassigned'
   | 'note'
   | 'assigned'
+  | 'started'
+  | 'completed'
+  | 'graded'
   | 'done'
   | 'turned';
 
@@ -20,6 +24,9 @@ const labels: Record<BadgeVariant, string> = {
   unassigned: 'Needs a name',
   note: 'Note',
   assigned: 'Assigned',
+  started: 'Started',
+  completed: 'Completed',
+  graded: 'Graded',
   done: 'Done',
   turned: 'Turned in',
 };
@@ -32,8 +39,10 @@ export function captureBadge(status: string): BadgeVariant {
 }
 
 export function practiceBadge(status: string): BadgeVariant {
-  if (status === 'submitted') return 'turned';
-  if (status === 'approved') return 'done';
+  const next = asSubmissionStatus(status);
+  if (next === 'started') return 'started';
+  if (next === 'completed') return 'completed';
+  if (next === 'graded') return 'graded';
   return 'assigned';
 }
 
@@ -46,6 +55,9 @@ export function Badge({ variant }: { variant: BadgeVariant }) {
     unassigned: { backgroundColor: colors.warnSoft, color: colors.warn },
     note: { backgroundColor: colors.wash, color: colors.mute },
     assigned: { backgroundColor: colors.warnSoft, color: colors.warn },
+    started: { backgroundColor: colors.warnSoft, color: colors.warn },
+    completed: { backgroundColor: colors.warnSoft, color: colors.warn },
+    graded: { backgroundColor: colors.goodSoft, color: colors.good },
     done: { backgroundColor: colors.goodSoft, color: colors.good },
     turned: { backgroundColor: colors.warnSoft, color: colors.warn },
   };

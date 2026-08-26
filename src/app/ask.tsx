@@ -1,4 +1,4 @@
-import { usePathname, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -49,6 +49,8 @@ export default function AskScreen() {
   const chrome = useChrome();
   const router = useRouter();
   const pathname = usePathname();
+  const { return: returnParam } = useLocalSearchParams<{ return?: string }>();
+  const returnTo = typeof returnParam === 'string' && returnParam.startsWith('/') ? returnParam : null;
   const { profile, teacher } = useAuth();
   const scroller = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
@@ -186,6 +188,9 @@ export default function AskScreen() {
         />
       }
     >
+      {returnTo ? (
+        <GhostButton align="left" label="Back to the assignment" onPress={() => router.push(returnTo as never)} />
+      ) : null}
       {!ready ? <WorkingLine text="Opening Kelyra…" /> : null}
       {ready && messages.length === 0 ? (
         <View style={styles.empty}>

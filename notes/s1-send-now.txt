@@ -1,0 +1,25 @@
+Chuck said SEND now. New session. --cwd ~/projects/kelyra.
+
+Kelyra — cut Supabase Storage egress (one slice).
+
+Context: Free org is over quota on Egress (8.62 / 5 GB), grace until 17 Sep 2026, then 402. Database 30 MB, stored files ~40 MB dashboard / ~230 MB object metadata. Almost all egress is Storage. Photos bucket: 132 JPEGs, many 2.8–3.3 MB phone stills. Audio is 8 MB. lessons bucket empty. Cached egress 2.56 GB vs 8.62 uncached.
+
+Cause (verify, non-binding): lists load full originals via createSignedUrl (3600s). New token each session = CDN miss. normalizePhoto quality 0.8 with no resize. hydrateCaptures signs every inbox page at full size. RN Image uses the signed URL as cache key.
+
+Goal: lists and avatars must not download 3 MB originals. Viewer/AI may still use the original. Stay on private buckets. User JWT. Do not public-bucket student photos. Do not move Postgres off Supabase. Do not add Cloudflare R2 in this slice.
+
+Do this:
+1. On photo upload, store a list/avatar derivative (e.g. max edge 480 or 96) plus the original (or replace original with a max-edge ~1600 JPEG if quality allows — do not silently destroy evidence photos without a full-size kept for Capture review). Prefer: original + `*_thumb` in the same photos bucket, assets row points at both or a convention on storage_path.
+2. Inbox, People avatars, WorkRow, message thumbs, roster: signed URL of the **thumb** only.
+3. ImageViewer / Capture review / analyze-homework / Ask photo: original.
+4. Stop cache-busting: persist signed URLs until near expiry (disk or AsyncStorage keyed by storage_path, not process memory only). Prefer expo-image (or equivalent) cacheKey = asset id / path, not the tokenized URL.
+5. Upload: resize before send (max long edge, JPEG quality) so new captures are not 3 MB. Existing 3 MB files: generate thumbs in a one-shot script Chuck/CoS can run; do not download-all in the client.
+6. Cache-Control on upload if Storage honors it for signed objects.
+
+Do not: public photos bucket; email the files out; git-commit notes/teacher-decks/; create-class; is_staff widen; Cloudflare/R2 in this pass.
+
+Done when: a full Inbox + People load does not fetch 3 MB originals for thumbs; new captures are much smaller; signed URL reuse does not mint a new token every app open. Typecheck clean.
+
+If SQL is needed, put a migration and tell Chief of Staff to apply it. Do not ask Chuck to paste.
+
+Out of scope: L3 lesson player chrome; L4 section packs; Edge lesson-host deploy; git push.

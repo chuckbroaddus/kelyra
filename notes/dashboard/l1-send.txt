@@ -1,0 +1,116 @@
+Kelyra — assign an interactive lesson as student work (one slice).
+
+HOLD. Do not treat this as a send. Implement only when Chuck or Chief of Staff says send.
+
+Goal: a teacher assigns a hosted FoM-style lesson pack like other work. The student opens it in-app WebView. Completing it writes results onto that student’s record. Grade / Class / Student altitudes can see it. Not a second LMS.
+
+Hard rules:
+- Teachers do not create classes. No Create class on this flow. Assign only to classes the teacher already teaches (office-assigned / existing). Grade altitude may multi-select those classes; Student altitude assigns to this student only.
+- Do not invent RLS or new SECURITY DEFINER that is wider than existing taught-class assignment/submission access. User JWT only. No service-role as the actor. Do not ride `is_staff`. Do not stack lesson results on known holes (thread-member insert, `school_*_for_link`, `get_parent_card`). If a new table or bucket policy is required, fail closed to the same wall as “work on a student in a class I teach.” Document the policy; do not copy office dumps.
+- Nothing is a grade until existing Approve. Metrics are evidence. Matcher never inserts a student. Model keys stay server-side.
+- Do not git-commit `notes/teacher-decks/` or BJU-derived stills. Do not buy a domain. Do not Expo-bundle the deck.
+- Phone captures; web reviews, assigns, and grades. Lesson *player* is phone-first. Teacher assign/review stays native 640 lists.
+- Icons: do not invent View-stroke glyphs; use existing Icon pipeline if any new chrome name is truly required (prefer existing).
+
+Nearby pattern: practice assign from the student record (`assignPractice` → `practice_sets` / assignments kind `practice` / `submissions`). Lessons should feel like the same “work on the student.” Reuse assignment + submission cells. Store `deck_id` + `version` (or `lesson_pack_id`) on the assignment, not a raw URL.
+
+--- Hosting (Ship) ---
+
+Private Supabase Storage bucket `lessons` + Edge Function `lesson-host` as a same-origin static gateway. The Expo app does not host HTML.
+
+Why not alternatives: a per-object signed URL on `index.html` 403s relative `audio/` and `img/` (`Audio()` cannot append query tokens). A public bucket leaks stills. EAS hosting bakes curriculum into the binary and skips per-student expiry.
+
+Layout:
+  lessons/{deck_id}/{version}/index.html
+  lessons/{deck_id}/{version}/audio/...
+  lessons/{deck_id}/{version}/img/...
+Example: `lessons/fom-ch01/v4/index.html`. Teacher or admin script uploads the folder. Students never list the bucket. New version = new prefix; in-flight tokens keep the old prefix until they expire.
+
+Launch:
+1. Teacher assigns in native UI. Row stores deck_id + version, not a URL.
+2. Student taps Open. Authed RPC/Edge `student_open_lesson(assignment_id)` checks the submission cell belongs to that student, then mints a short-lived JWT (~1h: student_id, assignment_id, storage prefix).
+3. App loads that URL as the WebView *top-level* document. Shape (illustrative, no custom domain): `https://<project>.supabase.co/functions/v1/lesson-host/<token>/index.html`. Do not persist the token in WorkRow, chrome, or share.
+4. `lesson-host` verifies JWT, maps the remaining path onto `lessons/{deck_id}/{version}/…`, streams the object so relative assets stay same-origin under the same token prefix.
+5. Token expiry mid-session: re-sign once and reload; then calm retry copy. Never dump to Safari.
+6. Do not put student identity or resume beat in the URL. `?beat=` is QA only.
+
+Dev allowlist: `http://localhost:8772` and LAN `:8772` (today’s `PORT_LESSON=8772`). Prod HTTPS (iOS ATS). No mixed-content assets in prod.
+
+WebView navigations allowlist: prod `lesson-host` origin + local/LAN `:8772`. Block other *page* navigations. Subresources allowed: relative `audio/` `img/` plus Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`) as stylesheet/font fetch only — the WebView must not *navigate* to Google.
+
+Top-level load, not iframe. No lesson cookies. Do not copy Kelyra auth cookies into the WebView. Audio: in-page tap-to-play; inline / playsInline.
+
+Student-visible: deck title + assignment name. Never show signed token, storage path, copy-paste lesson URL, bucket names, or JWT.
+
+Local playable deck (gitignored): `notes/teacher-decks/fom-ch01-v4/` (`index.html` + relative audio/img). Confirm Storage size with Chuck before a surprise quota (scene PNGs are multi-MB).
+
+--- Identity + metrics (Lesson) ---
+
+Lesson origin ≠ Expo origin is expected. Identity and resume are `postMessage` between the page and the native WebView host. Not the URL. Not cookies.
+
+On open, native injects identity that matches the JWT student + that assignment’s class: school, class, teacher, student. Visible on the live page or in a documented HUD/debug strip. Not an anonymous preview. S2 must never see S1’s name/id. Teacher tokens and superuser flags must not appear.
+
+Resume: new signed URL each Open. Page localStorage (today `kelyra-fom-ch01-v4`) is a device cache only, not a Kelyra session.
+
+Done: lesson `postMessage` or server; then pop to To-do as Done. No second native Done bar if the page already has Done.
+
+On complete, persist once (names may differ; all must land):
+- elapsed time (started, duration, completed at)
+- correct / incorrect counts or per-item outcomes
+- marks if the page scores
+- hint count (or which beats)
+- audio used
+- kinetic / drag used
+- extras the page emits (attempts, skipped beats, reduced-motion, …) — do not drop extras with no schema note
+
+Partial leave: in-progress vs abandoned, documented. Never write another student’s row. Repeat: new attempt *or* overwrite — pick one and show it clearly on the record. Client sends once; teacher record updates (one refresh OK for v1).
+
+--- UX (assign + player + teacher record) ---
+
+Teacher assign is native. No WebView. No new tray tab, no sixth icon, no Lessons hamburger root.
+
+- Class altitude (default): existing Assignments cabinet `/class/{id}/assignments`. Same New assignment control; type **Lesson** beside Practice. Must attach to Class A, not an unassigned office class, not a new class. If chrome “active” class is Class B, do not attach Class A’s lesson to Class B (fail closed or picker lists taught classes only).
+- Grade altitude: multi-select the teacher’s existing classes in that grade. Still no create-class.
+- Student altitude: this student only; who-list pre-filled and locked.
+- Create/edit: existing `/assignment/{id}` (or equivalent). Catalog picker for deck_id + version. No URL field. Empty catalog copy: “No lessons yet.” Wordmark = title or “New assignment.” Hamburger hidden. Q17: web shows `<`; iPhone omits it when edge-swipe already pops.
+
+Student To-do: same WorkRow as other work. Pills: Lesson / Due / Assigned or In progress or Done. No URL, no Open in Safari, no token. Tap opens the Lesson player (pushed).
+
+Lesson player:
+- Hide floating tray. Header wordmark = assignment title (marquee, no ellipsis). Hamburger hidden. No share, no Safari, no header refresh. Pull-to-refresh off (do not steal drag).
+- Full-bleed WebView. No address bar.
+- Open: `student_open_lesson` then top-level `lesson-host` token `index.html` (or `:8772` in dev).
+- Off-allowlist toast: “That link is not part of this lesson.”
+- Expiry fail: “Could not keep the lesson open” plus Try again.
+- Q17: iPhone no extra back chevron (swipe pops); web has chevron.
+- Never dump to system browser (browser is a bug fallback, not a supported player).
+
+Teacher review — evidence, not a grade until Approve. Show only what Lesson emits. Omit empty rows. No chart library. ListRow / WorkRow / pills.
+
+- Student altitude: work row for the lesson; tap attempt detail (title, due, status, metric rows). Optional Open lesson is teacher preview, not a student token.
+- Class altitude: assignment row or gradebook column like other work. Cell Done / In progress. Tap = attempt detail. Distinguishable from `kind: practice`. Lessons never enter Capture or Inbox.
+- Grade altitude: per-class n/m done as ListRow status. Tap class → Class altitude. Only classes this teacher teaches. No auto-email of scores.
+
+Copy never includes “Open in browser.”
+
+--- Privilege wall (QA; slice fails if this fails) ---
+
+Actors use the app + user JWT only. Preconditions: two teachers, two classes, no create-class control on the teacher shell for this pass.
+
+- Teacher B: cannot open S1 record, list Class A submissions, or read lesson results / Ask about S1.
+- Teacher A: cannot read a Class B student the same way.
+- Student S1: only own results; no class roll-up of S2; opening S2’s assignment id / student id in the query fails closed (identity stays S1 or page refuses).
+- Parent of S1: only linked children; not S2.
+- Anon / other school: guessed assignment UUID → no row.
+- Teacher A (normal, not superintendent): assign + read for *taught* class only. No office class create, no `create_school_class` teacher-less class, no matrix, no other-class directory. In-app AI must not do superuser reads/writes.
+- Logged out copy of a lesson URL: sign-in. S2 must not play as S1.
+
+Do not implement Ask tools `assign_lesson` / `open_lesson` / `read_lesson_results` in this send. When they exist later they wrap the same APIs the screens use, still user JWT, still not `is_staff`.
+
+--- Done when ---
+
+Behaviors A–D in `notes/qa-lesson-assignment-acceptance.md` hold on web (and iPhone if WebView). E1–E7 fail closed. Relative audio/img load under `lesson-host`. Identity on the page matches the JWT student. Catalog has no URL field. `lessons` bucket is private. No new class was created. `notes/teacher-decks/` was not committed.
+
+--- Out of scope v1 ---
+
+Teacher HTML upload; public/unlisted URLs; parent WebView; system browser as supported player; new tray tab; charts or AI tutor in player chrome; iframe wrapper; custom domain/CDN; Ask tools; git push of decks; Q17 as its own patch (honor it on these new screens only).

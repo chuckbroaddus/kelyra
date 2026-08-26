@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { radius, type, webFocus } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -31,6 +31,10 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
         onFocus={(event) => {
           setFocused(true);
           onFocus?.(event);
+          if (Platform.OS === 'web') {
+            const node = event.target as unknown as { scrollIntoView?: (opts?: ScrollIntoViewOptions) => void };
+            requestAnimationFrame(() => node.scrollIntoView?.({ block: 'center', inline: 'nearest' }));
+          }
         }}
         onBlur={(event) => {
           setFocused(false);

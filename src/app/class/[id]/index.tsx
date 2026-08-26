@@ -15,6 +15,8 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { listInbox, listThisWeek, listTurnedIn, type InboxItem, type TurnedInItem } from '@/lib/captures/api';
+import { practiceTitle } from '@/lib/practice/api';
+import { submissionReviewPath } from '@/lib/practice/review';
 import { deleteCapture } from '@/lib/captures/delete';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview } from '@/lib/classes/overview';
@@ -80,6 +82,18 @@ export default function ClassHomeScreen() {
   const openCapture = (item: InboxItem) => {
     if (item.student_id) router.push(`/class/${item.class_id}/student/${item.student_id}`);
     else router.push('/inbox');
+  };
+
+  const openTurnedIn = (item: TurnedInItem) => {
+    if (!id) return;
+    router.push(submissionReviewPath(id, item.id) as never);
+  };
+
+  const photoFor = (studentId: string) => roster.find((row) => row.id === studentId)?.photoUrl;
+
+  const turnedCopy = (item: TurnedInItem) => {
+    const work = item.kind === 'lesson' ? item.title : practiceTitle(item.title);
+    return `Completed ${work}`;
   };
 
   return (
@@ -170,12 +184,22 @@ export default function ClassHomeScreen() {
             <WorkRow
               key={item.id}
               title={item.studentName}
-              status={`Turned in ${item.title.replace(/^Practice:\s*/i, '')}`}
+              status={turnedCopy(item)}
               meta={formatWhen(item.submittedAt)}
               avatarName={item.studentName}
-              badge={practiceBadge('submitted')}
-              onPress={() => router.push(`/class/${id}/student/${item.studentId}`)}
-              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => router.push(`/class/${id}/student/${item.studentId}`) }]}
+              photoUrl={photoFor(item.studentId)}
+              badge={practiceBadge(item.status)}
+              onPress={() => openTurnedIn(item)}
+              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => openTurnedIn(item) }]}
+              trailing={[
+                {
+                  key: 'open',
+                  label: 'Review',
+                  tone: 'brand',
+                  autoCommit: false,
+                  onPress: () => openTurnedIn(item),
+                },
+              ]}
             />
           ))}
         </View>
@@ -183,6 +207,9 @@ export default function ClassHomeScreen() {
 
       {pane === 'needs' ? (
         <View style={styles.one}>
+          {inbox.length === 0 && turned.length === 0 ? (
+            <Text style={[styles.empty, { color: colors.mute }]}>Nothing waiting.</Text>
+          ) : null}
           {inbox.map((item) => (
             <WorkRow
               key={item.id}
@@ -221,12 +248,22 @@ export default function ClassHomeScreen() {
             <WorkRow
               key={item.id}
               title={item.studentName}
-              status={`Turned in ${item.title.replace(/^Practice:\s*/i, '')}`}
+              status={turnedCopy(item)}
               meta={formatWhen(item.submittedAt)}
               avatarName={item.studentName}
-              badge={practiceBadge('submitted')}
-              onPress={() => router.push(`/class/${id}/student/${item.studentId}`)}
-              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => router.push(`/class/${id}/student/${item.studentId}`) }]}
+              photoUrl={photoFor(item.studentId)}
+              badge={practiceBadge(item.status)}
+              onPress={() => openTurnedIn(item)}
+              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => openTurnedIn(item) }]}
+              trailing={[
+                {
+                  key: 'open',
+                  label: 'Review',
+                  tone: 'brand',
+                  autoCommit: false,
+                  onPress: () => openTurnedIn(item),
+                },
+              ]}
             />
           ))}
         </View>
@@ -237,9 +274,9 @@ export default function ClassHomeScreen() {
         phase={2}
         detail={
           roster.length === 0
-            ? 'Add a few names in Setup, then photograph today’s work.'
+            ? 'Enroll students from the school roster in Setup, then photograph today’s work.'
             : waiting
-              ? 'Start with what needs you. Then open a student to approve.'
+              ? 'Start with what needs you. Review turned-in work, then approve.'
               : 'Nothing waiting. Photograph work, or open a student.'
         }
       />

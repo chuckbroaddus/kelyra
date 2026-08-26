@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const xaiBaseUrl = 'https://api.x.ai/v1';
-const visionModel = 'grok-4.6';
+import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
+import { asPass, homeworkDraftExists, imageDetailFor } from '../_shared/aiPolicy.ts';
 
 const prompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
@@ -20,7 +20,9 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('XAI_API_KEY');
     if (!apiKey) return json({ error: 'XAI_API_KEY is not set' }, 501);
 
-    const { captureId } = (await req.json()) as { captureId?: string };
+    const body = (await req.json()) as { captureId?: string; pass?: string; queue?: boolean };
+    const { captureId } = body;
+    const pass = asPass(body.pass);
     if (!captureId) return json({ error: 'captureId required' }, 400);
 
     const supabase = createClient(
@@ -31,11 +33,28 @@ Deno.serve(async (req) => {
 
     const { data: capture, error: captureError } = await supabase
       .from('captures')
-      .select('id, student_id, photo_asset_id')
+      .select('id, student_id, photo_asset_id, model_draft, class_id')
       .eq('id', captureId)
       .single();
     if (captureError || !capture?.student_id || !capture.photo_asset_id) {
       return json({ error: 'Capture must have a student and a photo' }, 400);
+    }
+    if (pass !== 'look-again' && homeworkDraftExists(capture.model_draft)) {
+      return json({ ok: true, skipped: true, gaps: (capture.model_draft as { gaps?: unknown[] }).gaps ?? [] });
+    }
+    if (body.queue && pass !== 'look-again') {
+      const { data: schoolId } = await supabase.rpc('my_school_id');
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('ai_jobs').insert({
+        school_id: schoolId,
+        teacher_id: userData.user?.id ?? null,
+        capture_id: captureId,
+        kind: 'homework_draft',
+        pass: 'cheap',
+        status: 'pending',
+      });
+      await supabase.from('captures').update({ ai_status: 'pending', model_draft: { pending: true } }).eq('id', captureId);
+      return json({ ok: true, queued: true });
     }
 
     const { data: asset, error: assetError } = await supabase
@@ -50,7 +69,7 @@ Deno.serve(async (req) => {
       .createSignedUrl(asset.storage_path, 120);
     if (signedError || !signed?.signedUrl) return json({ error: 'Could not sign photo URL' }, 500);
 
-    const draft = await draftFromPhoto(apiKey, signed.signedUrl);
+    const draft = await draftFromPhoto(supabase, apiKey, signed.signedUrl, pass, captureId);
 
     await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
     if (draft.gaps.length) {
@@ -74,6 +93,7 @@ Deno.serve(async (req) => {
         model_draft: draft,
         draft_score: draft.draftScore,
         teacher_note: draft.teacherNote,
+        ai_status: 'done',
       })
       .eq('id', captureId);
     if (updateError) throw updateError;
@@ -85,37 +105,29 @@ Deno.serve(async (req) => {
   }
 });
 
-async function draftFromPhoto(apiKey: string, imageUrl: string) {
-  const response = await fetch(`${xaiBaseUrl}/responses`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: visionModel,
-      input: [
-        {
-          role: 'user',
-          content: [
-            { type: 'input_image', image_url: imageUrl, detail: 'high' },
-            { type: 'input_text', text: prompt },
-          ],
-        },
-      ],
-    }),
+async function draftFromPhoto(
+  supabase: ReturnType<typeof createClient>,
+  apiKey: string,
+  imageUrl: string,
+  pass: 'cheap' | 'look-again',
+  captureId: string,
+) {
+  const payload = await callMetered(supabase, apiKey, {
+    job: 'homework',
+    pass,
+    functionName: 'analyze-homework',
+    captureId,
+    payload: [
+      {
+        role: 'user',
+        content: [
+          { type: 'input_image', image_url: imageUrl, detail: imageDetailFor(pass) },
+          { type: 'input_text', text: prompt },
+        ],
+      },
+    ],
   });
-  if (!response.ok) {
-    throw new Error(`Vision failed: ${response.status} ${await response.text()}`);
-  }
-  const payload = (await response.json()) as {
-    output_text?: string;
-    output?: Array<{ content?: Array<{ text?: string }> }>;
-  };
-  const raw =
-    payload.output_text ??
-    payload.output?.flatMap((item) => item.content ?? []).map((part) => part.text ?? '').join('') ??
-    '';
+  const raw = outputText(payload);
   const parsed = extractJson(raw);
   const gaps = Array.isArray(parsed.gaps)
     ? parsed.gaps
@@ -132,26 +144,10 @@ async function draftFromPhoto(apiKey: string, imageUrl: string) {
       typeof parsed.draftScore === 'number' ? parsed.draftScore : null,
     teacherNote:
       typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
+    costUsd: typeof payload.__kelyraUsd === 'number' ? payload.__kelyraUsd : null,
+    model: typeof payload.__kelyraModel === 'string' ? payload.__kelyraModel : null,
+    pass,
   };
-}
-
-function extractJson(raw: string): {
-  gaps?: unknown;
-  draftScore?: unknown;
-  teacherNote?: unknown;
-} {
-  const start = raw.indexOf('{');
-  const end = raw.lastIndexOf('}');
-  if (start < 0 || end <= start) return {};
-  try {
-    return JSON.parse(raw.slice(start, end + 1)) as {
-      gaps?: unknown;
-      draftScore?: unknown;
-      teacherNote?: unknown;
-    };
-  } catch {
-    return {};
-  }
 }
 
 function cors() {

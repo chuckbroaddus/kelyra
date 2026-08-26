@@ -1,5 +1,6 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { radius, type } from '@/constants/theme';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -39,7 +40,7 @@ export function PhotoFrame({ uri, empty, compact, page, hero, fill }: Props) {
         </View>
       ) : (
         <View style={frameStyle}>
-          <Image source={{ uri }} style={styles.image} resizeMode={hero || fill ? 'contain' : 'cover'} />
+          <RemoteImage uri={uri} style={styles.image} contentFit={hero || fill ? 'contain' : 'cover'} />
         </View>
       )}
     </View>

@@ -3,10 +3,11 @@ import type { NameMatch } from '@/lib/ai/types';
 import { allPhotoAssetIds } from '@/lib/captures/pages';
 import { analyzeAttachedCapture, draftHasWork, storeCaptureDraft, type StoredHomeworkDraft } from '@/lib/gaps/api';
 import { matchName, shouldAutoAttach } from '@/lib/matching/matchName';
-import { signedUrlForAsset } from '@/lib/media/upload';
+import { loadPhotoAssetPaths } from '@/lib/media/upload';
+import { signedThumbUrls } from '@/lib/media/signedUrl';
 import { listRoster } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { CaptureRow } from '@/lib/supabase/types';
+import type { AssignmentKind, CaptureRow, SubmissionStatus } from '@/lib/supabase/types';
 
 export type InboxItem = CaptureRow & {
   photoUrl: string | null;
@@ -136,6 +137,7 @@ export async function saveCaptureEvaluation(
 
 async function analyzeOrReuseDraft(capture: CaptureRow) {
   const stored = capture.model_draft as StoredHomeworkDraft | null;
+  if (stored?.pending || capture.ai_status === 'pending' || capture.ai_status === 'running') return;
   if (stored && draftHasWork(stored)) {
     if (capture.student_id) {
       await storeCaptureDraft(capture.id, stored, capture.student_id);
@@ -143,9 +145,9 @@ async function analyzeOrReuseDraft(capture: CaptureRow) {
     return;
   }
   try {
-    await analyzeAttachedCapture(capture.id);
+    await analyzeAttachedCapture(capture.id, { queue: true });
   } catch {
-    // Filing must succeed even if AI is offline. Teacher can tap Ask AI.
+    // Filing must succeed even if AI is offline. Teacher can tap Draft queued.
   }
 }
 
@@ -190,7 +192,7 @@ export async function countNeedsYou(classId: string): Promise<number> {
       'assignment_id',
       assignments.map((row) => row.id),
     )
-    .eq('status', 'submitted');
+    .in('status', ['completed']);
   if (error) throw error;
   return inbox + (count ?? 0);
 }
@@ -201,13 +203,15 @@ export type TurnedInItem = {
   studentName: string;
   title: string;
   submittedAt: string;
+  kind: AssignmentKind;
+  status: SubmissionStatus;
 };
 
 export async function listTurnedIn(classId: string): Promise<TurnedInItem[]> {
   const supabase = requireSupabase();
   const { data: assignments, error: assignmentError } = await supabase
     .from('assignments')
-    .select('id, title')
+    .select('id, title, kind')
     .eq('class_id', classId);
   if (assignmentError) throw assignmentError;
   if (!assignments?.length) return [];
@@ -218,7 +222,7 @@ export async function listTurnedIn(classId: string): Promise<TurnedInItem[]> {
       'assignment_id',
       assignments.map((row) => row.id),
     )
-    .eq('status', 'submitted')
+    .in('status', ['completed'])
     .order('submitted_at', { ascending: false });
   if (error) throw error;
   if (!submissions?.length) return [];
@@ -226,12 +230,15 @@ export async function listTurnedIn(classId: string): Promise<TurnedInItem[]> {
   const { data: students } = await supabase.from('students').select('id, display_name').in('id', studentIds);
   const nameById = new Map((students ?? []).map((row) => [row.id, row.display_name]));
   const titleById = new Map(assignments.map((row) => [row.id, row.title]));
+  const kindById = new Map(assignments.map((row) => [row.id, row.kind]));
   return submissions.map((row) => ({
     id: row.id,
     studentId: row.student_id,
     studentName: nameById.get(row.student_id) ?? 'Student',
     title: titleById.get(row.assignment_id) ?? 'Practice',
     submittedAt: row.submitted_at ?? row.created_at,
+    kind: kindById.get(row.assignment_id) ?? 'practice',
+    status: row.status,
   }));
 }
 
@@ -283,37 +290,33 @@ async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
   const supabase = requireSupabase();
   const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
   const studentIds = captures.map((row) => row.student_id).filter((id): id is string => Boolean(id));
-  const [{ data: assets, error: assetError }, { data: students }] = await Promise.all([
-    supabase
-      .from('assets')
-      .select('*')
-      .in('id', photoIds.length ? photoIds : ['00000000-0000-0000-0000-000000000000']),
+  const [assets, { data: students }] = await Promise.all([
+    loadPhotoAssetPaths(photoIds),
     supabase
       .from('students')
       .select('id, display_name')
       .in('id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']),
   ]);
-  if (assetError) throw assetError;
-  const pathById = new Map((assets ?? []).map((asset) => [asset.id, asset.storage_path]));
+  const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
+  const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
+  const thumbUrls = await signedThumbUrls([...pathById.values()], knownThumbs);
   const nameById = new Map((students ?? []).map((student) => [student.id, student.display_name]));
-  return Promise.all(
-    captures.map(async (capture) => {
-      const photoUrls: string[] = [];
-      for (const assetId of allPhotoAssetIds(capture)) {
-        const path = pathById.get(assetId);
-        const url = path ? await signedUrlForAsset('photo', path) : null;
-        if (url) photoUrls.push(url);
-      }
-      const matchedName = capture.student_id ? (nameById.get(capture.student_id) ?? null) : null;
-      return {
-        ...capture,
-        photoUrl: photoUrls[0] ?? null,
-        photoUrls,
-        pageCount: photoUrls.length || allPhotoAssetIds(capture).length,
-        matchedName,
-      };
-    }),
-  );
+  return captures.map((capture) => {
+    const photoUrls: string[] = [];
+    for (const assetId of allPhotoAssetIds(capture)) {
+      const path = pathById.get(assetId);
+      const url = path ? thumbUrls.get(path) : null;
+      if (url) photoUrls.push(url);
+    }
+    const matchedName = capture.student_id ? (nameById.get(capture.student_id) ?? null) : null;
+    return {
+      ...capture,
+      photoUrl: photoUrls[0] ?? null,
+      photoUrls,
+      pageCount: photoUrls.length || allPhotoAssetIds(capture).length,
+      matchedName,
+    };
+  });
 }
 
 /** @deprecated use listInbox */

@@ -49,6 +49,7 @@ export async function uploadFramedProfilePhoto(input: {
       kind: 'photo',
       uri: input.uri,
       mimeType: input.mimeType,
+      skipThumb: true,
     });
     tempAssetId = uploaded.id;
     url = await signedUrlForAsset('photo', uploaded.storage_path);

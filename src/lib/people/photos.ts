@@ -1,42 +1,32 @@
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { signedUrlForAsset } from '@/lib/media/upload';
+import { signedThumbUrl, signedThumbUrls } from '@/lib/media/signedUrl';
+import { loadPhotoAssetPaths } from '@/lib/media/upload';
 import { uploadFramedProfilePhoto } from '@/lib/people/framePortrait';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { ProfilePhotoKind, ProfileRow } from '@/lib/supabase/types';
 
-const signedUrlCache = new Map<string, { url: string; until: number }>();
-const SIGNED_FOR_MS = 50 * 60 * 1000;
-
-function rememberSignedUrl(path: string, url: string) {
-  signedUrlCache.set(path, { url, until: Date.now() + SIGNED_FOR_MS });
+function prefetchPhotoUrls(urls: Iterable<string | null | undefined>) {
+  const list = [...urls].filter((url): url is string => Boolean(url));
+  if (!list.length) return;
+  void import('expo-image')
+    .then(({ Image }) => Image.prefetch(list, 'memory-disk'))
+    .catch(() => undefined);
 }
 
-async function signedPhotoUrls(paths: string[]): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  const unique = [...new Set(paths.filter(Boolean))];
-  if (!unique.length) return out;
-  const now = Date.now();
-  const need: string[] = [];
-  for (const path of unique) {
-    const hit = signedUrlCache.get(path);
-    if (hit && hit.until > now) out.set(path, hit.url);
-    else need.push(path);
-  }
-  if (!need.length) return out;
-  await Promise.all(
-    need.map(async (path) => {
-      const url = await signedUrlForAsset('photo', path);
-      if (!url) return;
-      rememberSignedUrl(path, url);
-      out.set(path, url);
-    }),
-  );
-  return out;
-}
+const AVATAR_THUMBS = { fallbackOriginal: false as const };
 
 export async function signedProfileUrl(storagePath: string | null | undefined): Promise<string | null> {
   if (!storagePath) return null;
-  return (await signedPhotoUrls([storagePath])).get(storagePath) ?? null;
+  return signedThumbUrl(storagePath, undefined, AVATAR_THUMBS);
+}
+
+/** One Storage sign for every unique thumb. Never the original still (egress). */
+export async function signedProfileUrls(
+  paths: Array<string | null | undefined>,
+): Promise<Map<string, string>> {
+  const unique = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+  if (!unique.length) return new Map();
+  return signedThumbUrls(unique, undefined, AVATAR_THUMBS);
 }
 
 export async function signedProfileUrlForAssetId(assetId: string | null | undefined): Promise<string | null> {
@@ -49,10 +39,14 @@ export async function signedUrlsForAssetIds(assetIds: string[]): Promise<Map<str
   const ids = [...new Set(assetIds.filter(Boolean))];
   const out = new Map<string, string>();
   if (!ids.length) return out;
-  const { data, error } = await requireSupabase().from('assets').select('id, storage_path').in('id', ids);
-  if (error || !data?.length) return out;
-  const urlByPath = await signedPhotoUrls(data.map((asset) => asset.storage_path).filter(Boolean));
-  for (const asset of data) {
+  const assets = await loadPhotoAssetPaths(ids);
+  const known = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
+  const urlByPath = await signedThumbUrls(
+    assets.map((asset) => asset.storage_path).filter(Boolean),
+    known,
+    AVATAR_THUMBS,
+  );
+  for (const asset of assets) {
     const url = urlByPath.get(asset.storage_path);
     if (url) out.set(asset.id, url);
   }
@@ -114,7 +108,7 @@ export async function photoUrlsForProfiles(
     for (const [id, asset] of fallback) assets.set(id, asset);
   }
   if (paths.size) {
-    const urlByPath = await signedPhotoUrls([...paths.values()]);
+    const urlByPath = await signedThumbUrls([...paths.values()], undefined, AVATAR_THUMBS);
     for (const [id, path] of paths) {
       const url = urlByPath.get(path);
       if (url) out.set(id, url);
@@ -128,6 +122,7 @@ export async function photoUrlsForProfiles(
       if (url) out.set(id, url);
     }
   }
+  prefetchPhotoUrls(out.values());
   return out;
 }
 
@@ -144,6 +139,7 @@ export async function hydratePhotoUrls<T extends { photo_asset_id?: string | nul
   const ids = [...new Set(rows.map((row) => row.photo_asset_id).filter((id): id is string => Boolean(id)))];
   if (!ids.length) return rows.map((row) => ({ ...row, photoUrl: null }));
   const urls = await signedUrlsForAssetIds(ids);
+  prefetchPhotoUrls(urls.values());
   return rows.map((row) => ({
     ...row,
     photoUrl: row.photo_asset_id ? urls.get(row.photo_asset_id) ?? null : null,

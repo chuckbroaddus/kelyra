@@ -1,4 +1,5 @@
 import { invokeAi } from '@/lib/ai/invoke';
+import { getClass } from '@/lib/classes/api';
 import { setMetaKey } from '@/lib/people/metadata';
 import { hydratePhotoUrls } from '@/lib/people/photos';
 import { provisionStudentLogin, writeAudit, type ProvisionedLogin } from '@/lib/school/api';
@@ -294,17 +295,34 @@ export async function addConfirmedStudents(input: {
   return { added, skipped };
 }
 
+async function assertOfficeMayMintStudent(): Promise<void> {
+  const { data, error } = await requireSupabase().rpc('is_school_admin');
+  if (error) throw new Error(error.message || 'Could not check office access');
+  if (!data) throw new Error('Only the office may add a new student.');
+}
+
 async function insertStudent(input: {
   classId: string;
   teacherId: string;
   displayName: string;
   createdVia: 'typed' | 'photo_list' | 'voice';
 }): Promise<RosterStudent> {
+  await assertOfficeMayMintStudent();
+  const { data: auth } = await requireSupabase().auth.getUser();
+  const actorId = auth.user?.id;
+  if (!actorId) throw new Error('sign in first');
+  let ownerId = input.teacherId || actorId;
+  try {
+    const klass = await getClass(input.classId);
+    if (klass.teacher_id) ownerId = klass.teacher_id;
+  } catch {
+    // Keep the acting office teacher's id if the class row cannot be read.
+  }
   const supabase = requireSupabase();
   const { data: student, error: studentError } = await supabase
     .from('students')
     .insert({
-      teacher_id: input.teacherId,
+      teacher_id: ownerId,
       display_name: input.displayName,
       sort_name: input.displayName,
       created_via: input.createdVia,

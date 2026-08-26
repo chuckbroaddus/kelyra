@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DangerButton, GhostButton } from '@/components/ui/Button';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { TextField } from '@/components/ui/TextField';
 import { radius, type } from '@/constants/theme';
@@ -88,7 +88,7 @@ export function ConfirmSheet({
           ]}
         >
           {photoUrl ? (
-            <Image source={{ uri: photoUrl }} style={[styles.thumb, { borderColor: colors.line }]} />
+            <RemoteImage uri={photoUrl} style={[styles.thumb, { borderColor: colors.line }]} />
           ) : null}
           <Text style={[styles.title, { color: colors.ink }]}>{title}</Text>
           <Text style={[styles.body, { color: colors.mute }]}>{copy}</Text>
@@ -151,5 +151,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     alignSelf: 'center',
+    overflow: 'hidden',
   },
 });

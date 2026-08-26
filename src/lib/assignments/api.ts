@@ -2,10 +2,18 @@ import { deriveKeyKind, keySummary, normalizeKeyItems, type AnswerKeyItem, type 
 import { gradeKindLabel, type GradeKind, type GradeTerm, type ScoreScheme, type WeightBand } from '@/lib/grade/marks';
 import { listRoster } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { AssignmentRow } from '@/lib/supabase/types';
+import type { AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
+
+export {
+  assignmentCategoryKey,
+  comingDueAssignments,
+  matchesAssignmentFilter,
+} from '@/lib/assignments/filter';
 
 export type AssignmentInput = {
   classId: string;
+  /** When set, only this roster row gets a submission cell. */
+  studentId?: string | null;
   title: string;
   category?: GradeKind | string;
   dueAt?: string | null;
@@ -38,6 +46,31 @@ export async function listClassAssignments(classId: string): Promise<AssignmentR
   return data ?? [];
 }
 
+export type StudentClassWork = {
+  assignment: AssignmentRow;
+  submission: SubmissionRow;
+};
+
+/** Class assignments this student has a cell for, same order as the class cabinet. */
+export async function listStudentClassWork(classId: string, studentId: string): Promise<StudentClassWork[]> {
+  const assignments = await listClassAssignments(classId);
+  if (!assignments.length) return [];
+  const { data, error } = await requireSupabase()
+    .from('submissions')
+    .select('*')
+    .eq('student_id', studentId)
+    .in(
+      'assignment_id',
+      assignments.map((row) => row.id),
+    );
+  if (error) throw error;
+  const byId = new Map((data ?? []).map((row) => [row.assignment_id, row]));
+  return assignments.flatMap((assignment) => {
+    const submission = byId.get(assignment.id);
+    return submission ? [{ assignment, submission }] : [];
+  });
+}
+
 export async function getAssignment(assignmentId: string): Promise<AssignmentRow | null> {
   const { data, error } = await requireSupabase()
     .from('assignments')
@@ -67,10 +100,10 @@ export async function createAssignment(input: AssignmentInput): Promise<Assignme
         .single();
     }
     if (retry.error) throw retry.error;
-    await seedAssignedCells(retry.data.id, input.classId);
+    await seedCreatedCells(retry.data.id, input);
     return retry.data;
   }
-  await seedAssignedCells(data.id, input.classId);
+  await seedCreatedCells(data.id, input);
   return data;
 }
 
@@ -85,6 +118,23 @@ export async function updateAssignment(assignmentId: string, input: AssignmentIn
   if (error) throw error;
   await seedAssignedCells(assignmentId, input.classId);
   return data;
+}
+
+async function seedCreatedCells(assignmentId: string, input: AssignmentInput): Promise<void> {
+  if (input.studentId) {
+    const roster = await listRoster(input.classId);
+    if (!roster.some((row) => row.id === input.studentId)) {
+      throw new Error('That student is not in this class.');
+    }
+    const { error } = await requireSupabase().from('submissions').insert({
+      assignment_id: assignmentId,
+      student_id: input.studentId,
+      status: 'assigned' as const,
+    });
+    if (error) throw error;
+    return;
+  }
+  await seedAssignedCells(assignmentId, input.classId);
 }
 
 export async function seedAssignedCells(assignmentId: string, classId: string): Promise<void> {
@@ -114,8 +164,16 @@ export function matchSpokenAssignment(transcript: string, assignments: Assignmen
   return hits.length === 1 ? hits[0]! : null;
 }
 
+export function assignmentKindLabel(kind: AssignmentRow['kind'] | string | null | undefined): 'Lesson' | 'Practice' {
+  return kind === 'lesson' ? 'Lesson' : 'Practice';
+}
+
+export const workKindLabel = assignmentKindLabel;
+
 export function assignmentSubtitle(row: AssignmentRow): string {
-  const bits = [gradeKindLabel(row.category ?? 'homework')];
+  const bits: string[] = [];
+  bits.push(assignmentKindLabel(row.kind));
+  if (row.kind !== 'lesson' && row.kind !== 'practice') bits.push(gradeKindLabel(row.category ?? 'homework'));
   if (row.unit?.trim()) bits.push(row.unit.trim());
   if (row.section?.trim()) bits.push(row.section.trim());
   if (row.due_at) bits.push(dueLabel(row.due_at));
@@ -147,7 +205,7 @@ function buildRow(input: AssignmentInput) {
     category: input.category ?? 'homework',
     weight_band: input.weightBand ?? 'none',
     weight_percent: input.weightBand === 'custom' ? input.weightPercent ?? null : null,
-    term: input.term ?? 'none',
+    term: input.term ?? 'year',
     score_scheme: input.scoreScheme ?? 'numeric',
     include_in_average: include,
     key_kind: keyKind,

@@ -84,7 +84,7 @@ export default function ThreadScreen() {
     setKind(thread.kind === 'group' ? 'group' : 'direct');
     setMembers(nextMembers);
     setPeopleById(byId);
-    setPhotoUrl(thread.photo_path ? await signedMessageUrl('photo', thread.photo_path) : null);
+    setPhotoUrl(thread.photo_path ? await signedMessageUrl('photo', thread.photo_path, 'thumb') : null);
     setTitle(
       thread.kind === 'group'
         ? thread.title ||

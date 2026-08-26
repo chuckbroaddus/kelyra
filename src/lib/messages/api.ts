@@ -59,6 +59,12 @@ export async function unreadCount(): Promise<number> {
   return n;
 }
 
+export async function listMessageableIds(): Promise<Set<string>> {
+  const { data, error } = await requireSupabase().rpc('message_directory');
+  if (error) return new Set();
+  return new Set((data ?? []).map((row) => row.id));
+}
+
 export async function listMessageDirectory(): Promise<ProfileRow[]> {
   const { data, error } = await requireSupabase().rpc('message_directory');
   if (error) throw new Error(error.message || 'Could not load people');
@@ -139,7 +145,7 @@ export async function listThreads(myId: string): Promise<ThreadPreview[]> {
     (threads ?? []).map(async (thread) => {
       const path = 'photo_path' in thread ? thread.photo_path : null;
       if (!path) return [thread.id, null] as const;
-      return [thread.id, await signedMessageUrl('photo', path)] as const;
+      return [thread.id, await signedMessageUrl('photo', path, 'thumb')] as const;
     }),
   );
   const photoByThread = new Map(customPhotos);
@@ -417,7 +423,7 @@ export async function replaceThreadPhoto(
   const path = await uploadThreadPhoto(ownerId, uri, mimeType);
   await setThreadPhoto(threadId, path);
   const { signedMessageUrl } = await import('@/lib/messages/attachments');
-  return (await signedMessageUrl('photo', path)) ?? uri;
+  return (await signedMessageUrl('photo', path, 'thumb')) ?? uri;
 }
 
 export function threadDisplayName(thread: Pick<ThreadPreview, 'kind' | 'title' | 'other' | 'faces' | 'memberCount'>): string {

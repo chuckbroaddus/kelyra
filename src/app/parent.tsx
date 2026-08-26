@@ -14,6 +14,7 @@ import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { firstName } from '@/lib/format';
 import {
+  formatLessonStatus,
   formatPracticeStatus,
   loadParentProgressMine,
   type ParentChildProgress,
@@ -142,9 +143,10 @@ function ChildCard({
   const shownName = child.preferred_name || child.display_name;
   const childFirst = firstName(shownName);
   const practice = formatPracticeStatus(child.practice_status);
-  const empty = !child.focus_label && !child.parent_sentence && !child.practice_status;
+  const lesson = formatLessonStatus(child.lesson_status);
+  const empty = !child.focus_label && !child.parent_sentence && !child.practice_status && !child.lesson_status;
   const practiceColor =
-    practice === 'Done' ? colors.good : practice === 'Assigned' ? colors.warn : colors.mute;
+    practice === 'Graded' ? colors.good : practice === 'None yet' ? colors.mute : colors.warn;
 
   const openEdit = async () => {
     setError(null);
@@ -213,6 +215,22 @@ function ChildCard({
             <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Practice</Text>
             <Text style={[type.body, { fontWeight: '600', color: practiceColor }]}>{practice}</Text>
           </View>
+          {lesson !== 'None yet' ? (
+            <View style={styles.block}>
+              <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Lesson</Text>
+              <Text
+                style={[
+                  type.body,
+                  {
+                    fontWeight: '600',
+                    color: lesson === 'Graded' ? colors.good : lesson === 'None yet' ? colors.mute : colors.warn,
+                  },
+                ]}
+              >
+                {lesson}
+              </Text>
+            </View>
+          ) : null}
           {child.parent_sentence ? (
             <View style={styles.block}>
               <Card>

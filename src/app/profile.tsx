@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
+import { ResetPasswordSheet } from '@/components/ui/ResetPasswordSheet';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { PersonTabs } from '@/components/ui/PersonTabs';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
@@ -17,7 +18,8 @@ import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
-import { getProfile, setAlsoHat, setAlsoParent as saveAlsoParent } from '@/lib/school/api';
+import { getProfile, resetLoginPassword, setAlsoHat, setAlsoParent as saveAlsoParent } from '@/lib/school/api';
+import { bounceStudentProfileToClass, canShowOfficeReset, RESET_PASSWORD_COPY } from '@/lib/school/resetPassword';
 import {
   canAlsoBeAdministrator,
   canAlsoBeTeacher,
@@ -68,6 +70,7 @@ export default function ProfileScreen() {
     [],
   );
   const [hatBusy, setHatBusy] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const targetId = typeof person === 'string' && person ? person : profile?.id ?? null;
   const mine = Boolean(profile && targetId === profile.id);
@@ -162,7 +165,7 @@ export default function ProfileScreen() {
   }, [chrome.role, router]);
 
   useEffect(() => {
-    if (!shown?.student_id || mine || !isStaffRole(profile)) return;
+    if (!shown?.student_id || mine || !bounceStudentProfileToClass(profile)) return;
     let cancelled = false;
     void listStudentEnrollments(shown.student_id).then((rows) => {
       if (cancelled || !rows[0]) return;
@@ -283,6 +286,15 @@ export default function ProfileScreen() {
         {shown ? (
           <Text style={[styles.meta, { color: colors.mute }]}>{roleStatus(shown)}</Text>
         ) : null}
+        {canShowOfficeReset(profile, shown) ? (
+          <GhostButton
+            label={RESET_PASSWORD_COPY.action}
+            onPress={() => {
+              setError(null);
+              setResetOpen(true);
+            }}
+          />
+        ) : null}
         {photoBusy ? <WorkingLine text="Working…" /> : editable ? (
           <Text style={[styles.meta, { color: colors.mute }]}>Tap the circle to change your photo</Text>
         ) : null}
@@ -299,6 +311,16 @@ export default function ProfileScreen() {
               if (mine) void refresh();
             }}
           />
+          {canShowOfficeReset(profile, shown) ? (
+            <GhostButton
+              align="left"
+              label={RESET_PASSWORD_COPY.action}
+              onPress={() => {
+                setError(null);
+                setResetOpen(true);
+              }}
+            />
+          ) : null}
           {staffPerson && mine ? (
             <>
               <GhostButton align="left" label="Change password" onPress={() => router.push('/password')} />
@@ -379,6 +401,16 @@ export default function ProfileScreen() {
                 label={isAlsoParent(shown) ? 'Not a parent' : 'Also a parent'}
                 onPress={() => void applyHat(() => saveAlsoParent(shown.id, !isAlsoParent(shown)))}
               />
+              {canShowOfficeReset(profile, shown) ? (
+                <GhostButton
+                  align="left"
+                  label={RESET_PASSWORD_COPY.action}
+                  onPress={() => {
+                    setError(null);
+                    setResetOpen(true);
+                  }}
+                />
+              ) : null}
             </>
           ) : null}
           {hatBusy ? <WorkingLine text="Updating role…" /> : null}
@@ -412,6 +444,15 @@ export default function ProfileScreen() {
           setRemoveOpen(true);
         }}
         onCancel={() => setPhotoOpen(false)}
+      />
+      <ResetPasswordSheet
+        visible={resetOpen && canShowOfficeReset(profile, shown)}
+        username={shown?.username}
+        onClose={() => setResetOpen(false)}
+        onReset={async (password) => {
+          if (!shown) return;
+          await resetLoginPassword(shown.id, password);
+        }}
       />
       <ConfirmSheet
         visible={removeOpen}

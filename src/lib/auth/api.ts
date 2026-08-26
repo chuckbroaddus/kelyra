@@ -28,6 +28,16 @@ export async function signUpWithPassword(email: string, password: string) {
 
 export async function signOut() {
   const { error } = await requireSupabase().auth.signOut();
+  try {
+    const { clearSignedUrlCache } = await import('@/lib/media/signedUrl');
+    await clearSignedUrlCache();
+    const { clearStudentSessionCache } = await import('@/lib/student-session/api');
+    clearStudentSessionCache();
+    const { clearFeedCache } = await import('@/lib/posts/api');
+    clearFeedCache();
+  } catch {
+    // Session is already gone.
+  }
   if (error) throw error;
 }
 

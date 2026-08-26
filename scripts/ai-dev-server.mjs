@@ -14,9 +14,25 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir, networkInterfaces } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { createClient } from '@supabase/supabase-js';
+import {
+  CHEAP_MODEL,
+  DEFAULT_MONTHLY_CAP_USD,
+  FLAGSHIP_MODEL,
+  MODEL_JPEG_QUALITY,
+  MODEL_MAX_EDGE,
+  PRACTICE_MODEL,
+  asPass,
+  estimateUsd,
+  firstNameOnly,
+  homeworkDraftExists,
+  imageDetailFor,
+  modelFor,
+  parseUsage,
+  reasoningEffortFor,
+} from './lib/ai-policy.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -25,8 +41,9 @@ loadEnv(join(root, '.env'));
 
 const port = Number(process.env.AI_DEV_PORT ?? 8787);
 const xaiBaseUrl = 'https://api.x.ai/v1';
-const visionModel = 'grok-4.6';
-const practiceModel = 'grok-4.6';
+const visionModel = CHEAP_MODEL;
+const practiceModel = PRACTICE_MODEL;
+const flagshipModel = FLAGSHIP_MODEL;
 const authPath = join(homedir(), '.grok', 'auth.json');
 const tokenUrl = 'https://auth.x.ai/oauth2/token';
 
@@ -93,6 +110,10 @@ const server = createServer(async (req, res) => {
       json(res, await generatePractice(body));
       return;
     }
+    if (route === 'review-submission') {
+      json(res, await reviewSubmission(supabase, body));
+      return;
+    }
     if (route === 'transcribe') {
       json(res, await transcribe(supabase, body));
       return;
@@ -139,6 +160,22 @@ const server = createServer(async (req, res) => {
     }
     if (route === 'match-key') {
       json(res, await matchKey(body));
+      return;
+    }
+    if (route === 'process-ai-jobs') {
+      json(res, await processAiJobs(supabase, authorization));
+      return;
+    }
+    if (route === 'ai-spend') {
+      json(res, await readAiSpend(supabase));
+      return;
+    }
+    if (route === 'draft-lesson-from-outline') {
+      json(res, await draftLessonFromOutline(supabase, body));
+      return;
+    }
+    if (route === 'build-practice-lesson') {
+      json(res, await buildPracticeLesson(supabase, authorization, body));
       return;
     }
 
@@ -207,14 +244,32 @@ function supabaseFromAuth(authorization) {
 async function analyzeHomework(supabase, body) {
   const captureId = String(body.captureId ?? '');
   if (!captureId) throw new Error('captureId required');
+  const pass = asPass(body.pass);
 
   const { data: capture, error: captureError } = await supabase
     .from('captures')
-    .select('id, student_id, photo_asset_id')
+    .select('id, student_id, photo_asset_id, model_draft')
     .eq('id', captureId)
     .single();
   if (captureError || !capture?.student_id || !capture.photo_asset_id) {
     throw new Error('Capture must have a student and a photo');
+  }
+  if (pass !== 'look-again' && homeworkDraftExists(capture.model_draft)) {
+    return { ok: true, skipped: true, gaps: capture.model_draft?.gaps ?? [] };
+  }
+  if (body.queue && pass !== 'look-again') {
+    const { data: schoolId } = await supabase.rpc('my_school_id');
+    const { data: userData } = await supabase.auth.getUser();
+    await supabase.from('ai_jobs').insert({
+      school_id: schoolId,
+      teacher_id: userData.user?.id ?? null,
+      capture_id: captureId,
+      kind: 'homework_draft',
+      pass: 'cheap',
+      status: 'pending',
+    });
+    await supabase.from('captures').update({ ai_status: 'pending', model_draft: { pending: true } }).eq('id', captureId);
+    return { ok: true, queued: true };
   }
 
   const { data: asset, error: assetError } = await supabase
@@ -229,7 +284,7 @@ async function analyzeHomework(supabase, body) {
     .createSignedUrl(asset.storage_path, 120);
   if (signedError || !signed?.signedUrl) throw new Error('Could not sign photo URL');
 
-  const draft = await draftFromPhoto(signed.signedUrl);
+  const draft = await draftFromPhoto(signed.signedUrl, pass, supabase, captureId);
 
   await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
   if (draft.gaps.length) {
@@ -253,6 +308,7 @@ async function analyzeHomework(supabase, body) {
       model_draft: draft,
       draft_score: draft.draftScore,
       teacher_note: draft.teacherNote,
+      ai_status: 'done',
     })
     .eq('id', captureId);
   if (updateError) throw updateError;
@@ -273,11 +329,11 @@ async function extractRoster(body) {
   const imageUrl = String(body.imageUrl ?? '');
   if (!imageUrl) throw new Error('imageUrl required');
   const prepared = await prepareImageForGrok(imageUrl);
-  const payload = await xaiResponses(visionModel, [
+  const payload = await grokCall('roster', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
         { type: 'input_text', text: rosterPrompt },
       ],
     },
@@ -322,8 +378,8 @@ Rules:
 async function interpretSpeech(body) {
   const transcript = String(body.transcript ?? '').replace(/\s+/g, ' ').trim();
   if (!transcript) throw new Error('transcript required');
-  const payload = await xaiResponses(
-    practiceModel,
+  const payload = await grokCall(
+    'speech',
     `${speechPrompt}\n\nTeacher said:\n${transcript}`,
   );
   const parsed = extractJson(outputText(payload));
@@ -359,7 +415,7 @@ async function generatePractice(body) {
   const skillLabel = String(body.skillLabel ?? '').trim();
   if (!skillLabel) throw new Error('skillLabel required');
 
-  const payload = await xaiResponses(practiceModel, practicePrompt(skillLabel));
+  const payload = await grokCall('practice', practicePrompt(skillLabel), {}, { functionName: 'generate-practice' });
   const parsed = extractJson(outputText(payload));
   const items = Array.isArray(parsed.items)
     ? parsed.items
@@ -373,6 +429,301 @@ async function generatePractice(body) {
     : [];
   if (!items.length) throw new Error('Grok returned no practice items');
   return { items };
+}
+
+const submissionReviewPrompt = `You are helping a K-12 teacher review one student's submitted work.
+Return JSON only, no markdown:
+{"summary":"one or two sentences","draftScore":null,"teacherNote":"short Glow/Grow or null","gaps":[{"label":"short skill name","sortOrder":1}],"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"short key"}]}
+Rules:
+- summary is what they turned in, not a biography.
+- draftScore is 0-100 when you can grade the work, otherwise null.
+- 0 to 3 gaps. Labels are short, like "two-digit regrouping". Empty if there is no skill gap worth follow-up.
+- If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
+- If there is no gap, items must be [].
+- Keep any teacher-typed gap labels and practice questions listed below. You may add more, not delete theirs.
+- Age-appropriate. No student names. No images.`;
+
+async function reviewSubmission(supabase, body) {
+  const submissionId = String(body.submissionId ?? '').trim();
+  if (!submissionId) throw new Error('submissionId required');
+
+  const { data: submission, error: subError } = await supabase
+    .from('submissions')
+    .select('id, assignment_id, status, answers, model_draft')
+    .eq('id', submissionId)
+    .maybeSingle();
+  if (subError || !submission) throw new Error('Submission not found');
+
+  const { data: assignment, error: assignmentError } = await supabase
+    .from('assignments')
+    .select('id, title, kind, practice_set_id, key_notes, key_items')
+    .eq('id', submission.assignment_id)
+    .maybeSingle();
+  if (assignmentError || !assignment) throw new Error('Assignment not found');
+
+  let items = [];
+  if (assignment.practice_set_id) {
+    const { data: set } = await supabase
+      .from('practice_sets')
+      .select('items')
+      .eq('id', assignment.practice_set_id)
+      .maybeSingle();
+    items = Array.isArray(set?.items) ? set.items : [];
+  }
+
+  const work = formatSubmissionWork({
+    title: String(assignment.title ?? 'Work'),
+    kind: String(assignment.kind ?? 'practice'),
+    items,
+    answers: submission.answers ?? {},
+    keyNotes: assignment.key_notes ?? null,
+    keyItems: assignment.key_items,
+  });
+  const dbPrior = parseSubmissionReview(submission.model_draft ?? {});
+  const prior =
+    body.draft != null ? mergeSubmissionDraft(parseSubmissionReview(body.draft), dbPrior) : dbPrior;
+  const ac = new AbortController();
+  const payload = await withTimeout(
+    grokCall(
+      'review',
+      `${submissionReviewPrompt}\n${teacherDraftPrompt(prior)}\n\n${work}`,
+      { max_output_tokens: 1024 },
+      { supabase, functionName: 'review-submission', signal: ac.signal },
+    ),
+    30_000,
+    'Grok took too long. Your notes are still here. Try Ask AI again.',
+    () => ac.abort(),
+  );
+  const incoming = parseSubmissionReview(extractJson(outputText(payload)));
+  if (
+    !incoming.summary &&
+    !incoming.gaps.length &&
+    !incoming.items.length &&
+    incoming.draftScore == null
+  ) {
+    throw new Error('Grok did not return a review. Your notes are still here. Try Ask AI again.');
+  }
+  const draft = mergeSubmissionDraft(prior, incoming);
+  const update = {
+    model_draft: draft,
+    draft_score: draft.draftScore,
+  };
+  const { error: updateError } = await supabase.from('submissions').update(update).eq('id', submissionId);
+  if (updateError) {
+    const { model_draft: _draft, ...withoutDraft } = update;
+    const retry = await supabase.from('submissions').update(withoutDraft).eq('id', submissionId);
+    if (retry.error) throw retry.error;
+  }
+  return { ok: true, ...draft };
+}
+
+function parseSubmissionReview(parsed) {
+  parsed = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  const gaps = Array.isArray(parsed.gaps)
+    ? parsed.gaps
+        .map((gap, index) => ({
+          label: String(gap.label ?? '').trim(),
+          sortOrder: Number(gap.sortOrder ?? index + 1),
+        }))
+        .filter((gap) => gap.label)
+        .slice(0, 3)
+    : [];
+  const items = Array.isArray(parsed.items)
+    ? parsed.items
+        .map((item, index) => ({
+          id: String(item.id ?? `item-${index + 1}`),
+          prompt: String(item.prompt ?? '').trim(),
+          ...(item.answerKey ? { answerKey: String(item.answerKey) } : {}),
+        }))
+        .filter((item) => item.prompt)
+        .slice(0, 8)
+    : [];
+  const summary = typeof parsed.summary === 'string' ? parsed.summary.replace(/\s+/g, ' ').trim() : '';
+  const teacherNote =
+    typeof parsed.teacherNote === 'string' ? parsed.teacherNote.replace(/\s+/g, ' ').trim() : '';
+  const score =
+    typeof parsed.draftScore === 'number'
+      ? parsed.draftScore
+      : typeof parsed.draftScore === 'string'
+        ? Number(parsed.draftScore)
+        : null;
+  return {
+    summary: summary || null,
+    gaps,
+    draftScore: Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : null,
+    teacherNote: teacherNote || null,
+    items,
+  };
+}
+
+function teacherDraftPrompt(draft) {
+  if (!draft) return '';
+  const gaps = Array.isArray(draft.gaps) ? draft.gaps.map((gap) => gap.label).filter(Boolean) : [];
+  const items = Array.isArray(draft.items) ? draft.items.map((item) => item.prompt).filter(Boolean) : [];
+  if (!gaps.length && !items.length && !draft.teacherNote) return '';
+  const lines = [
+    '',
+    'The teacher already started a draft. Keep their gap labels and practice questions. You may add more, not delete theirs.',
+  ];
+  if (gaps.length) lines.push(`Teacher gaps: ${gaps.join('; ')}`);
+  if (items.length) {
+    lines.push('Teacher questions:');
+    items.forEach((prompt, index) => lines.push(`  ${index + 1}. ${prompt}`));
+  }
+  if (draft.teacherNote) lines.push(`Teacher note: ${draft.teacherNote}`);
+  return `\n${lines.join('\n')}`;
+}
+
+function mergeSubmissionDraft(prior, incoming) {
+  const prev = prior ?? parseSubmissionReview({});
+  const next = incoming ?? parseSubmissionReview({});
+  const gaps = [];
+  const gapSeen = new Set();
+  for (const gap of [...(prev.gaps ?? []), ...(next.gaps ?? [])]) {
+    const key = String(gap.label ?? '').trim().toLowerCase();
+    if (!key || gapSeen.has(key)) continue;
+    gapSeen.add(key);
+    gaps.push({ label: String(gap.label).trim(), sortOrder: gaps.length + 1 });
+    if (gaps.length >= 3) break;
+  }
+  const items = [];
+  const itemSeen = new Set();
+  for (const item of [...(prev.items ?? []), ...(next.items ?? [])]) {
+    const prompt = String(item.prompt ?? '').trim();
+    if (!prompt) continue;
+    const key = prompt.toLowerCase();
+    if (itemSeen.has(key)) continue;
+    itemSeen.add(key);
+    items.push({
+      id: String(item.id ?? `item-${items.length + 1}`),
+      prompt,
+      ...(item.answerKey ? { answerKey: item.answerKey } : {}),
+    });
+    if (items.length >= 8) break;
+  }
+  return {
+    summary: next.summary || prev.summary,
+    teacherNote: next.teacherNote || prev.teacherNote,
+    draftScore: next.draftScore ?? prev.draftScore,
+    gaps,
+    items,
+  };
+}
+
+function withTimeout(promise, ms, message, onTimeout) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      try {
+        onTimeout?.();
+      } catch {
+        // Abort is best-effort.
+      }
+      reject(new Error(message));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        if (err && (err.name === 'AbortError' || /aborted/i.test(String(err.message ?? '')))) {
+          reject(new Error(message));
+          return;
+        }
+        reject(err);
+      },
+    );
+  });
+}
+
+function formatSubmissionWork(input) {
+  const parts = [`Assignment: ${input.title}`, `Kind: ${input.kind}`];
+  if (String(input.keyNotes ?? '').trim()) parts.push(`Teacher key note: ${String(input.keyNotes).trim()}`);
+  const keyRows = Array.isArray(input.keyItems) ? input.keyItems : [];
+  if (keyRows.length) {
+    parts.push('Answer key:');
+    for (const [index, row] of keyRows.entries()) {
+      const item = row ?? {};
+      parts.push(`  ${item.n ?? index + 1}. ${String(item.stem ?? '').trim()}${item.answer ? ` → ${item.answer}` : ''}`);
+    }
+  }
+  if (input.items.length) {
+    parts.push('');
+    for (const [index, item] of input.items.entries()) {
+      const id = String(item.id ?? `item-${index + 1}`);
+      const answer = input.answers?.[id];
+      const student = typeof answer === 'string' ? answer.trim() : answer == null ? '' : String(answer);
+      parts.push(`${index + 1}. ${String(item.prompt ?? '').trim() || 'Item'}`);
+      if (item.answerKey) parts.push(`   Expected: ${item.answerKey}`);
+      parts.push(`   Student: ${student || '(blank)'}`);
+    }
+  } else if (input.kind === 'lesson') {
+    parts.push('');
+    parts.push(formatLessonAnswers(input.answers ?? {}));
+  }
+  return parts.join('\n');
+}
+
+function formatLessonAnswers(answers) {
+  const extras =
+    answers.extras && typeof answers.extras === 'object' && !Array.isArray(answers.extras)
+      ? answers.extras
+      : {};
+  const marks = unwrapLessonMarks(answers.marks);
+  const stems =
+    extras.item_stems && typeof extras.item_stems === 'object' && !Array.isArray(extras.item_stems)
+      ? extras.item_stems
+      : {};
+  const ids = Array.isArray(extras.item_ids)
+    ? extras.item_ids.filter((id) => typeof id === 'string')
+    : Object.keys(marks);
+  const parts = [];
+  if (answers.state) parts.push(`Status: ${String(answers.state)}`);
+  const correct = ids.filter((id) => marks[id]?.ok === true).length;
+  const incorrect = ids.filter((id) => marks[id]?.ok === false).length;
+  const skipped = ids.filter((id) => typeof marks[id]?.ok !== 'boolean').length;
+  if (ids.length) parts.push(`Score: ${correct} correct, ${incorrect} incorrect, ${skipped} skipped`);
+  else if (typeof answers.correct === 'number' || typeof answers.incorrect === 'number') {
+    parts.push(`Score: ${Number(answers.correct) || 0} correct, ${Number(answers.incorrect) || 0} incorrect`);
+  }
+  if (typeof answers.duration_ms === 'number') {
+    const sec = Math.max(0, Math.round(answers.duration_ms / 1000));
+    parts.push(`Time: ${sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m ${sec % 60}s`}`);
+  }
+  if (typeof answers.hints === 'number' && answers.hints > 0) parts.push(`Hints: ${answers.hints}`);
+  if (answers.audio_used === true) parts.push('Heard this');
+  if (answers.kinetic_used === true) parts.push('Used a slider or drag');
+  for (const [index, id] of ids.entries()) {
+    const mark = marks[id] ?? {};
+    const stem = typeof stems[id] === 'string' && stems[id].trim() ? String(stems[id]).trim() : id;
+    const ok = mark.ok;
+    const outcome = ok === true ? 'Correct' : ok === false ? 'Incorrect' : 'Skipped';
+    const bits = [outcome];
+    if (typeof mark.user === 'string' && mark.user.trim()) bits.push(mark.user.trim());
+    if (typeof mark.tries === 'number' && mark.tries > 1) bits.push(`${mark.tries} tries`);
+    if (mark.later_corrected === true || (ok === true && mark.first_ok === false)) {
+      bits.push('corrected after a miss');
+    }
+    if (typeof mark.hints === 'number' && mark.hints > 0) {
+      bits.push(mark.hints === 1 ? '1 hint' : `${mark.hints} hints`);
+    }
+    parts.push(`${index + 1}. ${stem} — ${bits.join(' · ')}`);
+  }
+  return parts.join('\n');
+}
+
+function unwrapLessonMarks(marks) {
+  if (!marks || typeof marks !== 'object' || Array.isArray(marks)) return {};
+  const inner = marks.answers;
+  const source = inner && typeof inner === 'object' && !Array.isArray(inner) ? inner : marks;
+  const out = {};
+  for (const [id, value] of Object.entries(source)) {
+    if (id === 'slider37' || id === 'who') continue;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+    out[id] = value;
+  }
+  return out;
 }
 
 async function transcribe(supabase, body) {
@@ -514,18 +865,22 @@ async function classifyCapture(body) {
   if (!imageUrl) throw new Error('imageUrl required');
   const roster = Array.isArray(body.rosterFirstNames) ? body.rosterFirstNames : [];
   const rosterText = roster
-    .map((row) => (typeof row === 'string' ? row : `${row?.id ?? ''} ${row?.name ?? ''}`))
+    .map((row) =>
+      typeof row === 'string'
+        ? firstNameOnly(row)
+        : `${row?.id ?? ''} ${firstNameOnly(row?.name ?? '')}`.trim(),
+    )
     .filter(Boolean)
     .join(', ');
   const prepared = await prepareImageForGrok(imageUrl);
-  const payload = await xaiResponses(visionModel, [
+  const payload = await grokCall('classify', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
         {
           type: 'input_text',
-          text: `${classifyPrompt}\n\nRoster (id + name). Guess only from this list:\n${rosterText || '(none)'}`,
+          text: `${classifyPrompt}\n\nRoster first names only (id + first name). Guess only from this list:\n${rosterText || '(none)'}`,
         },
       ],
     },
@@ -599,7 +954,7 @@ async function hydrateAskImages(input) {
           content.push({
             ...part,
             image_url: await prepareImageForGrok(part.image_url),
-            detail: part.detail === 'high' || part.detail === 'low' ? part.detail : 'auto',
+            detail: part.detail === 'high' ? 'high' : imageDetailFor('cheap'),
           });
         } catch (err) {
           console.error(`[ai-dev] ask photo: ${err instanceof Error ? err.message : err}`);
@@ -633,7 +988,10 @@ async function askAssistant(_supabase, body) {
           .filter((item) => item.content)
       : [{ role: 'user', content: 'Hello' }];
   const input = await hydrateAskImages(raw);
-  const payload = await xaiResponses(practiceModel, input.length ? input : [{ role: 'user', content: 'Hello' }], extra);
+  const payload = await grokCall('ask', input.length ? input : [{ role: 'user', content: 'Hello' }], extra, {
+    supabase: _supabase,
+    functionName: 'ask-assistant',
+  });
   const calls = functionCallsFrom(payload);
   const responseId = typeof payload.id === 'string' ? payload.id : undefined;
   console.log(
@@ -661,16 +1019,18 @@ function functionCallsFrom(payload) {
 }
 
 async function evaluateHomework(body) {
+  const pass = asPass(body.pass);
   const urls = Array.isArray(body.imageUrls)
     ? body.imageUrls.map((url) => String(url)).filter(Boolean)
     : [String(body.imageUrl ?? '')].filter(Boolean);
   if (!urls.length) throw new Error('imageUrl required');
+  const detail = imageDetailFor(pass);
   const images = [];
   for (const url of urls.slice(0, 8)) {
     images.push({
       type: 'input_image',
       image_url: await prepareImageForGrok(url),
-      detail: 'high',
+      detail,
     });
   }
   const keyUrls = Array.isArray(body.keyImageUrls)
@@ -680,18 +1040,18 @@ async function evaluateHomework(body) {
     images.push({
       type: 'input_image',
       image_url: await prepareImageForGrok(url),
-      detail: 'high',
+      detail,
     });
   }
   const rosterHint = Array.isArray(body.rosterNames)
-    ? body.rosterNames.map((name) => String(name ?? '').trim()).filter(Boolean).join(', ')
+    ? body.rosterNames.map((name) => firstNameOnly(String(name ?? ''))).filter(Boolean).join(', ')
     : '';
   const keyItems = Array.isArray(body.keyItems) ? body.keyItems : [];
   const keyNotes = String(body.keyNotes ?? '').trim();
   const scoreScheme = String(body.scoreScheme ?? 'numeric');
   const maxScore = Number(body.maxScore);
   const keyBlock = formatKeyForPrompt(keyItems, keyNotes, scoreScheme, Number.isFinite(maxScore) ? maxScore : null);
-  const payload = await xaiResponses(visionModel, [
+  const payload = await grokCall('homework', [
     {
       role: 'user',
       content: [
@@ -708,7 +1068,7 @@ async function evaluateHomework(body) {
         },
       ],
     },
-  ]);
+  ], {}, { pass, functionName: 'evaluate-homework' });
   const parsed = extractJson(outputText(payload));
   const draft = parseHomeworkDraft(parsed);
   const studentName =
@@ -718,6 +1078,9 @@ async function evaluateHomework(body) {
     studentName: studentName || null,
     maxScore: typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(maxScore) ? maxScore : null,
     items: parseScoredItems(parsed.items, keyItems),
+    costUsd: payload.__kelyraUsd ?? null,
+    model: payload.__kelyraModel ?? null,
+    pass,
   };
 }
 
@@ -777,18 +1140,28 @@ function parseHomeworkDraft(parsed) {
   };
 }
 
-async function draftFromPhoto(imageUrl) {
+async function draftFromPhoto(imageUrl, pass = 'cheap', supabase = null, captureId = null) {
   const prepared = await prepareImageForGrok(imageUrl);
-  const payload = await xaiResponses(visionModel, [
-    {
-      role: 'user',
-      content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
-        { type: 'input_text', text: homeworkPrompt },
-      ],
-    },
-  ]);
-  return parseHomeworkDraft(extractJson(outputText(payload)));
+  const payload = await grokCall(
+    'homework',
+    [
+      {
+        role: 'user',
+        content: [
+          { type: 'input_image', image_url: prepared, detail: imageDetailFor(pass) },
+          { type: 'input_text', text: homeworkPrompt },
+        ],
+      },
+    ],
+    {},
+    { pass, supabase, functionName: 'analyze-homework', captureId },
+  );
+  return {
+    ...parseHomeworkDraft(extractJson(outputText(payload))),
+    costUsd: payload.__kelyraUsd ?? null,
+    model: payload.__kelyraModel ?? null,
+    pass,
+  };
 }
 
 const cropPortraitPrompt = `You frame one person's head for a circular profile photo AND say how the photo is tilted.
@@ -890,15 +1263,15 @@ async function cutoutLogo(body) {
 }
 
 async function detectLogoLayout(prepared) {
-  const payload = await xaiResponses(visionModel, [
+  const payload = await grokCall('portrait', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
         { type: 'input_text', text: logoLayoutPrompt },
       ],
     },
-  ]);
+  ], {}, { functionName: 'cutout-logo' });
   const parsed = extractJson(outputText(payload));
   const num = (value, fallback) => {
     const n = Number(value);
@@ -1139,15 +1512,15 @@ function composeLogoSquare(pngBuffer) {
 }
 
 async function detectFaceBox(prepared) {
-  return xaiResponses(visionModel, [
+  return grokCall('portrait', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: 'high' },
+        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
         { type: 'input_text', text: cropPortraitPrompt },
       ],
     },
-  ]);
+  ], {}, { functionName: 'crop-portrait' });
 }
 
 function readFaceBox(payload) {
@@ -1401,15 +1774,15 @@ async function analyzeAnswerKey(body) {
   if (!imageUrl) throw new Error('imageUrl required');
   const loaded = await loadImageForGrok(imageUrl);
   const signature = await pageSignature(loaded.bytes);
-  const payload = await xaiResponses(visionModel, [
+  const payload = await grokCall('key', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: loaded.dataUrl, detail: 'high' },
+        { type: 'input_image', image_url: loaded.dataUrl, detail: imageDetailFor('cheap') },
         { type: 'input_text', text: analyzeKeyPrompt },
       ],
     },
-  ]);
+  ], {}, { functionName: 'analyze-answer-key' });
   const parsed = extractJson(outputText(payload));
   const pageState = ['blank', 'filled', 'unsure'].includes(parsed.pageState) ? parsed.pageState : 'unsure';
   const items = parseKeyItemsFromModel(parsed.items);
@@ -1497,14 +1870,14 @@ async function matchKey(body) {
 
   const listed = withPhotos.map((row) => `${row.id} — ${row.title}`).join('\n');
   const content = [
-    { type: 'input_image', image_url: loaded.dataUrl, detail: 'high' },
+    { type: 'input_image', image_url: loaded.dataUrl, detail: imageDetailFor('cheap') },
     ...withPhotos.map((row) => ({ type: 'input_image', image_url: row.prepared, detail: 'low' })),
     {
       type: 'input_text',
       text: `${matchKeyPrompt}\n\nCandidate keys (in the same order as the images after the student page):\n${listed}`,
     },
   ];
-  const payload = await xaiResponses(visionModel, [{ role: 'user', content }]);
+  const payload = await grokCall('match-key', [{ role: 'user', content }], {}, { functionName: 'match-key' });
   const parsed = extractJson(outputText(payload));
   const allowed = new Set(withPhotos.map((row) => row.id));
   const picked = typeof parsed.assignmentId === 'string' && allowed.has(parsed.assignmentId) ? parsed.assignmentId : null;
@@ -1641,6 +2014,23 @@ async function loadImageForGrok(imageUrl) {
     }
   }
 
+  try {
+    const sharp = require('sharp');
+    body = await sharp(body)
+      .rotate()
+      .resize({
+        width: MODEL_MAX_EDGE,
+        height: MODEL_MAX_EDGE,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: Math.round(MODEL_JPEG_QUALITY * 100), mozjpeg: true })
+      .toBuffer();
+    mime = 'image/jpeg';
+  } catch {
+    // Keep the converted bytes if sharp is unavailable.
+  }
+
   return {
     bytes: body,
     mime,
@@ -1670,11 +2060,253 @@ function sniffImage(bytes) {
   return 'unknown';
 }
 
-async function xaiResponses(model, input, extra = {}) {
+async function grokCall(job, input, extra = {}, opts = {}) {
+  const pass = asPass(opts.pass);
+  await assertUnderCap(opts.supabase);
+  const model = opts.model ?? modelFor(job, pass);
+  const effort = reasoningEffortFor(model, pass);
+  const payload = await xaiResponses(
+    model,
+    input,
+    {
+      ...(effort ? { reasoning_effort: effort } : {}),
+      ...extra,
+    },
+    opts.signal,
+  );
+  const usage = parseUsage(payload);
+  const usd = estimateUsd(model, usage.inputTokens, usage.outputTokens);
+  await logAiUsage(opts.supabase, {
+    functionName: opts.functionName ?? job,
+    model,
+    captureId: opts.captureId ?? null,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    usd,
+  });
+  payload.__kelyraUsd = usd;
+  payload.__kelyraModel = model;
+  return payload;
+}
+
+async function assertUnderCap(supabase) {
+  if (!supabase) return;
+  try {
+    const { data } = await supabase.rpc('ai_spend_this_month');
+    const row = Array.isArray(data) ? data[0] : data;
+    const spent = Number(row?.usd ?? 0);
+    const capRaw = row?.cap_usd;
+    const cap = capRaw == null || capRaw === '' ? DEFAULT_MONTHLY_CAP_USD : Number(capRaw);
+    if (Number.isFinite(cap) && cap > 0 && spent >= cap) {
+      throw new Error(`This school is over its monthly AI budget ($${cap}).`);
+    }
+  } catch (err) {
+    if (err instanceof Error && /budget/.test(err.message)) throw err;
+  }
+}
+
+async function logAiUsage(supabase, row) {
+  if (!supabase || !row.usd) return;
+  try {
+    const { data: schoolId } = await supabase.rpc('my_school_id');
+    const { data: userData } = await supabase.auth.getUser();
+    if (!schoolId) return;
+    await supabase.from('ai_usage').insert({
+      school_id: schoolId,
+      teacher_id: userData.user?.id ?? null,
+      function: row.functionName,
+      model: row.model,
+      capture_id: row.captureId,
+      input_tokens: row.inputTokens,
+      output_tokens: row.outputTokens,
+      usd: row.usd,
+    });
+  } catch {
+    // Meter is best-effort.
+  }
+}
+
+async function readAiSpend(supabase) {
+  const { data, error } = await supabase.rpc('ai_spend_this_month');
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    usd: Number(row?.usd ?? 0),
+    capUsd: row?.cap_usd == null ? DEFAULT_MONTHLY_CAP_USD : Number(row.cap_usd),
+  };
+}
+
+async function processAiJobs(supabase, authorization) {
+  const { data: jobs, error } = await supabase
+    .from('ai_jobs')
+    .select('id, capture_id, pass')
+    .eq('status', 'pending')
+    .eq('kind', 'homework_draft')
+    .order('created_at', { ascending: true })
+    .limit(20);
+  if (error) throw error;
+  const results = [];
+  for (const job of jobs ?? []) {
+    await supabase.from('ai_jobs').update({ status: 'running' }).eq('id', job.id);
+    try {
+      await analyzeHomework(supabase, { captureId: job.capture_id, pass: job.pass });
+      await supabase
+        .from('ai_jobs')
+        .update({ status: 'done', finished_at: new Date().toISOString() })
+        .eq('id', job.id);
+      results.push({ id: job.id, ok: true });
+    } catch (err) {
+      await supabase
+        .from('ai_jobs')
+        .update({
+          status: 'error',
+          error: err instanceof Error ? err.message : 'failed',
+          finished_at: new Date().toISOString(),
+        })
+        .eq('id', job.id);
+      results.push({ id: job.id, ok: false });
+    }
+  }
+  void authorization;
+  return { ok: true, processed: results.length, results };
+}
+
+async function buildPracticeLesson(supabase, authorization, body) {
+  const classId = String(body.classId ?? '').trim();
+  const items = (Array.isArray(body.items) ? body.items : [])
+    .map((item, index) => ({
+      id: String(item.id ?? `item-${index + 1}`),
+      prompt: String(item.prompt ?? '').trim(),
+      ...(item.answerKey ? { answerKey: String(item.answerKey).trim() } : {}),
+    }))
+    .filter((item) => item.prompt);
+  if (!classId || !items.length) throw new Error('classId and items required');
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user?.id) throw new Error('Sign in first.');
+  const { data: taught } = await supabase
+    .from('class_teachers')
+    .select('class_id')
+    .eq('class_id', classId)
+    .eq('teacher_id', userData.user.id)
+    .maybeSingle();
+  if (!taught) throw new Error('You can only assign to a class you teach.');
+
+  const page = await import(pathToFileURL(join(root, 'supabase/functions/_shared/practicePage.ts')).href);
+  const fallback = page.specFromItems(
+    String(body.title ?? '').trim() || `Practice: ${body.skillLabel ?? 'skill'}`,
+    items,
+  );
+  let spec = fallback;
+  try {
+    const payload = await grokCall(
+      'lesson-outline',
+      `${page.PRACTICE_PAGE_STYLE_PROMPT}
+
+Skill: ${String(body.skillLabel ?? fallback.title)}
+Source assignment: ${String(body.title ?? '')}
+${body.instruction ? `Teacher revision: ${body.instruction}\n` : ''}Questions:
+${items.map((item, index) => `${index + 1}. ${item.prompt}${item.answerKey ? ` (key: ${item.answerKey})` : ''}`).join('\n')}`,
+      {},
+      { supabase, functionName: 'build-practice-lesson' },
+    );
+    spec = page.parsePracticePageSpec(extractJson(outputText(payload)), fallback);
+  } catch {
+    spec = fallback;
+  }
+  if (!spec.beats.length) spec = fallback;
+  const html = page.buildPracticeLessonHtml(spec);
+  const window = page.practiceBeatWindow(spec);
+  const admin = serviceSupabase();
+  let deckId = `prac-${crypto.randomUUID()}`;
+  let version = 'v1';
+  const assignmentId = String(body.assignmentId ?? '').trim();
+  if (assignmentId) {
+    const { data: assignment } = await supabase
+      .from('assignments')
+      .select('id, class_id, deck_id, lesson_version, storage_deck_id')
+      .eq('id', assignmentId)
+      .maybeSingle();
+    if (!assignment || assignment.class_id !== classId) throw new Error('Assignment not found.');
+    if (page.isPracticePackId(assignment.storage_deck_id) || page.isPracticePackId(assignment.deck_id)) {
+      deckId = assignment.storage_deck_id || assignment.deck_id;
+      version = assignment.lesson_version || 'v1';
+    }
+  }
+  const object = `${deckId}/${version}/index.html`;
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Need SUPABASE_SERVICE_ROLE_KEY to store the practice page.');
+  const uploaded = await fetch(`${url.replace(/\/$/, '')}/storage/v1/object/lessons/${object}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      apikey: key,
+      'Content-Type': 'text/html; charset=utf-8',
+      'x-upsert': 'true',
+    },
+    body: html,
+  });
+  if (!uploaded.ok) throw new Error(await uploaded.text());
+  if (!assignmentId) {
+    const { error: packError } = await admin.from('lesson_packs').insert({
+      deck_id: deckId,
+      version,
+      title: spec.title,
+      published: false,
+      storage_deck_id: deckId,
+      beat_start: window.start,
+      beat_end: window.end,
+    });
+    if (packError) throw packError;
+  } else {
+    await admin
+      .from('lesson_packs')
+      .update({ title: spec.title, beat_start: window.start, beat_end: window.end })
+      .eq('deck_id', deckId)
+      .eq('version', version);
+  }
+  void authorization;
+  return {
+    ok: true,
+    deckId,
+    version,
+    storageDeckId: deckId,
+    beatStart: window.start,
+    beatEnd: window.end,
+    title: spec.title,
+  };
+}
+
+function serviceSupabase() {
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Need SUPABASE_SERVICE_ROLE_KEY to store the practice page.');
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+async function draftLessonFromOutline(supabase, body) {
+  const outline = String(body.outline ?? body.text ?? '').trim();
+  if (!outline) throw new Error('outline required');
+  const payload = await grokCall(
+    'lesson-outline',
+    `You turn teacher slide notes into a Kelyra interactive lesson outline. JSON only:
+{"title":"","sections":[{"id":"1.1","title":"","teach":"spoken teach script","check":"spoken check script","items":[{"stem":"","accept":[""],"hint":""}]}]}
+Rules:
+- One section per major slide idea. Keep teach/check under 40 words each.
+- Items are paper-short. No student names. Do not copy textbook paragraphs.
+- Source notes:\n${outline.slice(0, 20000)}`,
+    {},
+    { supabase, functionName: 'draft-lesson-from-outline' },
+  );
+  return { ok: true, ...extractJson(outputText(payload)), costUsd: payload.__kelyraUsd ?? null };
+}
+
+async function xaiResponses(model, input, extra = {}, signal) {
   const response = await xaiFetch(`${xaiBaseUrl}/responses`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, input, ...extra }),
+    body: JSON.stringify({ store: false, model, input, ...extra }),
+    signal,
   });
   if (!response.ok) {
     throw new Error(`Grok failed: ${response.status} ${await response.text()}`);

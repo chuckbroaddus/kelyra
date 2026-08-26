@@ -142,12 +142,13 @@ Binary blobs in object storage. Homework captures, roster list photos, and **pro
 | `id` * | uuid | no | PK |
 | `teacher_id` * | uuid | no | |
 | `kind` * | enum | no | `photo` \| `audio` |
-| `storage_path` * | text | no | |
+| `storage_path` * | text | no | Original (new uploads max long edge ~1600 JPEG). |
+| `thumb_storage_path` | text | yes | List/avatar object in the same `photos` bucket. Convention if null: `{name}_thumb.{ext}`. SQL `20260824000005_photo_thumbs.sql`. |
 | `mime_type` | text | yes | |
-| `byte_size` | int | yes | |
+| `byte_size` | int | yes | Original size. |
 | `created_at` * | timestamptz | no | |
 
-An asset may be referenced by a capture, a roster import, a student profile, and/or a parent profile. Delete the storage object + `assets` row only when **no remaining FK** points at it (see Delete / cascade). Never reuse a homework capture as a profile photo unless the teacher taps “Use as profile photo” (then `photo_asset_id` points at that same asset; deleting the capture later must **not** delete a still-referenced profile asset).
+An asset may be referenced by a capture, a roster import, a student profile, and/or a parent profile. Delete the storage object + `assets` row only when **no remaining FK** points at it (see Delete / cascade). Never reuse a homework capture as a profile photo unless the teacher taps “Use as profile photo” (then `photo_asset_id` points at that same asset; deleting the capture later must **not** delete a still-referenced profile asset). Message/feed photos are not `assets` rows; they use the same `*_thumb` convention next to `payload.storage_path`. Lists sign the thumb. Capture review, ImageViewer, and analyze-homework / Ask photo sign the original.
 
 ### `captures`
 
@@ -212,7 +213,8 @@ Unique `(class_id, normalized_label)`.
 | Column | Type | Null | Notes |
 |---|---|---|---|
 | `id` * | uuid | no | PK |
-| `capture_id` * | uuid | no | FK `captures` |
+| `capture_id` | uuid | yes | FK `captures`. Null when the gap is from a turned-in assignment. |
+| `submission_id` | uuid | yes | FK `submissions`. Null when the gap is from a homework capture. One of capture or submission is required. |
 | `student_id` * | uuid | no | denormalized; always the capture’s student |
 | `skill_id` | uuid | yes | null until Approve maps/creates the skill |
 | `label` * | text | no | model or teacher text |
@@ -242,6 +244,24 @@ The generated packet. Not assigned until the teacher taps Assign.
 
 No per-item table in MVP (S3). Regenerating inserts a new `practice_sets` row.
 
+### `lesson_packs`
+
+Teacher catalog of hosted interactive lessons. Students have no SELECT. No URL field.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` * | uuid | no | PK |
+| `deck_id` * | text | no | Assignable pack id, e.g. `fom-ch01-s13`. Unique with `version` |
+| `version` * | text | no | e.g. `v4`. Unique with `deck_id` |
+| `title` * | text | no | Shown in the picker (`FoM · 1.3 Multiplication`) |
+| `published` * | bool | no | default true. Unpublished rows stay off the picker |
+| `storage_deck_id` * | text | no | Storage folder, e.g. `fom-ch01`. JWT/host prefix is `{storage_deck_id}/{version}` |
+| `beat_start` * | text | no | Inclusive first beat id (`hook` rides with 1.1) |
+| `beat_end` * | text | no | Inclusive last beat id (`done` rides with 1.7) |
+| `created_at` * | timestamptz | no | |
+
+Private Storage bucket `lessons` holds `{storage_deck_id}/{version}/index.html` plus relative `audio/` and `img/`. Section packs share one folder (`fom-ch01/v4`). Students never list it. Gateway: Edge `lesson-host`. Policy: `notes/lessons-policy.md`. SQL `20260824000006_lesson_section_packs.sql`.
+
 ### `assignments`
 
 A grade-book **column**. Teachers may **plan** one before any capture. Capture files into an existing column or creates a one-off on Approve.
@@ -251,7 +271,12 @@ A grade-book **column**. Teachers may **plan** one before any capture. Capture f
 | `id` * | uuid | no | PK |
 | `class_id` * | uuid | no | |
 | `title` * | text | no | “HW #17 Long Division Practice 3”, “6.1 Unit Test” |
-| `kind` * | enum | no | `planned` \| `capture` \| `practice` |
+| `kind` * | enum | no | `planned` \| `capture` \| `practice` \| `lesson` |
+| `deck_id` | text | yes | Lesson pack id when `kind = lesson` (e.g. `fom-ch01-s13`). Never a URL |
+| `lesson_version` | text | yes | Pack version |
+| `storage_deck_id` | text | yes | Copied from the pack at assign. Host prefix is `{storage_deck_id}/{version}` |
+| `beat_start` | text | yes | Copied from the pack at assign. Inclusive first beat id |
+| `beat_end` | text | yes | Copied from the pack at assign. Inclusive last beat id |
 | `category` | text | no | default `homework`. quiz, test, midterm, final, project, presentation, participation, behavior, other |
 | `capture_id` | uuid | yes | last capture filed into this column (optional) |
 | `practice_set_id` | uuid | yes | when `kind = practice` |
@@ -259,7 +284,7 @@ A grade-book **column**. Teachers may **plan** one before any capture. Capture f
 | `max_score` | numeric | yes | optional |
 | `weight_band` | text | no | `none` \| `daily` \| `major` \| `custom` |
 | `weight_percent` | numeric | yes | used when `custom` (e.g. 15) |
-| `term` | text | no | `none` \| `q1`–`q4` \| `semester` \| `year` |
+| `term` | text | no | `q1`–`q4` \| `s1` \| `s2` \| `year`. Default `year`. (Legacy `none` → `year`, `semester` → `s1`.) |
 | `score_scheme` | text | no | `numeric` \| `pass_fail` \| `either` |
 | `include_in_average` | bool | no | default true; Pass/Fail is never averaged as a number |
 | `key_kind` | text | no | `none` \| `photo` \| `items` \| `both`. Default `none` |
@@ -278,6 +303,8 @@ A grade-book **column**. Teachers may **plan** one before any capture. Capture f
 
 Creating a planned assignment seeds one `submissions` row per roster student at `assigned` so the column appears immediately.
 
+`kind = lesson` is hosted interactive work (`lesson_packs` catalog). The student cell is the same `submissions` row. Metrics land in `answers` (`kind: lesson`); they are evidence until Approve. Repeat Open overwrites that cell. See `notes/lessons-policy.md`.
+
 `captures.assignment_id` (nullable FK) is how a photo/voice files into a planned column. Approve updates that student’s cell; it does not invent a second column.
 
 ### `submissions`
@@ -289,19 +316,20 @@ A grade-book **cell**. One per student per assignment.
 | `id` * | uuid | no | PK |
 | `assignment_id` * | uuid | no | FK `assignments` |
 | `student_id` * | uuid | no | FK `students` |
-| `status` * | enum | no | `assigned` \| `submitted` \| `draft_scored` \| `approved` |
-| `answers` | jsonb | yes | student responses for practice |
-| `draft_score` | numeric | yes | |
+| `status` * | enum | no | `assigned` \| `started` \| `completed` \| `graded` |
+| `answers` | jsonb | yes | student responses for practice; lesson metrics (`kind: lesson`, extras kept) |
+| `draft_score` | numeric | yes | AI suggestion; not a grade |
 | `approved_score` | numeric | yes | what the teacher grid shows |
+| `model_draft` | jsonb | yes | AI review JSON (`summary`, `gaps`, `teacherNote`, `items`). Never student-visible. Not overwritten by Approve. SQL `20260824000007_submission_model_draft.sql` |
 | `submitted_at` | timestamptz | yes | locks student edits |
 | `approved_at` | timestamptz | yes | |
 | `created_at` * | timestamptz | no | |
 
 Unique `(assignment_id, student_id)`.
 
-Capture Approve: insert assignment + one submission with `status = approved` and `approved_score` from the capture.
+Capture Approve: insert assignment + one submission with `status = graded` and `approved_score` from the capture.
 
-Practice Assign: insert assignment + one submission per student with `status = assigned`. Student submit → `submitted` (+ optional `draft_scored`). Teacher Approve → `approved`.
+Practice Assign: insert assignment + one submission per student with `status = assigned`. Student opens → `started`. Student submit → `completed`. Opening **Review** may draft a score + gaps without changing status. Teacher grades → `graded`. If a gap remains, the teacher can assign the suggested follow-up practice. Nothing here is a grade until Graded.
 
 ### `parents`
 
@@ -447,9 +475,10 @@ Parent never sees another family’s anything. Parent never sees student `allerg
 | Photo of list, 3 names confirmed | 3 students + enrollments | same |
 | Homework photo, no speech | `captures` with `student_id` null, `status = unassigned` | no gaps, no assignment |
 | Speech names Mateo | `student_id` set, `status = attached` then `draft` | scores unpublished |
-| Teacher Approves | `skill_gaps.status`, `students.current_focus_skill_id`, assignment + approved submission | practice set still absent |
+| Teacher Approves | `skill_gaps.status`, `students.current_focus_skill_id`, assignment + graded submission | practice set still absent |
 | Teacher Assigns practice | `practice_sets`, assignment, submission `assigned` | `answers`, scores |
-| Student submits | `answers`, `submitted_at` | `approved_score` until teacher Approves |
+| Student opens | submission `started` | |
+| Student submits | `answers`, `submitted_at`, submission `completed` | `approved_score` until teacher grades |
 | Add parent “Amina” | `parents.display_name` | photo, metadata, children, invite |
 | Link Amina → Maya | `parent_students` | invite still optional |
 | Create parent link | `parent_accesses` with `parent_id` | email / accepted_at |
@@ -459,7 +488,7 @@ Parent never sees another family’s anything. Parent never sees student `allerg
 
 **Do not** use placeholders like `"TBD"` or empty-string required fields. Use SQL `NULL`. `metadata` starts as `{}`. Empty UI is “Add phone”, not `null`.
 
-**Publication** is status, not a second copy of the row. Student/parent queries filter `captures.status = approved` and `submissions.status in (assigned, submitted, approved)` as appropriate. Drafts are teacher-only.
+**Publication** is status, not a second copy of the row. Student/parent queries filter `captures.status = approved` and `submissions.status in (assigned, started, completed, graded)` as appropriate. Drafts are teacher-only. AI review may write `draft_score` / `model_draft` while status stays `completed`. Nothing is a grade until `graded`.
 
 **Matcher** updates `guessed_student_id` + `match_confidence`. Filing updates `student_id`. Those are different columns so a high-confidence guess can be shown as a chip without committing until the teacher lets it stand (or taps another name).
 

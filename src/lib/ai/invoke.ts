@@ -25,7 +25,12 @@ export async function invokeAi<T extends object>(
     | 'cutout-portrait'
     | 'cutout-logo'
     | 'analyze-answer-key'
-    | 'match-key',
+    | 'match-key'
+    | 'review-submission'
+    | 'process-ai-jobs'
+    | 'ai-spend'
+    | 'draft-lesson-from-outline'
+    | 'build-practice-lesson',
   body: Record<string, unknown>,
 ): Promise<T> {
   if (aiDevUrl) {
@@ -96,6 +101,7 @@ async function invokeLocal<T>(name: string, body: Record<string, unknown>): Prom
 
     const controller = new AbortController();
     let leftApp = false;
+    let timedOut = false;
     const onAppState = (next: AppStateStatus) => {
       if (next === 'background') {
         leftApp = true;
@@ -103,6 +109,14 @@ async function invokeLocal<T>(name: string, body: Record<string, unknown>): Prom
       }
     };
     const sub = AppState.addEventListener('change', onAppState);
+    const timeoutMs = name === 'review-submission' ? 35_000 : 0;
+    const timer =
+      timeoutMs > 0
+        ? setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+          }, timeoutMs)
+        : null;
 
     try {
       const response = await fetch(url, {
@@ -118,6 +132,9 @@ async function invokeLocal<T>(name: string, body: Record<string, unknown>): Prom
       return payload;
     } catch (err) {
       if (err instanceof AiHttpError) throw err;
+      if (timedOut) {
+        throw new AiHttpError('Grok took too long. Your notes are still here. Try Ask AI again.');
+      }
 
       const stillBackgrounded = isAppSuspended(AppState.currentState);
       if (leftApp || stillBackgrounded || isAbortLike(err)) {
@@ -131,6 +148,7 @@ async function invokeLocal<T>(name: string, body: Record<string, unknown>): Prom
         await sleep(350 * foregroundFailures);
       }
     } finally {
+      if (timer) clearTimeout(timer);
       sub.remove();
     }
   }

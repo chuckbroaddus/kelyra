@@ -33,7 +33,7 @@ export function FloatingTabTray() {
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
   const schoolFeedIcon = useSchoolFeedIcon();
 
-  if (chromeState.role === 'none') return null;
+  if (chromeState.role === 'none' || chromeState.forceHidden) return null;
 
   const tabs = tabsFor(
     chromeState.role,
@@ -126,16 +126,20 @@ export function FloatingTabTray() {
 
 function tabTip(tab: Tab): string {
   if (tab.badge) return `${tab.label}, ${tab.badge} waiting`;
-  if (tab.key === 'home') return tab.label === 'School' ? 'School home' : 'Home';
-  if (tab.key === 'feed') return 'School feed';
+  if (tab.key === 'home') {
+    if (tab.label === 'Assignments') return 'Your assignments';
+    return tab.label === 'School' ? 'School home' : 'Home';
+  }
+  if (tab.key === 'feed') return tab.href.startsWith('/student') ? 'Feeds' : 'School feed';
+  if (tab.key === 'grades') return 'Your grades';
   if (tab.key === 'classes') return 'Every class in the school';
-  if (tab.key === 'people') return 'Staff, parents, and students';
+  if (tab.key === 'people') return tab.href.startsWith('/student') ? 'Classmates, teachers, and parents' : 'Staff, parents, and students';
   if (tab.key === 'manage' || tab.key === 'system') return 'Feed icon, activity, and responsibilities';
   if (tab.key === 'activity') return 'Immutable change log';
   if (tab.key === 'ask') return 'Talk with Kelyra';
   if (tab.key === 'capture') return 'Photograph work';
   if (tab.key === 'inbox') return 'Needs you';
-  if (tab.key === 'class') return 'Grade book and class records';
+  if (tab.key === 'class') return tab.href.startsWith('/student') ? 'Classes' : 'Grade book and class records';
   return tab.label;
 }
 
@@ -215,7 +219,41 @@ function tabsFor(
   }
   if (role === 'student') {
     return [
-      { key: 'home', icon: 'today', label: 'Home', href: '/todo', active: pathname === '/todo' },
+      {
+        key: 'home',
+        icon: 'work',
+        label: 'Assignments',
+        href: '/todo',
+        active: pathname === '/todo' || pathname.startsWith('/todo/'),
+      },
+      {
+        key: 'feed',
+        icon: schoolFeedIcon,
+        label: 'Feeds',
+        href: '/student/feed',
+        active: pathname.startsWith('/student/feed'),
+      },
+      {
+        key: 'class',
+        icon: 'classes',
+        label: 'Classes',
+        href: '/student/class',
+        active: pathname.startsWith('/student/class'),
+      },
+      {
+        key: 'grades',
+        icon: 'grades',
+        label: 'Grades',
+        href: '/student/grades',
+        active: pathname.startsWith('/student/grades'),
+      },
+      {
+        key: 'people',
+        icon: 'person',
+        label: 'People',
+        href: '/student/people',
+        active: pathname.startsWith('/student/people'),
+      },
       { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
     ];
   }

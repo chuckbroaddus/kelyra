@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { captureBadge } from '@/components/ui/Badge';
+import { SecondaryButton } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
@@ -18,7 +19,7 @@ import { deleteCapture } from '@/lib/captures/delete';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { formatWhen } from '@/lib/format';
-import { markNoteOnly } from '@/lib/gaps/api';
+import { markNoteOnly, processQueuedDrafts } from '@/lib/gaps/api';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -37,6 +38,7 @@ export default function InboxScreen() {
   const [pending, setPending] = useState<InboxItem | null>(null);
   const [notePending, setNotePending] = useState<InboxItem | null>(null);
   const [busy, setBusy] = useState(false);
+  const [drafting, setDrafting] = useState(false);
 
   const load = useCallback(async () => {
     if (!teacher) return;
@@ -57,6 +59,22 @@ export default function InboxScreen() {
       void load();
     }, [load]),
   );
+
+  const queued = items.filter((item) => item.ai_status === 'pending' || (item.model_draft as { pending?: boolean } | null)?.pending).length;
+
+  const onDraftQueued = async () => {
+    setDrafting(true);
+    setStatus(null);
+    try {
+      const result = await processQueuedDrafts();
+      setStatus(result.processed ? `Drafted ${result.processed} queued page${result.processed === 1 ? '' : 's'}.` : 'Nothing queued.');
+      await load();
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not draft queued pages');
+    } finally {
+      setDrafting(false);
+    }
+  };
 
   const needsName = items.filter((item) => !item.student_id);
   const toReview = items.filter((item) => Boolean(item.student_id));
@@ -91,6 +109,13 @@ export default function InboxScreen() {
 
   return (
     <Screen>
+      {queued ? (
+        <SecondaryButton
+          label={drafting ? 'Drafting queued…' : `Draft queued (${queued})`}
+          disabled={drafting}
+          onPress={() => void onDraftQueued()}
+        />
+      ) : null}
       {!loaded ? <WorkingLine /> : null}
       {loaded && items.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>

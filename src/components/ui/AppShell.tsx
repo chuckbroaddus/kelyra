@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minHeight: 0,
+    overflow: 'hidden',
   },
   camera: {
     ...StyleSheet.absoluteFillObject,

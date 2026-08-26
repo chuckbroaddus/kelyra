@@ -20,3 +20,12 @@ verify_jwt = true
 
 [functions.generate-practice]
 verify_jwt = true
+
+[functions.review-submission]
+verify_jwt = true
+
+[functions.student-open-lesson]
+verify_jwt = true
+
+[functions.lesson-host]
+verify_jwt = false

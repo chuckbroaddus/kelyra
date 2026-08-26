@@ -258,8 +258,8 @@ Then:
 2. Note the class **Join code** on the class screen.
 3. On the same computer, open **Student join** (or http://localhost:8081/join). You can stay signed in.
 4. Enter the join code → **Find class** → tap **Mateo**.
-5. Answer the three items → **Submit**. It should say Submitted.
-6. Back on Mateo’s teacher page, practice should show `submitted`.
+5. Answer the three items → **Submit**. It should say Completed.
+6. Back on Mateo’s teacher page, practice should show `completed`.
 
 Items come from Grok when the local AI gateway is running (section 19). Otherwise they are placeholder prompts you can edit.
 

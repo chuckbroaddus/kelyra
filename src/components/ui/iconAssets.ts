@@ -44,6 +44,19 @@ import post from '../../../assets/icons/post.png';
 import alert from '../../../assets/icons/alert.png';
 import speaker from '../../../assets/icons/speaker.png';
 import mute from '../../../assets/icons/mute.png';
+import grades from '../../../assets/icons/grades.png';
+import statusAssigned from '../../../assets/icons/statusAssigned.png';
+import statusStarted from '../../../assets/icons/statusStarted.png';
+import statusCompleted from '../../../assets/icons/statusCompleted.png';
+import statusGraded from '../../../assets/icons/statusGraded.png';
+import termAll from '../../../assets/icons/termAll.png';
+import termQ1 from '../../../assets/icons/termQ1.png';
+import termQ2 from '../../../assets/icons/termQ2.png';
+import termQ3 from '../../../assets/icons/termQ3.png';
+import termQ4 from '../../../assets/icons/termQ4.png';
+import termS1 from '../../../assets/icons/termS1.png';
+import termS2 from '../../../assets/icons/termS2.png';
+import termYear from '../../../assets/icons/termYear.png';
 import feedSchool from '../../../assets/icons/feedSchool.png';
 import feedClass from '../../../assets/icons/feedClass.png';
 import feedBook from '../../../assets/icons/feedBook.png';
@@ -125,6 +138,19 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'alert': alert,
   'speaker': speaker,
   'mute': mute,
+  'grades': grades,
+  'statusAssigned': statusAssigned,
+  'statusStarted': statusStarted,
+  'statusCompleted': statusCompleted,
+  'statusGraded': statusGraded,
+  'termAll': termAll,
+  'termQ1': termQ1,
+  'termQ2': termQ2,
+  'termQ3': termQ3,
+  'termQ4': termQ4,
+  'termS1': termS1,
+  'termS2': termS2,
+  'termYear': termYear,
   'feedSchool': feedSchool,
   'feedClass': feedClass,
   'feedBook': feedBook,

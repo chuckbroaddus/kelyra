@@ -27,10 +27,10 @@ export function AssignmentPicker({ assignments, selectedId, onSelect, onCreate }
       contentContainerStyle={styles.row}
     >
       {onCreate ? (
-        <HoverTip label="Create a new assignment">
+        <HoverTip label="Assign">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="New assignment"
+          accessibilityLabel="Assign"
           onPress={onCreate}
           style={({ pressed }) => [styles.cell, pressed && { opacity: 0.88 }]}
         >
@@ -40,7 +40,7 @@ export function AssignmentPicker({ assignments, selectedId, onSelect, onCreate }
                 <Text style={[styles.plus, { color: colors.brand }]}>+</Text>
               </View>
               <MarqueeText
-                text="New"
+                text="Assign"
                 align="center"
                 paused={pressed}
                 fadeColor={colors.bg}

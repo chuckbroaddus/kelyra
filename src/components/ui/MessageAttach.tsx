@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ImageViewer } from '@/components/ui/ImageViewer';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { type } from '@/constants/theme';
 import { linkHost, signedMessageUrl, unfurlLink, type DraftAttach } from '@/lib/messages/attachments';
 import type { MessageFile, MessageLink, MessagePayload, MessagePhoto, MessageWorkCard } from '@/lib/supabase/types';
@@ -35,7 +36,7 @@ export function AttachPreview({
   useEffect(() => {
     let live = true;
     if (attach.type === 'photo') {
-      void signedMessageUrl('photo', attach.storage_path).then((next) => {
+      void signedMessageUrl('photo', attach.storage_path, 'thumb').then((next) => {
         if (live) setUrl(next);
       });
     }
@@ -47,7 +48,7 @@ export function AttachPreview({
 
   return (
     <View style={[styles.preview, { borderColor: colors.line, backgroundColor: colors.elevated }]}>
-      {url ? <Image source={{ uri: url }} style={styles.thumb} /> : null}
+      {url ? <RemoteImage uri={url} style={styles.thumb} /> : null}
       <View style={styles.previewText}>
         <Text style={[type.meta, { color: colors.mute }]} numberOfLines={1}>
           {attach.type === 'photo' ? 'Photo' : attach.type === 'file' ? attach.name : attach.title}
@@ -74,13 +75,20 @@ export function MessagePayloadView({
 }) {
   const { colors } = useTheme();
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fullUrl, setFullUrl] = useState<string | null>(null);
   const [broke, setBroke] = useState(false);
   const [open, setOpen] = useState(false);
   const [linkImage, setLinkImage] = useState<string | null>(isLink(payload) ? payload.image_url ?? null : null);
 
   useEffect(() => {
     let live = true;
-    if (isPhoto(payload) || isFile(payload)) {
+    setFullUrl(null);
+    setFileUrl(null);
+    if (isPhoto(payload)) {
+      void signedMessageUrl('photo', payload.storage_path, 'thumb').then((next) => {
+        if (live) setFileUrl(next);
+      });
+    } else if (isFile(payload)) {
       void signedMessageUrl(payload.type, payload.storage_path).then((next) => {
         if (live) setFileUrl(next);
       });
@@ -108,19 +116,29 @@ export function MessagePayloadView({
   }
 
   if (isPhoto(payload)) {
+    const viewerUri = fullUrl || fileUrl;
     return (
       <View style={styles.stack}>
         {fileUrl ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Photo. Open to send or save."
-            onPress={() => setOpen(true)}
+            onPress={() => {
+              if (!fullUrl) {
+                void signedMessageUrl('photo', payload.storage_path, 'original').then((next) => {
+                  setFullUrl(next ?? fileUrl);
+                  setOpen(true);
+                });
+                return;
+              }
+              setOpen(true);
+            }}
           >
-            <Image source={{ uri: fileUrl }} style={styles.photo} resizeMode="cover" />
+            <RemoteImage uri={fileUrl} style={styles.photo} contentFit="cover" />
           </Pressable>
         ) : null}
         {body && body !== 'Photo' ? <Text style={[type.body, { color: colors.ink }]}>{body}</Text> : null}
-        <ImageViewer visible={open && Boolean(fileUrl)} uris={fileUrl ? [fileUrl] : []} onClose={() => setOpen(false)} />
+        <ImageViewer visible={open && Boolean(viewerUri)} uris={viewerUri ? [viewerUri] : []} onClose={() => setOpen(false)} />
       </View>
     );
   }
@@ -149,10 +167,10 @@ export function MessagePayloadView({
         style={styles.stack}
       >
         {linkImage && !broke ? (
-          <Image
-            source={{ uri: linkImage }}
+          <RemoteImage
+            uri={linkImage}
             style={styles.linkArt}
-            resizeMode="cover"
+            contentFit="cover"
             onError={() => setBroke(true)}
           />
         ) : null}

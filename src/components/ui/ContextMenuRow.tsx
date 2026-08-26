@@ -99,10 +99,10 @@ function chipsFor(input: {
     ];
   }
 
-  if (pathname === '/todo') {
+  if (pathname === '/todo' && input.role !== 'student') {
     const current = contextTab || 'todo';
     return [
-      { key: 'todo', label: 'To-do', selected: current === 'todo', onPress: () => setContextTab('todo') },
+      { key: 'todo', label: 'To Do', selected: current === 'todo', onPress: () => setContextTab('todo') },
       { key: 'done', label: 'Done', selected: current === 'done', onPress: () => setContextTab('done') },
     ];
   }

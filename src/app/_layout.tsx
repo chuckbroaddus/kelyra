@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AppShell } from '@/components/ui/AppShell';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { LESSON_PLAYER_STACK_OPTIONS } from '@/lib/lessons/chrome';
 import { ThemeProvider, useTheme } from '@/lib/theme/ThemeProvider';
 
 export { ErrorBoundary } from 'expo-router';
@@ -52,6 +53,8 @@ function ThemedRoot() {
           <Stack.Screen name="activity" />
           <Stack.Screen name="admin" />
           <Stack.Screen name="class/[id]" />
+          <Stack.Screen name="lesson/[assignmentId]" options={LESSON_PLAYER_STACK_OPTIONS} />
+          <Stack.Screen name="assignment/new" />
         </Stack>
       </AppShell>
     </NavigationTheme>

@@ -228,6 +228,14 @@ export async function listDirectory(): Promise<DirectoryPerson[]> {
   });
 }
 
+export async function resetLoginPassword(profileId: string, password: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('admin_reset_login_password', {
+    p_profile_id: profileId,
+    p_password: password,
+  });
+  if (error) throw new Error(error.message || error.details || 'Could not reset password');
+}
+
 export async function createLogin(input: {
   email: string;
   password: string;

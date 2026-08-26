@@ -1,7 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
-  Image,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from 'react-native';
 
 import { photoUri } from '@/components/ui/Avatar';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { AvatarInitials } from '@/components/ui/AvatarInitials';
 import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { MarqueeText } from '@/components/ui/MarqueeText';
@@ -43,6 +43,8 @@ type Props = {
   /** Replaces the 72 media well (assignment glyph, etc.). */
   lead?: ReactNode;
   badge?: BadgeVariant;
+  /** Replaces the status badge (e.g. a status glyph). */
+  end?: ReactNode;
   pills?: WorkPill[];
   leading?: WorkSwipeAction[];
   trailing?: WorkSwipeAction[];
@@ -58,6 +60,7 @@ export function WorkRow({
   unknown,
   lead,
   badge,
+  end,
   pills = [],
   leading = [],
   trailing = [],
@@ -185,91 +188,155 @@ export function WorkRow({
         ]}
         {...responder.panHandlers}
       >
+        {onPress ? (
         <Pressable
-          accessibilityRole={onPress ? 'button' : undefined}
+          accessibilityRole="button"
           accessibilityLabel={status ? `${title}. ${status}` : title}
           onPress={onPress}
-          style={({ pressed }) => [styles.inner, pressed && onPress ? { opacity: 0.88 } : null]}
+          style={({ pressed }) => [styles.inner, pressed ? { opacity: 0.88 } : null]}
         >
           {({ pressed }) => (
-            <>
-          {lead ? (
-            <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
-              {lead}
-            </View>
-          ) : photoUri(photoUrl) ? (
-            <Image source={{ uri: photoUri(photoUrl)! }} style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]} />
-          ) : (
-            <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
-              {unknown ? <UnknownMark size={56} /> : <AvatarInitials name={avatarName ?? title} size={56} />}
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.head}>
-              <MarqueeText
-                text={title}
-                align="start"
-                paused={pressed || swiping}
-                fadeColor={colors.bg}
-                style={[styles.title, { color: colors.ink }]}
-              />
-              {badge ? <Badge variant={badge} /> : null}
-            </View>
-            {status ? (
-              <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
-                {status}
-              </Text>
-            ) : null}
-            {meta ? (
-              <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={1}>
-                {meta}
-              </Text>
-            ) : null}
-            {pills.length ? (
-              <View style={styles.pills}>
-                {pills.map((pill) => (
-                  <Pressable
-                    key={pill.key}
-                    accessibilityRole="button"
-                    hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-                    onPress={pill.onPress}
-                    style={({ pressed }) => [
-                      styles.pill,
-                      pill.kind === 'primary' && { backgroundColor: colors.brand },
-                      pill.kind === 'secondary' && {
-                        backgroundColor: colors.elevated,
-                        borderWidth: 1,
-                        borderColor: colors.line,
-                      },
-                      pressed && { opacity: 0.88 },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.pillLabel,
-                        {
-                          color:
-                            pill.kind === 'primary'
-                              ? colors.brandInk
-                              : pill.kind === 'ghost'
-                                ? colors.mute
-                                : colors.ink,
-                        },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {pill.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-          </View>
-            </>
+            <WorkRowBody
+              title={title}
+              status={status}
+              meta={meta}
+              photoUrl={photoUrl}
+              avatarName={avatarName}
+              unknown={unknown}
+              lead={lead}
+              badge={badge}
+              end={end}
+              pills={pills}
+              paused={pressed || swiping}
+            />
           )}
         </Pressable>
+        ) : (
+        <View style={styles.inner} accessibilityLabel={status ? `${title}. ${status}` : title}>
+          <WorkRowBody
+            title={title}
+            status={status}
+            meta={meta}
+            photoUrl={photoUrl}
+            avatarName={avatarName}
+            unknown={unknown}
+            lead={lead}
+            badge={badge}
+            end={end}
+            pills={pills}
+            paused={swiping}
+          />
+        </View>
+        )}
       </Animated.View>
     </View>
+  );
+}
+
+function WorkRowBody({
+  title,
+  status,
+  meta,
+  photoUrl,
+  avatarName,
+  unknown,
+  lead,
+  badge,
+  end,
+  pills,
+  paused,
+}: {
+  title: string;
+  status?: string;
+  meta?: string;
+  photoUrl?: string | null;
+  avatarName?: string;
+  unknown?: boolean;
+  lead?: ReactNode;
+  badge?: BadgeVariant;
+  end?: ReactNode;
+  pills: WorkPill[];
+  paused: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <>
+      {lead ? (
+        <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
+          {lead}
+        </View>
+      ) : photoUri(photoUrl) ? (
+        <RemoteImage
+          uri={photoUri(photoUrl)!}
+          style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]}
+        />
+      ) : (
+        <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
+          {unknown ? <UnknownMark size={56} /> : <AvatarInitials name={avatarName ?? title} size={56} />}
+        </View>
+      )}
+      <View style={styles.body}>
+        <View style={styles.head}>
+          <MarqueeText
+            text={title}
+            align="start"
+            paused={paused}
+            fadeColor={colors.bg}
+            style={[styles.title, { color: colors.ink }]}
+          />
+          {end ? end : badge ? <Badge variant={badge} /> : null}
+        </View>
+        {status ? (
+          <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
+            {status}
+          </Text>
+        ) : null}
+        {meta ? (
+          <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={1}>
+            {meta}
+          </Text>
+        ) : null}
+        {pills.length ? (
+          <View style={styles.pills}>
+            {pills.map((pill) => (
+              <Pressable
+                key={pill.key}
+                accessibilityRole="button"
+                hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                onPress={pill.onPress}
+                style={({ pressed }) => [
+                  styles.pill,
+                  pill.kind === 'primary' && { backgroundColor: colors.brand },
+                  pill.kind === 'secondary' && {
+                    backgroundColor: colors.elevated,
+                    borderWidth: 1,
+                    borderColor: colors.line,
+                  },
+                  pressed && { opacity: 0.88 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.pillLabel,
+                    {
+                      color:
+                        pill.kind === 'primary'
+                          ? colors.brandInk
+                          : pill.kind === 'ghost'
+                            ? colors.mute
+                            : colors.ink,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {pill.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
+    </>
   );
 }
 
@@ -313,6 +380,7 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: radius.md,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   mediaEmpty: {
     alignItems: 'center',

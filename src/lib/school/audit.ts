@@ -21,6 +21,7 @@ const ACTION_LABELS: Record<string, string> = {
   set_feed_icon: 'Changed a feed icon',
   set_school_name: 'Named the school',
   set_school_logo: 'Changed the school logo',
+  set_school_ai_cap: 'Set the monthly AI budget',
 };
 
 export function actionLabel(action: string): string {

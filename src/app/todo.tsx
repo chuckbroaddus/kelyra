@@ -1,197 +1,138 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 
-import { Badge, practiceBadge } from '@/components/ui/Badge';
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { AvatarTray } from '@/components/ui/AvatarTray';
-import { ClassmateSheet } from '@/components/ui/ClassmateSheet';
+import { PersonTabs } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
-import { TextField } from '@/components/ui/TextField';
+import { StudentWorkList } from '@/components/ui/StudentWorkList';
+import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { firstName } from '@/lib/format';
-import { signedProfileUrl } from '@/lib/people/photos';
-import { practiceTitle } from '@/lib/practice/api';
 import {
-  listStudentClassmates,
+  listStudentClasses,
   listStudentTodo,
   loadStudentSession,
-  submitStudentTodo,
+  peekStudentClasses,
+  peekStudentTodo,
+  type StudentClass,
   type StudentSession,
   type StudentTodo,
 } from '@/lib/student-session/api';
+import { queryParam } from '@/lib/student-session/classes';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function TodoScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { contextTab } = useChrome();
+  const { contextTab, setContextTab } = useChrome();
   const { profile } = useAuth();
+  const { class: classParam } = useLocalSearchParams<{ class?: string }>();
+  const [classId, setClassId] = useState(() => queryParam(classParam) || 'all');
   const [session, setSession] = useState<StudentSession | null>(null);
-  const [items, setItems] = useState<StudentTodo[]>([]);
-  const [classmates, setClassmates] = useState<
-    { id: string; name: string; photoUrl?: string | null; hasPhoto?: boolean }[]
-  >([]);
-  const [peer, setPeer] = useState<{ name: string; photoUrl?: string | null } | null>(null);
-  const [answers, setAnswers] = useState<Record<string, Record<string, string>>>({});
+  const [items, setItems] = useState<StudentTodo[]>(() => peekStudentTodo() ?? []);
+  const [classes, setClasses] = useState<StudentClass[]>(() => peekStudentClasses() ?? []);
   const [status, setStatus] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const pane = contextTab === 'done' ? 'done' : 'todo';
 
   const load = useCallback(async () => {
     const next = await loadStudentSession();
     setSession(next);
-    if (!next) return;
-    const todo = await listStudentTodo();
+    if (!next) {
+      setItems([]);
+      setClasses([]);
+      return;
+    }
+    const [todo, rooms] = await Promise.all([listStudentTodo(), listStudentClasses().catch(() => [])]);
     setItems(todo);
-    const nextAnswers: Record<string, Record<string, string>> = {};
-    for (const item of todo) {
-      nextAnswers[item.submissionId] = { ...item.answers };
-    }
-    setAnswers(nextAnswers);
-    try {
-      const peers = await listStudentClassmates();
-      setClassmates(
-        await Promise.all(
-          peers.map(async (row) => ({
-            id: row.studentId,
-            name: firstName(row.displayName),
-            photoUrl: await signedProfileUrl(row.photoPath),
-            hasPhoto: Boolean(row.photoPath),
-          })),
-        ),
-      );
-    } catch {
-      setClassmates([]);
-    }
+    setClasses(rooms);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void load().catch((err) => {
-        setStatus(err instanceof Error ? err.message : 'Could not load to-do');
-      });
+      let live = true;
+      void load()
+        .then(() => {
+          if (live) setStatus(null);
+        })
+        .catch((err) => {
+          if (live) setStatus(err instanceof Error ? err.message : 'Could not load assignments');
+        })
+        .finally(() => {
+          if (live) setReady(true);
+        });
+      return () => {
+        live = false;
+      };
     }, [load]),
   );
 
-  const assigned = items.find((item) => item.status === 'assigned');
-  const filter = contextTab === 'done' ? 'done' : 'todo';
-  const visible = useMemo(
-    () => items.filter((item) => (filter === 'done' ? item.status !== 'assigned' : item.status === 'assigned')),
-    [items, filter],
-  );
-
-  const onSubmit = async (item: StudentTodo) => {
-    if (!session) return;
-    setBusy(true);
-    setStatus(null);
-    try {
-      await submitStudentTodo(item.submissionId, answers[item.submissionId] ?? {});
-      await load();
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not submit');
-    } finally {
-      setBusy(false);
+  const open = (item: StudentTodo) => {
+    if (item.kind === 'lesson') {
+      router.push(`/lesson/${item.assignmentId}` as never);
+      return;
+    }
+    if (item.kind === 'practice') {
+      router.push(`/todo/${item.submissionId}` as never);
     }
   };
 
-  if (!session) {
+  const setClass = (id: string | 'all') => {
+    setClassId(id);
+    router.setParams({ class: id } as never);
+  };
+
+  if (!ready && !items.length) {
     return (
       <Screen maxWidth={640} centered>
-        <Text style={[styles.lead, { color: colors.mute }]}>
-          {profile?.role === 'student'
-            ? 'This login is not assigned to a roster name yet. Ask your teacher to assign it on your student page.'
-            : 'Sign in with the login your school assigned.'}
-        </Text>
-        {profile?.role === 'student' ? null : (
-          <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        <WorkingLine />
+      </Screen>
+    );
+  }
+
+  if (!session && !items.length) {
+    return (
+      <Screen maxWidth={640} centered>
+        {status ? (
+          <Text style={[styles.lead, { color: colors.danger }]}>{status}</Text>
+        ) : (
+          <Text style={[styles.lead, { color: colors.mute }]}>
+            {profile?.role === 'student'
+              ? 'This login is not assigned to a roster name yet. Ask your teacher to assign it on your student page.'
+              : 'Sign in with the login your school assigned.'}
+          </Text>
         )}
       </Screen>
     );
   }
 
   return (
-    <Screen
-      maxWidth={720}
-      keyboard
-      sticky={
-        assigned && filter === 'todo' ? (
-          <PrimaryButton
-            label={busy ? 'Turning in…' : 'Turn in'}
-            disabled={busy}
-            onPress={() => void onSubmit(assigned)}
-          />
-        ) : undefined
-      }
-    >
-      <AvatarTray
-        people={classmates}
-        onPress={(person) => setPeer({ name: person.name, photoUrl: person.photoUrl })}
+    <Screen maxWidth={720}>
+      <PersonTabs
+        stacked={classes.length > 1 || classId !== 'all'}
+        tabs={[
+          { key: 'todo', label: 'To Do', icon: 'practice' },
+          { key: 'done', label: 'Done', icon: 'statusCompleted' },
+        ]}
+        value={pane}
+        onChange={(key) => setContextTab(key)}
       />
-      <GhostButton align="left" label="Class feed" onPress={() => router.push('/feed')} />
-      <Text style={[type.meta, { color: colors.mute }]}>Your practice</Text>
-      {items[0]?.focusLabel ? (
-        <View style={styles.focus}>
-          <Badge variant="focus" />
-          <Text style={[styles.focusLabel, { color: colors.ink }]} numberOfLines={2}>
-            {items[0].focusLabel}
-          </Text>
-        </View>
-      ) : null}
-      {visible.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          {filter === 'done'
+      <StudentWorkList
+        items={items}
+        classes={classes}
+        pane={pane}
+        classId={classId}
+        onClassId={setClass}
+        onOpen={open}
+        empty={
+          pane === 'done'
             ? 'Nothing turned in yet.'
-            : 'Nothing to do yet. Your teacher will assign a short set.'}
-        </Text>
-      ) : (
-        <View style={styles.list}>
-          {visible.map((item) => (
-            <Card key={item.submissionId}>
-              <View style={styles.titleRow}>
-                <Text style={[styles.skill, { color: colors.ink }]} numberOfLines={2}>
-                  {practiceTitle(item.title)}
-                </Text>
-                <Badge variant={practiceBadge(item.status)} />
-              </View>
-              {item.items.map((practiceItem, index) => (
-                <View key={practiceItem.id} style={styles.item}>
-                  <Text style={[styles.gutter, { color: colors.mute }]}>{index + 1}.</Text>
-                  <View style={styles.prompt}>
-                    <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
-                    {item.status === 'assigned' ? (
-                      <TextField
-                        placeholder="Your answer"
-                        value={answers[item.submissionId]?.[practiceItem.id] ?? ''}
-                        onChangeText={(value) =>
-                          setAnswers((current) => ({
-                            ...current,
-                            [item.submissionId]: {
-                              ...(current[item.submissionId] ?? {}),
-                              [practiceItem.id]: value,
-                            },
-                          }))
-                        }
-                      />
-                    ) : (
-                      <Text style={[type.meta, { color: colors.mute }]}>{item.answers[practiceItem.id] || 'No answer'}</Text>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </Card>
-          ))}
-        </View>
-      )}
-      {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
-      <ClassmateSheet
-        name={peer?.name ?? null}
-        photoUrl={peer?.photoUrl}
-        className={session.className ?? 'your class'}
-        onClose={() => setPeer(null)}
+            : 'Nothing to do yet. Your teacher will assign work here.'
+        }
       />
+      {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
     </Screen>
   );
 }
@@ -199,60 +140,10 @@ export default function TodoScreen() {
 const styles = StyleSheet.create({
   lead: {
     ...type.body,
-    marginBottom: 16,
     textAlign: 'center',
   },
-  empty: {
-    ...type.body,
-    marginTop: 16,
-  },
-  focus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-  },
-  focusLabel: {
-    ...type.body,
-    fontWeight: '600',
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  list: {
-    gap: 24,
-    marginTop: 24,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  skill: {
-    ...type.body,
-    fontWeight: '600',
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  item: {
-    flexDirection: 'row',
-    gap: 12,
-    minWidth: 0,
-  },
-  gutter: {
-    ...type.meta,
-    width: 24,
-    flexShrink: 0,
-  },
-  prompt: {
-    flex: 1,
-    minWidth: 0,
-    gap: 8,
-  },
   error: {
-    ...type.body,
+    ...type.meta,
     marginTop: 12,
   },
 });

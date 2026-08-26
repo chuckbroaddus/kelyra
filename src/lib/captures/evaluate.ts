@@ -66,6 +66,7 @@ export async function evaluateCaptureMedia(input: {
   let gaps: StoredHomeworkDraft['gaps'] = [];
   let draftScore: number | null = null;
   let teacherNote: string | null = null;
+  let costUsd: number | null = null;
   if (photoAssets.length) {
     const imageUrls: string[] = [];
     for (const asset of photoAssets) {
@@ -78,11 +79,13 @@ export async function evaluateCaptureMedia(input: {
       gaps?: StoredHomeworkDraft['gaps'];
       draftScore?: number | null;
       teacherNote?: string | null;
+      costUsd?: number | null;
     }>('evaluate-homework', { imageUrls, imageUrl: imageUrls[0] });
     paperName = vision.studentName?.trim() || null;
     gaps = vision.gaps ?? [];
     draftScore = typeof vision.draftScore === 'number' ? vision.draftScore : null;
     teacherNote = vision.teacherNote ?? null;
+    costUsd = typeof vision.costUsd === 'number' ? vision.costUsd : null;
   }
 
   return {
@@ -93,6 +96,7 @@ export async function evaluateCaptureMedia(input: {
     gaps,
     draftScore,
     teacherNote,
+    costUsd,
     parentSentence: null,
     pageAssetIds: photoAssets.map((asset) => asset.id),
   };

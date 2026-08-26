@@ -4,7 +4,6 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CountBadge } from '@/components/ui/CountBadge';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { HoverTip } from '@/components/ui/HoverTip';
 import { Icon } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
@@ -27,7 +27,7 @@ import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 function searchPlaceholder(from: string, role: string, officeHome: boolean): string {
-  if (role === 'student') return 'Find your practice';
+  if (role === 'student') return 'Find an assignment';
   if (role === 'parent') return 'Find in this note';
   if (officeHome || role === 'superintendent' || role === 'administrator') return 'Find a person';
   if (from === '/inbox') return 'Find a capture or student';
@@ -113,8 +113,16 @@ export function AppHeader() {
   const kelyraMark =
     pathname === '/ask' || (searching && chromeState.searchFrom === '/ask');
   const markSize = bar + 12;
-  const showBack = pushed && !kelyraMark;
-  const showMenu = !showBack;
+  const headerChrome = chromeState.headerChrome;
+  const hideBack =
+    Boolean(headerChrome.hideBack) ||
+    (Boolean(headerChrome.hideBackOnNative) && Platform.OS !== 'web');
+  const showBack = pushed && !kelyraMark && !hideBack;
+  const showMenu = !showBack && !headerChrome.hideMenu;
+  const showSearch = !headerChrome.hideSearch;
+  const showMail = !headerChrome.hideMail;
+  const showCapture = capture && !headerChrome.hideCapture;
+  const showClose = Boolean(headerChrome.showClose);
   const titleFlex = expand.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
   const titleOpacity = expand.interpolate({ inputRange: [0, 0.45, 1], outputRange: [1, 0, 0] });
   const fieldOpacity = expand.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 1, 1] });
@@ -159,10 +167,10 @@ export function AppHeader() {
           </View>
         ) : logoUrl ? (
           <View style={styles.logoSlot} accessibilityLabel="School logo">
-            <Image
-              source={{ uri: logoUrl }}
+            <RemoteImage
+              uri={logoUrl}
               accessibilityLabel="School logo"
-              resizeMode="contain"
+              contentFit="contain"
               style={styles.logo}
             />
           </View>
@@ -197,7 +205,7 @@ export function AppHeader() {
           />
         </Animated.View>
 
-        {capture ? (
+        {showCapture ? (
           <HoverTip label="Photograph work">
             <Pressable
               accessibilityRole="button"
@@ -212,6 +220,7 @@ export function AppHeader() {
           </HoverTip>
         ) : null}
 
+        {showSearch ? (
         <HoverTip label={searching ? 'Close search' : 'Search'}>
           <Pressable
             accessibilityRole="button"
@@ -224,6 +233,7 @@ export function AppHeader() {
             </View>
           </Pressable>
         </HoverTip>
+        ) : null}
 
         <Animated.View
           pointerEvents={searching ? 'auto' : 'none'}
@@ -259,6 +269,25 @@ export function AppHeader() {
           ) : null}
         </Animated.View>
 
+        {showClose ? (
+          <HoverTip label="Close lesson">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close lesson"
+              onPress={() => {
+                if (chromeState.requestHeaderClose()) return;
+                router.back();
+              }}
+              style={({ pressed }) => [styles.hit, pressed && { opacity: 0.7 }]}
+            >
+              <View style={styles.glyph}>
+                <Icon name="close" color={colors.ink} size={icon} />
+              </View>
+            </Pressable>
+          </HoverTip>
+        ) : null}
+
+        {showMail ? (
         <HoverTip label={count > 0 ? `Messages, ${count} waiting` : 'Messages'}>
           <Pressable
             accessibilityRole="button"
@@ -272,6 +301,7 @@ export function AppHeader() {
             </View>
           </Pressable>
         </HoverTip>
+        ) : null}
 
         {showMenu ? (
           <HoverTip label="Open menu">
@@ -362,10 +392,13 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 11,
+    overflow: 'hidden',
   },
   logo: {
     width: 22,
     height: 22,
+    borderRadius: 11,
   },
   wordmark: {
     ...type.title,

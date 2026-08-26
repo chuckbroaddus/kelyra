@@ -1,10 +1,11 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
 import {
-  defaultVisionModel,
+  callMetered,
   parsePracticeItems,
   practicePrompt,
   requireXaiKey,
   outputText,
-  xaiResponses,
 } from '../_shared/ai.ts';
 
 Deno.serve(async (req) => {
@@ -16,8 +17,16 @@ Deno.serve(async (req) => {
     const apiKey = requireXaiKey();
     const { skillLabel } = (await req.json()) as { skillLabel?: string };
     if (!skillLabel?.trim()) return json({ error: 'skillLabel required' }, 400);
-
-    const payload = await xaiResponses(apiKey, defaultVisionModel, practicePrompt(skillLabel.trim()));
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
+    );
+    const payload = await callMetered(supabase, apiKey, {
+      job: 'practice',
+      functionName: 'generate-practice',
+      payload: practicePrompt(skillLabel.trim()),
+    });
     const items = parsePracticeItems(outputText(payload));
     if (!items.length) return json({ error: 'Grok returned no practice items' }, 502);
     return json({ items });

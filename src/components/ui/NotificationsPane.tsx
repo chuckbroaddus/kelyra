@@ -5,6 +5,7 @@ import { StyleSheet, Text } from 'react-native';
 import { ListRow } from '@/components/ui/ListRow';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
+import { isOpenWork } from '@/lib/assignments/status';
 import { listInbox, listTurnedIn } from '@/lib/captures/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
@@ -81,7 +82,7 @@ export function NotificationsPane() {
           status: `Turned in ${item.title.replace(/^Practice:\s*/i, '')}`,
           avatar: item.studentName,
           photoUrl: photoByStudent.get(item.studentId) ?? null,
-          href: `/class/${classId}/student/${item.studentId}`,
+          href: `/class/${classId}/review/${item.id}`,
         })),
       ];
       return [...alertRows, ...work];
@@ -90,7 +91,7 @@ export function NotificationsPane() {
     if (chrome.role === 'student' && chrome.studentSession) {
       const todo = await listStudentTodo();
       const practice = todo
-        .filter((item) => item.status === 'assigned')
+        .filter((item) => isOpenWork(item.status))
         .map((item) => ({
           id: item.submissionId,
           title: 'New practice',

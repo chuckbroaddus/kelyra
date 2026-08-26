@@ -40,7 +40,7 @@ function asHistoryItem(item: AskChatLine): InputItem | null {
       role: 'user',
       content: [
         { type: 'input_text', text: text || 'Look at this photo and help me file it in Kelyra.' },
-        { type: 'input_image', image_url: item.imageUrl, detail: 'auto' },
+        { type: 'input_image', image_url: item.imageUrl, detail: 'low' },
       ],
     };
   }

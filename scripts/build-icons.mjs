@@ -64,6 +64,44 @@ function sdfCircle(px, py, cx, cy, r) {
   return Math.hypot(px - U(cx), py - U(cy)) - U(r);
 }
 
+function wrap2pi(a) {
+  const t = 2 * Math.PI;
+  return ((a % t) + t) % t;
+}
+
+/** Clockwise wedge. PNG y is down; 12 o’clock is -π/2, 3 o’clock is 0. */
+function inSweep(ang, start, sweep) {
+  return wrap2pi(ang - start) <= sweep + 1e-4;
+}
+
+/**
+ * Counts-toward pie: full stroke circle so every glyph crops to the same
+ * square, plus a filled slice. Clock from 12: Q1 UR, Q2 LR, Q3 LL, Q4 UL.
+ * S1 = right half, S2 = left half.
+ */
+function pieSlice(png, start, sweep) {
+  const cx = 12;
+  const cy = 12;
+  const r = 7.4;
+  circle(png, cx, cy, r, ST, false);
+  stamp(
+    png,
+    (x, y) => {
+      const dx = x - U(cx);
+      const dy = y - U(cy);
+      const circleD = Math.hypot(dx, dy) - U(r);
+      const ang = Math.atan2(dy, dx);
+      if (inSweep(ang, start, sweep)) return circleD;
+      return Math.min(
+        sdfSegment(x, y, cx, cy, cx + Math.cos(start) * r, cy + Math.sin(start) * r),
+        sdfSegment(x, y, cx, cy, cx + Math.cos(start + sweep) * r, cy + Math.sin(start + sweep) * r),
+      );
+    },
+    0,
+    true,
+  );
+}
+
 function sdfSegment(px, py, x1, y1, x2, y2) {
   const ax = U(x1);
   const ay = U(y1);
@@ -354,6 +392,62 @@ const RECIPES = {
   mute: (p) => {
     RECIPES.speaker(p);
     line(p, 4.4, 4.4, 19.6, 19.6, ST);
+  },
+  /** Student tray: own marks. Report card, not the teacher 2×2 records grid. */
+  grades: (p) => {
+    roundRect(p, 5.2, 3.2, 13.6, 17.6, 1.2, ST, false);
+    line(p, 8.2, 8.2, 16, 8.2, ST);
+    line(p, 8.2, 11.4, 16, 11.4, ST);
+    line(p, 8.2, 14.6, 12.8, 14.6, ST);
+    line(p, 14.2, 16.6, 16, 18.6, ST);
+    line(p, 16, 18.6, 20.2, 13.8, ST);
+  },
+  /** Assignment cell: waiting. Empty circle. */
+  statusAssigned: (p) => {
+    circle(p, 12, 12, 7.4, ST, false);
+  },
+  /** Assignment cell: student opened it. Circle with a center mark. */
+  statusStarted: (p) => {
+    circle(p, 12, 12, 7.4, ST, false);
+    circle(p, 12, 12, 2.6, 0, true);
+  },
+  /** Assignment cell: turned in, waiting on the teacher. */
+  statusCompleted: (p) => {
+    circle(p, 12, 12, 7.4, ST, false);
+    line(p, 8.2, 12.2, 10.8, 15.4, ST);
+    line(p, 10.8, 15.4, 16.4, 8.6, ST);
+  },
+  /** Assignment cell: teacher graded. Gold-star school mark. */
+  statusGraded: (p) => {
+    const pts = [];
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      const b = a + Math.PI / 5;
+      pts.push([12 + Math.cos(a) * 8.4, 12.2 + Math.sin(a) * 8.4]);
+      pts.push([12 + Math.cos(b) * 3.5, 12.2 + Math.sin(b) * 3.5]);
+    }
+    poly(p, pts, ST, true);
+  },
+  /** Counts toward: everything. Solid disk. */
+  termAll: (p) => {
+    circle(p, 12, 12, 7.4, ST, true);
+  },
+  /** Quarter 1: 12–3, upper right. */
+  termQ1: (p) => pieSlice(p, -Math.PI / 2, Math.PI / 2),
+  /** Quarter 2: 3–6, lower right. */
+  termQ2: (p) => pieSlice(p, 0, Math.PI / 2),
+  /** Quarter 3: 6–9, lower left. */
+  termQ3: (p) => pieSlice(p, Math.PI / 2, Math.PI / 2),
+  /** Quarter 4: 9–12, upper left. */
+  termQ4: (p) => pieSlice(p, Math.PI, Math.PI / 2),
+  /** Semester 1: right half (Q1+Q2). */
+  termS1: (p) => pieSlice(p, -Math.PI / 2, Math.PI),
+  /** Semester 2: left half (Q3+Q4). */
+  termS2: (p) => pieSlice(p, Math.PI / 2, Math.PI),
+  /** Year: filled disk inside a clear rim — the whole cycle, not All’s solid pie. */
+  termYear: (p) => {
+    circle(p, 12, 12, 8.2, ST, false);
+    circle(p, 12, 12, 5, ST, true);
   },
   feedSchool: (p) => {
     roundRect(p, 9.6, 2.4, 4.8, 3.4, 0.4, ST, false);

@@ -5,8 +5,22 @@
  * Local development uses Grok CLI OAuth instead — see scripts/ai-dev-server.mjs.
  */
 
+import {
+  DEFAULT_MONTHLY_CAP_USD,
+  FLAGSHIP_MODEL,
+  PRACTICE_MODEL,
+  estimateUsd,
+  modelFor,
+  parseUsage,
+  reasoningEffortFor,
+  type AiJob,
+  type AiPass,
+} from './aiPolicy.ts';
+
 export const xaiBaseUrl = 'https://api.x.ai/v1';
-export const defaultVisionModel = 'grok-4.6';
+export const defaultVisionModel = FLAGSHIP_MODEL;
+export const cheapVisionModel = modelFor('homework');
+export const cheapTextModel = PRACTICE_MODEL;
 
 export const homeworkPrompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
@@ -26,6 +40,18 @@ Rules:
 - Prompts are one or two sentences.`;
 }
 
+export const submissionReviewPrompt = `You are helping a K-12 teacher review one student's submitted work.
+Return JSON only, no markdown:
+{"summary":"one or two sentences","draftScore":null,"teacherNote":"short Glow/Grow or null","gaps":[{"label":"short skill name","sortOrder":1}],"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"short key"}]}
+Rules:
+- summary is what they turned in, not a biography.
+- draftScore is 0-100 when you can grade the work, otherwise null.
+- 0 to 3 gaps. Labels are short, like "two-digit regrouping". Empty if there is no skill gap worth follow-up.
+- If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
+- If there is no gap, items must be [].
+- Keep any teacher-typed gap labels and practice questions listed below. You may add more, not delete theirs.
+- Age-appropriate. No student names. No images.`;
+
 export function requireXaiKey(): string {
   const apiKey = Deno.env.get('XAI_API_KEY');
   if (!apiKey) throw new Error('XAI_API_KEY is not set');
@@ -44,7 +70,7 @@ export async function xaiResponses(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model, input, ...extra }),
+    body: JSON.stringify({ store: false, model, input, ...extra }),
   });
   if (!response.ok) {
     throw new Error(`Grok failed: ${response.status} ${await response.text()}`);
@@ -53,6 +79,67 @@ export async function xaiResponses(
 }
 
 export type FunctionCall = { call_id: string; name: string; arguments: string };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MeterClient = any;
+
+export async function assertUnderAiCap(supabase: MeterClient): Promise<void> {
+  const { data, error } = await supabase.rpc('ai_spend_this_month');
+  if (error) return;
+  const row = Array.isArray(data) ? data[0] : data;
+  const spent = Number(row?.usd ?? 0);
+  const capRaw = row?.cap_usd;
+  const cap = capRaw == null || capRaw === '' ? DEFAULT_MONTHLY_CAP_USD : Number(capRaw);
+  if (Number.isFinite(cap) && cap > 0 && spent >= cap) {
+    throw new Error(`This school is over its monthly AI budget ($${cap}).`);
+  }
+}
+
+export async function callMetered(
+  supabase: MeterClient,
+  apiKey: string,
+  input: {
+    job: AiJob;
+    pass?: AiPass;
+    functionName: string;
+    captureId?: string | null;
+    payload: unknown;
+    extra?: Record<string, unknown>;
+  },
+): Promise<Record<string, unknown>> {
+  await assertUnderAiCap(supabase);
+  const pass = input.pass ?? 'cheap';
+  const model = modelFor(input.job, pass);
+  const effort = reasoningEffortFor(model, pass);
+  const extra = {
+    ...(effort ? { reasoning_effort: effort } : {}),
+    ...(input.extra ?? {}),
+  };
+  const payload = await xaiResponses(apiKey, model, input.payload, extra);
+  const usage = parseUsage(payload);
+  const usd = estimateUsd(model, usage.inputTokens, usage.outputTokens);
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: schoolId } = await supabase.rpc('my_school_id');
+    if (typeof schoolId === 'string' && schoolId) {
+      await supabase.from('ai_usage').insert({
+        school_id: schoolId,
+        teacher_id: userData.user?.id ?? null,
+        function: input.functionName,
+        model,
+        capture_id: input.captureId ?? null,
+        input_tokens: usage.inputTokens,
+        output_tokens: usage.outputTokens,
+        usd,
+      });
+    }
+  } catch {
+    // Meter is best-effort. Never fail the teacher draft for a log insert.
+  }
+  payload.__kelyraUsd = usd;
+  payload.__kelyraModel = model;
+  return payload;
+}
 
 export function functionCalls(payload: Record<string, unknown>): FunctionCall[] {
   const output = payload.output as Array<Record<string, unknown>> | undefined;
@@ -135,4 +222,48 @@ export function parsePracticeItems(raw: string): Array<{
     })
     .filter((item) => item.prompt)
     .slice(0, 8);
+}
+
+function asDraftScore(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.min(100, Math.round(value)));
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const n = Number(value.trim());
+    if (Number.isFinite(n)) return Math.max(0, Math.min(100, Math.round(n)));
+  }
+  return null;
+}
+
+export function parseSubmissionReview(raw: string | Record<string, unknown> | null | undefined): {
+  summary: string | null;
+  gaps: Array<{ label: string; sortOrder: number }>;
+  draftScore: number | null;
+  teacherNote: string | null;
+  items: Array<{ id: string; prompt: string; answerKey?: string }>;
+} {
+  const parsed = extractJson(typeof raw === 'string' ? raw : JSON.stringify(raw ?? {}));
+  const gaps = Array.isArray(parsed.gaps)
+    ? parsed.gaps
+        .map((gap, index) => {
+          const row = gap as { label?: string; sortOrder?: number };
+          return {
+            label: String(row.label ?? '').trim(),
+            sortOrder: Number(row.sortOrder ?? index + 1),
+          };
+        })
+        .filter((gap) => gap.label)
+        .slice(0, 3)
+    : [];
+  const items = parsePracticeItems(JSON.stringify({ items: parsed.items }));
+  const summary = typeof parsed.summary === 'string' ? parsed.summary.replace(/\s+/g, ' ').trim() : '';
+  const teacherNote =
+    typeof parsed.teacherNote === 'string' ? parsed.teacherNote.replace(/\s+/g, ' ').trim() : '';
+  return {
+    summary: summary || null,
+    gaps,
+    draftScore: asDraftScore(parsed.draftScore),
+    teacherNote: teacherNote || null,
+    items,
+  };
 }

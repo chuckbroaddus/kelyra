@@ -1,30 +1,34 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
 import { ClassTabs } from '@/components/ui/ClassTabs';
-import { Avatar } from '@/components/ui/Avatar';
-import { MarqueeText } from '@/components/ui/MarqueeText';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
+import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
+import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
+import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
+import { GradeTermTabs } from '@/components/ui/GradeTermTabs';
 import { Screen } from '@/components/ui/Screen';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { studentHead } from '@/constants/table';
-import { radius, type } from '@/constants/theme';
+import { chrome, radius, shadows, type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
-import { cellTone, formatCell, gradeCell, loadGradebook, type Gradebook } from '@/lib/gradebook/api';
+import { formatCell, gradeCell, loadGradebook, type Gradebook } from '@/lib/gradebook/api';
+import { submissionReviewPath } from '@/lib/practice/review';
 import { deleteAssignment, deleteSubmission } from '@/lib/practice/delete';
 import {
   buildAssignmentTree,
   defaultExpandedIds,
-  flattenBookTree,
+  visibleBookRows,
   type BookNode,
 } from '@/lib/assignments/tree';
+import { isAwaitingGrade, isGraded } from '@/lib/assignments/status';
+import { gradeTermLabel, matchesGradeTermFilter } from '@/lib/grade/marks';
 import { firstName } from '@/lib/format';
 import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
@@ -33,7 +37,14 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
   const layout = useLayout();
-  const { className } = useChrome();
+  const router = useRouter();
+  const {
+    className,
+    trayTranslate,
+    trayHideDistance,
+    trayRest,
+    visible: chromeVisible,
+  } = useChrome();
   const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
   usePushedTitle(className ?? 'Class');
   const [book, setBook] = useState<Gradebook | null>(null);
@@ -52,9 +63,12 @@ export default function GradebookScreen() {
     title: string;
     studentName: string;
     mark: string;
+    status: string | null;
+    kind: string | null;
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['class']));
+  const [termFilter, setTermFilter] = useState('all');
 
   useFocusEffect(
     useCallback(() => {
@@ -74,11 +88,60 @@ export default function GradebookScreen() {
   const heatmap = paneRaw === 'heatmap';
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
   const colWidth = studentHead.colWidth;
-  const tree = useMemo(
-    () => (book ? buildAssignmentTree(className ?? 'Class', book.assignments) : []),
-    [book, className],
+  const assignments = useMemo(
+    () => (book ? book.assignments.filter((row) => matchesGradeTermFilter(row, termFilter)) : []),
+    [book, termFilter],
   );
-  const visibleRows = useMemo(() => flattenBookTree(tree, expanded), [tree, expanded]);
+  const tree = useMemo(
+    () => (book ? buildAssignmentTree(className ?? 'Class', assignments) : []),
+    [assignments, book, className],
+  );
+  const visibleRows = useMemo(() => visibleBookRows(tree, expanded), [tree, expanded]);
+  const columns = useMemo(() => {
+    if (!book) return [];
+    return book.students.map((student) => ({
+      key: student.id,
+      title: firstName(student.display_name),
+      width: colWidth,
+      renderTitle: () => (
+        <GradebookStudentHead
+          name={student.display_name}
+          photoUrl={student.photoUrl}
+          href={id ? `/class/${id}/student/${student.id}` : undefined}
+        />
+      ),
+      render: (row: BookNode) => {
+        if (row.kind !== 'assignment' || !row.assignment) return null;
+        const cell = gradeCell(book, row.assignment.id, student.id);
+        return (
+          <Pressable
+            onPress={() => {
+              if (!cell.submissionId) return;
+              const waiting = isAwaitingGrade(cell.status);
+              if (waiting) {
+                router.push(submissionReviewPath(id!, cell.submissionId) as never);
+                return;
+              }
+              if (row.assignment?.kind === 'lesson') {
+                router.push(`/class/${id}/lesson-result/${cell.submissionId}` as never);
+                return;
+              }
+              setCellSheet({
+                submissionId: cell.submissionId,
+                title: row.assignment!.title,
+                studentName: student.display_name,
+                mark: formatCell(cell),
+                status: cell.status,
+                kind: row.assignment?.kind ?? null,
+              });
+            }}
+          >
+            <GradebookCellMark cell={cell} />
+          </Pressable>
+        );
+      },
+    }));
+  }, [book, colWidth, id, router]);
 
   useEffect(() => {
     if (!tree.length) return;
@@ -98,40 +161,75 @@ export default function GradebookScreen() {
     });
   };
 
-  const toolbar =
-    book && book.assignments.length > 0 && !heatmap ? (
-      <View style={[styles.intro, layout.showTopBar && styles.introWide]}>
-        <GhostButton
-          align={layout.showTopBar ? 'left' : 'center'}
-          label="Export CSV"
-          onPress={() => {
-            void exportGradebookCsv(book, 'class')
-              .then(() => setExportMessage('Exported.'))
-              .catch((err) => {
-                setStatus(err instanceof Error ? err.message : 'Could not export');
-              });
-          }}
-        />
-        {exportMessage ? <Text style={[type.meta, { color: colors.mute }]}>{exportMessage}</Text> : null}
+  useEffect(() => {
+    setTermFilter('all');
+  }, [id]);
+
+  const exportTravel = Math.max(trayHideDistance, 1) + 72;
+  const exportTranslate = trayTranslate.interpolate({
+    inputRange: [0, Math.max(trayHideDistance, 1)],
+    outputRange: [0, exportTravel],
+  });
+  const exportOpacity = trayTranslate.interpolate({
+    inputRange: [0, Math.max(trayHideDistance, 1)],
+    outputRange: [1, 0],
+  });
+  const showExport = Boolean(book && book.assignments.length > 0 && !heatmap) || Boolean(exportMessage);
+  const exportBar = showExport ? (
+    <Animated.View
+      pointerEvents={chromeVisible ? 'box-none' : 'none'}
+      style={[
+        styles.exportDock,
+        {
+          bottom: layout.showTopBar ? 16 : trayRest + 8,
+          transform: [{ translateY: exportTranslate }],
+          opacity: exportOpacity,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.exportPlate,
+          {
+            backgroundColor: colors.elevated,
+            borderColor: colors.line,
+            ...(scheme === 'light' ? shadows.light : null),
+          },
+          layout.showTopBar && styles.exportBarWide,
+        ]}
+      >
+        {book && book.assignments.length > 0 && !heatmap ? (
+          <>
+            <GhostButton
+              align="center"
+              label="Export CSV"
+              onPress={() => {
+                void exportGradebookCsv({ ...book, assignments }, 'class')
+                  .then(() => setExportMessage('Exported.'))
+                  .catch((err) => {
+                    setStatus(err instanceof Error ? err.message : 'Could not export');
+                  });
+              }}
+            />
+            {exportMessage ? <Text style={[type.meta, { color: colors.mute }]}>{exportMessage}</Text> : null}
+          </>
+        ) : (
+          <Text style={[type.meta, { color: colors.mute }]}>{exportMessage}</Text>
+        )}
       </View>
-    ) : exportMessage ? (
-      <Text style={[type.meta, { color: colors.mute }]}>{exportMessage}</Text>
+    </Animated.View>
+  ) : null;
+
+  const termTabs =
+    !heatmap && book && book.assignments.length > 0 ? (
+      <GradeTermTabs value={termFilter} onChange={setTermFilter} />
     ) : null;
-  const phase = (
-    <PhaseBanner
-      phase={3}
-      compact
-      detail={
-        heatmap
-          ? 'Students are columns. Gaps are rows. Names stay put while you scan.'
-          : 'Students are columns. Assignments nest under class, unit, and section. Pass/Fail never averages with numbers.'
-      }
-    />
-  );
 
   return (
+    <View style={styles.shell}>
     <Screen maxWidth={1100} scroll={false}>
-      {id ? <ClassTabs classId={id} /> : null}
+      {id ? <ClassTabs classId={id} stacked={Boolean(termTabs)} /> : null}
+      {termTabs}
       <View style={styles.pane}>
       {heatmap ? (
         overview?.heatmapSkills.length && overview.heatmapStudents.length ? (
@@ -140,36 +238,24 @@ export default function GradebookScreen() {
             skills={overview.heatmapSkills}
             students={overview.heatmapStudents}
             marks={overview.heatmap}
-            leading={toolbar}
-            trailing={phase}
           />
         ) : (
-          <View>
-            {toolbar}
-            <Text style={[styles.empty, { color: colors.mute }]}>Approve a gap to see who else has it.</Text>
-            {phase}
-          </View>
+          <Text style={[styles.empty, { color: colors.mute }]}>Approve a gap to see who else has it.</Text>
         )
       ) : !book ? (
-        <View>
-          {toolbar}
-          {status ? (
-            <Text style={[type.meta, { color: colors.danger }]}>{status}</Text>
-          ) : (
-            <WorkingLine />
-          )}
-          {phase}
-        </View>
+        status ? (
+          <Text style={[type.meta, { color: colors.danger }]}>{status}</Text>
+        ) : (
+          <WorkingLine />
+        )
       ) : book.assignments.length === 0 ? (
-        <View>
-          {toolbar}
-          <Text style={[styles.empty, { color: colors.mute }]}>No columns yet. Approve work or assign practice.</Text>
-          {phase}
-        </View>
+        <Text style={[styles.empty, { color: colors.mute }]}>No columns yet. Approve work or assign practice.</Text>
+      ) : assignments.length === 0 ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          No {gradeTermLabel(termFilter)} columns yet.
+        </Text>
       ) : (
           <StickyTable<BookNode>
-            leading={toolbar}
-            trailing={phase}
             rows={visibleRows}
             rowKey={(row) => row.id}
             frozenTitle="Assignment"
@@ -178,81 +264,18 @@ export default function GradebookScreen() {
             empty="No students yet."
             rowTone={(row) => (row.kind === 'assignment' ? 'stripe' : 'group')}
             renderFrozen={(row) => (
-              <Pressable
-                onPress={() => {
-                  if (row.expandable) toggleNode(row.id);
-                  else if (row.assignment) setHeaderMenu({ id: row.assignment.id, title: row.assignment.title });
-                }}
-                style={[styles.treeCell, { paddingLeft: 6 + row.indent * 12 }]}
-              >
-                <Text style={[styles.chevron, { color: colors.mute }]}>
-                  {row.expandable ? (expanded.has(row.id) ? '▾' : '▸') : ' '}
-                </Text>
-                <Text
-                  style={[
-                    styles.name,
-                    { color: colors.ink, fontWeight: row.kind === 'assignment' ? '500' : '700' },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {row.title}
-                </Text>
-              </Pressable>
+              <GradebookTreeLabel
+                row={row}
+                expanded={expanded}
+                onToggle={toggleNode}
+                onAssignmentPress={
+                  row.assignment
+                    ? () => setHeaderMenu({ id: row.assignment!.id, title: row.assignment!.title })
+                    : undefined
+                }
+              />
             )}
-            columns={book.students.map((student) => ({
-              key: student.id,
-              title: firstName(student.display_name),
-              width: colWidth,
-              renderTitle: () => (
-                <Link
-                  href={`/class/${id}/student/${student.id}`}
-                  accessibilityLabel={firstName(student.display_name)}
-                >
-                  <View style={styles.headStudent}>
-                    <Avatar name={student.display_name} photoUrl={student.photoUrl} size={studentHead.avatar} />
-                    <MarqueeText
-                      text={firstName(student.display_name)}
-                      align="center"
-                      fadeColor={colors.wash}
-                      style={[styles.headName, { color: colors.ink }]}
-                    />
-                  </View>
-                </Link>
-              ),
-              render: (row) => {
-                if (row.kind !== 'assignment' || !row.assignment) return null;
-                const cell = gradeCell(book, row.assignment.id, student.id);
-                const tone = cellTone(cell);
-                const color =
-                  tone === 'mute'
-                    ? colors.mute
-                    : tone === 'warn'
-                      ? colors.warn
-                      : tone === 'good'
-                        ? colors.good
-                        : colors.ink;
-                return (
-                  <Pressable
-                    onPress={() => {
-                      if (!cell.submissionId) return;
-                      setCellSheet({
-                        submissionId: cell.submissionId,
-                        title: row.assignment!.title,
-                        studentName: student.display_name,
-                        mark: formatCell(cell),
-                      });
-                    }}
-                  >
-                    <Text
-                      style={[styles.mark, { color, fontWeight: tone === 'inkBold' ? '600' : '600' }]}
-                      numberOfLines={1}
-                    >
-                      {formatCell(cell)}
-                    </Text>
-                  </Pressable>
-                );
-              },
-            }))}
+            columns={columns}
           />
       )}
 
@@ -312,6 +335,21 @@ export default function GradebookScreen() {
             <Text style={[type.meta, { color: colors.mute }]}>
               {cellSheet?.title} · {cellSheet?.mark}
             </Text>
+            {isGraded(cellSheet?.status) || isAwaitingGrade(cellSheet?.status) || cellSheet?.kind === 'lesson' ? (
+              <GhostButton
+                align="left"
+                label="Review"
+                onPress={() => {
+                  if (!cellSheet || !id) return;
+                  const href =
+                    cellSheet.kind === 'lesson' && !isGraded(cellSheet.status)
+                      ? `/class/${id}/lesson-result/${cellSheet.submissionId}`
+                      : submissionReviewPath(id, cellSheet.submissionId);
+                  setCellSheet(null);
+                  router.push(href as never);
+                }}
+              />
+            ) : null}
             <GhostButton
               align="left"
               label="Remove"
@@ -365,19 +403,39 @@ export default function GradebookScreen() {
         }}
       />
     </Screen>
+    {exportBar}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+  },
   pane: {
     flex: 1,
     minHeight: 0,
   },
-  intro: {
-    gap: 8,
-    marginBottom: 12,
+  exportDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    alignItems: 'center',
   },
-  introWide: {
+  exportPlate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: chrome.trayRadius,
+    borderWidth: 1,
+  },
+  exportBarWide: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -422,6 +480,12 @@ const styles = StyleSheet.create({
     ...type.cell,
     flex: 1,
     minWidth: 0,
+  },
+  treeName: {
+    flex: 1,
+    minWidth: 8,
+    fontSize: 13,
+    lineHeight: 16,
   },
   mark: {
     ...type.cell,

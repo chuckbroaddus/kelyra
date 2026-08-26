@@ -1,4 +1,7 @@
-import { functionCalls, outputText, requireXaiKey, xaiResponses } from '../_shared/ai.ts';
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+import { callMetered, functionCalls, outputText, requireXaiKey } from '../_shared/ai.ts';
+import { imageDetailFor } from '../_shared/aiPolicy.ts';
 
 const FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
 
@@ -31,7 +34,7 @@ async function hydrateAskImages(input: unknown): Promise<unknown> {
           content.push({
             type: 'input_image',
             image_url: `data:${mime};base64,${bytesToBase64(bytes)}`,
-            detail: part.detail === 'high' || part.detail === 'low' ? part.detail : 'auto',
+            detail: part.detail === 'high' ? 'high' : imageDetailFor('cheap'),
           });
         } catch {
           content.push({ type: 'input_text', text: '(A photo was attached but could not be opened.)' });
@@ -50,6 +53,11 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const apiKey = requireXaiKey();
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
+    );
     const tools = Array.isArray(body.tools) ? body.tools : [];
     const extra: Record<string, unknown> = {};
     if (tools.length) extra.tools = tools;
@@ -67,7 +75,12 @@ Deno.serve(async (req) => {
             .filter((item: { content: string }) => item.content)
         : [{ role: 'user', content: 'Hello' }];
     const input = await hydrateAskImages(raw);
-    const payload = await xaiResponses(apiKey, 'grok-4.6', input, extra);
+    const payload = await callMetered(supabase, apiKey, {
+      job: 'ask',
+      functionName: 'ask-assistant',
+      payload: input,
+      extra,
+    });
     const calls = functionCalls(payload);
     const responseId = typeof payload.id === 'string' ? payload.id : undefined;
     if (calls.length) return Response.json({ toolCalls: calls, responseId });

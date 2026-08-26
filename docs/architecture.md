@@ -31,6 +31,7 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
                    • matchName(transcript, roster)
                    • draftGaps(photo, hint)
                    • generatePractice(skill, context)
+                   • reviewSubmission(answers) — draft score + gaps + follow-up items (status stays completed until Graded)
                           │
                           ▼
                    SpaceXAI (xAI) by default
@@ -44,7 +45,7 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
 2. App inserts a `captures` row with `student_id` null, `status = unassigned`.
 3. Edge Function: STT if audio exists → matcher against that class’s enrollments → set `guessed_student_id`. High confidence may auto-attach; otherwise inbox.
 4. Once `student_id` is set and `kind = homework`, Edge Function sends the image + short schema to the model. Writes `model_draft`, `skill_gaps` (`draft`), `status = draft`.
-5. Teacher Approves on the web: RLS update. Trigger/function writes `assignments` + `submissions` (`approved`). Student/parent still cannot read drafts.
+5. Teacher Approves on the web: RLS update. Trigger/function writes `assignments` + `submissions` (`graded`). Student/parent still cannot read drafts.
 
 **What never happens**
 
@@ -64,8 +65,8 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
 | **Backend** | **Supabase** | Auth, Postgres, Storage, Edge Functions, RLS. No separate Nest/Rails app in v1. |
 | **Database** | **Postgres 15+** on Supabase | Schema from `docs/data-model.md`. Relational grade book. `students.metadata jsonb` unused in UI. |
 | **Auth** | Supabase Auth | Teacher: email + magic link or password. Parent: magic link on invite. Student: class `join_code` + pick roster name → signed session with `student_id` claim (custom token or a thin Edge Function). |
-| **Storage** | Supabase Storage (private buckets) | `photos/`, `audio/`. Signed URLs, short TTL. Not public. |
-| **AI** | **SpaceXAI (xAI)** behind a 5-method adapter | Default: **grok-4.6** for image understanding, gap JSON, practice JSON. **Grok Voice STT** for transcripts. Local dev: Grok CLI OAuth (`npm run ai:dev`, tokens in `~/.grok/auth.json`). Production: `XAI_API_KEY` only in Edge Function secrets. |
+| **Storage** | Supabase Storage (private buckets) | `photos/`, `audio/`. Signed URLs, reused until near expiry. Lists and avatars load `*_thumb`; Capture review and AI use the original. Not public. |
+| **AI** | **SpaceXAI (xAI)** behind a 5-method adapter | Cheap vision (`grok-4.20-0309-non-reasoning`, `detail: low`, resized to 1280) for classify / homework drafts / keys. Text (`grok-build-0.1`) for practice and PPT outlines. **grok-4.6** only for Ask and an explicit Look-again pass. Homework attached from Inbox is queued; teacher taps Draft queued. STT is Grok Voice. Local: `npm run ai:dev`. Production: `XAI_API_KEY` in Edge secrets. PPT → `npm run pptx:lesson` extracts text locally and does not store the BJU file. |
 | **AI fallback (not wired until needed)** | Gemini 3.5 Flash-Lite | Cheapest published all-in-one meter in `research/06`. Swap inside the adapter if handwriting or cost fails. Do **not** add Document AI / Textract in v1. |
 | **Email** | Resend or Postmark | Parent invite link. Not SMS. |
 | **Push** | Skip in v1 | Inbox is pull. FCM only when weekly email/SMS appears. |
@@ -85,6 +86,7 @@ supabase/
     transcribe/
     match-and-analyze/
     generate-practice/
+    review-submission/
 ```
 
 ---

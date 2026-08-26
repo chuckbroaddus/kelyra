@@ -8,9 +8,13 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "ai:dev": "node scripts/ai-dev-server.mjs",
+    "ai:dev": "node --experimental-strip-types scripts/ai-dev-server.mjs",
+    "lesson:dev": "node scripts/lesson-dev-server.mjs",
     "typecheck": "tsc --noEmit",
-    "icons": "node scripts/build-icons.mjs"
+    "icons": "node scripts/build-icons.mjs",
+    "thumbs": "node scripts/backfill-photo-thumbs.mjs",
+    "pptx:extract": "node scripts/extract-pptx.mjs",
+    "pptx:lesson": "node scripts/lesson-from-pptx.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -21,6 +25,7 @@
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.23",
     "expo-font": "~14.0.12",
+    "expo-image": "~3.0.11",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linking": "~8.0.12",
@@ -41,6 +46,7 @@
     "react-native-screens": "~4.16.0",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
+    "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {

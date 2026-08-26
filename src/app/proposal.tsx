@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { invokeAi } from '@/lib/ai/invoke';
+import { formatUsd } from '@/lib/ai/policy';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { attachCapture, createCapture, saveCaptureEvaluation } from '@/lib/captures/api';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
@@ -40,10 +41,14 @@ import {
 } from '@/lib/parents/api';
 import { mapClassifierFields } from '@/lib/people/metadata';
 import { setProfilePhoto, signedUrlsForAssetIds, uploadProfilePhoto } from '@/lib/people/photos';
+import { existingRosterMatch } from '@/lib/matching/spokenName';
+import { isOfficeRole } from '@/lib/school/roles';
 import {
   addConfirmedStudents,
   createRosterImport,
+  enrollExistingStudent,
   getStudent,
+  listAvailableStudents,
   listPendingRosterImports,
   listRoster,
   markRosterImportConfirmed,
@@ -78,6 +83,7 @@ type HomeworkVision = {
   draftScore?: number | null;
   maxScore?: number | null;
   teacherNote?: string | null;
+  costUsd?: number | null;
   items?: Array<{
     n: number;
     expected?: string | null;
@@ -90,7 +96,8 @@ type HomeworkVision = {
 
 export default function ProposalScreen() {
   const { colors } = useTheme();
-  const { teacher } = useAuth();
+  const { teacher, profile } = useAuth();
+  const office = isOfficeRole(profile);
   const chrome = useChrome();
   const router = useRouter();
   const layout = useLayout();
@@ -121,6 +128,7 @@ export default function ProposalScreen() {
   const [assignments, setAssignments] = useState<import('@/lib/supabase/types').AssignmentRow[]>([]);
   const [keyDraftItems, setKeyDraftItems] = useState<NonNullable<HomeworkVision['items']>>([]);
   const [keyMax, setKeyMax] = useState<number | null>(null);
+  const [aiCost, setAiCost] = useState<number | null>(null);
   const [parents, setParents] = useState<ClassParent[]>([]);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentName, setParentName] = useState('');
@@ -238,7 +246,7 @@ export default function ProposalScreen() {
 
         const rosterPayload = names.map((student) => ({
           id: student.id,
-          name: student.display_name,
+          name: student.display_name.split(/\s+/).filter(Boolean)[0] ?? student.display_name,
         }));
         const rosterNames = names.map((student) => ({
           studentId: student.id,
@@ -366,6 +374,7 @@ export default function ProposalScreen() {
           });
           if (vision?.items?.length) setKeyDraftItems(vision.items);
           if (vision?.maxScore != null) setKeyMax(vision.maxScore);
+          if (vision?.costUsd != null) setAiCost(vision.costUsd);
         }
         if (cancelled) return;
 
@@ -571,6 +580,7 @@ export default function ProposalScreen() {
         scoreMark,
         gradeKind,
         skipGrade: scoreMark !== 'numeric' && !gaps.some((gap) => gap.label.trim()),
+        costUsd: aiCost,
       };
       await saveCaptureEvaluation(capture.id, draftPayload, studentId);
       if (studentId) {
@@ -732,12 +742,34 @@ export default function ProposalScreen() {
     setBusy(true);
     try {
       if (selected.length) {
-        await addConfirmedStudents({
-          classId: chrome.classId,
-          teacherId: teacher.id,
-          names: selected.map((row) => row.name),
-          createdVia: 'photo_list',
-        });
+        if (office) {
+          await addConfirmedStudents({
+            classId: chrome.classId,
+            teacherId: teacher.id,
+            names: selected.map((row) => row.name),
+            createdVia: 'photo_list',
+          });
+        } else {
+          const available = await listAvailableStudents(chrome.classId);
+          const missing: string[] = [];
+          for (const row of selected) {
+            const match = existingRosterMatch(
+              row.name,
+              available.map((student) => ({
+                studentId: student.id,
+                displayName: student.display_name,
+                aliases: student.name_aliases,
+              })),
+            );
+            if (match) await enrollExistingStudent(chrome.classId, match.studentId);
+            else missing.push(row.name);
+          }
+          if (missing.length) {
+            throw new Error(
+              `Only the office may add a new student. Not on the school roster: ${missing.join(', ')}.`,
+            );
+          }
+        }
         const pending = await listPendingRosterImports(chrome.classId);
         if (pending[0]) await markRosterImportConfirmed(pending[0].id);
       }
@@ -861,6 +893,7 @@ export default function ProposalScreen() {
               <Text style={[type.meta, { color: colors.mute }]}>
                 Looks like {assigned.title} · against key
                 {keyMax != null ? ` · ${score || '—'} / ${keyMax}` : ''}
+                {aiCost != null ? ` · ${formatUsd(aiCost)}` : ''}
               </Text>
             );
           })()}
@@ -1194,7 +1227,11 @@ export default function ProposalScreen() {
         ) : intent === 'roster' && chrome.classId ? (
           <PrimaryButton
             disabled={busy}
-            label={`Add ${suggestions.filter((row) => row.selected && !row.alreadyHere).length} students`}
+            label={
+              office
+                ? `Add ${suggestions.filter((row) => row.selected && !row.alreadyHere).length} students`
+                : `Enroll matching names`
+            }
             onPress={() => void saveRoster()}
           />
         ) : undefined

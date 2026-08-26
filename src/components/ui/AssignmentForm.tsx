@@ -1,13 +1,15 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
-import { emptyKeyItem, type AnswerKeyItem, type AnswerKeyKind } from '@/lib/assignments/keys';
+import type { AssignmentInput } from '@/lib/assignments/api';
+import { deriveKeyKind, emptyKeyItem, keyMaxScore, type AnswerKeyItem, type AnswerKeyKind } from '@/lib/assignments/keys';
 import {
   GRADE_KINDS,
   GRADE_TERMS,
@@ -17,9 +19,16 @@ import {
   type ScoreScheme,
   type WeightBand,
 } from '@/lib/grade/marks';
+import { EMPTY_CATALOG_COPY } from '@/lib/lessons/allowlist';
+import { packKey } from '@/lib/lessons/protocol';
+import type { LessonPackRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
+export type AssignmentWorkKind = 'planned' | 'lesson';
+
 export type AssignmentFormValue = {
+  workKind: AssignmentWorkKind;
+  packKey: string;
   title: string;
   category: GradeKind;
   dueDate: string;
@@ -46,12 +55,14 @@ export function emptyAssignmentForm(seed?: { title?: string; category?: string }
     ? (seed!.category as GradeKind)
     : 'homework';
   return {
+    workKind: 'planned',
+    packKey: '',
     title: seed?.title ?? '',
     category,
     dueDate: '',
     weightBand: 'none',
     weightPercent: '',
-    term: 'none',
+    term: 'year',
     scoreScheme: 'numeric',
     keyKind: 'none',
     keyNotes: '',
@@ -81,6 +92,14 @@ type Props = {
   onClearKeyPhoto?: () => void;
   unitSuggestions?: string[];
   sectionSuggestions?: string[];
+  packs?: LessonPackRow[];
+  taughtClasses?: Array<{ id: string; name: string }>;
+  selectedClassIds?: string[];
+  onToggleClass?: (classId: string) => void;
+  classLocked?: boolean;
+  studentLockedName?: string | null;
+  lockWorkKind?: boolean;
+  hidePackPicker?: boolean;
 };
 
 export function AssignmentForm({
@@ -96,17 +115,89 @@ export function AssignmentForm({
   onClearKeyPhoto,
   unitSuggestions = [],
   sectionSuggestions = [],
+  packs = [],
+  taughtClasses = [],
+  selectedClassIds = [],
+  onToggleClass,
+  classLocked,
+  studentLockedName,
+  lockWorkKind,
+  hidePackPicker,
 }: Props) {
   const { colors } = useTheme();
   const patch = (partial: Partial<AssignmentFormValue>) => onChange({ ...value, ...partial });
-  const showItems = value.keyKind === 'items' || value.keyKind === 'both' || value.keyItems.length > 0;
-  const showPhoto = value.keyKind === 'photo' || value.keyKind === 'both' || Boolean(value.keyPhotoUrl);
+  const lesson = value.workKind === 'lesson';
+  const showItems = !lesson && (value.keyKind === 'items' || value.keyKind === 'both' || value.keyItems.length > 0);
+  const showPhoto = !lesson && (value.keyKind === 'photo' || value.keyKind === 'both' || Boolean(value.keyPhotoUrl));
+  const whoOk = classLocked || selectedClassIds.length > 0;
+  const saveDisabled = busy || keyBusy || !value.title.trim() || !whoOk || (lesson && !hidePackPicker && !value.packKey);
 
   return (
     <View style={styles.wrap}>
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Type</Text>
+      <ChipRow>
+        <Chip
+          label="Lesson"
+          selected={lesson}
+          disabled={lockWorkKind}
+          onPress={() => patch({ workKind: 'lesson' })}
+        />
+        <Chip
+          label="Practice"
+          selected={!lesson}
+          disabled={lockWorkKind}
+          onPress={() => patch({ workKind: 'planned' })}
+        />
+      </ChipRow>
+      {studentLockedName ? (
+        <Text style={[type.meta, { color: colors.mute }]}>Assigned to {studentLockedName} only.</Text>
+      ) : null}
+      {!classLocked && taughtClasses.length ? (
+        <>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Classes</Text>
+          <Text style={[type.meta, { color: colors.mute }]}>Only classes you already teach.</Text>
+          <ChipRow>
+            {taughtClasses.map((klass) => (
+              <Chip
+                key={klass.id}
+                label={klass.name}
+                selected={selectedClassIds.includes(klass.id)}
+                onPress={() => onToggleClass?.(klass.id)}
+              />
+            ))}
+          </ChipRow>
+        </>
+      ) : null}
+      {lesson && !hidePackPicker ? (
+        <>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Lesson</Text>
+          {packs.length === 0 ? (
+            <Text style={[type.meta, { color: colors.mute }]}>{EMPTY_CATALOG_COPY}</Text>
+          ) : (
+            <ChipRow>
+              {packs.map((pack) => {
+                const key = packKey(pack.deck_id, pack.version);
+                return (
+                  <Chip
+                    key={pack.id}
+                    label={pack.title}
+                    selected={value.packKey === key}
+                    onPress={() =>
+                      patch({
+                        packKey: key,
+                        title: value.title.trim() && value.title !== pack.title ? value.title : pack.title,
+                      })
+                    }
+                  />
+                );
+              })}
+            </ChipRow>
+          )}
+        </>
+      ) : null}
       <TextField
         label="Title"
-        placeholder="HW #17 Long Division Practice 3"
+        placeholder={lesson ? 'FoM · 1.3 Multiplication' : 'HW #17 Long Division Practice 3'}
         value={value.title}
         onChangeText={(title) => patch({ title })}
       />
@@ -201,6 +292,8 @@ export function AssignmentForm({
           <Chip key={term.key} label={term.label} selected={value.term === term.key} onPress={() => patch({ term: term.key })} />
         ))}
       </ChipRow>
+      {lesson ? null : (
+      <>
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Answer key</Text>
       <Text style={[type.meta, { color: colors.mute }]}>
         Photo a blank worksheet and we will propose answers. A filled key we just read. Later homework matches this
@@ -227,7 +320,7 @@ export function AssignmentForm({
       {showPhoto ? (
         <>
           {value.keyPhotoUrl ? (
-            <Image source={{ uri: value.keyPhotoUrl }} style={[styles.keyThumb, { borderColor: colors.line }]} />
+            <RemoteImage uri={value.keyPhotoUrl} style={[styles.keyThumb, { borderColor: colors.line }]} />
           ) : null}
           {value.keyPageState === 'blank' ? (
             <Text style={[type.meta, { color: colors.mute }]}>Looks blank — proposed answers below. Check them.</Text>
@@ -323,7 +416,9 @@ export function AssignmentForm({
           onChangeText={(keyPassAt) => patch({ keyPassAt })}
         />
       ) : null}
-      <PrimaryButton disabled={busy || keyBusy || !value.title.trim()} label={busy ? 'Saving…' : submitLabel} onPress={onSubmit} />
+      </>
+      )}
+      <PrimaryButton disabled={saveDisabled} label={busy ? 'Saving…' : submitLabel} onPress={onSubmit} />
       {onCancel ? <GhostButton align="left" label="Cancel" onPress={onCancel} /> : null}
     </View>
   );
@@ -340,6 +435,51 @@ export function dueAtFromDate(value: string): string | null {
   if (!trimmed) return null;
   const parsed = new Date(`${trimmed}T16:00:00`);
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+export function plannedAssignmentInput(
+  classId: string,
+  value: AssignmentFormValue,
+  studentId?: string | null,
+): AssignmentInput {
+  const items = value.keyItems;
+  return {
+    classId,
+    title: value.title,
+    category: value.category,
+    dueAt: dueAtFromDate(value.dueDate),
+    weightBand: value.weightBand,
+    weightPercent: value.weightPercent.trim() ? Number(value.weightPercent) : null,
+    term: value.term,
+    scoreScheme: value.scoreScheme,
+    includeInAverage: value.scoreScheme !== 'pass_fail',
+    maxScore: keyMaxScore(items),
+    keyKind: deriveKeyKind(Boolean(value.keyAssetId), items),
+    keyNotes: value.keyNotes,
+    keyPassAt: value.keyPassAt.trim() ? Number(value.keyPassAt) : null,
+    keyItems: items,
+    keyAssetId: value.keyAssetId,
+    keyPhash: value.keyPhash,
+    keyLayout: value.keyLayout,
+    keyHeader: value.keyHeader,
+    unit: value.unit,
+    section: value.section,
+    studentId: studentId ?? null,
+  };
+}
+
+export function lessonFieldsFromForm(value: AssignmentFormValue) {
+  return {
+    dueAt: dueAtFromDate(value.dueDate),
+    category: value.category,
+    weightBand: value.weightBand,
+    weightPercent: value.weightBand === 'custom' && value.weightPercent.trim() ? Number(value.weightPercent) : null,
+    term: value.term,
+    scoreScheme: value.scoreScheme,
+    includeInAverage: value.scoreScheme !== 'pass_fail',
+    unit: value.unit.trim() || null,
+    section: value.section.trim() || null,
+  };
 }
 
 const styles = StyleSheet.create({

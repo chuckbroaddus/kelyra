@@ -32,6 +32,7 @@ import {
   isFeedMuted,
   listFeed,
   listPostReplies,
+  peekFeed,
   replyToPost,
   setFeedMuted,
   type FeedPost,
@@ -65,7 +66,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
   const scrollY = useRef(0);
   const [replyFocused, setReplyFocused] = useState(false);
   const [kb, setKb] = useState(0);
-  const [rows, setRows] = useState<FeedPost[] | null>(null);
+  const [rows, setRows] = useState<FeedPost[] | null>(() => peekFeed());
   const [openId, setOpenId] = useState<string | null>(null);
   const [replies, setReplies] = useState<PostReply[]>([]);
   const [kind, setKind] = useState<'post' | 'alert'>('post');
@@ -81,20 +82,23 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
   const canMute = Boolean(profile) && profile?.role !== 'student';
   const canKind = canPost && (Boolean(boundClass) || isAdminRole(profile));
 
-  const load = useCallback(async () => {
+  const loadPosts = useCallback(async () => {
     setError(null);
-    const next = await listFeed();
-    setRows(next);
-    if (profile && profile.role !== 'student') {
-      setMuted(await isFeedMuted(boundClass).catch(() => false));
-    }
-  }, [boundClass, profile]);
+    setRows(await listFeed());
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void load().catch((err) => setError(err instanceof Error ? err.message : 'Could not load feed'));
-    }, [load]),
+      void loadPosts().catch((err) => setError(err instanceof Error ? err.message : 'Could not load feed'));
+    }, [loadPosts]),
   );
+
+  useEffect(() => {
+    if (!profile || profile.role === 'student') return;
+    void isFeedMuted(boundClass)
+      .then(setMuted)
+      .catch(() => setMuted(false));
+  }, [boundClass, profile]);
 
   const dockOpen = replyFocused ? false : chrome.visible || chrome.keyboardVisible;
 
@@ -162,7 +166,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
     try {
       await createPost({ classId: boundClass, kind, body, payload });
       chrome.refreshChrome();
-      await load();
+      await loadPosts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not post');
       throw err;
@@ -187,7 +191,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
     try {
       await replyToPost(openId, body, payload);
       setReplies(await listPostReplies(openId));
-      await load();
+      await loadPosts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reply');
       throw err;
@@ -200,7 +204,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
     void setFeedMuted(boundClass, !muted)
       .then(() => {
         setMuted(!muted);
-        return load();
+        return loadPosts();
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not mute'));
   };

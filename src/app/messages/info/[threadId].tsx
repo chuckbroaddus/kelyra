@@ -80,7 +80,7 @@ export default function ThreadInfoScreen() {
     setTitle(thread.title ?? '');
     setDraftTitle(thread.title ?? '');
     setMembers(nextMembers);
-    setPhotoUrl(thread.photo_path ? await signedMessageUrl('photo', thread.photo_path) : null);
+    setPhotoUrl(thread.photo_path ? await signedMessageUrl('photo', thread.photo_path, 'thumb') : null);
     setMuted(await isThreadMuted(threadId, profile.id));
     setPinned(await isThreadPinned(threadId, profile.id));
   }, [threadId, profile]);

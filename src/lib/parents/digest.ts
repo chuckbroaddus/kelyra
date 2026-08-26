@@ -93,7 +93,9 @@ export async function buildWeeklyFamilyDigest(classId: string, className: string
   for (const row of submissions ?? []) {
     const when = row.submitted_at ?? row.created_at;
     if (!when || when < since) continue;
-    if (row.status === 'submitted') add(row.student_id, 'Practice done');
+    if (row.status === 'graded') add(row.student_id, 'Practice graded');
+    else if (row.status === 'completed') add(row.student_id, 'Practice completed');
+    else if (row.status === 'started') add(row.student_id, 'Practice started');
     else if (row.status === 'assigned') add(row.student_id, 'Practice assigned');
   }
   for (const student of roster) {

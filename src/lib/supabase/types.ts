@@ -34,6 +34,7 @@ export type SchoolRow = {
   created_at: string;
   feed_icon?: string | null;
   logo_asset_id?: string | null;
+  ai_monthly_cap_usd?: number | null;
 };
 
 export type ProfileRow = {
@@ -155,8 +156,8 @@ export type CaptureStatus =
 export type GapSource = 'model' | 'teacher';
 export type GapStatus = 'draft' | 'approved' | 'dismissed';
 export type PracticeSetStatus = 'preview' | 'assigned' | 'discarded';
-export type AssignmentKind = 'capture' | 'practice' | 'planned';
-export type SubmissionStatus = 'assigned' | 'submitted' | 'draft_scored' | 'approved';
+export type AssignmentKind = 'capture' | 'practice' | 'planned' | 'lesson';
+export type SubmissionStatus = 'assigned' | 'started' | 'completed' | 'graded';
 
 export type PracticeItem = {
   id: string;
@@ -210,6 +211,23 @@ export type AssignmentRow = {
   key_ready_at?: string | null;
   unit?: string | null;
   section?: string | null;
+  deck_id?: string | null;
+  lesson_version?: string | null;
+  storage_deck_id?: string | null;
+  beat_start?: string | null;
+  beat_end?: string | null;
+};
+
+export type LessonPackRow = {
+  id: string;
+  deck_id: string;
+  version: string;
+  title: string;
+  published: boolean;
+  created_at: string;
+  storage_deck_id: string;
+  beat_start: string;
+  beat_end: string;
 };
 
 export type SubmissionRow = {
@@ -217,10 +235,11 @@ export type SubmissionRow = {
   assignment_id: string;
   student_id: string;
   status: SubmissionStatus;
-  answers: Record<string, string> | null;
+  answers: Record<string, unknown> | null;
   draft_score: number | null;
   approved_score: number | null;
   score_mark?: 'numeric' | 'pass' | 'fail';
+  model_draft?: Record<string, unknown> | null;
   submitted_at: string | null;
   approved_at: string | null;
   created_at: string;
@@ -319,6 +338,7 @@ export type ParentOpenChild = {
   class_name: string | null;
   focus_label: string | null;
   practice_status: string | null;
+  lesson_status: string | null;
   parent_sentence: string | null;
 };
 
@@ -347,6 +367,7 @@ export type AssetRow = {
   teacher_id: string;
   kind: AssetKind;
   storage_path: string;
+  thumb_storage_path?: string | null;
   mime_type: string | null;
   byte_size: number | null;
   created_at: string;
@@ -375,6 +396,7 @@ export type CaptureRow = {
   attached_at: string | null;
   approved_at: string | null;
   assignment_id?: string | null;
+  ai_status?: string | null;
 };
 
 export type SkillRow = {
@@ -386,7 +408,8 @@ export type SkillRow = {
 
 export type SkillGapRow = {
   id: string;
-  capture_id: string;
+  capture_id: string | null;
+  submission_id?: string | null;
   student_id: string;
   skill_id: string | null;
   label: string;
@@ -565,7 +588,14 @@ export type Database = {
       >;
       assets: Table<
         AssetRow,
-        { teacher_id: string; kind: AssetKind; storage_path: string; mime_type?: string | null; byte_size?: number | null },
+        {
+          teacher_id: string;
+          kind: AssetKind;
+          storage_path: string;
+          thumb_storage_path?: string | null;
+          mime_type?: string | null;
+          byte_size?: number | null;
+        },
         Partial<Omit<AssetRow, 'id' | 'teacher_id' | 'created_at'>>
       >;
       captures: Table<
@@ -591,7 +621,8 @@ export type Database = {
       skill_gaps: Table<
         SkillGapRow,
         {
-          capture_id: string;
+          capture_id?: string | null;
+          submission_id?: string | null;
           student_id: string;
           label: string;
           source: GapSource;
@@ -599,7 +630,7 @@ export type Database = {
           sort_order?: number;
           skill_id?: string | null;
         },
-        Partial<Omit<SkillGapRow, 'id' | 'capture_id' | 'created_at'>>
+        Partial<Omit<SkillGapRow, 'id' | 'created_at'>>
       >;
       practice_sets: Table<
         PracticeSetRow,
@@ -640,8 +671,26 @@ export type Database = {
           key_ready_at?: string | null;
           unit?: string | null;
           section?: string | null;
+          deck_id?: string | null;
+          lesson_version?: string | null;
+          storage_deck_id?: string | null;
+          beat_start?: string | null;
+          beat_end?: string | null;
         },
         Partial<Omit<AssignmentRow, 'id' | 'created_at'>>
+      >;
+      lesson_packs: Table<
+        LessonPackRow,
+        {
+          deck_id: string;
+          version: string;
+          title: string;
+          published?: boolean;
+          storage_deck_id: string;
+          beat_start: string;
+          beat_end: string;
+        },
+        Partial<Pick<LessonPackRow, 'title' | 'published' | 'storage_deck_id' | 'beat_start' | 'beat_end'>>
       >;
       submissions: Table<
         SubmissionRow,
@@ -649,10 +698,12 @@ export type Database = {
           assignment_id: string;
           student_id: string;
           status?: SubmissionStatus;
-          answers?: Record<string, string> | null;
+          answers?: Record<string, unknown> | null;
+          draft_score?: number | null;
           approved_score?: number | null;
           approved_at?: string | null;
           score_mark?: 'numeric' | 'pass' | 'fail';
+          model_draft?: Record<string, unknown> | null;
         },
         Partial<Omit<SubmissionRow, 'id' | 'assignment_id' | 'student_id' | 'created_at'>>
       >;
@@ -699,22 +750,110 @@ export type Database = {
           photo_path: string | null;
         }[];
       };
+      student_gradebook: {
+        Args: Record<string, never>;
+        Returns: {
+          class_id: string;
+          class_name: string;
+          assignment_id: string;
+          assignment_title: string;
+          kind: string;
+          unit: string | null;
+          section: string | null;
+          term: string | null;
+          created_at: string;
+          submission_id: string;
+          status: SubmissionStatus;
+          approved_score: number | null;
+          score_mark: string | null;
+          answers: Record<string, unknown> | null;
+        }[];
+      };
       student_list_todo: {
         Args: Record<string, never>;
         Returns: {
           submission_id: string;
+          assignment_id: string;
           assignment_title: string;
+          kind: string;
           status: SubmissionStatus;
+          due_at: string | null;
+          submitted_at: string | null;
+          class_id: string | null;
+          class_name: string | null;
+          class_icon: string | null;
+          approved_score: number | null;
+          score_mark: string | null;
+          deck_id: string | null;
+          lesson_version: string | null;
           items: PracticeItem[] | null;
-          answers: Record<string, string> | null;
+          answers: Record<string, unknown> | null;
           focus_label: string | null;
+        }[];
+      };
+      student_classes: {
+        Args: Record<string, never>;
+        Returns: {
+          class_id: string;
+          class_name: string;
+          feed_icon: string | null;
+          teacher_id: string | null;
+          teacher_name: string | null;
+          teacher_photo_path: string | null;
+        }[];
+      };
+      school_logo_paths: {
+        Args: Record<string, never>;
+        Returns: {
+          asset_id: string;
+          storage_path: string;
+          thumb_storage_path: string | null;
+        }[];
+      };
+      student_people: {
+        Args: Record<string, never>;
+        Returns: {
+          kind: string;
+          id: string;
+          profile_id: string | null;
+          display_name: string;
+          photo_path: string | null;
+          class_id: string | null;
+          class_name: string | null;
         }[];
       };
       student_submit: {
         Args: {
           p_submission_id: string;
-          p_answers: Record<string, string>;
+          p_answers: Record<string, unknown>;
         };
+        Returns: undefined;
+      };
+      student_mark_started: {
+        Args: { p_submission_id: string };
+        Returns: undefined;
+      };
+      student_open_lesson: {
+        Args: { p_assignment_id: string };
+        Returns: {
+          assignment_id: string;
+          submission_id: string;
+          title: string;
+          deck_id: string;
+          lesson_version: string;
+          storage_deck_id: string;
+          beat_start: string;
+          beat_end: string;
+          class_id: string;
+          class_name: string;
+          school_name: string;
+          teacher_name: string;
+          student_id: string;
+          student_name: string;
+        }[];
+      };
+      student_report_lesson: {
+        Args: { p_assignment_id: string; p_payload: Record<string, unknown> };
         Returns: undefined;
       };
       admin_set_student_link: {
@@ -813,6 +952,10 @@ export type Database = {
           p_also_teacher?: boolean;
         };
         Returns: string;
+      };
+      admin_reset_login_password: {
+        Args: { p_profile_id: string; p_password: string };
+        Returns: undefined;
       };
       set_capability_grant: {
         Args: { p_capability: string; p_role: SchoolRole; p_access: string };
@@ -946,6 +1089,8 @@ export type Database = {
       set_school_feed_icon: { Args: { p_icon: string }; Returns: string };
       set_school_name: { Args: { p_name: string }; Returns: string };
       set_school_logo: { Args: { p_asset_id: string | null }; Returns: string | null };
+      set_school_ai_cap: { Args: { p_usd: number }; Returns: number };
+      ai_spend_this_month: { Args: Record<string, never>; Returns: Array<{ usd: number; cap_usd: number | null }> };
       ask_open_thread: { Args: Record<string, never>; Returns: string };
       ask_list_messages: { Args: { p_limit?: number }; Returns: AskMessageRow[] };
       ask_append_message: {

@@ -1,0 +1,38 @@
+Chuck said implement now. New session. --cwd ~/projects/kelyra. Do not git-commit notes/teacher-decks/. Do not push GitHub. Do not create classes. Do not invent RLS. Do not send Q17 as its own patch (honor swipe-back / no extra iOS < on new screens only).
+
+## 1) Teacher work IA
+Source of truth: notes/teacher-work-ia.md (and this prompt). Labels, grouping, entry points only. Keep assignments.kind, class_teachers wall, existing tables.
+
+Headline: One Assign path. Lesson is a kind of assignment, not a sibling product. Practice is a kind of work, not the place you assign from.
+
+Do this:
+- Kill two equal selectors labeled Assignment and Lesson. After Assign, type control is Lesson / Practice only (PersonTabs or chip row). Never "Assignment" vs "Lesson".
+- Class: Assignments cabinet is work already given. Primary Assign is ghost/plus on that pane (and Class Home work peek if it exists). Not a tray tab.
+- Student: Assign is header or Work tab. NEVER nested under a tab named Practice. If Practice tab remains for skills/Approve, it is review-only: no New / Assign lesson there. Suggested tabs: reuse existing, retitle Work (list + Assign). Do not add tabs.
+- Grade: same Assign sheet; who-list is classes this teacher already teaches (listTaughtClasses). No create-class.
+- WorkRow: title + kind pill (Lesson / Practice) + due + status. List title Work or Assignments, never Lessons as a product.
+- Catalog picker stays inside Lesson type (deck_id + version). No URL field.
+- Capture tray and Inbox stay; neither is renamed Assign. Lessons never go through Inbox.
+- Copy: Assign; then Lesson or Practice. Submit labels like "Assign" not "Create assignment" when that reads as creating a class or a second product.
+
+Done when Jacquee can assign a lesson from Class Assignments and from a student Work (or header Assign) without seeing Practice as the door, and without choosing between two products named Assignment and Lesson.
+
+Likely files: src/app/assignment/new.tsx, src/app/class/[id]/assignment/[assignmentId].tsx, src/app/class/[id]/assignments.tsx, src/app/class/[id]/student/[studentId].tsx, src/components/ui/AssignmentForm.tsx, chrome copy.
+
+## 2) See the lesson page in the app
+Player already exists: src/app/lesson/[assignmentId].tsx, LessonWebView, openTeacherPreview / openStudentLesson, local :8772 via lessonDevOrigin().
+
+Chuck (Jacquee on iPhone, LAN 10.0.0.161) assigned FOM Ch.1 but could not comfortably find/open the HTML in-app. Preview is buried (lesson-result "Open lesson" with ?preview=1). Edge student-open-lesson is not deployed, so functions.invoke fails; __DEV__ must fall through to http://<LAN>:8772/index.html.
+
+Do this:
+- Obvious Preview/Open on a lesson WorkRow and on the assignment sheet: teacher -> /lesson/{id}?preview=1. Student todo already goes to /lesson/{id}. Put Open on student Work lesson rows too.
+- If student-open-lesson invoke returns 503 / error / null, still open :8772 in __DEV__ (openTeacherPreview already has a local fallback; make it actually reachable from UI). Do not dump to Safari.
+- Identity: teacher preview student name "Preview"; student path uses student_open_lesson RPC (already live on aohibokgilxhqwmupdfv). postMessage identity as existing protocol. Do not put identity in the URL.
+- Allowlist: lesson-host origin + LAN :8772. Q17: no extra iOS < if swipe pops.
+- Do not upload BJU decks to Storage. Do not git-commit notes/teacher-decks/. Do not set LESSON_HOST_SECRET yourself in this pass (Chief of Staff / Ship will deploy Edge). Local lesson:dev is already running on 8772.
+
+## Out of scope
+Ask tools, create-class (Q3/Q7), Q17 as a global AppHeader rewrite, parent WebView, public URLs, new tray tab.
+
+## Done
+Jacquee: Assign (not Assignment vs Lesson) from class and from student Work; Preview opens FOM Ch.1 in-app WebView on the phone against LAN :8772. Student Open still works when they have a submission cell.

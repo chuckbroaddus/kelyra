@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
-import { PrimaryButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { CreateLoginForm, PeopleDirectory } from '@/components/ui/PeopleAdmin';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { SchoolIdentityFields } from '@/components/ui/SchoolIdentity';
@@ -19,6 +19,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { can } from '@/lib/school/matrix';
 import { isAdminRole, isAlsoParent, isTeacherRole, roleStatus } from '@/lib/school/roles';
 import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
+import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api';
 import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
 import { getSchoolIdentity, type SchoolIdentity } from '@/lib/school/identity';
 import { deleteClass } from '@/lib/classes/delete';
@@ -43,6 +44,7 @@ export default function HomeScreen() {
   const [newKind, setNewKind] = useState('person');
   const [schoolFeed, setSchoolFeed] = useState<FeedRef | null>(null);
   const [schoolIdentity, setSchoolIdentity] = useState<SchoolIdentity | null>(null);
+  const [lessonRollup, setLessonRollup] = useState<ClassLessonRollup[]>([]);
 
   useEffect(() => {
     const next = Array.isArray(tabParam) ? tabParam[0] : tabParam;
@@ -55,6 +57,13 @@ export default function HomeScreen() {
     try {
       const next = admin && !teaches ? await listSchoolClasses() : await listClasses();
       setClasses(next);
+      if (teaches) {
+        try {
+          setLessonRollup(await listGradeLessonRollup());
+        } catch {
+          setLessonRollup([]);
+        }
+      }
       if (admin && profile) {
         const feeds = await listMyFeeds(profile);
         setSchoolFeed(feeds.find((item) => item.kind === 'school') ?? null);
@@ -79,6 +88,11 @@ export default function HomeScreen() {
     }, [load]),
   );
 
+  useEffect(() => {
+    if (profile?.role === 'student') router.replace('/todo');
+    else if (profile?.role === 'parent') router.replace('/parent');
+  }, [profile?.role, router]);
+
   if (!configured) {
     return (
       <Screen centered maxWidth={480}>
@@ -99,17 +113,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (profile?.role === 'student') {
-    router.replace('/todo');
-    return (
-      <Screen>
-        <WorkingLine />
-      </Screen>
-    );
-  }
-
-  if (profile?.role === 'parent') {
-    router.replace('/parent');
+  if (profile?.role === 'student' || profile?.role === 'parent') {
     return (
       <Screen>
         <WorkingLine />
@@ -263,11 +267,22 @@ export default function HomeScreen() {
               {officeOnly ? 'No classes yet.' : canCreateClass ? 'Name a class on New.' : 'No classes yet.'}
             </Text>
           ) : null}
-          {(classes ?? []).map((item) => (
+          {teaches && !officeOnly && !empty ? (
+            <GhostButton align="left" label="Assign" onPress={() => router.push('/assignment/new')} />
+          ) : null}
+          {(classes ?? []).map((item) => {
+            const lesson = lessonRollup.find((row) => row.classId === item.id);
+            return (
             <ListRow
               key={item.id}
               title={item.name}
-              status={'teacherName' in item ? item.teacherName : undefined}
+              status={
+                lesson
+                  ? `${lesson.title} · ${lesson.done}/${lesson.total} done`
+                  : 'teacherName' in item
+                    ? item.teacherName
+                    : undefined
+              }
               avatarName={item.name}
               onPress={() => openClass(item.id)}
               trailing={
@@ -284,7 +299,8 @@ export default function HomeScreen() {
                   : []
               }
             />
-          ))}
+            );
+          })}
         </>
       ) : null}
 

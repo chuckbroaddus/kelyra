@@ -1,0 +1,36 @@
+Chuck said SEND now. New session. --cwd ~/projects/kelyra.
+
+Kelyra — section-sized hosted lessons + locked student name on assignment open (one slice).
+
+L3 (X exit / swipe stays on the page) may still be in flight on another session. Do not revert L3 player chrome if it has landed. Do not reopen L2 IA.
+
+Trial teacher: they teach one textbook section at a time. Assigning all of Fundamentals of Math Chapter 1 as one lesson is too coarse.
+
+Chuck also: when a student opens the lesson as an assignment, the Welcome name box (#who, "Your name (optional)") must already show their Kelyra display_name and they must not be able to change it. Identity already arrives as postMessage kelyra.identity with student.id + student.name (src/lib/lessons/protocol.ts, student_open_lesson). The page currently ignores that and lets anyone type. LAN/file Preview with no student identity may keep an editable optional name. Teacher Preview (identity.preview / student.id null, name "Preview") must NOT lock the word Preview as if it were the kid.
+
+Current: one lesson_packs row fom-ch01 / v4, "Fundamentals of Math · Chapter 1". Playable notes/teacher-decks/fom-ch01-v4/index.html (gitignored). 14 beats. Picker is already one chip per pack row. student_open_lesson JWT prefix is {deck_id}/{version}. Identity/resume is postMessage, not the URL. ?beat= is QA only. Page key kelyra-fom-ch01-v4 is whole-chapter. Name box: index.html hookView input#who, state.who.
+
+Goal: Jacquee can assign 1.3 only. Student Open plays only that section. Completing it reports that assignment. Next/swipe cannot walk into 1.4. Student Open Welcome shows their real name, read-only.
+
+BJU titles (from the Ch01 PPT — use these, do not invent):
+1.1 Ordering and Rounding
+1.2 Addition and Subtraction
+1.3 Multiplication
+1.4 Division
+1.5 Exponents
+1.6 Square Roots
+1.7 Order of Operations
+
+Do this:
+1. Keep ONE HTML + shared audio/img. Storage prefix stays lessons/fom-ch01/v4/. Do not copy scene PNGs per section (S1 egress).
+2. Seed seven published packs: deck_id fom-ch01-s11 … fom-ch01-s17, version v4, titles as above (picker may prefix FoM ·). Hook rides with 1.1. Finished rides with 1.7. Teach+Check is one assignment. Optional unpublished/review "Chapter 1 (all)" on fom-ch01; default picker is the seven sections.
+3. Pack metadata: storage_deck_id always fom-ch01, plus beat_start/beat_end (or beat ids). JWT/host prefix must be fom-ch01/v4, not fom-ch01-s11/v4 (that path does not exist). Copy window onto the assignment or look it up at open.
+4. Pass the beat window on identity postMessage. Do NOT use ?section= or ?beatStart= for students. Page subsets BEATS, HUD pips n/k for that pack, Next/swipe cannot leave the window. Per-pack localStorage (kelyra-fom-ch01-s11-v4). Slice Done completes that assignment only. L3 X still exits without wiping saved answers.
+5. Dev :8772 uses the same identity gate. Do not serve the ungated chapter for every pack.
+6. Assign UI: no new tabs. Existing Lesson chips list the new rows. Do not reuse assignments.section (practice gradebook).
+7. Locked name: on student Open (identity.student.id present), set state.who from identity.student.name, fill #who, disable/readonly, drop "optional". Do not let localStorage overwrite the roster name. Metrics/complete still send that name. Teacher Preview stays unlocked (no student). LAN without identity stays optional editable.
+8. SQL in a migration. Tell Chief of Staff to apply it. Do not upload the deck to Storage unless Chuck confirms quota.
+
+Do not: public lessons bucket; git-commit notes/teacher-decks/; create-class; is_staff widen; S1 thumbs; Cloudflare; new Grok Build session for SQL retry (CoS resumes).
+
+Done when: Jacquee assigns FoM · 1.3 Multiplication only; student Open is 1.3 Teach+Check with their name filled and not editable; 1.2 answers still there if they had 1.2 assigned; typecheck clean.

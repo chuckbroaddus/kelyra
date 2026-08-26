@@ -1,8 +1,6 @@
-import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Avatar } from '@/components/ui/Avatar';
-import { MarqueeText } from '@/components/ui/MarqueeText';
+import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { type } from '@/constants/theme';
 import type { ReactNode } from 'react';
@@ -64,20 +62,11 @@ export function Heatmap({ classId, skills, students, marks, leading, trailing }:
           title: firstName(student.displayName),
           width: size,
           renderTitle: () => (
-            <Link
+            <GradebookStudentHead
+              name={student.displayName}
+              photoUrl={student.photoUrl}
               href={`/class/${classId}/student/${student.id}`}
-              accessibilityLabel={firstName(student.displayName)}
-            >
-              <View style={styles.headPerson}>
-                <Avatar name={student.displayName} photoUrl={student.photoUrl} size={studentHead.avatar} />
-                <MarqueeText
-                  text={firstName(student.displayName)}
-                  align="center"
-                  fadeColor={colors.wash}
-                  style={[styles.headName, { color: colors.ink }]}
-                />
-              </View>
-            </Link>
+            />
           ),
           render: (skill) => {
             const mark = marks[student.id]?.[skill.key] ?? null;

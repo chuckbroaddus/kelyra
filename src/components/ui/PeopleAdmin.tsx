@@ -8,18 +8,20 @@ import { PrimaryButton } from '@/components/ui/Button';
 import { HandleLink } from '@/components/ui/HandleLink';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
+import { ResetPasswordSheet } from '@/components/ui/ResetPasswordSheet';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
 import {
   createLogin,
   listDirectory,
+  resetLoginPassword,
   setAlsoHat,
   setAlsoParent as saveAlsoParent,
   type DirectoryPerson,
 } from '@/lib/school/api';
+import { canShowOfficeReset, peopleDirectoryPersonHref, RESET_PASSWORD_COPY } from '@/lib/school/resetPassword';
 import {
   canAlsoBeAdministrator,
   canAlsoBeTeacher,
@@ -43,12 +45,12 @@ const PEOPLE_TABS = [
 export function PeopleDirectory() {
   const { colors } = useTheme();
   const { profile, refresh } = useAuth();
-  const chrome = useChrome();
   const router = useRouter();
   const [rows, setRows] = useState<DirectoryPerson[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('staff');
+  const [resetTarget, setResetTarget] = useState<{ id: string; username: string } | null>(null);
 
   const load = useCallback(async () => {
     setRows(await listDirectory());
@@ -60,20 +62,11 @@ export function PeopleDirectory() {
     }, [load]),
   );
 
-  const openPerson = (row: DirectoryPerson, group: 'staff' | 'students' | 'parents') => {
-    const classId = row.classId ?? chrome.classId ?? chrome.classes[0]?.id ?? null;
-    if (group === 'students' && row.student_id && classId) {
-      router.push(`/class/${classId}/student/${row.student_id}`);
-      return;
-    }
-    if (group === 'parents' && row.parent_id && classId) {
-      router.push(`/class/${classId}/parent/${row.parent_id}`);
-      return;
-    }
-    router.push(`/profile?person=${row.id}` as never);
+  const openPerson = (row: DirectoryPerson) => {
+    router.push(peopleDirectoryPersonHref(row.id) as never);
   };
 
-  const renderGroup = (group: DirectoryPerson[], kind: 'staff' | 'students' | 'parents') => (
+  const renderGroup = (group: DirectoryPerson[]) => (
     <>
       {group.length === 0 ? (
         <Text style={[type.meta, { color: colors.mute }]}>None yet.</Text>
@@ -138,6 +131,18 @@ export function PeopleDirectory() {
             },
           });
         }
+        if (canShowOfficeReset(profile, row)) {
+          trailing.push({
+            key: 'reset',
+            label: RESET_PASSWORD_COPY.action,
+            tone: 'brand',
+            onPress: () => {
+              setError(null);
+              setStatus(null);
+              setResetTarget({ id: row.id, username: row.username ?? '' });
+            },
+          });
+        }
         const extra = [roleStatus(row), row.className].filter(Boolean).join(' · ');
         return (
           <ListRow
@@ -152,7 +157,7 @@ export function PeopleDirectory() {
             }
             avatarName={row.display_name || row.username}
             photoUrl={row.photoUrl}
-            onPress={() => openPerson(row, kind)}
+            onPress={() => openPerson(row)}
             trailing={trailing}
           />
         );
@@ -170,9 +175,18 @@ export function PeopleDirectory() {
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {rows == null ? <WorkingLine /> : null}
-      {tab === 'staff' && rows ? renderGroup(staff, 'staff') : null}
-      {tab === 'students' && rows ? renderGroup(students, 'students') : null}
-      {tab === 'parents' && rows ? renderGroup(parents, 'parents') : null}
+      {tab === 'staff' && rows ? renderGroup(staff) : null}
+      {tab === 'students' && rows ? renderGroup(students) : null}
+      {tab === 'parents' && rows ? renderGroup(parents) : null}
+      <ResetPasswordSheet
+        visible={Boolean(resetTarget)}
+        username={resetTarget?.username}
+        onClose={() => setResetTarget(null)}
+        onReset={async (password) => {
+          if (!resetTarget) return;
+          await resetLoginPassword(resetTarget.id, password);
+        }}
+      />
     </>
   );
 }

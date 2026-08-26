@@ -1,0 +1,71 @@
+Chuck said SEND U3 now. New session. --cwd ~/projects/kelyra. Do not treat HOLD as active.
+
+Kelyra — office reset of someone else’s password (one slice).
+
+
+Goal: Administrator and superintendent can reset a school login from office People. Teachers cannot. This is office reset of someone else, not self-service Change password on /password.
+
+Hard rules:
+- Privilege wall: `is_school_admin` / superintendent (office hats). Same wall as `accounts.create` / `admin_create_login` (superintendent all, administrator school, teacher none). NOT `class_teachers`. NOT `is_staff` widen. A teacher of FoM cannot reset those students’ auth passwords.
+- User JWT only. No service-role in the Expo client. Do not invent RLS or SECURITY DEFINER wider than that office wall. Do not ride thread-member insert, `school_*_for_link`, or `get_parent_card`.
+- Teachers do not create classes. Reset does not create a class, change hats, provision a user, or mint a student. Reset is not Create login.
+- Reuse today’s pattern: `admin_create_login` already sets a temporary password + `must_change_password` true; Chrome forces `/password`. Reset does the same for an existing login. Do not invent email magic links.
+- Username does not change. Email is not the sign-in. Kelyra signs in with @username + password.
+- Self-service `/password` (`src/app/password.tsx`) stays for the signed-in user. Do not remove it or make it office-only.
+- Hide Reset on your own row (use Profile Change password). Hide the control for teachers; do not show an error tease.
+- Do not log the new password. Show the temp once, then never again if they leave the sheet.
+- Icons: reuse existing swipe recipe. Do not invent View-stroke glyphs.
+
+Who: superintendent and administrator on office People. Applies to school logins: teachers, students, parents, other staff. Same control, same sheet. Not parents as actors. Not a class teacher who opened a student record.
+
+Where:
+- Office PeopleAdmin (Staff / Parents / Students): swipe on the ListRow, label “Reset password” (existing swipe recipe; tone wash or brand, not delete).
+- Ghost “Reset password” on the office person account `/profile?person=…` under identity, next to hats.
+- Do NOT put it on teacher Class Setup, student person tabs, Practice/Work, Capture, Inbox, Assign, or Ask as a superuser bypass.
+- Create login stays where it is.
+
+Sheet: pushed or ConfirmSheet-scale FormSheet. Title “Reset password.” Lead: They will sign in with @username and this password, then choose a new one.
+Field: Temporary password (office can type; optional Generate fills a pronounceable temp, 8+ chars). Ghost Save.
+Success: keep the temp on screen once with Copy. Status: “Password reset. They must change it at next sign-in.”
+Cancel does nothing.
+No login yet (no username): cannot reset — copy “No login yet, create one from People.”
+Q17: if this is a pushed screen, iPhone omits extra `<` when swipe pops; web keeps `<`.
+
+Server: one office RPC (e.g. `admin_reset_login_password`) gated like `admin_create_login`. Sets Auth password + `profiles.must_change_password = true` for that school profile. Fail closed for teacher JWT (Jacquee-as-teacher: RPC error / empty, no password change). Fail closed for a random `auth.users` UUID outside this school. In-app AI / Ask must not reset passwords for a teacher account (`is_staff` forbidden).
+
+After reset: target signs in with temp, lands on `/password`, sets a new password; old password dead.
+
+Copy:
+- Swipe/button: Reset password
+- Success: Password reset. They must change it at next sign-in.
+- Teacher: omit the control.
+- Self: omit.
+
+Acceptance (Q19 — fold these into the slice; do not treat as a later prompt):
+Actors use app + user JWT only. No service role as the actor. Separate from L1/L2 lesson assign and Q17.
+
+Fail closed — Jacquee-as-teacher (@jacquee, not also_administrator):
+- T1: People / hamburger / student card / Ask: no Reset password for anyone (including herself as office reset). Omit the control; no error tease.
+- T2: jacquee JWT calling the reset RPC or a direct `from('…')` write: error / empty. No password change.
+- T3: Ask “reset Colton’s password” / “reset @goodapple”: tool denied or no-op. Must not ride `is_staff`.
+- T4: Jacquee still uses `/password` when *her* `must_change_password` is true (self-service only).
+Fail the slice if a teacher JWT resets any auth user.
+
+Pass — office:
+- O1: Administrator (not Jacquee-teacher) resets a school login (FoM student or @goodapple in this school): succeeds; temp shown once; target `must_change_password` true.
+- O2: Target signs in with temp, lands on `/password`, sets a new password; old password dead.
+- O3: Superintendent same as O1–O2 on a different login.
+- O4: Cannot reset a login outside the school / a random `auth.users` UUID.
+- O5: Reset does not create a class, change hats, or provision a new user.
+
+`/password` stays:
+- P1: Forced change after create-login or office reset still works. Not removed, not office-only.
+- P2: User with `must_change_password` false is not forced through office reset. Do not block `/password` for office-forced users.
+
+Privilege extras: teaching FoM does not grant reset on those students’ auth passwords. In-app AI must not reset passwords. Do not log the new password.
+
+Done when: T1–T4 fail closed for @jacquee; O1–O5 pass for administrator and superintendent; P1 intact. No create-class. No email reset link.
+
+Out of scope: teacher create-class; teacher Add as a new student; email reset links; changing @username; reset from Capture/Inbox/Assign; Ask reset tool; Q17 as its own patch; L1/L2 lesson assign.
+
+If you need SQL, put it in supabase/migrations and tell Chief of Staff to apply it. Do not ask Chuck to paste. Do not git-commit notes/teacher-decks/. Do not push GitHub. Do not create classes. Do not widen is_staff.

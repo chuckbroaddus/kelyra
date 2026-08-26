@@ -37,6 +37,7 @@ export async function uploadFramedSchoolLogo(input: {
     kind: 'photo',
     uri: input.uri,
     mimeType: input.mimeType,
+    skipThumb: true,
   });
   const url = await signedUrlForAsset('photo', uploaded.storage_path);
   const framed = await frameLogoFile(input.uri, url);
@@ -45,6 +46,7 @@ export async function uploadFramedSchoolLogo(input: {
     kind: 'photo',
     uri: framed.uri,
     mimeType: framed.mimeType,
+    skipThumb: true,
   });
   if (uploaded.id !== asset.id) {
     try {

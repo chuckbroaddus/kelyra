@@ -406,10 +406,13 @@ export function HamburgerDrawer() {
                     : ''}
                 </Text>
               )}
-              {matches('My practice', q) ? (
-                <DrawerRow label="My practice" onPress={() => go('/todo')} />
+              {matches('Assignments', q) ? (
+                <DrawerRow label="Assignments" onPress={() => go('/todo')} />
               ) : null}
-              {matches('Feed', q) ? <DrawerRow label="Feed" onPress={() => go('/feed')} /> : null}
+              {matches('Feeds', q) ? <DrawerRow label="Feeds" onPress={() => go('/student/feed')} /> : null}
+              {matches('Classes', q) ? <DrawerRow label="Classes" onPress={() => go('/student/class')} /> : null}
+              {matches('Grades', q) ? <DrawerRow label="Grades" onPress={() => go('/student/grades')} /> : null}
+              {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/student/people')} /> : null}
               {matches('Sign out', q) ? (
                 <DrawerRow
                   label="Sign out"

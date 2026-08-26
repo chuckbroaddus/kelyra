@@ -66,11 +66,18 @@ export function Screen({
   const chrome = useOptionalChrome();
   const { scrollHandlers } = useMarqueeScroll();
   const keyboardUp = Boolean(chrome?.keyboardVisible);
+  const keyboardHeight = chrome?.keyboardHeight ?? 0;
   const bottomReserve = chrome?.trayPadding ?? 48;
   const topReserve = chrome?.contextReserve ?? 0;
   const stickyLift = keyboardUp
     ? 0
     : chrome?.trayRest ?? 12 + (Platform.OS === 'web' ? 0 : insets.bottom);
+  // Android resizes the window. iOS and mobile web overlay the keyboard, so the
+  // sticky composer has to ride up by the covered height.
+  const stickyBottom =
+    sticky && keyboardUp && Platform.OS !== 'android' && keyboardHeight > 0
+      ? keyboardHeight
+      : stickyLift;
 
   useEffect(() => {
     if (!keyboard || !keyboardUp) return;
@@ -139,7 +146,7 @@ export function Screen({
               backgroundColor: colors.elevated,
               borderTopColor: colors.line,
               paddingHorizontal: pad,
-              marginBottom: stickyLift,
+              marginBottom: stickyBottom,
             },
           ]}
         >
@@ -149,7 +156,8 @@ export function Screen({
     </View>
   );
 
-  if (Platform.OS === 'web' || !avoidKeyboard) return column;
+  // Sticky composers lift via keyboardHeight. KeyboardAvoidingView would double that.
+  if (Platform.OS === 'web' || !avoidKeyboard || sticky) return column;
 
   return (
     <KeyboardAvoidingView
@@ -183,6 +191,7 @@ function FlushBody({
   const visible = chrome?.visible ?? true;
   const openGap = pad + topReserve;
   const gap = useRef(new Animated.Value(openGap)).current;
+  const bottomPad = useRef(new Animated.Value(paddingBottom)).current;
 
   useEffect(() => {
     Animated.timing(gap, {
@@ -193,11 +202,22 @@ function FlushBody({
     }).start();
   }, [gap, openGap, visible]);
 
+  useEffect(() => {
+    Animated.timing(bottomPad, {
+      toValue: visible ? paddingBottom : 16,
+      duration: chromeTokens.motion.tray,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [bottomPad, paddingBottom, visible]);
+
   return (
-    <View style={[styles.flush, { maxWidth, paddingHorizontal: pad, paddingBottom }, centered && styles.centered]}>
+    <Animated.View
+      style={[styles.flush, { maxWidth, paddingHorizontal: pad, paddingBottom: bottomPad }, centered && styles.centered]}
+    >
       <Animated.View style={{ height: gap }} />
       <View style={styles.flushFill}>{children}</View>
-    </View>
+    </Animated.View>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal, Text } from 'react-native';
 
-import { AssignmentForm, dueAtFromDate, emptyAssignmentForm, type AssignmentFormValue } from '@/components/ui/AssignmentForm';
+import { AssignmentForm, dueAtFromDate, emptyAssignmentForm, lessonFieldsFromForm, plannedAssignmentInput, type AssignmentFormValue } from '@/components/ui/AssignmentForm';
+import { GhostButton } from '@/components/ui/Button';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { Screen } from '@/components/ui/Screen';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -10,10 +11,25 @@ import { type } from '@/constants/theme';
 import { invokeAi } from '@/lib/ai/invoke';
 import { createAssignment, getAssignment, listClassAssignments, updateAssignment } from '@/lib/assignments/api';
 import { groupingLabels } from '@/lib/assignments/tree';
-import { deriveKeyKind, keyMaxScore, parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
+import { deriveKeyKind, parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
 import { takeAssignmentFormSeed } from '@/lib/assignments/session';
+import { appendAskMessage, startAskThread } from '@/lib/ai/askHistory';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { assignLesson, listLessonPacks, updateLessonAssignment } from '@/lib/lessons/api';
+import { useAssignmentHeaderChrome } from '@/lib/lessons/chrome';
+import { parseGradeTerm } from '@/lib/grade/marks';
+import { packKey, parsePackKey } from '@/lib/lessons/protocol';
+import { followUpTitle, getFollowUpDraft, setFollowUpDraft } from '@/lib/practice/followUp';
+import {
+  assignmentIsFollowUp,
+  assignFollowUpToStudent,
+  buildFollowUpPack,
+  createFollowUpAssignment,
+  saveFollowUpAssignment,
+} from '@/lib/practice/followUpApi';
+import { getStudent } from '@/lib/students/api';
+import type { LessonPackRow } from '@/lib/supabase/types';
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { signedProfileUrlForAssetId } from '@/lib/people/photos';
@@ -35,15 +51,36 @@ export default function AssignmentEditScreen() {
   const { colors } = useTheme();
   const { teacher } = useAuth();
   const router = useRouter();
-  const { id, assignmentId } = useLocalSearchParams<{ id: string; assignmentId: string }>();
+  const { id, assignmentId, student: studentParam } = useLocalSearchParams<{
+    id: string;
+    assignmentId: string;
+    student?: string;
+  }>();
   const creating = assignmentId === 'new';
+  const lockedStudentId = typeof studentParam === 'string' ? studentParam : null;
+  useAssignmentHeaderChrome();
   const [seed] = useState(() => takeAssignmentFormSeed());
-  const [value, setValue] = useState<AssignmentFormValue>(() => emptyAssignmentForm(seed ?? undefined));
+  const [followUp] = useState(() => getFollowUpDraft());
+  const isFollowUp = Boolean(followUp && lockedStudentId && followUp.studentId === lockedStudentId);
+  const [value, setValue] = useState<AssignmentFormValue>(() => {
+    const next = emptyAssignmentForm(seed ?? undefined);
+    if (followUp && lockedStudentId && followUp.studentId === lockedStudentId) {
+      next.workKind = 'lesson';
+      next.title = followUpTitle(followUp.skillLabel, followUp.sourceTitle);
+      next.category = 'homework';
+    }
+    return next;
+  });
+  const [packs, setPacks] = useState<LessonPackRow[]>([]);
+  const [studentLockedName, setStudentLockedName] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [keyStatus, setKeyStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [keyBusy, setKeyBusy] = useState(false);
-  const [ready, setReady] = useState(creating);
+  const [ready, setReady] = useState(creating && !isFollowUp);
+  const [building, setBuilding] = useState(false);
+  const [followUpRow, setFollowUpRow] = useState(false);
+  const buildOnce = useRef(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [unitSuggestions, setUnitSuggestions] = useState<string[]>([]);
@@ -60,13 +97,17 @@ export default function AssignmentEditScreen() {
         }
         const keyPhotoUrl = await signedProfileUrlForAssetId(row.key_asset_id);
         const items = parseKeyItems(row.key_items);
+        const follow = assignmentIsFollowUp(row);
+        setFollowUpRow(follow);
         setValue({
+          workKind: row.kind === 'lesson' ? 'lesson' : 'planned',
+          packKey: row.deck_id && row.lesson_version ? packKey(row.deck_id, row.lesson_version) : '',
           title: row.title,
           category: (row.category as AssignmentFormValue['category']) ?? 'homework',
           dueDate: row.due_at ? row.due_at.slice(0, 10) : '',
           weightBand: (row.weight_band as AssignmentFormValue['weightBand']) ?? 'none',
           weightPercent: row.weight_percent != null ? String(row.weight_percent) : '',
-          term: (row.term as AssignmentFormValue['term']) ?? 'none',
+          term: parseGradeTerm(row.term),
           scoreScheme: (row.score_scheme as AssignmentFormValue['scoreScheme']) ?? 'numeric',
           keyKind: row.key_kind ?? deriveKeyKind(Boolean(row.key_asset_id), items),
           keyNotes: row.key_notes ?? '',
@@ -103,7 +144,52 @@ export default function AssignmentEditScreen() {
       });
   }, [id]);
 
-  usePushedTitle(creating ? 'New Assignment' : value.title.trim() || 'Edit Assignment');
+  useEffect(() => {
+    void listLessonPacks()
+      .then(setPacks)
+      .catch(() => setPacks([]));
+  }, []);
+
+  useEffect(() => {
+    if (!creating || !isFollowUp || !followUp || !id || buildOnce.current) return;
+    buildOnce.current = true;
+    let live = true;
+    setBuilding(true);
+    setStatus(null);
+    void buildFollowUpPack(followUp)
+      .then(async (pack) => {
+        if (!live) return;
+        const row = await createFollowUpAssignment(followUp, pack, {
+          title: value.title,
+          dueAt: dueAtFromDate(value.dueDate),
+          category: value.category,
+        });
+        setFollowUpDraft({ ...followUp, assignmentId: row.id });
+        setValue((current) => ({ ...current, packKey: packKey(pack.deckId, pack.version), title: current.title || pack.title }));
+        router.replace(`/class/${id}/assignment/${row.id}?student=${followUp.studentId}` as never);
+      })
+      .catch((err) => {
+        if (live) {
+          setStatus(err instanceof Error ? err.message : 'Could not build the practice page');
+          setReady(true);
+        }
+      })
+      .finally(() => {
+        if (live) setBuilding(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [creating, followUp, id, isFollowUp]);
+
+  useEffect(() => {
+    if (!lockedStudentId) return;
+    void getStudent(lockedStudentId)
+      .then((student) => setStudentLockedName(student.display_name))
+      .catch(() => setStudentLockedName('this student'));
+  }, [lockedStudentId]);
+
+  usePushedTitle(creating ? 'Assign' : value.title.trim() || 'Assign');
 
   const applyKeyPhoto = async (uri: string, mimeType: string) => {
     if (!teacher) return;
@@ -183,34 +269,94 @@ export default function AssignmentEditScreen() {
     setKeyStatus(null);
   };
 
+  const afterSave = () => {
+    if (lockedStudentId) {
+      router.replace(`/class/${id}/student/${lockedStudentId}?tab=work` as never);
+      return;
+    }
+    router.replace(`/class/${id}/assignments`);
+  };
+
+  const followUpMode = isFollowUp || followUpRow;
+
+  const onAskAdjust = async () => {
+    if (!id || !assignmentId || assignmentId === 'new') return;
+    const draft = getFollowUpDraft();
+    const questions = (draft?.items ?? []).map((item, index) => `${index + 1}. ${item.prompt}`).join('\n');
+    setBusy(true);
+    setStatus(null);
+    try {
+      await startAskThread();
+      await appendAskMessage(
+        'user',
+        `Revise this follow-up practice page before I assign it.\nTitle: ${value.title}\nAssignment id: ${assignmentId}\nClass id: ${id}\nQuestions (keep them as one assignment):\n${questions || '(see the hosted page)'}\nRebuild the page when I tell you what to change.`,
+      );
+      const ret = `/class/${id}/assignment/${assignmentId}${lockedStudentId ? `?student=${lockedStudentId}` : ''}`;
+      router.push(`/ask?return=${encodeURIComponent(ret)}` as never);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not open Ask');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRebuild = async () => {
+    const draft = getFollowUpDraft();
+    if (!draft || !id) return;
+    setBuilding(true);
+    setStatus(null);
+    try {
+      const pack = await buildFollowUpPack({ ...draft, assignmentId: assignmentId === 'new' ? undefined : assignmentId });
+      setValue((current) => ({ ...current, packKey: packKey(pack.deckId, pack.version) }));
+      setStatus('Rebuilt the page. Preview it before you assign.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not rebuild the page');
+    } finally {
+      setBuilding(false);
+    }
+  };
+
   const save = async () => {
     if (!id) return;
     setBusy(true);
     setStatus(null);
     try {
-      const items = value.keyItems;
-      const payload = {
-        classId: id,
-        title: value.title,
-        category: value.category,
-        dueAt: dueAtFromDate(value.dueDate),
-        weightBand: value.weightBand,
-        weightPercent: value.weightPercent.trim() ? Number(value.weightPercent) : null,
-        term: value.term,
-        scoreScheme: value.scoreScheme,
-        includeInAverage: value.scoreScheme !== 'pass_fail',
-        maxScore: keyMaxScore(items),
-        keyKind: deriveKeyKind(Boolean(value.keyAssetId), items),
-        keyNotes: value.keyNotes,
-        keyPassAt: value.keyPassAt.trim() ? Number(value.keyPassAt) : null,
-        keyItems: items,
-        keyAssetId: value.keyAssetId,
-        keyPhash: value.keyPhash,
-        keyLayout: value.keyLayout,
-        keyHeader: value.keyHeader,
-        unit: value.unit,
-        section: value.section,
-      };
+      if (followUpMode && assignmentId && assignmentId !== 'new') {
+        const pack = parsePackKey(value.packKey);
+        if (!pack) throw new Error('The practice page is not ready yet.');
+        await saveFollowUpAssignment(assignmentId, id, pack, {
+          title: value.title,
+          ...lessonFieldsFromForm(value),
+        });
+        if (lockedStudentId) await assignFollowUpToStudent(assignmentId, lockedStudentId);
+        setFollowUpDraft(null);
+        afterSave();
+        return;
+      }
+      if (value.workKind === 'lesson') {
+        const pack = parsePackKey(value.packKey);
+        if (!pack) throw new Error('Pick a lesson.');
+        const fields = lessonFieldsFromForm(value);
+        if (creating) {
+          await assignLesson({
+            classIds: [id],
+            title: value.title,
+            pack,
+            studentId: lockedStudentId,
+            ...fields,
+          });
+        } else if (assignmentId) {
+          await updateLessonAssignment(assignmentId, {
+            classId: id,
+            title: value.title,
+            pack,
+            ...fields,
+          });
+        }
+        afterSave();
+        return;
+      }
+      const payload = plannedAssignmentInput(id, value, creating ? lockedStudentId : null);
       const row = creating ? await createAssignment(payload) : await updateAssignment(assignmentId!, payload);
       if (seed?.returnTo === 'proposal') {
         const draft = getProposalDraft();
@@ -218,9 +364,9 @@ export default function AssignmentEditScreen() {
         router.replace('/proposal');
         return;
       }
-      router.replace(`/class/${id}/assignments`);
+      afterSave();
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not save assignment');
+      setStatus(err instanceof Error ? err.message : 'Could not assign');
     } finally {
       setBusy(false);
     }
@@ -229,25 +375,62 @@ export default function AssignmentEditScreen() {
   return (
     <Screen keyboard>
       <Text style={[type.meta, { color: colors.mute }]}>
-        {seed?.returnTo === 'proposal'
-          ? 'Save and you’ll go back to the capture you were filing.'
-          : 'This column shows in the grade book even before anyone turns it in.'}
+        {followUpMode
+          ? 'All of those questions are one assignment. Preview the page, or Ask if it is not right, then assign.'
+          : seed?.returnTo === 'proposal'
+            ? 'Save and you’ll go back to the capture you were filing.'
+            : creating
+              ? 'Assign a lesson or practice. This does not create a class.'
+              : 'This column shows in the grade book even before anyone turns it in.'}
       </Text>
-      {!ready ? <WorkingLine /> : null}
+      {followUpMode && (getFollowUpDraft()?.items.length ?? 0) > 0 ? (
+        <>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+            {getFollowUpDraft()!.items.length} questions · one assignment
+          </Text>
+          {getFollowUpDraft()!.items.map((item, index) => (
+            <Text key={item.id} style={[type.body, { color: colors.ink }]}>
+              {index + 1}. {item.prompt}
+            </Text>
+          ))}
+        </>
+      ) : null}
+      {building ? <WorkingLine text="Building the practice page…" /> : null}
+      {!creating && value.workKind === 'lesson' && assignmentId ? (
+        <GhostButton
+          align="left"
+          label="Preview page"
+          onPress={() => router.push(`/lesson/${assignmentId}?preview=1` as never)}
+        />
+      ) : null}
+      {followUpMode && !creating && assignmentId ? (
+        <>
+          <GhostButton align="left" label="Not right? Ask" onPress={() => void onAskAdjust()} />
+          {getFollowUpDraft()?.items.length ? (
+            <GhostButton align="left" label="Rebuild page" onPress={() => void onRebuild()} />
+          ) : null}
+        </>
+      ) : null}
+      {!ready && !building ? <WorkingLine /> : null}
       {ready ? (
         <AssignmentForm
           value={value}
           onChange={setValue}
-          busy={busy}
+          busy={busy || building}
           keyBusy={keyBusy}
           keyStatus={keyStatus}
-          submitLabel={creating ? 'Create assignment' : 'Save assignment'}
+          submitLabel={followUpMode ? 'Assign to student' : creating ? 'Assign' : 'Save'}
           onSubmit={() => void save()}
           onCancel={() => router.back()}
           onPickKeyPhoto={() => setPhotoOpen(true)}
           onClearKeyPhoto={onClearKeyPhoto}
           unitSuggestions={unitSuggestions}
           sectionSuggestions={sectionSuggestions}
+          packs={packs}
+          classLocked
+          studentLockedName={studentLockedName}
+          lockWorkKind={!creating || followUpMode}
+          hidePackPicker={followUpMode}
         />
       ) : null}
       {status ? <Text style={[type.body, { color: colors.danger }]}>{status}</Text> : null}

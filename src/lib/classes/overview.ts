@@ -48,7 +48,7 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
         .eq('class_id', classId)
         .eq('status', 'draft'),
       supabase.from('enrollments').select('student_id').eq('class_id', classId),
-      supabase.from('skill_gaps').select('label, status, student_id, capture_id'),
+      supabase.from('skill_gaps').select('label, status, student_id, capture_id, submission_id'),
     ]);
 
   const studentIds = (enrollments ?? []).map((row) => row.student_id);
@@ -77,6 +77,21 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
 
   const { data: classCaptures } = await supabase.from('captures').select('id').eq('class_id', classId);
   const captureIds = new Set((classCaptures ?? []).map((row) => row.id));
+  const submissionIds = [...new Set((gaps ?? []).map((gap) => gap.submission_id).filter(Boolean))] as string[];
+  const classSubmissionIds = new Set<string>();
+  if (submissionIds.length) {
+    const { data: subs } = await supabase.from('submissions').select('id, assignment_id').in('id', submissionIds);
+    const assignmentIds = [...new Set((subs ?? []).map((row) => row.assignment_id).filter(Boolean))];
+    const { data: assignments } = assignmentIds.length
+      ? await supabase.from('assignments').select('id, class_id').in('id', assignmentIds)
+      : { data: [] as Array<{ id: string; class_id: string }> };
+    const classAssignmentIds = new Set(
+      (assignments ?? []).filter((row) => row.class_id === classId).map((row) => row.id),
+    );
+    for (const row of subs ?? []) {
+      if (classAssignmentIds.has(row.assignment_id)) classSubmissionIds.add(row.id);
+    }
+  }
 
   const { data: rosterRows } = studentIds.length
     ? await supabase
@@ -91,7 +106,9 @@ export async function loadClassOverview(classId: string): Promise<ClassOverview>
   for (const studentId of studentIds) heatmap[studentId] = {};
 
   for (const gap of gaps ?? []) {
-    if (gap.status !== 'approved' || !captureIds.has(gap.capture_id)) continue;
+    const fromCapture = Boolean(gap.capture_id && captureIds.has(gap.capture_id));
+    const fromSubmission = Boolean(gap.submission_id && classSubmissionIds.has(gap.submission_id));
+    if (gap.status !== 'approved' || (!fromCapture && !fromSubmission)) continue;
     const label = gap.label.trim();
     if (!label) continue;
     const key = normalizeGap(label);

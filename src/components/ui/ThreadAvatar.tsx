@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Avatar, photoUri } from '@/components/ui/Avatar';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { AvatarInitials } from '@/components/ui/AvatarInitials';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -84,10 +85,9 @@ export function ThreadAvatar({ name, faces, photoUrl, size = 52, unread }: Props
           }}
         >
           {uri ? (
-            <Image
-              key={uri}
-              source={{ uri }}
-              resizeMode="cover"
+            <RemoteImage
+              uri={uri}
+              contentFit="cover"
               style={{ width: tile.width, height: tile.height }}
             />
           ) : (

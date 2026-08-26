@@ -44,6 +44,7 @@ export const CAPABILITIES: Capability[] = [
 
   { id: 'accounts.view', area: 'People', label: 'See logins', help: 'People list and directory.', superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
   { id: 'accounts.create', area: 'People', label: 'Create logins', help: 'Make a new account.', superintendent: 'all', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  { id: 'accounts.reset_password', area: 'People', label: 'Reset someone else’s password', help: 'Office sets a temporary password. They must change it at next sign-in. Not self-service.', superintendent: 'all', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'accounts.edit', area: 'People', label: 'Edit login profiles', help: 'Name, handle, email, contact.', superintendent: 'all', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
   { id: 'accounts.hats', area: 'People', label: 'Extra hats', help: 'Also administrator / teacher / parent.', superintendent: 'all', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'accounts.link_parent', area: 'People', label: 'Link parent ↔ student', help: 'Who is a parent of which child.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
@@ -55,7 +56,7 @@ export const CAPABILITIES: Capability[] = [
   { id: 'classes.delete', area: 'Classes', label: 'Delete a class', help: 'Hard-delete a class and its work.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
 
   { id: 'roster.view', area: 'Roster', label: 'See roster names', help: 'Students in a class.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
-  { id: 'roster.add', area: 'Roster', label: 'Add a roster name', help: 'A name for matching — not a login.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  { id: 'roster.add', area: 'Roster', label: 'Add a roster name', help: 'Enroll an existing school student. Creating a person is office-only.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   { id: 'roster.delete', area: 'Roster', label: 'Delete a student', help: 'Remove the person record.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
 
   { id: 'capture.use', area: 'Records', label: 'Capture work', help: 'Photograph or voice-note work.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { TextField } from '@/components/ui/TextField';
@@ -10,7 +11,8 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { uploadFramedSchoolLogo } from '@/lib/school/frameLogo';
-import { getSchoolIdentity, setSchoolLogo, setSchoolName, type SchoolIdentity } from '@/lib/school/identity';
+import { DEFAULT_MONTHLY_CAP_USD, formatUsd } from '@/lib/ai/policy';
+import { getSchoolIdentity, setSchoolAiCap, setSchoolLogo, setSchoolName, type SchoolIdentity } from '@/lib/school/identity';
 
 type Props = {
   identity: SchoolIdentity | null;
@@ -22,6 +24,7 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
   const { teacher } = useAuth();
   const chrome = useChrome();
   const [name, setName] = useState(identity?.name ?? '');
+  const [cap, setCap] = useState(String(identity?.aiMonthlyCapUsd ?? DEFAULT_MONTHLY_CAP_USD));
   const [saving, setSaving] = useState(false);
   const [cutting, setCutting] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -30,6 +33,25 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
   useEffect(() => {
     if (identity?.name) setName(identity.name);
   }, [identity?.name]);
+
+  const saveCap = async () => {
+    const usd = Number(cap);
+    if (!Number.isFinite(usd) || usd < 0) {
+      onError('Need a monthly AI budget of 0 or more.');
+      return;
+    }
+    setSaving(true);
+    onError(null);
+    try {
+      await setSchoolAiCap(usd);
+      const fresh = await getSchoolIdentity();
+      if (fresh) onChange(fresh);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Could not save the AI budget');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const saveName = async () => {
     const next = name.trim();
@@ -47,6 +69,8 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
         name: saved,
         logoAssetId: identity?.logoAssetId ?? null,
         logoUrl: identity?.logoUrl ?? null,
+        aiMonthlyCapUsd: identity?.aiMonthlyCapUsd ?? DEFAULT_MONTHLY_CAP_USD,
+        aiSpendUsd: identity?.aiSpendUsd ?? 0,
       };
       onChange(fresh);
       chrome.refreshChrome();
@@ -138,6 +162,25 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
         disabled={saving || name.trim() === (identity?.name ?? '')}
         onPress={() => void saveName()}
       />
+      <View style={styles.gap} />
+      <TextField
+        label="Monthly AI budget (USD)"
+        placeholder="50"
+        value={cap}
+        keyboardType="decimal-pad"
+        onChangeText={setCap}
+        returnKeyType="done"
+        onSubmitEditing={() => void saveCap()}
+      />
+      <ListRow
+        title="AI this month"
+        status={`${formatUsd(identity?.aiSpendUsd ?? 0) || '$0'} of ${formatUsd(identity?.aiMonthlyCapUsd ?? DEFAULT_MONTHLY_CAP_USD) || '$50'}`}
+      />
+      <PrimaryButton
+        label={saving ? 'Saving…' : 'Save AI budget'}
+        disabled={saving}
+        onPress={() => void saveCap()}
+      />
       <ListRow
         title="School logo"
         status={
@@ -150,10 +193,10 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
         icon={identity?.logoUrl ? undefined : 'photo'}
         avatar={
           identity?.logoUrl ? (
-            <Image
-              source={{ uri: identity.logoUrl }}
+            <RemoteImage
+              uri={identity.logoUrl}
               accessibilityLabel="School logo"
-              resizeMode="contain"
+              contentFit="contain"
               style={styles.preview}
             />
           ) : undefined
@@ -184,5 +227,5 @@ export function SchoolIdentityFields({ identity, onChange, onError }: Props) {
 
 const styles = StyleSheet.create({
   gap: { height: 10 },
-  preview: { width: 36, height: 36 },
+  preview: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
 });

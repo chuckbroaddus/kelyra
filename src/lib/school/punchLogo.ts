@@ -47,8 +47,9 @@ function punchCircularPlate(image: ImageData) {
     if (data[i + 3] && colorDist(data[i], data[i + 1], data[i + 2], bg) < 42) data[i + 3] = 0;
   }
   const square = Math.abs(width - height) / Math.max(width, height, 1) < 0.14;
-  const uniform = cornersSimilar(data, width, height, 36);
-  if (square && uniform) {
+  // Square plates get the inscribed circle even when corner samples differ
+  // (studio shadow). Otherwise white corners survive on a circular seal.
+  if (square) {
     applyCircleMask(data, width, height, 0.5, 0.5, 0.5, Math.max(1.2, Math.min(width, height) * 0.008));
   }
 }
@@ -120,21 +121,6 @@ function sampleCorners(data: Uint8ClampedArray, width: number, height: number): 
   }
   const med = (arr: number[]) => [...arr].sort((a, b) => a - b)[Math.floor(arr.length / 2)] ?? 0;
   return [med(rs), med(gs), med(bs)];
-}
-
-function cornersSimilar(data: Uint8ClampedArray, width: number, height: number, maxDist: number): boolean {
-  const corners: Array<[number, number, number]> = [
-    [1, 1],
-    [width - 2, 1],
-    [1, height - 2],
-    [width - 2, height - 2],
-  ].map(([x, y]) => {
-    const i = (y * width + x) * 4;
-    return [data[i], data[i + 1], data[i + 2]];
-  });
-  const base = corners[0];
-  if (!base) return false;
-  return corners.every((c) => colorDist(c[0], c[1], c[2], base) <= maxDist);
 }
 
 function colorDist(r: number, g: number, b: number, bg: [number, number, number]): number {

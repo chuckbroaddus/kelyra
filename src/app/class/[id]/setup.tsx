@@ -21,6 +21,7 @@ import { radius, type } from '@/constants/theme';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { setClassFeedIcon } from '@/lib/feeds/api';
@@ -64,7 +65,8 @@ export default function SetupScreen() {
   const layout = useLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, profile } = useAuth();
+  const office = isOfficeRole(profile);
   const chrome = useChrome();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   usePushedTitle(klass?.name ?? 'Class');
@@ -199,6 +201,10 @@ export default function SetupScreen() {
 
   const onAdd = async () => {
     if (!id || !teacher) return;
+    if (!office) {
+      setError('Only the office may add a new student.');
+      return;
+    }
     setStatus(null);
     setError(null);
     try {
@@ -280,6 +286,10 @@ export default function SetupScreen() {
 
   const onAddFromPhoto = async () => {
     if (!id || !teacher) return;
+    if (!office) {
+      setError('Only the office may add a new student.');
+      return;
+    }
     const selected = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim());
     if (!selected.length) {
       setError('Check at least one new name.');
@@ -318,6 +328,15 @@ export default function SetupScreen() {
 
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
   const exactMatch = Boolean(possibleMatch && namesAreEquivalent(possibleMatch.displayName, name));
+
+  const enrollNote = (
+    <View>
+      <SectionHeader label="Add students" first />
+      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
+        New names come from the office. Enroll someone already at this school from All students.
+      </Text>
+    </View>
+  );
 
   const addCard = (
     <View>
@@ -457,7 +476,11 @@ export default function SetupScreen() {
     <View>
       <SectionHeader label="Students" />
       {roster.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>No students yet. A name is enough.</Text>
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          {office
+            ? 'No students yet. A name is enough.'
+            : 'No students yet. Enroll someone already on the school roster.'}
+        </Text>
       ) : (
         <>
           <AvatarTray
@@ -541,19 +564,19 @@ export default function SetupScreen() {
           }}
         />
       ) : null}
-      {layout.isSplit ? (
+      {layout.isSplit && office ? (
         <View style={styles.split}>
           <View style={styles.col}>{addCard}</View>
           <View style={styles.col}>{rosterBlock}</View>
         </View>
       ) : (
         <>
-          {addCard}
+          {office ? addCard : enrollNote}
           {rosterBlock}
         </>
       )}
 
-      {imports[0] && !suggestions.length ? (
+      {office && imports[0] && !suggestions.length ? (
         <Card>
           <Text style={[type.body, { color: colors.ink }]}>
             {imports[0].suggestions.length} names waiting
@@ -576,7 +599,7 @@ export default function SetupScreen() {
         </Card>
       ) : null}
 
-      {suggestions.length ? (
+      {office && suggestions.length ? (
         <GhostButton align="left" label="Delete" onPress={() => setConfirm({ kind: 'suggestions' })} />
       ) : null}
 

@@ -1,0 +1,23 @@
+Chuck said SEND now. New session. --cwd ~/projects/kelyra.
+
+Kelyra — lesson player chrome: swipe belongs to the page, X exits the app screen.
+
+Problem (Chuck, iPhone, Jacquee Preview / student Open): iOS swipe-back unloads the in-app lesson WebView (pops /lesson/[assignmentId]) instead of going back a beat/page *inside* the lesson HTML. Mobile lessons already swipe between beats (STYLE-BRIEF). The app gesture steals it.
+
+Do this:
+
+1) While /lesson/[id] is open, the *application* must not pop on edge-swipe. Disable the stack interactive-pop / gestureEnabled for this screen only (iOS and wherever swipe-back is wired). Q17 still holds on other screens (hide extra `<` when swipe pops). This screen is the exception: no app swipe-pop, because swipe is the lesson’s.
+
+2) Put a native **X** on the lesson player (overlay on the WebView, not a new tray, not a second `<`). Top corner, always hittable, does not fight lesson buttons. Do not git-commit notes/teacher-decks/. Prefer native chrome so BJU HTML is not the only exit. Tapping X leaves the player (router.back). It does **not** wipe answers.
+
+3) Exit / halt: progress so far is paused. Subsequent Open/Preview of the same assignment keeps previous progress and answers (student_report_lesson already overwrites the cell; do not clear answers on X). Use in_progress or abandoned without deleting the payload. Complete still stays complete until they run it again (existing attempt rules).
+
+4) Swipe *on the webpage*: treat as back inside the lesson. If the HTML uses history, WebView goBack / allowsBackForwardNavigationGestures can be true *once the native stack gesture is off*. If the lesson is a single-document beat carousel (FoM v4), do not invent a second history stack — just stop stealing the page’s own swipe. nestedScrollEnabled stays. Do not dump to Safari.
+
+5) Teacher Preview and student Open both get X + no app swipe-pop.
+
+Out of scope: Q17 global AppHeader rewrite; create-class; office password; Edge deploy; git push of decks.
+
+Done when: Jacquee on iPhone in Preview can swipe between lesson beats without leaving the app, and X exits to the previous Kelyra screen with the lesson still saved as in-progress.
+
+If SQL is needed, put a migration and tell Chief of Staff to apply it. Do not ask Chuck to paste.
