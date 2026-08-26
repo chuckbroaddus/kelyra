@@ -1,0 +1,6 @@
+# Role name matches .grok/personas/kelyra-implementer.toml so workflow
+# agent_type "kelyra-implementer" applies the persona, model, and effort.
+description = "Kelyra implementation agent using Grok 4.5"
+default_capability_mode = "all"
+model = "grok-4.5"
+reasoning_effort = "high"

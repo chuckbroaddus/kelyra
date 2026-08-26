@@ -1,0 +1,6 @@
+# Role name matches .grok/personas/kelyra-qa.toml so workflow
+# agent_type "kelyra-qa" applies the persona, model, and effort.
+description = "Kelyra read-only QA reviewer using Grok 4.5"
+default_capability_mode = "read-only"
+model = "grok-4.5"
+reasoning_effort = "high"
