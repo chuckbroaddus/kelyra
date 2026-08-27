@@ -17,7 +17,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { can } from '@/lib/school/matrix';
-import { isAdminRole, isAlsoParent, isTeacherRole, roleStatus } from '@/lib/school/roles';
+import { isAdminRole, isAlsoParent, isOfficeRole, isTeacherRole, roleStatus } from '@/lib/school/roles';
 import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
 import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api';
 import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
@@ -140,7 +140,9 @@ export default function HomeScreen() {
     try {
       const created = await createClass(name);
       setName('');
-      router.replace(`/admin/class/${created.id}`);
+      // Office card only — teachers must not land on /admin/class/[id].
+      if (isOfficeRole(profile)) router.replace(`/admin/class/${created.id}`);
+      else router.replace('/?switch=1');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not create class');
     } finally {
@@ -150,7 +152,8 @@ export default function HomeScreen() {
 
   const empty = (classes ?? []).length === 0;
   const officeOnly = admin && !teaches;
-  const canCreateClass = teaches || can(profile, 'classes.create');
+  // Office/SIS owns class create (is_school_admin). Teachers never mint classes.
+  const canCreateClass = isOfficeRole(profile);
   const canCreateLogin = can(profile, 'accounts.create');
   const canCreate = canCreateClass || canCreateLogin;
   const openClass = (id: string) => {
@@ -254,17 +257,17 @@ export default function HomeScreen() {
       {pane === 'classes' ? (
         <>
           <Text style={[styles.lead, { color: colors.mute }]}>
-            {officeOnly
-              ? empty
-                ? 'Teachers open classes. You will see every class in the school here.'
-                : 'Every class in the school. Open a card for teacher and roster.'
-              : empty
-                ? 'One field. Then you can photograph work and file it to a student.'
+            {empty
+              ? canCreateClass
+                ? 'Create a class on New, then assign a teacher.'
+                : 'No classes yet. The office assigns the classes you teach.'
+              : officeOnly
+                ? 'Every class in the school. Open a card for teacher and roster.'
                 : 'Open a class to see what needs you today.'}
           </Text>
           {empty ? (
             <Text style={[type.meta, { color: colors.mute }]}>
-              {officeOnly ? 'No classes yet.' : canCreateClass ? 'Name a class on New.' : 'No classes yet.'}
+              {canCreateClass ? 'Name a class on New.' : 'No classes yet.'}
             </Text>
           ) : null}
           {teaches && !officeOnly && !empty ? (

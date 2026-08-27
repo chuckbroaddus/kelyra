@@ -139,22 +139,9 @@ export async function createClass(name: string): Promise<ClassRow> {
 
   const supabase = requireSupabase();
   const rpc = await supabase.rpc('create_school_class', { p_name: trimmed });
-  const created = !rpc.error ? (Array.isArray(rpc.data) ? rpc.data[0] : rpc.data) : null;
-  const data =
-    created ??
-    (
-      await supabase
-        .from('classes')
-        .insert({
-          name: trimmed,
-          name_source: 'typed',
-          teacher_id: null,
-        })
-        .select('*')
-        .single()
-    ).data;
-  const error = created ? null : rpc.error;
-  if (!data) throw error ?? new Error('Could not create class');
+  if (rpc.error) throw new Error(rpc.error.message || 'Could not create class');
+  const data = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+  if (!data) throw new Error('Could not create class');
   await writeAudit({
     action: 'create_class',
     entityType: 'class',

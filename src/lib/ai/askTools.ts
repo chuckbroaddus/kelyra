@@ -717,7 +717,7 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: 'function',
       name: 'create_class',
-      description: 'Create a class with no teacher until the office assigns one.',
+      description: 'Office only. Create a class with no teacher until the office assigns one.',
       parameters: {
         type: 'object',
         properties: { name: { type: 'string' } },
@@ -725,7 +725,8 @@ const TOOLS: Record<string, AskToolSpec> = {
         additionalProperties: false,
       },
     },
-    run: async (args) => {
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can create a class.' };
       const name = str(args, 'name');
       if (!name) return { error: 'Class name is required.' };
       const created = await createClass(name);
@@ -1106,6 +1107,8 @@ const TOOLS: Record<string, AskToolSpec> = {
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
   if (!spec.capability) return true;
   if (spec.def.name === 'add_student') return isOfficeRole(ctx.profile);
+  // Office/SIS owns class create — matches is_school_admin(), not also_administrator.
+  if (spec.def.name === 'create_class') return isOfficeRole(ctx.profile);
   if (spec.def.name === 'link_parent_student') {
     return can(ctx.profile, 'accounts.link_parent', spec.need ?? 'own', ctx.grants) ||
       can(ctx.profile, 'parents.invite', 'own', ctx.grants);

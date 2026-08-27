@@ -50,7 +50,7 @@ export const CAPABILITIES: Capability[] = [
   { id: 'accounts.link_parent', area: 'People', label: 'Link parent ↔ student', help: 'Who is a parent of which child.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
 
   { id: 'classes.view', area: 'Classes', label: 'See classes', help: 'List of classes. Own = classes you teach. School = every class.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
-  { id: 'classes.create', area: 'Classes', label: 'Create a class', help: 'Open a new class and become its teacher.', superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'none', student: 'none' },
+  { id: 'classes.create', area: 'Classes', label: 'Create a class', help: 'Office opens an unassigned class, then assigns a teacher.', superintendent: 'own', administrator: 'own', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'classes.overview', area: 'Classes', label: 'Class office card', help: 'Name, teacher, roster — not the teacher desk.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   { id: 'classes.teach', area: 'Classes', label: 'Teacher desk', help: 'Today, Capture, Inbox, grade book for a class.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
   { id: 'classes.delete', area: 'Classes', label: 'Delete a class', help: 'Hard-delete a class and its work.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
