@@ -1,7 +1,7 @@
 let meta = #{
     name: "kelyra-qa-loop",
     description: "Implement a Kelyra change, then loop kelyra-implementer and read-only kelyra-qa until P0/P1 are gone or three repair cycles elapse",
-    when_to_use: "Use to implement a Kelyra request with an iterative implementer/QA loop, optional security review, and typecheck/tests",
+    when_to_use: "Use for any Kelyra implementation that edits application code (TypeScript, tests, SQL, migrations, Edge). The parent session must launch this instead of writing code itself. Do not use for Q&A, planning, docs-only, git, or lesson HTML.",
     phases: [
         #{ title: "Implement", detail: "kelyra-implementer writes the change in the current working tree" },
         #{ title: "QA", detail: "read-only kelyra-qa inspects the working tree independently" },
