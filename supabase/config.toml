@@ -29,3 +29,15 @@ verify_jwt = true
 
 [functions.lesson-host]
 verify_jwt = false
+
+[functions.ask-assistant]
+verify_jwt = true
+
+[functions.classify-capture]
+verify_jwt = true
+
+[functions.process-ai-jobs]
+verify_jwt = true
+
+[functions.sign-in-handle]
+verify_jwt = false

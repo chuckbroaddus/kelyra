@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const mine = await loadMyProfile().catch(() => null);
         setProfile(mine);
-        // Fail closed: missing profile must not mint a teachers row.
+        // Fail closed: missing / student / parent must not load or mint a teachers row.
         if (shouldLoadTeacherRow(mine)) setTeacher(await ensureTeacherProfile());
         else setTeacher(null);
       }

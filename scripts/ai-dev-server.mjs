@@ -33,6 +33,7 @@ import {
   parseUsage,
   reasoningEffortFor,
 } from './lib/ai-policy.mjs';
+import { isAllowedAskImageUrl } from './lib/ask-image-url.mjs';
 
 const require = createRequire(import.meta.url);
 
@@ -135,6 +136,11 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (route === 'ask-assistant') {
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      if (authError || !userData.user?.id) {
+        json(res, { error: 'Sign in to Kelyra first.' }, 401);
+        return;
+      }
       json(res, await askAssistant(supabase, body));
       return;
     }
@@ -938,6 +944,7 @@ async function classifyCapture(body) {
 }
 
 const ASK_FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
+const ASK_PHOTO_FAILED = '(A photo was attached but could not be opened.)';
 
 async function hydrateAskImages(input) {
   if (!Array.isArray(input)) return input;
@@ -950,6 +957,10 @@ async function hydrateAskImages(input) {
     const content = [];
     for (const part of item.content) {
       if (part?.type === 'input_image' && typeof part.image_url === 'string' && !part.image_url.startsWith('data:')) {
+        if (!isAllowedAskImageUrl(part.image_url)) {
+          content.push({ type: 'input_text', text: ASK_PHOTO_FAILED });
+          continue;
+        }
         try {
           content.push({
             ...part,
@@ -958,7 +969,7 @@ async function hydrateAskImages(input) {
           });
         } catch (err) {
           console.error(`[ai-dev] ask photo: ${err instanceof Error ? err.message : err}`);
-          content.push({ type: 'input_text', text: '(A photo was attached but could not be opened.)' });
+          content.push({ type: 'input_text', text: ASK_PHOTO_FAILED });
         }
       } else {
         content.push(part);

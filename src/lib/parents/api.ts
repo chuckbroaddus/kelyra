@@ -155,7 +155,8 @@ export async function listParentsForClass(classId: string): Promise<{
 }> {
   const supabase = requireSupabase();
   const { data, error } = await supabase.rpc('class_parent_directory', { p_class_id: classId });
-  if (!error && data?.length) {
+  // Empty success is authoritative (taught-class / office wall). Do not widen.
+  if (!error && Array.isArray(data)) {
     const grouped = mapDirectory(data as DirectoryRow[]);
     const all = [...grouped.linked, ...grouped.unlinked, ...grouped.available];
     const withPhotos = await hydratePhotoUrls(all);
@@ -293,7 +294,8 @@ export async function addParentToClass(
 async function loadAllParentRows(): Promise<ParentRow[]> {
   const supabase = requireSupabase();
   const rpc = await supabase.rpc('school_parents_for_link');
-  if (!rpc.error && rpc.data?.length) return rpc.data;
+  // Empty success is authoritative (teacher taught-class wall). Do not widen.
+  if (!rpc.error && Array.isArray(rpc.data)) return rpc.data;
   const fallback = await supabase.from('parents').select('*').order('display_name', { ascending: true });
   if (!fallback.error && fallback.data?.length) return fallback.data;
   return rpc.data ?? fallback.data ?? [];
@@ -545,18 +547,13 @@ export async function listInvitesForParent(parentId: string): Promise<ParentAcce
 
 export async function linkChild(parentId: string, studentId: string): Promise<void> {
   const supabase = requireSupabase();
-  const rpc = await supabase.rpc('admin_set_parent_link', {
+  // Office RPC only — do not fall back to parent_students insert (teacher RLS can own both rows).
+  const { error } = await supabase.rpc('admin_set_parent_link', {
     p_parent_id: parentId,
     p_student_id: studentId,
     p_link: true,
   });
-  if (!rpc.error) return;
-  const { error } = await supabase.from('parent_students').insert({
-    parent_id: parentId,
-    student_id: studentId,
-  });
-  if (!error || /duplicate|unique/i.test(error.message)) return;
-  throw new Error(rpc.error.message || error.message || 'Could not link that family');
+  if (error) throw new Error(error.message || 'Could not link that family');
 }
 
 export async function createParentInvite(parentId: string, studentIdHint?: string | null): Promise<string> {

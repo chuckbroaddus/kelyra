@@ -573,7 +573,7 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: 'function',
       name: 'link_parent_student',
-      description: 'Link a parent to a child.',
+      description: 'Office only. Link a parent to a child as family. Teachers add existing linked children to a class with add_parent_to_class.',
       parameters: {
         type: 'object',
         properties: {
@@ -586,6 +586,7 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can link a parent to a child.' };
       const parent = await resolveParent(ctx, args);
       if ('error' in parent) return parent;
       const student = await resolveStudent(ctx, args);
@@ -1105,14 +1106,13 @@ const TOOLS: Record<string, AskToolSpec> = {
 };
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
-  if (!spec.capability) return true;
+  // Office walls first — before capability-null (fail open) or matrix grants / also_administrator.
   if (spec.def.name === 'add_student') return isOfficeRole(ctx.profile);
   // Office/SIS owns class create — matches is_school_admin(), not also_administrator.
   if (spec.def.name === 'create_class') return isOfficeRole(ctx.profile);
-  if (spec.def.name === 'link_parent_student') {
-    return can(ctx.profile, 'accounts.link_parent', spec.need ?? 'own', ctx.grants) ||
-      can(ctx.profile, 'parents.invite', 'own', ctx.grants);
-  }
+  // Office/SIS owns family identity — not parents.invite (class attach) or also_administrator.
+  if (spec.def.name === 'link_parent_student') return isOfficeRole(ctx.profile);
+  if (!spec.capability) return true;
   return can(ctx.profile, spec.capability, spec.need ?? 'own', ctx.grants);
 }
 

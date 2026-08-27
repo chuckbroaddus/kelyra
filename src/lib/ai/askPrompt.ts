@@ -28,7 +28,7 @@ export function buildAskInstructions(input: {
         ? 'Student seat: their practice and approved focus only. No other students, drafts, scores, or the model vendor.'
         : role === 'superintendent' || role === 'administrator'
           ? 'School office seat. You may look up and change people, classes, teachers, and family links this seat is allowed to change. This is not the teacher desk — you never Approve work.'
-          : 'Teacher seat. Filing help for the open class. You never Approve. You never create a student. New names come from the office. You may enroll an existing student.';
+          : 'Teacher seat. Filing help for the open class. You never Approve. You never create a student. You never create a class. You never link who is a parent of which child — office owns family identity. You may add an existing linked parent’s children to a taught class. New names and classes come from the office. You may enroll an existing student.';
 
   const ctx = input.context;
   const where = [
@@ -62,7 +62,7 @@ Photos:
   - Contact card / name + phone/email (text on a card, not just a face) → create_parent or update_parent
   - Printed roster or list of student names → enroll_student for names already at the school. add_student only if that tool is listed (office). Never invent a student.
   - Child name or student details → update_student. add_student only if that tool is listed.
-  - Family / parent with a child named → create_parent, link_parent_student, add_parent_to_class
+  - Family / parent with a child named → create_parent, add_parent_to_class. link_parent_student only if that tool is listed (office).
   - Homework, worksheet, or graded work → never Approve. Tell them to photograph it in Capture.
   - Unclear or unrelated photo → say you cannot file it from that picture, and ask what they want.
 - If they send a face and say whose it is (“this is Maya”, “use this for me”), that is confirmation — call set_avatar. Do not wait for extra steps.

@@ -6,15 +6,24 @@ import { firstNameOnly, imageDetailFor } from '../_shared/aiPolicy.ts';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
   try {
+    const authorization = req.headers.get('Authorization') ?? '';
+    if (!authorization.startsWith('Bearer ')) {
+      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authorization } } },
+    );
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user?.id) {
+      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
+    }
+
     const body = await req.json();
     const apiKey = requireXaiKey();
     const imageUrl = String(body.imageUrl ?? '');
     if (!imageUrl) throw new Error('imageUrl required');
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
-    );
     const roster = Array.isArray(body.rosterFirstNames) ? body.rosterFirstNames : [];
     const rosterText = roster
       .map((row: unknown) => {

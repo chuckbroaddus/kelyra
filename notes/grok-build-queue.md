@@ -6,38 +6,40 @@ Status: HOLD unless noted.
 
 Chuck will prioritize this list later. Chief of Staff keeps it current.
 
+Loop P2/P3 (nonblocking findings from `kelyra-qa-loop`) are tracked in `notes/qa-loop-backlog.md`, not in the HOLD tables below. Ask CoS to list, prioritize, or burn leftover Grok Build credits on them.
+
 ---
 
 ## P0 — Security / access (Kelyra QA)
 
 | ID | Item | Source | Status |
 |----|------|--------|--------|
-| Q1 | Public signup + `handle_new_user` always provisions a teacher | QA | HOLD |
-| Q2 | Any authenticated user can INSERT `message_thread_members` and read that thread | QA | HOLD |
-| Q3 | Teacher create-class: orphaned class, home opens office class they cannot use (also a product blocker) | QA | HOLD |
-| Q4 | `ask-assistant` no JWT/role check; `hydrateAskImages` arbitrary URL fetch if deployed | QA | HOLD |
+| Q1 | Public signup + `handle_new_user` always provisions a teacher | QA | APPLIED 2026-08-26 |
+| Q2 | Any authenticated user can INSERT `message_thread_members` and read that thread (UPDATE thread_id hop also locked) | QA | APPLIED 2026-08-26; UPDATE lockdown APPLIED 2026-08-26 |
+| Q3 | Teacher create-class: orphaned class, home opens office class they cannot use (also a product blocker) | QA | APPLIED 2026-08-26 |
+| Q4 | `ask-assistant` no JWT/role check; `hydrateAskImages` arbitrary URL fetch if deployed | QA | APPLIED 2026-08-27 (Edge live) |
 
 ## P1 — Data / staff overreach (Kelyra QA)
 
 | ID | Item | Source | Status |
 |----|------|--------|--------|
-| Q5 | `get_parent_card`: any staff gets full parent PII | QA | HOLD |
-| Q6 | `school_students_for_link` / `school_parents_for_link` dump whole school to any staff | QA | HOLD |
-| Q7 | Teacher Ask `create_class` → unassigned office class (`is_staff` only) | QA | HOLD |
-| Q8 | Ask `link_parent_student` OR-bypass; teachers should not link families | QA | HOLD |
-| Q9 | `profiles_read` any login SELECTs all profiles | QA | HOLD |
-| Q10 | `login_identifier` granted to anon (username → email oracle) | QA | HOLD |
-| Q11 | `students_own` leftover; co-teacher can see roster, cannot write | QA | HOLD |
-| Q12 | `handle_new_user` + `ensureTeacherProfile` can recreate teacher rows after student/parent provision | QA | HOLD |
+| Q5 | `get_parent_card`: any staff gets full parent PII | QA | APPLIED 2026-08-26 |
+| Q6 | `school_students_for_link` / `school_parents_for_link` dump whole school to any staff | QA | APPLIED 2026-08-26 |
+| Q7 | Teacher Ask `create_class` → unassigned office class (`is_staff` only) | QA | PASSED 2026-08-26 (no SQL; Ask advertise gate) |
+| Q8 | Ask `link_parent_student` OR-bypass; teachers should not link families | QA | APPLIED 2026-08-27 |
+| Q9 | `profiles_read` any login SELECTs all profiles | QA | APPLIED 2026-08-27 |
+| Q10 | `login_identifier` granted to anon (username → email oracle) | QA | APPLIED 2026-08-27 |
+| Q11 | `students_own` leftover; co-teacher can see roster, cannot write | QA | APPLIED 2026-08-27 |
+| Q12 | `handle_new_user` + `ensureTeacherProfile` can recreate teacher rows after student/parent provision | QA | APPLIED 2026-08-27 |
 
 ## P2 — Setup / product blockers (Kelyra QA)
 
 | ID | Item | Source | Status |
 |----|------|--------|--------|
-| Q13 | Setup/README still Slice 01; ~58 migrations skipped; docs still sell join codes | QA | HOLD |
-| Q14 | `/admin/matrix` UI is cosmetic (`can()` without grants except Ask) | QA | HOLD |
-| Q15 | `setActiveClass` writes DB; Capture/Inbox/header keep stale `active_class_id` | QA | HOLD |
-| Q16 | Alert detail `onOpenWork` is a no-op | QA | HOLD |
+| Q13 | Setup/README still Slice 01; ~58 migrations skipped; docs still sell join codes | QA | on P2/P3 backlog |
+| Q14 | `/admin/matrix` UI is cosmetic (`can()` without grants except Ask) | QA | on P2/P3 backlog |
+| Q15 | `setActiveClass` writes DB; Capture/Inbox/header keep stale `active_class_id` | QA | on P2/P3 backlog |
+| Q16 | Alert detail `onOpenWork` is a no-op | QA | on P2/P3 backlog |
 
 ## P2 — In-app Agent control plane (Kelyra Agent)
 
@@ -66,7 +68,7 @@ Superintendent look applied to teacher. Waiting on Apple Note “Not on KELYRA�
 
 | ID | Item | Source | Status |
 |----|------|--------|--------|
-| Q17 | iOS: hide redundant AppHeader `<` when edge-swipe already pops; keep `<` on web and where swipe cannot pop | QA | HOLD |
+| Q17 | iOS: hide redundant AppHeader `<` when edge-swipe already pops; keep `<` on web and where swipe cannot pop | QA | on P2/P3 backlog |
 
 Chuck (iPhone, 2026-08-23): swipe-back already works. The top-left `<` duplicates the same action. Do not treat this as “restore interactive-pop.”
 
@@ -429,6 +431,18 @@ Done when: Jacquee assigns FoM · 1.3 Multiplication only; student Open is 1.3 T
 - Grok Build send window: after Mon 1:40 AM CT
 
 ## Changelog
+- 2026-08-27 ~06:46 CT — Q4 Edge redeployed: ask-assistant, classify-capture, process-ai-jobs (verify_jwt=true). Unauthed Ask/SSRF closed on live.
+- 2026-08-27 ~01:44 CT — Q12 loop passed; SQL fail_closed_teacher_provision applying; overnight Q9–Q12 chain done.
+- 2026-08-27 ~01:30 CT — Q11 loop passed (3 security repair cycles); SQL students_write_via_taught_class applying; 3 P2/P3 filed; launching Q12.
+- 2026-08-27 ~00:28 CT — Q10 loop passed; SQL `revoke_login_identifier_anon` applied; Edge `sign-in-handle` deployed (verify_jwt=false); 4 P2/P3 filed; launching Q11.
+
+- 2026-08-26 19:54 CT — Q2 migration applied (`fail_closed_thread_members_insert`). Loop cancelled mid-run after implementer wrote the file; SQL applied by CoS.
+
+- 2026-08-26 19:52 CT — Q2 sent to Grok Build (new session). thread_members_insert still auth.uid() is not null.
+
+- 2026-08-26 19:48 CT — Q1 loop passed; SQL applied (`fail_closed_new_user`). Create-teacher button gone. handle_new_user no longer inserts teachers.
+
+- 2026-08-26 19:35 CT — Q1 sent to Grok Build (new session). Still present: Create teacher account + handle_new_user inserts teachers.
 
 - 2026-08-22 18:54 CT — list created from first QA pass, Agent matrix, UX teacher pack
 

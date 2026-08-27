@@ -8,11 +8,19 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: cors() });
   }
   try {
+    const authorization = req.headers.get('Authorization') ?? '';
+    if (!authorization.startsWith('Bearer ')) {
+      return json({ error: 'Sign in to Kelyra first.' }, 401);
+    }
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
+      { global: { headers: { Authorization: authorization } } },
     );
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user?.id) {
+      return json({ error: 'Sign in to Kelyra first.' }, 401);
+    }
     const { data: jobs, error } = await supabase
       .from('ai_jobs')
       .select('id, capture_id, pass')

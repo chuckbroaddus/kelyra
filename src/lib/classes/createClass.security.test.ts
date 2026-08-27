@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
+import { isAdminRole, isOfficeRole, isStaffRole } from '../school/roles.ts';
+
 const root = process.cwd();
 
 function read(rel: string): string {
@@ -48,4 +50,82 @@ test('Q3 Ask create_class is office-gated; matrix teachers cannot create', () =>
     matrix,
     /id:\s*'classes\.create'[\s\S]*?teacher:\s*'none'/,
   );
+});
+
+test('Q7: Jacquee teacher / also_administrator fail isOfficeRole (Ask + home wall)', () => {
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const officeAdmin = { role: 'administrator' as const };
+  const officeSuper = { role: 'superintendent' as const };
+
+  assert.equal(isOfficeRole(teacher), false);
+  assert.equal(isOfficeRole(teacherAlsoAdmin), false);
+  assert.equal(isOfficeRole(officeAdmin), true);
+  assert.equal(isOfficeRole(officeSuper), true);
+
+  // is_staff / also_administrator must not mint classes — office seat only.
+  assert.equal(isStaffRole(teacher), true);
+  assert.equal(isAdminRole(teacherAlsoAdmin), true);
+  assert.equal(isAdminRole(teacher), false);
+});
+
+test('Q7 Ask: create_class office gate runs before capability-null fail-open', () => {
+  const ask = read('src/lib/ai/askTools.ts');
+  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
+  assert.ok(allowedStart > 0);
+  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
+  const createGate = allowedBody.indexOf("spec.def.name === 'create_class'");
+  const nullOpen = allowedBody.indexOf('if (!spec.capability) return true');
+  assert.ok(createGate > 0, 'create_class allowed gate missing');
+  assert.ok(nullOpen > 0, 'capability-null short-circuit missing');
+  assert.ok(createGate < nullOpen, 'create_class must be gated before capability-null fail-open');
+  const createGateLine = allowedBody.slice(createGate, allowedBody.indexOf('\n', createGate));
+  assert.match(createGateLine, /isOfficeRole\(ctx\.profile\)/);
+  assert.doesNotMatch(createGateLine, /isStaffRole|isAdminRole|\bcan\(/);
+});
+
+test('Q7 Ask: create_class run fails closed for non-office; no is_staff path', () => {
+  const ask = read('src/lib/ai/askTools.ts');
+  const toolStart = ask.indexOf('create_class: {');
+  const toolEnd = ask.indexOf('list_class_teachers:', toolStart);
+  const tool = ask.slice(toolStart, toolEnd);
+  assert.match(tool, /capability:\s*'classes\.create'/);
+  assert.match(tool, /Office only/);
+  assert.match(tool, /if \(!isOfficeRole\(ctx\.profile\)\) return \{ error: 'Only the office can create a class\.' \}/);
+  const officeCheck = tool.indexOf('isOfficeRole(ctx.profile)');
+  const createCall = tool.indexOf('await createClass(');
+  assert.ok(officeCheck > 0 && createCall > officeCheck);
+  assert.doesNotMatch(tool, /is_staff|isStaffRole|isAdminRole/);
+});
+
+test('Q7: matrix also_administrator would widen classes.create — Ask must not ride can()', () => {
+  const matrix = read('src/lib/school/matrix.ts');
+  assert.match(matrix, /if \(profile\.also_administrator\) levels\.push\(row\.administrator\)/);
+  assert.match(
+    matrix,
+    /id:\s*'classes\.create'[\s\S]*?administrator:\s*'own'[\s\S]*?teacher:\s*'none'/,
+  );
+
+  const ask = read('src/lib/ai/askTools.ts');
+  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
+  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
+  const createIdx = allowedBody.indexOf("spec.def.name === 'create_class'");
+  const createLineEnd = allowedBody.indexOf('\n', createIdx);
+  const createGateLine = allowedBody.slice(createIdx, createLineEnd);
+  assert.match(createGateLine, /isOfficeRole/);
+  assert.doesNotMatch(createGateLine, /\bcan\(/);
+});
+
+test('Q7: no leftover client create_school_class / classes insert path', () => {
+  const api = read('src/lib/classes/api.ts');
+  assert.equal((api.match(/create_school_class/g) || []).length, 1);
+  assert.doesNotMatch(api, /\.from\('classes'\)\s*\.insert/);
+
+  const ask = read('src/lib/ai/askTools.ts');
+  assert.match(ask, /await createClass\(name\)/);
+  assert.doesNotMatch(ask, /rpc\('create_school_class'/);
+  assert.doesNotMatch(ask, /\.from\('classes'\)\s*\.insert/);
+
+  const prompt = read('src/lib/ai/askPrompt.ts');
+  assert.match(prompt, /You never create a class/);
 });

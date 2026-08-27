@@ -3,21 +3,6 @@ import type { AuditEventRow, ProfileRow, SchoolRole } from '@/lib/supabase/types
 
 import { handleFromInput } from '@/lib/school/roles';
 
-export async function lookupLoginEmail(handle: string): Promise<string | null> {
-  const raw = handle.trim();
-  if (!raw) return null;
-  if (raw.includes('@') && raw.includes('.')) return raw;
-  try {
-    const { data, error } = await requireSupabase().rpc('login_identifier', {
-      p_handle: handleFromInput(raw),
-    });
-    if (error) return null;
-    return data ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function loadMyProfile(): Promise<ProfileRow | null> {
   const supabase = requireSupabase();
   const { data: userData, error: userError } = await supabase.auth.getUser();
