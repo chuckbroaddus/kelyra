@@ -2,12 +2,12 @@ import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { PrimaryButton } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { signInWithPassword, signUpWithPassword } from '@/lib/auth/api';
+import { signInWithPassword } from '@/lib/auth/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function SignInScreen() {
@@ -20,21 +20,13 @@ export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
 
-  const run = async (mode: 'in' | 'up') => {
+  const run = async () => {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
     setMessage(null);
     try {
-      if (mode === 'in') {
-        await signInWithPassword(email, password);
-      } else {
-        const result = await signUpWithPassword(email, password);
-        if (!result.session) {
-          setMessage('Account created. If email confirmation is on, confirm it, then sign in.');
-          return;
-        }
-      }
+      await signInWithPassword(email, password);
       await refresh();
       router.replace('/');
     } catch (err) {
@@ -78,21 +70,21 @@ export default function SignInScreen() {
         returnKeyType="go"
         enterKeyHint="go"
         blurOnSubmit
-        onSubmitEditing={() => void run('in')}
+        onSubmitEditing={() => void run()}
         onKeyPress={(event) => {
-          if (event.nativeEvent.key === 'Enter') void run('in');
+          if (event.nativeEvent.key === 'Enter') void run();
         }}
       />
       {message ? <Text style={[styles.message, { color: colors.danger }]}>{message}</Text> : <View style={styles.gap} />}
       <PrimaryButton
         label={busy ? 'Signing in…' : 'Sign in'}
         disabled={busy}
-        onPress={() => void run('in')}
+        onPress={() => void run()}
       />
-      <GhostButton label="Create a teacher account" disabled={busy} onPress={() => void run('up')} />
       <Text style={[styles.hint, { color: colors.mute }]}>
-        First person at a new school: create an account, sign in, then run school_claim_superintendent() in
-        the SQL editor. Dev bootstrap password is only in that SQL file — never in this app.
+        Accounts come from the office, not this screen. First school only: create an auth user in
+        Supabase, sign in here, then run school_claim_superintendent() in the SQL editor. Dev bootstrap
+        password is only in that SQL file — never in this app.
       </Text>
     </Screen>
   );

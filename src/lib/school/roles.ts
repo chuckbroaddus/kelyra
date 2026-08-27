@@ -47,6 +47,11 @@ export function isTeacherRole(value: RoleLike): boolean {
   return hats.role === 'teacher' || Boolean(hats.also_teacher);
 }
 
+/** Auth chrome may load teachers only for an existing staff/teacher profile — never mint one. */
+export function shouldLoadTeacherRow(value: RoleLike): boolean {
+  return Boolean(value && (isStaffRole(value) || isTeacherRole(value)));
+}
+
 export function isAlsoParent(profile: ProfileHats | null | undefined): boolean {
   return Boolean(profile?.parent_id) || profile?.role === 'parent';
 }
@@ -139,7 +144,7 @@ export const PERMISSION_MATRIX: Array<{
 }> = [
   { capability: 'Create accounts', superintendent: 'All roles', administrator: 'All except second Superintendent', teacher: 'No', parent: 'No', student: 'No' },
   { capability: 'Reset someone else’s password', superintendent: 'School logins', administrator: 'School logins', teacher: 'No', parent: 'No', student: 'No' },
-  { capability: 'Create classes / assign teachers', superintendent: 'Yes', administrator: 'Yes', teacher: 'Own classes only', parent: 'No', student: 'No' },
+  { capability: 'Create classes / assign teachers', superintendent: 'Yes', administrator: 'Yes', teacher: 'No — office assigns', parent: 'No', student: 'No' },
   { capability: 'Also an administrator (same login)', superintendent: 'Yes', administrator: '—', teacher: 'No', parent: 'No', student: 'No' },
   { capability: 'Also a teacher (same login)', superintendent: 'Yes', administrator: 'Yes', teacher: '—', parent: 'No', student: 'No' },
   { capability: 'Also a parent (same login)', superintendent: 'Yes', administrator: 'Yes', teacher: 'Yes', parent: '—', student: 'No' },

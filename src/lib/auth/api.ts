@@ -17,15 +17,6 @@ export async function signInWithPassword(handle: string, password: string) {
   return data;
 }
 
-export async function signUpWithPassword(email: string, password: string) {
-  const { data, error } = await requireSupabase().auth.signUp({
-    email: email.trim(),
-    password,
-  });
-  if (error) throw error;
-  return data;
-}
-
 export async function signOut() {
   const { error } = await requireSupabase().auth.signOut();
   try {
@@ -47,14 +38,15 @@ export async function getSession() {
   return data.session;
 }
 
-export async function ensureTeacherProfile(): Promise<TeacherRow> {
+/** Load an existing teachers row. Never inserts — office provision / claim create staff rows. */
+export async function ensureTeacherProfile(): Promise<TeacherRow | null> {
   const supabase = requireSupabase();
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
   if (userError) throw userError;
-  if (!user?.email) throw new Error('Not signed in');
+  if (!user) throw new Error('Not signed in');
 
   const { data: existing, error: selectError } = await supabase
     .from('teachers')
@@ -62,13 +54,5 @@ export async function ensureTeacherProfile(): Promise<TeacherRow> {
     .eq('id', user.id)
     .maybeSingle();
   if (selectError) throw selectError;
-  if (existing) return existing;
-
-  const { data: inserted, error: insertError } = await supabase
-    .from('teachers')
-    .insert({ id: user.id, email: user.email })
-    .select('*')
-    .single();
-  if (insertError) throw insertError;
-  return inserted;
+  return existing;
 }

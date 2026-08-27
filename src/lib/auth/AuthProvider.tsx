@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { isSupabaseConfigured } from '@/constants/config';
 import { ensureTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
 import { loadMyProfile } from '@/lib/school/api';
-import { isStaffRole, isTeacherRole } from '@/lib/school/roles';
+import { shouldLoadTeacherRow } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import type { ProfileRow, TeacherRow } from '@/lib/supabase/types';
 
@@ -46,7 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const mine = await loadMyProfile().catch(() => null);
         setProfile(mine);
-        if (!mine || isStaffRole(mine) || isTeacherRole(mine)) setTeacher(await ensureTeacherProfile());
+        // Fail closed: missing profile must not mint a teachers row.
+        if (shouldLoadTeacherRow(mine)) setTeacher(await ensureTeacherProfile());
         else setTeacher(null);
       }
     } catch (err) {
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const mine = await loadMyProfile().catch(() => null);
       setProfile(mine);
-      if (!mine || isStaffRole(mine) || isTeacherRole(mine)) setTeacher(await ensureTeacherProfile());
+      if (shouldLoadTeacherRow(mine)) setTeacher(await ensureTeacherProfile());
       else setTeacher(null);
     } catch {
       // Keep the current teacher row if a silent refresh fails.
