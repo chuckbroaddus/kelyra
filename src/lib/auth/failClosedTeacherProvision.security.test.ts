@@ -116,3 +116,16 @@ test('Q12 sign-in: no public Create teacher / signUp', () => {
   assert.match(src, /school_claim_superintendent/);
   assert.match(src, /Accounts come from the office/i);
 });
+
+test('sign-in: full-color KelyraMark above text wordmark (no tint)', () => {
+  const src = read('src/app/sign-in.tsx');
+  const mark = read('src/components/ui/KelyraMark.tsx');
+  assert.match(src, /import \{ KelyraMark \} from '@\/components\/ui\/KelyraMark'/);
+  assert.match(src, /<KelyraMark size=\{72\}/);
+  assert.doesNotMatch(src, /tintColor/);
+  assert.match(mark, /assets\/brand\/kelyra\.png/);
+  assert.doesNotMatch(mark, /tintColor/);
+  const markIdx = src.indexOf('<KelyraMark');
+  const wordIdx = src.indexOf('>Kelyra</Text>');
+  assert.ok(markIdx >= 0 && wordIdx > markIdx, 'mark must sit above the Kelyra wordmark');
+});

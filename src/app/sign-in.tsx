@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
+import { KelyraMark } from '@/components/ui/KelyraMark';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
@@ -48,6 +49,7 @@ export default function SignInScreen() {
 
   return (
     <Screen centered maxWidth={400} keyboard>
+      <KelyraMark size={72} style={styles.mark} />
       <Text style={[styles.wordmark, { color: colors.ink }]}>Kelyra</Text>
       <Text style={[styles.kicker, { color: colors.mute }]}>Sign in with email or @username</Text>
       <TextField
@@ -91,6 +93,10 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
+  mark: {
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
   wordmark: {
     ...type.display,
     textAlign: 'center',
