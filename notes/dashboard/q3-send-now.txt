@@ -1,0 +1,27 @@
+Kelyra Q3 — teachers must not create classes. Still true. Fix this hole only.
+
+Product (Chuck / Note on KELYRA): Office/SIS owns class create. Teachers switch existing classes they already teach. Do not implement teacher self-create, even assign-to-self.
+
+Still in the tree:
+- public.create_school_class inserts classes with teacher_id null and never writes class_teachers. Teacher JWT can call it.
+- src/lib/classes/api.ts createClass(): RPC then FALLBACK raw insert { name, teacher_id: null } if the RPC fails. That fallback is an RLS-bypass attempt. Fail closed: no raw insert.
+- src/app/index.tsx: canCreateClass = teaches || can(profile, 'classes.create'). Teacher home "New class" is on. onCreate always router.replace(`/admin/class/${created.id}`). src/app/admin/class/[id].tsx bails unless isAdminRole. Result: orphaned office class the teacher cannot teach or open.
+- src/lib/ai/askTools.ts create_class tool calls the same createClass(). Close that teacher path too (same hole). Do not rebuild Ask. Do not do Q4–Q12, U1 chrome, or A1.
+
+Goal:
+1. Teacher (chromeRole teacher / not is_school_admin) has no Create class in the UI. Empty no-class is copy only, never a Create button.
+2. create_school_class is office-only (is_school_admin). Never insert a teacher-less class for a non-admin. Parents/students cannot create classes.
+3. createClass() must not fall back to a client insert. If the RPC fails, throw.
+4. After a successful office create, only office navigates to /admin/class/[id]. Do not send a teacher there.
+5. Ask create_class: teachers must not mint an unassigned office class. Fail closed for non-admin. Leave other Ask tools alone.
+6. Do not regress add_teacher_to_class / remove_teacher_from_class (already office). Do not widen is_staff. Do not invent students.
+7. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+8. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Jacquee (teacher) has no Create class on home and cannot mint a class via RPC, client insert, or Ask.
+- Office (administrator/superintendent) can still create an unassigned class, then assign a teacher.
+- Typecheck passes.
+- Nothing committed or pushed.

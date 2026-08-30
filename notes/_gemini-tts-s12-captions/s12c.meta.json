@@ -1,0 +1,21 @@
+{
+  "id": "s12c",
+  "status": 200,
+  "model": "gemini-2.5-flash-preview-tts",
+  "voice": "Kore",
+  "mime": "audio/L16;codec=pcm;rate=24000",
+  "data_chars": 640704,
+  "error": null,
+  "last": null,
+  "body_keys": [
+    "model",
+    "voice",
+    "mime",
+    "data"
+  ],
+  "rate": 24000,
+  "decoded_bytes": 480526,
+  "ffmpeg_status": 0,
+  "ffmpeg_ok": true,
+  "mp3_bytes": 40556
+}

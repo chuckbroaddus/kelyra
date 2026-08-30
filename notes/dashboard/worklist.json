@@ -1,0 +1,621 @@
+{
+  "updatedAt": "2026-08-27T22:13:28-05:00",
+  "version": 1,
+  "items": [
+    {
+      "id": "Q1",
+      "pri": "P0",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "Signup + handle_new_user always provisions teacher",
+      "prompt": "Remove public teacher self-provisioning from Kelyra.\n\nFiles:\n- src/app/sign-in.tsx \u2014 remove \"Create a teacher account\" / signUp path from the shipped UI. Sign-in only.\n- src/lib/auth/api.ts \u2014 do not export a public sign-up used by the login screen (admin_create_login remains).\n- supabase/migrations: replace handle_new_user so a raw auth.users insert does NOT create a teacher profile or teachers row. Either no profile (blocked until admin_create_login) or a non-staff placeholder that cannot call is_staff_profile RPCs.\n- src/lib/auth/AuthProvider.tsx \u2014 never call ensureTeacherProfile() when profile is missing or role is parent/student. Fail closed.\n\nDo not break admin_create_login, student/parent provision RPCs, or school_claim_superintendent for the documented first-office bootstrap (SQL editor only). Disable or document that Auth signup must be off in the Supabase project."
+    },
+    {
+      "id": "Q2",
+      "pri": "P0",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "message_thread_members INSERT is any auth user",
+      "prompt": "Lock message_thread_members inserts.\n\nNew migration:\n- DROP POLICY thread_members_insert\n- CREATE POLICY that with check is false for direct client inserts OR only profile_id = auth.uid() AND a SECURITY DEFINER predicate that the user was added by an allowed RPC (simpler: revoke INSERT from authenticated; only RPCs insert as definer).\n- REVOKE INSERT ON public.message_thread_members FROM authenticated, anon. Keep SELECT/UPDATE last_read as today.\n- Confirm open_direct_thread, open_group_thread, add_group_member still work (they are SECURITY DEFINER).\n\nDo not break unread counts, pins, or leave-group."
+    },
+    {
+      "id": "Q3",
+      "pri": "P0",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "Teachers must NOT create classes",
+      "prompt": "PRODUCT OVERRIDE from Chuck / Note on KELYRA: teachers must not create classes. Prefer removing teacher create paths. If you implement QA's assign-to-self create, still hide Create for teachers in UI.\n\nRepo: chuckbroaddus/kelyra (private). Do not invent product.\n\nBUG: Creating a class as a teacher produces an unassigned class the teacher cannot teach or open.\n\nROOT:\n- public.create_school_class inserts classes with teacher_id null and never writes class_teachers.\n- src/app/index.tsx onCreate always navigates to /admin/class/[id].\n- src/app/admin/class/[id].tsx bails unless isAdminRole.\n\nFIX (new migration + UI, no drive-by):\n1. Replace create_school_class so Office keeps unassigned class; Teacher path: Chuck override = do not offer teacher create. Office/SIS owns create.\n2. After createClass() only office navigates to /admin/class/[id].\n3. Grant/execute stays authenticated-only.\n\nACCEPT: Teacher has no Create class. Office creates class \u2192 unassigned until they add a teacher."
+    },
+    {
+      "id": "Q4",
+      "pri": "P0",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "ask-assistant no JWT; hydrateAskImages arbitrary URLs",
+      "prompt": "Harden ask-assistant (and other AI functions that lack verify_jwt).\n\n- Require Authorization Bearer; createUser client; reject if getUser() fails.\n- Ignore client tools/instructions for authorization. Optionally ignore tools entirely (tools run on device today).\n- hydrateAskImages: only https URLs on the project's storage host (or already data:). No private IPs / metadata hosts.\n- Do not put service role in the client. Do not log tokens.\n- Keep local ai:dev Bearer check.\n\nDo not break invokeAi ask-assistant from the signed-in app."
+    },
+    {
+      "id": "Q5",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "get_parent_card any staff full PII",
+      "prompt": "Tighten get_parent_card and Ask parent tools to the caller's allowed parents.\n\nFiles:\n- New migration replacing public.get_parent_card(uuid)\n- src/lib/parents/api.ts getParent\n- src/lib/ai/askTools.ts resolveParent / get_parent / search_parents / loadParents\n\nBehavior:\n- get_parent_card may return a row only if caller is_school_admin() OR teaches a class that has that parent OR parents.teacher_id = auth.uid().\n- Otherwise raise not allowed / not found (same message).\n- Ask resolveParent must not treat a raw UUID as globally readable; if getParent fails, return error, do not scan school-wide lists for non-admins.\n- Keep the recursion fix (use SECURITY DEFINER helper parent_on_taught_class; do not reintroduce RLS loops).\n- Do not change parent card UI for a teacher viewing their own class parents."
+    },
+    {
+      "id": "Q6",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "school_*_for_link dump whole school",
+      "prompt": "Scope school_*_for_link RPCs to office vs teacher.\n\nMigration: replace school_students_for_link and school_parents_for_link.\n- is_school_admin() (or can_link_parent_student): current school-wide behavior.\n- else teaches_class / teacher_id = auth.uid() only.\n- non-staff: empty or not allowed.\n\nAsk search_students / search_parents / list_people must not call the school-wide RPC for teachers. list_people should stay accounts.view; do not give students/parents school-wide People via Ask if you also fix profiles_read (Finding 6).\n\nDo not break office People linking or class roster add-existing-student for a class the teacher actually teaches."
+    },
+    {
+      "id": "Q7",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "Teacher Ask create_class via is_staff",
+      "prompt": "Fix Kelyra class-create privilege so a teacher cannot perform office/superuser class creation.\n\nFiles:\n- supabase/migrations: new migration replacing public.create_school_class(text)\n- src/lib/ai/askTools.ts (create_class tool)\n- src/lib/school/matrix.ts (classes.create defaults)\n- src/lib/classes/api.ts (createClass)\n- src/app/index.tsx (New Class)\n\nRequired behavior:\n1. create_school_class SECURITY DEFINER must require public.is_school_admin() OR (if you keep a teacher self-create path) must insert the caller as the only teacher via class_teachers and set classes.teacher_id = auth.uid(). Never allow a non-admin to create a teacher-less class.\n2. Ask tool create_class: for non-admin, capability classes.create need 'own' AND assign the signed-in teacher. For office, capability classes.create or classes.overview need 'school'. Do not return /admin/class/:id to a teacher desk user.\n3. createClass() must not fall back to a raw insert of teacher_id null if the RPC fails (that fallback is an RLS-bypass attempt). Fail closed.\n4. Do not regress add_teacher_to_class / remove_teacher_from_class (already is_school_admin). Do not let parents/students create classes.\n5. Add a SQL comment + a one-line client guard matching the RPC.\n\nDo not send this to production without a migration that existing unassigned office classes still work for admins."
+    },
+    {
+      "id": "Q8",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "link_parent_student OR-bypass",
+      "prompt": "Ask and API: teachers must not perform office family linking.\n\n- askTools.ts: drop the parents.invite OR. link_parent_student requires can(..., 'accounts.link_parent', 'own'|'school').\n- parents/api.ts linkChild: no table insert fallback after admin_set_parent_link failure. Fail closed.\n- Keep teacher class attach via add_parent_to_class (already teaches_class in RPC).\n- Do not regress admin_set_parent_link / can_link_parent_student."
+    },
+    {
+      "id": "Q9",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "profiles_read any login all profiles",
+      "prompt": "Narrow profiles SELECT and Ask list_people.\n\nMigration: replace profiles_read.\n- self always\n- is_school_admin / staff: school profiles\n- others: only rows returned by message_directory / can_message, plus linked family. Do not use a recursive policy on profiles.\n\nClient: accounts.view parent/student default to 'own' (or none). list_people Ask tool need 'school'.\nKeep messaging able to show names in a thread the user already belongs to (listPeopleByIds).\nDo not reintroduce message RLS recursion (keep is_thread_member SECURITY DEFINER)."
+    },
+    {
+      "id": "Q10",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "login_identifier anon username-email oracle",
+      "prompt": "Stop exposing emails to anonymous callers via login_identifier.\n\nOptions (pick one, fail closed):\nA) Revoke execute from anon. Sign-in accepts email only, or a new Edge Function that does sign-in without returning the email to the client.\nB) Keep handle login but return a non-distinguishing sentinel and let signInWithPassword fail uniformly; do not return the real email to the JS client.\n\nDo not break @handle sign-in UX more than necessary. Never return other profile columns."
+    },
+    {
+      "id": "Q11",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "students_own leftover; co-teacher SELECT only",
+      "prompt": "Repo: chuckbroaddus/kelyra.\n\nBUG: Co-teachers can see roster students but cannot update them. students_own (teacher_id = auth.uid()) was never dropped; students_via_taught_class is SELECT only.\n\nFIX (new migration):\n1. drop policy students_own; add students_write_via_taught_class for INSERT/UPDATE/DELETE using teaches_class on an enrollment (or new enrollment in a taught class). Keep students_admin_all.\n2. students.teacher_id: on insert default auth.uid() if the actor has a teachers row; do not block a second teacher\u2019s updates on owner mismatch.\n3. Align admin_provision_student_login / teacher-facing RPCs that still require s.teacher_id = auth.uid() to use teaches_class or is_school_admin.\n4. Repeat the same audit for parents_own / parent_students if those are still owner-only while office added select-via-class.\n\nACCEPT: Two teachers on one class can both rename, edit details, add roster names, attach parents. Owner-only delete of the person record may stay admin+owner if product requires \u2014 say so in the migration comment. No AI changes."
+    },
+    {
+      "id": "Q12",
+      "pri": "P1",
+      "lane": "QA",
+      "status": "APPLIED",
+      "summary": "ensureTeacherProfile recreates teacher rows",
+      "prompt": "Repo: chuckbroaddus/kelyra.\n\nBUG: Every new auth.users row becomes a teacher. Public \u201cCreate a teacher account\u201d stays on /sign-in. Student/parent provisioners paper over leftover teachers rows; AuthProvider.ensureTeacherProfile can recreate them.\n\nFIX:\n1. New migration: replace handle_new_user so it does NOT insert teachers or a default teacher profile unless a security-definer provision flag is set (or only insert a bare profiles row when admin_create_login / admin_provision_* already wrote one). Stop the leftover-delete dance.\n2. admin_create_login / provision student+parent: create the correct role in one shot; never rely on trigger+delete.\n3. src/app/sign-in.tsx: remove public sign-up (or hide behind \u201cno superintendent exists yet\u201d). First school still uses SQL claim as docs say.\n4. AuthProvider: never ensureTeacherProfile for student/parent; never treat !mine as \u201cmake a teacher.\u201d\n\nACCEPT: Creating a student login leaves no teachers row and no teacher chrome. Random email signup cannot become a teacher after the school exists. Do not change AI."
+    },
+    {
+      "id": "Q13",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "Setup/README Slice 01 only; join codes",
+      "prompt": "Repo: chuckbroaddus/kelyra. Docs only \u2014 no product redesign.\n\nBUG: docs/setup.md and README.md tell a reviewer to apply only 20260812000000_slice01_foundation.sql and expect join codes / empty migrations. Current app requires the full chain.\n\nFIX:\n1. Rewrite docs/setup.md \u00a74: apply every supabase/migrations/*.sql in filename order in the SQL editor (skip .gitkeep). Note: later files replace functions; \u201calready exists\u201d on a re-run of an early file is not \u201cdone.\u201d After school_roles, first login claims superintendent via school_claim_superintendent() \u2014 not \u201cyou are a teacher with a join code.\u201d\n2. Update README setup + folder map: migrations are not empty; /join redirects to sign-in; student/parent use provisioned logins not join codes.\n3. Add a short \u201calready applied Slice 01 only\u201d recovery: run remaining files in order; do not re-add join_code.\n\nACCEPT: A new machine following setup gets profiles, class_teachers, messages, student_list_todo(), etc. No secrets in docs."
+    },
+    {
+      "id": "Q14",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "/admin/matrix cosmetic",
+      "prompt": "Repo: chuckbroaddus/kelyra.\n\nBUG: /admin/matrix persists capability_grants but school UI uses can() without grants, so the matrix is cosmetic except Ask.\n\nFIX:\n1. Load grants once in AuthProvider or ChromeProvider (reuse loadGrants / 30s cache). Pass grants into can() for every chrome/home/admin gate that already calls can().\n2. Hide/disable Create class, People create, Activity, Capture, etc. when can() is false for that hat.\n3. Do not pretend Postgres RLS now reads the matrix unless you also add SQL checks for the same capability ids \u2014 if you cannot do RLS this pass, document that matrix is UI-only and keep server rules as the hard gate. Do not leave a superintendent-looking toggle that does nothing.\n\nACCEPT: Flipping accounts.create to none for teacher hides Create login and the RPC still rejects if they call it. Ask and UI use the same grant map. No AI model work."
+    },
+    {
+      "id": "Q15",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "setActiveClass DB write; Capture/Inbox/header stale",
+      "prompt": "Repo: chuckbroaddus/kelyra.\n\nBUG: Opening class B writes teachers.active_class_id but Capture, Inbox, and header listen still use the in-memory teacher.active_class_id (previous class).\n\nFIX:\n1. After setActiveClass, update AuthProvider teacher row (refreshTeacher or set active_class_id locally).\n2. resolveCaptureClass should prefer an explicit classId argument. Class desk, capture, inbox, and Chrome header must pass the class being viewed when known \u2014 not only stale teacher.active_class_id.\n3. /inbox remains \u201cactive class\u201d but must read the latest active id from DB if memory is stale.\n\nACCEPT: Open B \u2192 Capture \u2192 roster and new captures have class_id = B. Inbox lists B unassigned. Switching back to A restores A. Single-class teachers unchanged."
+    },
+    {
+      "id": "Q16",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "Alert onOpenWork no-op",
+      "prompt": "Repo: chuckbroaddus/kelyra.\n\nBUG: Alert detail MessagePayloadView uses onOpenWork={() => {}} so work cards in alerts do nothing.\n\nFIX: Reuse the same payload navigation as messages/[threadId].tsx (assignment, student record, student todo). If chrome.classId is missing, resolve from the alert\u2019s className/class_id via getAlert. Show a short error if the user cannot open that record.\n\nACCEPT: Teacher tap on a work-card alert opens the assignment or student. Empty handler removed."
+    },
+    {
+      "id": "Q17",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "iPhone: hide extra < ; swipe-back already works",
+      "prompt": "Kelyra iPhone back affordance \u2014 PATTERN (do not one-screen patch).\n\nConfirmed on device (Chuck, iPhone): edge swipe left-to-right already goes back on pushed screens. The custom top-left \u201c<\u201d in AppHeader does the same pop. That is a duplicate, not a missing native gesture.\n\nGoal:\n- iOS: hide the AppHeader back chevron (Icon name=\"back\") when the screen can already be dismissed with the system/stack edge-swipe.\n- Keep an explicit \u201c<\u201d (or equivalent) on web, and anywhere swipe cannot pop: tab/root screens that are not on a stack, first screen of a stack if you still need a way out, Android if you want a visible back, sheets/modals that are not stack pops.\n- Do not change product auth/RLS. Do not privilege-leak office routes into teacher/student/parent chrome.\n\nDo NOT:\n- Treat this as \u201crestore interactive-pop\u201d or \u201canimation: none killed swipe.\u201d A code audit saw headerShown: false and animation: 'none' on Stacks \u2014 that is a hypothesis only. Device behavior wins: swipe already works. Do not churn navigation animation / gestureEnabled unless a specific screen actually fails swipe in QA.\n- Add a second native header. Keep AppHeader as chrome.\n\nWhere the chevron lives today:\n- src/components/ui/AppHeader.tsx \u2014 showBack = isChromePushed(pathname) && !kelyraMark\n- src/lib/chrome/ChromeProvider.tsx \u2014 isPushedPath\n- src/components/ui/AppShell.tsx \u2014 AppHeader above the Stack\n\nImplementation:\n1) One helper, used by AppHeader only: showChromeBack({ platform, canGoBack, isTabRoot, swipePops }).\n   - iOS + swipePops (pushed stack screen): showBack = false\n   - web (and Android if no reliable swipe-pop): showBack = true when isPushedPath / canGoBack\n   - tab/root (/, capture, inbox, todo, ask, class desk, parent tab home for parent role): showBack = false on all platforms\n\n2) isPushedPath mismatches (still fix; they make a chevron appear where it should not, or omit it where web needs it):\n   - /parent is parent TAB home AND isPushedPath \u2192 no chevron for parent role on /parent; staff who pushed /parent from elsewhere may still need back on web.\n   - /password is in isPushedPath but AppHeader is null (role none) \u2014 leave forced-password with no chrome unless product wants a way out.\n   - Class cluster (gradebook, setup, assignments, family, parents, assign): if they are real stack pushes, iOS should swipe (Chuck: swipe works); web still needs `<` if they are pushed. If they are meant as tab-switch, use replace and no chevron.\n\n3) proposal.tsx GhostButton \u201cBack\u201d + setPushedBackHandler: do not leave two visible back controls on iOS. Keep dirty-discard on both swipe (beforeRemove) and any remaining Back control on web.\n\n4) Do not copy-paste per-screen BackButtons. Do not enable/disable gestureEnabled globally as the fix.\n\nManual QA:\n- iPhone: pushed student/parent/assignment/messages/search/proposal \u2014 swipe back works AND no top-left `<`. Tab roots still have no `<`.\n- Web: same pushed screens still show `<`.\n- Proposal dirty: swipe (iOS) or `<` (web) still confirm discard."
+    },
+    {
+      "id": "L1",
+      "pri": "P2",
+      "lane": "Prompt",
+      "status": "SENT",
+      "summary": "Build done; SQL applied. Edge secret + deploy still open.",
+      "prompt": "SENT 2026-08-24 1:40 AM CT. Session 01a03281-e07e-7210-8173-a95823e0b5c2.\nSQL applied on aohibokgilxhqwmupdfv: assignment_kind_lesson then lesson_assignments (enum lesson, lesson_packs fom-ch01/v4, private lessons bucket, student_open_lesson / student_report_lesson).\nRemaining: LESSON_HOST_SECRET + deploy student-open-lesson (verify_jwt=true) and lesson-host (verify_jwt=false). Do not git-commit BJU decks. Ask tools later.\n\nSources: notes/interactive-lessons-assign.md, notes/qa-lesson-assignment-acceptance.md."
+    },
+    {
+      "id": "A1",
+      "pri": "P2",
+      "lane": "Agent",
+      "status": "APPLIED",
+      "summary": "APPLIED 2026-08-27: policy map + Edge ask-assistant v4 live",
+      "prompt": "HOLD until Chuck / Chief of Staff confirm. Repo: chuckbroaddus/kelyra.\n\nProblem: Ask tools run only in the client (`src/lib/ai/askTools.ts`). Edge `ask-assistant` and `scripts/ai-dev-server.mjs` do not load the caller profile or capability matrix. A modified client can skip `can()`. Several RPCs are `is_staff` / `teaches_class` (office = every class), coarser than the UI matrix. Public signup still mints teachers. `message_thread_members` INSERT is any authenticated user.\n\nGoal: a control plane so NEW tools cannot widen that hole. The agent must act as the signed-in user only.\n\nDo this:\n1. In Edge `ask-assistant` and local `ask-assistant` handler: require a real user JWT (`auth.getUser()`). Load `profiles` + `capability_grants` for that uid. Ignore `body.role`. If no user, 401.\n2. Add `src/lib/ai/askToolPolicy.ts` (or server equivalent) that maps each tool name to capability + need (`own` | `school` | null). Same map used client and server.\n3. Before the model is offered a tool, filter by `can(profile, capability, need, grants)`.\n4. Do NOT execute tools on the Edge with the service role. Keep execution on the client with the user JWT for this pass. Do not invent service-role executors.\n5. `ask-assistant` must not accept an arbitrary client `tools` array as the allow-list. Server intersects requested names with the policy map for this uid. Drop unknown names.\n6. Do not fix signup, thread_members, or is_staff RPCs in this prompt unless a one-line comment points QA at them. Scope is the Ask hop only.\n7. Personality stays in `askPrompt.ts` but server must prepend a non-overridable line: act only as this profile; never claim another role.\n\nDone when: a teacher JWT cannot get `add_teacher_to_class` in the tool list; a student JWT cannot get roster/parent writes; Edge logs show getUser; QA can test with a normal teacher account.\n\nHypothesis (non-binding): verify_jwt in config.toml may already be missing for ask-assistant \u2014 check and add if needed, but still getUser in the function body."
+    },
+    {
+      "id": "A2",
+      "pri": "P2",
+      "lane": "Agent",
+      "status": "HOLD",
+      "summary": "Safe read tools listed",
+      "prompt": "HOLD until Chuck / Chief of Staff confirm. Depends on Prompt A policy map (or add the same capability keys client-side if A is not merged yet). Repo: chuckbroaddus/kelyra.\n\nAdd Ask tools that only wrap APIs the signed-in user already has. No service role. No new SECURITY DEFINER. No Approve. No scores to parent/student.\n\nTools (each: capability, need, existing function):\n- list_grade_cells(classId) \u2014 gradebook/assignments.manage as the screen already uses; call loadGradebook; return cells the JWT can SELECT. Teacher own class; office school because teaches_class already does. Student/parent: refuse.\n- assignment_completion(classId) \u2014 same gate; counts by status from that book. Do not average Pass/Fail as numbers.\n- summarize_class_desk(classId) \u2014 classes.teach or heatmap.view / overview; call loadClassOverview: unassigned + draft counts, focus list, top approved gaps.\n- list_inbox(classId?) \u2014 capture.use own (teacher only \u2014 office-only must refuse even if RLS would allow). List capture statuses the user can SELECT.\n- list_my_practice \u2014 student only; student_list_todo. Title/status/items. No scores.\n- my_children_progress \u2014 parent only; loadParentProgressMine / parent_open mine. Focus, practice words, parent sentence. No scores, work photos, drafts, other families.\n- my_unread_messages \u2014 all seats; unreadCount() for self membership.\n- list_feed(scope) \u2014 existing list_feed / can_see_post. Read only.\n- search_audit({handle, actorRole, action}) \u2014 audit.view school (office). listAuditEvents. Teachers none.\n\nAnticipation: if the user attaches a photo that looks like an answer key, do not create an assignment; say so and offer scan_answer_key (already exists) then confirm.\n\nCharts: the assistant may describe counts from these payloads. Do not add SQL charts or a warehouse.\n\nUpdate askPrompt.ts seats: teacher can summarize own class; office school; parent/student only their tools.\n\nDone when: teacher Ask can answer \"who hasn't turned in X\" from list_grade_cells; parent Ask cannot see scores; office Ask can search activity; no new grants to authenticated beyond existing RPCs."
+    },
+    {
+      "id": "A3",
+      "pri": "P2",
+      "lane": "Agent",
+      "status": "HOLD",
+      "summary": "Messages list+send as member; blocked on Q2",
+      "prompt": "HOLD until Chuck / Chief of Staff confirm. Repo: chuckbroaddus/kelyra.\n\nAdd Ask tools for Messages that cannot widen the open INSERT on message_thread_members.\n\nTools:\n- list_threads \u2014 existing inbox query; membership only.\n- list_thread_messages(threadId) \u2014 fail if not a member.\n- send_message(threadId, body) \u2014 same membership INSERT as the composer.\n\nDo NOT add add_thread_member, create_group, or remove_member until policy thread_members_insert (any authenticated user) is replaced with a staff/parent/student graph check. Point QA at 20260817000005_school_roles.sql.\n\nStudent/parent only see threads they can already open in /messages.\n\nDone when: a member can command send in an existing thread; no Ask tool inserts thread members.\n\nBLOCKED on Q2."
+    },
+    {
+      "id": "A4",
+      "pri": "P2",
+      "lane": "Agent",
+      "status": "DO NOT SEND",
+      "summary": "Backlog write/admin tools \u2014 do not send",
+      "prompt": "DO NOT SEND.\n\nThese are human actions without tools. Do not prompt Build yet:\n\n- Approve / delete capture, gap, student, class, parent\n- admin_create_login, hats, provision logins, claim superintendent\n- set_capability_grant, set_school_name/logo\n- add_thread_member\n- school-wide family RPC wrappers\n- PPT-to-practice (not in repo; /assign is a stub)\n- Attendance (out of MVP)\n\nPersonality already forbids Approve and dumping allergies/emergency/address unless asked. Keep that."
+    },
+    {
+      "id": "U1",
+      "pri": "P2",
+      "lane": "UX",
+      "status": "HOLD",
+      "summary": "Teacher chrome only; superintendent look",
+      "prompt": "Kelyra \u2014 Teacher SHELL only (chrome + Grade / Class / Student altitude). Do not implement Home body content, Capture composer, Inbox list, Gradebook grid, Assignments form, Family digest, or analytics charts in this pass.\n\nRepo is the existing Expo + Supabase app. Follow AGENTS.md and docs/ui-design.md. Tokens from useTheme() / src/constants/theme.ts. No hardcoded hex. No EXPO_PUBLIC_ model keys. Matcher never inserts a student. Nothing is a grade until Approve.\n\nAPPLY SUPERINTENDENT VISUAL LANGUAGE. Do not invent a second look. Office already has the language: AppHeader (wordmark + trailing icons), PersonTabs (icon-first; selected tab shows its English name, others icon-only, brandSoft pill, brand icon), FloatingTabTray (5 slots, Ask last, KelyraMark on Ask), HamburgerDrawer, Screen, ListRow, hide-on-scroll tray, no left rail. Teacher chrome must look like that seat wearing classroom destinations \u2014 same header height 56/44, same floating tray tokens, same PersonTabs component, same drawer width/scrim/row height.\n\nICON RULES (AGENTS.md): Never invent View-stroke glyphs for chrome. If you need a new name, add a recipe in scripts/build-icons.mjs, run npm run icons (assets/icons/*.png + src/components/ui/iconAssets.ts), add to IconName. Reuse existing names first: today, capture, inbox, records, ask, classes, person, parents, work, focus, setup, mail, menu, search, manage, feedSchool, plus. Full-color brand = KelyraMark, no tint. Do not run brand through the white-ink pipeline. Do not use mail for Family (mail is header messages).\n\nTEACHERS CANNOT CREATE CLASSES. This is a hard product rule (Chuck note + QA Q3 conflict). Remove or hide every teacher create-class path: no New class on teacher /, no \u201canother class\u201d that creates, no create affordance in the hamburger for chromeRole === 'teacher'. Hamburger class list = existing enrolled classes only. Empty no-class state is copy only (office/SIS owns create), never a Create button.\n\nGOAL OF THIS PASS\nRebuild teacher chrome: header, tray, Grade / Class / Student altitude switch, class switcher (existing classes only), student drill entry, ClassTabs cabinet filtered by altitude. After this pass a teacher can change zoom and switch existing classes without a new visual system.\n\nSCOPE \u2014 DO\n1) App tray for chromeRole === 'teacher' (office hats keep office tray). Exactly 5, left \u2192 right:\n   - today / Home \u2192 current-altitude Home. Active on Grade/Class/Student home only. Header wordmark: Kelyra on Grade/Home; class name on Class cabinet panes; student name on Student panes. Marquee if overflow. Do not ellipsis.\n   - capture / Capture \u2192 /capture. Wordmark: Capture. Stay-put after save (existing).\n   - inbox / Inbox \u2192 /inbox. Badge = unmatched + review count. Wordmark: Inbox. Inbox is the only unnamed/review queue product.\n   - records / Class cabinet \u2192 last cabinet pane for the current altitude (Gradebook is fine at Class). Active on cabinet routes only. Not a second Home.\n   - ask / Ask \u2192 /ask. Last. KelyraMark. English name Ask (not \u201cKelyra\u201d on tray a11y/tooltip or header).\n   House is start. Ask is last. Profile is NOT in the tray.\n\n2) Header (teacher): existing AppHeader. Keep camera (teacher only) \u2192 proposal/listen already in AppShell. Search \u2192 /search. Mail \u2192 /messages with red count, hidden at 0. Hamburger far right. Pushed screens (student person from a hop, assignment create/edit, search, messages, proposal): back chevron, hide hamburger, wordmark = screen name.\n\n3) Altitude switch on teacher Home (required). PersonTabs: Grade \u00b7 Class \u00b7 Student. Selected-name / icon-only / brandSoft / 1px line \u2014 same as office PersonTabs. This is the clutter cut.\n   - Grade: all classes in that grade (e.g. 5th), teachers of those classes, grade events, grade performance/assessments/metrics, whole-grade comms. Grade picker only if they teach more than one grade.\n   - Class: one class \u2014 roster, assigned/completed/scheduled work, class grades/assessments/metrics, class comms, class analytics. Class picker = hamburger existing classes (checkmark on active_class_id). Stay on Class altitude when switching class.\n   - Student: that student only \u2014 their classes, assigned/completed work, grades, assessments, parent comms, analytics on them. Enter by roster drill or a student picker that only appears at Student altitude.\n   A teacher of one 5th-grade class still sees all three tabs so the muscle is the same; Grade lists one class.\n   Capture and Inbox are NOT a fourth altitude. They stay global and keyed to active_class_id.\n\n4) Class switcher: hamburger only. One row per EXISTING class, checkmark, tap setActiveClass + replace to the same altitude. Swipe-delete opens existing type-the-name ConfirmSheet only if teachers are still allowed to leave/delete a class they belong to; do not add create. No class picker in the header. No /?switch=1 create flow for teachers.\n\n5) ClassTabs cabinet \u2014 cut daily tabs; filter by altitude.\n   Remove Today / This week / Needs you from CLASS_TABS. Those are Home-body filters later, not cabinet.\n   Cabinet panes must hide jobs that do not belong at the current altitude (no whole-grade teacher comms on Student; no one-kid analytics on Grade). Keep replace() on pane change. Family is a pane, not a pushed sheet. Assignment create/edit stays pushed.\n   OFFICE_CLASS_TABS unchanged (do not retitle office in this pass).\n   contextReserve 0 on /class/\u2026 Amazon chips REMAIN on Capture, Inbox, student To-do, multi-child parent only.\n\n6) Sheets / entry points in chrome only: header camera / ListenSheet / WebCameraCapture; hamburger SettingsSheet + drawer search; ConfirmSheet for class leave/delete if already wired. No new sheet types. No create-class sheet.\n\nSCOPE \u2014 DO NOT\n- Do not redesign Capture, Inbox rows, Gradebook table, Assignments, Family digest, student analytics bodies, superintendent office.\n- Do not add a sixth tray tab.\n- Do not put Needs you, Today, or This week in ClassTabs.\n- Do not invent a teacher theme or new icon set.\n- Do not implement create-class for teachers.\n- No SQL, no new packages, no Cloud-only APIs.\n\nACCEPTANCE\n- Teacher tray reads like office tray: 5 icons, Ask last, same floating frame.\n- Home shows Grade / Class / Student PersonTabs. Opening House does not show the full old 10-tab ClassTabs row.\n- Teacher cannot create a class from /, hamburger, or empty state.\n- Switching existing classes from the hamburger does not change visual language.\n- Superintendent / administrator chrome unchanged.\n- Single-class teacher still lands in their class; they can still zoom to Grade and Student.\n\nLikely files: ClassTabs.tsx, FloatingTabTray.tsx, HamburgerDrawer.tsx, ChromeProvider.tsx, src/app/index.tsx (teacher create paths), src/app/class/[id]/index.tsx (altitude switch chrome only)."
+    },
+    {
+      "id": "U2",
+      "pri": "P2",
+      "lane": "UX",
+      "status": "HOLD",
+      "summary": "Home body per altitude; Inbox is the queue",
+      "prompt": "Kelyra \u2014 Teacher Home BODY per altitude. Shell (tray, header, Grade/Class/Student switch, hamburger existing-class switcher, no create-class) is already done or is U1. Do not restyle AppHeader / FloatingTabTray / HamburgerDrawer.\n\nAPPLY SUPERINTENDENT VISUAL LANGUAGE. Same Screen, AvatarTray, WorkShelf, WorkRow, ListRow, PhaseBanner, GhostButton, tokens. No second look. No new icons unless a recipe is required and none exists (AGENTS.md: scripts/build-icons.mjs + npm run icons). Teachers still cannot create classes: empty states have no Create.\n\nRoute: teacher Home (class index / altitude home). Header titles as U1. No old 10-tab ClassTabs cabinet on this screen.\n\nAltitude bodies:\nGRADE: list of classes in that grade (ListRow, 36 avatar, teacher status). Teachers of those classes. Peek of grade-wide events / performance only as existing list density \u2014 no new chart library. Whole-grade comms entry (Family-at-grade or messages), not a composer on Home. If they teach one grade, still show this list (one class is fine).\nCLASS: PersonTabs filters if needed: Today \u00b7 This week only (icon-first, selected-name, brandSoft \u2014 same as office PersonTabs). These live on Class Home, not in ClassTabs cabinet. AvatarTray of the roster. WorkShelf peek of assigned / scheduled work. No Approve, no inbox queue, no capture composer on Home.\n\nSTUDENT: that student only \u2014 their classes, assigned/completed work, grades, assessments, parent comms, analytics on them. Enter from roster drill or the Student-altitude picker. Do not show classmates or whole-class Approve.\n\nRules:\n- Inbox is the only unnamed/review queue. Home is not a second Inbox.\n- No Approve on Home. Approve stays on Capture / Inbox / existing review surfaces.\n- Empty no-class: copy only. Never a Create class button (office/SIS owns create).\n- Do not redesign Capture, Inbox rows, Gradebook grid, Assignments form, Family digest, or office chrome in this pass.\n\nACCEPTANCE\n- Class Home shows Today / This week PersonTabs, AvatarTray, WorkShelf peek.\n- Student Home is that student only.\n- Teacher with no class sees empty copy, no Create.\n- Inbox remains the queue; Home has no Approve."
+    },
+    {
+      "id": "Q18",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "Lesson-assign acceptance plan (not a Build send)",
+      "prompt": "NOT a Grok Build send. QA test plan only.\n\n# QA: interactive lessons as assignable work (app acceptance)\n\n**Owner:** Kelyra QA (this file). Lesson-page visuals: Kelyra Lesson QA (`STYLE-BRIEF.md`).  \n**Status:** Implemented 2026-08-24. Run this file against web (and iPhone WebView). File bugs with repro / expected / actual / severity.  \n**Q17 stands:** iOS hide duplicate AppHeader `<` only; this is a separate slice.\n\nProduct (Chuck): a teacher assigns an interactive lesson page as work to students in a class they already teach. Completing the lesson writes results onto the student record. Grade / Class / Student views can see it. No teacher create-class in this flow.\n\nExisting nearby surface: practice is assigned from the **student record** (`assignPractice` \u2192 `practice_sets` / `assignments` kind `practice` / `submissions`). Lessons should feel like the same \u201cwork on the student,\u201d not a new office-only product. Exact table names may change; test the behaviors below, not a guessed schema.\n\n---\n\n## Preconditions (do not skip)\n\n1. Two teachers: A (Class A), B (Class B). No shared roster unless noted.\n2. Class A has at least two students (S1, S2) and one parent of S1.\n3. Teacher A did **not** create the class in this test (use an existing class / office-assigned class). There is **no** Create class control on the teacher shell for this pass.\n4. One published interactive lesson page the product treats as assignable (BJU FOM Ch.1 or whatever shipped).\n5. Accounts: teacher A, teacher B, student S1, student S2, parent of S1. No service-role / SQL as the actor.\n6. Platforms: web + iPhone if the lesson opens in-app WebView; identity and results must still persist.\n\nOut of scope here: visual punch list, style brief, projector layout.\n\n---\n\n## A. Teacher assigns a lesson (no create-class)\n\n| # | Step | Expected |\n|---|------|----------|\n| A1 | Sign in as teacher A. School home / class altitude for Class A. | No Create class. Class A is already on the desk. |\n| A2 | Open a student in Class A (Student view) **or** Class-level assign if shipped. Choose assign lesson / interactive page. Pick the lesson. Target: whole Class A **or** S1 only (test both if both exist). | Assign succeeds. Work appears as assigned on those students. |\n| A3 | Confirm the assignment is tied to Class A + the lesson id/title. | Not an unassigned office class. Not a new class. |\n| A4 | Try the same assign from teacher A while Class B is the \u201cactive\u201d class in chrome. | Must not attach Class A\u2019s lesson to Class B. Fail closed or the picker on"
+    },
+    {
+      "id": "Q19",
+      "pri": "P2",
+      "lane": "QA",
+      "status": "HOLD",
+      "summary": "Office password-reset acceptance plan (not a Build send)",
+      "prompt": "NOT a Grok Build send. Folded into U3 when that ships.\n\n# QA: office password reset (app acceptance)\n\n**Owner:** Kelyra QA  \n**Status:** HOLD until implementation. Do not send Grok Build.  \n**Separate:** L1/L2 lesson assign, Q17 iOS `<`.\n\nProduct: **administrator** and **superintendent** can reset a school login. **Teachers cannot.** Self-service **`/password`** (forced change after first/temp password) stays.\n\nNearby today (not the feature): `admin_create_login` + `must_change_password` \u2192 `/password` (`src/app/password.tsx`). Matrix `accounts.create`: superintendent `all`, administrator `school`, teacher `none`. Reset should use the **same office wall** (`is_school_admin` / office hats), not `is_staff` / `class_teachers`.\n\n---\n\n## Actors\n\n| Hat | Login (this school) | Expect reset control |\n|-----|---------------------|----------------------|\n| Teacher (not also_administrator) | **@jacquee** (Jacquee Broaddus) | **Fail closed.** No Reset in People/UI. RPC denied. |\n| Administrator | office admin JWT | **Pass.** Can reset school logins. |\n| Superintendent | office super JWT | **Pass.** Same. |\n| Target | any school login (teacher, student, parent, other staff) | After reset: temp/bootstrap password + must change, or documented equivalent. |\n\nDo not use service role as the actor.\n\n---\n\n## Where (office)\n\nExpect the control on the **People / login card** (create-login neighborhood), not on the teacher class desk, not on Ask as a superuser bypass.\n\nCopy may be \u201cReset password\u201d / \u201cNew temporary password.\u201d Office sees the new secret **once** (same pattern as create-login temp password). Do not email it from this slice unless product says so.\n\n`/password` remains the **signed-in user\u2019s** \u201cchoose a new password\u201d after `must_change_password`. Office reset should set that flag (or equivalent) so the target is forced through `/password` on next sign-in.\n\n---\n\n## Fail closed: Jacquee-as-teacher\n\n| # | Step | Expected |\n|---|------|----------|\n| T1 | Sign in @jacquee. People / hamburger / student card / Ask. | No Reset password for anyone (including herself as office reset). |\n| T2 | As jacquee JWT, call the reset RPC / `from('\u2026')` write if one exists. | Error / empty. No password change. |\n| T3 | Ask: \u201creset Colton\u2019s password\u201d / \u201creset @goodapple\u201d. | Tool denied or no-op. Must not ride `is_staff`. |\n| T4 | Jacquee still uses `/password` when **her** `must_change_password` is true. | Self-service only. That is not office reset. |\n\nFail the slice if a teacher JWT resets any auth user.\n\n---\n\n## Pass: office\n\n| # | Step | Exp"
+    },
+    {
+      "id": "U3",
+      "pri": "P2",
+      "lane": "UX",
+      "status": "HOLD",
+      "summary": "Office People: reset someone else\u2019s password; teachers cannot",
+      "prompt": "Kelyra \u2014 office reset of someone else\u2019s password (one slice).\n\nHOLD. Do not treat this as a send. Implement only when Chuck or Chief of Staff says send.\n\nGoal: Administrator and superintendent can reset a school login from office People. Teachers cannot. This is office reset of someone else, not self-service Change password on /password.\n\nHard rules:\n- Privilege wall: `is_school_admin` / superintendent (office hats). Same wall as `accounts.create` / `admin_create_login` (superintendent all, administrator school, teacher none). NOT `class_teachers`. NOT `is_staff` widen. A teacher of FoM cannot reset those students\u2019 auth passwords.\n- User JWT only. No service-role in the Expo client. Do not invent RLS or SECURITY DEFINER wider than that office wall. Do not ride thread-member insert, `school_*_for_link`, or `get_parent_card`.\n- Teachers do not create classes. Reset does not create a class, change hats, provision a user, or mint a student. Reset is not Create login.\n- Reuse today\u2019s pattern: `admin_create_login` already sets a temporary password + `must_change_password` true; Chrome forces `/password`. Reset does the same for an existing login. Do not invent email magic links.\n- Username does not change. Email is not the sign-in. Kelyra signs in with @username + password.\n- Self-service `/password` (`src/app/password.tsx`) stays for the signed-in user. Do not remove it or make it office-only.\n- Hide Reset on your own row (use Profile Change password). Hide the control for teachers; do not show an error tease.\n- Do not log the new password. Show the temp once, then never again if they leave the sheet.\n- Icons: reuse existing swipe recipe. Do not invent View-stroke glyphs.\n\nWho: superintendent and administrator on office People. Applies to school logins: teachers, students, parents, other staff. Same control, same sheet. Not parents as actors. Not a class teacher who opened a student record.\n\nWhere:\n- Office PeopleAdmin (Staff / Parents / Students): swipe on the ListRow, label \u201cReset password\u201d (existing swipe recipe; tone wash or brand, not delete).\n- Ghost \u201cReset password\u201d on the office person account `/profile?person=\u2026` under identity, next to hats.\n- Do NOT put it on teacher Class Setup, student person tabs, Practice/Work, Capture, Inbox, Assign, or Ask as a superuser bypass.\n- Create login stays where it is.\n\nSheet: pushed or ConfirmSheet-scale FormSheet. Title \u201cReset password.\u201d Lead: They will sign in with @username and this password, then choose a new one.\nField: Temporary password (office can type; optional Generate fills a pronounceable temp, 8+ chars). Ghost Save.\nSuccess: keep the temp on screen once with Copy. Status: \u201cPassword reset. They must change it at next sign-in.\u201d\nCancel does nothing.\nNo login yet (no username): cannot reset \u2014 copy \u201cNo login yet, create one from People.\u201d\nQ17: if this is a pushed screen, iPhone omits extra `<` when swipe pops; web keeps `<`.\n\nServer: one office RPC (e.g. `admin_reset_login_password`) gated like `admin_create_login`. Sets Auth password + `profiles.must_change_password = true` for that school profile. Fail closed for teacher JWT (Jacquee-as-teacher: RPC error / empty, no password change). Fail closed for a random `auth.users` UUID outside this school. In-app AI / Ask must not reset passwords for a teacher account (`is_staff` forbidden).\n\nAfter reset: target signs in with temp, lands on `/password`, sets a new password; old password dead.\n\nCopy:\n- Swipe/button: Reset password\n- Success: Password reset. They must change it at next sign-in.\n- Teacher: omit the control.\n- Self: omit.\n\nAcceptance (Q19 \u2014 fold these into the slice; do not treat as a later prompt):\nActors use app + user JWT only. No service role as the actor. Separate from L1/L2 lesson assign and Q17.\n\nFail closed \u2014 Jacquee-as-teacher (@jacquee, not also_administrator):\n- T1: People / hamburger / student card / Ask: no Reset password for anyone (including herself as office reset). Omit the control; no error tease.\n- T2: jacquee JWT calling the reset RPC or a direct `from('\u2026')` write: error / empty. No password change.\n- T3: Ask \u201creset Colton\u2019s password\u201d / \u201creset @goodapple\u201d: tool denied or no-op. Must not ride `is_staff`.\n- T4: Jacquee still uses `/password` when *her* `must_change_password` is true (self-service only).\nFail the slice if a teacher JWT resets any auth user.\n\nPass \u2014 office:\n- O1: Administrator (not Jacquee-teacher) resets a school login (FoM student or @goodapple in this school): succeeds; temp shown once; target `must_change_password` true.\n- O2: Target signs in with temp, lands on `/password`, sets a new password; old password dead.\n- O3: Superintendent same as O1\u2013O2 on a different login.\n- O4: Cannot reset a login outside the school / a random `auth.users` UUID.\n- O5: Reset does not create a class, change hats, or provision a new user.\n\n`/password` stays:\n- P1: Forced change after create-login or office reset still works. Not removed, not office-only.\n- P2: User with `must_change_password` false is not forced through office reset. Do not block `/password` for office-forced users.\n\nPrivilege extras: teaching FoM does not grant reset on those students\u2019 auth passwords. In-app AI must not reset passwords. Do not log the new password.\n\nDone when: T1\u2013T4 fail closed for @jacquee; O1\u2013O5 pass for administrator and superintendent; P1 intact. No create-class. No email reset link.\n\nOut of scope: teacher create-class; teacher Add as a new student; email reset links; changing @username; reset from Capture/Inbox/Assign; Ask reset tool; Q17 as its own patch; L1/L2 lesson assign."
+    },
+    {
+      "id": "S1",
+      "pri": "P1",
+      "lane": "CoS",
+      "status": "SENT",
+      "summary": "Cut Storage egress: thumbs + signed URL cache",
+      "prompt": "Kelyra \u2014 cut Supabase Storage egress (one slice).\n\nSENT 2026-08-24 14:21 CT (notes/s1-send-now.txt).\n\nContext: Free org is over quota on Egress (8.62 / 5 GB), grace until 17 Sep 2026, then 402. Database 30 MB, stored files ~40 MB dashboard / ~230 MB object metadata. Almost all egress is Storage. Photos bucket: 132 JPEGs, many 2.8\u20133.3 MB phone stills. Audio is 8 MB. lessons bucket empty. Cached egress 2.56 GB vs 8.62 uncached.\n\nCause (verify, non-binding): lists load full originals via createSignedUrl (3600s). New token each session = CDN miss. normalizePhoto quality 0.8 with no resize. hydrateCaptures signs every inbox page at full size. RN Image uses the signed URL as cache key.\n\nGoal: lists and avatars must not download 3 MB originals. Viewer/AI may still use the original. Stay on private buckets. User JWT. Do not public-bucket student photos. Do not move Postgres off Supabase. Do not add Cloudflare R2 in this slice.\n\nDo this:\n1. On photo upload, store a list/avatar derivative (e.g. max edge 480 or 96) plus the original (or replace original with a max-edge ~1600 JPEG if quality allows \u2014 do not silently destroy evidence photos without a full-size kept for Capture review). Prefer: original + `*_thumb` in the same photos bucket, assets row points at both or a convention on storage_path.\n2. Inbox, People avatars, WorkRow, message thumbs, roster: signed URL of the **thumb** only.\n3. ImageViewer / Capture review / analyze-homework / Ask photo: original.\n4. Stop cache-busting: persist signed URLs until near expiry (disk or AsyncStorage keyed by storage_path, not process memory only). Prefer expo-image (or equivalent) cacheKey = asset id / path, not the tokenized URL.\n5. Upload: resize before send (max long edge, JPEG quality) so new captures are not 3 MB. Existing 3 MB files: generate thumbs in a one-shot script Chuck/CoS can run; do not download-all in the client.\n6. Cache-Control on upload if Storage honors it for signed objects.\n\nDo not: public photos bucket; email the files out; git-commit notes/teacher-decks/; create-class; is_staff widen; Cloudflare/R2 in this pass.\n\nDone when: a full Inbox + People load does not fetch 3 MB originals for thumbs; new captures are much smaller; signed URL reuse does not mint a new token every app open. Typecheck clean.\n\nIf SQL is needed, put a migration and tell Chief of Staff to apply it."
+    },
+    {
+      "id": "L4",
+      "pri": "P1",
+      "lane": "CoS",
+      "status": "LANDED",
+      "summary": "FoM Ch01 section packs 1.1\u20131.7 + locked student name",
+      "prompt": "Kelyra \u2014 section-sized hosted lessons (one slice).\n\nHOLD until Chuck or Chief of Staff says send. Land after L3 (X exit / swipe stays on the page). Do not reopen L2 IA.\n\nTrial teacher: they teach one textbook section at a time. Assigning all of Fundamentals of Math Chapter 1 as one lesson is too coarse.\n\nCurrent: one lesson_packs row fom-ch01 / v4, \"Fundamentals of Math \u00b7 Chapter 1\". Playable notes/teacher-decks/fom-ch01-v4/index.html (gitignored). 14 beats. Picker is already one chip per pack row. student_open_lesson JWT prefix is {deck_id}/{version}. Identity/resume is postMessage, not the URL. ?beat= is QA only. Page key kelyra-fom-ch01-v4 is whole-chapter.\n\nGoal: Jacquee can assign 1.3 only. Student Open plays only that section. Completing it reports that assignment. Next/swipe cannot walk into 1.4.\n\nBJU titles (from the Ch01 PPT \u2014 use these, do not invent):\n1.1 Ordering and Rounding\n1.2 Addition and Subtraction\n1.3 Multiplication\n1.4 Division\n1.5 Exponents\n1.6 Square Roots\n1.7 Order of Operations\n\nDo this:\n1. Keep ONE HTML + shared audio/img. Storage prefix stays lessons/fom-ch01/v4/. Do not copy scene PNGs per section (S1 egress).\n2. Seed seven published packs: deck_id fom-ch01-s11 \u2026 fom-ch01-s17, version v4, titles as above (picker may prefix FoM \u00b7). Hook rides with 1.1. Finished rides with 1.7. Teach+Check is one assignment. Optional unpublished/review \"Chapter 1 (all)\" on fom-ch01; default picker is the seven sections.\n3. Pack metadata: storage_deck_id always fom-ch01, plus beat_start/beat_end (or beat ids). JWT/host prefix must be fom-ch01/v4, not fom-ch01-s11/v4 (that path does not exist). Copy window onto the assignment or look it up at open.\n4. Pass the beat window on identity postMessage. Do NOT use ?section= or ?beatStart= for students. Page subsets BEATS, HUD pips n/k for that pack, Next/swipe cannot leave the window. Per-pack localStorage (kelyra-fom-ch01-s11-v4). Slice Done completes that assignment only. L3 X still exits without wiping saved answers.\n5. Dev :8772 uses the same identity gate. Do not serve the ungated chapter for every pack.\n6. Assign UI: no new tabs. Existing Lesson chips list the new rows. Do not reuse assignments.section (practice gradebook).\n7. SQL in a migration. Tell Chief of Staff to apply it. Do not upload the deck to Storage unless Chuck confirms quota.\n\nDo not: public lessons bucket; git-commit notes/teacher-decks/; create-class; is_staff widen; S1 thumbs; Cloudflare; new Grok Build session for SQL retry (CoS resumes).\n\nDone when: Jacquee assigns FoM \u00b7 1.3 Multiplication only; student Open is 1.3 Teach+Check; 1.2 answers still there if they had 1.2 assigned; typecheck clean."
+    },
+    {
+      "id": "F01",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Co-teacher photo replace can orphan prior assets",
+      "prompt": "Kelyra P2 \u2014 Co-teacher photo replace can orphan prior assets. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041b1-ff99-7b00-b4ae-3d2bc816e1b5\nOriginating request: Q11 students_own co-teacher write\n\nEvidence:\nsetProfilePhoto updates students/parents.photo_asset_id via the new taught-class UPDATE policy, then calls teacher_unref_asset, which still requires assets.teacher_id = auth.uid() (20260816000000). The RPC error is not checked, so a co-teacher replacing another teacher's upload leaves the old asset referenced-count orphaned.\n\nDo this:\nWiden teacher_unref_asset (or clear-photo path) to allow unref when the actor may update that person via student_on_taught_class / parent_on_taught_class, and surface unref failures.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F02",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "sign-in-handle rate limit is in-memory only",
+      "prompt": "Kelyra P2 \u2014 sign-in-handle rate limit is in-memory only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041a7-9a17-7481-aa89-be1c58da6b3c\nOriginating request: Q10 login_identifier anon oracle\n\nEvidence:\nsupabase/functions/sign-in-handle/index.ts keeps attempts in a process-local Map (WINDOW_MS/MAX_ATTEMPTS). Deno isolates and cold starts do not share that map, so the 30/15min cap is not durable under multi-instance or restart.\n\nDo this:\nIf password spraying against handles becomes a concern, back the limiter with a shared store (DB/KV) or lean on Auth/WAF limits; email harvest is already closed without a durable limiter.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F03",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "In-memory Edge rate limit is soft; timing can still hint username existence",
+      "prompt": "Kelyra P2 \u2014 In-memory Edge rate limit is soft; timing can still hint username existence. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041a7-9a17-7481-aa89-be1c58da6b3c\nOriginating request: Q10 login_identifier anon oracle\n\nEvidence:\nsupabase/functions/sign-in-handle/index.ts keeps attempts in a process-local Map (30 / 15 min per IP|handle) and returns early on RPC miss before Auth bcrypt, so cold starts, multi-isolate fan-out, and response-time differences can still suggest whether a handle resolves. Responses never include the looked-up email.\n\nDo this:\nPrefer a durable shared limiter (DB/Redis) and optionally a constant-time path (always perform a password grant, including against a dummy when lookup misses) if username-existence resistance must match email-oracle closure.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F04",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "also_administrator still gets school-wide profile SELECT via can_message",
+      "prompt": "Kelyra P2 \u2014 also_administrator still gets school-wide profile SELECT via can_message. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0419d-a8da-7742-8390-46ed1c5950ac\nOriginating request: Q9 profiles_read\n\nEvidence:\nNew profiles_read includes `public.can_message(auth.uid(), id)`. In 20260819000003_message_directory.sql, can_message treats `also_administrator` as from_admin and returns true for every same-school profile. is_school_admin() / isOfficeRole do not include also_administrator, so a teacher JWT with that hat can still `select * from profiles` for the whole school\u2014same peer set message_directory already exposes.\n\nDo this:\nAcceptable for Q9 given messaging semantics and unchanged message_directory. If table SELECT must be office-only for school-wide dumps, narrow the policy later so school-wide listing is is_school_admin only and keep can_message/shares_message_thread for targeted hydrate.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F05",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Parent/student UI still gates family-link chrome with isAdminRole",
+      "prompt": "Kelyra P2 \u2014 Parent/student UI still gates family-link chrome with isAdminRole. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsrc/app/class/[id]/parent/[parentId].tsx sets canLinkChildren = isAdminRole(profile) and shows Add child; src/app/class/[id]/student/[studentId].tsx sets canLinkParents = isAdminRole(profile). isAdminRole is true for also_administrator teachers while isOfficeRole is false. After migration 20260826000007, those clicks fail at admin_set_parent_link / can_link_parent_student.\n\nDo this:\nSwitch Add child / Add parent family-link chrome to isOfficeRole (or accounts.link_parent office seat) so also_administrator teachers do not see actions that the RPC now denies. Out of Q8 Ask-hole scope; track as follow-up.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F06",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "APPLIED",
+      "summary": "APPLIED 2026-08-27: teacher Ask create_parent skips linkChild unless isOfficeRole (loop 01a043fd passed)",
+      "prompt": "Kelyra P2 \u2014 Ask create_parent still accepts student_id and calls linkChild. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsrc/lib/ai/askTools.ts create_parent (capability parents.invite) resolves student_id/student_name and passes studentId into createParent(); src/lib/parents/api.ts createParent then awaits linkChild(). Teachers keep the tool via parents.invite; after the office-only RPC they cannot mint the family row, but the tool description still says it can link a child and a failed link can leave a newly inserted parent without the child.\n\nDo this:\nFor non-office Ask contexts, omit student link args from create_parent or skip linkChild unless isOfficeRole; keep add_parent_to_class for class attach only.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F07",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "APPLIED",
+      "summary": "APPLIED 2026-08-27: parent_students_own SELECT-only so teachers cannot PostgREST-insert/update (loop 01a04406 passed, SQL applied) SQL live 20260827000004",
+      "prompt": "Kelyra P2 \u2014 Residual parent_students_own RLS still allows teacher inserts. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsupabase/migrations/20260816000000_people_photos_delete.sql still defines parent_students_own FOR ALL when the caller owns both parents.teacher_id and students.teacher_id. linkChild no longer uses that path, but a teacher JWT can still PostgREST-insert parent_students for rows they own. Q8 closed the Ask/linkChild/RPC hole only; this policy was not changed.\n\nDo this:\nIn a later migration (not Q8 scope), drop insert/update from parent_students_own or restrict minting to is_school_admin / admin_set_parent_link so teachers cannot mint family identity outside the office RPC.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F08",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Sibling not-in-class RPCs still school-dump to any staff",
+      "prompt": "Kelyra P2 \u2014 Sibling not-in-class RPCs still school-dump to any staff. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a04177-fc7b-7863-b35c-bb0e8ce207c4\nOriginating request: Q6 school_*_for_link dumps\n\nEvidence:\nsupabase/migrations/20260818000010_class_directory.sql school_students_not_in_class / school_parents_not_in_class still gate on is_staff_profile + my_school_id. listAvailableStudents still calls school_students_not_in_class. Explicitly out of Q6 scope.\n\nDo this:\nTrack a follow-up to tighten those RPCs the same way (office school-scoped or taught-class only); do not reopen Q6 for it.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F09",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Teacher-owned unlinked parents drop out of listParentsForLinking",
+      "prompt": "Kelyra P2 \u2014 Teacher-owned unlinked parents drop out of listParentsForLinking. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a04177-fc7b-7863-b35c-bb0e8ce207c4\nOriginating request: Q6 school_*_for_link dumps\n\nEvidence:\nschool_parents_for_link teacher branch is only parent_on_taught_class; security test asserts absence of p.teacher_id = auth.uid(). listParentsForLinking \u2192 loadAllParentRows trusts empty RPC success. Class directory still restores own cards via fillAvailableWithOwnParents; student-page openAddParent uses listParentsForLinking only.\n\nDo this:\nIf product needs the student-page existing-parent picker to include teacher-owned cards with no taught-class link yet, merge listParentsForTeacher into that UI path only\u2014do not widen the RPC.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F10",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Authenticated callers can distinguish missing vs unauthorized parent ids",
+      "prompt": "Kelyra P2 \u2014 Authenticated callers can distinguish missing vs unauthorized parent ids. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a0416d-3f52-7592-b803-24c37604f08a\nOriginating request: Q5 get_parent_card staff PII\n\nEvidence:\nsupabase/migrations/20260826000005_tighten_get_parent_card.sql loads the row and raises 'not found' before the allowed check; denied callers then get 'not allowed'. The prior function denied non-staff before the existence check.\n\nDo this:\nRaise a single 'not allowed' (or identical not-found) for both missing and unauthorized ids after authz, so student/parent JWTs cannot enumerate parent UUID existence.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F11",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Office direct parents SELECT remains school-unscoped via parents_admin_all",
+      "prompt": "Kelyra P2 \u2014 Office direct parents SELECT remains school-unscoped via parents_admin_all. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a0416d-3f52-7592-b803-24c37604f08a\nOriginating request: Q5 get_parent_card staff PII\n\nEvidence:\ngetParent() still does from('parents').select('*') first; parents_admin_all (school_roles migration) allows is_school_admin() with no school predicate, so office can still read a cross-school parent row without hitting the tightened RPC.\n\nDo this:\nTrack as a later office RLS harden (not Q5 RPC scope): scope parents_admin_all to my_school_id / same-school parent linkage so getParent() cannot bypass the school wall.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F12",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "APPLIED",
+      "summary": "teachers_own fail-closed (SELECT+UPDATE only); migration applied 20260827000005",
+      "prompt": "Kelyra P2 \u2014 teachers_own RLS still allows self-INSERT into teachers. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040a5-a12b-7f62-b29b-0df7c7c8abd6\nOriginating request: Q1 public signup / handle_new_user teacher provision\n\nEvidence:\nsupabase/migrations/20260812000000_slice01_foundation.sql policy teachers_own for all using/with check (id = auth.uid()). App no longer inserts, but a client with a raw auth session can still PostgREST-insert public.teachers for auth.uid(). Adjacent to held Q12.\n\nDo this:\nRestrict teachers INSERT to security-definer office/claim paths (drop or narrow teachers_own write), without weakening other RLS. Track with Q12.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed.",
+      "sessionId": "01a04412-f250-7802-a5f4-461571fa1303",
+      "appliedAt": "2026-08-27T11:40:04.305799-05:00"
+    },
+    {
+      "id": "T01",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Q12 security tests are static source assertions only",
+      "prompt": "Kelyra P3 \u2014 Q12 security tests are static source assertions only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041ea-e0c2-7511-b6f8-ef9878a268d2\nOriginating request: Q12 handle_new_user / ensureTeacherProfile\n\nEvidence:\nsrc/lib/auth/failClosedTeacherProvision.security.test.ts reads migration/TS text and asserts patterns; it does not execute SQL against a live DB.\n\nDo this:\nAcceptable and matches other Q* security tests; after CoS applies the migration, smoke provision student/parent and confirm no teachers row.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T02",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "parent_students taught-class SELECT includes sibling links",
+      "prompt": "Kelyra P3 \u2014 parent_students taught-class SELECT includes sibling links. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041b1-ff99-7b00-b4ae-3d2bc816e1b5\nOriginating request: Q11 students_own co-teacher write\n\nEvidence:\nparent_students_via_taught_class allows SELECT when parent_on_taught_class(parent_id), so a co-teacher of one linked child can read parent_students rows for siblings on other classes (UUIDs). Broader sibling visibility already exists via parent_children is_staff_profile.\n\nDo this:\nIf tightening later, restrict the policy to student_on_taught_class(student_id) only (drop the parent_on_taught_class OR).\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T03",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "parent_accesses FOR ALL widened to parent_on_taught_class",
+      "prompt": "Kelyra P3 \u2014 parent_accesses FOR ALL widened to parent_on_taught_class. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041b1-ff99-7b00-b4ae-3d2bc816e1b5\nOriginating request: Q11 students_own co-teacher write\n\nEvidence:\nMigration recreates parent_accesses_via_parent for ALL when p.teacher_id = auth.uid() OR parent_on_taught_class(p.id) OR is_school_admin(). Co-teachers can SELECT/INSERT/DELETE invite tokens for parents of taught students.\n\nDo this:\nAcceptable for shared-class parent invite UX; keep monitoring so token reads/mints stay limited to taught-class parents and are not logged. No change required for Q11 acceptance.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T04",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Q10 tests are static source assertions only",
+      "prompt": "Kelyra P3 \u2014 Q10 tests are static source assertions only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041a7-9a17-7481-aa89-be1c58da6b3c\nOriginating request: Q10 login_identifier anon oracle\n\nEvidence:\nsrc/lib/auth/loginIdentifier.security.test.ts only regex-checks migration SQL, client sources, Edge source, and config.toml; it does not exercise a live anon RPC deny or an Edge round-trip.\n\nDo this:\nOptional follow-up: add an integration check that anon rpc('login_identifier') fails after the migration and that sign-in-handle returns tokens without an email field.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T05",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Client types still declare login_identifier RPC",
+      "prompt": "Kelyra P3 \u2014 Client types still declare login_identifier RPC. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a041a7-9a17-7481-aa89-be1c58da6b3c\nOriginating request: Q10 login_identifier anon oracle\n\nEvidence:\nsrc/lib/supabase/types.ts still lists login_identifier while runtime execute is service_role-only after the migration.\n\nDo this:\nOptionally drop or narrow the generated client RPC typing in a later types refresh so new client code is less likely to call a dead oracle path.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T06",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Security coverage is static SQL/string assertions only",
+      "prompt": "Kelyra P3 \u2014 Security coverage is static SQL/string assertions only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0419d-a8da-7742-8390-46ed1c5950ac\nOriginating request: Q9 profiles_read\n\nEvidence:\nprofilesRead.security.test.ts asserts migration text and call-site strings; it does not exercise live RLS as distinct JWTs (student/parent/teacher/office).\n\nDo this:\nOptional follow-up: add a DB-backed RLS smoke test with role JWTs once the migration is applied to aohibokgilxhqwmupdfv.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T07",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Security tests are SQL string assertions only",
+      "prompt": "Kelyra P3 \u2014 Security tests are SQL string assertions only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0419d-a8da-7742-8390-46ed1c5950ac\nOriginating request: Q9 profiles_read\n\nEvidence:\nsrc/lib/school/profilesRead.security.test.ts asserts migration text and call-site source patterns; it does not exercise live JWTs against SELECT on public.profiles.\n\nDo this:\nOptional later: add a live RLS fixture proving a student/parent JWT cannot SELECT an unrelated same-school profile while self and thread co-member reads succeed.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T08",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Allowed peers still receive full profile rows",
+      "prompt": "Kelyra P3 \u2014 Allowed peers still receive full profile rows. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0419d-a8da-7742-8390-46ed1c5950ac\nOriginating request: Q9 profiles_read\n\nEvidence:\nprofiles_read permits SELECT of entire profiles rows for can_message / shares_message_thread peers; call sites use select('*') (e.g. src/lib/messages/api.ts listPeopleByIds). Same full-row exposure already exists via message_directory security definer.\n\nDo this:\nIf column minimization is desired later, project display fields for hydrate paths; out of scope for Q9.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T09",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "APPLIED",
+      "summary": "APPLIED 2026-08-27: same hole as F07; parent_students_own is SELECT-only (loop 01a04406, SQL applied)",
+      "prompt": "Kelyra P3 \u2014 parent_students_own RLS still allows teacher-owned direct inserts. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsupabase/migrations/20260816000000_people_photos_delete.sql policy parent_students_own permits insert when the caller owns both parent and student teacher_id rows. linkChild no longer uses that path (rpc-only), but a raw client insert remains possible for teachers who own both cards. Pre-existing; not the Ask OR-bypass.\n\nDo this:\nLater tighten parent_students write policies so family identity inserts go only through admin_set_parent_link / is_school_admin, without breaking legitimate teacher reads.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T10",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Q8 security tests are mostly source/string assertions",
+      "prompt": "Kelyra P3 \u2014 Q8 security tests are mostly source/string assertions. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsrc/lib/ai/linkParentStudent.security.test.ts checks isOfficeRole hats and string-matches allowed()/run()/migration/prompt text; it does not call askToolsFor() with a teacher AskToolContext to assert link_parent_student is absent from defs/names at runtime.\n\nDo this:\nOptional follow-up: runtime askToolsFor(teacher) / askToolsFor(teacher+also_administrator) asserting link_parent_student absent and add_parent_to_class present.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T11",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Add-child chrome still uses isAdminRole",
+      "prompt": "Kelyra P3 \u2014 Add-child chrome still uses isAdminRole. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0418e-822e-7232-be5a-5a07d85eff0e\nOriginating request: Q8 Ask link_parent_student OR-bypass\n\nEvidence:\nsrc/app/class/[id]/parent/[parentId].tsx and student/[studentId].tsx gate Add child / link UI with isAdminRole (includes also_administrator). After 20260826000007, those clicks fail at admin_set_parent_link \u2014 fail-closed, not a mint.\n\nDo this:\nLater UX pass: gate Add-child chrome on isOfficeRole so also_administrator teachers do not see a dead control.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T12",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Q7 regression tests are mostly source-shape assertions",
+      "prompt": "Kelyra P3 \u2014 Q7 regression tests are mostly source-shape assertions. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a04183-243d-74f0-b452-2a65b9674b77\nOriginating request: Q7 teacher Ask create_class\n\nEvidence:\ncreateClass.security.test.ts proves allowed()/run()/matrix/RPC text order and isOfficeRole(teacher) false, but does not call askToolsFor() with a teacher AskToolContext to assert create_class is absent from names/defs.\n\nDo this:\nOptional follow-up: add a small behavioral unit test that builds askToolsFor({ profile: { role: 'teacher' }, ... }) and asserts !names.includes('create_class'), plus office profile includes it.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T13",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "create_class Ask gate coverage is mostly source-shape assertions",
+      "prompt": "Kelyra P3 \u2014 create_class Ask gate coverage is mostly source-shape assertions. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a04183-243d-74f0-b452-2a65b9674b77\nOriginating request: Q7 teacher Ask create_class\n\nEvidence:\nsrc/lib/classes/createClass.security.test.ts asserts isOfficeRole for Jacquee-like profiles and string-matches allowed()/run() in askTools.ts, but does not call askToolsFor() with a teacher profile to assert create_class is absent from defs/names at runtime.\n\nDo this:\nOptional follow-up: add a small runtime unit that builds askToolsFor for role=teacher (and teacher+also_administrator) and asserts create_class is not advertised and run() returns the office-only error.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T14",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Q6 security tests are static SQL/source matching only",
+      "prompt": "Kelyra P3 \u2014 Q6 security tests are static SQL/source matching only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a04177-fc7b-7863-b35c-bb0e8ce207c4\nOriginating request: Q6 school_*_for_link dumps\n\nEvidence:\nsrc/lib/parents/schoolLinkDirectories.security.test.ts reads migration/api source and asserts regexes; no live PostgREST teacher-vs-office privilege exercise.\n\nDo this:\nAcceptable for this fix. Optionally add a DB-backed smoke later if a safe CI role exists.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T15",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Ask image allowlist is duplicated in three places",
+      "prompt": "Kelyra P3 \u2014 Ask image allowlist is duplicated in three places. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a0410e-85f5-7943-9ed8-870cc061fdde\nOriginating request: Q4 ask-assistant JWT + hydrateAskImages SSRF\n\nEvidence:\nIdentical logic lives in supabase/functions/_shared/askImageUrl.ts, scripts/lib/ask-image-url.mjs, and src/lib/ai/askImageUrl.ts (tests only for the src copy).\n\nDo this:\nKeep one shared definition or add a drift check so Edge and ai:dev cannot diverge.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T16",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "ai:dev image prep still follows redirects after allowlist",
+      "prompt": "Kelyra P3 \u2014 ai:dev image prep still follows redirects after allowlist. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a0410e-85f5-7943-9ed8-870cc061fdde\nOriginating request: Q4 ask-assistant JWT + hydrateAskImages SSRF\n\nEvidence:\nEdge hydrateAskImages uses fetch(..., { redirect: 'error' }); ai-dev hydrateAskImages calls prepareImageForGrok \u2192 loadImageForGrok which fetch(imageUrl) with default redirect following.\n\nDo this:\nPass redirect: 'error' (or re-validate Location host) in loadImageForGrok when used from Ask hydration.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T17",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "ai:dev image fetch still follows redirects after allowlist",
+      "prompt": "Kelyra P3 \u2014 ai:dev image fetch still follows redirects after allowlist. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a0410e-85f5-7943-9ed8-870cc061fdde\nOriginating request: Q4 ask-assistant JWT + hydrateAskImages SSRF\n\nEvidence:\nEdge hydrateAskImages uses fetch(..., { redirect: 'error' }), but ai-dev hydrateAskImages calls prepareImageForGrok \u2192 loadImageForGrok \u2192 fetch(imageUrl) with default redirect following.\n\nDo this:\nPass redirect: 'error' (or manual no-follow) in loadImageForGrok for ask hydration parity with Edge; allowlisted Supabase object GETs do not redirect in normal operation.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T18",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Unreachable non-office navigate branch after create",
+      "prompt": "Kelyra P3 \u2014 Unreachable non-office navigate branch after create. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040cd-ce0d-7613-934b-0f583e001e55\nOriginating request: Q3 teachers must not create classes\n\nEvidence:\nUI gates Create with isOfficeRole, but onCreate still has else router.replace('/?switch=1').\n\nDo this:\nDrop the else and always navigate to /admin/class/[id] after office create.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T19",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Security regression test is static SQL matching only",
+      "prompt": "Kelyra P3 \u2014 Security regression test is static SQL matching only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040bc-aa36-7ea3-9a90-40c8714967d0\nOriginating request: Q2 SQL apply retry (drop pinned_at grant)\n\nEvidence:\nsrc/lib/messages/threadMembersUpdate.security.test.ts reads the migration file and asserts regexes; it does not exercise live PostgREST/Postgres privileges after apply.\n\nDo this:\nAcceptable for this fix. Optionally add a DB-backed privilege smoke test later if a safe CI role exists.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T20",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "ensureTeacherProfile name implies minting",
+      "prompt": "Kelyra P3 \u2014 ensureTeacherProfile name implies minting. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040a5-a12b-7f62-b29b-0df7c7c8abd6\nOriginating request: Q1 public signup / handle_new_user teacher provision\n\nEvidence:\nsrc/lib/auth/api.ts ensureTeacherProfile only selects and returns existing|null; comment says never inserts.\n\nDo this:\nRename to loadTeacherProfile (or similar) in a follow-up to match fail-closed behavior.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T21",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Security regression test is static SQL-string only",
+      "prompt": "Kelyra P3 \u2014 Security regression test is static SQL-string only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040bc-aa36-7ea3-9a90-40c8714967d0\nOriginating request: Q2 thread_members insert hole QA + security\n\nEvidence:\nsrc/lib/messages/threadMembersUpdate.security.test.ts asserts migration file contents with regex; it does not exercise PostgREST/Postgres privileges.\n\nDo this:\nAcceptable for this session (no live PostgREST). Optional later: add a DB-backed privilege smoke test if a safe CI role exists.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T22",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Security regression test is static SQL string matching only",
+      "prompt": "Kelyra P3 \u2014 Security regression test is static SQL string matching only. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-26)\nSession: 01a040bc-aa36-7ea3-9a90-40c8714967d0\nOriginating request: Q2 thread_members insert hole QA + security\n\nEvidence:\nsrc/lib/messages/threadMembersUpdate.security.test.ts reads migration files and asserts regexes; it does not exercise PostgREST/Postgres privileges.\n\nDo this:\nOptional later: add an integration check that authenticated INSERT and thread_id UPDATE fail while last_read_at UPDATE as self succeeds.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T23",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Stale linkChild comment still implies teacher RLS write path",
+      "prompt": "Kelyra P3 \u2014 Stale linkChild comment still implies teacher RLS write path. Fix this leftover only.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a04406-aa50-73b0-80d7-7ce5bcb61a70\nOriginating request: F07 \u2014 Residual parent_students_own RLS still allows teacher inserts\n\nEvidence:\nsrc/lib/parents/api.ts linkChild still comments that teacher RLS can own both rows for insert fallback, but F07 makes parent_students_own SELECT-only and linkChild is already rpc('admin_set_parent_link') only.\n\nDo this:\nUpdate that comment to say family minting is office RPC / admin policy only, so future readers do not reintroduce a PostgREST insert fallback.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the comment matches the SELECT-only / office-RPC path, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T24",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "docs/data-model.md still describes owner-both parent_students writes",
+      "prompt": "Kelyra P3 \u2014 docs/data-model.md still describes owner-both parent_students writes. Fix this leftover only.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a04406-aa50-73b0-80d7-7ce5bcb61a70\nOriginating request: F07 \u2014 Residual parent_students_own RLS still allows teacher inserts\n\nEvidence:\ndocs/data-model.md RLS table still lists parent_students as owner-both teacher policy without noting SELECT-only / office minting; product text elsewhere already says only Superintendent/Administrator may create the link.\n\nDo this:\nWhen docs are next touched, record parent_students_own as SELECT-only and writes via admin_set_parent_link / parent_students_admin_all.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the data-model RLS note matches SELECT-only / office minting, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "L5",
+      "pri": "P2",
+      "lane": "Lesson",
+      "status": "APPLIED",
+      "summary": "APPLIED 2026-08-27: lesson struggle draft skill_gaps; SQL 20260827000006 + Edge review-submission/process-ai-jobs live",
+      "prompt": "Kelyra \u2014 Flag teacher skill gap on incomplete/wrong lesson submit. Fix this hole only.\n\nProduct: when a student Submits for a Grade on a kind=lesson cell with struggle (skip, still-wrong, later_corrected, extra tries, clustered hints \u2014 same rules as worthPractice in src/lib/lessons/work.ts), the teacher gets draft skill_gaps to edit/Approve, same as homework photo gaps. Clean first-try work: no gap. Nothing is a grade until Approve. Do not auto-assign practice. Do not set current_focus_skill_id on draft.\n\nDo not rebuild Ask, U1/U2, lesson HTML authoring, Capture/Inbox, or player chrome. Do not do F06/F07/F12. Do not git commit or push.\n\nAlready true (do not redo):\n- reportLesson \u2192 student_report_lesson writes submissions.answers + status=completed + submitted_at. Never graded. Never skill_",
+      "sessionId": "01a04418-b9e4-7471-a3fd-26da63c7876a",
+      "appliedAt": "2026-08-27T12:15:45.886799-05:00"
+    },
+    {
+      "id": "AVG",
+      "pri": "P1",
+      "lane": "Gradebook",
+      "status": "HOLD",
+      "summary": "Syllabus-weighted category averages (class setup), not per-quiz include_in_average",
+      "prompt": "Chuck 2026-08-27. Class-app gradebook. Not publish_lesson_pack. Not a kind=quiz player.\n\nModel:\n- Teacher defines the syllabus at class setup: assignment types, each type's weight toward the final (e.g. homework 10%, tests 30%), the term (quarter/semester/year), and special rules (e.g. a makeup test replaces the lowest test, cap 85%).\n- Each type is averaged for the term the work was assigned in.\n- Those type averages are then weighted into the final by the syllabus weights.\n- include_in_average means \"this column counts in its type average\", not \"this column is a slice of the final\".\n- Author still emits kind=lesson HTML only. quiz/test/midterm/final are assignments.category on that pack.\n\nLive today (do not pretend this already works):\n- assignments has category, term, weight_band (none/daily/major/custom), weight_percent, include_in_average.\n- Lesson assign currently defaults include_in_average=false. SQL column default is true.\n- There is no class-level syllabus / category-weight table and no makeup-replace-lowest policy. marks.ts only labels weight_band.\n\nDo not ship the old AVG shortcut (quiz \u2192 include_in_average true) as the gradebook. Hold until Chuck says to build class-setup syllabus weights.\n"
+    },
+    {
+      "id": "L6",
+      "pri": "P1",
+      "lane": "Lesson",
+      "status": "APPLIED",
+      "summary": "LIVE 2026-08-27: publish-lesson-pack Edge deployed (unpublished only); verify_jwt on",
+      "prompt": "Kelyra \u2014 implement publish_lesson_pack Edge hook. This hole only.\n\nProduct: authenticated Edge so a teacher or office JWT can upload a pack into private Storage + unpublished lesson_packs. Assign stays assignLesson. Students never list the bucket. published is always false. Live FoM / shared-folder refuse without office + replace_live. Over 12,304,812 bytes is 413.\n\nOut of scope: studio UI, published=true flip, deploying, SQL. Do not git commit or push.\n\nLoop 01a0459b-5c76-7e91-998d-cdae95fda881 passed 2026-08-27 (no P0/P1). Files in tree: supabase/functions/publish-lesson-pack/index.ts, config.toml verify_jwt=true, src/lib/lessons/publishLessonPack.ts + security tests. Next: CoS deploys when Chuck wants it live.",
+      "sessionId": "01a0459b-5c76-7e91-998d-cdae95fda881"
+    },
+    {
+      "id": "F13",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Office replace_live on a shared prefix still runs replace-prefix",
+      "prompt": "Kelyra P2 \u2014 Office replace_live on a shared prefix still runs replace-prefix. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0459b-5c76-7e91-998d-cdae95fda881\nOriginating request: Implement publish_lesson_pack Edge hook (teacher/office JWT \u2192 unpublished lesson_packs)\n\nEvidence:\nAfter shared-folder unlock via office+replace_live, listPrefix + remove deletes any object under storage_deck_id/version not in this request (publish-lesson-pack/index.ts ~423\u2013430). Live FoM section packs share fom-ch01/v4.\n\nDo this:\nWhen another lesson_packs row already shares the prefix, skip orphan deletes (catalog-only slice) or require/document a full-prefix re-upload before replace-prefix.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "F14",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "beat_start/beat_end existence check is conditional",
+      "prompt": "Kelyra P2 \u2014 beat_start/beat_end existence check is conditional. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0459b-5c76-7e91-998d-cdae95fda881\nOriginating request: Implement publish_lesson_pack Edge hook (teacher/office JWT \u2192 unpublished lesson_packs)\n\nEvidence:\nvalidateManifest only asserts beat window membership when beat ids are collected from manifest.beats or items[].beat; if neither is present, the check is skipped (index.ts ~268\u2013284) despite the contract requiring beats to exist in the pack.\n\nDo this:\nFail 400 unless beat_start and beat_end appear in beats[] and/or items[].beat (or an equivalent explicit pack beat list).\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T25",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Quota enforced only after full body is buffered",
+      "prompt": "Kelyra P3 \u2014 Quota enforced only after full body is buffered. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0459b-5c76-7e91-998d-cdae95fda881\nOriginating request: Implement publish_lesson_pack Edge hook (teacher/office JWT \u2192 unpublished lesson_packs)\n\nEvidence:\nparseRequest loads multipart/zip/base64 into memory, then bytes > MAX_BYTES returns 413 (index.ts ~145\u2013219, 388\u2013389).\n\nDo this:\nOptionally reject early on Content-Length / running tally while reading to reduce isolate pressure from oversized teacher uploads.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T26",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "publish-lesson-pack security coverage is static source assertions",
+      "prompt": "Kelyra P3 \u2014 publish-lesson-pack security coverage is static source assertions. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0459b-5c76-7e91-998d-cdae95fda881\nOriginating request: Implement publish_lesson_pack Edge hook (teacher/office JWT \u2192 unpublished lesson_packs)\n\nEvidence:\npublishLessonPack.security.test.ts only regex/string-matches Edge/helper/api/config; no live JWT or Storage round-trip (matches existing Q* security-test pattern).\n\nDo this:\nAfter CoS deploys, smoke teacher publish unpublished + parent/student 401 + live FoM 409 without replace_live.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T27",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "Storage/DB error details echoed to caller on 502",
+      "prompt": "Kelyra P3 \u2014 Storage/DB error details echoed to caller on 502. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a0459b-5c76-7e91-998d-cdae95fda881\nOriginating request: Implement publish_lesson_pack Edge hook (teacher/office JWT \u2192 unpublished lesson_packs)\n\nEvidence:\npublish-lesson-pack/index.ts returns raw uploaded.text(), removeError.message, and upsertError.message in JSON error bodies to the authenticated caller.\n\nDo this:\nReturn a generic storage/catalog failure message to clients; keep the raw detail in server logs only.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "L7",
+      "pri": "P1",
+      "lane": "Lesson",
+      "status": "APPLIED",
+      "summary": "Loop passed + ingest-lesson-pack live (v2); Gemini trial draft ok",
+      "prompt": "Kelyra \u2014 authenticated Edge Gemini ingest for a NEW FoM 1.2 pack JSON.\n\nDONE 2026-08-27/28: kelyra-qa-loop 01a04610-8723-7030-aa97-0664b6803a84 passed; ingest-lesson-pack ACTIVE on aohibokgilxhqwmupdfv (v2, verify_jwt=true); authz smoke OPTIONS 204 / unsigned 401; live Jacquee JWT + Ch1 PPT extract \u2192 {ok:true} stamps fom-ch01-s12-test / fom-ch01-s12-author-test / v1 / hook\u2192s12c. Draft at notes/authoring/fom-ch01-s12-ingest-draft.json (no Storage / lesson_packs upsert). Nothing git-committed. P2/P3 already on notes/qa-loop-backlog.md (looksLikeMarkdown; Gemini mime). Next product steps (not this hole): pack HTML / stills-TTS / assign unpublished \u2014 only when Chuck signs.",
+      "sessionId": "01a04610-8723-7030-aa97-0664b6803a84",
+      "updatedAt": "2026-08-27T22:13:28-05:00"
+    },
+    {
+      "id": "F15",
+      "pri": "P2",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "looksLikeMarkdown can reject valid pack JSON",
+      "prompt": "Kelyra P2 \u2014 looksLikeMarkdown can reject valid pack JSON. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a04610-8723-7030-aa97-0664b6803a84\nOriginating request: Authenticated Edge Gemini ingest for a NEW FoM 1.2 pack JSON\n\nEvidence:\nsupabase/functions/ingest-lesson-pack/index.ts looksLikeMarkdown treats any line matching /^#{1,6}\\s/m as markdown before JSON.parse. A stamp-valid pack whose art_note/eve_script contains a newline then '# ' would return 400 even though JSON.parse would succeed.\n\nDo this:\nParse JSON first; only treat fence/markdown failures as 400 when parse fails, or limit the markdown heuristic to leading ``` fences.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    },
+    {
+      "id": "T28",
+      "pri": "P3",
+      "lane": "Loop",
+      "status": "OPEN",
+      "summary": "No Gemini JSON response mime type",
+      "prompt": "Kelyra P3 \u2014 No Gemini JSON response mime type. Fix this hole only.\n\nProduct: do not rebuild Ask. Do not do A1\u2013A4, U1/U2, or lesson-player work unless this finding is that surface.\n\nSource: kelyra-qa-loop (2026-08-27)\nSession: 01a04610-8723-7030-aa97-0664b6803a84\nOriginating request: Authenticated Edge Gemini ingest for a NEW FoM 1.2 pack JSON\n\nEvidence:\ngeminiGenerate is called with instructions + max_output_tokens only; other jobs often rely on extractJson. This hole intentionally 400s on markdown, so fence-wrapped replies will fail more often until the model complies.\n\nDo this:\nOptional later: request responseMimeType application/json on this job if _shared/ai.ts grows that knob; keep stamp validation.\n\nPreserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.\nIf SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).\n\nOrchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal.\n\nDone when the evidence path is closed, typecheck passes, and nothing is committed or pushed."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+Kelyra Q1 — public signup still provisions a teacher. This is still true after recent Grok Build work. Fix this hole only.
+
+Still in the tree:
+- src/app/sign-in.tsx: GhostButton "Create a teacher account" calls signUpWithPassword.
+- src/lib/auth/api.ts: signUpWithPassword is public supabase.auth.signUp.
+- public.handle_new_user() (last defined in supabase/migrations/20260817000005_school_roles.sql) inserts into public.teachers and public.profiles with role 'teacher' for every new auth.users row.
+- supabase/migrations/20260817000014_student_logins.sql only strips leftover teachers rows for students after the fact.
+- src/lib/auth/AuthProvider.tsx calls ensureTeacherProfile(), which INSERTs a teachers row if missing (when profile is missing or staff/teacher).
+
+Goal:
+1. No public self-serve teacher signup in the app. Sign-in only. People get accounts via existing office paths (admin_create_login, admin_provision_student_login), not a Create button.
+2. handle_new_user must not insert a teachers row and must not default role to teacher. If an office provision function already created the auth user / profile, the trigger must not overwrite them into teachers. If a stray auth user appears with no profile, do not grant staff. Fail closed.
+3. Keep SQL-only bootstrap for the first superintendent (school_claim_superintendent in the SQL editor). Do not replace it with an in-app create-teacher button. Update the sign-in hint that currently tells people to create an account then run that SQL.
+4. Do not weaken RLS. User JWT only. No service-role as the actor. Do not invent students. Do not expand to Q2–Q12 except where ensureTeacherProfile would recreate this same hole: do not INSERT a teachers row for a user who is not already a teacher/staff.
+5. Add a new migration under supabase/migrations/. Put the full SQL in that file so it can be applied to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+6. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Done when:
+- The Create-a-teacher-account control is gone from sign-in.
+- A raw auth.signUp cannot become a teacher via handle_new_user.
+- Office-provisioned student/parent logins are not written into teachers.
+- Typecheck passes.

@@ -1,0 +1,25 @@
+Kelyra Q5 — get_parent_card: any staff gets full parent PII. Still true. Fix this hole only.
+
+Product: A teacher may see a parent card only for a parent of a student in a class they teach. Office (administrator / superintendent, is_school_admin) may load a parent in their school. A teacher JWT must not load an unrelated parent's row (name, contact, metadata, or any other parents columns). Students and parents must not call this. Do not ride is_staff.
+
+Still in the tree:
+- supabase/migrations/20260819000012_fix_parent_rls_recursion.sql: get_parent_card(p_parent_id) is SECURITY DEFINER. The only gate is `auth.uid() is null or not public.is_staff_profile(auth.uid())`. Then `select * from public.parents where id = p_parent_id` and return the whole row. Any authenticated staff (including a teacher) can pass any parent id and get the full card. RLS does not apply inside that definer.
+- The same migration already has parent_on_taught_class() + policy parents_via_taught_class (SELECT using parent_on_taught_class). Direct table SELECT is already taught-class scoped. The RPC bypasses that wall.
+- src/lib/parents/api.ts getParent(): tries `from('parents').select('*')` then falls back to rpc get_parent_card. Closing the RPC is the hole. Do not add a second client-side leak.
+- Hypothesis (verify, do not treat as the spec if the live schema differs): tighten get_parent_card so a non-office caller must pass parent_on_taught_class (or equivalent teaches_class via parent_students/enrollments); office uses is_school_admin (and same-school if that helper exists). Fail closed. You own the exact predicate.
+
+Goal:
+1. Teacher JWT cannot load a parent they do not teach. Office can still open a parent card they are allowed to manage. Unauthenticated / student / parent JWT cannot.
+2. Prefer fixing the function (and grants) over a new parallel RPC. Keep getParent() working for allowed callers.
+3. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+4. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+5. Do not do Q6–Q12, A1–A4, U1/U2, Q4 Edge redeploy, or lesson-player work. Do not widen is_staff. Do not dump school-wide parent lists (that is Q6).
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- A teacher JWT calling get_parent_card for a parent with no taught-class link is denied.
+- A teacher can still load a parent of a student in a class they teach.
+- Office can still load an in-school parent card.
+- Typecheck passes.
+- Nothing committed or pushed.

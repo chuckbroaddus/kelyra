@@ -34,6 +34,11 @@ import {
   reasoningEffortFor,
 } from './lib/ai-policy.mjs';
 import { isAllowedAskImageUrl } from './lib/ask-image-url.mjs';
+import {
+  askActorSystemLine,
+  filterAskToolDefs,
+  mergeAskGrants,
+} from '../supabase/functions/_shared/askToolPolicy.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -141,7 +146,16 @@ const server = createServer(async (req, res) => {
         json(res, { error: 'Sign in to Kelyra first.' }, 401);
         return;
       }
-      json(res, await askAssistant(supabase, body));
+      const { data: profileRow, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, also_administrator, also_teacher, parent_id, display_name, username')
+        .eq('id', userData.user.id)
+        .maybeSingle();
+      if (profileError || !profileRow?.role) {
+        json(res, { error: 'Sign in to Kelyra first.' }, 401);
+        return;
+      }
+      json(res, await askAssistant(supabase, body, userData.user.id, profileRow));
       return;
     }
     if (route === 'classify-capture') {
@@ -447,7 +461,8 @@ Rules:
 - If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
 - If there is no gap, items must be [].
 - Keep any teacher-typed gap labels and practice questions listed below. You may add more, not delete theirs.
-- Age-appropriate. No student names. No images.`;
+- Age-appropriate. No student names. No images.
+- For lessons, skipped items, extra tries, answers that were wrong first then corrected, and hints can show a skill gap even when the last answer is right. Prefer a gap when those cluster. Do not invent a gap from clean first-try work.`;
 
 async function reviewSubmission(supabase, body) {
   const submissionId = String(body.submissionId ?? '').trim();
@@ -455,7 +470,7 @@ async function reviewSubmission(supabase, body) {
 
   const { data: submission, error: subError } = await supabase
     .from('submissions')
-    .select('id, assignment_id, status, answers, model_draft')
+    .select('id, assignment_id, student_id, status, answers, model_draft')
     .eq('id', submissionId)
     .maybeSingle();
   if (subError || !submission) throw new Error('Submission not found');
@@ -477,17 +492,28 @@ async function reviewSubmission(supabase, body) {
     items = Array.isArray(set?.items) ? set.items : [];
   }
 
+  const kind = String(assignment.kind ?? 'practice');
+  const answers = submission.answers ?? {};
+  const dbPrior = parseSubmissionReview(submission.model_draft ?? {});
+  const stemGaps = await loadModelDraftGaps(supabase, submissionId);
+  const seededPrior = dbPrior.gaps.length ? dbPrior : { ...dbPrior, gaps: stemGaps };
+  const prior =
+    body.draft != null
+      ? mergeSubmissionDraft(parseSubmissionReview(body.draft), seededPrior)
+      : seededPrior;
+
+  if (body.queued && kind === 'lesson' && !lessonHasStruggle(answers)) {
+    return { ok: true, skipped: true, reason: 'no_struggle', ...prior };
+  }
+
   const work = formatSubmissionWork({
     title: String(assignment.title ?? 'Work'),
-    kind: String(assignment.kind ?? 'practice'),
+    kind,
     items,
-    answers: submission.answers ?? {},
+    answers,
     keyNotes: assignment.key_notes ?? null,
     keyItems: assignment.key_items,
   });
-  const dbPrior = parseSubmissionReview(submission.model_draft ?? {});
-  const prior =
-    body.draft != null ? mergeSubmissionDraft(parseSubmissionReview(body.draft), dbPrior) : dbPrior;
   const ac = new AbortController();
   const payload = await withTimeout(
     grokCall(
@@ -520,7 +546,91 @@ async function reviewSubmission(supabase, body) {
     const retry = await supabase.from('submissions').update(withoutDraft).eq('id', submissionId);
     if (retry.error) throw retry.error;
   }
+  await replaceSubmissionModelGaps(supabase, {
+    submissionId,
+    studentId: submission.student_id,
+    gaps: draft.gaps,
+  });
   return { ok: true, ...draft };
+}
+
+async function loadModelDraftGaps(supabase, submissionId) {
+  const { data } = await supabase
+    .from('skill_gaps')
+    .select('label, sort_order')
+    .eq('submission_id', submissionId)
+    .eq('source', 'model')
+    .eq('status', 'draft')
+    .order('sort_order', { ascending: true });
+  return (data ?? [])
+    .map((row, index) => ({
+      label: String(row.label ?? '').trim(),
+      sortOrder: Number(row.sort_order ?? index + 1) || index + 1,
+    }))
+    .filter((gap) => gap.label)
+    .slice(0, 3);
+}
+
+async function replaceSubmissionModelGaps(supabase, input) {
+  const live = (input.gaps ?? [])
+    .map((gap) => String(gap.label ?? '').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  // Never delete existing stem drafts down to zero when the model returned no labels.
+  if (!live.length) return;
+  await supabase
+    .from('skill_gaps')
+    .delete()
+    .eq('submission_id', input.submissionId)
+    .eq('source', 'model')
+    .eq('status', 'draft');
+  const { error } = await supabase.from('skill_gaps').insert(
+    live.map((label, index) => ({
+      capture_id: null,
+      submission_id: input.submissionId,
+      student_id: input.studentId,
+      label,
+      source: 'model',
+      status: 'draft',
+      sort_order: index + 1,
+    })),
+  );
+  if (error) throw error;
+}
+
+function lessonHasStruggle(answers) {
+  if (String(answers?.state ?? '') !== 'complete') return false;
+  const extras =
+    answers.extras && typeof answers.extras === 'object' && !Array.isArray(answers.extras)
+      ? answers.extras
+      : {};
+  const marks = unwrapLessonMarks(answers.marks);
+  const laterSet = new Set(
+    Array.isArray(extras.later_corrected)
+      ? extras.later_corrected.filter((id) => typeof id === 'string' && id.trim())
+      : [],
+  );
+  const hintedSet = new Set(
+    Array.isArray(extras.hinted) ? extras.hinted.filter((id) => typeof id === 'string' && id.trim()) : [],
+  );
+  const ids = Array.isArray(extras.item_ids)
+    ? extras.item_ids.filter((id) => typeof id === 'string' && id !== 'slider37' && id !== 'who')
+    : Object.keys(marks);
+  for (const id of ids) {
+    const mark = marks[id] ?? {};
+    const hasOk = typeof mark.ok === 'boolean';
+    const ok = hasOk ? Boolean(mark.ok) : null;
+    const tries =
+      typeof mark.tries === 'number' && Number.isFinite(mark.tries) ? Math.max(0, Math.round(mark.tries)) : 0;
+    const hints = Math.max(
+      typeof mark.hints === 'number' && Number.isFinite(mark.hints) ? Math.max(0, Math.round(mark.hints)) : 0,
+      hintedSet.has(id) ? 1 : 0,
+    );
+    const laterCorrected =
+      mark.later_corrected === true || laterSet.has(id) || (ok === true && mark.first_ok === false);
+    if (!hasOk || ok === false || laterCorrected || tries >= 3 || hints >= 2) return true;
+  }
+  return false;
 }
 
 function parseSubmissionReview(parsed) {
@@ -681,8 +791,16 @@ function formatLessonAnswers(answers) {
     extras.item_stems && typeof extras.item_stems === 'object' && !Array.isArray(extras.item_stems)
       ? extras.item_stems
       : {};
+  const laterSet = new Set(
+    Array.isArray(extras.later_corrected)
+      ? extras.later_corrected.filter((id) => typeof id === 'string' && id.trim())
+      : [],
+  );
+  const hintedSet = new Set(
+    Array.isArray(extras.hinted) ? extras.hinted.filter((id) => typeof id === 'string' && id.trim()) : [],
+  );
   const ids = Array.isArray(extras.item_ids)
-    ? extras.item_ids.filter((id) => typeof id === 'string')
+    ? extras.item_ids.filter((id) => typeof id === 'string' && id !== 'slider37' && id !== 'who')
     : Object.keys(marks);
   const parts = [];
   if (answers.state) parts.push(`Status: ${String(answers.state)}`);
@@ -700,6 +818,15 @@ function formatLessonAnswers(answers) {
   if (typeof answers.hints === 'number' && answers.hints > 0) parts.push(`Hints: ${answers.hints}`);
   if (answers.audio_used === true) parts.push('Heard this');
   if (answers.kinetic_used === true) parts.push('Used a slider or drag');
+  const struggleBits = [];
+  if (incorrect) struggleBits.push(incorrect === 1 ? '1 still incorrect' : `${incorrect} still incorrect`);
+  if (skipped) struggleBits.push(skipped === 1 ? '1 skipped' : `${skipped} skipped`);
+  if (laterSet.size) {
+    struggleBits.push(
+      laterSet.size === 1 ? '1 corrected after a miss' : `${laterSet.size} corrected after a miss`,
+    );
+  }
+  if (struggleBits.length) parts.push(`Struggle: ${struggleBits.join(' · ')}`);
   for (const [index, id] of ids.entries()) {
     const mark = marks[id] ?? {};
     const stem = typeof stems[id] === 'string' && stems[id].trim() ? String(stems[id]).trim() : id;
@@ -708,13 +835,20 @@ function formatLessonAnswers(answers) {
     const bits = [outcome];
     if (typeof mark.user === 'string' && mark.user.trim()) bits.push(mark.user.trim());
     if (typeof mark.tries === 'number' && mark.tries > 1) bits.push(`${mark.tries} tries`);
-    if (mark.later_corrected === true || (ok === true && mark.first_ok === false)) {
+    if (mark.later_corrected === true || laterSet.has(id) || (ok === true && mark.first_ok === false)) {
       bits.push('corrected after a miss');
     }
-    if (typeof mark.hints === 'number' && mark.hints > 0) {
-      bits.push(mark.hints === 1 ? '1 hint' : `${mark.hints} hints`);
-    }
+    const hintCount = Math.max(
+      typeof mark.hints === 'number' && mark.hints > 0 ? mark.hints : 0,
+      hintedSet.has(id) ? 1 : 0,
+    );
+    if (hintCount === 1) bits.push('1 hint');
+    else if (hintCount > 1) bits.push(`${hintCount} hints`);
+    const guesses = Array.isArray(mark.guesses)
+      ? mark.guesses.filter((g) => typeof g === 'string' && g.trim()).slice(-8)
+      : [];
     parts.push(`${index + 1}. ${stem} — ${bits.join(' · ')}`);
+    if (guesses.length) parts.push(`   Earlier tries: ${guesses.join(', ')}`);
   }
   return parts.join('\n');
 }
@@ -980,14 +1114,26 @@ async function hydrateAskImages(input) {
   return next;
 }
 
-async function askAssistant(_supabase, body) {
+async function askAssistant(supabase, body, uid, profileRow) {
   const started = Date.now();
-  const tools = Array.isArray(body.tools) ? body.tools : [];
+  const { data: grantRows } = await supabase
+    .from('capability_grants')
+    .select('capability_id, role, access');
+  const grants = mergeAskGrants(grantRows);
+  // Seat comes from profiles for this uid only — never from the client claim.
+  const requested = Array.isArray(body.tools) ? body.tools : [];
+  const tools = filterAskToolDefs(requested, profileRow, grants);
+  console.log(
+    `[ai-dev] ask-assistant getUser=${uid} role=${profileRow.role} tools=${tools.length}/${requested.length} (policy)`,
+  );
+
   const extra = {};
   if (tools.length) extra.tools = tools;
-  if (typeof body.instructions === 'string' && body.instructions.trim()) {
-    extra.instructions = body.instructions;
-  }
+  const actor = askActorSystemLine(profileRow);
+  const clientInstructions =
+    typeof body.instructions === 'string' && body.instructions.trim() ? body.instructions.trim() : '';
+  extra.instructions = clientInstructions ? `${actor}\n\n${clientInstructions}` : actor;
+
   const raw = Array.isArray(body.input) && body.input.length
     ? body.input
     : Array.isArray(body.messages)
@@ -1000,13 +1146,13 @@ async function askAssistant(_supabase, body) {
       : [{ role: 'user', content: 'Hello' }];
   const input = await hydrateAskImages(raw);
   const payload = await grokCall('ask', input.length ? input : [{ role: 'user', content: 'Hello' }], extra, {
-    supabase: _supabase,
+    supabase,
     functionName: 'ask-assistant',
   });
   const calls = functionCallsFrom(payload);
   const responseId = typeof payload.id === 'string' ? payload.id : undefined;
   console.log(
-    `[ai-dev] ask-assistant ${Date.now() - started}ms tools=${tools.length} items=${Array.isArray(input) ? input.length : 0} calls=${calls.length}`,
+    `[ai-dev] ask-assistant ${Date.now() - started}ms tools=${tools.length} (policy) items=${Array.isArray(input) ? input.length : 0} calls=${calls.length}`,
   );
   if (calls.length) return { toolCalls: calls, responseId };
   const text = outputText(payload).trim();
@@ -2150,9 +2296,9 @@ async function readAiSpend(supabase) {
 async function processAiJobs(supabase, authorization) {
   const { data: jobs, error } = await supabase
     .from('ai_jobs')
-    .select('id, capture_id, pass')
+    .select('id, capture_id, submission_id, pass, kind')
     .eq('status', 'pending')
-    .eq('kind', 'homework_draft')
+    .in('kind', ['homework_draft', 'submission_review'])
     .order('created_at', { ascending: true })
     .limit(20);
   if (error) throw error;
@@ -2160,7 +2306,12 @@ async function processAiJobs(supabase, authorization) {
   for (const job of jobs ?? []) {
     await supabase.from('ai_jobs').update({ status: 'running' }).eq('id', job.id);
     try {
-      await analyzeHomework(supabase, { captureId: job.capture_id, pass: job.pass });
+      if (job.kind === 'submission_review') {
+        if (!job.submission_id) throw new Error('submission_id required');
+        await reviewSubmission(supabase, { submissionId: job.submission_id, queued: true });
+      } else {
+        await analyzeHomework(supabase, { captureId: job.capture_id, pass: job.pass });
+      }
       await supabase
         .from('ai_jobs')
         .update({ status: 'done', finished_at: new Date().toISOString() })

@@ -1,0 +1,25 @@
+Kelyra Q9 — profiles_read: any login SELECTs all profiles. Still true. Fix this hole only.
+
+Product: A signed-in user must not read every row in public.profiles (email, username, role, hats, parent_id, student_id, school_id, must_change_password, …). Self can read self. Messaging needs display names for thread members. Office may need school-scoped people directory. Students/parents/teachers must not dump the whole table. Do not ride is_staff. Do not rebuild Ask. Do not do Q10–Q12, A1, U1/U2.
+
+Still in the tree:
+- supabase/migrations/20260817000010_fix_messages_rls.sql: create policy profiles_read on public.profiles for select using (auth.uid() is not null); — any authenticated JWT SELECTs every profile.
+- Earlier profiles_self was dropped in that migration. profiles_admin_write still exists for writes.
+- Call sites: src/lib/school/api.ts (self + by id + people list), src/lib/classes/api.ts (teacher names by id), src/lib/messages/api.ts and go.ts (hydrate member profiles by id). Keep those working for allowed rows.
+
+Goal:
+1. Replace profiles_read so it is not "any login → all rows." Prefer: self always; same-school peers only where product needs it (messages / people); tighter than school-wide for students/parents if that is viable. You own the exact predicate. Fail closed.
+2. Messaging hydrate-by-id and self profile load must still work.
+3. Office people directory must still work for is_school_admin.
+4. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+5. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+6. Do not do Q10–Q12, A1, U1/U2, Q4 Edge redeploy, or lesson-player work. Do not widen is_staff.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- An authenticated non-office JWT cannot SELECT arbitrary unrelated profiles (no full-table dump via profiles_read).
+- Self profile and message-member hydrate still work.
+- Office can still manage people in-school.
+- Typecheck passes.
+- Nothing committed or pushed.

@@ -1,0 +1,23 @@
+Kelyra Q10 — login_identifier granted to anon (username → email oracle). Still true. Fix this hole only.
+
+Product: Unauthenticated callers must not resolve a school username (or handle) to a real email. Sign-in still needs a way for the client to turn a handle into the Auth email when the user types a username. Prefer a rate-limited / opaque path, or revoke anon execute and require a signed-in or Edge-mediated lookup. Do not dump other profile fields. Do not ride is_staff. Do not rebuild Ask. Do not do Q11–Q12, A1, U1/U2.
+
+Still in the tree:
+- supabase/migrations/20260817000005_school_roles.sql: login_identifier(p_handle text) is SECURITY DEFINER; returns email from profiles where username matches normalize_username or lower(email) = lower(trim(handle)). Granted execute to anon, authenticated.
+- src/lib/school/api.ts calls rpc login_identifier for handle→email before sign-in.
+- src/lib/supabase/types.ts declares the RPC.
+
+Goal:
+1. Anon JWT must not be able to harvest emails via username/handle oracle (or the blast radius must be closed: no grant to anon, or return a non-email opaque token only usable by Auth, or move lookup behind an Edge function with rate limits). You own the exact design; fail closed for enumeration.
+2. Signed-in username login UX must still work for real users (handle sign-in still resolves).
+3. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself. If Edge/config changes are required, include them in the tree and document what Cos must deploy; do not deploy yourself.
+4. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+5. Do not do Q11–Q12, A1, U1/U2, Q4 Edge redeploy, or lesson-player work.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Anon cannot resolve arbitrary usernames to emails via login_identifier (or equivalent oracle).
+- Real users can still sign in with a username/handle.
+- Typecheck passes.
+- Nothing committed or pushed.

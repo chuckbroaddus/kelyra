@@ -40,11 +40,13 @@ test('Q3 home: teachers have no Create class; office only', () => {
 
 test('Q3 Ask create_class is office-gated; matrix teachers cannot create', () => {
   const ask = read('src/lib/ai/askTools.ts');
-  assert.match(
-    ask,
-    /if \(spec\.def\.name === 'create_class'\) return isOfficeRole\(ctx\.profile\)/,
-  );
+  assert.match(ask, /return isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
   assert.match(ask, /Only the office can create a class/);
+  const policy = read('src/lib/ai/askToolPolicy.ts');
+  assert.match(
+    policy,
+    /create_class:\s*\{\s*capability:\s*'classes\.create',\s*need:\s*null,\s*officeOnly:\s*true/,
+  );
   const matrix = read('src/lib/school/matrix.ts');
   assert.match(
     matrix,
@@ -70,18 +72,21 @@ test('Q7: Jacquee teacher / also_administrator fail isOfficeRole (Ask + home wal
 });
 
 test('Q7 Ask: create_class office gate runs before capability-null fail-open', () => {
-  const ask = read('src/lib/ai/askTools.ts');
-  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
+  const policy = read('src/lib/ai/askToolPolicy.ts');
+  const allowedStart = policy.indexOf('export function isAskToolAllowed');
   assert.ok(allowedStart > 0);
-  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
-  const createGate = allowedBody.indexOf("spec.def.name === 'create_class'");
-  const nullOpen = allowedBody.indexOf('if (!spec.capability) return true');
-  assert.ok(createGate > 0, 'create_class allowed gate missing');
+  const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
+  const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
+  const nullOpen = allowedBody.indexOf('if (!policy.capability) return true');
+  assert.ok(officeGate > 0, 'officeOnly gate missing');
   assert.ok(nullOpen > 0, 'capability-null short-circuit missing');
-  assert.ok(createGate < nullOpen, 'create_class must be gated before capability-null fail-open');
-  const createGateLine = allowedBody.slice(createGate, allowedBody.indexOf('\n', createGate));
-  assert.match(createGateLine, /isOfficeRole\(ctx\.profile\)/);
-  assert.doesNotMatch(createGateLine, /isStaffRole|isAdminRole|\bcan\(/);
+  assert.ok(officeGate < nullOpen, 'officeOnly must be gated before capability-null fail-open');
+  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole\(profile\)/);
+  assert.doesNotMatch(allowedBody.slice(officeGate, nullOpen), /isStaffRole|isAdminRole/);
+  assert.match(
+    policy,
+    /create_class:\s*\{\s*capability:\s*'classes\.create',\s*need:\s*null,\s*officeOnly:\s*true/,
+  );
 });
 
 test('Q7 Ask: create_class run fails closed for non-office; no is_staff path', () => {
@@ -106,14 +111,17 @@ test('Q7: matrix also_administrator would widen classes.create — Ask must not 
     /id:\s*'classes\.create'[\s\S]*?administrator:\s*'own'[\s\S]*?teacher:\s*'none'/,
   );
 
-  const ask = read('src/lib/ai/askTools.ts');
-  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
-  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
-  const createIdx = allowedBody.indexOf("spec.def.name === 'create_class'");
-  const createLineEnd = allowedBody.indexOf('\n', createIdx);
-  const createGateLine = allowedBody.slice(createIdx, createLineEnd);
-  assert.match(createGateLine, /isOfficeRole/);
-  assert.doesNotMatch(createGateLine, /\bcan\(/);
+  const policy = read('src/lib/ai/askToolPolicy.ts');
+  assert.match(
+    policy,
+    /create_class:\s*\{\s*capability:\s*'classes\.create',\s*need:\s*null,\s*officeOnly:\s*true/,
+  );
+  const allowedStart = policy.indexOf('export function isAskToolAllowed');
+  const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
+  const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
+  assert.ok(officeGate > 0);
+  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole/);
+  assert.doesNotMatch(allowedBody.slice(officeGate, allowedBody.indexOf('if (!policy.capability)')), /\bcan\(/);
 });
 
 test('Q7: no leftover client create_school_class / classes insert path', () => {

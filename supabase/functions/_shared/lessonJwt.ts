@@ -60,3 +60,34 @@ export async function verifyLessonJwt(token: string, secret: string): Promise<Le
 export function lessonTtlSec(): number {
   return 60 * 60;
 }
+
+/** Env first (local lesson-dev). Else Vault via service-role RPC lesson_host_secret. */
+let cached = '';
+
+export async function getLessonHostSecret(): Promise<string> {
+  const fromEnv = Deno.env.get('LESSON_HOST_SECRET') ?? '';
+  if (fromEnv) return fromEnv;
+  if (cached) return cached;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!supabaseUrl || !service) return '';
+  try {
+    const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/lesson_host_secret`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${service}`,
+        apikey: service,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (!res.ok) return '';
+    const value = await res.json();
+    const secret = typeof value === 'string' ? value : '';
+    if (!secret) return '';
+    cached = secret;
+    return cached;
+  } catch {
+    return '';
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "after": "Q8",
+  "queue": [
+    "Q9",
+    "Q10",
+    "Q11",
+    "Q12"
+  ],
+  "sessionWaiting": null,
+  "instructions": "When Q8 kelyra-qa-loop is terminal, apply any SQL, file P2/P3, then send the next HOLD item through grok --cwd ~/projects/kelyra -p with kelyra-qa-loop. One at a time. Apply SQL. No commit/push. Chuck is asleep; do not wait for him. Stop after Q12 or on credit/token failure.",
+  "completed": [
+    "Q8",
+    "Q9",
+    "Q10",
+    "Q11",
+    "Q12"
+  ],
+  "next": null,
+  "current": null,
+  "status": "done",
+  "finishedAt": "2026-08-27T01:44:00-05:00"
+}

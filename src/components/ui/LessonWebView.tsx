@@ -8,6 +8,7 @@ import {
   isAllowedLessonSubresource,
   isFontHost,
 } from '@/lib/lessons/allowlist';
+import { injectLessonBase, lessonDocumentBase, looksLikeLessonHtml } from '@/lib/lessons/hostedHtml';
 import {
   isLessonPageEvent,
   parseWebMessage,
@@ -32,11 +33,41 @@ export const LessonWebView = forwardRef<LessonWebViewHandle, Props>(function Les
   ref,
 ) {
   const view = useRef<WebView>(null);
+  const onExpiredRef = useRef(onExpired);
+  onExpiredRef.current = onExpired;
   const injected = useMemo(() => injectScript(identity), [identity]);
   const [pageCanGoBack, setPageCanGoBack] = useState(false);
+  const [page, setPage] = useState<{ html: string; baseUrl: string } | null>(null);
 
   useEffect(() => {
     setPageCanGoBack(false);
+    setPage(null);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(documentUrl, { cache: 'no-store' });
+        if (res.status === 401 || !res.ok) {
+          onExpiredRef.current();
+          return;
+        }
+        const text = await res.text();
+        if (!looksLikeLessonHtml(text)) {
+          onExpiredRef.current();
+          return;
+        }
+        if (!cancelled) {
+          setPage({
+            html: injectLessonBase(text, documentUrl),
+            baseUrl: lessonDocumentBase(documentUrl),
+          });
+        }
+      } catch {
+        if (!cancelled) onExpiredRef.current();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [documentUrl]);
 
   useImperativeHandle(ref, () => ({
@@ -47,13 +78,15 @@ export const LessonWebView = forwardRef<LessonWebViewHandle, Props>(function Les
     },
   }));
 
+  if (!page) return <View style={styles.fill} collapsable={false} />;
+
   return (
     <View style={styles.fill} collapsable={false}>
       <WebView
         ref={view}
-        source={{ uri: documentUrl }}
+        source={{ html: page.html, baseUrl: page.baseUrl }}
         style={styles.fill}
-        originWhitelist={['http://*', 'https://*']}
+        originWhitelist={['http://*', 'https://*', 'about:*']}
         injectedJavaScriptBeforeContentLoaded={injected}
         injectedJavaScript={injected}
         onLoadEnd={() => {
@@ -66,7 +99,7 @@ export const LessonWebView = forwardRef<LessonWebViewHandle, Props>(function Les
         onShouldStartLoadWithRequest={(request) => {
           const url = request.url;
           const top = request.isTopFrame !== false;
-          if (url === documentUrl) return true;
+          if (url === documentUrl || url === page.baseUrl) return true;
           if (isFontHost(url) && !top) return true;
           if (!top && isAllowedLessonSubresource(url, documentUrl)) return true;
           if (isAllowedLessonNavigation(url, documentUrl)) return true;
@@ -81,10 +114,12 @@ export const LessonWebView = forwardRef<LessonWebViewHandle, Props>(function Les
           }
         }}
         onHttpError={(event) => {
-          if (event.nativeEvent.statusCode === 401) onExpired();
+          if (event.nativeEvent.statusCode === 401) onExpiredRef.current();
         }}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
+        keyboardDisplayRequiresUserAction={false}
+        hideKeyboardAccessoryView
         allowsBackForwardNavigationGestures={pageCanGoBack}
         setSupportMultipleWindows={false}
         sharedCookiesEnabled={false}

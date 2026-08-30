@@ -17,8 +17,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('XAI_API_KEY');
-    if (!apiKey) return json({ error: 'XAI_API_KEY is not set' }, 501);
+    let apiKey: string;
+    try {
+      apiKey = requireXaiKey();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'AI key is not set';
+      return json({ error: message }, 501);
+    }
 
     const body = (await req.json()) as { captureId?: string; pass?: string; queue?: boolean };
     const { captureId } = body;

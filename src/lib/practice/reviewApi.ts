@@ -69,9 +69,23 @@ export async function loadTurnedInReview(submissionId: string): Promise<TurnedIn
   }
 
   const stored = parseSubmissionReview(submission.model_draft);
+  const { data: draftGaps } = await supabase
+    .from('skill_gaps')
+    .select('label, sort_order')
+    .eq('submission_id', submissionId)
+    .eq('status', 'draft')
+    .order('sort_order', { ascending: true });
+  const seededGaps = (draftGaps ?? [])
+    .map((row, index) => ({
+      label: String(row.label ?? '').trim(),
+      sortOrder: Number(row.sort_order ?? index + 1) || index + 1,
+    }))
+    .filter((gap) => gap.label)
+    .slice(0, 3);
   const draft: SubmissionReviewDraft = {
     ...stored,
     draftScore: stored.draftScore ?? submission.draft_score,
+    gaps: stored.gaps.length ? stored.gaps : seededGaps,
   };
   const lessonResult = assignment.kind === 'lesson' ? asLessonResult(submission.answers) : null;
   const lessonWork = lessonWorkFromResult(lessonResult);
@@ -114,10 +128,17 @@ export async function storeTurnedInDraft(
     draft_score: draft.draftScore,
   };
   const { error } = await supabase.from('submissions').update(payload).eq('id', submission.id);
-  if (!error) return;
-  const { model_draft: _draft, ...withoutDraft } = payload;
-  const retry = await supabase.from('submissions').update(withoutDraft).eq('id', submission.id);
-  if (retry.error) throw retry.error;
+  if (error) {
+    const { model_draft: _draft, ...withoutDraft } = payload;
+    const retry = await supabase.from('submissions').update(withoutDraft).eq('id', submission.id);
+    if (retry.error) throw retry.error;
+  }
+  // Keep Focus / reload in sync with editable Suggested gaps (including Remove-all).
+  await replaceSubmissionModelDraftGaps({
+    submissionId: submission.id,
+    studentId: submission.student_id,
+    gaps: draft.gaps,
+  });
 }
 
 export async function approveTurnedInReview(input: {
@@ -150,9 +171,10 @@ export async function approveTurnedInReview(input: {
   }
 
   const liveGaps = draft.gaps.filter((gap) => gap.label.trim());
+  // Always clear submission gaps first so Approve-with-zero does not leave Review drafts.
+  await supabase.from('skill_gaps').delete().eq('submission_id', review.submission.id);
   let focusSkill: { id: string; label: string } | null = null;
   if (liveGaps.length) {
-    await supabase.from('skill_gaps').delete().eq('submission_id', review.submission.id);
     for (const [index, gap] of liveGaps.entries()) {
       const skill = await ensureClassSkill(review.classId, gap.label.trim());
       if (!focusSkill) focusSkill = skill;
@@ -201,6 +223,34 @@ export async function approveTurnedInReview(input: {
     const message = err instanceof Error ? err.message : 'Could not assign practice';
     throw new Error(`Approved the score, but could not assign practice. ${message}`);
   }
+}
+
+async function replaceSubmissionModelDraftGaps(input: {
+  submissionId: string;
+  studentId: string;
+  gaps: Array<{ label: string; sortOrder?: number }>;
+}): Promise<void> {
+  const supabase = requireSupabase();
+  const live = input.gaps.map((gap) => gap.label.trim()).filter(Boolean).slice(0, 3);
+  await supabase
+    .from('skill_gaps')
+    .delete()
+    .eq('submission_id', input.submissionId)
+    .eq('source', 'model')
+    .eq('status', 'draft');
+  if (!live.length) return;
+  const { error } = await supabase.from('skill_gaps').insert(
+    live.map((label, index) => ({
+      capture_id: null,
+      submission_id: input.submissionId,
+      student_id: input.studentId,
+      label,
+      source: 'model',
+      status: 'draft',
+      sort_order: index + 1,
+    })),
+  );
+  if (error) throw error;
 }
 
 async function ensureClassSkill(classId: string, label: string): Promise<{ id: string; label: string }> {

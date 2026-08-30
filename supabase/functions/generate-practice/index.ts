@@ -32,7 +32,8 @@ Deno.serve(async (req) => {
     return json({ items });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'generate-practice failed';
-    const status = message.includes('XAI_API_KEY') ? 501 : 500;
+    const status =
+      message.includes('XAI_API_KEY') || message.includes('GEMINI_API_KEY') ? 501 : 500;
     return json({ error: message }, status);
   }
 });

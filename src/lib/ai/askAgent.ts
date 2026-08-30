@@ -20,7 +20,12 @@ export type AskAgentTurn = {
 type AskAssistantReply = {
   text?: string;
   responseId?: string;
-  toolCalls?: Array<{ call_id: string; name: string; arguments: string }>;
+  toolCalls?: Array<{
+    call_id: string;
+    name: string;
+    arguments: string;
+    thoughtSignature?: string;
+  }>;
 };
 
 type ContentPart =
@@ -29,7 +34,13 @@ type ContentPart =
 
 type InputItem =
   | { role: 'user' | 'assistant'; content: string | ContentPart[] }
-  | { type: 'function_call'; call_id: string; name: string; arguments: string }
+  | {
+      type: 'function_call';
+      call_id: string;
+      name: string;
+      arguments: string;
+      thoughtSignature?: string;
+    }
   | { type: 'function_call_output'; call_id: string; output: string };
 
 function asHistoryItem(item: AskChatLine): InputItem | null {
@@ -129,14 +140,19 @@ export async function runAskAgent(input: {
 
     if (reply.toolCalls?.length) {
       didWork = true;
+      // Push all function_call items first, then all outputs, so parallel tool
+      // rounds stay one model turn + one user turn (required for Gemini 3).
       for (const call of reply.toolCalls) {
-        input.onStatus?.(`${call.name.replace(/_/g, ' ')}…`);
         history.push({
           type: 'function_call',
           call_id: call.call_id,
           name: call.name,
           arguments: call.arguments ?? '{}',
+          ...(call.thoughtSignature ? { thoughtSignature: call.thoughtSignature } : {}),
         });
+      }
+      for (const call of reply.toolCalls) {
+        input.onStatus?.(`${call.name.replace(/_/g, ' ')}…`);
         const result = await tools.run(call.name, call.arguments ?? '{}');
         if (result.href) href = result.href;
         history.push({ type: 'function_call_output', call_id: call.call_id, output: result.json });

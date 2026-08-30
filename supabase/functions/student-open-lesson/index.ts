@@ -4,7 +4,7 @@
  * preview, SELECTs the assignment under RLS (taught class).
  */
 
-import { lessonTtlSec, signLessonJwt } from '../_shared/lessonJwt.ts';
+import { getLessonHostSecret, lessonTtlSec, signLessonJwt } from '../_shared/lessonJwt.ts';
 
 type OpenRow = {
   assignment_id: string;
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
   const anon = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-  const secret = Deno.env.get('LESSON_HOST_SECRET') ?? '';
+  const secret = await getLessonHostSecret();
   if (!supabaseUrl || !anon || !secret) return json({ error: 'Lesson host is not configured' }, 503);
 
   let body: { assignmentId?: string; preview?: boolean } = {};

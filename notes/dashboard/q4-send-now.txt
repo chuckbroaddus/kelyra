@@ -1,0 +1,29 @@
+Kelyra Q4 — ask-assistant is unauthenticated SSRF. Still true. Fix this hole only.
+
+Product: Ask is a signed-in school tool. An anonymous caller must not spend xAI or fetch URLs. Do not build A1 (tool-runner / policy map / capability grants). Tools still run on the device today.
+
+Still in the tree:
+- supabase/functions/ask-assistant/index.ts creates a user client from Authorization but never calls auth.getUser(). It proceeds with tools/instructions from the body even if the JWT is missing or junk.
+- supabase/config.toml has no [functions.ask-assistant] block (verify_jwt not set). lesson-host is verify_jwt = false on purpose — leave that.
+- hydrateAskImages in that Edge function does fetch(part.image_url) for any non-data: URL (SSRF: private IPs, metadata hosts, arbitrary https).
+- scripts/ai-dev-server.mjs: global Bearer prefix check exists, but askAssistant() still does not getUser(), and hydrateAskImages / prepareImageForGrok will open non-data image URLs.
+- src/lib/ai/invoke.ts is the signed-in app path. Keep it working.
+
+Goal:
+1. Edge ask-assistant: require Authorization Bearer; create a user-scoped client (anon key + that header). If getUser() fails, 401. Ignore body.role. Do not treat client tools or instructions as authorization. Do not put service role in the client. Do not log tokens.
+2. config.toml: [functions.ask-assistant] verify_jwt = true. If another AI Edge function also lacks both verify_jwt and getUser, add the same gate. Do not rebuild those functions. Do not change lesson-host.
+3. hydrateAskImages (Edge + ai:dev): only https URLs on this project's storage host (*.supabase.co/storage/v1/object/... for aohibokgilxhqwmupdfv), or already data:. Reject http, private/link-local/loopback IPs, metadata hosts (169.254.169.254, metadata.google.internal, and the usual cloud metadata names), and off-host URLs. Failed/rejected images become the existing "(A photo was attached but could not be opened.)" text part.
+4. Local ai:dev: keep the Bearer prefix check. For ask-assistant, also getUser() so a junk Bearer cannot spend.
+5. Signed-in invokeAi('ask-assistant') from the app must still work on both the local gateway and Edge.
+6. Prefer function + config.toml. Add a supabase/migrations/ file only if SQL is actually required; put the full script in the file. Do not apply SQL yourself. Chief of Staff applies it to project aohibokgilxhqwmupdfv.
+7. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+8. Do not do Q5–Q12, A1–A4, U1/U2, or lesson-player work.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Unauthed or junk-JWT ask-assistant returns 401 and does not call xAI or fetch a URL.
+- hydrateAskImages will not fetch an arbitrary or private URL.
+- Signed-in Ask still works.
+- Typecheck passes.
+- Nothing committed or pushed.

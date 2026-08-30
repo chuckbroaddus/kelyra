@@ -1,0 +1,124 @@
+{
+  "ok": true,
+  "pack": {
+    "spec": "kelyra.pack/1",
+    "kind": "lesson",
+    "deck_id": "fom-ch01-s12-test",
+    "storage_deck_id": "fom-ch01-s12-author-test",
+    "version": "v1",
+    "title": "FoM \u00b7 1.2 Addition and Subtraction",
+    "beat_start": "hook",
+    "beat_end": "s12c",
+    "style_brief": "kelyra-lesson/2026-08",
+    "voice": "eve",
+    "beats": [
+      {
+        "id": "hook",
+        "title": "Welcome",
+        "role": "hook",
+        "eve_script": "Section 1.2. Whole number and decimal addition and subtraction. Let us begin.",
+        "caption_script": "Cinematic wide shot of an old brass calculating machine resting on a mahogany desk under amber desk-lamp light.",
+        "art_note": "Hero scene for this beat: full-bleed original painted still + math model in the midground. 70% world / 30% frosted card. Color script one mood. No textbook screenshot as the hero."
+      },
+      {
+        "id": "s12t",
+        "title": "1.2 Teach",
+        "role": "teach",
+        "eve_script": "Notice how addition and subtraction undo each other. They are inverse operations. Line up your decimals and annex zeros when needed.",
+        "caption_script": "A polished slate chalkboard showing stacked decimal columns with soft chalk dust catching the side light.",
+        "art_note": "Hero scene for this beat: full-bleed original painted still + math model in the midground. 70% world / 30% frosted card. Color script one mood. No textbook screenshot as the hero."
+      },
+      {
+        "id": "s12c",
+        "title": "1.2 Check",
+        "role": "check",
+        "eve_script": "Solve each item. Type numbers carefully.",
+        "caption_script": "A clean leather-bound notebook page with grid lines and a crisp white pencil resting beside a brass ruler.",
+        "art_note": "Hero scene for this beat: full-bleed original painted still + math model in the midground. 70% world / 30% frosted card. Color script one mood. No textbook screenshot as the hero."
+      }
+    ],
+    "items": [
+      {
+        "id": "item-inv-1",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Add: 348 + 512",
+        "accept": [
+          "860"
+        ],
+        "hint": "Type 860"
+      },
+      {
+        "id": "item-inv-2",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Subtract: 642 \u2212 219",
+        "accept": [
+          "423"
+        ],
+        "hint": "Type 423"
+      },
+      {
+        "id": "item-inv-3",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Add decimals: 8.4 + 3.7",
+        "accept": [
+          "12.1"
+        ],
+        "hint": "Type 12.1"
+      },
+      {
+        "id": "item-inv-4",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Subtract decimals: 15.2 \u2212 6.8",
+        "accept": [
+          "8.4"
+        ],
+        "hint": "Type 8.4"
+      },
+      {
+        "id": "item-inv-5",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Find the difference by annexing zeros: 45 \u2212 18.27",
+        "accept": [
+          "26.73"
+        ],
+        "hint": "Type 26.73"
+      },
+      {
+        "id": "item-inv-6",
+        "beat": "s12c",
+        "type": "text",
+        "scored": true,
+        "stem": "Subtract money: $50 \u2212 $12.45",
+        "accept": [
+          "$37.55",
+          "37.55"
+        ],
+        "hint": "Type 37.55 or $37.55"
+      }
+    ],
+    "bridge": {
+      "identity": "kelyra.identity",
+      "event": "kelyra.lesson",
+      "complete_kind": "this_visit",
+      "reports": [
+        "item_ids",
+        "item_stems",
+        "later_corrected",
+        "hinted",
+        "skipped",
+        "wrong",
+        "retried"
+      ]
+    }
+  }
+}

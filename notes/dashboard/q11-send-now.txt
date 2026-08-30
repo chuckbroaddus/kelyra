@@ -1,0 +1,28 @@
+Kelyra Q11 — students_own leftover; co-teacher can see roster, cannot write. Still true. Fix this hole only.
+
+Product: Co-teachers on a shared class can SELECT roster students but cannot UPDATE/INSERT/DELETE them because writes still go through students_own (teacher_id = auth.uid()). students_via_taught_class is SELECT only. Two teachers on one class must both be able to rename, edit details, add roster names, and attach parents. Do not ride is_staff. Do not rebuild Ask. Do not do Q12, A1, U1/U2.
+
+Still in the tree (audit and fix as needed):
+- Policy students_own on public.students (teacher_id = auth.uid()) — owner-only writes.
+- Policy students_via_taught_class — SELECT only via teaches_class / enrollment.
+- Policy students_admin_all — keep for office.
+- admin_provision_student_login / teacher-facing RPCs that still require s.teacher_id = auth.uid().
+- Same owner-only pattern on parents_own / parent_students if still blocking co-teachers while office has select-via-class.
+
+Goal:
+1. New migration: drop policy students_own; add students_write_via_taught_class for INSERT/UPDATE/DELETE using teaches_class on an enrollment (or new enrollment in a taught class). Keep students_admin_all.
+2. students.teacher_id: on insert default auth.uid() if the actor has a teachers row; do not block a second teacher’s updates on owner mismatch.
+3. Align admin_provision_student_login / teacher-facing RPCs that still require s.teacher_id = auth.uid() to use teaches_class or is_school_admin.
+4. Repeat the same audit for parents_own / parent_students if those are still owner-only while office added select-via-class.
+5. Owner-only delete of the person record may stay admin+owner if product requires — say so in the migration comment.
+6. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+7. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+8. Do not do Q12, A1, U1/U2, Q4 Edge redeploy, or lesson-player work.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Two teachers on one class can both rename, edit details, add roster names, attach parents (writes via taught-class, not owner-only).
+- Office admin paths still work.
+- Typecheck passes.
+- Nothing committed or pushed.

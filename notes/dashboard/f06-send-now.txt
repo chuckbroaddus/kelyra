@@ -1,0 +1,27 @@
+Kelyra F06 — Ask create_parent still accepts student_id and calls linkChild. Fix this hole only.
+
+Product: Office/SIS owns parent↔student family links. Teachers may add an existing parent’s children to a class they teach (add_parent_to_class). They must not mint family identity via create_parent. Do not rebuild Ask. Do not do A1–A4, U1/U2, lesson-player, F07, F12, or other leftover holes in this run.
+
+Source: kelyra-qa-loop (2026-08-27) session 01a0418e-822e-7232-be5a-5a07d85eff0e after Q8.
+
+Evidence:
+- src/lib/ai/askTools.ts create_parent (capability parents.invite) resolves student_id/student_name and passes studentId into createParent().
+- src/lib/parents/api.ts createParent then awaits linkChild().
+- Teachers keep the tool via parents.invite; after the office-only RPC they cannot mint the family row, but the tool description still says it can link a child and a failed link can leave a newly inserted parent without the child.
+
+Do this:
+- For non-office Ask contexts, omit student link args from create_parent or skip linkChild unless isOfficeRole.
+- Keep add_parent_to_class for class attach only.
+- Fail closed. Do not ride is_staff.
+
+Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+If SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Teacher Ask create_parent cannot pass a student to linkChild / admin_set_parent_link.
+- Office can still create a parent and link a child if that path is office-owned.
+- Teacher add_parent_to_class for a taught class still works.
+- Typecheck passes.
+- Nothing committed or pushed.

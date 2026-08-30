@@ -1,0 +1,28 @@
+Kelyra Q2 QA + security only. The implement is already in the tree and live. Do not re-implement unless QA or security finds a real P0/P1 hole.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+What already landed (do not rewrite unless broken):
+- supabase/migrations/20260826000002_fail_closed_thread_members_insert.sql
+  drop policy if exists thread_members_insert on public.message_thread_members;
+  revoke insert on public.message_thread_members from public, anon, authenticated;
+  grant select, update on public.message_thread_members to authenticated;
+- Chief of Staff already applied that migration to Supabase project aohibokgilxhqwmupdfv as fail_closed_thread_members_insert. Do not apply SQL yourself. Do not write a second copy of the same migration.
+
+Original hole:
+- thread_members_insert was with check (auth.uid() is not null). Any authenticated client could INSERT any profile_id into any thread_id, then is_thread_member() unlocked thread/message SELECT.
+
+QA must independently verify, then security MUST run (this is an RLS/grants change; do not skip security):
+1. Clients cannot INSERT into message_thread_members (no INSERT policy; INSERT revoked from public/anon/authenticated). A leftover INSERT policy or GRANT INSERT is P0.
+2. Existing security-definer RPCs still exist and still write membership: open_direct_thread, open_group_thread, add_group_member, leave/remove. Do not invent a new messaging product. A3 stays parked.
+3. App code must not client-insert into message_thread_members. Search src/ for that table.
+4. SELECT/UPDATE for last_read/mute/pin for actual members should still work. Do not weaken other RLS.
+5. Do not expand to Q1 or Q3–Q12. Do not git reset, checkout, restore, clean, stash, commit, or push. Preserve unrelated dirty-tree work.
+6. If the existing migration is already correct, implementer reports that with changed_paths pointing at that file and hands off. Only write a new migration if QA/security finds a remaining hole.
+
+Done when:
+- QA and security both ran.
+- PostgREST insert into message_thread_members as a random authenticated user fails (policy/grants in the tree prove this; you cannot hit live PostgREST from this session).
+- Membership still goes through the definer RPCs only.
+- Typecheck passes if you touch TypeScript.
+- Nothing committed or pushed.

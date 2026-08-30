@@ -3,6 +3,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { callMetered, functionCalls, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { imageDetailFor } from '../_shared/aiPolicy.ts';
 import { isAllowedAskImageUrl } from '../_shared/askImageUrl.ts';
+import {
+  askActorSystemLine,
+  filterAskToolDefs,
+  mergeAskGrants,
+  type ProfileHats,
+} from '../_shared/askToolPolicy.ts';
 
 const FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
 const PHOTO_FAILED = '(A photo was attached but could not be opened.)';
@@ -55,11 +61,11 @@ async function hydrateAskImages(input: unknown): Promise<unknown> {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors() });
   try {
     const authorization = req.headers.get('Authorization') ?? '';
     if (!authorization.startsWith('Bearer ')) {
-      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
+      return json({ error: 'Sign in to Kelyra first.' }, 401);
     }
 
     const supabase = createClient(
@@ -69,17 +75,41 @@ Deno.serve(async (req) => {
     );
     const { data: auth, error: authError } = await supabase.auth.getUser();
     if (authError || !auth.user?.id) {
-      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
+      return json({ error: 'Sign in to Kelyra first.' }, 401);
     }
 
+    const uid = auth.user.id;
+    const { data: profileRow, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role, also_administrator, also_teacher, parent_id, display_name, username')
+      .eq('id', uid)
+      .maybeSingle();
+    if (profileError || !profileRow?.role) {
+      return json({ error: 'Sign in to Kelyra first.' }, 401);
+    }
+    const profile = profileRow as ProfileHats;
+
+    const { data: grantRows } = await supabase
+      .from('capability_grants')
+      .select('capability_id, role, access');
+    const grants = mergeAskGrants(grantRows);
+
     const body = await req.json();
+    // Seat comes from profiles for this uid only — never from the client claim.
+    const requested = Array.isArray(body.tools) ? body.tools : [];
+    const tools = filterAskToolDefs(requested, profile, grants);
+    console.log(
+      `ask-assistant getUser=${uid} role=${profile.role} tools=${tools.length}/${requested.length} (policy)`,
+    );
+
     const apiKey = requireXaiKey();
-    const tools = Array.isArray(body.tools) ? body.tools : [];
     const extra: Record<string, unknown> = {};
     if (tools.length) extra.tools = tools;
-    if (typeof body.instructions === 'string' && body.instructions.trim()) {
-      extra.instructions = body.instructions;
-    }
+    const actor = askActorSystemLine(profile);
+    const clientInstructions =
+      typeof body.instructions === 'string' && body.instructions.trim() ? body.instructions.trim() : '';
+    extra.instructions = clientInstructions ? `${actor}\n\n${clientInstructions}` : actor;
+
     const raw = Array.isArray(body.input) && body.input.length
       ? body.input
       : Array.isArray(body.messages)
@@ -99,10 +129,21 @@ Deno.serve(async (req) => {
     });
     const calls = functionCalls(payload);
     const responseId = typeof payload.id === 'string' ? payload.id : undefined;
-    if (calls.length) return Response.json({ toolCalls: calls, responseId });
+    if (calls.length) return json({ toolCalls: calls, responseId });
     const text = outputText(payload).trim();
-    return Response.json({ text: text || FALLBACK, responseId });
+    return json({ text: text || FALLBACK, responseId });
   } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : 'Ask failed' }, { status: 400 });
+    return json({ error: err instanceof Error ? err.message : 'Ask failed' }, 400);
   }
 });
+
+function cors() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
+
+function json(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: cors() });
+}

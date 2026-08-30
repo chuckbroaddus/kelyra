@@ -47,7 +47,7 @@ Do not add tools that ride `is_staff` / open thread-member insert.
 
 | ID | Item | Source | Status |
 |----|------|--------|--------|
-| A1 | Tool-runner: getUser + policy map + server-filtered tools; no service-role exec | Agent | HOLD |
+| A1 | Tool-runner: getUser + policy map + server-filtered tools; no service-role exec | Agent | APPLIED 2026-08-27 (Edge live) |
 | A2 | Safe reads: grade cells, class desk, completion, inbox, my practice, children progress, unread, feed, audit search | Agent | HOLD |
 | A3 | Messages list + send as member (no add-member until Q2) | Agent | HOLD |
 | A4 | Backlog do-not-send: Approve, deletes, admin logins/hats/matrix/school identity, PPT-to-practice | Agent | HOLD (do not send) |

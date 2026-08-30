@@ -1,0 +1,29 @@
+Kelyra Q6 — school_students_for_link / school_parents_for_link dump the whole school to any staff. Still true. Fix this hole only.
+
+Product: Office (is_school_admin) may list in-school students/parents for linking. A teacher JWT must not receive the whole-school student or parent directory (full rows). Teachers may list students/parents tied to classes they teach. Students/parents/anon must not. Do not ride is_staff. Do not do Q8 (link_parent_student). Do not rebuild Ask.
+
+Still in the tree:
+- supabase/migrations/20260819000000_parent_links_and_alerts.sql: school_students_for_link() is SECURITY DEFINER. Gate is is_staff_profile + owner.school_id = my_school_id(). Any teacher JWT gets every student in the school.
+- supabase/migrations/20260819000010_office_parent_directory.sql replaced school_parents_for_link(): still is_staff_profile, then (is_school_admin OR teacher_id = auth.uid() OR exists same-school profiles x.id = p.teacher_id or x.parent_id = p.id). The last OR is a school-wide dump for any staff.
+- class_parent_directory(p_class_id) selects from school_parents_for_link(), so it inherits the dump.
+- src/lib/students/api.ts listStudentsForLinking() calls school_students_for_link, then falls back to roster+available for a classId.
+- src/lib/parents/api.ts loadAllParentRows() calls school_parents_for_link, then falls back to from('parents').select('*'). Closing the RPC is the hole. Do not add a wider client dump. Direct-table fallback is only OK if RLS already walls the caller (teachers: taught-class). Do not use this ticket to rewrite parents_admin_all / office SELECT (filed separately as a P2 after Q5) unless the RPC fix is meaningless without it.
+- Hypothesis (verify): office stays school-scoped via is_school_admin + my_school_id; teachers use taught-class (teaches_class / parent_on_taught_class / enrollments). Fail closed. You own the exact predicate.
+
+Goal:
+1. Teacher JWT calling school_students_for_link / school_parents_for_link does not get unrelated school rows.
+2. Office can still list in-school students/parents for linking.
+3. class_parent_directory must not re-dump the school to a teacher. Keep office class-parent linking working.
+4. Keep listStudentsForLinking / parent class directory working for allowed callers.
+5. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+6. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+7. Do not do Q7–Q12, A1–A4, U1/U2, Q4 Edge redeploy, or lesson-player work. Do not widen is_staff.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- A teacher JWT cannot list the whole-school student or parent directory via these RPCs (or class_parent_directory).
+- A teacher can still see students/parents for classes they teach.
+- Office can still list in-school students/parents for linking.
+- Typecheck passes.
+- Nothing committed or pushed.

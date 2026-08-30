@@ -1,0 +1,275 @@
+{
+  "spec": "kelyra.pack/1",
+  "kind": "lesson",
+  "source": "extracted from notes/teacher-decks/fom-ch01-v4/index.html ITEMS/ALL_BEATS/SCENES plus src/lib/lessons/work.ts FOM_ITEM_STEMS. Fixture only. Does not replace the HTML.",
+  "deck_id": "fom-ch01-s11",
+  "storage_deck_id": "fom-ch01",
+  "version": "v4",
+  "title": "FoM · 1.1 Ordering and Rounding",
+  "beat_start": "hook",
+  "beat_end": "s11c",
+  "style_brief": "kelyra-lesson/2026-08",
+  "voice": "eve",
+  "progress_key_unsliced": "kelyra-fom-ch01-v4",
+  "folder": "notes/teacher-decks/fom-ch01-v4/",
+  "beats": [
+    {
+      "id": "hook",
+      "title": "Welcome",
+      "role": "hook",
+      "audio": "audio/hook.mp3",
+      "scene": "img/scenes/beat-hook.webp",
+      "caption": "audio/captions/hook.mp3",
+      "caption_script": "audio/captions/hook.txt"
+    },
+    {
+      "id": "s11t",
+      "title": "1.1 Teach",
+      "role": "teach",
+      "audio": "audio/s11t.mp3",
+      "scene": "img/scenes/beat-s11t.webp",
+      "caption": "audio/captions/s11t.mp3",
+      "caption_script": "audio/captions/s11t.txt"
+    },
+    {
+      "id": "s11c",
+      "title": "1.1 Check",
+      "role": "check",
+      "audio": "audio/s11c.mp3",
+      "scene": "img/scenes/beat-s11c.webp",
+      "caption": "audio/captions/s11c.mp3",
+      "caption_script": "audio/captions/s11c.txt"
+    }
+  ],
+  "items": [
+    {
+      "id": "slider37",
+      "beat": "s11t",
+      "type": "slider",
+      "scored": false,
+      "stem": "Park the star at 3.7",
+      "accept": [
+        "3.7"
+      ],
+      "notes": "Outside ITEMS/grade(). Excluded from score and skill-gap item_ids."
+    },
+    {
+      "id": "houses",
+      "beat": "s11c",
+      "type": "houses",
+      "scored": true,
+      "stem": "Drag each digit onto 29.108",
+      "body": "Tens, ones, point, tenths, hundredths, thousandths.",
+      "hint": "2 is tens. 8 is thousandths.",
+      "hero": "houses",
+      "slots": [
+        {
+          "need": "2",
+          "label": "tens"
+        },
+        {
+          "need": "9",
+          "label": "ones"
+        },
+        {
+          "need": ".",
+          "label": "point"
+        },
+        {
+          "need": "1",
+          "label": "tenths"
+        },
+        {
+          "need": "0",
+          "label": "hundredths"
+        },
+        {
+          "need": "8",
+          "label": "thousandths"
+        }
+      ]
+    },
+    {
+      "id": "a1",
+      "beat": "s11c",
+      "type": "text",
+      "scored": true,
+      "stem": "Word form of 506.209",
+      "accept": [
+        "five hundred six and two hundred nine thousandths",
+        "five hundred six, and two hundred nine thousandths"
+      ],
+      "hint": "Use and for the decimal point. Thousandths.",
+      "hero": "houses"
+    },
+    {
+      "id": "a2",
+      "beat": "s11c",
+      "type": "text",
+      "scored": true,
+      "stem": "Expanded form of 29.108 (use +)",
+      "accept": [
+        "20+9+0.1+0.008",
+        "20 + 9 + 0.1 + 0.008"
+      ],
+      "hint": "20 + 9 + 0.1 + 0.008 — skip a zero hundredths if the key does.",
+      "hero": "houses"
+    },
+    {
+      "id": "a3",
+      "beat": "s11c",
+      "type": "choice",
+      "scored": true,
+      "stem": "674.820 ____ 674.82",
+      "options": [
+        [
+          "=",
+          "="
+        ],
+        [
+          "<",
+          "<"
+        ],
+        [
+          ">",
+          ">"
+        ]
+      ],
+      "accept": [
+        "="
+      ],
+      "hint": "Trailing zero does not change value.",
+      "hero": "compare"
+    },
+    {
+      "id": "a4",
+      "beat": "s11c",
+      "type": "choice",
+      "scored": true,
+      "stem": "75,010.02 ____ 75,010.2",
+      "options": [
+        [
+          "=",
+          "="
+        ],
+        [
+          "<",
+          "<"
+        ],
+        [
+          ">",
+          ">"
+        ]
+      ],
+      "accept": [
+        "<"
+      ],
+      "hint": "Line up tenths: 0 versus 2.",
+      "hero": "compare"
+    },
+    {
+      "id": "a5",
+      "beat": "s11c",
+      "type": "text",
+      "scored": true,
+      "stem": "Increasing: 7.203; 7.302; 7.03; 7.215",
+      "accept": [
+        "7.03;7.203;7.215;7.302",
+        "7.03,7.203,7.215,7.302",
+        "7.03 7.203 7.215 7.302"
+      ],
+      "hint": "Annex zeros. Smallest tenths first: 7.03 … Separate with commas, semicolons, or spaces.",
+      "hero": "compare"
+    },
+    {
+      "id": "a6",
+      "beat": "s11c",
+      "type": "text",
+      "kind": "round",
+      "scored": true,
+      "stem": "Round 408,293.561 to the nearest hundred",
+      "accept": [
+        "408300",
+        "408,300"
+      ],
+      "hint": "Look at the tens digit 9.",
+      "hero": "line"
+    },
+    {
+      "id": "a7",
+      "beat": "s11c",
+      "type": "text",
+      "kind": "round",
+      "scored": true,
+      "stem": "Round 590.045 to the nearest hundredth",
+      "accept": [
+        "590.05"
+      ],
+      "hint": "The thousandths digit is 5, so round up.",
+      "hero": "line"
+    }
+  ],
+  "shared_audio": {
+    "praise": [
+      "audio/praise1.mp3",
+      "audio/praise3.mp3",
+      "audio/praise4.mp3"
+    ],
+    "oops": [
+      "audio/oops1.mp3",
+      "audio/oops2.mp3",
+      "audio/oops3.mp3"
+    ],
+    "eve_scripts": "audio/eve-scripts-s11.json"
+  },
+  "bridge": {
+    "identity": "kelyra.identity",
+    "event": "kelyra.lesson",
+    "name_lock": "If identity.student.id is set and preview is not true, fill and lock the name from identity.student.name. Wait for identity before painting the assigned slice.",
+    "complete_kind": "this_visit",
+    "preview_does_not_post": true,
+    "metrics": {
+      "started_at": "iso",
+      "completed_at": "iso",
+      "duration_ms": "number",
+      "correct": "last-ok count",
+      "incorrect": "last-ok count",
+      "hints": "total hint taps",
+      "audio_used": "boolean, Hear this/captions/praise/oops played",
+      "kinetic_used": "boolean, slider or houses (or __kelyraKinetic)",
+      "marks": "per item: user, ok, tries, hints, first_ok, later_corrected"
+    },
+    "extras": [
+      "item_ids",
+      "item_stems",
+      "skipped",
+      "wrong",
+      "later_corrected",
+      "retried",
+      "hinted",
+      "complete_kind",
+      "who",
+      "pack_deck_id",
+      "beat_start",
+      "beat_end"
+    ],
+    "reports": [
+      "item_ids",
+      "item_stems",
+      "later_corrected",
+      "hinted",
+      "skipped",
+      "wrong",
+      "retried"
+    ],
+    "gap_exclude_ids": [
+      "slider37",
+      "who"
+    ]
+  },
+  "counts": {
+    "beats": 3,
+    "scored_items": 8,
+    "unscored_items": 1
+  }
+}

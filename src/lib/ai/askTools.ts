@@ -43,6 +43,7 @@ import {
 import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, StudentRow } from '@/lib/supabase/types';
 
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
+import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
 
 type AskKeyScan = {
   pageState: string;
@@ -471,7 +472,8 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: 'function',
       name: 'create_parent',
-      description: 'Create a parent record and optionally set phone/email and link a child.',
+      description:
+        'Create a parent record and optionally set phone/email. Office may also link a child as family. Teachers never mint family links here — use add_parent_to_class for class attach of already-linked children.',
       parameters: {
         type: 'object',
         properties: {
@@ -496,12 +498,18 @@ const TOOLS: Record<string, AskToolSpec> = {
       const displayName = str(args, 'display_name');
       if (!displayName) return { error: 'Parent name is required.' };
       const fields = parentFields(args);
-      let studentId = str(args, 'student_id') || undefined;
+      // Family identity is office-owned. Teachers must not reach linkChild via createParent.
+      let studentId: string | undefined;
       let note: string | undefined;
-      if (!studentId && str(args, 'student_name')) {
-        const student = await resolveStudent(ctx, args);
-        if ('error' in student) note = student.error;
-        else studentId = student.id;
+      if (isOfficeRole(ctx.profile)) {
+        studentId = str(args, 'student_id') || undefined;
+        if (!studentId && str(args, 'student_name')) {
+          const student = await resolveStudent(ctx, args);
+          if ('error' in student) note = student.error;
+          else studentId = student.id;
+        }
+      } else if (str(args, 'student_id') || str(args, 'student_name')) {
+        note = 'Only the office can link a parent to a child. Use add_parent_to_class for class attach.';
       }
       const created = await createParent({
         teacherId: ctx.teacherId,
@@ -1106,14 +1114,8 @@ const TOOLS: Record<string, AskToolSpec> = {
 };
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
-  // Office walls first — before capability-null (fail open) or matrix grants / also_administrator.
-  if (spec.def.name === 'add_student') return isOfficeRole(ctx.profile);
-  // Office/SIS owns class create — matches is_school_admin(), not also_administrator.
-  if (spec.def.name === 'create_class') return isOfficeRole(ctx.profile);
-  // Office/SIS owns family identity — not parents.invite (class attach) or also_administrator.
-  if (spec.def.name === 'link_parent_student') return isOfficeRole(ctx.profile);
-  if (!spec.capability) return true;
-  return can(ctx.profile, spec.capability, spec.need ?? 'own', ctx.grants);
+  // Control plane in askToolPolicy — office walls + matrix; unknown names denied.
+  return isAskToolAllowed(spec.def.name, ctx.profile, ctx.grants);
 }
 
 function labelFor(name: string): string {

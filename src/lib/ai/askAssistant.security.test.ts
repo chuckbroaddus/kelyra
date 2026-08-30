@@ -66,3 +66,20 @@ test('Q4 classify-capture and process-ai-jobs also require getUser', () => {
   assert.match(jobs, /auth\.getUser\(\)/);
   assert.match(jobs, /json\(\{ error: 'Sign in to Kelyra first\.' \}, 401\)/);
 });
+
+test('A1 Edge ask-assistant loads profile+grants and filters tools by policy', () => {
+  const src = read('supabase/functions/ask-assistant/index.ts');
+  assert.match(src, /from\('profiles'\)/);
+  assert.match(src, /from\('capability_grants'\)/);
+  assert.match(src, /filterAskToolDefs/);
+  assert.match(src, /mergeAskGrants/);
+  assert.match(src, /askActorSystemLine/);
+  assert.match(src, /tools=\$\{tools\.length\}\/\$\{requested\.length\} \(policy\)/);
+  assert.doesNotMatch(src, /SERVICE_ROLE|service_role/);
+  assert.doesNotMatch(src, /body\.role\b/);
+  const getUserAt = src.indexOf('auth.getUser()');
+  const profileAt = src.indexOf("from('profiles')", getUserAt);
+  const filterAt = src.indexOf('filterAskToolDefs(requested', getUserAt);
+  const meteredAt = src.indexOf('await callMetered');
+  assert.ok(getUserAt > 0 && profileAt > getUserAt && filterAt > profileAt && meteredAt > filterAt);
+});

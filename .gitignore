@@ -101,3 +101,6 @@ expo-env.d.ts
 # @end expo-cli
 # BJU Press licensed decks — do not commit
 notes/teacher-decks/
+
+# Edge function secret files (never commit)
+supabase/functions/.secrets.*

@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type { LessonResult } from './protocol.ts';
-import { formatLessonWorkForPrompt, lessonWorkFromResult, lessonWorkLines } from './work.ts';
+import {
+  draftGapLabelsFromLessonWork,
+  formatLessonWorkForPrompt,
+  lessonWorkFromResult,
+  lessonWorkLines,
+} from './work.ts';
 
 function result(partial: Partial<LessonResult>): LessonResult {
   return { kind: 'lesson', state: 'complete', ...partial };
@@ -103,4 +108,41 @@ test('in-progress unattempted items are not skipped', () => {
   assert.equal(work?.skipped, 0);
   assert.equal(work?.headline, 'In progress · 1 checked');
   assert.equal(work?.practiceNote, null);
+});
+
+test('draftGapLabelsFromLessonWork only from worthPractice complete items', () => {
+  const clean = lessonWorkFromResult(
+    result({
+      marks: {
+        b1: { user: '2071', ok: true, tries: 1 },
+        b2: { user: '0.248', ok: true, tries: 1 },
+      },
+      extras: { item_ids: ['b1', 'b2'], item_stems: { b1: '4468 − 2397', b2: '8.949 − 8.701' } },
+    }),
+  );
+  assert.deepEqual(draftGapLabelsFromLessonWork(clean), []);
+
+  const struggle = lessonWorkFromResult(
+    result({
+      marks: {
+        b1: { user: '2071', ok: true, tries: 1 },
+        b2: { user: '0.248', ok: true, tries: 4, first_ok: false, later_corrected: true, hints: 2 },
+        b3: { user: '', ok: false },
+      },
+      extras: {
+        item_ids: ['b1', 'b2', 'b3', 'b4'],
+        item_stems: {
+          b1: '4468 − 2397',
+          b2: '8.949 − 8.701',
+          b3: '26.4 − 8.3596',
+          b4: '$65 − $8.97',
+        },
+      },
+    }),
+  );
+  assert.deepEqual(draftGapLabelsFromLessonWork(struggle), [
+    '8.949 − 8.701',
+    '26.4 − 8.3596',
+    '$65 − $8.97',
+  ]);
 });

@@ -136,7 +136,8 @@ ${items.map((item, index) => `${index + 1}. ${item.prompt}${item.answerKey ? ` (
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'build-practice-lesson failed';
-    const status = message.includes('XAI_API_KEY') ? 501 : 500;
+    const status =
+      message.includes('XAI_API_KEY') || message.includes('GEMINI_API_KEY') ? 501 : 500;
     return json({ error: message }, status);
   }
 });

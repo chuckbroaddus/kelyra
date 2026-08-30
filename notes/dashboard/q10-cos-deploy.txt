@@ -1,0 +1,11 @@
+Q10 Cos deploy (project aohibokgilxhqwmupdfv)
+
+1) Apply migration:
+   supabase/migrations/20260827000001_revoke_login_identifier_anon.sql
+   (revokes login_identifier from public/anon/authenticated; service_role only)
+
+2) Deploy Edge function (JWT verification off — callers are signed out):
+   supabase functions deploy sign-in-handle
+   config: supabase/config.toml → [functions.sign-in-handle] verify_jwt = false
+
+Do not leave the old anon RPC grant live. Handle sign-in will fail until the function is deployed.

@@ -1,0 +1,24 @@
+Kelyra — Wire production Edge AI to Gemini. Fix this hole only.
+
+Chuck disabled xAI API spend. Live Edge has GEMINI_API_KEY set and XAI_API_KEY unset. Production Ask, homework draft, lesson submission_review, classify, generate-practice, and build-practice-lesson currently call api.x.ai via supabase/functions/_shared/ai.ts (requireXaiKey + xaiResponses + callMetered) and 501 when XAI_API_KEY is missing. Local npm run ai:dev must stay on Grok CLI OAuth (~/.grok/auth.json). Do not put Gemini in the Expo app. Do not git commit or push.
+
+Already true (do not redo):
+- Adapter comment in docs/architecture.md: Gemini Flash-Lite is the cheap fallback, one function swap away, not wired.
+- Edge functions import callMetered / requireXaiKey from _shared/ai.ts.
+- Live secret name is GEMINI_API_KEY (already on the project). Never log or print it. Never hardcode it.
+- XAI_API_KEY is intentionally absent on Edge. Do not require it for text/vision jobs.
+- Local ai-dev-server.mjs uses grokCall / grok OAuth. Leave that path alone.
+
+Do this:
+1. In supabase/functions/_shared/ai.ts (and the copy Edge files import), when GEMINI_API_KEY is set, send metered text/vision jobs to Google Gemini instead of api.x.ai. Prefer the cheapest Gemini Flash-Lite multimodal model that matches current Google AI docs (architecture names Gemini 3.5 Flash-Lite; verify the live model id). Keep prompts, JSON-only parsers, tool/function-call mapping for Ask, usage metering (ai_usage), and the school monthly cap.
+2. requireXaiKey: Edge text/vision jobs should succeed with GEMINI_API_KEY alone. If you keep a require helper, fail closed with 501 only when neither production key the job needs is present.
+3. Voice STT (transcribe / transcribe-audio) stays xAI/Grok Voice. Do not fake STT through Gemini. Without XAI_API_KEY those may still 501; that is OK.
+4. Do not change lesson HTML, RLS, or student_report_lesson. Do not re-enable XAI_API_KEY. Do not spend xAI API credits.
+5. Static tests: Edge review-submission / ask-assistant / analyze-homework / generate-practice / classify-capture / process-ai-jobs no longer throw XAI_API_KEY is not set when GEMINI_API_KEY is present. ai-dev-server still does not require GEMINI_API_KEY.
+
+If SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies). Edge deploy is Chief of Staff after the loop. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). Headless grok -p exits on end-of-turn and cancels the loop. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- With GEMINI_API_KEY and no XAI_API_KEY, Edge review-submission and ask-assistant can call the model (loop tests / recorded fixtures). Local ai:dev still uses Grok OAuth.

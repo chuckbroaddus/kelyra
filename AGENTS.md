@@ -37,4 +37,6 @@ Then:
 
 Do **not** use kelyra-qa-loop for analysis, planning, Q&A, docs-only edits, git commit/push, applying SQL that was already produced, or files under `notes/teacher-decks/` (those belong to the lesson authoring agents).
 
+Loop children (implementer, QA, verify, security) must never call `ask_user_question`, including dummy Continue / tool-existence probes. There is no UI to click; it hangs the loop. If something cannot be inspected, report it and finish.
+
 Do not git commit or push unless the user explicitly asks.

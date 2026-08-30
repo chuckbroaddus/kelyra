@@ -1,0 +1,24 @@
+Kelyra Q2 — any signed-in user can INSERT message_thread_members and then read that thread. Still true. Fix this hole only.
+
+Still in the tree:
+- supabase/migrations/20260817000005_school_roles.sql
+  create policy thread_members_insert on public.message_thread_members
+    for insert with check (auth.uid() is not null);
+  That is not with-check profile_id = auth.uid() even. Any authenticated client can insert any profile_id into any thread_id, then is_thread_member() lets them SELECT the thread and messages.
+- Later migrations (20260817000010_fix_messages_rls.sql) rewrote SELECT policies via is_thread_member; they did not drop thread_members_insert.
+- Thread membership is already written by security-definer RPCs:
+  open_direct_thread / equivalent DM opener, open_group_thread, add_group_member (staff, existing member), and related group leave/remove. App should keep using those, not table inserts.
+
+Goal:
+1. Clients must not be able to join an arbitrary thread by inserting into message_thread_members. Fail closed.
+2. Keep existing security-definer paths that create DMs/groups and add/remove group members. Do not invent a new messaging product. Do not add in-app Agent tools (A3 stays parked).
+3. If a table INSERT policy is still required, it must not allow adding yourself (or anyone) to a thread you are not already allowed to open via those RPCs. Prefer: no client INSERT; only definer functions.
+4. Do not weaken other RLS. User JWT only. No service-role as the actor. Do not invent students. Do not expand to Q1 (done) or Q3–Q12.
+5. Add a new migration under supabase/migrations/. Put the full SQL in that file so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+6. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Done when:
+- PostgREST insert into message_thread_members as a random authenticated user fails.
+- Existing office/staff/member RPCs that add members still work.
+- You cannot become a member of someone else's thread without going through those RPCs.
+- Typecheck passes.

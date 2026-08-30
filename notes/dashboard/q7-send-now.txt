@@ -1,0 +1,29 @@
+Kelyra Q7 — Teacher Ask create_class still mints an unassigned office class (is_staff). Still true if any leftover path remains. Fix this hole only.
+
+Product (Chuck / Note on KELYRA / Q3): Office/SIS owns class create. Teachers must not create classes, including via Ask. Do not implement teacher self-create.
+
+Q3 already landed in the tree (do not reopen or rewrite it):
+- supabase/migrations/20260826000004_office_only_create_school_class.sql: create_school_class is is_school_admin only. Applied live.
+- src/lib/classes/api.ts createClass(): RPC only, throws on failure, no client insert fallback.
+- src/lib/ai/askTools.ts create_class: description Office only; run() returns error unless isOfficeRole; allowed() also isOfficeRole.
+- matrix.ts classes.create: teacher none.
+
+Still hunt leftovers that would let a teacher JWT mint a class via Ask:
+- Any other create_class / createClass / create_school_class Ask or tool-runner path gated on is_staff / can(classes.create) without isOfficeRole.
+- Tool still advertised to a teacher chromeRole so the model can call it (allowed() must hide it).
+- Client or Edge ignoring the office gate and calling the RPC anyway.
+- Do not rebuild Ask. Do not do Q8–Q12, A1, U1/U2, Q4 Edge redeploy, or lesson-player work.
+
+If Q3 already closed every path, do not churn the RPC. Add or keep tests that prove a teacher cannot get the create_class tool and cannot mint via Ask/createClass/RPC. Prefer failing closed.
+
+If SQL is actually required, new migration under supabase/migrations/ with the full script so Chief of Staff can apply it to aohibokgilxhqwmupdfv. Do not apply it yourself.
+
+Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Jacquee (teacher) cannot mint a class via Ask create_class, createClass(), or create_school_class.
+- Office can still create an unassigned class.
+- Typecheck passes.
+- Nothing committed or pushed.

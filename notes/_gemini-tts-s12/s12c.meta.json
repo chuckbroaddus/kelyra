@@ -1,0 +1,20 @@
+{
+  "id": "s12c",
+  "status": 200,
+  "model": "gemini-2.5-flash-preview-tts",
+  "voice": "Kore",
+  "mime": "audio/L16;codec=pcm;rate=24000",
+  "data_chars": 673984,
+  "error": null,
+  "last": null,
+  "body_keys": [
+    "model",
+    "voice",
+    "mime",
+    "data"
+  ],
+  "rate": 24000,
+  "decoded_bytes": 505486,
+  "b64_path": "/Users/chuckbroaddus/projects/kelyra/notes/_gemini-tts-s12/s12c.b64",
+  "pcm_path": "/Users/chuckbroaddus/projects/kelyra/notes/_gemini-tts-s12/s12c.pcm"
+}

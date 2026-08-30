@@ -23,9 +23,12 @@ export function isAiConfigured(): boolean {
 }
 
 function resolveAiDevUrl(): string {
+  // Unset/commented EXPO_PUBLIC_AI_DEV_URL means live Edge, even on a phone
+  // whose Metro host would otherwise look like a LAN Grok gateway.
+  if (!configuredAiUrl) return '';
   const configuredHost = hostnameOf(configuredAiUrl);
   const lanHost = firstLanHost();
-  if (lanHost && (!configuredAiUrl || isLoopback(configuredHost))) {
+  if (lanHost && isLoopback(configuredHost)) {
     return `http://${lanHost}:${portOf(configuredAiUrl) || '8787'}`;
   }
   return configuredAiUrl;

@@ -1,5 +1,6 @@
 /**
- * Drain queued cheap homework drafts. Teacher taps "Draft queued" or a cron hits this.
+ * Drain queued cheap homework drafts and lesson submission reviews.
+ * Teacher taps "Draft queued" or a cron hits this.
  */
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -23,25 +24,47 @@ Deno.serve(async (req) => {
     }
     const { data: jobs, error } = await supabase
       .from('ai_jobs')
-      .select('id, capture_id, pass')
+      .select('id, capture_id, submission_id, pass, kind')
       .eq('status', 'pending')
-      .eq('kind', 'homework_draft')
+      .in('kind', ['homework_draft', 'submission_review'])
       .order('created_at', { ascending: true })
       .limit(20);
     if (error) throw error;
     const results: Array<{ id: string; ok: boolean; error?: string }> = [];
     for (const job of jobs ?? []) {
       await supabase.from('ai_jobs').update({ status: 'running' }).eq('id', job.id);
-      await supabase.from('captures').update({ ai_status: 'running' }).eq('id', job.capture_id);
-      const res = await supabase.functions.invoke('analyze-homework', {
-        body: { captureId: job.capture_id, pass: job.pass === 'look-again' ? 'look-again' : 'cheap' },
-      });
-      const failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
+      let failed = false;
+      let failMessage: string | undefined;
+      if (job.kind === 'submission_review') {
+        if (!job.submission_id) {
+          failed = true;
+          failMessage = 'submission_id required';
+        } else {
+          const res = await supabase.functions.invoke('review-submission', {
+            body: { submissionId: job.submission_id, queued: true },
+          });
+          failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
+          failMessage = failed
+            ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed')
+            : undefined;
+        }
+      } else {
+        if (job.capture_id) {
+          await supabase.from('captures').update({ ai_status: 'running' }).eq('id', job.capture_id);
+        }
+        const res = await supabase.functions.invoke('analyze-homework', {
+          body: { captureId: job.capture_id, pass: job.pass === 'look-again' ? 'look-again' : 'cheap' },
+        });
+        failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
+        failMessage = failed
+          ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed')
+          : undefined;
+      }
       await supabase
         .from('ai_jobs')
         .update({
           status: failed ? 'error' : 'done',
-          error: failed ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed') : null,
+          error: failed ? failMessage ?? 'failed' : null,
           finished_at: new Date().toISOString(),
         })
         .eq('id', job.id);

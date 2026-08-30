@@ -289,6 +289,7 @@ fn impl_initial_prompt(request_json) {
     let p = "";
     p += "You are the Kelyra implementation agent (persona kelyra-implementer).\n";
     p += "Do not spawn subagents. Do not call spawn_subagent. Implement this request yourself.\n";
+    p += "Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.\n";
     p += "You have write access to the CURRENT working tree. isolation is off.\n";
     p += "Preserve existing uncommitted work. Do not git reset, git checkout, git restore, ";
     p += "git clean, git stash, or otherwise discard unrelated changes.\n";
@@ -308,6 +309,7 @@ fn impl_initial_prompt(request_json) {
 fn impl_fix_prompt(kind, request_json, findings_json) {
     let p = "";
     p += "Resume Kelyra implementation. Do not spawn subagents.\n";
+    p += "Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.\n";
     p += "Preserve unrelated working-tree changes. No git reset/checkout/restore/clean/stash.\n";
     p += "Fix only the blocking P0/P1 findings below. Smallest correct fix. Add a regression test when appropriate.\n";
     p += "Inspect the actual code for each finding. Do not patch a symptom if the root cause is nearby.\n";
@@ -326,6 +328,7 @@ fn qa_prompt(request_json, impl_json) {
     let p = "";
     p += "You are the Kelyra QA reviewer (persona kelyra-qa). You are READ-ONLY.\n";
     p += "Do not modify files. Do not spawn subagents. Do not call spawn_subagent.\n";
+    p += "Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.\n";
     p += "Independently inspect the actual working tree. Do not trust the implementer summary as evidence.\n";
     p += "You have no shell. Reconstruct the change by reading files with read_file and grep.\n";
     p += "Read Agents.md and docs/mvp.md when scope or invariants apply.\n";
@@ -355,6 +358,7 @@ fn security_prompt(request_json, impl_json, prior_json) {
     let p = "";
     p += "You are the Kelyra security QA agent. Use kelyra-qa invariants. You are READ-ONLY.\n";
     p += "Do not modify files. Do not spawn subagents.\n";
+    p += "Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.\n";
     p += "Inspect the actual working tree with read_file and grep. Do not trust the implementer summary.\n";
     p += "Audit only THIS request's changes. Ignore unrelated pre-existing dirty-tree work.\n";
     p += "Focus: authentication, authorization, RLS, Supabase policies, Edge Functions, storage, ";
@@ -379,6 +383,7 @@ fn verify_prompt(request_json, impl_json) {
     let p = "";
     p += "Run deterministic verification for this Kelyra change. Do not edit files.\n";
     p += "Do not spawn subagents. Do not git reset/checkout/restore/clean/stash.\n";
+    p += "Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.\n";
     p += "Do not start Expo, the AI dev server, or any long-lived process.\n";
     p += "Read package.json. Run only inexpensive existing commands that apply:\n";
     p += "1. If a lint script exists and is cheap, run it. This repo often has no lint script — skip if absent.\n";

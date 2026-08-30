@@ -1,0 +1,26 @@
+Kelyra Q12 — handle_new_user + ensureTeacherProfile can recreate teacher rows after student/parent provision. Still true. Fix this hole only.
+
+Product: Every new auth.users row must not become a teacher. Public “Create a teacher account” must not stay open once a school exists. Student/parent provisioners must not paper over leftover teachers rows; AuthProvider.ensureTeacherProfile must not recreate them. Do not ride is_staff. Do not rebuild Ask. Do not do A1, U1/U2.
+
+Still in the tree (audit and fix as needed):
+- handle_new_user trigger on auth.users inserting teachers / default teacher profile.
+- Public create-teacher / sign-up on src/app/sign-in.tsx.
+- AuthProvider.ensureTeacherProfile treating missing teacher as “make a teacher.”
+- admin_create_login / admin_provision_student_login / admin_provision_parent_login relying on trigger+delete.
+
+Goal:
+1. New migration: replace handle_new_user so it does NOT insert teachers or a default teacher profile unless a security-definer provision flag is set (or only insert a bare profiles row when admin_create_login / admin_provision_* already wrote one). Stop the leftover-delete dance.
+2. admin_create_login / provision student+parent: create the correct role in one shot; never rely on trigger+delete.
+3. src/app/sign-in.tsx: remove public sign-up (or hide behind “no superintendent exists yet”). First school still uses SQL claim as docs say.
+4. AuthProvider: never ensureTeacherProfile for student/parent; never treat !mine as “make a teacher.”
+5. New migration under supabase/migrations/ with the full SQL so Chief of Staff can apply it to project aohibokgilxhqwmupdfv. Do not apply it yourself.
+6. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+7. Do not do A1, U1/U2, Q4 Edge redeploy, or lesson-player work.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Creating a student login leaves no teachers row and no teacher chrome.
+- Random email signup cannot become a teacher after the school exists.
+- Typecheck passes.
+- Nothing committed or pushed.

@@ -1,0 +1,90 @@
+/**
+ * Ask tool allow-list control plane. Server and client share this map so a
+ * modified client cannot widen tools past the signed-in seat.
+ * Keep capability/need in sync with TOOLS in askTools.ts (see askToolPolicy.test.ts).
+ */
+import { can, type Access, type GrantMap } from '@/lib/school/matrix';
+import { isOfficeRole, type ProfileHats } from '@/lib/school/roles';
+
+export type AskToolNeed = 'own' | 'school' | null;
+
+export type AskToolPolicyEntry = {
+  capability: string | null;
+  need: AskToolNeed;
+  /** Matches askTools office walls — before matrix / also_administrator. */
+  officeOnly?: boolean;
+};
+
+/** Source of truth for which Ask tools a seat may be offered. */
+export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
+  get_app_state: { capability: null, need: null },
+  list_classes: { capability: 'classes.view', need: null },
+  list_roster: { capability: 'roster.view', need: null },
+  list_people: { capability: 'accounts.view', need: null },
+  search_parents: { capability: 'parents.view', need: null },
+  search_students: { capability: 'roster.view', need: null },
+  get_parent: { capability: 'parents.view', need: null },
+  create_parent: { capability: 'parents.invite', need: null },
+  update_parent: { capability: 'parents.invite', need: null },
+  link_parent_student: { capability: 'accounts.link_parent', need: null, officeOnly: true },
+  add_parent_to_class: { capability: 'parents.invite', need: null },
+  add_student: { capability: 'roster.add', need: null, officeOnly: true },
+  enroll_student: { capability: 'roster.add', need: null },
+  update_student: { capability: 'children.edit', need: null },
+  create_class: { capability: 'classes.create', need: null, officeOnly: true },
+  list_class_teachers: { capability: 'classes.overview', need: null },
+  add_teacher_to_class: { capability: 'classes.overview', need: 'school' },
+  remove_teacher_from_class: { capability: 'classes.overview', need: 'school' },
+  set_avatar: { capability: null, need: null },
+  scan_answer_key: { capability: 'assignments.manage', need: null },
+  list_assignments: { capability: 'assignments.manage', need: null },
+  create_assignment: { capability: 'assignments.manage', need: null },
+  open_screen: { capability: null, need: null },
+  revise_practice_page: { capability: 'assignments.manage', need: null },
+};
+
+export type AskActorProfile = ProfileHats & {
+  display_name?: string | null;
+  username?: string | null;
+};
+
+/** Non-overridable line the server prepends to Ask instructions. */
+export function askActorSystemLine(profile: AskActorProfile | null | undefined): string {
+  const role = profile?.role ?? 'unknown';
+  const label =
+    (typeof profile?.display_name === 'string' && profile.display_name.trim()) ||
+    (typeof profile?.username === 'string' && profile.username.trim()) ||
+    null;
+  const who = label ? `${role}, ${label}` : role;
+  return `Act only as this signed-in Kelyra profile (${who}). Never claim another role or user.`;
+}
+
+export function isAskToolAllowed(
+  name: string,
+  profile: ProfileHats | null | undefined,
+  grants?: GrantMap,
+): boolean {
+  const policy = ASK_TOOL_POLICY[name];
+  if (!policy) return false;
+  if (policy.officeOnly) return isOfficeRole(profile);
+  if (!policy.capability) return true;
+  const need = (policy.need ?? 'own') as Access;
+  return can(profile, policy.capability, need, grants);
+}
+
+export function allowedAskToolNames(
+  profile: ProfileHats | null | undefined,
+  grants?: GrantMap,
+): string[] {
+  return Object.keys(ASK_TOOL_POLICY).filter((name) => isAskToolAllowed(name, profile, grants));
+}
+
+export function filterAskToolDefs<T extends { name?: unknown }>(
+  tools: T[],
+  profile: ProfileHats | null | undefined,
+  grants?: GrantMap,
+): T[] {
+  return tools.filter(
+    (tool) => typeof tool?.name === 'string' && isAskToolAllowed(tool.name, profile, grants),
+  );
+}

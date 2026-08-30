@@ -1,0 +1,23 @@
+Kelyra F07 — Residual parent_students_own RLS still allows teacher inserts. Fix this hole only.
+
+Product: Office/SIS owns parent↔student family identity (admin_set_parent_link). Teachers must not PostgREST-insert parent_students for rows they own. Keep teacher reads of family rows they need for a taught class. Do not rebuild Ask. Do not do A1–A4, U1/U2, lesson-player, F06, F12, or skills-gap in this run.
+
+Source: kelyra-qa-loop (2026-08-27) session 01a0418e-822e-7232-be5a-5a07d85eff0e after Q8.
+
+Evidence:
+supabase/migrations/20260816000000_people_photos_delete.sql still defines parent_students_own FOR ALL when the caller owns both parents.teacher_id and students.teacher_id. linkChild no longer uses that path (rpc-only), but a teacher JWT can still PostgREST-insert parent_students for rows they own. Q8 closed the Ask/linkChild/RPC hole only; this policy was not changed.
+
+Do this:
+In a new migration (not a rewrite of Q8), drop insert/update from parent_students_own or restrict minting to is_school_admin / admin_set_parent_link so teachers cannot mint family identity outside the office RPC. Do not break legitimate teacher SELECT of parent_students for a taught class.
+
+Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+Put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). Headless grok -p exits on end-of-turn and cancels the loop. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- A teacher JWT cannot INSERT parent_students via PostgREST for owned parent+student rows.
+- Office admin_set_parent_link still works.
+- Teacher class-attach / add_parent_to_class still works.
+- Typecheck passes.
+- Nothing committed or pushed.

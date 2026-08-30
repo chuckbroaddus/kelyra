@@ -8,7 +8,7 @@
  */
 
 import { LESSON_BRIDGE_JS } from '../_shared/lessonBridge.ts';
-import { verifyLessonJwt } from '../_shared/lessonJwt.ts';
+import { getLessonHostSecret, verifyLessonJwt } from '../_shared/lessonJwt.ts';
 
 const BUCKET = 'lessons';
 const BRIDGE_PATH = '__kelyra/bridge.js';
@@ -37,13 +37,19 @@ const TYPES: Record<string, string> = {
 };
 
 function cors(extra: Record<string, string> = {}): Headers {
-  return new Headers({
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'X-Content-Type-Options': 'nosniff',
     'Cache-Control': 'private, max-age=120',
     ...extra,
-  });
+  };
+  // Supabase rewrites GET text/html to text/plain without a custom domain.
+  // nosniff then makes the browser print the lesson source. Skip it for HTML.
+  const type = headers['Content-Type'] ?? '';
+  if (!type.startsWith('text/html')) {
+    headers['X-Content-Type-Options'] = 'nosniff';
+  }
+  return new Headers(headers);
 }
 
 function fail(status: number, message: string) {
@@ -119,7 +125,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors() });
   if (req.method !== 'GET' && req.method !== 'HEAD') return fail(405, 'Method not allowed');
 
-  const secret = Deno.env.get('LESSON_HOST_SECRET') ?? '';
+  const secret = await getLessonHostSecret();
   if (!secret) return fail(503, 'Lesson host is not configured');
 
   const parsed = parseTokenPath(new URL(req.url));

@@ -1,0 +1,34 @@
+Kelyra A1 — Ask tool-runner control plane. Server still trusts the client tools array. Fix this hole only.
+
+Product: Ask must act only as the signed-in user. A modified client must not get tools their seat cannot use. Tools still execute on the device with the user JWT. Do not invent service-role executors. Do not rebuild Ask chat UX. Do not do A2–A4, U1/U2, or lesson-player work.
+
+Already live (Q4, do not redo unless broken):
+- Edge ask-assistant and local ai-dev ask-assistant require Authorization Bearer + auth.getUser(); verify_jwt=true on ask-assistant.
+- hydrateAskImages is Storage-only (no arbitrary URL fetch).
+
+Still broken:
+- Edge ask-assistant and scripts/ai-dev-server.mjs pass body.tools through to the model as the allow-list (Array.isArray(body.tools) → extra.tools = tools). They do not load profiles + capability_grants or intersect with a policy map.
+- Client can() in askTools.ts is skippable by a modified client. Capability lives on each tool spec in src/lib/ai/askTools.ts (capability + need), but there is no shared askToolPolicy.ts used by both client and server.
+- Server does not prepend a non-overridable system line that the model must act only as this profile / never claim another role.
+
+Goal: a control plane so NEW tools cannot widen the hole. The agent acts as the signed-in user only.
+
+Do this:
+1. Keep JWT + getUser on Edge ask-assistant and the local ask-assistant handler. After getUser, load profiles (+ hats/role fields the matrix needs) and capability_grants for that uid. Ignore any body.role. If no user, 401.
+2. Add src/lib/ai/askToolPolicy.ts (and a server-usable twin or shared export the Edge/local handlers can import or duplicate cleanly) that maps each tool name → { capability, need: "own" | "school" | null }. Prefer deriving from the existing ASK_TOOLS / tool specs in askTools.ts so client and server stay one source of truth — do not maintain two divergent lists.
+3. Before the model is offered tools: filter by can(profile, capability, need, grants) using src/lib/school/matrix.ts can(). Drop unknown names. Capability-null tools stay only if the existing client gate already allows them for that seat (match current askTools allowTool / office walls — do not fail open wider than today).
+4. Do NOT execute tools on the Edge with the service role. Keep execution on the client with the user JWT for this pass.
+5. ask-assistant (Edge + local) must not accept an arbitrary client tools array as the allow-list. Server intersects requested names with the policy map for this uid. If the client sends no tools list, still only offer tools the uid is allowed.
+6. Personality stays in askPrompt.ts, but server must prepend a non-overridable line: act only as this profile; never claim another role.
+7. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+8. No new SQL unless strictly required for loading grants in the Edge path. If you add a migration, put the full SQL under supabase/migrations/ and do not apply it yourself (Chief of Staff applies). Prefer using existing tables/RPCs the JWT can already read.
+9. Do not do A2–A4, U1/U2, Q-security rewrites, Edge redeploy of unrelated functions, or lesson-player work.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- A teacher JWT cannot get add_teacher_to_class in the tool list offered to the model.
+- A student JWT cannot get roster/parent write tools.
+- Edge / ai-dev logs show getUser and that tools were filtered by policy (not raw body.tools).
+- Typecheck / existing Ask security tests still pass; add or extend a focused test that the server policy drops unauthorized tool names.
+- Nothing committed or pushed.

@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.sign-in-handle]
 verify_jwt = false
+
+[functions.publish-lesson-pack]
+verify_jwt = true
+
+[functions.ingest-lesson-pack]
+verify_jwt = true

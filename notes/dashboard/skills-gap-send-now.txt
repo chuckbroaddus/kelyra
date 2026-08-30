@@ -1,0 +1,34 @@
+Kelyra — Flag teacher skill gap on incomplete/wrong lesson submit. Fix this hole only.
+
+Product: when a student Submits for a Grade on a kind=lesson cell with struggle (skip, still-wrong, later_corrected, extra tries, clustered hints — same rules as worthPractice in src/lib/lessons/work.ts), the teacher gets draft skill_gaps to edit/Approve, same as homework photo gaps. Clean first-try work: no gap. Nothing is a grade until Approve. Do not auto-assign practice. Do not set current_focus_skill_id on draft.
+
+Do not rebuild Ask, U1/U2, lesson HTML authoring, Capture/Inbox, or player chrome. Do not do F06/F07/F12. Do not git commit or push.
+
+Already true (do not redo):
+- reportLesson → student_report_lesson writes submissions.answers + status=completed + submitted_at. Never graded. Never skill_gaps.
+- Struggle extras already persist (skipped / later_corrected / retried / hinted; lessonWorkFromResult / worthPractice).
+- Schema already allows assignment gaps: 20260825000007_submission_gaps.sql (capture_id nullable, submission_id FK).
+- Homework analyze-homework inserts skill_gaps source=model status=draft for Approve.
+- Teacher Review /class/{id}/review/{submissionId} shows struggle copy; Suggested gap empty until Ask AI or typed gap. Ask AI writes model_draft only, not skill_gaps. Approve (approveTurnedInReview) inserts skill_gaps source=teacher status=approved.
+- Student JWT cannot insert skill_gaps (skill_gaps_via_class / teaches_class).
+- Edge submissionReviewPrompt in supabase/functions/_shared/ai.ts is missing the lesson struggle line that lives in src/lib/practice/review.ts.
+
+Do this:
+1. Migration: replace student_report_lesson. On state=complete only, if struggle signals exist in p_payload (marks.ok=false, missing item_ids, later_corrected / retried / hinted extras, tries>=3, hints>=2), upsert 1–3 draft skill_gaps: submission_id = that cell, capture_id null, student_id = signer, source=model, status=draft, labels from item stems / clustered skill (short, like homework). Repeat complete: replace model drafts for that submission_id only; do not touch teacher/approved rows. No-struggle complete: delete leftover model drafts for that submission. Still never write graded.
+2. Optional AI labels if cheap: after the cell write, queue ai_jobs kind=submission_review. Today ai_jobs.capture_id is NOT NULL — migration must add nullable submission_id and drop/alter that NOT NULL. Drain in review-submission / process-ai-jobs with teacher JWT or existing definer pattern, not student JWT, not service-role as actor. Copy the lesson struggle line from src/lib/practice/review.ts into Edge submissionReviewPrompt. Feed formatLessonWorkForPrompt (or extras), not practice-item blanks. Edge today writes only model_draft; also insert/replace draft skill_gaps for that submission_id (cap 3). Skip AI if no struggle.
+3. Teacher UI (wire existing, no new tray): student Focus already lists assignmentGaps. Class Needs you already lists completed cells. Show draft assignment gaps as Review (not Approved, not heatmap). Review screen: if skill_gaps drafts exist, seed Suggested gap from them; Ask AI remains optional. Inbox stays captures-only. No new alert/post unless you reuse Needs you.
+4. Approve path: keep approveTurnedInReview as the Approve that maps draft → approved + optional focus. Do not invent a second Approve.
+
+Privilege: user JWT / existing taught-class wall. Definer only as wide as this student’s own lesson cell. Fail closed if not the roster student. Do not ride is_staff.
+
+If SQL is needed, put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).
+Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). Headless grok -p exits on end-of-turn and cancels the loop. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Skip/wrong/later-corrected complete → draft gap on that student’s Focus + Review.
+- Clean first-try complete → no gap.
+- Approve still required for grade/focus.
+- Typecheck passes.
+- Nothing committed or pushed.

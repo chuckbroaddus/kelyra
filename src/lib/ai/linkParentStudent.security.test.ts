@@ -47,29 +47,37 @@ test('Q8: matrix also_administrator / parents.invite would widen — Ask must no
     /id:\s*'parents\.invite'[\s\S]*?teacher:\s*'own'/,
   );
 
-  const ask = read('src/lib/ai/askTools.ts');
-  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
-  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
-  const linkIdx = allowedBody.indexOf("spec.def.name === 'link_parent_student'");
-  const linkGateLine = allowedBody.slice(linkIdx, allowedBody.indexOf('\n', linkIdx));
-  assert.match(linkGateLine, /isOfficeRole/);
-  assert.doesNotMatch(linkGateLine, /\bcan\(|parents\.invite/);
+  const policy = read('src/lib/ai/askToolPolicy.ts');
+  assert.match(
+    policy,
+    /link_parent_student:\s*\{\s*capability:\s*'accounts\.link_parent',\s*need:\s*null,\s*officeOnly:\s*true/,
+  );
+  const allowedStart = policy.indexOf('export function isAskToolAllowed');
+  const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
+  const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
+  assert.ok(officeGate > 0);
+  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole/);
+  assert.doesNotMatch(allowedBody.slice(officeGate, allowedBody.indexOf('if (!policy.capability)')), /\bcan\(|parents\.invite/);
 });
 
 test('Q8 Ask: link_parent_student office gate runs before capability-null fail-open', () => {
-  const ask = read('src/lib/ai/askTools.ts');
-  const allowedStart = ask.indexOf('function allowed(spec: AskToolSpec, ctx: AskToolContext)');
+  const policy = read('src/lib/ai/askToolPolicy.ts');
+  const allowedStart = policy.indexOf('export function isAskToolAllowed');
   assert.ok(allowedStart > 0);
-  const allowedBody = ask.slice(allowedStart, ask.indexOf('function labelFor', allowedStart));
-  const linkGate = allowedBody.indexOf("spec.def.name === 'link_parent_student'");
-  const nullOpen = allowedBody.indexOf('if (!spec.capability) return true');
-  assert.ok(linkGate > 0, 'link_parent_student allowed gate missing');
+  const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
+  const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
+  const nullOpen = allowedBody.indexOf('if (!policy.capability) return true');
+  assert.ok(officeGate > 0, 'officeOnly gate missing');
   assert.ok(nullOpen > 0, 'capability-null short-circuit missing');
-  assert.ok(linkGate < nullOpen, 'link_parent_student must be gated before capability-null fail-open');
-  const linkGateLine = allowedBody.slice(linkGate, allowedBody.indexOf('\n', linkGate));
-  assert.match(linkGateLine, /isOfficeRole\(ctx\.profile\)/);
-  assert.doesNotMatch(linkGateLine, /isStaffRole|isAdminRole|\bcan\(|parents\.invite/);
-  assert.doesNotMatch(allowedBody, /\bcan\(ctx\.profile,\s*'parents\.invite'/);
+  assert.ok(officeGate < nullOpen, 'officeOnly must be gated before capability-null fail-open');
+  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole\(profile\)/);
+  assert.doesNotMatch(allowedBody.slice(officeGate, nullOpen), /isStaffRole|isAdminRole|parents\.invite/);
+  assert.match(
+    policy,
+    /link_parent_student:\s*\{\s*capability:\s*'accounts\.link_parent',\s*need:\s*null,\s*officeOnly:\s*true/,
+  );
+  const ask = read('src/lib/ai/askTools.ts');
+  assert.match(ask, /return isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
 });
 
 test('Q8 Ask: link_parent_student run fails closed for non-office; no parents.invite OR', () => {
@@ -96,6 +104,28 @@ test('Q8 Ask: add_parent_to_class stays teacher parents.invite; not family ident
   assert.doesNotMatch(tool, /linkChild|admin_set_parent_link|isOfficeRole/);
 });
 
+test('F06 Ask: create_parent skips student→linkChild unless isOfficeRole; no is_staff ride', () => {
+  const ask = read('src/lib/ai/askTools.ts');
+  const toolStart = ask.indexOf('create_parent: {');
+  const toolEnd = ask.indexOf('update_parent:', toolStart);
+  const tool = ask.slice(toolStart, toolEnd);
+  assert.match(tool, /capability:\s*'parents\.invite'/);
+  assert.match(tool, /Teachers never mint family links/);
+  assert.match(tool, /if \(isOfficeRole\(ctx\.profile\)\)/);
+  const officeGate = tool.indexOf('if (isOfficeRole(ctx.profile))');
+  const createCall = tool.indexOf('await createParent(');
+  assert.ok(officeGate > 0 && createCall > officeGate, 'office gate must precede createParent');
+  // Non-office must not resolve student_id/name into createParent.studentId.
+  const officeBlock = tool.slice(officeGate, tool.indexOf('} else if', officeGate));
+  assert.match(officeBlock, /student_id|student_name/);
+  const nonOfficeNote = tool.slice(tool.indexOf('} else if', officeGate), createCall);
+  assert.match(nonOfficeNote, /Only the office can link a parent to a child/);
+  assert.doesNotMatch(tool, /is_staff|isStaffRole|isAdminRole|also_administrator/);
+  // createParent still receives studentId only from the office-gated binding.
+  const createArgs = tool.slice(createCall, tool.indexOf('});', createCall));
+  assert.match(createArgs, /studentId/);
+});
+
 test('Q8 linkChild: no parent_students insert fallback past office RPC', () => {
   const src = read('src/lib/parents/api.ts');
   const fn = src.slice(src.indexOf('export async function linkChild'));
@@ -109,4 +139,5 @@ test('Q8 askPrompt: teachers told not to mint family links; photo map office-gat
   const prompt = read('src/lib/ai/askPrompt.ts');
   assert.match(prompt, /You never link who is a parent of which child/);
   assert.match(prompt, /link_parent_student only if that tool is listed \(office\)/);
+  assert.match(prompt, /never mint the family link/);
 });

@@ -344,6 +344,15 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 - Recommendation: Optional later: add an integration check that authenticated INSERT and thread_id UPDATE fail while last_read_at UPDATE as self succeeds.
 - Status: open
 
+### Brand placement assertion lives in a fail-closed provision security test file (P3)
+- Source: kelyra-qa-loop (2026-08-29)
+- Session: `01a05041-9af1-7321-9126-05df3135a7e5`
+- Workflow: `wf_01a050420d0f7c838fb3ed027db21177`
+- Request: Add full-color KelyraMark above the text wordmark on /sign-in
+- Evidence: src/lib/auth/failClosedTeacherProvision.security.test.ts adds test('sign-in: full-color KelyraMark above text wordmark (no tint)') beside Q12 teacher-provision assertions; the check itself only reads sign-in.tsx / KelyraMark.tsx source text.
+- Recommendation: Optional later: move the branding source check to a sign-in UI/regression test file so security tests stay focused on authz/provision invariants.
+- Status: open
+
 ## Fixed
 
 _None yet._

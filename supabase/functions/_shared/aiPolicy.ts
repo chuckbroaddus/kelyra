@@ -3,6 +3,8 @@
 export const CHEAP_MODEL = 'grok-4.20-0309-non-reasoning';
 export const FLAGSHIP_MODEL = 'grok-4.6';
 export const PRACTICE_MODEL = 'grok-build-0.1';
+/** Edge Gemini path (when GEMINI_API_KEY is set). Local ai:dev stays on Grok. */
+export const GEMINI_FLASH_LITE = 'gemini-3.5-flash-lite';
 export const DEFAULT_MONTHLY_CAP_USD = 50;
 
 export type AiPass = 'cheap' | 'look-again';
@@ -27,6 +29,8 @@ const RATES: Record<string, { input: number; output: number }> = {
   'grok-4.20-0309-non-reasoning': { input: 1.25, output: 2.5 },
   'grok-4.20-0309-reasoning': { input: 1.25, output: 2.5 },
   'grok-build-0.1': { input: 1, output: 2 },
+  // Gemini Developer API list price ($/1M tokens); see research/06.
+  'gemini-3.5-flash-lite': { input: 0.3, output: 2.5 },
 };
 
 export function modelFor(job: AiJob, pass: AiPass = 'cheap'): string {
@@ -60,9 +64,25 @@ export function parseUsage(payload: Record<string, unknown> | null | undefined):
   inputTokens: number;
   outputTokens: number;
 } {
-  const usage = (payload?.usage ?? payload) as Record<string, unknown> | undefined;
-  const input = Number(usage?.input_tokens ?? usage?.prompt_tokens ?? 0) || 0;
-  const output = Number(usage?.output_tokens ?? usage?.completion_tokens ?? 0) || 0;
+  const usage = (payload?.usage ?? payload?.usageMetadata ?? payload) as
+    | Record<string, unknown>
+    | undefined;
+  const input =
+    Number(
+      usage?.input_tokens ??
+        usage?.prompt_tokens ??
+        usage?.promptTokenCount ??
+        usage?.prompt_token_count ??
+        0,
+    ) || 0;
+  const output =
+    Number(
+      usage?.output_tokens ??
+        usage?.completion_tokens ??
+        usage?.candidatesTokenCount ??
+        usage?.candidates_token_count ??
+        0,
+    ) || 0;
   return { inputTokens: input, outputTokens: output };
 }
 

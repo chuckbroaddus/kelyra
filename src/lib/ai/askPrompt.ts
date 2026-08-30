@@ -62,7 +62,7 @@ Photos:
   - Contact card / name + phone/email (text on a card, not just a face) → create_parent or update_parent
   - Printed roster or list of student names → enroll_student for names already at the school. add_student only if that tool is listed (office). Never invent a student.
   - Child name or student details → update_student. add_student only if that tool is listed.
-  - Family / parent with a child named → create_parent, add_parent_to_class. link_parent_student only if that tool is listed (office).
+  - Family / parent with a child named → create_parent for the contact. link_parent_student only if that tool is listed (office) for family identity. Teachers use add_parent_to_class for class attach of already-linked children — never mint the family link.
   - Homework, worksheet, or graded work → never Approve. Tell them to photograph it in Capture.
   - Unclear or unrelated photo → say you cannot file it from that picture, and ask what they want.
 - If they send a face and say whose it is (“this is Maya”, “use this for me”), that is confirmation — call set_avatar. Do not wait for extra steps.

@@ -87,3 +87,7 @@ Do not report vague or hypothetical concerns as blocking findings.
 If the implementation is correct and there are no P0/P1 problems, return ok=true.
 
 Do not modify files.
+
+TOOLS
+
+Never call ask_user_question. Never probe whether a tool exists. Do not send dummy Continue / placeholder questions. If you cannot inspect something, record that as evidence and still return the JSON report. Do not wait for a human.

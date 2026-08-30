@@ -1,0 +1,22 @@
+Kelyra F12 — teachers_own RLS still allows self-INSERT into teachers. Fix this hole only.
+
+Product: a raw auth session must not PostgREST-insert public.teachers for auth.uid(). Teacher rows are created only by security-definer office/claim paths (admin_create_login / school_claim_superintendent / existing provision RPCs). Do not rebuild Ask. Do not do A1–A4, U1/U2, lesson-player, F06, F07, or skills-gap in this run.
+
+Source: kelyra-qa-loop (2026-08-26) session 01a040a5-a12b-7f62-b29b-0df7c7c8abd6 after Q1. Adjacent to Q12 (already applied).
+
+Evidence:
+supabase/migrations/20260812000000_slice01_foundation.sql policy teachers_own for all using/with check (id = auth.uid()). App no longer inserts, but a client with a raw auth session can still PostgREST-insert public.teachers for auth.uid().
+
+Do this:
+Restrict teachers INSERT to security-definer office/claim paths (drop or narrow teachers_own write), without weakening other RLS (teachers must still SELECT/UPDATE their own row as needed). Do not re-open Q1/Q12 handle_new_user work.
+
+Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+Put a full migration under supabase/migrations/ and do not apply it (Chief of Staff applies).
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). Headless grok -p exits on end-of-turn and cancels the loop. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Authenticated INSERT into public.teachers as self fails via PostgREST.
+- Office/claim provision RPCs still create teacher rows.
+- Typecheck passes.
+- Nothing committed or pushed.

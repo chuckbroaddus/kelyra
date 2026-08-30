@@ -1,0 +1,29 @@
+Kelyra Q8 — Ask link_parent_student OR-bypass; teachers should not link families. Still true. Fix this hole only.
+
+Product: Office/SIS owns parent↔student family links (accounts.link_parent). Teachers may add an existing parent’s children to a class they teach (parents.invite / add_parent_to_class). They must not mint or change who is a parent of which child. Students/parents/anon must not. Do not ride is_staff. Do not rebuild Ask. Do not do Q9–Q12, A1, U1/U2.
+
+Still in the tree:
+- src/lib/school/matrix.ts: accounts.link_parent is superintendent/administrator school, teacher none. parents.invite is teacher own (class attach, not family identity).
+- src/lib/ai/askTools.ts allowed(): link_parent_student returns can(accounts.link_parent) OR can(parents.invite). A teacher with parents.invite gets the family-link tool. run() then calls linkChild() with no extra office check.
+- src/lib/parents/api.ts linkChild() → rpc admin_set_parent_link.
+- supabase/migrations/20260819000000_parent_links_and_alerts.sql (replaced in 20260819000004): can_link_parent_student() is role in (superintendent, administrator) OR also_administrator. Regular teachers fail the RPC; also_administrator teachers pass. The Ask OR still advertises the tool to every teacher with parents.invite (Q7 leftover pattern: office walls belong before capability-null fail-open).
+- askPrompt.ts still tells Ask: Family / parent with a child named → create_parent, link_parent_student, add_parent_to_class.
+
+Goal:
+1. Teachers (chromeRole teacher, including also_administrator unless that seat is real office) must not get Ask link_parent_student and must not succeed at linking families via that tool or linkChild/admin_set_parent_link.
+2. Office (is_school_admin / superintendent / administrator) can still link parent↔student.
+3. Keep add_parent_to_class / parents.invite for teachers adding existing linked children to a taught class. Do not widen family identity linking.
+4. If SQL is required (e.g. also_administrator still passes can_link_parent_student and that is in-scope for this hole), new migration under supabase/migrations/ with the full script so Chief of Staff can apply it to aohibokgilxhqwmupdfv. Do not apply it yourself.
+5. Preserve unrelated uncommitted work. Do not git reset, checkout, restore, clean, stash, commit, or push.
+6. Do not do Q9–Q12, A1, U1/U2, Q4 Edge redeploy, or lesson-player work.
+
+Hypothesis (verify): drop the parents.invite OR; gate Ask link_parent_student on office / accounts.link_parent only; fail closed in run() too. You own whether also_administrator on a teacher JWT should still hit the RPC.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Do not implement in the parent. Keep this turn open until the run is terminal (passed, escalated, complete, or cancelled). The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless grok -p exits on end-of-turn and cancels the loop. Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run state.json until status is not active.
+
+Done when:
+- Jacquee (teacher) does not get Ask link_parent_student and cannot link an unrelated parent↔student via that path.
+- Office can still link parent↔student.
+- Teacher add_parent_to_class for a taught class still works.
+- Typecheck passes.
+- Nothing committed or pushed.

@@ -1,0 +1,16 @@
+SQL apply failed on project aohibokgilxhqwmupdfv. Fix the unapplied migration only. Do not rewrite 20260826000002.
+
+Chief of Staff ran apply_migration name fail_closed_thread_members_update with the contents of supabase/migrations/20260826000003_fail_closed_thread_members_update.sql.
+
+Postgres error:
+ERROR: 42703: column "pinned_at" of relation "message_thread_members" does not exist
+
+Live columns on public.message_thread_members (queried just now):
+thread_id uuid, profile_id uuid, last_read_at timestamptz, muted_at timestamptz
+There is no pinned_at column.
+
+Fix 20260826000003 so GRANT UPDATE is only on columns that exist (last_read_at, muted_at). Keep: revoke table UPDATE from public/anon/authenticated; tightened thread_members_self_update WITH CHECK (profile_id = auth.uid() AND is_thread_member(thread_id)); membership still only via security-definer RPCs.
+
+Do not apply SQL yourself. Do not git commit or push. Preserve unrelated dirty-tree work. Do not expand to Q1 or Q3–Q12.
+
+Orchestrator: launch kelyra-qa-loop with this full request. Keep this turn open until the run is terminal. Headless grok -p exits on end-of-turn and cancels the loop. Do not say you will report later and stop.

@@ -204,6 +204,29 @@ export function formatLessonWorkForPrompt(work: LessonWork | null | undefined): 
   return lines.join('\n');
 }
 
+/** Stem labels for draft skill_gaps — same worthPractice rule as SQL. Cap 3. */
+export function draftGapLabelsFromLessonWork(work: LessonWork | null | undefined): string[] {
+  if (!work || work.status !== 'Done') return [];
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const item of work.items) {
+    if (!item.worthPractice) continue;
+    const label = shortenGapLabel(item.prompt) || `Question ${item.id}`;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    labels.push(label);
+    if (labels.length >= 3) break;
+  }
+  return labels;
+}
+
+function shortenGapLabel(value: string): string {
+  const text = value.replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  return text.length > 48 ? text.slice(0, 48) : text;
+}
+
 function itemLine(item: LessonWorkItem): string {
   const bits = [outcomeLabel(item.outcome)];
   if (item.answer) bits.push(item.answer);
