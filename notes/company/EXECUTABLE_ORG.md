@@ -31,6 +31,7 @@ If an org order is sent to a specialist chat by mistake, the specialist must not
 | **Sync profile invoke** | Minutes-long specialist answer | `scripts/invoke_profile.sh PROFILE "..."` |
 | **kelyra-qa-loop** | Any application code change | skill `kelyra-qa-loop` + `scripts/run_kelyra_qa_loop.py` |
 | **Gateway dispatcher** | So kanban `ready` tasks actually run | `hermes -p chief-of-staff gateway start` |
+| **TTS / spoken audio** | Any `.mp3` / Grok speech | **Only** profile `grok-tts` — `scripts/invoke_tts.sh` or kanban `--assignee grok-tts` |
 
 ## Delivery chain (software)
 
@@ -65,12 +66,14 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 | growth-marketing | Growth, campaigns, messaging |
 | customer-success | Onboarding, retention, health |
 | operations-support | Support triage & ops workflows |
-| ai-resource-manager | Model/effort usage efficiency |
+| ai-resource-manager | SuperGrok HR: usage, allocation, leftover P2/P3 burn |
+| grok-tts | **Sole** company TTS owner — xAI Grok TTS + math pipeline; exclusive session lock |
 
 ## CoS skills (on `chief-of-staff` profile)
 
 - `kelyra-company-os` — org routing + kanban staffing
 - `kelyra-qa-loop` — Grok Build implementation pipeline
+- `kelyra-arm-hr` — ask ARM before kelyra `ready`; leftover P2/P3 window
 
 Engineering profiles also carry `kelyra-qa-loop`.
 
@@ -80,7 +83,24 @@ Engineering profiles also carry `kelyra-qa-loop`.
 ~/.hermes/profiles/chief-of-staff/scripts/staff_task.sh
 ~/.hermes/profiles/chief-of-staff/scripts/invoke_profile.sh
 ~/.hermes/profiles/chief-of-staff/scripts/run_kelyra_qa_loop.py
+~/.hermes/profiles/chief-of-staff/scripts/invoke_tts.sh          # always HERMES_HOME=grok-tts
+~/.hermes/profiles/grok-tts/tools/math-speech/pipeline.py
+~/.hermes/profiles/grok-tts/tools/math-speech/tts_session_lock.py  # exclusive lock + monitor
 ```
+
+## TTS policy (company-wide)
+
+1. **All TTS actions** (lesson VO, smoke clips, narration, kanban audio tasks) go through profile **`grok-tts` only**. CoS and other roles must **not** call Hermes `text_to_speech` on their own profile for production clips.
+2. Route via:
+   - `scripts/invoke_tts.sh "…"` or `invoke_tts.sh --file path.md`
+   - `hermes -p grok-tts chat -q "…"` / kanban `--assignee grok-tts`
+   - pipeline: `HERMES_HOME=~/.hermes/profiles/grok-tts` + `tools/math-speech/pipeline.py --tts`
+3. **Concurrency:** at most **one** active grok-tts TTS job. Exclusive lock:
+   - `runtime/tts_exclusive.lock`
+   - monitor: `invoke_tts.sh --monitor` or `python tts_session_lock.py monitor --json`
+   - parallel acquire attempts are **denied** and logged (`acquire_denied_parallel`) for CoS review.
+4. **Rate gap:** `tts.xai.min_interval_seconds: 5` between `/v1/tts` HTTP calls inside a job.
+5. CoS **monitors** grok-tts for parallel attempts (`alert_parallel` / recent denials) when staffing audio work or on status pulls.
 
 ## Operating rules (short)
 
@@ -90,6 +110,7 @@ Engineering profiles also carry `kelyra-qa-loop`.
 4. No secrets in chat, commits, or handoffs.
 5. CEO final authority on strategy locks, legal, spend, production irreversible actions.
 6. Grok effort only: minimal | low | medium | high.
+7. **TTS only via `grok-tts`**; never parallel TTS sessions (exclusive lock + 5s interval).
 
 ## Profile docs
 
