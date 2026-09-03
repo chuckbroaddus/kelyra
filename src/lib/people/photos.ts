@@ -13,6 +13,7 @@ function prefetchPhotoUrls(urls: Iterable<string | null | undefined>) {
     .catch(() => undefined);
 }
 
+/** Explicit for call-site clarity; signedThumbUrls already defaults to no original fallback. */
 const AVATAR_THUMBS = { fallbackOriginal: false as const };
 
 export async function signedProfileUrl(storagePath: string | null | undefined): Promise<string | null> {

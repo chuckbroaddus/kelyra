@@ -317,7 +317,7 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
   const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
   const origPaths = [...pathById.values()];
   const [thumbUrls, originalUrls] = await Promise.all([
-    signedThumbUrls(origPaths, knownThumbs),
+    signedThumbUrls(origPaths, knownThumbs, { fallbackOriginal: false }),
     signedUrls('photos', origPaths),
   ]);
   const gapsByCapture = new Map<string, SkillGapRow[]>();
@@ -341,8 +341,9 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
     }
     return {
       ...capture,
-      photoUrl: thumbs[0] ?? originals[0] ?? null,
-      photoUrls: originals.length ? originals : thumbs,
+      // WorkRow / shelves: thumb only. Review pager uses photoUrls (originals).
+      photoUrl: thumbs[0] ?? null,
+      photoUrls: originals,
       gaps: gapsByCapture.get(capture.id) ?? [],
     };
   });

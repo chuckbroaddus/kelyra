@@ -145,8 +145,8 @@ export async function signedUrl(bucket: Bucket, path: string): Promise<string | 
 
 export type ThumbSignOptions = {
   /**
-   * When the `_thumb` object is missing, sign the original (multi-MB phone stills).
-   * Avatars must pass false — initials beat a 3 MB face download.
+   * Opt-in: when the `_thumb` object is missing, sign the original (multi-MB).
+   * Default is false — lists/avatars stay blank or initials rather than egress.
    */
   fallbackOriginal?: boolean;
 };

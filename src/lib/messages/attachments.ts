@@ -37,7 +37,7 @@ export async function signedMessageUrl(
   variant: 'thumb' | 'original' = 'original',
 ): Promise<string | null> {
   if (kind === 'file') return signedUrl('files', storagePath);
-  if (variant === 'thumb') return signedThumbUrl(storagePath);
+  if (variant === 'thumb') return signedThumbUrl(storagePath, undefined, { fallbackOriginal: false });
   return signedUrl('photos', storagePath);
 }
 

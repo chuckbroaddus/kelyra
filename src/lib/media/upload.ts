@@ -218,5 +218,5 @@ export async function signedThumbUrlForAsset(
   storagePath: string,
   thumbStoragePath?: string | null,
 ): Promise<string | null> {
-  return signedThumbUrl(storagePath, thumbStoragePath);
+  return signedThumbUrl(storagePath, thumbStoragePath, { fallbackOriginal: false });
 }

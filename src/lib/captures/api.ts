@@ -299,7 +299,9 @@ async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
   ]);
   const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
   const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
-  const thumbUrls = await signedThumbUrls([...pathById.values()], knownThumbs);
+  const thumbUrls = await signedThumbUrls([...pathById.values()], knownThumbs, {
+    fallbackOriginal: false,
+  });
   const nameById = new Map((students ?? []).map((student) => [student.id, student.display_name]));
   return captures.map((capture) => {
     const photoUrls: string[] = [];

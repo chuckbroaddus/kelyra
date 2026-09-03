@@ -17,9 +17,9 @@ export function originalStoragePath(storagePath: string): string {
   return storagePath.replace(/_thumb(\.[^./]+)?$/, '$1');
 }
 
-/** Faces use thumbs only. Homework stills may fall back to the original object. */
+/** Opt-in only. Lists/avatars must not pull multi-MB originals when a thumb is missing. */
 export function allowOriginalPhotoFallback(fallbackOriginal?: boolean): boolean {
-  return fallbackOriginal !== false;
+  return fallbackOriginal === true;
 }
 
 /** Disk / expo-image cache key: object path, never the signed token. */

@@ -1,6 +1,8 @@
 # Kelyra Storage egress (Free plan, Aug 2026)
 
-Status: investigation. Do not upgrade yet. Do not git-commit decks.
+Status: S1 code in tree (thumbs + signed-URL disk cache + upload resize). Do not upgrade yet. Do not git-commit decks.
+
+**CoS apply:** migration `supabase/migrations/20260824000006_photo_thumbs.sql`, then `SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run thumbs`. Lists no longer fall back to multi-MB originals when a thumb is missing.
 
 ## What the dashboard said
 Org Free, 1 project, cycle 13 Aug–13 Sep 2026. Grace until **17 Sep 2026**, then 402s.
@@ -27,15 +29,15 @@ Storage Egress is ~97% of the 8.62 GB. Not Postgres. Not Edge counts.
 
 Largest photos are **~2.8–3.3 MB JPEGs** (phone stills). Owner prefix `ecce41fe-…` (Chuck’s teacher id). Capture + message photos.
 
-## Why 40 MB stored can still ship 8 GB
-Avatars (`signedProfileUrl*`) sign **thumbs only** — never the original still. Missing thumb → initials, not a 3 MB JPEG. Grade-book status glyphs are bundled PNGs (`statusAssigned` / `Started` / `Completed`), zero Storage. Lists of homework stills may still fall back to the original if no `_thumb` object exists.
+## Why 40 MB stored used to ship 8 GB (pre-S1)
+Root causes before the S1 client fixes (still true for objects that never got a `_thumb` backfill):
 
-1. `normalizePhoto` compresses JPEG quality 0.8 but **does not resize**. A 12MP still stays ~3 MB.
-2. Signed URL TTL 3600s. Memory cache in `photos.ts` is 50 min and dies on reload. A new token is a new URL, so the CDN treats it as a miss (matches cached 2.56 vs uncached 8.62).
-3. `hydrateCaptures` signs every page of every inbox row at full size on each list load.
-4. Full viewer and list thumb use the same object.
+1. Upload shipped full phone stills (~2.8–3.3 MB). S1 upload now resizes long edge (`PHOTO_MAX_EDGE` ~1600) and writes `*_thumb` beside the original.
+2. Signed URL TTL 3600s with no durable cache → new token each session → CDN miss (cached egress 2.56 vs uncached 8.62). S1 persists signed URLs (AsyncStorage keyed by bucket:path) until near expiry; `cacheKeyForUri` strips the token for expo-image disk cache.
+3. List hydration signed full-size originals for every inbox/roster row. S1 list/avatar/message/WorkRow paths sign **thumbs only** with `fallbackOriginal: false` (missing thumb → blank/initials, not multi-MB original). ImageViewer / Capture review / analyze-homework / Ask photo still use originals.
+4. Existing Storage objects stay large until CoS applies `20260824000006_photo_thumbs.sql` and runs `npm run thumbs`.
 
-Rough: one 3 MB capture shown 20 times without HTTP cache ≈ 60 MB. A week of inbox + roster photos on a few devices clears 5 GB.
+Rough historical: one 3 MB capture shown 20 times without HTTP cache ≈ 60 MB. A week of inbox + roster on a few devices cleared 5 GB.
 
 LAN lesson pages (`:8772`) do **not** count. `lessons` bucket is empty.
 

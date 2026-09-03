@@ -13,6 +13,48 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### storage-egress notes drift after S1 code (P2)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: diagnosis section previously claimed list fallback to originals and no upload resize after code flipped both.
+- Recommendation: Keep `notes/storage-egress.md` aligned with shipped thumb + resize behavior (docs touch on same run).
+- Status: fixed
+
+### Duplicate migration version 20260824000006 (P2)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: `20260824000006_photo_thumbs.sql` and `20260824000006_lesson_section_packs.sql` share the same version prefix.
+- Recommendation: Rename photo thumbs retry to a unique later timestamp before any automated migration runner; CoS apply photo_thumbs manually until then.
+- Status: open
+
+### Backfill forces .jpg thumbs vs convention extension (P2)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: `scripts/backfill-photo-thumbs.mjs` always ends `_thumb.jpg`; `thumbStoragePath` keeps source extension. Message photos lack assets rows so non-JPEG message thumbs can stay blank after backfill.
+- Recommendation: Backfill write convention path, or probe .jpg without falling back to multi-MB original.
+- Status: open
+
+### match-key key images use avatar thumb signer (P2)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: `proposal.tsx` loads assignment key `imageUrl` via `signedUrlsForAssetIds()` (thumbs, no original fallback). Match-key may see only 480px derivatives.
+- Recommendation: Sign key assets with original signer for match-key; keep thumbs for UI chips.
+- Status: open
+
+### Student capture load signs every original up front (P3)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: `listStudentCaptures` signs all originals while WorkRow uses thumbs; focus tab needs originals only for selected capture.
+- Recommendation: Lazy-sign originals when opening focus/review.
+- Status: open
+
+### Signed URL disk cache not cleared on non-explicit session end (P2)
+- Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
+- Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`
+- Evidence: AsyncStorage `kelyra.signed-urls.v1` keyed by bucket:path only; cleared in explicit `signOut()` but not on `SIGNED_OUT` / null session refresh.
+- Recommendation: Clear on session-null; prefer scoping cache entries by auth user id.
+- Status: open
+
 ### Narrow remute race if parent re-renders before awaitingGesture clears (P3)
 - Source: kelyra-qa-loop (2026-08-30)
 - Session: `01a05189-790a-74d2-b43f-733e43fa1a9a`
