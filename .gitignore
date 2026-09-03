@@ -104,3 +104,7 @@ notes/teacher-decks/
 
 # Edge function secret files (never commit)
 supabase/functions/.secrets.*
+
+# Local CoS dumps — Hermes profile tarballs can contain credentials
+notes/company/backups/
+.tmp_still*.png

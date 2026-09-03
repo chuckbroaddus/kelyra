@@ -1,5 +1,10 @@
+/**
+ * Q12 fail-closed teacher provision — static source assertions only.
+ * Matches other Q* security tests: pin migration/TS text; do not require a live DB.
+ * CoS smoke after apply: provision student/parent and confirm no public.teachers row.
+ */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
@@ -10,6 +15,13 @@ function read(rel: string): string {
 }
 
 const migration = 'supabase/migrations/20260827000003_fail_closed_teacher_provision.sql';
+const q12Stamp = '20260827000003_fail_closed_teacher_provision.sql';
+
+function laterMigrations(): string[] {
+  return readdirSync(join(root, 'supabase/migrations'))
+    .filter((name) => name.endsWith('.sql') && name > q12Stamp)
+    .sort();
+}
 
 test('Q12 migration: handle_new_user never inserts teachers or default teacher profile', () => {
   const sql = read(migration);
@@ -21,6 +33,21 @@ test('Q12 migration: handle_new_user never inserts teachers or default teacher p
   assert.doesNotMatch(body, /insert into public\.teachers/i);
   assert.doesNotMatch(body, /insert into public\.profiles/i);
   assert.doesNotMatch(body, /role\s*=\s*'teacher'|,\s*'teacher'\s*\)/i);
+});
+
+test('Q12 drift: later migrations do not remint teachers via handle_new_user or teachers_own', () => {
+  for (const name of laterMigrations()) {
+    const sql = read(`supabase/migrations/${name}`);
+    if (/create or replace function public\.handle_new_user\s*\(/i.test(sql)) {
+      const start = sql.search(/create or replace function public\.handle_new_user\s*\(/i);
+      const endMatch = sql.slice(start).search(/\$\$\s*;/);
+      const body = endMatch >= 0 ? sql.slice(start, start + endMatch) : sql.slice(start);
+      assert.doesNotMatch(body, /insert into public\.teachers/i, name);
+      assert.doesNotMatch(body, /insert into public\.profiles/i, name);
+    }
+    assert.doesNotMatch(sql, /create policy teachers_own on public\.teachers/i, name);
+    assert.doesNotMatch(sql, /create policy teachers_self_insert/i, name);
+  }
 });
 
 test('Q12 migration: teachers_own ALL dropped; self SELECT+UPDATE only (no INSERT)', () => {
@@ -99,6 +126,18 @@ test('Q12 AuthProvider: never ensureTeacherProfile for missing/student/parent', 
   assert.match(src, /else setTeacher\(null\)/);
 });
 
+test('Q12 shouldLoadTeacherRow: staff/teacher only; never mint for missing/student/parent', () => {
+  const src = read('src/lib/school/roles.ts');
+  const start = src.indexOf('/** Auth chrome may load teachers only');
+  assert.ok(start >= 0, 'shouldLoadTeacherRow fail-closed comment missing');
+  const fn = src.slice(start);
+  const end = fn.indexOf('\nexport function', fn.indexOf('export function shouldLoadTeacherRow'));
+  const body = end >= 0 ? fn.slice(0, end) : fn;
+  assert.match(body, /never mint/i);
+  assert.match(body, /isStaffRole\(value\) \|\| isTeacherRole\(value\)/);
+  assert.doesNotMatch(body, /insert|upsert|ensureTeacherProfile/i);
+});
+
 test('Q12 ensureTeacherProfile selects only; never inserts teachers', () => {
   const src = read('src/lib/auth/api.ts');
   const fn = src.slice(src.indexOf('export async function ensureTeacherProfile'));
@@ -110,22 +149,38 @@ test('Q12 ensureTeacherProfile selects only; never inserts teachers', () => {
 });
 
 test('Q12 sign-in: no public Create teacher / signUp', () => {
-  const src = read('src/app/sign-in.tsx');
-  assert.doesNotMatch(src, /Create a teacher/i);
-  assert.doesNotMatch(src, /signUp|sign-up|createTeacher|auth\.signUp/i);
-  assert.match(src, /school_claim_superintendent/);
-  assert.match(src, /Accounts come from the office/i);
+  const gate = read('src/app/sign-in.tsx');
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  assert.doesNotMatch(gate, /Create a teacher/i);
+  assert.doesNotMatch(gate, /signUp|sign-up|createTeacher|auth\.signUp/i);
+  assert.doesNotMatch(gate, /school_claim_superintendent/);
+  assert.doesNotMatch(splash, /Create a teacher/i);
+  assert.doesNotMatch(splash, /signUp|createTeacher|auth\.signUp/i);
+  assert.doesNotMatch(splash, /school_claim_superintendent/);
+  assert.match(
+    splash,
+    /Account creation is performed by the school office\. Please contact your school's administration for access\./,
+  );
 });
 
-test('sign-in: full-color KelyraMark above text wordmark (no tint)', () => {
-  const src = read('src/app/sign-in.tsx');
-  const mark = read('src/components/ui/KelyraMark.tsx');
-  assert.match(src, /import \{ KelyraMark \} from '@\/components\/ui\/KelyraMark'/);
-  assert.match(src, /<KelyraMark size=\{72\}/);
-  assert.doesNotMatch(src, /tintColor/);
-  assert.match(mark, /assets\/brand\/kelyra\.png/);
-  assert.doesNotMatch(mark, /tintColor/);
-  const markIdx = src.indexOf('<KelyraMark');
-  const wordIdx = src.indexOf('>Kelyra</Text>');
-  assert.ok(markIdx >= 0 && wordIdx > markIdx, 'mark must sit above the Kelyra wordmark');
+test('sign-in: splash final-frame still + shared neon CTA (no tint wordmark stack)', () => {
+  const gate = read('src/app/sign-in.tsx');
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  const brand = read('src/components/ui/splashBrand.ts');
+  const cta = read('src/components/ui/SplashSignInButton.tsx');
+  assert.match(gate, /SplashLanding/);
+  assert.match(gate, /initialRevealForm/);
+  assert.match(splash, /splashStillSources/);
+  assert.match(splash, /SplashSignInButton/);
+  assert.doesNotMatch(splash, /KelyraMark/);
+  assert.doesNotMatch(splash, />Kelyra<\/Text>/);
+  assert.doesNotMatch(splash, /tintColor/);
+  assert.doesNotMatch(splash, /PrimaryButton/);
+  assert.doesNotMatch(gate, /KelyraMark/);
+  assert.doesNotMatch(gate, />Kelyra<\/Text>/);
+  assert.match(brand, /kelyra_splash_still_16x9\.jpg/);
+  assert.match(brand, /kelyra_splash_still_9x16\.jpg/);
+  assert.doesNotMatch(cta, /tintColor/);
+  assert.match(cta, /#6B4CFF/);
+  assert.match(cta, /#2EC6F0/);
 });

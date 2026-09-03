@@ -7,6 +7,7 @@ import { loadMyProfile } from '@/lib/school/api';
 import { shouldLoadTeacherRow } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import type { ProfileRow, TeacherRow } from '@/lib/supabase/types';
+import { unlockAppOrientation } from '@/lib/theme/screenOrientation';
 
 type AuthState = {
   configured: boolean;
@@ -68,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => data.subscription.unsubscribe();
   }, [configured]);
+
+  // Post-auth: restore default orientation (pre-auth splash locks portrait on phones).
+  useEffect(() => {
+    if (!session) return;
+    void unlockAppOrientation();
+  }, [session]);
 
   const refreshTeacher = async () => {
     if (!configured) return;

@@ -12,6 +12,7 @@ import { ListRow } from '@/components/ui/ListRow';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
+import { SplashLanding } from '@/components/ui/SplashLanding';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -122,16 +123,7 @@ export default function HomeScreen() {
   }
 
   if (!teacher) {
-    return (
-      <Screen centered maxWidth={400}>
-        <Text style={[styles.wordmark, { color: colors.ink }]}>Kelyra</Text>
-        <Text style={[styles.lead, { color: colors.mute }]}>
-          Photograph the work. Approve the gap. Send a short practice set.
-        </Text>
-        {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
-      </Screen>
-    );
+    return <SplashLanding error={error} />;
   }
 
   const onCreate = async () => {
@@ -384,10 +376,6 @@ function schoolHomeTabs(opts: {
 }
 
 const styles = StyleSheet.create({
-  wordmark: {
-    ...type.display,
-    textAlign: 'center',
-  },
   lead: {
     ...type.body,
     marginTop: 8,

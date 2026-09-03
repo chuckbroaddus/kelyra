@@ -1155,15 +1155,15 @@ Chrome (header + context + tray) as §3 unless a screen says otherwise.
 
 **Job.** Sign in if needed. Otherwise pick a class, or name the first one.
 
-**Primary.** `Teacher sign in` (signed out) or `Create class` (signed in).
+**Primary.** `Sign in` (signed out) or `Create class` (signed in).
 
 **Routing (unchanged).** One class and no `?switch` → `replace` to `/class/{id}`.
 
 #### Signed out
 
-Vertical: wordmark `Kelyra` → lead `Photograph the work. Approve the gap. Send a short practice set.` → Primary `Teacher sign in` → Ghost `Student join`.
+Full-bleed splash MP4 (`SplashLanding`): **9×16** when the viewport is portrait (`height > width`), **16×9** when landscape / web-wide. Bundled assets under `assets/brand/splash/` (H.264 + AAC, no remote fetch). Plays **once** per mount/focus then holds the final frame (not looping). Unmuted with `Audio.setAudioModeAsync` (`playsInSilentModeIOS`); web may require a gesture if autoplay blocks sound. No native controls. No text wordmark or tagline on this gate. Local neon violet→cyan gradient **Sign in** CTA (splash palette, not terracotta `Primary`) sits in the lower third / bottom safe area (soft black scrim) and routes to `/sign-in`. Auth `error` still surfaces if set. No teacher chrome.
 
-No teacher chrome. Portrait and landscape: centered column, `maxWidth` 400.
+`configured === false` keeps the Supabase setup copy screen (no splash required).
 
 #### Signed in, zero classes
 
@@ -1181,9 +1181,13 @@ Portrait: `maxWidth` 480. Landscape phone: same. Tablet: left-aligned in the con
 
 ### 13.2 `/sign-in` — `src/app/sign-in.tsx`
 
-**Job.** Teacher email + password.
+**Job.** Email / `@username` + password. Fail-closed — no public signup.
 
-**Primary.** `Sign in`. Ghost `Create account`.
+**Hero.** Aspect-aware **final still** of the splash MP4 (`kelyra_splash_still_9x16.png` / `_16x9.png` under `assets/brand/splash/`), not `KelyraMark` and not a text “Kelyra” wordmark. Portrait still when `height > width`, landscape otherwise.
+
+**Primary.** Shared neon violet→cyan `SplashSignInButton` (same CTA as `SplashLanding`; not terracotta `Primary`). Label `Sign in` / `Signing in…`.
+
+**Footer.** Exact office copy only: “Account creation is performed by the school office. Please contact your school's administration for access.” No bootstrap / `school_claim_superintendent` blurb in the UI.
 
 No chrome. Centered column, `maxWidth` 400, both orientations.
 
