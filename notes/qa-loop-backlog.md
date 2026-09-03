@@ -13,13 +13,80 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### Narrow remute race if parent re-renders before awaitingGesture clears (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05189-790a-74d2-b43f-733e43fa1a9a`
+- Workflow: `wf_01a05189b45871908798fab7530e119e`
+- Request: Fix web splash audio — tap never unmutes (CEO 2026-08-30)
+- Evidence: tryPlayUnmuted sets el.muted=false then awaits playAsync before setAwaitingGesture(false). SplashVideo still receives isMuted={awaitingGesture} (true) until that state update. A concurrent SplashLanding setState (e.g. beginVideoCrossfade → setIsFadingOut) can re-commit muted={true} briefly before awaitingGesture flips.
+- Recommendation: If Safari ever remutes after a late tap, drive web muted only from an imperative flag or clear muted in the same sync turn before any parent setState; not required for acceptance given the short window.
+- Status: open
+
+
+### Web root fill uses minHeight 100% rather than 100vh (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a0516d-be43-7191-b46e-8fa87fc76c3e`
+- Workflow: `wf_01a0516e47fd7682880297f57bcd5c1a`
+- Request: Web splash US-WEB-1/2/3 center + cover + unmute
+- Evidence: SplashLanding root web Platform.select sets width/height/minHeight to '100%' only; expo-reset already sets html/body/#root height 100% and #root display:flex, so the flex chain should fill, but the request also allowed 100vh as belt-and-suspenders.
+- Recommendation: Optional: add minHeight: '100vh' (or 100dvh) on web root if live dogfood still shows gutters on a specific browser chrome size.
+- Status: open
+
+### SplashLanding can re-lock portrait after unlock while still mounted (P2)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05165-4387-72e3-8367-b5c4624102f6`
+- Workflow: `wf_01a051657e457c93b158b6109b0ce456`
+- Request: Mobile pre-auth portrait lock; unlock after sign-in (T40)
+- Evidence: SplashLanding locks in a useEffect on [width, height] with no session check (SplashLanding.tsx ~109–111). runSignIn unlocks then refresh/replace; AuthProvider unlocks only when session changes. Android uses softwareKeyboardLayoutMode "resize", so a post-unlock window height change (keyboard dismiss) can call lockPreAuthPortrait again. /sign-in also mounts SplashLanding with no auth gate, so a signed-in visit re-locks with nothing to unlock again.
+- Recommendation: Gate lock on signed-out state (skip or unlock when session is present), and/or lock once on mount instead of on every dimension change; keep AuthProvider unlock as backup.
+- Status: open
+
+### Orientation lock/unlock errors are swallowed (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05165-4387-72e3-8367-b5c4624102f6`
+- Workflow: `wf_01a051657e457c93b158b6109b0ce456`
+- Request: Mobile pre-auth portrait lock; unlock after sign-in (T40)
+- Evidence: lockPreAuthPortrait and unlockAppOrientation catch all errors with empty handlers in screenOrientation.ts.
+- Recommendation: Optional light logging in __DEV__ so simulator/unsupported-policy failures are visible during QA.
+- Status: open
+
+### Native Video may ignore parent opacity during crossfade (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05153-6ac8-7ef2-a0c8-4964692f2d78`
+- Workflow: `wf_01a05153e17e7271ab9f3fb02af5f865`
+- Request: Splash end black — architectural rewrite (T38)
+- Evidence: SplashLanding fades an Animated.View wrapper (useNativeDriver: true) around expo-av Video; on some native surfaces parent opacity may not composite, so the visual may hard-cut at unmount rather than smoothly fade. Still JPG remains always mounted underneath with explicit mediaBox sizing, so the hold does not depend on the fade.
+- Recommendation: Dogfood on iOS/Android; if the cut feels abrupt, unmount at fade start or migrate the player to expo-video while keeping the always-mounted still layer.
+- Status: open
+
+### pointerEvents none is only on the inner video layer (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05153-6ac8-7ef2-a0c8-4964692f2d78`
+- Workflow: `wf_01a05153e17e7271ab9f3fb02af5f865`
+- Request: Splash end black — architectural rewrite (T38)
+- Evidence: During fade-out, pointerEvents="none" is set on the Animated.View, but the outer Pressable still receives taps and can call skipSplash mid-fade.
+- Recommendation: Optional: also set pointerEvents none on the Pressable while isFadingOut if taps during fade should be ignored; current behavior (skip to CTA+form) is acceptable.
+- Status: open
+
+
+### Redundant atEnd ratio checks when SPLASH_PEAK_RATIO is 1 (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a0513e-280e-7a30-a6db-7b1b45feb94d`
+- Workflow: `wf_01a0513e5e0f7ef2abcd74dfbd95f29e`
+- Request: Splash still = last frame of ORIGINAL mp4 (CEO correction 2026-08-30)
+- Evidence: SplashLanding.tsx onPlaybackStatusUpdate ORs `position >= duration - SPLASH_END_EPSILON_MS` with both `position / duration >= SPLASH_PEAK_RATIO` and `position >= duration * SPLASH_PEAK_RATIO`; with ratio 76/76 those last two are equivalent to `position >= duration` and mostly duplicate the epsilon path.
+- Recommendation: Keep didJustFinish + epsilon (and optionally a single ratio check) for clarity; drop the duplicate ratio clauses if this is touched again.
+- Status: fixed
+- Note: Superseded 2026-08-30 by T38 kelyra-qa-loop `01a05153-6ac8-7ef2-a0c8-4964692f2d78`. Peak-frame / last-frame hold ratio logic removed; logo hold is always-mounted CEO JPG with video crossfade at 0.72 then unmount.
+
 ### Q12 security tests are static source assertions only (P3)
 - Source: kelyra-qa-loop (2026-08-27)
 - Session: `01a041ea-e0c2-7511-b6f8-ef9878a268d2`
 - Request: Q12 handle_new_user / ensureTeacherProfile
 - Evidence: src/lib/auth/failClosedTeacherProvision.security.test.ts reads migration/TS text and asserts patterns; it does not execute SQL against a live DB.
 - Recommendation: Acceptable and matches other Q* security tests; after CoS applies the migration, smoke provision student/parent and confirm no teachers row.
-- Status: open
+- Status: fixed
+- Note: Accepted 2026-09-02 — static source assertions are the Q* evidence path (no live-DB conversion). Test file documents that; adds post-Q12 drift pins for handle_new_user remint / teachers_own and shouldLoadTeacherRow gate. CoS smoke remains operational (provision student/parent → no teachers row).
 
 ### Co-teacher photo replace can orphan prior assets (P2)
 - Source: kelyra-qa-loop (2026-08-27)
@@ -353,9 +420,95 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 - Recommendation: Optional later: move the branding source check to a sign-in UI/regression test file so security tests stay focused on authz/provision invariants.
 - Status: open
 
+### Landing tests are static source assertions only (P3)
+- Source: kelyra-qa-loop (2026-08-29)
+- Session: `01a050eb-3d80-7ac3-9185-e907b6e319b8`
+- Request: Splash MP4 landing (CEO request 2026-08-29)
+- Evidence: splashLanding.test.ts checks index/SplashLanding source strings, asset existence, and that sign-in.tsx still has KelyraMark — it does not exercise runtime orientation switching or expo-av playback.
+- Recommendation: Acceptable for this request; optional follow-up could assert exported splashSources keys or a thin orientation helper if logic grows.
+- Status: open (partially improved 2026-08-30 — now asserts ownedVideo cleanup + splashAspectForSize; still no runtime expo-av orientation harness)
+
+
+### ownedVideo is captured after async audio setup, not at effect start (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a0510a-322e-70b0-b2d9-7aedbc897fa7`
+- Request: Fix splash orientation black-out (CEO 2026-08-30)
+- Evidence: SplashLanding.tsx assigns ownedVideo = videoRef.current only after await enableSplashAudioMode(), guarded by if (cancelled) return. Early blur/unmount before that assignment skips pause/unload (ownedVideo still null). Orientation remount is still safe because cancelled is checked before capture and cleanup never uses videoRef.current.
+- Recommendation: Optionally capture ownedVideo synchronously at effect entry (or via a layout/ref callback) so blur cleanup always owns the instance; not required for the orientation black-out fix.
+- Status: open
+
+### Cancelled tryPlayUnmuted can still setAwaitingGesture(true) (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a0510a-322e-70b0-b2d9-7aedbc897fa7`
+- Request: Fix splash orientation black-out (CEO 2026-08-30)
+- Evidence: tryPlayUnmuted's catch calls setAwaitingGesture(true) with no cancelled check. After an orientation swap, a stale failing play on the unloaded prior instance can flip awaitingGesture after the new effect reset, briefly forcing isMuted={true} until the new play path clears it.
+- Recommendation: Pass a cancelled/isActive guard into tryPlayUnmuted (or ignore setState when cancelled) so orientation cleanup cannot leave a stale muted/awaiting-gesture state.
+- Status: open
+
+### Mid-playback orientation remounts Video and replays (P2)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05119-659e-7cc0-a30d-e1594df5dec0`
+- Request: Splash last-frame still + no replay on rotate + shared login hero (CEO 2026-08-30 OOB)
+- Evidence: SplashLanding.tsx mounts Video with key={sourceKey} and useFocusEffect depends on sourceKey while hasCompletedSplash is false, so a rotate before didJustFinish unloads and starts the other-aspect MP4 again. Acceptance and guidance only require no replay after first completion.
+- Recommendation: If product wants zero replay even mid-animation, on sourceKey change before finish switch to the matching still (or keep a single Video without remounting) instead of remounting with shouldPlay.
+- Status: open
+
+### Possible brief first-frame flash at finish before Image swap (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05119-659e-7cc0-a30d-e1594df5dec0`
+- Request: Splash last-frame still + no replay on rotate + shared login hero (CEO 2026-08-30 OOB)
+- Evidence: Completion path is markCompleted on didJustFinish then a ternary that replaces Video with Image; there is no pre-mounted still overlay. Some platforms snap Video to frame 0 at end before React paints the Image.
+- Recommendation: Optionally keep an Image overlay of stillSource under/over Video and reveal it on finish so the last frame never blanks.
+- Status: fixed
+- Note: Addressed 2026-08-30 by T38 `01a05153-6ac8-7ef2-a0c8-4964692f2d78` — CEO JPG still is always mounted under video; hold no longer depends on last decoded frame or a post-finish Image swap.
+
+
 ## Fixed
 
-_None yet._
+### Stale splashBrand still comment (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05133-5656-7502-917a-5b387d7909f5`
+- Workflow: `wf_01a051339ba37230a9320575f0bc43ec`
+- Request: Fix splash ending on black (CEO 2026-08-30)
+- Evidence: src/components/ui/splashBrand.ts still documents splashStillSources as "Second-to-last / non-black end-frame stills", but assets and SplashLanding/tests treat them as peak frame 52.
+- Recommendation: Update the comment to say peak neon stills (frame 52 / SPLASH_PEAK_RATIO) so future edits do not re-extract fade-to-black end frames.
+- Status: fixed
+- Note: Fixed 2026-08-30 by T36 kelyra-qa-loop `01a0513e-280e-7a30-a6db-7b1b45feb94d`. splashBrand.ts now documents last frame of original splash (full neon wordmark hold). Peak-frame-52 wording is obsolete.
+
+### Stale "last-frame/final-frame" wording in tests (P3)
+- Source: kelyra-qa-loop (2026-08-30)
+- Session: `01a05125-1595-7560-b49f-2299dd5be62c`
+- Workflow: `wf_01a05125679a71709a7c4f8db57f84df`
+- Request: Unified splash auth screen (CEO 2026-08-30)
+- Evidence: splashLanding.test.ts still titles a case "last-frame still"; failClosedTeacherProvision.security.test.ts says "final-frame still"; splashBrand.ts correctly documents second-to-last / non-black stills and the PNGs show the neon wordmark.
+- Recommendation: Rename those test titles/comments to second-to-last / non-black end-frame so they match the CEO asset requirement.
+- Status: fixed
+- Note: Fixed/superseded 2026-08-30 by T36. CEO correction: hold still IS original last frame 76. last-frame wording is now correct.
+
+
+### Orientation switch may unload the newly mounted video (P2)
+- Source: kelyra-qa-loop (2026-08-29)
+- Session: `01a050eb-3d80-7ac3-9185-e907b6e319b8`
+- Request: Splash MP4 landing (CEO request 2026-08-29) / Fix splash orientation black-out (CEO 2026-08-30)
+- Evidence: SplashLanding.tsx keys Video on sourceKey and also puts sourceKey in useFocusEffect deps. On rotate/resize, React remounts Video first, then the prior effect cleanup runs against videoRef.current (now the new instance) and calls unloadAsync before the new effect’s playAsync.
+- Fix: Cleanup captures `ownedVideo` and only pause/unload that instance; never `videoRef.current` after a keyed remount. Aspect helper `splashAspectForSize` extracted; last-frame lock on didJustFinish.
+- Status: fixed (2026-08-30)
+
+### Web muted autoplay fallback can be undone by isMuted={false} on re-render (P2)
+- Source: kelyra-qa-loop (2026-08-29)
+- Session: `01a050fa-d1b5-7390-80b3-8e13daa4c7d7`
+- Request: Splash fix play once + audio + neon CTA (CEO 2026-08-29) / Fix splash orientation black-out (CEO 2026-08-30)
+- Evidence: SplashLanding kept Video isMuted={false} while setAwaitingGesture(true) then setIsMutedAsync(true)+playAsync for web autoplay fallback; expo-av reapplied props.status.isMuted on every render.
+- Fix: Drive mute from state via `isMuted={awaitingGesture}` so the muted autoplay fallback is not clobbered on re-render.
+- Status: fixed (2026-08-30)
+
+### didJustFinish only sets a ref; no explicit last-frame lock (P3)
+- Source: kelyra-qa-loop (2026-08-29)
+- Session: `01a050fa-d1b5-7390-80b3-8e13daa4c7d7`
+- Request: Splash fix play once + audio + neon CTA (CEO 2026-08-29) / Fix splash orientation black-out (CEO 2026-08-30)
+- Evidence: onPlaybackStatusUpdate only set finishedRef when didJustFinish.
+- Fix: On didJustFinish, pauseAsync and setPositionAsync(duration - 1) to hold the final frame.
+- Status: fixed (2026-08-30)
 
 ## Not this list
 
