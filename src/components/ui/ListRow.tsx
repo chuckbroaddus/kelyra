@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   actions: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

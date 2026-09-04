@@ -178,6 +178,10 @@ const server = createServer(async (req, res) => {
       json(res, await analyzeAnswerKey(body));
       return;
     }
+    if (route === 'parse-class-syllabus') {
+      json(res, await parseClassSyllabus(supabase, body));
+      return;
+    }
     if (route === 'match-key') {
       json(res, await matchKey(body));
       return;
@@ -1077,7 +1081,7 @@ async function classifyCapture(body) {
   };
 }
 
-const ASK_FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
+const ASK_FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
 const ASK_PHOTO_FAILED = '(A photo was attached but could not be opened.)';
 
 async function hydrateAskImages(input) {
@@ -1925,6 +1929,162 @@ Rules:
 - maxScore is the sum of points.
 - teacherNote is one short sentence or null.
 - Never invent a student. This is not grading a child.`;
+
+const syllabusParsePrompt = `You extract a CLASS GRADING POLICY (syllabus weights) from a photo for a teacher.
+Return JSON only, no markdown, schema_version 1:
+{
+  "schema_version": 1,
+  "document_kind": "syllabus_policy|rubric|mixed|unknown",
+  "document_kind_confidence": 0.0,
+  "warnings": [{"code":"string","message":"string","severity":"info|warn|block"}],
+  "title": {"value":"string|null","confidence":0.0,"selected":true},
+  "term_structure": {"value":"quarters|semesters|year|custom|null","confidence":0.0,"selected":true},
+  "categories": [{
+    "label": {"value":"Tests","confidence":0.0,"selected":true},
+    "key": {"value":"test","confidence":0.0,"selected":true},
+    "weight_percent": {"value":40,"confidence":0.0,"selected":true},
+    "default_include_in_average": {"value":false,"confidence":1.0,"selected":true}
+  }],
+  "policies": {
+    "missing_as_zero": {"value":false,"confidence":1.0,"selected":true},
+    "rounding": {"value":"nearest_whole","confidence":1.0,"selected":true},
+    "publish_to_family": {"value":true,"confidence":1.0,"selected":true},
+    "extra_credit_allowed": {"value":false,"confidence":0.0,"selected":false}
+  },
+  "rubric_draft": {"present":false,"criteria":[]},
+  "ocr_notes": null,
+  "overall_confidence": 0.0
+}
+Hard rules:
+- Classify document_kind first. Rubric criteria must NEVER become category weights.
+- Extract % weights only from grading-policy / final-grade tables.
+- Prefer keys: homework, quiz, test, midterm, final, project, presentation, participation, behavior, other.
+- Always default_include_in_average=false. Never set true because key is quiz/test.
+- missing_as_zero default false. Do not invent 40/60 defaults. If unreadable, empty categories + warning.
+- No roster, SIS ids, IEP text, or student score tables in categories.
+- If the page is a grade list / student-filled rubric, document_kind=unknown or rubric with empty categories.`;
+
+async function parseClassSyllabus(supabase, body) {
+  const classId = String(body.classId ?? '').trim();
+  const imageUrl = String(body.imageUrl ?? '');
+  if (!classId) throw new Error('classId required');
+  if (!imageUrl) throw new Error('imageUrl required');
+  if (!isAllowedAskImageUrl(imageUrl)) throw new Error('Image URL is not allowed.');
+
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user?.id) throw new Error('Sign in first.');
+  const { data: taught } = await supabase
+    .from('class_teachers')
+    .select('class_id')
+    .eq('class_id', classId)
+    .eq('teacher_id', userData.user.id)
+    .maybeSingle();
+  if (!taught) throw new Error('You can only parse a syllabus for a class you teach.');
+
+  // Side-effect free re: publish — return draft JSON only.
+  try {
+    const loaded = await loadImageForGrok(imageUrl);
+    const payload = await grokCall(
+      'syllabus',
+      [
+        {
+          role: 'user',
+          content: [
+            { type: 'input_image', image_url: loaded.dataUrl, detail: imageDetailFor('cheap') },
+            { type: 'input_text', text: syllabusParsePrompt },
+          ],
+        },
+      ],
+      {},
+      { supabase, functionName: 'parse-class-syllabus' },
+    );
+    const parsed = extractJson(outputText(payload));
+    return normalizeSyllabusDraft(parsed, classId);
+  } catch (err) {
+    return {
+      schema_version: 1,
+      class_id: classId,
+      document_kind: 'unknown',
+      document_kind_confidence: 0,
+      categories: [],
+      policies: {
+        missing_as_zero: { value: false, confidence: 1, selected: true },
+        rounding: { value: 'nearest_whole', confidence: 1, selected: true },
+        publish_to_family: { value: true, confidence: 1, selected: true },
+      },
+      warnings: [
+        {
+          code: 'low_ocr',
+          message: err instanceof Error ? err.message : 'Could not read this page.',
+          severity: 'block',
+        },
+      ],
+      overall_confidence: 0,
+      status: 'proposed',
+    };
+  }
+}
+
+function normalizeSyllabusDraft(parsed, classId) {
+  const kind = ['syllabus_policy', 'rubric', 'mixed', 'unknown'].includes(parsed?.document_kind)
+    ? parsed.document_kind
+    : 'unknown';
+  const categories = Array.isArray(parsed?.categories) ? parsed.categories : [];
+  const forced = categories.map((row, index) => {
+    const label =
+      typeof row?.label === 'string'
+        ? row.label
+        : typeof row?.label?.value === 'string'
+          ? row.label.value
+          : `Category ${index + 1}`;
+    const keyRaw =
+      typeof row?.key === 'string'
+        ? row.key
+        : typeof row?.key?.value === 'string'
+          ? row.key.value
+          : 'other';
+    const weight =
+      typeof row?.weight_percent === 'number'
+        ? row.weight_percent
+        : Number(row?.weight_percent?.value ?? 0);
+    const conf =
+      typeof row?.weight_percent?.confidence === 'number'
+        ? row.weight_percent.confidence
+        : typeof row?.label?.confidence === 'number'
+          ? row.label.confidence
+          : 0.5;
+    const selected = conf >= 0.55 && kind !== 'rubric';
+    return {
+      temp_id: `c${index + 1}`,
+      label: { value: label, confidence: conf, selected },
+      key: { value: String(keyRaw).toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'other', confidence: conf, selected },
+      weight_percent: { value: Number.isFinite(weight) ? weight : 0, confidence: conf, selected },
+      default_include_in_average: { value: false, confidence: 1, selected: true },
+    };
+  });
+  return {
+    schema_version: 1,
+    class_id: classId,
+    document_kind: kind,
+    document_kind_confidence: typeof parsed?.document_kind_confidence === 'number' ? parsed.document_kind_confidence : 0,
+    warnings: Array.isArray(parsed?.warnings) ? parsed.warnings : [],
+    title: parsed?.title ?? { value: null, confidence: 0, selected: false },
+    term_structure: parsed?.term_structure ?? { value: 'year', confidence: 0, selected: true },
+    categories: kind === 'rubric' ? [] : forced,
+    policies: {
+      rounding: { value: 'nearest_whole', confidence: 1, selected: true },
+      publish_to_family: { value: true, confidence: 1, selected: true },
+      extra_credit_allowed: { value: false, confidence: 1, selected: true },
+      ...(parsed?.policies && typeof parsed.policies === 'object' ? parsed.policies : {}),
+      // Force fail-closed defaults after any model suggestion.
+      missing_as_zero: { value: false, confidence: 1, selected: true },
+    },
+    rubric_draft: parsed?.rubric_draft ?? { present: kind === 'rubric' || kind === 'mixed', criteria: [] },
+    ocr_notes: typeof parsed?.ocr_notes === 'string' ? parsed.ocr_notes : null,
+    overall_confidence: typeof parsed?.overall_confidence === 'number' ? parsed.overall_confidence : 0,
+    status: 'proposed',
+  };
+}
 
 async function analyzeAnswerKey(body) {
   const imageUrl = String(body.imageUrl ?? '');

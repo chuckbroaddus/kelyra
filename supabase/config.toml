@@ -47,3 +47,6 @@ verify_jwt = true
 
 [functions.ingest-lesson-pack]
 verify_jwt = true
+
+[functions.parse-class-syllabus]
+verify_jwt = true

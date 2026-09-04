@@ -1,4 +1,8 @@
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import {
+  AudioModule,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from 'expo-audio';
 import { Platform } from 'react-native';
 
 import { getPreferredDeviceId } from '@/lib/media/devices';
@@ -32,35 +36,32 @@ export async function startLiveRecording(deviceId?: string | null): Promise<Live
 }
 
 async function startNativeRecording(): Promise<LiveRecording> {
-  const permission = await Audio.requestPermissionsAsync();
+  const permission = await requestRecordingPermissionsAsync();
   if (!permission.granted) {
     throw new Error('Microphone permission is required.');
   }
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: true,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: true,
-    interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-    interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
+  await setAudioModeAsync({
+    allowsRecording: true,
+    playsInSilentMode: true,
+    shouldPlayInBackground: true,
+    interruptionMode: 'duckOthers',
+    shouldRouteThroughEarpiece: false,
   });
-  const recording = new Audio.Recording();
-  await recording.prepareToRecordAsync(recordingOptions());
-  await recording.startAsync();
+  const options = recordingOptions();
+  const recording = new AudioModule.AudioRecorder(options);
+  await recording.prepareToRecordAsync(options);
+  recording.record();
   return {
     async stop() {
-      await recording.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
+      await recording.stop();
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'mixWithOthers',
+        shouldRouteThroughEarpiece: false,
       });
-      const uri = recording.getURI();
+      const uri = recording.uri;
       if (!uri) throw new Error('No audio was captured.');
       return persistLocalAudio(uri, mimeTypeForRecording());
     },

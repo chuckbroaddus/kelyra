@@ -13,6 +13,37 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### ui-design Ask FALLBACK still says Inbox (P3)
+- Source: kelyra-qa-loop (2026-09-04)
+- Session: `01a06d48-877b-7500-bb4d-3510231f9520`
+- Workflow: `wf_01a06d48d6a678f3822806f6fe946d33`
+- Request: TEACH-UX leftovers — finish v1 chrome (CEO send 2026-09-04)
+- Evidence: docs/ui-design.md §12.4 still documents “Open Inbox or the student’s page.” and “open Inbox” while askPrompt.ts, scripts/ai-dev-server.mjs, and supabase/functions/ask-assistant/index.ts now say Needs.
+- Recommendation: Update the Ask hard-limits copy in docs/ui-design.md to Needs so product docs match L6.
+- Status: open
+
+### Demoted routes leave ClassTabs with no selected tab (P3)
+- Source: kelyra-qa-loop (2026-09-04)
+- Session: `01a06b18-de24-7323-8af0-ff1b0a65d2cf`
+- Workflow: `wf_01a06b1937e877a1bca37af7a2d8f3e0`
+- Request: TEACH-UX Phase B — ClassTabs default cut + Class tray landing (CEO send 2026-09-04)
+- Evidence: classTabFromRoute still returns `week` / `heatmap` / `family`, but those keys are absent from CLASS_TABS, so PersonTabs selects nothing on those screens.
+- Recommendation: Map demoted panes to a nearby default tab for selection chrome (e.g. heatmap→gradebook, week→today, family→parents) without putting demoted keys back in CLASS_TABS.
+- Status: fixed
+- Fix note: fixed by TEACH-UX leftovers L4 (session 01a06d48-877b-7500-bb4d-3510231f9520, 2026-09-04)
+
+
+### Week and Heatmap lack secondary chrome after demotion (P2)
+- Source: kelyra-qa-loop (2026-09-04)
+- Session: `01a06b18-de24-7323-8af0-ff1b0a65d2cf`
+- Workflow: `wf_01a06b1937e877a1bca37af7a2d8f3e0`
+- Request: TEACH-UX Phase B — ClassTabs default cut + Class tray landing (CEO send 2026-09-04)
+- Evidence: CLASS_TABS omits week/heatmap; hrefForClassTab still returns `?tab=week` and `/gradebook?tab=heatmap`, and those panes still render in `class/[id]/index.tsx` and `gradebook.tsx`. Family is drawer-reachable (`HamburgerDrawer` "Family update"). No Today filter/overflow control for Week and no in-gradebook Heatmap pane switcher were added.
+- Recommendation: Add a Today Week filter (or overflow) and a Gradebook heatmap pane control so demoted surfaces stay discoverable without restoring default ClassTab icons.
+- Status: fixed
+- Fix note: fixed by TEACH-UX leftovers L3 (session 01a06d48-877b-7500-bb4d-3510231f9520, 2026-09-04)
+
+
 ### storage-egress notes drift after S1 code (P2)
 - Source: kelyra-qa-loop (2026-09-02) S1 t_785c5388
 - Workflow: `wf_01a0652449bd7880aec6e7bb5433931d`

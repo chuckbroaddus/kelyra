@@ -30,7 +30,8 @@ import { deleteClass } from '@/lib/classes/delete';
 import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { formatHandle, isAdminRole, isAlsoParent, isTeacherRole } from '@/lib/school/roles';
+import { isOfficeChromeRole } from '@/lib/chrome/seat';
+import { formatHandle, isAlsoParent } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -225,6 +226,8 @@ export function HamburgerDrawer() {
   };
 
   const staff = chromeState.role === 'teacher' || chromeState.role === 'administrator' || chromeState.role === 'superintendent';
+  const officeSeat = isOfficeChromeRole(chromeState.role);
+  const teacherSeat = chromeState.role === 'teacher';
   const q = query;
 
   return (
@@ -280,7 +283,7 @@ export function HamburgerDrawer() {
                 onPress={() => go('/profile')}
               />
               ) : null}
-              {profile?.role === 'superintendent' ? (
+              {officeSeat && profile?.role === 'superintendent' ? (
                 <>
                   {matches('Feed', q) ? (
                     <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
@@ -314,7 +317,7 @@ export function HamburgerDrawer() {
                       onPress={() => {
                         if (teacher) void setActiveClass(teacher.id, klass.id);
                         chromeState.refreshChrome();
-                        go(isTeacherRole(profile) ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
+                        go(teacherSeat ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
                       }}
                       trailing={[
                         {
@@ -327,11 +330,11 @@ export function HamburgerDrawer() {
                       ]}
                     />
                   ))}
-                  {isTeacherRole(profile) && matches('Another class', q) ? (
+                  {teacherSeat && matches('Another class', q) ? (
                     <DrawerRow label="Another class" onPress={() => go('/?switch=1')} />
                   ) : null}
                   <Hairline />
-                  {isAdminRole(profile) ? (
+                  {officeSeat ? (
                     <>
                       {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
                       {matches('Activity', q) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
@@ -342,9 +345,9 @@ export function HamburgerDrawer() {
                       <Hairline />
                     </>
                   ) : null}
-                  {chromeState.classId && isTeacherRole(profile) ? (
+                  {chromeState.classId && teacherSeat ? (
                     <>
-                      {matches('Grade book', q) ? (
+                      {q.trim() && matches('Grade book', q) ? (
                       <DrawerRow
                         label="Grade book"
                         onPress={() => {
@@ -353,7 +356,7 @@ export function HamburgerDrawer() {
                         }}
                       />
                       ) : null}
-                      {matches('Parents', q) ? (
+                      {q.trim() && matches('Parents', q) ? (
                         <DrawerRow label="Parents" onPress={() => go(`/class/${chromeState.classId}/parents`)} />
                       ) : null}
                       {matches('Family update', q) ? (
@@ -363,13 +366,36 @@ export function HamburgerDrawer() {
                   ) : null}
                 </>
               )}
+              {chromeState.canChooseSeat ? (
+                <>
+                  {teacherSeat && matches('Office', q) ? (
+                    <DrawerRow
+                      label="Office"
+                      onPress={() => {
+                        chromeState.setChromeSeat('office');
+                        go('/', true);
+                      }}
+                    />
+                  ) : null}
+                  {officeSeat && matches('Teach', q) ? (
+                    <DrawerRow
+                      label="Teach"
+                      onPress={() => {
+                        chromeState.setChromeSeat('teacher');
+                        go('/', true);
+                      }}
+                    />
+                  ) : null}
+                  <Hairline />
+                </>
+              ) : null}
               {isAlsoParent(profile) && matches('My children', q) ? (
                 <>
                   <DrawerRow label="My children" onPress={() => go('/parent')} />
                   <Hairline />
                 </>
               ) : null}
-              {profile && profile.role !== 'student' && profile.role !== 'superintendent' && matches('Feed', q) ? (
+              {officeSeat && profile?.role !== 'superintendent' && matches('Feed', q) ? (
                 <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
               ) : null}
               <Hairline />

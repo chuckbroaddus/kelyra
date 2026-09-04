@@ -12,6 +12,8 @@ export type AskToolPolicyEntry = {
   capability: string | null;
   need: AskToolNeed;
   officeOnly?: boolean;
+  teacherSeatOnly?: boolean;
+  familyRead?: boolean;
 };
 
 export type ProfileHats = {
@@ -51,6 +53,11 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   create_assignment: { capability: 'assignments.manage', need: null },
   open_screen: { capability: null, need: null },
   revise_practice_page: { capability: 'assignments.manage', need: null },
+  scan_class_syllabus: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  get_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  discard_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  get_published_class_syllabus: { capability: null, need: null, familyRead: true },
+  explain_my_class_average: { capability: null, need: null, familyRead: true },
 };
 
 /** Product defaults for capabilities Ask tools reference (subset of matrix CAPABILITIES). */
@@ -66,6 +73,9 @@ const ASK_CAPABILITY_DEFAULTS: GrantMap = {
   'classes.create': { superintendent: 'own', administrator: 'own', teacher: 'none', parent: 'none', student: 'none' },
   'classes.overview': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   'assignments.manage': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
+  'syllabus.manage': { superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
+  'gradebook.view': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
+  'children.view': { superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
   'accounts.edit': { superintendent: 'all', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
 };
 
@@ -161,6 +171,18 @@ export function isAskToolAllowed(
   const policy = ASK_TOOL_POLICY[name];
   if (!policy) return false;
   if (policy.officeOnly) return isOfficeRole(profile);
+  if (policy.teacherSeatOnly) {
+    if (isOfficeRole(profile)) return false;
+    if (profile?.role === 'parent' || profile?.role === 'student') return false;
+  }
+  if (policy.familyRead) {
+    if (isOfficeRole(profile)) return false;
+    if (profile?.role === 'student') return can(profile, 'gradebook.view', 'own', grants);
+    if (profile?.role === 'parent' || Boolean(profile?.parent_id)) {
+      return can(profile, 'children.view', 'own', grants);
+    }
+    return false;
+  }
   if (!policy.capability) return true;
   const need = (policy.need ?? 'own') as Access;
   return can(profile, policy.capability, need, grants);

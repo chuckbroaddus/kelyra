@@ -15,6 +15,7 @@ export default function ClassStackLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="feed" />
       <Stack.Screen name="setup" />
+      <Stack.Screen name="syllabus" />
       <Stack.Screen name="gradebook" />
       <Stack.Screen name="assignments" />
       <Stack.Screen name="assignment/[assignmentId]" />

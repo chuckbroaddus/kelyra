@@ -25,7 +25,14 @@ import { chrome } from '@/constants/theme';
 import { isOpenWork } from '@/lib/assignments/status';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { unreadCount } from '@/lib/messages/api';
-import { isOfficeRole, isStaffRole, isTeacherRole } from '@/lib/school/roles';
+import { isStaffRole } from '@/lib/school/roles';
+import {
+  canChooseChromeSeat,
+  loadChromeSeatPreference,
+  resolveStaffChromeRole,
+  saveChromeSeatPreference,
+  type ChromeSeatPreference,
+} from '@/lib/chrome/seat';
 import { countNeedsYou } from '@/lib/captures/api';
 import { countAlertsForMe, markAlertRead, subscribeAlertBell } from '@/lib/posts/api';
 import { listClasses, resolveCaptureClass } from '@/lib/classes/api';
@@ -55,6 +62,9 @@ export type HeaderChrome = {
 
 type ChromeValue = {
   role: ChromeRole;
+  /** Dual-hat only: switch Office ↔ Teacher chrome. No-op when the profile cannot choose. */
+  setChromeSeat: (seat: ChromeSeatPreference) => void;
+  canChooseSeat: boolean;
   visible: boolean;
   forceHidden: boolean;
   setForceHidden: (hidden: boolean) => void;
@@ -92,6 +102,8 @@ type ChromeValue = {
   setHeaderCloseHandler: (handler: (() => void) | null) => void;
   requestHeaderClose: () => boolean;
   badgeCount: number;
+  /** Teacher Needs tray badge: unassigned + draft-ready count only (no names/scores). */
+  needsCount: number;
   messageCount: number;
   classId: string | null;
   className: string | null;
@@ -179,6 +191,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   }, []);
   const pushedTitle = pushedTitleState?.path === pathname ? pushedTitleState.title : null;
   const [badgeCount, setBadgeCount] = useState(0);
+  const [needsCount, setNeedsCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState<string | null>(null);
@@ -199,6 +212,31 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const [keepLocalTray, setKeepLocalTrayState] = useState(false);
   const localTrayRef = useRef(false);
   const keepLocalRef = useRef(false);
+  const [seatPreference, setSeatPreference] = useState<ChromeSeatPreference | null>(null);
+  const canChooseSeat = canChooseChromeSeat(profile);
+
+  useEffect(() => {
+    let live = true;
+    if (!profile?.id || !canChooseChromeSeat(profile)) {
+      setSeatPreference(null);
+      return;
+    }
+    void loadChromeSeatPreference(profile.id).then((stored) => {
+      if (live) setSeatPreference(stored);
+    });
+    return () => {
+      live = false;
+    };
+  }, [profile?.id, profile?.role, profile?.also_teacher]);
+
+  const setChromeSeat = useCallback(
+    (seat: ChromeSeatPreference) => {
+      if (!profile?.id || !canChooseChromeSeat(profile)) return;
+      setSeatPreference(seat);
+      void saveChromeSeatPreference(profile.id, seat);
+    },
+    [profile],
+  );
 
   const trayTranslate = useRef(new Animated.Value(0)).current;
   const contextTranslate = useRef(new Animated.Value(0)).current;
@@ -257,21 +295,21 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
 
   const role: ChromeRole = useMemo(() => {
     if (pathname === '/sign-in' || pathname === '/join' || pathname === '/password') return 'none';
-    // Daily workspace: teacher hat uses Capture / Inbox / Class. Admin hats stay
-    // on the profile for People / Activity. Parent is a destination, not a login.
-    if (isTeacherRole(profile)) return 'teacher';
-    if (profile?.role && isStaffRole(profile)) return profile.role;
+    // Explicit seat for dual-hat office+teacher. Do not let also_teacher force teacher tray.
+    const staffRole = resolveStaffChromeRole(profile, seatPreference);
+    if (staffRole) return staffRole;
     if (profile?.role === 'parent') return 'parent';
     if (profile?.role === 'student') return 'student';
     if (pathname === '/parent' || pathname.startsWith('/parent')) {
       return parentTokens.length || pathname.includes('t=') ? 'parent' : 'none';
     }
     if (pathname === '/todo') return studentSession ? 'student' : 'none';
-    if (teacher) return 'teacher';
+    if (teacher && isStaffRole(profile)) return 'teacher';
+    if (teacher && !profile) return 'teacher';
     if (studentSession) return 'student';
     if (parentTokens.length) return 'parent';
     return 'none';
-  }, [pathname, teacher, profile, studentSession, parentTokens.length]);
+  }, [pathname, teacher, profile, studentSession, parentTokens.length, seatPreference]);
 
   const contextReserve = useMemo(() => {
     if (role === 'none') return 0;
@@ -553,12 +591,17 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           if (cancelled) return;
           setClassId(klass.id);
           setClassName(klass.name);
-          const work = isOfficeRole(profile) ? 0 : await countNeedsYou(klass.id).catch(() => 0);
-          if (!cancelled) setBadgeCount(alerts + work);
+          // Needs badge follows chrome seat, not profile hats (dual-hat Teach seat).
+          const work = role === 'teacher' ? await countNeedsYou(klass.id).catch(() => 0) : 0;
+          if (!cancelled) {
+            setNeedsCount(work);
+            setBadgeCount(alerts + work);
+          }
         } catch {
           if (!cancelled) {
             setClassId(null);
             setClassName(null);
+            setNeedsCount(0);
             setBadgeCount(alerts);
           }
         }
@@ -566,12 +609,15 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       }
       if (profile?.role === 'student') return;
       const parentNotes = await parentBellCount(tokens);
-      if (!cancelled) setBadgeCount(alerts + parentNotes);
+      if (!cancelled) {
+        setNeedsCount(0);
+        setBadgeCount(alerts + parentNotes);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [teacher, profile?.role, pathname, tick]);
+  }, [teacher, profile?.role, pathname, tick, role]);
 
   useEffect(() => {
     if (!studentSession || role !== 'student') return;
@@ -595,11 +641,13 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
 
   const refreshBell = useCallback(async () => {
     if (role === 'none') {
+      setNeedsCount(0);
       setBadgeCount(0);
       return;
     }
     const alerts = await countAlertsForMe().catch(() => 0);
     if (role === 'student') {
+      setNeedsCount(0);
       if (!studentSession) {
         setBadgeCount(alerts);
         return;
@@ -613,18 +661,20 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       }
       return;
     }
-    if (teacher && !isOfficeRole(profile) && classId) {
+    if (role === 'teacher' && teacher && classId) {
       const work = await countNeedsYou(classId).catch(() => 0);
+      setNeedsCount(work);
       setBadgeCount(alerts + work);
       return;
     }
+    setNeedsCount(0);
     if (role === 'parent') {
       const notes = await parentBellCount(parentTokens).catch(() => 0);
       setBadgeCount(alerts + notes);
       return;
     }
     setBadgeCount(alerts);
-  }, [role, studentSession, teacher, profile, classId, parentTokens]);
+  }, [role, studentSession, teacher, classId, parentTokens]);
 
   const acknowledgeAlert = useCallback((postId: string) => {
     void markAlertRead(postId).then((fresh) => {
@@ -804,6 +854,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ChromeValue>(
     () => ({
       role,
+      setChromeSeat,
+      canChooseSeat,
       visible,
       forceHidden,
       setForceHidden,
@@ -840,6 +892,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setHeaderCloseHandler,
       requestHeaderClose,
       badgeCount,
+      needsCount,
       messageCount,
       classId,
       className,
@@ -866,6 +919,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     }),
     [
       role,
+      setChromeSeat,
+      canChooseSeat,
       visible,
       forceHidden,
       headerChrome,
@@ -893,6 +948,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setHeaderCloseHandler,
       requestHeaderClose,
       badgeCount,
+      needsCount,
       messageCount,
       classId,
       className,

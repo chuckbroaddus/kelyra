@@ -7,6 +7,8 @@ import { captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { ChipRow } from '@/components/ui/ChipRow';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { WorkRow } from '@/components/ui/WorkRow';
@@ -100,6 +102,21 @@ export default function ClassHomeScreen() {
     <Screen>
       {id ? <ClassTabs classId={id} /> : null}
       {!loaded ? <WorkingLine /> : null}
+
+      {pane === 'today' || pane === 'week' ? (
+        <ChipRow>
+          <Chip
+            label="Today"
+            selected={pane === 'today'}
+            onPress={() => router.replace(hrefForClassTab(id!, 'today') as never)}
+          />
+          <Chip
+            label="This week"
+            selected={pane === 'week'}
+            onPress={() => router.replace(hrefForClassTab(id!, 'week') as never)}
+          />
+        </ChipRow>
+      ) : null}
 
       {pane !== 'needs' && roster.length > 0 ? (
         <AvatarTray
@@ -208,7 +225,9 @@ export default function ClassHomeScreen() {
       {pane === 'needs' ? (
         <View style={styles.one}>
           {inbox.length === 0 && turned.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.mute }]}>Nothing waiting.</Text>
+            <Text style={[styles.empty, { color: colors.mute }]}>
+              Nothing waiting. Capture work, review it in Needs, then Approve on the student page on web.
+            </Text>
           ) : null}
           {inbox.map((item) => (
             <WorkRow

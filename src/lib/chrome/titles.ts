@@ -44,6 +44,7 @@ export function headerTitleFor(input: {
     pathname.endsWith('/assignments') ||
     pathname.endsWith('/parents') ||
     pathname.endsWith('/setup') ||
+    pathname.endsWith('/syllabus') ||
     pathname.includes('/gradebook') ||
     (pathname.startsWith('/class/') && pathname.endsWith('/feed'))
   ) {
@@ -52,7 +53,7 @@ export function headerTitleFor(input: {
   if (pathname.endsWith('/assign')) return 'Assign';
   if (/^\/class\/[^/]+$/.test(pathname)) return named || className || 'Class';
   if (pathname === '/capture') return 'Capture';
-  if (pathname === '/inbox') return 'Inbox';
+  if (pathname === '/inbox') return 'Needs';
   if (pathname === '/ask') return 'Kelyra';
   if (pathname === '/profile') return named || 'Profile';
   if (pathname === '/join') return 'Join';

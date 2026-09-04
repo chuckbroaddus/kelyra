@@ -3,9 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
-import { ClassTabs } from '@/components/ui/ClassTabs';
+import { ClassTabs, hrefForClassTab } from '@/components/ui/ClassTabs';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { ChipRow } from '@/components/ui/ChipRow';
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
@@ -33,6 +35,9 @@ import { firstName } from '@/lib/format';
 import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
 import { WorkingLine } from '@/components/ui/WorkingMark';
+import { Card } from '@/components/ui/Card';
+import { PrimaryButton } from '@/components/ui/Button';
+import { getClassSyllabus } from '@/lib/syllabus/api';
 
 export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
@@ -69,6 +74,7 @@ export default function GradebookScreen() {
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['class']));
   const [termFilter, setTermFilter] = useState('all');
+  const [syllabusBanner, setSyllabusBanner] = useState<'none' | 'draft' | 'published'>('none');
 
   useFocusEffect(
     useCallback(() => {
@@ -81,6 +87,13 @@ export default function GradebookScreen() {
       void loadClassOverview(id)
         .then(setOverview)
         .catch(() => setOverview(null));
+      void getClassSyllabus(id)
+        .then((bundle) => {
+          if (!bundle.exists || !bundle.syllabus) setSyllabusBanner('none');
+          else if (bundle.syllabus.status === 'published') setSyllabusBanner('published');
+          else setSyllabusBanner('draft');
+        })
+        .catch(() => setSyllabusBanner('none'));
     }, [id]),
   );
 
@@ -229,6 +242,33 @@ export default function GradebookScreen() {
     <View style={styles.shell}>
     <Screen maxWidth={1100} scroll={false}>
       {id ? <ClassTabs classId={id} stacked={Boolean(termTabs)} /> : null}
+      {id ? (
+        <ChipRow>
+          <Chip
+            label="Gradebook"
+            selected={!heatmap}
+            onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
+          />
+          <Chip
+            label="Heatmap"
+            selected={heatmap}
+            onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
+          />
+        </ChipRow>
+      ) : null}
+      {syllabusBanner !== 'published' && id && !heatmap ? (
+        <Card>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            {syllabusBanner === 'draft'
+              ? 'Draft syllabus saved — not live.'
+              : 'Syllabus weights not set. Averages won’t use category weights until you publish.'}
+          </Text>
+          <PrimaryButton
+            label={syllabusBanner === 'draft' ? 'Continue' : 'Set up syllabus'}
+            onPress={() => router.push(`/class/${id}/syllabus`)}
+          />
+        </Card>
+      ) : null}
       {termTabs}
       <View style={styles.pane}>
       {heatmap ? (

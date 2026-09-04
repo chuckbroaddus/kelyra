@@ -19,17 +19,16 @@ import { Icon } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { chrome, type } from '@/constants/theme';
-import { useAuth } from '@/lib/auth/AuthProvider';
 import { isChromePushed, showHeaderCapture, useChrome } from '@/lib/chrome/ChromeProvider';
 import { headerTitleFor } from '@/lib/chrome/titles';
-import { isOfficeRole } from '@/lib/school/roles';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-function searchPlaceholder(from: string, role: string, officeHome: boolean): string {
+function searchPlaceholder(from: string, role: string): string {
   if (role === 'student') return 'Find an assignment';
   if (role === 'parent') return 'Find in this note';
-  if (officeHome || role === 'superintendent' || role === 'administrator') return 'Find a person';
+  // Office seat only — dual-hat Teach seat stays class-scoped.
+  if (role === 'superintendent' || role === 'administrator') return 'Find a person';
   if (from === '/inbox') return 'Find a capture or student';
   if (from.includes('/gradebook')) return 'Find a student or assignment';
   if (from.includes('/parent') || from.includes('/setup') || /\/class\/[^/]+\/?$/.test(from)) {
@@ -41,7 +40,6 @@ function searchPlaceholder(from: string, role: string, officeHome: boolean): str
 export function AppHeader() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
-  const { profile } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,7 +49,8 @@ export function AppHeader() {
   const icon = 22;
   const pushed = isChromePushed(pathname);
   const searching = pathname === '/search';
-  const officeHome = isOfficeRole(profile);
+  const officeHome =
+    chromeState.role === 'superintendent' || chromeState.role === 'administrator';
   const title = headerTitleFor({
     pathname: searching ? chromeState.searchFrom : pathname,
     pushedTitle: chromeState.pushedTitle,
@@ -206,10 +205,10 @@ export function AppHeader() {
         </Animated.View>
 
         {showCapture ? (
-          <HoverTip label="Photograph work">
+          <HoverTip label="Propose what this is">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Take a photo"
+              accessibilityLabel="Propose what this is"
               onPress={chromeState.openHeaderCamera}
               style={({ pressed }) => [styles.hit, pressed && { opacity: 0.7 }]}
             >
@@ -252,7 +251,7 @@ export function AppHeader() {
               autoFocus
               value={chromeState.searchQuery}
               onChangeText={chromeState.setSearchQuery}
-              placeholder={searchPlaceholder(chromeState.searchFrom, chromeState.role, officeHome)}
+              placeholder={searchPlaceholder(chromeState.searchFrom, chromeState.role)}
               placeholderTextColor={colors.mute}
               keyboardAppearance={scheme}
               returnKeyType="search"

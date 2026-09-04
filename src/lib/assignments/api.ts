@@ -22,6 +22,7 @@ export type AssignmentInput = {
   term?: GradeTerm;
   scoreScheme?: ScoreScheme;
   includeInAverage?: boolean;
+  isMakeup?: boolean;
   maxScore?: number | null;
   keyKind?: AnswerKeyKind;
   keyNotes?: string | null;
@@ -208,6 +209,7 @@ function buildRow(input: AssignmentInput) {
     term: input.term ?? 'year',
     score_scheme: input.scoreScheme ?? 'numeric',
     include_in_average: include,
+    is_makeup: input.isMakeup === true,
     key_kind: keyKind,
     key_notes: input.keyNotes?.trim() || null,
     key_pass_at: input.keyPassAt ?? null,

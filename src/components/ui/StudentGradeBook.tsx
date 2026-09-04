@@ -6,6 +6,9 @@ import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
 import { GradeTermTabs } from '@/components/ui/GradeTermTabs';
+import { FamilySyllabusSummary } from '@/components/ui/FamilySyllabusSummary';
+import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
+import { GhostButton } from '@/components/ui/Button';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { studentHead } from '@/constants/table';
@@ -14,6 +17,9 @@ import { defaultExpandedIds, visibleBookRows, type BookNode } from '@/lib/assign
 import { firstName } from '@/lib/format';
 import { gradeTermLabel, matchesGradeTermFilter } from '@/lib/grade/marks';
 import { gradeCell, loadStudentGradebook, studentBookTree, type StudentGradebook } from '@/lib/gradebook/api';
+import { loadStudentClassAverageExplain } from '@/lib/syllabus/api';
+import type { PublishedFamilySyllabus } from '@/lib/syllabus/api';
+import type { SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -28,11 +34,34 @@ export function StudentGradeBook({ classId }: Props) {
   const [status, setStatus] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [termFilter, setTermFilter] = useState('all');
+  const [syllabus, setSyllabus] = useState<PublishedFamilySyllabus | null>(null);
+  const [average, setAverage] = useState<SyllabusAverageResult | null>(null);
+  const [ruleLines, setRuleLines] = useState<string[]>([]);
+  const [whyOpen, setWhyOpen] = useState(false);
 
   const load = useCallback(async () => {
     const next = await loadStudentGradebook();
     setBook(next);
   }, []);
+
+  const loadExplain = useCallback(async () => {
+    if (classId === 'all') {
+      setSyllabus(null);
+      setAverage(null);
+      setRuleLines([]);
+      return;
+    }
+    try {
+      const explained = await loadStudentClassAverageExplain(classId, termFilter);
+      setSyllabus(explained.syllabus);
+      setAverage(explained.average);
+      setRuleLines(explained.ruleLines);
+    } catch {
+      setSyllabus({ ok: true, published: false });
+      setAverage(null);
+      setRuleLines([]);
+    }
+  }, [classId, termFilter]);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,10 +73,11 @@ export function StudentGradeBook({ classId }: Props) {
         .catch((err) => {
           if (live) setStatus(err instanceof Error ? err.message : 'Could not load grades');
         });
+      void loadExplain();
       return () => {
         live = false;
       };
-    }, [load]),
+    }, [load, loadExplain]),
   );
 
   const classAssignments = useMemo(() => {
@@ -145,12 +175,33 @@ export function StudentGradeBook({ classId }: Props) {
     );
   }
 
+  const classLabel = book.classes.find((row) => row.classId === classId)?.className ?? null;
+
   return (
     <View
       style={styles.pane}
       onLayout={(event) => onPaneLayout(event.nativeEvent.layout.width)}
     >
       {termTabs}
+      {classId !== 'all' && syllabus ? (
+        <>
+          {syllabus.published && average?.overall != null ? (
+            <View style={styles.hero}>
+              <Text style={[type.title, { color: colors.ink }]}>Current average · {average.overall}%</Text>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Based on approved work in {gradeTermLabel(termFilter)}
+              </Text>
+              <GhostButton align="left" label="Why this average?" onPress={() => setWhyOpen(true)} />
+            </View>
+          ) : null}
+          <FamilySyllabusSummary
+            syllabus={syllabus}
+            average={average}
+            ruleLines={ruleLines}
+            className={classLabel}
+          />
+        </>
+      ) : null}
       <StickyTable<BookNode>
         rows={visibleRows}
         rowKey={(row) => row.id}
@@ -178,6 +229,13 @@ export function StudentGradeBook({ classId }: Props) {
         ]}
       />
       {status ? <Text style={[type.meta, { color: colors.danger }]}>{status}</Text> : null}
+      <WhyAverageSheet
+        visible={whyOpen}
+        average={average}
+        className={classLabel}
+        termLabel={gradeTermLabel(termFilter)}
+        onClose={() => setWhyOpen(false)}
+      />
     </View>
   );
 }
@@ -190,5 +248,9 @@ const styles = StyleSheet.create({
   empty: {
     ...type.body,
     marginTop: 16,
+  },
+  hero: {
+    marginBottom: 8,
+    gap: 2,
   },
 });

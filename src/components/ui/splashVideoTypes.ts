@@ -20,7 +20,7 @@ export type SplashPlaybackStatus =
     };
 
 export type SplashVideoProps = {
-  /** Bundled require() module id (or web-resolved asset). */
+  /** Bundled require() module id, URI string, or { uri } — expo-video VideoSource-compatible. */
   source: number | string | { uri?: string };
   style?: StyleProp<ViewStyle>;
   shouldPlay?: boolean;

@@ -17,8 +17,10 @@ import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { can } from '@/lib/school/matrix';
-import { isAdminRole, isAlsoParent, isOfficeRole, isTeacherRole, roleStatus } from '@/lib/school/roles';
+import { isAlsoParent, isOfficeRole, roleStatus } from '@/lib/school/roles';
 import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
 import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api';
 import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
@@ -33,8 +35,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { switch: pick, tab: tabParam } = useLocalSearchParams<{ switch?: string; tab?: string }>();
   const { configured, loading, teacher, profile, error } = useAuth();
-  const admin = isAdminRole(profile);
-  const teaches = isTeacherRole(profile);
+  const chrome = useChrome();
+  const officeSeat = isOfficeChromeRole(chrome.role);
+  const teacherSeat = chrome.role === 'teacher';
   const [classes, setClasses] = useState<Array<ClassRow | SchoolClass> | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<string | null>(null);
@@ -54,18 +57,20 @@ export default function HomeScreen() {
   }, [tabParam]);
 
   const load = useCallback(async () => {
-    if (!teacher && !admin) return;
+    if (!teacher && !officeSeat) return;
     try {
-      const next = admin && !teaches ? await listSchoolClasses() : await listClasses();
+      const next = officeSeat ? await listSchoolClasses() : await listClasses();
       setClasses(next);
-      if (teaches) {
+      if (teacherSeat) {
         try {
           setLessonRollup(await listGradeLessonRollup());
         } catch {
           setLessonRollup([]);
         }
+      } else {
+        setLessonRollup([]);
       }
-      if (admin && profile) {
+      if (officeSeat && profile) {
         const feeds = await listMyFeeds(profile);
         setSchoolFeed(feeds.find((item) => item.kind === 'school') ?? null);
         try {
@@ -74,14 +79,14 @@ export default function HomeScreen() {
           setSchoolIdentity(null);
         }
       }
-      if (teaches && !admin && next.length === 1 && next[0] && !pick) {
+      if (teacherSeat && next.length === 1 && next[0] && !pick) {
         router.replace(`/class/${next[0].id}`);
       }
     } catch (err) {
       setClasses([]);
       setStatus(err instanceof Error ? err.message : 'Could not load classes');
     }
-  }, [admin, pick, profile, router, teacher, teaches]);
+  }, [officeSeat, pick, profile, router, teacher, teacherSeat]);
 
   useFocusEffect(
     useCallback(() => {
@@ -106,7 +111,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (loading || (teacher && classes === null && !admin)) {
+  if (loading || (teacher && classes === null && !officeSeat)) {
     return (
       <Screen>
         <WorkingLine />
@@ -143,27 +148,30 @@ export default function HomeScreen() {
   };
 
   const empty = (classes ?? []).length === 0;
-  const officeOnly = admin && !teaches;
   // Office/SIS owns class create (is_school_admin). Teachers never mint classes.
   const canCreateClass = isOfficeRole(profile);
-  const canCreateLogin = can(profile, 'accounts.create');
-  const canCreate = canCreateClass || canCreateLogin;
+  // Teacher seat hides office chrome; JWT capability is unchanged (chrome ≠ RLS).
+  const showCreateClass = canCreateClass && officeSeat;
+  const canCreateLogin = officeSeat && can(profile, 'accounts.create');
+  const canCreate = showCreateClass || canCreateLogin;
   const openClass = (id: string) => {
-    if (teaches) router.push(`/class/${id}`);
+    if (teacherSeat) router.push(`/class/${id}`);
     else router.push(`/admin/class/${id}`);
   };
   const feedIcon = (schoolFeed?.icon ?? 'feedSchool') as IconName;
-  const tabs = schoolHomeTabs({
-    admin,
-    canCreate,
-    canCreateClass,
-    canCreateLogin,
-    feedIcon,
-  });
-  const pane = tabs.some((item) => item.key === tab) ? tab : 'classes';
+  const tabs = officeSeat
+    ? schoolHomeTabs({
+        admin: officeSeat,
+        canCreate,
+        canCreateClass: showCreateClass,
+        canCreateLogin,
+        feedIcon,
+      })
+    : [];
+  const pane = officeSeat ? (tabs.some((item) => item.key === tab) ? tab : 'classes') : 'classes';
   const newTabs: PersonTab[] = [
     ...(canCreateLogin ? [{ key: 'person', label: 'People', icon: 'person' as const }] : []),
-    ...(canCreateClass ? [{ key: 'class', label: 'Classes', icon: 'classes' as const }] : []),
+    ...(showCreateClass ? [{ key: 'class', label: 'Classes', icon: 'classes' as const }] : []),
   ];
   const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
@@ -180,17 +188,19 @@ export default function HomeScreen() {
           {` · ${roleStatus(profile)}`}
         </Text>
       ) : null}
-      <PersonTabs
-        tabs={tabs}
-        value={pane}
-        onChange={(key) => {
-          setTab(key);
-          router.setParams({ tab: key });
-        }}
-      />
+      {officeSeat && tabs.length ? (
+        <PersonTabs
+          tabs={tabs}
+          value={pane}
+          onChange={(key) => {
+            setTab(key);
+            router.setParams({ tab: key });
+          }}
+        />
+      ) : null}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
 
-      {pane === 'manage' ? (
+      {pane === 'manage' && officeSeat ? (
         <>
           {profile?.role === 'superintendent' ? (
             <SchoolIdentityFields
@@ -199,7 +209,7 @@ export default function HomeScreen() {
               onError={setStatus}
             />
           ) : null}
-          {admin && schoolFeed ? (
+          {schoolFeed ? (
             <FeedIconRow
               title="School feed icon"
               value={schoolFeed.icon}
@@ -221,48 +231,44 @@ export default function HomeScreen() {
               onPress={() => router.push('/parent')}
             />
           ) : null}
-          {admin ? (
-            <>
-              <ListRow
-                title="Activity"
-                status="Immutable change log"
-                icon="history"
-                onPress={() => router.push('/activity')}
-              />
-              {profile?.role === 'superintendent' ? (
-                <ListRow
-                  title="Responsibilities"
-                  status="Who may do what"
-                  icon="details"
-                  onPress={() => router.push('/admin/matrix')}
-                />
-              ) : null}
-            </>
+          <ListRow
+            title="Activity"
+            status="Immutable change log"
+            icon="history"
+            onPress={() => router.push('/activity')}
+          />
+          {profile?.role === 'superintendent' ? (
+            <ListRow
+              title="Responsibilities"
+              status="Who may do what"
+              icon="details"
+              onPress={() => router.push('/admin/matrix')}
+            />
           ) : null}
         </>
       ) : null}
 
-      {pane === 'feed' ? <FeedPane scope="school" fill /> : null}
+      {pane === 'feed' && officeSeat ? <FeedPane scope="school" fill /> : null}
 
-      {pane === 'people' && admin ? <PeopleDirectory /> : null}
+      {pane === 'people' && officeSeat ? <PeopleDirectory /> : null}
 
       {pane === 'classes' ? (
         <>
           <Text style={[styles.lead, { color: colors.mute }]}>
             {empty
-              ? canCreateClass
+              ? showCreateClass
                 ? 'Create a class on New, then assign a teacher.'
                 : 'No classes yet. The office assigns the classes you teach.'
-              : officeOnly
+              : officeSeat
                 ? 'Every class in the school. Open a card for teacher and roster.'
                 : 'Open a class to see what needs you today.'}
           </Text>
           {empty ? (
             <Text style={[type.meta, { color: colors.mute }]}>
-              {canCreateClass ? 'Name a class on New.' : 'No classes yet.'}
+              {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
             </Text>
           ) : null}
-          {teaches && !officeOnly && !empty ? (
+          {teacherSeat && !empty ? (
             <GhostButton align="left" label="Assign" onPress={() => router.push('/assignment/new')} />
           ) : null}
           {(classes ?? []).map((item) => {
@@ -281,7 +287,7 @@ export default function HomeScreen() {
               avatarName={item.name}
               onPress={() => openClass(item.id)}
               trailing={
-                can(profile, 'classes.delete', teaches ? 'own' : 'school')
+                can(profile, 'classes.delete', teacherSeat ? 'own' : 'school')
                   ? [
                       {
                         key: 'delete',
@@ -299,13 +305,13 @@ export default function HomeScreen() {
         </>
       ) : null}
 
-      {pane === 'new' && canCreate ? (
+      {pane === 'new' && officeSeat && canCreate ? (
         <>
           {newTabs.length > 1 ? (
             <PersonTabs tabs={newTabs} value={newPane} onChange={setNewKind} />
           ) : null}
           {newPane === 'person' && canCreateLogin ? <CreateLoginForm /> : null}
-          {newPane === 'class' && canCreateClass ? (
+          {newPane === 'class' && showCreateClass ? (
             <>
               <TextField
                 placeholder="Name of Class"
@@ -338,7 +344,7 @@ export default function HomeScreen() {
           void deleteClass(pending.id)
             .then(async () => {
               setPending(null);
-              const remaining = admin && !teaches ? await listSchoolClasses() : await listClasses();
+              const remaining = officeSeat ? await listSchoolClasses() : await listClasses();
               setClasses(remaining);
               router.replace('/?switch=1');
             })
@@ -352,7 +358,8 @@ export default function HomeScreen() {
   );
 }
 
-function schoolHomeTabs(opts: {
+/** Office home tabs only — teacher seat has no office PersonTabs. */
+export function schoolHomeTabs(opts: {
   admin: boolean;
   canCreate: boolean;
   canCreateClass: boolean;

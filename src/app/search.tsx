@@ -10,7 +10,6 @@ import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { captureBadge } from '@/components/ui/Badge';
 import { listInbox, type InboxItem } from '@/lib/captures/api';
-import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { loadGradebook } from '@/lib/gradebook/api';
@@ -18,7 +17,7 @@ import { loadParentProgress } from '@/lib/parents/api';
 import { listStudentTodo } from '@/lib/student-session/api';
 import { listParentsForClass, type ClassParent } from '@/lib/parents/api';
 import { listDirectory, type DirectoryPerson } from '@/lib/school/api';
-import { formatHandle, isOfficeRole, isStaffRole, roleLabel } from '@/lib/school/roles';
+import { formatHandle, roleLabel } from '@/lib/school/roles';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -31,11 +30,8 @@ function haystack(parts: Array<string | null | undefined>): string {
 export default function SearchScreen() {
   const { colors } = useTheme();
   const chrome = useChrome();
-  const { profile } = useAuth();
   const router = useRouter();
   const query = chrome.searchQuery.trim().toLowerCase();
-  const office = isOfficeRole(profile);
-  const staff = isStaffRole(profile);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [assignments, setAssignments] = useState<string[]>([]);
@@ -58,12 +54,13 @@ export default function SearchScreen() {
           }
         }
         try {
-          if (office || (staff && !chrome.classId)) {
+          // School directory is office-seat chrome only (TEACH-UX T4 / SE-01).
+          if (chrome.role === 'superintendent' || chrome.role === 'administrator') {
             const people = await listDirectory().catch(() => []);
             if (cancelled) return;
             setDirectory(people);
           }
-          if ((chrome.role === 'teacher' || staff) && chrome.classId) {
+          if (chrome.role === 'teacher' && chrome.classId) {
             const [names, items, book, people] = await Promise.all([
               listRoster(chrome.classId),
               listInbox(chrome.classId),
@@ -98,7 +95,7 @@ export default function SearchScreen() {
       return () => {
         cancelled = true;
       };
-    }, [chrome.role, chrome.classId, chrome.studentSession, chrome.parentTokens, office, staff]),
+    }, [chrome.role, chrome.classId, chrome.studentSession, chrome.parentTokens]),
   );
 
   useFocusEffect(

@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
-import { OFFICE_CLASS_TABS, tabsWithFeedIcon } from '@/components/ui/ClassTabs';
+import { officeClassPersonTabs } from '@/components/ui/ClassTabs';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { FormSheet } from '@/components/ui/FormSheet';
@@ -188,7 +188,7 @@ export default function ClassOfficeScreen() {
   }
 
   const feedIcon = asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON);
-  const tabs = tabsWithFeedIcon(OFFICE_CLASS_TABS, feedIcon);
+  const tabs = officeClassPersonTabs(feedIcon);
   const pane = tabs.some((item) => item.key === tab) ? tab : 'teacher';
 
   return (

@@ -25,6 +25,7 @@ export async function invokeAi<T extends object>(
     | 'cutout-portrait'
     | 'cutout-logo'
     | 'analyze-answer-key'
+    | 'parse-class-syllabus'
     | 'match-key'
     | 'review-submission'
     | 'process-ai-jobs'

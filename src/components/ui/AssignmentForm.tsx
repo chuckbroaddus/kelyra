@@ -30,12 +30,14 @@ export type AssignmentFormValue = {
   workKind: AssignmentWorkKind;
   packKey: string;
   title: string;
-  category: GradeKind;
+  category: GradeKind | string;
   dueDate: string;
   weightBand: WeightBand;
   weightPercent: string;
   term: GradeTerm;
   scoreScheme: ScoreScheme;
+  includeInAverage: boolean;
+  isMakeup: boolean;
   keyKind: AnswerKeyKind;
   keyNotes: string;
   keyPassAt: string;
@@ -50,10 +52,19 @@ export type AssignmentFormValue = {
   section: string;
 };
 
-export function emptyAssignmentForm(seed?: { title?: string; category?: string }): AssignmentFormValue {
-  const category = GRADE_KINDS.some((row) => row.key === seed?.category)
-    ? (seed!.category as GradeKind)
-    : 'homework';
+export type SyllabusCategoryOption = {
+  key: string;
+  label: string;
+  weight_percent: number;
+  default_include_in_average: boolean;
+};
+
+export function emptyAssignmentForm(seed?: {
+  title?: string;
+  category?: string;
+  includeInAverage?: boolean;
+}): AssignmentFormValue {
+  const category = seed?.category?.trim() || 'homework';
   return {
     workKind: 'planned',
     packKey: '',
@@ -64,6 +75,9 @@ export function emptyAssignmentForm(seed?: { title?: string; category?: string }
     weightPercent: '',
     term: 'year',
     scoreScheme: 'numeric',
+    // Legacy planned default true; syllabus category default / lesson path pass false explicitly.
+    includeInAverage: seed?.includeInAverage ?? true,
+    isMakeup: false,
     keyKind: 'none',
     keyNotes: '',
     keyPassAt: '',
@@ -100,6 +114,8 @@ type Props = {
   studentLockedName?: string | null;
   lockWorkKind?: boolean;
   hidePackPicker?: boolean;
+  /** Published syllabus categories for this class. When set, Kind chips use these. */
+  syllabusCategories?: SyllabusCategoryOption[] | null;
 };
 
 export function AssignmentForm({
@@ -123,6 +139,7 @@ export function AssignmentForm({
   studentLockedName,
   lockWorkKind,
   hidePackPicker,
+  syllabusCategories = null,
 }: Props) {
   const { colors } = useTheme();
   const patch = (partial: Partial<AssignmentFormValue>) => onChange({ ...value, ...partial });
@@ -131,6 +148,16 @@ export function AssignmentForm({
   const showPhoto = !lesson && (value.keyKind === 'photo' || value.keyKind === 'both' || Boolean(value.keyPhotoUrl));
   const whoOk = classLocked || selectedClassIds.length > 0;
   const saveDisabled = busy || keyBusy || !value.title.trim() || !whoOk || (lesson && !hidePackPicker && !value.packKey);
+  const syllabusPublished = Boolean(syllabusCategories && syllabusCategories.length);
+  const kindOptions = syllabusPublished
+    ? syllabusCategories!
+    : GRADE_KINDS.map((row) => ({
+        key: row.key,
+        label: row.label,
+        weight_percent: 0,
+        default_include_in_average: false,
+      }));
+  const selectedKind = kindOptions.find((row) => row.key === value.category);
 
   return (
     <View style={styles.wrap}>
@@ -237,10 +264,52 @@ export function AssignmentForm({
         </ChipRow>
       ) : null}
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Kind</Text>
+      {syllabusPublished ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          {selectedKind
+            ? `Counts toward the ${selectedKind.label} average (${selectedKind.weight_percent}%).`
+            : 'Pick a category from this class syllabus.'}
+        </Text>
+      ) : (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          Class syllabus not published — category is a label only.
+        </Text>
+      )}
       <ChipRow>
-        {GRADE_KINDS.map((kind) => (
-          <Chip key={kind.key} label={kind.label} selected={value.category === kind.key} onPress={() => patch({ category: kind.key })} />
+        {kindOptions.map((kind) => (
+          <Chip
+            key={kind.key}
+            label={kind.label}
+            selected={value.category === kind.key}
+            onPress={() =>
+              patch({
+                category: kind.key,
+                includeInAverage:
+                  value.scoreScheme === 'pass_fail' ? false : kind.default_include_in_average === true,
+              })
+            }
+          />
         ))}
+      </ChipRow>
+      <ChipRow>
+        <Chip
+          label={
+            selectedKind
+              ? value.includeInAverage
+                ? `Counts toward ${selectedKind.label} average`
+                : `Does not count toward ${selectedKind.label} average`
+              : value.includeInAverage
+                ? 'Counts toward type average'
+                : 'Does not count toward type average'
+          }
+          selected={value.includeInAverage}
+          onPress={() => patch({ includeInAverage: !value.includeInAverage })}
+        />
+        <Chip
+          label={value.isMakeup ? 'Makeup column' : 'Not makeup'}
+          selected={value.isMakeup}
+          onPress={() => patch({ isMakeup: !value.isMakeup })}
+        />
       </ChipRow>
       <TextField
         label="Due date"
@@ -271,21 +340,30 @@ export function AssignmentForm({
         <Chip label="Pass/Fail" selected={value.scoreScheme === 'pass_fail'} onPress={() => patch({ scoreScheme: 'pass_fail' })} />
         <Chip label="Either" selected={value.scoreScheme === 'either'} onPress={() => patch({ scoreScheme: 'either' })} />
       </ChipRow>
-      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Weight</Text>
-      <ChipRow>
-        {WEIGHT_BANDS.map((band) => (
-          <Chip key={band.key} label={band.label} selected={value.weightBand === band.key} onPress={() => patch({ weightBand: band.key })} />
-        ))}
-      </ChipRow>
-      {value.weightBand === 'custom' ? (
-        <TextField
-          label="Percent of the term"
-          placeholder="15"
-          keyboardType="numeric"
-          value={value.weightPercent}
-          onChangeText={(weightPercent) => patch({ weightPercent })}
-        />
-      ) : null}
+      {syllabusPublished ? null : (
+        <>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Weight</Text>
+          <ChipRow>
+            {WEIGHT_BANDS.map((band) => (
+              <Chip
+                key={band.key}
+                label={band.label}
+                selected={value.weightBand === band.key}
+                onPress={() => patch({ weightBand: band.key })}
+              />
+            ))}
+          </ChipRow>
+          {value.weightBand === 'custom' ? (
+            <TextField
+              label="Percent of the term"
+              placeholder="15"
+              keyboardType="numeric"
+              value={value.weightPercent}
+              onChangeText={(weightPercent) => patch({ weightPercent })}
+            />
+          ) : null}
+        </>
+      )}
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Counts toward</Text>
       <ChipRow>
         {GRADE_TERMS.map((term) => (
@@ -452,7 +530,8 @@ export function plannedAssignmentInput(
     weightPercent: value.weightPercent.trim() ? Number(value.weightPercent) : null,
     term: value.term,
     scoreScheme: value.scoreScheme,
-    includeInAverage: value.scoreScheme !== 'pass_fail',
+    includeInAverage: value.scoreScheme === 'pass_fail' ? false : value.includeInAverage,
+    isMakeup: value.isMakeup,
     maxScore: keyMaxScore(items),
     keyKind: deriveKeyKind(Boolean(value.keyAssetId), items),
     keyNotes: value.keyNotes,
@@ -476,7 +555,8 @@ export function lessonFieldsFromForm(value: AssignmentFormValue) {
     weightPercent: value.weightBand === 'custom' && value.weightPercent.trim() ? Number(value.weightPercent) : null,
     term: value.term,
     scoreScheme: value.scoreScheme,
-    includeInAverage: value.scoreScheme !== 'pass_fail',
+    includeInAverage: value.scoreScheme === 'pass_fail' ? false : value.includeInAverage,
+    isMakeup: value.isMakeup,
     unit: value.unit.trim() || null,
     section: value.section.trim() || null,
   };

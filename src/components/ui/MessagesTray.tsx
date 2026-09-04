@@ -232,7 +232,7 @@ export function MessagesTray({ query, onQuery, onCompose, onMenu }: Props) {
 
 const styles = StyleSheet.create({
   dismiss: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 16,
   },
   float: {

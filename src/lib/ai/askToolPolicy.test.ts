@@ -56,10 +56,31 @@ test('A1 client askToolPolicy map matches Edge twin', () => {
     const entry = ASK_TOOL_POLICY[name]!;
     const snippet = entry.officeOnly
       ? `${name}:\\s*\\{[\\s\\S]*?officeOnly:\\s*true`
-      : `${name}:\\s*\\{\\s*capability:\\s*${entry.capability == null ? 'null' : `'${entry.capability.replace('.', '\\.')}'`}`;
+      : entry.teacherSeatOnly
+        ? `${name}:\\s*\\{[\\s\\S]*?teacherSeatOnly:\\s*true`
+        : entry.familyRead
+          ? `${name}:\\s*\\{[\\s\\S]*?familyRead:\\s*true`
+          : `${name}:\\s*\\{\\s*capability:\\s*${entry.capability == null ? 'null' : `'${entry.capability.replace('.', '\\.')}'`}`;
     assert.match(clientMap, new RegExp(snippet));
     assert.match(edgeMap, new RegExp(snippet));
   }
+});
+
+test('AVG syllabus.manage denied for student/parent/office; teacher allowed', () => {
+  const teacher = { role: 'teacher' as const };
+  const student = { role: 'student' as const };
+  const parent = { role: 'parent' as const };
+  const admin = { role: 'administrator' as const };
+  for (const name of ['scan_class_syllabus', 'get_class_syllabus_draft', 'discard_class_syllabus_draft']) {
+    assert.equal(isAskToolAllowed(name, teacher, grants), true);
+    assert.equal(isAskToolAllowed(name, student, grants), false);
+    assert.equal(isAskToolAllowed(name, parent, grants), false);
+    assert.equal(isAskToolAllowed(name, admin, grants), false);
+  }
+  assert.equal(isAskToolAllowed('get_published_class_syllabus', student, grants), true);
+  assert.equal(isAskToolAllowed('get_published_class_syllabus', parent, grants), true);
+  assert.equal(isAskToolAllowed('get_published_class_syllabus', admin, grants), false);
+  assert.equal(isAskToolAllowed('explain_my_class_average', teacher, grants), false);
 });
 
 test('A1 teacher JWT policy drops add_teacher_to_class and office-only writes', () => {

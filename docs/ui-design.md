@@ -242,17 +242,17 @@ Phone (`width < 720`): a **floating frame** over the content, not a system tab b
 
 Content draws **under** the frame. Last-scroll padding on every tray screen = frame height + bottom inset + 12, so the last row is not trapped.
 
-**Teacher tray (5), left → right**
+**Teacher tray (5), left → right** — shipped TEACH-UX IA (A–D). Same five keys; user-facing nouns **Desk · Capture · Needs · Class · Ask**. No sixth tab. No Profile in tray.
 
-| # | Icon (`Icon` name) | Header title | Route | Active when |
-|---|---|---|---|---|
-| 1 | `today` (house) | **Kelyra** | `/class/{activeId}` or `/` if none | `/` or `/class/{id}` and not setup / gradebook / family / student / parents / parent |
-| 2 | `capture` | **Capture** | `/capture` | `/capture` (not `/proposal`) |
-| 3 | `inbox` | **Inbox** | `/inbox` | `/inbox` |
-| 4 | `records` | **Class** | `/class/{id}/setup` | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` |
-| 5 | `ask` | **Ask** | `/ask` | `/ask` |
+| # | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
+|---|---|---|---|---|---|
+| 1 | `today` (house glyph) | **Desk** | class name on desk panes; `Kelyra` only when no class | `/class/{activeId}` or `/` if none | `/` or `/class/{id}` desk work (not setup / gradebook / family / student / parents / parent / assignments) |
+| 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (not `/proposal`) |
+| 3 | `inbox` | **Needs** | **Needs** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
+| 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
+| 5 | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
 
-House is always the start. Ask is always last.
+Desk is always the start (house glyph; label **Desk**). Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs** badge uses `countNeedsYou` once (unassigned + draft-ready).
 
 Family, All classes, Appearance, Profile, Sign out live in the hamburger, not the tray.
 
@@ -278,11 +278,11 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 
 | Destination | Hamburger / tray label | Wordmark |
 |---|---|---|
-| Teacher house | class name in the drawer | `Kelyra` on house; class screens use the class name |
+| Teacher **Desk** | class name in the drawer; tray a11y **Desk** | class name on desk panes; `Kelyra` only when no active class |
 | Capture | Capture | `Capture` |
-| Inbox | Inbox | `Inbox` |
-| Class (teacher) | class name / Grade book | `Class` on class home; named destinations keep `Assignments`, `Parents`, `Grade book` |
-| Ask | Kelyra | `Kelyra` (Ask slot uses the Kelyra mark, not this string) |
+| **Needs** (was Inbox label) | Needs | `Needs` (route `/inbox` unchanged) |
+| Class (teacher) | Class / class name | class name on every Class pane (§32.7); tray lands **setup**, not gradebook-first |
+| Ask | Ask / Kelyra | `Kelyra` (Ask slot uses the Kelyra mark, not this string) |
 | Profile (hamburger only) | identity row | `Profile` |
 | Student Assignments | **Assignments** | `Assignments` (`/todo`). To Do / Done stay in-page tabs |
 | Student Feeds | **Feeds** | `Feeds` |
@@ -301,11 +301,11 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 
 | Tab | Chips | Default | What they do |
 |---|---|---|---|
-| Home (teacher) | **Today** · **This week** · **Needs you** | Today | Filters the Home body (§13.3). Data from `loadClassOverview` + `listInbox` |
+| Desk (teacher) | *(none — ClassTabs owns desk panes)* | — | Shipped: `PersonTabs` / `CLASS_TABS` on `/class/…` (§32.7, §37). Do not restore Amazon chips on the desk |
 | Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
-| Inbox | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox` |
-| Class | **Roster** · **Parents** · **Heatmap** · **Grade book** | Roster | Navigates `/setup` · `/parents` · `/gradebook?view=heatmap` · `/gradebook?view=book` |
-| Ask | none | — | Empty row collapsed (height 0) |
+| Needs (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs** |
+| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs · Feed · Students · Assignments · Gradebook · Parents. Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow |
+| Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37) |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
 | Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
 | Parent Home | none, **or** one chip per **linked child** on this parent | First linked child | Switches the bound child. Never lists other families |
@@ -328,7 +328,7 @@ On pushed screens (student record, proposal, family, search, notifications) the 
 
 ### 3.8 Web / tablet (`width >= 720`)
 
-The floating tray is **replaced** by a slim top bar under the header, height 48, same destinations, labels visible. Ask is last. There is no Profile tab. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
+The floating tray is **replaced** by a slim top bar under the header, height 48, same five destinations, **labels visible**: **Desk · Capture · Needs · Class · Ask**. Ask is last. There is no Profile tab. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
 
 ---
 
@@ -755,7 +755,7 @@ New file `src/components/ui/FloatingTabTray.tsx`. Replaces `TeacherNav`’s `Tab
 - `position: 'absolute'`, left/right/bottom as §3.4.
 - `pointerEvents="box-none"` on the full-width wrap so content above remains tappable.
 - Active icon `brand`. Inactive `mute`. No featured candy blob. No raised Capture pill.
-- Inbox icon may show a count badge (`danger`, same anatomy as the bell, cap `99+`) from `countNeedsYou` (§11). House does **not** take the badge — Facebook puts activity on the bell and on Notifications, not on Home.
+- Needs tray icon may show a count badge (`danger`, same anatomy as the messages corner badge, cap `99+`) from `countNeedsYou` (§11). Desk/house does **not** take the badge — activity sits on Needs (and Messages alerts), not on Desk.
 - `accessibilityRole="tab"`, `accessibilityState.selected`.
 
 Web `showTopBar`: render the same destinations as a 48-pt top strip, labels on, no floating frame.
@@ -1066,11 +1066,11 @@ Implement as `countNeedsYou` next to `countInbox` in `src/lib/captures/api.ts` (
 
 | Surface | Number |
 |---|---|
-| Header bell (teacher) | `countNeedsYou(activeClassId)` |
-| Inbox tray icon | same number |
-| Header bell (student) | count of that student’s submissions with `status` in `assigned` · `started` |
-| Header bell (parent) | `1` if the bound child has a `parent_sentence` **or** a practice status of assigned/done **and** `kelyra.parent.lastSeenAt` is older than the newest of those timestamps; else `0`. Persist `lastSeenAt` when `/parent` or `/notifications` focuses. Do not invent unread rows |
-| House icon | never |
+| Messages header badge (teacher) | unread **alerts** (not `countNeedsYou`) |
+| **Needs** tray icon | `countNeedsYou(activeClassId)` |
+| Header badge (student) | count of that student’s submissions with `status` in `assigned` · `started` |
+| Header badge (parent) | `1` if the bound child has a `parent_sentence` **or** a practice status of assigned/done **and** `kelyra.parent.lastSeenAt` is older than the newest of those timestamps; else `0`. Persist `lastSeenAt` when `/parent` or `/notifications` focuses. Do not invent unread rows |
+| Desk / house icon | never |
 
 Notifications list rows are derived from the same queries. Tapping a row goes to an **existing** screen (student, inbox, to-do, parent). This is not a chat product.
 
@@ -1122,10 +1122,10 @@ The server injects **only** what that role may see (below). Persist nothing as a
 ### 12.4 Hard limits
 
 - The agent **never Approves**.
-- The agent **never inserts a student**. If it wants a name filed, it tells the teacher to open Inbox.
+- The agent **never inserts a student**. If it wants a name filed, it tells the teacher to open Needs.
 - The agent **never invents a class**.
 - The agent may **draft** a parent sentence or a gap label into the chat; writing it to the record still happens on the student page, by the teacher, via Approve / save.
-- If the model is unsure: `I can’t tell from what’s saved. Open Inbox or the student’s page.`
+- If the model is unsure: `I can’t tell from what’s saved. Open Needs or the student’s page.`
 - Empty / error: `Ask is offline. Try again in a moment.` (`mute` / `danger` respectively)
 - Do not brand the bubbles “Grok.” On-screen name: **Ask**.
 
@@ -2876,13 +2876,13 @@ Add `MarqueeText` to the primitives list in §18.d. No new npm packages. No SQL.
 | Role | Tray | Header extras | Hidden |
 |---|---|---|---|
 | Superintendent / Administrator | Feed · Classes · People · Manage · Ask | Messages + search. No camera | Parent↔student link is **on** |
-| Teacher | House · Capture · Inbox · Class · Ask · Profile | Camera + messages + search + bell | **Cannot** link parent↔student |
-| Parent | Home · Ask · Profile | Messages + search + bell | Camera, grade book, other children, add-a-child |
-| Student | Home · Ask · Profile | Messages + search + bell | Camera, other students’ grades |
+| Teacher | **Desk · Capture · Needs · Class · Ask** (5; no Profile tab) | Camera + messages + search. Camera **proposes**; tray Capture **files** | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
+| Parent | Home · Ask (Profile hamburger-only) | Messages + search | Camera, grade book, other children, add-a-child |
+| Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped student tray; Profile hamburger-only) | Messages + search | Camera, other students’ grades |
 
-Header cluster is now `[camera?] [mail] [search] [bell]`. Mail is the school messenger, not email. Badge = unread threads.
+Header cluster is now `[camera?] [search] [messages]`. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs** tray badge = `countNeedsYou` (separate from messages).
 
-Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger still adds **People**, **Activity**, **Messages**, **Responsibilities** above Grade book.
+Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger still adds **People**, **Activity**, **Messages**, **Responsibilities** above Grade book. Pure **teacher seat** never shows those office nouns.
 
 ### 31.2 @username
 
@@ -2900,7 +2900,12 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 
 ### 31.4b Extra hats (same login)
 
-Teacher hat switches the tray to House · Capture · Inbox · Class (camera on). Admin hats keep People / Activity in the drawer and on Home even when the tray is the teacher loop. Parent hat adds **My children** → `/parent` without switching to the parent-only tray. Parent-only logins still use the parent tray.
+**Explicit chrome seat** (client preference only — not JWT, not SQL). `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray.
+
+- Dual-hat office+teacher: default seat = **Office**. Seat switch (drawer/control) sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
+- When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask.
+- Parent hat adds **My children** → `/parent` without switching to the parent-only tray. Parent-only logins still use the parent tray.
+- Never merge trays. Never invent a sixth tray tab to hold both altitudes.
 
 ### 31.5 Activity (audit)
 
@@ -3095,15 +3100,19 @@ No new npm packages. No SQL. No `EXPO_PUBLIC_*` keys. Matcher never inserts a st
 
 ### 32.7 Class screens — same tab row, not the Amazon chips
 
-**Date:** 2026-08-19. Patches §3.6, §13.3, §13.7–§13.9. The class desk used two Amazon context-chip rows: Today / This week / Needs you on `/class/{id}`, and Gradebook / Assignments / Heatmap / Parents / Students on the records cluster. Those chips are gone. `PersonTabs` via `ClassTabs` sits in the page body under the header — same selected-name / icon-only rule as people.
+**Date:** 2026-08-19; **TEACH-UX ship 2026-09-04.** Patches §3.6, §13.3, §13.7–§13.9. The class desk used two Amazon context-chip rows: Today / This week / Needs you on `/class/{id}`, and Gradebook / Assignments / Heatmap / Parents / Students on the records cluster. Those chips are gone. `PersonTabs` via `ClassTabs` sits in the page body under the header — same selected-name / icon-only rule as people.
 
 Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/{id}`) stays pushed.
 
-Default **Today**. Family is last. Switching panes `replace`s so Back does not walk the tab history. Heatmap is `/class/{id}/gradebook?tab=heatmap`. Today / This week / Needs you are `/class/{id}?tab=today|week|needs`.
+**Default `CLASS_TABS` (≤7, ordered):** **Today · Needs · Feed · Students · Assignments · Gradebook · Parents**. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
 
-Office card `/admin/class/{id}` is in-page only: **Feed** · Roster · **Teacher**. Still not the teacher desk. School Feed is school-wide posts; class Feed is that class only. Feed is far left; Teacher is far right. Default on open stays Classes / Today / Teacher.
+**Demoted (routes stay; not default icons):** This week (`?tab=week` / Today filter), Heatmap (`/gradebook?tab=heatmap` only), Family (drawer or Class overflow). Do not restore a 10-tab default. AVG Syllabus stays Class-desk altitude via setup/gradebook entry — not an 8th default icon.
 
-The Amazon context row remains on Capture, Inbox, student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
+Switching panes `replace`s so Back does not walk the tab history. Today / Needs are `/class/{id}?tab=today|needs`.
+
+Office card `/admin/class/{id}` is in-page only: **Feed · Teacher · Parents · Students** (`OFFICE_CLASS_TABS` frozen — never teacher ClassTabs). School Feed is school-wide posts; class Feed is that class only.
+
+The Amazon context row remains on Capture, Needs (`/inbox`), student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
 
 ---
 
@@ -3228,10 +3237,12 @@ Profile is **only** the identity row in the hamburger (36 photo + handle, alread
 
 | Role | Tray, left → right | Count |
 |---|---|---|
-| Teacher | House · Capture · Inbox · Class · **Ask** | 5 |
-| Student | House · **Ask** | 2 |
-| Parent | House · **Ask** | 2 |
-| Office | **Feed** · **Classes** · **People** · **Manage** · **Ask** | 5 |
+| Teacher | **Desk · Capture · Needs · Class · Ask** (`today` · `capture` · `inbox` · `records` · `ask`) | 5 |
+| Student | Assignments · Feeds · Classes · Grades · People · **Ask** (shipped; not this TEACH-UX epic) | 6 |
+| Parent | Home · **Ask** | 2 |
+| Office | **Feed · Classes · People · Manage · Ask** | 5 |
+
+Teacher rules (TEACH-UX A–D): user-facing **Needs** label on key `inbox` / route `/inbox`; Class href = `/class/{id}/setup` (not gradebook-first); web ≥720 labels on the same five nouns. No sixth tray tab. No Profile-in-tray.
 
 Web/tablet top bar: same order, labels visible. Ask is last.
 
@@ -3552,5 +3563,41 @@ src/components/ui/PeopleAdmin.tsx
 src/app/index.tsx
 src/app/admin/people.tsx
 ```
+
+---
+
+## 37. TEACH-UX shipped IA (2026-09-04)
+
+**Docs delta only.** Matches dirty-tree TEACH-UX A–D. Plan: `notes/company/teacher-ux-plan.md`. Live: `src/lib/chrome/trayTabs.ts`, `classTabs.ts`, `seat.ts`, `titles.ts`.
+
+### 37.1 Teacher chrome contract
+
+| Layer | Shipped |
+|---|---|
+| Tray (5) | **Desk · Capture · Needs · Class · Ask** — keys `home`/`today`, `capture`, `inbox`, `class`/`records`, `ask` |
+| Needs | Label **Needs**; route **`/inbox`** unchanged; badge `countNeedsYou` |
+| Class tray href | `/class/{id}/setup` — **not** gradebook-first |
+| `CLASS_TABS` default ≤7 | Today · Needs · Feed · Students · Assignments · Gradebook · Parents |
+| Demoted | week, heatmap, family (routes stay) |
+| `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
+| Desk wordmark | **Class name** on class panes (§32.7) |
+| Ask | Tray-last; teacher may bind active `classId` / class chip |
+| Header camera | **Proposes** only; tray Capture **files** |
+| Web ≥720 | Same five labels visible |
+| Dual-hat seat | Explicit `office` \| `teacher` preference; `also_teacher` never silent-forces teacher tray; default dual-hat = Office |
+| Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite |
+
+### 37.2 Code map
+
+```
+src/lib/chrome/trayTabs.ts
+src/lib/chrome/classTabs.ts
+src/lib/chrome/seat.ts
+src/lib/chrome/titles.ts
+src/lib/chrome/ChromeProvider.tsx
+src/components/ui/FloatingTabTray.tsx
+```
+
+Matcher still never inserts a student. Nothing is a grade until the teacher Approves. Parked P2s (Needs dual-hat count polish, Week/Heatmap secondary chrome, route rename `/needs`) stay out of this doc delta.
 
 

@@ -192,6 +192,7 @@ export type AssignmentRow = {
   term?: string;
   score_scheme?: string;
   include_in_average?: boolean;
+  is_makeup?: boolean;
   key_kind?: 'none' | 'photo' | 'items' | 'both';
   key_notes?: string | null;
   key_pass_at?: number | null;
@@ -660,6 +661,7 @@ export type Database = {
           term?: string;
           score_scheme?: string;
           include_in_average?: boolean;
+          is_makeup?: boolean;
           key_kind?: AssignmentRow['key_kind'];
           key_notes?: string | null;
           key_pass_at?: number | null;
@@ -1152,6 +1154,35 @@ export type Database = {
         };
         Returns: string;
       };
+      class_teacher_of: { Args: { p_class_id: string }; Returns: boolean };
+      get_class_syllabus: { Args: { p_class_id: string }; Returns: Record<string, unknown> };
+      save_class_syllabus_draft: {
+        Args: { p_class_id: string; p_payload: Record<string, unknown> };
+        Returns: Record<string, unknown>;
+      };
+      publish_class_syllabus: {
+        Args: { p_class_id: string; p_payload: Record<string, unknown>; p_row_version: number };
+        Returns: Record<string, unknown>;
+      };
+      unpublish_class_syllabus: {
+        Args: { p_class_id: string; p_row_version: number };
+        Returns: Record<string, unknown>;
+      };
+      upsert_syllabus_ask_draft: {
+        Args: { p_class_id: string; p_draft: Record<string, unknown>; p_source_asset_id?: string | null };
+        Returns: Record<string, unknown>;
+      };
+      discard_syllabus_ask_draft: {
+        Args: { p_class_id: string };
+        Returns: Record<string, unknown>;
+      };
+      published_class_syllabus: { Args: { p_class_id: string }; Returns: Record<string, unknown> };
+      student_class_average_explain: { Args: { p_class_id: string }; Returns: Record<string, unknown> };
+      parent_class_average_explain: {
+        Args: { p_class_id: string; p_student_id: string };
+        Returns: Record<string, unknown>;
+      };
+      parent_child_classes: { Args: { p_student_id: string }; Returns: Record<string, unknown>[] };
     };
     Enums: {
       class_name_source: ClassNameSource;

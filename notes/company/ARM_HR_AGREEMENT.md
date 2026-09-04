@@ -75,14 +75,39 @@ This gets better as zero-delta rows accumulate (“about 1% per N similar tasks�
 
 P2/P3 **outside** this window stay sticky blocked (existing grok-build-ping rule). Leftover is the only auto-unblock.
 
+## Daytime fill (use the cap — do not idle)
+
+CEO 2026-09-03: if there is **remaining_daily** under the active ceiling, CoS and ARM **spend it** on assigned work. Sitting on Ready/Won’t-Run or stale reserved grants is a miss.
+
+Ceiling SoT for the Chicago day:
+
+- Default: **12% of weekly** from day-start (`remaining_daily = cap - day_used - reserved_open`)
+- CEO exception: `temporary_override.date` + `max_total_pct` in ARM `supergrok_usage.json` (example: 2026-09-03 **56%** weekly total)
+
+**Loop (CoS executes engine; no extra Grok 4.6 chat per tick):**
+
+1. `arm_hr.py status` (live snapshot). Do not invent percents.
+2. **Close** every GRANT whose kanban card is `done` / `cancelled` (`close --task-id --outcome done|parked`). Stale reserved_pct is why remaining_daily can show **0** while the meter still has room to the ceiling.
+3. If `remaining_daily >= predict(next).reserve_pct`:
+   - Next card is **assigned** (never unassigned epics — those Won’t Run).
+   - Prefer CEO queue: research R1 → matching P1/A1. Not leftover P2/P3 outside Sunday window. Not `qa-loop` unless Chuck said send.
+   - `request` → GRANT → sticky-unblock to ready (one at a time if remaining_daily is tight; at most enough GRANTs to fill remaining_daily).
+4. If GRANT would breach the ceiling → **DEFER**. Stop filling.
+5. Dispatcher: assigned + ready only. CoS parks unassigned Ready as sticky `needs_input`.
+
+ARM monitors (existing 2h snapshot cron). **Daytime fill is event-driven, not a 30m poll.** When a kanban worker session truly ends (`HERMES_KANBAN_TASK` set), the shared `notify-grokbot-sessions.sh` hook runs `cron_daytime_fill.sh` (flocked, no LLM): close GRANTs when the card is `done` **or** no longer running (`blocked` after protocol_violation still held the reserve — that was the stall). Then GRANT **one** assigned `*-R1/P1/A1/Q1` child if remaining_daily ≥ reserve. Skip unassigned epics and leftover P2/P3. `staff_task.sh` also `notify-subscribe --delivery-mode notify+wake` so CoS is woken on completed/blocked/gave_up. Workers **must** `hermes kanban complete` or the dispatcher records protocol_violation and parks the card.
+
+TTS still grok-tts. Leftover P2/P3 still Sunday 20:00–Monday 01:30 only.
+
 ## Split of labor
 
 | ARM (HR) | CoS (orchestrator) |
 |---|---|
 | Live fetch, budgets, grants/defers | Ask before ready; never auto-staff expensive work |
-| Ledger + prediction model | Close allocations when work finishes |
+| Ledger + prediction model | Close allocations when work finishes, then fill remaining_daily |
 | Sunday leftover **decision** | Sunday leftover **staffing** + Monday park |
 | Daily 08:00 cap commentary | Daily standup still reads ARM state |
+| Honor CEO `temporary_override` | Park unassigned Ready (Won’t Run); staff assigned children only |
 
 ## Crons installed
 
@@ -90,8 +115,9 @@ P2/P3 **outside** this window stay sticky blocked (existing grok-build-ping rule
 - ARM `0 20 * * 0` leftover-eval (no LLM)
 - ARM existing `0 8 * * *` daily usage check (LLM, low)
 - ARM existing `0 2 * * 1` weekly reset tracking (LLM, low)
-- CoS `every 30m` leftover tick (no LLM; no-op outside window)
+- CoS `every 30m` leftover tick (no LLM; no-op outside window — time window, not a work-complete event)
 - CoS `30 1 * * 1` leftover park (no LLM)
+- CoS daytime fill: **paused** 30m cron `8583e3c788a9`; replaced by worker `on_session_end` hook + kanban `notify+wake`
 
 ## Verification (this standup)
 

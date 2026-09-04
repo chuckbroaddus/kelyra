@@ -46,14 +46,14 @@ test('signed-out home gate uses unified splash auth (no push to /sign-in)', () =
   assert.match(splash, /volume=\{1\}/);
   assert.match(splash, /SplashVideo/);
   assert.match(splash, /splashAspectForSize/);
-  assert.match(splash, /Audio\.setAudioModeAsync/);
-  assert.match(splash, /playsInSilentModeIOS:\s*true/);
+  assert.match(splash, /setAudioModeAsync/);
+  assert.match(splash, /playsInSilentMode:\s*true/);
   assert.match(splash, /didJustFinish/);
   assert.doesNotMatch(splash, /http:\/\/|https:\/\//);
 
   const nativeVideo = read('src/components/ui/SplashVideo.tsx');
-  assert.match(nativeVideo, /ResizeMode\.COVER/);
-  assert.match(nativeVideo, /useNativeControls=\{false\}/);
+  assert.match(nativeVideo, /contentFit="cover"/);
+  assert.match(nativeVideo, /nativeControls=\{false\}/);
 });
 
 test('splash plays once unmuted and CTA matches neon splash palette (not terracotta Primary)', () => {
@@ -113,14 +113,14 @@ test('CEO JPG still always under video; crossfade opacity then unmount (no black
   assert.match(splash, /style=\{styles\.video\}/);
   assert.match(
     splash,
-    /still:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFillObject[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
+    /still:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
   );
   assert.match(
     splash,
-    /video:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFillObject[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
+    /video:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
   );
   const nativeVideo = read('src/components/ui/SplashVideo.tsx');
-  assert.match(nativeVideo, /ResizeMode\.COVER/);
+  assert.match(nativeVideo, /contentFit="cover"/);
 
   assert.match(brand, /splashStillSources/);
   assert.match(brand, /CEO hold stills \(JPG\)/);
@@ -220,7 +220,7 @@ test('native phone splash locks portrait pre-auth and unlocks after sign-in', ()
   assert.match(appJson, /"expo-screen-orientation"/);
   assert.match(appJson, /"initialOrientation":\s*"DEFAULT"/);
   assert.match(appJson, /"orientation":\s*"default"/);
-  assert.match(pkg, /"expo-screen-orientation":\s*"~9\.0\.9"/);
+  assert.match(pkg, /"expo-screen-orientation":\s*"~57\.0\.2"/);
 });
 
 test('splash mp4 assets are bundled with AAC audio', () => {
@@ -456,8 +456,8 @@ test('web splash root + media fill viewport for cover resize', () => {
     /Platform\.select\(\s*\{\s*web:\s*\{[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'[\s\S]*?minHeight:\s*'100vh'/,
   );
   assert.match(splash, /minHeight:\s*'100vh'/);
-  assert.match(splash, /videoHit:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFillObject/);
-  assert.match(splash, /videoLayer:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFillObject/);
+  assert.match(splash, /videoHit:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill/);
+  assert.match(splash, /videoLayer:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill/);
   // Aspect still comes from window dims; sizing does not.
   assert.match(splash, /useWindowDimensions/);
   assert.match(splash, /splashAspectForSize\(width,\s*height\)/);
@@ -472,7 +472,7 @@ test('web muted autoplay unlocks on body tap; skip stays available; native audio
   assert.match(splash, /setAwaitingGesture\(true\)/);
   assert.match(splash, /Platform\.OS === 'web'/);
   assert.match(splash, /isMuted=\{awaitingGesture\}/);
-  assert.match(splash, /playsInSilentModeIOS:\s*true/);
+  assert.match(splash, /playsInSilentMode:\s*true/);
   assert.match(splash, /Sound on/);
   assert.match(splash, /flashSoundOnHint/);
   assert.match(splash, /Tap for sound/);
@@ -544,9 +544,12 @@ test('web splash video uses HTML5 absolute fill + object-fit cover (not expo-av 
   assert.doesNotMatch(web, /from 'expo-av'/);
   assert.doesNotMatch(web, /ExponentVideo/);
   assert.doesNotMatch(web, /customStyle\s*=\s*\{[\s\S]*?position:\s*undefined/);
+  assert.doesNotMatch(native, /from 'expo-av'/);
+  assert.doesNotMatch(types, /from 'expo-av'/);
 
-  assert.match(native, /from 'expo-av'/);
-  assert.match(native, /ResizeMode\.COVER/);
+  assert.match(native, /from 'expo-video'/);
+  assert.match(native, /contentFit="cover"/);
+  assert.match(native, /nativeControls=\{false\}/);
   assert.match(types, /SplashVideoHandle/);
   assert.match(types, /SplashPlaybackStatus/);
 });

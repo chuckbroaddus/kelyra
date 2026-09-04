@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { captureBadge } from '@/components/ui/Badge';
+import { captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { SecondaryButton } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
@@ -14,12 +14,20 @@ import { type } from '@/constants/theme';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { attachCapture, listInbox, type InboxItem } from '@/lib/captures/api';
+import {
+  attachCapture,
+  listInbox,
+  listTurnedIn,
+  type InboxItem,
+  type TurnedInItem,
+} from '@/lib/captures/api';
 import { deleteCapture } from '@/lib/captures/delete';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { formatWhen } from '@/lib/format';
 import { markNoteOnly, processQueuedDrafts } from '@/lib/gaps/api';
+import { practiceTitle } from '@/lib/practice/api';
+import { submissionReviewPath } from '@/lib/practice/review';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -29,6 +37,7 @@ export default function InboxScreen() {
   const { contextTab } = useChrome();
   const { teacher } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
+  const [turned, setTurned] = useState<TurnedInItem[]>([]);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<string | null>(null);
@@ -46,7 +55,9 @@ export default function InboxScreen() {
       const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
       setClassId(klass.id);
       setRoster(await listRoster(klass.id));
-      setItems(await listInbox(klass.id));
+      const [captures, completed] = await Promise.all([listInbox(klass.id), listTurnedIn(klass.id)]);
+      setItems(captures);
+      setTurned(completed);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not load inbox');
     } finally {
@@ -80,6 +91,7 @@ export default function InboxScreen() {
   const toReview = items.filter((item) => Boolean(item.student_id));
   const chip = contextTab === 'name' || contextTab === 'review' ? contextTab : 'all';
   const visible = chip === 'name' ? needsName : chip === 'review' ? toReview : items;
+  const visibleTurned = chip === 'name' ? [] : turned;
 
   const visibleRoster = useMemo(() => {
     const needle = filter.trim().toLowerCase();
@@ -97,6 +109,12 @@ export default function InboxScreen() {
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not assign student');
     }
+  };
+
+  const photoFor = (studentId: string) => roster.find((row) => row.id === studentId)?.photoUrl;
+  const turnedCopy = (item: TurnedInItem) => {
+    const work = item.kind === 'lesson' ? item.title : practiceTitle(item.title);
+    return `Completed ${work}`;
   };
 
   if (!teacher) {
@@ -117,9 +135,9 @@ export default function InboxScreen() {
         />
       ) : null}
       {!loaded ? <WorkingLine /> : null}
-      {loaded && items.length === 0 ? (
+      {loaded && items.length === 0 && turned.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
-          Nothing waiting. Work without a clear name lands here.
+          Nothing waiting. Capture work, review it in Needs, then Approve on the student page on web.
         </Text>
       ) : null}
       {visible.map((item) => {
@@ -204,6 +222,44 @@ export default function InboxScreen() {
           />
         );
       })}
+      {visibleTurned.map((item) => (
+        <WorkRow
+          key={item.id}
+          title={item.studentName}
+          status={turnedCopy(item)}
+          meta={formatWhen(item.submittedAt)}
+          avatarName={item.studentName}
+          photoUrl={photoFor(item.studentId)}
+          badge={practiceBadge(item.status)}
+          onPress={() => {
+            if (!classId) return;
+            router.push(submissionReviewPath(classId, item.id) as never);
+          }}
+          pills={[
+            {
+              key: 'open',
+              label: 'Review',
+              kind: 'primary',
+              onPress: () => {
+                if (!classId) return;
+                router.push(submissionReviewPath(classId, item.id) as never);
+              },
+            },
+          ]}
+          trailing={[
+            {
+              key: 'open',
+              label: 'Review',
+              tone: 'brand',
+              autoCommit: false,
+              onPress: () => {
+                if (!classId) return;
+                router.push(submissionReviewPath(classId, item.id) as never);
+              },
+            },
+          ]}
+        />
+      ))}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
       <PhaseBanner
         phase={2}

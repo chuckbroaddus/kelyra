@@ -120,8 +120,12 @@ test('Q7: matrix also_administrator would widen classes.create — Ask must not 
   const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
   const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
   assert.ok(officeGate > 0);
-  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole/);
-  assert.doesNotMatch(allowedBody.slice(officeGate, allowedBody.indexOf('if (!policy.capability)')), /\bcan\(/);
+  // create_class returns at officeOnly → isOfficeRole. Do not scan later familyRead/can() arms.
+  const officeReturnEnd = allowedBody.indexOf(';', officeGate) + 1;
+  assert.ok(officeReturnEnd > officeGate);
+  const officeOnlyArm = allowedBody.slice(officeGate, officeReturnEnd);
+  assert.match(officeOnlyArm, /return isOfficeRole\(profile\)/);
+  assert.doesNotMatch(officeOnlyArm, /\bcan\(/);
 });
 
 test('Q7: no leftover client create_school_class / classes insert path', () => {

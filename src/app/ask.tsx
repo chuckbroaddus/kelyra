@@ -192,6 +192,16 @@ export default function AskScreen() {
         <GhostButton align="left" label="Back to the assignment" onPress={() => router.push(returnTo as never)} />
       ) : null}
       {!ready ? <WorkingLine text="Opening Kelyra…" /> : null}
+      {chrome.role === 'teacher' && chrome.className ? (
+        <View style={styles.contextRow}>
+          <Chip
+            label={chrome.className}
+            selected
+            disabled
+            tooltip={`Working in ${chrome.className}`}
+          />
+        </View>
+      ) : null}
       {ready && messages.length === 0 ? (
         <View style={styles.empty}>
           {chrome.role === 'teacher' || office
@@ -234,6 +244,12 @@ export default function AskScreen() {
 }
 
 const styles = StyleSheet.create({
+  contextRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
   empty: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -10,7 +10,6 @@ import {
   listSchoolClasses,
   removeTeacherFromClass,
 } from '@/lib/classes/api';
-import { uploadTeacherAsset } from '@/lib/media/upload';
 import {
   addParentToClass,
   createParent,
@@ -44,6 +43,16 @@ import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, Studen
 
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
 import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
+import {
+  discardSyllabusAskDraft,
+  getClassSyllabus,
+  loadParentClassAverageExplain,
+  loadPublishedClassSyllabus,
+  loadStudentClassAverageExplain,
+  upsertSyllabusAskDraft,
+} from '@/lib/syllabus/api';
+import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
+
 
 type AskKeyScan = {
   pageState: string;
@@ -1108,6 +1117,156 @@ const TOOLS: Record<string, AskToolSpec> = {
         ok: true,
         rebuilt: true,
         href: `/class/${classId}/assignment/${assignmentId}${draft?.studentId ? `?student=${draft.studentId}` : ''}`,
+      };
+    },
+  },
+  scan_class_syllabus: {
+    capability: 'syllabus.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'scan_class_syllabus',
+      description:
+        'Read an attached syllabus photo into a draft for one taught class. Does not publish. Teacher must confirm in class setup.',
+      parameters: {
+        type: 'object',
+        properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.teacherId) return { error: 'Teacher sign-in is required.' };
+      if (!ctx.photo?.imageUrl) return { error: 'Attach a syllabus photo first.' };
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const asset = await uploadTeacherAsset({
+        teacherId: ctx.teacherId,
+        kind: 'photo',
+        uri: ctx.photo.imageUrl,
+        mimeType: ctx.photo.mimeType || 'image/jpeg',
+      });
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (!imageUrl) return { error: 'Could not open the photo.' };
+      const draft = await invokeAi<Record<string, unknown>>('parse-class-syllabus', {
+        classId,
+        imageUrl,
+        mimeType: ctx.photo.mimeType || 'image/jpeg',
+      });
+      if (draft.error) return { error: String(draft.error) };
+      await upsertSyllabusAskDraft(classId, { ...draft, schema_version: 1, class_id: classId }, asset.id);
+      return {
+        ok: true,
+        parked: true,
+        document_kind: draft.document_kind ?? 'unknown',
+        href: `/class/${classId}/syllabus`,
+        note: 'Draft saved. Review and publish on the class syllabus screen. Nothing is live yet.',
+      };
+    },
+  },
+  get_class_syllabus_draft: {
+    capability: 'syllabus.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'get_class_syllabus_draft',
+      description: 'Return the parked Ask syllabus draft for a taught class (teacher only).',
+      parameters: {
+        type: 'object',
+        properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const bundle = await getClassSyllabus(classId);
+      return {
+        class_id: classId,
+        status: bundle.syllabus?.status ?? null,
+        ask_draft: bundle.syllabus?.ask_draft ?? null,
+        href: `/class/${classId}/syllabus`,
+      };
+    },
+  },
+  discard_class_syllabus_draft: {
+    capability: 'syllabus.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'discard_class_syllabus_draft',
+      description: 'Clear the Ask syllabus draft for a taught class. Leaves a published syllabus intact.',
+      parameters: {
+        type: 'object',
+        properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      await discardSyllabusAskDraft(classId);
+      return { ok: true, cleared: true, href: `/class/${classId}/syllabus` };
+    },
+  },
+  get_published_class_syllabus: {
+    capability: null,
+    def: {
+      type: 'function',
+      name: 'get_published_class_syllabus',
+      description:
+        'Read published category weights for a class the student is in or a linked child is in. No drafts.',
+      parameters: {
+        type: 'object',
+        properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const syllabus = await loadPublishedClassSyllabus(classId);
+      return syllabus;
+    },
+  },
+  explain_my_class_average: {
+    capability: null,
+    def: {
+      type: 'function',
+      name: 'explain_my_class_average',
+      description:
+        'Explain the current weighted average for the signed-in student or one linked child. Post-Approve scores only.',
+      parameters: {
+        type: 'object',
+        properties: {
+          class_id: { type: 'string' },
+          class_name: { type: 'string' },
+          student_id: { type: 'string', description: 'Required for parent — one linked child.' },
+        },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const studentId = str(args, 'student_id');
+      if (ctx.profile?.role === 'parent' || ctx.profile?.parent_id) {
+        if (!studentId) return { error: 'Pick one linked child (student_id).' };
+        const explained = await loadParentClassAverageExplain(classId, studentId);
+        return {
+          published: explained.syllabus.published,
+          overall: explained.average.overall,
+          disclosures: explained.average.disclosures,
+          adjusted: explained.average.adjustedNotes,
+          rules: explained.ruleLines,
+        };
+      }
+      const explained = await loadStudentClassAverageExplain(classId);
+      return {
+        published: explained.syllabus.published,
+        overall: explained.average.overall,
+        disclosures: explained.average.disclosures,
+        adjusted: explained.average.adjustedNotes,
+        rules: explained.ruleLines,
       };
     },
   },

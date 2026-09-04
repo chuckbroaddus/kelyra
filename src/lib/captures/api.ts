@@ -176,6 +176,7 @@ export async function countInbox(classId: string): Promise<number> {
   return count ?? 0;
 }
 
+/** Single Needs queue count for tray + desk: unassigned/attached/draft + completed submissions. Count only. */
 export async function countNeedsYou(classId: string): Promise<number> {
   const inbox = await countInbox(classId);
   const supabase = requireSupabase();

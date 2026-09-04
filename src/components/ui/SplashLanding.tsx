@@ -1,4 +1,4 @@
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -56,14 +56,12 @@ type Props = {
 let splashSessionCompleted = false;
 
 async function enableSplashAudioMode() {
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-    interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
+  await setAudioModeAsync({
+    allowsRecording: false,
+    playsInSilentMode: true,
+    shouldPlayInBackground: false,
+    interruptionMode: 'mixWithOthers',
+    shouldRouteThroughEarpiece: false,
   });
 }
 
@@ -254,7 +252,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
           }
           return;
         }
-        // Native: attempt unmuted (playsInSilentModeIOS); muted fallback if blocked.
+        // Native: attempt unmuted (playsInSilentMode); muted fallback if blocked.
         const started = await tryPlayUnmuted(ownedVideo);
         if (!started && !cancelled && !splashSessionCompleted) {
           try {
@@ -519,25 +517,25 @@ const styles = StyleSheet.create({
     }),
   },
   still: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
     zIndex: 1,
   },
   videoHit: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
     zIndex: 2,
   },
   videoLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
     zIndex: 2,
   },
   video: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },
@@ -570,7 +568,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 3,
     justifyContent: 'flex-end',
   },
@@ -580,7 +578,7 @@ const styles = StyleSheet.create({
   },
   /** Soft bottom band only — must not paint opaque black over the center logo. */
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   formBlock: {
     alignSelf: 'center',

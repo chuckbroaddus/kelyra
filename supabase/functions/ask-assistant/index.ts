@@ -10,7 +10,7 @@ import {
   type ProfileHats,
 } from '../_shared/askToolPolicy.ts';
 
-const FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
+const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
 const PHOTO_FAILED = '(A photo was attached but could not be opened.)';
 
 function bytesToBase64(bytes: Uint8Array): string {

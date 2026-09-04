@@ -9,7 +9,7 @@ export type AskLiveContext = {
   screen: string;
 };
 
-const FALLBACK = "I can’t tell from what’s saved. Open Inbox or the student’s page.";
+const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
 
 export function buildAskInstructions(input: {
   role: string;

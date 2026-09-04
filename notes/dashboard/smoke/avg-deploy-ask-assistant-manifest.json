@@ -1,0 +1,27 @@
+{
+  "name": "ask-assistant",
+  "entrypoint_path": "ask-assistant/index.ts",
+  "verify_jwt": true,
+  "files": [
+    {
+      "name": "_shared/ai.ts",
+      "bytes": 22588
+    },
+    {
+      "name": "_shared/aiPolicy.ts",
+      "bytes": 3467
+    },
+    {
+      "name": "_shared/askImageUrl.ts",
+      "bytes": 1840
+    },
+    {
+      "name": "_shared/askToolPolicy.ts",
+      "bytes": 9221
+    },
+    {
+      "name": "ask-assistant/index.ts",
+      "bytes": 5675
+    }
+  ]
+}

@@ -2,7 +2,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Modal, Text } from 'react-native';
 
-import { AssignmentForm, dueAtFromDate, emptyAssignmentForm, lessonFieldsFromForm, plannedAssignmentInput, type AssignmentFormValue } from '@/components/ui/AssignmentForm';
+import {
+  AssignmentForm,
+  dueAtFromDate,
+  emptyAssignmentForm,
+  lessonFieldsFromForm,
+  plannedAssignmentInput,
+  type AssignmentFormValue,
+  type SyllabusCategoryOption,
+} from '@/components/ui/AssignmentForm';
+import { categoryOptionsForAssign, getClassSyllabus } from '@/lib/syllabus/api';
 import { GhostButton } from '@/components/ui/Button';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { Screen } from '@/components/ui/Screen';
@@ -85,6 +94,7 @@ export default function AssignmentEditScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [unitSuggestions, setUnitSuggestions] = useState<string[]>([]);
   const [sectionSuggestions, setSectionSuggestions] = useState<string[]>([]);
+  const [syllabusCategories, setSyllabusCategories] = useState<SyllabusCategoryOption[] | null>(null);
 
   useEffect(() => {
     if (creating || !assignmentId) return;
@@ -109,6 +119,8 @@ export default function AssignmentEditScreen() {
           weightPercent: row.weight_percent != null ? String(row.weight_percent) : '',
           term: parseGradeTerm(row.term),
           scoreScheme: (row.score_scheme as AssignmentFormValue['scoreScheme']) ?? 'numeric',
+          includeInAverage: row.include_in_average !== false,
+          isMakeup: row.is_makeup === true,
           keyKind: row.key_kind ?? deriveKeyKind(Boolean(row.key_asset_id), items),
           keyNotes: row.key_notes ?? '',
           keyPassAt: row.key_pass_at != null ? String(row.key_pass_at) : '',
@@ -129,6 +141,34 @@ export default function AssignmentEditScreen() {
         setReady(true);
       });
   }, [assignmentId, creating]);
+
+  useEffect(() => {
+    if (!id) return;
+    void getClassSyllabus(id)
+      .then((bundle) => {
+        if (bundle.syllabus?.status === 'published') {
+          const options = categoryOptionsForAssign(bundle.categories);
+          setSyllabusCategories(options);
+          if (creating) {
+            setValue((current) => {
+              const match = options.find((row) => row.key === current.category) ?? options[0];
+              if (!match) return current;
+              return {
+                ...current,
+                category: match.key,
+                includeInAverage:
+                  current.workKind === 'lesson'
+                    ? false
+                    : match.default_include_in_average === true,
+              };
+            });
+          }
+        } else {
+          setSyllabusCategories(null);
+        }
+      })
+      .catch(() => setSyllabusCategories(null));
+  }, [id, creating]);
 
   useEffect(() => {
     if (!id) return;
@@ -431,6 +471,7 @@ export default function AssignmentEditScreen() {
           studentLockedName={studentLockedName}
           lockWorkKind={!creating || followUpMode}
           hidePackPicker={followUpMode}
+          syllabusCategories={syllabusCategories}
         />
       ) : null}
       {status ? <Text style={[type.body, { color: colors.danger }]}>{status}</Text> : null}

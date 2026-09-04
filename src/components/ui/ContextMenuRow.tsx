@@ -95,7 +95,7 @@ function chipsFor(input: {
     return [
       { key: 'name', label: 'Needs a name', hint: 'Unassigned work', selected: current === 'name', onPress: () => setContextTab('name') },
       { key: 'review', label: 'Review', hint: 'Drafts waiting for Approve', selected: current === 'review', onPress: () => setContextTab('review') },
-      { key: 'all', label: 'All', hint: 'Everything in Inbox', selected: current === 'all', onPress: () => setContextTab('all') },
+      { key: 'all', label: 'All', hint: 'Everything in Needs', selected: current === 'all', onPress: () => setContextTab('all') },
     ];
   }
 

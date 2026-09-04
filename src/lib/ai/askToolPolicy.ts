@@ -13,6 +13,10 @@ export type AskToolPolicyEntry = {
   need: AskToolNeed;
   /** Matches askTools office walls — before matrix / also_administrator. */
   officeOnly?: boolean;
+  /** Teacher seat only — office JWT denied unless they also teach (SQL is source of truth). */
+  teacherSeatOnly?: boolean;
+  /** Parent/student published syllabus + why-average read tools. */
+  familyRead?: boolean;
 };
 
 /** Source of truth for which Ask tools a seat may be offered. */
@@ -41,6 +45,11 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   create_assignment: { capability: 'assignments.manage', need: null },
   open_screen: { capability: null, need: null },
   revise_practice_page: { capability: 'assignments.manage', need: null },
+  scan_class_syllabus: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  get_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  discard_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
+  get_published_class_syllabus: { capability: null, need: null, familyRead: true },
+  explain_my_class_average: { capability: null, need: null, familyRead: true },
 };
 
 export type AskActorProfile = ProfileHats & {
@@ -67,6 +76,20 @@ export function isAskToolAllowed(
   const policy = ASK_TOOL_POLICY[name];
   if (!policy) return false;
   if (policy.officeOnly) return isOfficeRole(profile);
+  if (policy.teacherSeatOnly) {
+    // Office seat cannot write class grade policy in v1.
+    // Runtime SQL class_teacher_of remains the write wall.
+    if (isOfficeRole(profile)) return false;
+    if (profile?.role === 'parent' || profile?.role === 'student') return false;
+  }
+  if (policy.familyRead) {
+    if (isOfficeRole(profile)) return false;
+    if (profile?.role === 'student') return can(profile, 'gradebook.view', 'own', grants);
+    if (profile?.role === 'parent' || Boolean(profile?.parent_id)) {
+      return can(profile, 'children.view', 'own', grants);
+    }
+    return false;
+  }
   if (!policy.capability) return true;
   const need = (policy.need ?? 'own') as Access;
   return can(profile, policy.capability, need, grants);

@@ -33,7 +33,7 @@ export function ScreenOverlay({ visible, onRequestClose, children }: Props) {
 
 const styles = StyleSheet.create({
   fill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flex: 1,
   },
 });

@@ -7,19 +7,13 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
 import { chrome, shadows, type } from '@/constants/theme';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { tabsFor, type TrayTab } from '@/lib/chrome/trayTabs';
 import { useSchoolFeedIcon } from '@/lib/feeds/useFeedIcon';
 import { formatCount } from '@/lib/format';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-type Tab = {
-  key: string;
-  icon: IconName;
-  label: string;
-  href: string;
-  active: boolean;
-  badge?: number;
-};
+type Tab = TrayTab & { icon: IconName };
 
 export function FloatingTabTray() {
   const { colors, scheme } = useTheme();
@@ -39,10 +33,10 @@ export function FloatingTabTray() {
     chromeState.role,
     pathname,
     chromeState.classId,
-    chromeState.badgeCount,
+    chromeState.role === 'teacher' ? chromeState.needsCount : chromeState.badgeCount,
     homeTab,
     schoolFeedIcon,
-  );
+  ) as Tab[];
 
   if (layout.showTopBar) {
     return (
@@ -128,6 +122,7 @@ function tabTip(tab: Tab): string {
   if (tab.badge) return `${tab.label}, ${tab.badge} waiting`;
   if (tab.key === 'home') {
     if (tab.label === 'Assignments') return 'Your assignments';
+    if (tab.label === 'Desk') return 'Desk';
     return tab.label === 'School' ? 'School home' : 'Home';
   }
   if (tab.key === 'feed') return tab.href.startsWith('/student') ? 'Feeds' : 'School feed';
@@ -136,9 +131,9 @@ function tabTip(tab: Tab): string {
   if (tab.key === 'people') return tab.href.startsWith('/student') ? 'Classmates, teachers, and parents' : 'Staff, parents, and students';
   if (tab.key === 'manage' || tab.key === 'system') return 'Feed icon, activity, and responsibilities';
   if (tab.key === 'activity') return 'Immutable change log';
-  if (tab.key === 'ask') return 'Talk with Kelyra';
-  if (tab.key === 'capture') return 'Photograph work';
-  if (tab.key === 'inbox') return 'Needs you';
+  if (tab.key === 'ask') return tab.label === 'Ask' ? 'Ask' : 'Talk with Kelyra';
+  if (tab.key === 'capture') return 'File work';
+  if (tab.key === 'inbox') return 'Needs';
   if (tab.key === 'class') return tab.href.startsWith('/student') ? 'Classes' : 'Grade book and class records';
   return tab.label;
 }
@@ -173,147 +168,6 @@ function CountBadge({ count, danger, ink }: { count: number; danger: string; ink
       <Text style={[styles.badgeText, { color: ink }]}>{formatCount(count)}</Text>
     </View>
   );
-}
-
-function tabsFor(
-  role: string,
-  pathname: string,
-  classId: string | null,
-  badgeCount: number,
-  homeTab?: string,
-  schoolFeedIcon: IconName = 'feedSchool',
-): Tab[] {
-  if (role === 'superintendent' || role === 'administrator') {
-    const office = officeTrayKey(pathname, homeTab);
-    return [
-      {
-        key: 'feed',
-        icon: schoolFeedIcon,
-        label: 'Feed',
-        href: '/?tab=feed',
-        active: office === 'feed',
-      },
-      {
-        key: 'classes',
-        icon: 'classes',
-        label: 'Classes',
-        href: '/?tab=classes',
-        active: office === 'classes',
-      },
-      {
-        key: 'people',
-        icon: 'person',
-        label: 'People',
-        href: '/?tab=people',
-        active: office === 'people',
-      },
-      {
-        key: 'manage',
-        icon: 'manage',
-        label: 'Manage',
-        href: '/?tab=manage',
-        active: office === 'manage',
-      },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
-    ];
-  }
-  if (role === 'student') {
-    return [
-      {
-        key: 'home',
-        icon: 'work',
-        label: 'Assignments',
-        href: '/todo',
-        active: pathname === '/todo' || pathname.startsWith('/todo/'),
-      },
-      {
-        key: 'feed',
-        icon: schoolFeedIcon,
-        label: 'Feeds',
-        href: '/student/feed',
-        active: pathname.startsWith('/student/feed'),
-      },
-      {
-        key: 'class',
-        icon: 'classes',
-        label: 'Classes',
-        href: '/student/class',
-        active: pathname.startsWith('/student/class'),
-      },
-      {
-        key: 'grades',
-        icon: 'grades',
-        label: 'Grades',
-        href: '/student/grades',
-        active: pathname.startsWith('/student/grades'),
-      },
-      {
-        key: 'people',
-        icon: 'person',
-        label: 'People',
-        href: '/student/people',
-        active: pathname.startsWith('/student/people'),
-      },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
-    ];
-  }
-  if (role === 'parent') {
-    return [
-      { key: 'home', icon: 'today', label: 'Home', href: '/parent', active: pathname === '/parent' },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
-    ];
-  }
-
-  const classRoot = classId ? `/class/${classId}` : '/';
-  const onClassCluster =
-    pathname.endsWith('/setup') ||
-    pathname.includes('/gradebook') ||
-    pathname.includes('/assignment') ||
-    pathname.endsWith('/parents') ||
-    pathname.includes('/parent/') ||
-    pathname.endsWith('/family');
-  const onClass = pathname.startsWith('/class/');
-  const houseActive =
-    pathname === '/' || (onClass && !onClassCluster && !pathname.includes('/student/'));
-
-  return [
-    { key: 'home', icon: 'today', label: 'Home', href: classRoot, active: houseActive },
-    { key: 'capture', icon: 'capture', label: 'Capture', href: '/capture', active: pathname === '/capture' },
-    {
-      key: 'inbox',
-      icon: 'inbox',
-      label: 'Inbox',
-      href: '/inbox',
-      active: pathname === '/inbox',
-      badge: badgeCount > 0 ? badgeCount : undefined,
-    },
-    {
-      key: 'class',
-      icon: 'records',
-      label: 'Class',
-      href: classId ? `${classRoot}/gradebook` : '/',
-      active: onClassCluster,
-    },
-    { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
-  ];
-}
-
-function officeTrayKey(
-  pathname: string,
-  homeTab?: string,
-): 'feed' | 'classes' | 'people' | 'manage' | 'ask' | null {
-  if (pathname === '/ask') return 'ask';
-  if (pathname === '/activity' || pathname === '/admin/matrix') return 'manage';
-  if (pathname.startsWith('/admin/people') || pathname === '/admin') return 'people';
-  if (pathname.startsWith('/admin/class')) return 'classes';
-  if (pathname === '/' || pathname === '') {
-    if (homeTab === 'feed') return 'feed';
-    if (homeTab === 'people') return 'people';
-    if (homeTab === 'manage' || homeTab === 'school') return 'manage';
-    if (homeTab === 'new') return null;
-    return 'classes';
-  }
-  return null;
 }
 
 const styles = StyleSheet.create({

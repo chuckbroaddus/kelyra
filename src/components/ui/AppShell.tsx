@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   camera: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 40,
     padding: 16,
   },

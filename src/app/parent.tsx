@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
@@ -11,6 +11,7 @@ import { MarqueeText } from '@/components/ui/MarqueeText';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
+import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
 import { type } from '@/constants/theme';
 import { firstName } from '@/lib/format';
 import {
@@ -26,6 +27,8 @@ import { touchParentLastSeen } from '@/lib/parents/session';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { parseBirthdayInput, STUDENT_DETAIL_FIELDS, metaString, setMetaKey } from '@/lib/people/metadata';
 import { getStudent, renameStudent, updateStudentMetadata } from '@/lib/students/api';
+import { listParentChildClasses, loadParentClassAverageExplain } from '@/lib/syllabus/api';
+import type { SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ParentScreen() {
@@ -123,6 +126,97 @@ export default function ParentScreen() {
         </View>
       ) : null}
     </Screen>
+  );
+}
+
+function ParentClassGradesCard({
+  studentId,
+  childName,
+}: {
+  studentId: string;
+  childName: string;
+}) {
+  const { colors } = useTheme();
+  const studentIdRef = useRef(studentId);
+  studentIdRef.current = studentId;
+  const [rows, setRows] = useState<
+    Array<{ classId: string; className: string; average: number | null; published: boolean }>
+  >([]);
+  const [why, setWhy] = useState<{
+    className: string;
+    average: SyllabusAverageResult;
+  } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    // F-06 / L6: never leave sibling averages or an open why-sheet under the new child.
+    setWhy(null);
+    setRows([]);
+    void (async () => {
+      try {
+        const classes = await listParentChildClasses(studentId);
+        const next: Array<{
+          classId: string;
+          className: string;
+          average: number | null;
+          published: boolean;
+        }> = [];
+        for (const room of classes) {
+          if (!live || studentIdRef.current !== studentId) return;
+          const explained = await loadParentClassAverageExplain(room.classId, studentId).catch(() => null);
+          next.push({
+            classId: room.classId,
+            className: room.className,
+            average: explained?.average.overall ?? null,
+            published: Boolean(explained?.syllabus.published),
+          });
+        }
+        if (live && studentIdRef.current === studentId) setRows(next);
+      } catch {
+        if (live && studentIdRef.current === studentId) setRows([]);
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [studentId]);
+
+  if (!rows.length) return null;
+
+  return (
+    <View style={styles.block}>
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Classes</Text>
+      {rows.map((row) => (
+        <Card key={row.classId}>
+          <Text style={[type.body, { color: colors.ink }]}>{row.className}</Text>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            {row.published && row.average != null
+              ? `Current average ${row.average}%`
+              : 'No published average yet'}
+          </Text>
+          {row.published && row.average != null ? (
+            <GhostButton
+              align="left"
+              label="Why this average?"
+              onPress={() => {
+                const forStudent = studentId;
+                void loadParentClassAverageExplain(row.classId, forStudent).then((explained) => {
+                  if (studentIdRef.current !== forStudent) return;
+                  setWhy({ className: row.className, average: explained.average });
+                });
+              }}
+            />
+          ) : null}
+        </Card>
+      ))}
+      <WhyAverageSheet
+        visible={Boolean(why)}
+        average={why?.average ?? null}
+        childName={childName}
+        className={why?.className}
+        onClose={() => setWhy(null)}
+      />
+    </View>
   );
 }
 
@@ -241,6 +335,11 @@ function ChildCard({
           ) : null}
         </>
       )}
+      <ParentClassGradesCard
+        key={child.student_id}
+        studentId={child.student_id}
+        childName={shownName}
+      />
       {canEdit ? <GhostButton label="Edit details" onPress={() => void openEdit()} /> : null}
       {error && !open ? <Text style={[styles.empty, { color: colors.danger }]}>{error}</Text> : null}
       <FormSheet visible={open} title={`Edit ${shownName}`} onClose={() => setOpen(false)}>
