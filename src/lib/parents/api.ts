@@ -349,6 +349,20 @@ export async function listParentsForLinking(): Promise<ClassParent[]> {
   return attachChildren(await loadAllParentRows());
 }
 
+/**
+ * Student-page Add parent picker only: school_parents_for_link (taught-class wall)
+ * plus teacher-owned cards that have no taught-class link yet.
+ * Do not widen the RPC — merge listParentsForTeacher here (F09 / Q6).
+ */
+export async function listParentsForStudentPageLinking(teacherId: string): Promise<ClassParent[]> {
+  const fromRpc = await listParentsForLinking();
+  const mine = await listParentsForTeacher(teacherId);
+  const have = new Set(fromRpc.map((row) => row.id));
+  const extra = mine.filter((row) => !have.has(row.id));
+  if (!extra.length) return fromRpc;
+  return [...fromRpc, ...(await attachChildren(extra))];
+}
+
 function putParent(into: Map<string, ClassParent>, parent: ClassParent) {
   const have = into.get(parent.id);
   if (!have) {
