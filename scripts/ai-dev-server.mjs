@@ -39,6 +39,12 @@ import {
   filterAskToolDefs,
   mergeAskGrants,
 } from '../supabase/functions/_shared/askToolPolicy.ts';
+import {
+  gauthRefusalCard,
+  isFamilyAskSeat,
+  shouldRefuseAskBeforeVendor,
+  stripAskImagesForFamilySeat,
+} from '../supabase/functions/_shared/askHomeworkRefuse.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -180,6 +186,10 @@ const server = createServer(async (req, res) => {
     }
     if (route === 'parse-class-syllabus') {
       json(res, await parseClassSyllabus(supabase, body));
+      return;
+    }
+    if (route === 'explain-capture') {
+      json(res, await explainCapture(supabase, body));
       return;
     }
     if (route === 'match-key') {
@@ -1148,7 +1158,14 @@ async function askAssistant(supabase, body, uid, profileRow) {
           }))
           .filter((item) => item.content)
       : [{ role: 'user', content: 'Hello' }];
-  const input = await hydrateAskImages(raw);
+  const familySeat = isFamilyAskSeat(profileRow.role);
+  const gatedInput = familySeat ? stripAskImagesForFamilySeat(raw) : raw;
+  if (shouldRefuseAskBeforeVendor({ role: profileRow.role, rawInput: raw })) {
+    const card = gauthRefusalCard();
+    console.log(`[ai-dev] ask-assistant getUser=${uid} role=${profileRow.role} refuse-before-vendor`);
+    return { text: card.text, refusal: true, title: card.title };
+  }
+  const input = await hydrateAskImages(gatedInput);
   const payload = await grokCall('ask', input.length ? input : [{ role: 'user', content: 'Hello' }], extra, {
     supabase,
     functionName: 'ask-assistant',
@@ -1963,6 +1980,90 @@ Hard rules:
 - missing_as_zero default false. Do not invent 40/60 defaults. If unreadable, empty categories + warning.
 - No roster, SIS ids, IEP text, or student score tables in categories.
 - If the page is a grade list / student-filled rubric, document_kind=unknown or rubric with empty categories.`;
+
+async function explainCapture(supabase, body) {
+  const captureId = String(body.captureId ?? "").trim();
+  const classId = String(body.classId ?? "").trim();
+  let imageUrl = typeof body.imageUrl === "string" ? body.imageUrl.trim() : "";
+  if (!captureId) throw new Error("captureId required");
+  if (!classId) throw new Error("classId required");
+
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user?.id) throw new Error("Sign in first.");
+  const { data: taught } = await supabase
+    .from("class_teachers")
+    .select("class_id")
+    .eq("class_id", classId)
+    .eq("teacher_id", userData.user.id)
+    .maybeSingle();
+  if (!taught) throw new Error("You can only explain a capture for a class you teach.");
+
+  const { data: capture, error: capError } = await supabase
+    .from("captures")
+    .select("id, class_id, student_id, model_draft, draft_score, photo_asset_id, assignment_id")
+    .eq("id", captureId)
+    .maybeSingle();
+  if (capError || !capture) throw new Error("Capture not found.");
+  if (capture.class_id !== classId) throw new Error("Capture does not belong to that class.");
+
+  let keyItems = null;
+  let extract = null;
+  if (capture.assignment_id) {
+    const { data: assignment } = await supabase
+      .from("assignments")
+      .select("id, key_items, key_kind")
+      .eq("id", capture.assignment_id)
+      .maybeSingle();
+    keyItems = assignment?.key_items ?? null;
+  }
+  const modelDraft = capture.model_draft ?? {};
+  extract = modelDraft.extract ?? modelDraft.items ?? modelDraft.marks ?? null;
+  const keyed = Boolean(keyItems) || Boolean(extract);
+  if (imageUrl && !isAllowedAskImageUrl(imageUrl)) throw new Error("Image URL is not allowed.");
+
+  const prompt = `You write a TEACHER Explain draft for one student capture.
+Return JSON only. Pedagogy DRAFT only — never a grade.`;
+  const contextBits = [
+    `capture_id=${captureId}`,
+    capture.student_id ? "student bound" : "student unassigned",
+    keyed ? "keyed path" : "freeform path",
+    keyItems ? `key_items=${JSON.stringify(keyItems).slice(0, 4000)}` : null,
+    extract ? `extract_marks=${JSON.stringify(extract).slice(0, 4000)}` : null,
+  ].filter(Boolean).join("\n");
+  const content = [{ type: "input_text", text: `${prompt}\n\nContext:\n${contextBits}` }];
+  if (imageUrl) {
+    content.unshift({
+      type: "input_image",
+      image_url: await prepareImageForGrok(imageUrl),
+      detail: imageDetailFor("cheap"),
+    });
+  }
+  const payload = await grokCall("ask", [{ role: "user", content }], {}, {
+    supabase,
+    functionName: "explain-capture",
+  });
+  const parsed = extractJson(outputText(payload)) || {};
+  const stepsRaw = Array.isArray(parsed.steps) ? parsed.steps : [];
+  const steps = stepsRaw.map((s) => String(s ?? "").trim()).filter(Boolean).slice(0, 12);
+  const draft = {
+    schema_version: 1,
+    capture_id: captureId,
+    source: parsed.source === "keyed" || keyed ? "keyed" : "freeform",
+    steps: steps.length ? steps : ["Review the work with the student and note the first missed skill."],
+    reteach: typeof parsed.reteach === "string" && parsed.reteach.trim() ? parsed.reteach.trim() : null,
+  };
+  const { data: parked, error: parkError } = await supabase.rpc("park_explain_draft", {
+    p_capture_id: captureId,
+    p_draft: draft,
+  });
+  if (parkError) throw new Error(parkError.message);
+  return {
+    ok: true,
+    explain_draft: draft,
+    explain_status: "draft",
+    capture: { id: parked?.id ?? captureId, explain_status: "draft" },
+  };
+}
 
 async function parseClassSyllabus(supabase, body) {
   const classId = String(body.classId ?? '').trim();

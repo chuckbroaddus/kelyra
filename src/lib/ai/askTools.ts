@@ -44,6 +44,11 @@ import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, Studen
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
 import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
 import {
+  attachExplainAsNote,
+  discardExplainDraft,
+  requestExplainCapture,
+} from '@/lib/explain/api';
+import {
   discardSyllabusAskDraft,
   getClassSyllabus,
   loadParentClassAverageExplain,
@@ -1270,6 +1275,99 @@ const TOOLS: Record<string, AskToolSpec> = {
       };
     },
   },
+
+  explain_capture: {
+    capability: 'explain.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'explain_capture',
+      description:
+        'Park a teacher Explain draft on a taught-class capture. On-demand only. Never a grade. Prefer key+extract when present.',
+      parameters: {
+        type: 'object',
+        properties: {
+          capture_id: { type: 'string' },
+          class_id: { type: 'string' },
+          class_name: { type: 'string' },
+        },
+        required: ['capture_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.teacherId) return { error: 'Teacher sign-in is required.' };
+      const captureId = str(args, 'capture_id');
+      if (!captureId) return { error: 'Need capture_id.' };
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const draft = await requestExplainCapture({
+        captureId,
+        classId,
+        imageUrl: ctx.photo?.imageUrl ?? null,
+      });
+      return {
+        ok: true,
+        parked: true,
+        explain_status: 'draft',
+        steps: draft.steps,
+        reteach: draft.reteach,
+        href: `/class/${classId}/student/${'review'}`,
+        note: 'Explain draft parked. Keep private by default. Attach as teacher note only after Confirm.',
+      };
+    },
+  },
+  discard_explain_draft: {
+    capability: 'explain.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'discard_explain_draft',
+      description: 'Clear a parked Explain draft on a taught-class capture. Leaves grades unchanged.',
+      parameters: {
+        type: 'object',
+        properties: { capture_id: { type: 'string' }, class_id: { type: 'string' } },
+        required: ['capture_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.teacherId) return { error: 'Teacher sign-in is required.' };
+      const captureId = str(args, 'capture_id');
+      if (!captureId) return { error: 'Need capture_id.' };
+      await discardExplainDraft(captureId);
+      return { ok: true, cleared: true, explain_status: 'none' };
+    },
+  },
+  attach_explain_as_note: {
+    capability: 'explain.manage',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'attach_explain_as_note',
+      description:
+        'Copy the parked Explain draft into the teacher note. Confirm in UI first. Default is Keep private. Not a grade.',
+      parameters: {
+        type: 'object',
+        properties: { capture_id: { type: 'string' }, confirmed: { type: 'boolean' } },
+        required: ['capture_id', 'confirmed'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.teacherId) return { error: 'Teacher sign-in is required.' };
+      const captureId = str(args, 'capture_id');
+      if (!captureId) return { error: 'Need capture_id.' };
+      if (args.confirmed !== true) {
+        return {
+          error: 'Confirm required. Default is Keep private — do not attach unless the teacher confirms.',
+        };
+      }
+      await attachExplainAsNote(captureId);
+      return { ok: true, attached: true, explain_status: 'noted', note: 'Copied parked draft to teacher note. Still not a grade.' };
+    },
+  },
+
 };
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {

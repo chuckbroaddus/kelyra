@@ -217,6 +217,7 @@ export type AssignmentRow = {
   storage_deck_id?: string | null;
   beat_start?: string | null;
   beat_end?: string | null;
+  help_mode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
 };
 
 export type LessonPackRow = {
@@ -398,6 +399,8 @@ export type CaptureRow = {
   approved_at: string | null;
   assignment_id?: string | null;
   ai_status?: string | null;
+  explain_draft?: Record<string, unknown> | null;
+  explain_status?: 'none' | 'draft' | 'noted';
 };
 
 export type SkillRow = {
@@ -678,6 +681,7 @@ export type Database = {
           storage_deck_id?: string | null;
           beat_start?: string | null;
           beat_end?: string | null;
+          help_mode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
         },
         Partial<Omit<AssignmentRow, 'id' | 'created_at'>>
       >;
@@ -1155,6 +1159,12 @@ export type Database = {
         Returns: string;
       };
       class_teacher_of: { Args: { p_class_id: string }; Returns: boolean };
+      park_explain_draft: {
+        Args: { p_capture_id: string; p_draft: Record<string, unknown> };
+        Returns: CaptureRow;
+      };
+      discard_explain_draft: { Args: { p_capture_id: string }; Returns: CaptureRow };
+      attach_explain_as_note: { Args: { p_capture_id: string }; Returns: CaptureRow };
       get_class_syllabus: { Args: { p_class_id: string }; Returns: Record<string, unknown> };
       save_class_syllabus_draft: {
         Args: { p_class_id: string; p_payload: Record<string, unknown> };

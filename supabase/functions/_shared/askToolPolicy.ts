@@ -58,6 +58,9 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   discard_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
   get_published_class_syllabus: { capability: null, need: null, familyRead: true },
   explain_my_class_average: { capability: null, need: null, familyRead: true },
+  explain_capture: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  discard_explain_draft: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  attach_explain_as_note: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
 };
 
 /** Product defaults for capabilities Ask tools reference (subset of matrix CAPABILITIES). */
@@ -74,6 +77,7 @@ const ASK_CAPABILITY_DEFAULTS: GrantMap = {
   'classes.overview': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   'assignments.manage': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
   'syllabus.manage': { superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
+  'explain.manage': { superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
   'gradebook.view': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
   'children.view': { superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
   'accounts.edit': { superintendent: 'all', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },

@@ -50,6 +50,7 @@ export type AssignmentFormValue = {
   keyPageState: 'blank' | 'filled' | 'unsure' | null;
   unit: string;
   section: string;
+  helpMode: 'off' | 'hints' | 'steps_after_try' | 'check_work';
 };
 
 export type SyllabusCategoryOption = {
@@ -90,6 +91,7 @@ export function emptyAssignmentForm(seed?: {
     keyPageState: null,
     unit: '',
     section: '',
+    helpMode: 'off',
   };
 }
 
@@ -496,6 +498,25 @@ export function AssignmentForm({
       ) : null}
       </>
       )}
+
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Student help</Text>
+      <Text style={[type.meta, { color: colors.mute }]}>
+        Does not apply to graded captures. Students never see the full key up front. Default Off.
+      </Text>
+      <ChipRow>
+        <Chip label="Off" selected={value.helpMode === 'off'} onPress={() => patch({ helpMode: 'off' })} />
+        <Chip label="Hints" selected={value.helpMode === 'hints'} onPress={() => patch({ helpMode: 'hints' })} />
+        <Chip
+          label="Steps after try"
+          selected={value.helpMode === 'steps_after_try'}
+          onPress={() => patch({ helpMode: 'steps_after_try' })}
+        />
+        <Chip
+          label="Check work"
+          selected={value.helpMode === 'check_work'}
+          onPress={() => patch({ helpMode: 'check_work' })}
+        />
+      </ChipRow>
       <PrimaryButton disabled={saveDisabled} label={busy ? 'Saving…' : submitLabel} onPress={onSubmit} />
       {onCancel ? <GhostButton align="left" label="Cancel" onPress={onCancel} /> : null}
     </View>
@@ -543,6 +564,7 @@ export function plannedAssignmentInput(
     keyHeader: value.keyHeader,
     unit: value.unit,
     section: value.section,
+    helpMode: value.helpMode ?? 'off',
     studentId: studentId ?? null,
   };
 }

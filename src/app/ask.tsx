@@ -10,6 +10,7 @@ import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { runAskAgent, type AskChatLine } from '@/lib/ai/askAgent';
+import { GAUTH_REFUSAL_TITLE } from '@/lib/ai/askHomeworkRefuse';
 import { ASK_MODEL_TURNS, appendAskMessage, listAskMessages, startAskThread } from '@/lib/ai/askHistory';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
@@ -225,6 +226,13 @@ export default function AskScreen() {
         >
           {item.payload ? (
             <MessagePayloadView payload={item.payload} body={item.text} onOpenWork={() => {}} />
+          ) : item.from === 'assistant' && item.text.startsWith(GAUTH_REFUSAL_TITLE) ? (
+            <View style={{ gap: 6 }}>
+              <Text style={[type.section, { color: colors.ink }]}>{GAUTH_REFUSAL_TITLE}</Text>
+              <Text style={[type.body, { color: colors.ink }]}>
+                {item.text.slice(GAUTH_REFUSAL_TITLE.length).trim()}
+              </Text>
+            </View>
           ) : (
             <Text style={[type.body, { color: colors.ink }]}>{item.text}</Text>
           )}
