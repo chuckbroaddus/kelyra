@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
-import { isOfficeRole } from '../school/roles.ts';
+import { isAdminRole, isOfficeRole } from '../school/roles.ts';
 import { resolveStaffChromeRole } from './seat.ts';
 import { trayKeysForRole } from './trayTabs.ts';
 
@@ -53,8 +53,8 @@ test('SEC-02 / A3: teacher seat home has no office PersonTabs or class-create UI
   const src = read('src/app/index.tsx');
   assert.match(src, /const officeSeat = isOfficeChromeRole\(chrome\.role\)/);
   assert.match(src, /const teacherSeat = chrome\.role === 'teacher'/);
-  assert.match(src, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
-  assert.match(src, /showCreateClass = canCreateClass && officeSeat/);
+  assert.match(src, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
+  assert.match(src, /const showCreateClass = canCreateClass/);
   assert.match(src, /officeSeat\s*\?\s*schoolHomeTabs/);
   assert.match(src, /officeSeat && tabs\.length/);
   assert.match(src, /showCreateClass \?/);
@@ -89,7 +89,7 @@ test('SEC-09: office walls stay isOfficeRole — not chrome.role teacher hide as
   assert.equal(isOfficeRole({ role: 'administrator' }), true);
 
   const createHome = read('src/app/index.tsx');
-  assert.match(createHome, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
+  assert.match(createHome, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
 
   const policy = read('src/lib/ai/askToolPolicy.ts');
   assert.match(policy, /if \(policy\.officeOnly\) return isOfficeRole\(profile\)/);
@@ -137,3 +137,24 @@ test('SEC-05/06 Phase B: Class tray not gradebook-first; Family stays drawer; no
   assert.match(drawer, /\/family/);
   assert.match(drawer, /q\.trim\(\) && matches\('Grade book'/);
 });
+
+test('SEC-09 leftover: pure teacher fails activity admin gate (UI wall; JWT deny still optional)', () => {
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const office = { role: 'administrator' as const };
+
+  // activity.tsx still uses isAdminRole — also_administrator teachers see it; pure teachers do not.
+  assert.equal(isAdminRole(teacher), false);
+  assert.equal(isAdminRole(teacherAlsoAdmin), true);
+  assert.equal(isAdminRole(office), true);
+
+  const activity = read('src/app/activity.tsx');
+  assert.match(activity, /isAdminRole\(profile\)/);
+  assert.match(activity, /listAuditEvents|audit/i);
+
+  const matrix = read('src/app/admin/matrix.tsx');
+  assert.match(matrix, /./);
+  // Matrix remains office/admin chrome path under /admin — pure teacher isOfficeRole false.
+  assert.equal(isOfficeRole(teacher), false);
+});
+

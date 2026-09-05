@@ -764,3 +764,31 @@ test('bundled MP4 last frame is non-black; CEO JPG stills are not early peak fra
     assert.ok(!bundled.equals(peak52), `${still} must not equal peak frame 52 of ${mp4}`);
   }
 });
+
+test('t_bf043882: sign-in / splash brand is still+CTA — KelyraMark stays out of provision tests', () => {
+  const gate = read('src/app/sign-in.tsx');
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  const brand = read('src/components/ui/splashBrand.ts');
+  const cta = read('src/components/ui/SplashSignInButton.tsx');
+  assert.match(gate, /SplashLanding/);
+  assert.match(gate, /initialRevealForm/);
+  assert.match(splash, /splashStillSources/);
+  assert.match(splash, /SplashSignInButton/);
+  assert.doesNotMatch(splash, /KelyraMark/);
+  assert.doesNotMatch(splash, />Kelyra<\/Text>/);
+  assert.doesNotMatch(splash, /tintColor/);
+  assert.doesNotMatch(splash, /PrimaryButton/);
+  assert.doesNotMatch(gate, /KelyraMark/);
+  assert.doesNotMatch(gate, />Kelyra<\/Text>/);
+  assert.match(brand, /kelyra_splash_still_16x9\.jpg/);
+  assert.match(brand, /kelyra_splash_still_9x16\.jpg/);
+  assert.doesNotMatch(cta, /tintColor/);
+  assert.match(cta, /#6B4CFF/);
+  assert.match(cta, /#2EC6F0/);
+
+  // Provision security file must stay focused on Q12 authz walls, not brand chrome.
+  const provision = read('src/lib/auth/failClosedTeacherProvision.security.test.ts');
+  assert.doesNotMatch(provision, /KelyraMark/);
+  assert.doesNotMatch(provision, /splashStillSources|SplashSignInButton|splashBrand/);
+});
+

@@ -163,3 +163,24 @@ test('Gemini Ask loop preserves thoughtSignature on function_call history', () =
   assert.match(agent, /thoughtSignature\?:/);
   assert.match(agent, /call\.thoughtSignature\s*\?\s*\{\s*thoughtSignature:\s*call\.thoughtSignature/);
 });
+
+test('T28: geminiGenerate accepts responseMimeType into generationConfig', () => {
+  const ai = read('supabase/functions/_shared/ai.ts');
+  const genAt = ai.indexOf('export async function geminiGenerate');
+  assert.ok(genAt > 0);
+  const gen = ai.slice(genAt, ai.indexOf('export type FunctionCall', genAt));
+  assert.match(gen, /responseMimeType/);
+  assert.match(gen, /response_mime_type/);
+  assert.match(gen, /generationConfig\.responseMimeType\s*=\s*mime/);
+  // max tokens and mime share one generationConfig object
+  assert.match(gen, /const generationConfig: Record<string, unknown> = \{\}/);
+  assert.match(gen, /generationConfig\.maxOutputTokens/);
+});
+
+test('T28: ingest-lesson-pack requests application/json mime; keeps stamp validation', () => {
+  const ingest = read('supabase/functions/ingest-lesson-pack/index.ts');
+  assert.match(ingest, /responseMimeType:\s*'application\/json'/);
+  assert.match(ingest, /validateDraft\(draft\)/);
+  assert.match(ingest, /model returned markdown; JSON only required/);
+});
+

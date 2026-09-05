@@ -4,6 +4,11 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import { isAdminRole, isOfficeRole } from '../school/roles.ts';
+import {
+  allowedAskToolNames,
+  grantsFromAskDefaults,
+  isAskToolAllowed,
+} from '../../../supabase/functions/_shared/askToolPolicy.ts';
 
 const root = process.cwd();
 
@@ -56,8 +61,12 @@ test('Q8: matrix also_administrator / parents.invite would widen — Ask must no
   const allowedBody = policy.slice(allowedStart, policy.indexOf('export function allowedAskToolNames', allowedStart));
   const officeGate = allowedBody.indexOf('if (policy.officeOnly)');
   assert.ok(officeGate > 0);
-  assert.match(allowedBody.slice(officeGate, allowedBody.indexOf('\n', officeGate)), /isOfficeRole/);
-  assert.doesNotMatch(allowedBody.slice(officeGate, allowedBody.indexOf('if (!policy.capability)')), /\bcan\(|parents\.invite/);
+  // Only the officeOnly return arm — later teacherSeatOnly/familyRead arms may call can().
+  const officeReturnEnd = allowedBody.indexOf(';', officeGate) + 1;
+  assert.ok(officeReturnEnd > officeGate);
+  const officeOnlyArm = allowedBody.slice(officeGate, officeReturnEnd);
+  assert.match(officeOnlyArm, /return isOfficeRole\(profile\)/);
+  assert.doesNotMatch(officeOnlyArm, /\bcan\(|parents\.invite|isStaffRole|isAdminRole/);
 });
 
 test('Q8 Ask: link_parent_student office gate runs before capability-null fail-open', () => {
@@ -156,3 +165,22 @@ test('F05 UI: student card canLinkParents is isOfficeRole, not isAdminRole', () 
   assert.doesNotMatch(src, /canLinkParents\s*=\s*isAdminRole\(profile\)/);
   assert.match(src, /import \{[^}]*isOfficeRole[^}]*\} from '@\/lib\/school\/roles'/);
 });
+
+test('T10 behavioral: teacher / also_administrator omit link_parent_student; keep add_parent_to_class', () => {
+  const grants = grantsFromAskDefaults();
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const office = { role: 'administrator' as const };
+
+  for (const profile of [teacher, teacherAlsoAdmin]) {
+    assert.equal(isAskToolAllowed('link_parent_student', profile, grants), false);
+    assert.equal(isAskToolAllowed('add_parent_to_class', profile, grants), true);
+    const names = allowedAskToolNames(profile, grants);
+    assert.ok(!names.includes('link_parent_student'), JSON.stringify(names));
+    assert.ok(names.includes('add_parent_to_class'));
+  }
+
+  assert.equal(isAskToolAllowed('link_parent_student', office, grants), true);
+  assert.ok(allowedAskToolNames(office, grants).includes('link_parent_student'));
+});
+

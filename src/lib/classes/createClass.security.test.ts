@@ -4,6 +4,11 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import { isAdminRole, isOfficeRole, isStaffRole } from '../school/roles.ts';
+import {
+  allowedAskToolNames,
+  grantsFromAskDefaults,
+  isAskToolAllowed,
+} from '../../../supabase/functions/_shared/askToolPolicy.ts';
 
 const root = process.cwd();
 
@@ -32,7 +37,8 @@ test('Q3 createClass fails closed: no client classes insert fallback', () => {
 
 test('Q3 home: teachers have no Create class; office only', () => {
   const src = read('src/app/index.tsx');
-  assert.match(src, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
+  // HOLD/Q14 chrome: officeSeat + matrix can(); Ask/RPC walls stay isOfficeRole / is_school_admin.
+  assert.match(src, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
   assert.doesNotMatch(src, /canCreateClass\s*=\s*teaches\s*\|\|/);
   assert.match(src, /The office assigns the classes you teach/);
   assert.match(src, /if \(isOfficeRole\(profile\)\) router\.replace\(`\/admin\/class\/\$\{created\.id\}`\)/);
@@ -141,3 +147,27 @@ test('Q7: no leftover client create_school_class / classes insert path', () => {
   const prompt = read('src/lib/ai/askPrompt.ts');
   assert.match(prompt, /You never create a class/);
 });
+
+test('T12/T13 behavioral: teacher / also_administrator do not get create_class; office does', () => {
+  const grants = grantsFromAskDefaults();
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const office = { role: 'administrator' as const };
+
+  assert.equal(isAskToolAllowed('create_class', teacher, grants), false);
+  assert.equal(isAskToolAllowed('create_class', teacherAlsoAdmin, grants), false);
+  assert.equal(isAskToolAllowed('create_class', office, grants), true);
+
+  const teacherNames = allowedAskToolNames(teacher, grants);
+  const alsoNames = allowedAskToolNames(teacherAlsoAdmin, grants);
+  const officeNames = allowedAskToolNames(office, grants);
+  assert.ok(!teacherNames.includes('create_class'));
+  assert.ok(!alsoNames.includes('create_class'));
+  assert.ok(officeNames.includes('create_class'));
+
+  // Jacquee-like hats still fail isOfficeRole (Ask wall, not matrix also_administrator).
+  assert.equal(isOfficeRole(teacher), false);
+  assert.equal(isOfficeRole(teacherAlsoAdmin), false);
+  assert.equal(isOfficeRole(office), true);
+});
+

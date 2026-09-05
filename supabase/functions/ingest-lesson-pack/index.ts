@@ -471,6 +471,8 @@ Deno.serve(async (req) => {
       extra: {
         instructions: INGEST_SYSTEM_PROMPT,
         max_output_tokens: 8192,
+        // T28: ask Gemini for JSON so fence-wrapped markdown fails less often; stamp validation stays.
+        responseMimeType: 'application/json',
       },
     });
   } catch (err) {
