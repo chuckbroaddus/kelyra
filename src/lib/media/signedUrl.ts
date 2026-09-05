@@ -9,8 +9,19 @@ import {
 import { requireSupabase } from '@/lib/supabase/client';
 
 const STORAGE_KEY_PREFIX = 'kelyra.signed-urls.v1';
+/** Default TTL for photos / audio / files (and other non-diary media). */
 const SIGN_TTL_SEC = 3600;
+/**
+ * Shorter TTL for private diary media only (PR-07 / D1-14).
+ * Does not change the shared default used by photos/audio/files.
+ */
+export const DIARY_SIGN_TTL_SEC = 600;
 const REFRESH_MS = 5 * 60 * 1000;
+
+function refreshMsForTtl(ttlSec: number): number {
+  // Re-sign before expiry; keep diary (short TTL) from using the full 5m photos buffer.
+  return Math.min(REFRESH_MS, Math.max(30_000, Math.floor((ttlSec * 1000) / 2)));
+}
 
 type Bucket = 'photos' | 'audio' | 'files' | 'diary';
 type Entry = { url: string; exp: number };
@@ -124,29 +135,35 @@ export async function bindSignedUrlCacheUser(userId: string | null | undefined):
   }
 }
 
-export async function signedUrls(bucket: Bucket, paths: string[]): Promise<Map<string, string>> {
+export async function signedUrls(
+  bucket: Bucket,
+  paths: string[],
+  ttlSec: number = SIGN_TTL_SEC,
+): Promise<Map<string, string>> {
   await hydrate();
   const unique = [...new Set(paths.filter(Boolean))];
   const out = new Map<string, string>();
   if (!unique.length) return out;
+  const ttl = Number.isFinite(ttlSec) && ttlSec > 0 ? Math.floor(ttlSec) : SIGN_TTL_SEC;
+  const refreshMs = refreshMsForTtl(ttl);
   const now = Date.now();
   const need: string[] = [];
   for (const path of unique) {
     const hit = memory.get(cacheId(bucket, path));
-    if (hit && hit.exp - REFRESH_MS > now) out.set(path, hit.url);
+    if (hit && hit.exp - refreshMs > now) out.set(path, hit.url);
     else if (!isKnownMissing(bucket, path)) need.push(path);
   }
   if (!need.length) return out;
 
-  const flightKey = `${bucket}|${need.slice().sort().join('\0')}`;
+  const flightKey = `${bucket}|${ttl}|${need.slice().sort().join('\0')}`;
   const pending = inflight.get(flightKey);
   const work =
     pending ??
     (async () => {
       const minted = new Map<string, string>();
       const supabase = requireSupabase();
-      const exp = Date.now() + SIGN_TTL_SEC * 1000;
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrls(need, SIGN_TTL_SEC);
+      const exp = Date.now() + ttl * 1000;
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrls(need, ttl);
       if (!error && data?.length) {
         for (const row of data) {
           const path = row.path;
@@ -166,7 +183,7 @@ export async function signedUrls(bucket: Bucket, paths: string[]): Promise<Map<s
           need.map(async (path) => {
             const { data: one, error: oneError } = await supabase.storage
               .from(bucket)
-              .createSignedUrl(path, SIGN_TTL_SEC);
+              .createSignedUrl(path, ttl);
             if (oneError || !one?.signedUrl) {
               rememberMissing(bucket, path);
               return;
@@ -190,9 +207,22 @@ export async function signedUrls(bucket: Bucket, paths: string[]): Promise<Map<s
   }
 }
 
-export async function signedUrl(bucket: Bucket, path: string): Promise<string | null> {
+export async function signedUrl(
+  bucket: Bucket,
+  path: string,
+  ttlSec?: number,
+): Promise<string | null> {
   if (!path) return null;
-  return (await signedUrls(bucket, [path])).get(path) ?? null;
+  return (await signedUrls(bucket, [path], ttlSec)).get(path) ?? null;
+}
+
+/** Private diary media signed URLs — short TTL; does not change photos/audio/files default. */
+export async function signedDiaryUrl(path: string): Promise<string | null> {
+  return signedUrl('diary', path, DIARY_SIGN_TTL_SEC);
+}
+
+export async function signedDiaryUrls(paths: string[]): Promise<Map<string, string>> {
+  return signedUrls('diary', paths, DIARY_SIGN_TTL_SEC);
 }
 
 export type ThumbSignOptions = {

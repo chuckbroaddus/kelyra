@@ -7,7 +7,7 @@ import {
 import type { DiarySeat } from '@/lib/diary/seat';
 import type { DiaryDraft, DiaryEntryRow, DiaryMediaRow, LedgerEventRow } from '@/lib/diary/types';
 import { readUriAsBytes } from '@/lib/media/upload';
-import { signedUrl } from '@/lib/media/signedUrl';
+import { signedDiaryUrl } from '@/lib/media/signedUrl';
 import { requireSupabase } from '@/lib/supabase/client';
 
 /** Untyped until Database types regenerate after CoS applies migration. */
@@ -167,7 +167,7 @@ export async function attachDiaryPhoto(input: {
 }
 
 export async function diaryMediaSignedUrl(storagePath: string): Promise<string | null> {
-  return signedUrl('diary', storagePath);
+  return signedDiaryUrl(storagePath);
 }
 
 export async function listLedgerEvents(input: {
