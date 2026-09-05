@@ -83,8 +83,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   // Native phones stay portrait-locked pre-auth — always 9×16 splash assets.
   const phoneLocked = isNativePhone(width, height);
   const sourceKey = phoneLocked ? 'portrait' : splashAspectForSize(width, height);
-  const videoSource = splashSources[sourceKey];
-  const stillSource = splashStillSources[sourceKey];
+  // Freeze the playing asset across orientation flips so SplashVideo is not remounted
+  // (key=) mid post-fade AAC drain on web/iPad. Stills still follow live sourceKey.
+  const lockedVideoSourceKeyRef = useRef<string | null>(null);
   const videoRef = useRef<SplashVideoHandle | null>(null);
   const busyRef = useRef(false);
   const finishingRef = useRef(false);
@@ -115,6 +116,15 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   hasCompletedSplashRef.current = hasCompletedSplash;
   const showVideoRef = useRef(showVideo);
   showVideoRef.current = showVideo;
+
+  if (showVideo) {
+    if (lockedVideoSourceKeyRef.current == null) lockedVideoSourceKeyRef.current = sourceKey;
+  } else {
+    lockedVideoSourceKeyRef.current = null;
+  }
+  const videoSourceKey = lockedVideoSourceKeyRef.current ?? sourceKey;
+  const videoSource = splashSources[videoSourceKey];
+  const stillSource = splashStillSources[sourceKey];
 
   const videoOpacity = useRef(new Animated.Value(startCompleted ? 0 : 1)).current;
   const ctaOpacity = useRef(new Animated.Value(startCompleted ? 1 : 0)).current;
@@ -307,11 +317,21 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
       return () => {
         cancelled = true;
         clearTimeout(safetyTimer);
+        // Post-fade AAC drain: orientation remount / effect re-run must not pause/unload.
+        // Skip still cuts immediately via skipSplash → showVideo false + playbackEndedRef.
+        if (
+          hasCompletedSplashRef.current &&
+          showVideoRef.current &&
+          !playbackEndedRef.current
+        ) {
+          return;
+        }
         if (!ownedVideo) return;
         void ownedVideo.pauseAsync().catch(() => undefined);
         void ownedVideo.unloadAsync().catch(() => undefined);
       };
-    }, [sourceKey, tryPlayUnmuted]),
+      // videoSourceKey is frozen while showVideo; do not depend on live orientation sourceKey.
+    }, [videoSourceKey, tryPlayUnmuted]),
   );
 
   const onPlaybackStatusUpdate = useCallback(
@@ -434,7 +454,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
             style={[styles.videoLayer, { opacity: videoOpacity }]}
           >
             <SplashVideo
-              key={sourceKey}
+              key={videoSourceKey}
               ref={videoRef}
               source={videoSource}
               style={styles.video}
