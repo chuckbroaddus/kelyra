@@ -40,6 +40,8 @@ export const splashOfficeFooter =
  * Logo hold is the CEO JPG underneath — never the last decoded video frame.
  */
 export const SPLASH_CROSSFADE_RATIO = 0.72;
+/** Extra hold after the 0.72 mark so intro audio isn’t cut with the visual fade. */
+export const SPLASH_CROSSFADE_EXTRA_MS = 300;
 /** Video opacity 1→0; still JPG remains mounted underneath. */
 export const VIDEO_FADE_MS = 300;
 const CTA_FADE_MS = 320;
@@ -87,6 +89,8 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const busyRef = useRef(false);
   const finishingRef = useRef(false);
   const fadingRef = useRef(false);
+  /** True once didJustFinish / position>=duration — unmount may follow visual fade. */
+  const playbackEndedRef = useRef(false);
   const soundHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startCompleted = initialRevealForm || splashSessionCompleted;
@@ -104,6 +108,13 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Refs so beginVideoCrossfade / focus effect stay identity-stable across visual complete.
+  // State deps would churn completeNatural → useFocusEffect cleanup → pause/unload → clip AAC.
+  const hasCompletedSplashRef = useRef(hasCompletedSplash);
+  hasCompletedSplashRef.current = hasCompletedSplash;
+  const showVideoRef = useRef(showVideo);
+  showVideoRef.current = showVideo;
 
   const videoOpacity = useRef(new Animated.Value(startCompleted ? 0 : 1)).current;
   const ctaOpacity = useRef(new Animated.Value(startCompleted ? 1 : 0)).current;
@@ -127,7 +138,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const markCompleted = useCallback(() => {
     splashSessionCompleted = true;
     setHasCompletedSplash(true);
-    setAwaitingGesture(false);
+    // Do not clear awaitingGesture here — isMuted={awaitingGesture} and the player may
+    // still be mounted for post-fade AAC drain. Clearing would unmute without a gesture.
+    // Hint UI is already gated by !hasCompletedSplash; only tryPlayUnmuted clears mute.
     setSoundOnHint(false);
     if (soundHintTimer.current) {
       clearTimeout(soundHintTimer.current);
@@ -144,10 +157,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     fadeIn(formOpacity);
   }, [formOpacity]);
 
-  const finishAfterVideoGone = useCallback(() => {
-    setShowVideo(false);
+  /** Reveal CTA after visual crossfade — keep player mounted until playback ends (audio). */
+  const finishVisualSplash = useCallback(() => {
     if (finishingRef.current || splashSessionCompleted) {
-      // Skip may have already marked complete; still ensure video is gone.
       markCompleted();
       return;
     }
@@ -156,14 +168,22 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     revealCta();
   }, [markCompleted, revealCta]);
 
+  /** Tear down SplashVideo only after AAC/playback ends (or skip). */
+  const unmountSplashVideo = useCallback(() => {
+    setShowVideo(false);
+  }, []);
+
   /**
    * Fade opaque Video off onto the always-mounted CEO still. Logo hold never depends on
-   * didJustFinish or the last decoded video frame.
+   * didJustFinish or the last decoded video frame. Player stays mounted at opacity 0 so
+   * remaining audio can finish; unmountSplashVideo runs on playback end.
+   * Reads completion/showVideo via refs so this callback (and completeNatural) stay stable
+   * when markCompleted flips state — otherwise useFocusEffect cleanup kills AAC mid-drain.
    */
   const beginVideoCrossfade = useCallback(() => {
-    if (fadingRef.current || hasCompletedSplash || splashSessionCompleted) return;
-    if (!showVideo) {
-      finishAfterVideoGone();
+    if (fadingRef.current || hasCompletedSplashRef.current || splashSessionCompleted) return;
+    if (!showVideoRef.current) {
+      finishVisualSplash();
       return;
     }
     fadingRef.current = true;
@@ -177,20 +197,29 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         // Skip interrupted the fade — skip path already unmounted.
         return;
       }
-      finishAfterVideoGone();
+      finishVisualSplash();
+      // Playback may have ended during the fade — unmount now that visuals are done.
+      if (playbackEndedRef.current) {
+        unmountSplashVideo();
+      }
     });
-  }, [finishAfterVideoGone, hasCompletedSplash, showVideo, videoOpacity]);
+  }, [finishVisualSplash, unmountSplashVideo, videoOpacity]);
 
-  /** Natural end: crossfade off video; CTA after fade. */
+  /** Natural end: crossfade off video; CTA after fade; audio continues until unmount. */
   const completeNatural = useCallback(() => {
     beginVideoCrossfade();
   }, [beginVideoCrossfade]);
 
+  // Focus effect calls through the ref so its useCallback deps omit completeNatural entirely.
+  const completeNaturalRef = useRef(completeNatural);
+  completeNaturalRef.current = completeNatural;
+
   /** Skip: opacity 0 + unmount video immediately — no pause/unload while covering. */
   const skipSplash = useCallback(() => {
-    if (finishingRef.current || hasCompletedSplash || splashSessionCompleted) return;
+    if (finishingRef.current || hasCompletedSplashRef.current || splashSessionCompleted) return;
     finishingRef.current = true;
     fadingRef.current = true;
+    playbackEndedRef.current = true;
     setIsFadingOut(true);
     videoOpacity.stopAnimation();
     videoOpacity.setValue(0);
@@ -198,7 +227,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     markCompleted();
     revealCta();
     revealForm();
-  }, [hasCompletedSplash, markCompleted, revealCta, revealForm, videoOpacity]);
+  }, [markCompleted, revealCta, revealForm, videoOpacity]);
 
   const tryPlayUnmuted = useCallback(async (video: SplashVideoHandle | null) => {
     if (!video || splashSessionCompleted) return false;
@@ -216,12 +245,18 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     }
   }, []);
 
-  // Play only while the session has not finished splash. After completion, orientation
-  // only swaps still images — never remount a Video with shouldPlay.
+  // Play only while the session has not finished splash.
+  // Deps must stay stable across visual complete: do not list hasCompletedSplash or
+  // completeNatural (use completeNaturalRef). Identity churn re-runs expo-router
+  // useFocusEffect cleanup (pause/unload) and clips remaining AAC.
+  // After session complete, orientation only swaps stills — never remount Video with shouldPlay.
   useFocusEffect(
     useCallback(() => {
-      if (hasCompletedSplash || splashSessionCompleted) {
-        if (!hasCompletedSplash) setHasCompletedSplash(true);
+      // Already-finished session (or /sign-in): no player. This branch is for mount /
+      // sourceKey / blur-refocus — not for visual-complete during audio drain (effect
+      // identity must not change then; see completeNaturalRef above).
+      if (splashSessionCompleted) {
+        setHasCompletedSplash(true);
         setShowVideo(false);
         return;
       }
@@ -229,8 +264,12 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
       let cancelled = false;
       let ownedVideo: SplashVideoHandle | null = null;
       const safetyTimer = setTimeout(() => {
-        if (cancelled || splashSessionCompleted) return;
-        completeNatural();
+        if (cancelled) return;
+        if (!splashSessionCompleted) {
+          completeNaturalRef.current();
+        }
+        // Last resort: tear down hidden player if playToEnd never arrived.
+        setShowVideo(false);
       }, SPLASH_SAFETY_MS);
 
       void (async () => {
@@ -272,27 +311,46 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         void ownedVideo.pauseAsync().catch(() => undefined);
         void ownedVideo.unloadAsync().catch(() => undefined);
       };
-    }, [completeNatural, hasCompletedSplash, sourceKey, tryPlayUnmuted]),
+    }, [sourceKey, tryPlayUnmuted]),
   );
 
   const onPlaybackStatusUpdate = useCallback(
     (status: SplashPlaybackStatus) => {
       if (!status.isLoaded) return;
-      if (fadingRef.current || finishingRef.current || splashSessionCompleted) return;
 
       const duration = status.durationMillis ?? 0;
       const position = status.positionMillis ?? 0;
+      // Keep listening after visual fade — unmount only when playback/audio actually ends.
+      const playbackEnded =
+        !!status.didJustFinish || (duration > 0 && position >= duration);
+
+      if (playbackEnded) {
+        playbackEndedRef.current = true;
+        if (!fadingRef.current && !finishingRef.current && !splashSessionCompleted) {
+          // Rare: finish before crossfade ratio — still run visual path first.
+          beginVideoCrossfade();
+        }
+        // Unmount once ended; if fade still running, fade completion checks playbackEndedRef.
+        if (fadingRef.current && (finishingRef.current || splashSessionCompleted)) {
+          unmountSplashVideo();
+        } else if (!fadingRef.current) {
+          unmountSplashVideo();
+        }
+        return;
+      }
+
+      if (fadingRef.current || finishingRef.current || splashSessionCompleted) return;
+
       // Crossfade well before dead end — do not wait for didJustFinish for the logo hold.
       const pastCrossfade =
         duration > 0 &&
-        (position >= duration * SPLASH_CROSSFADE_RATIO ||
-          position / duration >= SPLASH_CROSSFADE_RATIO);
+        position >= duration * SPLASH_CROSSFADE_RATIO + SPLASH_CROSSFADE_EXTRA_MS;
 
-      if (pastCrossfade || status.didJustFinish) {
+      if (pastCrossfade) {
         beginVideoCrossfade();
       }
     },
-    [beginVideoCrossfade],
+    [beginVideoCrossfade, unmountSplashVideo],
   );
 
   const flashSoundOnHint = useCallback(() => {

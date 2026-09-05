@@ -136,10 +136,8 @@ test('orientation after complete does not remount SplashVideo with shouldPlay', 
   // Video only while showVideo — never remount after finish.
   assert.match(splash, /\{showVideo \? \([\s\S]*?<SplashVideo[\s\S]*?shouldPlay/);
   // Session flag short-circuits focus/play effect so rotate after finish never replays.
-  assert.match(
-    splash,
-    /if\s*\(\s*hasCompletedSplash\s*\|\|\s*splashSessionCompleted\s*\)/,
-  );
+  // Do not gate on hasCompletedSplash alone — that re-ran cleanup and clipped audio.
+  assert.match(splash, /if\s*\(\s*splashSessionCompleted\s*\)/);
   assert.match(splash, /setShowVideo\(false\)/);
   assert.match(splash, /ownedVideo/);
   assert.match(splash, /let ownedVideo:\s*SplashVideoHandle\s*\|\s*null\s*=\s*null/);
@@ -147,11 +145,60 @@ test('orientation after complete does not remount SplashVideo with shouldPlay', 
     splash,
     /return \(\) => \{[\s\S]*?cancelled\s*=\s*true;[\s\S]*?if\s*\(\s*!ownedVideo\s*\)\s*return;[\s\S]*?ownedVideo\.pauseAsync[\s\S]*?ownedVideo\.unloadAsync/,
   );
+  // Focus effect deps must omit hasCompletedSplash AND completeNatural (ref indirection).
+  // Listing completeNatural re-invalidated when beginVideoCrossfade churned on visual complete.
+  const focusEffect = splash.match(
+    /useFocusEffect\(\s*useCallback\(\(\) => \{[\s\S]*?\}, \[([^\]]*)\]\)/,
+  );
+  assert.ok(focusEffect, 'expected useFocusEffect callback deps');
+  assert.doesNotMatch(focusEffect[1], /hasCompletedSplash/);
+  assert.doesNotMatch(focusEffect[1], /completeNatural/);
+  assert.match(focusEffect[1], /sourceKey/);
+  assert.match(splash, /completeNaturalRef\.current\(\)/);
+  assert.match(splash, /completeNaturalRef\.current = completeNatural/);
   // Completed path: still Image remains; SplashVideo branch is gated off.
   assert.match(splash, /<Image[\s\S]*?source=\{stillSource\}/);
   assert.doesNotMatch(
     splash,
     /hasCompletedSplash\s*\?\s*\(\s*<Image[\s\S]*?\)\s*:\s*\(\s*<Pressable[\s\S]*?<SplashVideo/,
+  );
+});
+
+test('focus-effect identity stays stable across visual complete (no transitive dep on hasCompletedSplash)', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+
+  // beginVideoCrossfade must not list hasCompletedSplash / showVideo — those flip on
+  // finishVisualSplash/markCompleted and would churn completeNatural → useFocusEffect.
+  const fadeDeps = splash.match(
+    /const beginVideoCrossfade = useCallback\(\(\) => \{[\s\S]*?\}, \[([^\]]*)\]\)/,
+  );
+  assert.ok(fadeDeps, 'expected beginVideoCrossfade deps');
+  assert.doesNotMatch(fadeDeps[1], /hasCompletedSplash/);
+  assert.doesNotMatch(fadeDeps[1], /showVideo/);
+  assert.match(fadeDeps[1], /finishVisualSplash/);
+  assert.match(fadeDeps[1], /unmountSplashVideo/);
+  // Guards read refs instead of closed-over state.
+  assert.match(splash, /hasCompletedSplashRef\.current/);
+  assert.match(splash, /showVideoRef\.current/);
+  assert.match(splash, /hasCompletedSplashRef\.current = hasCompletedSplash/);
+  assert.match(splash, /showVideoRef\.current = showVideo/);
+
+  // Focus callback must not depend on completeNatural (use ref) or hasCompletedSplash.
+  const focusDeps = splash.match(
+    /useFocusEffect\(\s*useCallback\(\(\) => \{[\s\S]*?\}, \[([^\]]*)\]\)/,
+  );
+  assert.ok(focusDeps, 'expected useFocusEffect deps');
+  assert.equal(
+    focusDeps[1].replace(/\s/g, ''),
+    'sourceKey,tryPlayUnmuted',
+    'focus deps must be only sourceKey + tryPlayUnmuted (stable across visual complete)',
+  );
+  assert.match(splash, /completeNaturalRef/);
+  // Safety / natural path goes through the ref, not a closed-over completeNatural.
+  assert.match(splash, /completeNaturalRef\.current\(\)/);
+  assert.doesNotMatch(
+    splash,
+    /useFocusEffect\(\s*useCallback\(\(\) => \{[\s\S]*?completeNatural\(\)[\s\S]*?\}, \[/,
   );
 });
 
@@ -249,7 +296,8 @@ test('CTA and form stay hidden during animation; natural end fades CTA after cro
   assert.doesNotMatch(naturalBody[1], /revealForm/);
   // Logo hold must not require didJustFinish — crossfade ratio is primary.
   assert.match(splash, /SPLASH_CROSSFADE_RATIO/);
-  assert.match(splash, /pastCrossfade\s*\|\|\s*status\.didJustFinish/);
+  assert.match(splash, /pastCrossfade/);
+  assert.match(splash, /didJustFinish/);
 });
 
 test('end/skip completion never pause/unload while video opacity covers still', () => {
@@ -258,9 +306,11 @@ test('end/skip completion never pause/unload while video opacity covers still', 
   const naturalBody = splash.match(/const completeNatural = useCallback\(\(\) => \{([\s\S]*?)\},/);
   const skipBody = splash.match(/const skipSplash = useCallback\(\(\) => \{([\s\S]*?)\},/);
   const fadeBody = splash.match(/const beginVideoCrossfade = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const visualBody = splash.match(/const finishVisualSplash = useCallback\(\(\) => \{([\s\S]*?)\},/);
   assert.ok(naturalBody, 'expected completeNatural callback');
   assert.ok(skipBody, 'expected skipSplash callback');
   assert.ok(fadeBody, 'expected beginVideoCrossfade callback');
+  assert.ok(visualBody, 'expected finishVisualSplash callback');
 
   // Skip: opacity 0 + unmount immediately.
   assert.match(skipBody[1], /videoOpacity\.setValue\(0\)/);
@@ -275,9 +325,16 @@ test('end/skip completion never pause/unload while video opacity covers still', 
   assert.doesNotMatch(fadeBody[1], /unloadAsync/);
   assert.doesNotMatch(fadeBody[1], /pauseAsync|pauseVideo/);
 
+  // Visual finish reveals CTA but must not unmount (audio still playing).
+  assert.match(visualBody[1], /markCompleted\(\)/);
+  assert.match(visualBody[1], /revealCta\(\)/);
+  assert.doesNotMatch(visualBody[1], /setShowVideo\(false\)/);
+  assert.doesNotMatch(visualBody[1], /unmountSplashVideo/);
+
   // Crossfade uses Animated opacity; pointerEvents none during fade-out.
   assert.match(fadeBody[1], /Animated\.timing\(videoOpacity/);
   assert.match(fadeBody[1], /toValue:\s*0/);
+  assert.match(fadeBody[1], /finishVisualSplash\(\)/);
   assert.match(splash, /pointerEvents=\{isFadingOut \? 'none' : 'auto'\}/);
 
   // Unload belongs in focus-effect cleanup after SplashVideo is unmounted.
@@ -292,10 +349,16 @@ test('crossfade starts at 0.72 duration — not peak-frame / last-frame hold', (
   const splash = read('src/components/ui/SplashLanding.tsx');
 
   assert.match(splash, /export const SPLASH_CROSSFADE_RATIO = 0\.72/);
+  assert.match(splash, /export const SPLASH_CROSSFADE_EXTRA_MS = 300/);
   assert.match(splash, /export const VIDEO_FADE_MS = 300/);
-  assert.match(splash, /position\s*>=\s*duration\s*\*\s*SPLASH_CROSSFADE_RATIO/);
+  assert.match(
+    splash,
+    /position\s*>=\s*duration\s*\*\s*SPLASH_CROSSFADE_RATIO\s*\+\s*SPLASH_CROSSFADE_EXTRA_MS/,
+  );
   assert.match(splash, /SPLASH_SAFETY_MS/);
-  assert.match(splash, /completeNatural\(\)/);
+  // Safety timer invokes via ref so focus-effect deps stay stable across visual complete.
+  assert.match(splash, /completeNaturalRef\.current\(\)/);
+  assert.match(splash, /const completeNatural = useCallback/);
   assert.match(splash, /beginVideoCrossfade\(\)/);
   // Forbidden old peak-cut / last-frame architecture.
   assert.doesNotMatch(splash, /SPLASH_PEAK_FRAME/);
@@ -306,9 +369,82 @@ test('crossfade starts at 0.72 duration — not peak-frame / last-frame hold', (
   assert.ok(statusHandler, 'expected onPlaybackStatusUpdate');
   assert.match(statusHandler[0], /SPLASH_CROSSFADE_RATIO/);
   assert.match(statusHandler[0], /beginVideoCrossfade/);
-  // didJustFinish is fallback only — logo hold does not require it.
+  // Visual crossfade is ratio-driven; didJustFinish / playbackEnded drives unmount only.
   assert.match(statusHandler[0], /didJustFinish/);
   assert.match(statusHandler[0], /pastCrossfade/);
+  assert.match(statusHandler[0], /playbackEnded/);
+  assert.match(statusHandler[0], /unmountSplashVideo/);
+});
+
+test('natural path keeps player mounted until playback ends; skip still unmounts immediately', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+
+  assert.match(splash, /playbackEndedRef/);
+  assert.match(splash, /finishVisualSplash/);
+  assert.match(splash, /unmountSplashVideo/);
+  assert.match(splash, /export const SPLASH_CROSSFADE_RATIO = 0\.72/);
+
+  const fadeBody = splash.match(/const beginVideoCrossfade = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const visualBody = splash.match(/const finishVisualSplash = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const unmountBody = splash.match(/const unmountSplashVideo = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const skipBody = splash.match(/const skipSplash = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const statusHandler = splash.match(/onPlaybackStatusUpdate = useCallback\([\s\S]*?\],/);
+  assert.ok(fadeBody, 'expected beginVideoCrossfade');
+  assert.ok(visualBody, 'expected finishVisualSplash');
+  assert.ok(unmountBody, 'expected unmountSplashVideo');
+  assert.ok(skipBody, 'expected skipSplash');
+  assert.ok(statusHandler, 'expected onPlaybackStatusUpdate');
+
+  // Fade completion reveals CTA; unmount only if playback already ended.
+  assert.match(fadeBody[1], /finishVisualSplash\(\)/);
+  assert.match(fadeBody[1], /playbackEndedRef\.current/);
+  assert.match(fadeBody[1], /unmountSplashVideo\(\)/);
+  // finishVisualSplash itself must not kill the player (that clipped ~0.7s of AAC).
+  assert.doesNotMatch(visualBody[1], /setShowVideo/);
+  assert.match(unmountBody[1], /setShowVideo\(false\)/);
+
+  // Status handler must still process finish after fadingRef is set (no early-return that drops didJustFinish).
+  assert.match(statusHandler[0], /playbackEnded/);
+  assert.match(statusHandler[0], /didJustFinish/);
+  assert.match(statusHandler[0], /unmountSplashVideo/);
+  // Crossfade trigger remains ratio-based and independent of unmount.
+  assert.match(statusHandler[0], /pastCrossfade/);
+  assert.match(statusHandler[0], /beginVideoCrossfade/);
+
+  // Skip may still cut immediately.
+  assert.match(skipBody[1], /setShowVideo\(false\)/);
+  assert.match(skipBody[1], /markCompleted\(\)/);
+
+  // Visual-complete must not tear down via focus-effect identity churn.
+  assert.match(splash, /completeNaturalRef/);
+  assert.match(splash, /hasCompletedSplashRef/);
+  assert.match(splash, /showVideoRef/);
+});
+
+test('visual complete does not force-unmute during post-fade audio drain', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+
+  // isMuted stays tied to awaitingGesture for muted-until-gesture / unlocked drain.
+  assert.match(splash, /isMuted=\{awaitingGesture\}/);
+
+  const markBody = splash.match(/const markCompleted = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const visualBody = splash.match(/const finishVisualSplash = useCallback\(\(\) => \{([\s\S]*?)\},/);
+  const tryUnmute = splash.match(
+    /const tryPlayUnmuted = useCallback\(async \(video: SplashVideoHandle \| null\) => \{([\s\S]*?)\},/,
+  );
+  assert.ok(markBody, 'expected markCompleted');
+  assert.ok(visualBody, 'expected finishVisualSplash');
+  assert.ok(tryUnmute, 'expected tryPlayUnmuted');
+
+  // finishVisualSplash → markCompleted must not clear awaitingGesture (would unmute
+  // the still-mounted player without a gesture during the AAC drain window).
+  assert.doesNotMatch(markBody[1], /setAwaitingGesture\(false\)/);
+  assert.doesNotMatch(visualBody[1], /setAwaitingGesture/);
+  assert.match(markBody[1], /Do not clear awaitingGesture/);
+
+  // Only the explicit unlock path clears mute.
+  assert.match(tryUnmute[1], /setAwaitingGesture\(false\)/);
+  assert.match(tryUnmute[1], /setIsMutedAsync\(false\)/);
 });
 
 test('scrim is soft bottom gradient only (no opaque full-bleed black over logo)', () => {
