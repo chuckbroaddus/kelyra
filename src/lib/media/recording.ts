@@ -28,6 +28,27 @@ export function recordingOptions(): RecordingOptions {
   };
 }
 
+/**
+ * Same flatten as expo-audio `createRecordingOptions` (not publicly exported).
+ * AudioRecorder constructor expects flat platform fields; nested RecordingOptions are for the hook input.
+ */
+export function flattenedRecordingOptions(options: RecordingOptions = recordingOptions()) {
+  const common = {
+    extension: options.extension,
+    sampleRate: options.sampleRate,
+    numberOfChannels: options.numberOfChannels,
+    bitRate: options.bitRate,
+    isMeteringEnabled: options.isMeteringEnabled ?? false,
+  };
+  if (Platform.OS === 'ios') {
+    return { ...common, directory: options.directory, ...options.ios };
+  }
+  if (Platform.OS === 'android') {
+    return { ...common, directory: options.directory, ...options.android };
+  }
+  return { ...common, ...options.web };
+}
+
 export function mimeTypeForRecording(): string {
   if (Platform.OS === 'web') {
     return pickWebMimeType()?.split(';')[0] ?? 'audio/webm';

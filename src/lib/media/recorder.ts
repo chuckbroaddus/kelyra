@@ -6,7 +6,7 @@ import {
 import { Platform } from 'react-native';
 
 import { getPreferredDeviceId } from '@/lib/media/devices';
-import { mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
+import { flattenedRecordingOptions, mimeTypeForRecording, recordingOptions } from '@/lib/media/recording';
 
 export type LiveRecording = {
   stop: () => Promise<{ uri: string; mimeType: string }>;
@@ -48,7 +48,8 @@ async function startNativeRecording(): Promise<LiveRecording> {
     shouldRouteThroughEarpiece: false,
   });
   const options = recordingOptions();
-  const recording = new AudioModule.AudioRecorder(options);
+  const platformOptions = flattenedRecordingOptions(options);
+  const recording = new AudioModule.AudioRecorder(platformOptions);
   await recording.prepareToRecordAsync(options);
   recording.record();
   return {
