@@ -35,7 +35,7 @@ export default function ClassHomeScreen() {
   const layout = useLayout();
   const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, setActiveClassId} = useAuth();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
@@ -64,6 +64,7 @@ export default function ClassHomeScreen() {
       setTurned(await listTurnedIn(id));
       setWeek(await listThisWeek(id));
       await setActiveClass(teacher.id, id);
+      setActiveClassId(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load class');
       setLoaded(true);

@@ -6,7 +6,9 @@ import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
 import { chrome, shadows, type } from '@/constants/theme';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { can } from '@/lib/school/matrix';
 import { tabsFor, type TrayTab } from '@/lib/chrome/trayTabs';
 import { useSchoolFeedIcon } from '@/lib/feeds/useFeedIcon';
 import { formatCount } from '@/lib/format';
@@ -18,6 +20,7 @@ type Tab = TrayTab & { icon: IconName };
 export function FloatingTabTray() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
+  const { profile, grants } = useAuth();
   const pathname = usePathname();
   const params = useGlobalSearchParams<{ tab?: string | string[] }>();
   const homeTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
@@ -29,14 +32,20 @@ export function FloatingTabTray() {
 
   if (chromeState.role === 'none' || chromeState.forceHidden) return null;
 
-  const tabs = tabsFor(
+  const tabs = (tabsFor(
     chromeState.role,
     pathname,
     chromeState.classId,
     chromeState.role === 'teacher' ? chromeState.needsCount : chromeState.badgeCount,
     homeTab,
     schoolFeedIcon,
-  ) as Tab[];
+  ) as Tab[]).filter((tab) => {
+    if (tab.key === 'capture') return can(profile, 'capture.use', 'own', grants);
+    if (tab.key === 'people' && chromeState.role !== 'student') {
+      return can(profile, 'accounts.view', 'school', grants) || can(profile, 'accounts.create', 'own', grants);
+    }
+    return true;
+  });
 
   if (layout.showTopBar) {
     return (

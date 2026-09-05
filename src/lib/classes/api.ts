@@ -202,13 +202,16 @@ export async function setActiveClass(teacherId: string, classId: string) {
   if (error) throw error;
 }
 
+/** Prefer an explicit class being viewed; then DB/memory active id; else first taught class. */
 export async function resolveCaptureClass(
   teacherId: string,
   activeClassId: string | null,
+  explicitClassId?: string | null,
 ): Promise<ClassRow> {
-  if (activeClassId) {
+  const prefer = explicitClassId || activeClassId;
+  if (prefer) {
     try {
-      return await getClass(activeClassId);
+      return await getClass(prefer);
     } catch {
       // Fall through to first class if the saved id is stale.
     }

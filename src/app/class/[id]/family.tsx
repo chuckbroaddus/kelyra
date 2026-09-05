@@ -24,7 +24,7 @@ export default function FamilyScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { teacher } = useAuth();
+  const { teacher, setActiveClassId} = useAuth();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [overview, setOverview] = useState<ClassOverview | null>(null);
@@ -39,6 +39,7 @@ export default function FamilyScreen() {
       setRoster(await listRoster(id));
       setOverview(await loadClassOverview(id));
       await setActiveClass(teacher.id, id);
+      setActiveClassId(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load class');
     }

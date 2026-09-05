@@ -53,6 +53,8 @@ export type ChromeRole = 'superintendent' | 'administrator' | 'teacher' | 'stude
 export type HeaderChrome = {
   hideBack?: boolean;
   hideBackOnNative?: boolean;
+  /** Keep AppHeader < on iOS even when edge-swipe can pop (dirty discard). */
+  forceBackChevron?: boolean;
   hideMenu?: boolean;
   hideSearch?: boolean;
   hideMail?: boolean;
@@ -141,10 +143,24 @@ export function defaultContextTab(pathname: string): string {
 const ChromeContext = createContext<ChromeValue | null>(null);
 
 function isPushedPath(pathname: string): boolean {
+  // Tray roots (/parent, /parent/ride, class desk cluster) are not pushes.
+  // Class person cards and other stack screens are.
+  if (pathname === '/parent' || pathname === '/parent/ride' || pathname.startsWith('/parent/vehicles')) {
+    return false;
+  }
+  if (pathname === '/messages' || pathname === '/ask' || pathname === '/capture' || pathname === '/inbox') {
+    return false;
+  }
+  // Class cluster tray destinations (setup / gradebook / parents / family) — not a push.
+  if (
+    /^\/class\/[^/]+\/(setup|gradebook|parents|family)(?:\/|$)/.test(pathname) ||
+    /^\/class\/[^/]+$/.test(pathname)
+  ) {
+    return false;
+  }
   return (
     /\/class\/[^/]+\/student\//.test(pathname) ||
-    pathname === '/parent' ||
-    pathname.includes('/parent/') ||
+    /\/class\/[^/]+\/parent\//.test(pathname) ||
     pathname.includes('/assignment/') ||
     pathname.includes('/lesson') ||
     pathname === '/search' ||
@@ -153,7 +169,7 @@ function isPushedPath(pathname: string): boolean {
     pathname === '/notifications' ||
     pathname.startsWith('/notifications/') ||
     pathname === '/proposal' ||
-    pathname.startsWith('/messages') ||
+    pathname.startsWith('/messages/') ||
     pathname === '/activity' ||
     pathname.startsWith('/admin') ||
     pathname === '/password'
@@ -587,7 +603,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           const all = await listClasses();
           if (cancelled) return;
           setClasses(all);
-          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+          const pathClass = pathname.match(/^\/class\/([^/]+)/)?.[1] ?? null;
+          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, pathClass);
           if (cancelled) return;
           setClassId(klass.id);
           setClassName(klass.name);

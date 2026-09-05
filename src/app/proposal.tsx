@@ -546,6 +546,9 @@ export default function ProposalScreen() {
   };
 
   useEffect(() => {
+    const dirtyNow = dirty || note || score || gaps.some((gap) => gap.label);
+    // iOS hides < when swipe can pop; keep chevron when dirty so discard still runs.
+    chrome.setHeaderChrome(dirtyNow ? { forceBackChevron: true } : null);
     chrome.setPushedBackHandler(() => {
       if (dirty || note || score || gaps.some((gap) => gap.label)) {
         setDiscardOpen(true);
@@ -553,7 +556,10 @@ export default function ProposalScreen() {
       }
       return false;
     });
-    return () => chrome.setPushedBackHandler(null);
+    return () => {
+      chrome.setPushedBackHandler(null);
+      chrome.setHeaderChrome(null);
+    };
   }, [chrome, dirty, note, score, gaps]);
 
   const retake = () => {

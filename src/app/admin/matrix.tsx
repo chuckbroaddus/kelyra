@@ -43,6 +43,8 @@ export default function MatrixScreen() {
 
   usePushedTitle('Responsibilities');
 
+  // Q14: toggles feed can() chrome. RLS / RPCs remain the hard gate until server reads the same grants.
+
   useFocusEffect(
     useCallback(() => {
       void loadCapabilityRows()
@@ -85,7 +87,12 @@ export default function MatrixScreen() {
 
   return (
     <Screen maxWidth={640}>
-      <Text style={[type.body, { color: colors.mute }]}>
+      
+      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
+        Matrix toggles hide or show chrome only. Server RLS and RPCs stay the hard gate — a
+        superintendent toggle that widens UI does not grant database access by itself.
+      </Text>
+<Text style={[type.body, { color: colors.mute }]}>
         Tap a seat to cycle None → Own → School → All. Own is self, own classes, or own children. School is
         the office. All is break-glass.
       </Text>

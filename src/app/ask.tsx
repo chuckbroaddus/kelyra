@@ -53,7 +53,7 @@ export default function AskScreen() {
   const pathname = usePathname();
   const { return: returnParam } = useLocalSearchParams<{ return?: string }>();
   const returnTo = typeof returnParam === 'string' && returnParam.startsWith('/') ? returnParam : null;
-  const { profile, teacher } = useAuth();
+  const { profile, teacher, grants} = useAuth();
   const scroller = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
   const [ready, setReady] = useState(false);
@@ -96,7 +96,7 @@ export default function AskScreen() {
   );
 
   useEffect(() => {
-    if (office && can(profile, 'parents.invite')) {
+    if (office && can(profile, 'parents.invite', 'own', grants)) {
       setChips(['Create a parent record', 'List the classes']);
       return;
     }

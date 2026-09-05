@@ -1375,6 +1375,337 @@ const TOOLS: Record<string, AskToolSpec> = {
     },
   },
 
+  list_grade_cells: {
+    capability: 'assignments.manage',
+    def: {
+      type: "function",
+      name: "list_grade_cells",
+      description: "List grade-book cells for a class the seat can already open. Teacher/office only. Student/parent refused.",
+      parameters: {
+        type: "object",
+        properties: { class_id: { type: "string" }, class_name: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === "student" || ctx.profile?.role === "parent") {
+        return { error: "Grade cells are not available on this seat." };
+      }
+      const classId = str(args, "class_id") || ctx.classId;
+      if (!classId) return { error: "Need class_id." };
+      const { loadGradebook } = await import("@/lib/gradebook/api");
+      const book = await loadGradebook(classId);
+      const cells = Object.entries(book.cells).map(([key, cell]) => {
+        const [assignmentId, studentId] = key.split(":");
+        const assignment = book.assignments.find((row) => row.id === assignmentId);
+        const student = book.students.find((row) => row.id === studentId);
+        return {
+          assignment_id: assignmentId,
+          assignment_title: assignment?.title ?? null,
+          student_id: studentId,
+          student_name: student?.display_name ?? null,
+          status: cell.status,
+          score: cell.score,
+          score_mark: cell.scoreMark,
+        };
+      });
+      return { class_id: classId, cells, note: "JWT/RLS gated. Not for parent/student seats." };
+    },
+  },
+
+  assignment_completion: {
+    capability: 'assignments.manage',
+    def: {
+      type: "function",
+      name: "assignment_completion",
+      description: "Counts of submission statuses for a class grade book. Does not average Pass/Fail as numbers. Teacher/office only.",
+      parameters: {
+        type: "object",
+        properties: { class_id: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === "student" || ctx.profile?.role === "parent") {
+        return { error: "Completion counts are not available on this seat." };
+      }
+      const classId = str(args, "class_id") || ctx.classId;
+      if (!classId) return { error: "Need class_id." };
+      const { loadGradebook } = await import("@/lib/gradebook/api");
+      const book = await loadGradebook(classId);
+      const byStatus: Record<string, number> = {};
+      for (const cell of Object.values(book.cells)) {
+        const status = cell.status ?? "empty";
+        byStatus[status] = (byStatus[status] ?? 0) + 1;
+      }
+      return { class_id: classId, by_status: byStatus, assignment_count: book.assignments.length, student_count: book.students.length };
+    },
+  },
+  summarize_class_desk: {
+    capability: 'classes.teach',
+    def: {
+      type: "function",
+      name: "summarize_class_desk",
+      description: "Unassigned and draft capture counts, focus list, top approved gaps for a taught class.",
+      parameters: {
+        type: "object",
+        properties: { class_id: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const classId = str(args, "class_id") || ctx.classId;
+      if (!classId) return { error: "Need class_id." };
+      const { loadClassOverview } = await import("@/lib/classes/overview");
+      const overview = await loadClassOverview(classId);
+      return {
+        class_id: classId,
+        unassigned: overview.unassignedCount,
+        drafts: overview.draftCount,
+        focus: overview.focusStudents.map((row) => ({ id: row.id, name: row.displayName, focus: row.focusLabel })),
+        top_gaps: overview.commonGaps.slice(0, 8).map((gap) => ({ label: gap.label, count: gap.count })),
+      };
+    },
+  },
+  list_inbox: {
+    capability: 'capture.use',
+    def: {
+      type: "function",
+      name: "list_inbox",
+      description: "Teacher-only inbox capture statuses for a class. Office-only seats refuse.",
+      parameters: {
+        type: "object",
+        properties: { class_id: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.teacherId) return { error: "Teacher seat required." };
+      const classId = str(args, "class_id") || ctx.classId;
+      if (!classId) return { error: "Need class_id." };
+      const { listInbox } = await import("@/lib/captures/api");
+      const items = await listInbox(classId);
+      return {
+        class_id: classId,
+        items: items.slice(0, 40).map((row) => ({
+          id: row.id,
+          status: row.status,
+          ai_status: row.ai_status,
+          student_id: row.student_id,
+          matched_name: row.matchedName,
+        })),
+      };
+    },
+  },
+
+  list_my_practice: {
+    capability: null,
+    def: {
+      type: "function",
+      name: "list_my_practice",
+      description: "Student seat only. Assigned practice titles/status/items. No scores.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+    run: async (_args, ctx) => {
+      if (ctx.profile?.role !== "student") return { error: "Student seat only." };
+      const { listStudentTodo } = await import("@/lib/student-session/api");
+      const rows = await listStudentTodo();
+      return {
+        items: rows.map((row) => ({
+          submission_id: row.submissionId,
+          title: row.title,
+          status: row.status,
+          class_name: row.className,
+          items: row.items,
+          focus: row.focusLabel,
+        })),
+      };
+    },
+  },
+  my_children_progress: {
+    capability: 'children.view',
+    def: {
+      type: "function",
+      name: "my_children_progress",
+      description: "Parent seat: focus, practice words, parent sentence for linked children. No scores or work photos.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+    run: async (_args, ctx) => {
+      if (ctx.profile?.role !== "parent" && !ctx.profile?.parent_id) {
+        return { error: "Parent seat only." };
+      }
+      const { loadParentProgressMine } = await import("@/lib/parents/api");
+      const progress = await loadParentProgressMine();
+      if (!progress) return { error: "No linked children progress." };
+      // Strip scores if present on the payload.
+      const safe = JSON.parse(JSON.stringify(progress)) as Record<string, unknown>;
+      const strip = (obj: unknown) => {
+        if (!obj || typeof obj !== "object") return;
+        const rec = obj as Record<string, unknown>;
+        for (const key of Object.keys(rec)) {
+          if (/score|photo|draft|approved_score/i.test(key)) delete rec[key];
+          else strip(rec[key]);
+        }
+      };
+      strip(safe);
+      return { progress: safe };
+    },
+  },
+  my_unread_messages: {
+    capability: 'messages.use',
+    def: {
+      type: "function",
+      name: "my_unread_messages",
+      description: "Unread message count for the signed-in profile (membership only).",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+    run: async () => {
+      const { unreadCount } = await import("@/lib/messages/api");
+      return { unread: await unreadCount() };
+    },
+  },
+  list_feed: {
+    capability: null,
+    def: {
+      type: "function",
+      name: "list_feed",
+      description: "School/class feed posts the JWT can already see.",
+      parameters: {
+        type: "object",
+        properties: { scope: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+    run: async () => {
+      const { listFeed } = await import("@/lib/posts/api");
+      const posts = await listFeed();
+      return {
+        posts: posts.slice(0, 30).map((row) => ({
+          id: row.id,
+          body: row.body,
+          class_id: row.classId,
+          created_at: row.createdAt,
+          author: row.authorName,
+        })),
+      };
+    },
+  },
+  search_audit: {
+    capability: 'audit.view',
+    need: 'school',
+    def: {
+      type: "function",
+      name: "search_audit",
+      description: "Office activity log search by handle, actor role, or action. Teachers none.",
+      parameters: {
+        type: "object",
+        properties: {
+          handle: { type: "string" },
+          actor_role: { type: "string" },
+          action: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+    run: async (args) => {
+      const { listAuditEvents } = await import("@/lib/school/api");
+      const rows = await listAuditEvents();
+      const handle = str(args, "handle").toLowerCase();
+      const actorRole = str(args, "actor_role").toLowerCase();
+      const action = str(args, "action").toLowerCase();
+      const filtered = rows.filter((row) => {
+        const blob = JSON.stringify(row).toLowerCase();
+        if (handle && !blob.includes(handle.replace(/^@/, ""))) return false;
+        if (actorRole && String((row as { actor_role?: string }).actor_role ?? "").toLowerCase() !== actorRole) return false;
+        if (action && String(row.action ?? "").toLowerCase() !== action && !String(row.action ?? "").toLowerCase().includes(action)) return false;
+        return true;
+      });
+      return { events: filtered.slice(0, 40) };
+    },
+  },
+
+  list_threads: {
+    capability: 'messages.use',
+    def: {
+      type: "function",
+      name: "list_threads",
+      description: "List message threads for the signed-in member only. Does not add members.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+    run: async (_args, ctx) => {
+      if (!ctx.profile?.id) return { error: "Sign in required." };
+      const { listThreads } = await import("@/lib/messages/api");
+      const threads = await listThreads(ctx.profile.id);
+      return {
+        threads: threads.slice(0, 40).map((row) => ({
+          id: row.id,
+          title: row.title,
+          kind: row.kind,
+          last_message_at: row.lastMessageAt,
+          unread: row.unread,
+        })),
+        note: "Membership only. No add_thread_member until thread_members_insert stays fail-closed (see 20260817000005 / 20260826000002).",
+      };
+    },
+  },
+  list_thread_messages: {
+    capability: 'messages.use',
+    def: {
+      type: "function",
+      name: "list_thread_messages",
+      description: "List messages in a thread the user already belongs to.",
+      parameters: {
+        type: "object",
+        properties: { thread_id: { type: "string" } },
+        required: ["thread_id"],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.profile?.id) return { error: "Sign in required." };
+      const threadId = str(args, "thread_id");
+      if (!threadId) return { error: "Need thread_id." };
+      const { listThreads, listMessages } = await import("@/lib/messages/api");
+      const mine = await listThreads(ctx.profile.id);
+      if (!mine.some((row) => row.id === threadId)) return { error: "Not a member of that thread." };
+      const messages = await listMessages(threadId);
+      return {
+        thread_id: threadId,
+        messages: messages.slice(-50).map((row) => ({
+          id: row.id,
+          body: row.body,
+          sender_id: row.sender_id,
+          created_at: row.created_at,
+        })),
+      };
+    },
+  },
+  send_message: {
+    capability: 'messages.use',
+    def: {
+      type: "function",
+      name: "send_message",
+      description: "Send a text message in a thread the user already belongs to. Does not add members.",
+      parameters: {
+        type: "object",
+        properties: { thread_id: { type: "string" }, body: { type: "string" } },
+        required: ["thread_id", "body"],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.profile?.id) return { error: "Sign in required." };
+      const threadId = str(args, "thread_id");
+      const body = str(args, "body");
+      if (!threadId || !body) return { error: "Need thread_id and body." };
+      const { listThreads, sendMessage } = await import("@/lib/messages/api");
+      const mine = await listThreads(ctx.profile.id);
+      if (!mine.some((row) => row.id === threadId)) return { error: "Not a member of that thread." };
+      const row = await sendMessage(threadId, ctx.profile.id, body, null);
+      return { ok: true, message_id: row.id, thread_id: threadId };
+    },
+  },
+
 };
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {

@@ -34,7 +34,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { switch: pick, tab: tabParam } = useLocalSearchParams<{ switch?: string; tab?: string }>();
-  const { configured, loading, teacher, profile, error } = useAuth();
+  const { configured, loading, teacher, profile, grants, error } = useAuth();
   const chrome = useChrome();
   const officeSeat = isOfficeChromeRole(chrome.role);
   const teacherSeat = chrome.role === 'teacher';
@@ -148,11 +148,12 @@ export default function HomeScreen() {
   };
 
   const empty = (classes ?? []).length === 0;
-  // Office/SIS owns class create (is_school_admin). Teachers never mint classes.
-  const canCreateClass = isOfficeRole(profile);
-  // Teacher seat hides office chrome; JWT capability is unchanged (chrome ≠ RLS).
-  const showCreateClass = canCreateClass && officeSeat;
-  const canCreateLogin = officeSeat && can(profile, 'accounts.create');
+  // Matrix grants drive chrome; server/RLS remains the hard gate (Q14).
+  const canCreateClass = officeSeat && can(profile, 'classes.create', 'own', grants);
+  const showCreateClass = canCreateClass;
+  const canCreateLogin = officeSeat && can(profile, 'accounts.create', 'own', grants);
+  const canViewActivity = officeSeat && can(profile, 'audit.view', 'school', grants);
+  const canEditMatrix = can(profile, 'school.matrix', 'all', grants);
   const canCreate = showCreateClass || canCreateLogin;
   const openClass = (id: string) => {
     if (teacherSeat) router.push(`/class/${id}`);
@@ -243,16 +244,18 @@ export default function HomeScreen() {
             icon="manage"
             onPress={() => router.push('/admin/ride')}
           />
-          <ListRow
-            title="Activity"
-            status="Immutable change log"
-            icon="history"
-            onPress={() => router.push('/activity')}
-          />
-          {profile?.role === 'superintendent' ? (
+          {canViewActivity ? (
+            <ListRow
+              title="Activity"
+              status="Immutable change log"
+              icon="history"
+              onPress={() => router.push('/activity')}
+            />
+          ) : null}
+          {canEditMatrix ? (
             <ListRow
               title="Responsibilities"
-              status="Who may do what"
+              status="Who may do what (UI chrome; server stays the hard gate)"
               icon="details"
               onPress={() => router.push('/admin/matrix')}
             />
@@ -299,7 +302,7 @@ export default function HomeScreen() {
               avatarName={item.name}
               onPress={() => openClass(item.id)}
               trailing={
-                can(profile, 'classes.delete', teacherSeat ? 'own' : 'school')
+                can(profile, 'classes.delete', teacherSeat ? 'own' : 'school', grants)
                   ? [
                       {
                         key: 'delete',

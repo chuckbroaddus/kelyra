@@ -54,7 +54,7 @@ export default function SyllabusScreen() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, setActiveClassId} = useAuth();
   const chrome = useChrome();
   usePushedTitle(chrome.className ?? 'Syllabus');
 
@@ -87,6 +87,7 @@ export default function SyllabusScreen() {
       const nextClass = await getClass(id);
       setKlass(nextClass);
       await setActiveClass(teacher.id, id);
+      setActiveClassId(id);
       const bundle = await getClassSyllabus(id);
       if (!bundle.exists || !bundle.syllabus) {
         setSyllabusStatus('none');

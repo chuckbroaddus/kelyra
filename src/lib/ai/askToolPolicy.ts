@@ -55,6 +55,18 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   explain_capture: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true, parentCoTeacher: true },
   discard_explain_draft: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
   attach_explain_as_note: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  list_grade_cells: { capability: 'assignments.manage', need: null },
+  assignment_completion: { capability: 'assignments.manage', need: null },
+  summarize_class_desk: { capability: 'classes.teach', need: null },
+  list_inbox: { capability: 'capture.use', need: null, teacherSeatOnly: true },
+  list_my_practice: { capability: null, need: null },
+  my_children_progress: { capability: 'children.view', need: null },
+  my_unread_messages: { capability: 'messages.use', need: null },
+  list_feed: { capability: null, need: null },
+  search_audit: { capability: 'audit.view', need: 'school' },
+  list_threads: { capability: 'messages.use', need: null },
+  list_thread_messages: { capability: 'messages.use', need: null },
+  send_message: { capability: 'messages.use', need: null },
 };
 
 export type AskActorProfile = ProfileHats & {
