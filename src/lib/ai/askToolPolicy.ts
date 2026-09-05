@@ -50,6 +50,9 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   discard_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
   get_published_class_syllabus: { capability: null, need: null, familyRead: true },
   explain_my_class_average: { capability: null, need: null, familyRead: true },
+  explain_capture: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  discard_explain_draft: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  attach_explain_as_note: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
 };
 
 export type AskActorProfile = ProfileHats & {

@@ -34,6 +34,7 @@ export type AssignmentInput = {
   keyHeader?: string | null;
   unit?: string | null;
   section?: string | null;
+  helpMode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
 };
 
 export async function listClassAssignments(classId: string): Promise<AssignmentRow[]> {
@@ -221,5 +222,6 @@ function buildRow(input: AssignmentInput) {
     key_ready_at: keyKind === 'none' ? null : new Date().toISOString(),
     unit: input.unit?.trim() || null,
     section: input.section?.trim() || null,
+    help_mode: input.helpMode ?? 'off',
   };
 }

@@ -9,6 +9,12 @@ import {
   mergeAskGrants,
   type ProfileHats,
 } from '../_shared/askToolPolicy.ts';
+import {
+  gauthRefusalCard,
+  isFamilyAskSeat,
+  shouldRefuseAskBeforeVendor,
+  stripAskImagesForFamilySeat,
+} from '../_shared/askHomeworkRefuse.ts';
 
 const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
 const PHOTO_FAILED = '(A photo was attached but could not be opened.)';
@@ -65,7 +71,7 @@ Deno.serve(async (req) => {
   try {
     const authorization = req.headers.get('Authorization') ?? '';
     if (!authorization.startsWith('Bearer ')) {
-      return json({ error: 'Sign in to Kelyra first.' }, 401);
+      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
     }
 
     const supabase = createClient(
@@ -75,7 +81,7 @@ Deno.serve(async (req) => {
     );
     const { data: auth, error: authError } = await supabase.auth.getUser();
     if (authError || !auth.user?.id) {
-      return json({ error: 'Sign in to Kelyra first.' }, 401);
+      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
     }
 
     const uid = auth.user.id;
@@ -85,7 +91,7 @@ Deno.serve(async (req) => {
       .eq('id', uid)
       .maybeSingle();
     if (profileError || !profileRow?.role) {
-      return json({ error: 'Sign in to Kelyra first.' }, 401);
+      return Response.json({ error: 'Sign in to Kelyra first.' }, { status: 401 });
     }
     const profile = profileRow as ProfileHats;
 
@@ -102,7 +108,6 @@ Deno.serve(async (req) => {
       `ask-assistant getUser=${uid} role=${profile.role} tools=${tools.length}/${requested.length} (policy)`,
     );
 
-    const apiKey = requireXaiKey();
     const extra: Record<string, unknown> = {};
     if (tools.length) extra.tools = tools;
     const actor = askActorSystemLine(profile);
@@ -120,7 +125,18 @@ Deno.serve(async (req) => {
             }))
             .filter((item: { content: string }) => item.content)
         : [{ role: 'user', content: 'Hello' }];
-    const input = await hydrateAskImages(raw);
+
+    // GAUTH G0/G3: family seats — drop vision; refuse graded-solve BEFORE vendor.
+    const familySeat = isFamilyAskSeat(profile.role);
+    const gatedInput = familySeat ? stripAskImagesForFamilySeat(raw) : raw;
+    if (shouldRefuseAskBeforeVendor({ role: profile.role, rawInput: raw })) {
+      const card = gauthRefusalCard();
+      console.log(`ask-assistant getUser=${uid} role=${profile.role} refuse-before-vendor`);
+      return json({ text: card.text, refusal: true, title: card.title });
+    }
+
+    const input = await hydrateAskImages(gatedInput);
+    const apiKey = requireXaiKey();
     const payload = await callMetered(supabase, apiKey, {
       job: 'ask',
       functionName: 'ask-assistant',

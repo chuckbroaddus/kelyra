@@ -133,6 +133,7 @@ export default function AssignmentEditScreen() {
           keyPageState: null,
           unit: row.unit ?? '',
           section: row.section ?? '',
+          helpMode: (row.help_mode as AssignmentFormValue['helpMode']) ?? 'off',
         });
         setReady(true);
       })

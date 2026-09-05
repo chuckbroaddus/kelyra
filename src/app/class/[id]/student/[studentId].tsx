@@ -13,6 +13,7 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { ExplainDraftCard } from '@/components/ui/ExplainDraftCard';
 import { IconButton } from '@/components/ui/IconButton';
 import { AssignmentWorkList } from '@/components/ui/AssignmentWorkList';
 import { Card } from '@/components/ui/Card';
@@ -821,6 +822,14 @@ export default function StudentScreen() {
                         onPress={() => void onAskGrok('look-again')}
                       />
                     </>
+                  ) : null}
+                  {latest?.id && classId ? (
+                    <ExplainDraftCard
+                      captureId={latest.id}
+                      classId={classId}
+                      initialDraft={latest.explain_draft}
+                      initialStatus={latest.explain_status}
+                    />
                   ) : null}
                   {draftCostUsd(latest.model_draft as never) != null ? (
                     <Text style={[type.meta, { color: colors.mute }]}>

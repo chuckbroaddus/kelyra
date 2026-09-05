@@ -1,5 +1,6 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import { ASK_FALLBACK, buildAskInstructions, type AskLiveContext } from '@/lib/ai/askPrompt';
+import { gauthRefusalCard, shouldRefuseAskBeforeVendor } from '@/lib/ai/askHomeworkRefuse';
 import { askToolsFor, type AskToolContext } from '@/lib/ai/askTools';
 import { loadGrants } from '@/lib/school/matrixApi';
 import type { ProfileRow } from '@/lib/supabase/types';
@@ -113,14 +114,29 @@ export async function runAskAgent(input: {
   const tools = askToolsFor(ctx);
   const latest = input.messages[input.messages.length - 1];
   const latestHasImage = Boolean(latest?.imageUrl);
+  // Client mirror of Edge G0 — server remains SoT; skip vendor round-trip on clear refuse.
+  if (
+    shouldRefuseAskBeforeVendor({
+      role: input.live.role,
+      text: latest?.text ?? '',
+      hasImage: latestHasImage,
+    })
+  ) {
+    const card = gauthRefusalCard();
+    return { text: card.text, didWork: false };
+  }
+  const familyNoVision =
+    input.live.role === 'student' || input.live.role === 'parent'
+      ? input.messages.map((m) => ({ ...m, imageUrl: null, imageMime: null }))
+      : input.messages;
   const instructions = buildAskInstructions({
     role: input.live.role,
     toolNames: tools.names,
     context: input.live,
-    latestHasImage,
+    latestHasImage: familyNoVision !== input.messages ? false : latestHasImage,
   });
   const history: InputItem[] = keepLatestImage(
-    input.messages.map(asHistoryItem).filter((item): item is InputItem => Boolean(item)),
+    familyNoVision.map(asHistoryItem).filter((item): item is InputItem => Boolean(item)),
   );
 
   let href: string | undefined;

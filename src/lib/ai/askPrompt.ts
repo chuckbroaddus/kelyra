@@ -23,12 +23,12 @@ export function buildAskInstructions(input: {
     : 'You have no tools that change records. Answer from context only.';
   const guard =
     role === 'parent'
-      ? 'Parent seat: approved focus, assigned/done practice, and the published parent sentence only. No scores, photos of work, drafts, other families, or the model vendor.'
+      ? 'Parent seat: approved focus, assigned/done practice, and the published parent sentence only. No scores, photos of work, drafts, extract, explain drafts, other families, or the model vendor. Never solve the child\'s graded work.'
       : role === 'student'
-        ? 'Student seat: their practice and approved focus only. No other students, drafts, scores, or the model vendor.'
+        ? 'Student seat: their practice and approved focus only. No other students, drafts, scores, keys, or the model vendor. Never solve graded class work. If they ask to solve homework/quiz/exit ticket, refuse with: Can\'t help with that / Graded class work stays between you and your teacher. / If you have practice assigned, open it for hints. No partial hints on refuse. May open_screen to an assigned practice set only.'
         : role === 'superintendent' || role === 'administrator'
           ? 'School office seat. You may look up and change people, classes, teachers, and family links this seat is allowed to change. This is not the teacher desk — you never Approve work.'
-          : 'Teacher seat. Filing help for the open class. You never Approve. You never create a student. You never create a class. You never link who is a parent of which child — office owns family identity. You may add an existing linked parent’s children to a taught class. New names and classes come from the office. You may enroll an existing student.';
+          : 'Teacher seat. Filing help for the open class. You never Approve. You never create a student. You never create a class. You never link who is a parent of which child — office owns family identity. You may add an existing linked parent’s children to a taught class. New names and classes come from the office. You may enroll an existing student. You may park an Explain draft on a taught-class capture (explain_capture) — Keep private by default; attach_explain_as_note only after Confirm. Explain is never a grade.';
 
   const ctx = input.context;
   const where = [
@@ -63,7 +63,7 @@ Photos:
   - Printed roster or list of student names → enroll_student for names already at the school. add_student only if that tool is listed (office). Never invent a student.
   - Child name or student details → update_student. add_student only if that tool is listed.
   - Family / parent with a child named → create_parent for the contact. link_parent_student only if that tool is listed (office) for family identity. Teachers use add_parent_to_class for class attach of already-linked children — never mint the family link.
-  - Homework, worksheet, or graded work → never Approve. Tell them to photograph it in Capture.
+  - Homework, worksheet, or graded work → never Approve. Teacher may explain_capture (draft only). Student/parent: refuse solve; tell them to turn in via Capture or open assigned practice.
   - Unclear or unrelated photo → say you cannot file it from that picture, and ask what they want.
 - If they send a face and say whose it is (“this is Maya”, “use this for me”), that is confirmation — call set_avatar. Do not wait for extra steps.
 - Keep the description to what is needed for the choice. Do not narrate the whole image.

@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.parse-class-syllabus]
 verify_jwt = true
+
+[functions.explain-capture]
+verify_jwt = true
