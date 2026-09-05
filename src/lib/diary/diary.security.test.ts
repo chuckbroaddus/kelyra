@@ -130,3 +130,29 @@ test('UI: /diary Journal|Ledger; drawer Diary; student has no Diary link', () =>
   const studentBlock = drawer.slice(studentAt, parentAt);
   assert.doesNotMatch(studentBlock, /go\('\/diary'\)/);
 });
+
+test('DIARY polish leftovers: export, chip pickers, STT labels, short diary TTL', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /Export CSV/);
+  assert.match(screen, /Copy CSV/);
+  assert.match(screen, /Start recording/);
+  assert.match(screen, /Stop recording/);
+  assert.doesNotMatch(screen, /Dictate \(mic\)/);
+  assert.doesNotMatch(screen, /Class id filter/);
+  assert.doesNotMatch(screen, /Student id filter/);
+  assert.doesNotMatch(screen, /UUID for your search only/);
+  assert.match(screen, /listTaughtClasses/);
+  assert.match(screen, /listRoster/);
+  assert.match(screen, /Soft student pointer/);
+  const api = read('src/lib/diary/api.ts');
+  assert.match(api, /signedDiaryUrl/);
+  assert.doesNotMatch(api, /signedUrl\('diary'/);
+  const signed = read('src/lib/media/signedUrl.ts');
+  assert.match(signed, /DIARY_SIGN_TTL_SEC\s*=\s*600/);
+  assert.match(signed, /export async function signedDiaryUrl/);
+  const exportSrc = read('src/lib/diary/export.ts');
+  assert.match(exportSrc, /ledgerToCsv/);
+  assert.match(read('src/lib/diary/exportCsv.ts'), /ledgerToCsv/);
+  assert.match(exportSrc, /exportLedgerCsv/);
+  assert.match(exportSrc, /copyLedgerCsv/);
+});

@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Chip } from '@/components/ui/Chip';
@@ -27,17 +27,20 @@ import {
   takePendingDiaryDraft,
   updateDiaryEntry,
 } from '@/lib/diary/api';
+import { copyLedgerCsv, exportLedgerCsv } from '@/lib/diary/export';
 import {
   DIARY_FERPA_NOTE,
   DIARY_PRIVACY_BODY,
   DIARY_PRIVACY_TITLE,
 } from '@/lib/diary/privacy';
-import { canOpenDiary, diarySeatForChrome, type DiarySeat } from '@/lib/diary/seat';
+import { canOpenDiary, diarySeatForChrome } from '@/lib/diary/seat';
 import type { DiaryDraft, DiaryEntryRow, LedgerEventRow } from '@/lib/diary/types';
-import { formatWhen } from '@/lib/format';
-import { startLiveRecording } from '@/lib/media/recorder';
+import { firstName, formatWhen } from '@/lib/format';
+import { listTaughtClasses } from '@/lib/lessons/api';
+import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { pickRawPhoto, waitForModalDismiss } from '@/lib/media/pickPhoto';
 import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
+import { listRoster } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Segment = 'journal' | 'ledger';
@@ -52,6 +55,9 @@ const LEDGER_FAMILIES: Array<{ key: string | null; label: string }> = [
   { key: 'other', label: 'Other' },
 ];
 
+type TaughtClass = { id: string; name: string };
+type RosterChip = { id: string; display_name: string };
+
 export default function DiaryScreen() {
   const { colors } = useTheme();
   const { profile } = useAuth();
@@ -63,17 +69,19 @@ export default function DiaryScreen() {
     chromeRole: chrome.role,
   });
   const allowed = canOpenDiary(profile) && seat != null;
+  const teacherLike = seat === 'teacher' || seat === 'staff';
 
   const [segment, setSegment] = useState<Segment>('journal');
   const [entries, setEntries] = useState<DiaryEntryRow[] | null>(null);
   const [ledger, setLedger] = useState<LedgerEventRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState<string | null>(null);
   const [ledgerFrom, setLedgerFrom] = useState('');
   const [ledgerTo, setLedgerTo] = useState('');
-  const [ledgerClassId, setLedgerClassId] = useState('');
-  const [ledgerStudentId, setLedgerStudentId] = useState('');
+  const [ledgerClassId, setLedgerClassId] = useState<string | null>(null);
+  const [ledgerStudentId, setLedgerStudentId] = useState<string | null>(null);
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -85,12 +93,75 @@ export default function DiaryScreen() {
   const [body, setBody] = useState('');
   const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10));
   const [tagsText, setTagsText] = useState('');
-  const [studentPointer, setStudentPointer] = useState('');
+  const [studentPointer, setStudentPointer] = useState<string | null>(null);
+  const [pointerClassId, setPointerClassId] = useState<string | null>(null);
+  const [taughtClasses, setTaughtClasses] = useState<TaughtClass[]>([]);
+  const [pointerRoster, setPointerRoster] = useState<RosterChip[]>([]);
+  const [ledgerRoster, setLedgerRoster] = useState<RosterChip[]>([]);
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
+  const liveRef = useRef<LiveRecording | null>(null);
 
   const multiChild = seat === 'parent' && children.length >= 2;
   const failClosedEmpty = multiChild && !focusedChildId;
+
+  useEffect(() => {
+    if (!teacherLike) {
+      setTaughtClasses([]);
+      return;
+    }
+    let cancelled = false;
+    void listTaughtClasses()
+      .then((rows) => {
+        if (!cancelled) setTaughtClasses(rows.map((row) => ({ id: row.id, name: row.name })));
+      })
+      .catch(() => {
+        if (!cancelled) setTaughtClasses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [teacherLike]);
+
+  useEffect(() => {
+    if (!pointerClassId) {
+      setPointerRoster([]);
+      return;
+    }
+    let cancelled = false;
+    void listRoster(pointerClassId)
+      .then((rows) => {
+        if (!cancelled) {
+          setPointerRoster(rows.map((row) => ({ id: row.id, display_name: row.display_name })));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPointerRoster([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pointerClassId]);
+
+  useEffect(() => {
+    if (!ledgerClassId) {
+      setLedgerRoster([]);
+      return;
+    }
+    let cancelled = false;
+    void listRoster(ledgerClassId)
+      .then((rows) => {
+        if (!cancelled) {
+          setLedgerRoster(rows.map((row) => ({ id: row.id, display_name: row.display_name })));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLedgerRoster([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ledgerClassId]);
 
   const refresh = useCallback(async () => {
     if (!allowed || !seat || !profile?.id) {
@@ -125,7 +196,8 @@ export default function DiaryScreen() {
         setBody(pending.body);
         setEntryDate(pending.entry_date ?? new Date().toISOString().slice(0, 10));
         setTagsText('');
-        setStudentPointer('');
+        setStudentPointer(null);
+        setPointerClassId(null);
         setComposerOpen(true);
       }
 
@@ -151,8 +223,8 @@ export default function DiaryScreen() {
           query: query.trim() || null,
           fromIso: ledgerFrom.trim() ? `${ledgerFrom.trim()}T00:00:00.000Z` : null,
           toIso: ledgerTo.trim() ? `${ledgerTo.trim()}T23:59:59.999Z` : null,
-          classId: ledgerClassId.trim() || null,
-          studentId: ledgerStudentId.trim() || null,
+          classId: ledgerClassId,
+          studentId: ledgerStudentId,
         });
         setLedger(rows);
         setEntries(null);
@@ -162,7 +234,19 @@ export default function DiaryScreen() {
       setEntries([]);
       setLedger([]);
     }
-  }, [allowed, family, focusedChildId, ledgerClassId, ledgerFrom, ledgerStudentId, ledgerTo, profile?.id, query, seat, segment]);
+  }, [
+    allowed,
+    family,
+    focusedChildId,
+    ledgerClassId,
+    ledgerFrom,
+    ledgerStudentId,
+    ledgerTo,
+    profile?.id,
+    query,
+    seat,
+    segment,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -180,7 +264,8 @@ export default function DiaryScreen() {
     setBody(prefill?.body ?? '');
     setEntryDate(prefill?.entry_date ?? new Date().toISOString().slice(0, 10));
     setTagsText('');
-    setStudentPointer('');
+    setStudentPointer(null);
+    setPointerClassId(null);
     setComposerOpen(true);
   }
 
@@ -190,7 +275,8 @@ export default function DiaryScreen() {
     setBody(row.body);
     setEntryDate(row.entry_date);
     setTagsText((row.tags ?? []).join(', '));
-    setStudentPointer(row.student_id ?? '');
+    setStudentPointer(row.student_id);
+    setPointerClassId(null);
     setComposerOpen(true);
   }
 
@@ -213,7 +299,7 @@ export default function DiaryScreen() {
           title,
           entryDate,
           tags,
-          studentId: studentPointer.trim() || null,
+          studentId: studentPointer,
           childStudentId: childId,
         });
       } else {
@@ -224,7 +310,7 @@ export default function DiaryScreen() {
           title,
           entryDate,
           tags,
-          studentId: studentPointer.trim() || null,
+          studentId: studentPointer,
           childStudentId: childId,
         });
         setEditing(created);
@@ -264,37 +350,60 @@ export default function DiaryScreen() {
     }
   }
 
-  async function dictate() {
-    if (recording) return;
-    setRecording(true);
+  async function startDictate() {
+    if (recording || liveRef.current) return;
     setError(null);
+    setNotice(null);
     try {
       const live = await startLiveRecording();
-      // Stop after user taps again — simple one-shot: record until they tap Stop via alert path.
-      // For v1: record ~ until stopRecording press on same button.
-      (dictate as { _live?: Awaited<ReturnType<typeof startLiveRecording>> })._live = live;
+      liveRef.current = live;
+      setRecording(true);
     } catch (err) {
+      liveRef.current = null;
       setRecording(false);
       setError(err instanceof Error ? err.message : 'Could not start mic');
     }
   }
 
   async function stopDictate() {
-    const live = (dictate as { _live?: Awaited<ReturnType<typeof startLiveRecording>> })._live;
-    (dictate as { _live?: Awaited<ReturnType<typeof startLiveRecording>> })._live = undefined;
+    const live = liveRef.current;
+    liveRef.current = null;
     if (!live) {
       setRecording(false);
       return;
     }
+    setBusy(true);
     try {
       const audio = await live.stop();
       const text = await transcribeAudioDirect({ uri: audio.uri, mimeType: audio.mimeType });
       if (text) setBody((current) => (current.trim() ? `${current.trim()} ${text}` : text));
+      setNotice('Transcript added — edit before Save.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not transcribe');
     } finally {
       setRecording(false);
+      setBusy(false);
     }
+  }
+
+  async function onExportLedger() {
+    if (!ledger?.length) return;
+    setNotice(null);
+    try {
+      const result = await exportLedgerCsv(ledger);
+      setNotice(result === 'downloaded' ? 'Ledger CSV downloaded.' : 'Ledger CSV shared.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not export ledger');
+    }
+  }
+
+  async function onCopyLedger() {
+    if (!ledger?.length) return;
+    setNotice(null);
+    const result = await copyLedgerCsv(ledger);
+    if (result === 'copied') setNotice('Ledger CSV copied to clipboard.');
+    else if (result === 'shared') setNotice('Ledger CSV shared.');
+    else setError('Could not copy ledger CSV.');
   }
 
   if (!allowed || !seat) {
@@ -328,7 +437,7 @@ export default function DiaryScreen() {
             {children.map((child) => (
               <Chip
                 key={child.id}
-                label={child.display_name.split(/\s+/)[0] ?? child.display_name}
+                label={firstName(child.display_name)}
                 selected={focusedChildId === child.id}
                 onPress={() => setFocusedChildId(child.id)}
               />
@@ -361,12 +470,61 @@ export default function DiaryScreen() {
           </ChipRow>
           <TextField label="From date (YYYY-MM-DD)" value={ledgerFrom} onChangeText={setLedgerFrom} autoCapitalize="none" />
           <TextField label="To date (YYYY-MM-DD)" value={ledgerTo} onChangeText={setLedgerTo} autoCapitalize="none" />
-          <TextField label="Class id filter (taught class)" value={ledgerClassId} onChangeText={setLedgerClassId} autoCapitalize="none" />
-          <TextField label="Student id filter" value={ledgerStudentId} onChangeText={setLedgerStudentId} autoCapitalize="none" />
+
+          <Text style={[styles.filterLabel, { color: colors.mute }]}>Class (taught)</Text>
+          {taughtClasses.length ? (
+            <ChipRow>
+              <Chip
+                label="All classes"
+                selected={ledgerClassId == null}
+                onPress={() => {
+                  setLedgerClassId(null);
+                  setLedgerStudentId(null);
+                }}
+              />
+              {taughtClasses.map((klass) => (
+                <Chip
+                  key={klass.id}
+                  label={klass.name}
+                  selected={ledgerClassId === klass.id}
+                  onPress={() => {
+                    setLedgerClassId(klass.id);
+                    setLedgerStudentId(null);
+                  }}
+                />
+              ))}
+            </ChipRow>
+          ) : (
+            <Text style={[type.meta, { color: colors.mute }]}>
+              No taught classes on this seat — class filter unavailable.
+            </Text>
+          )}
+
+          {ledgerClassId ? (
+            <>
+              <Text style={[styles.filterLabel, { color: colors.mute }]}>Student (roster)</Text>
+              <ChipRow>
+                <Chip
+                  label="All students"
+                  selected={ledgerStudentId == null}
+                  onPress={() => setLedgerStudentId(null)}
+                />
+                {ledgerRoster.map((student) => (
+                  <Chip
+                    key={student.id}
+                    label={firstName(student.display_name)}
+                    selected={ledgerStudentId === student.id}
+                    onPress={() => setLedgerStudentId(student.id)}
+                  />
+                ))}
+              </ChipRow>
+            </>
+          ) : null}
         </>
       ) : null}
 
       {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
+      {notice ? <Text style={[type.meta, { color: colors.mute }]}>{notice}</Text> : null}
 
       {segment === 'journal' ? (
         <>
@@ -425,22 +583,31 @@ export default function DiaryScreen() {
           {seat === 'staff' ? ', office changes' : ''}). It is not Office Activity and not your journal.
         </Text>
       ) : (
-        groupedLedger.map((group) => (
-          <View key={group.day}>
-            <SectionHeader label={group.day} first={group === groupedLedger[0]} />
-            {group.rows.map((row) => (
-              <View
-                key={row.id}
-                style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-              >
-                <Text style={[type.meta, { color: colors.mute }]}>
-                  {formatWhen(row.created_at)} · {row.action_family}
-                </Text>
-                <Text style={[type.body, { color: colors.ink }]}>{row.summary}</Text>
-              </View>
-            ))}
+        <>
+          <View style={styles.exportRow}>
+            <GhostButton label="Export CSV" onPress={() => void onExportLedger()} />
+            <GhostButton label="Copy CSV" onPress={() => void onCopyLedger()} />
           </View>
-        ))
+          <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
+            Exports only your currently filtered ledger rows — not other teachers, not Office Activity.
+          </Text>
+          {groupedLedger.map((group) => (
+            <View key={group.day}>
+              <SectionHeader label={group.day} first={group === groupedLedger[0]} />
+              {group.rows.map((row) => (
+                <View
+                  key={row.id}
+                  style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
+                >
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    {formatWhen(row.created_at)} · {row.action_family}
+                  </Text>
+                  <Text style={[type.body, { color: colors.ink }]}>{row.summary}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </>
       )}
 
       <FormSheet
@@ -449,6 +616,7 @@ export default function DiaryScreen() {
         onClose={() => {
           setComposerOpen(false);
           setDraft(null);
+          if (recording) void stopDictate();
         }}
       >
         <TextField label="Title (optional)" value={title} onChangeText={setTitle} />
@@ -472,21 +640,91 @@ export default function DiaryScreen() {
           onChangeText={setTagsText}
           autoCapitalize="none"
         />
-        {seat === 'teacher' || seat === 'staff' ? (
-          <TextField
-            label="Student pointer (optional private search id)"
-            value={studentPointer}
-            onChangeText={setStudentPointer}
-            autoCapitalize="none"
-            placeholder="UUID for your search only — not an ACL"
-          />
+        {teacherLike ? (
+          <>
+            <Text style={[styles.filterLabel, { color: colors.mute }]}>
+              Soft student pointer (private search only — not an ACL)
+            </Text>
+            {taughtClasses.length ? (
+              <>
+                <ChipRow>
+                  <Chip
+                    label="No class"
+                    selected={pointerClassId == null && studentPointer == null}
+                    onPress={() => {
+                      setPointerClassId(null);
+                      setStudentPointer(null);
+                    }}
+                  />
+                  {taughtClasses.map((klass) => (
+                    <Chip
+                      key={klass.id}
+                      label={klass.name}
+                      selected={pointerClassId === klass.id}
+                      onPress={() => {
+                        setPointerClassId(klass.id);
+                        setStudentPointer(null);
+                      }}
+                    />
+                  ))}
+                </ChipRow>
+                {pointerClassId ? (
+                  <ChipRow>
+                    {pointerRoster.map((student) => (
+                      <Chip
+                        key={student.id}
+                        label={firstName(student.display_name)}
+                        selected={studentPointer === student.id}
+                        onPress={() =>
+                          setStudentPointer((current) => (current === student.id ? null : student.id))
+                        }
+                      />
+                    ))}
+                  </ChipRow>
+                ) : studentPointer ? (
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    Pointer set — pick a taught class to change it, or Clear.
+                  </Text>
+                ) : (
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    Optional: pick a taught class, then a roster student for your search only.
+                  </Text>
+                )}
+                {studentPointer ? (
+                  <GhostButton
+                    label="Clear student pointer"
+                    onPress={() => {
+                      setStudentPointer(null);
+                      setPointerClassId(null);
+                    }}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Soft student pointer needs a taught class roster. Teachers do not create classes from Diary.
+              </Text>
+            )}
+          </>
         ) : null}
-        <GhostButton
-          label={recording ? 'Stop & transcribe' : 'Dictate (mic)'}
-          onPress={() => void (recording ? stopDictate() : dictate())}
-        />
+
+        {recording ? (
+          <>
+            <Text style={[type.meta, { color: colors.danger, marginTop: 8 }]}>
+              Recording… tap Stop when finished. Transcript lands in the body for edit before Save.
+            </Text>
+            <GhostButton
+              label={busy ? 'Transcribing…' : 'Stop recording'}
+              tone="danger"
+              onPress={() => void stopDictate()}
+              disabled={busy}
+            />
+          </>
+        ) : (
+          <GhostButton label="Start recording" onPress={() => void startDictate()} disabled={busy} />
+        )}
         {editing ? <GhostButton label="Attach photo" onPress={() => void attachPhoto()} /> : null}
-        <PrimaryButton label={busy ? 'Saving…' : 'Save'} onPress={() => void saveEntry()} />
+        <PrimaryButton label={busy ? 'Saving…' : 'Save'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
 
       <ConfirmSheet
@@ -566,5 +804,12 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 6,
     marginBottom: 10,
+  },
+  exportRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 4,
   },
 });
