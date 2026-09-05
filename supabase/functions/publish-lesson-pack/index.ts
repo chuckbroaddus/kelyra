@@ -8,13 +8,15 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { unzipSync } from 'npm:fflate@0.8.2';
 
-import { isOfficeRole, type ProfileHats } from '../_shared/askToolPolicy.ts';
+import {
+  canPublish,
+  isLiveFomDeckId,
+  isLiveFomStoragePath,
+  isOfficeRole,
+  type ProfileHats,
+} from '../_shared/publishLessonPackPolicy.ts';
 
 const SLUG = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-/** Live FoM Ch01 catalog + storage wall. Test ids (…-test) are not live. */
-const LIVE_FOM_STORAGE = 'fom-ch01';
-const LIVE_FOM_VERSION = 'v4';
-const LIVE_FOM_DECK = /^fom-ch01(?:-s\d+)?$/;
 const MAX_BYTES = 12_304_812;
 const SKIP_DIRS = ['png-original/', 'ava-original/', 'eve-staging/', 'captions/ava-original/'];
 
@@ -64,22 +66,6 @@ function json(body: unknown, status = 200) {
       ...cors(),
     },
   });
-}
-
-function canPublish(profile: ProfileHats | null | undefined): boolean {
-  if (!profile?.role) return false;
-  if (profile.role === 'teacher') return true;
-  if (profile.also_teacher) return true;
-  if (profile.role === 'superintendent' || profile.role === 'administrator') return true;
-  return false;
-}
-
-function isLiveFomDeckId(deckId: string): boolean {
-  return LIVE_FOM_DECK.test(deckId);
-}
-
-function isLiveFomStoragePath(storageDeckId: string, version: string): boolean {
-  return storageDeckId === LIVE_FOM_STORAGE && version === LIVE_FOM_VERSION;
 }
 
 function skipUpload(rel: string): boolean {
