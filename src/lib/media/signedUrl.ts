@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { allowOriginalPhotoFallback, originalStoragePath, thumbStoragePath } from '@/lib/media/paths';
+import {
+  allowOriginalPhotoFallback,
+  legacyThumbStoragePath,
+  originalStoragePath,
+  thumbStoragePath,
+} from '@/lib/media/paths';
 import { requireSupabase } from '@/lib/supabase/client';
 
 const STORAGE_KEY = 'kelyra.signed-urls.v1';
@@ -160,15 +165,29 @@ export async function signedThumbUrls(
   const out = new Map<string, string>();
   if (!originals.length) return out;
 
-  const thumbFor = (path: string) => knownThumbs?.get(path) || thumbStoragePath(path);
-  const thumbPaths = [...new Set(originals.map(thumbFor).filter(Boolean))];
+  const thumbFor = (path: string) => {
+    const known = knownThumbs?.get(path);
+    if (known) return known;
+    return thumbStoragePath(path);
+  };
+  const primaryPaths = [...new Set(originals.map(thumbFor).filter(Boolean))];
+  const legacyByOriginal = new Map<string, string>();
+  for (const path of originals) {
+    if (knownThumbs?.get(path)) continue; // DB path is authoritative
+    const primary = thumbStoragePath(path);
+    const legacy = legacyThumbStoragePath(path);
+    if (legacy && legacy !== primary) legacyByOriginal.set(path, legacy);
+  }
+  const thumbPaths = [...new Set([...primaryPaths, ...legacyByOriginal.values()].filter(Boolean))];
   const thumbs = await signedUrls('photos', thumbPaths);
   const missing: string[] = [];
   for (const path of originals) {
-    const url = thumbs.get(thumbFor(path));
+    const primary = thumbFor(path);
+    const url = (primary && thumbs.get(primary)) || (legacyByOriginal.get(path) && thumbs.get(legacyByOriginal.get(path)!));
     if (url) out.set(path, url);
     else missing.push(path);
   }
+  // Never multi-MB original unless explicitly opted in (lists/avatars stay blank).
   if (!missing.length || !allowOriginalPhotoFallback(options?.fallbackOriginal)) return out;
 
   const origs = await signedUrls(
