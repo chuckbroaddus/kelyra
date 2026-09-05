@@ -29,9 +29,11 @@ If an org order is sent to a specialist chat by mistake, the specialist must not
 |---|---|---|
 | **Kanban board `kelyra`** | Durable multi-role work, dependencies, overnight | `scripts/staff_task.sh` or `hermes kanban create ...` |
 | **Sync profile invoke** | Minutes-long specialist answer | `scripts/invoke_profile.sh PROFILE "..."` |
-| **kelyra-qa-loop** | Any application code change | skill `kelyra-qa-loop` + `scripts/run_kelyra_qa_loop.py` |
+| **kelyra-qa-loop** | Class-app code when SuperGrok GRANT | skill `kelyra-qa-loop` + `scripts/run_kelyra_qa_loop.py` |
+| **Grok Bot bot-build** | Class-app/Author code when SuperGrok cannot GRANT | ARM `--pool grok-bot` + assignee `grok-bot-consultant` (`kelyra-bot-build-loop` / `author-bot-build-loop`); expect GitHub PR |
 | **Gateway dispatcher** | So kanban `ready` tasks actually run | `hermes -p chief-of-staff gateway start` |
 | **TTS / spoken audio** | Any `.mp3` / Grok speech | **Only** profile `grok-tts` — `scripts/invoke_tts.sh` or kanban `--assignee grok-tts` |
+| **Grok Bot work** | Mac app, Grok Bot teammates, Expo Go UX, connectors | Assignee **`grok-bot-consultant`**; Grok Bot closes via `scripts/complete_consultant_task.sh` |
 
 ## Delivery chain (software)
 
@@ -68,12 +70,14 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 | operations-support | Support triage & ops workflows |
 | ai-resource-manager | SuperGrok HR: usage, allocation, leftover P2/P3 burn |
 | grok-tts | **Sole** company TTS owner — xAI Grok TTS + math pipeline; exclusive session lock |
+| grok-bot-consultant | Async shim to Grok Bot CoS (webhook contract + sticky await). Does not implement. |
 
 ## CoS skills (on `chief-of-staff` profile)
 
 - `kelyra-company-os` — org routing + kanban staffing
 - `kelyra-qa-loop` — Grok Build implementation pipeline
 - `kelyra-arm-hr` — ask ARM before kelyra `ready`; leftover P2/P3 window
+- `kelyra-grok-build-ping` — Build dual-POST leftovers (Hermes-only P2/P3 writer)
 
 Engineering profiles also carry `kelyra-qa-loop`.
 
@@ -84,6 +88,7 @@ Engineering profiles also carry `kelyra-qa-loop`.
 ~/.hermes/profiles/chief-of-staff/scripts/invoke_profile.sh
 ~/.hermes/profiles/chief-of-staff/scripts/run_kelyra_qa_loop.py
 ~/.hermes/profiles/chief-of-staff/scripts/invoke_tts.sh          # always HERMES_HOME=grok-tts
+~/.hermes/profiles/chief-of-staff/scripts/complete_consultant_task.sh  # Grok Bot push-close
 ~/.hermes/profiles/grok-tts/tools/math-speech/pipeline.py
 ~/.hermes/profiles/grok-tts/tools/math-speech/tts_session_lock.py  # exclusive lock + monitor
 ```

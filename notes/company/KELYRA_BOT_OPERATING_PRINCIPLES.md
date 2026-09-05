@@ -16,6 +16,7 @@ Kelyra is a coordinated company of specialized Hermes Bots. Prefer **artifacts o
 
 ## Kanban
 Board `kelyra` is SoT. Update the ticket when work moves. Completing work is not “said so in chat.”
+Grok Bot work uses assignee `grok-bot-consultant` (async sticky await). Never `grok-bot`. Loop leftover P2/P3: Hermes CoS only.
 
 ## Handoff
 OBJECTIVE / CONTEXT / REQUIREMENTS / CONSTRAINTS / FILES/AREAS / WORK PERFORMED / VERIFICATION / RESULT / OPEN ISSUES / ESCALATION NEEDED / RECOMMENDED NEXT ACTION
@@ -29,4 +30,4 @@ OBJECTIVE / CONTEXT / REQUIREMENTS / CONSTRAINTS / FILES/AREAS / WORK PERFORMED 
 Use `minimal|low|medium|high` as configured on the profile. Do not invent `max`/`ultra`.
 
 ## Usage
-`ai-resource-manager` is HR for SuperGrok Premium (**12% of weekly credit per Chicago day**; reset Monday 01:38). CoS asks ARM before kelyra `ready`. Sunday 20:00 leftover P2/P3 burn; Monday 01:30 park. Production TTS only via `grok-tts`. See `ARM_HR_AGREEMENT.md`.
+`ai-resource-manager` is HR for SuperGrok Premium (**12% of weekly credit per Chicago day**; reset Monday 01:38) **and** Grok Bot Cursor sand (**14% of weekly**; reset Saturday 15:51 CT). CoS asks ARM `--pool` before kelyra `ready`. Sunday 20:00 leftover P2/P3 SuperGrok burn; Monday 01:30 park. Production TTS only via `grok-tts`. See `ARM_HR_AGREEMENT.md`.

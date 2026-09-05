@@ -13,6 +13,15 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### Orientation change during post-fade AAC drain can still kill audio on non-phone-locked surfaces (P2)
+- Source: kelyra-qa-loop (2026-09-04)
+- Session: `01a06dcb-fdd8-74c2-a87d-e0a5a90ee218`
+- Workflow: `wf_01a06dcc4f7f78618ac908ddfe7fbd48`
+- Request: Splash intro audio clipped at end (CEO)
+- Evidence: After visual complete, showVideo stays true with SplashVideo key={sourceKey} while useFocusEffect deps are [sourceKey, tryPlayUnmuted]. A landscape↔portrait flip re-runs the prior effect cleanup (pauseAsync/unloadAsync) and remounts via key before didJustFinish. Native phones are portrait-locked so sourceKey stays stable; web/iPad can hit a ~0.4–0.7s window.
+- Recommendation: During the post-fade drain, ignore sourceKey swaps (freeze aspect / omit key churn) or skip pause/unload cleanup while playbackEndedRef is false and showVideo is still true for audio drain.
+- Status: open
+
 ### ui-design Ask FALLBACK still says Inbox (P3)
 - Source: kelyra-qa-loop (2026-09-04)
 - Session: `01a06d48-877b-7500-bb4d-3510231f9520`

@@ -12,8 +12,9 @@ ARM behaves as **Human Resources for SuperGrok Premium credits**. CoS may set co
 | Rule | Value |
 |---|---|
 | Daily cap | **12% of weekly SuperGrok credit** per America/Chicago day |
+| Grok Bot daily cap | **14% of weekly Cursor sand** per Chicago day. Week resets **Saturday 15:51 CT** (`grok_bot_usage.json` `snapshot.resets_at`) |
 | Weekly reset | **Monday 01:38** America/Chicago (billing `currentPeriod.end` is SoT when present) |
-| Ready gate | CoS **asks ARM** before moving a kelyra card to `ready`. If no grant, **wait until the next Chicago day** |
+| Ready gate | CoS **asks ARM** (`--pool supergrok` and/or `--pool grok-bot`) before `ready`. DENY → sticky `needs_arm_grant:<pool>` (auto-retry on close, no poll) |
 | Collection | Snapshot + activity profile on team work, including **zero-delta** rows (API is whole-number percents) |
 | Forecast | ARM prediction model per activity class; used when CoS asks “how much will this kanban task cost?” |
 | Leftover | **Sunday 20:00** Chicago: if weekly remaining ≥ 1%, burn **P2/P3 one at a time** |
