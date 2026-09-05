@@ -18,6 +18,12 @@ const LIVE_FOM_DECK = /^fom-ch01(?:-s\d+)?$/;
 const MAX_BYTES = 12_304_812;
 const SKIP_DIRS = ['png-original/', 'ava-original/', 'eve-staging/', 'captions/ava-original/'];
 
+function assertUnderQuota(total: number) {
+  if (total > MAX_BYTES) {
+    throw Object.assign(new Error('pack exceeds size quota'), { status: 413 });
+  }
+}
+
 type PackFile = { path: string; bytes: Uint8Array };
 
 type PublishFields = {
@@ -181,7 +187,9 @@ async function parseRequest(req: Request): Promise<{ fields: PublishFields; file
       files.push({ path, bytes: await readBlobBytes(file) });
     }
     if (zipBytes) files.push(...unzipPack(zipBytes));
-    return { fields, files: dedupeFiles(files) };
+    const multiparts = dedupeFiles(files);
+    assertUnderQuota(multiparts.reduce((sum, f) => sum + f.bytes.byteLength, 0));
+    return { fields, files: multiparts };
   }
 
   // zip + JSON sidecar: metadata JSON with zip_base64 and/or files[].
@@ -216,7 +224,9 @@ async function parseRequest(req: Request): Promise<{ fields: PublishFields; file
       files.push({ path, bytes: Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)) });
     }
   }
-  return { fields, files: dedupeFiles(files) };
+  const jsonFiles = dedupeFiles(files);
+  assertUnderQuota(jsonFiles.reduce((sum, f) => sum + f.bytes.byteLength, 0));
+  return { fields, files: jsonFiles };
 }
 
 function dedupeFiles(files: PackFile[]): PackFile[] {
@@ -358,6 +368,12 @@ Deno.serve(async (req) => {
   // Authz: teacher | also_teacher | superintendent | administrator. Not is_staff. Not class_teachers.
   if (!canPublish(profile)) return json({ error: 'teacher or office seat required' }, 401);
 
+  // Reject oversized uploads before buffering the full body into memory (t_7c3a2473).
+  const declared = Number(req.headers.get('Content-Length') ?? '');
+  if (Number.isFinite(declared) && declared > MAX_BYTES) {
+    return json({ error: 'pack exceeds size quota', max: MAX_BYTES }, 413);
+  }
+
   let fields: PublishFields;
   let files: PackFile[];
   try {
@@ -405,7 +421,10 @@ Deno.serve(async (req) => {
     .eq('version', fields.version)
     .neq('deck_id', fields.deck_id)
     .limit(1);
-  if (sharedError) return json({ error: sharedError.message }, 502);
+  if (sharedError) {
+    console.error('publish-lesson-pack shared-folder lookup failed', sharedError.message);
+    return json({ error: 'catalog lookup failed' }, 502);
+  }
   if ((sharedRows ?? []).length > 0 && !(office && fields.replace_live)) {
     return json({ error: 'shared-folder lock; office replace_live required to slice' }, 409);
   }
@@ -417,7 +436,8 @@ Deno.serve(async (req) => {
     const uploaded = await putObject(supabaseUrl, serviceKey, object, file.bytes, mimeOf(file.path));
     if (!uploaded.ok) {
       const detail = await uploaded.text().catch(() => '');
-      return json({ error: 'storage write failed', detail }, 502);
+      console.error('publish-lesson-pack storage write failed', object, detail);
+      return json({ error: 'storage write failed' }, 502);
     }
     uploadedPaths.add(object);
   }
@@ -432,11 +452,15 @@ Deno.serve(async (req) => {
       const orphans = existing.filter((path) => !uploadedPaths.has(path));
       if (orphans.length) {
         const { error: removeError } = await admin.storage.from('lessons').remove(orphans);
-        if (removeError) return json({ error: 'storage write failed', detail: removeError.message }, 502);
+        if (removeError) {
+          console.error('publish-lesson-pack orphan remove failed', removeError.message);
+          return json({ error: 'storage write failed' }, 502);
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'storage list failed';
-      return json({ error: 'storage write failed', detail: message }, 502);
+      console.error('publish-lesson-pack storage list failed', message);
+      return json({ error: 'storage write failed' }, 502);
     }
   }
 
@@ -453,7 +477,10 @@ Deno.serve(async (req) => {
   const { error: upsertError } = await admin.from('lesson_packs').upsert(packRow, {
     onConflict: 'deck_id,version',
   });
-  if (upsertError) return json({ error: upsertError.message }, 502);
+  if (upsertError) {
+    console.error('publish-lesson-pack catalog upsert failed', upsertError.message);
+    return json({ error: 'catalog write failed' }, 502);
+  }
 
   return json({
     ok: true,
