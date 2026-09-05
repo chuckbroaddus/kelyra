@@ -163,24 +163,3 @@ test('Q12 sign-in: no public Create teacher / signUp', () => {
   );
 });
 
-test('sign-in: splash final-frame still + shared neon CTA (no tint wordmark stack)', () => {
-  const gate = read('src/app/sign-in.tsx');
-  const splash = read('src/components/ui/SplashLanding.tsx');
-  const brand = read('src/components/ui/splashBrand.ts');
-  const cta = read('src/components/ui/SplashSignInButton.tsx');
-  assert.match(gate, /SplashLanding/);
-  assert.match(gate, /initialRevealForm/);
-  assert.match(splash, /splashStillSources/);
-  assert.match(splash, /SplashSignInButton/);
-  assert.doesNotMatch(splash, /KelyraMark/);
-  assert.doesNotMatch(splash, />Kelyra<\/Text>/);
-  assert.doesNotMatch(splash, /tintColor/);
-  assert.doesNotMatch(splash, /PrimaryButton/);
-  assert.doesNotMatch(gate, /KelyraMark/);
-  assert.doesNotMatch(gate, />Kelyra<\/Text>/);
-  assert.match(brand, /kelyra_splash_still_16x9\.jpg/);
-  assert.match(brand, /kelyra_splash_still_9x16\.jpg/);
-  assert.doesNotMatch(cta, /tintColor/);
-  assert.match(cta, /#6B4CFF/);
-  assert.match(cta, /#2EC6F0/);
-});

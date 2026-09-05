@@ -392,10 +392,19 @@ export async function geminiGenerate(
   }
   const tools = geminiToolsFromExtra(extra);
   if (tools) body.tools = tools;
+  const generationConfig: Record<string, unknown> = {};
   const maxOut = Number(extra.max_output_tokens ?? extra.maxOutputTokens);
   if (Number.isFinite(maxOut) && maxOut > 0) {
-    body.generationConfig = { maxOutputTokens: Math.round(maxOut) };
+    generationConfig.maxOutputTokens = Math.round(maxOut);
   }
+  const mime =
+    typeof extra.responseMimeType === 'string'
+      ? extra.responseMimeType.trim()
+      : typeof extra.response_mime_type === 'string'
+        ? extra.response_mime_type.trim()
+        : '';
+  if (mime) generationConfig.responseMimeType = mime;
+  if (Object.keys(generationConfig).length) body.generationConfig = generationConfig;
   const response = await fetch(
     `${geminiBaseUrl}/models/${encodeURIComponent(model)}:generateContent`,
     {
