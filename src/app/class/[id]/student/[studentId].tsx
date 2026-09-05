@@ -55,8 +55,8 @@ import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/g
 import {
   createParent,
   linkChild,
-  listParentsForLinking,
   listParentsForStudent,
+  listParentsForStudentPageLinking,
   parentStatusLine,
   type ClassParent,
 } from '@/lib/parents/api';
@@ -454,7 +454,12 @@ export default function StudentScreen() {
     setAddParentOpen(true);
     setParentFilter('');
     try {
-      setExistingParents(await listParentsForLinking());
+      // Merge own unlinked parents into picker; do not widen school_parents_for_link (F09).
+      setExistingParents(
+        teacher
+          ? await listParentsForStudentPageLinking(teacher.id)
+          : [],
+      );
     } catch {
       setExistingParents([]);
     }
