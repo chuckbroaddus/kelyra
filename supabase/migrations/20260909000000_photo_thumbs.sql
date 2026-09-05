@@ -1,7 +1,8 @@
--- CoS: apply THIS file on aohibokgilxhqwmupdfv.
+-- Photo thumbs (renamed from colliding 20260824000006_photo_thumbs.sql; t_964cc158).
 -- 20260824000005 aborted (42703: message_threads.photo_path does not exist).
 -- Live threads have no photo_path; is_thread_photo must not reference that column
 -- at CREATE time. Idempotent. Private photos bucket. Does not add photo_path.
+-- Keep 20260824000005 as historical aborted attempt; lesson_section_packs owns 20260824000006.
 
 alter table public.assets
   add column if not exists thumb_storage_path text;
