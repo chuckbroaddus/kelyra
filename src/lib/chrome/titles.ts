@@ -22,6 +22,10 @@ export function headerTitleFor(input: {
   if (pathname.startsWith('/messages/info/')) return named || 'Details';
   if (pathname.startsWith('/messages/') && pathname !== '/messages') return named || 'Message';
   if (pathname === '/messages' || pathname.startsWith('/messages')) return 'Messages';
+  if (pathname.startsWith('/parent/ride')) return named || 'Car rider';
+  if (pathname.startsWith('/parent/vehicles')) return named || 'Vehicles';
+  if (pathname.startsWith('/ride')) return named || 'Dismissal';
+  if (pathname.startsWith('/admin/ride')) return named || 'Ride office';
   if (pathname === '/admin/matrix') return named || 'Responsibilities';
   if (pathname.startsWith('/admin/class/')) return named || 'Class';
   if (pathname.startsWith('/admin')) return 'People';

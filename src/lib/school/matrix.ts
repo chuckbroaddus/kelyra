@@ -72,6 +72,11 @@ export const CAPABILITIES: Capability[] = [
   { id: 'children.view', area: 'Family', label: 'See own children', help: 'Parent progress.', superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
   { id: 'children.edit', area: 'Family', label: 'Edit child details', help: 'Name and contact on a linked child.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'none' },
 
+  { id: 'ride.check_in', area: 'Ride', label: 'Car-rider check-in', help: 'Parent vehicles + photo/I am first check-in. Own XX only.', superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
+  { id: 'ride.duty', area: 'Ride', label: 'Dismissal duty', help: 'Curb/stage walk, order_fix, checkout. Duty wall — not is_staff.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  { id: 'ride.restrict', area: 'Ride', label: 'Pickup restrictions', help: 'Office blacklist. Parent sees Check in failed only.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  { id: 'ride.archive', area: 'Ride', label: 'Archive day photos', help: 'Superintendent archives that day line photos until delete.', superintendent: 'school', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
+
   { id: 'messages.use', area: 'Messages', label: 'In-app messages', help: '1:1 threads.', superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
   { id: 'audit.view', area: 'Audit', label: 'View activity log', help: 'Who changed what.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'audit.mutate', area: 'Audit', label: 'Edit or delete the log', help: 'Nobody. The log is append-only.', superintendent: 'none', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },

@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.practice-help]
 verify_jwt = true
+
+[functions.ride-lpr]
+verify_jwt = true

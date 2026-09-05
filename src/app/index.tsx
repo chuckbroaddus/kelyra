@@ -232,6 +232,18 @@ export default function HomeScreen() {
             />
           ) : null}
           <ListRow
+            title="Dismissal curb"
+            status="Walk line, checkout, attach plate"
+            icon="work"
+            onPress={() => router.push('/ride')}
+          />
+          <ListRow
+            title="Ride office"
+            status="Lines, restrictions, archive"
+            icon="manage"
+            onPress={() => router.push('/admin/ride')}
+          />
+          <ListRow
             title="Activity"
             status="Immutable change log"
             icon="history"

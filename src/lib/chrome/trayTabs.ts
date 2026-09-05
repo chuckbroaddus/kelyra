@@ -98,6 +98,7 @@ export function tabsFor(
   if (role === 'parent') {
     return [
       { key: 'home', icon: 'today', label: 'Home', href: '/parent', active: pathname === '/parent' },
+      { key: 'ride', icon: 'work', label: 'Ride', href: '/parent/ride', active: pathname.startsWith('/parent/ride') || pathname.startsWith('/parent/vehicles') },
       { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
     ];
   }
@@ -141,7 +142,7 @@ function officeTrayKey(
   homeTab?: string,
 ): 'feed' | 'classes' | 'people' | 'manage' | 'ask' | null {
   if (pathname === '/ask') return 'ask';
-  if (pathname === '/activity' || pathname === '/admin/matrix') return 'manage';
+  if (pathname === '/activity' || pathname === '/admin/matrix' || pathname.startsWith('/admin/ride') || pathname.startsWith('/ride')) return 'manage';
   if (pathname.startsWith('/admin/people') || pathname === '/admin') return 'people';
   if (pathname.startsWith('/admin/class')) return 'classes';
   if (pathname === '/' || pathname === '') {
