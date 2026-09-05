@@ -65,7 +65,7 @@ export async function getSession() {
  * Never inserts or upserts — office provision / claim / hats create staff rows.
  * Callers must gate on shouldLoadTeacherRow so students/parents never hit this.
  */
-export async function ensureTeacherProfile(): Promise<TeacherRow | null> {
+export async function loadTeacherProfile(): Promise<TeacherRow | null> {
   const supabase = requireSupabase();
   const {
     data: { user },

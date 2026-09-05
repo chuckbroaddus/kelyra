@@ -44,9 +44,9 @@ test('F12: does not rewrite Q1/Q12 handle_new_user or provision RPCs', () => {
   assert.doesNotMatch(executable, /admin_provision_student_login|admin_provision_parent_login/i);
 });
 
-test('F12: ensureTeacherProfile selects only; never inserts teachers', () => {
+test('F12: loadTeacherProfile selects only; never inserts teachers', () => {
   const src = read('src/lib/auth/api.ts');
-  const fn = src.slice(src.indexOf('export async function ensureTeacherProfile'));
+  const fn = src.slice(src.indexOf('export async function loadTeacherProfile'));
   assert.match(fn, /\.from\('teachers'\)/);
   assert.match(fn, /\.select\('\*'\)/);
   assert.match(fn, /\.maybeSingle\(\)/);

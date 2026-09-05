@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { isSupabaseConfigured } from '@/constants/config';
-import { ensureTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
+import { loadTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
 import { loadMyProfile } from '@/lib/school/api';
 import { shouldLoadTeacherRow } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const mine = await loadMyProfile().catch(() => null);
         setProfile(mine);
         // Fail closed: missing / student / parent must not load or mint a teachers row.
-        if (shouldLoadTeacherRow(mine)) setTeacher(await ensureTeacherProfile());
+        if (shouldLoadTeacherRow(mine)) setTeacher(await loadTeacherProfile());
         else setTeacher(null);
       }
     } catch (err) {
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const mine = await loadMyProfile().catch(() => null);
       setProfile(mine);
-      if (shouldLoadTeacherRow(mine)) setTeacher(await ensureTeacherProfile());
+      if (shouldLoadTeacherRow(mine)) setTeacher(await loadTeacherProfile());
       else setTeacher(null);
     } catch {
       // Keep the current teacher row if a silent refresh fails.

@@ -547,7 +547,7 @@ export async function listInvitesForParent(parentId: string): Promise<ParentAcce
 
 export async function linkChild(parentId: string, studentId: string): Promise<void> {
   const supabase = requireSupabase();
-  // Office RPC only — do not fall back to parent_students insert (teacher RLS can own both rows).
+  // Office RPC / admin policy only — parent_students_own is SELECT-only; do not reintroduce a PostgREST insert fallback.
   const { error } = await supabase.rpc('admin_set_parent_link', {
     p_parent_id: parentId,
     p_student_id: studentId,

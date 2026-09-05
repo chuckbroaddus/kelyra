@@ -113,11 +113,11 @@ test('Q12 migration: student/parent provision never mint or delete teachers', ()
   assert.doesNotMatch(parent, /update public\.profiles[\s\S]*where id = uid[\s\S]*if not found/i);
 });
 
-test('Q12 AuthProvider: never ensureTeacherProfile for missing/student/parent', () => {
+test('Q12 AuthProvider: never loadTeacherProfile for missing/student/parent', () => {
   const src = read('src/lib/auth/AuthProvider.tsx');
   assert.match(src, /shouldLoadTeacherRow\(mine\)/);
-  // Every ensureTeacherProfile call must be behind shouldLoadTeacherRow.
-  const calls = [...src.matchAll(/ensureTeacherProfile\(\)/g)];
+  // Every loadTeacherProfile call must be behind shouldLoadTeacherRow.
+  const calls = [...src.matchAll(/loadTeacherProfile\(\)/g)];
   assert.equal(calls.length, 2);
   for (const match of calls) {
     const before = src.slice(Math.max(0, match.index! - 80), match.index!);
@@ -135,12 +135,12 @@ test('Q12 shouldLoadTeacherRow: staff/teacher only; never mint for missing/stude
   const body = end >= 0 ? fn.slice(0, end) : fn;
   assert.match(body, /never mint/i);
   assert.match(body, /isStaffRole\(value\) \|\| isTeacherRole\(value\)/);
-  assert.doesNotMatch(body, /insert|upsert|ensureTeacherProfile/i);
+  assert.doesNotMatch(body, /insert|upsert|loadTeacherProfile/i);
 });
 
-test('Q12 ensureTeacherProfile selects only; never inserts teachers', () => {
+test('Q12 loadTeacherProfile selects only; never inserts teachers', () => {
   const src = read('src/lib/auth/api.ts');
-  const fn = src.slice(src.indexOf('export async function ensureTeacherProfile'));
+  const fn = src.slice(src.indexOf('export async function loadTeacherProfile'));
   assert.match(fn, /\.from\('teachers'\)/);
   assert.match(fn, /\.select\('\*'\)/);
   assert.match(fn, /\.maybeSingle\(\)/);

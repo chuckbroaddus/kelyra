@@ -613,7 +613,7 @@ Teacher (`auth.uid()` = `teachers.id`):
 | Table | Policy |
 |---|---|
 | `parents` | `teacher_id = auth.uid()` all + check |
-| `parent_students` | parent’s `teacher_id = auth.uid()` and student’s `teacher_id = auth.uid()` |
+| `parent_students` | `parent_students_own` is **SELECT-only** when the caller owns both parent and student (`teacher_id = auth.uid()`). Writes (mint/unlink) go through office RPCs / policies: `admin_set_parent_link` and `parent_students_admin_all` — only Superintendent / Administrator may create the link. |
 | `parent_accesses` | via `parents.teacher_id` (replace the current via-student-only policy after backfill) |
 | `roster_imports` | via `classes.teacher_id` |
 | `students` / `assets` / `classes` / … | unchanged teacher-own |
