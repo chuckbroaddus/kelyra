@@ -956,7 +956,6 @@ export type Database = {
       };
       teacher_unref_asset: { Args: { p_asset_id: string }; Returns: undefined };
       teacher_delete_roster_import: { Args: { p_import_id: string }; Returns: undefined };
-      login_identifier: { Args: { p_handle: string }; Returns: string | null };
       my_role: { Args: Record<string, never>; Returns: SchoolRole | null };
       is_school_admin: { Args: Record<string, never>; Returns: boolean };
       school_claim_superintendent: { Args: Record<string, never>; Returns: ProfileRow };

@@ -2474,7 +2474,8 @@ async function prepareImageForGrok(imageUrl) {
 }
 
 async function loadImageForGrok(imageUrl) {
-  const response = await fetch(imageUrl);
+  // T16/T17: match Edge hydrateAskImages — do not follow redirects after allowlist.
+  const response = await fetch(imageUrl, { redirect: 'error' });
   if (!response.ok) throw new Error('Could not download the homework photo.');
   const bytes = Buffer.from(await response.arrayBuffer());
   const kind = sniffImage(bytes);
