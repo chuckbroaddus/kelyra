@@ -69,3 +69,36 @@ test('Q6 clients treat empty RPC success as authoritative; no widen on empty', (
   assert.match(linkBody, /rpc\('school_students_for_link'\)/);
   assert.match(linkBody, /if \(!error && data\)/);
 });
+
+import { isOfficeRole, isTeacherRole } from '../school/roles.ts';
+
+test('T14 behavioral: office vs teacher vs parent hats for link-directory intent', () => {
+  const office = { role: 'administrator' as const };
+  const teacher = { role: 'teacher' as const };
+  const parent = { role: 'parent' as const };
+  const student = { role: 'student' as const };
+
+  assert.equal(isOfficeRole(office), true);
+  assert.equal(isOfficeRole(teacher), false);
+  assert.equal(isTeacherRole(teacher), true);
+  assert.equal(isTeacherRole(parent), false);
+  assert.equal(isOfficeRole(parent), false);
+  assert.equal(isOfficeRole(student), false);
+  // RPC bodies stay SQL; role hats document who the wall intends to serve.
+});
+
+test('T14 client behavior: link pickers call school_* RPCs; empty array is authoritative', () => {
+  const parents = read('src/lib/parents/api.ts');
+  const loadFn = parents.slice(parents.indexOf('async function loadAllParentRows'));
+  const loadBody = loadFn.slice(0, loadFn.indexOf('async function attachChildren'));
+  assert.match(loadBody, /Empty success is authoritative/);
+  assert.match(loadBody, /Do not widen/);
+  assert.match(loadBody, /Array\.isArray\(rpc\.data\)/);
+
+  const students = read('src/lib/students/api.ts');
+  const linkFn = students.slice(students.indexOf('export async function listStudentsForLinking'));
+  const linkBody = linkFn.slice(0, linkFn.indexOf('export async function listAvailableStudents'));
+  assert.match(linkBody, /rpc\('school_students_for_link'\)/);
+  assert.match(linkBody, /if \(!error && data\)/);
+  // Live teacher-vs-office PostgREST privilege smoke still needs DB JWT fixture.
+});

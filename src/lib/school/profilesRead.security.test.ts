@@ -50,3 +50,33 @@ test('Q9 call sites still load self, by id, and message hydrate from profiles', 
   const classes = read('src/lib/classes/api.ts');
   assert.match(classes, /from\('profiles'\)\.select\('id, username, display_name, email, student_id, parent_id'\)\.in\('id', ids\)/);
 });
+
+import { isOfficeRole, isStaffRole, isTeacherRole } from './roles.ts';
+
+test('T06/T07 behavioral: office seat vs staff hats (RLS uses is_school_admin, not is_staff)', () => {
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const office = { role: 'administrator' as const };
+  const parent = { role: 'parent' as const };
+  const student = { role: 'student' as const };
+
+  // is_school_admin ≈ office seat — also_administrator teacher must not dump school profiles.
+  assert.equal(isOfficeRole(teacher), false);
+  assert.equal(isOfficeRole(teacherAlsoAdmin), false);
+  assert.equal(isOfficeRole(office), true);
+  assert.equal(isOfficeRole(parent), false);
+  assert.equal(isOfficeRole(student), false);
+
+  assert.equal(isStaffRole(teacher), true);
+  assert.equal(isStaffRole(parent), false);
+  assert.equal(isTeacherRole(teacherAlsoAdmin), true);
+});
+
+test('T06/T07 client behavior: profile reads are PostgREST selects (RLS wall), not service_role', () => {
+  const school = read('src/lib/school/api.ts');
+  assert.doesNotMatch(school, /SERVICE_ROLE|service_role|serviceRole/);
+  assert.match(school, /from\('profiles'\)\.select\('\*'\)\.eq\('id', uid\)/);
+  const messages = read('src/lib/messages/api.ts');
+  assert.doesNotMatch(messages, /SERVICE_ROLE|service_role/);
+  // Live student/parent JWT SELECT of unrelated same-school profile still needs DB fixture.
+});

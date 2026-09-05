@@ -20,18 +20,21 @@ test('publish-lesson-pack is registered with verify_jwt true', () => {
 
 test('teacher / also_teacher / office allowed; parent / student denied; not is_staff / class_teachers', () => {
   const src = read(edge);
-  assert.match(src, /function canPublish/);
-  assert.match(src, /role === 'teacher'/);
-  assert.match(src, /also_teacher/);
-  assert.match(src, /superintendent/);
-  assert.match(src, /administrator/);
+  const policy = read('supabase/functions/_shared/publishLessonPackPolicy.ts');
+  assert.match(src, /canPublish/);
+  assert.match(policy, /export function canPublish/);
+  assert.match(policy, /role === 'teacher'/);
+  assert.match(policy, /also_teacher/);
+  assert.match(policy, /superintendent/);
+  assert.match(policy, /administrator/);
   assert.match(src, /teacher or office seat required/);
   assert.match(src, /status:\s*401|json\(\{ error: 'teacher or office seat required' \}, 401\)/);
 
-  const canAt = src.indexOf('function canPublish');
-  const canBody = src.slice(canAt, src.indexOf('\n}', canAt) + 2);
+  const canAt = policy.indexOf('export function canPublish');
+  const canBody = policy.slice(canAt, policy.indexOf('\n}', canAt) + 2);
   assert.doesNotMatch(canBody, /is_staff|is_staff_profile|class_teachers/);
   assert.doesNotMatch(src, /is_staff_profile|isStaffRole\(/);
+  assert.doesNotMatch(policy, /isStaffRole|is_staff_profile/);
 
   // Parent/student fall through canPublish → 401 (not granted by role alone).
   assert.ok(canBody.includes("role === 'teacher'"));
@@ -63,9 +66,11 @@ test('quota over 12,304,812 bytes returns 413', () => {
 
 test('live FoM refuse without office + replace_live', () => {
   const src = read(edge);
+  const policy = read('supabase/functions/_shared/publishLessonPackPolicy.ts');
   assert.match(src, /isLiveFomDeckId|LIVE_FOM_DECK/);
   assert.match(src, /isLiveFomStoragePath|LIVE_FOM_STORAGE/);
-  assert.match(src, /fom-ch01/);
+  assert.match(policy, /fom-ch01/);
+  assert.match(policy, /LIVE_FOM_DECK/);
   assert.match(src, /replace_live/);
   assert.match(src, /isOfficeRole/);
   assert.match(src, /409/);
@@ -152,4 +157,61 @@ test('client helper uses user JWT only; not an Ask tool', () => {
   assert.doesNotMatch(askTools, /publish_lesson|publishLessonPack|publish-lesson-pack/);
   const askPolicy = read('src/lib/ai/askToolPolicy.ts');
   assert.doesNotMatch(askPolicy, /publish_lesson/);
+});
+
+import {
+  canPublish,
+  isLiveFomDeckId,
+  isLiveFomHit,
+  isLiveFomStoragePath,
+  mayReplaceProtectedPack,
+  type ProfileHats,
+} from '../../../supabase/functions/_shared/publishLessonPackPolicy.ts';
+
+test('T26 behavioral: canPublish role-hat fixtures (teacher/office yes; parent/student/anon no)', () => {
+  const yes: ProfileHats[] = [
+    { role: 'teacher' },
+    { role: 'administrator' },
+    { role: 'superintendent' },
+    { role: 'parent', also_teacher: true },
+    { role: 'student', also_teacher: true },
+  ];
+  const no: ProfileHats[] = [
+    null as unknown as ProfileHats,
+    {},
+    { role: 'parent' },
+    { role: 'student' },
+    { role: 'teacher', also_administrator: true }, // still teacher → yes actually
+  ];
+  for (const p of yes) assert.equal(canPublish(p), true, JSON.stringify(p));
+  assert.equal(canPublish(null), false);
+  assert.equal(canPublish(undefined), false);
+  assert.equal(canPublish({}), false);
+  assert.equal(canPublish({ role: 'parent' }), false);
+  assert.equal(canPublish({ role: 'student' }), false);
+  // also_administrator alone on teacher still publishes via role===teacher
+  assert.equal(canPublish({ role: 'teacher', also_administrator: true }), true);
+});
+
+test('T26 behavioral: live FoM + shared lock need office replace_live', () => {
+  assert.equal(isLiveFomDeckId('fom-ch01'), true);
+  assert.equal(isLiveFomDeckId('fom-ch01-s3'), true);
+  assert.equal(isLiveFomDeckId('fom-ch01-test'), false);
+  assert.equal(isLiveFomStoragePath('fom-ch01', 'v4'), true);
+  assert.equal(isLiveFomStoragePath('fom-ch01', 'v5'), false);
+  assert.equal(isLiveFomHit('fom-ch01', 'other', 'v1'), true);
+
+  const teacher = { role: 'teacher' as const };
+  const office = { role: 'administrator' as const };
+  assert.equal(mayReplaceProtectedPack(teacher, true), false);
+  assert.equal(mayReplaceProtectedPack(office, false), false);
+  assert.equal(mayReplaceProtectedPack(office, true), true);
+  assert.equal(mayReplaceProtectedPack({ role: 'parent' }, true), false);
+});
+
+test('T26 Edge still imports shared publishLessonPackPolicy (no local canPublish)', () => {
+  const src = read(edge);
+  assert.match(src, /from '\.\.\/_shared\/publishLessonPackPolicy\.ts'/);
+  assert.doesNotMatch(src, /function canPublish/);
+  assert.doesNotMatch(src, /const LIVE_FOM_STORAGE/);
 });

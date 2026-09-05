@@ -46,3 +46,53 @@ test('Q10 config: sign-in-handle verify_jwt is false', () => {
   const cfg = read('supabase/config.toml');
   assert.match(cfg, /\[functions\.sign-in-handle\]\s*\nverify_jwt\s*=\s*false/);
 });
+
+import {
+  DEFAULT_DUMMY_EMAIL,
+  normalizeSignInHandle,
+  pickGrantEmail,
+  resolveLoginEmail,
+  sessionResponseKeys,
+  sessionTokensOnly,
+  shouldReturnSession,
+} from '../../../supabase/functions/_shared/signInHandlePolicy.ts';
+import { handleFromInput } from '../school/roles.ts';
+
+test('T04 behavioral: normalizeSignInHandle matches client handleFromInput core', () => {
+  assert.equal(normalizeSignInHandle('@Ada.Lovelace'), 'ada.lovelace');
+  assert.equal(normalizeSignInHandle('  Bob  '), 'bob');
+  assert.equal(normalizeSignInHandle('X'.repeat(40)).length, 32);
+  // Client handleFromInput has no 32-cap; Edge does — both strip @ and lower.
+  assert.equal(handleFromInput('@Ada'), 'ada');
+});
+
+test('T04 behavioral: sessionTokensOnly never includes email; miss path withholds tokens', () => {
+  const tokens = sessionTokensOnly({
+    access_token: 'a.jwt.here',
+    refresh_token: 'r.jwt.here',
+  });
+  assert.deepEqual(sessionResponseKeys(tokens), ['access_token', 'refresh_token']);
+  assert.equal('email' in tokens, false);
+
+  assert.equal(resolveLoginEmail('kid@school.test', null), 'kid@school.test');
+  assert.equal(resolveLoginEmail('not-an-email', null), null);
+  assert.equal(resolveLoginEmail('kid@school.test', { message: 'fail' }), null);
+  assert.equal(pickGrantEmail(null), DEFAULT_DUMMY_EMAIL);
+  assert.equal(pickGrantEmail('a@b.c', 'dummy@x'), 'a@b.c');
+
+  assert.equal(shouldReturnSession(null, true, tokens), false);
+  assert.equal(shouldReturnSession('a@b.c', false, tokens), false);
+  assert.equal(shouldReturnSession('a@b.c', true, { access_token: 'a' }), false);
+  assert.equal(shouldReturnSession('a@b.c', true, tokens), true);
+});
+
+test('T04 Edge drift: still uses login_identifier + token-only success shape', () => {
+  const src = read('supabase/functions/sign-in-handle/index.ts');
+  assert.match(src, /rpc\(['"]login_identifier['"]/);
+  assert.match(src, /access_token:\s*tokenPayload\.access_token/);
+  assert.match(src, /refresh_token:\s*tokenPayload\.refresh_token/);
+  assert.doesNotMatch(src, /return json\(\s*\{[^}]*email/s);
+  assert.match(src, /never echo the resolved email/i);
+  // Shared policy mirrors Edge; live anon RPC deny still needs DB JWT fixture.
+  assert.match(read('supabase/functions/_shared/signInHandlePolicy.ts'), /sessionTokensOnly/);
+});
