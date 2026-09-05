@@ -40,7 +40,11 @@ import {
   type ClassParent,
 } from '@/lib/parents/api';
 import { mapClassifierFields } from '@/lib/people/metadata';
-import { setProfilePhoto, signedUrlsForAssetIds, uploadProfilePhoto } from '@/lib/people/photos';
+import {
+  setProfilePhoto,
+  signedOriginalUrlsForAssetIds,
+  uploadProfilePhoto,
+} from '@/lib/people/photos';
 import { existingRosterMatch } from '@/lib/matching/spokenName';
 import { isOfficeRole } from '@/lib/school/roles';
 import {
@@ -284,7 +288,7 @@ export default function ProposalScreen() {
         }
 
         const keyed = classAssignments.filter((row) => assignmentHasKey(row));
-        const keyUrls = await signedUrlsForAssetIds(
+        const keyUrls = await signedOriginalUrlsForAssetIds(
           keyed.map((row) => row.key_asset_id).filter((id): id is string => Boolean(id)),
         );
         const matchPromise =
@@ -908,7 +912,9 @@ export default function ProposalScreen() {
                 setFollowUp(true);
                 void (async () => {
                   try {
-                    const urls = await signedUrlsForAssetIds(assigned.key_asset_id ? [assigned.key_asset_id] : []);
+                    const urls = await signedOriginalUrlsForAssetIds(
+                      assigned.key_asset_id ? [assigned.key_asset_id] : [],
+                    );
                     const vision = await invokeAi<HomeworkVision>('evaluate-homework', {
                       imageUrl,
                       imageUrls: [imageUrl],

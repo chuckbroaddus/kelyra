@@ -1,5 +1,5 @@
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { signedThumbUrl, signedThumbUrls } from '@/lib/media/signedUrl';
+import { signedThumbUrl, signedThumbUrls, signedUrls } from '@/lib/media/signedUrl';
 import { loadPhotoAssetPaths } from '@/lib/media/upload';
 import { uploadFramedProfilePhoto } from '@/lib/people/framePortrait';
 import { requireSupabase } from '@/lib/supabase/client';
@@ -47,6 +47,21 @@ export async function signedUrlsForAssetIds(assetIds: string[]): Promise<Map<str
     known,
     AVATAR_THUMBS,
   );
+  for (const asset of assets) {
+    const url = urlByPath.get(asset.storage_path);
+    if (url) out.set(asset.id, url);
+  }
+  return out;
+}
+
+/** Full-resolution originals for vision (match-key / evaluate). Chips stay on signedUrlsForAssetIds. */
+export async function signedOriginalUrlsForAssetIds(assetIds: string[]): Promise<Map<string, string>> {
+  const ids = [...new Set(assetIds.filter(Boolean))];
+  const out = new Map<string, string>();
+  if (!ids.length) return out;
+  const assets = await loadPhotoAssetPaths(ids);
+  const paths = assets.map((asset) => asset.storage_path).filter(Boolean);
+  const urlByPath = await signedUrls('photos', paths);
   for (const asset of assets) {
     const url = urlByPath.get(asset.storage_path);
     if (url) out.set(asset.id, url);
