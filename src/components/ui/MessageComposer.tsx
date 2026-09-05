@@ -20,6 +20,7 @@ import {
   type DraftAttach,
 } from '@/lib/messages/attachments';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { pinComposerToEnd } from '@/components/ui/messageComposerPin';
 
 const COMPOSER_PAD = 24;
 const COMPOSER_LINE = type.body.lineHeight ?? 24;
@@ -62,10 +63,7 @@ export function MessageComposer({
 
   const pinToTyping = useCallback(() => {
     const pin = () => {
-      const node = fieldRef.current as unknown as { scrollTop?: number; scrollHeight?: number } | null;
-      if (node && typeof node.scrollTop === 'number' && typeof node.scrollHeight === 'number') {
-        node.scrollTop = node.scrollHeight;
-      }
+      pinComposerToEnd(fieldRef.current);
     };
     pin();
     requestAnimationFrame(pin);
