@@ -1,7 +1,11 @@
 /**
  * Q10: resolve @handle → Auth session without returning the looked-up email to anon.
  * Cos: deploy this function with verify_jwt=false (see supabase/config.toml).
- * Uses service_role only for login_identifier; password grant uses the anon key.
+ * Uses service_role only for login_identifier + durable rate check; password grant uses anon key.
+ *
+ * F02: rate limit is DB-backed (sign_in_handle_rate_check), not a process-local Map.
+ * F03: always perform password grant (dummy email on lookup miss) so timing does not
+ * hint whether a handle resolves. Responses never include the looked-up email.
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -9,9 +13,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const FAIL = 'Invalid login credentials';
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 30;
-
-type AttemptBucket = { windowStartedAt: number; count: number };
-const attempts = new Map<string, AttemptBucket>();
+/** Fallback when SIGN_IN_DUMMY_EMAIL unset. Prefer a real Auth sink user for bcrypt parity. */
+const DEFAULT_DUMMY_EMAIL = 'sign-in-dummy@users.kelyra.invalid';
 
 function corsHeaders(): HeadersInit {
   return {
@@ -32,18 +35,7 @@ function normalizeHandle(raw: string): string {
 function clientBucket(req: Request, handle: string): string {
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
   const ip = forwarded || req.headers.get('cf-connecting-ip')?.trim() || 'unknown';
-  return `${ip}|${handle}`;
-}
-
-function allowAttempt(bucket: string): boolean {
-  const now = Date.now();
-  const row = attempts.get(bucket);
-  if (!row || now - row.windowStartedAt >= WINDOW_MS) {
-    attempts.set(bucket, { windowStartedAt: now, count: 1 });
-    return true;
-  }
-  row.count += 1;
-  return row.count <= MAX_ATTEMPTS;
+  return `${ip}|${handle}`.slice(0, 256);
 }
 
 Deno.serve(async (req) => {
@@ -67,18 +59,26 @@ Deno.serve(async (req) => {
   const handle = normalizeHandle(String(body.handle ?? ''));
   const password = String(body.password ?? '');
   if (handle.length < 2 || password.length < 6) return json({ error: FAIL }, 401);
-  if (!allowAttempt(clientBucket(req, handle))) return json({ error: FAIL }, 429);
+
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: allowed, error: rateError } = await admin.rpc('sign_in_handle_rate_check', {
+    p_bucket: clientBucket(req, handle),
+    p_window_ms: WINDOW_MS,
+    p_max_attempts: MAX_ATTEMPTS,
+  });
+  if (rateError || allowed !== true) return json({ error: FAIL }, 429);
 
   try {
-    const admin = createClient(supabaseUrl, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
     const { data: email, error: lookupError } = await admin.rpc('login_identifier', {
       p_handle: handle,
     });
-    if (lookupError || typeof email !== 'string' || !email.includes('@')) {
-      return json({ error: FAIL }, 401);
-    }
+    const resolved =
+      !lookupError && typeof email === 'string' && email.includes('@') ? email : null;
+    const dummy = (Deno.env.get('SIGN_IN_DUMMY_EMAIL') ?? DEFAULT_DUMMY_EMAIL).trim();
+    const grantEmail = resolved ?? dummy;
 
     const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${anon}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: grantEmail, password }),
     });
     const tokenPayload = (await tokenRes.json().catch(() => null)) as {
       access_token?: string;
@@ -96,7 +96,9 @@ Deno.serve(async (req) => {
       msg?: string;
     } | null;
 
+    // Miss path always grants against dummy — never return tokens unless lookup resolved.
     if (
+      !resolved ||
       !tokenRes.ok ||
       !tokenPayload?.access_token ||
       !tokenPayload?.refresh_token
