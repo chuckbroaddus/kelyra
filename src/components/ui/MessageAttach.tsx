@@ -4,6 +4,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ImageViewer } from '@/components/ui/ImageViewer';
+import { MathText } from '@/components/ui/MathText';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { type } from '@/constants/theme';
 import { linkHost, signedMessageUrl, unfurlLink, type DraftAttach } from '@/lib/messages/attachments';
@@ -109,7 +110,9 @@ export function MessagePayloadView({
     return (
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Shared work</Text>
-        <Text style={[type.body, { color: colors.ink }]}>{body}</Text>
+        <MathText style={type.body} color={colors.ink}>
+          {body}
+        </MathText>
         <GhostButton align="left" label="Open" onPress={() => onOpenWork(payload)} />
       </Card>
     );
@@ -137,7 +140,11 @@ export function MessagePayloadView({
             <RemoteImage uri={fileUrl} style={styles.photo} contentFit="cover" />
           </Pressable>
         ) : null}
-        {body && body !== 'Photo' ? <Text style={[type.body, { color: colors.ink }]}>{body}</Text> : null}
+        {body && body !== 'Photo' ? (
+          <MathText style={type.body} color={colors.ink}>
+            {body}
+          </MathText>
+        ) : null}
         <ImageViewer visible={open && Boolean(viewerUri)} uris={viewerUri ? [viewerUri] : []} onClose={() => setOpen(false)} />
       </View>
     );
@@ -153,7 +160,11 @@ export function MessagePayloadView({
             if (fileUrl) void Linking.openURL(fileUrl);
           }}
         />
-        {body && body !== payload.name ? <Text style={[type.body, { color: colors.ink }]}>{body}</Text> : null}
+        {body && body !== payload.name ? (
+          <MathText style={type.body} color={colors.ink}>
+            {body}
+          </MathText>
+        ) : null}
       </View>
     );
   }
@@ -181,11 +192,20 @@ export function MessagePayloadView({
           </Text>
         ) : null}
         <Text style={[type.meta, { color: colors.mute }]}>{linkHost(payload.url)}</Text>
+        {body && body !== payload.title ? (
+          <MathText style={type.body} color={colors.ink}>
+            {body}
+          </MathText>
+        ) : null}
       </Pressable>
     );
   }
 
-  return <Text style={[type.body, { color: colors.ink }]}>{body}</Text>;
+  return (
+    <MathText style={type.body} color={colors.ink}>
+      {body}
+    </MathText>
+  );
 }
 
 const styles = StyleSheet.create({
