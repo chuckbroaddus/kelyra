@@ -42,6 +42,7 @@
     "expo-web-browser": "~57.0.2",
     "heic-convert": "^2.1.0",
     "heic2any": "^0.0.4",
+    "katex": "^0.16.22",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",

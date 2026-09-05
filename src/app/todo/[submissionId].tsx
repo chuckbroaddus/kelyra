@@ -6,6 +6,7 @@ import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { Screen } from '@/components/ui/Screen';
+import { MathText } from '@/components/ui/MathText';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -188,7 +189,9 @@ export default function StudentPracticeScreen() {
               </ChipRow>
             ) : null}
             {helpText[practiceItem.id] ? (
-              <Text style={[type.meta, { color: colors.ink }]}>{helpText[practiceItem.id]}</Text>
+              <MathText style={type.meta} color={colors.ink}>
+                {helpText[practiceItem.id]}
+              </MathText>
             ) : null}
           </View>
         </View>

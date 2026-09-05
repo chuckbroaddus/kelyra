@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { MathText } from '@/components/ui/MathText';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -135,12 +136,24 @@ export function ExplainDraftCard(props: Props) {
           ) : (
             <>
               {draft.steps.map((step, i) => (
-                <Text key={`step-${i}`} style={[type.body, { color: colors.ink }]}>
-                  {i + 1}. {step}
-                </Text>
+                <View key={`step-${i}`} style={styles.stepRow}>
+                  <Text style={[type.body, { color: colors.ink }]}>{i + 1}. </Text>
+                  <View style={styles.stepBody}>
+                    <MathText style={type.body} color={colors.ink}>
+                      {step}
+                    </MathText>
+                  </View>
+                </View>
               ))}
               {draft.reteach ? (
-                <Text style={[type.meta, { color: colors.mute }]}>Re-teach: {draft.reteach}</Text>
+                <View style={styles.stepRow}>
+                  <Text style={[type.meta, { color: colors.mute }]}>Re-teach: </Text>
+                  <View style={styles.stepBody}>
+                    <MathText style={type.meta} color={colors.mute}>
+                      {draft.reteach}
+                    </MathText>
+                  </View>
+                </View>
               ) : null}
             </>
           )}
@@ -170,4 +183,6 @@ export function ExplainDraftCard(props: Props) {
 const styles = StyleSheet.create({
   wrap: { gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
   row: { gap: 8 },
+  stepRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
+  stepBody: { flex: 1, minWidth: 0 },
 });

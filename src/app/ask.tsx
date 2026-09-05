@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
+import { MathText } from '@/components/ui/MathText';
 import { MessageComposer } from '@/components/ui/MessageComposer';
 import { MessagePayloadView } from '@/components/ui/MessageAttach';
 import { Screen } from '@/components/ui/Screen';
@@ -234,7 +235,9 @@ export default function AskScreen() {
               </Text>
             </View>
           ) : (
-            <Text style={[type.body, { color: colors.ink }]}>{item.text}</Text>
+            <MathText style={type.body} color={colors.ink}>
+              {item.text}
+            </MathText>
           )}
         </View>
       ))}
