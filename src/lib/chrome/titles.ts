@@ -17,6 +17,7 @@ export function headerTitleFor(input: {
   if (pathname === '/proposal') return 'Look at this';
   if (pathname === '/feed') return named || 'Feed';
   if (pathname === '/activity') return 'Activity';
+  if (pathname === '/diary') return named || 'Diary';
   if (pathname === '/password') return 'Password';
   if (pathname === '/messages/new') return named || 'New Message';
   if (pathname.startsWith('/messages/info/')) return named || 'Details';

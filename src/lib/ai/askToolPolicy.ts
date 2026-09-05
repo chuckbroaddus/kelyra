@@ -86,6 +86,7 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   add_thread_member: { capability: 'messages.use', need: null },
   unlink_parent_student: { capability: 'accounts.link_parent', need: null, officeOnly: true },
   set_parent_card_link: { capability: 'accounts.link_parent', need: null, officeOnly: true },
+  draft_diary_entry: { capability: 'diary.draft', need: 'own' },
 };
 
 export type AskActorProfile = ProfileHats & {

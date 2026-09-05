@@ -56,6 +56,7 @@ import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, Studen
 
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
 import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
+import { parkPendingDiaryDraft } from '@/lib/diary/api';
 import {
   attachExplainAsNote,
   discardExplainDraft,
@@ -2217,6 +2218,42 @@ const TOOLS: Record<string, AskToolSpec> = {
     },
   },
 
+  draft_diary_entry: {
+    capability: 'diary.draft',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'draft_diary_entry',
+      description:
+        'Draft a private diary journal entry for the signed-in owner. Returns title/body/entry_date only. Never inserts, never Approves grades, never creates classes, never writes ledger. User must open Diary and Save.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          body: { type: 'string' },
+          entry_date: { type: 'string', description: 'YYYY-MM-DD; default today' },
+        },
+        required: ['body'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.profile?.id) return { error: 'Sign in first.' };
+      if (ctx.profile.role === 'student') return { error: 'Students do not have Diary.' };
+      const body = str(args, 'body');
+      if (!body) return { error: 'Need a body for the diary draft.' };
+      const title = str(args, 'title') || null;
+      const entry_date = str(args, 'entry_date') || new Date().toISOString().slice(0, 10);
+      const draft = { title, body, entry_date };
+      await parkPendingDiaryDraft(ctx.profile.id, draft);
+      return {
+        ...draft,
+        parked: true,
+        href: '/diary',
+        note: 'Draft parked in Diary composer. User must Save. Nothing was inserted.',
+      };
+    },
+  },
 
 };
 

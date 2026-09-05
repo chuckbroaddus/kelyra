@@ -94,6 +94,7 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   add_thread_member: { capability: 'messages.use', need: null },
   unlink_parent_student: { capability: 'accounts.link_parent', need: null, officeOnly: true },
   set_parent_card_link: { capability: 'accounts.link_parent', need: null, officeOnly: true },
+  draft_diary_entry: { capability: 'diary.draft', need: 'own' },
 };
 
 /** Product defaults for capabilities Ask tools reference (subset of matrix CAPABILITIES). */
@@ -118,6 +119,7 @@ const ASK_CAPABILITY_DEFAULTS: GrantMap = {
   'capture.use': { superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
   'messages.use': { superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
   'audit.view': { superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  'diary.draft': { superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
   'capture.approve': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   'roster.delete': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   'classes.delete': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },

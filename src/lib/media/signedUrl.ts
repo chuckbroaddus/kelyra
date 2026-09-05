@@ -12,7 +12,7 @@ const STORAGE_KEY_PREFIX = 'kelyra.signed-urls.v1';
 const SIGN_TTL_SEC = 3600;
 const REFRESH_MS = 5 * 60 * 1000;
 
-type Bucket = 'photos' | 'audio' | 'files';
+type Bucket = 'photos' | 'audio' | 'files' | 'diary';
 type Entry = { url: string; exp: number };
 
 let memory = new Map<string, Entry>();

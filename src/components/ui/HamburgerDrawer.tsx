@@ -339,6 +339,7 @@ export function HamburgerDrawer() {
                     <>
                       {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
                       {matches('Activity', q) && can(profile, 'audit.view', 'school', grants) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
+                      {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
                       {matches('Messages', q) ? <DrawerRow label="Messages" onPress={() => go('/messages')} /> : null}
                       {matches('Responsibilities', q) && can(profile, 'school.matrix', 'all', grants) ? (
                         <DrawerRow label="Responsibilities" onPress={() => go('/admin/matrix')} />
@@ -399,6 +400,7 @@ export function HamburgerDrawer() {
               {officeSeat && profile?.role !== 'superintendent' && matches('Feed', q) ? (
                 <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
               ) : null}
+              {!officeSeat && matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
               <Hairline />
               {matches('Sign out', q) ? (
               <DrawerRow
@@ -471,6 +473,7 @@ export function HamburgerDrawer() {
               {matches('My children', q) ? (
                 <DrawerRow label="My children" onPress={() => go('/parent')} />
               ) : null}
+              {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
               {matches('Sign out', q) ? (
                 <DrawerRow
                   label="Sign out"
