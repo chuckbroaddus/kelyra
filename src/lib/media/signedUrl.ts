@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { allowOriginalPhotoFallback, originalStoragePath, thumbStoragePath } from '@/lib/media/paths';
 import { requireSupabase } from '@/lib/supabase/client';
 
-const STORAGE_KEY = 'kelyra.signed-urls.v1';
+const STORAGE_KEY_PREFIX = 'kelyra.signed-urls.v1';
 const SIGN_TTL_SEC = 3600;
 const REFRESH_MS = 5 * 60 * 1000;
 
@@ -16,6 +16,29 @@ let hydrated = false;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 const inflight = new Map<string, Promise<Map<string, string>>>();
 const MISS_MS = 10 * 60 * 1000;
+/** Auth user id the in-memory + disk cache is bound to (null = logged out / cleared). */
+let cacheUserId: string | null = null;
+
+function diskKeyFor(userId: string | null): string | null {
+  if (!userId) return null;
+  return `${STORAGE_KEY_PREFIX}:${userId}`;
+}
+
+async function removeAllSignedUrlDiskKeys(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const ours = keys.filter(
+      (key) => key === STORAGE_KEY_PREFIX || key.startsWith(`${STORAGE_KEY_PREFIX}:`),
+    );
+    if (ours.length) await AsyncStorage.multiRemove(ours);
+  } catch {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY_PREFIX);
+    } catch {
+      // Local cache only.
+    }
+  }
+}
 
 function cacheId(bucket: Bucket, path: string): string {
   return `${bucket}:${path}`;
@@ -24,8 +47,10 @@ function cacheId(bucket: Bucket, path: string): string {
 async function hydrate(): Promise<void> {
   if (hydrated) return;
   hydrated = true;
+  const diskKey = diskKeyFor(cacheUserId);
+  if (!diskKey) return;
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(diskKey);
     if (!raw) return;
     const parsed = JSON.parse(raw) as Record<string, Entry>;
     const now = Date.now();
@@ -48,7 +73,8 @@ function schedulePersist(): void {
     for (const [key, value] of memory) {
       if (value.exp > now) obj[key] = value;
     }
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(obj)).catch(() => undefined);
+    const diskKey = diskKeyFor(cacheUserId);
+    if (diskKey) void AsyncStorage.setItem(diskKey, JSON.stringify(obj)).catch(() => undefined);
   }, 200);
 }
 
@@ -65,8 +91,29 @@ export async function clearSignedUrlCache(): Promise<void> {
   memory = new Map();
   missingUntil.clear();
   hydrated = true;
+  cacheUserId = null;
+  await removeAllSignedUrlDiskKeys();
+}
+
+/**
+ * Bind the signed-URL cache to an auth user (or clear when session is null / SIGNED_OUT).
+ * Prefer scoping disk keys by user id so a prior session cannot leak URLs.
+ */
+export async function bindSignedUrlCacheUser(userId: string | null | undefined): Promise<void> {
+  const next = userId || null;
+  if (next === cacheUserId && (next != null || hydrated)) return;
+  memory = new Map();
+  missingUntil.clear();
+  hydrated = false;
+  cacheUserId = next;
+  if (!next) {
+    hydrated = true;
+    await removeAllSignedUrlDiskKeys();
+    return;
+  }
+  // Drop legacy unscoped key so old sessions cannot resurrect cross-user URLs.
   try {
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await AsyncStorage.removeItem(STORAGE_KEY_PREFIX);
   } catch {
     // Local cache only.
   }
