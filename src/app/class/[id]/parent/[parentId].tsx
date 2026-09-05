@@ -45,7 +45,7 @@ import {
   uploadProfilePhoto,
 } from '@/lib/people/photos';
 import { listProfiles, setParentCardLink } from '@/lib/school/api';
-import { formatHandle, isAdminRole } from '@/lib/school/roles';
+import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { listStudentsForLinking } from '@/lib/students/api';
 import type { ParentRow, ProfileRow, StudentRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -70,7 +70,7 @@ export default function ParentPage() {
   const { colors } = useTheme();
   const router = useRouter();
   const { teacher, profile } = useAuth();
-  const canLinkChildren = isAdminRole(profile);
+  const canLinkChildren = isOfficeRole(profile);
   const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { id: classId, parentId } = useLocalSearchParams<{ id: string; parentId: string }>();
   const [parent, setParent] = useState<ParentRow | null>(null);

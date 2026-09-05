@@ -141,3 +141,18 @@ test('Q8 askPrompt: teachers told not to mint family links; photo map office-gat
   assert.match(prompt, /link_parent_student only if that tool is listed \(office\)/);
   assert.match(prompt, /never mint the family link/);
 });
+
+
+test('F05 UI: parent card canLinkChildren is isOfficeRole, not isAdminRole', () => {
+  const src = read('src/app/class/[id]/parent/[parentId].tsx');
+  assert.match(src, /canLinkChildren\s*=\s*isOfficeRole\(profile\)/);
+  assert.doesNotMatch(src, /canLinkChildren\s*=\s*isAdminRole\(profile\)/);
+  assert.match(src, /import \{[^}]*isOfficeRole[^}]*\} from '@\/lib\/school\/roles'/);
+});
+
+test('F05 UI: student card canLinkParents is isOfficeRole, not isAdminRole', () => {
+  const src = read('src/app/class/[id]/student/[studentId].tsx');
+  assert.match(src, /canLinkParents\s*=\s*isOfficeRole\(profile\)/);
+  assert.doesNotMatch(src, /canLinkParents\s*=\s*isAdminRole\(profile\)/);
+  assert.match(src, /import \{[^}]*isOfficeRole[^}]*\} from '@\/lib\/school\/roles'/);
+});
