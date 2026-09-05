@@ -155,7 +155,9 @@ export default function StudentPracticeScreen() {
         <View key={practiceItem.id} style={styles.item}>
           <Text style={[styles.gutter, { color: colors.mute }]}>{index + 1}.</Text>
           <View style={styles.prompt}>
-            <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
+            <MathText style={type.body} color={colors.ink}>
+              {practiceItem.prompt}
+            </MathText>
             {open ? (
               <TextField
                 placeholder="Your answer"

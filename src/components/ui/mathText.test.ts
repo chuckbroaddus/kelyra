@@ -14,7 +14,12 @@ import {
   splitMathSegments,
   splitProseBlocks,
 } from './mathTextCore.ts';
-import { KATEX_MIN_CSS, KATEX_MIN_CSS_NATIVE, katexCssWithoutFontFace } from './katexMinCss.ts';
+import {
+  KATEX_MIN_CSS,
+  KATEX_MIN_CSS_NATIVE,
+  katexCssWithDataWoff2,
+  katexCssWithoutFontFace,
+} from './katexMinCss.ts';
 
 const root = join(import.meta.dirname, '../../..');
 
@@ -181,6 +186,33 @@ test('MATHUI L-04: same renderer on Explain / Help / notes', () => {
   assert.match(read('src/app/class/[id]/student/[studentId].tsx'), /teacher_note/);
 });
 
+test('MATHUI surfaces: no Explain numbered-row fork; practice prompts + payload body use MathText', () => {
+  const explain = read('src/components/ui/ExplainDraftCard.tsx');
+  assert.doesNotMatch(explain, /stepRow/);
+  assert.doesNotMatch(explain, /\{i \+ 1\}\.\s*</);
+  assert.doesNotMatch(explain, /flexDirection:\s*['"]row['"]/);
+  assert.match(explain, /draft\.steps\.map\(\(step, i\) => `\$\{i \+ 1\}\. \$\{step\}`\)\.join\('\\n'\)/);
+
+  const help = read('src/app/todo/[submissionId].tsx');
+  assert.match(help, /<MathText[\s\S]*?\{practiceItem\.prompt\}/);
+  assert.doesNotMatch(help, /<Text[^>]*>\{practiceItem\.prompt\}<\/Text>/);
+
+  const notes = read('src/app/class/[id]/student/[studentId].tsx');
+  assert.match(notes, /<MathText[\s\S]*?\{practiceItem\.prompt\}/);
+  assert.match(notes, /teacher_note \? <MathText/);
+
+  const payload = read('src/components/ui/MessageAttach.tsx');
+  assert.match(payload, /from '@\/components\/ui\/MathText'/);
+  assert.match(
+    payload,
+    /Shared work<\/Text>\s*<MathText style=\{type\.body\} color=\{colors\.ink\}>\s*\{body\}\s*<\/MathText>/,
+  );
+  // Link caption: MathText when body is distinct from title chrome (mirror photo/file)
+  assert.match(payload, /body && body !== payload\.title \?[\s\S]*?<MathText style=\{type\.body\} color=\{colors\.ink\}>/);
+  assert.match(payload, /body && body !== 'Photo' \?[\s\S]*?<MathText/);
+  assert.match(payload, /body && body !== payload\.name \?[\s\S]*?<MathText/);
+});
+
 test('MATHUI L-05 / LATEX XSS P0 still pass via prose HTML', () => {
   const blocks = splitProseBlocks('1. <script>alert(1)</script>\n2. ok $\\frac{1}{2}$');
   const html = renderProseBodyHtml(blocks);
@@ -262,12 +294,32 @@ test('MATHUI native: WebView width/maxWidth, layout width inject, swipe overflow
   assert.doesNotMatch(native, /file:/);
 });
 
-test('MATHUI native: katex CSS strips @font-face for about:blank', () => {
+test('MATHUI native: katex CSS embeds data: woff2 (about:blank-safe)', () => {
   assert.match(KATEX_MIN_CSS, /@font-face/);
-  assert.doesNotMatch(KATEX_MIN_CSS_NATIVE, /@font-face/);
+  assert.match(KATEX_MIN_CSS, /url\(fonts\/KaTeX_/);
+  // Native must keep @font-face with offline data URLs — not strip faces (invisible glyphs)
+  assert.match(KATEX_MIN_CSS_NATIVE, /@font-face/);
+  assert.match(KATEX_MIN_CSS_NATIVE, /data:font\/woff2;base64,/);
+  assert.doesNotMatch(KATEX_MIN_CSS_NATIVE, /url\(fonts\//);
+  assert.doesNotMatch(KATEX_MIN_CSS_NATIVE, /https?:\/\//);
+  // Main + Math faces present (glyphs for X^n etc.)
+  assert.match(KATEX_MIN_CSS_NATIVE, /font-family:KaTeX_Main/);
+  assert.match(KATEX_MIN_CSS_NATIVE, /font-family:KaTeX_Math/);
+  // Transform helper: embed + drop woff/ttf fallbacks
+  const sample =
+    '@font-face{font-family:X;src:url(fonts/X.woff2) format("woff2"),url(fonts/X.woff) format("woff"),url(fonts/X.ttf) format("truetype")}.katex{}';
+  assert.equal(
+    katexCssWithDataWoff2(sample, { 'X.woff2': 'AAA' }),
+    '@font-face{font-family:X;src:url(data:font/woff2;base64,AAA) format("woff2")}.katex{}',
+  );
+  // Strip helper still available (not used for native stylesheet)
   assert.equal(katexCssWithoutFontFace('@font-face{font-family:X;src:url(a)} .katex{}'), ' .katex{}');
   // Web stylesheet unchanged for MathText.web
   const mathWeb = read('src/components/ui/MathText.web.tsx');
   assert.match(mathWeb, /KATEX_MIN_CSS/);
   assert.doesNotMatch(mathWeb, /KATEX_MIN_CSS_NATIVE/);
+  // Native document uses the data-font stylesheet
+  const native = read('src/components/ui/MathText.tsx');
+  assert.match(native, /KATEX_MIN_CSS_NATIVE/);
+  assert.doesNotMatch(native, /katexCssWithoutFontFace/);
 });

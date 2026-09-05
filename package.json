@@ -12,6 +12,7 @@
     "lesson:dev": "node scripts/lesson-dev-server.mjs",
     "typecheck": "tsc --noEmit",
     "icons": "node scripts/build-icons.mjs",
+    "katex-native-css": "node scripts/build-katex-native-css.mjs",
     "thumbs": "node scripts/backfill-photo-thumbs.mjs",
     "pptx:extract": "node scripts/extract-pptx.mjs",
     "pptx:lesson": "node scripts/lesson-from-pptx.mjs"

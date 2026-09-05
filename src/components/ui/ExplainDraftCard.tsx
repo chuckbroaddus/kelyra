@@ -135,25 +135,18 @@ export function ExplainDraftCard(props: Props) {
             </>
           ) : (
             <>
-              {draft.steps.map((step, i) => (
-                <View key={`step-${i}`} style={styles.stepRow}>
-                  <Text style={[type.body, { color: colors.ink }]}>{i + 1}. </Text>
-                  <View style={styles.stepBody}>
-                    <MathText style={type.body} color={colors.ink}>
-                      {step}
-                    </MathText>
-                  </View>
-                </View>
-              ))}
+              {draft.steps.length > 0 ? (
+                <MathText style={type.body} color={colors.ink}>
+                  {draft.steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+                </MathText>
+              ) : null}
               {draft.reteach ? (
-                <View style={styles.stepRow}>
-                  <Text style={[type.meta, { color: colors.mute }]}>Re-teach: </Text>
-                  <View style={styles.stepBody}>
-                    <MathText style={type.meta} color={colors.mute}>
-                      {draft.reteach}
-                    </MathText>
-                  </View>
-                </View>
+                <>
+                  <Text style={[type.meta, { color: colors.mute }]}>Re-teach</Text>
+                  <MathText style={type.meta} color={colors.mute}>
+                    {draft.reteach}
+                  </MathText>
+                </>
               ) : null}
             </>
           )}
@@ -183,6 +176,4 @@ export function ExplainDraftCard(props: Props) {
 const styles = StyleSheet.create({
   wrap: { gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
   row: { gap: 8 },
-  stepRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
-  stepBody: { flex: 1, minWidth: 0 },
 });

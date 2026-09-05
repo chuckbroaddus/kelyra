@@ -1144,7 +1144,9 @@ export default function StudentScreen() {
                       </>
                     ) : (
                       <>
-                        <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
+                        <MathText style={type.body} color={colors.ink}>
+                          {practiceItem.prompt}
+                        </MathText>
                         {!isOpenWork(item.status) ? (
                           <Text style={[type.meta, { color: colors.mute }]}>
                             {answerText(item.answers, practiceItem.id) || 'No answer'}
