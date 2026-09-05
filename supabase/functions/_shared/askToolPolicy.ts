@@ -75,6 +75,25 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   list_threads: { capability: 'messages.use', need: null },
   list_thread_messages: { capability: 'messages.use', need: null },
   send_message: { capability: 'messages.use', need: null },
+  // A4 write/admin wrappers (JWT APIs only; also_administrator is not office)
+  approve_capture: { capability: 'capture.approve', need: null },
+  delete_capture: { capability: 'capture.approve', need: null },
+  delete_gap: { capability: 'capture.approve', need: null },
+  delete_student: { capability: 'roster.delete', need: null },
+  delete_class: { capability: 'classes.delete', need: null },
+  delete_parent: { capability: 'parents.invite', need: null },
+  admin_create_login: { capability: 'accounts.create', need: null, officeOnly: true },
+  set_also_hat: { capability: 'accounts.hats', need: null, officeOnly: true },
+  set_also_parent: { capability: 'accounts.hats', need: null, officeOnly: true },
+  provision_student_login: { capability: 'accounts.create', need: null, officeOnly: true },
+  provision_parent_login: { capability: 'accounts.create', need: null, officeOnly: true },
+  claim_superintendent: { capability: null, need: null, officeOnly: true },
+  set_capability_grant: { capability: 'school.matrix', need: null },
+  set_school_name: { capability: 'school.identity', need: null },
+  set_school_logo: { capability: 'school.identity', need: null },
+  add_thread_member: { capability: 'messages.use', need: null },
+  unlink_parent_student: { capability: 'accounts.link_parent', need: null, officeOnly: true },
+  set_parent_card_link: { capability: 'accounts.link_parent', need: null, officeOnly: true },
 };
 
 /** Product defaults for capabilities Ask tools reference (subset of matrix CAPABILITIES). */
@@ -99,6 +118,13 @@ const ASK_CAPABILITY_DEFAULTS: GrantMap = {
   'capture.use': { superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
   'messages.use': { superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
   'audit.view': { superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  'capture.approve': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  'roster.delete': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  'classes.delete': { superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  'accounts.create': { superintendent: 'all', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  'accounts.hats': { superintendent: 'all', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
+  'school.matrix': { superintendent: 'all', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
+  'school.identity': { superintendent: 'all', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
 
 };
 
