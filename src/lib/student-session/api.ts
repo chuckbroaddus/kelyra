@@ -40,6 +40,7 @@ export type StudentTodo = {
   items: PracticeItem[];
   answers: Record<string, unknown>;
   focusLabel: string | null;
+  helpMode: 'off' | 'hints' | 'steps_after_try' | 'check_work';
 };
 
 type CacheBox<T> = { value: T | null; inflight: Promise<T> | null };
@@ -138,6 +139,9 @@ export async function listStudentTodo(): Promise<StudentTodo[]> {
       items: row.items ?? [],
       answers: row.answers ?? {},
       focusLabel: row.focus_label,
+      helpMode: (row.help_mode === 'hints' || row.help_mode === 'steps_after_try' || row.help_mode === 'check_work'
+        ? row.help_mode
+        : 'off'),
     }));
   });
 }

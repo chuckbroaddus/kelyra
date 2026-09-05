@@ -41,16 +41,16 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-test('GAUTH-S1-02 explain.manage teacher own; parent/student/office none', () => {
+test('GAUTH-S1-02 explain.manage teacher own; parent linked-child own; student/office none', () => {
   const matrix = read('src/lib/school/matrix.ts');
   assert.match(
     matrix,
-    /id:\s*'explain\.manage'[\s\S]*?superintendent:\s*'none'[\s\S]*?administrator:\s*'none'[\s\S]*?teacher:\s*'own'[\s\S]*?parent:\s*'none'[\s\S]*?student:\s*'none'/,
+    /id:\s*'explain\.manage'[\s\S]*?superintendent:\s*'none'[\s\S]*?administrator:\s*'none'[\s\S]*?teacher:\s*'own'[\s\S]*?parent:\s*'own'[\s\S]*?student:\s*'none'/,
   );
   assert.doesNotMatch(matrix, /id:\s*'explain\.manage'[\s\S]*?assignments\.manage/);
   assert.equal(grants['explain.manage']?.teacher, 'own');
   assert.equal(grants['explain.manage']?.student, 'none');
-  assert.equal(grants['explain.manage']?.parent, 'none');
+  assert.equal(grants['explain.manage']?.parent, 'own');
   assert.equal(grants['explain.manage']?.administrator, 'none');
 });
 
@@ -64,7 +64,7 @@ test('GAUTH-S1-03 twin maps + never-register list + unknown denied', () => {
     assert.equal(ASK_TOOL_POLICY[name]?.capability, 'explain.manage');
     assert.equal(isAskToolAllowed(name, { role: 'teacher' }, grants), true);
     assert.equal(isAskToolAllowed(name, { role: 'student' }, grants), false);
-    assert.equal(isAskToolAllowed(name, { role: 'parent' }, grants), false);
+    assert.equal(isAskToolAllowed(name, { role: 'parent' }, grants), name === 'explain_capture');
     assert.equal(isAskToolAllowed(name, { role: 'administrator' }, grants), false);
     assert.equal(isAskToolAllowed(name, { role: 'teacher', also_administrator: true }, grants), true);
   }
@@ -88,7 +88,7 @@ test('GAUTH-S1-01 refuse-before-vendor; no vision family; no partial hint', () =
   );
   assert.equal(
     shouldRefuseAskBeforeVendor({ role: 'parent', text: 'check my work on tonight homework', hasImage: false }),
-    true,
+    false,
   );
   assert.equal(
     shouldRefuseAskBeforeVendor({ role: 'teacher', text: 'solve this quiz', hasImage: true }),
@@ -142,15 +142,15 @@ test('GAUTH-S1-04 family DTO omits explain_draft / extract / draft_score / origi
   assert.match(migration, /Family must never SELECT|family RPCs omit/i);
 });
 
-test('GAUTH-S1-05 explain-capture class_teachers before media/vendor', () => {
+test('GAUTH-S1-05 explain-capture seat wall before media/vendor', () => {
   const edge = read('supabase/functions/explain-capture/index.ts');
-  assert.match(edge, /class_teachers/);
+  assert.match(edge, /class_teachers|gauth_load_explain_capture/);
   assert.match(edge, /isAllowedAskImageUrl/);
   assert.match(edge, /park_explain_draft/);
   assert.doesNotMatch(edge, /approved_score\s*=/);
   assert.doesNotMatch(edge, /EXPO_PUBLIC_/);
   const serve = edge.slice(edge.indexOf('Deno.serve'));
-  const taughtAt = serve.indexOf('class_teachers');
+  const taughtAt = Math.max(serve.indexOf('class_teachers'), serve.indexOf('gauth_load_explain_capture'));
   const meteredAt = serve.indexOf('callMetered');
   const signedAt = serve.indexOf('createSignedUrl');
   assert.ok(taughtAt > 0, 'class_teachers missing');
@@ -161,16 +161,19 @@ test('GAUTH-S1-05 explain-capture class_teachers before media/vendor', () => {
   const dev = read('scripts/ai-dev-server.mjs');
   assert.match(dev, /async function explainCapture/);
   const fn = dev.slice(dev.indexOf('async function explainCapture'), dev.indexOf('async function parseClassSyllabus'));
-  assert.ok(fn.indexOf('class_teachers') > 0, 'dev explainCapture missing class_teachers');
-  assert.ok(fn.indexOf('class_teachers') < fn.indexOf('grokCall'), 'dev authz before grokCall');
+  assert.ok(fn.indexOf('class_teachers') > 0 || fn.indexOf('gauth_load_explain_capture') > 0, 'dev explainCapture missing wall');
+  const authzAt = Math.max(fn.indexOf('class_teachers'), fn.indexOf('gauth_load_explain_capture'));
+  assert.ok(authzAt < fn.indexOf('grokCall'), 'dev authz before grokCall');
 });
 
-test('GAUTH-S1-06 ignore body.role; dual-hat parent denied explain tools', () => {
+test('GAUTH-S1-06 ignore body.role; dual-hat follows active seat', () => {
   const edge = read('supabase/functions/ask-assistant/index.ts');
   assert.doesNotMatch(edge, /body\.role\b/);
   assert.match(edge, /filterAskToolDefs/);
   const parentTeacher = { role: 'parent' as const, also_teacher: true };
-  assert.equal(isAskToolAllowed('explain_capture', parentTeacher, grants), false);
+  assert.equal(isAskToolAllowed('explain_capture', parentTeacher, grants), true);
+  assert.equal(isAskToolAllowed('discard_explain_draft', parentTeacher, grants), false);
+  assert.equal(isAskToolAllowed('attach_explain_as_note', parentTeacher, grants), false);
   const teacherParent = { role: 'teacher' as const, parent_id: 'p1' };
   assert.equal(isAskToolAllowed('explain_capture', teacherParent, grants), true);
 });
@@ -213,16 +216,19 @@ test('GAUTH-S1-10/12/14 ask_messages hygiene + actor line + on-demand Explain', 
   assert.match(policy, /askActorSystemLine/);
 });
 
-test('GAUTH G2 help_mode default off; assign form chips; no G4 player', () => {
+test('GAUTH G2 help_mode default off; assign form chips; G4 player + Edge', () => {
   const sql = read('supabase/migrations/20260904000000_gauth_v1.sql');
   assert.match(sql, /help_mode text not null default 'off'/);
   assert.match(sql, /off.*hints.*steps_after_try.*check_work/s);
   const form = read('src/components/ui/AssignmentForm.tsx');
   assert.match(form, /Student help/);
   assert.match(form, /helpMode: 'off'/);
-  assert.doesNotMatch(form, /Practice Help player|Snap & Solve/);
-  // No Help Edge in this card
-  assert.equal(existsSync(join(root, 'supabase/functions/practice-help/index.ts')), false);
+  assert.doesNotMatch(form, /Snap & Solve/);
+  // G4 Practice Help Edge + player
+  assert.equal(existsSync(join(root, 'supabase/functions/practice-help/index.ts')), true);
+  const player = read('src/app/todo/[submissionId].tsx');
+  assert.match(player, /requestPracticeHelp/);
+  assert.match(player, /helpMode/);
 });
 
 test('GAUTH G3 refusal copy exact', () => {
@@ -245,4 +251,62 @@ test('GAUTH policy twins still sync for explain tools', () => {
     assert.match(client, new RegExp(`${name}:`));
     assert.match(edge, new RegExp(`${name}:`));
   }
+});
+
+test('GAUTH-S1-15 Practice Help separate Edge; student JWT; help_mode re-read', () => {
+  const edge = read('supabase/functions/practice-help/index.ts');
+  assert.match(edge, /role !== "student"/);
+  assert.match(edge, /student_me/);
+  assert.match(edge, /help_mode/);
+  assert.match(edge, /helpMode === "off"/);
+  assert.doesNotMatch(edge, /ASK_TOOL_POLICY|explain_capture/);
+  const toml = read('supabase/config.toml');
+  assert.match(toml, /\[functions\.practice-help\]\s*\nverify_jwt\s*=\s*true/);
+  assert.equal('check_work' in ASK_TOOL_POLICY, false);
+  assert.ok(isNeverAskTool('check_work'));
+});
+
+test('GAUTH-S1-16 Help denied on graded capture; no bulk key; default off', () => {
+  const edge = read('supabase/functions/practice-help/index.ts');
+  assert.match(edge, /kind !== "practice"/);
+  assert.match(edge, /never return bulk key|only this item/i);
+  const sql = read('supabase/migrations/20260905000000_gauth_v1_1.sql');
+  assert.match(sql, /answerKey/);
+  assert.match(sql, /help_mode/);
+  const player = read('src/app/todo/[submissionId].tsx');
+  assert.doesNotMatch(player, /answerKey|answer_key/);
+});
+
+test('GAUTH-S1-17 attempt gate; parent deny Help; no approved_score write', () => {
+  const edge = read('supabase/functions/practice-help/index.ts');
+  assert.match(edge, /attempt_gate/);
+  assert.match(edge, /Try the item first/);
+  assert.match(edge, /approved_score_written: false/);
+  assert.doesNotMatch(edge, /approved_score\s*=/);
+  assert.match(edge, /Practice Help is only for the signed-in student/);
+  const migration = read('supabase/migrations/20260905000000_gauth_v1_1.sql');
+  assert.match(migration, /parent_of/);
+  assert.match(migration, /gauth_load_explain_capture/);
+});
+
+test('GAUTH v1.1 parent co-teacher linked child; twins not mixed in loader', () => {
+  const sql = read('supabase/migrations/20260905000000_gauth_v1_1.sql');
+  assert.match(sql, /parent_students/);
+  assert.match(sql, /ps\.student_id = p_student_id/);
+  assert.match(sql, /prof\.role = 'parent'/);
+  assert.match(sql, /prof\.role = 'teacher'/);
+  const edge = read('supabase/functions/explain-capture/index.ts');
+  assert.match(edge, /linked child/);
+  assert.match(edge, /ephemeral/);
+});
+
+test('GAUTH v1.1 student still refuse-before-vendor on graded solve', () => {
+  assert.equal(
+    shouldRefuseAskBeforeVendor({ role: 'student', text: 'solve this quiz for me', hasImage: false }),
+    true,
+  );
+  assert.equal(
+    shouldRefuseAskBeforeVendor({ role: 'student', text: 'hello', hasImage: true }),
+    true,
+  );
 });

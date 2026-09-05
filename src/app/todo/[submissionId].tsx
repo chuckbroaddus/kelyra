@@ -3,6 +3,8 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { ChipRow } from '@/components/ui/ChipRow';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
@@ -10,8 +12,10 @@ import { type } from '@/constants/theme';
 import { isOpenWork } from '@/lib/assignments/status';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { practiceTitle } from '@/lib/practice/api';
+import { requestPracticeHelp, type PracticeHelpAction } from '@/lib/practice/helpApi';
 import {
   listStudentTodo,
+  loadStudentSession,
   markStudentWorkStarted,
   submitStudentTodo,
   type StudentTodo,
@@ -24,16 +28,20 @@ export default function StudentPracticeScreen() {
   const { setContextTab } = useChrome();
   const { submissionId } = useLocalSearchParams<{ submissionId: string }>();
   const [item, setItem] = useState<StudentTodo | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<string | null>(null);
+  const [helpText, setHelpText] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [helpBusy, setHelpBusy] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   usePushedTitle(item ? practiceTitle(item.title) : 'Practice');
 
   const load = useCallback(async () => {
     if (!submissionId) return;
-    const todo = await listStudentTodo();
+    const [todo, session] = await Promise.all([listStudentTodo(), loadStudentSession()]);
+    setStudentId(session?.studentId ?? null);
     const next = todo.find((row) => row.submissionId === submissionId) ?? null;
     setItem(next);
     if (!next) return;
@@ -85,6 +93,32 @@ export default function StudentPracticeScreen() {
     }
   };
 
+  const onHelp = async (practiceItemId: string, action: PracticeHelpAction) => {
+    if (!item || !studentId) return;
+    setHelpBusy(`${practiceItemId}:${action}`);
+    setStatus(null);
+    try {
+      const result = await requestPracticeHelp({
+        assignmentId: item.assignmentId,
+        studentId,
+        itemId: practiceItemId,
+        action,
+        attemptText: answers[practiceItemId] ?? '',
+      });
+      if (result.error || result.refused) {
+        setStatus(result.error ?? 'Help is not available right now.');
+        return;
+      }
+      if (result.text) {
+        setHelpText((current) => ({ ...current, [practiceItemId]: result.text! }));
+      }
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not get help');
+    } finally {
+      setHelpBusy(null);
+    }
+  };
+
   if (!ready) {
     return (
       <Screen maxWidth={640} centered>
@@ -103,6 +137,7 @@ export default function StudentPracticeScreen() {
   }
 
   const open = isOpenWork(item.status);
+  const helpOn = item.kind === 'practice' && item.helpMode && item.helpMode !== 'off';
 
   return (
     <Screen
@@ -129,6 +164,32 @@ export default function StudentPracticeScreen() {
             ) : (
               <Text style={[type.meta, { color: colors.mute }]}>{answers[practiceItem.id] || 'No answer'}</Text>
             )}
+            {helpOn && open ? (
+              <ChipRow>
+                <Chip
+                  label={helpBusy === `${practiceItem.id}:hint` ? 'Hint…' : 'Hint'}
+                  disabled={Boolean(helpBusy)}
+                  onPress={() => void onHelp(practiceItem.id, 'hint')}
+                />
+                {(item.helpMode === 'steps_after_try' || item.helpMode === 'check_work') ? (
+                  <Chip
+                    label={helpBusy === `${practiceItem.id}:next_step` ? 'Step…' : 'Next step'}
+                    disabled={Boolean(helpBusy)}
+                    onPress={() => void onHelp(practiceItem.id, 'next_step')}
+                  />
+                ) : null}
+                {item.helpMode === 'check_work' ? (
+                  <Chip
+                    label={helpBusy === `${practiceItem.id}:check_work` ? 'Checking…' : 'Check work'}
+                    disabled={Boolean(helpBusy)}
+                    onPress={() => void onHelp(practiceItem.id, 'check_work')}
+                  />
+                ) : null}
+              </ChipRow>
+            ) : null}
+            {helpText[practiceItem.id] ? (
+              <Text style={[type.meta, { color: colors.ink }]}>{helpText[practiceItem.id]}</Text>
+            ) : null}
           </View>
         </View>
       ))}

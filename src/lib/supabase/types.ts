@@ -795,6 +795,7 @@ export type Database = {
           items: PracticeItem[] | null;
           answers: Record<string, unknown> | null;
           focus_label: string | null;
+          help_mode: string | null;
         }[];
       };
       student_classes: {
@@ -1159,6 +1160,8 @@ export type Database = {
         Returns: string;
       };
       class_teacher_of: { Args: { p_class_id: string }; Returns: boolean };
+      parent_of: { Args: { p_student_id: string }; Returns: boolean };
+      gauth_load_explain_capture: { Args: { p_capture_id: string }; Returns: Record<string, unknown> };
       park_explain_draft: {
         Args: { p_capture_id: string; p_draft: Record<string, unknown> };
         Returns: CaptureRow;

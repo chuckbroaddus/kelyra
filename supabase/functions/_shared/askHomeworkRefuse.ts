@@ -86,6 +86,9 @@ export function shouldRefuseAskBeforeVendor(input: {
   hasImage?: boolean;
   rawInput?: unknown;
 }): boolean {
+  // CEO v1.1: parent co-teacher may Ask step-by-step for linked children.
+  // Student seat keeps G0/G3 refuse-before-vendor. Token-only /parent never reaches Ask.
+  if (input.role === 'parent') return false;
   if (!isFamilyAskSeat(input.role)) return false;
   const text =
     (input.text && input.text.trim()) ||

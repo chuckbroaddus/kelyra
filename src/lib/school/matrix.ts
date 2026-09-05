@@ -65,7 +65,7 @@ export const CAPABILITIES: Capability[] = [
   { id: 'heatmap.view', area: 'Records', label: 'View heatmap', help: 'Who is stuck where.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   { id: 'assignments.manage', area: 'Records', label: 'Assignments', help: 'Keys, units, planned work.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'own' },
   { id: 'syllabus.manage', area: 'Records', label: 'Class syllabus', help: 'Category weights and grading policy for a taught class. Office none in v1.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
-  { id: 'explain.manage', area: 'Records', label: 'Teacher Explain', help: 'Park an explain draft on a taught-class capture. Not a grade. Parent/student/office none.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
+  { id: 'explain.manage', area: 'Records', label: 'Teacher Explain', help: 'Park an explain draft on a taught-class capture. Not a grade. Parent linked-child co-teacher own; student/office none.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'own', student: 'none' },
 
   { id: 'parents.view', area: 'Family', label: 'See parents', help: 'Parent people for a class.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'none' },
   { id: 'parents.invite', area: 'Family', label: 'Link a parent', help: 'Attach a parent login to a child.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
