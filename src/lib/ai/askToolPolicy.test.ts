@@ -185,3 +185,88 @@ test('A1 ask-assistant handlers filter by policy after getUser (not raw body.too
   assert.match(dev, /ask-assistant getUser=/);
   assert.match(dev, /from '\.\.\/supabase\/functions\/_shared\/askToolPolicy\.ts'/);
 });
+
+
+test('A4 approve/delete refuse student/parent; teacher capture.approve allowed', () => {
+  const teacher = { role: 'teacher' as const };
+  const student = { role: 'student' as const };
+  const parent = { role: 'parent' as const };
+  const admin = { role: 'administrator' as const };
+  for (const name of ['approve_capture', 'delete_capture', 'delete_gap']) {
+    assert.equal(isAskToolAllowed(name, teacher, grants), true);
+    assert.equal(isAskToolAllowed(name, student, grants), false);
+    assert.equal(isAskToolAllowed(name, parent, grants), false);
+    assert.equal(isAskToolAllowed(name, admin, grants), true);
+  }
+  for (const name of ['delete_student', 'delete_class', 'delete_parent']) {
+    assert.equal(isAskToolAllowed(name, student, grants), false);
+    assert.equal(isAskToolAllowed(name, parent, grants), false);
+    assert.equal(isAskToolAllowed(name, teacher, grants), true);
+  }
+});
+
+test('A4 office login/hats/provision; also_administrator is not office', () => {
+  const admin = { role: 'administrator' as const };
+  const superintend = { role: 'superintendent' as const };
+  const teacher = { role: 'teacher' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  const student = { role: 'student' as const };
+  const parent = { role: 'parent' as const };
+
+  for (const name of [
+    'admin_create_login',
+    'set_also_hat',
+    'set_also_parent',
+    'provision_student_login',
+    'provision_parent_login',
+    'claim_superintendent',
+    'unlink_parent_student',
+    'set_parent_card_link',
+  ]) {
+    assert.equal(isAskToolAllowed(name, admin, grants), true, name);
+    assert.equal(isAskToolAllowed(name, superintend, grants), true, name);
+    assert.equal(isAskToolAllowed(name, teacher, grants), false, name);
+    assert.equal(isAskToolAllowed(name, teacherAlsoAdmin, grants), false, `${name} also_administrator`);
+    assert.equal(isAskToolAllowed(name, student, grants), false, name);
+    assert.equal(isAskToolAllowed(name, parent, grants), false, name);
+  }
+
+  // create_class still office-only (teachers do not create classes)
+  assert.equal(isAskToolAllowed('create_class', teacher, grants), false);
+  assert.equal(isAskToolAllowed('create_class', teacherAlsoAdmin, grants), false);
+  assert.equal(isAskToolAllowed('create_class', admin, grants), true);
+});
+
+test('A4 school.identity / school.matrix superintendent; admin and also_administrator denied', () => {
+  const superintend = { role: 'superintendent' as const };
+  const admin = { role: 'administrator' as const };
+  const teacherAlsoAdmin = { role: 'teacher' as const, also_administrator: true };
+  for (const name of ['set_capability_grant', 'set_school_name', 'set_school_logo']) {
+    assert.equal(isAskToolAllowed(name, superintend, grants), true, name);
+    assert.equal(isAskToolAllowed(name, admin, grants), false, name);
+    assert.equal(isAskToolAllowed(name, teacherAlsoAdmin, grants), false, name);
+  }
+});
+
+test('A4 add_thread_member offered after Q2 fail-closed (messages.use)', () => {
+  assert.equal(isAskToolAllowed('add_thread_member', { role: 'teacher' }, grants), true);
+  assert.equal(isAskToolAllowed('add_thread_member', { role: 'student' }, grants), true);
+  assert.equal(isAskToolAllowed('add_thread_member', { role: 'parent' }, grants), true);
+  const ask = read('src/lib/ai/askTools.ts');
+  assert.match(ask, /add_thread_member/);
+  assert.match(ask, /addGroupMember|add_group_member/);
+  assert.doesNotMatch(
+    ask,
+    /No add_thread_member until thread_members_insert stays fail-closed/,
+  );
+  const insertSql = read('supabase/migrations/20260826000002_fail_closed_thread_members_insert.sql');
+  assert.match(insertSql, /revoke insert on public\.message_thread_members/);
+});
+
+test('A4 skips PPT-to-practice and Attendance tools', () => {
+  assert.equal(isAskToolAllowed('ppt_to_practice', { role: 'teacher' }, grants), false);
+  assert.equal(isAskToolAllowed('attendance', { role: 'teacher' }, grants), false);
+  assert.equal(isAskToolAllowed('mark_attendance', { role: 'teacher' }, grants), false);
+  const ask = read('src/lib/ai/askTools.ts');
+  assert.doesNotMatch(ask, /\bppt_to_practice\b|\bmark_attendance\b/);
+});

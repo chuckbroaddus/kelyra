@@ -27,7 +27,20 @@ import { PARENT_DETAIL_FIELDS, STUDENT_DETAIL_FIELDS, metaString } from '@/lib/p
 import { uploadProfilePhoto } from '@/lib/people/photos';
 import { getFollowUpDraft } from '@/lib/practice/followUp';
 import { buildFollowUpPack, loadFollowUpItems } from '@/lib/practice/followUpApi';
-import { listDirectory, writeAudit } from '@/lib/school/api';
+import {
+  claimSuperintendent,
+  createLogin,
+  listDirectory,
+  provisionParentLogin,
+  provisionStudentLogin,
+  setAlsoHat,
+  setAlsoParent,
+  setParentCardLink,
+  setParentLink,
+  writeAudit,
+} from '@/lib/school/api';
+import { setSchoolLogo, setSchoolName } from '@/lib/school/identity';
+import { saveGrant } from '@/lib/school/matrixApi';
 import { can, type Access, type GrantMap } from '@/lib/school/matrix';
 import { isAskPasswordToolDenied } from '@/lib/school/resetPassword';
 import { isAdminRole, isOfficeRole } from '@/lib/school/roles';
@@ -1644,7 +1657,7 @@ const TOOLS: Record<string, AskToolSpec> = {
           last_message_at: row.lastMessageAt,
           unread: row.unread,
         })),
-        note: "Membership only. No add_thread_member until thread_members_insert stays fail-closed (see 20260817000005 / 20260826000002).",
+        note: "Membership only. Prefer add_thread_member (add_group_member RPC) after Q2 fail-closed insert.",
       };
     },
   },
@@ -1705,6 +1718,505 @@ const TOOLS: Record<string, AskToolSpec> = {
       return { ok: true, message_id: row.id, thread_id: threadId };
     },
   },
+
+  approve_capture: {
+    capability: 'capture.approve',
+    def: {
+      type: 'function',
+      name: 'approve_capture',
+      description:
+        'Approve a capture (teacher last click). Writes approved gaps/score via existing JWT APIs. Student/parent refused. Not PPT-to-practice.',
+      parameters: {
+        type: 'object',
+        properties: {
+          capture_id: { type: 'string' },
+          score: { type: 'number' },
+          score_mark: { type: 'string', enum: ['numeric', 'pass', 'fail'] },
+          assignment_id: { type: 'string' },
+        },
+        required: ['capture_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Approve is not available on this seat.' };
+      }
+      const captureId = str(args, 'capture_id');
+      if (!captureId) return { error: 'Need capture_id.' };
+      const { requireSupabase } = await import('@/lib/supabase/client');
+      const { approveCapture } = await import('@/lib/gaps/api');
+      const supabase = requireSupabase();
+      const { data: capture, error } = await supabase.from('captures').select('*').eq('id', captureId).maybeSingle();
+      if (error) throw error;
+      if (!capture) return { error: 'Capture not found.' };
+      const { data: gaps, error: gapErr } = await supabase
+        .from('skill_gaps')
+        .select('*')
+        .eq('capture_id', captureId)
+        .order('sort_order', { ascending: true });
+      if (gapErr) throw gapErr;
+      const scoreRaw = args.score;
+      const score = typeof scoreRaw === 'number' && Number.isFinite(scoreRaw) ? scoreRaw : undefined;
+      const scoreMarkRaw = str(args, 'score_mark');
+      const scoreMark =
+        scoreMarkRaw === 'numeric' || scoreMarkRaw === 'pass' || scoreMarkRaw === 'fail'
+          ? scoreMarkRaw
+          : undefined;
+      const assignmentId = str(args, 'assignment_id') || null;
+      const result = await approveCapture(capture, gaps ?? [], score, {
+        ...(scoreMark ? { scoreMark } : {}),
+        assignmentId,
+      });
+      return {
+        approved: true,
+        capture_id: captureId,
+        skill_id: result.skillId,
+        skill_label: result.skillLabel,
+      };
+    },
+  },
+  delete_capture: {
+    capability: 'capture.approve',
+    def: {
+      type: 'function',
+      name: 'delete_capture',
+      description: 'Delete a capture via teacher_delete_capture. Student/parent refused.',
+      parameters: {
+        type: 'object',
+        properties: { capture_id: { type: 'string' } },
+        required: ['capture_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Delete capture is not available on this seat.' };
+      }
+      const captureId = str(args, 'capture_id');
+      if (!captureId) return { error: 'Need capture_id.' };
+      const { deleteCapture } = await import('@/lib/captures/delete');
+      await deleteCapture(captureId);
+      return { deleted: true, capture_id: captureId };
+    },
+  },
+  delete_gap: {
+    capability: 'capture.approve',
+    def: {
+      type: 'function',
+      name: 'delete_gap',
+      description: 'Delete a skill gap via teacher_delete_gap. Student/parent refused.',
+      parameters: {
+        type: 'object',
+        properties: { gap_id: { type: 'string' } },
+        required: ['gap_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Delete gap is not available on this seat.' };
+      }
+      const gapId = str(args, 'gap_id');
+      if (!gapId) return { error: 'Need gap_id.' };
+      const { deleteGap } = await import('@/lib/gaps/delete');
+      await deleteGap(gapId);
+      return { deleted: true, gap_id: gapId };
+    },
+  },
+  delete_student: {
+    capability: 'roster.delete',
+    def: {
+      type: 'function',
+      name: 'delete_student',
+      description: 'Hard-delete a student via teacher_delete_student. Student/parent refused.',
+      parameters: {
+        type: 'object',
+        properties: { student_id: { type: 'string' }, student_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Delete student is not available on this seat.' };
+      }
+      const student = await resolveStudent(ctx, args);
+      if ('error' in student) return student;
+      const { deleteStudent } = await import('@/lib/students/delete');
+      await deleteStudent(student.id);
+      return { deleted: true, student_id: student.id, name: student.display_name };
+    },
+  },
+  delete_class: {
+    capability: 'classes.delete',
+    def: {
+      type: 'function',
+      name: 'delete_class',
+      description: 'Hard-delete a class via teacher_delete_class. Student/parent refused. Teachers do not create classes.',
+      parameters: {
+        type: 'object',
+        properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Delete class is not available on this seat.' };
+      }
+      const classId = await resolveClassId(ctx, args);
+      if (typeof classId !== 'string') return classId;
+      const { deleteClass } = await import('@/lib/classes/delete');
+      await deleteClass(classId);
+      return { deleted: true, class_id: classId };
+    },
+  },
+  delete_parent: {
+    capability: 'parents.invite',
+    def: {
+      type: 'function',
+      name: 'delete_parent',
+      description: 'Hard-delete a parent via teacher_delete_parent. Student/parent refused.',
+      parameters: {
+        type: 'object',
+        properties: { parent_id: { type: 'string' }, parent_name: { type: 'string' }, name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Delete parent is not available on this seat.' };
+      }
+      const parent = await resolveParent(ctx, args);
+      if ('error' in parent) return parent;
+      const { deleteParent } = await import('@/lib/parents/delete');
+      await deleteParent(parent.id);
+      return { deleted: true, parent_id: parent.id, name: parent.display_name };
+    },
+  },
+  admin_create_login: {
+    capability: 'accounts.create',
+    def: {
+      type: 'function',
+      name: 'admin_create_login',
+      description: 'Office only. Create a login via admin_create_login. Teachers / also_administrator refused.',
+      parameters: {
+        type: 'object',
+        properties: {
+          email: { type: 'string' },
+          password: { type: 'string' },
+          username: { type: 'string' },
+          role: { type: 'string', enum: ['superintendent', 'administrator', 'teacher', 'parent', 'student'] },
+          display_name: { type: 'string' },
+          must_change: { type: 'boolean' },
+          also_parent: { type: 'boolean' },
+          also_administrator: { type: 'boolean' },
+          also_teacher: { type: 'boolean' },
+        },
+        required: ['email', 'password', 'username', 'role', 'display_name'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can create logins.' };
+      const email = str(args, 'email');
+      const password = str(args, 'password');
+      const username = str(args, 'username');
+      const role = str(args, 'role') as 'superintendent' | 'administrator' | 'teacher' | 'parent' | 'student';
+      const displayName = str(args, 'display_name');
+      if (!email || !password || !username || !role || !displayName) {
+        return { error: 'Need email, password, username, role, and display_name.' };
+      }
+      const profileId = await createLogin({
+        email,
+        password,
+        username,
+        role,
+        displayName,
+        mustChange: args.must_change !== false,
+        alsoParent: Boolean(args.also_parent),
+        alsoAdministrator: Boolean(args.also_administrator),
+        alsoTeacher: Boolean(args.also_teacher),
+      });
+      return { created: true, profile_id: profileId, role, username, display_name: displayName };
+    },
+  },
+  set_also_hat: {
+    capability: 'accounts.hats',
+    def: {
+      type: 'function',
+      name: 'set_also_hat',
+      description: 'Office only. Toggle also_administrator or also_teacher via admin_set_also_hat.',
+      parameters: {
+        type: 'object',
+        properties: {
+          profile_id: { type: 'string' },
+          hat: { type: 'string', enum: ['administrator', 'teacher'] },
+          also: { type: 'boolean' },
+        },
+        required: ['profile_id', 'hat', 'also'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can change hats.' };
+      const profileId = str(args, 'profile_id');
+      const hat = str(args, 'hat') as 'administrator' | 'teacher';
+      if (!profileId || (hat !== 'administrator' && hat !== 'teacher')) {
+        return { error: 'Need profile_id and hat (administrator|teacher).' };
+      }
+      if (typeof args.also !== 'boolean') return { error: 'Need also true/false.' };
+      await setAlsoHat(profileId, hat, args.also);
+      return { updated: true, profile_id: profileId, hat, also: args.also };
+    },
+  },
+  set_also_parent: {
+    capability: 'accounts.hats',
+    def: {
+      type: 'function',
+      name: 'set_also_parent',
+      description: 'Office only. Toggle also-parent identity via admin_set_also_parent.',
+      parameters: {
+        type: 'object',
+        properties: { profile_id: { type: 'string' }, also: { type: 'boolean' } },
+        required: ['profile_id', 'also'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can change parent hats.' };
+      const profileId = str(args, 'profile_id');
+      if (!profileId) return { error: 'Need profile_id.' };
+      if (typeof args.also !== 'boolean') return { error: 'Need also true/false.' };
+      const parentId = await setAlsoParent(profileId, args.also);
+      return { updated: true, profile_id: profileId, also: args.also, parent_id: parentId };
+    },
+  },
+  provision_student_login: {
+    capability: 'accounts.create',
+    def: {
+      type: 'function',
+      name: 'provision_student_login',
+      description: 'Office only. Provision a student login via admin_provision_student_login.',
+      parameters: {
+        type: 'object',
+        properties: { student_id: { type: 'string' }, student_name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can provision student logins.' };
+      const student = await resolveStudent(ctx, args);
+      if ('error' in student) return student;
+      const row = await provisionStudentLogin(student.id);
+      return {
+        provisioned: true,
+        profile_id: row.profileId,
+        student_id: row.studentId,
+        username: row.username,
+        created: row.created,
+        // Never echo temp passwords into Ask chat by default — office People shows them.
+        temp_password_set: Boolean(row.tempPassword),
+      };
+    },
+  },
+  provision_parent_login: {
+    capability: 'accounts.create',
+    def: {
+      type: 'function',
+      name: 'provision_parent_login',
+      description: 'Office only. Provision a parent login via admin_provision_parent_login.',
+      parameters: {
+        type: 'object',
+        properties: { parent_id: { type: 'string' }, parent_name: { type: 'string' }, name: { type: 'string' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can provision parent logins.' };
+      const parent = await resolveParent(ctx, args);
+      if ('error' in parent) return parent;
+      const row = await provisionParentLogin(parent.id);
+      return {
+        provisioned: true,
+        profile_id: row.profileId,
+        parent_id: row.studentId,
+        username: row.username,
+        created: row.created,
+        temp_password_set: Boolean(row.tempPassword),
+      };
+    },
+  },
+  claim_superintendent: {
+    capability: null,
+    def: {
+      type: 'function',
+      name: 'claim_superintendent',
+      description: 'Office bootstrap. Claim superintendent via school_claim_superintendent when none exists.',
+      parameters: { type: 'object', properties: {}, additionalProperties: false },
+    },
+    run: async (_args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can claim superintendent from Ask.' };
+      const row = await claimSuperintendent();
+      return { claimed: true, profile_id: row.id, role: row.role, username: row.username };
+    },
+  },
+  set_capability_grant: {
+    capability: 'school.matrix',
+    def: {
+      type: 'function',
+      name: 'set_capability_grant',
+      description: 'Superintendent matrix edit via set_capability_grant. Administrators and also_administrator refused by matrix.',
+      parameters: {
+        type: 'object',
+        properties: {
+          capability_id: { type: 'string' },
+          role: { type: 'string', enum: ['superintendent', 'administrator', 'teacher', 'parent', 'student'] },
+          access: { type: 'string', enum: ['none', 'own', 'school', 'all'] },
+        },
+        required: ['capability_id', 'role', 'access'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'Matrix edits are not available on this seat.' };
+      }
+      const capabilityId = str(args, 'capability_id');
+      const role = str(args, 'role') as 'superintendent' | 'administrator' | 'teacher' | 'parent' | 'student';
+      const access = str(args, 'access') as 'none' | 'own' | 'school' | 'all';
+      if (!capabilityId || !role || !access) return { error: 'Need capability_id, role, and access.' };
+      await saveGrant(capabilityId, role, access);
+      return { updated: true, capability_id: capabilityId, role, access };
+    },
+  },
+  set_school_name: {
+    capability: 'school.identity',
+    def: {
+      type: 'function',
+      name: 'set_school_name',
+      description: 'Superintendent only (matrix). Set school name via set_school_name.',
+      parameters: {
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        required: ['name'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'School name is not editable on this seat.' };
+      }
+      const name = str(args, 'name');
+      if (!name) return { error: 'Need name.' };
+      const saved = await setSchoolName(name);
+      return { updated: true, name: saved };
+    },
+  },
+  set_school_logo: {
+    capability: 'school.identity',
+    def: {
+      type: 'function',
+      name: 'set_school_logo',
+      description: 'Superintendent only (matrix). Set or clear school logo asset via set_school_logo.',
+      parameters: {
+        type: 'object',
+        properties: { asset_id: { type: 'string' }, clear: { type: 'boolean' } },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
+        return { error: 'School logo is not editable on this seat.' };
+      }
+      const clear = args.clear === true;
+      const assetId = clear ? null : str(args, 'asset_id') || null;
+      if (!clear && !assetId) return { error: 'Need asset_id or clear:true.' };
+      await setSchoolLogo(assetId);
+      return { updated: true, asset_id: assetId };
+    },
+  },
+  add_thread_member: {
+    capability: 'messages.use',
+    def: {
+      type: 'function',
+      name: 'add_thread_member',
+      description:
+        'Add a member to a group thread via add_group_member RPC (Q2 fail-closed; no direct INSERT). Caller must already be a member.',
+      parameters: {
+        type: 'object',
+        properties: { thread_id: { type: 'string' }, profile_id: { type: 'string' } },
+        required: ['thread_id', 'profile_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.profile?.id) return { error: 'Sign in required.' };
+      const threadId = str(args, 'thread_id');
+      const profileId = str(args, 'profile_id');
+      if (!threadId || !profileId) return { error: 'Need thread_id and profile_id.' };
+      const { listThreads, addGroupMember } = await import('@/lib/messages/api');
+      const mine = await listThreads(ctx.profile.id);
+      if (!mine.some((row) => row.id === threadId)) return { error: 'Not a member of that thread.' };
+      await addGroupMember(threadId, profileId);
+      return { added: true, thread_id: threadId, profile_id: profileId };
+    },
+  },
+  unlink_parent_student: {
+    capability: 'accounts.link_parent',
+    def: {
+      type: 'function',
+      name: 'unlink_parent_student',
+      description: 'Office only. Unlink parent↔student via admin_set_parent_link (p_link false).',
+      parameters: {
+        type: 'object',
+        properties: {
+          parent_id: { type: 'string' },
+          parent_name: { type: 'string' },
+          student_id: { type: 'string' },
+          student_name: { type: 'string' },
+        },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can unlink a parent from a child.' };
+      const parent = await resolveParent(ctx, args);
+      if ('error' in parent) return parent;
+      const student = await resolveStudent(ctx, args);
+      if ('error' in student) return student;
+      await setParentLink(parent.id, student.id, false);
+      return { unlinked: true, parent_id: parent.id, student_id: student.id };
+    },
+  },
+  set_parent_card_link: {
+    capability: 'accounts.link_parent',
+    def: {
+      type: 'function',
+      name: 'set_parent_card_link',
+      description: 'Office only. Assign a login profile to a parent card via admin_set_parent_card_link.',
+      parameters: {
+        type: 'object',
+        properties: {
+          profile_id: { type: 'string' },
+          parent_id: { type: 'string' },
+          clear: { type: 'boolean' },
+        },
+        required: ['profile_id'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!isOfficeRole(ctx.profile)) return { error: 'Only the office can assign parent card logins.' };
+      const profileId = str(args, 'profile_id');
+      if (!profileId) return { error: 'Need profile_id.' };
+      const clear = args.clear === true;
+      const parentId = clear ? null : str(args, 'parent_id') || null;
+      if (!clear && !parentId) return { error: 'Need parent_id or clear:true.' };
+      await setParentCardLink(profileId, parentId);
+      return { updated: true, profile_id: profileId, parent_id: parentId };
+    },
+  },
+
 
 };
 
