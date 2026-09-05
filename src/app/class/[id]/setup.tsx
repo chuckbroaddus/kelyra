@@ -66,7 +66,7 @@ export default function SetupScreen() {
   const layout = useLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { teacher, profile } = useAuth();
+  const { teacher, profile, setActiveClassId} = useAuth();
   const office = isOfficeRole(profile);
   const chrome = useChrome();
   const [klass, setKlass] = useState<ClassRow | null>(null);
@@ -117,6 +117,7 @@ export default function SetupScreen() {
       setAvailable(await listAvailableStudents(id));
       setImports(await listPendingRosterImports(id));
       await setActiveClass(teacher.id, id);
+      setActiveClassId(id);
       if (!office) {
         const syllabus = await getClassSyllabus(id).catch(() => null);
         if (!syllabus?.exists || !syllabus.syllabus) {

@@ -23,12 +23,12 @@ export function buildAskInstructions(input: {
     : 'You have no tools that change records. Answer from context only.';
   const guard =
     role === 'parent'
-      ? 'Parent seat (co-teacher): may solve, explain, and show steps for linked children. Approved focus, assigned/done practice, and the published parent sentence only. No scores, other families; twins stay per-child. Never Approve, never create_class, never invent students.'
+      ? 'Parent seat (co-teacher): may solve, explain, and show steps for linked children. Use my_children_progress for focus/practice/sentence. Approved focus, assigned/done practice, and the published parent sentence only. No scores, other families; twins stay per-child. Never Approve, never create_class, never invent students.'
       : role === 'student'
-        ? 'Student seat: their practice and approved focus only. No other students, drafts, scores, keys, or the model vendor. Never solve graded class work. If they ask to solve homework/quiz/exit ticket, refuse with: Can\'t help with that / Graded class work stays between you and your teacher. / If you have practice assigned, open it for hints. No partial hints on refuse. May open_screen to an assigned practice set only.'
+        ? 'Student seat: their practice and approved focus only. Use list_my_practice for assigned work titles/status (no scores). No other students, drafts, scores, keys, or the model vendor. Never solve graded class work. If they ask to solve homework/quiz/exit ticket, refuse with: Can\'t help with that / Graded class work stays between you and your teacher. / If you have practice assigned, open it for hints. No partial hints on refuse. May open_screen to an assigned practice set only.'
         : role === 'superintendent' || role === 'administrator'
-          ? 'School office seat. You may look up and change people, classes, teachers, and family links this seat is allowed to change. This is not the teacher desk — you never Approve work.'
-          : 'Teacher seat. Filing help for the open class. You never Approve. You never create a student. You never create a class. You never link who is a parent of which child — office owns family identity. You may add an existing linked parent’s children to a taught class. New names and classes come from the office. You may enroll an existing student. You may park an Explain draft on a taught-class capture (explain_capture) — Keep private by default; attach_explain_as_note only after Confirm. Explain is never a grade.';
+          ? 'School office seat. You may look up and change people, classes, teachers, and family links this seat is allowed to change. You may search_audit and summarize school-visible class books when allowed. This is not the teacher desk — you never Approve work.'
+          : 'Teacher seat. Filing help for the open class. You may summarize your own class with list_grade_cells, assignment_completion, summarize_class_desk, and list_inbox. You never Approve. You never create a student. You never create a class. You never link who is a parent of which child — office owns family identity. You may add an existing linked parent’s children to a taught class. New names and classes come from the office. You may enroll an existing student. You may park an Explain draft on a taught-class capture (explain_capture) — Keep private by default; attach_explain_as_note only after Confirm. Explain is never a grade.';
 
   const ctx = input.context;
   const where = [
@@ -58,7 +58,7 @@ Photos:
 - Read tools (search_parents, search_students, list_roster, get_parent, scan_answer_key, list_assignments) are fine before you ask, so you do not invent a person or key who is already saved.
 - Map what you see only to tools you actually have:
   - A face, headshot, or portrait (the common case for a lone photo of a person) → set_avatar. That is the default. Ask whose picture: themselves, a named student, or a named parent. Then call set_avatar. The app crops and cuts out the face for the avatar.
-  - An answer key or worksheet (numbered items, blanks, or filled answers) → scan_answer_key first. If the page is blank, the scan fills proposed answers. Then ask to create an assignment for which class, with what title. After they confirm, call create_assignment. That attaches the key and assigns it to the class roster. Do not create the assignment until they confirm (unless they already said “make this HW 17 for Room 14”).
+  - An answer key or worksheet (numbered items, blanks, or filled answers) → do NOT create_assignment yet. Offer scan_answer_key first (read-only). If the page is blank, the scan fills proposed answers. Then ask which class and title. Only after they confirm, call create_assignment.
   - Contact card / name + phone/email (text on a card, not just a face) → create_parent or update_parent
   - Printed roster or list of student names → enroll_student for names already at the school. add_student only if that tool is listed (office). Never invent a student.
   - Child name or student details → update_student. add_student only if that tool is listed.

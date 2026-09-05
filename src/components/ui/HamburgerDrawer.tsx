@@ -33,6 +33,7 @@ import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { formatHandle, isAlsoParent } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
+import { can } from '@/lib/school/matrix';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 function matches(label: string, query: string): boolean {
@@ -43,7 +44,7 @@ function matches(label: string, query: string): boolean {
 
 export function HamburgerDrawer() {
   const { colors, scheme } = useTheme();
-  const { session, teacher, profile, signOut } = useAuth();
+  const { session, teacher, profile, signOut, setActiveClassId, grants} = useAuth();
   const chromeState = useChrome();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -315,7 +316,7 @@ export function HamburgerDrawer() {
                       chevron={false}
                       selected={klass.id === chromeState.classId}
                       onPress={() => {
-                        if (teacher) void setActiveClass(teacher.id, klass.id);
+                        if (teacher) void setActiveClass(teacher.id, klass.id).then(() => setActiveClassId(klass.id));
                         chromeState.refreshChrome();
                         go(teacherSeat ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
                       }}
@@ -337,9 +338,9 @@ export function HamburgerDrawer() {
                   {officeSeat ? (
                     <>
                       {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
-                      {matches('Activity', q) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
+                      {matches('Activity', q) && can(profile, 'audit.view', 'school', grants) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
                       {matches('Messages', q) ? <DrawerRow label="Messages" onPress={() => go('/messages')} /> : null}
-                      {matches('Responsibilities', q) ? (
+                      {matches('Responsibilities', q) && can(profile, 'school.matrix', 'all', grants) ? (
                         <DrawerRow label="Responsibilities" onPress={() => go('/admin/matrix')} />
                       ) : null}
                       <Hairline />

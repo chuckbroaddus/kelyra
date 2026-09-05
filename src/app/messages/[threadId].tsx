@@ -159,12 +159,17 @@ export default function ThreadScreen() {
   };
 
   const openCard = (payload: MessageWorkCard) => {
-    if (payload.assignment_id && chrome.classId) {
-      router.push(`/class/${chrome.classId}/assignment/${payload.assignment_id}`);
+    const classId = chrome.classId;
+    if (payload.assignment_id && classId) {
+      router.push(`/class/${classId}/assignment/${payload.assignment_id}`);
       return;
     }
-    if (payload.student_id && chrome.classId) {
-      router.push(`/class/${chrome.classId}/student/${payload.student_id}`);
+    if (payload.student_id && classId) {
+      router.push(`/class/${classId}/student/${payload.student_id}`);
+      return;
+    }
+    if ((payload.assignment_id || payload.student_id) && !classId) {
+      setError('Could not open that work — no active class.');
       return;
     }
     router.push('/todo');

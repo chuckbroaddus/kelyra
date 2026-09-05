@@ -61,26 +61,33 @@ Leave the Email provider itself **enabled**.
 
 ---
 
-## 4. Create the database tables
+## 4. Create the database tables (every migration, in order)
 
-This runs our Slice 01 schema (teachers, classes, students, captures, etc.).
+Slice 01 alone is not enough for a current checkout. Apply **every** SQL file under `supabase/migrations/` in **filename order**. Skip `.gitkeep` if present. Later files replace or redefine functions — a re-run of an early file that says `already exists` does **not** mean you are done.
 
 1. In the same Supabase project, left sidebar: **SQL Editor**.
-2. Click **New query**.
-3. On your computer, open this file in any editor:
+2. On your computer, list migrations sorted by name:
 
-   `/Users/chuck/projects/kelyra/supabase/migrations/20260812000000_slice01_foundation.sql`
+```bash
+ls /Users/chuck/projects/kelyra/supabase/migrations/*.sql | sort
+```
 
-4. Select **all** of it (the whole file) and copy.
-5. Paste into the Supabase SQL editor.
-6. Click **Run** (or press Cmd+Enter).
-7. You should see **Success**. No red error.
+3. For **each** `.sql` file in that order:
+   - Click **New query** (or clear the editor).
+   - Open the file, select **all**, copy, paste into the SQL editor.
+   - Click **Run** (Cmd+Enter). Prefer **Success**.
+   - If you see `already exists` on an **early** file you already applied, that is expected for tables — continue to the **next** file. Do not stop at Slice 01.
+4. After `20260817000005_school_roles.sql` (and later role/login migrations), the first signed-in staff login claims **superintendent** via `school_claim_superintendent()` — not “teacher + join code.” Student and parent access uses **provisioned logins**, not class join codes. `/join` redirects to **sign-in**.
 
-If you see `already exists`, you probably ran it twice. That is OK for tables; if a **policy** name conflicts, say so and we can adjust. Do not run it a third time unless we tell you to.
+Confirm in **Table Editor** that core tables exist (`teachers`, `classes`, `students`, `enrollments`, `profiles`, …). Migrations are **not** empty in this repo.
 
-You can confirm tables exist: left sidebar **Table Editor** — you should see `teachers`, `classes`, `students`, `enrollments`, `assets`, `captures`, `skills`, `skill_gaps`.
+### Short recovery if you only applied Slice 01
 
----
+If you previously ran only `20260812000000_slice01_foundation.sql`:
+
+1. Do **not** re-apply every early file hoping to “finish.” Run the remaining files after Slice 01 in filename order (`20260813000000_practice.sql`, then each later `*.sql`).
+2. `already exists` on objects from Slice 01 is fine; keep going until the last migration succeeds.
+3. Then sign in once so the first office claim can run (`school_claim_superintendent`). Create student/parent logins from the office People flow — not join codes.
 
 ## 5. Copy the API keys into `.env`
 
@@ -150,7 +157,7 @@ If Create account says to confirm email, go back to step 3 — confirm email is 
 
 1. Type `Room 14 math` in the box.
 2. Click **Create class**.
-3. You should see the class screen with that name and a **Join code** (6 characters).
+3. You should see the class screen with that name. (Join codes were removed — students use provisioned logins; `/join` goes to sign-in.)
 
 ### Add students
 
@@ -255,11 +262,10 @@ Run this SQL in the Supabase SQL Editor (same as the first migration):
 Then:
 
 1. As the teacher, open Mateo → **Assign practice**. You should see `Practice: … : assigned`.
-2. Note the class **Join code** on the class screen.
-3. On the same computer, open **Student join** (or http://localhost:8081/join). You can stay signed in.
-4. Enter the join code → **Find class** → tap **Mateo**.
-5. Answer the three items → **Submit**. It should say Completed.
-6. Back on Mateo’s teacher page, practice should show `completed`.
+2. Have the office provision a student login for Mateo (People), or use an existing student login.
+3. Sign in as that student (http://localhost:8081/sign-in — `/join` redirects here).
+4. Open Assignments / to-do and complete Mateo’s practice → **Submit**.
+5. Back on Mateo’s teacher page, practice should show `completed`.
 
 Items come from Grok when the local AI gateway is running (section 19). Otherwise they are placeholder prompts you can edit.
 

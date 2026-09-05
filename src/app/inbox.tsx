@@ -34,8 +34,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 export default function InboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { contextTab } = useChrome();
-  const { teacher } = useAuth();
+  const { contextTab, classId: chromeClassId } = useChrome();
+  const { teacher, refreshTeacher, setActiveClassId } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [turned, setTurned] = useState<TurnedInItem[]>([]);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
@@ -52,8 +52,18 @@ export default function InboxScreen() {
   const load = useCallback(async () => {
     if (!teacher) return;
     try {
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+      // Prefer class being viewed; else refresh teacher row so memory matches DB.
+      await refreshTeacher();
+      const { requireSupabase } = await import("@/lib/supabase/client");
+      const { data: teacherRow } = await requireSupabase()
+        .from("teachers")
+        .select("active_class_id")
+        .eq("id", teacher.id)
+        .maybeSingle();
+      const activeId = (teacherRow?.active_class_id as string | null) ?? teacher.active_class_id;
+      const klass = await resolveCaptureClass(teacher.id, activeId, chromeClassId);
       setClassId(klass.id);
+      setActiveClassId(klass.id);
       setRoster(await listRoster(klass.id));
       const [captures, completed] = await Promise.all([listInbox(klass.id), listTurnedIn(klass.id)]);
       setItems(captures);
@@ -63,7 +73,7 @@ export default function InboxScreen() {
     } finally {
       setLoaded(true);
     }
-  }, [teacher]);
+  }, [teacher, chromeClassId, refreshTeacher, setActiveClassId]);
 
   useFocusEffect(
     useCallback(() => {

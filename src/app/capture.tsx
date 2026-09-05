@@ -41,6 +41,7 @@ export default function CaptureScreen() {
   const { colors } = useTheme();
   const layout = useLayout();
   const chrome = useChrome();
+  const chromeClassId = chrome.classId;
   const router = useRouter();
   const { teacher } = useAuth();
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
@@ -111,7 +112,7 @@ export default function CaptureScreen() {
       if (!teacher) return;
       void (async () => {
         try {
-          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
           setRoster(await listRoster(klass.id));
           setMicId(await getPreferredDeviceId('audio'));
           setCameraId(await getPreferredDeviceId('video'));
@@ -263,7 +264,7 @@ export default function CaptureScreen() {
     setStatus(null);
     setError(null);
     try {
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id);
+      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
       const photoAssets =
         evaluation?.photoAssets?.length === pages.length
           ? evaluation.photoAssets

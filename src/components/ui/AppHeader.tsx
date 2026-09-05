@@ -19,7 +19,9 @@ import { Icon } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { chrome, type } from '@/constants/theme';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { isChromePushed, showHeaderCapture, useChrome } from '@/lib/chrome/ChromeProvider';
+import { can } from '@/lib/school/matrix';
 import { headerTitleFor } from '@/lib/chrome/titles';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -40,6 +42,7 @@ function searchPlaceholder(from: string, role: string): string {
 export function AppHeader() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
+  const { profile, grants } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -62,7 +65,10 @@ export function AppHeader() {
   });
   const onHome = (pathname === '/' || pathname === '') && !pushed;
   const logoUrl = chromeState.schoolLogoUrl;
-  const capture = showHeaderCapture(pathname, chromeState.role) && !searching;
+  const capture =
+    showHeaderCapture(pathname, chromeState.role) &&
+    can(profile, 'capture.use', 'own', grants) &&
+    !searching;
   const count = chromeState.badgeCount;
   const expand = useRef(new Animated.Value(searching ? 1 : 0)).current;
   const [reduce, setReduce] = useState(false);
@@ -116,7 +122,11 @@ export function AppHeader() {
   const hideBack =
     Boolean(headerChrome.hideBack) ||
     (Boolean(headerChrome.hideBackOnNative) && Platform.OS !== 'web');
-  const showBack = pushed && !kelyraMark && !hideBack;
+  // iPhone: edge-swipe already pops — hide duplicate <. Web / Android keep chevron.
+  // forceBackChevron keeps < when dirty discard must intercept (proposal).
+  const iosSwipeBack =
+    Platform.OS === 'ios' && pushed && !headerChrome.forceBackChevron;
+  const showBack = pushed && !kelyraMark && !hideBack && !iosSwipeBack;
   const showMenu = !showBack && !headerChrome.hideMenu;
   const showSearch = !headerChrome.hideSearch;
   const showMail = !headerChrome.hideMail;
