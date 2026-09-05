@@ -315,11 +315,9 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
 
   const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
   const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
-  const origPaths = [...pathById.values()];
-  const [thumbUrls, originalUrls] = await Promise.all([
-    signedThumbUrls(origPaths, knownThumbs, { fallbackOriginal: false }),
-    signedUrls('photos', origPaths),
-  ]);
+  const thumbUrls = await signedThumbUrls([...pathById.values()], knownThumbs, {
+    fallbackOriginal: false,
+  });
   const gapsByCapture = new Map<string, SkillGapRow[]>();
   for (const gap of gaps ?? []) {
     if (!gap.capture_id) continue;
@@ -330,23 +328,32 @@ export async function listStudentCaptures(studentId: string): Promise<StudentCap
 
   return captures.map((capture) => {
     const thumbs: string[] = [];
-    const originals: string[] = [];
     for (const id of allPhotoAssetIds(capture)) {
       const path = pathById.get(id);
       if (!path) continue;
       const thumb = thumbUrls.get(path);
-      const original = originalUrls.get(path);
       if (thumb) thumbs.push(thumb);
-      if (original) originals.push(original);
     }
     return {
       ...capture,
-      // WorkRow / shelves: thumb only. Review pager uses photoUrls (originals).
+      // WorkRow / shelves: thumb only. Focus/review lazy-signs originals (t_2943be43).
       photoUrl: thumbs[0] ?? null,
-      photoUrls: originals,
+      photoUrls: [],
       gaps: gapsByCapture.get(capture.id) ?? [],
     };
   });
+}
+
+/** Sign full-resolution originals for one capture (focus pager / AI). List load stays thumb-only. */
+export async function signStudentCaptureOriginals(capture: CaptureRow): Promise<string[]> {
+  const ids = allPhotoAssetIds(capture);
+  if (!ids.length) return [];
+  const assets = await loadPhotoAssetPaths(ids);
+  const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
+  const paths = ids.map((id) => pathById.get(id)).filter((path): path is string => Boolean(path));
+  if (!paths.length) return [];
+  const urls = await signedUrls('photos', paths);
+  return paths.map((path) => urls.get(path)).filter((url): url is string => Boolean(url));
 }
 
 export async function listStudentGaps(studentId: string): Promise<SkillGapRow[]> {
