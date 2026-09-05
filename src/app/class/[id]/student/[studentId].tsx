@@ -14,6 +14,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { ExplainDraftCard } from '@/components/ui/ExplainDraftCard';
+import { MathText } from '@/components/ui/MathText';
 import { IconButton } from '@/components/ui/IconButton';
 import { AssignmentWorkList } from '@/components/ui/AssignmentWorkList';
 import { Card } from '@/components/ui/Card';
@@ -744,7 +745,7 @@ export default function StudentScreen() {
                   Heard: {latest.transcript}
                 </Text>
               ) : null}
-              {latest.teacher_note ? <Text style={[type.body, { color: colors.ink }]}>{latest.teacher_note}</Text> : null}
+              {latest.teacher_note ? <MathText style={type.body} color={colors.ink}>{latest.teacher_note}</MathText> : null}
               {latest.status === 'draft' || latest.status === 'attached' ? (
                 <TextField
                   label="Draft score"
