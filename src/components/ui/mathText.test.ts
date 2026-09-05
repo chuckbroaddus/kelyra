@@ -5,11 +5,16 @@ import test from 'node:test';
 
 import {
   KATEX_BASE_OPTIONS,
+  clampNativeWebViewHeight,
+  NATIVE_WEBVIEW_HEIGHT_CAP,
+  NATIVE_WEBVIEW_MIN_HEIGHT,
+  proseHtmlHasMountedKatex,
   renderKatexHtml,
   renderProseBodyHtml,
   splitMathSegments,
   splitProseBlocks,
 } from './mathTextCore.ts';
+import { KATEX_MIN_CSS, KATEX_MIN_CSS_NATIVE, katexCssWithoutFontFace } from './katexMinCss.ts';
 
 const root = join(import.meta.dirname, '../../..');
 
@@ -209,4 +214,60 @@ test('MATHUI prose: native one WebView per bubble when math present', () => {
   assert.match(native, /renderProseBodyHtml/);
   // Must not create MathWebSpan-per-segment pattern
   assert.doesNotMatch(native, /function MathWebSpan/);
+});
+
+// --- Native WebView measure / no empty slabs (t_daa6a896) ---
+
+test('MATHUI native: height clamp caps and rejects invalid (no 2000 slab)', () => {
+  assert.equal(clampNativeWebViewHeight(48), 48);
+  assert.equal(clampNativeWebViewHeight(19), NATIVE_WEBVIEW_MIN_HEIGHT);
+  assert.equal(clampNativeWebViewHeight(NATIVE_WEBVIEW_HEIGHT_CAP + 500), NATIVE_WEBVIEW_HEIGHT_CAP);
+  assert.equal(clampNativeWebViewHeight(2000), NATIVE_WEBVIEW_HEIGHT_CAP);
+  assert.equal(clampNativeWebViewHeight(0), null);
+  assert.equal(clampNativeWebViewHeight(-10), null);
+  assert.equal(clampNativeWebViewHeight(NaN), null);
+  assert.equal(clampNativeWebViewHeight(undefined), null);
+  assert.equal(clampNativeWebViewHeight('48'), null);
+  assert.ok(NATIVE_WEBVIEW_HEIGHT_CAP < 2000);
+});
+
+test('MATHUI native: KaTeX fail → no mounted katex → Text fallback path', () => {
+  const bad = renderProseBodyHtml(splitProseBlocks('broken $$\\notacommand{{{$$'));
+  // Failed KaTeX becomes escaped source text, not a katex span
+  assert.equal(proseHtmlHasMountedKatex(bad), false);
+  const good = renderProseBodyHtml(splitProseBlocks('half is $\\frac{1}{2}$'));
+  assert.equal(proseHtmlHasMountedKatex(good), true);
+});
+
+test('MATHUI native: WebView width/maxWidth, layout width inject, swipe overflow', () => {
+  const native = read('src/components/ui/MathText.tsx');
+  assert.match(native, /maxWidth:\s*['"]100%['"]/);
+  assert.match(native, /onLayout/);
+  assert.match(native, /layoutWidth/);
+  assert.match(native, /width=\$\{w\}|width:\$\{w\}px/);
+  assert.match(native, /overflow-x:\s*auto/);
+  assert.match(native, /-webkit-overflow-scrolling:\s*touch/);
+  assert.match(native, /scrollEnabled=\{false\}/);
+  assert.match(native, /nestedScrollEnabled/);
+  assert.match(native, /clampNativeWebViewHeight/);
+  assert.match(native, /proseHtmlHasMountedKatex/);
+  assert.match(native, /KATEX_MIN_CSS_NATIVE/);
+  assert.match(native, /document\.fonts/);
+  assert.match(native, /fallbackText/);
+  // Still XSS-safe
+  assert.match(native, /originWhitelist/);
+  assert.match(native, /about:blank/);
+  assert.match(native, /onShouldStartLoadWithRequest/);
+  assert.match(native, /injectedJavaScript=\{undefined\}/);
+  assert.doesNotMatch(native, /file:/);
+});
+
+test('MATHUI native: katex CSS strips @font-face for about:blank', () => {
+  assert.match(KATEX_MIN_CSS, /@font-face/);
+  assert.doesNotMatch(KATEX_MIN_CSS_NATIVE, /@font-face/);
+  assert.equal(katexCssWithoutFontFace('@font-face{font-family:X;src:url(a)} .katex{}'), ' .katex{}');
+  // Web stylesheet unchanged for MathText.web
+  const mathWeb = read('src/components/ui/MathText.web.tsx');
+  assert.match(mathWeb, /KATEX_MIN_CSS/);
+  assert.doesNotMatch(mathWeb, /KATEX_MIN_CSS_NATIVE/);
 });

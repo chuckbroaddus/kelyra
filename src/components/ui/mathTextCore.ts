@@ -126,6 +126,27 @@ export function renderKatexHtml(tex: string, displayMode: boolean): string | nul
   }
 }
 
+/** Native WebView height floor / ceiling — never leave a blank 2000px slab. */
+export const NATIVE_WEBVIEW_MIN_HEIGHT = 20;
+export const NATIVE_WEBVIEW_HEIGHT_CAP = 1200;
+
+/**
+ * Clamp a postMessage height from the prose WebView.
+ * Invalid / non-positive → null (caller falls back to Text, never a blank slab).
+ */
+export function clampNativeWebViewHeight(height: unknown): number | null {
+  if (typeof height !== 'number' || !Number.isFinite(height) || height <= 0) return null;
+  const h = Math.ceil(height);
+  if (h < NATIVE_WEBVIEW_MIN_HEIGHT) return NATIVE_WEBVIEW_MIN_HEIGHT;
+  if (h > NATIVE_WEBVIEW_HEIGHT_CAP) return NATIVE_WEBVIEW_HEIGHT_CAP;
+  return h;
+}
+
+/** True when prose HTML includes at least one mounted KaTeX span (not source fallback). */
+export function proseHtmlHasMountedKatex(bodyHtml: string): boolean {
+  return /class="katex"/.test(bodyHtml);
+}
+
 export function segmentHasMath(segments: MathSegment[]): boolean {
   return segments.some((s) => s.kind === 'inline' || s.kind === 'display');
 }
