@@ -31,7 +31,7 @@ import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { listProfiles, setStudentLink } from '@/lib/school/api';
-import { formatHandle, isAdminRole } from '@/lib/school/roles';
+import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { deleteCapture } from '@/lib/captures/delete';
 import { returnCaptureToInbox } from '@/lib/captures/api';
@@ -119,7 +119,7 @@ export default function StudentScreen() {
   const { colors, scheme } = useTheme();
   const router = useRouter();
   const { teacher, profile } = useAuth();
-  const canLinkParents = isAdminRole(profile);
+  const canLinkParents = isOfficeRole(profile);
   const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { isSplit } = useScreenPad();
   const { id: classId, studentId, capture: captureParam, tab: tabParam } = useLocalSearchParams<{
