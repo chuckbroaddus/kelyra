@@ -310,3 +310,57 @@ test('GAUTH v1.1 student still refuse-before-vendor on graded solve', () => {
     true,
   );
 });
+
+test('GAUTH G5 help-used migration: counts column + record RPC + teacher class_teacher_of read', () => {
+  const sql = read('supabase/migrations/20260906000000_gauth_g5_help_used.sql');
+  assert.match(sql, /help_used jsonb not null default '\{\}'::jsonb/);
+  assert.match(sql, /record_practice_help_use/);
+  assert.match(sql, /teacher_get_practice_help_used/);
+  assert.match(sql, /class_teacher_of/);
+  assert.match(sql, /coalesce\(asg\.help_mode, 'off'\) = 'off'/);
+  assert.match(sql, /No keystroke|no keystroke/i);
+  assert.doesNotMatch(sql, /approved_score\s*=/);
+  assert.doesNotMatch(sql, /keystroke_log|store_attempt|answer_key_dump/);
+});
+
+test('GAUTH G5 practice-help Edge increments on success; off-mode no increment path', () => {
+  const edge = read('supabase/functions/practice-help/index.ts');
+  assert.match(edge, /record_practice_help_use/);
+  assert.match(edge, /helpMode === "off"/);
+  const offAt = edge.indexOf('helpMode === "off"');
+  const countAt = edge.indexOf('record_practice_help_use');
+  assert.ok(offAt > 0 && countAt > offAt, 'increment must follow help_mode off refuse');
+  assert.match(edge, /approved_score_written: false/);
+  assert.doesNotMatch(edge, /approved_score\s*=/);
+  assert.doesNotMatch(edge, /keystroke_log|keystrokes/);
+  const dev = read('scripts/ai-dev-server.mjs');
+  assert.match(dev, /record_practice_help_use/);
+});
+
+test('GAUTH G5 teacher-only Help used UI; no student Snap; parent UI skipped', () => {
+  const studentPage = read('src/app/class/[id]/student/[studentId].tsx');
+  assert.match(studentPage, /formatItemHelpUsed/);
+  assert.match(studentPage, /formatHelpUsedRowSummary/);
+  const workList = read('src/components/ui/AssignmentWorkList.tsx');
+  assert.match(workList, /Help used/);
+  const helper = read('src/lib/practice/helpUsed.ts');
+  assert.match(helper, /Help used/);
+  const player = read('src/app/todo/[submissionId].tsx');
+  assert.doesNotMatch(player, /formatItemHelpUsed|formatHelpUsedRowSummary/);
+  assert.doesNotMatch(player, /Snap & Solve/);
+  const helpApi = read('src/lib/practice/helpApi.ts');
+  assert.match(helpApi, /fetchTeacherHelpUsed/);
+  assert.doesNotMatch(helpApi, /keystroke/);
+});
+
+test('GAUTH G5 student walls intact; no bulk key; parent_of untouched', () => {
+  const edge = read('supabase/functions/practice-help/index.ts');
+  assert.match(edge, /role !== "student"/);
+  assert.match(edge, /kind !== "practice"/);
+  assert.match(edge, /never return bulk key|only this item/i);
+  const v11 = read('supabase/migrations/20260905000000_gauth_v1_1.sql');
+  assert.match(v11, /parent_of/);
+  assert.match(v11, /gauth_load_explain_capture/);
+  const g5 = read('supabase/migrations/20260906000000_gauth_g5_help_used.sql');
+  assert.doesNotMatch(g5, /drop function.*parent_of|create or replace function public\.parent_of/i);
+});

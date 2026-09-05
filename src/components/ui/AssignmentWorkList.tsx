@@ -23,6 +23,7 @@ import { GRADE_KINDS, gradeKindLabel, weightSummary } from '@/lib/grade/marks';
 import { listClassLessonCounts } from '@/lib/lessons/api';
 import { lessonWorkLabel } from '@/lib/lessons/protocol';
 import { deleteAssignment } from '@/lib/practice/delete';
+import { parseHelpUsed, totalHelpUsed } from '@/lib/practice/helpUsed';
 import type { AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -236,8 +237,10 @@ function studentWorkExtras(
     };
   }
   const label = submissionStatusLabel(submission.status) || 'Assigned';
+  const helpN = row.kind === 'practice' ? totalHelpUsed(parseHelpUsed(submission.help_used)) : 0;
+  const helpMeta = helpN > 0 ? `Help used ${helpN}` : null;
   return {
-    status: [label, due].filter(Boolean).join(' · ') || undefined,
+    status: [label, helpMeta, due].filter(Boolean).join(' · ') || undefined,
     badge: practiceBadge(submission.status),
   };
 }
