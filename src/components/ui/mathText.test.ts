@@ -6,7 +6,9 @@ import test from 'node:test';
 import {
   KATEX_BASE_OPTIONS,
   renderKatexHtml,
+  renderProseBodyHtml,
   splitMathSegments,
+  splitProseBlocks,
 } from './mathTextCore.ts';
 
 const root = join(import.meta.dirname, '../../..');
@@ -124,4 +126,87 @@ test('LATEX frac renders katex HTML on success', () => {
   const html = renderKatexHtml('\\frac{1}{2}', false);
   assert.ok(html);
   assert.match(html!, /frac|mfrac|katex/);
+});
+
+// --- MATHUI L-01…L-06 ---
+
+test('MATHUI L-01: web inline math uses p/span flow, not flex-wrap row', () => {
+  const mathWeb = read('src/components/ui/MathText.web.tsx');
+  assert.doesNotMatch(mathWeb, /flexDirection:\s*['"]row['"]/);
+  assert.doesNotMatch(mathWeb, /flexWrap:\s*['"]wrap['"]/);
+  assert.match(mathWeb, /createElement\(\s*['"]p['"]/);
+  assert.match(mathWeb, /kelyra-math-inline/);
+  assert.match(mathWeb, /verticalAlign:\s*['"]baseline['"]|vertical-align:\s*baseline/);
+});
+
+test('MATHUI L-02: display math is its own block', () => {
+  const blocks = splitProseBlocks('Let x be given.\n\n$$x^2+1$$\n\nDone.');
+  assert.ok(blocks.some((b) => b.kind === 'display' && b.raw.includes('x^2')));
+  assert.ok(blocks.some((b) => b.kind === 'paragraph' && b.text.includes('Let x')));
+  const mathWeb = read('src/components/ui/MathText.web.tsx');
+  assert.match(mathWeb, /kelyra-math-display/);
+  assert.match(mathWeb, /overflowX:\s*['"]auto['"]|overflow-x:\s*auto/);
+});
+
+test('MATHUI L-03: numbered list markers share one column (split + ol)', () => {
+  const blocks = splitProseBlocks('Steps:\n\n1. First $a$\n2. Second\n3. Third');
+  const list = blocks.find((b) => b.kind === 'list');
+  assert.ok(list);
+  assert.equal(list!.kind, 'list');
+  if (list!.kind === 'list') {
+    assert.equal(list.ordered, true);
+    assert.equal(list.items.length, 3);
+    assert.match(list.items[0]!, /First/);
+    assert.equal(list.items[1], 'Second');
+    assert.equal(list.items[2], 'Third');
+  }
+  const mathWeb = read('src/components/ui/MathText.web.tsx');
+  assert.match(mathWeb, /['"]ol['"]/);
+  assert.match(mathWeb, /listStylePosition:\s*['"]outside['"]|list-style-position:\s*outside/);
+  const native = read('src/components/ui/MathText.tsx');
+  assert.match(native, /width:\s*28/);
+  assert.match(native, /listRow/);
+});
+
+test('MATHUI L-04: same renderer on Explain / Help / notes', () => {
+  assert.match(read('src/app/ask.tsx'), /from '@\/components\/ui\/MathText'/);
+  assert.match(read('src/app/todo/[submissionId].tsx'), /from '@\/components\/ui\/MathText'/);
+  assert.match(read('src/components/ui/ExplainDraftCard.tsx'), /from '@\/components\/ui\/MathText'/);
+  assert.match(read('src/app/class/[id]/student/[studentId].tsx'), /from '@\/components\/ui\/MathText'/);
+  assert.match(read('src/app/class/[id]/student/[studentId].tsx'), /teacher_note/);
+});
+
+test('MATHUI L-05 / LATEX XSS P0 still pass via prose HTML', () => {
+  const blocks = splitProseBlocks('1. <script>alert(1)</script>\n2. ok $\\frac{1}{2}$');
+  const html = renderProseBodyHtml(blocks);
+  assert.match(html, /&lt;script&gt;/);
+  assert.doesNotMatch(html, /<script>alert/);
+  assert.match(html, /katex/);
+  assert.equal(renderKatexHtml('\\href{javascript:alert(1)}{x}', false), null);
+});
+
+test('MATHUI L-06: Student G0 / parent co-teacher walls unchanged', () => {
+  const ask = read('src/app/ask.tsx');
+  assert.match(ask, /GAUTH_REFUSAL_TITLE/);
+  assert.match(ask, /item\.text\.startsWith\(GAUTH_REFUSAL_TITLE\)/);
+  // Refusal still uses Text, not MathText
+  assert.match(ask, /GAUTH_REFUSAL_TITLE[\s\S]*?<Text style=\{\[type\.section/);
+});
+
+test('MATHUI prose: bullet list split', () => {
+  const blocks = splitProseBlocks('- alpha\n- beta with $x$');
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0]!.kind, 'list');
+  if (blocks[0]!.kind === 'list') {
+    assert.equal(blocks[0].ordered, false);
+    assert.equal(blocks[0].items.length, 2);
+  }
+});
+
+test('MATHUI prose: native one WebView per bubble when math present', () => {
+  const native = read('src/components/ui/MathText.tsx');
+  assert.match(native, /one offline WebView per bubble|ProseWebView/);
+  assert.match(native, /renderProseBodyHtml/);
+  // Must not create MathWebSpan-per-segment pattern
+  assert.doesNotMatch(native, /function MathWebSpan/);
 });
