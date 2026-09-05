@@ -78,7 +78,7 @@ function fadeIn(value: Animated.Value) {
 export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { refresh } = useAuth();
+  const { refresh, session } = useAuth();
   const { width, height } = useWindowDimensions();
   // Native phones stay portrait-locked pre-auth — always 9×16 splash assets.
   const phoneLocked = isNativePhone(width, height);
@@ -87,6 +87,8 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const stillSource = splashStillSources[sourceKey];
   const videoRef = useRef<SplashVideoHandle | null>(null);
   const busyRef = useRef(false);
+  /** After unlock (sign-in), do not re-lock on keyboard/resize while still mounted. */
+  const unlockedRef = useRef(false);
   const finishingRef = useRef(false);
   const fadingRef = useRef(false);
   /** True once didJustFinish / position>=duration — unmount may follow visual fade. */
@@ -121,8 +123,13 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const formOpacity = useRef(new Animated.Value(initialRevealForm ? 1 : 0)).current;
 
   useEffect(() => {
+    // Signed-in (e.g. /sign-in while session exists) or post-unlock: never re-lock.
+    if (session || unlockedRef.current) {
+      void unlockAppOrientation();
+      return;
+    }
     void lockPreAuthPortrait(width, height);
-  }, [width, height]);
+  }, [width, height, session]);
 
   useEffect(() => {
     if (!initialRevealForm) return;
@@ -376,6 +383,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     setMessage(null);
     try {
       await signInWithPassword(email, password);
+      unlockedRef.current = true;
       await unlockAppOrientation();
       await refresh();
       router.replace('/');
