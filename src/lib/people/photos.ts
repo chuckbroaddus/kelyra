@@ -152,20 +152,14 @@ export async function setProfilePhoto(
   personId: string,
   assetId: string,
 ): Promise<void> {
-  const table = kind === 'student' ? 'students' : kind === 'parent' ? 'parents' : 'teachers';
-  const supabase = requireSupabase();
-  const { data: current, error: loadError } = await supabase
-    .from(table)
-    .select('photo_asset_id')
-    .eq('id', personId)
-    .single();
-  if (loadError) throw loadError;
-  const { error } = await supabase.from(table).update({ photo_asset_id: assetId }).eq('id', personId);
+  // Atomic replace via RPC: taught-class / office / owner auth (same wall as clear),
+  // then _unref_delete_asset on the previous photo so co-teachers do not orphan uploads.
+  const { error } = await requireSupabase().rpc('teacher_set_profile_photo', {
+    p_kind: kind,
+    p_person_id: personId,
+    p_asset_id: assetId,
+  });
   if (error) throw error;
-  const previous = current?.photo_asset_id;
-  if (previous && previous !== assetId) {
-    await supabase.rpc('teacher_unref_asset', { p_asset_id: previous });
-  }
 }
 
 export async function clearProfilePhoto(kind: ProfilePhotoKind, personId: string): Promise<void> {

@@ -950,6 +950,10 @@ export type Database = {
         Args: { p_kind: string; p_person_id: string };
         Returns: undefined;
       };
+      teacher_set_profile_photo: {
+        Args: { p_asset_id: string; p_kind: string; p_person_id: string };
+        Returns: undefined;
+      };
       teacher_unref_asset: { Args: { p_asset_id: string }; Returns: undefined };
       teacher_delete_roster_import: { Args: { p_import_id: string }; Returns: undefined };
       login_identifier: { Args: { p_handle: string }; Returns: string | null };
