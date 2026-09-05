@@ -5,6 +5,7 @@ import {
   allowOriginalPhotoFallback,
   cacheKeyForUri,
   isThumbStoragePath,
+  legacyThumbStoragePath,
   originalStoragePath,
   thumbStoragePath,
 } from './paths.ts';
@@ -17,8 +18,10 @@ test('avatar and list thumbs never fall back to the original still by default', 
 
 test('thumb path convention is stable and idempotent', () => {
   assert.equal(thumbStoragePath('class/a.jpg'), 'class/a_thumb.jpg');
+  assert.equal(thumbStoragePath('class/a.png'), 'class/a_thumb.jpg');
   assert.equal(thumbStoragePath('class/a_thumb.jpg'), 'class/a_thumb.jpg');
   assert.equal(thumbStoragePath('owner/noext'), 'owner/noext_thumb');
+  assert.equal(legacyThumbStoragePath('class/a.png'), 'class/a_thumb.png');
   assert.equal(isThumbStoragePath('class/a_thumb.jpg'), true);
   assert.equal(isThumbStoragePath('class/a.jpg'), false);
   assert.equal(originalStoragePath('class/a_thumb.jpg'), 'class/a.jpg');

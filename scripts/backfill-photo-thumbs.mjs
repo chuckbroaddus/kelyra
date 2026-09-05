@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * One-shot: write `{name}_thumb.jpg` next to existing photos. Does not replace originals.
+ * Path matches client thumbStoragePath (always _thumb.jpg; t_903cdfa6).
  *
  *   SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run thumbs
  *

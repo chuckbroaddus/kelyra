@@ -91,12 +91,12 @@ export async function uploadPhotoPair(input: {
   let thumbPath: string | null = null;
   if (!input.skipThumb) {
     try {
-      const thumb = await makePhotoThumb(prepared.uri, prepared.mimeType);
+      const thumb = await makePhotoThumb(prepared.uri, 'image/jpeg');
       const thumbBytes = new Uint8Array(await readUriAsBytes(thumb.uri));
       if (thumbBytes.byteLength) {
         thumbPath = thumbStoragePath(storagePath);
         if (thumbPath !== storagePath) {
-          await uploadObject('photos', thumbPath, thumbBytes, thumb.mimeType);
+          await uploadObject('photos', thumbPath, thumbBytes, 'image/jpeg');
         } else {
           thumbPath = null;
         }
