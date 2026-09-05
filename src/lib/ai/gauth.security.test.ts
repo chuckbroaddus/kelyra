@@ -12,10 +12,15 @@ import {
   GAUTH_NEVER_ASK_TOOLS,
   GAUTH_REFUSAL_TITLE,
   gauthRefusalCard,
+  isFamilyAskSeat,
   isNeverAskTool,
   shouldRefuseAskBeforeVendor,
   stripAskImagesForFamilySeat,
 } from '../../../supabase/functions/_shared/askHomeworkRefuse.ts';
+import {
+  isFamilyAskSeat as clientIsFamilyAskSeat,
+  shouldRefuseAskBeforeVendor as clientShouldRefuseAskBeforeVendor,
+} from './askHomeworkRefuse.ts';
 
 const root = process.cwd();
 
@@ -77,7 +82,7 @@ test('GAUTH-S1-03 twin maps + never-register list + unknown denied', () => {
   assert.equal(isAskToolAllowed('invented_solve', { role: 'superintendent' }, grants), false);
 });
 
-test('GAUTH-S1-01 refuse-before-vendor; no vision family; no partial hint', () => {
+test('GAUTH-S1-01 refuse-before-vendor; student no vision; parent never refuse; no partial hint', () => {
   assert.equal(
     shouldRefuseAskBeforeVendor({ role: 'student', text: 'solve this quiz for me', hasImage: false }),
     true,
@@ -90,6 +95,20 @@ test('GAUTH-S1-01 refuse-before-vendor; no vision family; no partial hint', () =
     shouldRefuseAskBeforeVendor({ role: 'parent', text: 'check my work on tonight homework', hasImage: false }),
     false,
   );
+  assert.equal(
+    shouldRefuseAskBeforeVendor({ role: 'parent', text: '2+2', hasImage: false }),
+    false,
+  );
+  assert.equal(
+    shouldRefuseAskBeforeVendor({ role: 'parent', text: 'what is the answer', hasImage: false }),
+    false,
+  );
+  assert.equal(
+    shouldRefuseAskBeforeVendor({ role: 'parent', text: 'hello', hasImage: true }),
+    false,
+  );
+  assert.equal(isFamilyAskSeat('parent'), false);
+  assert.equal(isFamilyAskSeat('student'), true);
   assert.equal(
     shouldRefuseAskBeforeVendor({ role: 'teacher', text: 'solve this quiz', hasImage: true }),
     false,
@@ -309,6 +328,49 @@ test('GAUTH v1.1 student still refuse-before-vendor on graded solve', () => {
     shouldRefuseAskBeforeVendor({ role: 'student', text: 'hello', hasImage: true }),
     true,
   );
+});
+
+test('GAUTH parent Ask co-educator: no refuse; student G0; client=Edge twin', () => {
+  const cases: Array<{ role: string; text: string; hasImage: boolean; expect: boolean }> = [
+    { role: 'parent', text: '2+2', hasImage: false, expect: false },
+    { role: 'parent', text: 'what is the answer', hasImage: false, expect: false },
+    { role: 'parent', text: 'solve this quiz for me', hasImage: false, expect: false },
+    { role: 'parent', text: 'hello', hasImage: true, expect: false },
+    { role: 'student', text: 'solve this quiz for me', hasImage: false, expect: true },
+    { role: 'student', text: 'what is the answer', hasImage: false, expect: true },
+    { role: 'student', text: 'hello', hasImage: true, expect: true },
+  ];
+  for (const c of cases) {
+    const edge = shouldRefuseAskBeforeVendor({ role: c.role, text: c.text, hasImage: c.hasImage });
+    const client = clientShouldRefuseAskBeforeVendor({ role: c.role, text: c.text, hasImage: c.hasImage });
+    assert.equal(edge, c.expect, `edge ${c.role} ${c.text} image=${c.hasImage}`);
+    assert.equal(client, c.expect, `client ${c.role} ${c.text} image=${c.hasImage}`);
+    assert.equal(client, edge, `twin mismatch ${c.role} ${c.text}`);
+  }
+  assert.equal(clientIsFamilyAskSeat('parent'), false);
+  assert.equal(isFamilyAskSeat('parent'), false);
+  assert.equal(clientIsFamilyAskSeat('student'), true);
+  assert.equal(isFamilyAskSeat('student'), true);
+
+  const clientSrc = read('src/lib/ai/askHomeworkRefuse.ts');
+  const edgeSrc = read('supabase/functions/_shared/askHomeworkRefuse.ts');
+  assert.match(clientSrc, /if \(input\.role === 'parent'\) return false/);
+  assert.match(edgeSrc, /if \(input\.role === 'parent'\) return false/);
+  assert.match(clientSrc, /return role === 'student'/);
+  assert.match(edgeSrc, /return role === 'student'/);
+  assert.doesNotMatch(clientSrc, /role === 'student' \|\| role === 'parent'/);
+  assert.doesNotMatch(edgeSrc, /role === 'student' \|\| role === 'parent'/);
+
+  const prompt = read('src/lib/ai/askPrompt.ts');
+  assert.match(prompt, /Parent seat \(co-teacher\): may solve, explain, and show steps/);
+  assert.doesNotMatch(prompt, /Never solve the child's graded work/);
+  const parentGuard = prompt.match(/Parent seat \(co-teacher\):[^']+/);
+  assert.ok(parentGuard);
+  assert.doesNotMatch(parentGuard[0]!, /model vendor|Never solve/i);
+
+  const agent = read('src/lib/ai/askAgent.ts');
+  assert.match(agent, /input\.live\.role === 'student'/);
+  assert.doesNotMatch(agent, /role === 'student' \|\| input\.live\.role === 'parent'/);
 });
 
 test('GAUTH G5 help-used migration: counts column + record RPC + teacher class_teacher_of read', () => {

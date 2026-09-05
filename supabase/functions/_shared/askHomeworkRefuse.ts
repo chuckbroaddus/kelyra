@@ -1,6 +1,7 @@
 /**
- * GAUTH G0/G3 — student/parent Ask refuse control plane.
+ * GAUTH G0/G3 — student Ask refuse control plane.
  * Prompt text is not the wall: refuse before vendor; no vision; no partial hints.
+ * Parent (co-educator) never refuses before vendor; may attach photos.
  */
 
 export const GAUTH_NEVER_ASK_TOOLS = [
@@ -26,8 +27,9 @@ export type GauthRefusalCard = {
   practiceHref?: string | null;
 };
 
+/** Student seat only — parent is co-educator, not a refuse/vision-strip seat. */
 export function isFamilyAskSeat(role: string | null | undefined): boolean {
-  return role === 'student' || role === 'parent';
+  return role === 'student';
 }
 
 /** Homework / quiz / exit-ticket solve intents (assistive; fail closed). */
@@ -37,7 +39,7 @@ const SOLVE_INTENT =
 const GRADED_WORK =
   /\b(quiz|test|exam|exit\s*ticket|homework|worksheet|problem\s*set|graded\s+work|tonight'?s\s+(quiz|hw|homework)|class\s+work)\b/i;
 
-/** Multi-step stem heuristic — uncertainty still refuses for family seats. */
+/** Multi-step stem heuristic — uncertainty still refuses for student seats. */
 const MULTI_STEP_STEM =
   /(?:^\s*\d+[\).:]|\n\s*\d+[\).:]|(?:find|compute|evaluate|simplify|solve for)\b.+\b(?:show|explain|steps?)\b)/im;
 
@@ -76,9 +78,9 @@ export function askInputHasImage(input: unknown): boolean {
 }
 
 /**
- * True when student/parent Ask must return the G3 card without calling the vendor.
- * Any vision attachment for family seats refuses (no student/parent Ask vision).
- * Text intents: match or uncertainty (graded work + multi-step / solve-ish) refuse.
+ * True when student Ask must return the G3 card without calling the vendor.
+ * Parent (co-educator) never refuses before vendor (text or image).
+ * Any vision attachment for student refuses. Text intents refuse for student only.
  */
 export function shouldRefuseAskBeforeVendor(input: {
   role: string | null | undefined;
@@ -106,7 +108,7 @@ export function shouldRefuseAskBeforeVendor(input: {
   return false;
 }
 
-/** Drop image parts for family seats before hydrate / vendor. */
+/** Drop image parts for student seats before hydrate / vendor. Parent may attach photos. */
 export function stripAskImagesForFamilySeat(input: unknown): unknown {
   if (!Array.isArray(input)) return input;
   return input.map((item) => {
