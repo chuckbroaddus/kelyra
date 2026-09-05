@@ -349,10 +349,10 @@ async function parseRequest(req: Request): Promise<ParsedBody> {
 }
 
 function looksLikeMarkdown(raw: string): boolean {
+  // F15: fence-only. Mid-document "# " in art_note/eve_script is valid pack JSON.
   const t = raw.trim();
   if (t.startsWith('```')) return true;
   if (/```(?:json)?/i.test(t)) return true;
-  if (/^#{1,6}\s/m.test(t)) return true;
   return false;
 }
 
@@ -484,14 +484,15 @@ Deno.serve(async (req) => {
 
   const raw = outputText(payload).trim();
   if (!raw) return json({ error: 'empty model response' }, 400);
-  if (looksLikeMarkdown(raw)) {
-    return json({ error: 'model returned markdown; JSON only required' }, 400);
-  }
 
+  // F15: parse JSON first; only treat fence/markdown as 400 when parse fails.
   let draft: Record<string, unknown>;
   try {
     draft = JSON.parse(raw) as Record<string, unknown>;
   } catch {
+    if (looksLikeMarkdown(raw)) {
+      return json({ error: 'model returned markdown; JSON only required' }, 400);
+    }
     return json({ error: 'model returned non-JSON' }, 400);
   }
   if (!draft || typeof draft !== 'object' || Array.isArray(draft)) {

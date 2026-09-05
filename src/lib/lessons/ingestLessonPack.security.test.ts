@@ -127,3 +127,18 @@ test('client helper uses user JWT only; no service role; no assign', () => {
   assert.doesNotMatch(src, /\bassignLesson\s*\(/);
   assert.doesNotMatch(src, /publishLessonPack/);
 });
+
+
+test('F15 looksLikeMarkdown is fence-only; parse JSON before markdown 400', () => {
+  const src = read('supabase/functions/ingest-lesson-pack/index.ts');
+  const fnStart = src.indexOf('function looksLikeMarkdown');
+  const fnEnd = src.indexOf('function validateDraft', fnStart);
+  const fn = src.slice(fnStart, fnEnd);
+  assert.match(fn, /fence-only|F15/i);
+  assert.doesNotMatch(fn, /\^#\{1,6\}/);
+  const rawIdx = src.indexOf("const raw = outputText");
+  const parseIdx = src.indexOf('JSON.parse(raw)');
+  const mdIdx = src.indexOf('looksLikeMarkdown(raw)', rawIdx);
+  assert.ok(parseIdx > rawIdx);
+  assert.ok(mdIdx > parseIdx, 'markdown check must run only after JSON.parse catch');
+});
