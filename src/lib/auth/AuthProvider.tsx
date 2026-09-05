@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { isSupabaseConfigured } from '@/constants/config';
 import { loadTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
+import { bindSignedUrlCacheUser, clearSignedUrlCache } from '@/lib/media/signedUrl';
 import { loadMyProfile } from '@/lib/school/api';
 import { shouldLoadTeacherRow } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -42,9 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const next = await getSession();
       setSession(next);
       if (!next) {
+        await clearSignedUrlCache();
         setTeacher(null);
         setProfile(null);
       } else {
+        await bindSignedUrlCacheUser(next.user.id);
         const mine = await loadMyProfile().catch(() => null);
         setProfile(mine);
         // Fail closed: missing / student / parent must not load or mint a teachers row.
@@ -64,7 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange(() => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // Clear / rebind on any non-explicit session end (SIGNED_OUT, null refresh), not only signOut().
+      if (event === 'SIGNED_OUT' || !nextSession) {
+        void clearSignedUrlCache();
+      } else {
+        void bindSignedUrlCacheUser(nextSession.user.id);
+      }
       void refresh();
     });
     return () => data.subscription.unsubscribe();
@@ -106,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshTeacher,
       signOut: async () => {
         await signOutRequest();
+        await clearSignedUrlCache();
         setSession(null);
         setTeacher(null);
         setProfile(null);
