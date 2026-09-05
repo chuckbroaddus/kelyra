@@ -70,6 +70,10 @@ export default function DiaryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [family, setFamily] = useState<string | null>(null);
+  const [ledgerFrom, setLedgerFrom] = useState('');
+  const [ledgerTo, setLedgerTo] = useState('');
+  const [ledgerClassId, setLedgerClassId] = useState('');
+  const [ledgerStudentId, setLedgerStudentId] = useState('');
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -145,6 +149,10 @@ export default function DiaryScreen() {
           seat,
           actionFamily: family,
           query: query.trim() || null,
+          fromIso: ledgerFrom.trim() ? `${ledgerFrom.trim()}T00:00:00.000Z` : null,
+          toIso: ledgerTo.trim() ? `${ledgerTo.trim()}T23:59:59.999Z` : null,
+          classId: ledgerClassId.trim() || null,
+          studentId: ledgerStudentId.trim() || null,
         });
         setLedger(rows);
         setEntries(null);
@@ -154,7 +162,7 @@ export default function DiaryScreen() {
       setEntries([]);
       setLedger([]);
     }
-  }, [allowed, family, focusedChildId, profile?.id, query, seat, segment]);
+  }, [allowed, family, focusedChildId, ledgerClassId, ledgerFrom, ledgerStudentId, ledgerTo, profile?.id, query, seat, segment]);
 
   useFocusEffect(
     useCallback(() => {
@@ -219,8 +227,10 @@ export default function DiaryScreen() {
           studentId: studentPointer.trim() || null,
           childStudentId: childId,
         });
-        // Optional photo attach after create is via button in composer while editing
-        void created;
+        setEditing(created);
+        setDraft(null);
+        await refresh();
+        return; // keep composer open so photo attach works on the new entry
       }
       setComposerOpen(false);
       setDraft(null);
@@ -349,6 +359,10 @@ export default function DiaryScreen() {
               />
             ))}
           </ChipRow>
+          <TextField label="From date (YYYY-MM-DD)" value={ledgerFrom} onChangeText={setLedgerFrom} autoCapitalize="none" />
+          <TextField label="To date (YYYY-MM-DD)" value={ledgerTo} onChangeText={setLedgerTo} autoCapitalize="none" />
+          <TextField label="Class id filter (taught class)" value={ledgerClassId} onChangeText={setLedgerClassId} autoCapitalize="none" />
+          <TextField label="Student id filter" value={ledgerStudentId} onChangeText={setLedgerStudentId} autoCapitalize="none" />
         </>
       ) : null}
 
