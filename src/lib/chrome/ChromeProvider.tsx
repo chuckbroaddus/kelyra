@@ -171,6 +171,7 @@ function isPushedPath(pathname: string): boolean {
     pathname === '/proposal' ||
     pathname.startsWith('/messages/') ||
     pathname === '/activity' ||
+    pathname === '/diary' ||
     pathname.startsWith('/admin') ||
     pathname === '/password'
   );

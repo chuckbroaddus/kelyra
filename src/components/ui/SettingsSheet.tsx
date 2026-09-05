@@ -6,6 +6,11 @@ import { GhostButton } from '@/components/ui/Button';
 import { HoverTip } from '@/components/ui/HoverTip';
 import { Icon } from '@/components/ui/Icon';
 import { radius, type } from '@/constants/theme';
+import {
+  DIARY_FERPA_NOTE,
+  DIARY_PRIVACY_BODY,
+  DIARY_PRIVACY_TITLE,
+} from '@/lib/diary/privacy';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
@@ -53,6 +58,10 @@ export function SettingsSheet({ visible, onClose }: Props) {
           </View>
           <Text style={[styles.section, { color: colors.mute }]}>Color theme</Text>
           <AppearanceControl />
+          <Text style={[styles.section, { color: colors.mute }]}>Diary</Text>
+          <Text style={[styles.diaryTitle, { color: colors.ink }]}>{DIARY_PRIVACY_TITLE}</Text>
+          <Text style={[styles.diaryBody, { color: colors.mute }]}>{DIARY_PRIVACY_BODY}</Text>
+          <Text style={[styles.diaryBody, { color: colors.mute }]}>{DIARY_FERPA_NOTE}</Text>
           <GhostButton label="Done" onPress={onClose} />
         </View>
       </View>
@@ -94,5 +103,12 @@ const styles = StyleSheet.create({
   section: {
     ...type.section,
     textTransform: 'uppercase',
+  },
+  diaryTitle: {
+    ...type.body,
+    fontWeight: '600',
+  },
+  diaryBody: {
+    ...type.meta,
   },
 });

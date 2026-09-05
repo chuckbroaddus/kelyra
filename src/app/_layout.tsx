@@ -50,6 +50,7 @@ function ThemedRoot() {
           <Stack.Screen name="messages" />
           <Stack.Screen name="feed" />
           <Stack.Screen name="activity" />
+          <Stack.Screen name="diary" />
           <Stack.Screen name="admin" />
           <Stack.Screen name="class/[id]" />
           <Stack.Screen name="lesson/[assignmentId]" options={LESSON_PLAYER_STACK_OPTIONS} />

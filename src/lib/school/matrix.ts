@@ -78,6 +78,7 @@ export const CAPABILITIES: Capability[] = [
   { id: 'ride.archive', area: 'Ride', label: 'Archive day photos', help: 'Superintendent archives that day line photos until delete.', superintendent: 'school', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
 
   { id: 'messages.use', area: 'Messages', label: 'In-app messages', help: '1:1 threads.', superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
+  { id: 'diary.draft', area: 'Diary', label: 'Draft diary entry', help: 'Ask may draft a private diary entry. User must Save. Never Approve, create class, or write ledger.', superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
   { id: 'audit.view', area: 'Audit', label: 'View activity log', help: 'Who changed what.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'audit.mutate', area: 'Audit', label: 'Edit or delete the log', help: 'Nobody. The log is append-only.', superintendent: 'none', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
 ];
