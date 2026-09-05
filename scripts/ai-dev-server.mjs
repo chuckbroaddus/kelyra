@@ -2022,7 +2022,18 @@ async function practiceHelp(supabase, body) {
     err.attempt_gate = true;
     throw err;
   }
-  // No approved_score write. No bulk key to client.
+  // G5 count (soft-fail). Re-read help_mode inside RPC. No approved_score / no bulk key / no keystroke log.
+  let helpUsed;
+  try {
+    const { data: counted } = await supabase.rpc('record_practice_help_use', {
+      p_assignment_id: assignmentId,
+      p_item_id: itemId,
+      p_action: actionRaw,
+    });
+    helpUsed = counted ?? undefined;
+  } catch {
+    helpUsed = undefined;
+  }
   return {
     ok: true,
     help_mode: helpMode,
@@ -2030,6 +2041,7 @@ async function practiceHelp(supabase, body) {
     item_id: itemId,
     text: 'Practice Help (dev): try the next smaller step on this item.',
     approved_score_written: false,
+    ...(helpUsed !== undefined ? { help_used: helpUsed } : {}),
   };
 }
 

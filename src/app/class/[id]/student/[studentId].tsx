@@ -84,6 +84,7 @@ import {
   savePracticeItems,
   type StudentPractice,
 } from '@/lib/practice/api';
+import { formatHelpUsedRowSummary, formatItemHelpUsed, parseHelpUsed } from '@/lib/practice/helpUsed';
 import { answerText, submissionReviewPath } from '@/lib/practice/review';
 import { closeFocusSkill, getStudent, patchStudentMetadata, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import { deleteStudent, listStudentEnrollments, removeEnrollment } from '@/lib/students/delete';
@@ -1081,6 +1082,17 @@ export default function StudentScreen() {
                 <Text style={[styles.skill, { color: colors.ink }]}>{practiceTitle(item.title)}</Text>
                 <Badge variant={practiceBadge(item.status)} />
               </View>
+              {formatHelpUsedRowSummary(
+                parseHelpUsed(item.help_used),
+                item.items.map((row) => row.id),
+              ) ? (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  {formatHelpUsedRowSummary(
+                    parseHelpUsed(item.help_used),
+                    item.items.map((row) => row.id),
+                  )}
+                </Text>
+              ) : null}
               {(item.practiceSetId && isOpenWork(item.status)
                 ? (itemDrafts[item.practiceSetId] ?? item.items)
                 : item.items
@@ -1089,6 +1101,7 @@ export default function StudentScreen() {
                   <Text style={[styles.gutter, { color: colors.mute }]}>{index + 1}.</Text>
                   <View style={styles.prompt}>
                     {item.practiceSetId && isOpenWork(item.status) ? (
+                      <>
                       <TextField
                         multiline
                         value={practiceItem.prompt}
@@ -1102,12 +1115,23 @@ export default function StudentScreen() {
                           }))
                         }
                       />
+                      {formatItemHelpUsed(parseHelpUsed(item.help_used), practiceItem.id) ? (
+                        <Text style={[type.meta, { color: colors.mute }]}>
+                          {formatItemHelpUsed(parseHelpUsed(item.help_used), practiceItem.id)}
+                        </Text>
+                      ) : null}
+                      </>
                     ) : (
                       <>
                         <Text style={[type.body, { color: colors.ink }]}>{practiceItem.prompt}</Text>
                         {!isOpenWork(item.status) ? (
                           <Text style={[type.meta, { color: colors.mute }]}>
                             {answerText(item.answers, practiceItem.id) || 'No answer'}
+                          </Text>
+                        ) : null}
+                        {formatItemHelpUsed(parseHelpUsed(item.help_used), practiceItem.id) ? (
+                          <Text style={[type.meta, { color: colors.mute }]}>
+                            {formatItemHelpUsed(parseHelpUsed(item.help_used), practiceItem.id)}
                           </Text>
                         ) : null}
                       </>

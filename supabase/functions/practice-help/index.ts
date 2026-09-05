@@ -96,7 +96,20 @@ Deno.serve(async (req) => {
       payload: [{ role: "user", content }],
     });
     const text = outputText(payload).trim() || "Try a smaller step on this item, then ask again.";
-    // Integrity: never write approved_score from Help.
+    // G5: count successful Help turns. Re-read help_mode inside RPC (fail-closed / revoke).
+    // Soft-fail count so a missing migration cannot break G4 Help text.
+    let helpUsed: unknown = undefined;
+    try {
+      const { data: counted } = await supabase.rpc("record_practice_help_use", {
+        p_assignment_id: assignmentId,
+        p_item_id: itemId,
+        p_action: actionRaw,
+      });
+      helpUsed = counted ?? undefined;
+    } catch {
+      helpUsed = undefined;
+    }
+    // Integrity: never write approved_score from Help. No keystroke payload stored.
     return json({
       ok: true,
       help_mode: helpMode,
@@ -104,6 +117,7 @@ Deno.serve(async (req) => {
       item_id: itemId,
       text,
       approved_score_written: false,
+      ...(helpUsed !== undefined ? { help_used: helpUsed } : {}),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Practice Help failed";

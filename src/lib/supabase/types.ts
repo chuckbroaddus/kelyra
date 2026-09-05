@@ -238,6 +238,8 @@ export type SubmissionRow = {
   student_id: string;
   status: SubmissionStatus;
   answers: Record<string, unknown> | null;
+  /** GAUTH G5: per-item Help turn counts. No keystroke payload. */
+  help_used?: Record<string, Record<string, number>> | null;
   draft_score: number | null;
   approved_score: number | null;
   score_mark?: 'numeric' | 'pass' | 'fail';
@@ -930,6 +932,14 @@ export type Database = {
       teacher_delete_practice_set: { Args: { p_practice_set_id: string }; Returns: undefined };
       teacher_delete_assignment: { Args: { p_assignment_id: string }; Returns: undefined };
       teacher_delete_submission: { Args: { p_submission_id: string }; Returns: undefined };
+      record_practice_help_use: {
+        Args: { p_assignment_id: string; p_item_id: string; p_action: string };
+        Returns: Record<string, unknown>;
+      };
+      teacher_get_practice_help_used: {
+        Args: { p_assignment_id: string; p_student_id: string };
+        Returns: Record<string, unknown>;
+      };
       teacher_delete_parent: { Args: { p_parent_id: string }; Returns: undefined };
       teacher_unlink_child: {
         Args: { p_parent_id: string; p_student_id: string };
