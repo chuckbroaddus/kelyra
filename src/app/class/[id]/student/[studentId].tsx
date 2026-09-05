@@ -48,6 +48,7 @@ import {
   listStudentCaptures,
   listStudentGaps,
   markNoteOnly as markCaptureNoteOnly,
+  signStudentCaptureOriginals,
   updateGapLabel,
   type StudentCapture,
 } from '@/lib/gaps/api';
@@ -131,6 +132,8 @@ export default function StudentScreen() {
   const [student, setStudent] = useState<StudentRow | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [captures, setCaptures] = useState<StudentCapture[]>([]);
+  /** Full-res URLs for the selected focus capture only (lazy-signed). */
+  const [focusOriginalUrls, setFocusOriginalUrls] = useState<string[]>([]);
   const [gaps, setGaps] = useState<SkillGapRow[]>([]);
   const [practice, setPractice] = useState<StudentPractice[]>([]);
   const [parents, setParents] = useState<ClassParent[]>([]);
@@ -224,6 +227,18 @@ export default function StudentScreen() {
   const latest =
     captures.find((item) => item.id === captureParam) ??
     captures[0];
+
+  useEffect(() => {
+    let live = true;
+    setFocusOriginalUrls([]);
+    if (!latest) return;
+    void signStudentCaptureOriginals(latest).then((urls) => {
+      if (live) setFocusOriginalUrls(urls);
+    });
+    return () => {
+      live = false;
+    };
+  }, [latest?.id]);
 
   const editedGaps = () =>
     (latest?.gaps ?? []).map((gap) => ({
@@ -429,7 +444,7 @@ export default function StudentScreen() {
     setPhotoOpen(false);
     setPhotoBusy(true);
     try {
-      const source = latest.photoUrls[0] || latest.photoUrl;
+      const source = focusOriginalUrls[0] || latest.photoUrl;
       if (teacher && source) {
         await uploadProfilePhoto({
           teacherId: teacher.id,
@@ -571,13 +586,13 @@ export default function StudentScreen() {
   };
 
   const canAskGrok =
-    Boolean(latest?.photo_asset_id || latest?.photoUrls?.length) &&
+    Boolean(latest?.photo_asset_id || latest?.photoUrl || focusOriginalUrls.length) &&
     (latest?.status === 'attached' || latest?.status === 'draft');
   const history = buildSkillHistory(student, captures, practice, gaps);
   const focusLabel = focusSkillLabel(student, captures, storedFocusLabel, gaps);
   const assignmentGaps = gaps.filter((gap) => gap.submission_id && gap.status !== 'dismissed' && gap.label.trim());
-  const photos = latest?.photoUrls?.length
-    ? latest.photoUrls
+  const photos = focusOriginalUrls.length
+    ? focusOriginalUrls
     : latest?.photoUrl
       ? [latest.photoUrl]
       : [];
