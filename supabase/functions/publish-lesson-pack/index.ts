@@ -277,10 +277,12 @@ function validateManifest(manifest: Manifest, fields: PublishFields): string | n
     const beat = (item as { beat?: unknown }).beat;
     if (typeof beat === 'string' && beat) beatIds.add(beat);
   }
-  if (beatIds.size > 0) {
-    if (!beatIds.has(fields.beat_start) || !beatIds.has(fields.beat_end)) {
-      return 'beat_start/beat_end must exist in the pack';
-    }
+  // F14: always require beat_start/beat_end in beats[] and/or items[].beat.
+  if (beatIds.size === 0) {
+    return 'beat_start/beat_end must exist in the pack';
+  }
+  if (!beatIds.has(fields.beat_start) || !beatIds.has(fields.beat_end)) {
+    return 'beat_start/beat_end must exist in the pack';
   }
   return null;
 }
@@ -420,17 +422,22 @@ Deno.serve(async (req) => {
     uploadedPaths.add(object);
   }
 
-  // Replace-prefix: delete orphans still under this version that were not in this request.
-  try {
-    const existing = await listPrefix(admin, prefix);
-    const orphans = existing.filter((path) => !uploadedPaths.has(path));
-    if (orphans.length) {
-      const { error: removeError } = await admin.storage.from('lessons').remove(orphans);
-      if (removeError) return json({ error: 'storage write failed', detail: removeError.message }, 502);
+  // Replace-prefix: delete orphans under this version not in this request.
+  // F13: when another lesson_packs row already shares the prefix, skip orphan
+  // deletes (catalog-only slice) so sibling packs' objects are not wiped.
+  const sharedPrefix = (sharedRows ?? []).length > 0;
+  if (!sharedPrefix) {
+    try {
+      const existing = await listPrefix(admin, prefix);
+      const orphans = existing.filter((path) => !uploadedPaths.has(path));
+      if (orphans.length) {
+        const { error: removeError } = await admin.storage.from('lessons').remove(orphans);
+        if (removeError) return json({ error: 'storage write failed', detail: removeError.message }, 502);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'storage list failed';
+      return json({ error: 'storage write failed', detail: message }, 502);
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'storage list failed';
-    return json({ error: 'storage write failed', detail: message }, 502);
   }
 
   // published must always be present and false — SQL default is true.
