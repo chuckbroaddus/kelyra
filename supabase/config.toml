@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.explain-capture]
 verify_jwt = true
+
+[functions.practice-help]
+verify_jwt = true

@@ -15,6 +15,8 @@ export type AskToolPolicyEntry = {
   officeOnly?: boolean;
   /** Teacher seat only — office JWT denied unless they also teach (SQL is source of truth). */
   teacherSeatOnly?: boolean;
+  /** Parent co-teacher may call explain_capture; Edge enforces parent_of. */
+  parentCoTeacher?: boolean;
   /** Parent/student published syllabus + why-average read tools. */
   familyRead?: boolean;
 };
@@ -50,7 +52,7 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   discard_class_syllabus_draft: { capability: 'syllabus.manage', need: 'own', teacherSeatOnly: true },
   get_published_class_syllabus: { capability: null, need: null, familyRead: true },
   explain_my_class_average: { capability: null, need: null, familyRead: true },
-  explain_capture: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
+  explain_capture: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true, parentCoTeacher: true },
   discard_explain_draft: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
   attach_explain_as_note: { capability: 'explain.manage', need: 'own', teacherSeatOnly: true },
 };
@@ -83,7 +85,8 @@ export function isAskToolAllowed(
     // Office seat cannot write class grade policy in v1.
     // Runtime SQL class_teacher_of remains the write wall.
     if (isOfficeRole(profile)) return false;
-    if (profile?.role === 'parent' || profile?.role === 'student') return false;
+    if (profile?.role === 'student') return false;
+    if (profile?.role === 'parent') return policy.parentCoTeacher === true;
   }
   if (policy.familyRead) {
     if (isOfficeRole(profile)) return false;

@@ -1296,7 +1296,9 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
-      if (!ctx.teacherId) return { error: 'Teacher sign-in is required.' };
+      const seat = ctx.profile?.role;
+      if (seat !== 'teacher' && seat !== 'parent') return { error: 'Teacher or parent sign-in is required.' };
+      if (seat === 'teacher' && !ctx.teacherId) return { error: 'Teacher sign-in is required.' };
       const captureId = str(args, 'capture_id');
       if (!captureId) return { error: 'Need capture_id.' };
       const classId = await resolveClassId(ctx, args);
@@ -1306,17 +1308,22 @@ const TOOLS: Record<string, AskToolSpec> = {
         classId,
         imageUrl: ctx.photo?.imageUrl ?? null,
       });
+      const parked = seat === 'teacher';
       return {
         ok: true,
-        parked: true,
-        explain_status: 'draft',
+        parked,
+        ephemeral: !parked,
+        explain_status: parked ? 'draft' : 'ephemeral',
         steps: draft.steps,
         reteach: draft.reteach,
-        href: `/class/${classId}/student/${'review'}`,
-        note: 'Explain draft parked. Keep private by default. Attach as teacher note only after Confirm.',
+        href: parked ? `/class/${classId}/student/${'review'}` : undefined,
+        note: parked
+          ? 'Explain draft parked. Keep private by default. Attach as teacher note only after Confirm.'
+          : 'Parent co-teacher Explain for a linked child. Ephemeral — not parked on the teacher draft.',
       };
     },
   },
+
   discard_explain_draft: {
     capability: 'explain.manage',
     need: 'own',

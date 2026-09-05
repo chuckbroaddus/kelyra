@@ -27,6 +27,7 @@ export async function invokeAi<T extends object>(
     | 'analyze-answer-key'
     | 'parse-class-syllabus'
     | 'explain-capture'
+    | 'practice-help'
     | 'match-key'
     | 'review-submission'
     | 'process-ai-jobs'
