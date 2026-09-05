@@ -126,7 +126,7 @@ export async function runAskAgent(input: {
     return { text: card.text, didWork: false };
   }
   const familyNoVision =
-    input.live.role === 'student' || input.live.role === 'parent'
+    input.live.role === 'student'
       ? input.messages.map((m) => ({ ...m, imageUrl: null, imageMime: null }))
       : input.messages;
   const instructions = buildAskInstructions({
