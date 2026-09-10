@@ -27,6 +27,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { unreadCount } from '@/lib/messages/api';
 import { isStaffRole } from '@/lib/school/roles';
 import {
+  availableChromeSeats,
   canChooseChromeSeat,
   loadChromeSeatPreference,
   resolveStaffChromeRole,
@@ -64,7 +65,7 @@ export type HeaderChrome = {
 
 type ChromeValue = {
   role: ChromeRole;
-  /** Dual-hat only: switch Office ↔ Teacher chrome. No-op when the profile cannot choose. */
+  /** Dual-hat only: switch Office ↔ Teacher ↔ Parent chrome. No-op when the profile cannot choose. */
   setChromeSeat: (seat: ChromeSeatPreference) => void;
   canChooseSeat: boolean;
   visible: boolean;
@@ -244,11 +245,12 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     return () => {
       live = false;
     };
-  }, [profile?.id, profile?.role, profile?.also_teacher]);
+  }, [profile?.id, profile?.role, profile?.also_teacher, profile?.parent_id]);
 
   const setChromeSeat = useCallback(
     (seat: ChromeSeatPreference) => {
       if (!profile?.id || !canChooseChromeSeat(profile)) return;
+      if (!availableChromeSeats(profile).includes(seat)) return;
       setSeatPreference(seat);
       void saveChromeSeatPreference(profile.id, seat);
     },
@@ -312,7 +314,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
 
   const role: ChromeRole = useMemo(() => {
     if (pathname === '/sign-in' || pathname === '/join' || pathname === '/password') return 'none';
-    // Explicit seat for dual-hat office+teacher. Do not let also_teacher force teacher tray.
+    // Explicit seat for dual-hat staff (office/teacher/parent). Do not let also_* force a tray merge.
     const staffRole = resolveStaffChromeRole(profile, seatPreference);
     if (staffRole) return staffRole;
     if (profile?.role === 'parent') return 'parent';
