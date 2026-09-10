@@ -1296,6 +1296,10 @@ export type Database = {
         Args: { p_line_id: string; p_parent_id: string; p_student_ids?: string[] | null };
         Returns: Record<string, unknown>;
       };
+      dismissal_parent_leave: {
+        Args: { p_line_id: string };
+        Returns: Record<string, unknown>;
+      };
       dismissal_nudge: {
         Args: { p_line_id: string; p_parent_id: string };
         Returns: Record<string, unknown>;

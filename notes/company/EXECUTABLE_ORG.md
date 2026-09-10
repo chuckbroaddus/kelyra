@@ -74,7 +74,7 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 | qa-engineer | IQG test plans/cases + post-implement prove-out; files defects with severity |
 | qa-supervisor | Design-stage real-world intent; IQG stamp with PM; tasks prove-out via CoS; release evidence |
 | security | Security & privacy review |
-| devops-release | CI/CD, deploy, ops reliability; **sole** git merge/commit/push when CoS staffs after CEO/CoS auth |
+| devops-release | CI/CD, deploy, ops reliability; **sole** git merge/commit/push **and** live SQL apply when CoS staffs after CEO/CoS auth |
 | legal-compliance | Policy/compliance; flag human counsel |
 | finance-analytics | Revenue, cost, forecasting |
 | growth-marketing | Growth, campaigns, messaging |
@@ -129,6 +129,7 @@ Engineering profiles also carry `kelyra-qa-loop`.
 6. Grok effort only: minimal | low | medium | high.
 7. **TTS only via `grok-tts`**; never parallel TTS sessions (exclusive lock + 5s interval).
 8. **Git ship only via `devops-release`.** CoS does not `git commit` / `merge` / `push`. Staff DevOps after CEO/CoS authorizes. Never force-push main. Never secrets.
+8b. **Live SQL only via `devops-release`.** CoS does not apply migrations. Staff DevOps with SQL **filenames** from the loop handoff. Apply by filename; never colliding `db push`. Leftover P2/P3 sticky cards stay CoS.
 9. **Intent Quality Gate.** No Eng before PM+QA Supervisor stamps. After implement, staff QA Engineer prove-out. Defects get severity + PM disposition. See `INTENT_QUALITY_GATE.md`.
 
 ## Profile docs

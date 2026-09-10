@@ -8,7 +8,8 @@ There is **no CLI** for rooms. Use **Hermes Desktop → Bots**.
 
 ### 1. Kelyra Leadership (already created)
 - **Owner:** Kelyra Chief of Staff (`chief-of-staff`)
-- **Members (4):** Chief of Staff, Strategy, Product Manager, Software Architect
+- **Members (5):** Chief of Staff, Strategy, Product Manager, UI/UX Designer (`ui-ux-designer`), Software Architect
+- **Desktop:** add `Kelyra UI/UX Designer` (room had 4; cap is 6). No CLI for rooms.
 
 ### 2. Kelyra Engineering
 - **Owner:** Kelyra Software Architect (`software-architect`)
@@ -50,7 +51,7 @@ If you later want CoS *inside* Engineering, drop one of: Fast Coder, Security, o
 ## Seat math
 | Room | Count |
 |------|------:|
-| Leadership | 4 |
+| Leadership | 5 |
 | Engineering | 6 |
 | QA | 4 |
 | Product & GTM | 6 |

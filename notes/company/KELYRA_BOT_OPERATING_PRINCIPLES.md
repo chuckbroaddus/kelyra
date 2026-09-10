@@ -15,6 +15,7 @@ Kelyra is a coordinated company of specialized Hermes Bots. Prefer **artifacts o
 10. **Evidence matters.** Tests, logs, metrics, acceptance criteria.
 11. **UI/UX RACI.** `research-feedback` researches; `ui-ux-designer` designs and builds options; `product-manager` chooses among those options. Designer does not pick or research. PM does not produce visual option packs. Engineering implements the chosen option only.
 12. **Git ship.** Merge, commit, and push are **`devops-release` only**. CoS staffs that profile after CEO/CoS authorization. Other roles (including CoS) do not run git ship. Never force-push main. Never secrets.
+12b. **Live SQL.** Applying migration/SQL files on Supabase is **`devops-release` only** (CEO 2026-09-10, same lane as git ship). CoS staffs DevOps with **filenames** after a loop names them. CoS does not `apply_sql_by_filename`, `supabase db query -f`, or MCP `apply_migration`. Apply **by filename**; never `db push` when two files share a timestamp prefix. Leftover P2/P3 sticky cards stay CoS.
 13. **Intent Quality Gate (IQG).** Features and user-facing bug fixes must be fully realized, not happy-path only. QA Supervisor reviews real-world intent in **design** (hats, dual-hat, full lifecycle, multiplicity, chrome entry). PM and QA Supervisor both **stamp** the design before any engineering. After implementation, QA Supervisor has CoS staff QA Engineer to write test plans/cases and execute them. Defects go on board `kelyra` with severity; PM **auto-dispositions** them. See `INTENT_QUALITY_GATE.md`.
 
 ## Kanban
