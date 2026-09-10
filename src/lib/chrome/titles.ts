@@ -1,3 +1,19 @@
+/** Seat-root wordmark after office↔teacher commit — path must already be `/` (P-06 Option A). */
+export function headerTitleForSeatRoot(
+  role: string,
+  schoolName?: string | null,
+): string {
+  return headerTitleFor({
+    pathname: '/',
+    pushedTitle: null,
+    className: null,
+    contextTab: '',
+    role,
+    schoolName,
+    officeHome: role === 'superintendent' || role === 'administrator',
+  });
+}
+
 /** Header wordmark for the current route. Prefer a static label; use pushedTitle for a person, class, or thread name. */
 export function headerTitleFor(input: {
   pathname: string;
@@ -23,7 +39,7 @@ export function headerTitleFor(input: {
   if (pathname.startsWith('/messages/info/')) return named || 'Details';
   if (pathname.startsWith('/messages/') && pathname !== '/messages') return named || 'Message';
   if (pathname === '/messages' || pathname.startsWith('/messages')) return 'Messages';
-  if (pathname.startsWith('/parent/ride')) return named || 'Car rider';
+  if (pathname.startsWith('/parent/ride')) return named || 'Ride';
   if (pathname.startsWith('/parent/vehicles')) return named || 'Vehicles';
   if (pathname.startsWith('/ride')) return named || 'Dismissal';
   if (pathname.startsWith('/admin/ride')) return named || 'Ride office';

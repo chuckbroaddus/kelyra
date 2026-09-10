@@ -29,9 +29,12 @@ import { isStaffRole } from '@/lib/school/roles';
 import {
   availableChromeSeats,
   canChooseChromeSeat,
+  chromePathnameForSeatNav,
+  chromeSeatRootHref,
   loadChromeSeatPreference,
   resolveStaffChromeRole,
   saveChromeSeatPreference,
+  shouldClearSeatNavPath,
   type ChromeSeatPreference,
 } from '@/lib/chrome/seat';
 import { countNeedsYou } from '@/lib/captures/api';
@@ -68,6 +71,11 @@ type ChromeValue = {
   /** Dual-hat only: switch Office ↔ Teacher ↔ Parent chrome. No-op when the profile cannot choose. */
   setChromeSeat: (seat: ChromeSeatPreference) => void;
   canChooseSeat: boolean;
+  /**
+   * Pathname for wordmark / tray active state. During Option A seat switch this is the seat
+   * root immediately so prior-seat routes cannot drive headerTitleFor for even one frame.
+   */
+  chromePathname: string;
   visible: boolean;
   forceHidden: boolean;
   setForceHidden: (hidden: boolean) => void;
@@ -231,12 +239,15 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const localTrayRef = useRef(false);
   const keepLocalRef = useRef(false);
   const [seatPreference, setSeatPreference] = useState<ChromeSeatPreference | null>(null);
+  /** Optimistic seat-root path until router.replace settles (P-06 Option A). */
+  const [seatNavPath, setSeatNavPath] = useState<string | null>(null);
   const canChooseSeat = canChooseChromeSeat(profile);
 
   useEffect(() => {
     let live = true;
     if (!profile?.id || !canChooseChromeSeat(profile)) {
       setSeatPreference(null);
+      setSeatNavPath(null);
       return;
     }
     void loadChromeSeatPreference(profile.id).then((stored) => {
@@ -251,8 +262,12 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     (seat: ChromeSeatPreference) => {
       if (!profile?.id || !canChooseChromeSeat(profile)) return;
       if (!availableChromeSeats(profile).includes(seat)) return;
+      // Atomic chrome commit: persist → role resolve (via seatPreference) → seat-root path
+      // for titles/tray before router.replace; drawer still replace-routes to the same href.
       setSeatPreference(seat);
       void saveChromeSeatPreference(profile.id, seat);
+      setSeatNavPath(chromeSeatRootHref(seat));
+      setPushedTitleState(null);
     },
     [profile],
   );
@@ -329,6 +344,13 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     if (parentTokens.length) return 'parent';
     return 'none';
   }, [pathname, teacher, profile, studentSession, parentTokens.length, seatPreference]);
+
+  useEffect(() => {
+    if (!shouldClearSeatNavPath({ seatNavPath, pathname, role })) return;
+    setSeatNavPath(null);
+  }, [pathname, seatNavPath, role]);
+
+  const chromePathname = chromePathnameForSeatNav(seatNavPath, pathname);
 
   const contextReserve = useMemo(() => {
     if (role === 'none') return 0;
@@ -876,6 +898,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       role,
       setChromeSeat,
       canChooseSeat,
+      chromePathname,
       visible,
       forceHidden,
       setForceHidden,
@@ -941,6 +964,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       role,
       setChromeSeat,
       canChooseSeat,
+      chromePathname,
       visible,
       forceHidden,
       headerChrome,
@@ -1017,10 +1041,7 @@ export function isChromePushed(pathname: string): boolean {
   return isPushedPath(pathname);
 }
 
-/** Homework shutter. Hidden on Messages so a group photo cannot run portrait cutout. */
-export function showHeaderCapture(pathname: string, role: string): boolean {
-  return role === 'teacher' && !pathname.startsWith('/messages');
-}
+export { showHeaderCapture } from '@/lib/chrome/headerCapture';
 
 /** Bind a header title to this screen so leaving it cannot wipe the next screen’s title. */
 export function usePushedTitle(title: string | null) {

@@ -116,12 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const setActiveClassId = (classId: string | null) => {
+    // Clear outside the setTeacher updater (keep updater pure). MULT-01 / IQG-CL-01.
+    if (teacher && teacher.active_class_id !== classId) {
+      clearAskGroundOnActiveClassChange();
+    }
     setTeacher((current) => {
       if (!current) return current;
-      if (current.active_class_id !== classId) {
-        // MULT-01 / IQG-CL-01: class switch clears Ask session ground + page soft-candidate.
-        clearAskGroundOnActiveClassChange();
-      }
+      if (current.active_class_id === classId) return current;
       return { ...current, active_class_id: classId };
     });
   };

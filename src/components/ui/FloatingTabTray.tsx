@@ -1,4 +1,4 @@
-import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { can } from '@/lib/school/matrix';
-import { tabsFor, type TrayTab } from '@/lib/chrome/trayTabs';
+import { tabsFor, trayRemountKey, type TrayTab } from '@/lib/chrome/trayTabs';
 import { useSchoolFeedIcon } from '@/lib/feeds/useFeedIcon';
 import { formatCount } from '@/lib/format';
 import { useLayout } from '@/lib/theme/layout';
@@ -21,7 +21,8 @@ export function FloatingTabTray() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
   const { profile, grants } = useAuth();
-  const pathname = usePathname();
+  // chromePathname is seat root during Option A switch — never prior-seat path for active tabs.
+  const pathname = chromeState.chromePathname;
   const params = useGlobalSearchParams<{ tab?: string | string[] }>();
   const homeTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const router = useRouter();
@@ -29,6 +30,7 @@ export function FloatingTabTray() {
   const layout = useLayout();
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
   const schoolFeedIcon = useSchoolFeedIcon();
+  const remountKey = trayRemountKey(chromeState.role);
 
   if (chromeState.role === 'none' || chromeState.forceHidden) return null;
 
@@ -49,7 +51,10 @@ export function FloatingTabTray() {
 
   if (layout.showTopBar) {
     return (
-      <View style={[styles.topBar, { backgroundColor: colors.elevated, borderBottomColor: colors.line }]}>
+      <View
+        key={remountKey}
+        style={[styles.topBar, { backgroundColor: colors.elevated, borderBottomColor: colors.line }]}
+      >
         {tabs.map((tab) => (
           <HoverTip key={tab.key} label={tipIfNew(tab.label, tabTip(tab))}>
           <Pressable
@@ -81,6 +86,7 @@ export function FloatingTabTray() {
 
   return (
     <Animated.View
+      key={remountKey}
       pointerEvents="box-none"
       style={[
         styles.float,
@@ -140,7 +146,7 @@ function tabTip(tab: Tab): string {
   if (tab.key === 'people') return tab.href.startsWith('/student') ? 'Classmates, teachers, and parents' : 'Staff, parents, and students';
   if (tab.key === 'manage' || tab.key === 'system') return 'Feed icon, activity, and responsibilities';
   if (tab.key === 'activity') return 'Immutable change log';
-  if (tab.key === 'ask') return tab.label === 'Ask' ? 'Ask' : 'Talk with Kelyra';
+  if (tab.key === 'ask') return 'Ask';
   if (tab.key === 'capture') return 'File work';
   if (tab.key === 'inbox') return 'Needs';
   if (tab.key === 'class') return tab.href.startsWith('/student') ? 'Classes' : 'Grade book and class records';

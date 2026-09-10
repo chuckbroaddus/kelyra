@@ -78,9 +78,9 @@ test('STU-02 / OFF-08 / D4: student + office trays and OFFICE_CLASS_TABS unchang
     ['feed', 'teacher', 'parents', 'students'],
   );
   const studentAsk = tabsFor('student', '/ask', null, 0).find((tab) => tab.key === 'ask');
-  assert.equal(studentAsk?.label, 'Kelyra');
+  assert.equal(studentAsk?.label, 'Ask');
   const officeAsk = tabsFor('administrator', '/ask', null, 0).find((tab) => tab.key === 'ask');
-  assert.equal(officeAsk?.label, 'Kelyra');
+  assert.equal(officeAsk?.label, 'Ask');
 });
 
 test('D4 Phase A dual-hat seat still works', () => {
@@ -112,7 +112,8 @@ test('invariants: matcher never inserts; canCreateClass untouched; no EXPO_PUBLI
   const matchName = read('src/lib/matching/matchName.ts');
   assert.doesNotMatch(matchName, /\.insert\(|from\('students'\)\.insert/);
   const index = read('src/app/index.tsx');
-  assert.match(index, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
+  // Teachers cannot create classes: office seat + matrix grant (not job-of-record alone).
+  assert.match(index, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
   for (const rel of [
     'src/lib/chrome/trayTabs.ts',
     'src/components/ui/FloatingTabTray.tsx',

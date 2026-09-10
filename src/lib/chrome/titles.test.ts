@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { headerTitleFor } from './titles.ts';
+import { headerTitleFor, headerTitleForSeatRoot } from './titles.ts';
 
 const base = {
   pushedTitle: null,
@@ -29,4 +29,14 @@ test('CT-06: class panes keep class name wordmark', () => {
       pathOnly,
     );
   }
+});
+
+test('P-06: seat-root wordmark follows post-commit role only', () => {
+  assert.equal(headerTitleForSeatRoot('teacher'), 'Kelyra');
+  assert.equal(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Lincoln');
+  assert.equal(headerTitleForSeatRoot('superintendent', 'Lincoln'), 'Lincoln');
+  assert.notEqual(headerTitleForSeatRoot('teacher'), 'People');
+  assert.notEqual(headerTitleForSeatRoot('teacher'), 'Manage');
+  assert.notEqual(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Capture');
+  assert.notEqual(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Needs');
 });

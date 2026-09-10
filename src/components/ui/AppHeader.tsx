@@ -20,7 +20,8 @@ import { KelyraMark } from '@/components/ui/KelyraMark';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { chrome, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { isChromePushed, showHeaderCapture, useChrome } from '@/lib/chrome/ChromeProvider';
+import { isChromePushed, useChrome } from '@/lib/chrome/ChromeProvider';
+import { showHeaderCapture } from '@/lib/chrome/headerCapture';
 import { can } from '@/lib/school/matrix';
 import { headerTitleFor } from '@/lib/chrome/titles';
 import { useLayout } from '@/lib/theme/layout';
@@ -50,12 +51,14 @@ export function AppHeader() {
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
   const bar = landscape ? chrome.headerHeightLandscape : chrome.headerHeight;
   const icon = 22;
-  const pushed = isChromePushed(pathname);
+  // Seat switch uses chromePathname (seat root) so prior-seat routes cannot stick the wordmark.
+  const pathForChrome = chromeState.chromePathname;
+  const pushed = isChromePushed(pathForChrome);
   const searching = pathname === '/search';
   const officeHome =
     chromeState.role === 'superintendent' || chromeState.role === 'administrator';
   const title = headerTitleFor({
-    pathname: searching ? chromeState.searchFrom : pathname,
+    pathname: searching ? chromeState.searchFrom : pathForChrome,
     pushedTitle: chromeState.pushedTitle,
     className: chromeState.className,
     contextTab: chromeState.contextTab,
@@ -63,7 +66,7 @@ export function AppHeader() {
     schoolName: chromeState.schoolName,
     officeHome,
   });
-  const onHome = (pathname === '/' || pathname === '') && !pushed;
+  const onHome = (pathForChrome === '/' || pathForChrome === '') && !pushed;
   const logoUrl = chromeState.schoolLogoUrl;
   const capture =
     showHeaderCapture(pathname, chromeState.role) &&
@@ -116,7 +119,7 @@ export function AppHeader() {
   const titleSize = landscape ? 16 : onHome ? 20 : 18;
   const titleLine = landscape ? 24 : 28;
   const kelyraMark =
-    pathname === '/ask' || (searching && chromeState.searchFrom === '/ask');
+    pathForChrome === '/ask' || (searching && chromeState.searchFrom === '/ask');
   const markSize = bar + 12;
   const headerChrome = chromeState.headerChrome;
   const hideBack =

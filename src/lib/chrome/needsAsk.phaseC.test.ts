@@ -64,7 +64,7 @@ test('ASK-01/02/05: class name chip on teacher Ask; one /ask; office Ask unchang
   assert.equal(teacherAsk?.href, '/ask');
   const officeAsk = tabsFor('administrator', '/ask', null, 0).find((tab) => tab.key === 'ask');
   assert.equal(officeAsk?.href, '/ask');
-  assert.equal(officeAsk?.label, 'Kelyra');
+  assert.equal(officeAsk?.label, 'Ask');
 });
 
 test('ASK-03/04 / SEC-04: no new Ask tools; policy maps keep officeOnly / teacherSeatOnly', () => {
@@ -77,13 +77,39 @@ test('ASK-03/04 / SEC-04: no new Ask tools; policy maps keep officeOnly / teache
   assert.match(edge, /teacherSeatOnly/);
 });
 
-test('C5 / HB-04: Grade book and Parents demoted to drawer search; Family stays', () => {
+test('C5 / HB-04: Grade book and Parents always visible; search still filters; Family stays', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
-  assert.match(drawer, /q\.trim\(\) && matches\('Grade book'/);
-  assert.match(drawer, /q\.trim\(\) && matches\('Parents'/);
+  // §3.3 rows 5–6: empty filter shows them (matches returns true when q empty).
+  assert.match(drawer, /matches\('Grade book', q\)/);
+  assert.match(drawer, /matches\('Parents', q\)/);
+  assert.doesNotMatch(drawer, /q\.trim\(\) && matches\('Grade book'/);
+  assert.doesNotMatch(drawer, /q\.trim\(\) && matches\('Parents'/);
   assert.match(drawer, /matches\('Family update'/);
+  // matches() still gates when q is non-empty (HB-04 search).
+  assert.match(drawer, /function matches\(label: string, query: string\)/);
+  assert.match(drawer, /if \(!needle\) return true/);
+  assert.match(drawer, /label\.toLowerCase\(\)\.includes\(needle\)/);
   assert.match(drawer, /const teacherSeat = chromeState\.role === 'teacher'/);
   assert.match(drawer, /const officeSeat = isOfficeChromeRole\(chromeState\.role\)/);
+});
+
+test('P3 HB: Grade book DrawerRow indent matches Parents/Family update', () => {
+  const drawer = read('src/components/ui/HamburgerDrawer.tsx');
+  const blockStart = drawer.indexOf("{chromeState.classId && teacherSeat ? (");
+  assert.ok(blockStart > 0);
+  const familyAt = drawer.indexOf('label="Family update"', blockStart);
+  assert.ok(familyAt > blockStart);
+  const block = drawer.slice(blockStart, familyAt + 80);
+  const lines = block.split('\n');
+  const gradeRow = lines.find((line) => /<DrawerRow\s*$/.test(line) && lines[lines.indexOf(line) + 1]?.includes('label="Grade book"'));
+  const parentsRow = lines.find((line) => /<DrawerRow label="Parents"/.test(line));
+  const familyRow = lines.find((line) => /<DrawerRow label="Family update"/.test(line));
+  assert.ok(gradeRow, 'Grade book DrawerRow present');
+  assert.ok(parentsRow, 'Parents DrawerRow present');
+  assert.ok(familyRow, 'Family update DrawerRow present');
+  const lead = (line: string) => (line.match(/^[ \t]*/)?.[0] ?? '').length;
+  assert.equal(lead(gradeRow!), lead(parentsRow!));
+  assert.equal(lead(gradeRow!), lead(familyRow!));
 });
 
 test('Phase A+B intact: five tray keys; Class setup; CLASS_TABS ≤7; no sixth', () => {
@@ -121,5 +147,6 @@ test('SEC / invariants: no EXPO_PUBLIC secrets; matcher never inserts; canCreate
   const matchName = read('src/lib/matching/matchName.ts');
   assert.doesNotMatch(matchName, /\.insert\(|from\('students'\)\.insert/);
   const index = read('src/app/index.tsx');
-  assert.match(index, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
+  // Teachers cannot create classes: office seat + matrix grant (not job-of-record alone).
+  assert.match(index, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
 });

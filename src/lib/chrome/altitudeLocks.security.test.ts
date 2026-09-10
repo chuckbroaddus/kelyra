@@ -67,6 +67,7 @@ test('SEC-02: drawer office nouns gated on officeSeat, not isAdminRole', () => {
   assert.match(src, /availableChromeSeats\(profile\)/);
   assert.match(src, /setChromeSeat\('parent'\)/);
   assert.match(src, /label="Parent"/);
+  assert.match(src, /accessibilityLabel="Switch to Parent seat"/);
   assert.doesNotMatch(src, /isAdminRole\(profile\)/);
   assert.doesNotMatch(src, /isTeacherRole\(profile\)/);
   const inject = src.indexOf('{officeSeat ? (');
@@ -163,7 +164,9 @@ test('SEC-05/06 Phase B: Class tray not gradebook-first; Family stays drawer; no
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /label="Family update"/);
   assert.match(drawer, /\/family/);
-  assert.match(drawer, /q\.trim\(\) && matches\('Grade book'/);
+  // §3.3: Grade book always visible with empty filter (not q.trim()-gated).
+  assert.match(drawer, /matches\('Grade book', q\)/);
+  assert.doesNotMatch(drawer, /q\.trim\(\) && matches\('Grade book'/);
 });
 
 test('SEC-09 leftover: pure teacher fails activity admin gate (UI wall; JWT deny still optional)', () => {

@@ -74,8 +74,8 @@ test('L4: demoted routes highlight nearby default tab', () => {
 
 test('L5: header search placeholder follows chrome.role seat, not isOfficeRole(profile)', () => {
   const header = read('src/components/ui/AppHeader.tsx');
+  // Placeholders are seat-scoped via chrome.role — never job-of-record isOfficeRole(profile).
   assert.doesNotMatch(header, /isOfficeRole/);
-  assert.doesNotMatch(header, /useAuth/);
   assert.match(header, /function searchPlaceholder\(from: string, role: string\)/);
   assert.match(
     header,
@@ -86,6 +86,10 @@ test('L5: header search placeholder follows chrome.role seat, not isOfficeRole(p
     header,
     /chromeState\.role === 'superintendent' \|\| chromeState\.role === 'administrator'/,
   );
+  // useAuth is allowed for capture.use matrix gating only — not for placeholder seat.
+  assert.match(header, /useAuth/);
+  assert.match(header, /can\(profile,\s*'capture\.use',\s*'own',\s*grants\)/);
+  assert.match(header, /showHeaderCapture\(pathname,\s*chromeState\.role\)/);
 });
 
 test('L6: Ask FALLBACK says Needs in askPrompt + ai-dev + ask-assistant', () => {
@@ -103,7 +107,8 @@ test('Phase A–D intact: five tray; CLASS_TABS ≤7; Class setup; Needs; canCre
   assert.equal(tabsFor('teacher', '/', 'abc', 0).find((t) => t.key === 'class')?.href, '/class/abc/setup');
   assert.ok(CLASS_TABS.length <= 7);
   const index = read('src/app/index.tsx');
-  assert.match(index, /canCreateClass\s*=\s*isOfficeRole\(profile\)/);
+  // Teachers cannot create classes: office seat + matrix grant (not job-of-record alone).
+  assert.match(index, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);
   const matchName = read('src/lib/matching/matchName.ts');
   assert.doesNotMatch(matchName, /\.insert\(|from\('students'\)\.insert/);
   for (const rel of [
