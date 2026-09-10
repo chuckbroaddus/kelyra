@@ -190,7 +190,7 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 9. **Menu tray** — floating bar at the bottom of the drawer (same hide-on-scroll as the app tray). Search field (magnifying glass + “Search”) filters the menu and submits to `/search`. Gear on the right (tooltip **Settings**) opens `SettingsSheet`. Theme does **not** live on Profile or as a drawer section.
 10. **Sign out** — `danger` label. Signs out, `replace`s to `/`.
 
-**Dual-hat office+teacher on teacher seat only (`canChooseSeat`, seat=teacher):** add one altitude row **Office** (a11y `Switch to Office seat`) with the other altitude controls — after **My children** when that parent-hat row exists, otherwise near **Sign out**. Do **not** show **Teach** while already on teacher seat. Full atomic switch: §31.4b / §37.3. Parent **My children** (if present) stays its own row and is unchanged by P-06.
+**Dual-hat office+teacher on teacher seat only (`canChooseSeat`, seat=teacher):** add one altitude row **Office** (a11y `Switch to Office seat`) with the other altitude controls — after **My children** when that parent-hat row exists, otherwise near **Sign out**. Do **not** show **Teach** while already on teacher seat. Full atomic switch: §31.4b / §37.3. Parent **My children** (if present) stays its own deep-link row. When `also_parent` and not already parent-seated, also show altitude row **Parent** (a11y `Switch to Parent seat`) after **My children** / with other seat rows, before Sign out — §31.4b Parent seat (G3); not a Ride tray tab.
 
 **Superintendent rows, in order**
 
@@ -200,10 +200,11 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 4. **People** → `/?tab=people`
 5. **Manage** → `/?tab=manage`
 6. **Ask** → `/ask`
-7. **My children** — only with a parent hat → `/parent`
+7. **My children** — only with a parent hat → `/parent` (deep-link; does **not** flip to parent seat / parent tray)
 8. **Teach** — only dual-hat office+teacher with seat=**office** (`canChooseSeat`); a11y `Switch to Teach seat`; atomic seat switch §31.4b / §37.3. Hide when seat=teacher (then the teacher-seat drawer owns **Office** instead).
-9. Hairline
-10. **Sign out**
+9. **Parent** — only staff with parent hat, chrome **not** already parent (`parent` ∈ available seats); a11y `Switch to Parent seat`; atomic Parent seat switch §31.4b (lands `/parent`, tray **Home · Ride · Ask**). Hide on parent seat. After **My children** when present; with other altitude rows; before Sign out. **Not** a Ride label — Ride is the tray tab after flip.
+10. Hairline
+11. **Sign out**
 
 Do not also list Feed in the shared staff Feed row for this seat. Administrator hamburger keeps the class list + People / Activity / Messages / Responsibilities (no Feed or Manage in drawer extras; Feed drawer rows are superintendent §36.2 only; tray Feed stays for both office seats).
 
@@ -227,7 +228,8 @@ Do not restore **Leave class** on the student drawer or Profile. Tray destinatio
 
 1. Identity: parent `display_name` (or “Parent”) + child first names, `meta`. **Current drawer has no 36 circle** (`HamburgerDrawer.tsx` is plain `Text`). Do not marquee this block in this pass. If a parent photo is added later, the name next to it marquees (§30).
 2. **Children** — one row per **linked** child on this parent record (`parent_students`), not per stored device token. Each row focuses that child on `/parent`. One child: omit the section.
-3. **Settings** — same gear. Theme is in the Settings popup.
+3. **Office** / **Teach** — only when this login also has staff seats and chrome is **parent** seat: altitude switches back (a11y `Switch to Office seat` / `Switch to Teach seat`); land `/`; rebuild staff tray. Hide seats not available. §31.4b Parent seat reverse.
+4. **Settings** — same gear. Theme is in the Settings popup.
 
 Parent cannot delete a child, revoke their own invite, or edit teacher notes. Leave those controls off this drawer.
 
@@ -1695,7 +1697,7 @@ On focus, write `kelyra.parent.lastSeenAt` so the bell can clear (§11).
 | Route | `/parent/ride` (related: `/parent/vehicles…` stays Ride-active for tray highlight only) |
 | Header wordmark | **Ride** (§3.5) |
 | Who | **Parent seat only** on the floating tray **Home · Ride · Ask** |
-| Office | **No** Ride tray tab. Staff dismissal / curb / Ride office = **Manage** altitude (§36 Manage pane + duty routes). Dual-hat parent hat still does **not** merge trays (§31.4b) |
+| Office | **No** Ride tray tab. Staff dismissal / curb / Ride office = **Manage** altitude (§36 Manage pane + duty routes). Dual-hat parent hat still does **not** merge trays. Staff reach parent Ride only via **Parent seat** drawer altitude (§31.4b G3) — not by adding Ride to teacher/office tray; **My children** deep-link alone is not Ride SoT |
 | Leave surface | **`/parent/ride` hub only** while server reports a live waiting trip. **No** Leave on `/parent/vehicles…`. **No** second confirm surface on vehicles |
 | Parent event | Parent path writes **`left` only**. Never mint **`released`**. Staff curb **`released`** stays pickup confirmation |
 | Non-goals | Student Ride tab; sixth teacher tab; office tray Ride for parity; inventing View-stroke; reopening icon options B/C/D; sticky Leave footer; quiet trailing-only ListRow Leave as primary pattern; Danger red Leave; one-tap leave; type-to-confirm; hold-3s; partial leave; household leave-all; undo that restores XX; neighbor plates / line totals; Checkout / Released / Picked up nouns on parent chrome |
@@ -3234,12 +3236,14 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 
 ### 31.4b Extra hats (same login)
 
-**Explicit chrome seat** (client preference only — not JWT, not SQL). `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray.
+**Explicit chrome seat** (client preference only — not JWT, not SQL). Preference domain: `office` | `teacher` | `parent`. `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray. `also_parent` on staff means they **may choose** Parent chrome; it must **never** silently force Parent seat or add Ride to a staff tray.
 
 - Dual-hat office+teacher: default seat = **Office**. Seat switch sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
 - When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask. **Still no Ride tray tab** — staff curb/dismissal stays Manage altitude.
-- Parent hat adds **My children** → `/parent` without switching to the parent-only tray (parent tray including **Ride** is for parent-only / parent-seat chrome). Parent-only logins still use the parent tray **Home · Ride · Ask**. Parent **My children** is orthogonal to office↔teacher seat switch (G3 later — not this lock).
-- Never merge trays. Never invent a sixth tray tab to hold both altitudes. Never add office Ride for “parity” with parent Ride.
+- Staff with parent hat (`also_parent`) get **two orthogonal drawer paths:** **My children** = deep-link into the `/parent` family **without** flipping seat (no parent tray / no Ride tab under staff chrome). **Parent** = altitude seat switch (Teach/Office class) that sets preference `parent`, rebuilds tray from `tabsFor('parent')` only → **Home · Ride · Ask**, lands parent root `/parent`. **Ride requires Parent seat** — My children alone is not the Ride menu path.
+- Parent-only logins (no staff seat) still use the parent tray **Home · Ride · Ask** with no seat row needed.
+- Default seat stays job-of-record: office > teacher. **Never default into Parent.** Parent is opt-in altitude.
+- Never merge trays. Never invent a sixth tray tab to hold both altitudes. Never add office/teacher Ride for “parity” with parent Ride. Never treat staff-tray `/parent/ride` deep-link as stamped Ride entry.
 
 #### Office ↔ teacher seat switch (P-06 lock, 2026-09-10 — Option A only)
 
@@ -3259,7 +3263,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 | Camera | Mounts **iff** new role is `teacher`; unmounts on office. Gate on `role === 'teacher'`, not `also_teacher`. |
 | Logo | School logo **unchanged** across office↔teacher (same school). |
 | Wordmark | `headerTitleFor` for **new** pathname + **new** role only (§3.5). Ask exception unchanged (KelyraMark + Ask rules). |
-| Parent | **My children** drawer path **unchanged**. |
+| Parent | **My children** drawer path **unchanged** (orthogonal deep-link). **Parent seat** altitude row is a separate control — see next subsection (G3 / IQG-RIDE). |
 | Primitives | Existing drawer rows. No new seat glyphs. No header seat chip. No WhoRow seat segments. |
 
 **Ordered commit sequence** (one coherent seat from user POV after the drawer no longer covers the shell):
@@ -3274,6 +3278,49 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old tray + half-new title at any frame.
 
 **Illegal transient states (any shipped frame):** seat=teacher + wordmark People/Manage; seat=office + tray Needs/Capture; merged 6+ tray flash; stuck prior-seat wordmark under or after drawer exit; KelyraMark off-Ask when school logo should show; drawer Office/Teach duplicated by a header chip or WhoRow segment.
+
+#### Parent seat switch (IQG-RIDE G3 lock, 2026-09-10 — Option (a) only)
+
+**PM-locked:** `notes/company/ride-iqg-pm-lock.md` §1 / §1.2b / §1.4. Explicit **Parent** drawer altitude row (Teach/Office class). Do **not** reopen leave A/B/C, Ride icon, multi-vehicle picker, or staff Ride tray. Rejected: (b) My children only as Ride entry; (c) hybrid Ride via deep-link.
+
+**One sentence:** **My children** = deep-link `/parent` family without seat flip; **Parent seat** = altitude preference `parent` that rebuilds parent tray — **Ride requires Parent seat.**
+
+| Element | Lock |
+|---|---|
+| Who | Staff with parent hat and ≥1 other seat (`canChooseSeat` / `availableChromeSeats` includes `parent` plus office and/or teacher): teacher+parent, office+parent, triple-hat. Not parent-only logins (they already sit parent chrome). |
+| Placement | **HamburgerDrawer** altitude group only. **Not** tray. **Not** header chip. With Teach/Office seat rows; **after My children** when that row exists; **before Sign out** hairline. |
+| Visibility | Show **Parent** only when chrome is **not** already parent and `parent` ∈ available seats. **Hide** on parent seat. |
+| Rows (staff seats) | Show **only other seats** (hide current), same family as P-06: seat=office → **Teach** (if available) + **Parent** (if available); seat=teacher → **Office** (if available) + **Parent** (if available). |
+| Rows (from parent seat) | List available staff seats as altitude switches back: **Office** and/or **Teach** — hide **Parent** while already parent-seated. |
+| Labels | **Parent** (not “Ride seat” as the only / sole label). Reverse rows keep **Teach** / **Office**. |
+| a11y | **Required:** `Switch to Parent seat` (parity Teach/Office). Reverse: `Switch to Teach seat` / `Switch to Office seat`. No required toast. |
+| Preference | Client-only `office` \| `teacher` \| `parent`. Default remains job-of-record office > teacher — **never** cold-start Parent. Not JWT/SQL. |
+| Landing | Parent seat change **always** lands **parent root** `/parent` (`chromeSeatRootHref('parent')`). Do **not** stay-on-compatible-route. Reverse to office/teacher always lands seat root `/` (teacher landing rules as P-06). |
+| Motion | **0 ms** chrome morph. Drawer keeps existing two-phase exit (§34 / §35). Reduce Motion = already instant; no extra path. Same family as P-06. |
+| Tray | Rebuild from `tabsFor(newRole)` only — full unmount/remount or key remount. Parent → **Home · Ride · Ask** only. **Never** concatenate staff + parent tabs or item-wise morph. |
+| Camera | Unmounts on parent (parent has no header camera). Mounts again only if reverse lands teacher. Gate on `role === 'teacher'`, not hats. |
+| Logo | School logo **unchanged** across seats (same school). |
+| Wordmark | `headerTitleFor` for **new** pathname + **new** role only (§3.5). After Parent land: parent Home wordmark on `/parent`; never prior Teach/Office noun for even one frame. |
+| My children | **Orthogonal** deep-link. Does **not** set preference `parent`. Does **not** rebuild parent tray. **Not** Ride SoT. Still works without exposing Ride tab (DH-06). |
+| Ride SoT | After Parent seat settles: tray **Home · Ride · Ask**; Ride reachable in **≤3 taps** from drawer open (Parent → land → Ride, or Parent then Ride). Leave/check-in parent UX only under parent-seat Ride family. |
+| Primitives | Existing drawer rows. No new seat glyphs. No header seat chip. No WhoRow seat segments. No multi-vehicle picker chrome. |
+
+**Ordered commit sequence** (mirror P-06; one coherent seat after drawer no longer covers the shell):
+
+1. **Persist** preference `parent` (or `office` / `teacher` on reverse).
+2. **Resolve** `chrome.role` from preference (`resolveStaffChromeRole` → `parent` when seat=parent).
+3. **Replace route** to seat root **before or atomically with** tray key set — parent → `/parent`; reverse → `/`.
+4. **Rebuild tray** from `tabsFor(newRole)` only.
+5. **Header:** school logo stays; wordmark = post-commit role+path only; camera off on parent / on teacher only after reverse.
+6. Ask special case unchanged.
+
+Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old staff tray + parent title, or parent tray + prior staff wordmark, at any frame.
+
+**Illegal transient states (any shipped frame):** staff seat + Ride tray tab; parent seat + teacher Capture/Needs or office People/Manage tray nouns; merged staff+parent tray flash (6+ or concatenated); stuck prior-seat wordmark under or after drawer exit; “Ride seat” as the sole drawer label for this control; silent auto-flip to Parent; treating **My children** alone as Ride entry; header chip / WhoRow seat segment duplicate.
+
+**Prove-out AC this fold must support** (eng later; DH ids from pm-lock §4): **DH-01** Parent row + Ride ≤3 taps; **DH-02** teacher/office tray never Ride; **DH-04** no tray merge; **DH-05** office+also_parent same Parent path; **DH-06** My children still works without exposing Ride tab; **DH-07** cold start stays job-of-record (not Parent).
+
+**Out of this fold.** Leave-line A/B/C reopen; Ride icon reopen; multi-vehicle check-in picker; toast success one-liner; new IconName seat glyphs; 180 ms chrome crossfade; header chip; stay-on-compatible-route; staff sixth Ride tab; office Ride parity.
 
 ### 31.5 Activity (audit)
 
@@ -3912,7 +3959,7 @@ Activity is no longer a tray icon. It lives on the School pane. Messages stay in
 
 ### 36.2 Superintendent hamburger
 
-Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Then My children (parent hat) and Sign out. Manage opens `/?tab=manage`. Feed opens `/?tab=feed`.
+Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Then **My children** (parent hat, deep-link) · altitude **Teach** / **Parent** when available (§31.4b) · Sign out. Manage opens `/?tab=manage`. Feed opens `/?tab=feed`.
 
 ### 36.3 School home tabs
 
@@ -3940,7 +3987,7 @@ src/app/admin/people.tsx
 
 ## 37. TEACH-UX shipped IA (2026-09-04)
 
-**Docs delta only.** Matches dirty-tree TEACH-UX A–D. Plan: `notes/company/teacher-ux-plan.md`. Live: `src/lib/chrome/trayTabs.ts`, `classTabs.ts`, `seat.ts`, `titles.ts`. Dual-hat office↔teacher seat-switch chrome locked **2026-09-10** (P-06 Option A) — see §31.4b and §37.3.
+**Docs delta only.** Matches dirty-tree TEACH-UX A–D. Plan: `notes/company/teacher-ux-plan.md`. Live: `src/lib/chrome/trayTabs.ts`, `classTabs.ts`, `seat.ts`, `titles.ts`. Dual-hat office↔teacher seat-switch chrome locked **2026-09-10** (P-06 Option A) — see §31.4b and §37.3. Parent seat altitude (IQG-RIDE G3 Option (a)) locked **2026-09-10** — see §31.4b Parent seat subsection; binding `notes/company/ride-iqg-pm-lock.md` §1.
 
 ### 37.1 Teacher chrome contract
 
@@ -3956,8 +4003,8 @@ src/app/admin/people.tsx
 | Ask | Tray-last; teacher may bind active `classId` / class chip |
 | Header camera | **Proposes** only; tray Capture **files**. Camera mounts on **teacher seat only** (not on office seat, even if `also_teacher`) |
 | Web ≥720 | Same five labels visible |
-| Dual-hat seat | Explicit client `office` \| `teacher` preference; `also_teacher` never silent-forces teacher tray; default dual-hat = **Office**. Switch = **HamburgerDrawer** other-seat row only (§31.4b / §37.3) |
-| Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite; no merged trays; no header seat chip; no office Ride tray tab |
+| Dual-hat seat | Explicit client `office` \| `teacher` \| `parent` preference; `also_teacher` never silent-forces teacher tray; `also_parent` never silent-forces Parent or staff Ride tab; default dual-hat job-of-record = **Office** (never cold-start Parent). Switch = **HamburgerDrawer** other-seat rows only (§31.4b / §37.3) |
+| Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite; no merged trays; no header seat chip; no office/teacher Ride tray tab; no “Ride seat” as sole Parent altitude label |
 
 ### 37.2 Code map
 
@@ -3985,7 +4032,7 @@ src/components/ui/AppHeader.tsx
 | Office | **Teach** | Switch to Teach seat |
 | Teacher | **Office** | Switch to Office seat |
 
-Hide the current seat. Do not list both seats with a check. Do not duplicate the control in the header or tray. Parent **My children** stays its own drawer row and does **not** change in this pack (G3 later).
+Hide the current seat. Do not list both seats with a check. Do not duplicate the control in the header or tray. Parent **My children** stays its own drawer deep-link row (unchanged by P-06). **Parent seat** altitude row is specified in §31.4b Parent seat subsection (IQG-RIDE G3) — not part of this P-06 office↔teacher-only pack, but same drawer altitude family.
 
 **Atomic sequence on tap** (must ship as one coherent seat after drawer no longer covers shell):
 
@@ -4000,7 +4047,7 @@ Hide the current seat. Do not list both seats with a check. Do not duplicate the
 
 **Settle acceptance (one paragraph).** After switch settles: seat=teacher never shows office tray nouns (People/Manage) or office People altitude; seat=office never shows teacher Capture/Needs tray or teacher camera; wordmark matches §3.5 for the destination landed; no merged 6+ tray flash at any shipped frame; no stuck prior-seat wordmark under or after drawer exit; default dual-hat remains Office; preference is not JWT/SQL; office seat still has no Ride tray tab.
 
-**Out of this lock.** G3 parent-as-seat; toast success one-liner; new IconName seat glyphs; 180 ms chrome crossfade; header chip; identity segments; stay-on-compatible-route; reopening §31.4b defaults or tray recipes.
+**Out of this P-06 lock.** Toast success one-liner; new IconName seat glyphs; 180 ms chrome crossfade; header chip; identity segments; stay-on-compatible-route; reopening §31.4b office↔teacher defaults or tray recipes. **Parent seat G3** is **not** out of product law — it is locked in the §31.4b Parent seat subsection (same motion/tray family; separate who/label/landing).
 
 Matcher still never inserts a student. Nothing is a grade until the teacher Approves. Parked P2s (Needs dual-hat count polish, Week/Heatmap secondary chrome, route rename `/needs`) stay out of this doc delta.
 
