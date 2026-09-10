@@ -233,3 +233,14 @@ test('RIDE-S1-21 parent UI routes exist; fail copy constant', () => {
   assert.ok(read('src/app/admin/ride/index.tsx').length > 50);
   assert.equal(RIDE_FAIL_MESSAGE, 'Check in failed');
 });
+
+test('RIDE-S1-22 parent check-in early guards use specific copy', () => {
+  const ui = read('src/app/parent/ride.tsx');
+  assert.match(ui, /setStatus\('Sign in again'\)/);
+  assert.match(ui, /setStatus\('No line available'\)/);
+  assert.match(ui, /setStatus\('Pick children first'\)/);
+  assert.match(ui, /setStatus\('Photo canceled'\)/);
+  // Real RPC/restriction failures still use the opaque constant
+  assert.match(ui, /setStatus\(RIDE_FAIL_MESSAGE\)/);
+  assert.match(ui, /setStatus\(parentCheckInMessage\(result\)\)/);
+});

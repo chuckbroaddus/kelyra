@@ -71,12 +71,16 @@ export default function ParentRideScreen() {
   }
 
   async function runCheckIn(opts: { imFirst: boolean; photo?: boolean }) {
-    if (!lineId || !session?.user?.id) {
-      setStatus(RIDE_FAIL_MESSAGE);
+    if (!session?.user?.id) {
+      setStatus('Sign in again');
+      return;
+    }
+    if (!lineId) {
+      setStatus('No line available');
       return;
     }
     if (!picked.length) {
-      setStatus(RIDE_FAIL_MESSAGE);
+      setStatus('Pick children first');
       return;
     }
     setBusy(true);
@@ -89,7 +93,7 @@ export default function ParentRideScreen() {
         await waitForModalDismiss();
         const photo = await pickRawPhoto(true);
         if (!photo) {
-          setStatus(RIDE_FAIL_MESSAGE);
+          setStatus('Photo canceled');
           return;
         }
         storagePath = await uploadRidePhoto(session.user.id, photo.uri, photo.mimeType);
