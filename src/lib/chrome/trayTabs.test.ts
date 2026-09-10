@@ -6,6 +6,7 @@ import { tabsFor, trayKeysForRole } from './trayTabs.ts';
 const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
+const PARENT_KEYS = ['home', 'ride', 'ask'];
 
 test('A1 pure teacher tray: five keys, no office People/Manage', () => {
   const keys = trayKeysForRole('teacher');
@@ -64,4 +65,20 @@ test('TR-06: teacher Needs label; route stays /inbox', () => {
   assert.equal(needs.label, 'Needs');
   assert.equal(needs.href, '/inbox');
   assert.equal(needs.badge, 2);
+});
+
+test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/office', () => {
+  assert.deepEqual(trayKeysForRole('parent'), PARENT_KEYS);
+  assert.ok(trayKeysForRole('parent').includes('ride'));
+  assert.ok(!trayKeysForRole('teacher').includes('ride'));
+  assert.ok(!trayKeysForRole('administrator').includes('ride'));
+  const teacher = new Set(trayKeysForRole('teacher'));
+  const parent = new Set(trayKeysForRole('parent'));
+  const union = new Set([...teacher, ...parent]);
+  assert.notDeepEqual([...union].sort(), TEACHER_KEYS.slice().sort());
+  assert.notDeepEqual([...union].sort(), PARENT_KEYS.slice().sort());
+  assert.ok(parent.has('ride'));
+  assert.ok(!teacher.has('ride'));
+  assert.ok(teacher.has('capture'));
+  assert.ok(!parent.has('capture'));
 });

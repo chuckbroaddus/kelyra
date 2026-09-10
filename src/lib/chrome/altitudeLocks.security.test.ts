@@ -35,10 +35,38 @@ test('SEC-01 dual-hat: office seat tray === office; teacher seat === pure teache
   assert.notEqual(merged.size, trayKeysForRole(teacherRole!).length);
 });
 
+test('SEC-01 also_parent: parent seat tray === parent (incl Ride); never merge onto teacher', () => {
+  const teacherParent = { role: 'teacher' as const, parent_id: 'p1' };
+  assert.equal(resolveStaffChromeRole(teacherParent, null), 'teacher');
+  assert.equal(resolveStaffChromeRole(teacherParent, 'parent'), 'parent');
+  assert.deepEqual(trayKeysForRole('parent'), ['home', 'ride', 'ask']);
+  assert.deepEqual(
+    trayKeysForRole(resolveStaffChromeRole(teacherParent, 'parent')!),
+    trayKeysForRole('parent'),
+  );
+  assert.deepEqual(
+    trayKeysForRole(resolveStaffChromeRole(teacherParent, 'teacher')!),
+    trayKeysForRole('teacher'),
+  );
+  const merged = new Set([...trayKeysForRole('teacher'), ...trayKeysForRole('parent')]);
+  assert.notEqual(merged.size, trayKeysForRole('teacher').length);
+  assert.notEqual(merged.size, trayKeysForRole('parent').length);
+  assert.ok(!trayKeysForRole('teacher').includes('ride'));
+
+  const triple = { role: 'administrator' as const, also_teacher: true, parent_id: 'p1' };
+  assert.equal(resolveStaffChromeRole(triple, 'office'), 'administrator');
+  assert.equal(resolveStaffChromeRole(triple, 'teacher'), 'teacher');
+  assert.equal(resolveStaffChromeRole(triple, 'parent'), 'parent');
+  assert.deepEqual(trayKeysForRole(resolveStaffChromeRole(triple, 'parent')!), trayKeysForRole('parent'));
+});
+
 test('SEC-02: drawer office nouns gated on officeSeat, not isAdminRole', () => {
   const src = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(src, /const officeSeat = isOfficeChromeRole\(chromeState\.role\)/);
   assert.match(src, /const teacherSeat = chromeState\.role === 'teacher'/);
+  assert.match(src, /availableChromeSeats\(profile\)/);
+  assert.match(src, /setChromeSeat\('parent'\)/);
+  assert.match(src, /label="Parent"/);
   assert.doesNotMatch(src, /isAdminRole\(profile\)/);
   assert.doesNotMatch(src, /isTeacherRole\(profile\)/);
   const inject = src.indexOf('{officeSeat ? (');

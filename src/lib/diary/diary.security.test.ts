@@ -123,9 +123,9 @@ test('UI: /diary Journal|Ledger; drawer Diary; student has no Diary link', () =>
   assert.match(screen, /PersonTabs/);
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /label=\"Diary\"/);
-  // Student branch must not include Diary go
-  const studentAt = drawer.indexOf("chromeState.role === 'student'");
-  const parentAt = drawer.indexOf("chromeState.role === 'parent'");
+  // Student branch must not include Diary go (match JSX role sections, not seat consts)
+  const studentAt = drawer.indexOf("{chromeState.role === 'student' ? (");
+  const parentAt = drawer.indexOf("{chromeState.role === 'parent' ? (");
   assert.ok(studentAt > 0 && parentAt > studentAt);
   const studentBlock = drawer.slice(studentAt, parentAt);
   assert.doesNotMatch(studentBlock, /go\('\/diary'\)/);

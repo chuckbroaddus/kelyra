@@ -30,7 +30,7 @@ import { deleteClass } from '@/lib/classes/delete';
 import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { isOfficeChromeRole } from '@/lib/chrome/seat';
+import { availableChromeSeats, isOfficeChromeRole } from '@/lib/chrome/seat';
 import { formatHandle, isAlsoParent } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
 import { can } from '@/lib/school/matrix';
@@ -229,6 +229,8 @@ export function HamburgerDrawer() {
   const staff = chromeState.role === 'teacher' || chromeState.role === 'administrator' || chromeState.role === 'superintendent';
   const officeSeat = isOfficeChromeRole(chromeState.role);
   const teacherSeat = chromeState.role === 'teacher';
+  const parentSeat = chromeState.role === 'parent';
+  const seats = availableChromeSeats(profile);
   const q = query;
 
   return (
@@ -370,7 +372,7 @@ export function HamburgerDrawer() {
               )}
               {chromeState.canChooseSeat ? (
                 <>
-                  {teacherSeat && matches('Office', q) ? (
+                  {seats.includes('office') && !officeSeat && matches('Office', q) ? (
                     <DrawerRow
                       label="Office"
                       onPress={() => {
@@ -379,7 +381,7 @@ export function HamburgerDrawer() {
                       }}
                     />
                   ) : null}
-                  {officeSeat && matches('Teach', q) ? (
+                  {seats.includes('teacher') && !teacherSeat && matches('Teach', q) ? (
                     <DrawerRow
                       label="Teach"
                       onPress={() => {
@@ -388,10 +390,19 @@ export function HamburgerDrawer() {
                       }}
                     />
                   ) : null}
+                  {seats.includes('parent') && !parentSeat && matches('Parent', q) ? (
+                    <DrawerRow
+                      label="Parent"
+                      onPress={() => {
+                        chromeState.setChromeSeat('parent');
+                        go('/parent', true);
+                      }}
+                    />
+                  ) : null}
                   <Hairline />
                 </>
               ) : null}
-              {isAlsoParent(profile) && matches('My children', q) ? (
+              {!chromeState.canChooseSeat && isAlsoParent(profile) && matches('My children', q) ? (
                 <>
                   <DrawerRow label="My children" onPress={() => go('/parent')} />
                   <Hairline />
@@ -472,6 +483,29 @@ export function HamburgerDrawer() {
               )}
               {matches('My children', q) ? (
                 <DrawerRow label="My children" onPress={() => go('/parent')} />
+              ) : null}
+              {chromeState.canChooseSeat ? (
+                <>
+                  <Hairline />
+                  {seats.includes('office') && matches('Office', q) ? (
+                    <DrawerRow
+                      label="Office"
+                      onPress={() => {
+                        chromeState.setChromeSeat('office');
+                        go('/', true);
+                      }}
+                    />
+                  ) : null}
+                  {seats.includes('teacher') && matches('Teach', q) ? (
+                    <DrawerRow
+                      label="Teach"
+                      onPress={() => {
+                        chromeState.setChromeSeat('teacher');
+                        go('/', true);
+                      }}
+                    />
+                  ) : null}
+                </>
               ) : null}
               {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
               {matches('Sign out', q) ? (
