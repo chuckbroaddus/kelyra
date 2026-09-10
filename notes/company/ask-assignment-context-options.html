@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASK-D1 — Pedagogy pack + Ask ground options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #161616; color: #eee;
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    min-height: 100%;
+  }
+  a { color: #8cb4ff; }
+  .top {
+    border-bottom: 1px solid #333; padding: 12px 14px 0;
+    position: sticky; top: 0; background: #161616; z-index: 5;
+  }
+  h1 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .meta { color: #aaa; font-size: 12px; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 10px; }
+  .tabs button {
+    appearance: none; border: 1px solid #444; background: #222; color: #eee;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; font: inherit;
+  }
+  .tabs button.active { border-color: #8cb4ff; color: #8cb4ff; }
+  .wrap { padding: 14px; display: grid; gap: 16px; max-width: 1200px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px; align-items: start;
+  }
+  .panel {
+    background: #1b1b1b; border: 1px solid #333; border-radius: 12px; overflow: hidden;
+  }
+  .panel h2 {
+    font-size: 13px; font-weight: 600; color: #fff; padding: 10px 12px;
+    border-bottom: 1px solid #333; background: #1f1f1f;
+  }
+  .panel .blurb {
+    color: #aaa; font-size: 12px; padding: 8px 12px; border-bottom: 1px solid #2a2a2a;
+  }
+  .hidden { display: none !important; }
+  .phone {
+    margin: 12px; background: #F7F3EC; color: #1A1612;
+    border-radius: 18px; border: 1px solid #cfc4b8; overflow: hidden;
+    max-width: 340px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .hdr {
+    height: 48px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; background: #FFFCFA; border-bottom: 1px solid #E7E0D6;
+    font-weight: 700; font-size: 15px;
+  }
+  .hdr .trail { display: flex; gap: 2px; color: #6A635B; font-size: 12px; }
+  .body { padding: 12px; min-height: 380px; position: relative; padding-bottom: 96px; }
+  .body.ask-body { display: flex; flex-direction: column; min-height: 440px; padding-bottom: 12px; }
+  .title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .lead { font-size: 13px; color: #6A635B; margin-bottom: 12px; line-height: 1.4; }
+  .card {
+    background: #FFFFFF; border: 1px solid #E7E0D6; border-radius: 12px;
+    padding: 10px; margin-bottom: 10px;
+  }
+  .pill {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px; margin-bottom: 8px;
+  }
+  .pill.draft { background: #EFE8DE; color: #6A635B; }
+  .pill.ok { background: #DCEFE4; color: #1F6B40; }
+  .pill.warn { background: #F8E7C8; color: #8F5610; }
+  .field-label { font-size: 11px; color: #6A635B; margin: 6px 0 2px; font-weight: 600; }
+  .field {
+    background: #FFFCFA; border: 1px solid #E7E0D6; border-radius: 8px;
+    padding: 8px; font-size: 13px; color: #1A1612; min-height: 36px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .chip {
+    border: 1px solid #E7E0D6; background: #FFFCFA; border-radius: 999px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer;
+  }
+  .chip.on { background: #F8E2D4; border-color: #B03E0E; color: #B03E0E; font-weight: 600; }
+  .wall {
+    margin: 10px 0 6px; padding: 8px; background: #EFE8DE; border-radius: 8px;
+    border: 1px dashed #cfc4b8;
+  }
+  .wall .wl { font-size: 11px; font-weight: 700; color: #6A635B; margin-bottom: 4px; }
+  .btn {
+    display: block; width: 100%; text-align: center; border-radius: 10px;
+    padding: 12px; font-size: 15px; font-weight: 600; margin-top: 8px;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .btn.primary { background: #B03E0E; color: #FFF8F3; }
+  .btn.ghost { background: transparent; color: #1A1612; border: 1px solid #E7E0D6; }
+  .btn.mute { background: transparent; color: #6A635B; border: none; font-weight: 500; }
+  .banner {
+    background: #F8E7C8; color: #8F5610; font-size: 12px; padding: 8px 10px;
+    border-radius: 8px; margin-bottom: 10px;
+  }
+  .ground {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: #F8E2D4; border: 1px solid #E7E0D6; border-radius: 10px;
+    padding: 8px 10px; font-size: 13px; margin: 6px 0;
+  }
+  .ground button {
+    appearance: none; border: none; background: transparent;
+    color: #B03E0E; font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .hdr-ground {
+    background: #F8E2D4; border-bottom: 1px solid #E7E0D6;
+    padding: 6px 10px; font-size: 12px; display: flex; justify-content: space-between;
+  }
+  .hdr-ground button {
+    appearance: none; border: none; background: transparent;
+    color: #B03E0E; font-weight: 600; font-size: 12px; cursor: pointer;
+  }
+  .thread { flex: 1; overflow: auto; padding: 4px 0 8px; }
+  .bubble {
+    max-width: 88%; padding: 10px 12px; border-radius: 12px;
+    font-size: 14px; margin-bottom: 8px; line-height: 1.35;
+  }
+  .bubble.bot { background: #FFFFFF; border: 1px solid #E7E0D6; }
+  .bubble.me { background: #F8E2D4; margin-left: auto; }
+  .composer {
+    display: flex; gap: 8px; align-items: center;
+    background: #FFFCFA; border: 1px solid #E7E0D6; border-radius: 24px;
+    padding: 6px 8px 6px 14px; margin-top: auto;
+  }
+  .composer input {
+    flex: 1; border: none; background: transparent; font: inherit; outline: none; color: #1A1612;
+  }
+  .send {
+    width: 36px; height: 36px; border-radius: 18px; background: #B03E0E;
+    color: #FFF8F3; border: none; font-weight: 700; cursor: pointer;
+  }
+  .tray {
+    height: 56px; display: flex; border-top: 1px solid #E7E0D6;
+    background: #FFFCFA; font-size: 10px; color: #6A635B;
+  }
+  .tray span { flex: 1; display: grid; place-items: center; text-align: center; }
+  .tray span.on { color: #B03E0E; font-weight: 700; }
+  .scrim {
+    position: absolute; inset: 0; background: rgba(26,22,18,0.45);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 3;
+  }
+  .scrim.center { align-items: center; }
+  .sheet {
+    background: #FFFCFA; border-radius: 16px 16px 0 0; width: 100%;
+    padding: 14px; border: 1px solid #E7E0D6;
+  }
+  .sheet.dialog { border-radius: 16px; width: calc(100% - 24px); max-width: 360px; }
+  .sheet h3 { font-size: 16px; margin-bottom: 6px; }
+  .row {
+    padding: 12px 4px; border-bottom: 1px solid #E7E0D6; font-size: 14px; cursor: pointer;
+  }
+  .row:last-child { border-bottom: none; }
+  .note { color: #aaa; font-size: 12px; padding: 0 12px 12px; }
+  .state-bar {
+    display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .state-bar button {
+    appearance: none; border: 1px solid #444; background: #222; color: #ccc;
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;
+  }
+  .state-bar button.on { border-color: #8cb4ff; color: #8cb4ff; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.cmp th, table.cmp td {
+    border: 1px solid #444; padding: 6px 8px; text-align: left; vertical-align: top; color: #eee;
+  }
+  table.cmp th { background: #222; color: #fff; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>ASK-D1 — Pedagogy pack confirm + Ask ground</h1>
+    <p class="meta">Options only · PM chooses · FoM 1.2 · no eng · no ui-design patch</p>
+    <div class="tabs" id="mainTabs">
+      <button type="button" data-tab="a" class="active">A Quiet strip</button>
+      <button type="button" data-tab="b">B Modal gate</button>
+      <button type="button" data-tab="c">C Panel + sheet</button>
+      <button type="button" data-tab="cmp">Compare</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <div id="tab-a" class="tabpane">
+      <div class="grid">
+        <div class="panel">
+          <h2>A · Teacher — quiet strip (draft)</h2>
+          <p class="blurb">Publish succeeded. Non-blocking Tutor brief card. Confirm ≠ Approve.</p>
+          <div class="phone">
+            <div class="hdr"><span>Desk</span><span class="trail">Alg 1 · P3</span></div>
+            <div class="body">
+              <div class="title">FoM 1.2</div>
+              <p class="lead">Published. Student work can start. Tutor brief still needs your Confirm.</p>
+              <div class="card" id="a-teach-card">
+                <span class="pill draft" id="a-pill">Draft</span>
+                <div style="font-weight:700;margin-bottom:4px;">Tutor brief</div>
+                <div class="field-label">Objectives</div>
+                <div class="field">Solve one-step equations; check by substitution</div>
+                <div class="field-label">Likely misconceptions</div>
+                <div class="field">Sign errors when moving terms; equals means “do the same”</div>
+                <div class="field-label">Hint depth</div>
+                <div class="chips" id="a-depth">
+                  <span class="chip on">Next step</span>
+                  <span class="chip">Conceptual</span>
+                  <span class="chip">Scaffolding</span>
+                </div>
+                <div class="field-label">Vocabulary</div>
+                <div class="field">inverse · balance · isolate</div>
+                <div class="wall">
+                  <div class="wl">Only you · never sent to student Ask</div>
+                  <div class="field">Watch for kids who invert both sides incorrectly on negatives.</div>
+                </div>
+                <button type="button" class="btn primary" id="a-confirm">Confirm brief</button>
+                <button type="button" class="btn ghost">Re-generate</button>
+                <button type="button" class="btn mute">Skip for now</button>
+              </div>
+            </div>
+            <div class="tray"><span class="on">Desk</span><span>Capture</span><span>Needs</span><span>Class</span><span>Ask</span></div>
+          </div>
+          <p class="note">Tap Confirm → Confirmed pill. Clear uses ConfirmSheet (not shown).</p>
+        </div>
+        <div class="panel">
+          <h2>A · Student — composer chip</h2>
+          <p class="blurb">Soft assume above composer. Not this → inline list.</p>
+          <div class="state-bar" id="a-stu-states">
+            <button type="button" data-s="soft" class="on">Soft</button>
+            <button type="button" data-s="fix">Not this</button>
+            <button type="button" data-s="none">Tray none</button>
+            <button type="button" data-s="stale">Stale quiet</button>
+          </div>
+          <div class="phone">
+            <div class="hdr"><span>Ask</span><span class="trail">Kelyra</span></div>
+            <div class="body ask-body">
+              <div class="thread" id="a-stu-thread">
+                <div class="bubble bot">What part of the equation feels stuck?</div>
+              </div>
+              <div id="a-stu-ground" class="ground">
+                <span>Looks like FoM 1.2</span>
+                <button type="button" id="a-not-this">Not this</button>
+              </div>
+              <div id="a-stu-pick" class="card hidden">
+                <div class="row">FoM 1.2</div>
+                <div class="row">FoM 1.1 Practice</div>
+                <div class="row">Just chatting</div>
+              </div>
+              <div class="composer"><input placeholder="Ask…" /><button class="send" type="button">↑</button></div>
+            </div>
+            <div class="tray"><span>Home</span><span>To do</span><span>Practice</span><span>People</span><span>Feed</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>A · Parent — empty card</h2>
+          <p class="blurb">Explicit which-assignment. Never “Looks like.”</p>
+          <div class="phone">
+            <div class="hdr"><span>Ask</span><span class="trail">Saydee</span></div>
+            <div class="body ask-body">
+              <div class="thread">
+                <div class="card" id="a-par-card">
+                  <div class="title" style="font-size:16px;">Which assignment?</div>
+                  <p class="lead">Pick one so Ask can help with that work — or just chat.</p>
+                  <div class="row">FoM 1.2</div>
+                  <div class="row">Reading log · Week 3</div>
+                  <button type="button" class="btn ghost" id="a-par-chat">Just chatting</button>
+                </div>
+                <div id="a-par-after" class="hidden">
+                  <div class="bubble bot">You’re set for class help. What should we look at?</div>
+                </div>
+              </div>
+              <div class="composer"><input placeholder="Message Ask…" /><button class="send" type="button">↑</button></div>
+            </div>
+            <div class="tray"><span>Home</span><span>Ride</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-b" class="tabpane hidden">
+      <div class="grid">
+        <div class="panel">
+          <h2>B · Teacher — modal gate</h2>
+          <p class="blurb">Must Confirm or Skip before leaving publish success.</p>
+          <div class="phone" style="position:relative">
+            <div class="hdr"><span>Desk</span><span class="trail">Alg 1 · P3</span></div>
+            <div class="body">
+              <div class="title">FoM 1.2</div>
+              <p class="lead">Published. Review tutor brief to finish.</p>
+              <div class="card"><div class="field">Assignment body preview…</div></div>
+              <div class="scrim" id="b-scrim">
+                <div class="sheet">
+                  <h3>Tutor brief for FoM 1.2</h3>
+                  <span class="pill draft">Draft</span>
+                  <div class="field-label">Objectives</div>
+                  <div class="field">Solve one-step equations</div>
+                  <div class="wall"><div class="wl">Only you</div><div class="field">Internal note…</div></div>
+                  <button type="button" class="btn primary" id="b-confirm">Confirm brief</button>
+                  <button type="button" class="btn ghost">Re-generate</button>
+                  <button type="button" class="btn mute" id="b-skip">Skip for now</button>
+                </div>
+              </div>
+            </div>
+            <div class="tray"><span class="on">Desk</span><span>Capture</span><span>Needs</span><span>Class</span><span>Ask</span></div>
+          </div>
+          <p class="note">X dismiss = Skip (a11y announced). Clear only from detail revisit.</p>
+        </div>
+        <div class="panel">
+          <h2>B · Student — header ground</h2>
+          <p class="blurb">Ground under Ask title. Change opens sheet.</p>
+          <div class="state-bar" id="b-stu-states">
+            <button type="button" data-s="soft" class="on">Soft</button>
+            <button type="button" data-s="sheet">Change sheet</button>
+            <button type="button" data-s="none">Tray none</button>
+          </div>
+          <div class="phone" style="position:relative">
+            <div class="hdr"><span>Ask</span><span class="trail">Kelyra</span></div>
+            <div class="hdr-ground" id="b-hdr-g"><span>Looks like FoM 1.2</span><button type="button" id="b-change">Change</button></div>
+            <div class="body ask-body">
+              <div class="thread"><div class="bubble bot">What part feels stuck?</div></div>
+              <div class="composer"><input placeholder="Ask…" /><button class="send" type="button">↑</button></div>
+              <div class="scrim hidden" id="b-sheet">
+                <div class="sheet">
+                  <h3>Assignment for Ask</h3>
+                  <div class="row">FoM 1.2</div>
+                  <div class="row">FoM 1.1 Practice</div>
+                  <div class="row">Just chatting</div>
+                  <button type="button" class="btn ghost" id="b-sheet-x">Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div class="tray"><span>Home</span><span>To do</span><span>Practice</span><span>People</span><span>Feed</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>B · Parent — modal hard stop</h2>
+          <p class="blurb">Composer blocked until pick or Just chatting.</p>
+          <div class="phone" style="position:relative">
+            <div class="hdr"><span>Ask</span><span class="trail">Saydee</span></div>
+            <div class="body ask-body">
+              <div class="thread"><div class="bubble bot" style="opacity:.35">Ask is ready when you pick.</div></div>
+              <div class="composer" style="opacity:.4;pointer-events:none"><input disabled placeholder="Pick first…" /><button class="send" type="button" disabled>↑</button></div>
+              <div class="scrim center" id="b-par-scrim">
+                <div class="sheet dialog">
+                  <h3>Which assignment?</h3>
+                  <p class="lead">Ask can go deeper on one assignment, or you can just chat.</p>
+                  <div class="row">FoM 1.2</div>
+                  <div class="row">Reading log · Week 3</div>
+                  <button type="button" class="btn ghost" id="b-par-chat">Just chatting</button>
+                </div>
+              </div>
+            </div>
+            <div class="tray"><span>Home</span><span>Ride</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-c" class="tabpane hidden">
+      <div class="grid">
+        <div class="panel">
+          <h2>C · Teacher — durable panel</h2>
+          <p class="blurb">Always on assignment detail. Stale = warn border.</p>
+          <div class="state-bar" id="c-teach-states">
+            <button type="button" data-s="draft" class="on">Draft</button>
+            <button type="button" data-s="ok">Confirmed</button>
+            <button type="button" data-s="stale">Needs review</button>
+          </div>
+          <div class="phone">
+            <div class="hdr"><span>Desk</span><span class="trail">Alg 1 · P3</span></div>
+            <div class="body">
+              <div class="title">FoM 1.2</div>
+              <p class="lead">One-step equations · due Fri</p>
+              <div class="card" style="opacity:.85"><div class="field">Assignment body…</div></div>
+              <div class="banner hidden" id="c-stale-b">Assignment changed — review the tutor brief.</div>
+              <div class="card" id="c-panel" style="border-width:2px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <strong>Tutor brief</strong>
+                  <span class="pill draft" id="c-pill">Draft</span>
+                </div>
+                <div class="field-label">Objectives</div>
+                <div class="field">Solve one-step equations</div>
+                <div class="chips"><span class="chip on">Next step</span><span class="chip">Conceptual</span><span class="chip">Scaffolding</span></div>
+                <div class="wall">
+                  <div class="wl">Only you · Never sent to student Ask</div>
+                  <div class="field">Internal notes…</div>
+                </div>
+                <button type="button" class="btn primary">Confirm brief</button>
+                <button type="button" class="btn ghost">Re-generate</button>
+                <button type="button" class="btn mute">Clear brief</button>
+              </div>
+            </div>
+            <div class="tray"><span class="on">Desk</span><span>Capture</span><span>Needs</span><span>Class</span><span>Ask</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>C · Student — chip + sheet correct</h2>
+          <p class="blurb">Composer chip; correct always sheet.</p>
+          <div class="phone" style="position:relative">
+            <div class="hdr"><span>Ask</span><span class="trail">Kelyra</span></div>
+            <div class="body ask-body">
+              <div class="thread"><div class="bubble bot">What part of FoM feels stuck?</div></div>
+              <div class="ground"><span>Looks like FoM 1.2</span><button type="button" id="c-not">Not this</button></div>
+              <div class="composer"><input placeholder="Ask…" /><button class="send" type="button">↑</button></div>
+              <div class="scrim hidden" id="c-sheet">
+                <div class="sheet">
+                  <h3>Assignment for Ask</h3>
+                  <div class="row">○ FoM 1.2</div>
+                  <div class="row">○ FoM 1.1 Practice</div>
+                  <div class="row">○ Just chatting</div>
+                  <button type="button" class="btn primary" id="c-done">Done</button>
+                </div>
+              </div>
+            </div>
+            <div class="tray"><span>Home</span><span>To do</span><span>Practice</span><span>People</span><span>Feed</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>C · Parent — system bubble</h2>
+          <p class="blurb">Conversational explicit ask + receipt.</p>
+          <div class="phone">
+            <div class="hdr"><span>Ask</span><span class="trail">Saydee</span></div>
+            <div class="body ask-body">
+              <div class="thread" id="c-par-th">
+                <div class="bubble bot">Which assignment are you helping with? Pick one, or say you’re just chatting.</div>
+                <div class="chips" id="c-par-chips">
+                  <span class="chip" data-p="FoM 1.2">FoM 1.2</span>
+                  <span class="chip" data-p="Reading log">Reading log</span>
+                  <span class="chip" data-p="chat">Just chatting</span>
+                </div>
+              </div>
+              <div class="composer"><input placeholder="Message Ask…" /><button class="send" type="button">↑</button></div>
+            </div>
+            <div class="tray"><span>Home</span><span>Ride</span><span class="on">Ask</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-cmp" class="tabpane hidden">
+      <div class="panel">
+        <h2>Head-to-head · recommendation only</h2>
+        <p class="blurb">PM chooses. Designer rec = A + micro-adoptions from C (sheet when many titles) and durable collapsed card.</p>
+        <div style="padding:12px;overflow:auto">
+          <table class="cmp">
+            <tr><th>Dimension</th><th>A Quiet strip</th><th>B Modal gate</th><th>C Panel + sheet</th></tr>
+            <tr><td>Teacher home</td><td>Inline strip/card</td><td>Blocking modal</td><td>Durable panel</td></tr>
+            <tr><td>Confirm rate</td><td>Medium</td><td>Highest</td><td>Medium-high</td></tr>
+            <tr><td>Student ground</td><td>Above composer</td><td>Header band</td><td>Above composer</td></tr>
+            <tr><td>Correct flow</td><td>Inline list</td><td>Sheet</td><td>Always sheet</td></tr>
+            <tr><td>Parent ground</td><td>Empty card</td><td>Modal stop</td><td>System bubble</td></tr>
+            <tr><td>Chrome delta</td><td>Smallest</td><td>Header cost</td><td>Panel density</td></tr>
+            <tr><td>Risk</td><td>Skip-happy</td><td>Modal fatigue</td><td>Missed bubble</td></tr>
+          </table>
+        </div>
+        <p class="note">Copy lock samples: student soft “Looks like FoM 1.2”; parent “Which assignment?”; teacher “Confirm brief” never Approve; stale “Needs review”.</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('mainTabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-tab]');
+      if (!b) return;
+      document.querySelectorAll('#mainTabs button').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.tabpane').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
+    });
+
+    // A teacher confirm
+    const aPill = document.getElementById('a-pill');
+    document.getElementById('a-confirm')?.addEventListener('click', () => {
+      aPill.textContent = 'Confirmed';
+      aPill.className = 'pill ok';
+    });
+    document.getElementById('a-depth')?.addEventListener('click', (e) => {
+      const c = e.target.closest('.chip'); if (!c) return;
+      aDepthChips(c);
+    });
+    function aDepthChips(on) {
+      document.querySelectorAll('#a-depth .chip').forEach(x => x.classList.toggle('on', x === on));
+    }
+
+    // A student states
+    const aG = document.getElementById('a-stu-ground');
+    const aP = document.getElementById('a-stu-pick');
+    const aTh = document.getElementById('a-stu-thread');
+    function aStu(s) {
+      document.querySelectorAll('#a-stu-states button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+      aG.classList.add('hidden'); aP.classList.add('hidden');
+      aTh.innerHTML = '<div class="bubble bot">What part of the equation feels stuck?</div>';
+      if (s === 'soft') { aG.classList.remove('hidden'); aG.querySelector('span').textContent = 'Looks like FoM 1.2'; }
+      if (s === 'fix') { aP.classList.remove('hidden'); }
+      if (s === 'none') { /* tray none */ }
+      if (s === 'stale') {
+        aG.classList.remove('hidden');
+        aG.querySelector('span').textContent = 'Looks like FoM 1.2';
+        aTh.innerHTML = '<div class="bubble bot" style="color:#6A635B;border-style:dashed">Tutor brief was updated — using class help for now.</div><div class="bubble bot">What part of the equation feels stuck?</div>';
+      }
+    }
+    document.getElementById('a-stu-states')?.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-s]'); if (b) aStu(b.dataset.s);
+    });
+    document.getElementById('a-not-this')?.addEventListener('click', () => aStu('fix'));
+
+    // A parent
+    document.getElementById('a-par-chat')?.addEventListener('click', () => {
+      document.getElementById('a-par-card').classList.add('hidden');
+      document.getElementById('a-par-after').classList.remove('hidden');
+    });
+
+    // B teacher
+    document.getElementById('b-confirm')?.addEventListener('click', () => {
+      document.getElementById('b-scrim').classList.add('hidden');
+    });
+    document.getElementById('b-skip')?.addEventListener('click', () => {
+      document.getElementById('b-scrim').classList.add('hidden');
+    });
+
+    // B student
+    const bHdr = document.getElementById('b-hdr-g');
+    const bSheet = document.getElementById('b-sheet');
+    function bStu(s) {
+      document.querySelectorAll('#b-stu-states button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+      bSheet.classList.add('hidden');
+      if (s === 'none') bHdr.classList.add('hidden');
+      else bHdr.classList.remove('hidden');
+      if (s === 'sheet') bSheet.classList.remove('hidden');
+    }
+    document.getElementById('b-stu-states')?.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-s]'); if (b) bStu(b.dataset.s);
+    });
+    document.getElementById('b-change')?.addEventListener('click', () => bStu('sheet'));
+    document.getElementById('b-sheet-x')?.addEventListener('click', () => bStu('soft'));
+
+    // B parent
+    document.getElementById('b-par-chat')?.addEventListener('click', () => {
+      document.getElementById('b-par-scrim').classList.add('hidden');
+    });
+
+    // C teacher states
+    const cPill = document.getElementById('c-pill');
+    const cPanel = document.getElementById('c-panel');
+    const cStale = document.getElementById('c-stale-b');
+    document.getElementById('c-teach-states')?.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-s]'); if (!b) return;
+      document.querySelectorAll('#c-teach-states button').forEach(x => x.classList.toggle('on', x === b));
+      cStale.classList.add('hidden');
+      cPanel.style.borderColor = '#E7E0D6';
+      if (b.dataset.s === 'draft') { cPill.textContent = 'Draft'; cPill.className = 'pill draft'; }
+      if (b.dataset.s === 'ok') { cPill.textContent = 'Confirmed'; cPill.className = 'pill ok'; }
+      if (b.dataset.s === 'stale') {
+        cPill.textContent = 'Needs review'; cPill.className = 'pill warn';
+        cStale.classList.remove('hidden');
+        cPanel.style.borderColor = '#8F5610';
+      }
+    });
+
+    // C student sheet
+    document.getElementById('c-not')?.addEventListener('click', () => {
+      document.getElementById('c-sheet').classList.remove('hidden');
+    });
+    document.getElementById('c-done')?.addEventListener('click', () => {
+      document.getElementById('c-sheet').classList.add('hidden');
+    });
+
+    // C parent chips
+    document.getElementById('c-par-chips')?.addEventListener('click', (e) => {
+      const c = e.target.closest('.chip'); if (!c) return;
+      const th = document.getElementById('c-par-th');
+      const msg = c.dataset.p === 'chat'
+        ? 'Just chatting — class help only'
+        : 'Helping with ' + c.dataset.p;
+      document.getElementById('c-par-chips').classList.add('hidden');
+      const rec = document.createElement('div');
+      rec.className = 'bubble bot';
+      rec.textContent = msg;
+      th.appendChild(rec);
+    });
+  </script>
+</body>
+</html>

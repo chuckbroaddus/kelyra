@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RIDE-CO-D1 — Parent leave-line options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #161616;
+    color: #eee;
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    min-height: 100%;
+  }
+  a { color: #8cb4ff; }
+  .top {
+    border-bottom: 1px solid #333;
+    padding: 12px 14px 0;
+    position: sticky;
+    top: 0;
+    background: #161616;
+    z-index: 5;
+  }
+  h1 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .meta { color: #aaa; font-size: 12px; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 10px; }
+  .tabs button {
+    appearance: none;
+    border: 1px solid #444;
+    background: #222;
+    color: #eee;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .tabs button.active { border-color: #8cb4ff; color: #8cb4ff; }
+  .wrap { padding: 14px; display: grid; gap: 16px; max-width: 1100px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .panel {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    padding: 10px 12px;
+    border-bottom: 1px solid #333;
+    background: #1f1f1f;
+  }
+  .panel .blurb {
+    color: #aaa;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  /* Phone chrome — light parent surface */
+  .phone {
+    margin: 12px;
+    background: #F7F1EA;
+    color: #1A1612;
+    border-radius: 18px;
+    border: 1px solid #cfc4b8;
+    overflow: hidden;
+    max-width: 340px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .hdr {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    background: #FFF8F3;
+    border-bottom: 1px solid #E6DCD2;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .hdr .trail { display: flex; gap: 2px; }
+  .hdr .ic {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: grid; place-items: center; color: #5c534a; font-size: 14px;
+  }
+  .body { padding: 12px 12px 88px; min-height: 420px; position: relative; }
+  .body.pad-footer { padding-bottom: 140px; }
+  .title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .lead { font-size: 13px; color: #6B635C; margin-bottom: 12px; line-height: 1.4; }
+  .card {
+    background: #FFF8F3;
+    border: 1px solid #E6DCD2;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .label { font-size: 12px; color: #6B635C; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 1px solid #D9CFC4;
+    background: #F7F1EA;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .chip.on { background: #1A1612; color: #FFF8F3; border-color: #1A1612; }
+  .chip.ro { opacity: 0.95; }
+  .field {
+    border: 1px solid #D9CFC4;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    color: #6B635C;
+    margin-bottom: 8px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    border: 0;
+    cursor: pointer;
+    margin-top: 8px;
+    min-height: 44px;
+  }
+  .btn.primary { background: #2F6FED; color: #fff; }
+  .btn.secondary {
+    background: #FFF8F3;
+    color: #1A1612;
+    border: 1px solid #D9CFC4;
+  }
+  .btn.ghost { background: transparent; color: #6B635C; font-weight: 600; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .xx { font-size: 16px; font-weight: 600; }
+  .kids { font-size: 13px; color: #6B635C; margin-top: 4px; }
+  .listrow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    background: #FFF8F3;
+    border: 1px solid #E6DCD2;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .listrow .t { font-weight: 600; font-size: 15px; }
+  .listrow .s { font-size: 13px; margin-top: 2px; }
+  .listrow .m { font-size: 12px; color: #6B635C; margin-top: 2px; }
+  .listrow .leave {
+    color: #6B635C;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+  .footer-leave {
+    position: absolute;
+    left: 10px; right: 10px; bottom: 58px;
+    z-index: 2;
+  }
+  .tray {
+    position: absolute;
+    left: 10px; right: 10px; bottom: 8px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(255,248,243,0.96);
+    border: 1px solid #E6DCD2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    font-size: 11px;
+    color: #6B635C;
+    text-align: center;
+  }
+  .tray b { display: block; color: #1A1612; font-size: 12px; }
+  .tray .on { color: #2F6FED; }
+  .tray .on b { color: #2F6FED; }
+  .helper { font-size: 12px; color: #6B635C; margin-top: 6px; line-height: 1.35; }
+  .success {
+    background: #FFF8F3;
+    border: 1px solid #E6DCD2;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  /* Sheet */
+  .scrim {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(26,22,18,0.40);
+    z-index: 8;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .scrim.show { display: flex; }
+  .sheet {
+    width: 100%;
+    background: #FFF8F3;
+    border-radius: 16px 16px 0 0;
+    border-top: 1px solid #E6DCD2;
+    padding: 16px 14px 18px;
+  }
+  .sheet h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .sheet p { font-size: 14px; color: #6B635C; margin-bottom: 12px; line-height: 1.4; }
+  .note {
+    color: #aaa;
+    font-size: 12px;
+    padding: 0 2px 8px;
+  }
+  table.cmp {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.cmp th, table.cmp td {
+    border: 1px solid #444;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+    color: #eee;
+  }
+  table.cmp th { background: #222; color: #fff; }
+  .rec {
+    border: 1px solid #3a4a2a;
+    background: #1c2418;
+    border-radius: 10px;
+    padding: 12px;
+    color: #d7e6c8;
+    font-size: 13px;
+  }
+  .rec strong { color: #fff; }
+  .hidden { display: none !important; }
+  .statebar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 12px 10px;
+  }
+  .statebar button {
+    appearance: none;
+    border: 1px solid #444;
+    background: #222;
+    color: #ccc;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>RIDE-CO-D1 — Parent leave-line options</h1>
+    <div class="meta">
+      PM SoT: ride-parent-checkout-pm.md · Stories US-CO-* · Event kind <code>left</code> only · Confirm yes · No undo · Icon <code>ride</code> locked · Tray Home · Ride · Ask
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" class="active" data-tab="all">All three</button>
+      <button type="button" data-tab="a">A · Trip card</button>
+      <button type="button" data-tab="b">B · Sticky footer</button>
+      <button type="button" data-tab="c">C · Quiet ListRow</button>
+      <button type="button" data-tab="matrix">Matrix</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="view-all">
+    <p class="note">Interactive: tap Leave → confirm sheet → Leave line. Reset returns to waiting. Recommendation is non-binding.</p>
+    <div class="grid">
+      <!-- A -->
+      <div class="panel" id="panel-a">
+        <h2>A — Trip card owns Leave (status-first)</h2>
+        <div class="blurb">XX + kids + Leave on one card. Same-line check-in recedes. Hub-only Leave.</div>
+        <div class="statebar">
+          <button type="button" data-reset="a">Reset waiting</button>
+        </div>
+        <div class="phone" id="phone-a">
+          <div class="hdr">
+            <span>Ride</span>
+            <span class="trail"><span class="ic">⌕</span><span class="ic">✉</span><span class="ic">☰</span></span>
+          </div>
+          <div class="body" data-opt="a">
+            <div class="title">Car rider</div>
+            <div class="lead a-waiting">You’re in this line. Leave when you’re done waiting — not staff pickup.</div>
+            <div class="lead a-left hidden">Pick children for this stop, then photo the car ahead — or I’m first.</div>
+
+            <div class="card">
+              <div class="label">Line</div>
+              <div class="chips">
+                <span class="chip on">Front curb</span>
+                <span class="chip">Back lot</span>
+              </div>
+            </div>
+
+            <div class="card a-waiting">
+              <div class="label">This trip</div>
+              <div class="xx">You are 7</div>
+              <div class="kids">Saydee</div>
+              <div class="chips" style="margin-top:8px">
+                <span class="chip on ro">Saydee</span>
+              </div>
+              <button type="button" class="btn ghost" data-open="a">Leave line</button>
+            </div>
+
+            <div class="success a-left hidden">You’re out of Front curb.</div>
+
+            <div class="card a-checkin">
+              <div class="label">Children this stop</div>
+              <div class="chips">
+                <span class="chip">Saydee</span>
+                <span class="chip">Sydnee</span>
+              </div>
+              <div class="helper a-waiting">Leave this line before checking in here again.</div>
+              <div class="field" style="margin-top:8px">Car ahead plate…</div>
+              <button type="button" class="btn primary a-left" disabled>Photo car ahead</button>
+              <button type="button" class="btn primary a-waiting" disabled>Photo car ahead</button>
+              <button type="button" class="btn ghost" disabled>I’m first</button>
+            </div>
+            <div class="card a-left hidden">
+              <div class="label">Children this stop</div>
+              <div class="chips">
+                <span class="chip on">Sydnee</span>
+              </div>
+              <div class="field" style="margin-top:8px">Car ahead plate…</div>
+              <button type="button" class="btn primary">Photo car ahead</button>
+              <button type="button" class="btn ghost">I’m first</button>
+            </div>
+
+            <button type="button" class="btn ghost">Manage vehicles</button>
+
+            <div class="tray">
+              <div>⌂<b>Home</b></div>
+              <div class="on">🚗<b>Ride</b></div>
+              <div>✦<b>Ask</b></div>
+            </div>
+
+            <div class="scrim" id="scrim-a">
+              <div class="sheet">
+                <h3>Leave Front curb?</h3>
+                <p>You’ll stop waiting on this line for Saydee. You can check in again later. This is not pickup.</p>
+                <button type="button" class="btn primary" data-confirm="a">Leave line</button>
+                <button type="button" class="btn ghost" data-cancel="a">Keep waiting</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="panel" id="panel-b">
+        <h2>B — Sticky Leave footer (action-first)</h2>
+        <div class="blurb">Persistent Leave above tray. Check-in stays for staggered B. Trip scope is server trip, not chips.</div>
+        <div class="statebar">
+          <button type="button" data-reset="b">Reset waiting</button>
+        </div>
+        <div class="phone" id="phone-b">
+          <div class="hdr">
+            <span>Ride</span>
+            <span class="trail"><span class="ic">⌕</span><span class="ic">✉</span><span class="ic">☰</span></span>
+          </div>
+          <div class="body pad-footer" data-opt="b">
+            <div class="title">Car rider</div>
+            <div class="lead">Own place in line. Leave is under your thumb — confirm before it drops XX.</div>
+
+            <div class="card">
+              <div class="label">Line</div>
+              <div class="chips">
+                <span class="chip on">Front curb</span>
+                <span class="chip">Back lot</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="label">Children this stop</div>
+              <div class="chips">
+                <span class="chip">Saydee</span>
+                <span class="chip on">Sydnee</span>
+              </div>
+              <div class="helper b-waiting">Leaving drops Saydee from this line — chip picks are for your next check-in.</div>
+            </div>
+            <div class="card b-waiting">
+              <div class="xx">You are 7</div>
+              <div class="kids">Front curb · Saydee</div>
+            </div>
+            <div class="success b-left hidden">Out of line.</div>
+            <div class="card">
+              <div class="field">Car ahead plate…</div>
+              <button type="button" class="btn secondary b-waiting">Photo car ahead</button>
+              <button type="button" class="btn primary b-left hidden">Photo car ahead</button>
+              <button type="button" class="btn ghost">I’m first</button>
+            </div>
+            <button type="button" class="btn ghost">Manage vehicles</button>
+
+            <div class="footer-leave b-waiting">
+              <button type="button" class="btn primary" data-open="b">Leave line</button>
+            </div>
+
+            <div class="tray">
+              <div>⌂<b>Home</b></div>
+              <div class="on">🚗<b>Ride</b></div>
+              <div>✦<b>Ask</b></div>
+            </div>
+
+            <div class="scrim" id="scrim-b">
+              <div class="sheet">
+                <h3>Leave this line?</h3>
+                <p>Front curb · Saydee. You’ll stop waiting. Not pickup — staff still confirms handoff.</p>
+                <button type="button" class="btn primary" data-confirm="b">Leave line</button>
+                <button type="button" class="btn ghost" data-cancel="b">Keep waiting</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="panel" id="panel-c">
+        <h2>C — Quiet ListRow (check-in-first)</h2>
+        <div class="blurb">Check-in stays hero. Trip is a ListRow; trailing Leave / “I’m not waiting.”</div>
+        <div class="statebar">
+          <button type="button" data-reset="c">Reset waiting</button>
+        </div>
+        <div class="phone" id="phone-c">
+          <div class="hdr">
+            <span>Ride</span>
+            <span class="trail"><span class="ic">⌕</span><span class="ic">✉</span><span class="ic">☰</span></span>
+          </div>
+          <div class="body" data-opt="c">
+            <div class="title">Car rider</div>
+            <div class="lead">Pick children for this stop, then photo the car ahead — or I’m first.</div>
+            <div class="card">
+              <div class="label">Line</div>
+              <div class="chips">
+                <span class="chip on">Front curb</span>
+                <span class="chip">Back lot</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="label">Children this stop</div>
+              <div class="chips">
+                <span class="chip on">Saydee</span>
+                <span class="chip">Sydnee</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="field">Car ahead plate…</div>
+              <button type="button" class="btn primary">Photo car ahead</button>
+              <button type="button" class="btn ghost">I’m first</button>
+            </div>
+
+            <div class="listrow c-waiting">
+              <div>
+                <div class="t">Front curb</div>
+                <div class="s">You are 7</div>
+                <div class="m">Saydee</div>
+              </div>
+              <button type="button" class="leave" data-open="c">Leave</button>
+            </div>
+            <div class="success c-left hidden">No longer waiting on Front curb.</div>
+
+            <button type="button" class="btn ghost">Manage vehicles</button>
+
+            <div class="tray">
+              <div>⌂<b>Home</b></div>
+              <div class="on">🚗<b>Ride</b></div>
+              <div>✦<b>Ask</b></div>
+            </div>
+
+            <div class="scrim" id="scrim-c">
+              <div class="sheet">
+                <h3>Stop waiting on Front curb?</h3>
+                <p>For Saydee on this trip only. You can join a line again anytime. Not staff pickup.</p>
+                <button type="button" class="btn primary" data-confirm="c">I’m not waiting</button>
+                <button type="button" class="btn ghost" data-cancel="c">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rec">
+      <strong>Recommendation only (non-binding): Option A</strong>
+      — with B’s “Keep waiting” cancel noun, brand Primary confirm (not Danger), same-line check-in disabled while waiting, vehicles hub-only.
+      PM chooses. Do not patch docs/ui-design.md until lock.
+    </div>
+  </div>
+
+  <div class="wrap hidden" id="view-matrix">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>A Trip card</th>
+          <th>B Sticky footer</th>
+          <th>C Quiet ListRow</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Stance</td><td>Status-first</td><td>Action-first</td><td>Check-in-first</td></tr>
+        <tr><td>Leave weight</td><td>Secondary on card</td><td>Strong footer</td><td>Quiet trailing</td></tr>
+        <tr><td>Noun</td><td>Leave line</td><td>Leave line</td><td>I’m not waiting</td></tr>
+        <tr><td>Thumb reach</td><td>Medium</td><td>Highest</td><td>Lowest</td></tr>
+        <tr><td>Duty confusion</td><td>Low</td><td>Medium</td><td>Lowest</td></tr>
+        <tr><td>US-CO-01 discover</td><td>Strong</td><td>Strongest</td><td>Weak</td></tr>
+        <tr><td>US-CO-04 staggered</td><td>Restore stack</td><td>Already on screen</td><td>Already on screen</td></tr>
+        <tr><td>Motion</td><td colspan="3">No theatrical morph; sheet ~180–260ms; content swap</td></tr>
+        <tr><td>Event</td><td colspan="3">Parent <code>left</code> only — never <code>released</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<script>
+  function setLeft(opt, left) {
+    const root = document.querySelector('[data-opt="' + opt + '"]');
+    if (!root) return;
+    root.querySelectorAll('.a-waiting, .b-waiting, .c-waiting').forEach(el => {
+      if (el.classList.contains(opt + '-waiting') || el.classList.contains('a-waiting') && opt==='a' || el.classList.contains('b-waiting') && opt==='b' || el.classList.contains('c-waiting') && opt==='c') {
+        el.classList.toggle('hidden', left);
+      }
+    });
+    // broader: any *-waiting / *-left inside this phone
+    root.querySelectorAll('[class*="-waiting"]').forEach(el => {
+      const is = el.className.split(/\s+/).some(c => c === opt + '-waiting');
+      if (is) el.classList.toggle('hidden', left);
+    });
+    root.querySelectorAll('[class*="-left"]').forEach(el => {
+      const is = el.className.split(/\s+/).some(c => c === opt + '-left');
+      if (is) el.classList.toggle('hidden', !left);
+    });
+    const scrim = document.getElementById('scrim-' + opt);
+    if (scrim) scrim.classList.remove('show');
+  }
+
+  document.querySelectorAll('[data-open]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const opt = btn.getAttribute('data-open');
+      document.getElementById('scrim-' + opt).classList.add('show');
+    });
+  });
+  document.querySelectorAll('[data-cancel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('scrim-' + btn.getAttribute('data-cancel')).classList.remove('show');
+    });
+  });
+  document.querySelectorAll('[data-confirm]').forEach(btn => {
+    btn.addEventListener('click', () => setLeft(btn.getAttribute('data-confirm'), true));
+  });
+  document.querySelectorAll('[data-reset]').forEach(btn => {
+    btn.addEventListener('click', () => setLeft(btn.getAttribute('data-reset'), false));
+  });
+  document.querySelectorAll('.scrim').forEach(scrim => {
+    scrim.addEventListener('click', (e) => {
+      if (e.target === scrim) scrim.classList.remove('show');
+    });
+  });
+
+  const tabs = document.querySelectorAll('.tabs button');
+  const viewAll = document.getElementById('view-all');
+  const viewMatrix = document.getElementById('view-matrix');
+  const panels = {
+    a: document.getElementById('panel-a'),
+    b: document.getElementById('panel-b'),
+    c: document.getElementById('panel-c'),
+  };
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const id = tab.getAttribute('data-tab');
+      if (id === 'matrix') {
+        viewAll.classList.add('hidden');
+        viewMatrix.classList.remove('hidden');
+        return;
+      }
+      viewMatrix.classList.add('hidden');
+      viewAll.classList.remove('hidden');
+      if (id === 'all') {
+        Object.values(panels).forEach(p => p.classList.remove('hidden'));
+      } else {
+        Object.entries(panels).forEach(([k, p]) => p.classList.toggle('hidden', k !== id));
+      }
+    });
+  });
+</script>
+</body>
+</html>
