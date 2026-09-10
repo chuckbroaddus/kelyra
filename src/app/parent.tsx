@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -145,6 +145,7 @@ function ParentClassGradesCard({
   childName: string;
 }) {
   const { colors } = useTheme();
+  const router = useRouter();
   const studentIdRef = useRef(studentId);
   studentIdRef.current = studentId;
   const [rows, setRows] = useState<
@@ -191,6 +192,12 @@ function ParentClassGradesCard({
 
   if (!rows.length) return null;
 
+  const openBook = (classId?: string) => {
+    const params = new URLSearchParams({ child: studentId });
+    if (classId) params.set('class', classId);
+    router.push(`/parent/grades?${params.toString()}`);
+  };
+
   return (
     <View style={styles.block}>
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Classes</Text>
@@ -215,6 +222,11 @@ function ParentClassGradesCard({
               }}
             />
           ) : null}
+          <GhostButton
+            align="left"
+            label="See all grades"
+            onPress={() => openBook(row.classId)}
+          />
         </Card>
       ))}
       <WhyAverageSheet

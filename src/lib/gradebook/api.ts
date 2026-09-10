@@ -76,24 +76,36 @@ function asKind(value: string | null | undefined): AssignmentKind {
   return 'practice';
 }
 
-export async function loadStudentGradebook(): Promise<StudentGradebook> {
-  const session = await loadStudentSession();
-  if (!session) throw new Error('This login is not assigned to a roster name yet.');
-  const { data, error } = await requireSupabase().rpc('student_gradebook');
-  if (error) {
-    if (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? '')) {
-      throw new Error('Paste supabase/migrations/20260825000006_grade_terms.sql in the Supabase SQL editor, then open Grades again.');
-    }
-    throw new Error(error.message || 'Could not load grades');
-  }
+type GradebookRpcRow = {
+  class_id: string;
+  class_name: string | null;
+  assignment_id: string;
+  assignment_title: string;
+  kind: string | null;
+  unit: string | null;
+  section: string | null;
+  term: string | null;
+  created_at: string;
+  submission_id: string | null;
+  status: SubmissionRow['status'] | null;
+  approved_score: number | null;
+  score_mark: string | null;
+  answers?: Record<string, unknown> | null;
+};
 
+function mapGradebookRows(
+  rows: GradebookRpcRow[],
+  student: StudentGradebook['student'],
+  opts?: { includeAnswers?: boolean },
+): StudentGradebook {
   const classes: StudentGradebook['classes'] = [];
   const assignments: AssignmentRow[] = [];
   const cells: Record<string, GradeCell> = {};
   const seenClass = new Set<string>();
   const seenAssignment = new Set<string>();
+  const includeAnswers = opts?.includeAnswers === true;
 
-  for (const row of data ?? []) {
+  for (const row of rows) {
     if (row.class_id && !seenClass.has(row.class_id)) {
       seenClass.add(row.class_id);
       classes.push({ classId: row.class_id, className: row.class_name ?? 'Class' });
@@ -116,24 +128,68 @@ export async function loadStudentGradebook(): Promise<StudentGradebook> {
       });
     }
     if (row.assignment_id) {
-      cells[cellKey(row.assignment_id, session.studentId)] = {
+      cells[cellKey(row.assignment_id, student.id)] = {
         status: row.status ?? null,
         score: row.approved_score ?? null,
         scoreMark: row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
         submissionId: row.submission_id ?? null,
         kind: asKind(row.kind),
-        answers: row.answers ?? null,
+        // Family RPC never returns answers; student path may keep lesson labels.
+        answers: includeAnswers ? (row.answers ?? null) : null,
       };
     }
   }
 
-  const photoUrl = await signedProfileUrl(session.photoPath).catch(() => null);
   return {
-    student: { id: session.studentId, displayName: session.displayName, photoUrl },
+    student,
     assignments,
     cells,
     classes: classes.sort((a, b) => a.className.localeCompare(b.className)),
   };
+}
+
+export async function loadStudentGradebook(): Promise<StudentGradebook> {
+  const session = await loadStudentSession();
+  if (!session) throw new Error('This login is not assigned to a roster name yet.');
+  const { data, error } = await requireSupabase().rpc('student_gradebook');
+  if (error) {
+    if (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? '')) {
+      throw new Error('Paste supabase/migrations/20260825000006_grade_terms.sql in the Supabase SQL editor, then open Grades again.');
+    }
+    throw new Error(error.message || 'Could not load grades');
+  }
+
+  const photoUrl = await signedProfileUrl(session.photoPath).catch(() => null);
+  return mapGradebookRows((data ?? []) as GradebookRpcRow[], {
+    id: session.studentId,
+    displayName: session.displayName,
+    photoUrl,
+  }, { includeAnswers: true });
+}
+
+/** Parent (linked child) or student (own id) — no answers / drafts / classmates. */
+export async function loadFamilyStudentGradebook(
+  studentId: string,
+  studentMeta?: { displayName?: string; photoUrl?: string | null },
+): Promise<StudentGradebook> {
+  if (!studentId) throw new Error('Choose a child to open grades.');
+  const { data, error } = await requireSupabase().rpc('family_student_gradebook', {
+    p_student_id: studentId,
+  });
+  if (error) {
+    if (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? '')) {
+      throw new Error(
+        'Paste supabase/migrations/20260910000004_family_student_gradebook.sql in the Supabase SQL editor, then open Grades again.',
+      );
+    }
+    throw new Error(error.message || 'Could not load grades');
+  }
+
+  return mapGradebookRows((data ?? []) as GradebookRpcRow[], {
+    id: studentId,
+    displayName: studentMeta?.displayName?.trim() || 'Student',
+    photoUrl: studentMeta?.photoUrl ?? null,
+  });
 }
 
 export function gradeCell(

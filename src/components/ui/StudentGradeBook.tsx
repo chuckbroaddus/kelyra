@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
@@ -16,8 +16,14 @@ import { type } from '@/constants/theme';
 import { defaultExpandedIds, visibleBookRows, type BookNode } from '@/lib/assignments/tree';
 import { firstName } from '@/lib/format';
 import { gradeTermLabel, matchesGradeTermFilter } from '@/lib/grade/marks';
-import { gradeCell, loadStudentGradebook, studentBookTree, type StudentGradebook } from '@/lib/gradebook/api';
-import { loadStudentClassAverageExplain } from '@/lib/syllabus/api';
+import {
+  gradeCell,
+  loadFamilyStudentGradebook,
+  loadStudentGradebook,
+  studentBookTree,
+  type StudentGradebook,
+} from '@/lib/gradebook/api';
+import { loadParentClassAverageExplain, loadStudentClassAverageExplain } from '@/lib/syllabus/api';
 import type { PublishedFamilySyllabus } from '@/lib/syllabus/api';
 import type { SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
 import { useLayout } from '@/lib/theme/layout';
@@ -25,11 +31,17 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   classId: string | 'all';
+  /** Parent seat: focused child. When set, uses family RPC + parent explain (no drafts). */
+  studentId?: string;
+  childName?: string | null;
+  photoUrl?: string | null;
 };
 
-export function StudentGradeBook({ classId }: Props) {
+export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Props) {
   const { colors } = useTheme();
   const layout = useLayout();
+  const studentIdRef = useRef(studentId);
+  studentIdRef.current = studentId;
   const [book, setBook] = useState<StudentGradebook | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -40,9 +52,18 @@ export function StudentGradeBook({ classId }: Props) {
   const [whyOpen, setWhyOpen] = useState(false);
 
   const load = useCallback(async () => {
+    if (studentId) {
+      const next = await loadFamilyStudentGradebook(studentId, {
+        displayName: childName ?? undefined,
+        photoUrl: photoUrl ?? null,
+      });
+      if (studentIdRef.current !== studentId) return;
+      setBook(next);
+      return;
+    }
     const next = await loadStudentGradebook();
     setBook(next);
-  }, []);
+  }, [studentId, childName, photoUrl]);
 
   const loadExplain = useCallback(async () => {
     if (classId === 'all') {
@@ -52,16 +73,20 @@ export function StudentGradeBook({ classId }: Props) {
       return;
     }
     try {
-      const explained = await loadStudentClassAverageExplain(classId, termFilter);
+      const explained = studentId
+        ? await loadParentClassAverageExplain(classId, studentId, termFilter)
+        : await loadStudentClassAverageExplain(classId, termFilter);
+      if (studentId && studentIdRef.current !== studentId) return;
       setSyllabus(explained.syllabus);
       setAverage(explained.average);
       setRuleLines(explained.ruleLines);
     } catch {
+      if (studentId && studentIdRef.current !== studentId) return;
       setSyllabus({ ok: true, published: false });
       setAverage(null);
       setRuleLines([]);
     }
-  }, [classId, termFilter]);
+  }, [classId, termFilter, studentId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,6 +104,19 @@ export function StudentGradeBook({ classId }: Props) {
       };
     }, [load, loadExplain]),
   );
+
+  // F-06: sibling switch clears prior book / why sheet before the next load lands.
+  useEffect(() => {
+    if (!studentId) return;
+    setWhyOpen(false);
+    setBook(null);
+    setSyllabus(null);
+    setAverage(null);
+    setRuleLines([]);
+    setStatus(null);
+    setTermFilter('all');
+    setExpanded(new Set());
+  }, [studentId]);
 
   const classAssignments = useMemo(() => {
     if (!book) return [];
@@ -176,6 +214,7 @@ export function StudentGradeBook({ classId }: Props) {
   }
 
   const classLabel = book.classes.find((row) => row.classId === classId)?.className ?? null;
+  const shownName = childName?.trim() || student.displayName;
 
   return (
     <View
@@ -199,6 +238,7 @@ export function StudentGradeBook({ classId }: Props) {
             average={average}
             ruleLines={ruleLines}
             className={classLabel}
+            childName={studentId ? shownName : null}
           />
         </>
       ) : null}
@@ -216,10 +256,10 @@ export function StudentGradeBook({ classId }: Props) {
         columns={[
           {
             key: student.id,
-            title: firstName(student.displayName),
+            title: firstName(shownName),
             width: studentCol,
             renderTitle: () => (
-              <GradebookStudentHead name={student.displayName} photoUrl={student.photoUrl} />
+              <GradebookStudentHead name={shownName} photoUrl={student.photoUrl} />
             ),
             render: (row) => {
               if (row.kind !== 'assignment' || !row.assignment) return null;
@@ -232,6 +272,7 @@ export function StudentGradeBook({ classId }: Props) {
       <WhyAverageSheet
         visible={whyOpen}
         average={average}
+        childName={studentId ? shownName : null}
         className={classLabel}
         termLabel={gradeTermLabel(termFilter)}
         onClose={() => setWhyOpen(false)}

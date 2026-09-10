@@ -495,6 +495,9 @@ export function HamburgerDrawer() {
               {matches('My children', q) ? (
                 <DrawerRow label="My children" onPress={() => go('/parent')} />
               ) : null}
+              {matches('Grades', q) ? (
+                <DrawerRow label="Grades" onPress={() => go('/parent/grades')} />
+              ) : null}
               {chromeState.canChooseSeat ? (
                 <>
                   {seats.includes('office') && matches('Office', q) ? (

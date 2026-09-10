@@ -777,6 +777,24 @@ export type Database = {
           answers: Record<string, unknown> | null;
         }[];
       };
+      family_student_gradebook: {
+        Args: { p_student_id: string };
+        Returns: {
+          class_id: string;
+          class_name: string;
+          assignment_id: string;
+          assignment_title: string;
+          kind: string;
+          unit: string | null;
+          section: string | null;
+          term: string | null;
+          created_at: string;
+          submission_id: string;
+          status: SubmissionStatus;
+          approved_score: number | null;
+          score_mark: string | null;
+        }[];
+      };
       student_list_todo: {
         Args: Record<string, never>;
         Returns: {
