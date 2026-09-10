@@ -38,20 +38,26 @@ If an org order is sent to a specialist chat by mistake, the specialist must not
 ## Delivery chain (software)
 
 ```
-Strategy / Research → UI/UX Designer (options) → Product Manager (choose + stories)
+Strategy / Research → UI/UX Designer (options)
+  → Product Manager (choose + stories)  ∥  QA Supervisor (real-world intent)
+  → DESIGN STAMP (PM APPROVED + QA Supervisor APPROVED)   ← no Eng before this
   → Architect (as needed)
   → Senior Developer or Fast Coder
-  → Grok Build kelyra-qa-loop
-  → QA Engineer / QA Supervisor
+  → Grok Build kelyra-qa-loop  (or grok-bot-consultant bot-build)
+  → QA Supervisor → QA Engineer (test plan + cases + execute)
+  → Defects on kelyra (severity) → PM auto-disposition → Eng if FIX-NOW
+  → QA Supervisor release evidence
   → Security (boundary changes)
   → DevOps Release → ship
 ```
 
-Non-visual product work may skip the designer. **All UI/UX design items** (chrome, IA, visual options, research handoffs, implementation requests, decisions, and documentation updates) **must** route through `ui-ux-designer` so it stays in the loop. The flow is: `research-feedback` → `ui-ux-designer` (designs options + owns `docs/ui-design.md` and related UI/UX docs) → `product-manager` (chooses + notifies ui-ux-designer of final decision for doc update) → Engineering.
+**Intent Quality Gate** (CEO 2026-09-10): `notes/company/INTENT_QUALITY_GATE.md`. Features and user-facing bugs must cover real-world intent (hats, dual-hat, full lifecycle, multiplicity, chrome entry), not a happy-path slice. CoS must not staff Engineering / qa-loop implement until both stamps exist. After the loop is terminal, CoS must staff `qa-engineer` from the QA Supervisor’s prove-out OBJECTIVE. Defect cards are first-class; PM dispositions them without a CEO ask.
+
+Non-visual product work may skip the designer. **All UI/UX design items** (chrome, IA, visual options, research handoffs, implementation requests, decisions, and documentation updates) **must** route through `ui-ux-designer` so it stays in the loop. The flow is: `research-feedback` → `ui-ux-designer` (designs options + owns `docs/ui-design.md` and related UI/UX docs) → `product-manager` (chooses + notifies ui-ux-designer of final decision for doc update) **and** `qa-supervisor` (intent review) → dual stamp → Engineering.
 
 The ui-ux-designer role owns permanent maintenance of the canonical UI/UX design documentation (`docs/ui-design.md` and supporting files in `docs/` + `notes/company/`). Product Manager must explicitly notify ui-ux-designer of every final choice so documentation stays current. Designer does not pick; PM does not design option packs; designer does not run research.
 
-Developers never self-certify. The embedded Grok workflow owns implementation QA. Higher-layer QA judges evidence and release risk only.
+Developers never self-certify. The embedded Grok workflow owns implementation QA. Higher-layer QA owns intent completeness, prove-out testing, and release evidence — not a second implementer loop.
 
 ## Roster
 
@@ -60,13 +66,13 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 | chief-of-staff | Orchestrate, prioritize, escalate, report |
 | strategy | Strategy, positioning, pricing, roadmap |
 | research-feedback | Research & feedback → opportunities; UI/UX designer depends on this research |
-|| ui-ux-designer | All UI/UX designing and option packs + permanent owner of canonical UI/UX design documentation (`docs/ui-design.md` and related files). Must stay in the loop on every UI/UX item. (Does not choose; does not research) |
-| product-manager | Chooses among designer options; specs, stories, acceptance criteria |
+| ui-ux-designer | All UI/UX designing and option packs + permanent owner of canonical UI/UX design documentation (`docs/ui-design.md` and related files). Must stay in the loop on every UI/UX item. (Does not choose; does not research) |
+| product-manager | Chooses among designer options; specs, stories, acceptance criteria; **IQG design stamp** with QA Supervisor; **auto-dispositions** IQG defect cards |
 | software-architect | Architecture, data, technical standards |
 | senior-developer | Substantial implementation + launch qa-loop |
 | fast-coder | Small/repetitive implementation + qa-loop |
-| qa-engineer | Higher-layer QA of loop evidence |
-| qa-supervisor | Release quality / process adequacy |
+| qa-engineer | IQG test plans/cases + post-implement prove-out; files defects with severity |
+| qa-supervisor | Design-stage real-world intent; IQG stamp with PM; tasks prove-out via CoS; release evidence |
 | security | Security & privacy review |
 | devops-release | CI/CD, deploy, ops reliability; **sole** git merge/commit/push when CoS staffs after CEO/CoS auth |
 | legal-compliance | Policy/compliance; flag human counsel |
@@ -80,7 +86,7 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 
 ## CoS skills (on `chief-of-staff` profile)
 
-- `kelyra-company-os` — org routing + kanban staffing
+- `kelyra-company-os` — org routing + kanban staffing + Intent Quality Gate
 - `kelyra-qa-loop` — Grok Build implementation pipeline
 - `kelyra-arm-hr` — ask ARM before kelyra `ready`; leftover P2/P3 window
 - `kelyra-grok-build-ping` — Build dual-POST leftovers (Hermes-only P2/P3 writer)
@@ -123,6 +129,7 @@ Engineering profiles also carry `kelyra-qa-loop`.
 6. Grok effort only: minimal | low | medium | high.
 7. **TTS only via `grok-tts`**; never parallel TTS sessions (exclusive lock + 5s interval).
 8. **Git ship only via `devops-release`.** CoS does not `git commit` / `merge` / `push`. Staff DevOps after CEO/CoS authorizes. Never force-push main. Never secrets.
+9. **Intent Quality Gate.** No Eng before PM+QA Supervisor stamps. After implement, staff QA Engineer prove-out. Defects get severity + PM disposition. See `INTENT_QUALITY_GATE.md`.
 
 ## Profile docs
 

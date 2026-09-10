@@ -14,7 +14,7 @@ Refresh: `~/projects/kelyra/notes/dashboard/refresh-kanban.sh`
 2. Open the dashboard HTML / Hermes kanban UI.
 3. Tell **Kelyra Chief of Staff** in its Bot Chat: add X to board `kelyra`, priority, assignee.
 
-CoS decomposes and assigns. App code goes through `kelyra-qa-loop`. QA Supervisor does release evidence. DevOps ships. No self-certify.
+CoS decomposes and assigns. Features and user-facing bugs go through **Intent Quality Gate** (`INTENT_QUALITY_GATE.md`): QA Supervisor in design, PM+QA Supervisor stamp, then Eng/`kelyra-qa-loop`, then QA Engineer test plans + execution. Defects on `kelyra` with severity; PM auto-dispositions. QA Supervisor does release evidence. DevOps ships. No self-certify. No happy-path-only “done.”
 
 ## SuperGrok (ARM is HR)
 Daily cap **12% of weekly credit** (Chicago day). Reset Monday **01:38** America/Chicago. Governor: `ai-resource-manager`.

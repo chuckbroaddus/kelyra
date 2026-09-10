@@ -15,6 +15,7 @@ Kelyra is a coordinated company of specialized Hermes Bots. Prefer **artifacts o
 10. **Evidence matters.** Tests, logs, metrics, acceptance criteria.
 11. **UI/UX RACI.** `research-feedback` researches; `ui-ux-designer` designs and builds options; `product-manager` chooses among those options. Designer does not pick or research. PM does not produce visual option packs. Engineering implements the chosen option only.
 12. **Git ship.** Merge, commit, and push are **`devops-release` only**. CoS staffs that profile after CEO/CoS authorization. Other roles (including CoS) do not run git ship. Never force-push main. Never secrets.
+13. **Intent Quality Gate (IQG).** Features and user-facing bug fixes must be fully realized, not happy-path only. QA Supervisor reviews real-world intent in **design** (hats, dual-hat, full lifecycle, multiplicity, chrome entry). PM and QA Supervisor both **stamp** the design before any engineering. After implementation, QA Supervisor has CoS staff QA Engineer to write test plans/cases and execute them. Defects go on board `kelyra` with severity; PM **auto-dispositions** them. See `INTENT_QUALITY_GATE.md`.
 
 ## Kanban
 Board `kelyra` is SoT. Update the ticket when work moves. Completing work is not “said so in chat.”
@@ -26,7 +27,7 @@ OBJECTIVE / CONTEXT / REQUIREMENTS / CONSTRAINTS / FILES/AREAS / WORK PERFORMED 
 @mention `chief-of-staff` for cross-domain or priority conflicts.
 
 ## QA
-`kelyra-qa-loop` / `author-qa-loop` own implementation-level QA. Higher-layer QA (QA Supervisor / QA Engineer) checks whether the loop was used and whether evidence is enough for release — they do not repeat every internal stage.
+`kelyra-qa-loop` / `author-qa-loop` own implementation-level QA. Higher-layer QA owns **Intent Quality Gate** (`INTENT_QUALITY_GATE.md`): design-stage real-world intent, dual PM+QA Supervisor stamp before engineering, post-implement test plans/cases/execution, defects with severity, PM auto-disposition. They do not repeat every internal loop stage. Loop `passed` is not product-complete without prove-out against the stamp.
 
 ## Reasoning
 Use `minimal|low|medium|high` as configured on the profile. Do not invent `max`/`ultra`.

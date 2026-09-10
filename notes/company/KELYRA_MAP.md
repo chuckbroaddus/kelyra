@@ -27,6 +27,9 @@ Governor: `ai-resource-manager` (HR for two wallets). Agreement: `notes/company/
 - Grok Bot / Cursor sand: 14% of weekly; Saturday 15:51 CT reset (`status --pool grok-bot`; publisher `memory/grok_bot_usage.json`)
 CoS asks ARM GRANT before kelyra `ready` on every pool the work burns. DENY → sticky `needs_arm_grant:<pool>`.
 
+## Intent Quality Gate
+Process: `notes/company/INTENT_QUALITY_GATE.md` (CEO 2026-09-10). Dual PM + QA Supervisor stamp before engineering. QA Engineer prove-out after implement. Defects on board `kelyra` with severity; PM auto-dispositions.
+
 ## TTS
 All company TTS through profile `grok-tts` only.
 
