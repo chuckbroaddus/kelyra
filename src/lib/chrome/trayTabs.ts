@@ -9,6 +9,11 @@ export type TrayTab = {
   badge?: number;
 };
 
+/** React remount key so seat switch rebuilds from tabsFor(role) only — never concatenate (P-06). */
+export function trayRemountKey(role: string): string {
+  return role;
+}
+
 export function trayKeysForRole(role: string): string[] {
   return tabsFor(role, '/', null, 0).map((tab) => tab.key);
 }
@@ -52,7 +57,7 @@ export function tabsFor(
         href: '/?tab=manage',
         active: office === 'manage',
       },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
+      { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
   if (role === 'student') {
@@ -92,14 +97,14 @@ export function tabsFor(
         href: '/student/people',
         active: pathname.startsWith('/student/people'),
       },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
+      { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
   if (role === 'parent') {
     return [
       { key: 'home', icon: 'today', label: 'Home', href: '/parent', active: pathname === '/parent' },
       { key: 'ride', icon: 'ride', label: 'Ride', href: '/parent/ride', active: pathname.startsWith('/parent/ride') || pathname.startsWith('/parent/vehicles') },
-      { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
+      { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
 

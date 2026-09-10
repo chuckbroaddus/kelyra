@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DangerButton, GhostButton } from '@/components/ui/Button';
+import { DangerButton, GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { TextField } from '@/components/ui/TextField';
@@ -22,9 +22,18 @@ type Props = {
   title: string;
   body: string;
   confirmLabel: string;
+  /** Defaults to Cancel. Clear-brief uses Keep brief. Leave line uses Keep waiting. */
+  cancelLabel?: string;
   typeName?: string | null;
   photoUrl?: string | null;
   busy?: boolean;
+  /**
+   * `danger` (default) = delete ConfirmSheet (§20.1): DangerButton + undo coda; blocked on parent/student/none.
+   * `primary` = parent-safe confirm (§13.13b): PrimaryButton, no undo coda; allowed on parent seat.
+   */
+  tone?: 'danger' | 'primary';
+  /** Optional a11y on the confirm control (e.g. Leave line + child names). */
+  confirmAccessibilityLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -38,9 +47,12 @@ export function ConfirmSheet({
   title,
   body,
   confirmLabel,
+  cancelLabel = 'Cancel',
   typeName,
   photoUrl,
   busy,
+  tone = 'danger',
+  confirmAccessibilityLabel,
   onCancel,
   onConfirm,
 }: Props) {
@@ -51,17 +63,26 @@ export function ConfirmSheet({
   const web = Platform.OS === 'web';
   const needsName = Boolean(typeName?.trim());
   const ready = !needsName || namesMatch(typed, typeName ?? '');
-  const copy = body.includes('This cannot be undone.')
-    ? body
-    : `${body.trim()}\nThis cannot be undone.`;
+  const parentSafe = tone === 'primary';
+  const copy = parentSafe
+    ? body.trim()
+    : body.includes('This cannot be undone.')
+      ? body
+      : `${body.trim()}\nThis cannot be undone.`;
 
   useEffect(() => {
     if (!visible) setTyped('');
   }, [visible]);
 
-  if (chrome && (chrome.role === 'none' || chrome.role === 'student' || chrome.role === 'parent')) {
+  if (chrome && (chrome.role === 'none' || chrome.role === 'student')) {
     return null;
   }
+  // Destructive delete sheet stays teacher/office-only; parent-safe primary is allowed on parent seat.
+  if (chrome && chrome.role === 'parent' && !parentSafe) {
+    return null;
+  }
+
+  const ConfirmControl = parentSafe ? PrimaryButton : DangerButton;
 
   return (
     <ScreenOverlay visible={visible} onRequestClose={onCancel}>
@@ -101,12 +122,13 @@ export function ConfirmSheet({
               autoCorrect={false}
             />
           ) : null}
-          <DangerButton
+          <ConfirmControl
             label={busy ? 'Working…' : confirmLabel}
             disabled={!ready || busy}
+            accessibilityLabel={confirmAccessibilityLabel}
             onPress={onConfirm}
           />
-          <GhostButton label="Cancel" onPress={onCancel} />
+          <GhostButton label={cancelLabel} onPress={onCancel} />
         </View>
       </KeyboardAvoidingView>
     </ScreenOverlay>

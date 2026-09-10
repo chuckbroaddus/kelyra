@@ -30,7 +30,12 @@ import { deleteClass } from '@/lib/classes/delete';
 import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { availableChromeSeats, isOfficeChromeRole } from '@/lib/chrome/seat';
+import {
+  availableChromeSeats,
+  chromeSeatRootHref,
+  isOfficeChromeRole,
+  otherOfficeTeacherSeatRow,
+} from '@/lib/chrome/seat';
 import { formatHandle, isAlsoParent } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
 import { can } from '@/lib/school/matrix';
@@ -300,9 +305,9 @@ export function HamburgerDrawer() {
                   {matches('Manage', q) || matches('School', q) ? (
                     <DrawerRow label="Manage" onPress={() => go('/?tab=manage')} />
                   ) : null}
-                  {matches('Kelyra', q) || matches('Ask', q) ? (
+                  {matches('Ask', q) || matches('Kelyra', q) ? (
                     <DrawerRow
-                      label="Kelyra"
+                      label="Ask"
                       onPress={() => go('/ask')}
                       leading={<KelyraMark size={22} />}
                     />
@@ -318,7 +323,12 @@ export function HamburgerDrawer() {
                       chevron={false}
                       selected={klass.id === chromeState.classId}
                       onPress={() => {
-                        if (teacher) void setActiveClass(teacher.id, klass.id).then(() => setActiveClassId(klass.id));
+                        // Sync setActiveClassId first so Ask ground clears before refreshChrome/go
+                        // (avoids classId effect re-reading stale ground while DB write is in flight).
+                        if (teacher) {
+                          setActiveClassId(klass.id);
+                          void setActiveClass(teacher.id, klass.id);
+                        }
                         chromeState.refreshChrome();
                         go(teacherSeat ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
                       }}
@@ -337,6 +347,8 @@ export function HamburgerDrawer() {
                     <DrawerRow label="Another class" onPress={() => go('/?switch=1')} />
                   ) : null}
                   <Hairline />
+                  {/* Admin extras: §31.1 People/Activity/Messages/Responsibilities.
+                      Feed is superintendent §36.2 only; do not invent Manage. */}
                   {officeSeat ? (
                     <>
                       {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
@@ -351,65 +363,63 @@ export function HamburgerDrawer() {
                   ) : null}
                   {chromeState.classId && teacherSeat ? (
                     <>
-                      {q.trim() && matches('Grade book', q) ? (
-                      <DrawerRow
-                        label="Grade book"
-                        onPress={() => {
-                          chromeState.setContextTab('book', `/class/${chromeState.classId}/gradebook`);
-                          go(`/class/${chromeState.classId}/gradebook`);
-                        }}
-                      />
+                      {matches('Grade book', q) ? (
+                        <DrawerRow
+                          label="Grade book"
+                          onPress={() => {
+                            chromeState.setContextTab('book', `/class/${chromeState.classId}/gradebook`);
+                            go(`/class/${chromeState.classId}/gradebook`);
+                          }}
+                        />
                       ) : null}
-                      {q.trim() && matches('Parents', q) ? (
+                      {matches('Parents', q) ? (
                         <DrawerRow label="Parents" onPress={() => go(`/class/${chromeState.classId}/parents`)} />
                       ) : null}
                       {matches('Family update', q) ? (
                         <DrawerRow label="Family update" onPress={() => go(`/class/${chromeState.classId}/family`)} />
                       ) : null}
+                      <Hairline />
                     </>
                   ) : null}
                 </>
               )}
+              {/* §36.2 / §31.4b: parent hat → My children without merging trays */}
+              {isAlsoParent(profile) && matches('My children', q) ? (
+                <DrawerRow label="My children" onPress={() => go('/parent')} />
+              ) : null}
               {chromeState.canChooseSeat ? (
                 <>
-                  {seats.includes('office') && !officeSeat && matches('Office', q) ? (
-                    <DrawerRow
-                      label="Office"
-                      onPress={() => {
-                        chromeState.setChromeSeat('office');
-                        go('/', true);
-                      }}
-                    />
-                  ) : null}
-                  {seats.includes('teacher') && !teacherSeat && matches('Teach', q) ? (
-                    <DrawerRow
-                      label="Teach"
-                      onPress={() => {
-                        chromeState.setChromeSeat('teacher');
-                        go('/', true);
-                      }}
-                    />
-                  ) : null}
+                  {(() => {
+                    const switchRow = otherOfficeTeacherSeatRow(chromeState.role);
+                    if (
+                      !switchRow ||
+                      !seats.includes(switchRow.seat) ||
+                      !matches(switchRow.label, q)
+                    ) {
+                      return null;
+                    }
+                    return (
+                      <DrawerRow
+                        label={switchRow.label}
+                        accessibilityLabel={switchRow.accessibilityLabel}
+                        onPress={() => {
+                          chromeState.setChromeSeat(switchRow.seat);
+                          go(chromeSeatRootHref(switchRow.seat), true);
+                        }}
+                      />
+                    );
+                  })()}
                   {seats.includes('parent') && !parentSeat && matches('Parent', q) ? (
                     <DrawerRow
                       label="Parent"
+                      accessibilityLabel="Switch to Parent seat"
                       onPress={() => {
                         chromeState.setChromeSeat('parent');
-                        go('/parent', true);
+                        go(chromeSeatRootHref('parent'), true);
                       }}
                     />
                   ) : null}
-                  <Hairline />
                 </>
-              ) : null}
-              {!chromeState.canChooseSeat && isAlsoParent(profile) && matches('My children', q) ? (
-                <>
-                  <DrawerRow label="My children" onPress={() => go('/parent')} />
-                  <Hairline />
-                </>
-              ) : null}
-              {officeSeat && profile?.role !== 'superintendent' && matches('Feed', q) ? (
-                <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
               ) : null}
               {!officeSeat && matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
               <Hairline />
@@ -453,6 +463,7 @@ export function HamburgerDrawer() {
               {matches('Classes', q) ? <DrawerRow label="Classes" onPress={() => go('/student/class')} /> : null}
               {matches('Grades', q) ? <DrawerRow label="Grades" onPress={() => go('/student/grades')} /> : null}
               {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/student/people')} /> : null}
+              <Hairline />
               {matches('Sign out', q) ? (
                 <DrawerRow
                   label="Sign out"
@@ -486,28 +497,30 @@ export function HamburgerDrawer() {
               ) : null}
               {chromeState.canChooseSeat ? (
                 <>
-                  <Hairline />
                   {seats.includes('office') && matches('Office', q) ? (
                     <DrawerRow
                       label="Office"
+                      accessibilityLabel="Switch to Office seat"
                       onPress={() => {
                         chromeState.setChromeSeat('office');
-                        go('/', true);
+                        go(chromeSeatRootHref('office'), true);
                       }}
                     />
                   ) : null}
                   {seats.includes('teacher') && matches('Teach', q) ? (
                     <DrawerRow
                       label="Teach"
+                      accessibilityLabel="Switch to Teach seat"
                       onPress={() => {
                         chromeState.setChromeSeat('teacher');
-                        go('/', true);
+                        go(chromeSeatRootHref('teacher'), true);
                       }}
                     />
                   ) : null}
                 </>
               ) : null}
               {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
+              <Hairline />
               {matches('Sign out', q) ? (
                 <DrawerRow
                   label="Sign out"
@@ -653,6 +666,7 @@ function DrawerRow({
   check,
   tooltip,
   leading,
+  accessibilityLabel,
 }: {
   label: string;
   onPress: () => void;
@@ -660,12 +674,14 @@ function DrawerRow({
   check?: boolean;
   tooltip?: string;
   leading?: ReactNode;
+  accessibilityLabel?: string;
 }) {
   const { colors } = useTheme();
   return (
     <HoverTip label={tipIfNew(label, tooltip)} fill>
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.75 }]}
     >

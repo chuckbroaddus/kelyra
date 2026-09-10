@@ -34,6 +34,14 @@ export type CheckInResult = {
   student_ids?: string[];
 };
 
+export type LeaveResult = {
+  ok: boolean;
+  message?: string;
+  kind?: string;
+  line_id?: string;
+  student_ids?: string[];
+};
+
 export async function listDismissalLines(): Promise<DismissalLine[]> {
   const { data, error } = await requireSupabase().rpc('dismissal_list_lines');
   if (error) throw error;
@@ -114,6 +122,19 @@ export async function parentCheckIn(input: {
   }
   const row = (data ?? { ok: false }) as CheckInResult;
   if (!row.ok) return { ok: false, message: 'Check in failed' };
+  return row;
+}
+
+/** Parent ends waiting on this line — queue_events.kind=left only. Never released. */
+export async function parentLeave(lineId: string): Promise<LeaveResult> {
+  const { data, error } = await requireSupabase().rpc('dismissal_parent_leave', {
+    p_line_id: lineId,
+  });
+  if (error) {
+    return { ok: false, message: 'Leave failed' };
+  }
+  const row = (data ?? { ok: false }) as LeaveResult;
+  if (!row.ok) return { ok: false, message: 'Leave failed' };
   return row;
 }
 

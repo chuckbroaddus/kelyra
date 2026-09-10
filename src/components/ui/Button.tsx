@@ -12,6 +12,7 @@ type Props = {
   align?: 'center' | 'left';
   showDot?: boolean;
   tone?: 'danger';
+  accessibilityLabel?: string;
 };
 
 function Base({
@@ -26,6 +27,7 @@ function Base({
   tone,
   ghost,
   dotColor,
+  accessibilityLabel,
 }: Props & {
   style: object;
   textStyle: object;
@@ -37,6 +39,7 @@ function Base({
     <HoverTip label={tipIfNew(label, tooltip)} fill={align !== 'left' && !ghost}>
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [

@@ -90,6 +90,13 @@ test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/offi
   assert.ok(!parent.has('capture'));
 });
 
+test('P-05: Ask label unified across seats', () => {
+  for (const role of ['teacher', 'superintendent', 'administrator', 'student', 'parent']) {
+    const ask = tabsFor(role, '/ask', role === 'teacher' ? 'c1' : null, 0).find((tab) => tab.key === 'ask');
+    assert.equal(ask?.label, 'Ask', role);
+  }
+});
+
 test('RIDE-ICON: parent Ride + Dismissal curb use ride; Assignments stay work', () => {
   const ride = tabsFor('parent', '/parent', null, 0).find((tab) => tab.key === 'ride');
   assert.equal(ride?.icon, 'ride');

@@ -4,8 +4,11 @@ import test from 'node:test';
 import {
   availableChromeSeats,
   canChooseChromeSeat,
+  chromeSeatRootHref,
+  coldStartChromeSeatPreference,
   defaultChromeSeat,
   isOfficeChromeRole,
+  otherOfficeTeacherSeatRow,
   resolveStaffChromeRole,
 } from './seat.ts';
 
@@ -46,6 +49,17 @@ test('defaultChromeSeat prefers job-of-record, never Parent', () => {
   assert.equal(defaultChromeSeat({ role: 'administrator', also_teacher: true, parent_id: 'p1' }), 'office');
   assert.equal(defaultChromeSeat({ role: 'teacher', parent_id: 'p1' }), 'teacher');
   assert.equal(defaultChromeSeat({ role: 'administrator', parent_id: 'p1' }), 'office');
+});
+
+test('DH-07 coldStartChromeSeatPreference ignores stored parent', () => {
+  assert.equal(coldStartChromeSeatPreference('parent'), null);
+  assert.equal(coldStartChromeSeatPreference('office'), 'office');
+  assert.equal(coldStartChromeSeatPreference('teacher'), 'teacher');
+  assert.equal(coldStartChromeSeatPreference('nope'), null);
+  assert.equal(
+    resolveStaffChromeRole({ role: 'administrator', parent_id: 'p1' }, coldStartChromeSeatPreference('parent')),
+    'administrator',
+  );
 });
 
 test('resolveStaffChromeRole: also_teacher does not force teacher without seat', () => {
@@ -90,4 +104,31 @@ test('isOfficeChromeRole matches chrome.role seats only', () => {
   assert.equal(isOfficeChromeRole('teacher'), false);
   assert.equal(isOfficeChromeRole('student'), false);
   assert.equal(isOfficeChromeRole('parent'), false);
+});
+
+test('P-06: chromeSeatRootHref always lands seat root', () => {
+  assert.equal(chromeSeatRootHref('office'), '/');
+  assert.equal(chromeSeatRootHref('teacher'), '/');
+  assert.equal(chromeSeatRootHref('parent'), '/parent');
+});
+
+test('P-06: otherOfficeTeacherSeatRow shows only the other seat', () => {
+  assert.deepEqual(otherOfficeTeacherSeatRow('administrator'), {
+    seat: 'teacher',
+    label: 'Teach',
+    accessibilityLabel: 'Switch to Teach seat',
+  });
+  assert.deepEqual(otherOfficeTeacherSeatRow('superintendent'), {
+    seat: 'teacher',
+    label: 'Teach',
+    accessibilityLabel: 'Switch to Teach seat',
+  });
+  assert.deepEqual(otherOfficeTeacherSeatRow('teacher'), {
+    seat: 'office',
+    label: 'Office',
+    accessibilityLabel: 'Switch to Office seat',
+  });
+  assert.equal(otherOfficeTeacherSeatRow('parent'), null);
+  assert.equal(otherOfficeTeacherSeatRow('student'), null);
+  assert.equal(otherOfficeTeacherSeatRow(null), null);
 });

@@ -11,7 +11,13 @@ import {
   vehicleValidOn,
 } from './plate.ts';
 import { conflictFirst, rankGraph, staffWalkOrder } from './order.ts';
-import { parentCheckInMessage, nudgeCopy } from './copy.ts';
+import {
+  nudgeCopy,
+  parentCheckInMessage,
+  parentLeaveConfirmBody,
+  parentLeaveSuccessMessage,
+  RIDE_LEAVE_FAIL_MESSAGE,
+} from './copy.ts';
 
 const root = process.cwd();
 function read(rel: string): string {
@@ -20,6 +26,7 @@ function read(rel: string): string {
 
 const schema = 'supabase/migrations/20260907000000_ride_schema.sql';
 const rpcs = 'supabase/migrations/20260907000001_ride_rpcs.sql';
+const leaveRpc = 'supabase/migrations/20260910000003_dismissal_parent_leave.sql';
 
 test('RIDE-S1-01 schema stamps school_id on every ride table', () => {
   const sql = read(schema);
@@ -241,12 +248,14 @@ test('RIDE-api RPCs are typed on Database.Functions (no rideDb any escape hatch)
   assert.match(api, /requireSupabase\(\)\.rpc\('dismissal_list_lines'\)/);
   assert.match(api, /requireSupabase\(\)\.rpc\('parent_list_vehicles'\)/);
   assert.match(api, /requireSupabase\(\)\.functions\.invoke\('ride-lpr'/);
+  assert.match(api, /requireSupabase\(\)\.rpc\('dismissal_parent_leave'/);
   for (const name of [
     'dismissal_list_lines',
     'parent_list_vehicles',
     'parent_upsert_vehicle',
     'dismissal_my_trip',
     'dismissal_parent_check_in',
+    'dismissal_parent_leave',
     'dismissal_queue_live',
     'dismissal_staff_walk_photo',
     'dismissal_order_fix',
@@ -271,4 +280,46 @@ test('RIDE-S1-22 parent check-in early guards use specific copy', () => {
   // Real RPC/restriction failures still use the opaque constant
   assert.match(ui, /setStatus\(RIDE_FAIL_MESSAGE\)/);
   assert.match(ui, /setStatus\(parentCheckInMessage\(result\)\)/);
+});
+
+test('P-LEFT / CEO-2: parent leave RPC writes left only; never released', () => {
+  const sql = read(leaveRpc);
+  assert.match(sql, /create or replace function public\.dismissal_parent_leave/);
+  assert.match(sql, /'left'/);
+  assert.match(sql, /ride_my_parent_id/);
+  assert.match(sql, /ride_compute_line_order/);
+  assert.match(sql, /Leave failed/);
+  assert.doesNotMatch(sql, /'released'/);
+  assert.match(sql, /grant execute on function public\.dismissal_parent_leave\(uuid\) to authenticated/);
+});
+
+test('P-LEFT Option A: trip card Leave line + ConfirmSheet primary / Keep waiting', () => {
+  const ui = read('src/app/parent/ride.tsx');
+  assert.match(ui, /label="Leave line"/);
+  assert.match(ui, /You are \{trip\.position_xx\}/);
+  assert.match(ui, /tone="primary"/);
+  assert.match(ui, /confirmLabel="Leave line"/);
+  assert.match(ui, /cancelLabel="Keep waiting"/);
+  assert.match(ui, /parentLeave\(/);
+  assert.match(ui, /Leave this line before checking in here again/);
+  assert.doesNotMatch(ui, /releasePickup|dismissal_release|'released'/);
+  assert.doesNotMatch(ui, /sticky|Checkout|Picked up|Released/);
+  // Hub only — vehicles has no Leave
+  const vehicles = read('src/app/parent/vehicles.tsx');
+  assert.doesNotMatch(vehicles, /Leave line|parentLeave|Keep waiting/);
+});
+
+test('P-LEFT copy: success out-of-line; confirm not pickup; fail opaque', () => {
+  assert.equal(parentLeaveSuccessMessage('K–2'), 'You’re out of K–2.');
+  assert.match(parentLeaveConfirmBody(['Saydee', 'Sydnee']), /not pickup/i);
+  assert.doesNotMatch(parentLeaveConfirmBody(['Saydee']), /released|checkout|picked up|of \d+/i);
+  assert.equal(RIDE_LEAVE_FAIL_MESSAGE, 'Leave failed');
+});
+
+test('P-LEFT ConfirmSheet parent-safe tone unlocks parent seat; no undo coda', () => {
+  const sheet = read('src/components/ui/ConfirmSheet.tsx');
+  assert.match(sheet, /tone\?: 'danger' \| 'primary'/);
+  assert.match(sheet, /PrimaryButton/);
+  assert.match(sheet, /parentSafe/);
+  assert.match(sheet, /chrome\.role === 'parent' && !parentSafe/);
 });

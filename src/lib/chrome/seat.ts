@@ -80,13 +80,95 @@ export function isOfficeChromeRole(role: string | null | undefined): boolean {
   return role === 'superintendent' || role === 'administrator';
 }
 
+/** Seat-root href for Option A switch — always land root, never stay-on-compatible-route. */
+export function chromeSeatRootHref(seat: ChromeSeatPreference): string {
+  return seat === 'parent' ? '/parent' : '/';
+}
+
+/**
+ * When optimistic seatNavPath may clear. /class/* is teacher landing only — never clear
+ * office seat-root `/` while the router is still on a prior teacher /class/* path.
+ */
+export function shouldClearSeatNavPath(input: {
+  seatNavPath: string | null;
+  pathname: string;
+  /** Post-commit chrome.role (after preference resolve). */
+  role: string | null | undefined;
+}): boolean {
+  const { seatNavPath, pathname, role } = input;
+  if (!seatNavPath) return false;
+  if (pathname === seatNavPath) return true;
+  if (seatNavPath === '/') {
+    if (pathname === '') return true;
+    // Teacher Desk often redirects `/` → `/class/{id}`; only then is /class/* arrived root.
+    if (/^\/class\//.test(pathname) && role === 'teacher') return true;
+    return false;
+  }
+  if (seatNavPath === '/parent' && pathname.startsWith('/parent')) return true;
+  return false;
+}
+
+/** Pathname used for wordmark/tray while a seat switch is in flight. */
+export function chromePathnameForSeatNav(
+  seatNavPath: string | null,
+  pathname: string,
+): string {
+  return seatNavPath ?? pathname;
+}
+
+/**
+ * Other office↔teacher hamburger row when already on an office or teacher seat.
+ * Null on parent / none — parent drawer lists Office and Teach separately.
+ */
+export function otherOfficeTeacherSeatRow(
+  role: string | null | undefined,
+): {
+  seat: 'office' | 'teacher';
+  label: 'Office' | 'Teach';
+  accessibilityLabel: string;
+} | null {
+  if (isOfficeChromeRole(role)) {
+    return {
+      seat: 'teacher',
+      label: 'Teach',
+      accessibilityLabel: 'Switch to Teach seat',
+    };
+  }
+  if (role === 'teacher') {
+    return {
+      seat: 'office',
+      label: 'Office',
+      accessibilityLabel: 'Switch to Office seat',
+    };
+  }
+  return null;
+}
+
+/**
+ * Cold-start restore for dual-hat preference (DH-07 / §31.4b).
+ * Parent is session-only altitude — never restore across force-quit / cold launch.
+ * Office↔teacher may persist.
+ */
+export function coldStartChromeSeatPreference(
+  raw: string | null | undefined,
+): 'office' | 'teacher' | null {
+  if (raw === 'office' || raw === 'teacher') return raw;
+  return null;
+}
+
 export async function loadChromeSeatPreference(
   profileId: string | null | undefined,
 ): Promise<ChromeSeatPreference | null> {
   if (!profileId) return null;
   try {
-    const raw = await AsyncStorage.getItem(chromeSeatStorageKey(profileId));
-    if (raw === 'office' || raw === 'teacher' || raw === 'parent') return raw;
+    const key = chromeSeatStorageKey(profileId);
+    const raw = await AsyncStorage.getItem(key);
+    const seat = coldStartChromeSeatPreference(raw);
+    // Drop stale parent so a later read cannot resurrect Parent tray.
+    if (raw === 'parent') {
+      await AsyncStorage.removeItem(key);
+    }
+    return seat;
   } catch {
     // Missing storage is fine — default via resolveStaffChromeRole.
   }
@@ -97,5 +179,11 @@ export async function saveChromeSeatPreference(
   profileId: string,
   seat: ChromeSeatPreference,
 ): Promise<void> {
-  await AsyncStorage.setItem(chromeSeatStorageKey(profileId), seat);
+  const key = chromeSeatStorageKey(profileId);
+  // Parent is in-session only (DH-07). Clearing leaves job-of-record default on cold start.
+  if (seat === 'parent') {
+    await AsyncStorage.removeItem(key);
+    return;
+  }
+  await AsyncStorage.setItem(key, seat);
 }
