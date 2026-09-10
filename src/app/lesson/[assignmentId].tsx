@@ -7,6 +7,7 @@ import { LessonClose } from '@/components/ui/LessonClose';
 import { LessonWebView, type LessonWebViewHandle } from '@/components/ui/LessonWebView';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
+import { setAskPageGround } from '@/lib/ask/assignmentGround';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { openStudentLesson, openTeacherPreview, reportLesson } from '@/lib/lessons/api';
@@ -38,6 +39,15 @@ export default function LessonPlayerScreen() {
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   usePushedTitle(title);
+
+  useEffect(() => {
+    if (!assignmentId || isPreview) {
+      setAskPageGround(null);
+      return;
+    }
+    setAskPageGround({ assignmentId, title });
+    return () => setAskPageGround(null);
+  }, [assignmentId, isPreview, title]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ ...LESSON_PLAYER_STACK_OPTIONS });

@@ -21,6 +21,7 @@ import {
   type ParentChildProgress,
   type ParentProgress,
 } from '@/lib/parents/api';
+import { setAskParentChildId } from '@/lib/ask/assignmentGround';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { isAlsoParent } from '@/lib/school/roles';
 import { touchParentLastSeen } from '@/lib/parents/session';
@@ -54,7 +55,11 @@ export default function ParentScreen() {
               return;
             }
             setProgress(next);
-            setActiveChildId((current) => current ?? next.children[0]?.student_id ?? null);
+            setActiveChildId((current) => {
+              const nextId = current ?? next.children[0]?.student_id ?? null;
+              setAskParentChildId(nextId);
+              return nextId;
+            });
             refreshChrome();
           })
           .catch((err) => {
@@ -95,7 +100,10 @@ export default function ParentScreen() {
             name: item.preferred_name || item.display_name,
             photoUrl: item.photoUrl,
           }))}
-          onPress={(person) => setActiveChildId(person.id)}
+          onPress={(person) => {
+            setActiveChildId(person.id);
+            setAskParentChildId(person.id);
+          }}
         />
       ) : null}
       {child ? (

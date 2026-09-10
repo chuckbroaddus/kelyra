@@ -45,6 +45,8 @@ import {
   shouldRefuseAskBeforeVendor,
   stripAskImagesForFamilySeat,
 } from '../supabase/functions/_shared/askHomeworkRefuse.ts';
+import { formatTutorBriefForAsk, parseTutorBriefSafe } from '../supabase/functions/_shared/tutorBrief.ts';
+import { canPublish } from '../supabase/functions/_shared/publishLessonPackPolicy.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -162,6 +164,10 @@ const server = createServer(async (req, res) => {
         return;
       }
       json(res, await askAssistant(supabase, body, userData.user.id, profileRow));
+      return;
+    }
+    if (route === 'generate-tutor-brief') {
+      json(res, await generateTutorBrief(supabase, body));
       return;
     }
     if (route === 'classify-capture') {
@@ -1150,7 +1156,22 @@ async function askAssistant(supabase, body, uid, profileRow) {
   const actor = askActorSystemLine(profileRow);
   const clientInstructions =
     typeof body.instructions === 'string' && body.instructions.trim() ? body.instructions.trim() : '';
-  extra.instructions = clientInstructions ? `${actor}\n\n${clientInstructions}` : actor;
+
+  // A-Filing: assignmentId ground only — never trust a client pack body.
+  const assignmentId =
+    typeof body.assignmentId === 'string' && body.assignmentId.trim() ? body.assignmentId.trim() : '';
+  const boundStudentId =
+    typeof body.studentId === 'string' && body.studentId.trim() ? body.studentId.trim() : null;
+  let packLine = '';
+  if (assignmentId) {
+    const { data: packRaw } = await supabase.rpc('get_tutor_brief_safe', {
+      p_assignment_id: assignmentId,
+      p_student_id: boundStudentId,
+    });
+    const pack = parseTutorBriefSafe(packRaw);
+    if (pack) packLine = formatTutorBriefForAsk(pack);
+  }
+  extra.instructions = [actor, clientInstructions, packLine].filter(Boolean).join('\n\n');
 
   const raw = Array.isArray(body.input) && body.input.length
     ? body.input
@@ -1164,6 +1185,7 @@ async function askAssistant(supabase, body, uid, profileRow) {
       : [{ role: 'user', content: 'Hello' }];
   const familySeat = isFamilyAskSeat(profileRow.role);
   const gatedInput = familySeat ? stripAskImagesForFamilySeat(raw) : raw;
+  // ASK-P0-10: refuse still wins even when a confirmed pack is present.
   if (shouldRefuseAskBeforeVendor({ role: profileRow.role, rawInput: raw })) {
     const card = gauthRefusalCard();
     console.log(`[ai-dev] ask-assistant getUser=${uid} role=${profileRow.role} refuse-before-vendor`);
@@ -1182,6 +1204,81 @@ async function askAssistant(supabase, body, uid, profileRow) {
   if (calls.length) return { toolCalls: calls, responseId };
   const text = outputText(payload).trim();
   return { text: text || ASK_FALLBACK, responseId };
+}
+
+async function generateTutorBrief(supabase, body) {
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  if (authError || !userData.user?.id) return { error: 'Sign in to Kelyra first.' };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, role, also_teacher, also_administrator, parent_id')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+  if (!profile?.role) return { error: 'Sign in to Kelyra first.' };
+  // Teacher desk wall: teacher | also_teacher | office — then teaches_class.
+  if (!canPublish(profile)) return { error: 'Only teachers can draft a tutor brief.' };
+
+  const assignmentId = String(body.assignmentId ?? '').trim();
+  if (!assignmentId) return { error: 'assignmentId required' };
+
+  const { data: assignment, error: asgError } = await supabase
+    .from('assignments')
+    .select('id, class_id, title, category, unit, section, kind, deck_id, lesson_version')
+    .eq('id', assignmentId)
+    .maybeSingle();
+  if (asgError || !assignment?.id) return { error: 'Assignment not found.' };
+
+  const { data: teaches } = await supabase.rpc('teaches_class', { p_class_id: assignment.class_id });
+  if (!teaches) return { error: 'You can only draft a tutor brief for a class you teach.' };
+
+  const meta = [
+    `title=${assignment.title ?? ''}`,
+    `category=${assignment.category ?? ''}`,
+    `unit=${assignment.unit ?? ''}`,
+    `section=${assignment.section ?? ''}`,
+    `kind=${assignment.kind ?? ''}`,
+    assignment.deck_id ? `deck=${assignment.deck_id}` : null,
+    assignment.lesson_version ? `lesson_version=${assignment.lesson_version}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const prompt = `You draft a STUDENT-SAFE pedagogy pack (tutor brief) for one Kelyra assignment.
+Return JSON only:
+{"objectives":["..."],"misconceptions":["..."],"allowed_hint_depth":"next-step"|"conceptual"|"scaffolding","vocabulary":["..."]}
+Hard rules: student-safe only; no keys, worked solutions, final answers, or "write this"; keep under ~800 tokens.
+
+Assignment metadata:
+${meta}`;
+
+  const payload = await grokCall('ask', [{ role: 'user', content: prompt }], {}, {
+    supabase,
+    functionName: 'generate-tutor-brief',
+  });
+  const parsed = extractJson(outputText(payload)) || {};
+  const asList = (value) =>
+    Array.isArray(value) ? value.map((item) => String(item ?? '').trim()).filter(Boolean).slice(0, 8) : [];
+  const objectives = asList(parsed.objectives);
+  const misconceptions = asList(parsed.misconceptions);
+  const vocabulary = asList(parsed.vocabulary);
+  const depth =
+    parsed.allowed_hint_depth === 'conceptual' || parsed.allowed_hint_depth === 'scaffolding'
+      ? parsed.allowed_hint_depth
+      : 'next-step';
+  if (!objectives.length && !misconceptions.length && !vocabulary.length) {
+    return { error: 'Couldn’t draft a brief. Try re-generate, or skip for now.' };
+  }
+  const { data: brief, error: upsertError } = await supabase.rpc('upsert_tutor_brief_draft', {
+    p_assignment_id: assignmentId,
+    p_objectives: objectives,
+    p_misconceptions: misconceptions,
+    p_allowed_hint_depth: depth,
+    p_vocabulary: vocabulary,
+    p_teacher_notes: null,
+    p_as_new_draft: true,
+  });
+  if (upsertError) return { error: upsertError.message || 'Could not save tutor brief draft.' };
+  return { brief };
 }
 
 function functionCallsFrom(payload) {

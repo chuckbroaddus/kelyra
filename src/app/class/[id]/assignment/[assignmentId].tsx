@@ -15,6 +15,7 @@ import { categoryOptionsForAssign, getClassSyllabus } from '@/lib/syllabus/api';
 import { GhostButton } from '@/components/ui/Button';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { Screen } from '@/components/ui/Screen';
+import { TutorBriefCard } from '@/components/ui/TutorBriefCard';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { type } from '@/constants/theme';
 import { invokeAi } from '@/lib/ai/invoke';
@@ -23,6 +24,7 @@ import { groupingLabels } from '@/lib/assignments/tree';
 import { deriveKeyKind, parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
 import { takeAssignmentFormSeed } from '@/lib/assignments/session';
 import { appendAskMessage, startAskThread } from '@/lib/ai/askHistory';
+import { setAskPageGround } from '@/lib/ask/assignmentGround';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { assignLesson, listLessonPacks, updateLessonAssignment } from '@/lib/lessons/api';
@@ -43,6 +45,12 @@ import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { signedProfileUrlForAssetId } from '@/lib/people/photos';
 import { getProposalDraft, setProposalDraft } from '@/lib/proposal/session';
+import { generateTutorBrief } from '@/lib/tutorBrief/api';
+import {
+  tutorBriefMaterialChanged,
+  tutorBriefMaterialSnapshot,
+  type TutorBriefMaterialSnapshot,
+} from '@/lib/tutorBrief/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 
@@ -60,10 +68,11 @@ export default function AssignmentEditScreen() {
   const { colors } = useTheme();
   const { teacher } = useAuth();
   const router = useRouter();
-  const { id, assignmentId, student: studentParam } = useLocalSearchParams<{
+  const { id, assignmentId, student: studentParam, brief: briefParam } = useLocalSearchParams<{
     id: string;
     assignmentId: string;
     student?: string;
+    brief?: string;
   }>();
   const creating = assignmentId === 'new';
   const lockedStudentId = typeof studentParam === 'string' ? studentParam : null;
@@ -95,6 +104,30 @@ export default function AssignmentEditScreen() {
   const [unitSuggestions, setUnitSuggestions] = useState<string[]>([]);
   const [sectionSuggestions, setSectionSuggestions] = useState<string[]>([]);
   const [syllabusCategories, setSyllabusCategories] = useState<SyllabusCategoryOption[] | null>(null);
+  const [briefEmphasize, setBriefEmphasize] = useState(briefParam === '1');
+  const [savedAssignmentId, setSavedAssignmentId] = useState<string | null>(
+    creating ? null : assignmentId ?? null,
+  );
+  const [materialSnap, setMaterialSnap] = useState<TutorBriefMaterialSnapshot | null>(null);
+  const briefGenOnce = useRef(false);
+
+  useEffect(() => {
+    if (briefParam !== '1' || !assignmentId || assignmentId === 'new' || briefGenOnce.current) return;
+    briefGenOnce.current = true;
+    setBriefEmphasize(true);
+    setSavedAssignmentId(assignmentId);
+    // Create/publish landing only — not every revisit with ?brief=1.
+    void generateTutorBrief(assignmentId).catch(() => undefined);
+  }, [briefParam, assignmentId]);
+
+  useEffect(() => {
+    if (creating || !assignmentId) {
+      setAskPageGround(null);
+      return;
+    }
+    setAskPageGround({ assignmentId, title: value.title || 'Assignment' });
+    return () => setAskPageGround(null);
+  }, [assignmentId, creating, value.title]);
 
   useEffect(() => {
     if (creating || !assignmentId) return;
@@ -105,13 +138,28 @@ export default function AssignmentEditScreen() {
           setReady(true);
           return;
         }
+        setSavedAssignmentId(row.id);
+        setAskPageGround({ assignmentId: row.id, title: row.title });
         const keyPhotoUrl = await signedProfileUrlForAssetId(row.key_asset_id);
         const items = parseKeyItems(row.key_items);
         const follow = assignmentIsFollowUp(row);
         setFollowUpRow(follow);
+        const nextPackKey = row.deck_id && row.lesson_version ? packKey(row.deck_id, row.lesson_version) : '';
+        const nextKind = row.kind === 'lesson' ? 'lesson' : 'planned';
+        setMaterialSnap(
+          tutorBriefMaterialSnapshot({
+            title: row.title,
+            category: row.category,
+            unit: row.unit,
+            section: row.section,
+            kind: nextKind,
+            packKey: nextPackKey,
+            keyItems: items,
+          }),
+        );
         setValue({
-          workKind: row.kind === 'lesson' ? 'lesson' : 'planned',
-          packKey: row.deck_id && row.lesson_version ? packKey(row.deck_id, row.lesson_version) : '',
+          workKind: nextKind,
+          packKey: nextPackKey,
           title: row.title,
           category: (row.category as AssignmentFormValue['category']) ?? 'homework',
           dueDate: row.due_at ? row.due_at.slice(0, 10) : '',
@@ -310,12 +358,44 @@ export default function AssignmentEditScreen() {
     setKeyStatus(null);
   };
 
-  const afterSave = () => {
+  const currentMaterialSnap = (): TutorBriefMaterialSnapshot =>
+    tutorBriefMaterialSnapshot({
+      title: value.title,
+      category: value.category,
+      unit: value.unit,
+      section: value.section,
+      kind: value.workKind,
+      packKey: value.packKey,
+      keyItems: value.keyItems,
+    });
+
+  /** One AI pass on create/publish or material fingerprint change — not routine due/weight saves. */
+  const kickTutorBriefIfNeeded = (nextId: string, opts: { force?: boolean } = {}) => {
+    setSavedAssignmentId(nextId);
+    const after = currentMaterialSnap();
+    const shouldGenerate = opts.force === true || tutorBriefMaterialChanged(materialSnap, after);
+    setMaterialSnap(after);
+    if (!shouldGenerate) return;
+    setBriefEmphasize(true);
+    void generateTutorBrief(nextId).catch(() => {
+      // Strip/card still shows; Re-generate surfaces the fail copy.
+    });
+  };
+
+  const afterSave = (nextId?: string, opts?: { forceBrief?: boolean }) => {
     if (lockedStudentId) {
       router.replace(`/class/${id}/student/${lockedStudentId}?tab=work` as never);
       return;
     }
-    router.replace(`/class/${id}/assignments`);
+    if (seed?.returnTo === 'proposal') {
+      router.replace('/proposal');
+      return;
+    }
+    if (nextId && creating) {
+      router.replace(`/class/${id}/assignment/${nextId}?brief=1` as never);
+      return;
+    }
+    if (nextId) kickTutorBriefIfNeeded(nextId, { force: opts?.forceBrief });
   };
 
   const followUpMode = isFollowUp || followUpRow;
@@ -371,7 +451,7 @@ export default function AssignmentEditScreen() {
         });
         if (lockedStudentId) await assignFollowUpToStudent(assignmentId, lockedStudentId);
         setFollowUpDraft(null);
-        afterSave();
+        afterSave(assignmentId);
         return;
       }
       if (value.workKind === 'lesson') {
@@ -379,13 +459,14 @@ export default function AssignmentEditScreen() {
         if (!pack) throw new Error('Pick a lesson.');
         const fields = lessonFieldsFromForm(value);
         if (creating) {
-          await assignLesson({
+          const created = await assignLesson({
             classIds: [id],
             title: value.title,
             pack,
             studentId: lockedStudentId,
             ...fields,
           });
+          afterSave(created[0]?.id);
         } else if (assignmentId) {
           await updateLessonAssignment(assignmentId, {
             classId: id,
@@ -393,8 +474,8 @@ export default function AssignmentEditScreen() {
             pack,
             ...fields,
           });
+          afterSave(assignmentId);
         }
-        afterSave();
         return;
       }
       const payload = plannedAssignmentInput(id, value, creating ? lockedStudentId : null);
@@ -405,13 +486,15 @@ export default function AssignmentEditScreen() {
         router.replace('/proposal');
         return;
       }
-      afterSave();
+      afterSave(row.id);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not assign');
     } finally {
       setBusy(false);
     }
   };
+
+  const briefAssignmentId = savedAssignmentId && savedAssignmentId !== 'new' ? savedAssignmentId : null;
 
   return (
     <Screen keyboard>
@@ -424,6 +507,13 @@ export default function AssignmentEditScreen() {
               ? 'Assign a lesson or practice. This does not create a class.'
               : 'This column shows in the grade book even before anyone turns it in.'}
       </Text>
+      {briefAssignmentId ? (
+        <TutorBriefCard
+          assignmentId={briefAssignmentId}
+          emphasize={briefEmphasize}
+          onSkipEmphasize={() => setBriefEmphasize(false)}
+        />
+      ) : null}
       {followUpMode && (getFollowUpDraft()?.items.length ?? 0) > 0 ? (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>

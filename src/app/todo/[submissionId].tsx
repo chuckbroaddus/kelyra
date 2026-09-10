@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
@@ -11,6 +11,7 @@ import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { isOpenWork } from '@/lib/assignments/status';
+import { setAskPageGround } from '@/lib/ask/assignmentGround';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { practiceTitle } from '@/lib/practice/api';
 import { requestPracticeHelp, type PracticeHelpAction } from '@/lib/practice/helpApi';
@@ -38,6 +39,15 @@ export default function StudentPracticeScreen() {
   const [ready, setReady] = useState(false);
 
   usePushedTitle(item ? practiceTitle(item.title) : 'Practice');
+
+  useEffect(() => {
+    if (!item?.assignmentId) {
+      setAskPageGround(null);
+      return;
+    }
+    setAskPageGround({ assignmentId: item.assignmentId, title: item.title });
+    return () => setAskPageGround(null);
+  }, [item?.assignmentId, item?.title]);
 
   const load = useCallback(async () => {
     if (!submissionId) return;

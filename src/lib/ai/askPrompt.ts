@@ -7,6 +7,9 @@ export type AskLiveContext = {
   classCount: number;
   studentId: string | null;
   screen: string;
+  /** Session ground only — Edge attaches confirmed safe pack server-side. */
+  assignmentId?: string | null;
+  assignmentTitle?: string | null;
 };
 
 const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
@@ -38,6 +41,9 @@ export function buildAskInstructions(input: {
     ctx.className ? `Active class: ${ctx.className}.` : 'No class is open.',
     ctx.classCount ? `Classes visible: ${ctx.classCount}.` : null,
     ctx.studentId ? `Bound student id: ${ctx.studentId}.` : null,
+    ctx.assignmentId
+      ? `Assignment ground id: ${ctx.assignmentId}${ctx.assignmentTitle ? ` (${ctx.assignmentTitle})` : ''}. A confirmed student-safe tutor brief may be attached by the server — never invent keys or final answers.`
+      : 'No assignment ground — use class context only.',
     `They opened Kelyra from: ${ctx.screen}.`,
     input.latestHasImage ? 'The latest user message includes a photo you can see.' : null,
   ]

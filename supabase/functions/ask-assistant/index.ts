@@ -15,6 +15,7 @@ import {
   shouldRefuseAskBeforeVendor,
   stripAskImagesForFamilySeat,
 } from '../_shared/askHomeworkRefuse.ts';
+import { formatTutorBriefForAsk, parseTutorBriefSafe } from '../_shared/tutorBrief.ts';
 
 const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
 const PHOTO_FAILED = '(A photo was attached but could not be opened.)';
@@ -113,7 +114,24 @@ Deno.serve(async (req) => {
     const actor = askActorSystemLine(profile);
     const clientInstructions =
       typeof body.instructions === 'string' && body.instructions.trim() ? body.instructions.trim() : '';
-    extra.instructions = clientInstructions ? `${actor}\n\n${clientInstructions}` : actor;
+
+    // A-Filing: client may pass assignmentId ground only — never trust a client pack body.
+    const assignmentId =
+      typeof body.assignmentId === 'string' && body.assignmentId.trim() ? body.assignmentId.trim() : '';
+    const boundStudentId =
+      typeof body.studentId === 'string' && body.studentId.trim() ? body.studentId.trim() : null;
+    let packLine = '';
+    if (assignmentId) {
+      const { data: packRaw } = await supabase.rpc('get_tutor_brief_safe', {
+        p_assignment_id: assignmentId,
+        p_student_id: boundStudentId,
+      });
+      const pack = parseTutorBriefSafe(packRaw);
+      if (pack) packLine = formatTutorBriefForAsk(pack);
+    }
+
+    const merged = [actor, clientInstructions, packLine].filter(Boolean).join('\n\n');
+    extra.instructions = merged;
 
     const raw = Array.isArray(body.input) && body.input.length
       ? body.input
@@ -127,6 +145,7 @@ Deno.serve(async (req) => {
         : [{ role: 'user', content: 'Hello' }];
 
     // GAUTH G0/G3: family seats — drop vision; refuse graded-solve BEFORE vendor.
+    // ASK-P0-10: refuse still wins even when a confirmed pack is present.
     const familySeat = isFamilyAskSeat(profile.role);
     const gatedInput = familySeat ? stripAskImagesForFamilySeat(raw) : raw;
     if (shouldRefuseAskBeforeVendor({ role: profile.role, rawInput: raw })) {

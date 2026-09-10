@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { isSupabaseConfigured } from '@/constants/config';
+import { clearAskGroundOnActiveClassChange } from '@/lib/ask/assignmentGround';
 import { loadTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
 import { bindSignedUrlCacheUser, clearSignedUrlCache } from '@/lib/media/signedUrl';
 import { loadMyProfile } from '@/lib/school/api';
@@ -115,7 +116,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const setActiveClassId = (classId: string | null) => {
-    setTeacher((current) => (current ? { ...current, active_class_id: classId } : current));
+    setTeacher((current) => {
+      if (!current) return current;
+      if (current.active_class_id !== classId) {
+        // MULT-01 / IQG-CL-01: class switch clears Ask session ground + page soft-candidate.
+        clearAskGroundOnActiveClassChange();
+      }
+      return { ...current, active_class_id: classId };
+    });
   };
 
   const value = useMemo<AuthState>(

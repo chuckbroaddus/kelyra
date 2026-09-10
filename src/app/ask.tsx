@@ -1,7 +1,8 @@
-import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AskAssignmentGroundChrome } from '@/components/ask/AskAssignmentGround';
 import { GhostButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { MathText } from '@/components/ui/MathText';
@@ -13,6 +14,10 @@ import { type } from '@/constants/theme';
 import { runAskAgent, type AskChatLine } from '@/lib/ai/askAgent';
 import { GAUTH_REFUSAL_TITLE } from '@/lib/ai/askHomeworkRefuse';
 import { ASK_MODEL_TURNS, appendAskMessage, listAskMessages, startAskThread } from '@/lib/ai/askHistory';
+import {
+  effectiveAskAssignmentGround,
+  getAskParentChildId,
+} from '@/lib/ask/assignmentGround';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { firstName } from '@/lib/format';
@@ -94,6 +99,24 @@ export default function AskScreen() {
       ? ['Create a parent record', 'List the classes']
       : ['Who still needs a name?', 'What gaps did I approve this week?'],
   );
+  const [groundTick, setGroundTick] = useState(0);
+  // Dual-hat: chrome seat is SoT for Ask role guards and ground rules.
+  const askRole = chrome.role !== 'none' ? chrome.role : (profile?.role ?? 'teacher');
+  const [parentBoundId, setParentBoundId] = useState<string | null>(() => getAskParentChildId());
+  const onGroundChange = useCallback(() => setGroundTick((n) => n + 1), []);
+  // Re-read module child id on focus so twin switch on Home re-prompts Which assignment?
+  useFocusEffect(
+    useCallback(() => {
+      if (askRole !== 'parent') return;
+      setParentBoundId(getAskParentChildId());
+    }, [askRole]),
+  );
+  const boundStudentId =
+    askRole === 'student'
+      ? chrome.studentSession?.studentId ?? null
+      : askRole === 'parent'
+        ? parentBoundId
+        : chrome.studentSession?.studentId ?? null;
 
   useEffect(() => {
     if (office && can(profile, 'parents.invite', 'own', grants)) {
@@ -132,19 +155,23 @@ export default function AskScreen() {
       if (savedId) userBubble.id = savedId;
       const forModel = next.slice(-ASK_MODEL_TURNS);
       const lastPhoto = forModel.findLastIndex((row) => row.payload?.type === 'photo');
+      const ground = effectiveAskAssignmentGround(askRole);
       const reply = await runAskAgent({
         profile,
         teacherId: teacher?.id ?? null,
         classId: chrome.classId,
         live: {
-          role: profile?.role ?? (chrome.role === 'none' ? 'teacher' : chrome.role),
+          // Dual-hat: chrome / profile seat is SoT — never merge seats.
+          role: askRole,
           displayName: profile?.display_name ?? null,
           handle: profile?.username ?? null,
           classId: chrome.classId,
           className: chrome.className,
           classCount: chrome.classes.length,
-          studentId: chrome.studentSession?.studentId ?? null,
+          studentId: boundStudentId,
           screen: pathname || '/ask',
+          assignmentId: ground?.assignmentId ?? null,
+          assignmentTitle: ground?.title ?? null,
         },
         messages: await Promise.all(forModel.map((item, index) => lineForAi(item, index === lastPhoto))),
         onStatus: setStatus,
@@ -182,12 +209,21 @@ export default function AskScreen() {
       scrollRef={scroller}
       onContentSizeChange={() => scroller.current?.scrollToEnd({ animated: true })}
       sticky={
-        <MessageComposer
-          placeholder="Ask…"
-          busy={busy}
-          onSend={send}
-          onError={setError}
-        />
+        <View>
+          <AskAssignmentGroundChrome
+            key={`${groundTick}:${boundStudentId ?? ''}`}
+            role={askRole}
+            classId={chrome.classId}
+            studentId={boundStudentId}
+            onGroundChange={onGroundChange}
+          />
+          <MessageComposer
+            placeholder="Ask…"
+            busy={busy}
+            onSend={send}
+            onError={setError}
+          />
+        </View>
       }
     >
       {returnTo ? (

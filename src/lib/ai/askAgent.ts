@@ -148,6 +148,8 @@ export async function runAskAgent(input: {
       role: input.live.role,
       classId: input.classId,
       studentId: input.live.studentId,
+      // Ground id only — Edge attaches confirmed safe slice. Never send pack body.
+      assignmentId: input.live.assignmentId ?? null,
       instructions,
       input: history.length ? history : [{ role: 'user', content: 'Hello' }],
       tools: tools.defs,
