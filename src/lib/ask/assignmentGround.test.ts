@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   clearAskAssignmentGround,
   clearAskGroundOnActiveClassChange,
+  consumeStaleNoticeOnce,
   effectiveAskAssignmentGround,
   getAskParentChildId,
   isAskJustChatting,
@@ -85,4 +86,12 @@ test('MULT-01 class switch clear is not Just chatting (chattingOnly stays false)
   clearAskGroundOnActiveClassChange();
   assert.equal(isAskJustChatting(), false);
   assert.equal(effectiveAskAssignmentGround('parent'), null);
+});
+
+test('P2 ASK-I1 consumeStaleNoticeOnce is one-shot until session reset', () => {
+  resetAskGroundSessionForTests();
+  assert.equal(consumeStaleNoticeOnce(), true);
+  assert.equal(consumeStaleNoticeOnce(), false);
+  resetAskGroundSessionForTests();
+  assert.equal(consumeStaleNoticeOnce(), true);
 });

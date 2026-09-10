@@ -8,6 +8,8 @@ import { ListRow } from '@/components/ui/ListRow';
 import { type } from '@/constants/theme';
 import {
   clearAskAssignmentGround,
+  clearAskGroundOnActiveClassChange,
+  consumeStaleNoticeOnce,
   consumeTrayHintOnce,
   getAskParentChildId,
   isAskJustChatting,
@@ -19,7 +21,7 @@ import {
   type AskAssignmentGround,
 } from '@/lib/ask/assignmentGround';
 import { loadParentProgressMine } from '@/lib/parents/api';
-import { listTutorBriefGroundOptions } from '@/lib/tutorBrief/api';
+import { getTutorBriefSafe, listTutorBriefGroundOptions } from '@/lib/tutorBrief/api';
 import type { TutorBriefGroundOption } from '@/lib/tutorBrief/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -27,23 +29,33 @@ type Props = {
   role: string;
   classId: string | null;
   studentId: string | null;
+  /** Bumps when Ask turn advances — re-probe pack freshness for mid-session stale mute. */
+  packProbe?: number;
   onGroundChange?: (ground: AskAssignmentGround | null) => void;
 };
 
 /** A-Filing student chip / parent empty card above MessageComposer. */
-export function AskAssignmentGroundChrome({ role, classId, studentId, onGroundChange }: Props) {
+export function AskAssignmentGroundChrome({
+  role,
+  classId,
+  studentId,
+  packProbe = 0,
+  onGroundChange,
+}: Props) {
   const { colors } = useTheme();
   const [chip, setChip] = useState<AskAssignmentGround | null>(null);
   const [correcting, setCorrecting] = useState(false);
   const [options, setOptions] = useState<TutorBriefGroundOption[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [trayHint, setTrayHint] = useState(false);
+  const [staleMute, setStaleMute] = useState(false);
   const [parentChildId, setParentChildId] = useState<string | null>(
     () => studentId ?? getAskParentChildId(),
   );
   const [justChatting, setJustChatting] = useState(isAskJustChatting());
   const prevParentChildRef = useRef<string | null | undefined>(undefined);
   const prevClassIdRef = useRef<string | null | undefined>(undefined);
+  const hadLivePackRef = useRef(false);
 
   // Parent: prefer prop (Ask focus sync) over stale local id.
   const boundStudentId = role === 'student' ? studentId : (studentId ?? parentChildId);
@@ -80,11 +92,15 @@ export function AskAssignmentGroundChrome({ role, classId, studentId, onGroundCh
     }
   }, [role, studentId, onGroundChange]);
 
-  // MULT-01 / IQG-CL-01..03: classId change refreshes chip/card (module clear is in setActiveClassId).
+  // MULT-01 / IQG-CL-01..03: classId change clears ground then refreshes chip/card.
   useEffect(() => {
     const prev = prevClassIdRef.current;
     prevClassIdRef.current = classId;
     if (prev !== undefined && prev !== classId) {
+      // Clear before refreshChip so a hamburger race cannot re-read prior-class ground.
+      clearAskGroundOnActiveClassChange();
+      hadLivePackRef.current = false;
+      setStaleMute(false);
       setChip(null);
       setJustChatting(false);
       setCorrecting(false);
@@ -93,6 +109,43 @@ export function AskAssignmentGroundChrome({ role, classId, studentId, onGroundCh
       refreshChip();
     }
   }, [classId, onGroundChange, refreshChip]);
+
+  // §12.6.4: optional one-shot mute when inject drops mid-session (ground set, safe pack now null).
+  const groundedAssignmentId = chip?.assignmentId ?? null;
+  useEffect(() => {
+    if ((role !== 'student' && role !== 'parent') || !groundedAssignmentId) {
+      hadLivePackRef.current = false;
+      return;
+    }
+    let live = true;
+    void getTutorBriefSafe(groundedAssignmentId, boundStudentId)
+      .then((pack) => {
+        if (!live) return;
+        if (pack) {
+          hadLivePackRef.current = true;
+          return;
+        }
+        if (hadLivePackRef.current && consumeStaleNoticeOnce()) {
+          setStaleMute(true);
+        }
+        hadLivePackRef.current = false;
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [role, groundedAssignmentId, boundStudentId, packProbe]);
+
+  // New ground id: do not carry prior-assignment "had live pack" across picks.
+  const prevGroundedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevGroundedIdRef.current === groundedAssignmentId) return;
+    if (prevGroundedIdRef.current != null && groundedAssignmentId != null) {
+      hadLivePackRef.current = false;
+      setStaleMute(false);
+    }
+    prevGroundedIdRef.current = groundedAssignmentId;
+  }, [groundedAssignmentId]);
 
   useEffect(() => {
     if (role !== 'parent') return;
@@ -197,6 +250,11 @@ export function AskAssignmentGroundChrome({ role, classId, studentId, onGroundCh
 
   return (
     <View style={styles.wrap}>
+      {staleMute ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          Tutor brief was updated — using class help for now.
+        </Text>
+      ) : null}
       {role === 'student' && chip ? (
         <View style={[styles.chipRow, { backgroundColor: colors.elevated, borderColor: colors.line }]}>
           <Text

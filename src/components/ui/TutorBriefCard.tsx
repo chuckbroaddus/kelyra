@@ -171,34 +171,32 @@ export function TutorBriefCard({ assignmentId, emphasize, onSkipEmphasize }: Pro
     }
   };
 
-  const onSaveNotesBlur = async () => {
+  const persistDraftFields = async (nextDepth: TutorHintDepth) => {
     if (!brief) return;
-    // Confirmed: never upsert-on-blur (would demote to Draft). Persist via Confirm brief.
+    // Confirmed: never upsert (would demote to Draft). Persist via Confirm brief.
     if (brief.status === 'confirmed') return;
-    const unchanged = tutorBriefFieldsEqual(
-      {
-        objectives: fields.objectives,
-        misconceptions: fields.misconceptions,
-        vocabulary: fields.vocabulary,
-        allowed_hint_depth: depth,
-        teacher_notes: teacherNotes,
-      },
-      {
-        objectives: brief.objectives,
-        misconceptions: brief.misconceptions,
-        vocabulary: brief.vocabulary,
-        allowed_hint_depth: brief.allowed_hint_depth,
-        teacher_notes: brief.teacher_notes,
-      },
-    );
+    const nextFields = {
+      objectives: textToList(objectives),
+      misconceptions: textToList(misconceptions),
+      vocabulary: textToList(vocabulary),
+      allowed_hint_depth: nextDepth,
+      teacher_notes: teacherNotes,
+    };
+    const unchanged = tutorBriefFieldsEqual(nextFields, {
+      objectives: brief.objectives,
+      misconceptions: brief.misconceptions,
+      vocabulary: brief.vocabulary,
+      allowed_hint_depth: brief.allowed_hint_depth,
+      teacher_notes: brief.teacher_notes,
+    });
     if (unchanged) return;
     try {
       const next = await saveTutorBriefDraft({
         assignmentId,
-        objectives: fields.objectives,
-        misconceptions: fields.misconceptions,
-        allowedHintDepth: depth,
-        vocabulary: fields.vocabulary,
+        objectives: nextFields.objectives,
+        misconceptions: nextFields.misconceptions,
+        allowedHintDepth: nextDepth,
+        vocabulary: nextFields.vocabulary,
         teacherNotes,
         asNewDraft: false,
       });
@@ -206,6 +204,16 @@ export function TutorBriefCard({ assignmentId, emphasize, onSkipEmphasize }: Pro
     } catch {
       // Keep editing; confirm path will surface errors.
     }
+  };
+
+  const onSaveNotesBlur = async () => {
+    await persistDraftFields(depth);
+  };
+
+  const onDepthPress = (key: TutorHintDepth) => {
+    setDepth(key);
+    // Depth-only change must persist without waiting for Confirm/blur (draft/stale).
+    void persistDraftFields(key);
   };
 
   if (!ready) return <WorkingLine text="Opening tutor brief…" />;
@@ -263,7 +271,7 @@ export function TutorBriefCard({ assignmentId, emphasize, onSkipEmphasize }: Pro
                       key={key}
                       label={HINT_DEPTH_LABELS[key]}
                       selected={depth === key}
-                      onPress={() => setDepth(key)}
+                      onPress={() => onDepthPress(key)}
                     />
                   ))}
                 </ChipRow>

@@ -20,6 +20,7 @@ function read(rel: string): string {
 }
 
 const migration = 'supabase/migrations/20260910000001_assignment_tutor_briefs.sql';
+const keyStripMigration = 'supabase/migrations/20260910000002_confirm_tutor_brief_key_strip.sql';
 
 test('ASK-P0-01 student-safe pack schema forbids keys / teacher_notes / explain_draft in safe slice', () => {
   const sql = read(migration);
@@ -161,12 +162,88 @@ test('MULT-01 setActiveClassId clears Ask ground; chrome refreshes on classId', 
   assert.match(auth, /clearAskGroundOnActiveClassChange/);
   assert.match(auth, /active_class_id !== classId/);
   assert.doesNotMatch(auth, /setAskJustChatting/);
+  // P3 E1: clear runs outside the setTeacher updater (updater stays pure).
+  const clearIdx = auth.indexOf('clearAskGroundOnActiveClassChange()');
+  const updaterIdx = auth.indexOf('setTeacher((current)');
+  assert.ok(clearIdx > 0 && updaterIdx > 0 && clearIdx < updaterIdx);
   const chrome = read('src/components/ask/AskAssignmentGround.tsx');
   assert.match(chrome, /prevClassIdRef/);
   assert.match(chrome, /prev !== classId/);
+  assert.match(chrome, /clearAskGroundOnActiveClassChange\(\)/);
   const ground = read('src/lib/ask/assignmentGround.ts');
   assert.match(ground, /export function clearAskGroundOnActiveClassChange/);
   assert.match(ground, /pageCandidate = null/);
+});
+
+test('P2 E1 hamburger class switch: setActiveClassId before refreshChrome/go', () => {
+  const drawer = read('src/components/ui/HamburgerDrawer.tsx');
+  const press = drawer.slice(
+    drawer.indexOf('selected={klass.id === chromeState.classId}'),
+    drawer.indexOf('trailing={['),
+  );
+  const setId = press.indexOf('setActiveClassId(klass.id)');
+  const refresh = press.indexOf('chromeState.refreshChrome()');
+  const go = press.indexOf('go(teacherSeat');
+  assert.ok(setId >= 0 && refresh >= 0 && go >= 0);
+  assert.ok(setId < refresh && setId < go);
+  assert.match(press, /void setActiveClass\(teacher\.id, klass\.id\)/);
+  assert.doesNotMatch(press, /setActiveClass\([^)]+\)\.then\(\(\)\s*=>\s*setActiveClassId/);
+});
+
+test('P2 ASK-I1 ?brief=1: skip regen when confirmed; strip param after Confirm', () => {
+  const desk = read('src/app/class/[id]/assignment/[assignmentId].tsx');
+  assert.match(desk, /getTutorBriefTeacher/);
+  assert.match(desk, /skipConfirmed/);
+  assert.match(desk, /existing\?\.status !== ['"]confirmed['"]/);
+  assert.match(desk, /stripBriefParam/);
+  assert.match(desk, /onSkipEmphasize=\{stripBriefParam\}/);
+  assert.match(desk, /router\.replace\(`\/class\/\$\{id\}\/assignment\/\$\{assignmentId\}`/);
+});
+
+test('P3 ASK-I1 ?brief=1 catch re-checks confirmed before generate (no demote)', () => {
+  const desk = read('src/app/class/[id]/assignment/[assignmentId].tsx');
+  const effectStart = desk.indexOf('if (briefParam !== \'1\'');
+  assert.ok(effectStart > 0);
+  const effect = desk.slice(effectStart, desk.indexOf('}, [briefParam, assignmentId, id, router]);'));
+  // Catch must re-get + skipConfirmed — never blind setBriefEmphasize + generateTutorBrief.
+  assert.match(effect, /\.catch\(async \(\) =>/);
+  assert.match(effect, /const again = await getTutorBriefTeacher\(assignmentId\)/);
+  assert.match(effect, /skipConfirmed\(again\)/);
+  assert.match(effect, /action !== ['"]generate['"]/);
+  assert.doesNotMatch(
+    effect,
+    /\.catch\(\(\)\s*=>\s*\{\s*setBriefEmphasize\(true\);\s*return generateTutorBrief/,
+  );
+});
+
+test('P2 ASK-I1 stale mid-session mute notice is wired in Ask UI', () => {
+  const chrome = read('src/components/ask/AskAssignmentGround.tsx');
+  assert.match(chrome, /consumeStaleNoticeOnce/);
+  assert.match(chrome, /getTutorBriefSafe/);
+  assert.match(chrome, /Tutor brief was updated — using class help for now\./);
+  assert.match(chrome, /hadLivePackRef/);
+  assert.match(chrome, /packProbe/);
+  const ask = read('src/app/ask.tsx');
+  assert.match(ask, /packProbe=\{messages\.length\}/);
+});
+
+test('P3 ASK-I1 hint-depth chip persists on press for draft/stale', () => {
+  const card = read('src/components/ui/TutorBriefCard.tsx');
+  assert.match(card, /onDepthPress/);
+  assert.match(card, /persistDraftFields/);
+  assert.match(card, /onPress=\{\(\)\s*=>\s*onDepthPress\(key\)\}/);
+  assert.match(card, /brief\.status === ['"]confirmed['"]\) return/);
+});
+
+test('P3 ASK-I1 confirm_tutor_brief strips/rejects answer-key write-this patterns', () => {
+  const sql = read(keyStripMigration);
+  assert.match(sql, /tutor_brief_strip_key_patterns/);
+  assert.match(sql, /tutor_brief_text_looks_like_key/);
+  assert.match(sql, /answer\[\[:space:\]_-\]\*key/);
+  assert.match(sql, /write\[\[:space:\]_-\]\*this/);
+  assert.match(sql, /create or replace function public\.confirm_tutor_brief/);
+  assert.match(sql, /Brief looks like an answer key/);
+  assert.match(sql, /tutor_brief_strip_key_patterns\(objs_raw\)/);
 });
 
 test('ASK-P0-14 student photo-of-quiz refuse stays (vision not a solver)', () => {

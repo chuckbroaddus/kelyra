@@ -215,6 +215,7 @@ export default function AskScreen() {
             role={askRole}
             classId={chrome.classId}
             studentId={boundStudentId}
+            packProbe={messages.length}
             onGroundChange={onGroundChange}
           />
           <MessageComposer

@@ -45,7 +45,7 @@ import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { signedProfileUrlForAssetId } from '@/lib/people/photos';
 import { getProposalDraft, setProposalDraft } from '@/lib/proposal/session';
-import { generateTutorBrief } from '@/lib/tutorBrief/api';
+import { generateTutorBrief, getTutorBriefTeacher } from '@/lib/tutorBrief/api';
 import {
   tutorBriefMaterialChanged,
   tutorBriefMaterialSnapshot,
@@ -111,14 +111,47 @@ export default function AssignmentEditScreen() {
   const [materialSnap, setMaterialSnap] = useState<TutorBriefMaterialSnapshot | null>(null);
   const briefGenOnce = useRef(false);
 
+  const stripBriefParam = () => {
+    setBriefEmphasize(false);
+    if (briefParam === '1' && id && assignmentId && assignmentId !== 'new') {
+      router.replace(`/class/${id}/assignment/${assignmentId}` as never);
+    }
+  };
+
   useEffect(() => {
     if (briefParam !== '1' || !assignmentId || assignmentId === 'new' || briefGenOnce.current) return;
     briefGenOnce.current = true;
-    setBriefEmphasize(true);
     setSavedAssignmentId(assignmentId);
-    // Create/publish landing only — not every revisit with ?brief=1.
-    void generateTutorBrief(assignmentId).catch(() => undefined);
-  }, [briefParam, assignmentId]);
+    // Create/publish landing only — skip regen when already confirmed (remount must not demote).
+    // Catch must re-check: upsert_tutor_brief_draft always sets draft, so a transient get
+    // error must not generate over a confirmed pack while ?brief=1 remains.
+    const skipConfirmed = (existing: Awaited<ReturnType<typeof getTutorBriefTeacher>>) => {
+      if (existing?.status !== 'confirmed') return false;
+      setBriefEmphasize(false);
+      if (id) router.replace(`/class/${id}/assignment/${assignmentId}` as never);
+      return true;
+    };
+    void getTutorBriefTeacher(assignmentId)
+      .then((existing) => {
+        if (skipConfirmed(existing)) return null;
+        return 'generate' as const;
+      })
+      .catch(async () => {
+        try {
+          const again = await getTutorBriefTeacher(assignmentId);
+          if (skipConfirmed(again)) return null;
+          return 'generate' as const;
+        } catch {
+          return null;
+        }
+      })
+      .then((action) => {
+        if (action !== 'generate') return;
+        setBriefEmphasize(true);
+        return generateTutorBrief(assignmentId);
+      })
+      .catch(() => undefined);
+  }, [briefParam, assignmentId, id, router]);
 
   useEffect(() => {
     if (creating || !assignmentId) {
@@ -511,7 +544,7 @@ export default function AssignmentEditScreen() {
         <TutorBriefCard
           assignmentId={briefAssignmentId}
           emphasize={briefEmphasize}
-          onSkipEmphasize={() => setBriefEmphasize(false)}
+          onSkipEmphasize={stripBriefParam}
         />
       ) : null}
       {followUpMode && (getFollowUpDraft()?.items.length ?? 0) > 0 ? (
