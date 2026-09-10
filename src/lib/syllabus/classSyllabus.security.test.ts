@@ -147,6 +147,62 @@ test('F-06 Parent Home sibling switch clears why-sheet and rows; keyed by studen
   assert.match(ui, /<ParentClassGradesCard[\s\S]*?key=\{child\.student_id\}/);
 });
 
+test('P-G1 Parent Home pushes focused-child grades book', () => {
+  const ui = read('src/app/parent.tsx');
+  const card = ui.slice(ui.indexOf('function ParentClassGradesCard'));
+  assert.match(card, /See all grades/);
+  assert.match(card, /\/parent\/grades\?/);
+  assert.match(card, /child: studentId/);
+  assert.doesNotMatch(card, /ask_draft/);
+  assert.doesNotMatch(card, /save_class_syllabus|publish_class_syllabus|upsertSyllabusAskDraft/);
+});
+
+test('P-G1…P-G3 Parent grades book reuses StudentGradeBook scoped to focused child', () => {
+  const book = read('src/app/parent/grades.tsx');
+  assert.match(book, /StudentGradeBook/);
+  assert.match(book, /studentId=\{activeChildId\}/);
+  assert.match(book, /key=\{activeChildId\}/);
+  assert.match(book, /FamilySyllabusSummary|childName/);
+  assert.match(book, /setClasses\(\[\]\)/);
+  assert.match(book, /AvatarTray/);
+  assert.doesNotMatch(book, /ask_draft|draft_score|loadStudentGradebook/);
+  assert.doesNotMatch(book, /save_class_syllabus|publish_class_syllabus/);
+
+  const component = read('src/components/ui/StudentGradeBook.tsx');
+  assert.match(component, /loadFamilyStudentGradebook/);
+  assert.match(component, /loadParentClassAverageExplain/);
+  assert.match(component, /FamilySyllabusSummary/);
+  assert.match(component, /WhyAverageSheet/);
+  assert.match(component, /setWhyOpen\(false\)/);
+  assert.match(component, /studentId/);
+});
+
+test('P-G1 family_student_gradebook strips answers; parent_students gate; no classmates', () => {
+  const sql = read('supabase/migrations/20260910000004_family_student_gradebook.sql');
+  assert.match(sql, /create or replace function public\.family_student_gradebook\(p_student_id uuid\)/);
+  assert.match(sql, /parent_students/);
+  assert.match(sql, /my_student_id\(\)/);
+  assert.match(sql, /sub\.student_id = p_student_id/);
+  const body = sql.slice(sql.indexOf('return query'), sql.indexOf('$$;'));
+  assert.doesNotMatch(body, /answers|draft_score|ask_draft|model_draft/);
+  assert.match(body, /sub\.approved_score/);
+  assert.match(body, /sub\.status/);
+
+  const api = read('src/lib/gradebook/api.ts');
+  assert.match(api, /family_student_gradebook/);
+  assert.match(api, /includeAnswers/);
+  const familyLoader = api.slice(api.indexOf('export async function loadFamilyStudentGradebook'));
+  assert.doesNotMatch(familyLoader.slice(0, 1200), /includeAnswers:\s*true/);
+});
+
+test('Parent drawer exposes Grades → /parent/grades', () => {
+  const drawer = read('src/components/ui/HamburgerDrawer.tsx');
+  assert.match(drawer, /go\('\/parent\/grades'\)/);
+  const gradesRow = drawer.slice(drawer.indexOf("go('/parent/grades')") - 120, drawer.indexOf("go('/parent/grades')") + 40);
+  assert.match(gradesRow, /matches\('Grades'/);
+  assert.match(gradesRow, /DrawerRow label="Grades"/);
+});
+
 test('SEC: syllabus RPCs never delete client-supplied asset ids; require ownership + _unref_delete_asset', () => {
   const sql = read(migration);
   const upsert = sql.slice(sql.indexOf('create or replace function public.upsert_syllabus_ask_draft'));

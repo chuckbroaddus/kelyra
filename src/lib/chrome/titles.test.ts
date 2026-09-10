@@ -40,3 +40,26 @@ test('P-06: seat-root wordmark follows post-commit role only', () => {
   assert.notEqual(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Capture');
   assert.notEqual(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Needs');
 });
+
+test('Parent grades book wordmark is Grades', () => {
+  assert.equal(
+    headerTitleFor({
+      pathname: '/parent/grades',
+      pushedTitle: null,
+      className: null,
+      contextTab: '',
+      role: 'parent',
+    }),
+    'Grades',
+  );
+  assert.equal(
+    headerTitleFor({
+      pathname: '/parent/grades',
+      pushedTitle: 'Grades',
+      className: null,
+      contextTab: '',
+      role: 'parent',
+    }),
+    'Grades',
+  );
+});

@@ -181,6 +181,7 @@ function isPushedPath(pathname: string): boolean {
     pathname.startsWith('/messages/') ||
     pathname === '/activity' ||
     pathname === '/diary' ||
+    pathname.startsWith('/parent/grades') ||
     pathname.startsWith('/admin') ||
     pathname === '/password'
   );
