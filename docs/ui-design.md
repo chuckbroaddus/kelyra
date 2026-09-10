@@ -130,11 +130,13 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 | Role | Chrome | Hidden chrome |
 |---|---|---|
 | Teacher (signed in) | Header + context row + floating tray + hamburger | — |
-| Student (join session) | Header + context row + shorter tray + hamburger | Camera. No other students’ grades |
-| Parent (invite session) | Header + context row + shorter tray + hamburger | Camera. No other children, no scores, no “Grok” |
+| Student (join session) | Header + context row + role tray + hamburger | Camera. No other students’ grades |
+| Parent (invite session) | Header + context row + role tray + hamburger | Camera. No other children, no scores, no “Grok” |
 | Signed out / `/sign-in` / `/join` (pre-session) | Wordmark only | Tray, hamburger, camera, search, bell |
 
-`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own shorter tray**. Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
+`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own role trays** (not the teacher Capture/Needs density and **no camera**). Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
+
+**“Shorter tray” (superseded gloss, 2026-09-09).** Early drafts said student/parent get a “shorter tray.” That meant **no teacher Capture/Needs density and no camera** — not “fewer tabs than teacher.” Locked counts live in **§34.2** (and §31.1): **student 6**, **parent 3** (Home · Ride · Ask), **teacher/office 5**. Do not cut the student 6-tab tray to satisfy this section.
 
 ### 3.2 Header slots (one recipe)
 
@@ -188,6 +190,8 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 9. **Menu tray** — floating bar at the bottom of the drawer (same hide-on-scroll as the app tray). Search field (magnifying glass + “Search”) filters the menu and submits to `/search`. Gear on the right (tooltip **Settings**) opens `SettingsSheet`. Theme does **not** live on Profile or as a drawer section.
 10. **Sign out** — `danger` label. Signs out, `replace`s to `/`.
 
+**Dual-hat office+teacher on teacher seat only (`canChooseSeat`, seat=teacher):** add one altitude row **Office** (a11y `Switch to Office seat`) with the other altitude controls — after **My children** when that parent-hat row exists, otherwise near **Sign out**. Do **not** show **Teach** while already on teacher seat. Full atomic switch: §31.4b / §37.3. Parent **My children** (if present) stays its own row and is unchanged by P-06.
+
 **Superintendent rows, in order**
 
 1. Identity (same as teacher): 36 photo + `@handle`, tap → `/profile`.
@@ -197,16 +201,27 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 5. **Manage** → `/?tab=manage`
 6. **Ask** → `/ask`
 7. **My children** — only with a parent hat → `/parent`
-8. Hairline
-9. **Sign out**
+8. **Teach** — only dual-hat office+teacher with seat=**office** (`canChooseSeat`); a11y `Switch to Teach seat`; atomic seat switch §31.4b / §37.3. Hide when seat=teacher (then the teacher-seat drawer owns **Office** instead).
+9. Hairline
+10. **Sign out**
 
-Do not also list Feed in the shared staff Feed row for this seat. Administrator hamburger keeps the class list + People / Activity / Messages / Responsibilities.
+Do not also list Feed in the shared staff Feed row for this seat. Administrator hamburger keeps the class list + People / Activity / Messages / Responsibilities (no Feed or Manage in drawer extras; Feed drawer rows are superintendent §36.2 only; tray Feed stays for both office seats).
 
 **Student rows**
 
-1. Identity: display name + class name, `meta`. **No photo in the current drawer.** Do not marquee this block — it is not picture-adjacent. (Teacher identity next to the 36 photo **does** marquee, §30.)
-2. **Leave class** — clears the student session, `replace`s to `/join`.
-3. **Settings** — same gear as staff. Theme is in the Settings popup, not inline.
+Students are **school logins** (`profile.role = student` + `student_me`). `/join` only redirects to `/sign-in`. There is no device-only join-code session left to “leave.”
+
+1. Identity: school-login `WhoRow` (display name / handle) when `profile.username` is set; otherwise display name + class name from `studentSession`, `meta`. **No photo in the current drawer.** Do not marquee this block — it is not picture-adjacent. (Teacher identity next to the 36 photo **does** marquee, §30.)
+2. **Assignments** → `/todo`
+3. **Feeds** → `/student/feed`
+4. **Classes** → `/student/class`
+5. **Grades** → `/student/grades`
+6. **People** → `/student/people`
+7. Hairline
+8. **Sign out** — `danger` label. Signs out (auth + student caches), `replace`s to `/`. **Does not unenroll.** School-login **Sign out supersedes** the old join-session **Leave class** row (cleared session → `/join`).
+9. **Settings** — same gear as staff in the shared drawer float tray. Theme is in the Settings popup, not inline.
+
+Do not restore **Leave class** on the student drawer or Profile. Tray destinations stay on the floating student tray; drawer rows above are the same nouns for search/filter parity — do not cut the student tray as a drive-by when editing this list.
 
 **Parent rows**
 
@@ -220,7 +235,9 @@ Device may still cache more than one invite token (two parents on one phone). If
 
 ### 3.4 Floating tray — icons and order
 
-**Conflict resolution (required, 2026-08-21).** Profile is **not** in the tray. It lives only in the hamburger identity row. Ask is the **last** tray icon (far right). Do not restore a sixth Profile tab. Office **People** uses the `person` glyph (directory, not Profile). See §34 and §36.
+**Conflict resolution (required, 2026-08-21; Ride fold-in 2026-09-09).** Profile is **not** in the tray. It lives only in the hamburger identity row. Ask is the **last** tray icon (far right). Do not restore a sixth Profile tab. Office **People** uses the `person` glyph (directory, not Profile). See §34 and §36.
+
+**Superseded 2026-09-09.** Early §3.4 tables below once listed **Student tray (2)** and **Parent tray (2)** (Home · Ask only). Those 2-tab rows are **not law**. Locked counts and nouns are **§34.2** / **§31.1** / the tables in this section as patched: student **6**, parent **Home · Ride · Ask (3)**, teacher/office **5**. Parent **Ride** is CEO-shipped car-rider chrome (`src/lib/chrome/trayTabs.ts`); office has **no** Ride tray tab — dismissal/curb lives under **Manage** altitude. Glyph lock: `notes/company/ride-icon-decision.md` (IconName `ride`, RearPlate). Product track: `notes/company/car-rider-*.md`.
 
 Phone (`width < 720`): a **floating frame** over the content, not a system tab bar.
 
@@ -256,25 +273,32 @@ Desk is always the start (house glyph; label **Desk**). Ask is always last. Tray
 
 Family, All classes, Appearance, Profile, Sign out live in the hamburger, not the tray.
 
-**Student tray (2)**
+**Student tray (6), left → right** — shipped student chrome (§31.1 / §34.2). Do **not** cut to 2 tabs. No camera. No Profile in tray. Profile stays hamburger-only.
 
-| # | Icon | Title | Route |
-|---|---|---|---|
-| 1 | `today` | **Kelyra** | `/todo` |
-| 2 | `ask` | **Ask** | `/ask` |
+| # | Key | Icon (`Icon` name) | Tray / a11y label | Route | Active when |
+|---|---|---|---|---|---|
+| 1 | `home` | `work` | **Assignments** | `/todo` | `/todo` or `/todo/…` |
+| 2 | `feed` | owner-chosen school feed glyph | **Feeds** | `/student/feed` | `/student/feed…` |
+| 3 | `class` | `classes` | **Classes** | `/student/class` | `/student/class…` |
+| 4 | `grades` | `grades` | **Grades** | `/student/grades` | `/student/grades…` |
+| 5 | `people` | `person` | **People** | `/student/people` | `/student/people…` |
+| 6 | `ask` | `ask` | **Ask** (a11y; web label may read Kelyra on the mark slot) | `/ask` | `/ask` |
 
-**Parent tray (2)**
+**Parent tray (3), left → right** — CEO-locked car-rider chrome (2026-09-09). Keys/icons/routes match `tabsFor('parent')` in `src/lib/chrome/trayTabs.ts`. No camera. No Profile in tray. **No student Ride. No teacher sixth tab for Ride.**
 
-| # | Icon | Title | Route |
-|---|---|---|---|
-| 1 | `today` | **Kelyra** | `/parent` |
-| 2 | `ask` | **Ask** | `/ask` |
+| # | Key | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
+|---|---|---|---|---|---|---|
+| 1 | `home` | `today` | **Home** | **Home** (or product note-home title on `/parent`) | `/parent` | pathname exactly `/parent` |
+| 2 | `ride` | **`ride`** (RearPlate — car rear + plate; **not** `work`) | **Ride** | **Ride** | `/parent/ride` | `/parent/ride…` or `/parent/vehicles…` |
+| 3 | `ask` | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
 
-**Office tray (5)** — superintendent / administrator: **Feed** · **Classes** · **People** · **Manage** · **Ask**. See §36. The Feed glyph is the owner-chosen school feed icon. Manage is sliders (`manage`), not the schoolhouse and not Settings.
+**IconName `ride` ownership.** Recipe lives in `scripts/build-icons.mjs` → `npm run icons` → `assets/icons/ride.png` + `iconAssets.ts`. Do **not** invent View-stroke glyphs in app code. Lock note: `notes/company/ride-icon-decision.md`. Do not retarget student/class Assignments `work` to `ride`.
+
+**Office tray (5)** — superintendent / administrator: **Feed** · **Classes** · **People** · **Manage** · **Ask**. See §36. The Feed glyph is the owner-chosen school feed icon. Manage is sliders (`manage`), not the schoolhouse and not Settings. **Office has no Ride tray tab.** Parent check-in is the parent-seat **Ride** tab; staff dismissal / curb / Ride office surfaces are **Manage altitude** (Manage pane rows and duty routes such as `/admin/ride…` / `/ride…` activate **Manage**, not a sixth office tab).
 
 ### 3.5 Header title per tab
 
-The wordmark is the Facebook title swap: **it is the same English label as the hamburger (and tray) item for that destination.** Nested in-page tabs (To Do / Done, class chips, PersonTabs) do **not** change the wordmark.
+The wordmark is the Facebook title swap: **it is the same English label as the hamburger (and tray) item for that destination.** Nested in-page tabs (To Do / Done, class chips, PersonTabs) do **not** change the wordmark. After a dual-hat office↔teacher seat switch (§31.4b / §37.3), the wordmark reads **only** from post-commit role + landed path — never the prior seat for even one frame.
 
 | Destination | Hamburger / tray label | Wordmark |
 |---|---|---|
@@ -289,7 +313,9 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 | Student Classes | **Classes** | `Classes` |
 | Student Grades | **Grades** | `Grades` |
 | Student People | **People** | `People` |
-| Office Feed / Classes / People / Manage | same labels | same labels on those tabs; school **name** only when the office home has no tab (or Manage still uses school name — do not invent a second title) |
+| Parent Home | **Home** | `Home` on `/parent` (note-home; child chips do not rename the wordmark) |
+| Parent Ride | **Ride** | `Ride` on `/parent/ride` (and related parent vehicle surfaces) |
+| Office Feed / Classes / People / Manage | same labels | same labels on those tabs; school **name** only when the office home has no tab (or Manage still uses school name — do not invent a second title). **Dismissal curb / Ride office** stay Manage altitude — not a tray noun |
 
 Pushed screens (student record, search, messages, proposal, family, assignment form, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`, the assignment title). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores the hamburger / tray label. Do not ellipsis the header title.
 
@@ -305,7 +331,7 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 | Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
 | Needs (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs** |
 | Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs · Feed · Students · Assignments · Gradebook · Parents. Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow |
-| Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37) |
+| Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37). **Assignment ground is not a header band** — student/parent ground lives composer-adjacent (§12.6). Do not add a permanent ground row under the mark. |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
 | Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
 | Parent Home | none, **or** one chip per **linked child** on this parent | First linked child | Switches the bound child. Never lists other families |
@@ -363,6 +389,8 @@ These are **not** Meta blue, Instagram purple, or Amazon orange. Light is warm d
 | `wash` | `#EFE8DE` | Avatars, zebra, empty wells | — |
 
 `brand` is the single primary action and the focus skill. The bell badge is the one place `danger` is used as chrome (Facebook-red muscle memory, our brick, not `#E41E3F`). Status copy is `mute`. Never use `danger` for “Asking AI…”.
+
+**Tutor brief filing meta (Ask assignment ground, §12.6 / §29.4a).** Draft / Confirmed / Needs review are **filing** states, not grades. Use `wash`/`mute` for Draft, `good`/`goodSoft` for Confirmed, `warn`/`warnSoft` for stale **Needs review**. **Never** paint draft, stale, or “asking” with `danger`. **Never** label Confirm as Approve.
 
 ### 4.2 Dark
 
@@ -664,6 +692,20 @@ The loop the teacher can say out loud:
 `formatCell` / CSV emit `—`, `Assigned`, `Started`, `Completed`, a score, `Graded`. The on-screen grid uses status **icons** for the first three and the mark after graded. Keep CSV strings in lockstep with `formatCell` (§15).
 
 Skill history (`humanGapStatus`) uses the same phrases: `Review`, `Approved`, `Note`, `Assigned`, `Started`, `Completed`, `Graded`, `Proficient`, `Stopped focusing`.
+
+### 8.1 Tutor brief status (filing meta — not a grade)
+
+Pedagogy pack on an assignment before Ask may inject it. **Confirm brief ≠ Approve.** Nothing here is a grade. Product lock: `notes/company/ask-assignment-context-ui-lock.md` (**A-Filing**).
+
+| State | Pill | Tone | Meaning |
+|---|---|---|---|
+| Unconfirmed draft | **Draft** | `wash` / `mute` — no brand, no good | AI or teacher draft; **not** injectable |
+| Teacher confirmed | **Confirmed** | `goodSoft` fill + `good` text | Student-safe pack may inject into Ask |
+| Material changed after confirm | **Needs review** | `warnSoft` fill + `warn` text | Inject stops until re-confirm or clear |
+
+Banner (stale, non-blocking for student grades/publish): `Assignment changed — review the tutor brief.`
+
+Do **not** use Approve / Graded / Review (capture sense) nouns on this chrome. Do **not** use `danger` for Draft or Needs review.
 
 ---
 
@@ -1021,7 +1063,7 @@ Existing. Theme-agnostic besides tokens. Phase banner compact on Capture, Inbox,
 
 Extend `src/components/ui/Icon.tsx` (custom strokes, or `expo-symbols` if a glyph is missing). **Do not add an icon pack.**
 
-New names: `search` (glass), `bell`, `ask` (simple spark / chat-bubble — **not** a smile, **not** a Meta mark), `person` (head-and-shoulders). Existing `menu`, `capture`, `today`, `inbox`, `records`, `close` stay.
+New names: `search` (glass), `bell`, `ask` (simple spark / chat-bubble — **not** a smile, **not** a Meta mark), `person` (head-and-shoulders). Existing `menu`, `capture`, `today`, `inbox`, `records`, `close` stay. **Ride chrome (2026-09-09):** IconName **`ride`** (RearPlate — dead-rear car + plate) is owned by `scripts/build-icons.mjs` + `npm run icons`; lock `notes/company/ride-icon-decision.md`. Parent tray Ride and office Manage “Dismissal curb” use `ride`. Do not invent View-stroke. Do not retarget Assignments `work`.
 
 ### 10.18 `MarqueeText`
 
@@ -1105,35 +1147,173 @@ Request body:
   role: 'teacher' | 'student' | 'parent',
   classId?: string,
   studentId?: string,     // bound student for student/parent
+  assignmentId?: string,  // optional ground when pack inject is allowed (§12.6)
   messages: { from: 'user' | 'assistant', text: string }[],
 }
 ```
 
-The server injects **only** what that role may see (below). Persist nothing as a grade.
+The server injects **only** what that role may see (below). Persist nothing as a grade. Unconfirmed tutor briefs never inject; class-only Ask is product-OK.
 
 ### 12.3 What the agent is allowed to see
 
 | Role | Allowed | Forbidden |
 |---|---|---|
-| Teacher | Active class roster first names, inbox counts, draft/approved gaps, focus skills, practice assigned/turned-in/done, teacher notes, parent names that exist | IEP/504 text, other teachers, raw parent emails, allergies/emergency dumps, auto-Approve, auto-delete |
-| Student | Their display name, class name, assigned practice items, approved focus skill | Other students, drafts, scores, parent sentences, roster last names if we only show first names on the classmate tray — **use first name + last initial when needed to disambiguate, never another student’s gaps** |
-| Parent | Their child(ren)’s name, class, approved focus, assigned/done, the published `parent_sentence`, own photo, linked-child photos, month/day birthday | Scores, photos of work, drafts, other families, “Grok”, unpublished sentence, allergies, emergency, teacher notes, student phone/email/address |
+| Teacher | Active class roster first names, inbox counts, draft/approved gaps, focus skills, practice assigned/turned-in/done, teacher notes, parent names that exist, **own** tutor-brief drafts on the desk (confirm surface is assignment detail — §29.4a) | IEP/504 text, other teachers, raw parent emails, allergies/emergency dumps, auto-Approve, auto-delete, auto-Confirm brief |
+| Student | Their display name, class name, assigned practice items, approved focus skill, **confirmed student-safe tutor brief** for the grounded assignment only (title + objectives / misconceptions / hint depth / vocab — no keys) | Other students, drafts, scores, parent sentences, unconfirmed packs, teacher-only notes, roster last names if we only show first names on the classmate tray — **use first name + last initial when needed to disambiguate, never another student’s gaps** |
+| Parent | Their child(ren)’s name, class, approved focus, assigned/done, the published `parent_sentence`, own photo, linked-child photos, month/day birthday, **confirmed student-safe tutor brief** only after **explicit** assignment ground (§12.6) | Scores, photos of work, drafts, other families, “Grok”, unpublished sentence, allergies, emergency, teacher notes, student phone/email/address, soft-assumed ground |
 
 ### 12.4 Hard limits
 
-- The agent **never Approves**.
+- The agent **never Approves** (grades). **Confirm brief** is a separate filing verb on assignment detail — never rename it Approve.
 - The agent **never inserts a student**. If it wants a name filed, it tells the teacher to open Needs.
 - The agent **never invents a class**.
+- The agent **never invents an assignment ground** or merges two packs.
+- **Re-pick / Choose assignment** always clears prior pack inject before any new inject (§12.6.2–.3, IQG §6.2 **A**).
+- **Class switch** while Ask is open clears assignment ground and drops pack inject (§12.6.8, IQG §6.3).
+- **Teacher-seat Ask:** no student-safe pack inject (class-only). **Office / superintendent seat Ask:** no pack inject, no soft chip, no parent assignment card, no Choose assignment (§12.6.8, IQG §6.1).
 - The agent may **draft** a parent sentence or a gap label into the chat; writing it to the record still happens on the student page, by the teacher, via Approve / save.
 - If the model is unsure: `I can’t tell from what’s saved. Open Needs or the student’s page.`
 - Empty / error: `Ask is offline. Try again in a moment.` (`mute` / `danger` respectively)
 - Do not brand the bubbles “Grok.” On-screen name: **Ask**.
+- **Help remains a separate surface forever.** Do not merge Help → Ask, bury Help in Ask empty chips, or route product-support Help through this agent.
 
 ### 12.5 Portrait / landscape
 
-Portrait: bubbles `flex: 1`, composer sticky above the tray slot (tray may hide; composer stays).
+Portrait: bubbles `flex: 1`, composer sticky above the tray slot (tray may hide; composer stays). Assignment ground chip / durable **Choose assignment** / parent card sits **with** the composer stack (keyboard-lift aware), not under the header.
 
-Landscape: same column, `maxWidth` 640, centered. Do not put the composer in a side pane.
+Landscape: same column, `maxWidth` 640, centered. Do not put the composer in a side pane. Ground chrome stays in that column above the composer.
+
+### 12.6 Assignment ground (A-Filing — locked)
+
+**Stance name:** **A-Filing** (PM UI lock `notes/company/ask-assignment-context-ui-lock.md`). Filing-first teacher confirm + soft student ground + explicit parent ground. **This is the only stance in chrome law** — not a menu of A/B/C.
+
+**Job.** Let Ask go deeper on one assignment when a **confirmed** student-safe tutor brief exists — without grade theater, without hard-assuming tray chat, without parent soft-assume. After clear, student and parent can **re-ground in-session** (IQG §6.2 **A**).
+
+**Not.** Solver UI, answer-key reveal, Help→Ask merge, parent Approve, twin picker invention, blocking publish modal, permanent header ground band, always-expanded Tutor brief density panel, student “missing pack” scold, leave/re-enter as sole re-ground, office/super pack chrome.
+
+#### 12.6.1 Teacher — publish strip + durable Tutor brief card
+
+Lives on **assignment detail** (desk + phone), not inside `/ask`. Full control recipe: **§29.4a**.
+
+| Moment | Chrome |
+|---|---|
+| Publish / material update success | Non-blocking **inline success strip** under the assignment title |
+| Later revisit | First-class **collapsed Tutor brief card** on the same detail — findable after strip dismiss; not flash-only |
+| Not | Blocking leave-publish modal. New tray tab. Help merge. Always-expanded panel as default |
+
+CTAs (labels locked): **Confirm brief** (primary) · **Re-generate** (ghost) · **Skip for now** (ghost) · **Clear brief** (ghost mute → ConfirmSheet). Status pills: **Draft** · **Confirmed** · **Needs review** (§8.1).
+
+#### 12.6.2 Student — soft chip above composer
+
+**Placement:** Sticky band **directly above** `MessageComposer` (not under header, not inside bubbles, not inside the send disc). Survives scroll; keyboard-lift aware. `MessageComposer` structure stays unchanged. Soft chip **and** durable re-ground share this same composer-adjacent zone (IQG §6.2 **A** — not a header band, not a blocking modal).
+
+| State | Copy / chrome |
+|---|---|
+| Soft assume (page knows assignment) | `Looks like FoM 1.2` · trailing **Not this** |
+| a11y (soft) | `Looks like Foundations of Math 1.2. Double-tap to change assignment.` |
+| Tray / no page assignment (first empty) | **No chip.** Optional once/session mute `Working on a specific assignment?` → opens picker; **never auto-picks** a pack. That once/session hint does **not** replace durable re-ground after an explicit clear mid-session |
+| **No ground after clear** (Just chatting · Not this → none · correct-away to none · class switch with no new page ground) | Durable mute text control **Choose assignment** in the same band above the composer. Stays for the rest of this Ask session until a ground is set again. Opens the existing picker rules below — **not** leave/re-enter Ask, **not** page-revisit-only |
+| a11y (re-ground) | `Choose assignment` |
+| Class-only (no confirmed pack) | Chip may still show page-bound title; **no** “pack missing” scold UI |
+| Ambiguous two titles | **No** soft assume — open **sheet** with those two titles + **Just chatting**. Never merge packs |
+| Correct / Choose ≤3 titles | Inline compact list + **Just chatting** |
+| Correct / Choose >3 titles | **Sheet** list + **Just chatting** |
+| Pick / clear / re-pick | Chip or **Choose assignment** updates; **prior pack inject always cleared** before any new inject |
+
+Sheet (phone bottom sheet; web same sheet or compact popover ≤400): titles + **Just chatting** only — no pack dump.
+
+#### 12.6.3 Parent — empty-state card (explicit)
+
+Parent seat Ask open, no ground yet → **empty-state card** in the thread well (not modal, not system-bubble-only, not header band):
+
+```
+Title: Which assignment?
+Body: Pick one so Ask can help with that work — or just chat.
+ListRow titles (enrolled child + class scoped)
+Ghost: Just chatting
+```
+
+| Rule | Behavior |
+|---|---|
+| Before pack inject | Card required for pack path; free chat after **Just chatting** |
+| After **Just chatting** / cleared ground | **Card returns** (or the same durable control that opens this picker) in-session — IQG §6.2 **A**. Not student-only. Not once/session-only. Not leave/re-enter Ask as sole path |
+| Child switch | Clears assignment ground; **card returns** (re-prompt) |
+| Class switch | Clears assignment ground; **card re-prompts** if pack path is still desired (same family as child-switch) |
+| Re-pick | **Prior pack inject cleared** before any new inject |
+| Copy | **Which assignment?** — never “Looks like…” |
+| After pick | Student-safe inject + parent seat policy — **no** teacher-only fields |
+
+Phone: card in thread. Web ≥720: same card centered in the 640 column.
+
+#### 12.6.4 Wrong / empty / stale / twins / re-ground
+
+| Case | Student | Parent | Teacher |
+|---|---|---|---|
+| Corrected away | Chip → none or new; inject cleared; quiet; if none → durable **Choose assignment** | n/a (explicit) | — |
+| Just chatting / cleared to none | Soft chip off; durable **Choose assignment** in composer band (in-session) | **Which assignment?** card returns | — |
+| Re-pick / Choose assignment | Prior inject cleared; new ground per pick; inject only if pack confirmed | Same clear-then-ground | — |
+| Class switch while Ask open | Clear ground + drop inject; chip updates to new page-bound title if known, else hide → **Choose assignment** | Clear ground; card re-prompts | Teacher Ask stays class-only (no pack) |
+| Stale mid-session | Drop inject; optional **one** mute system line once: `Tutor brief was updated — using class help for now.` | Same quiet if ground set | **Needs review** banner (§8.1) |
+| Unconfirmed / missing pack | **No** student UI about missing pack | No missing-pack scold | Draft strip/card remains |
+| Twin ambiguity | Fail closed: no pack; never invent twin picker here | Explicit child then assignment (existing Family child switcher) | — |
+| Tray no page | No hard-assume; optional once/session hint; after clear use **Choose assignment** | Explicit card if they want pack depth | — |
+
+#### 12.6.5 Canonical copy (FoM 1.2 samples)
+
+| Voice | Copy |
+|---|---|
+| Student soft | `Looks like FoM 1.2` + `Not this` |
+| Student tray hint | `Working on a specific assignment?` |
+| Student re-ground (no ground) | **`Choose assignment`** — mute text in composer-adjacent band |
+| Student / parent none path | `Just chatting` |
+| Parent explicit | `Which assignment?` |
+| Parent body | `Pick one so Ask can help with that work — or just chat.` |
+| Teacher confirm CTA | **Confirm brief** — never Approve |
+| Teacher skip | **Skip for now** |
+| Teacher clear sheet | Title `Clear tutor brief?` · Body `Ask will use class context only until you confirm a new brief.` · Primary **Clear brief** · Ghost **Keep brief** |
+| Teacher stale | `Assignment changed — review the tutor brief.` |
+| Student stale quiet | `Tutor brief was updated — using class help for now.` |
+| Over-cap | `Brief is too long to confirm — shorten or re-generate.` |
+| Gen fail | `Couldn’t draft a brief. Try re-generate, or skip for now.` |
+
+#### 12.6.6 Primitives / icons
+
+Prefer existing: `Card` / `ListRow` / `Chip` / `ChipRow` / `PrimaryButton` / `GhostButton` / ConfirmSheet / `MessageComposer`. Tokens: `ink` `mute` `elevated` `card` `line` `brand` `brandSoft` `warn`/`warnSoft` (stale) `good`/`goodSoft` (confirmed) `wash` — **never** `danger` for draft/stale/asking.
+
+**No new IconName** for this slice. Status = text pills. Later glyph → `scripts/build-icons.mjs` + `npm run icons` only.
+
+#### 12.6.7 Non-goals (callout)
+
+Solver UI · key reveal · Help→Ask merge · parent Approve · twin picker invention · B modal gate / B header ground · C always-expanded panel / C system-bubble-only parent path · student missing-pack scold · grade nouns on Confirm · leave/re-enter Ask as **sole** re-ground (rejected IQG §6.2 **B**) · office/super pack chrome · teacher-seat Ask pack inject · new IconName for Choose assignment (prefer mute text).
+
+#### 12.6.8 Clear family, seats, office/super (product law — no new chrome invent)
+
+**Live-context clear family** (assignmentId / ground / pack inject drop). Document only — do not invent extra chrome for these:
+
+- Correct-away / **Not this** → none
+- **Just chatting**
+- Re-pick / **Choose assignment** (always clears **prior** inject first)
+- Child switch (parent)
+- Seat switch (any dual-hat)
+- Tray/no-page hard-assume refuse (never auto-pick)
+- **Class switch** while Ask open (IQG §6.3): active class change clears session ground and drops pack inject immediately; does **not** confirm a new pack; does **not** carry prior class’s assignmentId
+
+**Teacher-seat Ask:** **no** student-safe pack inject this slice — class-only. Confirm/author path stays assignment-detail **Confirm brief** (§29.4a), not “preview student tutor” inject inside teacher Ask.
+
+**Office seat + superintendent seat Ask (IQG §6.1):**
+
+| Law | Chrome |
+|---|---|
+| Pack inject | **None** |
+| Student soft chip | **None** |
+| Parent **Which assignment?** card | **None** |
+| **Choose assignment** re-ground | **None** |
+| Confirm / Clear / Skip / Re-generate | **None** on office seat — only teacher seat + assignment detail |
+| Job of Ask | Ops / school / class chat only |
+
+Dual-hat office+teacher: pack authoring only after switch to **teacher** seat on assignment detail. Seat switch clears any prior ground (same clear family).
+
+**Micro stance lock:** durable re-ground is **A-Filing only** (IQG §6.2 **A**). Not Option B modal-first. Not header-band Option C.
 
 ---
 
@@ -1467,7 +1647,7 @@ Classmate tap → `ClassmateSheet` (§10.5). No scores. No other children’s wo
 
 **Empty.** `Nothing to do yet. Your teacher will assign a short set.`
 
-Leave class lives in the hamburger and on Profile, not as a ghost on the worksheet.
+Sign out lives in the hamburger and on Profile, not as a ghost on the worksheet. Do not put Leave class on the worksheet.
 
 ---
 
@@ -1475,7 +1655,7 @@ Leave class lives in the hamburger and on Profile, not as a ghost on the workshe
 
 **Job.** A note home. Silence if the teacher has not approved.
 
-**Header title:** `Kelyra`. No camera.
+**Header title:** **Home** (parent tray key `home`; §3.5). No camera. Floating tray is **Home · Ride · Ask** (§3.4 / §34.2) — Ride is a sibling tab, not a card buried only on this page.
 
 **Primary.** None.
 
@@ -1501,6 +1681,116 @@ Centered column, `maxWidth` 480. **No photos of work. No scores. No other childr
 
 On focus, write `kelyra.parent.lastSeenAt` so the bell can clear (§11).
 
+### 13.13b `/parent/ride` — Parent Ride (car-rider) — chrome only
+
+**Date locked in SoT:** 2026-09-09 (CEO + PM §6 / P-02; leave-line chrome lock same day). Product flows and LPR live in `notes/company/car-rider-*.md`. Leave-line product law: `notes/company/ride-parent-checkout-pm.md`. **PM chrome pick:** `notes/company/ride-parent-checkout-lock.md` — **Option A** (trip card owns Leave) + named B/C micro-adoptions only. **Do not reopen A/B/C.** This subsection is **chrome IA**, not a full screen rewrite and not staff curb redesign.
+
+**Job of chrome.** Parent seat peer tray tab for curb/line **check-in** (photograph or enter the plate on the car ahead) and, while a live waiting trip exists, a clear **leave-line** exit for **this trip only** (`queue_events.kind = left`). Not homework (`work`). Not teacher Capture. Not staff pickup (`released`). Not a grade.
+
+| Field | Value |
+|---|---|
+| Tray key | `ride` |
+| Icon | **`ride`** (RearPlate) via `npm run icons` — `notes/company/ride-icon-decision.md` (**LOCKED** — do not invent a leave glyph) |
+| Label | **Ride** |
+| Route | `/parent/ride` (related: `/parent/vehicles…` stays Ride-active for tray highlight only) |
+| Header wordmark | **Ride** (§3.5) |
+| Who | **Parent seat only** on the floating tray **Home · Ride · Ask** |
+| Office | **No** Ride tray tab. Staff dismissal / curb / Ride office = **Manage** altitude (§36 Manage pane + duty routes). Dual-hat parent hat still does **not** merge trays (§31.4b) |
+| Leave surface | **`/parent/ride` hub only** while server reports a live waiting trip. **No** Leave on `/parent/vehicles…`. **No** second confirm surface on vehicles |
+| Parent event | Parent path writes **`left` only**. Never mint **`released`**. Staff curb **`released`** stays pickup confirmation |
+| Non-goals | Student Ride tab; sixth teacher tab; office tray Ride for parity; inventing View-stroke; reopening icon options B/C/D; sticky Leave footer; quiet trailing-only ListRow Leave as primary pattern; Danger red Leave; one-tap leave; type-to-confirm; hold-3s; partial leave; household leave-all; undo that restores XX; neighbor plates / line totals; Checkout / Released / Picked up nouns on parent chrome |
+
+#### Not waiting (check-in stack — unchanged hierarchy)
+
+Vertical stack on `/parent/ride` when the parent has **no** live waiting trip:
+
+1. Title + lead (check-in instructions)
+2. Line chips
+3. Children this stop chips
+4. Ahead plate field + **Photo car ahead** (Primary) + **I'm first** (Ghost)
+5. Status string card (check-in result) when present
+6. Ghost **Manage vehicles**
+
+No Leave control. Empty / I’m-first law unchanged.
+
+#### Waiting — trip card owns Leave (Option A lock)
+
+**Stance.** Waiting is a first-class **trip card**. Leave is a **secondary** control **inside** that card. Same-line check-in tools **recede**. Status-first parent note — not duty footer, not curb checkout list.
+
+**IA while waiting**
+
+```
+Lead (short): You’re in this line.
+Line chips
+TRIP CARD (pinned for the live waiting line)
+  Line · {line name}
+  You are {XX}                 ← own XX only; no “of N”; no school total
+  {Child}, {Child}             ← this trip’s first names only (read-only; server trip scope)
+  [ Leave line ]               ← full-width Ghost (or Secondary) inside the card
+Same-line Photo / I’m first    ← disabled + mute helper (see below)
+Optional: “Another line” frame ← check-in target for a different line chip (staggered B)
+Manage vehicles
+```
+
+| Priority while waiting | Element |
+|---|---|
+| 1 | Trip card: own XX |
+| 2 | Trip children (read-only) |
+| 3 | **Leave line** (secondary, in-card) |
+| 4 | Check-in for **another** line / post-leave |
+| Dim | Same-line **Photo** / **I’m first** — **disabled** |
+
+**Live trip card stays pinned** for the waiting line. Switching line chips may surface check-in for another line under a quiet **Another line** frame **without** hiding Leave for the live trip. Chip toggles do **not** edit the live wait (no partial leave v1). Trip children on the card and on confirm come from the **server trip**, not from currently toggled chips.
+
+**Same-line check-in while waiting.** **Photo car ahead** and **I’m first** for the **waiting line** are **disabled**, with one mute helper: `Leave this line before checking in here again.` (or equivalent short mute). Do not invite double-join on the same line.
+
+**Leave CTA**
+
+| Field | Lock |
+|---|---|
+| Placement | **Inside** the trip `Card`, full-width under XX + child names |
+| Style | **Ghost** (or Secondary) — **not** sticky footer, **not** FAB, **not** header overflow, **not** trailing-only ListRow as the primary Leave pattern |
+| Label | **Leave line** |
+| When shown | Server says live waiting trip on parent-seat `/parent/ride` only |
+| When hidden | Not waiting; after parent `left`; after staff `released` for that trip; student / teacher / office / duty seats; `/parent/vehicles…` |
+
+**Confirm (parent-safe ConfirmSheet shape)**
+
+Lightweight confirm — **not** one-tap. Prefer unlocking a parent-safe mode on `ConfirmSheet` (§20.1) or a thin visual sibling: same sheet geometry (phone bottom / web centered ≤400), scrim, title, body, brand Primary, Ghost cancel below with large gap; both hits ≥44.
+
+| Field | Lock |
+|---|---|
+| Title | `Leave {line name}?` |
+| Body | Stop waiting on this line for {trip first names}; can check in again; **not pickup**. Example pattern: `You’ll stop waiting on this line for {Child1}{, Child2}. You can check in again later. This is not pickup.` |
+| Primary | **Leave line** — brand **Primary** (**not** Danger) |
+| Cancel | **Keep waiting** (Ghost, **below** primary) — not plain “Cancel” |
+| Forbidden | Type-the-name; **“This cannot be undone.”** delete coda; Danger red; Checkout / Released / Picked up nouns |
+| a11y | `accessibilityLabel` includes line name + child first names; VO order: trip status → Leave → sheet title → body → Leave line → Keep waiting |
+
+On confirm: client calls the **parent leave** path only; server appends `queue_events.kind = left` for this `line_id` + exactly this trip’s `student_ids` with server `occurred_at`. Parent never mints `released`.
+
+**After leave (success / fail / staggered)**
+
+| State | Chrome |
+|---|---|
+| Success | Replace trip card with short inline success: `You’re out of {line name}.` (or equivalent short). **No** XX, **no** total, **no** “picked up” / released / checkout language. **Restore** the check-in stack on the same hub so staggered check-in on another line is possible under existing empty / I’m-first law |
+| Fail | Generic fail (same posture as check-in fail) — **no reason codes** |
+| Undo | **None.** Re-check-in (photo ahead / I’m first) rebuilds order |
+| Motion | Standard sheet enter/exit. Instant content swap waiting → not-waiting. **No** XX morph, confetti, or plate slide-away theater |
+
+**Seats / dual-hat**
+
+| Seat | Leave-line chrome |
+|---|---|
+| Parent on `/parent/ride` | Yes — while waiting |
+| Parent on `/parent/vehicles…` | **No** Leave (hub-only) |
+| Student / teacher / office / duty | **No** |
+| Dual-hat | Leave only under **parent** tray Home · Ride · Ask; switching office/teacher chrome does not merge trays |
+
+**Primitives (prefer existing).** `Card`, `Chip` / `ChipRow`, `PrimaryButton` / `GhostButton` (optional Secondary), ConfirmSheet-shape. Tokens: `ink` / `mute` / `elevated` / `line` / `brand`. Prefer **no** new glyphs.
+
+**Copy nouns.** Prefer **Leave line** / out-of-this-line success. **Avoid** Checkout, Released, Picked up on parent Ride. Staff curb copy for `released` stays pickup-oriented elsewhere.
+
 ---
 
 ### 13.14 `/profile` — Profile (new) — `src/app/profile.tsx`
@@ -1523,8 +1813,10 @@ Sign out                     ghost, danger label
 AvatarInitials 72
 {displayName}
 {className}
-Leave class                  ghost
+Sign out                     ghost, danger label
 ```
+
+School login only. No **Leave class** — that was join-session chrome; `/join` → `/sign-in`.
 
 **Parent**
 
@@ -1544,7 +1836,7 @@ Empty/error: if the session is gone, `replace` to `/` or `/join`.
 
 ### 13.15 `/ask` — Ask (new) — `src/app/ask.tsx`
 
-See §12. Header title: `Ask`. No context row.
+See §12 (including **§12.6 Assignment ground / A-Filing**). Header title: `Ask`. No context row for assignment ground — composer-adjacent soft chip / durable mute **Choose assignment** (student after clear) / parent empty **Which assignment?** card only (card returns after Just chatting). Office/super: no pack chrome. Class switch clears ground (§12.6.8). Help stays a separate surface.
 
 ---
 
@@ -1953,7 +2245,7 @@ The spec **succeeds** if a teacher who uses Facebook, Instagram, and Amazon ever
 
 ## 20. Delete map
 
-Every first-class thing a teacher can create is deletable from the UI. Student and parent roles **cannot** delete teacher records. Student **Leave class** (already on hamburger + Profile) only clears the device session. Parent cannot delete a child.
+Every first-class thing a teacher can create is deletable from the UI. Student and parent roles **cannot** delete teacher records. Student **Sign out** (hamburger + Profile) ends the auth session and clears student caches; it does **not** unenroll. Do not ship a separate **Leave class** action — join-code device sessions are gone (`/join` → `/sign-in`). Parent cannot delete a child.
 
 There is **no undo**. Confirm copy always includes `This cannot be undone.` Matcher / delete never inserts a student.
 
@@ -2350,7 +2642,7 @@ Teacher: `Avatar` 72, tap or Photo pill → `PhotoSheet`. Same cutout / center /
 
 **§32** — staff people (teacher / administrator / superintendent, including `/profile?person=`) use `PersonTabs`: Classes · Role · Children · Details.
 
-Student: `Avatar` 72 with own `photoUrl` if the join RPC returns it. Still **Leave class** only.
+Student: `Avatar` 72 with own `photoUrl` when `student_me` / profile returns it. Exit is **Sign out** only (no Leave class).
 
 Parent: `Avatar` 72 with **parent** photo; child rows show child photos. Still no Appearance on the page.
 
@@ -2624,6 +2916,48 @@ Every choice row is a **horizontal `ChipRow`**. Title and custom % stay `TextFie
 
 **Answer key** (same form): chips **None · Photo · Typed items**. Photo of a blank worksheet runs `analyze-answer-key` and proposes editable items — teacher taps **Save assignment** to approve. A filled key is extracted, not solved. WorkRow status may include `Key · 12 items`. Capture match pre-selects the assignment when the printed page matches the stored print hash; teacher can change it. Evaluate scores against the key. Nothing is a grade until Approve.
 
+### 29.4a Tutor brief (A-Filing — locked)
+
+**Job.** After publish (and on later revisit), let the teacher preview / edit / **Confirm brief** so a student-safe pedagogy pack may inject into Ask **for student/parent seats with assignment ground** — never into office/super Ask, and not into teacher-seat Ask this slice (class-only; §12.6.8). Filing chrome — **not** grade Approve. Cross-link inject + re-ground rules: **§12.6**. Product lock: `notes/company/ask-assignment-context-ui-lock.md` + IQG `notes/company/ask-iqg-intent.md` §6.
+
+**Where**
+
+| Moment | Chrome |
+|---|---|
+| Publish / material update success | Non-blocking **inline success strip** under assignment title (web desk + phone assignment detail) |
+| Later revisit | First-class **collapsed Tutor brief card** on `/class/{id}/assignment/{assignmentId}` (and desk open-assignment). Findable after strip dismiss — not flash-only |
+| Not | Blocking leave-publish modal. New tray tab. Help. Always-expanded density panel as default |
+
+**Card hierarchy**
+
+```
+[status pill: Draft | Confirmed | Needs review]
+Student-safe fields (edit in place)
+── teacher-only wall ──
+Internal notes (optional, never inject)
+[ Confirm brief ]     Primary
+[ Re-generate ]       Ghost
+[ Skip for now ]      Ghost  (unconfirmed; publish already done)
+[ Clear brief ]       Ghost mute → ConfirmSheet destructive
+```
+
+| Control | Job |
+|---|---|
+| **Confirm brief** | Makes pack injectable. **Never** label “Approve”. |
+| **Re-generate** | New AI draft → **Draft**; prior confirmed stays live until new Confirm or Clear |
+| **Skip for now** | Leaves unconfirmed; dismisses strip emphasis; assignment stays published |
+| **Clear brief** | Off pack without unpublish. ConfirmSheet title `Clear tutor brief?` body `Ask will use class context only until you confirm a new brief.` Primary **Clear brief** / Ghost **Keep brief** |
+
+**Status pills** — §8.1. Stale: pill **Needs review** + one-line banner `Assignment changed — review the tutor brief.` Non-blocking for grades/publish of student work. **Never** `danger` for draft/stale.
+
+**Field editor:** stacked fields for objectives, misconceptions, vocabulary; hint depth exclusive chips **Next step** · **Conceptual** · **Scaffolding**. Over-cap: mute `Brief is too long to confirm — shorten or re-generate.` Confirm disabled. Gen fail: mute `Couldn’t draft a brief. Try re-generate, or skip for now.`
+
+**Teacher-only wall:** hairline + **Only you**; notes in `wash` well (not continuous white with safe fields); lock copy `Never sent to student Ask`; no “show student” toggle.
+
+**Layout:** phone full width under title; web desk content column. Controls in-card (not header overflow). One filled brand control: **Confirm brief**.
+
+**Icons:** no new IconName. Text pills only.
+
 ### 29.5 Capture picker
 
 On the Grade sheet, **Assignment** is an `AssignmentPicker`:
@@ -2875,14 +3209,14 @@ Add `MarqueeText` to the primitives list in §18.d. No new npm packages. No SQL.
 
 | Role | Tray | Header extras | Hidden |
 |---|---|---|---|
-| Superintendent / Administrator | Feed · Classes · People · Manage · Ask | Messages + search. No camera | Parent↔student link is **on** |
-| Teacher | **Desk · Capture · Needs · Class · Ask** (5; no Profile tab) | Camera + messages + search. Camera **proposes**; tray Capture **files** | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
-| Parent | Home · Ask (Profile hamburger-only) | Messages + search | Camera, grade book, other children, add-a-child |
-| Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped student tray; Profile hamburger-only) | Messages + search | Camera, other students’ grades |
+| Superintendent / Administrator | Feed · Classes · People · Manage · Ask (**no** Ride tray tab; dismissal/curb under Manage) | Messages + search. No camera | Parent↔student link is **on** |
+| Teacher | **Desk · Capture · Needs · Class · Ask** (5; no Profile tab; **no** Ride tab) | Camera + messages + search. Camera **proposes**; tray Capture **files** | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
+| Parent | **Home · Ride · Ask** (3; keys `home`/`ride`/`ask`; icons `today`/`ride`/`ask`; hrefs `/parent`, `/parent/ride`, `/ask`. Profile hamburger-only) | Messages + search | Camera, grade book, other children, add-a-child |
+| Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped **6**-tab student tray; Profile hamburger-only) | Messages + search | Camera, other students’ grades |
 
 Header cluster is now `[camera?] [search] [messages]`. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs** tray badge = `countNeedsYou` (separate from messages).
 
-Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger still adds **People**, **Activity**, **Messages**, **Responsibilities** above Grade book. Pure **teacher seat** never shows those office nouns.
+Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger extras are **People** · **Activity** · **Messages** · **Responsibilities** only — they do **not** include Feed or Manage; Feed in the drawer is superintendent §36.2 only (tray Feed remains for both office seats). Pure **teacher seat** never shows those office nouns.
 
 ### 31.2 @username
 
@@ -2902,10 +3236,44 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 
 **Explicit chrome seat** (client preference only — not JWT, not SQL). `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray.
 
-- Dual-hat office+teacher: default seat = **Office**. Seat switch (drawer/control) sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
-- When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask.
-- Parent hat adds **My children** → `/parent` without switching to the parent-only tray. Parent-only logins still use the parent tray.
-- Never merge trays. Never invent a sixth tray tab to hold both altitudes.
+- Dual-hat office+teacher: default seat = **Office**. Seat switch sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
+- When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask. **Still no Ride tray tab** — staff curb/dismissal stays Manage altitude.
+- Parent hat adds **My children** → `/parent` without switching to the parent-only tray (parent tray including **Ride** is for parent-only / parent-seat chrome). Parent-only logins still use the parent tray **Home · Ride · Ask**. Parent **My children** is orthogonal to office↔teacher seat switch (G3 later — not this lock).
+- Never merge trays. Never invent a sixth tray tab to hold both altitudes. Never add office Ride for “parity” with parent Ride.
+
+#### Office ↔ teacher seat switch (P-06 lock, 2026-09-10 — Option A only)
+
+**PM-locked:** drawer destination rows + atomic instant chrome. Law above stays closed. This subsection fills the visual / transition / wordmark handoff so engineering can MATCH. Do **not** reopen A/B/C/D; no header chip, no seat-pair checklist, no identity segments, no 180 ms chrome crossfade.
+
+| Element | Lock |
+|---|---|
+| Who | Dual-hat office+teacher only (`canChooseSeat`). Not pure teacher, not parent-only. |
+| Placement | **HamburgerDrawer only.** Not tray. Not header. Group with altitude controls (near Sign out / after **My children** when that row exists). |
+| Rows | Show **only the other seat** (hide current): seat=office → **Teach**; seat=teacher → **Office**. |
+| Labels | **Teach** / **Office** (not “Teacher seat”). |
+| a11y | `Switch to Teach seat` / `Switch to Office seat`. No required toast. |
+| Preference | Client-only `office` \| `teacher`. Default dual-hat = **Office**. Not JWT/SQL. |
+| Landing | Seat change **always** lands **seat root** (`/` / teacher landing with active-class rules as today). Do **not** stay-on-compatible-route. |
+| Motion | **0 ms** chrome morph. Drawer keeps existing two-phase exit (§34 / §35). Reduce Motion = already instant; no extra path. |
+| Tray | Rebuild from `tabsFor(newRole)` only — full unmount/remount or key remount. **Never** concatenate tab arrays or item-wise morph. |
+| Camera | Mounts **iff** new role is `teacher`; unmounts on office. Gate on `role === 'teacher'`, not `also_teacher`. |
+| Logo | School logo **unchanged** across office↔teacher (same school). |
+| Wordmark | `headerTitleFor` for **new** pathname + **new** role only (§3.5). Ask exception unchanged (KelyraMark + Ask rules). |
+| Parent | **My children** drawer path **unchanged**. |
+| Primitives | Existing drawer rows. No new seat glyphs. No header seat chip. No WhoRow seat segments. |
+
+**Ordered commit sequence** (one coherent seat from user POV after the drawer no longer covers the shell):
+
+1. **Persist** preference `office` \| `teacher`.
+2. **Resolve** `chrome.role` from preference (this section).
+3. **Replace route** to seat home **before or atomically with** tray key set — never leave the prior seat’s path driving `headerTitleFor` after role flip.
+4. **Rebuild tray** from `tabsFor(newRole)` only.
+5. **Header:** school logo stays; wordmark = post-commit role+path; camera on teacher only / off office.
+6. Ask special case unchanged: `/ask` → KelyraMark + Ask wordmark rules; seat does not invent a second Ask title.
+
+Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old tray + half-new title at any frame.
+
+**Illegal transient states (any shipped frame):** seat=teacher + wordmark People/Manage; seat=office + tray Needs/Capture; merged 6+ tray flash; stuck prior-seat wordmark under or after drawer exit; KelyraMark off-Ask when school logo should show; drawer Office/Teach duplicated by a header chip or WhoRow segment.
 
 ### 31.5 Activity (audit)
 
@@ -3233,14 +3601,18 @@ Dismiss is back. No Cancel label. Reduce Motion: snap open/closed, no timing. Wh
 
 ### 34.2 Tray — Ask last, no Profile
 
-Profile is **only** the identity row in the hamburger (36 photo + handle, already there). The tray never shows a face or `person` tab.
+Profile is **only** the identity row in the hamburger (36 photo + handle, already there). The tray never shows a face or `person` tab for Profile. (Office **People** and student **People** use the directory `person` glyph — that is not Profile.)
 
 | Role | Tray, left → right | Count |
 |---|---|---|
 | Teacher | **Desk · Capture · Needs · Class · Ask** (`today` · `capture` · `inbox` · `records` · `ask`) | 5 |
-| Student | Assignments · Feeds · Classes · Grades · People · **Ask** (shipped; not this TEACH-UX epic) | 6 |
-| Parent | Home · **Ask** | 2 |
-| Office | **Feed · Classes · People · Manage · Ask** | 5 |
+| Student | Assignments · Feeds · Classes · Grades · People · **Ask** (shipped student chrome; intentional 6 — not a defect vs teacher 5) | 6 |
+| Parent | **Home · Ride · Ask** (keys `home` · `ride` · `ask`; icons `today` · **`ride`** · `ask`; hrefs `/parent` · `/parent/ride` · `/ask`) | **3** |
+| Office | **Feed · Classes · People · Manage · Ask** (**no** Ride tray tab; dismissal/curb = Manage altitude) | 5 |
+
+**Parent Ride (2026-09-09 lock).** CEO-shipped car-rider on the **parent** floating tray only. IconName **`ride`** (RearPlate) via `npm run icons` — `notes/company/ride-icon-decision.md`. Product: `notes/company/car-rider-*.md`. Screen chrome pointer: §13.13b (check-in + **leave-line Option A**: trip card owns Ghost **Leave line**; ConfirmSheet **Leave line** / **Keep waiting**; hub-only; parent `left` only). Do not reopen icon or leave A/B/C options. Do not put Ride on office/teacher/student trays.
+
+**Superseded 2026-09-09.** Any earlier “Parent · Home · Ask · count 2” row (including pre-patch §34.2 and early §3.4 2-tab parent) is void. Spec matches shipped `trayTabs.ts`.
 
 Teacher rules (TEACH-UX A–D): user-facing **Needs** label on key `inbox` / route `/inbox`; Class href = `/class/{id}/setup` (not gradebook-first); web ≥720 labels on the same five nouns. No sixth tray tab. No Profile-in-tray.
 
@@ -3533,10 +3905,10 @@ No new npm packages. Matcher never inserts a student. Nothing is a grade until t
 | 1 | owner-chosen school feed glyph | **Feed** | `/?tab=feed` | `tab=feed` |
 | 2 | `classes` | **Classes** | `/?tab=classes` | `/`, default and `tab=classes`; `/admin/class/{id}` |
 | 3 | `person` | **People** | `/?tab=people` | `tab=people` (and `/admin/people` redirect) |
-| 4 | `manage` | **Manage** | `/?tab=manage` | `tab=manage` (and old `tab=school`); `/activity`; `/admin/matrix` |
+| 4 | `manage` | **Manage** | `/?tab=manage` | `tab=manage` (and old `tab=school`); `/activity`; `/admin/matrix`; staff Ride/dismissal duty routes (`/admin/ride…`, `/ride…`) — **not** a separate office Ride tab |
 | 5 | `ask` | **Ask** | `/ask` | `/ask` |
 
-Activity is no longer a tray icon. It lives on the School pane. Messages stay in the header mail icon.
+Activity is no longer a tray icon. It lives on the School pane. Messages stay in the header mail icon. **Office tray stays five nouns — never add Ride here.** Parent Ride is parent-seat only (§3.4 / §34.2).
 
 ### 36.2 Superintendent hamburger
 
@@ -3546,7 +3918,7 @@ Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. 
 
 `PersonTabs` on `/`: **Feed** · **Classes** · **People** · **Manage** · **New**. Default **Classes**. People is office-only. Teachers without an admin hat omit People; their plus tab stays **New class**.
 
-**Manage pane** (not the tray): superintendent **School name** + **School logo**, school feed icon, **Activity**, **Responsibilities** (superintendent). One `ListRow` stack, each with a 36 leading glyph so titles line up. No People row. No Messages row. Parent hat may still show **My children**. `manage` is three slider tracks with knobs — not the Settings cog and not the schoolhouse. `/?tab=school` still opens this pane.
+**Manage pane** (not the tray): superintendent **School name** + **School logo**, school feed icon, **Activity**, **Responsibilities** (superintendent), and staff **dismissal / curb / Ride office** entry rows (e.g. “Dismissal curb”) — Manage altitude, **not** a sixth office tray tab. One `ListRow` stack, each with a 36 leading glyph so titles line up; curb row uses IconName **`ride`** when that surface ships (`notes/company/ride-icon-decision.md`). No People row. No Messages row. Parent hat may still show **My children**. `manage` is three slider tracks with knobs — not the Settings cog and not the schoolhouse. `/?tab=school` still opens this pane.
 
 Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The **school logo** (uploaded mark, circular punch) stays **upper left** on every signed-in header (22×22 contain) — student, parent, teacher, office — including while search is open. Do not draw `feedSchool` or any other glyph in that slot. Back still leads on pushed screens; the logo sits immediately after it.
 
@@ -3568,7 +3940,7 @@ src/app/admin/people.tsx
 
 ## 37. TEACH-UX shipped IA (2026-09-04)
 
-**Docs delta only.** Matches dirty-tree TEACH-UX A–D. Plan: `notes/company/teacher-ux-plan.md`. Live: `src/lib/chrome/trayTabs.ts`, `classTabs.ts`, `seat.ts`, `titles.ts`.
+**Docs delta only.** Matches dirty-tree TEACH-UX A–D. Plan: `notes/company/teacher-ux-plan.md`. Live: `src/lib/chrome/trayTabs.ts`, `classTabs.ts`, `seat.ts`, `titles.ts`. Dual-hat office↔teacher seat-switch chrome locked **2026-09-10** (P-06 Option A) — see §31.4b and §37.3.
 
 ### 37.1 Teacher chrome contract
 
@@ -3582,10 +3954,10 @@ src/app/admin/people.tsx
 | `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
 | Desk wordmark | **Class name** on class panes (§32.7) |
 | Ask | Tray-last; teacher may bind active `classId` / class chip |
-| Header camera | **Proposes** only; tray Capture **files** |
+| Header camera | **Proposes** only; tray Capture **files**. Camera mounts on **teacher seat only** (not on office seat, even if `also_teacher`) |
 | Web ≥720 | Same five labels visible |
-| Dual-hat seat | Explicit `office` \| `teacher` preference; `also_teacher` never silent-forces teacher tray; default dual-hat = Office |
-| Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite |
+| Dual-hat seat | Explicit client `office` \| `teacher` preference; `also_teacher` never silent-forces teacher tray; default dual-hat = **Office**. Switch = **HamburgerDrawer** other-seat row only (§31.4b / §37.3) |
+| Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite; no merged trays; no header seat chip; no office Ride tray tab |
 
 ### 37.2 Code map
 
@@ -3596,7 +3968,39 @@ src/lib/chrome/seat.ts
 src/lib/chrome/titles.ts
 src/lib/chrome/ChromeProvider.tsx
 src/components/ui/FloatingTabTray.tsx
+src/components/ui/HamburgerDrawer.tsx
+src/components/ui/AppHeader.tsx
 ```
+
+### 37.3 Dual-hat office ↔ teacher seat switch (P-06 Option A, 2026-09-10)
+
+**Lock source:** `notes/company/ux-audit-p06-seat-switch-lock.md` (Option A only; no B/C/D micro-adoptions). Full contract + illegal frames: **§31.4b**. This subsection is the teacher-chrome acceptance mirror for engineering MATCH.
+
+**Stance.** Seat switch is a **hamburger destination**, not ambient chrome. Flip is an **instant atomic rebuild** timed with drawer exit — no morph, no header chip, no seat-pair check-list, no WhoRow segments.
+
+**Control (drawer only, `canChooseSeat`)**
+
+| Current seat | Visible row label | a11y |
+|---|---|---|
+| Office | **Teach** | Switch to Teach seat |
+| Teacher | **Office** | Switch to Office seat |
+
+Hide the current seat. Do not list both seats with a check. Do not duplicate the control in the header or tray. Parent **My children** stays its own drawer row and does **not** change in this pack (G3 later).
+
+**Atomic sequence on tap** (must ship as one coherent seat after drawer no longer covers shell):
+
+1. Persist preference `office` \| `teacher`.
+2. Resolve `chrome.role` from preference.
+3. Replace route to **seat root** (always — no stay-on-compatible-route) before or atomically with tray key set.
+4. Remount tray from `tabsFor(newRole)` only — never concatenate / morph tab arrays.
+5. Header: school logo unchanged; wordmark = `headerTitleFor(new path, new role)` only (§3.5); camera mounts iff role is teacher, unmounts if office.
+6. Ask `/ask` mark + title rules unchanged.
+
+**Motion.** **0 ms** chrome morph. Existing drawer two-phase exit only. Reduce Motion identical (instant). Shell under scrim may already show **target** seat chrome or hold previous until unmount — never half-old tray + half-new title.
+
+**Settle acceptance (one paragraph).** After switch settles: seat=teacher never shows office tray nouns (People/Manage) or office People altitude; seat=office never shows teacher Capture/Needs tray or teacher camera; wordmark matches §3.5 for the destination landed; no merged 6+ tray flash at any shipped frame; no stuck prior-seat wordmark under or after drawer exit; default dual-hat remains Office; preference is not JWT/SQL; office seat still has no Ride tray tab.
+
+**Out of this lock.** G3 parent-as-seat; toast success one-liner; new IconName seat glyphs; 180 ms chrome crossfade; header chip; identity segments; stay-on-compatible-route; reopening §31.4b defaults or tray recipes.
 
 Matcher still never inserts a student. Nothing is a grade until the teacher Approves. Parked P2s (Needs dual-hat count polish, Week/Heatmap secondary chrome, route rename `/needs`) stay out of this doc delta.
 

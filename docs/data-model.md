@@ -50,6 +50,8 @@ Login profile details (`display_name`, `username`, `email`, `phone`, `address`, 
 
 Kelyra Ask (`/ask`) is **not** Messages. Each profile has one open `ask_threads` row (`cleared_at` null). `ask_messages` are owner-only (RLS). The screen shows the last 100 bubbles; the model sees the last 20 turns. Rows older than 90 days are purged. SQL `20260823000000_ask_history.sql`. **New chat** archives the open thread and starts empty. Nothing Ask writes here is a grade.
 
+**Tutor brief (A-Filing pedagogy pack).** `assignment_tutor_briefs` is 1:1 with `assignments`. Student-safe fields: `objectives`, `misconceptions`, `allowed_hint_depth`, `vocabulary`. `teacher_notes` is teacher-only and never injects. Status `draft` | `confirmed` | `stale` — only confirmed (or live snapshot during re-gen) injects via `get_tutor_brief_safe`. Family/student never SELECT `teacher_notes` (table RLS = teaches_class; safe view omits notes). SQL `20260910000001_assignment_tutor_briefs.sql`. Confirm brief ≠ Approve.
+
 ---
 
 ## Entities and fields
@@ -602,7 +604,7 @@ Existing live FKs that **conflict** with “teacher thinks it’s gone” and wh
 | `parent_accesses.student_id` | `ON DELETE CASCADE` | Change to `ON DELETE SET NULL` (token now lives on the parent). |
 | `parent_students.*` | — | both sides `ON DELETE CASCADE` |
 
-Student/parent roles **cannot** call these RPCs. `student_submit` / `student_open_class` stay read-or-submit-own. Parent token stays read-only via `parent_open`. Student **Leave class** only clears the device session; it does not unenroll. Parent cannot delete a child record.
+Student/parent roles **cannot** call these RPCs. `student_submit` / `student_open_class` stay read-or-submit-own. Parent token stays read-only via `parent_open`. Student **Sign out** ends the auth session and clears student caches; it does not unenroll. (Legacy join-code **Leave class** is retired — students are school logins; `/join` redirects to `/sign-in`.) Parent cannot delete a child record.
 
 ---
 
