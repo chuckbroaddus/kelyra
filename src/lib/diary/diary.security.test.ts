@@ -156,3 +156,20 @@ test('DIARY polish leftovers: export, chip pickers, STT labels, short diary TTL'
   assert.match(exportSrc, /exportLedgerCsv/);
   assert.match(exportSrc, /copyLedgerCsv/);
 });
+
+test('TD-05 / t_5f2574b1: diary UI lists media and signs private diary URLs for view', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /listDiaryMedia/);
+  assert.match(screen, /diaryMediaSignedUrl/);
+  assert.match(screen, /loadDiaryPhotoViews/);
+  assert.match(screen, /DiaryPhotoStrip/);
+  assert.match(screen, /RemoteImage/);
+  assert.match(screen, /onError/);
+  // Still private diary path — not Capture / photos bucket in the view helper.
+  assert.doesNotMatch(screen, /signedUrl\('photos'/);
+  assert.doesNotMatch(screen, /from\('captures'\)/);
+  const api = read('src/lib/diary/api.ts');
+  assert.match(api, /export async function listDiaryMedia/);
+  assert.match(api, /export async function diaryMediaSignedUrl/);
+  assert.match(api, /signedDiaryUrl\(storagePath\)/);
+});

@@ -7,7 +7,9 @@ import { ChipRow } from '@/components/ui/ChipRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { ImageViewer } from '@/components/ui/ImageViewer';
 import { PersonTabs } from '@/components/ui/PersonTabs';
+import { RemoteImage } from '@/components/ui/RemoteImage';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
@@ -20,8 +22,10 @@ import {
   attachDiaryPhoto,
   createDiaryEntry,
   deleteDiaryEntry,
+  diaryMediaSignedUrl,
   hasAckedDiaryPrivacy,
   listDiaryEntries,
+  listDiaryMedia,
   listLedgerEvents,
   listParentLinkedChildren,
   takePendingDiaryDraft,
@@ -44,6 +48,7 @@ import { listRoster } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Segment = 'journal' | 'ledger';
+type DiaryPhotoView = { id: string; url: string };
 
 const LEDGER_FAMILIES: Array<{ key: string | null; label: string }> = [
   { key: null, label: 'All' },
@@ -100,10 +105,24 @@ export default function DiaryScreen() {
   const [ledgerRoster, setLedgerRoster] = useState<RosterChip[]>([]);
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
+  const [entryPhotos, setEntryPhotos] = useState<Record<string, DiaryPhotoView[]>>({});
+  const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
   const liveRef = useRef<LiveRecording | null>(null);
 
   const multiChild = seat === 'parent' && children.length >= 2;
   const failClosedEmpty = multiChild && !focusedChildId;
+
+  const dropBrokenPhoto = useCallback((entryId: string | null, photoId: string) => {
+    if (entryId) {
+      setEntryPhotos((prev) => {
+        const current = prev[entryId];
+        if (!current?.length) return prev;
+        return { ...prev, [entryId]: current.filter((photo) => photo.id !== photoId) };
+      });
+    }
+    setComposerPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
+  }, []);
 
   useEffect(() => {
     if (!teacherLike) {
@@ -254,6 +273,41 @@ export default function DiaryScreen() {
     }, [refresh]),
   );
 
+  useEffect(() => {
+    if (!entries?.length) {
+      setEntryPhotos({});
+      return;
+    }
+    let cancelled = false;
+    const ids = entries.map((row) => row.id);
+    void (async () => {
+      const next: Record<string, DiaryPhotoView[]> = {};
+      await Promise.all(
+        ids.map(async (entryId) => {
+          next[entryId] = await loadDiaryPhotoViews(entryId);
+        }),
+      );
+      if (!cancelled) setEntryPhotos(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entries]);
+
+  useEffect(() => {
+    if (!composerOpen || !editing?.id) {
+      setComposerPhotos([]);
+      return;
+    }
+    let cancelled = false;
+    void loadDiaryPhotoViews(editing.id).then((views) => {
+      if (!cancelled) setComposerPhotos(views);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [composerOpen, editing?.id]);
+
   const groupedEntries = useMemo(() => groupByDay(entries ?? []), [entries]);
   const groupedLedger = useMemo(() => groupLedgerByDay(ledger ?? []), [ledger]);
 
@@ -266,6 +320,7 @@ export default function DiaryScreen() {
     setTagsText('');
     setStudentPointer(null);
     setPointerClassId(null);
+    setComposerPhotos([]);
     setComposerOpen(true);
   }
 
@@ -277,6 +332,7 @@ export default function DiaryScreen() {
     setTagsText((row.tags ?? []).join(', '));
     setStudentPointer(row.student_id);
     setPointerClassId(null);
+    setComposerPhotos(entryPhotos[row.id] ?? []);
     setComposerOpen(true);
   }
 
@@ -335,13 +391,17 @@ export default function DiaryScreen() {
       await waitForModalDismiss();
       const photo = await pickRawPhoto(false);
       if (!photo) return;
+      const entryId = editing.id;
       await attachDiaryPhoto({
         ownerProfileId: profile.id,
         seat,
-        entryId: editing.id,
+        entryId,
         uri: photo.uri,
         mimeType: photo.mimeType,
       });
+      const views = await loadDiaryPhotoViews(entryId);
+      setComposerPhotos(views);
+      setEntryPhotos((prev) => ({ ...prev, [entryId]: views }));
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not attach photo');
@@ -543,30 +603,40 @@ export default function DiaryScreen() {
             groupedEntries.map((group) => (
               <View key={group.day}>
                 <SectionHeader label={group.day} first={group === groupedEntries[0]} />
-                {group.rows.map((row) => (
-                  <Pressable
-                    key={row.id}
-                    onPress={() => openEdit(row)}
-                    style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-                  >
-                    <Text style={[type.meta, { color: colors.mute }]}>
-                      {formatWhen(row.updated_at)}
-                      {row.updated_at !== row.created_at ? ' · edited' : ''}
-                    </Text>
-                    {row.title ? (
-                      <Text style={[type.title, { color: colors.ink }]} numberOfLines={2}>
-                        {row.title}
-                      </Text>
-                    ) : null}
-                    <Text style={[type.body, { color: colors.ink }]} numberOfLines={4}>
-                      {row.body}
-                    </Text>
-                    {(row.tags ?? []).length ? (
-                      <Text style={[type.meta, { color: colors.mute }]}>{(row.tags ?? []).join(' · ')}</Text>
-                    ) : null}
-                    <GhostButton label="Delete" onPress={() => setPendingDelete(row)} />
-                  </Pressable>
-                ))}
+                {group.rows.map((row) => {
+                  const photos = entryPhotos[row.id] ?? [];
+                  return (
+                    <View
+                      key={row.id}
+                      style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
+                    >
+                      <Pressable onPress={() => openEdit(row)}>
+                        <Text style={[type.meta, { color: colors.mute }]}>
+                          {formatWhen(row.updated_at)}
+                          {row.updated_at !== row.created_at ? ' · edited' : ''}
+                        </Text>
+                        {row.title ? (
+                          <Text style={[type.title, { color: colors.ink }]} numberOfLines={2}>
+                            {row.title}
+                          </Text>
+                        ) : null}
+                        <Text style={[type.body, { color: colors.ink }]} numberOfLines={4}>
+                          {row.body}
+                        </Text>
+                      </Pressable>
+                      <DiaryPhotoStrip
+                        photos={photos}
+                        compact
+                        onBroken={(photoId) => dropBrokenPhoto(row.id, photoId)}
+                        onOpen={(uris, index) => setViewer({ uris, index })}
+                      />
+                      {(row.tags ?? []).length ? (
+                        <Text style={[type.meta, { color: colors.mute }]}>{(row.tags ?? []).join(' · ')}</Text>
+                      ) : null}
+                      <GhostButton label="Delete" onPress={() => setPendingDelete(row)} />
+                    </View>
+                  );
+                })}
               </View>
             ))
           )}
@@ -616,6 +686,7 @@ export default function DiaryScreen() {
         onClose={() => {
           setComposerOpen(false);
           setDraft(null);
+          setComposerPhotos([]);
           if (recording) void stopDictate();
         }}
       >
@@ -634,6 +705,13 @@ export default function DiaryScreen() {
           numberOfLines={6}
           placeholder="Personal reflection — not the official student file."
         />
+        {editing ? (
+          <DiaryPhotoStrip
+            photos={composerPhotos}
+            onBroken={(photoId) => dropBrokenPhoto(editing.id, photoId)}
+            onOpen={(uris, index) => setViewer({ uris, index })}
+          />
+        ) : null}
         <TextField
           label="Tags (comma-separated)"
           value={tagsText}
@@ -750,11 +828,87 @@ export default function DiaryScreen() {
           setPendingDelete(null);
           if (!row) return;
           void deleteDiaryEntry(row.id)
-            .then(() => refresh())
+            .then(() => {
+              setEntryPhotos((prev) => {
+                if (!prev[row.id]) return prev;
+                const next = { ...prev };
+                delete next[row.id];
+                return next;
+              });
+              return refresh();
+            })
             .catch((err) => setError(err instanceof Error ? err.message : 'Could not delete'));
         }}
       />
+
+      <ImageViewer
+        visible={Boolean(viewer?.uris.length)}
+        uris={viewer?.uris ?? []}
+        index={viewer?.index ?? 0}
+        onClose={() => setViewer(null)}
+      />
     </Screen>
+  );
+}
+
+/** Owner signed URLs for private diary photos. Null/fail → honest empty, never throw to UI.
+ * FIX-NOW for t_5f2574b1: list + signed per entry after attach + on open/reopen.
+ */
+async function loadDiaryPhotoViews(entryId: string): Promise<DiaryPhotoView[]> {
+  try {
+    const rows = await listDiaryMedia(entryId);
+    const views: DiaryPhotoView[] = [];
+    for (const row of rows) {
+      try {
+        const url = await diaryMediaSignedUrl(row.storage_path);
+        if (url) views.push({ id: row.id, url });
+      } catch {
+        // Skip broken sign; do not crash the journal.
+      }
+    }
+    return views;
+  } catch {
+    return [];
+  }
+}
+
+function DiaryPhotoStrip({
+  photos,
+  compact,
+  onBroken,
+  onOpen,
+}: {
+  photos: DiaryPhotoView[];
+  compact?: boolean;
+  onBroken: (photoId: string) => void;
+  onOpen: (uris: string[], index: number) => void;
+}) {
+  const { colors } = useTheme();
+  if (!photos.length) return null;
+  const uris = photos.map((photo) => photo.url);
+  return (
+    <View style={styles.photoRow}>
+      {photos.map((photo, index) => (
+        <Pressable
+          key={photo.id}
+          accessibilityRole="button"
+          accessibilityLabel="Diary photo"
+          onPress={() => onOpen(uris, index)}
+          style={[
+            compact ? styles.photoThumbWrap : styles.photoComposerWrap,
+            { borderColor: colors.line, backgroundColor: colors.wash },
+          ]}
+        >
+          <RemoteImage
+            uri={photo.url}
+            style={compact ? styles.photoThumb : styles.photoComposer}
+            contentFit="cover"
+            onError={() => onBroken(photo.id)}
+            accessibilityLabel="Diary photo"
+          />
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -811,5 +965,34 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
     marginBottom: 4,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+  },
+  photoThumbWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  photoThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  photoComposerWrap: {
+    width: '100%',
+    maxWidth: 360,
+    aspectRatio: 4 / 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  photoComposer: {
+    width: '100%',
+    height: '100%',
   },
 });
