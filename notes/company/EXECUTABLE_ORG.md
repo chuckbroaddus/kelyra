@@ -38,13 +38,18 @@ If an org order is sent to a specialist chat by mistake, the specialist must not
 ## Delivery chain (software)
 
 ```
-Strategy / Research → Product Manager → Architect (as needed)
+Strategy / Research → UI/UX Designer (options) → Product Manager (choose + stories)
+  → Architect (as needed)
   → Senior Developer or Fast Coder
   → Grok Build kelyra-qa-loop
   → QA Engineer / QA Supervisor
   → Security (boundary changes)
   → DevOps Release → ship
 ```
+
+Non-visual product work may skip the designer. **All UI/UX design items** (chrome, IA, visual options, research handoffs, implementation requests, decisions, and documentation updates) **must** route through `ui-ux-designer` so it stays in the loop. The flow is: `research-feedback` → `ui-ux-designer` (designs options + owns `docs/ui-design.md` and related UI/UX docs) → `product-manager` (chooses + notifies ui-ux-designer of final decision for doc update) → Engineering.
+
+The ui-ux-designer role owns permanent maintenance of the canonical UI/UX design documentation (`docs/ui-design.md` and supporting files in `docs/` + `notes/company/`). Product Manager must explicitly notify ui-ux-designer of every final choice so documentation stays current. Designer does not pick; PM does not design option packs; designer does not run research.
 
 Developers never self-certify. The embedded Grok workflow owns implementation QA. Higher-layer QA judges evidence and release risk only.
 
@@ -54,15 +59,16 @@ Developers never self-certify. The embedded Grok workflow owns implementation QA
 |---|---|
 | chief-of-staff | Orchestrate, prioritize, escalate, report |
 | strategy | Strategy, positioning, pricing, roadmap |
-| product-manager | Specs, stories, acceptance criteria |
-| research-feedback | Research & feedback → opportunities |
+| research-feedback | Research & feedback → opportunities; UI/UX designer depends on this research |
+|| ui-ux-designer | All UI/UX designing and option packs + permanent owner of canonical UI/UX design documentation (`docs/ui-design.md` and related files). Must stay in the loop on every UI/UX item. (Does not choose; does not research) |
+| product-manager | Chooses among designer options; specs, stories, acceptance criteria |
 | software-architect | Architecture, data, technical standards |
 | senior-developer | Substantial implementation + launch qa-loop |
 | fast-coder | Small/repetitive implementation + qa-loop |
 | qa-engineer | Higher-layer QA of loop evidence |
 | qa-supervisor | Release quality / process adequacy |
 | security | Security & privacy review |
-| devops-release | CI/CD, deploy, ops reliability |
+| devops-release | CI/CD, deploy, ops reliability; **sole** git merge/commit/push when CoS staffs after CEO/CoS auth |
 | legal-compliance | Policy/compliance; flag human counsel |
 | finance-analytics | Revenue, cost, forecasting |
 | growth-marketing | Growth, campaigns, messaging |
@@ -116,6 +122,7 @@ Engineering profiles also carry `kelyra-qa-loop`.
 5. CEO final authority on strategy locks, legal, spend, production irreversible actions.
 6. Grok effort only: minimal | low | medium | high.
 7. **TTS only via `grok-tts`**; never parallel TTS sessions (exclusive lock + 5s interval).
+8. **Git ship only via `devops-release`.** CoS does not `git commit` / `merge` / `push`. Staff DevOps after CEO/CoS authorizes. Never force-push main. Never secrets.
 
 ## Profile docs
 

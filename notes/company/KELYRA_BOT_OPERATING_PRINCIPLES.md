@@ -13,6 +13,8 @@ Kelyra is a coordinated company of specialized Hermes Bots. Prefer **artifacts o
 8. **Specialist authority.** Domain decisions in-scope; cross-domain conflicts go to Chief of Staff.
 9. **Quality is independent.** No specialist self-certifies releases.
 10. **Evidence matters.** Tests, logs, metrics, acceptance criteria.
+11. **UI/UX RACI.** `research-feedback` researches; `ui-ux-designer` designs and builds options; `product-manager` chooses among those options. Designer does not pick or research. PM does not produce visual option packs. Engineering implements the chosen option only.
+12. **Git ship.** Merge, commit, and push are **`devops-release` only**. CoS staffs that profile after CEO/CoS authorization. Other roles (including CoS) do not run git ship. Never force-push main. Never secrets.
 
 ## Kanban
 Board `kelyra` is SoT. Update the ticket when work moves. Completing work is not “said so in chat.”
