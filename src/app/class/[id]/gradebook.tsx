@@ -20,7 +20,13 @@ import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
-import { formatCell, gradeCell, loadGradebook, type Gradebook } from '@/lib/gradebook/api';
+import {
+  formatCell,
+  gradeCell,
+  loadGradebook,
+  studentWeightedOveralls,
+  type Gradebook,
+} from '@/lib/gradebook/api';
 import { submissionReviewPath } from '@/lib/practice/review';
 import { deleteAssignment, deleteSubmission } from '@/lib/practice/delete';
 import {
@@ -31,6 +37,7 @@ import {
 } from '@/lib/assignments/tree';
 import { isAwaitingGrade, isGraded } from '@/lib/assignments/status';
 import { gradeTermLabel, matchesGradeTermFilter } from '@/lib/grade/marks';
+import type { SyllabusCategoryInput, SyllabusPolicies } from '@/lib/grade/syllabusAverage';
 import { firstName } from '@/lib/format';
 import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
@@ -75,6 +82,11 @@ export default function GradebookScreen() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['class']));
   const [termFilter, setTermFilter] = useState('all');
   const [syllabusBanner, setSyllabusBanner] = useState<'none' | 'draft' | 'published'>('none');
+  const [syllabusForOverall, setSyllabusForOverall] = useState<{
+    status: string;
+    categories: SyllabusCategoryInput[];
+    policies: SyllabusPolicies | null;
+  } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -89,11 +101,30 @@ export default function GradebookScreen() {
         .catch(() => setOverview(null));
       void getClassSyllabus(id)
         .then((bundle) => {
-          if (!bundle.exists || !bundle.syllabus) setSyllabusBanner('none');
-          else if (bundle.syllabus.status === 'published') setSyllabusBanner('published');
+          if (!bundle.exists || !bundle.syllabus) {
+            setSyllabusBanner('none');
+            setSyllabusForOverall(null);
+            return;
+          }
+          if (bundle.syllabus.status === 'published') setSyllabusBanner('published');
           else setSyllabusBanner('draft');
+          setSyllabusForOverall({
+            status: bundle.syllabus.status,
+            policies: bundle.syllabus.policies ?? null,
+            categories: bundle.categories.map((c) => ({
+              key: c.key,
+              label: c.label,
+              weight_percent: Number(c.weight_percent),
+              sort_order: c.sort_order,
+              active: c.active !== false,
+              rules: c.rules,
+            })),
+          });
         })
-        .catch(() => setSyllabusBanner('none'));
+        .catch(() => {
+          setSyllabusBanner('none');
+          setSyllabusForOverall(null);
+        });
     }, [id]),
   );
 
@@ -109,7 +140,24 @@ export default function GradebookScreen() {
     () => (book ? buildAssignmentTree(className ?? 'Class', assignments) : []),
     [assignments, book, className],
   );
-  const visibleRows = useMemo(() => visibleBookRows(tree, expanded), [tree, expanded]);
+  const overallByStudent = useMemo(() => {
+    if (!book) return {} as Record<string, number | null>;
+    return studentWeightedOveralls(book, syllabusForOverall, termFilter);
+  }, [book, syllabusForOverall, termFilter]);
+  const overallRow: BookNode = useMemo(
+    () => ({
+      kind: 'unit',
+      id: '__overall__',
+      title: 'Overall',
+      indent: 0,
+      expandable: false,
+    }),
+    [],
+  );
+  const visibleRows = useMemo(() => {
+    const rows = visibleBookRows(tree, expanded);
+    return book && book.students.length ? [overallRow, ...rows] : rows;
+  }, [book, expanded, overallRow, tree]);
   const columns = useMemo(() => {
     if (!book) return [];
     return book.students.map((student) => ({
@@ -124,6 +172,14 @@ export default function GradebookScreen() {
         />
       ),
       render: (row: BookNode) => {
+        if (row.id === '__overall__') {
+          const overall = overallByStudent[student.id];
+          return (
+            <Text style={[type.meta, { color: colors.ink, fontWeight: '700', textAlign: 'center' }]}>
+              {overall != null ? `${overall}%` : '—'}
+            </Text>
+          );
+        }
         if (row.kind !== 'assignment' || !row.assignment) return null;
         const cell = gradeCell(book, row.assignment.id, student.id);
         return (
@@ -154,7 +210,7 @@ export default function GradebookScreen() {
         );
       },
     }));
-  }, [book, colWidth, id, router]);
+  }, [book, colWidth, colors.ink, id, overallByStudent, router]);
 
   useEffect(() => {
     if (!tree.length) return;

@@ -142,25 +142,109 @@ type WorkingCell = {
   isMakeup: boolean;
 };
 
-function isDue(assignment: AverageAssignment, now: Date): boolean {
+export function isAssignmentDue(assignment: AverageAssignment, now: Date = new Date()): boolean {
   if (!assignment.due_at) return true;
   const due = new Date(assignment.due_at);
   if (Number.isNaN(due.getTime())) return true;
   return due.getTime() <= now.getTime();
 }
 
-function isNotDueYet(assignment: AverageAssignment, now: Date): boolean {
+export function isAssignmentNotDueYet(assignment: AverageAssignment, now: Date = new Date()): boolean {
   if (!assignment.due_at) return false;
   const due = new Date(assignment.due_at);
   if (Number.isNaN(due.getTime())) return false;
   return due.getTime() > now.getTime();
 }
 
-function cellApproved(cell: AverageCell | undefined): boolean {
+function isDue(assignment: AverageAssignment, now: Date): boolean {
+  return isAssignmentDue(assignment, now);
+}
+
+function isNotDueYet(assignment: AverageAssignment, now: Date): boolean {
+  return isAssignmentNotDueYet(assignment, now);
+}
+
+export function cellApproved(cell: AverageCell | undefined): boolean {
   if (!cell) return false;
   if (cell.approvedAt) return true;
   if (cell.status === 'graded') return true;
   return false;
+}
+
+export type MissingUpcomingItem = {
+  assignmentId: string;
+  title: string;
+  dueAt: string | null;
+  categoryKey: string;
+};
+
+/** P-M1 / F-05: split due-missing vs not-due. Not-due never counts as Missing. */
+export function partitionMissingUpcoming(
+  assignments: AverageAssignment[],
+  cells: AverageCell[],
+  options: { now?: Date | string | number } = {},
+): { missing: MissingUpcomingItem[]; upcoming: MissingUpcomingItem[] } {
+  const now = asDate(options.now);
+  const cellByAssignment = new Map(cells.map((cell) => [cell.assignmentId, cell]));
+  const missing: MissingUpcomingItem[] = [];
+  const upcoming: MissingUpcomingItem[] = [];
+
+  for (const assignment of assignments) {
+    const cell = cellByAssignment.get(assignment.id);
+    if (cell?.excused) continue;
+    if (cellApproved(cell)) continue;
+
+    const item: MissingUpcomingItem = {
+      assignmentId: assignment.id,
+      title: assignment.title,
+      dueAt: assignment.due_at ?? null,
+      categoryKey: assignment.category,
+    };
+
+    if (isNotDueYet(assignment, now)) {
+      upcoming.push(item);
+      continue;
+    }
+    // Due (or no due date): Missing when no approved score and not excused.
+    missing.push(item);
+  }
+
+  return { missing, upcoming };
+}
+
+export type FamilyAssignmentRoleLabel =
+  | { kind: 'counts'; categoryLabel: string }
+  | { kind: 'does_not_count' }
+  | { kind: 'dropped' }
+  | { kind: 'replaced'; note?: string }
+  | { kind: 'makeup' };
+
+/** S-G4 / P-G4 labels from engine contributions + assignment include flag. */
+export function familyAssignmentRoleLabels(
+  average: SyllabusAverageResult | null | undefined,
+  assignment: Pick<AverageAssignment, 'id' | 'include_in_average' | 'category'> | null | undefined,
+  categoryLabel?: string | null,
+): FamilyAssignmentRoleLabel[] {
+  const labels: FamilyAssignmentRoleLabel[] = [];
+  if (!assignment) return labels;
+
+  const include = assignment.include_in_average !== false;
+  const catLabel = categoryLabel?.trim() || assignment.category || 'category';
+  if (include) labels.push({ kind: 'counts', categoryLabel: catLabel });
+  else labels.push({ kind: 'does_not_count' });
+
+  if (!average) return labels;
+  for (const category of average.categories) {
+    for (const row of category.contributions) {
+      if (row.assignmentId !== assignment.id) continue;
+      if (row.role === 'dropped') labels.push({ kind: 'dropped' });
+      if (row.role === 'replaced') labels.push({ kind: 'replaced', note: row.note });
+      if (row.role === 'makeup_vehicle' || (row.role === 'counted' && /makeup/i.test(row.note ?? ''))) {
+        labels.push({ kind: 'makeup' });
+      }
+    }
+  }
+  return labels;
 }
 
 /**

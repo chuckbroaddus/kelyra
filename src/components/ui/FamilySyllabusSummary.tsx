@@ -12,6 +12,8 @@ type Props = {
   ruleLines?: string[];
   childName?: string | null;
   className?: string | null;
+  /** Home / P-H2: category labels + weights only. */
+  compact?: boolean;
 };
 
 export function FamilySyllabusSummary({
@@ -20,10 +22,12 @@ export function FamilySyllabusSummary({
   ruleLines = [],
   childName,
   className,
+  compact = false,
 }: Props) {
   const { colors } = useTheme();
 
   if (!syllabus.published) {
+    if (compact) return null;
     return (
       <Card>
         <Text style={[type.body, { color: colors.ink }]}>How grades work</Text>
@@ -31,6 +35,22 @@ export function FamilySyllabusSummary({
           Your teacher has not published how categories count yet.
         </Text>
       </Card>
+    );
+  }
+
+  const categories = syllabus.categories ?? [];
+
+  if (compact) {
+    if (!categories.length) return null;
+    return (
+      <View style={styles.compact}>
+        <Text style={[type.meta, { color: colors.mute }]}>How grades work</Text>
+        {categories.map((row) => (
+          <Text key={row.key} style={[type.meta, { color: colors.ink }]}>
+            {row.label} · {row.weight_percent}%
+          </Text>
+        ))}
+      </View>
     );
   }
 
@@ -43,7 +63,7 @@ export function FamilySyllabusSummary({
         <Text style={[type.meta, { color: colors.mute }]}>Showing {childName}</Text>
       ) : null}
       <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>Categories</Text>
-      {(syllabus.categories ?? []).map((row) => {
+      {categories.map((row) => {
         const catAvg = average?.categories.find((c) => c.key === row.key);
         return (
           <View key={row.key} style={styles.row}>
@@ -79,6 +99,10 @@ export function FamilySyllabusSummary({
 
 const styles = StyleSheet.create({
   row: {
+    marginTop: 6,
+    gap: 2,
+  },
+  compact: {
     marginTop: 6,
     gap: 2,
   },

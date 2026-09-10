@@ -1,6 +1,8 @@
 import { buildAssignmentTree, type BookNode } from '@/lib/assignments/tree';
 import { asSubmissionStatus, isAwaitingGrade, isGraded, submissionStatusLabel } from '@/lib/assignments/status';
 import { formatScoreMark, numericScoreForAverage, parseGradeTerm, type ScoreMark } from '@/lib/grade/marks';
+import { computeTeacherStudentOveralls } from '@/lib/grade/teacherOveralls';
+import type { SyllabusCategoryInput, SyllabusPolicies } from '@/lib/grade/syllabusAverage';
 import { lessonWorkLabel } from '@/lib/lessons/protocol';
 import { signedProfileUrl } from '@/lib/people/photos';
 import { loadStudentSession } from '@/lib/student-session/api';
@@ -220,6 +222,35 @@ export function formatCell(cell: GradeCell): string {
   }
   if (cell.kind === 'lesson') return lessonWorkLabel(cell.status, cell.answers);
   return submissionStatusLabel(cell.status) || cell.status;
+}
+
+/** Teacher desk: per-student weighted overall via the same engine as family. */
+export function studentWeightedOveralls(
+  book: Gradebook,
+  syllabus: {
+    status: string | null | undefined;
+    categories: SyllabusCategoryInput[];
+    policies?: SyllabusPolicies | null;
+  } | null | undefined,
+  termFilter: string = 'all',
+): Record<string, number | null> {
+  return computeTeacherStudentOveralls({
+    studentIds: book.students.map((row) => row.id),
+    assignments: book.assignments,
+    cellsForStudent: (studentId) =>
+      book.assignments.map((row) => {
+        const cell = gradeCell(book, row.id, studentId);
+        return {
+          assignmentId: row.id,
+          approvedScore: cell.score,
+          scoreMark: cell.scoreMark,
+          status: cell.status,
+          approved: isGraded(cell.status),
+        };
+      }),
+    syllabus,
+    termFilter,
+  });
 }
 
 export { numericScoreForAverage };

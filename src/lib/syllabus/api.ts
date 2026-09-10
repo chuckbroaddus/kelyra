@@ -1,6 +1,7 @@
 import { requireSupabase } from '@/lib/supabase/client';
 import {
   computeSyllabusAverage,
+  partitionMissingUpcoming,
   plainSyllabusRules,
   type AverageAssignment,
   type AverageCell,
@@ -333,6 +334,10 @@ function mapExplain(data: AverageExplainPayload, termFilter: string): {
   syllabus: PublishedFamilySyllabus;
   average: SyllabusAverageResult;
   ruleLines: string[];
+  assignments: AverageAssignment[];
+  cells: AverageCell[];
+  missing: ReturnType<typeof partitionMissingUpcoming>['missing'];
+  upcoming: ReturnType<typeof partitionMissingUpcoming>['upcoming'];
 } {
   const syllabus = (data.syllabus ?? { ok: true, published: false }) as PublishedFamilySyllabus;
   const assignments = (data.assignments ?? []) as AverageAssignment[];
@@ -363,12 +368,18 @@ function mapExplain(data: AverageExplainPayload, termFilter: string): {
     { termFilter },
   );
 
+  const { missing, upcoming } = partitionMissingUpcoming(assignments, cells);
+
   return {
     syllabus,
     average,
     ruleLines: syllabus.published
       ? plainSyllabusRules(categories, syllabus.policies_public)
       : [],
+    assignments,
+    cells,
+    missing,
+    upcoming,
   };
 }
 

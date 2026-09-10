@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
 import { GradeTermTabs } from '@/components/ui/GradeTermTabs';
+import {
+  FamilyAssignmentDetail,
+  type FamilyAssignmentDetailModel,
+} from '@/components/ui/FamilyAssignmentDetail';
 import { FamilySyllabusSummary } from '@/components/ui/FamilySyllabusSummary';
+import { MissingUpcomingStrip } from '@/components/ui/MissingUpcomingStrip';
 import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { StickyTable } from '@/components/ui/StickyTable';
@@ -25,7 +30,11 @@ import {
 } from '@/lib/gradebook/api';
 import { loadParentClassAverageExplain, loadStudentClassAverageExplain } from '@/lib/syllabus/api';
 import type { PublishedFamilySyllabus } from '@/lib/syllabus/api';
-import type { SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
+import type {
+  AverageAssignment,
+  MissingUpcomingItem,
+  SyllabusAverageResult,
+} from '@/lib/grade/syllabusAverage';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -49,7 +58,11 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
   const [syllabus, setSyllabus] = useState<PublishedFamilySyllabus | null>(null);
   const [average, setAverage] = useState<SyllabusAverageResult | null>(null);
   const [ruleLines, setRuleLines] = useState<string[]>([]);
+  const [explainAssignments, setExplainAssignments] = useState<AverageAssignment[]>([]);
+  const [missing, setMissing] = useState<MissingUpcomingItem[]>([]);
+  const [upcoming, setUpcoming] = useState<MissingUpcomingItem[]>([]);
   const [whyOpen, setWhyOpen] = useState(false);
+  const [detail, setDetail] = useState<FamilyAssignmentDetailModel | null>(null);
 
   const load = useCallback(async () => {
     if (studentId) {
@@ -70,6 +83,9 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       setSyllabus(null);
       setAverage(null);
       setRuleLines([]);
+      setExplainAssignments([]);
+      setMissing([]);
+      setUpcoming([]);
       return;
     }
     try {
@@ -80,11 +96,17 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       setSyllabus(explained.syllabus);
       setAverage(explained.average);
       setRuleLines(explained.ruleLines);
+      setExplainAssignments(explained.assignments);
+      setMissing(explained.missing);
+      setUpcoming(explained.upcoming);
     } catch {
       if (studentId && studentIdRef.current !== studentId) return;
       setSyllabus({ ok: true, published: false });
       setAverage(null);
       setRuleLines([]);
+      setExplainAssignments([]);
+      setMissing([]);
+      setUpcoming([]);
     }
   }, [classId, termFilter, studentId]);
 
@@ -105,14 +127,18 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
     }, [load, loadExplain]),
   );
 
-  // F-06: sibling switch clears prior book / why sheet before the next load lands.
+  // F-06: sibling switch clears prior book / why / detail / missing before the next load lands.
   useEffect(() => {
     if (!studentId) return;
     setWhyOpen(false);
+    setDetail(null);
     setBook(null);
     setSyllabus(null);
     setAverage(null);
     setRuleLines([]);
+    setExplainAssignments([]);
+    setMissing([]);
+    setUpcoming([]);
     setStatus(null);
     setTermFilter('all');
     setExpanded(new Set());
@@ -216,6 +242,30 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
   const classLabel = book.classes.find((row) => row.classId === classId)?.className ?? null;
   const shownName = childName?.trim() || student.displayName;
 
+  const openAssignmentDetail = (row: BookNode) => {
+    if (row.kind !== 'assignment' || !row.assignment) return;
+    const explainRow = explainAssignments.find((item) => item.id === row.assignment!.id);
+    const categoryKey = explainRow?.category ?? row.assignment.category ?? null;
+    const categoryLabel =
+      (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label ?? categoryKey;
+    const roomName =
+      classLabel ??
+      book.classes.find((room) => room.classId === row.assignment!.class_id)?.className ??
+      null;
+    setDetail({
+      title: row.assignment.title,
+      className: roomName,
+      categoryLabel,
+      dueAt: explainRow?.due_at ?? row.assignment.due_at ?? null,
+      assignment: explainRow ?? {
+        id: row.assignment.id,
+        category: categoryKey ?? 'other',
+        include_in_average: row.assignment.include_in_average,
+      },
+      cell: gradeCell(book, row.assignment.id, student.id),
+    });
+  };
+
   return (
     <View
       style={styles.pane}
@@ -240,6 +290,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
             className={classLabel}
             childName={studentId ? shownName : null}
           />
+          <MissingUpcomingStrip missing={missing} upcoming={upcoming} />
         </>
       ) : null}
       <StickyTable<BookNode>
@@ -251,7 +302,16 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
         empty="No assignments yet."
         rowTone={(row) => (row.kind === 'assignment' ? 'stripe' : 'group')}
         renderFrozen={(row) => (
-          <GradebookTreeLabel row={row} expanded={expanded} onToggle={toggleNode} />
+          <GradebookTreeLabel
+            row={row}
+            expanded={expanded}
+            onToggle={toggleNode}
+            onAssignmentPress={
+              row.kind === 'assignment' && row.assignment
+                ? () => openAssignmentDetail(row)
+                : undefined
+            }
+          />
         )}
         columns={[
           {
@@ -263,7 +323,15 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
             ),
             render: (row) => {
               if (row.kind !== 'assignment' || !row.assignment) return null;
-              return <GradebookCellMark cell={gradeCell(book, row.assignment.id, student.id)} />;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${row.assignment.title}`}
+                  onPress={() => openAssignmentDetail(row)}
+                >
+                  <GradebookCellMark cell={gradeCell(book, row.assignment.id, student.id)} />
+                </Pressable>
+              );
             },
           },
         ]}
@@ -276,6 +344,12 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
         className={classLabel}
         termLabel={gradeTermLabel(termFilter)}
         onClose={() => setWhyOpen(false)}
+      />
+      <FamilyAssignmentDetail
+        visible={Boolean(detail)}
+        detail={detail}
+        average={average}
+        onClose={() => setDetail(null)}
       />
     </View>
   );

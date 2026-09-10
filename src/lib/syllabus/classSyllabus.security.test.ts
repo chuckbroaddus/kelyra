@@ -142,9 +142,29 @@ test('F-06 Parent Home sibling switch clears why-sheet and rows; keyed by studen
   const card = ui.slice(ui.indexOf('function ParentClassGradesCard'));
   assert.match(card, /setWhy\(null\)/);
   assert.match(card, /setRows\(\[\]\)/);
+  assert.match(card, /FamilySyllabusSummary/);
+  assert.match(card, /MissingUpcomingStrip/);
   assert.match(card, /studentIdRef\.current !== studentId/);
   assert.match(card, /studentIdRef\.current !== forStudent/);
   assert.match(ui, /<ParentClassGradesCard[\s\S]*?key=\{child\.student_id\}/);
+});
+
+test('P-H2/P-M1 Parent Home How-grades + Missing strip gated on published; no drafts', () => {
+  const ui = read('src/app/parent.tsx');
+  const card = ui.slice(ui.indexOf('function ParentClassGradesCard'));
+  assert.match(card, /FamilySyllabusSummary/);
+  assert.match(card, /compact/);
+  assert.match(card, /MissingUpcomingStrip/);
+  assert.match(card, /row\.published/);
+  assert.match(card, /explained\?\.missing/);
+  assert.match(card, /loadParentClassAverageExplain/);
+  assert.doesNotMatch(card, /ask_draft|draft_score/);
+  assert.doesNotMatch(card, /save_class_syllabus|publish_class_syllabus|upsertSyllabusAskDraft/);
+
+  const strip = read('src/components/ui/MissingUpcomingStrip.tsx');
+  assert.match(strip, /Missing: \{missing\.length\}/);
+  assert.match(strip, /Not due yet/);
+  assert.match(strip, /compact/);
 });
 
 test('P-G1 Parent Home pushes focused-child grades book', () => {
@@ -157,7 +177,7 @@ test('P-G1 Parent Home pushes focused-child grades book', () => {
   assert.doesNotMatch(card, /save_class_syllabus|publish_class_syllabus|upsertSyllabusAskDraft/);
 });
 
-test('P-G1…P-G3 Parent grades book reuses StudentGradeBook scoped to focused child', () => {
+test('P-G1…P-G4 Parent grades book reuses StudentGradeBook scoped to focused child', () => {
   const book = read('src/app/parent/grades.tsx');
   assert.match(book, /StudentGradeBook/);
   assert.match(book, /studentId=\{activeChildId\}/);
@@ -173,8 +193,42 @@ test('P-G1…P-G3 Parent grades book reuses StudentGradeBook scoped to focused c
   assert.match(component, /loadParentClassAverageExplain/);
   assert.match(component, /FamilySyllabusSummary/);
   assert.match(component, /WhyAverageSheet/);
+  assert.match(component, /FamilyAssignmentDetail/);
   assert.match(component, /setWhyOpen\(false\)/);
+  assert.match(component, /setDetail\(null\)/);
   assert.match(component, /studentId/);
+});
+
+test('S-G4/P-G4 FamilyAssignmentDetail own-cell labels; no draft fields', () => {
+  const detail = read('src/components/ui/FamilyAssignmentDetail.tsx');
+  assert.match(detail, /Counts toward/);
+  assert.match(detail, /Does not count toward the class average/);
+  assert.match(detail, /dropped as lowest score/);
+  assert.match(detail, /Replaced by makeup/);
+  assert.doesNotMatch(detail, /draft_score|ask_draft|model_draft|explain_draft/);
+  assert.doesNotMatch(detail, /loadGradebook\(|listRoster/);
+
+  const book = read('src/components/ui/StudentGradeBook.tsx');
+  assert.match(book, /openAssignmentDetail/);
+  assert.match(book, /FamilyAssignmentDetail/);
+  assert.doesNotMatch(book, /draft_score|ask_draft/);
+});
+
+test('Teacher gradebook overall uses studentWeightedOveralls; blank when unpublished', () => {
+  const ui = read('src/app/class/[id]/gradebook.tsx');
+  assert.match(ui, /studentWeightedOveralls/);
+  assert.match(ui, /__overall__/);
+  assert.match(ui, /Overall/);
+  assert.match(ui, /syllabusForOverall/);
+  assert.match(ui, /overall != null \? `\$\{overall\}%` : '—'/);
+
+  const api = read('src/lib/gradebook/api.ts');
+  assert.match(api, /export function studentWeightedOveralls/);
+  assert.match(api, /computeTeacherStudentOveralls/);
+
+  const engine = read('src/lib/grade/teacherOveralls.ts');
+  assert.match(engine, /computeSyllabusAverage/);
+  assert.match(engine, /status === 'published'/);
 });
 
 test('P-G1 family_student_gradebook strips answers; parent_students gate; no classmates', () => {

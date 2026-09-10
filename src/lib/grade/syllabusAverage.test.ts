@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { computeSyllabusAverage, type AverageAssignment, type AverageCell, type SyllabusInput } from './syllabusAverage.ts';
+import {
+  computeSyllabusAverage,
+  familyAssignmentRoleLabels,
+  partitionMissingUpcoming,
+  type AverageAssignment,
+  type AverageCell,
+  type SyllabusInput,
+} from './syllabusAverage.ts';
 
 const baseSyllabus = (): SyllabusInput => ({
   status: 'published',
@@ -349,4 +356,48 @@ test('C-18 approved_score outside 0–100 omitted', () => {
   const cells = [cell('h1', 150), cell('q1', 100), cell('t1', 100), cell('p1', 100)];
   const result = computeSyllabusAverage(baseSyllabus(), assignments, cells);
   assert.equal(result.categories.find((c) => c.key === 'homework')!.omitted, true);
+});
+
+test('F-05/F-08 partitionMissingUpcoming: not-due never Missing; Missing count is due-only', () => {
+  const past = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+  const future = new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString();
+  const assignments = [
+    assignment({ id: 'due_miss', title: 'Past HW', category: 'homework', due_at: past }),
+    assignment({ id: 'upcoming', title: 'Future HW', category: 'homework', due_at: future }),
+    assignment({ id: 'graded', title: 'Done', category: 'quiz', due_at: past }),
+    assignment({ id: 'no_due', title: 'No due', category: 'project' }),
+  ];
+  const cells = [cell('graded', 90)];
+  const { missing, upcoming } = partitionMissingUpcoming(assignments, cells);
+  assert.deepEqual(
+    missing.map((r) => r.assignmentId).sort(),
+    ['due_miss', 'no_due'],
+  );
+  assert.deepEqual(
+    upcoming.map((r) => r.assignmentId),
+    ['upcoming'],
+  );
+  assert.ok(!missing.some((r) => r.assignmentId === 'upcoming'));
+});
+
+test('F-13 familyAssignmentRoleLabels: counts / does not / dropped / replaced', () => {
+  const syllabus = baseSyllabus();
+  syllabus.categories[2]!.rules = { drop_lowest_n: 1 };
+  const assignments = [
+    assignment({ id: 't1', title: 'T1', category: 'test' }),
+    assignment({ id: 't2', title: 'T2', category: 'test' }),
+    assignment({ id: 'h1', title: 'Practice', category: 'homework', include_in_average: false }),
+    assignment({ id: 'q1', title: 'Q1', category: 'quiz' }),
+    assignment({ id: 'p1', title: 'P1', category: 'project' }),
+  ];
+  const cells = [cell('t1', 40), cell('t2', 90), cell('h1', 100), cell('q1', 100), cell('p1', 100)];
+  const result = computeSyllabusAverage(syllabus, assignments, cells);
+
+  const dropped = familyAssignmentRoleLabels(result, assignments[0], 'Tests');
+  assert.ok(dropped.some((l) => l.kind === 'counts' && l.categoryLabel === 'Tests'));
+  assert.ok(dropped.some((l) => l.kind === 'dropped'));
+
+  const excluded = familyAssignmentRoleLabels(result, assignments[2], 'Homework');
+  assert.ok(excluded.some((l) => l.kind === 'does_not_count'));
+  assert.ok(!excluded.some((l) => l.kind === 'counts'));
 });

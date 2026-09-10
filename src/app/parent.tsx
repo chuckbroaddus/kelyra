@@ -11,6 +11,8 @@ import { MarqueeText } from '@/components/ui/MarqueeText';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
+import { FamilySyllabusSummary } from '@/components/ui/FamilySyllabusSummary';
+import { MissingUpcomingStrip } from '@/components/ui/MissingUpcomingStrip';
 import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
 import { type } from '@/constants/theme';
 import { firstName } from '@/lib/format';
@@ -28,8 +30,12 @@ import { touchParentLastSeen } from '@/lib/parents/session';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { parseBirthdayInput, STUDENT_DETAIL_FIELDS, metaString, setMetaKey } from '@/lib/people/metadata';
 import { getStudent, renameStudent, updateStudentMetadata } from '@/lib/students/api';
-import { listParentChildClasses, loadParentClassAverageExplain } from '@/lib/syllabus/api';
-import type { SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
+import {
+  listParentChildClasses,
+  loadParentClassAverageExplain,
+  type PublishedFamilySyllabus,
+} from '@/lib/syllabus/api';
+import type { MissingUpcomingItem, SyllabusAverageResult } from '@/lib/grade/syllabusAverage';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ParentScreen() {
@@ -137,6 +143,16 @@ export default function ParentScreen() {
   );
 }
 
+type ParentClassRow = {
+  classId: string;
+  className: string;
+  average: number | null;
+  published: boolean;
+  syllabus: PublishedFamilySyllabus;
+  missing: MissingUpcomingItem[];
+  upcoming: MissingUpcomingItem[];
+};
+
 function ParentClassGradesCard({
   studentId,
   childName,
@@ -148,9 +164,7 @@ function ParentClassGradesCard({
   const router = useRouter();
   const studentIdRef = useRef(studentId);
   studentIdRef.current = studentId;
-  const [rows, setRows] = useState<
-    Array<{ classId: string; className: string; average: number | null; published: boolean }>
-  >([]);
+  const [rows, setRows] = useState<ParentClassRow[]>([]);
   const [why, setWhy] = useState<{
     className: string;
     average: SyllabusAverageResult;
@@ -158,18 +172,13 @@ function ParentClassGradesCard({
 
   useEffect(() => {
     let live = true;
-    // F-06 / L6: never leave sibling averages or an open why-sheet under the new child.
+    // F-06 / L6: never leave sibling averages, how-grades, missing, or why under the new child.
     setWhy(null);
     setRows([]);
     void (async () => {
       try {
         const classes = await listParentChildClasses(studentId);
-        const next: Array<{
-          classId: string;
-          className: string;
-          average: number | null;
-          published: boolean;
-        }> = [];
+        const next: ParentClassRow[] = [];
         for (const room of classes) {
           if (!live || studentIdRef.current !== studentId) return;
           const explained = await loadParentClassAverageExplain(room.classId, studentId).catch(() => null);
@@ -178,6 +187,9 @@ function ParentClassGradesCard({
             className: room.className,
             average: explained?.average.overall ?? null,
             published: Boolean(explained?.syllabus.published),
+            syllabus: explained?.syllabus ?? { ok: true, published: false },
+            missing: explained?.missing ?? [],
+            upcoming: explained?.upcoming ?? [],
           });
         }
         if (live && studentIdRef.current === studentId) setRows(next);
@@ -209,6 +221,10 @@ function ParentClassGradesCard({
               ? `Current average ${row.average}%`
               : 'No published average yet'}
           </Text>
+          {row.published ? (
+            <FamilySyllabusSummary syllabus={row.syllabus} compact className={row.className} />
+          ) : null}
+          <MissingUpcomingStrip missing={row.missing} upcoming={row.upcoming} compact />
           {row.published && row.average != null ? (
             <GhostButton
               align="left"
