@@ -1,6 +1,7 @@
 # Intent Quality Gate (IQG)
 
 **CEO lock:** 2026-09-10 (Chuck)  
+**Standing:** Confirmed after ASK + RIDE IQG smokes the same day. This is the default delivery model going forward — not a one-off experiment.  
 **SoT for this process:** this file. CoS, PM, QA Supervisor, and QA Engineer must follow it.  
 **Problem it stops:** shipping a slice of a feature that is “in” but not fully realized (happy-path only). Examples Chuck named: teacher-who-is-also-parent with no Ride menu; parent can enter the car line but cannot leave; parent with multiple cars cannot pick which car at sign-in.
 
