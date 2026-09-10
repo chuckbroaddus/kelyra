@@ -235,7 +235,7 @@ export default function HomeScreen() {
           <ListRow
             title="Dismissal curb"
             status="Walk line, checkout, attach plate"
-            icon="work"
+            icon="ride"
             onPress={() => router.push('/ride')}
           />
           <ListRow

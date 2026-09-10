@@ -234,6 +234,34 @@ test('RIDE-S1-21 parent UI routes exist; fail copy constant', () => {
   assert.equal(RIDE_FAIL_MESSAGE, 'Check in failed');
 });
 
+test('RIDE-api RPCs are typed on Database.Functions (no rideDb any escape hatch)', () => {
+  const api = read('src/lib/ride/api.ts');
+  const types = read('src/lib/supabase/types.ts');
+  assert.doesNotMatch(api, /function rideDb\(\):\s*any/);
+  assert.match(api, /requireSupabase\(\)\.rpc\('dismissal_list_lines'\)/);
+  assert.match(api, /requireSupabase\(\)\.rpc\('parent_list_vehicles'\)/);
+  assert.match(api, /requireSupabase\(\)\.functions\.invoke\('ride-lpr'/);
+  for (const name of [
+    'dismissal_list_lines',
+    'parent_list_vehicles',
+    'parent_upsert_vehicle',
+    'dismissal_my_trip',
+    'dismissal_parent_check_in',
+    'dismissal_queue_live',
+    'dismissal_staff_walk_photo',
+    'dismissal_order_fix',
+    'dismissal_release',
+    'dismissal_nudge',
+    'staff_attach_vehicle',
+    'office_ensure_default_dismissal_lines',
+    'office_set_pickup_restriction',
+    'superintendent_archive_day_photos',
+    'dismissal_purge_old',
+  ]) {
+    assert.match(types, new RegExp(`${name}:\\s*\\{`));
+  }
+});
+
 test('RIDE-S1-22 parent check-in early guards use specific copy', () => {
   const ui = read('src/app/parent/ride.tsx');
   assert.match(ui, /setStatus\('Sign in again'\)/);

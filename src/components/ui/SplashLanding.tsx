@@ -17,7 +17,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SplashSignInButton } from '@/components/ui/SplashSignInButton';
 import { SplashVideo, type SplashPlaybackStatus, type SplashVideoHandle } from '@/components/ui/SplashVideo';
-import { splashAspectForSize, splashSources, splashStillSources } from '@/components/ui/splashBrand';
+import {
+  splashAspectForSize,
+  splashSources,
+  splashStillSources,
+  type SplashAspectKey,
+} from '@/components/ui/splashBrand';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -85,7 +90,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const sourceKey = phoneLocked ? 'portrait' : splashAspectForSize(width, height);
   // Freeze the playing asset across orientation flips so SplashVideo is not remounted
   // (key=) mid post-fade AAC drain on web/iPad. Stills still follow live sourceKey.
-  const lockedVideoSourceKeyRef = useRef<string | null>(null);
+  const lockedVideoSourceKeyRef = useRef<SplashAspectKey | null>(null);
   const videoRef = useRef<SplashVideoHandle | null>(null);
   const busyRef = useRef(false);
   /** After unlock (sign-in), do not re-lock on keyboard/resize while still mounted. */

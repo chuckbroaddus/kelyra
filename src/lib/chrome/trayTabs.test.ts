@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import test from 'node:test';
 
+import { CLASS_TABS } from './classTabs.ts';
 import { tabsFor, trayKeysForRole } from './trayTabs.ts';
+
+function read(rel: string): string {
+  return readFileSync(join(process.cwd(), rel), 'utf8');
+}
 
 const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
@@ -81,4 +88,20 @@ test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/offi
   assert.ok(!teacher.has('ride'));
   assert.ok(teacher.has('capture'));
   assert.ok(!parent.has('capture'));
+});
+
+test('RIDE-ICON: parent Ride + Dismissal curb use ride; Assignments stay work', () => {
+  const ride = tabsFor('parent', '/parent', null, 0).find((tab) => tab.key === 'ride');
+  assert.equal(ride?.icon, 'ride');
+  const studentHome = tabsFor('student', '/todo', null, 0).find((tab) => tab.key === 'home');
+  assert.equal(studentHome?.icon, 'work');
+  assert.equal(CLASS_TABS.find((tab) => tab.key === 'assignments')?.icon, 'work');
+  assert.ok(!trayKeysForRole('teacher').includes('ride'));
+  assert.ok(!trayKeysForRole('administrator').includes('ride'));
+
+  const home = read('src/app/index.tsx');
+  const curb = home.match(/title="Dismissal curb"[\s\S]*?icon="([^"]+)"/);
+  assert.equal(curb?.[1], 'ride');
+  const office = home.match(/title="Ride office"[\s\S]*?icon="([^"]+)"/);
+  assert.equal(office?.[1], 'manage');
 });

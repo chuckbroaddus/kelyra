@@ -339,6 +339,23 @@ const RECIPES = {
     line(p, 8.6, 8.4, 15.4, 8.4, ST);
     line(p, 8.6, 11.6, 13.6, 11.6, ST);
   },
+  ride: (p) => {
+    // roof (rear glass / roof cap)
+    roundRect(p, 7.0, 3.4, 10.0, 3.2, 1.4, ST, false);
+    // body / trunk face
+    roundRect(p, 4.6, 5.8, 14.8, 11.0, 1.6, ST, false);
+    // taillights (filled dots)
+    circle(p, 6.2, 8.6, 0.95, 0, true);
+    circle(p, 17.8, 8.6, 0.95, 0, true);
+    // license plate (must read at 22px)
+    roundRect(p, 8.0, 10.6, 8.0, 3.6, 0.7, ST, false);
+    line(p, 9.2, 12.4, 10.6, 12.4, ST);
+    line(p, 11.3, 12.4, 12.7, 12.4, ST);
+    line(p, 13.4, 12.4, 14.8, 12.4, ST);
+    // wheels
+    circle(p, 7.4, 18.6, 2.05, ST, false);
+    circle(p, 16.6, 18.6, 2.05, ST, false);
+  },
   practice: (p) => {
     roundRect(p, 3.2, 5.2, 5.2, 5.2, 1, ST, false);
     line(p, 4.4, 7.8, 7.2, 7.8, ST);

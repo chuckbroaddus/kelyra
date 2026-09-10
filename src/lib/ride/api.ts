@@ -43,7 +43,7 @@ export async function listDismissalLines(): Promise<DismissalLine[]> {
 export async function listParentVehicles(): Promise<ParentVehicle[]> {
   const { data, error } = await requireSupabase().rpc('parent_list_vehicles');
   if (error) throw error;
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? (data as ParentVehicle[]) : [];
 }
 
 export async function upsertParentVehicle(input: {

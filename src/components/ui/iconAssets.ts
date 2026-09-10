@@ -34,6 +34,7 @@ import focus from '../../../assets/icons/focus.png';
 import login from '../../../assets/icons/login.png';
 import history from '../../../assets/icons/history.png';
 import work from '../../../assets/icons/work.png';
+import ride from '../../../assets/icons/ride.png';
 import practice from '../../../assets/icons/practice.png';
 import details from '../../../assets/icons/details.png';
 import manage from '../../../assets/icons/manage.png';
@@ -128,6 +129,7 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'login': login,
   'history': history,
   'work': work,
+  'ride': ride,
   'practice': practice,
   'details': details,
   'manage': manage,

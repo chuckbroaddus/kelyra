@@ -1209,6 +1209,120 @@ export type Database = {
         Returns: Record<string, unknown>;
       };
       parent_child_classes: { Args: { p_student_id: string }; Returns: Record<string, unknown>[] };
+      /** Car-rider / dismissal RPCs (supabase/migrations/20260907000001_ride_rpcs.sql). */
+      dismissal_list_lines: {
+        Args: Record<string, never>;
+        Returns: { id: string; name: string; sort: number; status: string }[];
+      };
+      parent_list_vehicles: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          plate_raw: string;
+          plate_norm: string;
+          make: string | null;
+          model: string | null;
+          label: string | null;
+          validity_kind: string;
+          valid_from: string | null;
+          valid_to: string | null;
+          status: string;
+          valid_today?: boolean;
+        }[];
+      };
+      parent_upsert_vehicle: {
+        Args: {
+          p_id?: string | null;
+          p_plate_raw?: string | null;
+          p_make?: string | null;
+          p_model?: string | null;
+          p_label?: string | null;
+          p_validity_kind?: string | null;
+          p_valid_from?: string | null;
+          p_valid_to?: string | null;
+          p_void?: boolean;
+        };
+        Returns: Record<string, unknown>;
+      };
+      staff_attach_vehicle: {
+        Args: {
+          p_parent_id: string;
+          p_plate_raw: string;
+          p_plate_source?: string | null;
+          p_make?: string | null;
+          p_model?: string | null;
+          p_label?: string | null;
+        };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_parent_check_in: {
+        Args: {
+          p_line_id: string;
+          p_student_ids: string[];
+          p_im_first?: boolean;
+          p_storage_path?: string | null;
+          p_ahead_plate_raw?: string | null;
+          p_ahead_plate_source?: string | null;
+        };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_my_trip: {
+        Args: { p_line_id?: string | null };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_queue_live: {
+        Args: { p_line_id: string };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_staff_walk_photo: {
+        Args: {
+          p_line_id: string;
+          p_storage_path: string;
+          p_staff_seq: number;
+          p_walk_id?: string | null;
+          p_plate_raw?: string | null;
+          p_plate_source?: string | null;
+          p_parent_id?: string | null;
+          p_student_ids?: string[] | null;
+          p_unknown_flag?: boolean;
+        };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_order_fix: {
+        Args: { p_line_id: string; p_ordered_parent_ids: string[] };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_release: {
+        Args: { p_line_id: string; p_parent_id: string; p_student_ids?: string[] | null };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_nudge: {
+        Args: { p_line_id: string; p_parent_id: string };
+        Returns: Record<string, unknown>;
+      };
+      office_ensure_default_dismissal_lines: {
+        Args: Record<string, never>;
+        Returns: { id: string; name: string; sort: number; status: string }[];
+      };
+      office_set_pickup_restriction: {
+        Args: {
+          p_id?: string | null;
+          p_student_id?: string | null;
+          p_parent_id?: string | null;
+          p_vehicle_id?: string | null;
+          p_reason?: string | null;
+          p_active?: boolean;
+        };
+        Returns: Record<string, unknown>;
+      };
+      superintendent_archive_day_photos: {
+        Args: { p_school_date: string };
+        Returns: Record<string, unknown>;
+      };
+      dismissal_purge_old: {
+        Args: Record<string, never>;
+        Returns: Record<string, unknown>;
+      };
     };
     Enums: {
       class_name_source: ClassNameSource;

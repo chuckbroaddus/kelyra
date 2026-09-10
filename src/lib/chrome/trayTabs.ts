@@ -98,7 +98,7 @@ export function tabsFor(
   if (role === 'parent') {
     return [
       { key: 'home', icon: 'today', label: 'Home', href: '/parent', active: pathname === '/parent' },
-      { key: 'ride', icon: 'work', label: 'Ride', href: '/parent/ride', active: pathname.startsWith('/parent/ride') || pathname.startsWith('/parent/vehicles') },
+      { key: 'ride', icon: 'ride', label: 'Ride', href: '/parent/ride', active: pathname.startsWith('/parent/ride') || pathname.startsWith('/parent/vehicles') },
       { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
     ];
   }

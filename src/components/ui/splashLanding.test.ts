@@ -153,7 +153,9 @@ test('orientation after complete does not remount SplashVideo with shouldPlay', 
   assert.ok(focusEffect, 'expected useFocusEffect callback deps');
   assert.doesNotMatch(focusEffect[1], /hasCompletedSplash/);
   assert.doesNotMatch(focusEffect[1], /completeNatural/);
-  assert.match(focusEffect[1], /sourceKey/);
+  // Frozen videoSourceKey — live orientation sourceKey must not remount mid-drain.
+  assert.match(focusEffect[1], /videoSourceKey/);
+  assert.doesNotMatch(focusEffect[1], /(?<!video)sourceKey/);
   assert.match(splash, /completeNaturalRef\.current\(\)/);
   assert.match(splash, /completeNaturalRef\.current = completeNatural/);
   // Completed path: still Image remains; SplashVideo branch is gated off.
@@ -190,8 +192,8 @@ test('focus-effect identity stays stable across visual complete (no transitive d
   assert.ok(focusDeps, 'expected useFocusEffect deps');
   assert.equal(
     focusDeps[1].replace(/\s/g, ''),
-    'sourceKey,tryPlayUnmuted',
-    'focus deps must be only sourceKey + tryPlayUnmuted (stable across visual complete)',
+    'videoSourceKey,tryPlayUnmuted',
+    'focus deps must be only videoSourceKey + tryPlayUnmuted (stable across visual complete)',
   );
   assert.match(splash, /completeNaturalRef/);
   // Safety / natural path goes through the ref, not a closed-over completeNatural.
@@ -216,7 +218,17 @@ test('orientation cleanup unloads only the owned SplashVideo instance (not video
     splash,
     /return \(\) => \{[\s\S]*?const video\s*=\s*videoRef\.current;[\s\S]*?unloadAsync/,
   );
-  assert.match(splash, /key=\{sourceKey\}/);
+  // Freeze playing asset across orientation flips — do not remount on live sourceKey.
+  assert.match(splash, /key=\{videoSourceKey\}/);
+  assert.doesNotMatch(splash, /key=\{sourceKey\}/);
+});
+
+test('lockedVideoSourceKeyRef is SplashAspectKey so splashSources index typechecks', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  assert.match(splash, /useRef<SplashAspectKey\s*\|\s*null>\(null\)/);
+  assert.doesNotMatch(splash, /lockedVideoSourceKeyRef\s*=\s*useRef<string\s*\|\s*null>/);
+  assert.match(splash, /const videoSourceKey = lockedVideoSourceKeyRef\.current \?\? sourceKey/);
+  assert.match(splash, /splashSources\[videoSourceKey\]/);
 });
 
 test('splashAspectForSize picks portrait when height > width', async () => {
