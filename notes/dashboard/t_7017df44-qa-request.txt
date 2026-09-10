@@ -1,0 +1,61 @@
+Kanban t_7017df44: Integrate MathText into Ask, Explain, Help, notes.
+
+GOAL
+Use the rewritten MathText (prose+math+list) everywhere Ask, Explain, Help, and notes currently render mixed math/prose so all four surfaces share one path. Remove duplicate per-surface layout forks. Fix overflow, spacing, nested-list issues. Keep KaTeX XSS options. No SQL. No commit/push.
+
+CONTEXT (already done — do NOT rewrite MathText core layout again unless a surface bug forces a tiny shared fix)
+- Parent t_d90da5fe passed: MathText prose+math+list + native data: woff2 fonts (wf_01a070d2, 0 P0/P1).
+- Law: notes/company/mathui-architecture.md, mathui-acceptance.md L-01…L-06.
+- mathTextCore KaTeX options locked: trust:false, throwOnError:false, maxSize/maxExpand caps. Model blobs never dangerouslySetInnerHTML; only KaTeX output of math spans.
+- Surfaces already import MathText in places:
+  - Ask: src/app/ask.tsx (assistant/user bubbles via MathText; GAUTH refusal stays plain Text)
+  - Explain: src/components/ui/ExplainDraftCard.tsx (steps + reteach via MathText BUT with a manual numbered-row fork)
+  - Help: src/app/todo/[submissionId].tsx (helpText via MathText; practiceItem.prompt still plain Text)
+  - notes: src/app/class/[id]/student/[studentId].tsx (teacher_note via MathText; practice prompts still plain Text)
+
+KNOWN GAPS TO FIX
+1) ExplainDraftCard DUPLICATE LIST LAYOUT FORK (must remove):
+   - Currently maps draft.steps with manual `{i+1}. ` Text + flexDirection row + MathText body.
+   - MathText already owns numbered lists (ol hanging indent / native marker column).
+   - Route steps through MathText only — e.g. join steps as a single numbered list string, or one MathText per step WITHOUT a parallel marker column that reimplements list layout. No flex-wrap View of Text+div as the “list fix”.
+   - Reteach: keep MathText; drop unnecessary row forks if they only exist for layout.
+
+2) Help practice prompts still bypass MathText:
+   - src/app/todo/[submissionId].tsx: practiceItem.prompt is <Text>. Use MathText so prompts with $…$ / lists render correctly.
+   - Same class of bypass on student sheet practice prompts if they show math: src/app/class/[id]/student/[studentId].tsx practiceItem.prompt ~line 1127.
+
+3) Ask MessagePayloadView body bypass:
+   - When item.payload is set, MessagePayloadView renders body with plain <Text> (work_card and possibly others). For Ask assistant/user content that can include math, body should go through MathText where the body is model/prose text (not chrome labels like “Shared work”). Prefer fixing MessagePayloadView body rendering with MathText so Ask (and consistent feed/messages) share one path — keep attach chrome as Text.
+
+4) Inventory and kill leftover ad-hoc KaTeX/markdown/HTML forks on these four surfaces only (do not expand to unrelated screens beyond what’s needed for MessagePayloadView shared body). No MathJax. No new markdown library.
+
+5) Overflow / spacing / nested-list polish on the four surfaces:
+   - Bubbles and cards must not clip display math horizontally (overflow-x handled inside MathText).
+   - Nested lists from model text must render via MathText, not custom surface CSS.
+   - Native: one WebView per bubble already; do not introduce per-$ WebViews.
+   - Do not reintroduce empty slabs / invisible math regressions (native uses data: woff2 CSS).
+
+6) Tests / evidence
+   - Extend or add source assertions that Ask, ExplainDraftCard, Help (todo submission), notes (student teacher_note + practice prompts where changed) import/use MathText and do NOT keep the Explain manual `i + 1` list fork.
+   - Existing mathText.test.ts LATEX S1 + MATHUI L-01…L-06 must still pass.
+   - npm run typecheck must pass.
+   - XSS options unchanged (assert trust:false etc. still present).
+
+CONSTRAINTS
+- No SQL / migrations / Edge function secret changes.
+- No git commit or push.
+- Preserve unrelated dirty working tree.
+- Do not call ask_user_question.
+- Student G0 / parent co-teacher walls unchanged.
+- Do not loosen KaTeX XSS (no trust:true, no mounting model HTML).
+
+ACCEPTANCE
+- Ask, Explain, Help, and notes render mixed prose+math+lists via MathText only.
+- No leftover per-surface math layout forks on those screens (especially Explain numbered steps).
+- XSS options still the existing safe KaTeX config.
+- kelyra-qa-loop evidence: typecheck + mathText tests green; note changed files.
+
+OUT OF SCOPE
+- Release self-certification / PR merge.
+- Broader Feed/Messages redesign beyond MessagePayloadView body→MathText if needed for Ask consistency.
+- Rewriting mathTextCore tokenizer from scratch.

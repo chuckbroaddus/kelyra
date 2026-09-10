@@ -1,0 +1,22 @@
+Kanban t_d90da5fe: Rewrite MathText as prose+math+list renderer (after GATE).
+
+CONTEXT (already on main — do not reopen architecture):
+- mathui-architecture.md is law (layout only; keep mathTextCore KaTeX options).
+- Commits 3a21efe (#10) and 877b2c0 (#11) already landed splitProseBlocks + web p/ol/ul + native one-WebView-per-bubble.
+- Dogfood notes/dashboard/mathui-native-qa/report.md: native math still INVISIBLE because KATEX_MIN_CSS_NATIVE strips all @font-face and about:blank cannot load fonts/KaTeX_*.woff2. Web Ask OK.
+
+GOAL:
+1. Confirm MathText (web + native) matches mathui-architecture.md for prose, inline/block math, and lists.
+2. Fix residual native invisible math: embed KaTeX woff2 as data: URLs in native CSS (offline, about:blank-safe) OR equivalent that paints real glyphs without network font fetch. Prefer data: woff2 over generic Times fallback when practical (~296KB fonts total). Keep width clamp + horizontal swipe for display overflow.
+3. Preserve KaTeX XSS options exactly: trust:false, throwOnError:false, maxSize/maxExpand caps, macros:{} per call, TRUST_GATED refuse, no whole-blob dangerouslySetInnerHTML, native originWhitelist/about:blank/onShouldStartLoadWithRequest/injectedJavaScript=undefined. Do not loosen.
+4. No SQL, schema, API, or data-layer changes. Preserve unrelated dirty tree (car-rider notes etc). No git commit/push.
+5. Keep public API MathText children: string.
+
+ACCEPTANCE:
+- Layout per architecture (splitProseBlocks; web one inline container; lists hanging; display overflow-x auto; native one WebView per bubble not per $).
+- Native math glyphs visible (not empty slabs) with offline fonts.
+- XSS options unchanged (tests LATEX-S1-* and MATHUI L-01…L-06 still pass).
+- Update/extend mathText.test.ts as needed for native data-font path.
+- Run node tests for mathText + typecheck; no P0/P1 left.
+
+If already complete after the native font fix only, stop there. Do not expand into Ask/Explain integration scope (that is sibling card t_7017df44).

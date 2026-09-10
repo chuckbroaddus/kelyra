@@ -13,6 +13,16 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### Link payload still omits caption body (P3)
+- Source: kelyra-qa-loop (2026-09-05)
+- Session: `01a070dc-47bd-7903-bbde-c4765248d22a`
+- Workflow: `wf_01a070dca30475328528d674b909a79f`
+- Request: Kanban t_7017df44 — Integrate MathText into Ask, Explain, Help, notes
+- Evidence: MessageAttach MessagePayloadView link branch renders title/description/host as Text chrome and never renders the `body` prop; work/photo/file/fallback correctly use MathText for model/prose body.
+- Recommendation: If Ask captions on link attaches need math, render non-chrome `body` via MathText under the link card; otherwise leave as-is (likely pre-existing).
+- Status: open
+
+
 ### Orientation change during post-fade AAC drain can still kill audio on non-phone-locked surfaces (P2)
 - Source: kelyra-qa-loop (2026-09-04)
 - Session: `01a06dcb-fdd8-74c2-a87d-e0a5a90ee218`
