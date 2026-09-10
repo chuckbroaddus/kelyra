@@ -173,3 +173,49 @@ test('TD-05 / t_5f2574b1: diary UI lists media and signs private diary URLs for 
   assert.match(api, /export async function diaryMediaSignedUrl/);
   assert.match(api, /signedDiaryUrl\(storagePath\)/);
 });
+
+test('t_05f7f139: journal filters wire from/to/tag/studentId into listDiaryEntries', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /diaryFilterDate\(journalFrom\)/);
+  assert.match(screen, /diaryFilterDate\(journalTo\)/);
+  assert.match(screen, /journalTag/);
+  assert.match(screen, /studentId:\s*studentFilter/);
+  assert.match(screen, /listDiaryEntries\(\{/);
+  assert.match(screen, /Student pointer \(private search only\)/);
+  // Soft pointer never treated as ACL copy
+  assert.match(screen, /Soft student pointer \(private search only — not an ACL\)/);
+});
+
+test('t_369b456a: diary attach offers camera or library via PhotoSheet + pickRawPhoto', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /PhotoSheet/);
+  assert.match(screen, /attachPhotoFromSource\(true\)/);
+  assert.match(screen, /attachPhotoFromSource\(false\)/);
+  assert.match(screen, /pickRawPhoto\(fromCamera\)/);
+  assert.match(screen, /webCameraNeeded/);
+  assert.match(screen, /WebCameraCapture/);
+  assert.doesNotMatch(screen, /pickRawPhoto\(false\)\s*;/);
+  assert.doesNotMatch(screen, /from\('captures'\)/);
+});
+
+test('t_b7594650: Journal + Ledger newest/oldest sort; default newest', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /sortOldest/);
+  assert.match(screen, /useState\(false\)/);
+  assert.match(screen, /label=\"Newest\"/);
+  assert.match(screen, /label=\"Oldest\"/);
+  assert.match(screen, /sortDiaryEntries\(rows,\s*sortOldest\)/);
+  assert.match(screen, /ascending:\s*sortOldest/);
+});
+
+test('t_0a6410cf: ledger row tap deep-links fail-closed', () => {
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /ledgerDeepLinkHref/);
+  assert.match(screen, /ledgerDeepLinkStillPermitted/);
+  assert.match(screen, /onLedgerRowPress/);
+  assert.match(screen, /router\.push/);
+  const link = read('src/lib/diary/ledgerLink.ts');
+  assert.match(link, /export function ledgerDeepLinkHref/);
+  assert.match(link, /export async function ledgerDeepLinkStillPermitted/);
+  assert.match(link, /return null/);
+});

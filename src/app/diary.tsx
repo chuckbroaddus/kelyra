@@ -1,7 +1,8 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -9,6 +10,7 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { PersonTabs } from '@/components/ui/PersonTabs';
+import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -33,6 +35,12 @@ import {
 } from '@/lib/diary/api';
 import { copyLedgerCsv, exportLedgerCsv } from '@/lib/diary/export';
 import {
+  diaryFilterDate,
+  ledgerDeepLinkHref,
+  ledgerDeepLinkStillPermitted,
+  sortDiaryEntries,
+} from '@/lib/diary/ledgerLink';
+import {
   DIARY_FERPA_NOTE,
   DIARY_PRIVACY_BODY,
   DIARY_PRIVACY_TITLE,
@@ -42,7 +50,7 @@ import type { DiaryDraft, DiaryEntryRow, LedgerEventRow } from '@/lib/diary/type
 import { firstName, formatWhen } from '@/lib/format';
 import { listTaughtClasses } from '@/lib/lessons/api';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
-import { pickRawPhoto, waitForModalDismiss } from '@/lib/media/pickPhoto';
+import { pickRawPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
 import { listRoster } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -67,6 +75,7 @@ export default function DiaryScreen() {
   const { colors } = useTheme();
   const { profile } = useAuth();
   const chrome = useChrome();
+  const router = useRouter();
   usePushedTitle('Diary');
 
   const seat = diarySeatForChrome({
@@ -87,6 +96,14 @@ export default function DiaryScreen() {
   const [ledgerTo, setLedgerTo] = useState('');
   const [ledgerClassId, setLedgerClassId] = useState<string | null>(null);
   const [ledgerStudentId, setLedgerStudentId] = useState<string | null>(null);
+  const [journalFrom, setJournalFrom] = useState('');
+  const [journalTo, setJournalTo] = useState('');
+  const [journalTag, setJournalTag] = useState('');
+  const [journalClassId, setJournalClassId] = useState<string | null>(null);
+  const [journalStudentId, setJournalStudentId] = useState<string | null>(null);
+  const [journalRoster, setJournalRoster] = useState<RosterChip[]>([]);
+  /** false = newest first (default); true = oldest first. Survives Apply. */
+  const [sortOldest, setSortOldest] = useState(false);
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -108,8 +125,9 @@ export default function DiaryScreen() {
   const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
   const [entryPhotos, setEntryPhotos] = useState<Record<string, DiaryPhotoView[]>>({});
   const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const liveRef = useRef<LiveRecording | null>(null);
-
   const multiChild = seat === 'parent' && children.length >= 2;
   const failClosedEmpty = multiChild && !focusedChildId;
 
@@ -182,6 +200,26 @@ export default function DiaryScreen() {
     };
   }, [ledgerClassId]);
 
+  useEffect(() => {
+    if (!journalClassId) {
+      setJournalRoster([]);
+      return;
+    }
+    let cancelled = false;
+    void listRoster(journalClassId)
+      .then((rows) => {
+        if (!cancelled) {
+          setJournalRoster(rows.map((row) => ({ id: row.id, display_name: row.display_name })));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setJournalRoster([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [journalClassId]);
+
   const refresh = useCallback(async () => {
     if (!allowed || !seat || !profile?.id) {
       setEntries([]);
@@ -224,26 +262,38 @@ export default function DiaryScreen() {
         if (seat === 'parent' && kidsNeedFocus(kids, focus)) {
           setEntries([]);
         } else {
+          const from = diaryFilterDate(journalFrom);
+          const to = diaryFilterDate(journalTo);
+          const tag = journalTag.trim() || null;
+          // Soft pointer filter — teacher/staff only; never ACL.
+          const studentFilter = teacherLike ? journalStudentId : null;
           const rows = await listDiaryEntries({
             seat,
             childStudentId: seat === 'parent' ? focus : null,
             query: query.trim() || null,
+            from,
+            to,
+            tag,
+            studentId: studentFilter,
           });
-          setEntries(rows);
+          setEntries(sortDiaryEntries(rows, sortOldest));
         }
         setLedger(null);
       } else if (seat === 'parent') {
         setLedger([]);
         setEntries(null);
       } else {
+        const fromDate = diaryFilterDate(ledgerFrom);
+        const toDate = diaryFilterDate(ledgerTo);
         const rows = await listLedgerEvents({
           seat,
           actionFamily: family,
           query: query.trim() || null,
-          fromIso: ledgerFrom.trim() ? `${ledgerFrom.trim()}T00:00:00.000Z` : null,
-          toIso: ledgerTo.trim() ? `${ledgerTo.trim()}T23:59:59.999Z` : null,
+          fromIso: fromDate ? `${fromDate}T00:00:00.000Z` : null,
+          toIso: toDate ? `${toDate}T23:59:59.999Z` : null,
           classId: ledgerClassId,
           studentId: ledgerStudentId,
+          ascending: sortOldest,
         });
         setLedger(rows);
         setEntries(null);
@@ -257,6 +307,10 @@ export default function DiaryScreen() {
     allowed,
     family,
     focusedChildId,
+    journalFrom,
+    journalStudentId,
+    journalTag,
+    journalTo,
     ledgerClassId,
     ledgerFrom,
     ledgerStudentId,
@@ -265,8 +319,9 @@ export default function DiaryScreen() {
     query,
     seat,
     segment,
+    sortOldest,
+    teacherLike,
   ]);
-
   useFocusEffect(
     useCallback(() => {
       void refresh();
@@ -384,29 +439,67 @@ export default function DiaryScreen() {
     }
   }
 
-  async function attachPhoto() {
+  async function attachPhotoFromSource(fromCamera: boolean) {
     if (!profile?.id || !seat || !editing) return;
+    setPhotoSheetOpen(false);
+    setError(null);
+    setNotice(null);
+    if (fromCamera && webCameraNeeded(true)) {
+      setCameraOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       await waitForModalDismiss();
-      const photo = await pickRawPhoto(false);
+      const photo = await pickRawPhoto(fromCamera);
       if (!photo) return;
-      const entryId = editing.id;
-      await attachDiaryPhoto({
-        ownerProfileId: profile.id,
-        seat,
-        entryId,
-        uri: photo.uri,
-        mimeType: photo.mimeType,
-      });
-      const views = await loadDiaryPhotoViews(entryId);
-      setComposerPhotos(views);
-      setEntryPhotos((prev) => ({ ...prev, [entryId]: views }));
-      await refresh();
+      await finishAttachPhoto(photo.uri, photo.mimeType);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not attach photo');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function finishAttachPhoto(uri: string, mimeType: string) {
+    if (!profile?.id || !seat || !editing) return;
+    const entryId = editing.id;
+    await attachDiaryPhoto({
+      ownerProfileId: profile.id,
+      seat,
+      entryId,
+      uri,
+      mimeType,
+    });
+    const views = await loadDiaryPhotoViews(entryId);
+    setComposerPhotos(views);
+    setEntryPhotos((prev) => ({ ...prev, [entryId]: views }));
+    await refresh();
+  }
+
+  async function onWebDiaryCapture(uri: string, mimeType: string) {
+    setCameraOpen(false);
+    if (!profile?.id || !seat || !editing) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await finishAttachPhoto(uri, mimeType);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not attach photo');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLedgerRowPress(row: LedgerEventRow) {
+    const href = ledgerDeepLinkHref(row);
+    if (!href) return; // summary only — missing entity pointer
+    try {
+      const ok = await ledgerDeepLinkStillPermitted(row);
+      if (!ok) return; // deleted / forbidden — stay on summary, no toast spam
+      router.push(href as never);
+    } catch {
+      // silent fail-closed
     }
   }
 
@@ -513,6 +606,85 @@ export default function DiaryScreen() {
         placeholder={segment === 'journal' ? 'Search journal' : 'Search ledger summary'}
         autoCapitalize="none"
       />
+
+      <Text style={[styles.filterLabel, { color: colors.mute }]}>Sort</Text>
+      <ChipRow>
+        <Chip label="Newest" selected={!sortOldest} onPress={() => setSortOldest(false)} />
+        <Chip label="Oldest" selected={sortOldest} onPress={() => setSortOldest(true)} />
+      </ChipRow>
+
+      {segment === 'journal' ? (
+        <>
+          <TextField
+            label="From date (YYYY-MM-DD)"
+            value={journalFrom}
+            onChangeText={setJournalFrom}
+            autoCapitalize="none"
+          />
+          <TextField
+            label="To date (YYYY-MM-DD)"
+            value={journalTo}
+            onChangeText={setJournalTo}
+            autoCapitalize="none"
+          />
+          <TextField
+            label="Tag"
+            value={journalTag}
+            onChangeText={setJournalTag}
+            placeholder="Exact tag"
+            autoCapitalize="none"
+          />
+          {teacherLike ? (
+            <>
+              <Text style={[styles.filterLabel, { color: colors.mute }]}>
+                Student pointer (private search only)
+              </Text>
+              {taughtClasses.length ? (
+                <ChipRow>
+                  <Chip
+                    label="All students"
+                    selected={journalClassId == null && journalStudentId == null}
+                    onPress={() => {
+                      setJournalClassId(null);
+                      setJournalStudentId(null);
+                    }}
+                  />
+                  {taughtClasses.map((klass) => (
+                    <Chip
+                      key={klass.id}
+                      label={klass.name}
+                      selected={journalClassId === klass.id}
+                      onPress={() => {
+                        setJournalClassId(klass.id);
+                        setJournalStudentId(null);
+                      }}
+                    />
+                  ))}
+                </ChipRow>
+              ) : (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  Soft student filter needs a taught class roster.
+                </Text>
+              )}
+              {journalClassId ? (
+                <ChipRow>
+                  {journalRoster.map((student) => (
+                    <Chip
+                      key={student.id}
+                      label={firstName(student.display_name)}
+                      selected={journalStudentId === student.id}
+                      onPress={() =>
+                        setJournalStudentId((current) => (current === student.id ? null : student.id))
+                      }
+                    />
+                  ))}
+                </ChipRow>
+              ) : null}
+            </>
+          ) : null}
+        </>
+      ) : null}
+
       <GhostButton label="Apply filters" onPress={() => void refresh()} />
 
       {segment === 'ledger' && seat !== 'parent' ? (
@@ -664,17 +836,22 @@ export default function DiaryScreen() {
           {groupedLedger.map((group) => (
             <View key={group.day}>
               <SectionHeader label={group.day} first={group === groupedLedger[0]} />
-              {group.rows.map((row) => (
-                <View
-                  key={row.id}
-                  style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-                >
-                  <Text style={[type.meta, { color: colors.mute }]}>
-                    {formatWhen(row.created_at)} · {row.action_family}
-                  </Text>
-                  <Text style={[type.body, { color: colors.ink }]}>{row.summary}</Text>
-                </View>
-              ))}
+              {group.rows.map((row) => {
+                const linkable = Boolean(ledgerDeepLinkHref(row));
+                return (
+                  <Pressable
+                    key={row.id}
+                    accessibilityRole={linkable ? 'button' : 'text'}
+                    onPress={() => void onLedgerRowPress(row)}
+                    style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
+                  >
+                    <Text style={[type.meta, { color: colors.mute }]}>
+                      {formatWhen(row.created_at)} · {row.action_family}
+                    </Text>
+                    <Text style={[type.body, { color: colors.ink }]}>{row.summary}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
           ))}
         </>
@@ -801,9 +978,30 @@ export default function DiaryScreen() {
         ) : (
           <GhostButton label="Start recording" onPress={() => void startDictate()} disabled={busy} />
         )}
-        {editing ? <GhostButton label="Attach photo" onPress={() => void attachPhoto()} /> : null}
+        {editing ? (
+          <GhostButton
+            label="Attach photo"
+            onPress={() => setPhotoSheetOpen(true)}
+            disabled={busy || recording}
+          />
+        ) : null}
         <PrimaryButton label={busy ? 'Saving…' : 'Save'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
+
+      <PhotoSheet
+        visible={photoSheetOpen}
+        title="Attach diary photo"
+        onTake={() => void attachPhotoFromSource(true)}
+        onLibrary={() => void attachPhotoFromSource(false)}
+        onCancel={() => setPhotoSheetOpen(false)}
+      />
+
+      <Modal visible={cameraOpen} animationType="slide" onRequestClose={() => setCameraOpen(false)}>
+        <WebCameraCapture
+          onCapture={(uri, mime) => void onWebDiaryCapture(uri, mime)}
+          onCancel={() => setCameraOpen(false)}
+        />
+      </Modal>
 
       <ConfirmSheet
         visible={privacyOpen}
