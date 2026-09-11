@@ -1071,7 +1071,8 @@ export type Database = {
       set_thread_title: { Args: { p_thread_id: string; p_title: string }; Returns: undefined };
       set_thread_photo: { Args: { p_thread_id: string; p_path: string | null }; Returns: undefined };
       set_thread_pinned: { Args: { p_thread_id: string; p_pinned: boolean }; Returns: undefined };
-      add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
+            open_student_family_thread: { Args: { p_student_id: string }; Returns: string };
+add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
       remove_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
       send_message: {
         Args: { p_thread_id: string; p_body: string; p_payload?: MessagePayload | null };
