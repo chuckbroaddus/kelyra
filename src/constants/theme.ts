@@ -177,6 +177,8 @@ export const chrome = {
     menuIn: 280,
     menuOut: 220,
     context: 260,
+    /** Selected-name morph on PersonTabs / ClassTabs — context × 1.25. */
+    personTab: 325,
   },
 };
 
