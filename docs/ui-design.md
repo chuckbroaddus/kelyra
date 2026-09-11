@@ -651,7 +651,7 @@ Amazon’s rule, applied to Kelyra. Classify first, then pick a primitive.
 
 | Information | Primitive | Where |
 |---|---|---|
-| Students in the active class | `AvatarTray` | Teacher Home, teacher Class / Roster, join-name picker (circles optional; ListRow still wins for picking) |
+| Students in the active class | `AvatarTray` | Teacher Home, join-name picker (circles optional; ListRow still wins for picking). **Not** Students/setup — that tab is vertical enrolled `ListRow`s only |
 | Parents linked to this class (have a child enrolled here) | `AvatarTray` | Class / Parents, student-page Parents section |
 | A parent’s children (only if > 1) | `AvatarTray` | Parent Home, parent hamburger |
 | Classmates (first name + photo/initials only) | `AvatarTray` | Student Home |
@@ -1612,21 +1612,21 @@ CSV: `formatCell` strings. Theme-independent. §15.
 
 ---
 
-### 13.8 `/class/[id]/setup` — Class / Roster
+### 13.8 `/class/[id]/setup` — Class / Students
 
-**Job.** Name is enough. Speak, photograph the printed list, or type. Confirm every name.
+**Job.** Teacher view: browse the enrolled roster only. Office/admin: add and remove students; teachers never add or remove on this tab.
 
-**Header title:** `Class`. Context: Roster (selected) · Parents · Heatmap · Grade book.
+**Header title:** class name. Context: `ClassTabs` with **Students** selected.
 
-**Primary.** Context-sensitive, one at a time: `Add N students` / `Rename {old} to {new}` / `Add {name}`.
+**Teacher.** Section **Students enrolled** (uppercase section title) → vertical `ListRow`s (photo + name; tap → student page). No **Add students** lead/banner. No helper about office / All students. No horizontal `AvatarTray`. No swipe **Remove**. No **All students** enroll list / swipe **Add**. Empty: `No students enrolled yet. The office manages the class roster.`
 
-**Vertical.** No PhaseBanner / Phase 1 Setup lead. Join code card → parked roster-import card if any (§20) → Add students card (photo / record / type / confirm checklist) → `AvatarTray` of the roster (photos) → search + `ListRow`s if they need to open a student → last ghost **Delete class** (type-the-name; office/admin + `classes.delete` only — teachers never delete classes). Feed icon and Syllabus editing live on **Settings** (`/class/{id}/settings`), not on this roster screen.
+**Office/admin.** Add students card (photo / record / type / confirm checklist) + parked roster-import card if any (§20) → **Students enrolled** vertical `ListRow`s with swipe **Remove** → **All students** with swipe **Add** to enroll someone already at the school → last ghost **Delete class** (type-the-name; office/admin + `classes.delete` only — teachers never delete classes). Same office surfaces also live on `/admin/class/{id}` (Students pane). Feed icon and Syllabus editing live on **Settings** (`/class/{id}/settings`), not on this roster screen.
 
 **Portrait.** One column.
 
-**Landscape.** Join + add-students left, tray + roster right when `isSplit`. On `phone-landscape`, one column; the printed-list camera uses the wide side. Do not stretch the join-code words to 900 pt.
+**Landscape.** Office: add-students left, enrolled list right when `isSplit`. On `phone-landscape`, one column; the printed-list camera uses the wide side. Teachers: one enrolled-list column.
 
-The header camera on this tab still goes to `/proposal`. If the classifier says **roster**, the teacher lands on the existing confirm checklist. That is the same photo-of-list flow, just started from the camera icon.
+The header camera on this tab still goes to `/proposal`. If the classifier says **roster**, office lands on the existing confirm checklist. That is the same photo-of-list flow, just started from the camera icon.
 
 ---
 
@@ -2334,8 +2334,8 @@ Roles: if `chrome.role !== 'teacher'`, do not render Delete pills, swipes, or th
 | Object | Control lives | Confirm | Verb | What the teacher is promised |
 |---|---|---|---|---|
 | **Class** | Office/admin only — teachers never delete classes. Class / Roster (`/setup`) last pills: ghost **Delete class** (office/admin + `classes.delete`). Class picker (`/` `?switch=1`) `ListRow` swipe Delete (office seat + `classes.delete`; Teach seat dual-hat has no swipe). Hamburger class row swipe Delete (office + `classes.delete`; never teacher seat). Not a tray icon. | Type-the-name. Title `Delete {class name}?` Body: `This deletes the class, its homework, practice, and grade book. Students who are only in this class will be deleted. Students who are also in another class will stay on those rosters. This cannot be undone.` | Hard-delete class via `teacher_delete_class` | Gone. Land on `/` (or the next remaining class, set active). |
-| **Student (the person)** | Student page last pills: ghost **Delete {first name}**. Roster `ListRow` swipe Delete. Search hit overflow. | Type-the-name. Title `Delete {display name}?` Body: `This deletes {first} from every class, including their work, grades, parent links, and photo. This cannot be undone.` | Hard-delete student | Person gone. No Inbox leftovers. No grade-book cells. Parent records stay; the link is gone. Photo asset unref-deleted. |
-| **Enrollment (remove from this class)** | Student page, only if they have **another** enrollment: ghost **Remove from {class}**. Roster row overflow **Remove from class**. | Simple. `Remove {first} from {class}? Their work in this class will be deleted. They will stay in {other class}. This cannot be undone.` | Detach | If this is their last class, **do not offer Remove** — only Delete student. Last-class unenroll is a person delete. |
+| **Student (the person)** | Student page last pills: ghost **Delete {first name}**. Roster `ListRow` swipe Delete (**office/admin only** on Students/setup). Search hit overflow. | Type-the-name. Title `Delete {display name}?` Body: `This deletes {first} from every class, including their work, grades, parent links, and photo. This cannot be undone.` | Hard-delete student | Person gone. No Inbox leftovers. No grade-book cells. Parent records stay; the link is gone. Photo asset unref-deleted. |
+| **Enrollment (remove from this class)** | Student page, only if they have **another** enrollment: ghost **Remove from {class}**. Students/setup roster swipe **Remove** (**office/admin only** — teachers never remove). Also `/admin/class/{id}`. | Simple. `Remove {first} from {class}? Their work in this class will be deleted. They will stay in {other class}. This cannot be undone.` | Detach | If this is their last class, **do not offer Remove** — only Delete student. Last-class unenroll is a person delete. |
 | **Homework / capture / voice / multi-page** | Inbox `WorkRow` swipe **Delete** + ghost pill. Student Work `WorkRow` swipe **Delete** + ghost pill. Needs-you / This-week same. | Simple. Title `Delete this work?` Show 72 thumb + date in the sheet. `This removes the photo and is not a grade. This cannot be undone.` | Hard-delete capture | Not Inbox. Gaps go. Capture-kind grade column goes if it had no other purpose. Focus retargets or clears. Profile photo that reused this asset stays. |
 | **Skill gap (draft)** | Student page, each draft gap: trailing ghost **Remove** on that field row (not the whole student). | Simple. `Remove this suggested gap?` | Hard-delete `skill_gaps` row | Capture stays. Focus unchanged (drafts never hold focus). |
 | **Skill gap (approved)** | Same row, **Remove**. Skill-history `ListRow` swipe Delete only when `source` is a gap (not a practice event). | Simple. `Remove this approved gap? The homework and the grade stay. If this is the focus skill, focus will move or clear.` | Hard-delete gap | Focus → next remaining approved gap, else null. `skills` row stays. Grade cell stays. |
@@ -2669,13 +2669,13 @@ Column-header overflow **Delete column**. Cell sheet ghost **Remove** (that subm
 
 Context chips gain **Parents** (navigates away).
 
-### 13.8 Setup / Roster
+### 13.8 Setup / Students
 
-`AvatarTray` + `ListRow` pass `photoUrl`. Roster `ListRow` swipe: **Remove from class** or **Delete student** per §20. Parked `roster_imports` card with **Open** / **Delete**.
+Students tab is an **enrolled list only** for teachers: vertical `ListRow`s with `photoUrl`, section **Students enrolled**. **No** `AvatarTray` on Students. **No** teacher add or remove — swipe **Remove**, **All students** swipe **Add**, and any Add-students lead are office/admin only (also `/admin/class/{id}`). Parked `roster_imports` card with **Open** / **Delete** stays office-only.
 
 Last pills: **Delete class** (type-the-name) for office/admin with `can(classes.delete)` only. Teachers never see **Delete class**.
 
-Header camera still goes to `/proposal`; roster intent still lands on the checklist.
+Header camera still goes to `/proposal`; roster intent still lands on the checklist (office add flow).
 
 ### 13.9 Family
 
@@ -3092,7 +3092,7 @@ Hairline `line` rule (height 56) sits between the last student and Unknown so th
 
 **No — never**
 
-- Home / Class roster `AvatarTray` (tap navigates)
+- Home `AvatarTray` (tap navigates). Students/setup has **no** `AvatarTray` — vertical enrolled list only
 - Parents tray, parent-child tray, classmate tray
 - Join-name picker (a student is choosing themselves)
 - Portrait / parent card / student card / roster-import checklists (those require a real person or a confirmed name)
