@@ -311,7 +311,7 @@ export default function AssignmentEditScreen() {
       .catch(() => setStudentLockedName('this student'));
   }, [lockedStudentId]);
 
-  usePushedTitle(creating ? 'Assign' : value.title.trim() || 'Assign');
+  usePushedTitle(creating ? 'Assignment' : value.title.trim() || 'Assignment');
 
   const applyKeyPhoto = async (uri: string, mimeType: string) => {
     if (!teacher) return;

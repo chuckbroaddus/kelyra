@@ -18,7 +18,7 @@ export default function GradeAssignScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   useAssignmentHeaderChrome();
-  usePushedTitle('Assign');
+  usePushedTitle('Assignment');
   const [value, setValue] = useState<AssignmentFormValue>(() => emptyAssignmentForm());
   const [packs, setPacks] = useState<LessonPackRow[]>([]);
   const [classes, setClasses] = useState<ClassRow[]>([]);
