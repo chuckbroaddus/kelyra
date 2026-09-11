@@ -16,6 +16,7 @@ import { MarqueeText } from '@/components/ui/MarqueeText';
 import { UnknownMark } from '@/components/ui/UnknownMark';
 import { radius, type } from '@/constants/theme';
 import { useSwipeRowOpen } from '@/lib/ui/swipeRowOpen';
+import { decideSwipeSnap, decideSwipeTerminate, SWIPE_TILE } from '@/lib/ui/swipeRowSnap';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type WorkPill = {
@@ -72,6 +73,7 @@ export function WorkRow({
   const x = useRef(new Animated.Value(0)).current;
   const start = useRef(0);
   const openOffset = useRef(0);
+  const grantFrom = useRef(0);
   const [swiping, setSwiping] = useState(false);
   const [open, setOpen] = useState(false);
   // test-hook: leadingRef/trailingRef keep PanResponder snap widths current across renders
@@ -94,6 +96,12 @@ export function WorkRow({
   };
 
   const snap = (to: number) => {
+    // Keep claim/tap logic aligned with the resting target even if a later
+    // gesture interrupts the timing callback (finished === false).
+    openOffset.current = to;
+    if (to !== 0) {
+      setOpen((prev) => (prev ? prev : true));
+    }
     Animated.timing(x, {
       toValue: to,
       duration: 160,
@@ -101,13 +109,14 @@ export function WorkRow({
     }).start(({ finished }) => {
       if (!finished) return;
       markOpen(to);
-      if (to === 0) setSwiping(false);
+      setSwiping(false);
     });
   };
 
   const responder = useRef(
     PanResponder.create({
       // When actions are open, claim early so stack back-gesture cannot steal LTR close.
+      // Tap-to-close is handled in onPanResponderRelease (Pressable never sees the press).
       onStartShouldSetPanResponder: () => openOffset.current !== 0,
       onStartShouldSetPanResponderCapture: () => openOffset.current !== 0,
       onMoveShouldSetPanResponder: (_, g) => {
@@ -127,60 +136,58 @@ export function WorkRow({
         x.stopAnimation((value) => {
           start.current = value;
           openOffset.current = value;
+          grantFrom.current = value;
         });
       },
       onPanResponderMove: (_, g) => {
         const leadActs = leadingRef.current;
         const trailActs = trailingRef.current;
-        const maxL = leadActs.length * 80;
-        const maxR = trailActs.length * 80;
+        const maxL = leadActs.length * SWIPE_TILE;
+        const maxR = trailActs.length * SWIPE_TILE;
         const next = start.current + g.dx;
-        // LTR disabled when no leading (maxL=0); open snap uses full −trailing.length * 80
+        // LTR disabled when no leading (maxL=0); open snap uses full −trailing.length * SWIPE_TILE
         const clamped = Math.max(-maxR, Math.min(maxL, next));
         openOffset.current = clamped;
         x.setValue(clamped);
       },
       onPanResponderRelease: (_, g) => {
-        const rowW = width.current || 320;
-        const offset = start.current + g.dx;
         const leadActs = leadingRef.current;
         const trailActs = trailingRef.current;
-        const maxL = leadActs.length * 80;
-        const maxR = trailActs.length * 80;
-        const full = Math.max(120, 0.4 * rowW);
-
-        if (offset > 0 && leadActs[0]) {
-          if (offset > full && leadActs[0].autoCommit) {
-            run(leadActs[0]);
+        const decision = decideSwipeSnap({
+          grantX: grantFrom.current,
+          offset: start.current + g.dx,
+          gesture: { dx: g.dx, dy: g.dy, vx: g.vx },
+          leadCount: leadActs.length,
+          trailCount: trailActs.length,
+          rowWidth: width.current || 320,
+        });
+        if (decision.kind === 'auto') {
+          const action = decision.side === 'lead' ? leadActs[0] : trailActs[0];
+          if (action?.autoCommit) {
+            run(action);
             return;
           }
-          snap(offset > 56 ? maxL : 0);
+          snap(decision.side === 'lead' ? leadActs.length * SWIPE_TILE : -trailActs.length * SWIPE_TILE);
           return;
         }
-        if (offset < 0 && trailActs[0]) {
-          if (offset < -full && trailActs[0].autoCommit) {
-            run(trailActs[0]);
-            return;
-          }
-          snap(offset < -56 ? -maxR : 0);
-          return;
-        }
-        snap(0);
+        snap(decision.to);
       },
       onPanResponderTerminate: () => {
-        const v = openOffset.current;
-        const maxL = leadingRef.current.length * 80;
-        const maxR = trailingRef.current.length * 80;
-        if (v < -56 && maxR) snap(-maxR);
-        else if (v > 56 && maxL) snap(maxL);
-        else snap(0);
+        snap(
+          decideSwipeTerminate(
+            openOffset.current,
+            leadingRef.current.length,
+            trailingRef.current.length,
+          ),
+        );
       },
     }),
   ).current;
 
   const onCardPress = () => {
     // Tap foreground while open closes actions only (no detail navigation).
-    if (openOffset.current !== 0) {
+    // Prefer openOffset; fall back to React `open` if a close snap already zeroed the ref.
+    if (openOffset.current !== 0 || open) {
       snap(0);
       return;
     }

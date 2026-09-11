@@ -8,6 +8,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { type } from '@/constants/theme';
 import { useSwipeRowOpen } from '@/lib/ui/swipeRowOpen';
+import { decideSwipeSnap, decideSwipeTerminate, SWIPE_TILE } from '@/lib/ui/swipeRowSnap';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type ListSwipeAction = {
@@ -67,6 +68,7 @@ export function ListRow({
   const x = useRef(new Animated.Value(0)).current;
   const start = useRef(0);
   const openOffset = useRef(0);
+  const grantFrom = useRef(0);
   const [swiping, setSwiping] = useState(false);
   const [open, setOpen] = useState(false);
   const swipable = leading.length + trailing.length > 0;
@@ -85,6 +87,10 @@ export function ListRow({
   };
 
   const snap = (to: number) => {
+    openOffset.current = to;
+    if (to !== 0) {
+      setOpen((prev) => (prev ? prev : true));
+    }
     Animated.timing(x, {
       toValue: to,
       duration: 160,
@@ -92,7 +98,7 @@ export function ListRow({
     }).start(({ finished }) => {
       if (!finished) return;
       markOpen(to);
-      if (to === 0) setSwiping(false);
+      setSwiping(false);
     });
   };
 
@@ -111,6 +117,7 @@ export function ListRow({
 
   const responder = useRef(
     PanResponder.create({
+      // Tap-to-close while open is handled in release — onStart claim steals from Pressable.
       onStartShouldSetPanResponder: () => openOffset.current !== 0,
       onStartShouldSetPanResponderCapture: () => openOffset.current !== 0,
       onMoveShouldSetPanResponder: (_, g) => {
@@ -131,55 +138,53 @@ export function ListRow({
         x.stopAnimation((value) => {
           start.current = value;
           openOffset.current = value;
+          grantFrom.current = value;
         });
       },
       onPanResponderMove: (_, g) => {
-        const maxL = leadingRef.current.length * 80;
-        const maxR = trailingRef.current.length * 80;
+        const maxL = leadingRef.current.length * SWIPE_TILE;
+        const maxR = trailingRef.current.length * SWIPE_TILE;
         const next = start.current + g.dx;
         const clamped = Math.max(-maxR, Math.min(maxL, next));
         openOffset.current = clamped;
         x.setValue(clamped);
       },
       onPanResponderRelease: (_, g) => {
-        const rowW = width.current || 320;
-        const offset = start.current + g.dx;
         const leadActs = leadingRef.current;
         const trailActs = trailingRef.current;
-        const maxL = leadActs.length * 80;
-        const maxR = trailActs.length * 80;
-        const full = Math.max(120, 0.4 * rowW);
-        if (offset > 0 && leadActs[0]) {
-          if (offset > full && leadActs[0].autoCommit) {
-            run(leadActs[0]);
+        const decision = decideSwipeSnap({
+          grantX: grantFrom.current,
+          offset: start.current + g.dx,
+          gesture: { dx: g.dx, dy: g.dy, vx: g.vx },
+          leadCount: leadActs.length,
+          trailCount: trailActs.length,
+          rowWidth: width.current || 320,
+        });
+        if (decision.kind === 'auto') {
+          const action = decision.side === 'lead' ? leadActs[0] : trailActs[0];
+          if (action?.autoCommit) {
+            run(action);
             return;
           }
-          snap(offset > 56 ? maxL : 0);
+          snap(decision.side === 'lead' ? leadActs.length * SWIPE_TILE : -trailActs.length * SWIPE_TILE);
           return;
         }
-        if (offset < 0 && trailActs[0]) {
-          if (offset < -full && trailActs[0].autoCommit) {
-            run(trailActs[0]);
-            return;
-          }
-          snap(offset < -56 ? -maxR : 0);
-          return;
-        }
-        snap(0);
+        snap(decision.to);
       },
       onPanResponderTerminate: () => {
-        const v = openOffset.current;
-        const maxL = leadingRef.current.length * 80;
-        const maxR = trailingRef.current.length * 80;
-        if (v < -56 && maxR) snap(-maxR);
-        else if (v > 56 && maxL) snap(maxL);
-        else snap(0);
+        snap(
+          decideSwipeTerminate(
+            openOffset.current,
+            leadingRef.current.length,
+            trailingRef.current.length,
+          ),
+        );
       },
     }),
   ).current;
 
   const onCardPress = () => {
-    if (openOffset.current !== 0) {
+    if (openOffset.current !== 0 || open) {
       snap(0);
       return;
     }

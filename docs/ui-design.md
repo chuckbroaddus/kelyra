@@ -920,8 +920,8 @@ Wrap `WorkRow` in a horizontal gesture (implement with `react-native` `Animated`
 **Open / close / back (standard for every swipeable `WorkRow` and `ListRow`).**
 
 1. **Open** — trailing swipe (RTL / swipe left) reveals actions; leading swipe when leading actions exist.
-2. **Close** — one opposite swipe (LTR when trailing is open) snaps the row closed **and must not** trigger React Navigation / Expo Router back. While `tx !== 0`, the row claims the horizontal gesture early (`onStartShouldSet` / capture) and refuses termination; the focused screen sets `gestureEnabled: false` / `fullScreenGestureEnabled: false` via `SwipeRowOpenProvider` until every row is closed.
-3. **Tap to close** — tap the foreground card/content (left of the revealed tiles) while open closes actions only. It does **not** navigate to detail unless the row is already closed and has an intentional `onPress`.
+2. **Close** — one opposite swipe (LTR when trailing is open) snaps the row closed **and must not** trigger React Navigation / Expo Router back. Close keys off direction/velocity from the grant offset (modest LTR / `vx`, or release past the open snap threshold), not “almost fully closed” absolute `x` alone — that avoided a jittery partial close that left actions stuck open. While `tx !== 0`, the row claims the horizontal gesture early (`onStartShouldSet` / capture) and refuses termination; the focused screen sets `gestureEnabled: false` / `fullScreenGestureEnabled: false` via `SwipeRowOpenProvider` until every row is closed.
+3. **Tap to close** — tap the foreground card/content (left of the revealed tiles) while open closes actions only. It does **not** navigate to detail unless the row is already closed and has an intentional `onPress`. Because the row claims `onStart` while open (to block stack back), the tap is resolved in the pan **release** path (`decideSwipeSnap` tap slop) as well as `Pressable` `onCardPress` when the press lands.
 4. **Back** — stack / edge back-gesture is allowed only after actions are closed. Chrome (header) back still works while open. A **second** LTR swipe after close may go back.
 
 **Inbox (`unassigned`)**
