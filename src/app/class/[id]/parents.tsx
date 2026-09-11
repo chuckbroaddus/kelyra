@@ -76,12 +76,10 @@ export default function ParentsScreen() {
     setPicked(allSelected ? [] : linked.map((parent) => parent.id));
   };
 
+  const overCap = picked.length > 11;
+
   const sendMessage = () => {
-    if (!picked.length) return;
-    if (picked.length > 11) {
-      setError('Group chats stay small. Pick at most 11 parents.');
-      return;
-    }
+    if (!picked.length || overCap) return;
     void (async () => {
       const { data } = await requireSupabase()
         .from('profiles')
@@ -207,13 +205,18 @@ export default function ParentsScreen() {
       {linked.length ? (
         messaging ? (
           <View style={styles.footer}>
+            {overCap ? (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Group chats stay small. Pick at most 11 parents.
+              </Text>
+            ) : null}
             <PrimaryButton
               label={
                 picked.length
                   ? `Message ${picked.length} parent${picked.length === 1 ? '' : 's'}`
                   : 'Message these parents'
               }
-              disabled={!picked.length}
+              disabled={!picked.length || overCap}
               onPress={sendMessage}
             />
           </View>

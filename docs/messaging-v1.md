@@ -143,8 +143,8 @@ Matcher still never inserts a student. Group membership uses existing enrollment
 
 1. Open mail. Existing 1:1 with a colleague still works. `@handle` still opens that thread.
 2. On a student’s page, **Message parents** opens (or creates) one group with that child’s linked parents. Send a line. Each parent sees it after sign-in on `/messages`.
-3. Class / Parents: tap rounded **Message these parents**, select three parents (or **Select all**), **Message 3 parents**. Cancel clears selection. Cannot select more than 11 for one group (blocked or warned).
-3b. Class / Students: tap rounded **Message these students**, select three students (or **Select all**), **Message 3 students**. Cancel on the Select all row clears selection. Cannot select more than 11 for one group (blocked or warned). Students without logins are refused the same way parents without logins are.
+3. Class / Parents: tap rounded **Message these parents**, select three parents (or **Select all**), **Message 3 parents**. Cancel clears selection. **Select all** may check everyone; if more than 11 are checked, **Message** stays disabled with adjacent copy **Group chats stay small. Pick at most 11 parents.** (no buried-only error).
+3b. Class / Students: tap rounded **Message these students**, select three students (or **Select all**), **Message 3 students**. Cancel on the Select all row clears selection. Same 11-cap UX as Parents (Select all allowed; Message disabled + adjacent **Pick at most 11 students** helper). Students without logins are refused the same way parents without logins are.
 4. On that student’s practice, **Share in a message**. Card appears. **Notify parent(s)** is on. Send. Parent opens the card in-app to the practice — no browser URL. Score unchanged. Approve/Assign still required to put work on the books.
 5. Class page **Post to class**. Parents of that class see it on the feed. Replies stay under the post. Mail list does not grow by 200 threads.
 6. Super **Post to school** and one **Alert**. Alert shows on the bell next to existing Needs you rows. Mail icon still means chat.

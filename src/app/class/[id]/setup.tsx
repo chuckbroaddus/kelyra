@@ -354,12 +354,10 @@ export default function SetupScreen() {
     setPicked(allSelected ? [] : roster.map((student) => student.id));
   };
 
+  const overCap = picked.length > 11;
+
   const sendMessage = () => {
-    if (!picked.length) return;
-    if (picked.length > 11) {
-      setError('Group chats stay small. Pick at most 11 students.');
-      return;
-    }
+    if (!picked.length || overCap) return;
     void (async () => {
       const { data } = await requireSupabase()
         .from('profiles')
@@ -592,13 +590,18 @@ export default function SetupScreen() {
       {roster.length ? (
         messaging ? (
           <View style={styles.footer}>
+            {overCap ? (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Group chats stay small. Pick at most 11 students.
+              </Text>
+            ) : null}
             <PrimaryButton
               label={
                 picked.length
                   ? `Message ${picked.length} student${picked.length === 1 ? '' : 's'}`
                   : 'Message these students'
               }
-              disabled={!picked.length}
+              disabled={!picked.length || overCap}
               onPress={sendMessage}
             />
           </View>
