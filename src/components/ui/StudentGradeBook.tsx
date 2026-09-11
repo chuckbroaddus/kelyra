@@ -30,10 +30,12 @@ import {
 } from '@/lib/gradebook/api';
 import { loadParentClassAverageExplain, loadStudentClassAverageExplain } from '@/lib/syllabus/api';
 import type { PublishedFamilySyllabus } from '@/lib/syllabus/api';
-import type {
-  AverageAssignment,
-  MissingUpcomingItem,
-  SyllabusAverageResult,
+import {
+  coerceIncludeInAverage,
+  familyFacingCategoryLabel,
+  type AverageAssignment,
+  type MissingUpcomingItem,
+  type SyllabusAverageResult,
 } from '@/lib/grade/syllabusAverage';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -250,18 +252,18 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       ? (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label
       : undefined;
     // Accurate or omit — never invent user-facing "other".
-    const categoryLabel =
-      syllabusLabel ??
-      (categoryKey && categoryKey.toLowerCase() !== 'other' ? categoryKey : null);
+    const categoryLabel = familyFacingCategoryLabel(categoryKey, syllabusLabel);
     const roomName =
       classLabel ??
       book.classes.find((room) => room.classId === row.assignment!.class_id)?.className ??
       null;
     const cell = gradeCell(book, row.assignment.id, student.id);
-    const includeKnown =
-      typeof (explainRow?.include_in_average ?? row.assignment.include_in_average) === 'boolean'
-        ? (explainRow?.include_in_average ?? row.assignment.include_in_average)
-        : undefined;
+    const includeKnown = coerceIncludeInAverage(
+      explainRow?.include_in_average ?? row.assignment.include_in_average,
+    );
+    // Sanitized key for role helper: omit invented "other"; syllabus chip uses categoryLabel separately.
+    const assignmentCategory =
+      categoryKey && String(categoryKey).toLowerCase() !== 'other' ? categoryKey : null;
     setDetail({
       title: row.assignment.title,
       className: roomName,
@@ -269,17 +271,11 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       dueAt: explainRow?.due_at ?? row.assignment.due_at ?? null,
       // Wire only family-safe submissions.submitted_at — never approved_at; leave per-assignment family note unset.
       submittedAt: cell.submittedAt ?? null,
-      assignment: explainRow
-        ? {
-            id: explainRow.id,
-            category: explainRow.category,
-            include_in_average: explainRow.include_in_average,
-          }
-        : {
-            id: row.assignment.id,
-            category: categoryKey && categoryKey.toLowerCase() !== 'other' ? categoryKey : null,
-            include_in_average: includeKnown,
-          },
+      assignment: {
+        id: explainRow?.id ?? row.assignment.id,
+        category: assignmentCategory,
+        include_in_average: includeKnown,
+      },
       cell,
     });
   };

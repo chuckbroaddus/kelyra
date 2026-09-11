@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  coerceIncludeInAverage,
   computeSyllabusAverage,
   familyAssignmentRoleLabels,
+  familyFacingCategoryLabel,
   partitionMissingUpcoming,
   type AverageAssignment,
   type AverageCell,
@@ -420,4 +422,43 @@ test('F-13 familyAssignmentRoleLabels: unknown include omits Counts (fail-closed
 
   const excluded = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: false, category: 'homework' }, 'Homework');
   assert.deepEqual(excluded, [{ kind: 'does_not_count' }]);
+});
+
+test('FAD: coerceIncludeInAverage — only explicit boolean', () => {
+  assert.equal(coerceIncludeInAverage(true), true);
+  assert.equal(coerceIncludeInAverage(false), false);
+  assert.equal(coerceIncludeInAverage(undefined), undefined);
+  assert.equal(coerceIncludeInAverage(null), undefined);
+  assert.equal(coerceIncludeInAverage('true'), undefined);
+  assert.equal(coerceIncludeInAverage(1), undefined);
+});
+
+test('FAD: familyFacingCategoryLabel — unknown/other omit; syllabus label wins', () => {
+  assert.equal(familyFacingCategoryLabel(undefined), null);
+  assert.equal(familyFacingCategoryLabel(null), null);
+  assert.equal(familyFacingCategoryLabel(''), null);
+  assert.equal(familyFacingCategoryLabel('other'), null);
+  assert.equal(familyFacingCategoryLabel('Other'), null);
+  assert.equal(familyFacingCategoryLabel('homework'), 'homework');
+  assert.equal(familyFacingCategoryLabel('other', 'Other'), 'Other');
+  assert.equal(familyFacingCategoryLabel('homework', 'Homework'), 'Homework');
+  assert.equal(familyFacingCategoryLabel(null, '  Quizzes  '), 'Quizzes');
+});
+
+test('FAD: unknown category never invents Counts label "other"', () => {
+  const unknownKey = familyAssignmentRoleLabels(
+    null,
+    { id: 'a1', include_in_average: true, category: null },
+    null,
+  );
+  assert.deepEqual(unknownKey, [{ kind: 'counts', categoryLabel: 'the class' }]);
+  assert.ok(!unknownKey.some((l) => l.kind === 'counts' && /other/i.test(l.categoryLabel)));
+
+  const otherKey = familyAssignmentRoleLabels(
+    null,
+    { id: 'a1', include_in_average: true, category: 'other' },
+    familyFacingCategoryLabel('other'),
+  );
+  assert.deepEqual(otherKey, [{ kind: 'counts', categoryLabel: 'the class' }]);
+  assert.ok(!JSON.stringify(otherKey).toLowerCase().includes('"other"'));
 });

@@ -219,6 +219,27 @@ export type FamilyAssignmentRoleLabel =
   | { kind: 'replaced'; note?: string }
   | { kind: 'makeup' };
 
+/** Explicit boolean only — unknown/null/undefined stay unknown (never !== false). */
+export function coerceIncludeInAverage(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+/**
+ * Family-facing category chip: syllabus label when known; else raw key.
+ * Unknown / invented key "other" → omit (accurate-or-omit).
+ */
+export function familyFacingCategoryLabel(
+  categoryKey: string | null | undefined,
+  syllabusLabel?: string | null,
+): string | null {
+  const label = syllabusLabel?.trim();
+  if (label) return label;
+  const key = (categoryKey ?? '').trim();
+  if (!key) return null;
+  if (key.toLowerCase() === 'other') return null;
+  return key;
+}
+
 /** S-G4 / P-G4 labels from engine contributions + assignment include flag. */
 export function familyAssignmentRoleLabels(
   average: SyllabusAverageResult | null | undefined,
@@ -232,7 +253,7 @@ export function familyAssignmentRoleLabels(
   if (!assignment) return labels;
 
   // Fail-closed: unknown include → omit Counts / Does not count (never default-true).
-  const include = assignment.include_in_average;
+  const include = coerceIncludeInAverage(assignment.include_in_average);
   if (include === true) {
     const raw = categoryLabel?.trim() || (assignment.category ?? '').trim();
     const catLabel = raw && raw.toLowerCase() !== 'other' ? raw : 'the class';

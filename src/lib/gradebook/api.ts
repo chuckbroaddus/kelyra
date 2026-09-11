@@ -9,6 +9,7 @@ import { loadStudentSession } from '@/lib/student-session/api';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { AssignmentKind, AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
+import { familySubmittedAt } from '@/lib/gradebook/familyDetailFields';
 
 export type GradeCell = {
   status: SubmissionRow['status'] | null;
@@ -146,7 +147,7 @@ function mapGradebookRows(
         kind: asKind(row.kind),
         // Family RPC never returns answers; student path may keep lesson labels.
         answers: includeAnswers ? (row.answers ?? null) : null,
-        submittedAt: row.submitted_at ?? null,
+        submittedAt: familySubmittedAt(row.submitted_at),
       };
     }
   }
@@ -327,3 +328,5 @@ async function backfillApprovedCaptures(classId: string) {
     }
   }
 }
+
+export { familySubmittedAt } from '@/lib/gradebook/familyDetailFields';
