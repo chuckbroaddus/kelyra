@@ -23,7 +23,7 @@ import {
   renameParent,
   type ClassParent,
 } from '@/lib/parents/api';
-import { birthdayForSave } from '@/lib/date/iso';
+import { prepareAskStudentBirthday } from '@/lib/ai/askStudentBirthday';
 import { PARENT_DETAIL_FIELDS, STUDENT_DETAIL_FIELDS, metaString } from '@/lib/people/metadata';
 import { uploadProfilePhoto } from '@/lib/people/photos';
 import { getFollowUpDraft } from '@/lib/practice/followUp';
@@ -744,11 +744,11 @@ const TOOLS: Record<string, AskToolSpec> = {
         const value = str(args, key);
         if (!value) continue;
         if (key === 'birthday') {
-          const result = birthdayForSave(value);
-          if (!result.ok) return { error: result.error };
-          if (!result.value) continue;
-          next = await patchStudentMetadata(next, key, result.value);
-          saved[key] = result.value;
+          const prep = prepareAskStudentBirthday(value);
+          if (prep.action === 'error') return { error: prep.error };
+          if (prep.action === 'skip') continue;
+          next = await patchStudentMetadata(next, key, prep.value);
+          saved[key] = prep.value;
           continue;
         }
         next = await patchStudentMetadata(next, key, value);

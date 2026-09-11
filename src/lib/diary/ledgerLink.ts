@@ -40,38 +40,100 @@ export function ledgerDeepLinkHref(row: LedgerEventRow): string | null {
   return null;
 }
 
+/** Minimal PostgREST-shaped client for stillPermitted (real Supabase or unit stub). */
+export type LedgerLinkDb = {
+  from: (table: string) => LedgerLinkTable;
+};
+
+type LedgerLinkTable = {
+  select: (cols: string) => LedgerLinkFilter;
+};
+
+type LedgerLinkFilter = {
+  eq: (col: string, val: string) => LedgerLinkFilter;
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: unknown }>;
+};
+
+type ProbeOk = { ok: true; row: Record<string, unknown> };
+type ProbeFail = { ok: false };
+
+async function probe(
+  db: LedgerLinkDb,
+  table: string,
+  cols: string,
+  filters: Array<[string, string]>,
+): Promise<ProbeOk | ProbeFail> {
+  let q: LedgerLinkFilter = db.from(table).select(cols);
+  for (const [col, val] of filters) {
+    q = q.eq(col, val);
+  }
+  const { data, error } = await q.maybeSingle();
+  if (error || !data || typeof data.id !== 'string' || !data.id) return { ok: false };
+  return { ok: true, row: data };
+}
+
 /**
  * Confirm the linked entity is still readable for this seat (RLS).
- * Fail closed: missing href, deleted row, or forbidden → false. Never throws.
+ * Fail closed: missing href, deleted row, forbidden, or class_id mismatch → false.
+ * When classId is present, entity probes re-bind to that class (assignments.class_id,
+ * submissions → assignments.class_id, students → enrollments). Never throws.
+ *
+ * @param db optional injectable client (unit tests); defaults to requireSupabase().
  */
-export async function ledgerDeepLinkStillPermitted(row: LedgerEventRow): Promise<boolean> {
+export async function ledgerDeepLinkStillPermitted(
+  row: LedgerEventRow,
+  db?: LedgerLinkDb,
+): Promise<boolean> {
   const href = ledgerDeepLinkHref(row);
   if (!href) return false;
   try {
-    const { requireSupabase } = await import('@/lib/supabase/client');
-    const db = requireSupabase();
+    const client =
+      db ??
+      ((await import('@/lib/supabase/client')).requireSupabase() as unknown as LedgerLinkDb);
     const classId = row.class_id?.trim() || null;
     const entityId = row.entity_id?.trim() || null;
     const studentId = row.student_id?.trim() || null;
     const type = row.entity_type?.trim() || null;
 
     if (classId) {
-      const { data: klass, error } = await db.from('classes').select('id').eq('id', classId).maybeSingle();
-      if (error || !klass?.id) return false;
+      const klass = await probe(client, 'classes', 'id', [['id', classId]]);
+      if (!klass.ok) return false;
     }
 
     if (type === 'assignment' && entityId) {
-      const { data, error } = await db.from('assignments').select('id').eq('id', entityId).maybeSingle();
-      return Boolean(!error && data?.id);
+      const filters: Array<[string, string]> = [['id', entityId]];
+      if (classId) filters.push(['class_id', classId]);
+      const hit = await probe(client, 'assignments', 'id', filters);
+      return hit.ok;
     }
+
     if (type === 'submission' && entityId) {
-      const { data, error } = await db.from('submissions').select('id').eq('id', entityId).maybeSingle();
-      return Boolean(!error && data?.id);
+      // submissions have no class_id — re-bind via parent assignment when classId present
+      const sub = await probe(client, 'submissions', 'id, assignment_id', [['id', entityId]]);
+      if (!sub.ok) return false;
+      if (!classId) return true;
+      const assignmentId = typeof sub.row.assignment_id === 'string' ? sub.row.assignment_id : '';
+      if (!assignmentId) return false;
+      const asg = await probe(client, 'assignments', 'id', [
+        ['id', assignmentId],
+        ['class_id', classId],
+      ]);
+      return asg.ok;
     }
+
     if ((type === 'student' || type === 'capture' || (!type && studentId)) && studentId) {
-      const { data, error } = await db.from('students').select('id').eq('id', studentId).maybeSingle();
-      return Boolean(!error && data?.id);
+      if (classId) {
+        // Soft student pointer is never ACL — enrollment bind is defense-in-depth only
+        const enr = await probe(client, 'enrollments', 'id', [
+          ['student_id', studentId],
+          ['class_id', classId],
+        ]);
+        return enr.ok;
+      }
+      const stu = await probe(client, 'students', 'id', [['id', studentId]]);
+      return stu.ok;
     }
+
     if (type === 'class' || type === 'syllabus' || row.action_family === 'syllabus') {
       return Boolean(classId);
     }

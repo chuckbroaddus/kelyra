@@ -1,6 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -184,15 +182,8 @@ test('birthdayUnchanged treats matching raw/ISO as unchanged for name-only save'
   assert.equal(birthdayUnchanged('2018-01-01', '2017-03-14'), false);
 });
 
-test('Ask update_student routes birthday through birthdayForSave before patch', () => {
-  const ask = readFileSync(resolve('src/lib/ai/askTools.ts'), 'utf8');
-  const toolStart = ask.indexOf('update_student: {');
-  const toolEnd = ask.indexOf('create_class:', toolStart);
-  assert.ok(toolStart > 0 && toolEnd > toolStart);
-  const tool = ask.slice(toolStart, toolEnd);
-  assert.match(tool, /birthdayForSave/);
-  const guard = tool.indexOf('birthdayForSave(');
-  const patch = tool.indexOf("patchStudentMetadata(next, key, result.value)");
-  assert.ok(guard > 0 && patch > guard, 'birthdayForSave must guard before patchStudentMetadata');
-  assert.match(tool, /if \(!result\.ok\) return \{ error: result\.error \}/);
+test('Ask update_student birthday branch is covered by prepareAskStudentBirthday (behavioral)', () => {
+  // Behavioral Ask birthday coverage lives in src/lib/ai/askStudentBirthday.test.ts
+  // (prepareAskStudentBirthday + askTools wiring). Keep birthdayForSave range tests here.
+  assert.equal(typeof birthdayForSave, 'function');
 });
