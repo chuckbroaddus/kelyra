@@ -131,3 +131,21 @@ test('CT-09: every class desk pane collapses ClassTabs like Feed (§9.6)', () =>
   assert.match(docs, /Canonical reference: class Feed/);
   assert.match(docs, /Screen collapse=/);
 });
+
+
+test('CT-10: collapse restore wiring — begin-drag reveal + dock-style absolute chrome', () => {
+  const provider = read('src/lib/chrome/ChromeProvider.tsx');
+  assert.match(provider, /onScrollBeginDrag/);
+  assert.match(provider, /revealFromTopDrag|stepHideOnScroll/);
+
+  const chrome = read('src/components/ui/CollapsingPageChrome.tsx');
+  assert.match(chrome, /position:\s*['"]absolute['"]|styles\.bodyAbs/);
+
+  const feedPane = read('src/components/ui/FeedPane.tsx');
+  assert.match(feedPane, /onScrollBeginDrag/);
+  assert.match(feedPane, /alwaysBounceVertical/);
+
+  const screen = read('src/components/ui/Screen.tsx');
+  assert.match(screen, /onScrollBeginDrag/);
+  assert.match(screen, /alwaysBounceVertical/);
+});
