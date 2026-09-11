@@ -18,7 +18,7 @@ export type SwipeSnapGesture = {
 };
 
 export type SwipeSnapArgs = {
-  /** translateX when the gesture was granted (after stopAnimation). */
+  /** translateX when the gesture was granted (sync currentX, not stopAnimation cb). */
   grantX: number;
   /** Unclamped grantX + dx at release. */
   offset: number;
@@ -82,11 +82,31 @@ export function decideSwipeSnap(args: SwipeSnapArgs): SwipeSnapResult {
   return { kind: 'snap', to: 0 };
 }
 
-/** After a stolen/terminated gesture, snap to nearest resting open or closed. */
-export function decideSwipeTerminate(openOffset: number, leadCount: number, trailCount: number): number {
+/**
+ * After a stolen/terminated gesture, snap to nearest resting open or closed.
+ * If the finger was clearly closing (positive dx from trailing-open, or negative
+ * from leading-open), prefer shut so a stack-gesture steal does not re-open.
+ */
+export function decideSwipeTerminate(
+  openOffset: number,
+  leadCount: number,
+  trailCount: number,
+  closingDx = 0,
+): number {
   const maxL = leadCount * SWIPE_TILE;
   const maxR = trailCount * SWIPE_TILE;
+  if (openOffset < 0 && closingDx > CLOSE_DX_PX / 2) return 0;
+  if (openOffset > 0 && closingDx < -CLOSE_DX_PX / 2) return 0;
   if (openOffset < -SNAP_OPEN_PX && maxR) return -maxR;
   if (openOffset > SNAP_OPEN_PX && maxL) return maxL;
   return 0;
+}
+
+/**
+ * Synchronous grant baseline: stop the spring/timing without waiting on the
+ * async stopAnimation(value) callback (which can land after move/release and
+ * rewrite `start` mid-gesture → jitter).
+ */
+export function syncGrantFromCurrentX(currentX: number): number {
+  return currentX;
 }

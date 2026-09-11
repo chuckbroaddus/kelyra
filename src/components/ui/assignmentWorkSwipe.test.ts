@@ -45,6 +45,10 @@ test('WorkRow claims gesture while open and tap closes without navigating', () =
   assert.match(src, /useSwipeRowOpen\(open\)/);
   assert.match(src, /decideSwipeSnap/);
   assert.match(src, /grantFrom/);
+  assert.match(src, /syncGrantFromCurrentX/);
+  assert.match(src, /currentX\.current/);
+  assert.match(src, /x\.stopAnimation\(\)/);
+  assert.doesNotMatch(src, /x\.stopAnimation\(\s*\(value\)/);
   // Tap-to-close: Pressable path + pan-release path (onStart steals from Pressable)
   assert.match(src, /openOffset\.current !== 0 \|\| open/);
   assert.match(src, /colors\.dangerBrick/);
@@ -58,6 +62,10 @@ test('ListRow shares open-claim, tap-to-close, and dangerBrick Delete tiles', ()
   assert.match(src, /useSwipeRowOpen\(open && swipable\)/);
   assert.match(src, /decideSwipeSnap/);
   assert.match(src, /grantFrom/);
+  assert.match(src, /syncGrantFromCurrentX/);
+  assert.match(src, /currentX\.current/);
+  assert.match(src, /x\.stopAnimation\(\)/);
+  assert.doesNotMatch(src, /x\.stopAnimation\(\s*\(value\)/);
   assert.match(src, /openOffset\.current !== 0 \|\| open/);
   assert.match(src, /colors\.dangerBrick/);
   assert.match(src, /leadingRef\.current = leading/);
@@ -80,11 +88,15 @@ test('AppShell mounts SwipeRowOpenProvider', () => {
 
 test('swipeRowOpen disables stack gesture while any row is open', () => {
   const src = read('src/lib/ui/swipeRowOpen.tsx');
-  assert.match(src, /gestureEnabled:\s*false/);
-  assert.match(src, /fullScreenGestureEnabled:\s*false/);
-  assert.match(src, /gestureEnabled:\s*true/);
+  const gestures = read('src/lib/ui/swipeRowStackGestures.ts');
   assert.match(src, /export function useSwipeRowOpen/);
   assert.match(src, /export function SwipeRowOpenProvider/);
+  assert.match(src, /setSwipeRowStackGestures\(navigation as SwipeRowNavLike, false\)/);
+  assert.match(src, /setSwipeRowStackGestures\(navigation as SwipeRowNavLike, true\)/);
+  assert.match(gestures, /export function setSwipeRowStackGestures/);
+  assert.match(gestures, /getParent/);
+  assert.match(gestures, /gestureEnabled:\s*enabled/);
+  assert.match(gestures, /fullScreenGestureEnabled:\s*enabled/);
 });
 
 test('ui-design documents swipe close / tap / back and dangerBrick', () => {
@@ -96,6 +108,7 @@ test('ui-design documents swipe close / tap / back and dangerBrick', () => {
   assert.match(src, /must not.*trigger React Navigation/i);
   assert.match(src, /SwipeRowOpenProvider/);
   assert.match(src, /second.*LTR swipe after close/i);
+  assert.match(src, /parent stack/i);
 });
 
 test('swipeRowSnap encodes tap-to-close and directional LTR close', () => {

@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { setSwipeRowStackGestures, type SwipeRowNavLike } from '@/lib/ui/swipeRowStackGestures';
+
 type Gate = {
   reportOpen: (id: string, open: boolean) => void;
   anyOpen: boolean;
@@ -47,9 +49,10 @@ export function useSwipeRowsAnyOpen(): boolean {
 }
 
 /**
- * While any registered swipe row is open, disable the focused screen's interactive
- * pop / full-screen back gesture so an LTR close swipe is not stolen by React
- * Navigation. Chrome (header) back stays available. Restores when the last row closes.
+ * While any registered swipe row is open, disable interactive pop / full-screen
+ * back on the focused screen and parent stacks so an LTR close swipe is not
+ * stolen by React Navigation. Chrome (header) back stays available. Restores
+ * when the last row closes.
  */
 export function useSwipeRowOpen(open: boolean): void {
   const id = useId();
@@ -68,20 +71,14 @@ export function useSwipeRowOpen(open: boolean): void {
     if (block) {
       if (!held.current) {
         held.current = true;
-        navigation.setOptions({
-          gestureEnabled: false,
-          fullScreenGestureEnabled: false,
-        });
+        setSwipeRowStackGestures(navigation as SwipeRowNavLike, false);
       }
       return;
     }
 
     if (held.current) {
       held.current = false;
-      navigation.setOptions({
-        gestureEnabled: true,
-        fullScreenGestureEnabled: true,
-      });
+      setSwipeRowStackGestures(navigation as SwipeRowNavLike, true);
     }
   }, [gate, gate?.anyOpen, open, navigation]);
 
@@ -89,14 +86,7 @@ export function useSwipeRowOpen(open: boolean): void {
     return () => {
       if (!held.current) return;
       held.current = false;
-      try {
-        navigation.setOptions({
-          gestureEnabled: true,
-          fullScreenGestureEnabled: true,
-        });
-      } catch {
-        // Screen may already be unmounted.
-      }
+      setSwipeRowStackGestures(navigation as SwipeRowNavLike, true);
     };
   }, [navigation]);
 }
