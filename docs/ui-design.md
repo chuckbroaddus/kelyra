@@ -143,20 +143,20 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 Every signed-in screen uses this exact header. It is not the React Navigation stack title.
 
 ```
-[ logo 22 + Wordmark (flex, left, marquee) ]   [ camera 44 ] [ search 44 ] [ messages 44 ] [ ☰ 44 ]
+[ logo (header bar + 12) + Wordmark (flex, left, marquee) ]   [ camera 44 ] [ search 44 ] [ messages 44 ] [ ☰ 44 ]
 ```
 
 **Superseded 2026-08-21.** Old slots were camera · search · bell, and search replaced the title with Cancel. See §34. Current recipe:
 
 | Slot | Size | Who sees it | Action |
 |---|---|---|---|
-| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. **School logo** 22×22 contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
+| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. **School logo** same size as the Ask Kelyra mark (`header bar + 12` square in a slot of width `markSize` / height bar), contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
 | Camera | 44 × 44, `capture` icon | **Teacher only**, hidden while search is open | Opens the device camera, then `/proposal` (§14) |
 | Search | 44 × 44, `search` glyph | Teacher, student, parent | Icon slides left; a field slides out from it (§34). Results on `/search` |
 | Messages | 44 × 44, `mail` glyph | Teacher, student, parent | Pushes `/messages`. Red count badge = **unread alerts**, same as the old bell. Hidden at 0 |
 | Hamburger | 44 × 44, 3-line `menu` icon, `ink`, **far right** | Teacher, student, parent | Opens the left drawer (§3.3, two-phase §34). Hidden on pushed screens |
 
-Wordmark starts on the left. When the school has a logo, that **logo** (not an icon) sits 22×22 immediately left of the wordmark for student, parent, teacher, and office. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**. Pushed screens keep the school **logo** immediately right of Back.
+Wordmark starts on the left. When the school has a logo, that **logo** (not an icon) sits at Ask Kelyra mark size (`header bar + 12`, same slot geometry) immediately left of the wordmark for student, parent, teacher, and office. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**. Pushed screens keep the school **logo** immediately right of Back.
 
 On student / parent the camera slot is omitted; search sits immediately left of messages.
 
@@ -3965,7 +3965,7 @@ Top → bottom: **Feed** · **Classes** · **People** · **Manage** · **Ask**. 
 
 **Manage pane** (not the tray): superintendent **School name** + **School logo**, school feed icon, **Activity**, **Responsibilities** (superintendent), and staff **dismissal / curb / Ride office** entry rows (e.g. “Dismissal curb”) — Manage altitude, **not** a sixth office tray tab. One `ListRow` stack, each with a 36 leading glyph so titles line up; curb row uses IconName **`ride`** when that surface ships (`notes/company/ride-icon-decision.md`). No People row. No Messages row. Parent hat may still show **My children**. `manage` is three slider tracks with knobs — not the Settings cog and not the schoolhouse. `/?tab=school` still opens this pane.
 
-Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The **school logo** (uploaded mark, circular punch) stays **upper left** on every signed-in header (22×22 contain) — student, parent, teacher, office — including while search is open. Do not draw `feedSchool` or any other glyph in that slot. Back still leads on pushed screens; the logo sits immediately after it.
+Header on school home (`/`): the saved school name (fallback `School`). Other screens keep their own titles. The **school logo** (uploaded mark, circular punch) stays **upper left** on every signed-in header (Ask Kelyra mark size: `header bar + 12` contain) — student, parent, teacher, office — including while search is open. Do not draw `feedSchool` or any other glyph in that slot. Back still leads on pushed screens; the logo sits immediately after it.
 
 **People pane:** nested Staff · Parents · Students. Create-account is not a fourth people tab.
 
