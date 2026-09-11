@@ -30,10 +30,12 @@ import {
 } from '@/lib/gradebook/api';
 import { loadParentClassAverageExplain, loadStudentClassAverageExplain } from '@/lib/syllabus/api';
 import type { PublishedFamilySyllabus } from '@/lib/syllabus/api';
-import type {
-  AverageAssignment,
-  MissingUpcomingItem,
-  SyllabusAverageResult,
+import {
+  coerceIncludeInAverage,
+  familyFacingCategoryLabel,
+  type AverageAssignment,
+  type MissingUpcomingItem,
+  type SyllabusAverageResult,
 } from '@/lib/grade/syllabusAverage';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -246,23 +248,35 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
     if (row.kind !== 'assignment' || !row.assignment) return;
     const explainRow = explainAssignments.find((item) => item.id === row.assignment!.id);
     const categoryKey = explainRow?.category ?? row.assignment.category ?? null;
-    const categoryLabel =
-      (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label ?? categoryKey;
+    const syllabusLabel = categoryKey
+      ? (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label
+      : undefined;
+    // Accurate or omit — never invent user-facing "other".
+    const categoryLabel = familyFacingCategoryLabel(categoryKey, syllabusLabel);
     const roomName =
       classLabel ??
       book.classes.find((room) => room.classId === row.assignment!.class_id)?.className ??
       null;
+    const cell = gradeCell(book, row.assignment.id, student.id);
+    const includeKnown = coerceIncludeInAverage(
+      explainRow?.include_in_average ?? row.assignment.include_in_average,
+    );
+    // Sanitized key for role helper: omit invented "other"; syllabus chip uses categoryLabel separately.
+    const assignmentCategory =
+      categoryKey && String(categoryKey).toLowerCase() !== 'other' ? categoryKey : null;
     setDetail({
       title: row.assignment.title,
       className: roomName,
       categoryLabel,
       dueAt: explainRow?.due_at ?? row.assignment.due_at ?? null,
-      assignment: explainRow ?? {
-        id: row.assignment.id,
-        category: categoryKey ?? 'other',
-        include_in_average: row.assignment.include_in_average,
+      // Wire only family-safe submissions.submitted_at — never approved_at; leave per-assignment family note unset.
+      submittedAt: cell.submittedAt ?? null,
+      assignment: {
+        id: explainRow?.id ?? row.assignment.id,
+        category: assignmentCategory,
+        include_in_average: includeKnown,
       },
-      cell: gradeCell(book, row.assignment.id, student.id),
+      cell,
     });
   };
 

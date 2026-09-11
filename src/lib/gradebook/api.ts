@@ -9,6 +9,7 @@ import { loadStudentSession } from '@/lib/student-session/api';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { AssignmentKind, AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
+import { familySubmittedAt } from '@/lib/gradebook/familyDetailFields';
 
 export type GradeCell = {
   status: SubmissionRow['status'] | null;
@@ -17,6 +18,8 @@ export type GradeCell = {
   submissionId: string | null;
   kind?: AssignmentKind | null;
   answers?: Record<string, unknown> | null;
+  /** Family-safe turned-in stamp from submissions.submitted_at — never approved_at. */
+  submittedAt?: string | null;
 };
 
 export type Gradebook = {
@@ -88,11 +91,15 @@ type GradebookRpcRow = {
   section: string | null;
   term: string | null;
   created_at: string;
+  due_at?: string | null;
+  category?: string | null;
+  include_in_average?: boolean | null;
   submission_id: string | null;
   status: SubmissionRow['status'] | null;
   approved_score: number | null;
   score_mark: string | null;
   answers?: Record<string, unknown> | null;
+  submitted_at?: string | null;
 };
 
 function mapGradebookRows(
@@ -121,12 +128,14 @@ function mapGradebookRows(
         kind: asKind(row.kind),
         capture_id: null,
         practice_set_id: null,
-        due_at: null,
+        due_at: row.due_at ?? null,
         max_score: null,
         created_at: row.created_at,
         unit: row.unit ?? null,
         section: row.section ?? null,
         term: parseGradeTerm(row.term),
+        category: row.category ?? undefined,
+        include_in_average: typeof row.include_in_average === 'boolean' ? row.include_in_average : undefined,
       });
     }
     if (row.assignment_id) {
@@ -138,6 +147,7 @@ function mapGradebookRows(
         kind: asKind(row.kind),
         // Family RPC never returns answers; student path may keep lesson labels.
         answers: includeAnswers ? (row.answers ?? null) : null,
+        submittedAt: familySubmittedAt(row.submitted_at),
       };
     }
   }
@@ -156,7 +166,7 @@ export async function loadStudentGradebook(): Promise<StudentGradebook> {
   const { data, error } = await requireSupabase().rpc('student_gradebook');
   if (error) {
     if (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? '')) {
-      throw new Error('Paste supabase/migrations/20260825000006_grade_terms.sql in the Supabase SQL editor, then open Grades again.');
+      throw new Error('Paste supabase/migrations/20260911000000_family_gradebook_detail_fields.sql in the Supabase SQL editor, then open Grades again.');
     }
     throw new Error(error.message || 'Could not load grades');
   }
@@ -181,7 +191,7 @@ export async function loadFamilyStudentGradebook(
   if (error) {
     if (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? '')) {
       throw new Error(
-        'Paste supabase/migrations/20260910000004_family_student_gradebook.sql in the Supabase SQL editor, then open Grades again.',
+        'Paste supabase/migrations/20260911000000_family_gradebook_detail_fields.sql in the Supabase SQL editor, then open Grades again.',
       );
     }
     throw new Error(error.message || 'Could not load grades');
@@ -318,3 +328,5 @@ async function backfillApprovedCaptures(classId: string) {
     }
   }
 }
+
+export { familySubmittedAt } from '@/lib/gradebook/familyDetailFields';
