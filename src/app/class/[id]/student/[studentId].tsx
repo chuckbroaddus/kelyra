@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { Avatar } from '@/components/ui/Avatar';
@@ -9,6 +9,7 @@ import { Badge, captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { DateInput } from '@/components/ui/DateInput';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
@@ -67,9 +68,14 @@ import {
   STUDENT_DETAIL_FIELDS,
   formatBirthdayMd,
   metaString,
-  parseBirthdayInput,
   setMetaKey,
 } from '@/lib/people/metadata';
+import {
+  birthdayForSave,
+  birthdayUnchanged,
+  coerceBirthdayISO,
+  formatLocaleDate,
+} from '@/lib/date/iso';
 import {
   clearProfilePhoto,
   pickAndSetProfilePhoto,
@@ -365,7 +371,10 @@ export default function StudentScreen() {
       display_name: student.display_name,
     };
     for (const field of STUDENT_DETAIL_FIELDS) {
-      next[field.key] = metaString(student.metadata, field.key) ?? '';
+      const stored = metaString(student.metadata, field.key) ?? '';
+      // Prefer ISO in draft so DateInput can display; keep unparsable raw for save guard.
+      next[field.key] =
+        field.key === 'birthday' ? coerceBirthdayISO(stored) ?? stored : stored;
     }
     setDraft(next);
     setEditOpen(true);
@@ -374,19 +383,29 @@ export default function StudentScreen() {
   const saveEdit = async () => {
     if (!student) return;
     setBusy(true);
+    setError(null);
     try {
-      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
-      if (nextName && nextName !== student.display_name) {
-        await renameStudent(student.id, nextName, student.display_name);
-      }
+      // Validate birthday before any writes so rename cannot commit ahead of a bad date.
+      // Unchanged optional birthday (incl. legacy out-of-range) must not block name-only save.
       let metadata = { ...student.metadata };
       for (const field of STUDENT_DETAIL_FIELDS) {
         const raw = draft[field.key] ?? '';
         if (field.key === 'birthday') {
-          metadata = setMetaKey(metadata, field.key, parseBirthdayInput(raw) ?? raw);
+          const stored = metaString(student.metadata, 'birthday');
+          if (birthdayUnchanged(raw, stored)) continue;
+          const result = birthdayForSave(raw);
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          metadata = setMetaKey(metadata, field.key, result.value);
         } else {
           metadata = setMetaKey(metadata, field.key, raw);
         }
+      }
+      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
+      if (nextName && nextName !== student.display_name) {
+        await renameStudent(student.id, nextName, student.display_name);
       }
       await updateStudentMetadata(student, metadata);
       setEditOpen(false);
@@ -598,7 +617,8 @@ export default function StudentScreen() {
       : [];
 
   const preferred = student ? metaString(student.metadata, 'preferred_name') : null;
-  const birthdayMd = student ? formatBirthdayMd(metaString(student.metadata, 'birthday')) : null;
+  const birthdayIso = student ? coerceBirthdayISO(metaString(student.metadata, 'birthday')) : null;
+  const birthdayMd = birthdayIso ? formatBirthdayMd(birthdayIso) : null;
   const otherClass = enrollments.find((row) => row.class_id !== classId);
   const unlinkedExistingParents = existingParents.filter(
     (parent) => !parents.some((linked) => linked.id === parent.id),
@@ -623,7 +643,7 @@ export default function StudentScreen() {
       label: field.label,
       value:
         field.key === 'birthday'
-          ? metaString(student?.metadata, 'birthday')
+          ? formatLocaleDate(coerceBirthdayISO(metaString(student?.metadata, 'birthday')))
           : metaString(student?.metadata, field.key),
     })),
   ];
@@ -1258,34 +1278,36 @@ export default function StudentScreen() {
               value={draft.display_name ?? ''}
               onChangeText={(value) => setDraft((current) => ({ ...current, display_name: value }))}
             />
-            {STUDENT_DETAIL_FIELDS.map((field) => (
-              <TextField
-                key={field.key}
-                label={field.label}
-                value={draft[field.key] ?? ''}
-                multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
-                keyboardType={
-                  field.key === 'phone' || field.key === 'emergency_phone'
-                    ? 'phone-pad'
-                    : field.key === 'email'
-                      ? 'email-address'
-                      : field.key === 'birthday'
-                        ? Platform.OS === 'web'
-                          ? 'default'
-                          : 'numbers-and-punctuation'
+            {STUDENT_DETAIL_FIELDS.map((field) =>
+              field.key === 'birthday' ? (
+                <DateInput
+                  key={field.key}
+                  label={field.label}
+                  mode="birthday"
+                  clearable
+                  value={coerceBirthdayISO(draft[field.key])}
+                  onChange={(iso) => setDraft((current) => ({ ...current, [field.key]: iso ?? '' }))}
+                />
+              ) : (
+                <TextField
+                  key={field.key}
+                  label={field.label}
+                  value={draft[field.key] ?? ''}
+                  multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
+                  keyboardType={
+                    field.key === 'phone' || field.key === 'emergency_phone'
+                      ? 'phone-pad'
+                      : field.key === 'email'
+                        ? 'email-address'
                         : 'default'
-                }
-                placeholder={
-                  field.key === 'birthday'
-                    ? 'YYYY-MM-DD'
-                    : field.key === 'grade_or_age'
-                      ? '3rd / 8 years'
-                      : undefined
-                }
-                onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
-              />
-            ))}
+                  }
+                  placeholder={field.key === 'grade_or_age' ? '3rd / 8 years' : undefined}
+                  onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
+                />
+              ),
+            )}
             <Text style={[type.meta, { color: colors.mute }]}>Allergies and notes: only you will see this.</Text>
+            {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
             <PrimaryButton label={busy ? 'Saving…' : 'Save'} disabled={busy} onPress={() => void saveEdit()} />
       </FormSheet>
 

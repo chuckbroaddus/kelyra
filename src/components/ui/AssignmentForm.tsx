@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { DateInput } from '@/components/ui/DateInput';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
@@ -10,6 +12,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import type { AssignmentInput } from '@/lib/assignments/api';
 import { deriveKeyKind, emptyKeyItem, keyMaxScore, type AnswerKeyItem, type AnswerKeyKind } from '@/lib/assignments/keys';
+import { addDaysISO, toISODate, todayISO } from '@/lib/date/iso';
 import {
   GRADE_KINDS,
   GRADE_TERMS,
@@ -144,11 +147,13 @@ export function AssignmentForm({
   syllabusCategories = null,
 }: Props) {
   const { colors } = useTheme();
+  const [dueError, setDueError] = useState<string | null>(null);
   const patch = (partial: Partial<AssignmentFormValue>) => onChange({ ...value, ...partial });
   const lesson = value.workKind === 'lesson';
   const showItems = !lesson && (value.keyKind === 'items' || value.keyKind === 'both' || value.keyItems.length > 0);
   const showPhoto = !lesson && (value.keyKind === 'photo' || value.keyKind === 'both' || Boolean(value.keyPhotoUrl));
   const whoOk = classLocked || selectedClassIds.length > 0;
+  const dueIso = value.dueDate.trim() || null;
   const saveDisabled = busy || keyBusy || !value.title.trim() || !whoOk || (lesson && !hidePackPicker && !value.packKey);
   const syllabusPublished = Boolean(syllabusCategories && syllabusCategories.length);
   const kindOptions = syllabusPublished
@@ -313,27 +318,42 @@ export function AssignmentForm({
           onPress={() => patch({ isMakeup: !value.isMakeup })}
         />
       </ChipRow>
-      <TextField
+      <DateInput
         label="Due date"
-        placeholder="2026-08-20"
-        value={value.dueDate}
-        onChangeText={(dueDate) => patch({ dueDate })}
+        mode="due"
+        value={dueIso}
+        required
+        clearable
+        errorText={dueError}
+        onChange={(iso) => {
+          setDueError(null);
+          patch({ dueDate: iso ?? '' });
+        }}
       />
       <ChipRow>
         <Chip
           label="Tomorrow"
           selected={value.dueDate === isoDate(1)}
-          onPress={() => patch({ dueDate: isoDate(1) })}
+          onPress={() => {
+            setDueError(null);
+            patch({ dueDate: isoDate(1) });
+          }}
         />
         <Chip
           label="Next week"
           selected={value.dueDate === isoDate(7)}
-          onPress={() => patch({ dueDate: isoDate(7) })}
+          onPress={() => {
+            setDueError(null);
+            patch({ dueDate: isoDate(7) });
+          }}
         />
         <Chip
           label="Clear"
           selected={!value.dueDate.trim()}
-          onPress={() => patch({ dueDate: '' })}
+          onPress={() => {
+            setDueError(null);
+            patch({ dueDate: '' });
+          }}
         />
       </ChipRow>
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Mark</Text>
@@ -517,16 +537,25 @@ export function AssignmentForm({
           onPress={() => patch({ helpMode: 'check_work' })}
         />
       </ChipRow>
-      <PrimaryButton disabled={saveDisabled} label={busy ? 'Saving…' : submitLabel} onPress={onSubmit} />
+      <PrimaryButton
+        disabled={saveDisabled}
+        label={busy ? 'Saving…' : submitLabel}
+        onPress={() => {
+          if (!value.dueDate.trim()) {
+            setDueError('Add a due date');
+            return;
+          }
+          setDueError(null);
+          onSubmit();
+        }}
+      />
       {onCancel ? <GhostButton align="left" label="Cancel" onPress={onCancel} /> : null}
     </View>
   );
 }
 
 export function isoDate(daysFromToday = 0): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromToday);
-  return date.toISOString().slice(0, 10);
+  return addDaysISO(todayISO(), daysFromToday) ?? toISODate(new Date());
 }
 
 export function dueAtFromDate(value: string): string | null {

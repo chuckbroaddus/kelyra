@@ -32,6 +32,7 @@ import { matchPaperName } from '@/lib/matching/matchName';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import { getProposalDraft, setProposalDraft } from '@/lib/proposal/session';
+import { birthdayForSave } from '@/lib/date/iso';
 import {
   createParent,
   linkChild,
@@ -721,6 +722,18 @@ export default function ProposalScreen() {
       for (const field of checked) {
         if (field.key === 'notes' && typeof metadata.notes === 'string' && metadata.notes) {
           metadata = { ...metadata, notes: `${metadata.notes}\n${field.value}` };
+        } else if (field.key === 'birthday') {
+          const result = birthdayForSave(field.value);
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          if (result.value) metadata = { ...metadata, birthday: result.value };
+          else {
+            const next = { ...metadata };
+            delete next.birthday;
+            metadata = next;
+          }
         } else {
           metadata = { ...metadata, [field.key]: field.value };
         }

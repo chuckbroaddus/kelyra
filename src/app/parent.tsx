@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { AvatarTray } from '@/components/ui/AvatarTray';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { EmailLink } from '@/components/ui/EmailLink';
+import { DateInput } from '@/components/ui/DateInput';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { Card } from '@/components/ui/Card';
@@ -28,7 +29,8 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { isAlsoParent } from '@/lib/school/roles';
 import { touchParentLastSeen } from '@/lib/parents/session';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
-import { parseBirthdayInput, STUDENT_DETAIL_FIELDS, metaString, setMetaKey } from '@/lib/people/metadata';
+import { birthdayForSave, birthdayUnchanged, coerceBirthdayISO } from '@/lib/date/iso';
+import { STUDENT_DETAIL_FIELDS, metaString, setMetaKey } from '@/lib/people/metadata';
 import { getStudent, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import {
   listParentChildClasses,
@@ -284,7 +286,9 @@ function ChildCard({
       const student = await getStudent(child.student_id);
       const next: Record<string, string> = { display_name: student.display_name };
       for (const field of STUDENT_DETAIL_FIELDS) {
-        next[field.key] = metaString(student.metadata, field.key) ?? '';
+        const stored = metaString(student.metadata, field.key) ?? '';
+        next[field.key] =
+          field.key === 'birthday' ? coerceBirthdayISO(stored) ?? stored : stored;
       }
       setDraft(next);
       setOpen(true);
@@ -298,14 +302,27 @@ function ChildCard({
     setError(null);
     try {
       const student = await getStudent(child.student_id);
-      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
-      if (nextName && nextName !== student.display_name) {
-        await renameStudent(student.id, nextName, student.display_name);
-      }
+      // Validate birthday before any writes so rename cannot commit ahead of a bad date.
+      // Unchanged optional birthday (incl. legacy out-of-range) must not block name-only save.
       let metadata = { ...student.metadata };
       for (const field of STUDENT_DETAIL_FIELDS) {
         const raw = draft[field.key] ?? '';
-        metadata = setMetaKey(metadata, field.key, field.key === 'birthday' ? parseBirthdayInput(raw) ?? raw : raw);
+        if (field.key === 'birthday') {
+          const stored = metaString(student.metadata, 'birthday');
+          if (birthdayUnchanged(raw, stored)) continue;
+          const result = birthdayForSave(raw);
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          metadata = setMetaKey(metadata, field.key, result.value);
+        } else {
+          metadata = setMetaKey(metadata, field.key, raw);
+        }
+      }
+      const nextName = (draft.display_name ?? '').replace(/\s+/g, ' ').trim();
+      if (nextName && nextName !== student.display_name) {
+        await renameStudent(student.id, nextName, student.display_name);
       }
       await updateStudentMetadata(student, metadata);
       setOpen(false);
@@ -384,15 +401,26 @@ function ChildCard({
           value={draft.display_name ?? ''}
           onChangeText={(value) => setDraft((current) => ({ ...current, display_name: value }))}
         />
-        {STUDENT_DETAIL_FIELDS.map((field) => (
-          <TextField
-            key={field.key}
-            label={field.label}
-            value={draft[field.key] ?? ''}
-            multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
-            onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
-          />
-        ))}
+        {STUDENT_DETAIL_FIELDS.map((field) =>
+          field.key === 'birthday' ? (
+            <DateInput
+              key={field.key}
+              label={field.label}
+              mode="birthday"
+              clearable
+              value={coerceBirthdayISO(draft[field.key])}
+              onChange={(iso) => setDraft((current) => ({ ...current, [field.key]: iso ?? '' }))}
+            />
+          ) : (
+            <TextField
+              key={field.key}
+              label={field.label}
+              value={draft[field.key] ?? ''}
+              multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
+              onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
+            />
+          ),
+        )}
         {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
         <PrimaryButton label={busy ? 'Saving…' : 'Save'} disabled={busy} onPress={() => void save()} />
       </FormSheet>

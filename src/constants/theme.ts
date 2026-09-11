@@ -18,6 +18,8 @@ export type Palette = {
   dangerSoft: string;
   focus: string;
   wash: string;
+  /** Modal / sheet dim behind content. */
+  overlay: string;
 };
 
 export const palettes = {
@@ -39,6 +41,7 @@ export const palettes = {
     dangerSoft: '#F8DDD9',
     focus: '#B03E0E',
     wash: '#EFE8DE',
+    overlay: 'rgba(26,22,18,0.40)',
   },
   dark: {
     bg: '#141311',
@@ -58,6 +61,7 @@ export const palettes = {
     dangerSoft: '#331C1A',
     focus: '#E07A3A',
     wash: '#2A2723',
+    overlay: 'rgba(0,0,0,0.55)',
   },
 } as const satisfies Record<'light' | 'dark', Palette>;
 

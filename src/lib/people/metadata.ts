@@ -52,27 +52,11 @@ export function setMetaKey(
   return next;
 }
 
-export function formatBirthdayMd(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
-  if (!match) return null;
-  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-export function parseBirthdayInput(raw: string): string | null {
-  const value = raw.trim();
-  if (!value) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return null;
-  const date = new Date(parsed);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+export {
+  coerceBirthdayISO,
+  formatBirthdayMd,
+  parseLooseDate as parseBirthdayInput,
+} from '@/lib/date/iso';
 
 export function relationshipLabel(metadata: Record<string, unknown> | null | undefined): string | null {
   const rel = metaString(metadata, 'relationship');
