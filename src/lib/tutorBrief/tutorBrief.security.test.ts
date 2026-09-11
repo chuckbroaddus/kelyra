@@ -179,7 +179,7 @@ test('P2 E1 hamburger class switch: setActiveClassId before refreshChrome/go', (
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   const press = drawer.slice(
     drawer.indexOf('selected={klass.id === chromeState.classId}'),
-    drawer.indexOf('trailing={['),
+    drawer.indexOf('trailing={'),
   );
   const setId = press.indexOf('setActiveClassId(klass.id)');
   const refresh = press.indexOf('chromeState.refreshChrome()');

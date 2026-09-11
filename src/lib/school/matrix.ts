@@ -53,7 +53,7 @@ export const CAPABILITIES: Capability[] = [
   { id: 'classes.create', area: 'Classes', label: 'Create a class', help: 'Office opens an unassigned class, then assigns a teacher.', superintendent: 'own', administrator: 'own', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'classes.overview', area: 'Classes', label: 'Class office card', help: 'Name, teacher, roster — not the teacher desk.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
   { id: 'classes.teach', area: 'Classes', label: 'Teacher desk', help: 'Today, Capture, Inbox, grade book for a class.', superintendent: 'none', administrator: 'none', teacher: 'own', parent: 'none', student: 'none' },
-  { id: 'classes.delete', area: 'Classes', label: 'Delete a class', help: 'Hard-delete a class and its work.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },
+  { id: 'classes.delete', area: 'Classes', label: 'Delete a class', help: 'Hard-delete a class and its work. Office/admin only; teachers never delete classes.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
 
   { id: 'roster.view', area: 'Roster', label: 'See roster names', help: 'Students in a class.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
   { id: 'roster.add', area: 'Roster', label: 'Add a roster name', help: 'Enroll an existing school student. Creating a person is office-only.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'none', student: 'none' },

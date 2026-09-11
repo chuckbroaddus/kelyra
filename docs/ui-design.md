@@ -1577,7 +1577,7 @@ CSV: `formatCell` strings. Theme-independent. §15.
 
 **Primary.** Context-sensitive, one at a time: `Add N students` / `Rename {old} to {new}` / `Add {name}`.
 
-**Vertical.** Phase 1 → lead → Join code card → parked roster-import card if any (§20) → Add students card (photo / record / type / confirm checklist) → `AvatarTray` of the roster (photos) → search + `ListRow`s if they need to open a student → last ghost **Delete class** (type-the-name).
+**Vertical.** Phase 1 → lead → Join code card → parked roster-import card if any (§20) → Add students card (photo / record / type / confirm checklist) → `AvatarTray` of the roster (photos) → search + `ListRow`s if they need to open a student → last ghost **Delete class** (type-the-name; office/admin + `classes.delete` only — teachers never delete classes).
 
 **Portrait.** One column.
 
@@ -2245,7 +2245,7 @@ The spec **succeeds** if a teacher who uses Facebook, Instagram, and Amazon ever
 
 ## 20. Delete map
 
-Every first-class thing a teacher can create is deletable from the UI. Student and parent roles **cannot** delete teacher records. Student **Sign out** (hamburger + Profile) ends the auth session and clears student caches; it does **not** unenroll. Do not ship a separate **Leave class** action — join-code device sessions are gone (`/join` → `/sign-in`). Parent cannot delete a child.
+Every first-class thing a teacher can create is deletable from the UI. **Teachers never delete classes** — only the office/admin seat (`classes.delete`). Student and parent roles **cannot** delete teacher records. Student **Sign out** (hamburger + Profile) ends the auth session and clears student caches; it does **not** unenroll. Do not ship a separate **Leave class** action — join-code device sessions are gone (`/join` → `/sign-in`). Parent cannot delete a child.
 
 There is **no undo**. Confirm copy always includes `This cannot be undone.` Matcher / delete never inserts a student.
 
@@ -2270,13 +2270,13 @@ Ghost Cancel
 
 Full-swipe on a Delete tile **only opens this sheet**. Same rule as Approve.
 
-Roles: if `chrome.role !== 'teacher'`, do not render Delete pills, swipes, or this sheet.
+Roles: if `chrome.role !== 'teacher'`, do not render Delete pills, swipes, or this sheet — except **class** delete, which is the inverse: office/admin only (`chrome.role` superintendent/administrator + `can(classes.delete)`). Teachers never swipe-delete a class; Teach-seat dual-hat has no class Delete.
 
 ### 20.2 Object → where → confirm → what happens
 
 | Object | Control lives | Confirm | Verb | What the teacher is promised |
 |---|---|---|---|---|
-| **Class** | Class / Roster (`/setup`) last pills: ghost **Delete class**. Class picker (`/` `?switch=1`) `ListRow` swipe Delete. Hamburger class row swipe Delete. Not a tray icon. | Type-the-name. Title `Delete {class name}?` Body: `This deletes the class, its homework, practice, and grade book. Students who are only in this class will be deleted. Students who are also in another class will stay on those rosters. This cannot be undone.` | Hard-delete class via `teacher_delete_class` | Gone. Land on `/` (or the next remaining class, set active). |
+| **Class** | Office/admin only — teachers never delete classes. Class / Roster (`/setup`) last pills: ghost **Delete class** (office/admin + `classes.delete`). Class picker (`/` `?switch=1`) `ListRow` swipe Delete (office seat + `classes.delete`; Teach seat dual-hat has no swipe). Hamburger class row swipe Delete (office + `classes.delete`; never teacher seat). Not a tray icon. | Type-the-name. Title `Delete {class name}?` Body: `This deletes the class, its homework, practice, and grade book. Students who are only in this class will be deleted. Students who are also in another class will stay on those rosters. This cannot be undone.` | Hard-delete class via `teacher_delete_class` | Gone. Land on `/` (or the next remaining class, set active). |
 | **Student (the person)** | Student page last pills: ghost **Delete {first name}**. Roster `ListRow` swipe Delete. Search hit overflow. | Type-the-name. Title `Delete {display name}?` Body: `This deletes {first} from every class, including their work, grades, parent links, and photo. This cannot be undone.` | Hard-delete student | Person gone. No Inbox leftovers. No grade-book cells. Parent records stay; the link is gone. Photo asset unref-deleted. |
 | **Enrollment (remove from this class)** | Student page, only if they have **another** enrollment: ghost **Remove from {class}**. Roster row overflow **Remove from class**. | Simple. `Remove {first} from {class}? Their work in this class will be deleted. They will stay in {other class}. This cannot be undone.` | Detach | If this is their last class, **do not offer Remove** — only Delete student. Last-class unenroll is a person delete. |
 | **Homework / capture / voice / multi-page** | Inbox `WorkRow` swipe **Delete** + ghost pill. Student Work `WorkRow` swipe **Delete** + ghost pill. Needs-you / This-week same. | Simple. Title `Delete this work?` Show 72 thumb + date in the sheet. `This removes the photo and is not a grade. This cannot be undone.` | Hard-delete capture | Not Inbox. Gaps go. Capture-kind grade column goes if it had no other purpose. Focus retargets or clears. Profile photo that reused this asset stays. |
@@ -2564,7 +2564,7 @@ Do not rewrite a screen whose primary job did not change. Only these deltas:
 
 ### 13.1 `/` class picker
 
-`ListRow` swipe Delete → type-the-name class confirm. Pill is unnecessary if swipe + hamburger swipe exist; still add a ghost **Delete** on the row’s destination (setup) so VoiceOver is covered.
+`ListRow` swipe Delete → type-the-name class confirm — **office/admin only** (`officeSeat` + `can(classes.delete)`). Teachers never swipe-delete a class (including Teach-seat dual-hat). Pill is unnecessary if swipe + hamburger swipe exist; still add a ghost **Delete class** on Setup for office/admin VoiceOver.
 
 ### 13.3 House
 
@@ -2616,7 +2616,7 @@ Context chips gain **Parents** (navigates away).
 
 `AvatarTray` + `ListRow` pass `photoUrl`. Roster `ListRow` swipe: **Remove from class** or **Delete student** per §20. Parked `roster_imports` card with **Open** / **Delete**.
 
-Last pills: **Delete class** (type-the-name).
+Last pills: **Delete class** (type-the-name) for office/admin with `can(classes.delete)` only. Teachers never see **Delete class**.
 
 Header camera still goes to `/proposal`; roster intent still lands on the checklist.
 

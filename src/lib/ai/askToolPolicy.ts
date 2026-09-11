@@ -72,7 +72,7 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   delete_capture: { capability: 'capture.approve', need: null },
   delete_gap: { capability: 'capture.approve', need: null },
   delete_student: { capability: 'roster.delete', need: null },
-  delete_class: { capability: 'classes.delete', need: null },
+  delete_class: { capability: 'classes.delete', need: null, officeOnly: true },
   delete_parent: { capability: 'parents.invite', need: null },
   admin_create_login: { capability: 'accounts.create', need: null, officeOnly: true },
   set_also_hat: { capability: 'accounts.hats', need: null, officeOnly: true },

@@ -21,6 +21,7 @@ import { radius, type } from '@/constants/theme';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { can } from '@/lib/school/matrix';
 import { isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
@@ -66,7 +67,7 @@ export default function SetupScreen() {
   const layout = useLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { teacher, profile, setActiveClassId} = useAuth();
+  const { teacher, profile, grants, setActiveClassId } = useAuth();
   const office = isOfficeRole(profile);
   const chrome = useChrome();
   const [klass, setKlass] = useState<ClassRow | null>(null);
@@ -660,7 +661,7 @@ export default function SetupScreen() {
         <GhostButton align="left" label="Delete" onPress={() => setConfirm({ kind: 'suggestions' })} />
       ) : null}
 
-      {klass ? (
+      {klass && office && can(profile, 'classes.delete', 'school', grants) ? (
         <GhostButton align="left" label="Delete class" onPress={() => setConfirm({ kind: 'class' })} />
       ) : null}
 

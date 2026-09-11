@@ -332,15 +332,19 @@ export function HamburgerDrawer() {
                         chromeState.refreshChrome();
                         go(teacherSeat ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
                       }}
-                      trailing={[
-                        {
-                          key: 'delete',
-                          label: 'Delete',
-                          tone: 'danger',
-                          autoCommit: false,
-                          onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
-                        },
-                      ]}
+                      trailing={
+                        officeSeat && can(profile, 'classes.delete', 'school', grants)
+                          ? [
+                              {
+                                key: 'delete',
+                                label: 'Delete',
+                                tone: 'danger',
+                                autoCommit: false,
+                                onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
+                              },
+                            ]
+                          : []
+                      }
                     />
                   ))}
                   {teacherSeat && matches('Another class', q) ? (

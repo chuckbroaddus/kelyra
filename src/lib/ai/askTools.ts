@@ -1862,7 +1862,7 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: 'function',
       name: 'delete_class',
-      description: 'Hard-delete a class via teacher_delete_class. Student/parent refused. Teachers do not create classes.',
+      description: 'Office only. Hard-delete a class via teacher_delete_class. Teachers never delete classes.',
       parameters: {
         type: 'object',
         properties: { class_id: { type: 'string' }, class_name: { type: 'string' } },
@@ -1870,8 +1870,8 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
-      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
-        return { error: 'Delete class is not available on this seat.' };
+      if (!isOfficeRole(ctx.profile)) {
+        return { error: 'Only the office can delete a class.' };
       }
       const classId = await resolveClassId(ctx, args);
       if (typeof classId !== 'string') return classId;
