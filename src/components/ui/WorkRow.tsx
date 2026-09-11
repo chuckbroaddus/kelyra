@@ -71,6 +71,11 @@ export function WorkRow({
   const x = useRef(new Animated.Value(0)).current;
   const start = useRef(0);
   const [swiping, setSwiping] = useState(false);
+  // test-hook: leadingRef/trailingRef keep PanResponder snap widths current across renders
+  const leadingRef = useRef(leading);
+  const trailingRef = useRef(trailing);
+  leadingRef.current = leading;
+  trailingRef.current = trailing;
 
   const run = (action: WorkSwipeAction) => {
     snap(0);
@@ -98,33 +103,38 @@ export function WorkRow({
         });
       },
       onPanResponderMove: (_, g) => {
-        const maxL = leading.length * 80;
-        const maxR = trailing.length * 80;
+        const leadActs = leadingRef.current;
+        const trailActs = trailingRef.current;
+        const maxL = leadActs.length * 80;
+        const maxR = trailActs.length * 80;
         const next = start.current + g.dx;
+        // LTR disabled when no leading (maxL=0); open snap uses full −trailing.length * 80
         const clamped = Math.max(-maxR, Math.min(maxL, next));
         x.setValue(clamped);
       },
       onPanResponderRelease: (_, g) => {
         const rowW = width.current || 320;
         const offset = start.current + g.dx;
-        const maxL = leading.length * 80;
-        const maxR = trailing.length * 80;
+        const leadActs = leadingRef.current;
+        const trailActs = trailingRef.current;
+        const maxL = leadActs.length * 80;
+        const maxR = trailActs.length * 80;
         const full = Math.max(120, 0.4 * rowW);
 
-        if (offset > 0 && leading[0]) {
-          if (offset > full && leading[0].autoCommit) {
-            run(leading[0]);
+        if (offset > 0 && leadActs[0]) {
+          if (offset > full && leadActs[0].autoCommit) {
+            run(leadActs[0]);
             return;
           }
           snap(offset > 56 ? maxL : 0);
           return;
         }
-        if (offset < 0 && trailing[0]) {
-          if (offset < -full && trailing[0].autoCommit) {
-            run(trailing[0]);
+        if (offset < 0 && trailActs[0]) {
+          if (offset < -full && trailActs[0].autoCommit) {
+            run(trailActs[0]);
             return;
           }
-          snap(offset < -56 ? -Math.min(maxR, trailing.length * 80) : 0);
+          snap(offset < -56 ? -maxR : 0);
           return;
         }
         snap(0);
@@ -357,7 +367,8 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   tile: {
-    height: '100%',
+    alignSelf: 'stretch',
+    minHeight: 72,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
