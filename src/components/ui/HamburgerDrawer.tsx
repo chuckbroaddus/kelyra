@@ -321,6 +321,8 @@ export function HamburgerDrawer() {
                           key={klass.id}
                           title={klass.name}
                           avatarName={klass.name}
+                          photoUrl={klass.avatarUrl}
+                          hasPhoto={Boolean(klass.avatar_asset_id)}
                           chevron={false}
                           selected={klass.id === chromeState.classId}
                           onPress={() => {

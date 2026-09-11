@@ -5,6 +5,8 @@ export type StudentClass = {
   teacherName?: string | null;
   teacherPhotoPath?: string | null;
   teacherPhotoUrl?: string | null;
+  avatarPhotoPath?: string | null;
+  avatarPhotoUrl?: string | null;
 };
 
 export type StudentPersonKind = 'classmate' | 'teacher' | 'parent';

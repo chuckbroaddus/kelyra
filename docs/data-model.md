@@ -81,6 +81,7 @@ The signed-in customer. One auth user.
 | `created_at` * | timestamptz | no | |
 | `name_source` * | enum | no | `voice` \| `typed` |
 | `feed_icon` | text | no | Glyph on the combined inbox tab. Default `feedClass`. Owner (class teacher or office) picks from the catalog in `src/lib/feeds/icons.ts`. SQL `20260821000000_feed_icons.sql`. |
+| `avatar_asset_id` | uuid | yes | FK `assets` ON DELETE SET NULL. Class photo on Settings, class lists, and mixed student class chips. Same owners as `feed_icon` (`set_class_avatar`, SQL `20260911000003_class_avatar.sql`). Distinct from the feed glyph. |
 
 A teacher may own more than one class; capture always uses `teachers.active_class_id`. `schools.feed_icon` (default `feedSchool`) is the school-wide feed glyph; superintendent and administrators pick it. `schools.name` (default `School`) and `schools.logo_asset_id` are the header wordmark; only the superintendent sets them (`set_school_name` / `set_school_logo`, SQL `20260822000000_school_identity.sql`). The logo is a photo asset, shown 22×22 contain next to the name on school home.
 
@@ -567,6 +568,8 @@ unref(asset_id) =
   and not exists students.photo_asset_id
   and not exists parents.photo_asset_id
   and not exists roster_imports.photo_asset_id
+  and not exists schools.logo_asset_id
+  and not exists classes.avatar_asset_id
 ```
 
 If unref: `storage.objects` delete on that `storage_path`, then `DELETE FROM assets`. If still referenced (e.g. homework also set as profile): leave the asset.

@@ -125,7 +125,12 @@ export function studentRoomTabs(
             photoName: room.teacherName || room.className,
             photoUrl: room.teacherPhotoUrl,
           }
-        : {}),
+        : room.avatarPhotoUrl
+          ? {
+              photoName: room.className,
+              photoUrl: room.avatarPhotoUrl,
+            }
+          : {}),
     });
   }
   return tabs;

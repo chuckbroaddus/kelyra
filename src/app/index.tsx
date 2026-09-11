@@ -304,6 +304,8 @@ export default function HomeScreen() {
                     : undefined
               }
               avatarName={item.name}
+              photoUrl={item.avatarUrl}
+              hasPhoto={Boolean(item.avatar_asset_id)}
               onPress={() => openClass(item.id)}
               trailing={
                 canDeleteClass
