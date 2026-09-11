@@ -768,6 +768,25 @@ On Capture, Student, and `/todo`, the sticky primary sits in a **fixed** slot ju
 
 Same thresholds. Tray is shorter (44). Insets left/right still apply while hidden (the off-screen translate includes them).
 
+### 9.6 Collapsing page chrome (ClassTabs + segment chips + syllabus)
+
+On **scrolling** desk panes (Today, Assignments, Feed, …) `ClassTabs` and any segment chips live in the page `ScrollView`, so a swipe-up scrolls them off with the content. Swipe-down toward the top brings them back with the content — same feel as Desk / Assignments.
+
+On **flush** panes (`Screen scroll={false}` — Gradebook / Heatmap `StickyTable`), those rows cannot ride the page scroller. Wrap them in `CollapsingPageChrome` (`src/components/ui/CollapsingPageChrome.tsx`) so they share the tray’s `chrome.visible` brain:
+
+| Gesture | Result |
+|---|---|
+| Swipe-up / scroll down | Class tab row **and** Gradebook/Heatmap segment chips **and** the syllabus banner collapse off-screen together (height + opacity, `chrome.motion.context`, ease-out, no spring). |
+| Swipe-down / scroll up | The **class tab row** (and the rest of that collapsing block) **reappears promptly** — same show thresholds as §9.2. Do not wait for `contentOffset.y < 8` alone. |
+
+Rules:
+
+- Reuse `ChromeProvider.onScroll` / `visible`. Do not invent a second velocity tracker.
+- Do **not** pin `ClassTabs` as `stickyHeaderIndices` or as `chrome.contextHeight`. Counts-toward `GradeTermTabs` may stay below the collapsing block so the grid filter remains while the upper chrome is away.
+- Segment chips under ClassTabs use `ChipRow compact` — no extra vertical padding above/below the Gradebook · Heatmap shelf.
+- Hiding the block **does** reclaim vertical space for the grid (unlike the overlay tray/context). That is intentional on flush tables.
+- Apply this pattern wherever flush chrome would otherwise stay stuck while the tray hides (today: `/class/{id}/gradebook`). Prefer page-scroll for ordinary `Screen` panes.
+
 ---
 
 ## 10. Component specs
@@ -1576,6 +1595,8 @@ Swipe Approve on a work row **opens this same decision**, already scrolled to th
 - **Grade book** is the existing `StickyTable`.
 
 **Primary.** None. Ghost `Export CSV` floats just above the tray in a rounded `elevated` plate (`trayRadius`, 1 px `line`, same whisper shadow as the tray) so the grid does not show through the letters. On hide-on-scroll it travels farther than the tray so both leave the screen, and Screen’s bottom tray pad collapses so the grid uses the space. No PhaseBanner on this screen.
+
+**Collapsing chrome (§9.6).** `ClassTabs` + Gradebook/Heatmap `ChipRow compact` + unpublished-syllabus banner sit in `CollapsingPageChrome`. Swipe-up sends that block off with the tray; swipe-down brings the tab row back promptly. Counts-toward `GradeTermTabs` stay under the block (not inside it). Tighten vertical rhythm around the segment chips — no oversized ChipRow padding.
 
 **Portrait.** Table `flex: 1` (`Screen scroll={false}`). Heatmap same.
 
@@ -3421,7 +3442,7 @@ Fade color is the selected pill (`brandSoft`). This is the one exception to §30
 
 **Scroll into view.** On select, `scrollTo` the tab’s `x` minus a 12 pt lead so the selected pill is not clipped. First tab (Focus / Login) scrolls to `x = 0`. Reduce Motion: jump with `animated: false`. Do not spring. Do not auto-center the way a `UITabBar` would.
 
-**Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Student destinations omit the Amazon context row entirely (`contextReserve = 0`) so there is no empty band above the first `PersonTabs`. Pushed person pages still omit the Amazon Class context row (§3.6). Hide-on-scroll still applies only to the floating tray.
+**Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Student destinations omit the Amazon context row entirely (`contextReserve = 0`) so there is no empty band above the first `PersonTabs`. Pushed person pages still omit the Amazon Class context row (§3.6). On ordinary scrolling screens, hide-on-scroll still applies only to the floating tray — the in-page `PersonTabs` / `ClassTabs` scroll away with content. On flush Gradebook/Heatmap, wrap ClassTabs + segment chips + syllabus chrome in `CollapsingPageChrome` so they leave and return with the tray brain (§9.6).
 
 Phone: one column, portrait and landscape. In student landscape (`width >= 640`) the Focus **pane** may still split photo left / Approve right as §13.6; the tab row itself stays one full-width row under the hero. Do not put tabs in a second column.
 
