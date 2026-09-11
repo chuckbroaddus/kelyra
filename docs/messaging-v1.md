@@ -83,8 +83,8 @@ Reuse `/messages` and HandleLink. Add the minimum.
 | New **group** | `/messages` compose: multi-select, only allowed member sets above |
 | Staff group | People multi-select (admin or teacher) |
 | Parents of one child | Student page or that child’s parent page — **Message parents** |
-| Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N parent(s)** (max 11; skip selected without logins; hard-fail only if none have logins) |
-| Selected students | Class / Students messaging select mode — rounded **Message these students** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N student(s)** (own students only; max 11; skip selected without logins; hard-fail only if none have logins) |
+| Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N parent(s)** (max 11; skip selected without logins; hard-fail only if none have logins). Same Needs-login helper as Students (grayed-out parents need a login; office can create). |
+| Selected students | Class / Students messaging select mode — rounded **Message these students** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N student(s)** (own students only; max 11; skip selected without logins; hard-fail only if none have logins). When any row lacks a login, select mode shows a short mute helper: grayed-out students need a login; the office can create logins. |
 | Teacher ↔ class | Class page **Post to class** → **post**, not a group |
 | Admin ↔ parents | Feed composer or admin People → **post** or **alert** |
 | Admin ↔ staff | People → staff **group chat** |
