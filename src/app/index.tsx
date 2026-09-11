@@ -269,15 +269,18 @@ export default function HomeScreen() {
 
       {pane === 'classes' ? (
         <>
-          <Text style={[styles.lead, { color: colors.mute }]}>
-            {empty
+          {(() => {
+            const lead = empty
               ? showCreateClass
                 ? 'Create a class on New, then assign a teacher.'
                 : 'No classes yet. The office assigns the classes you teach.'
               : officeSeat
                 ? 'Every class in the school. Open a card for teacher and roster.'
-                : 'Open a class to see what needs you today.'}
-          </Text>
+                : null;
+            return lead ? (
+              <Text style={[styles.lead, { color: colors.mute }]}>{lead}</Text>
+            ) : null;
+          })()}
           {empty ? (
             <Text style={[type.meta, { color: colors.mute }]}>
               {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}

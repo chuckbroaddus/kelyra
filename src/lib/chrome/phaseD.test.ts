@@ -16,7 +16,7 @@ function read(rel: string): string {
 const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
-const TEACHER_LABELS = ['Desk', 'Capture', 'Needs', 'Class', 'Ask'];
+const TEACHER_LABELS = ['Desk', 'Capture', 'Needs Attention', 'Class', 'Ask'];
 
 test('TR-09 / D1: teacher tray labels Desk · Capture · Needs · Class · Ask; today glyph', () => {
   const tabs = tabsFor('teacher', '/', 'c1', 0);
@@ -96,14 +96,14 @@ test('D4 Phase B/C intact: CLASS_TABS ≤7; Class ≠ gradebook-first; Needs + A
   const classTab = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class');
   assert.equal(classTab?.href, '/class/abc/setup');
   assert.ok(!classTab?.href.includes('/gradebook'));
-  assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs');
+  assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs Attention');
   const ask = read('src/app/ask.tsx');
   assert.match(ask, /Working in \$\{chrome\.className\}/);
 });
 
 test('D5: Ask FALLBACK uses Needs not Inbox', () => {
   const prompt = read('src/lib/ai/askPrompt.ts');
-  assert.match(prompt, /Open Needs or the student’s page/);
+  assert.match(prompt, /Open Needs Attention or the student’s page/);
   assert.doesNotMatch(prompt, /Open Inbox/);
 });
 

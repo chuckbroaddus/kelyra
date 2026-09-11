@@ -26,7 +26,7 @@ test('CT-01: CLASS_TABS default ≤7 ordered Today·Needs·Feed·Students·Assig
   assert.ok(CLASS_TABS.length <= 7);
   assert.equal(CLASS_TABS.length, 7);
   assert.deepEqual(keys, [...DEFAULT_ORDER]);
-  assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs');
+  assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs Attention');
 });
 
 test('CT-02/03/04: Week, Heatmap, Family not in default icon set', () => {

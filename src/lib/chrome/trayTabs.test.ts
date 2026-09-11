@@ -66,10 +66,10 @@ test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () =>
   assert.equal(studentClass?.href, '/student/class');
 });
 
-test('TR-06: teacher Needs label; route stays /inbox', () => {
+test('TR-06: teacher Needs Attention label; route stays /inbox', () => {
   const needs = tabsFor('teacher', '/inbox', 'c1', 2).find((tab) => tab.key === 'inbox');
   assert.ok(needs);
-  assert.equal(needs.label, 'Needs');
+  assert.equal(needs.label, 'Needs Attention');
   assert.equal(needs.href, '/inbox');
   assert.equal(needs.badge, 2);
 });

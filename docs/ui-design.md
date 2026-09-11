@@ -134,9 +134,9 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 | Parent (invite session) | Header + context row + role tray + hamburger | Camera. No other children, no scores, no “Grok” |
 | Signed out / `/sign-in` / `/join` (pre-session) | Wordmark only | Tray, hamburger, camera, search, bell |
 
-`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own role trays** (not the teacher Capture/Needs density and **no camera**). Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
+`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own role trays** (not the teacher Capture/Needs Attention density and **no camera**). Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
 
-**“Shorter tray” (superseded gloss, 2026-09-09).** Early drafts said student/parent get a “shorter tray.” That meant **no teacher Capture/Needs density and no camera** — not “fewer tabs than teacher.” Locked counts live in **§34.2** (and §31.1): **student 6**, **parent 3** (Home · Ride · Ask), **teacher/office 5**. Do not cut the student 6-tab tray to satisfy this section.
+**“Shorter tray” (superseded gloss, 2026-09-09).** Early drafts said student/parent get a “shorter tray.” That meant **no teacher Capture/Needs Attention density and no camera** — not “fewer tabs than teacher.” Locked counts live in **§34.2** (and §31.1): **student 6**, **parent 3** (Home · Ride · Ask), **teacher/office 5**. Do not cut the student 6-tab tray to satisfy this section.
 
 ### 3.2 Header slots (one recipe)
 
@@ -261,17 +261,17 @@ Phone (`width < 720`): a **floating frame** over the content, not a system tab b
 
 Content draws **under** the frame. Last-scroll padding on every tray screen = frame height + bottom inset + 12, so the last row is not trapped.
 
-**Teacher tray (5), left → right** — shipped TEACH-UX IA (A–D). Same five keys; user-facing nouns **Desk · Capture · Needs · Class · Ask**. No sixth tab. No Profile in tray.
+**Teacher tray (5), left → right** — shipped TEACH-UX IA (A–D). Same five keys; user-facing nouns **Desk · Capture · Needs Attention · Class · Ask**. No sixth tab. No Profile in tray.
 
 | # | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
 |---|---|---|---|---|---|
 | 1 | `today` (house glyph) | **Desk** | class name on desk panes; `Kelyra` only when no class | `/class/{activeId}` or `/` if none | `/` or `/class/{id}` desk work (not setup / gradebook / family / student / parents / parent / assignments) |
 | 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (not `/proposal`) |
-| 3 | `inbox` | **Needs** | **Needs** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
+| 3 | `inbox` | **Needs Attention** | **Needs Attention** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
 | 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
 | 5 | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
 
-Desk is always the start (house glyph; label **Desk**). Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs** badge uses `countNeedsYou` once (unassigned + draft-ready).
+Desk is always the start (house glyph; label **Desk**). Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs Attention** badge uses `countNeedsYou` once (unassigned + draft-ready).
 
 Family, All classes, Appearance, Profile, Sign out live in the hamburger, not the tray.
 
@@ -306,7 +306,7 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 |---|---|---|
 | Teacher **Desk** | class name in the drawer; tray a11y **Desk** | class name on desk panes; `Kelyra` only when no active class |
 | Capture | Capture | `Capture` |
-| **Needs** (was Inbox label) | Needs | `Needs` (route `/inbox` unchanged) |
+| **Needs Attention** (was Inbox label) | Needs Attention | `Needs Attention` (route `/inbox` unchanged) |
 | Class (teacher) | Class / class name | class name on every Class pane (§32.7); tray lands **setup**, not gradebook-first |
 | Ask | Ask / Kelyra | `Kelyra` (Ask slot uses the Kelyra mark, not this string) |
 | Profile (hamburger only) | identity row | `Profile` |
@@ -331,8 +331,8 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 |---|---|---|---|
 | Desk (teacher) | *(none — ClassTabs owns desk panes)* | — | Shipped: `PersonTabs` / `CLASS_TABS` on `/class/…` (§32.7, §37). Do not restore Amazon chips on the desk |
 | Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
-| Needs (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs** |
-| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs · Feed · Students · Assignments · Gradebook · Parents. Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow |
+| Needs Attention (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs Attention** |
+| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents. Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow |
 | Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37). **Assignment ground is not a header band** — student/parent ground lives composer-adjacent (§12.6). Do not add a permanent ground row under the mark. |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
 | Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
@@ -356,7 +356,7 @@ On pushed screens (student record, proposal, family, search, notifications) the 
 
 ### 3.8 Web / tablet (`width >= 720`)
 
-The floating tray is **replaced** by a slim top bar under the header, height 48, same five destinations, **labels visible**: **Desk · Capture · Needs · Class · Ask**. Ask is last. There is no Profile tab. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
+The floating tray is **replaced** by a slim top bar under the header, height 48, same five destinations, **labels visible**: **Desk · Capture · Needs Attention · Class · Ask**. Ask is last. There is no Profile tab. Hide-on-scroll still applies to the **context row**. The top bar itself stays pinned (it *is* the header cluster + tabs). No left rail. Delete `teacherNav.railWidth` / `wideAt: 960`.
 
 ---
 
@@ -799,7 +799,7 @@ New file `src/components/ui/FloatingTabTray.tsx`. Replaces `TeacherNav`’s `Tab
 - `position: 'absolute'`, left/right/bottom as §3.4.
 - `pointerEvents="box-none"` on the full-width wrap so content above remains tappable.
 - Active icon `brand`. Inactive `mute`. No featured candy blob. No raised Capture pill.
-- Needs tray icon may show a count badge (`danger`, same anatomy as the messages corner badge, cap `99+`) from `countNeedsYou` (§11). Desk/house does **not** take the badge — activity sits on Needs (and Messages alerts), not on Desk.
+- Needs Attention tray icon may show a count badge (`danger`, same anatomy as the messages corner badge, cap `99+`) from `countNeedsYou` (§11). Desk/house does **not** take the badge — activity sits on Needs Attention (and Messages alerts), not on Desk.
 - `accessibilityRole="tab"`, `accessibilityState.selected`.
 
 Web `showTopBar`: render the same destinations as a 48-pt top strip, labels on, no floating frame.
@@ -1059,7 +1059,7 @@ Student book (one column): pin that column to the **right**. Frozen assignment t
 
 ### 10.16 Join code, Phase banner
 
-Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on class Home, Capture, Inbox (Needs), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
+Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on class Home, Capture, Inbox (Needs Attention), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
 
 ### 10.17 Icon additions
 
@@ -1111,7 +1111,7 @@ Implement as `countNeedsYou` next to `countInbox` in `src/lib/captures/api.ts` (
 | Surface | Number |
 |---|---|
 | Messages header badge (teacher) | unread **alerts** (not `countNeedsYou`) |
-| **Needs** tray icon | `countNeedsYou(activeClassId)` |
+| **Needs Attention** tray icon | `countNeedsYou(activeClassId)` |
 | Header badge (student) | count of that student’s submissions with `status` in `assigned` · `started` |
 | Header badge (parent) | `1` if the bound child has a `parent_sentence` **or** a practice status of assigned/done **and** `kelyra.parent.lastSeenAt` is older than the newest of those timestamps; else `0`. Persist `lastSeenAt` when `/parent` or `/notifications` focuses. Do not invent unread rows |
 | Desk / house icon | never |
@@ -1167,14 +1167,14 @@ The server injects **only** what that role may see (below). Persist nothing as a
 ### 12.4 Hard limits
 
 - The agent **never Approves** (grades). **Confirm brief** is a separate filing verb on assignment detail — never rename it Approve.
-- The agent **never inserts a student**. If it wants a name filed, it tells the teacher to open Needs.
+- The agent **never inserts a student**. If it wants a name filed, it tells the teacher to open Needs Attention.
 - The agent **never invents a class**.
 - The agent **never invents an assignment ground** or merges two packs.
 - **Re-pick / Choose assignment** always clears prior pack inject before any new inject (§12.6.2–.3, IQG §6.2 **A**).
 - **Class switch** while Ask is open clears assignment ground and drops pack inject (§12.6.8, IQG §6.3).
 - **Teacher-seat Ask:** no student-safe pack inject (class-only). **Office / superintendent seat Ask:** no pack inject, no soft chip, no parent assignment card, no Choose assignment (§12.6.8, IQG §6.1).
 - The agent may **draft** a parent sentence or a gap label into the chat; writing it to the record still happens on the student page, by the teacher, via Approve / save.
-- If the model is unsure: `I can’t tell from what’s saved. Open Needs or the student’s page.`
+- If the model is unsure: `I can’t tell from what’s saved. Open Needs Attention or the student’s page.`
 - Empty / error: `Ask is offline. Try again in a moment.` (`mute` / `danger` respectively)
 - Do not brand the bubbles “Grok.” On-screen name: **Ask**.
 - **Help remains a separate surface forever.** Do not merge Help → Ask, bury Help in Ask empty chips, or route product-support Help through this agent.
@@ -3210,11 +3210,11 @@ Add `MarqueeText` to the primitives list in §18.d. No new npm packages. No SQL.
 | Role | Tray | Header extras | Hidden |
 |---|---|---|---|
 | Superintendent / Administrator | Feed · Classes · People · Manage · Ask (**no** Ride tray tab; dismissal/curb under Manage) | Messages + search. No camera | Parent↔student link is **on** |
-| Teacher | **Desk · Capture · Needs · Class · Ask** (5; no Profile tab; **no** Ride tab) | Camera + messages + search. Camera **proposes**; tray Capture **files** | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
+| Teacher | **Desk · Capture · Needs Attention · Class · Ask** (5; no Profile tab; **no** Ride tab) | Camera + messages + search. Camera **proposes**; tray Capture **files** | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
 | Parent | **Home · Ride · Ask** (3; keys `home`/`ride`/`ask`; icons `today`/`ride`/`ask`; hrefs `/parent`, `/parent/ride`, `/ask`. Profile hamburger-only) | Messages + search | Camera, grade book, other children, add-a-child |
 | Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped **6**-tab student tray; Profile hamburger-only) | Messages + search | Camera, other students’ grades |
 
-Header cluster is now `[camera?] [search] [messages]`. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs** tray badge = `countNeedsYou` (separate from messages).
+Header cluster is now `[camera?] [search] [messages]`. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs Attention** tray badge = `countNeedsYou` (separate from messages).
 
 Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger extras are **People** · **Activity** · **Messages** · **Responsibilities** only — they do **not** include Feed or Manage; Feed in the drawer is superintendent §36.2 only (tray Feed remains for both office seats). Pure **teacher seat** never shows those office nouns.
 
@@ -3236,7 +3236,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 
 **Explicit chrome seat** (client preference only — not JWT, not SQL). Preference domain: `office` | `teacher` | `parent`. `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray. `also_parent` on staff means they **may choose** Parent chrome; it must **never** silently force Parent seat or add Ride to a staff tray.
 
-- Dual-hat office+teacher: default seat = **Office**. Seat switch sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
+- Dual-hat office+teacher: default seat = **Office**. Seat switch sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Capture · Needs Attention · Class · Ask**; office People / Manage / matrix / school Activity hide from primary chrome.
 - When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask. **Still no Ride tray tab** — staff curb/dismissal stays Manage altitude.
 - Staff with parent hat (`also_parent`) get **two orthogonal drawer paths:** **My children** = deep-link into the `/parent` family **without** flipping seat (no parent tray / no Ride tab under staff chrome). **Parent** = altitude seat switch (Teach/Office class) that sets preference `parent`, rebuilds tray from `tabsFor('parent')` only → **Home · Ride · Ask**, lands parent root `/parent`. **Ride requires Parent seat** — My children alone is not the Ride menu path.
 - Parent-only logins (no staff seat) still use the parent tray **Home · Ride · Ask** with no seat row needed.
@@ -3275,7 +3275,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 
 Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old tray + half-new title at any frame.
 
-**Illegal transient states (any shipped frame):** seat=teacher + wordmark People/Manage; seat=office + tray Needs/Capture; merged 6+ tray flash; stuck prior-seat wordmark under or after drawer exit; KelyraMark off-Ask when school logo should show; drawer Office/Teach duplicated by a header chip or WhoRow segment.
+**Illegal transient states (any shipped frame):** seat=teacher + wordmark People/Manage; seat=office + tray Needs Attention/Capture; merged 6+ tray flash; stuck prior-seat wordmark under or after drawer exit; KelyraMark off-Ask when school logo should show; drawer Office/Teach duplicated by a header chip or WhoRow segment.
 
 #### Parent seat switch (IQG-RIDE G3 lock, 2026-09-10 — Option (a) only)
 
@@ -3314,7 +3314,7 @@ Shell under scrim may already hold **target** seat chrome (preferred) or stay pr
 
 Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old staff tray + parent title, or parent tray + prior staff wordmark, at any frame.
 
-**Illegal transient states (any shipped frame):** staff seat + Ride tray tab; parent seat + teacher Capture/Needs or office People/Manage tray nouns; merged staff+parent tray flash (6+ or concatenated); stuck prior-seat wordmark under or after drawer exit; “Ride seat” as the sole drawer label for this control; silent auto-flip to Parent; treating **My children** alone as Ride entry; header chip / WhoRow seat segment duplicate.
+**Illegal transient states (any shipped frame):** staff seat + Ride tray tab; parent seat + teacher Capture/Needs Attention or office People/Manage tray nouns; merged staff+parent tray flash (6+ or concatenated); stuck prior-seat wordmark under or after drawer exit; “Ride seat” as the sole drawer label for this control; silent auto-flip to Parent; treating **My children** alone as Ride entry; header chip / WhoRow seat segment duplicate.
 
 **Prove-out AC this fold must support** (eng later; DH ids from pm-lock §4): **DH-01** Parent row + Ride ≤3 taps; **DH-02** teacher/office tray never Ride; **DH-04** no tray merge; **DH-05** office+also_parent same Parent path; **DH-06** My children still works without exposing Ride tab; **DH-07** cold start stays job-of-record (not Parent).
 
@@ -3517,15 +3517,15 @@ No new npm packages. No SQL. No `EXPO_PUBLIC_*` keys. Matcher never inserts a st
 
 Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/{id}`) stays pushed.
 
-**Default `CLASS_TABS` (≤7, ordered):** **Today · Needs · Feed · Students · Assignments · Gradebook · Parents**. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
+**Default `CLASS_TABS` (≤7, ordered):** **Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents**. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
 
 **Demoted (routes stay; not default icons):** This week (`?tab=week` / Today filter), Heatmap (`/gradebook?tab=heatmap` only), Family (drawer or Class overflow). Do not restore a 10-tab default. AVG Syllabus stays Class-desk altitude via setup/gradebook entry — not an 8th default icon.
 
-Switching panes `replace`s so Back does not walk the tab history. Today / Needs are `/class/{id}?tab=today|needs`.
+Switching panes `replace`s so Back does not walk the tab history. Today / Needs Attention are `/class/{id}?tab=today|needs`.
 
 Office card `/admin/class/{id}` is in-page only: **Feed · Teacher · Parents · Students** (`OFFICE_CLASS_TABS` frozen — never teacher ClassTabs). School Feed is school-wide posts; class Feed is that class only.
 
-The Amazon context row remains on Capture, Needs (`/inbox`), student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
+The Amazon context row remains on Capture, Needs Attention (`/inbox`), student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
 
 ---
 
@@ -3650,7 +3650,7 @@ Profile is **only** the identity row in the hamburger (36 photo + handle, alread
 
 | Role | Tray, left → right | Count |
 |---|---|---|
-| Teacher | **Desk · Capture · Needs · Class · Ask** (`today` · `capture` · `inbox` · `records` · `ask`) | 5 |
+| Teacher | **Desk · Capture · Needs Attention · Class · Ask** (`today` · `capture` · `inbox` · `records` · `ask`) | 5 |
 | Student | Assignments · Feeds · Classes · Grades · People · **Ask** (shipped student chrome; intentional 6 — not a defect vs teacher 5) | 6 |
 | Parent | **Home · Ride · Ask** (keys `home` · `ride` · `ask`; icons `today` · **`ride`** · `ask`; hrefs `/parent` · `/parent/ride` · `/ask`) | **3** |
 | Office | **Feed · Classes · People · Manage · Ask** (**no** Ride tray tab; dismissal/curb = Manage altitude) | 5 |
@@ -3659,7 +3659,7 @@ Profile is **only** the identity row in the hamburger (36 photo + handle, alread
 
 **Superseded 2026-09-09.** Any earlier “Parent · Home · Ask · count 2” row (including pre-patch §34.2 and early §3.4 2-tab parent) is void. Spec matches shipped `trayTabs.ts`.
 
-Teacher rules (TEACH-UX A–D): user-facing **Needs** label on key `inbox` / route `/inbox`; Class href = `/class/{id}/setup` (not gradebook-first); web ≥720 labels on the same five nouns. No sixth tray tab. No Profile-in-tray.
+Teacher rules (TEACH-UX A–D): user-facing **Needs Attention** label on key `inbox` / route `/inbox`; Class href = `/class/{id}/setup` (not gradebook-first); web ≥720 labels on the same five nouns. No sixth tray tab. No Profile-in-tray.
 
 Web/tablet top bar: same order, labels visible. Ask is last.
 
@@ -3991,10 +3991,10 @@ src/app/admin/people.tsx
 
 | Layer | Shipped |
 |---|---|
-| Tray (5) | **Desk · Capture · Needs · Class · Ask** — keys `home`/`today`, `capture`, `inbox`, `class`/`records`, `ask` |
-| Needs | Label **Needs**; route **`/inbox`** unchanged; badge `countNeedsYou` |
+| Tray (5) | **Desk · Capture · Needs Attention · Class · Ask** — keys `home`/`today`, `capture`, `inbox`, `class`/`records`, `ask` |
+| Needs Attention | Label **Needs Attention**; route **`/inbox`** unchanged; badge `countNeedsYou` |
 | Class tray href | `/class/{id}/setup` — **not** gradebook-first |
-| `CLASS_TABS` default ≤7 | Today · Needs · Feed · Students · Assignments · Gradebook · Parents |
+| `CLASS_TABS` default ≤7 | Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents |
 | Demoted | week, heatmap, family (routes stay) |
 | `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
 | Desk wordmark | **Class name** on class panes (§32.7) |
@@ -4043,7 +4043,7 @@ Hide the current seat. Do not list both seats with a check. Do not duplicate the
 
 **Motion.** **0 ms** chrome morph. Existing drawer two-phase exit only. Reduce Motion identical (instant). Shell under scrim may already show **target** seat chrome or hold previous until unmount — never half-old tray + half-new title.
 
-**Settle acceptance (one paragraph).** After switch settles: seat=teacher never shows office tray nouns (People/Manage) or office People altitude; seat=office never shows teacher Capture/Needs tray or teacher camera; wordmark matches §3.5 for the destination landed; no merged 6+ tray flash at any shipped frame; no stuck prior-seat wordmark under or after drawer exit; default dual-hat remains Office; preference is not JWT/SQL; office seat still has no Ride tray tab.
+**Settle acceptance (one paragraph).** After switch settles: seat=teacher never shows office tray nouns (People/Manage) or office People altitude; seat=office never shows teacher Capture/Needs Attention tray or teacher camera; wordmark matches §3.5 for the destination landed; no merged 6+ tray flash at any shipped frame; no stuck prior-seat wordmark under or after drawer exit; default dual-hat remains Office; preference is not JWT/SQL; office seat still has no Ride tray tab.
 
 **Out of this P-06 lock.** Toast success one-liner; new IconName seat glyphs; 180 ms chrome crossfade; header chip; identity segments; stay-on-compatible-route; reopening §31.4b office↔teacher defaults or tray recipes. **Parent seat G3** is **not** out of product law — it is locked in the §31.4b Parent seat subsection (same motion/tray family; separate who/label/landing).
 

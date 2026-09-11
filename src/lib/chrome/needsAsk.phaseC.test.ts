@@ -13,14 +13,14 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-test('TR-06 / ND-01/02: tray Needs label; href stays /inbox; key stays inbox', () => {
+test('TR-06 / ND-01/02: tray Needs Attention label; href stays /inbox; key stays inbox', () => {
   const tabs = tabsFor('teacher', '/inbox', 'c1', 0);
   const needs = tabs.find((tab) => tab.key === 'inbox');
   assert.ok(needs);
-  assert.equal(needs.label, 'Needs');
+  assert.equal(needs.label, 'Needs Attention');
   assert.equal(needs.href, '/inbox');
   assert.equal(needs.icon, 'inbox');
-  assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs');
+  assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs Attention');
 });
 
 test('TR-11 / ND: badge is count-only; same numeric source param for tray Needs', () => {
@@ -41,11 +41,11 @@ test('TR-11 / ND: badge is count-only; same numeric source param for tray Needs'
   assert.match(api, /Single Needs queue count for tray \+ desk/);
 });
 
-test('ND-03: empty states tie Capture → Needs → Approve on web', () => {
+test('ND-03: empty states tie Capture → Needs Attention → Approve on web', () => {
   const inbox = read('src/app/inbox.tsx');
   const desk = read('src/app/class/[id]/index.tsx');
-  assert.match(inbox, /Capture work, review it in Needs, then Approve on the student page on web/);
-  assert.match(desk, /Capture work, review it in Needs, then Approve on the student page on web/);
+  assert.match(inbox, /Capture work, review it in Needs Attention, then Approve on the student page on web/);
+  assert.match(desk, /Capture work, review it in Needs Attention, then Approve on the student page on web/);
 });
 
 test('ASK-01/02/05: class name chip on teacher Ask; one /ask; office Ask unchanged', () => {
@@ -120,7 +120,7 @@ test('Phase A+B intact: five tray keys; Class setup; CLASS_TABS ≤7; no sixth',
   assert.ok(CLASS_TABS.length <= 7);
 });
 
-test('titles: /inbox wordmark is Needs', () => {
+test('titles: /inbox wordmark is Needs Attention', () => {
   assert.equal(
     headerTitleFor({
       pathname: '/inbox',
@@ -129,7 +129,7 @@ test('titles: /inbox wordmark is Needs', () => {
       contextTab: 'all',
       role: 'teacher',
     }),
-    'Needs',
+    'Needs Attention',
   );
 });
 

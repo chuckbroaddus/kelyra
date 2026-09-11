@@ -1101,7 +1101,7 @@ async function classifyCapture(body) {
   };
 }
 
-const ASK_FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
+const ASK_FALLBACK = "I can’t tell from what’s saved. Open Needs Attention or the student’s page.";
 const ASK_PHOTO_FAILED = '(A photo was attached but could not be opened.)';
 
 async function hydrateAskImages(input) {

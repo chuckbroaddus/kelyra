@@ -159,7 +159,7 @@ test('SEC-05/06 Phase B: Class tray not gradebook-first; Family stays drawer; no
   const teacherBlock = tray.slice(tray.indexOf('const classRoot'));
   assert.match(teacherBlock, /\$\{classRoot\}\/setup/);
   assert.doesNotMatch(teacherBlock, /\$\{classRoot\}\/gradebook/);
-  assert.match(teacherBlock, /label: 'Needs'/);
+  assert.match(teacherBlock, /label: 'Needs Attention'/);
   assert.match(teacherBlock, /href: '\/inbox'/);
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /label="Family update"/);

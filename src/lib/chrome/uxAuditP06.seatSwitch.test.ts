@@ -85,7 +85,7 @@ test('P-06 settle: office seat never teacher Capture/Needs tray or camera; no Ri
   assert.equal(showHeaderCapture('/messages', 'teacher'), false);
 
   assert.equal(headerTitleForSeatRoot(officeRole!, 'Lincoln'), 'Lincoln');
-  assert.notEqual(headerTitleForSeatRoot(officeRole!, 'Lincoln'), 'Needs');
+  assert.notEqual(headerTitleForSeatRoot(officeRole!, 'Lincoln'), 'Needs Attention');
   assert.notEqual(headerTitleForSeatRoot(officeRole!, 'Lincoln'), 'Capture');
 });
 
