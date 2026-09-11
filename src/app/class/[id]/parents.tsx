@@ -119,8 +119,7 @@ export default function ParentsScreen() {
   const all = [...linked, ...available];
 
   return (
-    <Screen keyboard maxWidth={640}>
-      {classId ? <ClassTabs classId={classId} /> : null}
+    <Screen keyboard maxWidth={640} collapse={classId ? <ClassTabs classId={classId} /> : null}>
       {all.length ? (
         <AvatarTray
           people={all.map((parent) => ({

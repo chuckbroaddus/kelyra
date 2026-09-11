@@ -278,8 +278,7 @@ export default function SyllabusScreen() {
   const rulesCategory = categories.find((c) => c.key === editingRulesKey) ?? null;
 
   return (
-    <Screen keyboard>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
       <SectionHeader label="How this class grades" first />
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>

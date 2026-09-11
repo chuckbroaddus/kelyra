@@ -8,7 +8,6 @@ import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
@@ -293,35 +292,38 @@ export default function GradebookScreen() {
       <GradeTermTabs value={termFilter} onChange={setTermFilter} />
     ) : null;
 
+  const collapsing = (
+    <>
+      {id ? <ClassTabs classId={id} stacked /> : null}
+      {id ? (
+        <View style={styles.chipShelf}>
+          <ChipRow compact>
+            <Chip
+              label="Gradebook"
+              selected={!heatmap}
+              onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
+            />
+            <Chip
+              label="Heatmap"
+              selected={heatmap}
+              onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
+            />
+          </ChipRow>
+        </View>
+      ) : null}
+      {syllabusBanner !== 'published' && id && !heatmap ? (
+        <View style={styles.syllabusBanner}>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Warning - Grade weights not set in Syllabus
+          </Text>
+        </View>
+      ) : null}
+    </>
+  );
+
   return (
     <View style={styles.shell}>
-    <Screen maxWidth={1100} scroll={false}>
-      <CollapsingPageChrome>
-        {id ? <ClassTabs classId={id} stacked /> : null}
-        {id ? (
-          <View style={styles.chipShelf}>
-            <ChipRow compact>
-              <Chip
-                label="Gradebook"
-                selected={!heatmap}
-                onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
-              />
-              <Chip
-                label="Heatmap"
-                selected={heatmap}
-                onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
-              />
-            </ChipRow>
-          </View>
-        ) : null}
-        {syllabusBanner !== 'published' && id && !heatmap ? (
-          <View style={styles.syllabusBanner}>
-            <Text style={[type.meta, { color: colors.mute }]}>
-              Warning - Grade weights not set in Syllabus
-            </Text>
-          </View>
-        ) : null}
-      </CollapsingPageChrome>
+    <Screen maxWidth={1100} scroll={false} collapse={collapsing}>
       {termTabs}
       <View style={styles.pane}>
       {heatmap ? (

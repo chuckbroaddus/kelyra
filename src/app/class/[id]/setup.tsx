@@ -536,8 +536,7 @@ export default function SetupScreen() {
   );
 
   return (
-    <Screen keyboard>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
       {layout.isSplit && office ? (
         <View style={styles.split}>
           <View style={styles.col}>{addCard}</View>

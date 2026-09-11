@@ -87,8 +87,7 @@ export default function FamilyScreen() {
   usePushedTitle(klass?.name ?? 'Class');
 
   return (
-    <Screen keyboard maxWidth={640}>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen keyboard maxWidth={640} collapse={id ? <ClassTabs classId={id} /> : null}>
       <SectionHeader label="Send a note home" first />
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>

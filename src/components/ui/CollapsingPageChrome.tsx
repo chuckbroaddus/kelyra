@@ -11,8 +11,8 @@ type Props = {
 /**
  * In-page chrome (ClassTabs, segment chips, Gradebook syllabus warning) that leaves with
  * hide-on-scroll and returns on swipe-down — same `chrome.visible` brain as the
- * floating tray / Amazon context row. Used on flush screens (`Screen scroll={false}`)
- * where those rows cannot live in the page ScrollView the way Desk / Assignments do.
+ * floating tray / Amazon context row / class Feed composer dock. Prefer `Screen`
+ * `collapse={…}` so every class desk pane shares Feed’s leave/return physics.
  */
 export function CollapsingPageChrome({ children }: Props) {
   const chrome = useOptionalChrome();

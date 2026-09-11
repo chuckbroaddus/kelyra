@@ -74,8 +74,7 @@ export default function ClassSettingsScreen() {
   );
 
   return (
-    <Screen keyboard>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
       {klass ? (
         <>
           <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />

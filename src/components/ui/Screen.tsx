@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
 import { chrome as chromeTokens } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
@@ -32,6 +33,12 @@ type Props = {
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scrollRef?: RefObject<ScrollView | null>;
   onContentSizeChange?: (width: number, height: number) => void;
+  /**
+   * In-page chrome (ClassTabs, Gradebook chips, …) pinned above the page scroller
+   * and collapsed with the tray via `chrome.visible` — same brain as class Feed.
+   * Do not also place ClassTabs inside `children` when this is set.
+   */
+  collapse?: ReactNode;
 };
 
 export function useScreenPad() {
@@ -59,6 +66,7 @@ export function Screen({
   onScroll,
   scrollRef,
   onContentSizeChange,
+  collapse,
 }: Props) {
   const { colors } = useTheme();
   const { pad } = useScreenPad();
@@ -78,6 +86,7 @@ export function Screen({
     sticky && keyboardUp && Platform.OS !== 'android' && keyboardHeight > 0
       ? keyboardHeight
       : stickyLift;
+  const pinChrome = collapse != null;
 
   useEffect(() => {
     if (!keyboard || !keyboardUp) return;
@@ -104,7 +113,14 @@ export function Screen({
     paddingBottom: sticky ? 16 : 16 + (keyboardUp ? 12 : bottomReserve),
   };
 
-  const body = scroll ? (
+  // When ClassTabs (etc.) sit in CollapsingPageChrome above the scroller, FlushBody
+  // owns horizontal + top pad — the scroller only needs bottom tray reserve.
+  const pinnedContentStyle = {
+    maxWidth,
+    paddingBottom: padStyle.paddingBottom,
+  };
+
+  const scroller = (content: ReactNode, contentStyle: object) => (
     <ScrollView
       ref={scrollRef}
       style={styles.scroller}
@@ -119,21 +135,41 @@ export function Screen({
       onScrollEndDrag={scrollHandlers.onScrollEndDrag}
       onMomentumScrollEnd={scrollHandlers.onMomentumScrollEnd}
       onContentSizeChange={onContentSizeChange}
-      contentContainerStyle={[styles.content, padStyle, centered && styles.centered]}
+      contentContainerStyle={[styles.content, contentStyle, centered && styles.centered]}
     >
-      {children}
+      {content}
     </ScrollView>
-  ) : (
-    <FlushBody
-      pad={pad}
-      topReserve={topReserve}
-      maxWidth={maxWidth}
-      paddingBottom={padStyle.paddingBottom}
-      centered={centered}
-    >
-      {children}
-    </FlushBody>
   );
+
+  let body: ReactNode;
+  if (pinChrome) {
+    body = (
+      <FlushBody
+        pad={pad}
+        topReserve={topReserve}
+        maxWidth={maxWidth}
+        paddingBottom={padStyle.paddingBottom}
+        centered={centered}
+      >
+        <CollapsingPageChrome>{collapse}</CollapsingPageChrome>
+        {scroll ? scroller(children, pinnedContentStyle) : <View style={styles.flushFill}>{children}</View>}
+      </FlushBody>
+    );
+  } else if (scroll) {
+    body = scroller(children, padStyle);
+  } else {
+    body = (
+      <FlushBody
+        pad={pad}
+        topReserve={topReserve}
+        maxWidth={maxWidth}
+        paddingBottom={padStyle.paddingBottom}
+        centered={centered}
+      >
+        {children}
+      </FlushBody>
+    );
+  }
 
   const column = (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
