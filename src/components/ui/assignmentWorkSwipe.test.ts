@@ -29,8 +29,9 @@ test('WorkRow PanResponder reads leadingRef/trailingRef (not stale first-render 
   assert.match(src, /trailingRef/);
   assert.match(src, /leadingRef\.current = leading/);
   assert.match(src, /trailingRef\.current = trailing/);
-  assert.match(src, /const maxR = trailActs\.length \* 80/);
-  assert.match(src, /snap\(offset < -56 \? -maxR : 0\)/);
+  assert.match(src, /trailActs\.length/);
+  assert.match(src, /SWIPE_TILE/);
+  assert.match(src, /decideSwipeSnap/);
   assert.match(src, /alignSelf:\s*'stretch'/);
   assert.match(src, /minHeight:\s*72/);
   assert.doesNotMatch(src, /height:\s*'100%'/);
@@ -42,7 +43,10 @@ test('WorkRow claims gesture while open and tap closes without navigating', () =
   assert.match(src, /onStartShouldSetPanResponderCapture:\s*\(\)\s*=>\s*openOffset\.current !== 0/);
   assert.match(src, /onPanResponderTerminationRequest:\s*\(\)\s*=>\s*openOffset\.current === 0/);
   assert.match(src, /useSwipeRowOpen\(open\)/);
-  assert.match(src, /if \(openOffset\.current !== 0\) \{\s*snap\(0\);\s*return;/);
+  assert.match(src, /decideSwipeSnap/);
+  assert.match(src, /grantFrom/);
+  // Tap-to-close: Pressable path + pan-release path (onStart steals from Pressable)
+  assert.match(src, /openOffset\.current !== 0 \|\| open/);
   assert.match(src, /colors\.dangerBrick/);
   assert.doesNotMatch(src, /action\.tone === 'danger'\s*\?\s*colors\.danger\b/);
 });
@@ -52,7 +56,9 @@ test('ListRow shares open-claim, tap-to-close, and dangerBrick Delete tiles', ()
   assert.match(src, /onStartShouldSetPanResponder:\s*\(\)\s*=>\s*openOffset\.current !== 0/);
   assert.match(src, /onPanResponderTerminationRequest:\s*\(\)\s*=>\s*openOffset\.current === 0/);
   assert.match(src, /useSwipeRowOpen\(open && swipable\)/);
-  assert.match(src, /if \(openOffset\.current !== 0\) \{\s*snap\(0\);\s*return;/);
+  assert.match(src, /decideSwipeSnap/);
+  assert.match(src, /grantFrom/);
+  assert.match(src, /openOffset\.current !== 0 \|\| open/);
   assert.match(src, /colors\.dangerBrick/);
   assert.match(src, /leadingRef\.current = leading/);
   assert.match(src, /trailingRef\.current = trailing/);
@@ -90,4 +96,12 @@ test('ui-design documents swipe close / tap / back and dangerBrick', () => {
   assert.match(src, /must not.*trigger React Navigation/i);
   assert.match(src, /SwipeRowOpenProvider/);
   assert.match(src, /second.*LTR swipe after close/i);
+});
+
+test('swipeRowSnap encodes tap-to-close and directional LTR close', () => {
+  const src = read('src/lib/ui/swipeRowSnap.ts');
+  assert.match(src, /export function decideSwipeSnap/);
+  assert.match(src, /CLOSE_DX_PX/);
+  assert.match(src, /TAP_SLOP_PX/);
+  assert.match(src, /grantX !== 0 && isTap/);
 });
