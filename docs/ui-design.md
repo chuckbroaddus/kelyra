@@ -3437,6 +3437,8 @@ Row height 44 (the hit). Gap 4. Leading inset = page pad (16 phone / 24 tablet).
 
 Unselected is icon-only. Only the selected tab shows its English name.
 
+**Selected-name morph.** Switching tabs animates the selected title slot and pill `maxWidth` with `chrome.motion.personTab` (325 ms = `context` × 1.25). Soft-fill (`brandSoft`) fades with the expand value. The outgoing label stays mounted and clips away — do not unmount it at the start of deselect. Reduce Motion jumps (`setValue` / duration 0) and `scrollTo(..., animated: false)`.
+
 **Counts toward glyphs.** Grade-book period tabs use pie-slice `IconName`s (`termAll` … `termYear`), not a labels-only row. Clock from 12: Quarter 1 = upper-right fill, Q2 lower-right, Q3 lower-left, Q4 upper-left. Semester 1 = right half, Semester 2 = left half. **All** is a solid disk; **Year** is a filled disk inside a rim. Same selected-name / icon-only rule as every other PersonTabs row. Do not use `ChipRow` for this filter.
 
 **Title slot.** The width used for the selected name is the lesser of (1) the painted title at `type.pill` and (2) the max allowed for that row. Subtract the 22 glyph (icon or teacher avatar), 8 gap, 22 hit pad, and 8 row-end pad from the measured tab scroller before the title may grow. Trailing mute / extra chrome sits outside the scroller and is already gone from that width.

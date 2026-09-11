@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type TextStyle,
+} from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { CountBadge } from '@/components/ui/CountBadge';
@@ -16,7 +27,7 @@ import {
   personTabSelectedMaxWidth,
   personTabTitleSlot,
 } from '@/components/ui/personTabsLayout';
-import { radius, type } from '@/constants/theme';
+import { chrome, radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type PersonTab = {
@@ -41,21 +52,173 @@ type Props = {
   compact?: boolean;
 };
 
+/** Icon-only hit (styles.hit minWidth / minHeight). */
+const PERSON_TAB_ICON_HIT = 44;
+
+type ThemeColors = {
+  brand: string;
+  brandSoft: string;
+  mute: string;
+};
+
+type PillProps = {
+  tab: PersonTab;
+  selected: boolean;
+  hasGlyph: boolean;
+  labelMax: number;
+  titleWidth: number;
+  colors: ThemeColors;
+  reduce: boolean;
+  onChange: (key: string) => void;
+  onLayoutX: (x: number) => void;
+};
+
+function PersonTabPill({
+  tab,
+  selected,
+  hasGlyph,
+  labelMax,
+  titleWidth,
+  colors,
+  reduce,
+  onChange,
+  onLayoutX,
+}: PillProps) {
+  const expand = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  const [showLabel, setShowLabel] = useState(selected);
+  const slot = labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
+  const selectedMax = personTabSelectedMaxWidth(labelMax || titleWidth, hasGlyph);
+
+  useEffect(() => {
+    if (selected) setShowLabel(true);
+    if (reduce) {
+      expand.setValue(selected ? 1 : 0);
+      if (!selected) setShowLabel(false);
+      return;
+    }
+    Animated.timing(expand, {
+      toValue: selected ? 1 : 0,
+      duration: chrome.motion.personTab,
+      easing: selected ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished && !selected) setShowLabel(false);
+    });
+  }, [expand, reduce, selected]);
+
+  const labelWidth = expand.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, slot],
+  });
+  const pillMax = expand.interpolate({
+    inputRange: [0, 1],
+    outputRange: [PERSON_TAB_ICON_HIT, Math.max(PERSON_TAB_ICON_HIT, selectedMax)],
+  });
+
+  return (
+    <HoverTip label={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}>
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected }}
+        accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
+        onPress={() => onChange(tab.key)}
+        onLayout={(event) => {
+          onLayoutX(event.nativeEvent.layout.x);
+        }}
+        style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+      >
+        <Animated.View
+          style={[
+            styles.hit,
+            !hasGlyph && styles.labelHit,
+            { maxWidth: pillMax, overflow: 'hidden' },
+          ]}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: colors.brandSoft,
+                borderRadius: radius.pill,
+                opacity: expand,
+              },
+            ]}
+          />
+          {hasGlyph ? (
+            <View style={styles.glyph}>
+              {tab.photoName || tab.photoUrl ? (
+                <Avatar
+                  name={tab.photoName || tab.label}
+                  photoUrl={tab.photoUrl}
+                  hasPhoto={Boolean(tab.photoUrl)}
+                  size={PERSON_TAB_GLYPH}
+                />
+              ) : tab.icon ? (
+                <Icon
+                  name={tab.icon}
+                  color={selected ? colors.brand : colors.mute}
+                  size={PERSON_TAB_GLYPH}
+                />
+              ) : null}
+              <CountBadge count={tab.badge ?? 0} />
+            </View>
+          ) : null}
+          {showLabel && slot > 0 ? (
+            <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: labelMax }]}>
+              <MarqueeText
+                text={tab.label}
+                align="start"
+                accessible
+                accessibilityLabel={tab.label}
+                fadeColor={colors.brandSoft}
+                style={[styles.label, { color: colors.brand }]}
+              />
+            </Animated.View>
+          ) : showLabel && selected && slot === 0 ? (
+            <Text
+              numberOfLines={1}
+              accessible
+              accessibilityLabel={tab.label}
+              style={[styles.label, { color: colors.brand }]}
+            >
+              {tab.label}
+            </Text>
+          ) : null}
+        </Animated.View>
+      </Pressable>
+    </HoverTip>
+  );
+}
+
 /** Icon-first section tabs. Selected tab shows its name next to the glyph. */
 export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
   const [titleByKey, setTitleByKey] = useState<Record<string, number>>({});
+  const [reduce, setReduce] = useState(false);
   const xOf = useRef<Record<string, number>>({});
   const hasGlyph = personTabRowHasGlyph(tabs);
   const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph) : 0;
 
   useEffect(() => {
+    let live = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
+      if (live) setReduce(value);
+    });
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
+    return () => {
+      live = false;
+      sub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     const x = xOf.current[value];
     if (x == null) return;
-    scroller.current?.scrollTo({ x: Math.max(0, x - 12), animated: true });
-  }, [value, rowWidth]);
+    scroller.current?.scrollTo({ x: Math.max(0, x - 12), animated: !reduce });
+  }, [value, rowWidth, reduce]);
 
   return (
     <View
@@ -99,76 +262,22 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }
         style={styles.scroller}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
       >
-        {tabs.map((tab) => {
-          const selected = tab.key === value;
-          const titleWidth = titleByKey[tab.key] ?? 0;
-          const slot = selected && labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
-          return (
-            <HoverTip key={tab.key} label={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
-                onPress={() => onChange(tab.key)}
-                onLayout={(event) => {
-                  xOf.current[tab.key] = event.nativeEvent.layout.x;
-                }}
-                style={({ pressed }) => [
-                  styles.hit,
-                  !hasGlyph && styles.labelHit,
-                  selected && {
-                    backgroundColor: colors.brandSoft,
-                    maxWidth: personTabSelectedMaxWidth(labelMax || titleWidth, hasGlyph),
-                  },
-                  pressed && { opacity: 0.85 },
-                ]}
-              >
-                {hasGlyph ? (
-                  <View style={styles.glyph}>
-                    {tab.photoName || tab.photoUrl ? (
-                      <Avatar
-                        name={tab.photoName || tab.label}
-                        photoUrl={tab.photoUrl}
-                        hasPhoto={Boolean(tab.photoUrl)}
-                        size={PERSON_TAB_GLYPH}
-                      />
-                    ) : tab.icon ? (
-                      <Icon
-                        name={tab.icon}
-                        color={selected ? colors.brand : colors.mute}
-                        size={PERSON_TAB_GLYPH}
-                      />
-                    ) : null}
-                    <CountBadge count={tab.badge ?? 0} />
-                  </View>
-                ) : null}
-                {selected ? (
-                  slot > 0 ? (
-                    <View style={[styles.labelClip, { width: slot, maxWidth: labelMax }]}>
-                      <MarqueeText
-                        text={tab.label}
-                        align="start"
-                        accessible
-                        accessibilityLabel={tab.label}
-                        fadeColor={colors.brandSoft}
-                        style={[styles.label, { color: colors.brand }]}
-                      />
-                    </View>
-                  ) : (
-                    <Text
-                      numberOfLines={1}
-                      accessible
-                      accessibilityLabel={tab.label}
-                      style={[styles.label, { color: colors.brand }]}
-                    >
-                      {tab.label}
-                    </Text>
-                  )
-                ) : null}
-              </Pressable>
-            </HoverTip>
-          );
-        })}
+        {tabs.map((tab) => (
+          <PersonTabPill
+            key={tab.key}
+            tab={tab}
+            selected={tab.key === value}
+            hasGlyph={hasGlyph}
+            labelMax={labelMax}
+            titleWidth={titleByKey[tab.key] ?? 0}
+            colors={colors}
+            reduce={reduce}
+            onChange={onChange}
+            onLayoutX={(x) => {
+              xOf.current[tab.key] = x;
+            }}
+          />
+        ))}
       </ScrollView>
       {trailing}
     </View>
