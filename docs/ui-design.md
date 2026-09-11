@@ -1433,10 +1433,11 @@ No chrome. Centered column, `maxWidth` 400, both orientations.
 3. **`AvatarTray`** of the roster. Tap → student page. Empty roster: omit the tray.
 4. If `listInbox` is non-empty, a short **Needs you** `WorkShelf` (max 12).
 5. Optional quiet `ListRow`s only if we still need a teaching cue: `Add students` → Setup, shown **only** when roster is empty.
+6. When the roster has students and the Needs pile is empty (no inbox shelf items), quiet mute/meta copy: **Nothing else needs doing today**. Do not show this when the empty-roster card is up.
 
 Omit the instructional Phase 2 Daily `PhaseBanner` and its dynamic lead from class Home.
 
-**This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = completed`).
+**This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = completed`). When that list is empty after load, quiet mute/meta: **Nothing else needs doing this week**.
 
 **Needs you** (ClassTabs label **Needs Attention**, `?tab=needs`). Hide the people tray. Vertical `WorkRow` of `listInbox` + turned-in practice. This is the same pile as the bell. Turned-in practice rows: **Review** via trailing swipe (and row tap) only — no inline Review pill (same denser pattern as Assignments Preview/Delete). Capture rows: keep **Review** / **Assign name** pills; **Delete** is leading swipe only. This week’s turned-in practice rows use the same swipe-only Review (no inline pill).
 

@@ -151,8 +151,15 @@ export default function ClassHomeScreen() {
         </Card>
       ) : null}
 
+      {pane === 'today' && roster.length > 0 && inbox.length === 0 && week !== null ? (
+        <Text style={[styles.emptyHint, { color: colors.mute }]}>Nothing else needs doing today</Text>
+      ) : null}
+
       {pane === 'week' ? (
         <View style={twoUp ? styles.two : styles.one}>
+          {week !== null && week.captures.length === 0 && week.practice.length === 0 ? (
+            <Text style={[styles.emptyHint, { color: colors.mute }]}>Nothing else needs doing this week</Text>
+          ) : null}
           {(week?.captures ?? []).map((item) => (
             <WorkRow
               key={item.id}
@@ -299,6 +306,7 @@ export default function ClassHomeScreen() {
 
 const styles = StyleSheet.create({
   empty: type.body,
+  emptyHint: type.meta,
   one: {
     gap: 0,
   },
