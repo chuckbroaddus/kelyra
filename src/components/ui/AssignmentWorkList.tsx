@@ -87,7 +87,7 @@ export function AssignmentWorkList({ classId, studentId, renderAfter }: Props) {
 
   return (
     <>
-      <PrimaryButton align="left" label="Create Assignment" onPress={() => router.push(assignHref as never)} />
+      <PrimaryButton label="Create Assignment" onPress={() => router.push(assignHref as never)} />
       {soon.length ? (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Coming due</Text>
