@@ -952,6 +952,15 @@ If a row already has two actions per side, **Delete** replaces the least-critica
 |---|---|---|
 | Leading | **Delete** | Opens delete-practice confirm |
 
+**Assignments (`AssignmentWorkList`)** — trailing-only (no leading). Swipe left reveals **two** tappable tiles, 80 pt each (open snap `−160`):
+
+| Side | Action | Tile | Commit |
+|---|---|---|---|
+| Trailing 1 (inner) | **Preview** | `brand` fill, `brandInk` | Lesson → preview; other kinds → assignment sheet. Never auto-commits |
+| Trailing 2 (outer right / far edge) | **Delete** | `danger` fill (`#B53A32` / dark `#F07A70`), light label | Opens delete-assignment confirm. Never auto-commits |
+
+Order is always `[Preview, Delete]` so Delete sits at the outer right edge. Leading stays empty (`maxL = 0`); LTR reveal is disabled.
+
 ### 10.8 `ListRow`
 
 New file `src/components/ui/ListRow.tsx`. Facebook people row. Use for classes, roster-as-text, notifications, family invite list, join-name picker, skill-history timeline.
