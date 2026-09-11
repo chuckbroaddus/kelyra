@@ -9,7 +9,6 @@ import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { WorkRow } from '@/components/ui/WorkRow';
 import { WorkShelf } from '@/components/ui/WorkShelf';
@@ -77,7 +76,6 @@ export default function ClassHomeScreen() {
     }, [load]),
   );
 
-  const waiting = inbox.length + turned.length;
   const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const pane = paneRaw === 'week' || paneRaw === 'needs' ? paneRaw : 'today';
   const twoUp = layout.breakpoint === 'tablet';
@@ -290,16 +288,6 @@ export default function ClassHomeScreen() {
       ) : null}
 
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={2}
-        detail={
-          roster.length === 0
-            ? 'Enroll students from the school roster in Setup, then photograph today’s work.'
-            : waiting
-              ? 'Start with what needs you. Review turned-in work, then approve.'
-              : 'Nothing waiting. Photograph work, or open a student.'
-        }
-      />
       <ConfirmSheet
         visible={Boolean(pending)}
         title="Delete this work?"

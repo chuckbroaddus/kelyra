@@ -1059,7 +1059,7 @@ Student book (one column): pin that column to the **right**. Frozen assignment t
 
 ### 10.16 Join code, Phase banner
 
-Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, Home, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on Capture, Inbox (Needs), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
+Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on class Home, Capture, Inbox (Needs), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
 
 ### 10.17 Icon additions
 
@@ -1387,11 +1387,11 @@ No chrome. Centered column, `maxWidth` 400, both orientations.
 
 1. Pinned header `Kelyra`.
 2. Context row.
-3. `PhaseBanner` phase 2.
-4. Lead, `mute`, one sentence. Existing three states stay (no roster / waiting / quiet).
-5. **`AvatarTray`** of the roster. Tap → student page. Empty roster: omit the tray.
-6. If `listInbox` is non-empty, a short **Needs you** `WorkShelf` (max 12).
-7. Optional quiet `ListRow`s only if we still need a teaching cue: `Add students` → Setup, shown **only** when roster is empty.
+3. **`AvatarTray`** of the roster. Tap → student page. Empty roster: omit the tray.
+4. If `listInbox` is non-empty, a short **Needs you** `WorkShelf` (max 12).
+5. Optional quiet `ListRow`s only if we still need a teaching cue: `Add students` → Setup, shown **only** when roster is empty.
+
+Omit the instructional Phase 2 Daily `PhaseBanner` and its dynamic lead from class Home.
 
 **This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = completed`).
 
@@ -1403,7 +1403,7 @@ No chrome. Centered column, `maxWidth` 400, both orientations.
 
 **Empty roster.** Skip tray and shelf. Quiet card: `No students yet.` Ghost `Add students` → Setup. Camera / Capture still exist.
 
-**Loading.** `Loading…` under the lead.
+**Loading.** `Loading…` while class data loads.
 
 **Error.** Existing error line.
 
