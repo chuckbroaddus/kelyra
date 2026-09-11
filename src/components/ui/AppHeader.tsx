@@ -130,7 +130,7 @@ export function AppHeader() {
   const iosSwipeBack =
     Platform.OS === 'ios' && pushed && !headerChrome.forceBackChevron;
   const showBack = pushed && !kelyraMark && !hideBack && !iosSwipeBack;
-  const showMenu = !showBack && !headerChrome.hideMenu;
+  const showMenu = !headerChrome.hideMenu && (!showBack || Boolean(headerChrome.keepMenu));
   const showSearch = !headerChrome.hideSearch;
   const showMail = !headerChrome.hideMail;
   const showCapture = capture && !headerChrome.hideCapture;

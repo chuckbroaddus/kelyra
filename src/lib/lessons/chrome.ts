@@ -8,7 +8,7 @@ export const LESSON_PLAYER_STACK_OPTIONS = {
   fullScreenGestureEnabled: false,
 } as const;
 
-const ASSIGN: HeaderChrome = { hideBackOnNative: true, hideMenu: true };
+const ASSIGN: HeaderChrome = { hideBackOnNative: true, hideMenu: false, keepMenu: true };
 const PLAYER: HeaderChrome = {
   hideBack: true,
   hideBackOnNative: true,
@@ -37,12 +37,13 @@ function useHeaderChrome(spec: HeaderChrome) {
   const hideBack = Boolean(spec.hideBack);
   const hideBackOnNative = Boolean(spec.hideBackOnNative);
   const hideMenu = Boolean(spec.hideMenu);
+  const keepMenu = Boolean(spec.keepMenu);
   const hideSearch = Boolean(spec.hideSearch);
   const hideMail = Boolean(spec.hideMail);
   const hideCapture = Boolean(spec.hideCapture);
   const showClose = Boolean(spec.showClose);
   useEffect(() => {
-    setHeaderChrome({ hideBack, hideBackOnNative, hideMenu, hideSearch, hideMail, hideCapture, showClose });
+    setHeaderChrome({ hideBack, hideBackOnNative, hideMenu, keepMenu, hideSearch, hideMail, hideCapture, showClose });
     return () => setHeaderChrome(null);
-  }, [hideBack, hideBackOnNative, hideCapture, hideMail, hideMenu, hideSearch, setHeaderChrome, showClose]);
+  }, [hideBack, hideBackOnNative, hideCapture, hideMail, hideMenu, keepMenu, hideSearch, setHeaderChrome, showClose]);
 }

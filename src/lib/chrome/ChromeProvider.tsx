@@ -60,6 +60,8 @@ export type HeaderChrome = {
   /** Keep AppHeader < on iOS even when edge-swipe can pop (dirty discard). */
   forceBackChevron?: boolean;
   hideMenu?: boolean;
+  /** When true, keep far-right hamburger even on pushed screens that also show back. */
+  keepMenu?: boolean;
   hideSearch?: boolean;
   hideMail?: boolean;
   hideCapture?: boolean;

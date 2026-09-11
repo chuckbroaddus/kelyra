@@ -319,7 +319,7 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 | Parent Ride | **Ride** | `Ride` on `/parent/ride` (and related parent vehicle surfaces) |
 | Office Feed / Classes / People / Manage | same labels | same labels on those tabs; school **name** only when the office home has no tab (or Manage still uses school name — do not invent a second title). **Dismissal curb / Ride office** stay Manage altitude — not a tray noun |
 
-Pushed screens (student record, search, messages, proposal, family, assignment form, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`, the assignment title). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores the hamburger / tray label. Do not ellipsis the header title.
+Pushed screens (student record, search, messages, proposal, family, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. **Exception — assignment create/edit** (`/assignment/new`, `/class/{id}/assignment/…`, lesson-result Assign chrome): keep **both** the leading back chevron (where pushed) **and** the far-right hamburger (`keepMenu`). The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `New Assignment`, the assignment title). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores the hamburger / tray label. Do not ellipsis the header title.
 
 ### 3.6 Second header row — context menu
 
@@ -3515,7 +3515,7 @@ No new npm packages. No SQL. No `EXPO_PUBLIC_*` keys. Matcher never inserts a st
 
 **Date:** 2026-08-19; **TEACH-UX ship 2026-09-04.** Patches §3.6, §13.3, §13.7–§13.9. The class desk used two Amazon context-chip rows: Today / This week / Needs you on `/class/{id}`, and Gradebook / Assignments / Heatmap / Parents / Students on the records cluster. Those chips are gone. `PersonTabs` via `ClassTabs` sits in the page body under the header — same selected-name / icon-only rule as people.
 
-Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/{id}`) stays pushed.
+Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/new`, `/class/{id}/assignment/…`) stays pushed **and keeps the hamburger** (back + menu; `keepMenu` — CEO override of hide-until-pop).
 
 **Default `CLASS_TABS` (≤7, ordered):** **Today · Needs · Feed · Students · Assignments · Gradebook · Parents**. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
 

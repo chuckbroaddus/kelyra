@@ -537,7 +537,7 @@ export default function AssignmentEditScreen() {
           : seed?.returnTo === 'proposal'
             ? 'Save and you’ll go back to the capture you were filing.'
             : creating
-              ? 'Assign a lesson or practice. This does not create a class.'
+              ? 'Create an Assignment'
               : 'This column shows in the grade book even before anyone turns it in.'}
       </Text>
       {briefAssignmentId ? (

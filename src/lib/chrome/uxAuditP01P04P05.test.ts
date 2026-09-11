@@ -33,7 +33,10 @@ test('P-01: AppHeader trailing order is capture → search → mail → menu; ca
   const menu = header.indexOf('showMenu ?');
   assert.ok(capture > 0 && search > capture && mail > search && menu > mail);
   assert.match(header, /showHeaderCapture\(pathname,\s*chromeState\.role\)/);
-  assert.match(header, /const showMenu = !showBack && !headerChrome\.hideMenu/);
+  assert.match(
+    header,
+    /const showMenu = !headerChrome\.hideMenu && \(!showBack \|\| Boolean\(headerChrome\.keepMenu\)\)/,
+  );
   // P-06: wordmark/pushed read chromePathname so prior-seat routes cannot stick after seat switch.
   assert.match(header, /const pathForChrome = chromeState\.chromePathname/);
   assert.match(header, /const pushed = isChromePushed\(pathForChrome\)/);
@@ -41,6 +44,17 @@ test('P-01: AppHeader trailing order is capture → search → mail → menu; ca
   assert.match(header, /Icon name="mail"/);
   assert.match(header, /Icon name="menu"/);
   assert.match(header, /School logo/);
+});
+
+
+test('P-01: ASSIGN chrome keeps hamburger on pushed Assign (keepMenu)', () => {
+  const chrome = read('src/lib/lessons/chrome.ts');
+  assert.match(chrome, /const ASSIGN: HeaderChrome = \{[^}]*keepMenu:\s*true/);
+  assert.match(chrome, /const ASSIGN: HeaderChrome = \{[^}]*hideMenu:\s*false/);
+  // Lesson player still hides menu.
+  assert.match(chrome, /const PLAYER: HeaderChrome = \{[\s\S]*?hideMenu:\s*true/);
+  const header = read('src/components/ui/AppHeader.tsx');
+  assert.match(header, /headerChrome\.keepMenu/);
 });
 
 /** P-05 — §34.2: tray a11y/web label Ask on every seat; Ask last. */
