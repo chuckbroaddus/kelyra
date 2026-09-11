@@ -779,13 +779,15 @@ Pass the tab row through `Screen`’s `collapse={…}` prop. That wraps it in `C
 | Swipe-up / scroll down | Class tab row collapses off-screen (height + opacity, `chrome.motion.context`, ease-out, no spring). On Gradebook / Heatmap, Gradebook·Heatmap segment chips **and** the Gradebook syllabus warning (when shown) collapse in the **same** block. |
 | Swipe-down / scroll up | The **class tab row** (and the rest of that collapsing block) **reappears promptly** — same show thresholds as §9.2. Do not wait for `contentOffset.y < 8` alone. |
 
+**Collapse reflow + Feed fill ScrollView.** Hiding the block reclaims space (`CollapsingPageChrome` measures then absolute-positions children like Feed’s composer dock, height → 0). That grows the page / Feed fill `ScrollView` and can leave `contentOffset.y ≈ 0` with nothing left to scroll — mid-feed `dy` restore never fires, especially on web/Android without rubber-band. Shared brain in `src/lib/chrome/hideOnScroll.ts`: (1) when viewport height grows, clamp scroll tracking so a stale `y > maxY` is not treated as end rubber-band forever; (2) `onScrollBeginDrag` at `y < 8` while hidden reveals chrome (swipe-down restore intent at the top); (3) fill / desk scrollers use `alwaysBounceVertical` so iOS overscroll still hits the §9.2 `y < 8` show path. Near-end rubber-band suppress (`y ≥ maxY − 16`) applies only when `maxY ≥ 64` so a short Feed after collapse can still swipe-down restore. Wire `chrome.onScroll` **and** `chrome.onScrollBeginDrag` on every scroller that drives collapse (Screen, `FeedPane` fill, `StickyTable` body).
+
 **Desk panes that must use `collapse`:** Today / Needs Attention (`/class/{id}`), Feed, Students (`/setup`), Assignments, Gradebook / Heatmap, Parents, Settings, plus demoted siblings that still show ClassTabs (Family, Syllabus).
 
 **Gradebook syllabus chrome.** On the Gradebook pane only (not Heatmap): when syllabus grade weights are not set / not published, show plain text **`Warning - Grade weights not set in Syllabus`** inside the collapsing block. No “Set up syllabus” / Continue button, no Card CTA, no draft helper copy. When weights are defined (published syllabus), show neither the warning nor any syllabus CTA.
 
 Rules:
 
-- Reuse `ChromeProvider.onScroll` / `visible`. Do not invent a second velocity tracker.
+- Reuse `ChromeProvider.onScroll` / `onScrollBeginDrag` / `visible` (via `hideOnScroll.ts`). Do not invent a second velocity tracker.
 - Do **not** pin `ClassTabs` as `stickyHeaderIndices` or as `chrome.contextHeight`. Counts-toward `GradeTermTabs` may stay below the collapsing block so the grid filter remains while the upper chrome is away.
 - Segment chips under ClassTabs use `ChipRow compact` — no extra vertical padding above/below the Gradebook · Heatmap shelf.
 - Hiding the block **does** reclaim vertical space for the grid / list (unlike the overlay tray/context). That is intentional.

@@ -22,6 +22,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { chrome } from '@/constants/theme';
+import {
+  createHideOnScrollState,
+  revealFromTopDrag,
+  stepHideOnScroll,
+} from '@/lib/chrome/hideOnScroll';
 import { isOpenWork } from '@/lib/assignments/status';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { unreadCount } from '@/lib/messages/api';
@@ -86,6 +91,8 @@ type ChromeValue = {
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  /** Reveal collapsed tray/ClassTabs when a drag starts at the top after collapse reflow (§9.6). */
+  onScrollBeginDrag: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   showChrome: () => void;
   trayTranslate: Animated.Value;
   /** Distance the tray travels when it hides. Overlay chrome (Export CSV) should travel at least this far plus its own height. */
@@ -281,9 +288,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const contextOpacity = useRef(new Animated.Value(1)).current;
   const localTrayTranslate = useRef(new Animated.Value(0)).current;
   const localTrayOpacity = useRef(new Animated.Value(1)).current;
-  const lastY = useRef(0);
-  const acc = useRef(0);
-  const lastDir = useRef<1 | -1 | 0>(0);
+  const hideScroll = useRef(createHideOnScrollState(true));
   const visibleRef = useRef(true);
   const ignoreScrollUntil = useRef(0);
   const headerVoice = useRef<LiveRecording | null>(null);
@@ -380,6 +385,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       const moveLocal = opts?.local ?? true;
       if (moveSystem) {
         visibleRef.current = show;
+        hideScroll.current = { ...hideScroll.current, visible: show };
         setVisible(show);
       }
       const dur = chrome.motion.tray;
@@ -555,54 +561,27 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       const { contentOffset, contentSize, layoutMeasurement, velocity } = event.nativeEvent;
       const y = contentOffset.y;
       const maxY = Math.max(0, contentSize.height - layoutMeasurement.height);
+      const prev = hideScroll.current;
+      prev.visible = visibleRef.current;
+      const { state, show } = stepHideOnScroll(prev, {
+        y,
+        maxY,
+        layoutH: layoutMeasurement.height,
+        vy: velocity?.y ?? 0,
+      });
+      hideScroll.current = state;
+      if (show === true) animate(true);
+      else if (show === false) animate(false);
+    },
+    [animate, drawerOpen, forceHidden, headerCameraOpen, keyboardVisible],
+  );
 
-      // iOS rubber-band past the end looks like a swipe-down and would
-      // bring Students / Heatmap / Gradebook back. Ignore it.
-      if (y > maxY) {
-        lastY.current = maxY;
-        acc.current = 0;
-        lastDir.current = 0;
-        return;
-      }
-
-      if (y < 8) {
-        lastY.current = y;
-        acc.current = 0;
-        if (!visibleRef.current) animate(true);
-        return;
-      }
-      const dy = y - lastY.current;
-      lastY.current = y;
-      const vy = velocity?.y ?? 0;
-      if (vy > 1.2) {
-        acc.current = 0;
-        if (visibleRef.current) animate(false);
-        return;
-      }
-      // Bounce-back near the end also reports a fast negative vy.
-      if (vy < -1.2) {
-        acc.current = 0;
-        if (y >= maxY - 16) return;
-        if (!visibleRef.current) animate(true);
-        return;
-      }
-      const dir: 1 | -1 | 0 = dy > 0 ? 1 : dy < 0 ? -1 : 0;
-      if (dir !== 0 && dir !== lastDir.current) {
-        acc.current = 0;
-        lastDir.current = dir;
-      }
-      acc.current += dy;
-      if (acc.current > 12 && visibleRef.current) {
-        acc.current = 0;
-        animate(false);
-      } else if (acc.current < -8 && !visibleRef.current) {
-        if (y >= maxY - 16) {
-          acc.current = 0;
-          return;
-        }
-        acc.current = 0;
-        animate(true);
-      }
+  const onScrollBeginDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (forceHidden || drawerOpen || headerCameraOpen || keyboardVisible) return;
+      if (Date.now() < ignoreScrollUntil.current) return;
+      const y = event.nativeEvent.contentOffset.y;
+      if (revealFromTopDrag(visibleRef.current, y)) animate(true);
     },
     [animate, drawerOpen, forceHidden, headerCameraOpen, keyboardVisible],
   );
@@ -910,6 +889,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       drawerOpen,
       setDrawerOpen,
       onScroll,
+      onScrollBeginDrag,
       showChrome,
       trayTranslate,
       trayHideDistance: hideDistance,
@@ -974,6 +954,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setHeaderChrome,
       drawerOpen,
       onScroll,
+      onScrollBeginDrag,
       showChrome,
       trayTranslate,
       hideDistance,

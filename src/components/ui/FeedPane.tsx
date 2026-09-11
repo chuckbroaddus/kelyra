@@ -153,6 +153,13 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
     [chrome],
   );
 
+  const onFeedScrollBeginDrag = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      chrome.onScrollBeginDrag(event);
+    },
+    [chrome],
+  );
+
   const visible = useMemo(() => {
     if (!rows) return null;
     if (scope === 'school') return rows.filter((row) => !row.classId);
@@ -353,7 +360,10 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
+          bounces
+          alwaysBounceVertical
           onScroll={onFeedScroll}
+          onScrollBeginDrag={onFeedScrollBeginDrag}
           contentContainerStyle={{ paddingBottom: 24 + (replyFocused ? Math.max(kb, 48) : 24) }}
         >
           {list}

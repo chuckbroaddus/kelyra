@@ -187,6 +187,8 @@ export function StickyTable<T>({
     <View style={styles.shell}>
       <ScrollView
         style={styles.vScroll}
+        bounces
+        alwaysBounceVertical
         stickyHeaderIndices={leading ? [1] : [0]}
         scrollEventThrottle={16}
         nestedScrollEnabled
@@ -196,7 +198,10 @@ export function StickyTable<T>({
         onScroll={(event) => {
           chrome?.onScroll(event);
         }}
-        onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
+        onScrollBeginDrag={(event) => {
+          chrome?.onScrollBeginDrag(event);
+          scrollHandlers.onScrollBeginDrag?.(event);
+        }}
         onScrollEndDrag={scrollHandlers.onScrollEndDrag}
         onMomentumScrollEnd={scrollHandlers.onMomentumScrollEnd}
       >

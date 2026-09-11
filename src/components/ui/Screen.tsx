@@ -130,8 +130,13 @@ export function Screen({
       showsVerticalScrollIndicator={false}
       stickyHeaderIndices={stickyHeaderIndices}
       scrollEventThrottle={16}
+      bounces
+      alwaysBounceVertical
       onScroll={handleScroll}
-      onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
+      onScrollBeginDrag={(event) => {
+        chrome?.onScrollBeginDrag(event);
+        scrollHandlers.onScrollBeginDrag?.(event);
+      }}
       onScrollEndDrag={scrollHandlers.onScrollEndDrag}
       onMomentumScrollEnd={scrollHandlers.onMomentumScrollEnd}
       onContentSizeChange={onContentSizeChange}
