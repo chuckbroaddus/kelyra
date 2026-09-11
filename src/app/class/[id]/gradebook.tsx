@@ -43,8 +43,6 @@ import { firstName } from '@/lib/format';
 import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { Card } from '@/components/ui/Card';
-import { PrimaryButton } from '@/components/ui/Button';
 import { getClassSyllabus } from '@/lib/syllabus/api';
 
 export default function GradebookScreen() {
@@ -318,17 +316,9 @@ export default function GradebookScreen() {
         ) : null}
         {syllabusBanner !== 'published' && id && !heatmap ? (
           <View style={styles.syllabusBanner}>
-            <Card>
-              <Text style={[type.meta, { color: colors.mute }]}>
-                {syllabusBanner === 'draft'
-                  ? 'Draft syllabus saved — not live.'
-                  : 'Syllabus weights not set. Averages won’t use category weights until you publish.'}
-              </Text>
-              <PrimaryButton
-                label={syllabusBanner === 'draft' ? 'Continue' : 'Set up syllabus'}
-                onPress={() => router.push(`/class/${id}/syllabus`)}
-              />
-            </Card>
+            <Text style={[type.meta, { color: colors.mute }]}>
+              Warning - Grade weights not set in Syllabus
+            </Text>
           </View>
         ) : null}
       </CollapsingPageChrome>
