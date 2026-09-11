@@ -18,6 +18,7 @@ export default function ParentVehiclesScreen() {
   const [rows, setRows] = useState<ParentVehicle[]>([]);
   const [open, setOpen] = useState(false);
   const [plate, setPlate] = useState('');
+  const [year, setYear] = useState('');
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [label, setLabel] = useState('');
@@ -38,8 +39,13 @@ export default function ParentVehiclesScreen() {
 
   async function save() {
     try {
+      const trimmedYear = year.trim();
+      const parsedYear = trimmedYear === '' ? null : Number.parseInt(trimmedYear, 10);
+      const yearValue =
+        parsedYear != null && Number.isFinite(parsedYear) ? parsedYear : null;
       await upsertParentVehicle({
         plateRaw: plate,
+        year: yearValue,
         make,
         model,
         label,
@@ -47,6 +53,7 @@ export default function ParentVehiclesScreen() {
       });
       setOpen(false);
       setPlate('');
+      setYear('');
       setMake('');
       setModel('');
       setLabel('');
@@ -80,7 +87,7 @@ export default function ParentVehiclesScreen() {
             {row.label ? ` · ${row.label}` : ''}
           </Text>
           <Text style={{ color: colors.mute }}>
-            {[row.make, row.model].filter(Boolean).join(' ')} · {row.validity_kind}
+            {[row.year, row.make, row.model].filter(Boolean).join(' ')} · {row.validity_kind}
             {row.valid_today === false ? ' · not valid today' : ''}
           </Text>
           <GhostButton label="Remove" tone="danger" onPress={() => void remove(row.id)} />
@@ -90,6 +97,7 @@ export default function ParentVehiclesScreen() {
 
       <FormSheet visible={open} title="Add vehicle" onClose={() => setOpen(false)}>
         <TextField label="Plate" value={plate} onChangeText={setPlate} autoCapitalize="characters" />
+        <TextField label="Year" value={year} onChangeText={setYear} keyboardType="number-pad" />
         <TextField label="Make" value={make} onChangeText={setMake} />
         <TextField label="Model" value={model} onChangeText={setModel} />
         <TextField label="Label (optional, e.g. nanny)" value={label} onChangeText={setLabel} />

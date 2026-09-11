@@ -12,7 +12,7 @@
 
 Dismissal is a physical queue of **cars**, sometimes **two lines** (typically by grade). Kelyra uses phones already in pockets:
 
-1. The **parent person record** holds vehicles (plate, make, model) — own cars plus **grandma / nanny** cars. Parent adds and removes them. Each vehicle is **today only**, **date range**, or **indefinite**. Staff may attach a plate when the parent has not.
+1. The **parent person record** holds vehicles (plate, year, make, model) — own cars plus **grandma / nanny** cars. Parent adds and removes them. Each vehicle is **today only**, **date range**, or **indefinite**. Staff may attach a plate when the parent has not.
 2. Check-in: pick **which children this stop**, then either photograph the **car ahead**, or **I'm first** (photo of empty lane or manual first). The person **behind** identifies this car when they photograph its bumper. The parent does **not** pick which of their cars they are sitting in.
 3. Unreadable / unknown plate: type the plate or **speak it** (STT). Same for staff attach.
 4. Staff walk photographs cars **1, 2, 3…** on **that line**. Two people claiming first → staff flag + tap to fix order.
@@ -35,7 +35,7 @@ Kelyra: **phone LPR + predecessor graph + staff walk**, existing hats. 2026-09-0
 
 ### 2.1 Vehicles on the parent person
 
-- Plate, make, model. Many rows. Includes cars the parent does not drive every day (grandma, nanny).
+- Plate, year, make, model. Many rows. Includes cars the parent does not drive every day (grandma, nanny).
 - Validity: `today` | `from`–`to` (school-local dates) | `indefinite`. Expired rows do not match the line.
 - Parent add/remove. Staff attach/override. Staff judgment outranks parent hygiene.
 - `plate_norm`: uppercase, no spaces/hyphens. Never invent a parent from a plate.

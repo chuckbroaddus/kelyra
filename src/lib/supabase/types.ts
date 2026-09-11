@@ -1249,6 +1249,7 @@ add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns
           plate_norm: string;
           make: string | null;
           model: string | null;
+          year: number | null;
           label: string | null;
           validity_kind: string;
           valid_from: string | null;
@@ -1263,6 +1264,7 @@ add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns
           p_plate_raw?: string | null;
           p_make?: string | null;
           p_model?: string | null;
+          p_year?: number | null;
           p_label?: string | null;
           p_validity_kind?: string | null;
           p_valid_from?: string | null;
@@ -1278,6 +1280,7 @@ add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns
           p_plate_source?: string | null;
           p_make?: string | null;
           p_model?: string | null;
+          p_year?: number | null;
           p_label?: string | null;
         };
         Returns: Record<string, unknown>;
