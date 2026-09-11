@@ -1,10 +1,11 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { ClassTabs } from '@/components/ui/ClassTabs';
@@ -38,7 +39,7 @@ export default function ParentsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ClassParent | null>(null);
   const [busy, setBusy] = useState(false);
-  const [picking, setPicking] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
 
   const load = useCallback(async () => {
@@ -54,6 +55,47 @@ export default function ParentsScreen() {
       });
     }, [load]),
   );
+
+  const allSelected = useMemo(
+    () => linked.length > 0 && linked.every((parent) => picked.includes(parent.id)),
+    [linked, picked],
+  );
+
+  const exitMessaging = () => {
+    setMessaging(false);
+    setPicked([]);
+  };
+
+  const togglePick = (parentId: string) => {
+    setPicked((current) =>
+      current.includes(parentId) ? current.filter((id) => id !== parentId) : [...current, parentId],
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setPicked(allSelected ? [] : linked.map((parent) => parent.id));
+  };
+
+  const sendMessage = () => {
+    if (!picked.length) return;
+    if (picked.length > 11) {
+      setError('Group chats stay small. Pick at most 11 parents.');
+      return;
+    }
+    void (async () => {
+      const { data } = await requireSupabase()
+        .from('profiles')
+        .select('id')
+        .in('parent_id', picked);
+      const ids = (data ?? []).map((row) => row.id);
+      if (!ids.length) {
+        setError('Those parents need logins first.');
+        return;
+      }
+      const thread = await openGroupThread('Parents', ids);
+      router.push(`/messages/${thread}` as never);
+    })().catch((err) => setError(err instanceof Error ? err.message : 'Could not start group'));
+  };
 
   const onDelete = async () => {
     if (!pending) return;
@@ -71,7 +113,7 @@ export default function ParentsScreen() {
 
   return (
     <Screen keyboard maxWidth={640} collapse={classId ? <ClassTabs classId={classId} /> : null}>
-      <SectionHeader label="In this class" first />
+      <SectionHeader label="Parents of class' students" first />
       {linked.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
           {office
@@ -79,88 +121,109 @@ export default function ParentsScreen() {
             : 'No parents linked to students in this class yet. The office manages the class family list.'}
         </Text>
       ) : null}
-      {linked.map((parent) => (
-        <ListRow
-          key={parent.id}
-          title={parent.display_name}
-          status={parent.children.map((child) => firstName(child.display_name)).join(', ')}
-          statusNode={<LinkedKids kids={parent.children} />}
-          photoUrl={parent.photoUrl}
-          hasPhoto={Boolean(parent.photo_asset_id)}
-          selected={picked.includes(parent.id)}
-          onPress={() => {
-            if (picking) {
-              setPicked((current) =>
-                current.includes(parent.id) ? current.filter((id) => id !== parent.id) : [...current, parent.id],
-              );
-              return;
-            }
-            router.push(`/class/${classId}/parent/${parent.id}`);
-          }}
-          trailing={
-            office
-              ? [
-                  {
-                    key: 'remove',
-                    label: 'Remove',
-                    tone: 'wash' as const,
-                    onPress: () => {
-                      if (!classId) return;
-                      void removeParentFromClass(classId, parent.id)
-                        .then(() => load())
-                        .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove parent'));
-                    },
-                  },
-                  ...(admin
-                    ? [
-                        {
-                          key: 'delete',
-                          label: 'Delete',
-                          tone: 'danger' as const,
-                          autoCommit: false,
-                          onPress: () => setPending(parent),
-                        },
-                      ]
-                    : []),
-                ]
-              : undefined
-          }
-        />
-      ))}
-      {linked.length ? (
-        <GhostButton
-          align="left"
-          label={picking ? 'Cancel pick' : 'Message these parents'}
-          onPress={() => {
-            setPicking((value) => !value);
-            setPicked([]);
-          }}
-        />
+      {messaging && linked.length ? (
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: allSelected }}
+          accessibilityLabel="Select all parents"
+          onPress={toggleSelectAll}
+          style={styles.selectAll}
+        >
+          <CheckBox checked={allSelected} />
+          <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+        </Pressable>
       ) : null}
-      {picking ? (
-        <PrimaryButton
-          label={`Message ${picked.length} parent${picked.length === 1 ? '' : 's'}`}
-          disabled={!picked.length}
-          onPress={() => {
-            if (picked.length > 11) {
-              setError('Group chats stay small. Pick at most 11 parents.');
-              return;
-            }
-            void (async () => {
-              const { data } = await requireSupabase()
-                .from('profiles')
-                .select('id')
-                .in('parent_id', picked);
-              const ids = (data ?? []).map((row) => row.id);
-              if (!ids.length) {
-                setError('Those parents need logins first.');
+      {linked.map((parent) => {
+        const checked = picked.includes(parent.id);
+        const row = (
+          <ListRow
+            title={parent.display_name}
+            status={parent.children.map((child) => firstName(child.display_name)).join(', ')}
+            statusNode={<LinkedKids kids={parent.children} />}
+            photoUrl={parent.photoUrl}
+            hasPhoto={Boolean(parent.photo_asset_id)}
+            selected={messaging ? checked : false}
+            chevron={!messaging}
+            onPress={() => {
+              if (messaging) {
+                togglePick(parent.id);
                 return;
               }
-              const thread = await openGroupThread('Parents', ids);
-              router.push(`/messages/${thread}` as never);
-            })().catch((err) => setError(err instanceof Error ? err.message : 'Could not start group'));
-          }}
-        />
+              router.push(`/class/${classId}/parent/${parent.id}`);
+            }}
+            trailing={
+              messaging || !office
+                ? undefined
+                : [
+                    {
+                      key: 'remove',
+                      label: 'Remove',
+                      tone: 'wash' as const,
+                      onPress: () => {
+                        if (!classId) return;
+                        void removeParentFromClass(classId, parent.id)
+                          .then(() => load())
+                          .catch((err) =>
+                            setError(err instanceof Error ? err.message : 'Could not remove parent'),
+                          );
+                      },
+                    },
+                    ...(admin
+                      ? [
+                          {
+                            key: 'delete',
+                            label: 'Delete',
+                            tone: 'danger' as const,
+                            autoCommit: false,
+                            onPress: () => setPending(parent),
+                          },
+                        ]
+                      : []),
+                  ]
+            }
+          />
+        );
+        if (!messaging) {
+          return <View key={parent.id}>{row}</View>;
+        }
+        return (
+          <View key={parent.id} style={styles.selectRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked }}
+              accessibilityLabel={`Select ${parent.display_name}`}
+              onPress={() => togglePick(parent.id)}
+              style={styles.checkHit}
+            >
+              <CheckBox checked={checked} />
+            </Pressable>
+            <View style={styles.selectRowBody}>{row}</View>
+          </View>
+        );
+      })}
+      {linked.length ? (
+        messaging ? (
+          <View style={styles.footer}>
+            <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+            <PrimaryButton
+              label={
+                picked.length
+                  ? `Message ${picked.length} parent${picked.length === 1 ? '' : 's'}`
+                  : 'Message these parents'
+              }
+              disabled={!picked.length}
+              onPress={sendMessage}
+            />
+          </View>
+        ) : (
+          <PrimaryButton
+            label="Message these parents"
+            onPress={() => {
+              setMessaging(true);
+              setPicked([]);
+            }}
+          />
+        )
       ) : null}
 
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
@@ -177,6 +240,23 @@ export default function ParentsScreen() {
         />
       ) : null}
     </Screen>
+  );
+}
+
+function CheckBox({ checked }: { checked: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.check,
+        {
+          borderColor: checked ? colors.brand : colors.line,
+          backgroundColor: checked ? colors.brand : colors.card,
+        },
+      ]}
+    >
+      {checked ? <Icon name="check" color={colors.brandInk} size={16} /> : null}
+    </View>
   );
 }
 
@@ -208,6 +288,43 @@ const styles = StyleSheet.create({
   empty: {
     ...type.body,
     marginBottom: 12,
+  },
+  selectAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  selectAllLabel: {
+    ...type.meta,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  selectRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkHit: {
+    paddingTop: 14,
+    paddingRight: 10,
+    paddingLeft: 4,
+  },
+  selectRowBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  check: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    gap: 8,
+    marginTop: 8,
   },
   kids: {
     flexDirection: 'row',
