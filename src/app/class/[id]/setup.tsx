@@ -675,32 +675,18 @@ export default function SetupScreen() {
         </Text>
       ) : null}
       {messaging && roster.length ? (
-        <View>
-          <View style={styles.selectAllRow}>
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: allSelected }}
-              accessibilityLabel="Select all students"
-              onPress={toggleSelectAll}
-              style={styles.selectAll}
-            >
-              <CheckBox checked={allSelected} />
-              <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
-            </Pressable>
-            <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
-          </View>
-          {messaging ? (
-            <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
-              Parents are always included and cannot be removed. Each selected student opens their own
-              family chat (not a shared group).
-            </Text>
-          ) : null}
-          {hasBlockedRows ? (
-            <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
-              Grayed-out students need a student login, at least one linked parent, and at least one
-              parent login. The office can create logins and link guardians.
-            </Text>
-          ) : null}
+        <View style={styles.selectAllRow}>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: allSelected }}
+            accessibilityLabel="Select all students"
+            onPress={toggleSelectAll}
+            style={styles.selectAll}
+          >
+            <CheckBox checked={allSelected} />
+            <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+          </Pressable>
+          <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
         </View>
       ) : null}
       {roster.map((student) => {
@@ -835,6 +821,16 @@ export default function SetupScreen() {
               disabled={!picked.length || overCap || noneMessageable}
               onPress={sendMessage}
             />
+            <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
+              Parents are always included and cannot be removed. One student opens that family's chat;
+              two or more open one shared group.
+            </Text>
+            {hasBlockedRows ? (
+              <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
+                Grayed-out students need a student login, at least one linked parent, and at least one
+                parent login. The office can create logins and link guardians.
+              </Text>
+            ) : null}
           </View>
         ) : (
           <PrimaryButton label="Message these students" onPress={enterMessaging} />
