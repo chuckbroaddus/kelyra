@@ -30,7 +30,7 @@ Stamp `school_id` on every row.
 
 ### `parent_vehicles`
 
-`parent_id`, `plate_raw`, `plate_norm`, `make`, `model`, `label` (optional “nanny”), `source` parent|staff, `status` active|void,  
+`parent_id`, `plate_raw`, `plate_norm`, `year`, `make`, `model`, `label` (optional “nanny”), `source` parent|staff, `status` active|void,  
 `validity_kind` `today` | `range` | `indefinite`, `valid_from` date, `valid_to` date (school-local).  
 Expired ⇒ not used for match. Parent upsert/delete (void). Staff attach.
 

@@ -22,7 +22,7 @@
 
 ### 2.1 HATS (P-*, S-*, D-HAT-*, TW-*)
 **Parent hat (primary):**
-- P-VEH-01: Add vehicle (plate/make/model + today/range/indefinite)
+- P-VEH-01: Add vehicle (plate/year/make/model + today/range/indefinite)
 - P-VEH-02: Void vehicle
 - P-VEH-03: Grandma/nanny car today-only expiry
 - P-IN-01: Check-in photo of car ahead (per line)

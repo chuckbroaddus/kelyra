@@ -12,7 +12,7 @@
 
 | Surface | Job | What it is not |
 |---|---|---|
-| **Vehicles** | Plate/make/model on parent; grandma/nanny cars; today / range / indefinite; add/remove | Hang-tag; student metadata; parent picking “which car I’m in” at shutter |
+| **Vehicles** | Plate/year/make/model on parent; grandma/nanny cars; today / range / indefinite; add/remove | Hang-tag; student metadata; parent picking “which car I’m in” at shutter |
 | **Lines** | Two (or more) physical lines, typically grade bands | One global school queue |
 | **Check-in** | Children this stop + photo of car ahead **or** I’m first | GPS; placard |
 | **Plate entry** | LPR, else type or STT (parent + staff) | Client vision keys |

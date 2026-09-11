@@ -32,7 +32,7 @@ Intent gaps remaining: none
 
 | Surface | Job | Not |
 |---|---|---|
-| **Vehicles** | Plate/make/model on parent; grandma/nanny; today/range/indefinite; add/void | Hang-tag; student metadata |
+| **Vehicles** | Plate/year/make/model on parent; grandma/nanny; today/range/indefinite; add/void | Hang-tag; student metadata |
 | **Lines** | Two+ physical lines (grade bands); independent orders | One global school queue |
 | **Check-in** | Children **this stop** + photo of car ahead **or** I'm first | GPS; placard; keypad product |
 | **Leave-line** | Parent ends waiting on **this line** — event **`left`** (CEO 2026-09-09 overrides old L-08 ban) | Staff pickup; grade; GPS auto-exit |
@@ -149,7 +149,7 @@ Intent gaps remaining: none
 ### 4.1 Vehicles lifecycle
 
 ```
-parent adds vehicle (plate/make/model/label) + validity today|range|indefinite
+parent adds vehicle (plate/year/make/model/label) + validity today|range|indefinite
   → active match window
   → void/remove
   → staff attach on conflict / unreadable

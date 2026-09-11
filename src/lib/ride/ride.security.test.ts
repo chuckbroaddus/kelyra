@@ -241,6 +241,22 @@ test('RIDE-S1-21 parent UI routes exist; fail copy constant', () => {
   assert.equal(RIDE_FAIL_MESSAGE, 'Check in failed');
 });
 
+test('RIDE vehicle year: migration column + RPC p_year + list jsonb', () => {
+  const mig = read('supabase/migrations/20260911220000_parent_vehicle_year.sql');
+  assert.match(mig, /add column if not exists year integer/i);
+  assert.match(mig, /parent_vehicles_year_ok/);
+  assert.match(mig, /p_year integer default null/);
+  assert.match(mig, /drop function if exists public\.parent_upsert_vehicle\(uuid, text, text, text, text, text, date, date, boolean\)/);
+  assert.match(mig, /drop function if exists public\.staff_attach_vehicle\(uuid, text, text, text, text, text\)/);
+  assert.match(mig, /'year', v\.year/);
+  const api = read('src/lib/ride/api.ts');
+  assert.match(api, /year\?: number \| null/);
+  assert.match(api, /p_year: input\.year \?\? null/);
+  const ui = read('src/app/parent/vehicles.tsx');
+  assert.match(ui, /label="Year"/);
+  assert.match(ui, /\[row\.year, row\.make, row\.model\]/);
+});
+
 test('RIDE-api RPCs are typed on Database.Functions (no rideDb any escape hatch)', () => {
   const api = read('src/lib/ride/api.ts');
   const types = read('src/lib/supabase/types.ts');

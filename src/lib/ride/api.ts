@@ -9,6 +9,7 @@ export type ParentVehicle = {
   plate_norm: string;
   make: string | null;
   model: string | null;
+  year: number | null;
   label: string | null;
   validity_kind: 'today' | 'range' | 'indefinite';
   valid_from: string | null;
@@ -59,6 +60,7 @@ export async function upsertParentVehicle(input: {
   plateRaw: string;
   make?: string;
   model?: string;
+  year?: number | null;
   label?: string;
   validityKind: 'today' | 'range' | 'indefinite';
   validFrom?: string | null;
@@ -70,6 +72,7 @@ export async function upsertParentVehicle(input: {
     p_plate_raw: input.plateRaw,
     p_make: input.make ?? null,
     p_model: input.model ?? null,
+    p_year: input.year ?? null,
     p_label: input.label ?? null,
     p_validity_kind: input.validityKind,
     p_valid_from: input.validFrom ?? null,
@@ -218,6 +221,7 @@ export async function staffAttachVehicle(input: {
   plateSource?: 'lpr' | 'typed' | 'stt';
   make?: string;
   model?: string;
+  year?: number | null;
   label?: string;
 }): Promise<void> {
   const { error } = await requireSupabase().rpc('staff_attach_vehicle', {
@@ -226,6 +230,7 @@ export async function staffAttachVehicle(input: {
     p_plate_source: input.plateSource ?? 'typed',
     p_make: input.make ?? null,
     p_model: input.model ?? null,
+    p_year: input.year ?? null,
     p_label: input.label ?? null,
   });
   if (error) throw error;
