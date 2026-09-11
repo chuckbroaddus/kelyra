@@ -9,7 +9,7 @@ type Props = {
 };
 
 /**
- * In-page chrome (ClassTabs, segment chips, syllabus banner) that leaves with
+ * In-page chrome (ClassTabs, segment chips, Gradebook syllabus warning) that leaves with
  * hide-on-scroll and returns on swipe-down — same `chrome.visible` brain as the
  * floating tray / Amazon context row. Used on flush screens (`Screen scroll={false}`)
  * where those rows cannot live in the page ScrollView the way Desk / Assignments do.
