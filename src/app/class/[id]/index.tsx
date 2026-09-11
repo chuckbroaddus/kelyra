@@ -145,14 +145,6 @@ export default function ClassHomeScreen() {
         />
       ) : null}
 
-      {pane === 'today' ? (
-        <GhostButton
-          align="left"
-          label="Post to class"
-          onPress={() => router.replace(hrefForClassTab(id, 'feed') as never)}
-        />
-      ) : null}
-
       {pane === 'today' && roster.length === 0 ? (
         <Card>
           <Text style={[styles.empty, { color: colors.mute }]}>No students yet.</Text>
