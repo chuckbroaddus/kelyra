@@ -652,7 +652,7 @@ Amazon’s rule, applied to Kelyra. Classify first, then pick a primitive.
 | Information | Primitive | Where |
 |---|---|---|
 | Students in the active class | `AvatarTray` | Teacher Home, join-name picker (circles optional; ListRow still wins for picking). **Not** Students/setup — that tab is vertical enrolled `ListRow`s only |
-| Parents linked to this class (have a child enrolled here) | `AvatarTray` | Class / Parents, student-page Parents section |
+| Parents linked to this class (have a child enrolled here) | `AvatarTray` | Student-page Parents section (Class / Parents is vertical `ListRow`s — enrolled-linked only for teachers) |
 | A parent’s children (only if > 1) | `AvatarTray` | Parent Home, parent hamburger |
 | Classmates (first name + photo/initials only) | `AvatarTray` | Student Home |
 | This week’s work that needs the teacher | `WorkShelf` (compact thumbs, max 12) | Teacher Home, **Needs you** chip |
@@ -1102,7 +1102,7 @@ Student book (one column): pin that column to the **right**. Frozen assignment t
 
 ### 10.16 Join code, Phase banner
 
-Existing. Theme-agnostic besides tokens. Phase banner **full** on Family, and Records when those screens still show it. **Omit** instructional Phase banners on Students/setup (no Phase 1 Setup lead), class Home, Capture, Inbox (Needs Attention), Student record Focus, and Review — those surfaces no longer show the instructional lead chrome (Approve / matcher product law unchanged off-screen).
+Existing. Theme-agnostic besides tokens. Phase banner **full** on Records when those screens still show it. **Omit** instructional Phase banners on Students/setup (no Phase 1 Setup lead), Class / Parents, Family (no Phase 4 · Family lead), class Home, Capture, Inbox (Needs Attention), Student record Focus, and Review — those surfaces no longer show the instructional lead chrome (Approve / matcher product law unchanged off-screen).
 
 ### 10.17 Icon additions
 
@@ -1655,7 +1655,7 @@ Pushed from the drawer. Wordmark `Family`. No context row. Not a tab.
 
 **Primary.** None. Ghosts: `Copy family update`, `This week's update`, `Email this week's update`.
 
-**Vertical.** Phase 4 → lead → Join code → Send a note home → Who to invite as `ListRow`s (name, meta = focus or `—`, chevron → student page).
+**Vertical.** Send a note home → **Parents** `ListRow` → Who to tell as `ListRow`s (name, meta = focus or `—`, chevron → student page). No PhaseBanner / no **PHASE 4 · Family** lead.
 
 Portrait / landscape: centered column, `maxWidth` 640. Tablet landscape: join + digest left, roster right.
 
@@ -2442,24 +2442,13 @@ Also linked from: hamburger **Parents**, Class chip **Parents**, student-page Pa
 
 ### 22.2 Class / Parents — `/class/{id}/parents`
 
-**Job.** The grown-ups for this room.
+**Job.** Teacher view: browse parents linked to students in this class. Office/admin manages add/remove on `/admin/class/{id}` (Parents pane) and People — not teacher add/remove chrome on this tab.
 
-**Who appears.** Parents who have at least one `parent_students` child **enrolled in this class**. A parent linked only to a child in another class does not show here (they still exist on that other class’s Parents screen). A parent with zero children appears on **every** class’s Parents screen in a trailing `Not linked yet` section so they are not lost.
+**Who appears.** Parents who have at least one `parent_students` child **enrolled in this class** (`In this class`). A parent linked only to a child in another class does not show here (they still exist on that other class’s Parents screen / office All parents).
 
-**Vertical**
+**Teacher.** Section **In this class** → vertical `ListRow`s (photo + name + linked kids; tap → parent page). Optional **Message these parents** pick flow. No **Add parent** field/button. No photograph-a-contact-card affordance on this tab. No swipe **Remove**. No **All parents** section / swipe **Add**. No PhaseBanner / no **PHASE 4 · Family** lead. Empty: `No parents linked to students in this class yet. The office manages the class family list.`
 
-```
-AvatarTray of parents (photo / initials, first name)
-Add parent            field + Primary Add {name}
-Ghost Photograph a contact card  → header-camera /proposal with parent_card
-ListRow per parent    name · {n} children · {invite: Linked / No link}
-```
-
-Tap row or circle → parent page.
-
-Swipe Delete → type-the-name confirm (§20).
-
-**Empty.** `No parents yet.` Field is the next action.
+**Office/admin (same route when `isOfficeRole`).** Same **In this class** list with swipe **Remove** (and admin swipe **Delete** type-the-name §20). No **Add parent** / **All parents** on this teacher ClassTabs surface — those live on `/admin/class/{id}` Parents pane (In this class + All parents swipe Add) and People.
 
 **Portrait / landscape.** One column. `maxWidth` 640.
 
@@ -2674,15 +2663,19 @@ Context chips gain **Parents** (navigates away).
 
 ### 13.8 Setup / Students
 
-Students tab is an **enrolled list only** for teachers: vertical `ListRow`s with `photoUrl`, section **Students enrolled**. **No** `AvatarTray` on Students. **No** teacher add or remove — swipe **Remove**, **All students** swipe **Add**, and any Add-students lead are office/admin only (also `/admin/class/{id}`). Parked `roster_imports` card with **Open** / **Delete** stays office-only.
+Students tab is an **enrolled list only** for teachers: vertical `ListRow`s with `photoUrl`, section **Students enrolled**. **No** `AvatarTray` on Students. **No** teacher add or remove — swipe **Remove**, **All students** swipe **Add**, and any Add-students lead are office/admin only (also `/admin/class/{id}` Students pane — office must retain add/remove there). Parked `roster_imports` card with **Open** / **Delete** stays office-only.
 
 Last pills: **Delete class** (type-the-name) for office/admin with `can(classes.delete)` only. Teachers never see **Delete class**.
 
 Header camera still goes to `/proposal`; roster intent still lands on the checklist (office add flow).
 
+### 13.8b Class / Parents
+
+Parents tab mirrors Students enrolled-only for teachers: **In this class** `ListRow`s only. **No** teacher **Add parent**, **All parents**, or swipe **Remove**. Office add/remove for parents stays on `/admin/class/{id}` Parents pane (+ People). No Phase 4 Family banner on Parents or Family.
+
 ### 13.9 Family
 
-`ListRow`s show child photos. Add a short **Parents** `ListRow` at the top → `/class/{id}/parents`. Invites still originate from the student or parent page, not a blast from Family.
+`ListRow`s show child photos. Add a short **Parents** `ListRow` at the top → `/class/{id}/parents`. Invites still originate from the student or parent page, not a blast from Family. No PhaseBanner / no **PHASE 4 · Family** copy.
 
 ### 13.11 `/join`
 

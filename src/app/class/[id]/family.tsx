@@ -6,7 +6,6 @@ import { GhostButton } from '@/components/ui/Button';
 import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { type } from '@/constants/theme';
@@ -122,10 +121,6 @@ export default function FamilyScreen() {
 
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={4}
-        detail="Parents get a link from a student’s page. They see the focus skill and whether practice is done — nothing else. Students sign in with the login assigned to them."
-      />
     </Screen>
   );
 }
