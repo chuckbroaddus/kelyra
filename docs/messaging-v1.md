@@ -176,6 +176,7 @@ Matcher still never inserts a student. Group membership uses existing enrollment
 - Reuse `message_threads.student_id` for one durable thread per student; ensure members on reopen; never drop parents.
 - `remove_group_member`: nobody may remove the linked student or parent members when `student_id` is set. Mute allowed. `add_group_member`: staff only on family threads.
 - Migration `20260911170000_open_student_family_thread.sql` — **CoS apply** (authorized); do not merge without apply note.
+- Dual-hat teacher-parent is allowed: the same profile counts as the parent on the family thread (`20260911171000_open_student_family_thread_dual_hat.sql`; CoS applied live).
 
 ## 8. Later (do not build now)
 
