@@ -8,6 +8,7 @@ import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
+import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
@@ -297,34 +298,40 @@ export default function GradebookScreen() {
   return (
     <View style={styles.shell}>
     <Screen maxWidth={1100} scroll={false}>
-      {id ? <ClassTabs classId={id} stacked={Boolean(termTabs)} /> : null}
-      {id ? (
-        <ChipRow>
-          <Chip
-            label="Gradebook"
-            selected={!heatmap}
-            onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
-          />
-          <Chip
-            label="Heatmap"
-            selected={heatmap}
-            onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
-          />
-        </ChipRow>
-      ) : null}
-      {syllabusBanner !== 'published' && id && !heatmap ? (
-        <Card>
-          <Text style={[type.meta, { color: colors.mute }]}>
-            {syllabusBanner === 'draft'
-              ? 'Draft syllabus saved — not live.'
-              : 'Syllabus weights not set. Averages won’t use category weights until you publish.'}
-          </Text>
-          <PrimaryButton
-            label={syllabusBanner === 'draft' ? 'Continue' : 'Set up syllabus'}
-            onPress={() => router.push(`/class/${id}/syllabus`)}
-          />
-        </Card>
-      ) : null}
+      <CollapsingPageChrome>
+        {id ? <ClassTabs classId={id} stacked /> : null}
+        {id ? (
+          <View style={styles.chipShelf}>
+            <ChipRow compact>
+              <Chip
+                label="Gradebook"
+                selected={!heatmap}
+                onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
+              />
+              <Chip
+                label="Heatmap"
+                selected={heatmap}
+                onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
+              />
+            </ChipRow>
+          </View>
+        ) : null}
+        {syllabusBanner !== 'published' && id && !heatmap ? (
+          <View style={styles.syllabusBanner}>
+            <Card>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {syllabusBanner === 'draft'
+                  ? 'Draft syllabus saved — not live.'
+                  : 'Syllabus weights not set. Averages won’t use category weights until you publish.'}
+              </Text>
+              <PrimaryButton
+                label={syllabusBanner === 'draft' ? 'Continue' : 'Set up syllabus'}
+                onPress={() => router.push(`/class/${id}/syllabus`)}
+              />
+            </Card>
+          </View>
+        ) : null}
+      </CollapsingPageChrome>
       {termTabs}
       <View style={styles.pane}>
       {heatmap ? (
@@ -513,6 +520,13 @@ const styles = StyleSheet.create({
   pane: {
     flex: 1,
     minHeight: 0,
+  },
+  chipShelf: {
+    marginTop: 0,
+    marginBottom: 4,
+  },
+  syllabusBanner: {
+    marginBottom: 8,
   },
   exportDock: {
     position: 'absolute',
