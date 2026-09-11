@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
@@ -52,6 +53,8 @@ import {
 import type { StudentRow } from '@/lib/supabase/types';
 import { deleteStudent, removeEnrollment } from '@/lib/students/delete';
 import { firstName } from '@/lib/format';
+import { openGroupThread } from '@/lib/messages/api';
+import { requireSupabase } from '@/lib/supabase/client';
 import type { RosterImportRow } from '@/lib/supabase/types';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
@@ -94,6 +97,8 @@ export default function SetupScreen() {
   >(null);
   const [busy, setBusy] = useState(false);
   const [parkedAssetId, setParkedAssetId] = useState<string | null>(null);
+  const [messaging, setMessaging] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
   const load = useCallback(async () => {
     if (!id || !teacher) return;
     try {
@@ -329,6 +334,47 @@ export default function SetupScreen() {
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
   const exactMatch = Boolean(possibleMatch && namesAreEquivalent(possibleMatch.displayName, name));
 
+  const allSelected = useMemo(
+    () => roster.length > 0 && roster.every((student) => picked.includes(student.id)),
+    [roster, picked],
+  );
+
+  const exitMessaging = () => {
+    setMessaging(false);
+    setPicked([]);
+  };
+
+  const togglePick = (studentId: string) => {
+    setPicked((current) =>
+      current.includes(studentId) ? current.filter((id) => id !== studentId) : [...current, studentId],
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setPicked(allSelected ? [] : roster.map((student) => student.id));
+  };
+
+  const sendMessage = () => {
+    if (!picked.length) return;
+    if (picked.length > 11) {
+      setError('Group chats stay small. Pick at most 11 students.');
+      return;
+    }
+    void (async () => {
+      const { data } = await requireSupabase()
+        .from('profiles')
+        .select('id')
+        .in('student_id', picked);
+      const ids = (data ?? []).map((row) => row.id);
+      if (!ids.length) {
+        setError('Those students need logins first.');
+        return;
+      }
+      const thread = await openGroupThread('Students', ids);
+      router.push(`/messages/${thread}` as never);
+    })().catch((err) => setError(err instanceof Error ? err.message : 'Could not start group'));
+  };
+
   const addCard = (
     <View>
       <SectionHeader label="Add students" first />
@@ -472,34 +518,100 @@ export default function SetupScreen() {
             ? 'No students yet. A name is enough.'
             : 'No students enrolled yet. The office manages the class roster.'}
         </Text>
-      ) : (
-        roster.map((student) => (
+      ) : null}
+      {messaging && roster.length ? (
+        <View style={styles.selectAllRow}>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: allSelected }}
+            accessibilityLabel="Select all students"
+            onPress={toggleSelectAll}
+            style={styles.selectAll}
+          >
+            <CheckBox checked={allSelected} />
+            <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+          </Pressable>
+          <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+        </View>
+      ) : null}
+      {roster.map((student) => {
+        const checked = picked.includes(student.id);
+        const row = (
           <ListRow
-            key={student.id}
             title={student.display_name}
             photoUrl={student.photoUrl}
             hasPhoto={Boolean(student.photo_asset_id)}
-            onPress={() => router.push(`/class/${id}/student/${student.id}`)}
+            selected={messaging ? checked : false}
+            chevron={!messaging}
+            onPress={() => {
+              if (messaging) {
+                togglePick(student.id);
+                return;
+              }
+              router.push(`/class/${id}/student/${student.id}`);
+            }}
             trailing={
-              office
-                ? [
+              messaging || !office
+                ? undefined
+                : [
                     {
                       key: 'remove',
                       label: 'Remove',
-                      tone: 'wash',
+                      tone: 'wash' as const,
                       onPress: () => {
                         if (!id) return;
                         void removeEnrollment(id, student.id)
                           .then(() => load())
-                          .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove student'));
+                          .catch((err) =>
+                            setError(err instanceof Error ? err.message : 'Could not remove student'),
+                          );
                       },
                     },
                   ]
-                : undefined
             }
           />
-        ))
-      )}
+        );
+        if (!messaging) {
+          return <View key={student.id}>{row}</View>;
+        }
+        return (
+          <View key={student.id} style={styles.selectRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked }}
+              accessibilityLabel={`Select ${student.display_name}`}
+              onPress={() => togglePick(student.id)}
+              style={styles.checkHit}
+            >
+              <CheckBox checked={checked} />
+            </Pressable>
+            <View style={styles.selectRowBody}>{row}</View>
+          </View>
+        );
+      })}
+      {roster.length ? (
+        messaging ? (
+          <View style={styles.footer}>
+            <PrimaryButton
+              label={
+                picked.length
+                  ? `Message ${picked.length} student${picked.length === 1 ? '' : 's'}`
+                  : 'Message these students'
+              }
+              disabled={!picked.length}
+              onPress={sendMessage}
+            />
+          </View>
+        ) : (
+          <PrimaryButton
+            label="Message these students"
+            onPress={() => {
+              setMessaging(true);
+              setPicked([]);
+            }}
+          />
+        )
+      ) : null}
       {office ? (
         <>
           <SectionHeader label="All students" />
@@ -649,8 +761,69 @@ export default function SetupScreen() {
   );
 }
 
+function CheckBox({ checked }: { checked: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.messageCheck,
+        {
+          borderColor: checked ? colors.brand : colors.line,
+          backgroundColor: checked ? colors.brand : colors.card,
+        },
+      ]}
+    >
+      {checked ? <Icon name="check" color={colors.brandInk} size={16} /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   empty: type.body,
+  selectAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  selectAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    flexShrink: 1,
+  },
+  selectAllLabel: {
+    ...type.meta,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  selectRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkHit: {
+    paddingTop: 14,
+    paddingRight: 10,
+    paddingLeft: 4,
+  },
+  selectRowBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  messageCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    gap: 8,
+    marginTop: 8,
+  },
   mediaHits: {
     flexDirection: 'row',
     alignItems: 'center',
