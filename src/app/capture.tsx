@@ -10,7 +10,6 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
 import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -763,11 +762,6 @@ export default function CaptureScreen() {
         <View style={styles.right}>
           <Screen scroll maxWidth={480}>
             {whoBlock}
-            <PhaseBanner
-              phase={2}
-              compact
-              detail="Photograph one student’s work, then say the name. Keyed: confirm + Approve on this phone (Pack B)."
-            />
           </Screen>
         </View>
       </View>
@@ -778,11 +772,6 @@ export default function CaptureScreen() {
     <Screen keyboard sticky={sticky}>
       {photoBlock}
       {whoBlock}
-      <PhaseBanner
-        phase={2}
-        compact
-        detail="Photograph one student’s work, then say the name. Keyed: confirm + Approve on this phone (Pack B)."
-      />
     </Screen>
   );
 }
