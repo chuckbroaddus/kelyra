@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { PrimaryButton } from '@/components/ui/Button';
 import { CreateLoginForm, PeopleDirectory } from '@/components/ui/PeopleAdmin';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { SchoolIdentityFields } from '@/components/ui/SchoolIdentity';
@@ -286,9 +286,6 @@ export default function HomeScreen() {
             <Text style={[type.meta, { color: colors.mute }]}>
               {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
             </Text>
-          ) : null}
-          {teacherSeat && !empty ? (
-            <GhostButton align="left" label="Assign" onPress={() => router.push('/assignment/new')} />
           ) : null}
           {(classes ?? []).map((item) => {
             const lesson = lessonRollup.find((row) => row.classId === item.id);
