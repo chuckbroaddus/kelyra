@@ -2901,7 +2901,7 @@ Each `WorkRow`:
 - `lead` = `AssignmentMark` 48
 - Title = assignment title
 - Status = kind · due
-- Meta = weight summary (`Major · Quarter 2` / `15% · Semester 1`). Year is the default and stays off the meta line.
+- Meta = weight summary (`Major · Quarter 2` / `15% · Semester 1`). Year stays off the meta line when selected.
 - Badge `assigned`
 - Pills: **Open** · **Grade book**. **Open** is the only control that starts the assignment (student work or teacher lesson preview). Tapping the media or title does nothing. Cost: do not mint a lesson-host URL or load the pack until **Open**.
 - Swipe trailing **Open**, leading **Delete** (confirm sheet, no type-the-name)
@@ -2912,7 +2912,7 @@ Empty: `No assignments yet. Create one — the column shows up empty until work 
 
 `AssignmentForm` on `/class/{id}/assignment/new` and `/{id}`. Capture **New** uses this exact screen (`returnTo: proposal`).
 
-Every choice row is a **horizontal `ChipRow`**. Title and custom % stay `TextField`. Due date field + chips Tomorrow / Next week / Clear. Optional **Unit** and **Section** fields (plus chips of names already used in the class) nest the grade-book tree. **Counts toward:** Quarter 1–4, Semester 1, Semester 2, Year. No “This year.” New assignments default to Year. An assignment belongs to one bucket; the grade-book tabs roll up (Semester 1 = Q1 + Q2 + semester-only, Year = both semesters + year-only).
+Every choice row is a **horizontal `ChipRow`**. Section labels (uppercase via `textTransform`): **Class** (help: “Choose a class or multiple classes.”), **For the grade book**, **Assignment (grade) category**, **Counts toward**, etc. `TextField` **TITLE** (placeholder always “Enter a title for the assignment”) and custom % stay fields. `DateInput` label **DUE DATE** + chips Tomorrow / Next week / Clear. Optional **Unit** / **Section** (placeholders “Enter a unit number (e.g. 3)” / “Enter a section number (e.g. 2)”; plus chips of names already used in the class) nest the grade-book tree. Optional grade-book grouping meta under **For the grade book** stays. **Counts toward:** Quarter 1–4, Semester 1, Semester 2, Year. No “This year.” New assignments default to the **current nine-week quarter** via `defaultGradeTermForDate(new Date())` (Aug 15–Oct 16 Q1 · Oct 17–Jan 11 Q2 incl. Christmas break · Jan 12–Mar 12 Q3 · Mar 13–Aug 14 Q4; edit flows keep the stored term). An assignment belongs to one bucket; the grade-book tabs roll up (Semester 1 = Q1 + Q2 + semester-only, Year = both semesters + year-only).
 
 **Answer key** (same form): chips **None · Photo · Typed items**. Photo of a blank worksheet runs `analyze-answer-key` and proposes editable items — teacher taps **Save assignment** to approve. A filled key is extracted, not solved. WorkRow status may include `Key · 12 items`. Capture match pre-selects the assignment when the printed page matches the stored print hash; teacher can change it. Evaluate scores against the key. Nothing is a grade until Approve.
 

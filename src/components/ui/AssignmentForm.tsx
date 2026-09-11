@@ -17,6 +17,7 @@ import {
   GRADE_KINDS,
   GRADE_TERMS,
   WEIGHT_BANDS,
+  defaultGradeTermForDate,
   type GradeKind,
   type GradeTerm,
   type ScoreScheme,
@@ -77,7 +78,7 @@ export function emptyAssignmentForm(seed?: {
     dueDate: '',
     weightBand: 'none',
     weightPercent: '',
-    term: 'year',
+    term: defaultGradeTermForDate(new Date()),
     scoreScheme: 'numeric',
     // Legacy planned default true; syllabus category default / lesson path pass false explicitly.
     includeInAverage: seed?.includeInAverage ?? true,
@@ -188,8 +189,8 @@ export function AssignmentForm({
       ) : null}
       {!classLocked && taughtClasses.length ? (
         <>
-          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Classes</Text>
-          <Text style={[type.meta, { color: colors.mute }]}>Only classes you already teach.</Text>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Class</Text>
+          <Text style={[type.meta, { color: colors.mute }]}>Choose a class or multiple classes.</Text>
           <ChipRow>
             {taughtClasses.map((klass) => (
               <Chip
@@ -230,18 +231,18 @@ export function AssignmentForm({
         </>
       ) : null}
       <TextField
-        label="Title"
-        placeholder={lesson ? 'FoM · 1.3 Multiplication' : 'HW #17 Long Division Practice 3'}
+        label="TITLE"
+        placeholder="Enter a title for the assignment"
         value={value.title}
         onChangeText={(title) => patch({ title })}
       />
-      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>In the book</Text>
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>For the grade book</Text>
       <Text style={[type.meta, { color: colors.mute }]}>
         Optional. The grade book groups rows by class, then unit, then section.
       </Text>
       <TextField
         label="Unit"
-        placeholder="Fractions"
+        placeholder="Enter a unit number (e.g. 3)"
         value={value.unit}
         onChangeText={(unit) => patch({ unit })}
       />
@@ -254,7 +255,7 @@ export function AssignmentForm({
       ) : null}
       <TextField
         label="Section"
-        placeholder="6.1 Adding"
+        placeholder="Enter a section number (e.g. 2)"
         value={value.section}
         onChangeText={(section) => patch({ section })}
       />
@@ -270,7 +271,7 @@ export function AssignmentForm({
           ))}
         </ChipRow>
       ) : null}
-      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Kind</Text>
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Assignment (grade) category</Text>
       {syllabusPublished ? (
         <Text style={[type.meta, { color: colors.mute }]}>
           {selectedKind
@@ -319,7 +320,7 @@ export function AssignmentForm({
         />
       </ChipRow>
       <DateInput
-        label="Due date"
+        label="DUE DATE"
         mode="due"
         value={dueIso}
         required
