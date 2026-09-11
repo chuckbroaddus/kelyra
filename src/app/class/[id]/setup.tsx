@@ -358,7 +358,7 @@ export default function SetupScreen() {
       if (!loginByStudentId[studentId]) return 'needs_student_login';
       const parents = parentsByStudentId[studentId] ?? [];
       if (!parents.length) return 'needs_parents';
-      if (parents.some((parent) => !parent.hasLogin)) return 'needs_parent_login';
+      if (!parents.some((parent) => parent.hasLogin)) return 'needs_parent_login';
       return 'ok';
     },
     [loginByStudentId, parentsByStudentId],
@@ -485,7 +485,7 @@ export default function SetupScreen() {
         if (!loginMap[studentId]) return 'needs_student_login' as const;
         const parents = parentsMap[studentId] ?? [];
         if (!parents.length) return 'needs_parents' as const;
-        if (parents.some((parent) => !parent.hasLogin)) return 'needs_parent_login' as const;
+        if (!parents.some((parent) => parent.hasLogin)) return 'needs_parent_login' as const;
         return 'ok' as const;
       };
 
@@ -494,8 +494,8 @@ export default function SetupScreen() {
       if (!eligible.length) {
         setSendHint(
           picked.length === 1
-            ? 'That student needs a login and every linked parent login first.'
-            : 'Those students need logins and parent logins first.',
+            ? 'That student needs a login and at least one parent login first.'
+            : 'Those students need logins and at least one parent login each first.',
         );
         return;
       }
@@ -522,7 +522,7 @@ export default function SetupScreen() {
           : `Opened ${opened.length} chats — parents included`,
       );
       if (skipped > 0) {
-        parts.push(`${skipped} skipped (need student + all parent logins)`);
+        parts.push(`${skipped} skipped (need student + at least one parent login)`);
       }
       if (failures.length) {
         parts.push(`${failures.length} failed to open`);
@@ -701,8 +701,8 @@ export default function SetupScreen() {
           ) : null}
           {hasBlockedRows ? (
             <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
-              Grayed-out students need a student login, at least one linked parent, and every parent
-              login. The office can create logins and link guardians.
+              Grayed-out students need a student login, at least one linked parent, and at least one
+              parent login. The office can create logins and link guardians.
             </Text>
           ) : null}
         </View>
@@ -729,7 +729,7 @@ export default function SetupScreen() {
                     gate === 'needs_parents'
                       ? 'Link at least one parent before messaging this student.'
                       : gate === 'needs_parent_login'
-                        ? 'Every linked parent needs a login first.'
+                        ? 'At least one linked parent needs a login first.'
                         : 'That student needs a login first.',
                   );
                   return;
@@ -783,7 +783,7 @@ export default function SetupScreen() {
                     gate === 'needs_parents'
                       ? 'Link at least one parent before messaging this student.'
                       : gate === 'needs_parent_login'
-                        ? 'Every linked parent needs a login first.'
+                        ? 'At least one linked parent needs a login first.'
                         : 'That student needs a login first.',
                   );
                   return;
@@ -810,9 +810,9 @@ export default function SetupScreen() {
               <Text style={[type.meta, { color: colors.mute }]}>
                 {blockedAmongPicked === picked.length
                   ? picked.length === 1
-                    ? 'That student needs a login and every linked parent login first.'
-                    : 'Those students need logins and parent logins first.'
-                  : `${blockedAmongPicked} of these need student + all parent logins — send will open the rest`}
+                    ? 'That student needs a login and at least one parent login first.'
+                    : 'Those students need logins and at least one parent login each first.'
+                  : `${blockedAmongPicked} of these need student + at least one parent login — send will open the rest`}
               </Text>
             ) : null}
             {!overCap && sendHint ? (
