@@ -15,6 +15,8 @@ function room(partial: Partial<StudentClass> & Pick<StudentClass, 'classId' | 'c
     teacherName: null,
     teacherPhotoPath: null,
     teacherPhotoUrl: null,
+    avatarPhotoPath: null,
+    avatarPhotoUrl: null,
     ...partial,
   };
 }

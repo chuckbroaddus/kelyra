@@ -274,6 +274,9 @@ export type ClassRow = {
   name_source: ClassNameSource;
   created_at: string;
   feed_icon?: string | null;
+  avatar_asset_id?: string | null;
+  /** Signed thumb. Client hydrate only — not a column. */
+  avatarUrl?: string | null;
 };
 
 export type StudentRow = {
@@ -543,8 +546,8 @@ export type Database = {
       >;
       classes: Table<
         ClassRow,
-        { teacher_id?: string | null; name: string; name_source?: ClassNameSource; feed_icon?: string | null },
-        Partial<Pick<ClassRow, 'name' | 'name_source' | 'teacher_id' | 'feed_icon'>>
+        { teacher_id?: string | null; name: string; name_source?: ClassNameSource; feed_icon?: string | null; avatar_asset_id?: string | null },
+        Partial<Pick<ClassRow, 'name' | 'name_source' | 'teacher_id' | 'feed_icon' | 'avatar_asset_id'>>
       >;
       students: Table<
         StudentRow,
@@ -827,6 +830,7 @@ export type Database = {
           teacher_id: string | null;
           teacher_name: string | null;
           teacher_photo_path: string | null;
+          avatar_photo_path: string | null;
         }[];
       };
       school_logo_paths: {
@@ -1138,6 +1142,7 @@ export type Database = {
       ask_new_thread: { Args: Record<string, never>; Returns: string };
       ask_purge_old: { Args: Record<string, never>; Returns: undefined };
       set_class_feed_icon: { Args: { p_class_id: string; p_icon: string }; Returns: string };
+      set_class_avatar: { Args: { p_class_id: string; p_asset_id: string | null }; Returns: string | null };
       list_feed: {
         Args: Record<string, never>;
         Returns: {

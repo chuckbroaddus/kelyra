@@ -6,6 +6,7 @@ import { PrimaryButton } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { officeClassPersonTabs } from '@/components/ui/ClassTabs';
 import { FeedPane } from '@/components/ui/FeedPane';
+import { ClassAvatarRow } from '@/components/ui/ClassAvatarRow';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { Icon } from '@/components/ui/Icon';
@@ -202,6 +203,7 @@ export default function ClassOfficeScreen() {
 
       {pane === 'teacher' ? (
         <>
+          <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />
           <FeedIconRow
             value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
             onPick={async (icon) => {

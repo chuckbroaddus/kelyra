@@ -345,6 +345,9 @@ export default function ProfileScreen() {
               key={klass.id}
               title={klass.name}
               status={chrome.classId === klass.id ? 'Active class' : undefined}
+              avatarName={klass.name}
+              photoUrl={klass.avatarUrl}
+              hasPhoto={Boolean(klass.avatar_asset_id)}
               onPress={() => router.push(`/class/${klass.id}`)}
             />
           ))}

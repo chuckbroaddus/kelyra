@@ -1,3 +1,4 @@
+import { hydrateClassAvatars } from '@/lib/classes/avatar';
 import { photoUrlsForProfiles } from '@/lib/people/photos';
 import { listProfiles, writeAudit } from '@/lib/school/api';
 import { isTeacherRole } from '@/lib/school/roles';
@@ -10,7 +11,7 @@ export async function listClasses(): Promise<ClassRow[]> {
     .select('*')
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return hydrateClassAvatars(data ?? []);
 }
 
 export type SchoolClass = ClassRow & {
@@ -191,7 +192,9 @@ export async function getClass(classId: string): Promise<ClassRow> {
     .eq('id', classId)
     .single();
   if (error) throw error;
-  return data;
+  const [hydrated] = await hydrateClassAvatars(data ? [data] : []);
+  if (!hydrated) throw new Error('Class not found');
+  return hydrated;
 }
 
 export async function setActiveClass(teacherId: string, classId: string) {

@@ -331,7 +331,7 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 | Desk (teacher) | *(none — ClassTabs owns desk panes)* | — | Shipped: `PersonTabs` / `CLASS_TABS` on `/class/…` (§32.7, §37). Do not restore Amazon chips on the desk |
 | Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
 | Needs Attention (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs Attention** |
-| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · **Settings** (gear, far right). Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow. Feed icon + Syllabus live on Settings, not Students |
+| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · **Settings** (gear, far right). Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow. Class avatar + Feed icon + Syllabus live on Settings, not Students |
 | Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37). **Assignment ground is not a header band** — student/parent ground lives composer-adjacent (§12.6). Do not add a permanent ground row under the mark. |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
 | Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
@@ -1632,13 +1632,15 @@ The header camera on this tab still goes to `/proposal`. If the classifier says 
 
 ### 13.8a `/class/[id]/settings` — Class / Settings
 
-**Job.** Class-level preferences that are not roster work: Feed icon and Syllabus.
+**Job.** Class-level preferences that are not roster work: Class avatar, Feed icon, and Syllabus.
 
 **Header title:** class name. Context: `ClassTabs` with **Settings** selected (gear, far right).
 
-**Vertical.** `FeedIconRow` → (teachers) Syllabus summary card with primary to `/class/{id}/syllabus`. No PhaseBanner. No roster controls.
+**Vertical.** `ClassAvatarRow` (PhotoSheet camera / library / remove, same as people and school logo) → `FeedIconRow` → (teachers) Syllabus summary card with primary to `/class/{id}/syllabus`. No PhaseBanner. No roster controls.
 
-Students/setup no longer hosts Feed icon or Syllabus.
+`ClassAvatarRow` writes `classes.avatar_asset_id` via `set_class_avatar` (class teacher or office — same wall as Feed icon). Initials until a photo is set. Class lists that already show a class circle (`ListRow` avatarName on Desk, hamburger, Profile Classes) pass `photoUrl` from that field. Mixed student class chips use the photo when set; class-only student rows keep the teacher face (§34.4). Feed icon stays the Messages/feed glyph — not a photo.
+
+Students/setup no longer hosts Feed icon, class avatar, or Syllabus.
 
 ---
 
@@ -3576,7 +3578,7 @@ Header wordmark stays the **class name** on every pane (not “Gradebook”, “
 
 **Default `CLASS_TABS` (≤8, ordered):** **Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · Settings**. Settings is last (far right) with the existing `settings` gear glyph. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
 
-**Settings** (`/class/{id}/settings`): class Feed icon picker + Syllabus entry (How this class grades). Those controls moved off Students/setup. Syllabus editor remains `/class/{id}/syllabus` and highlights the Settings tab.
+**Settings** (`/class/{id}/settings`): class avatar (`PhotoSheet`) + Feed icon picker + Syllabus entry (How this class grades). Those controls live on Settings, not Students/setup. Syllabus editor remains `/class/{id}/syllabus` and highlights the Settings tab. Office class card Teacher pane has the same avatar + Feed icon rows.
 
 **Demoted (routes stay; not default icons):** This week (`?tab=week` / Today filter), Heatmap (`/gradebook?tab=heatmap` only), Family (drawer or Class overflow). Do not restore a 10-tab default. AVG Syllabus stays Class-desk altitude via **Settings** (and gradebook entry) — not a separate Syllabus ClassTab.
 
@@ -3769,9 +3771,10 @@ A feed is identified in the inbox by its glyph, not by a long class name (the se
 **Where the picker lives**
 
 - School tab on `/` — row **School feed icon** (office)
-- Office class card Teacher pane — row **Feed icon**
-- Class desk Settings (`/class/{id}/settings`) — row **Feed icon** (moved off Students/setup)
+- Office class card Teacher pane — **Class avatar** + **Feed icon**
+- Class desk Settings (`/class/{id}/settings`) — **Class avatar** then **Feed icon** (moved off Students/setup)
 - `FeedIconPicker` is a `FormSheet` grid. Selected cell `brandSoft` + `brand` icon and label.
+- Class avatar is a photo (`classes.avatar_asset_id`), not a catalog glyph. `PhotoSheet` Take / library / Remove. SQL `20260911000003_class_avatar.sql` (`set_class_avatar`).
 
 SQL: paste `supabase/migrations/20260821000000_feed_icons.sql` (`schools.feed_icon`, `classes.feed_icon`, `list_my_feeds`, `set_school_feed_icon`, `set_class_feed_icon`). Audit action `set_feed_icon`.
 

@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ClassAvatarRow } from '@/components/ui/ClassAvatarRow';
 import { ClassTabs } from '@/components/ui/ClassTabs';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { Screen } from '@/components/ui/Screen';
@@ -76,18 +77,21 @@ export default function ClassSettingsScreen() {
     <Screen keyboard>
       {id ? <ClassTabs classId={id} /> : null}
       {klass ? (
-        <FeedIconRow
-          value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
-          onPick={async (icon) => {
-            try {
-              await setClassFeedIcon(klass.id, icon);
-              setKlass({ ...klass, feed_icon: icon });
-              chrome.refreshChrome();
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'Could not save the feed icon');
-            }
-          }}
-        />
+        <>
+          <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />
+          <FeedIconRow
+            value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
+            onPick={async (icon) => {
+              try {
+                await setClassFeedIcon(klass.id, icon);
+                setKlass({ ...klass, feed_icon: icon });
+                chrome.refreshChrome();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'Could not save the feed icon');
+              }
+            }}
+          />
+        </>
       ) : null}
       {!office && id ? (
         <Card>

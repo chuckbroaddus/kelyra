@@ -183,15 +183,21 @@ async function fetchStudentClasses(): Promise<StudentClass[]> {
     teacherName: row.teacher_name ?? null,
     teacherPhotoPath: row.teacher_photo_path ?? null,
     teacherPhotoUrl: null,
+    avatarPhotoPath: row.avatar_photo_path ?? null,
+    avatarPhotoUrl: null,
   }));
   if (classesNeedTeacherPeople(rows)) {
     const people = await listStudentPeople().catch(() => [] as StudentPerson[]);
     rows = mergeClassTeachers(rows, people);
   }
-  const urls = await signedProfileUrls(rows.map((row) => row.teacherPhotoPath));
+  const urls = await signedProfileUrls([
+    ...rows.map((row) => row.teacherPhotoPath),
+    ...rows.map((row) => row.avatarPhotoPath),
+  ]);
   return rows.map((row) => ({
     ...row,
     teacherPhotoUrl: row.teacherPhotoPath ? urls.get(row.teacherPhotoPath) ?? null : null,
+    avatarPhotoUrl: row.avatarPhotoPath ? urls.get(row.avatarPhotoPath) ?? null : null,
   }));
 }
 
