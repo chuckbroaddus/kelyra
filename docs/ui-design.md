@@ -386,6 +386,7 @@ These are **not** Meta blue, Instagram purple, or Amazon orange. Light is warm d
 | `warnSoft` | `#F8E7C8` | Waiting wash | — |
 | `danger` | `#B53A32` | Stop recording, thrown errors, **bell badge** | ≥ 4.6:1 on `bg` |
 | `dangerSoft` | `#F8DDD9` | Stop / error wash | — |
+| `dangerBrick` | `#9B2C2C` | **Delete swipe tiles** on `WorkRow` / `ListRow` (classic brick, not coral) | light label `#FFF8F3` |
 | `focus` | `#B03E0E` | Same hex as `brand` | — |
 | `wash` | `#EFE8DE` | Avatars, zebra, empty wells | — |
 
@@ -414,6 +415,7 @@ An equal sibling, not an invert. Photographic work must still read. Brand is a l
 | `warnSoft` | `#2E2416` | Wash | — |
 | `danger` | `#F07A70` | Stop, errors, bell badge | ≥ 7:1 on `bg` |
 | `dangerSoft` | `#331C1A` | Wash | — |
+| `dangerBrick` | `#C9403A` | **Delete swipe tiles** (brick on dark — not soft coral/salmon `#F07A70`) | light label `#FFF8F3` |
 | `focus` | `#E07A3A` | Same as `brand` | — |
 | `wash` | `#2A2723` | Avatars, zebra | — |
 
@@ -894,6 +896,14 @@ Wrap `WorkRow` in a horizontal gesture (implement with `react-native` `Animated`
 | Full-swipe auto-commit | release past `max(120, 0.4 * rowWidth)` **only for non-publishing actions** |
 | Snap-back | release earlier, 160 ms ease-out |
 | Action tile | full row height, label 12 / 600, icon 20, color below |
+| Delete tile fill | `dangerBrick` (`#9B2C2C` light / `#C9403A` dark) — **brick red**, never soft coral/salmon. Label `#FFF8F3`. Preview stays `brand`. |
+
+**Open / close / back (standard for every swipeable `WorkRow` and `ListRow`).**
+
+1. **Open** — trailing swipe (RTL / swipe left) reveals actions; leading swipe when leading actions exist.
+2. **Close** — one opposite swipe (LTR when trailing is open) snaps the row closed **and must not** trigger React Navigation / Expo Router back. While `tx !== 0`, the row claims the horizontal gesture early (`onStartShouldSet` / capture) and refuses termination; the focused screen sets `gestureEnabled: false` / `fullScreenGestureEnabled: false` via `SwipeRowOpenProvider` until every row is closed.
+3. **Tap to close** — tap the foreground card/content (left of the revealed tiles) while open closes actions only. It does **not** navigate to detail unless the row is already closed and has an intentional `onPress`.
+4. **Back** — stack / edge back-gesture is allowed only after actions are closed. Chrome (header) back still works while open. A **second** LTR swipe after close may go back.
 
 **Inbox (`unassigned`)**
 
@@ -926,7 +936,7 @@ Wrap `WorkRow` in a horizontal gesture (implement with `react-native` `Animated`
 
 **Hard rule.** Teacher Approve **cannot** be a silent full-swipe. Swipe **Approve** always opens the existing Approve UI so the teacher can edit the score and gaps. Full-swipe auto-commit is legal only for **Assign** (opens picker), **Open**, and **Note only** (after confirm).
 
-**Delete is a new swipe action.** Tile: `danger` fill, light label `Delete`. Allowed on `WorkRow` (captures, practice) and `ListRow` (classes, students, parents, invites, parked roster drafts). **Full-swipe on Delete must not auto-commit** — same rule as Approve. Releasing past the full-swipe threshold **snaps open the reveal and opens the confirm sheet**. Releasing earlier snaps back. There is no undo, so the sheet must say `This cannot be undone.`
+**Delete is a new swipe action.** Tile: `dangerBrick` fill (brick red), light label `Delete`. Allowed on `WorkRow` (captures, practice) and `ListRow` (classes, students, parents, invites, parked roster drafts). **Full-swipe on Delete must not auto-commit** — same rule as Approve. Releasing past the full-swipe threshold **snaps open the reveal and opens the confirm sheet**. Releasing earlier snaps back. There is no undo, so the sheet must say `This cannot be undone.`
 
 Un-filing a capture (send back to Inbox) is **not** delete. Trailing **Inbox** on the student work row, confirm `Send this back to Inbox?`, then `student_id = null`, `status = unassigned`. Delete removes the capture (§20).
 
@@ -957,9 +967,9 @@ If a row already has two actions per side, **Delete** replaces the least-critica
 | Side | Action | Tile | Commit |
 |---|---|---|---|
 | Trailing 1 (inner) | **Preview** | `brand` fill, `brandInk` | Lesson → preview; other kinds → assignment sheet. Never auto-commits |
-| Trailing 2 (outer right / far edge) | **Delete** | `danger` fill (`#B53A32` / dark `#F07A70`), light label | Opens delete-assignment confirm. Never auto-commits |
+| Trailing 2 (outer right / far edge) | **Delete** | `dangerBrick` fill (`#9B2C2C` / dark `#C9403A`), light `#FFF8F3` | Opens delete-assignment confirm. Never auto-commits |
 
-Order is always `[Preview, Delete]` so Delete sits at the outer right edge. Leading stays empty (`maxL = 0`); LTR reveal is disabled.
+Order is always `[Preview, Delete]` so Delete sits at the outer right edge. Leading stays empty (`maxL = 0`); LTR **reveal** is disabled, but LTR **close** while open still snaps shut (see open/close/back rules above) and must not pop the screen.
 
 ### 10.8 `ListRow`
 
@@ -972,7 +982,7 @@ New file `src/components/ui/ListRow.tsx`. Facebook people row. Use for classes, 
 
 Height 52 / 56 with status. Avatar: photo 36 circle if `photoUrl`, else `AvatarInitials` 36. Name `rowTitle`, 1 line, **marquee** (§30). Status `meta` / `mute`, 1 line, truncate. Chevron `›` 18 / `mute` if the row goes somewhere. Hairline inset 16 + 36 + 12. Press opacity 0.88.
 
-**Swipe-to-delete** on teacher `ListRow`s that represent something the teacher created (class, student, parent, invite, parked roster draft). Same physics as `WorkRow`. Delete tile `danger`. Full-swipe opens the confirm sheet and does **not** commit. Student / parent roles never get a delete swipe.
+**Swipe-to-delete** on teacher `ListRow`s that represent something the teacher created (class, student, parent, invite, parked roster draft). Same physics and open/close/back rules as `WorkRow`. Delete tile `dangerBrick`. Full-swipe opens the confirm sheet and does **not** commit. Student / parent roles never get a delete swipe.
 
 ### 10.9 `WorkShelf`
 

@@ -7,6 +7,7 @@ import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { type } from '@/constants/theme';
+import { useSwipeRowOpen } from '@/lib/ui/swipeRowOpen';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type ListSwipeAction = {
@@ -61,12 +62,27 @@ export function ListRow({
   leading = [],
   trailing = [],
 }: Props) {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const width = useRef(0);
   const x = useRef(new Animated.Value(0)).current;
   const start = useRef(0);
+  const openOffset = useRef(0);
   const [swiping, setSwiping] = useState(false);
+  const [open, setOpen] = useState(false);
   const swipable = leading.length + trailing.length > 0;
+  // test-hook: leadingRef/trailingRef keep PanResponder snap widths current across renders
+  const leadingRef = useRef(leading);
+  const trailingRef = useRef(trailing);
+  leadingRef.current = leading;
+  trailingRef.current = trailing;
+
+  useSwipeRowOpen(open && swipable);
+
+  const markOpen = (value: number) => {
+    openOffset.current = value;
+    const next = value !== 0;
+    setOpen((prev) => (prev === next ? prev : next));
+  };
 
   const snap = (to: number) => {
     Animated.timing(x, {
@@ -74,7 +90,9 @@ export function ListRow({
       duration: 160,
       useNativeDriver: true,
     }).start(({ finished }) => {
-      if (finished && to === 0) setSwiping(false);
+      if (!finished) return;
+      markOpen(to);
+      if (to === 0) setSwiping(false);
     });
   };
 
@@ -85,6 +103,7 @@ export function ListRow({
       useNativeDriver: true,
     }).start(() => {
       start.current = 0;
+      markOpen(0);
       setSwiping(false);
       action.onPress();
     });
@@ -92,46 +111,80 @@ export function ListRow({
 
   const responder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) =>
-        swipable && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+      onStartShouldSetPanResponder: () => openOffset.current !== 0,
+      onStartShouldSetPanResponderCapture: () => openOffset.current !== 0,
+      onMoveShouldSetPanResponder: (_, g) => {
+        if (!leadingRef.current.length && !trailingRef.current.length) return false;
+        if (openOffset.current !== 0) {
+          return Math.abs(g.dx) > 2 && Math.abs(g.dx) >= Math.abs(g.dy);
+        }
+        return Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy);
+      },
+      onMoveShouldSetPanResponderCapture: (_, g) => {
+        if (openOffset.current === 0) return false;
+        return Math.abs(g.dx) > 2 && Math.abs(g.dx) >= Math.abs(g.dy);
+      },
+      onPanResponderTerminationRequest: () => openOffset.current === 0,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: () => {
         setSwiping(true);
         x.stopAnimation((value) => {
           start.current = value;
+          openOffset.current = value;
         });
       },
       onPanResponderMove: (_, g) => {
-        const maxL = leading.length * 80;
-        const maxR = trailing.length * 80;
+        const maxL = leadingRef.current.length * 80;
+        const maxR = trailingRef.current.length * 80;
         const next = start.current + g.dx;
-        x.setValue(Math.max(-maxR, Math.min(maxL, next)));
+        const clamped = Math.max(-maxR, Math.min(maxL, next));
+        openOffset.current = clamped;
+        x.setValue(clamped);
       },
       onPanResponderRelease: (_, g) => {
         const rowW = width.current || 320;
         const offset = start.current + g.dx;
-        const maxL = leading.length * 80;
-        const maxR = trailing.length * 80;
+        const leadActs = leadingRef.current;
+        const trailActs = trailingRef.current;
+        const maxL = leadActs.length * 80;
+        const maxR = trailActs.length * 80;
         const full = Math.max(120, 0.4 * rowW);
-        if (offset > 0 && leading[0]) {
-          if (offset > full && leading[0].autoCommit) {
-            run(leading[0]);
+        if (offset > 0 && leadActs[0]) {
+          if (offset > full && leadActs[0].autoCommit) {
+            run(leadActs[0]);
             return;
           }
           snap(offset > 56 ? maxL : 0);
           return;
         }
-        if (offset < 0 && trailing[0]) {
-          if (offset < -full && trailing[0].autoCommit) {
-            run(trailing[0]);
+        if (offset < 0 && trailActs[0]) {
+          if (offset < -full && trailActs[0].autoCommit) {
+            run(trailActs[0]);
             return;
           }
-          snap(offset < -56 ? -Math.min(maxR, trailing.length * 80) : 0);
+          snap(offset < -56 ? -maxR : 0);
           return;
         }
         snap(0);
       },
+      onPanResponderTerminate: () => {
+        const v = openOffset.current;
+        const maxL = leadingRef.current.length * 80;
+        const maxR = trailingRef.current.length * 80;
+        if (v < -56 && maxR) snap(-maxR);
+        else if (v > 56 && maxL) snap(maxL);
+        else snap(0);
+      },
     }),
   ).current;
+
+  const onCardPress = () => {
+    if (openOffset.current !== 0) {
+      snap(0);
+      return;
+    }
+    onPress?.();
+  };
 
   const tile = (action: ListSwipeAction) => (
     <HoverTip key={action.key} label={tipIfNew(action.label, action.tooltip)}>
@@ -144,7 +197,7 @@ export function ListRow({
             action.tone === 'brand'
               ? colors.brand
               : action.tone === 'danger'
-                ? colors.danger
+                ? colors.dangerBrick
                 : colors.wash,
           width: 80,
         },
@@ -158,9 +211,7 @@ export function ListRow({
               action.tone === 'brand'
                 ? colors.brandInk
                 : action.tone === 'danger'
-                  ? scheme === 'dark'
-                    ? '#1A120C'
-                    : '#FFF8F3'
+                  ? '#FFF8F3'
                   : colors.ink,
           },
         ]}
@@ -181,6 +232,50 @@ export function ListRow({
     ) : (
       <Avatar name={avatarName ?? title} photoUrl={photoUrl} hasPhoto={hasPhoto} size={36} unknown={unknown} />
     ));
+
+  const spoken = `${unread ? 'Unread. ' : ''}${status ? `${title}. ${status}` : title}`;
+  const pressable = onPress || swipable ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={spoken}
+      onPress={onCardPress}
+      style={({ pressed }) => [pressed && { opacity: 0.88 }]}
+    >
+      {({ pressed }) => (
+        <View
+          style={[
+            styles.row,
+            {
+              borderBottomColor: colors.line,
+              backgroundColor: selected ? colors.brandSoft : colors.bg,
+              alignItems: statusNode ? 'flex-start' : 'center',
+            },
+          ]}
+        >
+          {face}
+          <View style={styles.text}>
+            <MarqueeText
+              text={title}
+              align="start"
+              paused={pressed || swiping}
+              fadeColor={selected ? colors.brandSoft : colors.bg}
+              style={[styles.title, { color: colors.ink, fontWeight: unread ? '700' : '600' }]}
+            />
+            {statusNode ??
+              (status ? (
+                <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
+                  {status}
+                </Text>
+              ) : null)}
+          </View>
+          {right}
+          {chevron && onPress ? (
+            <Text style={[styles.chevron, { color: colors.mute }]}>›</Text>
+          ) : null}
+        </View>
+      )}
+    </Pressable>
+  ) : null;
 
   const body = (
     <View
@@ -216,50 +311,7 @@ export function ListRow({
     </View>
   );
 
-  const spoken = `${unread ? 'Unread. ' : ''}${status ? `${title}. ${status}` : title}`;
-  const pressable = onPress ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={spoken}
-      onPress={onPress}
-      style={({ pressed }) => [pressed && { opacity: 0.88 }]}
-    >
-      {({ pressed }) => (
-        <View
-          style={[
-            styles.row,
-            {
-              borderBottomColor: colors.line,
-              backgroundColor: selected ? colors.brandSoft : colors.bg,
-              alignItems: statusNode ? 'flex-start' : 'center',
-            },
-          ]}
-        >
-          {face}
-          <View style={styles.text}>
-            <MarqueeText
-              text={title}
-              align="start"
-              paused={pressed || swiping}
-              fadeColor={selected ? colors.brandSoft : colors.bg}
-              style={[styles.title, { color: colors.ink }]}
-            />
-            {statusNode ??
-              (status ? (
-                <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
-                  {status}
-                </Text>
-              ) : null)}
-          </View>
-          {right}
-          {chevron ? (
-            <Text style={[styles.chevron, { color: colors.mute }]}>›</Text>
-          ) : null}
-        </View>
-      )}
-    </Pressable>
-  ) : null;
-  const inner = onPress ? (
+  const inner = pressable ? (
     tooltip ? <HoverTip label={tooltip} fill>{pressable}</HoverTip> : pressable
   ) : (
     body
