@@ -83,7 +83,7 @@ Reuse `/messages` and HandleLink. Add the minimum.
 | New **group** | `/messages` compose: multi-select, only allowed member sets above |
 | Staff group | People multi-select (admin or teacher) |
 | Parents of one child | Student page or that child’s parent page — **Message parents** |
-| Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all / Cancel → **Message N parent(s)** |
+| Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N parent(s)** |
 | Teacher ↔ class | Class page **Post to class** → **post**, not a group |
 | Admin ↔ parents | Feed composer or admin People → **post** or **alert** |
 | Admin ↔ staff | People → staff **group chat** |

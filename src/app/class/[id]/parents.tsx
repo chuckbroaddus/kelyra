@@ -122,16 +122,19 @@ export default function ParentsScreen() {
         </Text>
       ) : null}
       {messaging && linked.length ? (
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: allSelected }}
-          accessibilityLabel="Select all parents"
-          onPress={toggleSelectAll}
-          style={styles.selectAll}
-        >
-          <CheckBox checked={allSelected} />
-          <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
-        </Pressable>
+        <View style={styles.selectAllRow}>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: allSelected }}
+            accessibilityLabel="Select all parents"
+            onPress={toggleSelectAll}
+            style={styles.selectAll}
+          >
+            <CheckBox checked={allSelected} />
+            <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+          </Pressable>
+          <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+        </View>
       ) : null}
       {linked.map((parent) => {
         const checked = picked.includes(parent.id);
@@ -204,7 +207,6 @@ export default function ParentsScreen() {
       {linked.length ? (
         messaging ? (
           <View style={styles.footer}>
-            <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
             <PrimaryButton
               label={
                 picked.length
@@ -289,12 +291,19 @@ const styles = StyleSheet.create({
     ...type.body,
     marginBottom: 12,
   },
+  selectAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 4,
+  },
   selectAll: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
-    paddingHorizontal: 4,
+    flexShrink: 1,
   },
   selectAllLabel: {
     ...type.meta,
