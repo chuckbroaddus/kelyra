@@ -45,18 +45,29 @@ test('TR-09 / D1: web top bar renders tab.label (labels on at ≥720)', () => {
   assert.match(tray, /if \(tab\.label === 'Desk'\) return 'Desk'/);
 });
 
-test('CAP-04 / D2: header camera proposes; tray Capture files', () => {
+test('CAP-04 / D2: header camera and tray Capture both open /capture', () => {
   const header = read('src/components/ui/AppHeader.tsx');
   const cam = header.indexOf('openHeaderCamera');
   assert.ok(cam > 0);
   const block = header.slice(Math.max(0, cam - 280), cam + 80);
-  assert.match(block, /Propose what this is/);
-  assert.match(block, /accessibilityLabel="Propose what this is"/);
-  assert.doesNotMatch(block, /Photograph work|Take a photo|File work/);
+  assert.match(block, /Open Capture/);
+  assert.match(block, /accessibilityLabel="Open Capture"/);
+  assert.doesNotMatch(block, /Propose what this is|Photograph work|Take a photo|File work/);
+
+  const chrome = read('src/lib/chrome/ChromeProvider.tsx');
+  const open = chrome.indexOf('const openHeaderCamera');
+  assert.ok(open > 0);
+  const openBlock = chrome.slice(open, open + 420);
+  assert.match(openBlock, /router\.push\('\/capture'\)/);
+  assert.doesNotMatch(openBlock, /setHeaderListenOpen\(true\)/);
 
   const tray = read('src/components/ui/FloatingTabTray.tsx');
   assert.match(tray, /if \(tab\.key === 'capture'\) return 'File work'/);
   assert.equal(tabsFor('teacher', '/capture', 'c1', 0).find((t) => t.key === 'capture')?.href, '/capture');
+
+  const context = read('src/components/ui/ContextMenuRow.tsx');
+  assert.doesNotMatch(context, /label: 'Photo'.*label: 'Voice'.*label: 'Pages'/s);
+  assert.match(context, /pathname === '\/capture'/);
 });
 
 test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab on teacher seat', () => {

@@ -5,11 +5,12 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
 import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
+import { ListRow } from '@/components/ui/ListRow';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -36,7 +37,7 @@ import {
 } from '@/lib/captures/api';
 import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
 import { resolveCaptureClass } from '@/lib/classes/api';
-import { approveCapture } from '@/lib/gaps/api';
+import { approveCapture, markNoteOnly } from '@/lib/gaps/api';
 import { invokeAi } from '@/lib/ai/invoke';
 import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
 import {
@@ -44,15 +45,71 @@ import {
   extractMarksFromVisionItems,
 } from '@/lib/keygrade/draft';
 import { findTwinCandidates } from '@/lib/keygrade/twins';
-import { shouldAutoAttach } from '@/lib/matching/matchName';
+import { matchPaperName, shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
+import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
+import { existingRosterMatch } from '@/lib/matching/spokenName';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { normalizePhoto } from '@/lib/media/photo';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
-import { signedOriginalUrlsForAssetIds } from '@/lib/people/photos';
-import { listRoster, type RosterStudent } from '@/lib/students/api';
+import { pickMessageDocument } from '@/lib/messages/attachments';
+import {
+  createParent,
+  linkChild,
+  listParentsForClass,
+  updateParentMetadata,
+  type ClassParent,
+} from '@/lib/parents/api';
+import { mapClassifierFields } from '@/lib/people/metadata';
+import {
+  setProfilePhoto,
+  signedOriginalUrlsForAssetIds,
+  uploadProfilePhoto,
+} from '@/lib/people/photos';
+import { isOfficeRole } from '@/lib/school/roles';
+import {
+  addConfirmedStudents,
+  createRosterImport,
+  enrollExistingStudent,
+  getStudent,
+  listAvailableStudents,
+  listPendingRosterImports,
+  listRoster,
+  markRosterImportConfirmed,
+  suggestRosterFromPhoto,
+  updateStudentMetadata,
+  type RosterStudent,
+  type SuggestedRosterName,
+} from '@/lib/students/api';
+import { birthdayForSave } from '@/lib/date/iso';
 import type { AssignmentRow } from '@/lib/supabase/types';
+
+type CaptureIntent = 'homework' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure';
+
+type ClassifyResult = {
+  intent: CaptureIntent;
+  confidence: number;
+  studentGuessId: string | null;
+  studentGuessName: string | null;
+  parentGuessName: string | null;
+  draftScore: number | null;
+  gaps: { label: string }[];
+  fields: { label: string; value: string }[];
+  names: { name: string; confidence: number }[];
+  note: string | null;
+};
+
+type CaptureFile = { key: string; uri: string; mimeType: string; name: string };
+
+const INTENT_COPY: Record<CaptureIntent, string> = {
+  homework: 'This will be student work / a grade draft',
+  portrait: 'This will be a profile portrait',
+  parent_card: 'This will be a parent card',
+  student_card: 'This will be a student card',
+  roster: 'This will be a roster list',
+  unsure: 'This will be… (pick a job — we will not guess)',
+};
 
 export default function CaptureScreen() {
   const { colors } = useTheme();
@@ -63,14 +120,21 @@ export default function CaptureScreen() {
   const chromeRole = chrome.role;
   const router = useRouter();
   const { teacher } = useAuth();
+  const office = chromeRole !== 'none' && isOfficeRole(chromeRole);
+
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
+  const [files, setFiles] = useState<CaptureFile[]>([]);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [parents, setParents] = useState<ClassParent[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
+  const [parentId, setParentId] = useState<string | null>(null);
+  const [parentName, setParentName] = useState('');
+  const [portraitTarget, setPortraitTarget] = useState<'student' | 'parent'>('student');
   const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
@@ -83,6 +147,14 @@ export default function CaptureScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const [evaluation, setEvaluation] = useState<CaptureEvaluation | null>(null);
+  const [intent, setIntent] = useState<CaptureIntent | null>(null);
+  const [classified, setClassified] = useState<ClassifyResult | null>(null);
+  const [suggestions, setSuggestions] = useState<SuggestedRosterName[]>([]);
+  const [fieldChecks, setFieldChecks] = useState<
+    Array<{ key: string; label: string; value: string; checked: boolean }>
+  >([]);
+  const [uploadedAssetId, setUploadedAssetId] = useState<string | null>(null);
+  const [dropHover, setDropHover] = useState(false);
 
   const keyedAssignments = useMemo(
     () => assignments.filter((row) => assignmentHasKey(row)),
@@ -98,8 +170,11 @@ export default function CaptureScreen() {
       displayName: student.display_name,
       aliases: student.name_aliases,
     }));
-    return findTwinCandidates(spokenName || evaluation?.studentName || '', names);
-  }, [spokenName, evaluation?.studentName, roster]);
+    return findTwinCandidates(spokenName || classified?.studentGuessName || evaluation?.studentName || '', names);
+  }, [spokenName, classified?.studentGuessName, evaluation?.studentName, roster]);
+
+  const hasContent =
+    pages.length > 0 || files.length > 0 || Boolean(audioUri) || Boolean(spokenName.trim());
 
   const preview = useMemo(() => {
     const names = roster.map((student) => ({
@@ -156,6 +231,12 @@ export default function CaptureScreen() {
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
           setRoster(await listRoster(klass.id));
           setAssignments(await listClassAssignments(klass.id));
+          try {
+            const grownups = await listParentsForClass(klass.id);
+            setParents([...grownups.linked, ...grownups.unlinked]);
+          } catch {
+            setParents([]);
+          }
           setMicId(await getPreferredDeviceId('audio'));
           setCameraId(await getPreferredDeviceId('video'));
         } catch (err) {
@@ -181,8 +262,17 @@ export default function CaptureScreen() {
     );
   }
 
+  const clearClassify = () => {
+    setIntent(null);
+    setClassified(null);
+    setSuggestions([]);
+    setFieldChecks([]);
+    setUploadedAssetId(null);
+  };
+
   const resetSlip = () => {
     setPages([]);
+    setFiles([]);
     setAudioUri(null);
     setSpokenName('');
     setEvaluation(null);
@@ -191,7 +281,10 @@ export default function CaptureScreen() {
     setPackItems([]);
     setReviewOpen(false);
     setStudentId(null);
+    setParentId(null);
+    setParentName('');
     setAssignmentId(null);
+    clearClassify();
   };
 
   const applyPhoto = async (uri: string, mimeType?: string | null) => {
@@ -208,37 +301,84 @@ export default function CaptureScreen() {
       setEvaluation(null);
       setPackItems([]);
       setReviewOpen(false);
+      clearClassify();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that photo.');
     }
   };
 
-  const pickPhoto = async (fromCamera: boolean) => {
+  const applyLibraryAsset = async (uri: string, mimeType?: string | null, name?: string | null) => {
+    const mime = mimeType || 'application/octet-stream';
+    if (mime.startsWith('image/')) {
+      await applyPhoto(uri, mime);
+      return;
+    }
+    setFiles((current) => [
+      ...current,
+      {
+        key: `${Date.now()}-${current.length}`,
+        uri,
+        mimeType: mime,
+        name: name || (mime.startsWith('video/') ? 'Video' : 'File'),
+      },
+    ]);
+    clearClassify();
+  };
+
+  const pickCamera = async () => {
     setStatus(null);
     setError(null);
-    if (fromCamera && Platform.OS === 'web') {
+    if (Platform.OS === 'web') {
       setCameraOpen(true);
       return;
     }
-
-    const permission = fromCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      setError('Camera or photo permission is required.');
+      setError('Camera permission is required.');
       return;
     }
-
-    const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-      : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.7,
-        });
-
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     await applyPhoto(asset.uri, asset.mimeType);
+  };
+
+  const pickLibrary = async () => {
+    setStatus(null);
+    setError(null);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError('Photo library permission is required.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    await applyLibraryAsset(asset.uri, asset.mimeType, asset.fileName);
+  };
+
+  const pickFiles = async () => {
+    setStatus(null);
+    setError(null);
+    try {
+      const picked = await pickMessageDocument();
+      if (!picked) return;
+      await applyLibraryAsset(picked.uri, picked.mimeType, picked.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open Files.');
+    }
+  };
+
+  const ingestDroppedFiles = async (list: FileList | File[] | null | undefined) => {
+    if (!list || !list.length) return;
+    setError(null);
+    for (const file of Array.from(list)) {
+      const uri = URL.createObjectURL(file);
+      await applyLibraryAsset(uri, file.type || 'application/octet-stream', file.name);
+    }
   };
 
   const startRecording = async () => {
@@ -261,8 +401,16 @@ export default function CaptureScreen() {
       setRecording(null);
       setAudioUri(captured.uri);
       setAudioMime(captured.mimeType);
+      setStatus('Transcribing…');
+      const text = await transcribeAudioDirect({ uri: captured.uri, mimeType: captured.mimeType });
+      if (text) {
+        setSpokenName((current) => (current.trim() ? `${current.trim()} ${text}` : text));
+      }
+      setStatus(null);
+      clearClassify();
     } catch (err) {
       setRecording(null);
+      setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not finish the recording.');
     }
   };
@@ -300,7 +448,6 @@ export default function CaptureScreen() {
         : [],
     });
     const extract = extractMarksFromVisionItems(vision.items);
-    // Prefer extract rows; if vision returned no items, seed blanks from key.
     const marks =
       extract.length > 0
         ? extract
@@ -327,52 +474,154 @@ export default function CaptureScreen() {
   };
 
   const onAskAi = async () => {
-    if ((!pages.length && !audioUri) || asking || recording) return;
+    if (!hasContent || asking || recording) return;
     setAsking(true);
     setError(null);
-    setStatus('Asking AI… this can take a few seconds.');
+    setStatus('Asking AI…');
+    clearClassify();
     try {
-      const result = await evaluateCaptureMedia({
-        teacherId: teacher.id,
-        pages: pages.map((page, index) => ({
-          uri: page.uri,
-          mimeType: page.mimeType,
-          asset: evaluation?.photoAssets[index],
-        })),
-        audioUri,
-        audioMime,
-        existingAudio: evaluation?.audioAsset,
-      });
-      setEvaluation(result);
-      if (!spokenName.trim() && result.studentName) {
-        setSpokenName(result.studentName);
-      } else if (!spokenName.trim() && result.transcript) {
-        setSpokenName(result.transcript);
+      const firstImage = pages.find((page) => page.mimeType.startsWith('image/')) ?? pages[0] ?? null;
+      let imageUrl: string | null = null;
+      let assetId: string | null = null;
+
+      if (firstImage) {
+        const uploaded = await uploadTeacherAsset({
+          teacherId: teacher.id,
+          kind: 'photo',
+          uri: firstImage.uri,
+          mimeType: firstImage.mimeType,
+        });
+        assetId = uploaded.id;
+        imageUrl = await signedUrlForAsset('photo', uploaded.storage_path);
+        setUploadedAssetId(assetId);
+        setEvaluation({
+          photoAssets: [uploaded],
+          audioAsset: null,
+          transcript: spokenName.trim() || null,
+          studentName: null,
+          gaps: [],
+          draftScore: null,
+          teacherNote: null,
+          costUsd: null,
+          parentSentence: null,
+          pageAssetIds: [uploaded.id],
+        });
       }
 
-      if (selectedAssignment && assignmentHasKey(selectedAssignment) && result.photoAssets.length) {
-        const keyed = await runKeyedExtract(result.photoAssets, selectedAssignment);
-        setEvaluation({
-          ...result,
-          gaps: keyed.draft.gaps,
-          draftScore: keyed.draft.draftScore,
-          teacherNote: keyed.draft.teacherNote,
-          studentName: keyed.draft.studentName ?? result.studentName,
-          costUsd: keyed.draft.costUsd ?? result.costUsd,
-          pageAssetIds: keyed.draft.pageAssetIds,
-        });
-        setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
-        setReviewOpen(true);
-        setStatus(
-          `Keyed draft ${keyed.scored.draft_score ?? '—'} · confirm items, then Approve this capture.`,
-        );
-      } else {
-        const bits = [];
-        if (result.studentName) bits.push(`Name: ${result.studentName}`);
-        if (result.draftScore != null) bits.push(`Draft score: ${result.draftScore}`);
-        if (result.gaps.length) bits.push(result.gaps.map((gap) => gap.label).join(', '));
-        setStatus(bits.length ? bits.join(' · ') : 'AI finished. Check the save button.');
+      if (audioUri && !spokenName.trim()) {
+        const text = await transcribeAudioDirect({ uri: audioUri, mimeType: audioMime }).catch(() => '');
+        if (text) setSpokenName(text);
       }
+
+      const rosterPayload = roster.map((student) => ({
+        id: student.id,
+        name: student.display_name.split(/\s+/).filter(Boolean)[0] ?? student.display_name,
+      }));
+
+      let result: ClassifyResult;
+      if (imageUrl) {
+        result = await invokeAi<ClassifyResult>('classify-capture', {
+          imageUrl,
+          classId: chromeClassId,
+          rosterFirstNames: rosterPayload,
+        });
+      } else {
+        result = {
+          intent: 'homework',
+          confidence: spokenName.trim() ? 0.6 : 0.4,
+          studentGuessId: null,
+          studentGuessName: null,
+          parentGuessName: null,
+          draftScore: null,
+          gaps: [],
+          fields: [],
+          names: [],
+          note: spokenName.trim() ? `Heard: ${spokenName.trim()}` : files.length ? `File: ${files.map((f) => f.name).join(', ')}` : null,
+        };
+      }
+
+      const rawIntent = (result.intent as string) === 'metadata' ? 'student_card' : result.intent;
+      const named = ['homework', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
+      let nextIntent: CaptureIntent = named.includes(rawIntent as (typeof named)[number])
+        ? (rawIntent as CaptureIntent)
+        : 'unsure';
+      if (nextIntent === 'unsure' && (result.studentGuessName || result.gaps?.length || spokenName.trim())) {
+        nextIntent = 'homework';
+      }
+
+      const rosterNames = roster.map((student) => ({
+        studentId: student.id,
+        displayName: student.display_name,
+        aliases: student.name_aliases,
+      }));
+      const paperName = result.studentGuessName?.trim() || null;
+      const fromId = roster.some((student) => student.id === result.studentGuessId)
+        ? result.studentGuessId
+        : null;
+      const matched = paperName ? matchPaperName(paperName, rosterNames) : { guessedStudentId: null, confidence: 0 };
+      const guessOnRoster = fromId ?? matched.guessedStudentId;
+      if (guessOnRoster) setStudentId(guessOnRoster);
+      if (result.parentGuessName) setParentName(result.parentGuessName);
+      if (!spokenName.trim() && (result.studentGuessName || result.note)) {
+        setSpokenName(result.studentGuessName || result.note || '');
+      }
+
+      const mapped = mapClassifierFields(
+        result.fields ?? [],
+        nextIntent === 'parent_card' ? 'parent' : 'student',
+      );
+      setFieldChecks(mapped.map((field) => ({ ...field, checked: true })));
+      setClassified(result);
+      setIntent(nextIntent);
+
+      if (nextIntent === 'roster' && imageUrl && chromeClassId) {
+        const suggested = await suggestRosterFromPhoto(
+          imageUrl,
+          roster.map((student) => student.display_name),
+        );
+        setSuggestions(suggested);
+        if (assetId) {
+          await createRosterImport({
+            classId: chromeClassId,
+            photoAssetId: assetId,
+            suggestions: suggested.map((row) => ({
+              name: row.name,
+              selected: row.selected,
+              already_enrolled: row.alreadyHere,
+            })),
+          }).catch(() => undefined);
+        }
+      }
+
+      if (nextIntent === 'homework' && selectedAssignment && assignmentHasKey(selectedAssignment) && pages.length) {
+        try {
+          const media = await evaluateCaptureMedia({
+            teacherId: teacher.id,
+            pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
+            audioUri,
+            audioMime,
+          });
+          setEvaluation(media);
+          if (media.photoAssets.length) {
+            const keyed = await runKeyedExtract(media.photoAssets, selectedAssignment);
+            setEvaluation({
+              ...media,
+              gaps: keyed.draft.gaps,
+              draftScore: keyed.draft.draftScore,
+              teacherNote: keyed.draft.teacherNote,
+              studentName: keyed.draft.studentName ?? media.studentName,
+              costUsd: keyed.draft.costUsd ?? media.costUsd,
+              pageAssetIds: keyed.draft.pageAssetIds,
+            });
+            setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
+            setReviewOpen(true);
+          }
+        } catch {
+          // Confirm strip still works without Pack B extract.
+        }
+      }
+
+      setStatus(null);
     } catch (err) {
       setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not ask AI');
@@ -418,6 +667,7 @@ export default function CaptureScreen() {
       });
       setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
       setReviewOpen(true);
+      setIntent('homework');
       setStatus('Confirm each item, file the student if needed, then Approve.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start keyed review');
@@ -427,8 +677,8 @@ export default function CaptureScreen() {
   };
 
   const persistCapture = async (mode: 'draft' | 'approve', draftScore: number | null) => {
-    if (!pages.length && !spokenName.trim() && !audioUri) {
-      setError('Add a photo, a name, or a short note.');
+    if (!pages.length && !spokenName.trim() && !audioUri && !files.length) {
+      setError('Add a photo, a file, a name, or a short note.');
       return;
     }
     if (mode === 'approve' && !canApproveKeygrade(chromeRole)) {
@@ -490,7 +740,6 @@ export default function CaptureScreen() {
             })
           : null;
 
-      // Re-apply teacher confirm overrides onto scored items.
       const draftToSave = keyed
         ? {
             ...keyed.draft,
@@ -500,10 +749,15 @@ export default function CaptureScreen() {
           }
         : photoAssets.length
           ? {
-              gaps: evaluation?.gaps ?? [],
-              draftScore: evaluation?.draftScore ?? null,
-              teacherNote: evaluation?.teacherNote ?? null,
-              studentName: evaluation?.studentName ?? null,
+              gaps: (evaluation?.gaps ?? classified?.gaps ?? []).map((gap, index) => ({
+                label: gap.label,
+                sortOrder: 'sortOrder' in gap && typeof (gap as { sortOrder?: number }).sortOrder === 'number'
+                  ? (gap as { sortOrder: number }).sortOrder
+                  : index + 1,
+              })),
+              draftScore: evaluation?.draftScore ?? classified?.draftScore ?? null,
+              teacherNote: evaluation?.teacherNote ?? classified?.note ?? null,
+              studentName: evaluation?.studentName ?? classified?.studentGuessName ?? null,
               parentSentence: evaluation?.parentSentence ?? null,
               pageAssetIds: photoAssets.map((asset) => asset.id),
             }
@@ -513,7 +767,7 @@ export default function CaptureScreen() {
         classId: klass.id,
         kind: photo ? 'homework' : 'voice_note',
         inputSource: photo ? 'camera' : spokenName.trim() ? 'typed' : 'voice',
-        photoAssetId: photo?.id,
+        photoAssetId: photo?.id ?? uploadedAssetId,
         audioAssetId: audio?.id,
         transcript: spokenName.trim() || null,
         assignmentId: selectedAssignment?.id ?? null,
@@ -593,35 +847,408 @@ export default function CaptureScreen() {
     }
   };
 
-  const save = async () => {
-    await persistCapture('draft', packItems.length ? null : evaluation?.draftScore ?? null);
+  const saveHomeworkConfirm = async (mode: 'inbox' | 'approve' | 'note') => {
+    if (mode === 'approve') {
+      await persistCapture('approve', packItems.length ? null : evaluation?.draftScore ?? classified?.draftScore ?? null);
+      return;
+    }
+    if (mode === 'note') {
+      setBusy(true);
+      setError(null);
+      try {
+        const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+        const photoAssets =
+          evaluation?.photoAssets?.length === pages.length
+            ? evaluation.photoAssets
+            : await Promise.all(
+                pages.map((page) =>
+                  uploadTeacherAsset({
+                    teacherId: teacher.id,
+                    kind: 'photo',
+                    uri: page.uri,
+                    mimeType: page.mimeType,
+                  }),
+                ),
+              );
+        const photo = photoAssets[0];
+        if (!photo && !uploadedAssetId) throw new Error('Add a photo first.');
+        const capture = await createCapture({
+          classId: klass.id,
+          kind: 'homework',
+          inputSource: 'camera',
+          photoAssetId: photo?.id ?? uploadedAssetId,
+          transcript: spokenName.trim() || null,
+        });
+        if (studentId) await attachCapture(capture.id, studentId);
+        await markNoteOnly(capture.id);
+        resetSlip();
+        setStatus('Saved as a note.');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not save note');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    await persistCapture('draft', packItems.length ? null : evaluation?.draftScore ?? classified?.draftScore ?? null);
   };
 
-  const hasMedia = pages.length > 0 || Boolean(audioUri);
-  const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
-  const sticky = hasMedia || spokenName.trim() ? (
-    <PrimaryButton
-      label={busy ? 'Saving…' : preview.button}
-      disabled={busy}
-      onPress={() => void save()}
-    />
-  ) : undefined;
+  const savePortraitConfirm = async () => {
+    const personId = portraitTarget === 'student' ? studentId : parentId;
+    if (!personId) {
+      setError('Pick a person for the portrait.');
+      return;
+    }
+    const source = pages[0];
+    if (!source && !uploadedAssetId) {
+      setError('Add a photo first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      if (source) {
+        await uploadProfilePhoto({
+          teacherId: teacher.id,
+          kind: portraitTarget,
+          personId,
+          uri: source.uri,
+          mimeType: source.mimeType,
+          imageUrl: null,
+        });
+      } else if (uploadedAssetId) {
+        await setProfilePhoto(portraitTarget, personId, uploadedAssetId);
+      }
+      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      resetSlip();
+      setStatus('Portrait saved.');
+      if (portraitTarget === 'student') {
+        router.replace(`/class/${klass.id}/student/${personId}`);
+      } else {
+        router.replace(`/class/${klass.id}/parent/${personId}`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not set photo');
+    } finally {
+      setBusy(false);
+    }
+  };
 
-  const photoBlock = (
-    <View style={styles.block}>
-      {!cameraOpen ? (
-        <PhotoPager
-          empty={pages.length === 0}
-          pages={pages}
-          hero
-          fill={split}
-          onRemove={(key) => {
-            setPages((current) => current.filter((item) => item.key !== key));
-            setEvaluation(null);
-            setPackItems([]);
-            setReviewOpen(false);
-          }}
+  const saveParentCardConfirm = async () => {
+    if (!parentName.trim()) {
+      setError('Add a parent name.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const checked = fieldChecks.filter((field) => field.checked && field.key !== 'notes');
+      const notes = fieldChecks.filter((field) => field.checked && field.key === 'notes').map((field) => field.value);
+      const metadata: Record<string, string> = {};
+      for (const field of checked) metadata[field.key] = field.value;
+      if (notes.length) metadata.notes = notes.join('\n');
+      let id = parentId;
+      if (!id) {
+        const created = await createParent({
+          teacherId: teacher.id,
+          displayName: parentName,
+          createdVia: 'photo_card',
+          metadata,
+          studentId: studentId ?? undefined,
+        });
+        id = created.parent.id;
+      } else {
+        const existing = parents.find((row) => row.id === id);
+        const merged = { ...(existing?.metadata ?? {}), ...metadata };
+        if (notes.length && typeof existing?.metadata.notes === 'string' && existing.metadata.notes) {
+          merged.notes = `${existing.metadata.notes}\n${notes.join('\n')}`;
+        }
+        await updateParentMetadata(id, merged);
+        if (studentId) await linkChild(id, studentId);
+      }
+      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      resetSlip();
+      setStatus('Parent saved.');
+      router.replace(`/class/${klass.id}/parent/${id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save parent');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveStudentCardConfirm = async () => {
+    if (!studentId) {
+      setError('Pick a student first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      const student = await getStudent(studentId);
+      const checked = fieldChecks.filter((field) => field.checked);
+      let metadata = { ...student.metadata };
+      for (const field of checked) {
+        if (field.key === 'notes' && typeof metadata.notes === 'string' && metadata.notes) {
+          metadata = { ...metadata, notes: `${metadata.notes}\n${field.value}` };
+        } else if (field.key === 'birthday') {
+          const result = birthdayForSave(field.value);
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          if (result.value) metadata = { ...metadata, birthday: result.value };
+          else {
+            const next = { ...metadata };
+            delete next.birthday;
+            metadata = next;
+          }
+        } else {
+          metadata = { ...metadata, [field.key]: field.value };
+        }
+      }
+      await updateStudentMetadata(student, metadata);
+      const photoAssets =
+        evaluation?.photoAssets?.length
+          ? evaluation.photoAssets
+          : pages.length
+            ? await Promise.all(
+                pages.map((page) =>
+                  uploadTeacherAsset({
+                    teacherId: teacher.id,
+                    kind: 'photo',
+                    uri: page.uri,
+                    mimeType: page.mimeType,
+                  }),
+                ),
+              )
+            : [];
+      const photoId = photoAssets[0]?.id ?? uploadedAssetId;
+      if (photoId) {
+        const capture = await createCapture({
+          classId: klass.id,
+          kind: 'homework',
+          inputSource: 'camera',
+          photoAssetId: photoId,
+        });
+        await attachCapture(capture.id, studentId);
+        await markNoteOnly(capture.id);
+      }
+      resetSlip();
+      setStatus('Student details saved.');
+      router.replace(`/class/${klass.id}/student/${studentId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save details');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveRosterConfirm = async () => {
+    if (!chromeClassId) {
+      router.replace('/?switch=1');
+      return;
+    }
+    const selected = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim());
+    setBusy(true);
+    setError(null);
+    try {
+      if (selected.length) {
+        if (office) {
+          await addConfirmedStudents({
+            classId: chromeClassId,
+            teacherId: teacher.id,
+            names: selected.map((row) => row.name),
+            createdVia: 'photo_list',
+          });
+        } else {
+          const available = await listAvailableStudents(chromeClassId);
+          const missing: string[] = [];
+          for (const row of selected) {
+            const match = existingRosterMatch(
+              row.name,
+              available.map((student) => ({
+                studentId: student.id,
+                displayName: student.display_name,
+                aliases: student.name_aliases,
+              })),
+            );
+            if (match) await enrollExistingStudent(chromeClassId, match.studentId);
+            else missing.push(row.name);
+          }
+          if (missing.length) {
+            throw new Error(
+              `Only the office may add a new student. Not on the school roster: ${missing.join(', ')}.`,
+            );
+          }
+        }
+        const pending = await listPendingRosterImports(chromeClassId);
+        if (pending[0]) await markRosterImportConfirmed(pending[0].id);
+      }
+      resetSlip();
+      setStatus('Roster updated.');
+      router.replace(`/class/${chromeClassId}/setup`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add those students');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
+
+  const sticky = (() => {
+    if (asking) {
+      return <PrimaryButton label="Asking AI…" disabled onPress={() => undefined} />;
+    }
+    if (intent === 'homework') {
+      if (reviewOpen && packItems.length) return undefined; // Pack B owns Approve
+      return studentId ? (
+        <PrimaryButton
+          disabled={busy}
+          label={busy ? 'Saving…' : 'Save to student'}
+          onPress={() => void saveHomeworkConfirm('inbox')}
         />
+      ) : (
+        <PrimaryButton
+          disabled={busy}
+          label={busy ? 'Saving…' : 'Save to Inbox'}
+          onPress={() => void saveHomeworkConfirm('inbox')}
+        />
+      );
+    }
+    if (intent === 'portrait') {
+      return (
+        <PrimaryButton
+          disabled={busy || (portraitTarget === 'student' ? !studentId : !parentId)}
+          label={busy ? 'Saving…' : 'Use as profile'}
+          onPress={() => void savePortraitConfirm()}
+        />
+      );
+    }
+    if (intent === 'parent_card') {
+      return (
+        <PrimaryButton
+          disabled={busy || !parentName.trim()}
+          label={busy ? 'Saving…' : 'Save parent'}
+          onPress={() => void saveParentCardConfirm()}
+        />
+      );
+    }
+    if (intent === 'student_card') {
+      return (
+        <PrimaryButton
+          disabled={busy || !studentId}
+          label={busy ? 'Saving…' : 'Save details'}
+          onPress={() => void saveStudentCardConfirm()}
+        />
+      );
+    }
+    if (intent === 'roster' && chromeClassId) {
+      return (
+        <PrimaryButton
+          disabled={busy}
+          label={
+            busy
+              ? 'Saving…'
+              : office
+                ? `Add ${suggestions.filter((row) => row.selected && !row.alreadyHere).length} students`
+                : 'Enroll matching names'
+          }
+          onPress={() => void saveRosterConfirm()}
+        />
+      );
+    }
+    if (hasContent && !recording) {
+      return (
+        <PrimaryButton
+          label="Ask AI to process"
+          disabled={asking || busy}
+          onPress={() => void onAskAi()}
+        />
+      );
+    }
+    return undefined;
+  })();
+
+  const webDropProps =
+    Platform.OS === 'web'
+      ? ({
+          onDragEnter: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            setDropHover(true);
+          },
+          onDragOver: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            setDropHover(true);
+          },
+          onDragLeave: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            setDropHover(false);
+          },
+          onDrop: (event: {
+            preventDefault?: () => void;
+            stopPropagation?: () => void;
+            dataTransfer?: { files?: FileList };
+            nativeEvent?: { dataTransfer?: { files?: FileList } };
+          }) => {
+            event.preventDefault?.();
+            event.stopPropagation?.();
+            setDropHover(false);
+            const list = event.dataTransfer?.files ?? event.nativeEvent?.dataTransfer?.files;
+            void ingestDroppedFiles(list);
+          },
+        } as Record<string, unknown>)
+      : {};
+
+  const previewBlock = (
+    <View style={styles.block}>
+      <SectionHeader label="Image Preview" first />
+      {!cameraOpen ? (
+        <View
+          style={[
+            styles.dropWell,
+            dropHover && { borderColor: colors.brand, backgroundColor: colors.brandSoft },
+          ]}
+          {...webDropProps}
+        >
+          <PhotoPager
+            empty={pages.length === 0}
+            pages={pages}
+            hero
+            fill={split}
+            onRemove={(key) => {
+              setPages((current) => current.filter((item) => item.key !== key));
+              setEvaluation(null);
+              setPackItems([]);
+              setReviewOpen(false);
+              clearClassify();
+            }}
+          />
+          {Platform.OS === 'web' && pages.length === 0 ? (
+            <Text style={[type.meta, styles.dropHint, { color: colors.mute }]}>
+              Drop photos, videos, or files here
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+      {files.length ? (
+        <View style={styles.gaps}>
+          {files.map((file) => (
+            <Chip
+              key={file.key}
+              label={file.name}
+              onPress={() => {
+                setFiles((current) => current.filter((item) => item.key !== file.key));
+                clearClassify();
+              }}
+            />
+          ))}
+        </View>
       ) : null}
       {cameraOpen ? (
         <WebCameraCapture
@@ -644,41 +1271,39 @@ export default function CaptureScreen() {
             }}
           />
           <View style={styles.mediaHits}>
-            <IconButton
-              name="capture"
-              size="lg"
-              tone="brand"
-              label={pages.length ? 'Add a page' : 'Take photo'}
-              onPress={() => void pickPhoto(true)}
-            />
+            <IconButton name="capture" size="lg" tone="brand" label="Camera" onPress={() => void pickCamera()} />
+            <IconButton name="photo" size="lg" tone="wash" label="Photo or Video" onPress={() => void pickLibrary()} />
+            <IconButton name="file" size="lg" tone="wash" label="Files" onPress={() => void pickFiles()} />
           </View>
-          <GhostButton
-            label={pages.length ? 'Add a page from library' : 'Choose from library'}
-            onPress={() => void pickPhoto(false)}
-          />
         </>
       )}
     </View>
   );
 
-  const whoBlock = (
+  const composerBlock = (
     <View style={styles.block}>
-      <SectionHeader label="Who is this?" first={split} />
-      <IconButton
-        name="mic"
-        size="lg"
-        tone={recording ? 'danger' : 'wash'}
-        live={Boolean(recording)}
-        label={recording ? 'Stop recording' : 'Record the name'}
-        onPress={() => void (recording ? stopRecording() : startRecording())}
-      />
-      <TextField
-        multiline
-        placeholder="Maya Chen, still lining up place value"
-        value={spokenName}
-        onChangeText={setSpokenName}
-      />
-      <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text>
+      <View style={styles.textRow}>
+        <View style={styles.textFlex}>
+          <TextField
+            multiline
+            placeholder="What is this? Name, note, or say it"
+            value={spokenName}
+            onChangeText={(value) => {
+              setSpokenName(value);
+              if (intent) clearClassify();
+            }}
+          />
+        </View>
+        <IconButton
+          name="mic"
+          size="lg"
+          tone={recording ? 'danger' : 'wash'}
+          live={Boolean(recording)}
+          label={recording ? 'Stop listening' : 'Dictate into the field'}
+          onPress={() => void (recording ? stopRecording() : startRecording())}
+        />
+      </View>
+      {preview.hint ? <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text> : null}
 
       {keyedAssignments.length ? (
         <Card>
@@ -712,6 +1337,187 @@ export default function CaptureScreen() {
         </Card>
       ) : null}
 
+      {intent ? (
+        <Card>
+          <Text style={[type.section, { color: colors.ink }]}>{INTENT_COPY[intent]}</Text>
+          {classified?.note ? (
+            <Text style={[type.meta, { color: colors.mute }]} numberOfLines={3}>
+              {classified.note}
+            </Text>
+          ) : null}
+
+          {intent === 'unsure' ? (
+            <View style={styles.gaps}>
+              {(
+                [
+                  ['homework', 'Grade'],
+                  ['roster', 'Roster'],
+                  ['portrait', 'Portrait'],
+                  ['parent_card', 'Parent card'],
+                  ['student_card', 'Student card'],
+                ] as const
+              ).map(([key, label]) => (
+                <SecondaryButton key={key} label={label} onPress={() => setIntent(key)} />
+              ))}
+            </View>
+          ) : null}
+
+          {intent === 'homework' ? (
+            <>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {studentId
+                  ? `Suggested student: ${roster.find((row) => row.id === studentId)?.display_name ?? 'Selected'}. Tap another to change.`
+                  : classified?.studentGuessName
+                    ? `Read on the page: ${classified.studentGuessName}. Pick the student — we will not invent one.`
+                    : 'No name was clear. Unknown waits in Inbox.'}
+              </Text>
+              <View style={styles.gaps}>
+                {roster.slice(0, 12).map((student) => (
+                  <Chip
+                    key={student.id}
+                    label={student.display_name.split(/\s+/)[0] ?? student.display_name}
+                    selected={studentId === student.id}
+                    onPress={() => setStudentId(student.id === studentId ? null : student.id)}
+                  />
+                ))}
+                <Chip label="Unknown" selected={studentId == null} onPress={() => setStudentId(null)} />
+              </View>
+              <GhostButton
+                label="Save as note"
+                disabled={busy}
+                onPress={() => void saveHomeworkConfirm('note')}
+              />
+            </>
+          ) : null}
+
+          {intent === 'portrait' ? (
+            <>
+              <View style={styles.gaps}>
+                <Chip
+                  label="Student"
+                  selected={portraitTarget === 'student'}
+                  onPress={() => setPortraitTarget('student')}
+                />
+                <Chip
+                  label="Parent"
+                  selected={portraitTarget === 'parent'}
+                  onPress={() => setPortraitTarget('parent')}
+                />
+              </View>
+              {(portraitTarget === 'student' ? roster : parents).map((person) => (
+                <ListRow
+                  key={person.id}
+                  title={person.display_name}
+                  photoUrl={'photoUrl' in person ? person.photoUrl : null}
+                  chevron={false}
+                  selected={portraitTarget === 'student' ? person.id === studentId : person.id === parentId}
+                  onPress={() => {
+                    if (portraitTarget === 'student') setStudentId(person.id);
+                    else setParentId(person.id);
+                  }}
+                />
+              ))}
+            </>
+          ) : null}
+
+          {intent === 'parent_card' ? (
+            <>
+              <TextField label="Parent name" value={parentName} onChangeText={setParentName} />
+              {fieldChecks.map((field, index) => (
+                <ListRow
+                  key={`${field.key}-${index}`}
+                  title={field.label}
+                  status={field.value}
+                  chevron={false}
+                  selected={field.checked}
+                  onPress={() =>
+                    setFieldChecks((current) =>
+                      current.map((item, i) => (i === index ? { ...item, checked: !item.checked } : item)),
+                    )
+                  }
+                />
+              ))}
+              <Text style={[type.meta, { color: colors.mute }]}>Link a child (optional)</Text>
+              {roster.map((student) => (
+                <ListRow
+                  key={student.id}
+                  title={student.display_name}
+                  photoUrl={student.photoUrl}
+                  chevron={false}
+                  selected={student.id === studentId}
+                  onPress={() => setStudentId(student.id)}
+                />
+              ))}
+            </>
+          ) : null}
+
+          {intent === 'student_card' ? (
+            <>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Confirm every field. We will not invent a student.
+              </Text>
+              {roster.map((student) => (
+                <ListRow
+                  key={student.id}
+                  title={student.display_name}
+                  photoUrl={student.photoUrl}
+                  chevron={false}
+                  selected={student.id === studentId}
+                  onPress={() => setStudentId(student.id)}
+                />
+              ))}
+              {fieldChecks.map((field, index) => (
+                <ListRow
+                  key={`${field.key}-${index}`}
+                  title={field.label}
+                  status={field.value}
+                  chevron={false}
+                  selected={field.checked}
+                  onPress={() =>
+                    setFieldChecks((current) =>
+                      current.map((item, i) => (i === index ? { ...item, checked: !item.checked } : item)),
+                    )
+                  }
+                />
+              ))}
+            </>
+          ) : null}
+
+          {intent === 'roster' ? (
+            <>
+              {!chromeClassId ? (
+                <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />
+              ) : (
+                suggestions.map((row) => (
+                  <ListRow
+                    key={row.key}
+                    title={row.alreadyHere ? `${row.name} · already here` : row.name}
+                    chevron={false}
+                    selected={row.selected && !row.alreadyHere}
+                    onPress={() =>
+                      setSuggestions((current) =>
+                        current.map((item) =>
+                          item.key === row.key ? { ...item, selected: !item.selected } : item,
+                        ),
+                      )
+                    }
+                  />
+                ))
+              )}
+            </>
+          ) : null}
+
+          <GhostButton
+            align="left"
+            label="Clear AI result"
+            onPress={() => {
+              clearClassify();
+              setReviewOpen(false);
+            }}
+          />
+        </Card>
+      ) : null}
+
       {reviewOpen && packItems.length ? (
         <KeygradePackBReview
           chromeRole={chromeRole}
@@ -729,7 +1535,7 @@ export default function CaptureScreen() {
         />
       ) : null}
 
-      {evaluation?.gaps.length && !reviewOpen ? (
+      {evaluation?.gaps.length && !reviewOpen && intent === 'homework' ? (
         <Card>
           <Text style={[type.section, { color: colors.mute }]}>Suggested gaps</Text>
           <View style={styles.gaps}>
@@ -740,17 +1546,14 @@ export default function CaptureScreen() {
           {evaluation.draftScore != null ? (
             <Text style={[type.meta, { color: colors.mute }]}>Draft score {evaluation.draftScore}</Text>
           ) : null}
-          {evaluation.teacherNote ? <Text style={[type.meta, { color: colors.mute }]}>{evaluation.teacherNote}</Text> : null}
+          {evaluation.teacherNote ? (
+            <Text style={[type.meta, { color: colors.mute }]}>{evaluation.teacherNote}</Text>
+          ) : null}
         </Card>
       ) : null}
-      {hasMedia && !recording ? (
-        <GhostButton
-          label={asking ? 'Asking AI…' : 'Ask AI to guess the name'}
-          disabled={asking || busy}
-          onPress={() => void onAskAi()}
-        />
-      ) : null}
-      {asking ? <WorkingLine text="Asking AI…" /> : status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
+
+      {asking ? <WorkingLine text="Asking AI…" /> : null}
+      {status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       {split && sticky ? sticky : null}
     </View>
@@ -759,10 +1562,10 @@ export default function CaptureScreen() {
   if (split) {
     return (
       <View style={[styles.split, { backgroundColor: colors.bg }]}>
-        <View style={styles.left}>{photoBlock}</View>
+        <View style={styles.left}>{previewBlock}</View>
         <View style={styles.right}>
           <Screen scroll maxWidth={480}>
-            {whoBlock}
+            {composerBlock}
           </Screen>
         </View>
       </View>
@@ -771,8 +1574,8 @@ export default function CaptureScreen() {
 
   return (
     <Screen keyboard sticky={sticky}>
-      {photoBlock}
-      {whoBlock}
+      {previewBlock}
+      {composerBlock}
     </Screen>
   );
 }
@@ -791,6 +1594,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginVertical: 4,
+  },
+  textRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  textFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  dropWell: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+  },
+  dropHint: {
+    textAlign: 'center',
+    paddingBottom: 8,
   },
   gaps: {
     flexDirection: 'row',
