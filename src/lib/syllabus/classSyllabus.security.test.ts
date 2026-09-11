@@ -207,11 +207,22 @@ test('S-G4/P-G4 FamilyAssignmentDetail own-cell labels; no draft fields', () => 
   assert.match(detail, /Replaced by makeup/);
   assert.doesNotMatch(detail, /draft_score|ask_draft|model_draft|explain_draft/);
   assert.doesNotMatch(detail, /loadGradebook\(|listRoster/);
+  // Doc may mention Glow/Grow as forbidden; assert no mapping from private note fields.
+  assert.doesNotMatch(detail, /teacher_note|parent_sentence/);
 
   const book = read('src/components/ui/StudentGradeBook.tsx');
   assert.match(book, /openAssignmentDetail/);
   assert.match(book, /FamilyAssignmentDetail/);
-  assert.doesNotMatch(book, /draft_score|ask_draft/);
+  assert.match(book, /submittedAt: cell\.submittedAt/);
+  assert.doesNotMatch(book, /familyComment\s*:/);
+  assert.doesNotMatch(book, /categoryKey \?\? 'other'/);
+  assert.doesNotMatch(book, /draft_score|ask_draft|teacher_note|parent_sentence/);
+
+  const roles = read('src/lib/grade/syllabusAverage.ts');
+  const fn = roles.slice(roles.indexOf('export function familyAssignmentRoleLabels'));
+  assert.match(fn.slice(0, 1200), /include === true/);
+  assert.match(fn.slice(0, 1200), /include === false/);
+  assert.doesNotMatch(fn.slice(0, 900), /include_in_average !== false/);
 });
 
 test('Teacher gradebook overall uses studentWeightedOveralls; blank when unpublished', () => {
@@ -232,8 +243,8 @@ test('Teacher gradebook overall uses studentWeightedOveralls; blank when unpubli
 });
 
 test('P-G1 family_student_gradebook strips answers; parent_students gate; no classmates', () => {
-  const sql = read('supabase/migrations/20260910000004_family_student_gradebook.sql');
-  assert.match(sql, /create or replace function public\.family_student_gradebook\(p_student_id uuid\)/);
+  const sql = read('supabase/migrations/20260911000000_family_gradebook_detail_fields.sql');
+  assert.match(sql, /create function public\.family_student_gradebook\(p_student_id uuid\)/);
   assert.match(sql, /parent_students/);
   assert.match(sql, /my_student_id\(\)/);
   assert.match(sql, /sub\.student_id = p_student_id/);
@@ -241,10 +252,16 @@ test('P-G1 family_student_gradebook strips answers; parent_students gate; no cla
   assert.doesNotMatch(body, /answers|draft_score|ask_draft|model_draft/);
   assert.match(body, /sub\.approved_score/);
   assert.match(body, /sub\.status/);
+  assert.match(body, /sub\.submitted_at/);
+  assert.match(body, /a\.due_at/);
+  assert.match(body, /a\.category/);
+  assert.match(body, /a\.include_in_average/);
+  assert.doesNotMatch(body, /approved_at/);
 
   const api = read('src/lib/gradebook/api.ts');
   assert.match(api, /family_student_gradebook/);
   assert.match(api, /includeAnswers/);
+  assert.match(api, /submittedAt/);
   const familyLoader = api.slice(api.indexOf('export async function loadFamilyStudentGradebook'));
   assert.doesNotMatch(familyLoader.slice(0, 1200), /includeAnswers:\s*true/);
 });

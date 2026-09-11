@@ -401,3 +401,23 @@ test('F-13 familyAssignmentRoleLabels: counts / does not / dropped / replaced', 
   assert.ok(excluded.some((l) => l.kind === 'does_not_count'));
   assert.ok(!excluded.some((l) => l.kind === 'counts'));
 });
+
+test('F-13 familyAssignmentRoleLabels: unknown include omits Counts (fail-closed)', () => {
+  const omitted = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: undefined, category: 'homework' }, 'Homework');
+  assert.equal(omitted.length, 0);
+
+  const missing = familyAssignmentRoleLabels(null, { id: 'a1' } as { id: string; include_in_average?: boolean; category?: string }, null);
+  assert.equal(missing.length, 0);
+
+  const countsClass = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: true }, null);
+  assert.deepEqual(countsClass, [{ kind: 'counts', categoryLabel: 'the class' }]);
+
+  const countsNamed = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: true, category: 'homework' }, 'Homework');
+  assert.deepEqual(countsNamed, [{ kind: 'counts', categoryLabel: 'Homework' }]);
+
+  const noOther = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: true, category: 'other' }, 'other');
+  assert.deepEqual(noOther, [{ kind: 'counts', categoryLabel: 'the class' }]);
+
+  const excluded = familyAssignmentRoleLabels(null, { id: 'a1', include_in_average: false, category: 'homework' }, 'Homework');
+  assert.deepEqual(excluded, [{ kind: 'does_not_count' }]);
+});

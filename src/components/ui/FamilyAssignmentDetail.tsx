@@ -19,7 +19,7 @@ export type FamilyAssignmentDetailModel = {
   submittedAt?: string | null;
   /** Family-published note only — never Glow/Grow private notes. */
   familyComment?: string | null;
-  assignment?: Pick<AverageAssignment, 'id' | 'include_in_average' | 'category'> | null;
+  assignment?: (Pick<AverageAssignment, 'id' | 'include_in_average'> & { category?: string | null }) | null;
   cell: GradeCell;
 };
 

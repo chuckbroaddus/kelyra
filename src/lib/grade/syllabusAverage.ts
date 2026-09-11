@@ -222,16 +222,24 @@ export type FamilyAssignmentRoleLabel =
 /** S-G4 / P-G4 labels from engine contributions + assignment include flag. */
 export function familyAssignmentRoleLabels(
   average: SyllabusAverageResult | null | undefined,
-  assignment: Pick<AverageAssignment, 'id' | 'include_in_average' | 'category'> | null | undefined,
+  assignment:
+    | (Pick<AverageAssignment, 'id' | 'include_in_average'> & { category?: string | null })
+    | null
+    | undefined,
   categoryLabel?: string | null,
 ): FamilyAssignmentRoleLabel[] {
   const labels: FamilyAssignmentRoleLabel[] = [];
   if (!assignment) return labels;
 
-  const include = assignment.include_in_average !== false;
-  const catLabel = categoryLabel?.trim() || assignment.category || 'category';
-  if (include) labels.push({ kind: 'counts', categoryLabel: catLabel });
-  else labels.push({ kind: 'does_not_count' });
+  // Fail-closed: unknown include → omit Counts / Does not count (never default-true).
+  const include = assignment.include_in_average;
+  if (include === true) {
+    const raw = categoryLabel?.trim() || (assignment.category ?? '').trim();
+    const catLabel = raw && raw.toLowerCase() !== 'other' ? raw : 'the class';
+    labels.push({ kind: 'counts', categoryLabel: catLabel });
+  } else if (include === false) {
+    labels.push({ kind: 'does_not_count' });
+  }
 
   if (!average) return labels;
   for (const category of average.categories) {

@@ -246,23 +246,41 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
     if (row.kind !== 'assignment' || !row.assignment) return;
     const explainRow = explainAssignments.find((item) => item.id === row.assignment!.id);
     const categoryKey = explainRow?.category ?? row.assignment.category ?? null;
+    const syllabusLabel = categoryKey
+      ? (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label
+      : undefined;
+    // Accurate or omit — never invent user-facing "other".
     const categoryLabel =
-      (syllabus?.categories ?? []).find((c) => c.key === categoryKey)?.label ?? categoryKey;
+      syllabusLabel ??
+      (categoryKey && categoryKey.toLowerCase() !== 'other' ? categoryKey : null);
     const roomName =
       classLabel ??
       book.classes.find((room) => room.classId === row.assignment!.class_id)?.className ??
       null;
+    const cell = gradeCell(book, row.assignment.id, student.id);
+    const includeKnown =
+      typeof (explainRow?.include_in_average ?? row.assignment.include_in_average) === 'boolean'
+        ? (explainRow?.include_in_average ?? row.assignment.include_in_average)
+        : undefined;
     setDetail({
       title: row.assignment.title,
       className: roomName,
       categoryLabel,
       dueAt: explainRow?.due_at ?? row.assignment.due_at ?? null,
-      assignment: explainRow ?? {
-        id: row.assignment.id,
-        category: categoryKey ?? 'other',
-        include_in_average: row.assignment.include_in_average,
-      },
-      cell: gradeCell(book, row.assignment.id, student.id),
+      // Wire only family-safe submissions.submitted_at — never approved_at; leave per-assignment family note unset.
+      submittedAt: cell.submittedAt ?? null,
+      assignment: explainRow
+        ? {
+            id: explainRow.id,
+            category: explainRow.category,
+            include_in_average: explainRow.include_in_average,
+          }
+        : {
+            id: row.assignment.id,
+            category: categoryKey && categoryKey.toLowerCase() !== 'other' ? categoryKey : null,
+            include_in_average: includeKnown,
+          },
+      cell,
     });
   };
 
