@@ -198,11 +198,16 @@ test('A4 approve/delete refuse student/parent; teacher capture.approve allowed',
     assert.equal(isAskToolAllowed(name, parent, grants), false);
     assert.equal(isAskToolAllowed(name, admin, grants), true);
   }
-  for (const name of ['delete_student', 'delete_class', 'delete_parent']) {
+  for (const name of ['delete_student', 'delete_parent']) {
     assert.equal(isAskToolAllowed(name, student, grants), false);
     assert.equal(isAskToolAllowed(name, parent, grants), false);
     assert.equal(isAskToolAllowed(name, teacher, grants), true);
   }
+  // Class delete is office-only (teachers never delete classes).
+  assert.equal(isAskToolAllowed('delete_class', student, grants), false);
+  assert.equal(isAskToolAllowed('delete_class', parent, grants), false);
+  assert.equal(isAskToolAllowed('delete_class', teacher, grants), false);
+  assert.equal(isAskToolAllowed('delete_class', admin, grants), true);
 });
 
 test('A4 office login/hats/provision; also_administrator is not office', () => {

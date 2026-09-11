@@ -150,6 +150,7 @@ export default function HomeScreen() {
   const empty = (classes ?? []).length === 0;
   // Matrix grants drive chrome; server/RLS remains the hard gate (Q14).
   const canCreateClass = officeSeat && can(profile, 'classes.create', 'own', grants);
+  const canDeleteClass = officeSeat && can(profile, 'classes.delete', 'school', grants);
   const showCreateClass = canCreateClass;
   const canCreateLogin = officeSeat && can(profile, 'accounts.create', 'own', grants);
   const canViewActivity = officeSeat && can(profile, 'audit.view', 'school', grants);
@@ -305,7 +306,7 @@ export default function HomeScreen() {
               avatarName={item.name}
               onPress={() => openClass(item.id)}
               trailing={
-                can(profile, 'classes.delete', teacherSeat ? 'own' : 'school', grants)
+                canDeleteClass
                   ? [
                       {
                         key: 'delete',
