@@ -5,7 +5,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { SecondaryButton } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { WorkRow } from '@/components/ui/WorkRow';
@@ -271,12 +270,6 @@ export default function InboxScreen() {
         />
       ))}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
-      <PhaseBanner
-        phase={2}
-        compact
-        detail="Work without a clear name waits here. Matching never creates a student."
-      />
-
       <FormSheet visible={Boolean(picking)} title="Who is this?" onClose={() => setPicking(null)}>
             {roster.length > 8 ? (
               <TextField placeholder="Find a student" value={filter} onChangeText={setFilter} />

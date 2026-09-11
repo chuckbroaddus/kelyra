@@ -1059,7 +1059,7 @@ Student book (one column): pin that column to the **right**. Frozen assignment t
 
 ### 10.16 Join code, Phase banner
 
-Existing. Theme-agnostic besides tokens. Phase banner compact on Capture, Inbox, Student, Records; full on Setup, Family, Home.
+Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, Home, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on Capture, Inbox (Needs), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
 
 ### 10.17 Icon additions
 
@@ -1427,10 +1427,9 @@ The old `StickyTable` roster, the big-number “Needs you” card, and the fille
 
 **Portrait**
 
-```
-PhaseBanner compact
-Lead: Photograph one student’s work, then say the name. Incomplete is fine.
+Omit PhaseBanner / no instructional Phase 2 Daily lead on Capture (Approve / Pack B confirm law unchanged off-screen).
 
+```
 [ Photo well — flex ]
 Take photo / Add a page / Choose from library / Device picker
 Ask AI to guess the name     ← Ghost, only if hasMedia && !recording
@@ -1495,7 +1494,7 @@ Swipe as §10.7.
 
 **Empty.** `Nothing waiting. Work without a clear name lands here.`
 
-Lead stays: `Work without a clear name waits here. Matching never creates a student.`
+Omit PhaseBanner / no instructional Phase 2 Daily lead on Inbox (matcher never creates a student remains product law off-screen; empty-state copy above stays).
 
 ---
 
@@ -1515,11 +1514,10 @@ Do not hide Approve behind a long scroll.
 
 **Portrait**
 
+Omit PhaseBanner / no instructional Phase 2 Daily lead on the student record (Approve law unchanged off-screen).
+
 ```
 Focus row
-PhaseBanner compact
-Lead: Look at the work, then approve. Nothing is a grade until you do.
-
 [ Photo hero ]
 Heard / note
 Suggested gaps (editable before approve)
@@ -3449,7 +3447,7 @@ If `/profile` reuses this row, **Classes** uses `classes` (chalkboard on a stand
 
 The selected tab already names the pane. Omit a duplicate `SectionHeader` inside the pane when it would repeat that name. Sheets (Photo, Edit, pickers, Confirm) stay on the **screen**, not inside a pane.
 
-**Student — Focus** (default, primary job). The focus skill row (`Badge` + label, or `No focus skill yet`). Compact `PhaseBanner` and the lead `Look at the work, then approve. Nothing is a grade until you do.` The **latest homework** (or the `?capture=` one): `PhotoPager`, heard / note, draft score, suggested gaps, **Approve** / **Approve & give practice** / Ask AI / Add gap / Keep as a note. After approve: Give practice. Mark proficient / Dismiss focus. Empty: `No work filed yet.` Ghost **Photograph work**. Landscape split of photo | decision lives here, not on other panes.
+**Student — Focus** (default, primary job). The focus skill row (`Badge` + label, or `No focus skill yet`). Omit PhaseBanner / no instructional Phase 2 Daily lead here (Approve law unchanged off-screen). The **latest homework** (or the `?capture=` one): `PhotoPager`, heard / note, draft score, suggested gaps, **Approve** / **Approve & give practice** / Ask AI / Add gap / Keep as a note. After approve: Give practice. Mark proficient / Dismiss focus. Empty: `No work filed yet.` Ghost **Photograph work**. Landscape split of photo | decision lives here, not on other panes.
 
 **Student — Parents.** Today’s Parents section (§22.4): `AvatarTray`, `ListRow` + Unlink, ghost **Add parent**.
 

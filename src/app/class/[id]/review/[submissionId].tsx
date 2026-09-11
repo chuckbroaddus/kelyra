@@ -7,7 +7,6 @@ import { Badge, practiceBadge } from '@/components/ui/Badge';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { LessonWorkView } from '@/components/ui/LessonWork';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
@@ -512,11 +511,6 @@ export default function SubmissionReviewScreen() {
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={2}
-        compact
-        detail="Look at the work, then approve. Nothing is a grade until you do."
-      />
     </Screen>
   );
 }

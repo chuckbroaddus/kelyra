@@ -22,7 +22,6 @@ import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { PersonTabs } from '@/components/ui/PersonTabs';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { Screen, useScreenPad } from '@/components/ui/Screen';
@@ -1248,11 +1247,6 @@ export default function StudentScreen() {
 
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={2}
-        compact
-        detail="Look at the work, then approve. Nothing is a grade until you do."
-      />
 
       <PhotoSheet
         visible={photoOpen}
