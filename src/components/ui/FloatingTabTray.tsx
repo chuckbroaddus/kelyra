@@ -148,7 +148,7 @@ function tabTip(tab: Tab): string {
   if (tab.key === 'activity') return 'Immutable change log';
   if (tab.key === 'ask') return 'Ask';
   if (tab.key === 'capture') return 'File work';
-  if (tab.key === 'inbox') return 'Needs';
+  if (tab.key === 'inbox') return 'Needs Attention';
   if (tab.key === 'class') return tab.href.startsWith('/student') ? 'Classes' : 'Grade book and class records';
   return tab.label;
 }

@@ -93,7 +93,7 @@ test('L5: header search placeholder follows chrome.role seat, not isOfficeRole(p
 });
 
 test('L6: Ask FALLBACK says Needs in askPrompt + ai-dev + ask-assistant', () => {
-  const needle = /Open Needs or the student’s page/;
+  const needle = /Open Needs Attention or the student’s page/;
   assert.match(read('src/lib/ai/askPrompt.ts'), needle);
   assert.match(read('scripts/ai-dev-server.mjs'), needle);
   assert.match(read('supabase/functions/ask-assistant/index.ts'), needle);
@@ -103,7 +103,7 @@ test('L6: Ask FALLBACK says Needs in askPrompt + ai-dev + ask-assistant', () => 
 
 test('Phase A–D intact: five tray; CLASS_TABS ≤7; Class setup; Needs; canCreateClass', () => {
   assert.deepEqual(trayKeysForRole('teacher'), ['home', 'capture', 'inbox', 'class', 'ask']);
-  assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs');
+  assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs Attention');
   assert.equal(tabsFor('teacher', '/', 'abc', 0).find((t) => t.key === 'class')?.href, '/class/abc/setup');
   assert.ok(CLASS_TABS.length <= 7);
   const index = read('src/app/index.tsx');

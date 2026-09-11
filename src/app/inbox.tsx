@@ -146,7 +146,7 @@ export default function InboxScreen() {
       {!loaded ? <WorkingLine /> : null}
       {loaded && items.length === 0 && turned.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
-          Nothing waiting. Capture work, review it in Needs, then Approve on the student page on web.
+          Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
         </Text>
       ) : null}
       {visible.map((item) => {

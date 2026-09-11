@@ -75,7 +75,7 @@ export function headerTitleFor(input: {
   if (pathname.endsWith('/assign')) return 'Assign';
   if (/^\/class\/[^/]+$/.test(pathname)) return named || className || 'Class';
   if (pathname === '/capture') return 'Capture';
-  if (pathname === '/inbox') return 'Needs';
+  if (pathname === '/inbox') return 'Needs Attention';
   if (pathname === '/ask') return 'Kelyra';
   if (pathname === '/profile') return named || 'Profile';
   if (pathname === '/join') return 'Join';

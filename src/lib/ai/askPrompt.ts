@@ -12,7 +12,7 @@ export type AskLiveContext = {
   assignmentTitle?: string | null;
 };
 
-const FALLBACK = "I can’t tell from what’s saved. Open Needs or the student’s page.";
+const FALLBACK = "I can’t tell from what’s saved. Open Needs Attention or the student’s page.";
 
 export function buildAskInstructions(input: {
   role: string;

@@ -11,7 +11,7 @@ export type ClassDeskTab = {
 /** Default Class desk icons (≤7). Week / Heatmap / Family stay reachable via hrefForClassTab. */
 export const CLASS_TABS: ClassDeskTab[] = [
   { key: 'today', label: 'Today', icon: 'today' },
-  { key: 'needs', label: 'Needs', icon: 'inbox' },
+  { key: 'needs', label: 'Needs Attention', icon: 'inbox' },
   { key: 'feed', label: 'Feed', icon: DEFAULT_CLASS_FEED_ICON },
   { key: 'students', label: 'Students', icon: 'setup' },
   { key: 'assignments', label: 'Assignments', icon: 'work' },

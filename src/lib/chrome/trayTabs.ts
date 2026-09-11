@@ -126,7 +126,7 @@ export function tabsFor(
     {
       key: 'inbox',
       icon: 'inbox',
-      label: 'Needs',
+      label: 'Needs Attention',
       href: '/inbox',
       active: pathname === '/inbox',
       badge: badgeCount > 0 ? badgeCount : undefined,
