@@ -45,6 +45,8 @@ export default function ThreadInfoScreen() {
   const staff = isStaffRole(profile);
   const admin = isAdminRole(profile);
   const [kind, setKind] = useState<MessageThreadKind>('direct');
+  const [familyStudentId, setFamilyStudentId] = useState<string | null>(null);
+  const [lockedMemberIds, setLockedMemberIds] = useState<Set<string>>(new Set());
   const [title, setTitle] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
   const [members, setMembers] = useState<ThreadPerson[]>([]);
@@ -77,9 +79,22 @@ export default function ThreadInfoScreen() {
     const [thread, nextMembers] = await Promise.all([getThread(threadId), listThreadMembers(threadId)]);
     if (photoBusy.current) return;
     setKind(thread.kind === 'group' ? 'group' : 'direct');
+    const sid = thread.student_id ?? null;
+    setFamilyStudentId(sid);
     setTitle(thread.title ?? '');
     setDraftTitle(thread.title ?? '');
     setMembers(nextMembers);
+    if (sid) {
+      setLockedMemberIds(
+        new Set(
+          nextMembers
+            .filter((person) => person.student_id === sid || Boolean(person.parent_id))
+            .map((person) => person.id),
+        ),
+      );
+    } else {
+      setLockedMemberIds(new Set());
+    }
     setPhotoUrl(thread.photo_path ? await signedMessageUrl('photo', thread.photo_path, 'thumb') : null);
     setMuted(await isThreadMuted(threadId, profile.id));
     setPinned(await isThreadPinned(threadId, profile.id));
@@ -230,7 +245,10 @@ export default function ThreadInfoScreen() {
           photoUrl={person.photoUrl}
           chevron={false}
           trailing={
-            kind === 'group' && person.id !== profile?.id && admin
+            kind === 'group' &&
+            person.id !== profile?.id &&
+            admin &&
+            !lockedMemberIds.has(person.id)
               ? [
                   {
                     key: 'remove',
@@ -252,8 +270,13 @@ export default function ThreadInfoScreen() {
       {kind === 'group' && (staff || admin) && members.length < 12 ? (
         <GhostButton align="left" label="Add people" onPress={() => void openAdd()} />
       ) : null}
-      {kind === 'group' ? (
+      {kind === 'group' && !(familyStudentId && profile && lockedMemberIds.has(profile.id)) ? (
         <DangerButton label="Leave group" onPress={() => setPending({ kind: 'leave' })} />
+      ) : null}
+      {kind === 'group' && familyStudentId ? (
+        <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
+          Parents and the student stay on this family chat and cannot be removed.
+        </Text>
       ) : null}
 
       {members.length === 0 ? <WorkingLine /> : null}

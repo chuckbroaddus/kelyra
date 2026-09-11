@@ -524,6 +524,66 @@ async function hydrateLinkedParents(parents: ParentRow[]): Promise<ClassParent[]
   return rows;
 }
 
+
+export type LinkedParentChip = {
+  id: string;
+  display_name: string;
+  photoUrl: string | null;
+  /** true when a profiles row exists for this parent card */
+  hasLogin: boolean;
+};
+
+/**
+ * Invert parent_students for a roster: student_id → linked parent chips (photos + login flag).
+ * Used by Students messaging select to mirror Parents tab LinkedKids.
+ */
+export async function listLinkedParentsByStudentIds(
+  studentIds: string[],
+): Promise<Record<string, LinkedParentChip[]>> {
+  const unique = [...new Set(studentIds.filter(Boolean))];
+  const empty: Record<string, LinkedParentChip[]> = {};
+  for (const id of unique) empty[id] = [];
+  if (!unique.length) return empty;
+
+  const supabase = requireSupabase();
+  const { data: links, error } = await supabase
+    .from('parent_students')
+    .select('parent_id, student_id')
+    .in('student_id', unique);
+  if (error) throw error;
+  if (!links?.length) return empty;
+
+  const parentIds = [...new Set(links.map((row) => row.parent_id))];
+  const [{ data: parents, error: parentError }, { data: logins }] = await Promise.all([
+    supabase.from('parents').select('id, display_name, photo_asset_id').in('id', parentIds),
+    supabase.from('profiles').select('id, parent_id').in('parent_id', parentIds),
+  ]);
+  if (parentError) throw parentError;
+  const hydrated = await hydratePhotoUrls(parents ?? []);
+  const parentById = new Map(hydrated.map((row) => [row.id, row]));
+  const loginParentIds = new Set(
+    (logins ?? []).map((row) => row.parent_id).filter(Boolean) as string[],
+  );
+
+  const out: Record<string, LinkedParentChip[]> = { ...empty };
+  for (const link of links) {
+    const parent = parentById.get(link.parent_id);
+    if (!parent) continue;
+    const chip: LinkedParentChip = {
+      id: parent.id,
+      display_name: parent.display_name,
+      photoUrl: parent.photoUrl ?? null,
+      hasLogin: loginParentIds.has(parent.id),
+    };
+    const bucket = out[link.student_id] ?? (out[link.student_id] = []);
+    if (!bucket.some((row) => row.id === chip.id)) bucket.push(chip);
+  }
+  for (const id of unique) {
+    out[id] = (out[id] ?? []).sort((a, b) => a.display_name.localeCompare(b.display_name));
+  }
+  return out;
+}
+
 export async function listChildrenForParent(parentId: string): Promise<
   Array<StudentRow & { photoUrl: string | null }>
 > {

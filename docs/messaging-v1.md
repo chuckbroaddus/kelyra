@@ -52,7 +52,7 @@ Keep 1:1. Add only:
 | From ↓ / To → | Super or admin | Teacher | Parent | Student |
 |---|---|---|---|---|
 | Super / admin | 1:1 and staff group | 1:1 and staff group | 1:1; class/school-wide = post/alert | No 1:1 in v1 |
-| Teacher | 1:1 | 1:1 and staff group | 1:1 or small group (one child or selected parents; max 11) | 1:1 or small selected group with **own** students (max 11); class-wide stays a **post** |
+| Teacher | 1:1 | 1:1 and staff group | 1:1 or small group (one child or selected parents; max 11) | **Family thread per student** (teacher + student + all linked parents; parents locked). Students select opens N family threads (pick cap 11 still OK). Class-wide stays a **post** |
 | Parent | 1:1 to office | 1:1 to their child’s teachers | **Forbid** | **Forbid** |
 | Student | Forbid | Own class teachers only | **Forbid** | **Forbid** |
 
@@ -84,7 +84,7 @@ Reuse `/messages` and HandleLink. Add the minimum.
 | Staff group | People multi-select (admin or teacher) |
 | Parents of one child | Student page or that child’s parent page — **Message parents** |
 | Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N parent(s)** (max 11; skip selected without logins; hard-fail only if none have logins). Same Needs-login helper as Students (grayed-out parents need a login; office can create). |
-| Selected students | Class / Students messaging select mode — rounded **Message these students** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N student(s)** (own students only; max 11; skip selected without logins; hard-fail only if none have logins). When any row lacks a login, select mode shows a short mute helper: grayed-out students need a login; the office can create logins. |
+| Selected students | Class / Students — **LinkedParents** under each student (always, mirror Parents **LinkedKids**). Messaging select: **Message these students** → checkboxes / Select all + Cancel → **Message N student(s)**. **One family thread per student** (teacher + student + all linked parent logins); never a shared multi-family group (FERPA). Selectable only when student has login **and** ≥1 linked parent **and** every linked parent has a login. Skip/gate others (**Needs login** / **Needs parents** / **Needs parent login**). Opens N threads; navigate to first; CTA e.g. **Opened 3 chats — parents included**. Select UX may still cap at 11 picks. Parents cannot be removed from `student_id` threads (SQL + UI). Migration `open_student_family_thread` — CoS apply. |
 | Teacher ↔ class | Class page **Post to class** → **post**, not a group |
 | Admin ↔ parents | Feed composer or admin People → **post** or **alert** |
 | Admin ↔ staff | People → staff **group chat** |
@@ -144,7 +144,7 @@ Matcher still never inserts a student. Group membership uses existing enrollment
 1. Open mail. Existing 1:1 with a colleague still works. `@handle` still opens that thread.
 2. On a student’s page, **Message parents** opens (or creates) one group with that child’s linked parents. Send a line. Each parent sees it after sign-in on `/messages`.
 3. Class / Parents: tap rounded **Message these parents**, select three parents (or **Select all**), **Message 3 parents**. Cancel clears selection. **Select all** may check everyone; if more than 11 are checked, **Message** stays disabled with adjacent copy **Group chats stay small. Pick at most 11 parents.** (no buried-only error). Same login UX as Students: batch-lookup on enter select mode; **Needs login** rows; **zero** logins among selected → CTA-adjacent hard-fail; **mixed** → message those with logins, note e.g. **Messaging 4 of 7 — 3 need logins**, proceed into the thread.
-3b. Class / Students: tap rounded **Message these students**, select three students (or **Select all**), **Message 3 students**. Cancel on the Select all row clears selection. Same 11-cap UX as Parents (Select all allowed; Message disabled + adjacent **Pick at most 11 students** helper). Entering select mode batch-looks-up who has a login profile (non-blocking): rows without logins show **Needs login** and are not checkable once known. On send: resolve `profiles` via `student_id`; check the query error. **Zero** of the selected have logins → Message stays disabled / CTA-adjacent **Those students need logins first** (never a buried-only error). **Mixed** pick → open the group with those who have logins, leave the rest out, and show a brief CTA note like **Messaging 4 of 7 — 3 need logins**, then navigate into the thread. Class-wide remains **Post to class**, not a group chat.
+3b. Class / Students: each student row shows linked **parents underneath** (avatars + first names; **Needs login** on parent chips without profiles) in normal list and select mode. Tap **Message these students**, select three fully-covered students, **Message 3 students**. Cancel clears selection. Select UX may still cap at 11 picks (each pick opens its **own** family thread — the old shared 11-student group is not used on this path). Selectable only when: student login + ≥1 linked parent + every linked parent has a login. Grayed rows show **Needs login** / **Needs parents** / **Needs parent login**. On send: `open_student_family_thread` per eligible student; navigate to the first; CTA e.g. **Opened 3 chats — parents included** (skips noted). Class-wide remains **Post to class**. Parents + student are locked on family threads (no Remove).
 4. On that student’s practice, **Share in a message**. Card appears. **Notify parent(s)** is on. Send. Parent opens the card in-app to the practice — no browser URL. Score unchanged. Approve/Assign still required to put work on the books.
 5. Class page **Post to class**. Parents of that class see it on the feed. Replies stay under the post. Mail list does not grow by 200 threads.
 6. Super **Post to school** and one **Alert**. Alert shows on the bell next to existing Needs you rows. Mail icon still means chat.
@@ -168,6 +168,14 @@ Matcher still never inserts a student. Group membership uses existing enrollment
 - Mutating a grade or submission from a message or post
 
 ---
+
+## 7b. Family thread policy (Chuck 2026-09-11)
+
+- RPC `open_student_family_thread(p_student_id)` — staff who teach the student; members = teacher + student profile + all parent profiles linked via `parent_students`.
+- Hard-fail if no parents linked, any linked parent lacks a login, or student lacks a login. Never open teacher+student-only.
+- Reuse `message_threads.student_id` for one durable thread per student; ensure members on reopen; never drop parents.
+- `remove_group_member`: nobody may remove the linked student or parent members when `student_id` is set. Mute allowed. `add_group_member`: staff only on family threads.
+- Migration `20260911170000_open_student_family_thread.sql` — **CoS apply** (authorized); do not merge without apply note.
 
 ## 8. Later (do not build now)
 

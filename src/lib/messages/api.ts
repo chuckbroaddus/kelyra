@@ -263,6 +263,15 @@ export async function openChildParentThread(studentId: string): Promise<string> 
   return openGroupThread('Parents', [], studentId);
 }
 
+/** Teacher + student + all linked parent logins. One durable thread per student (FERPA). */
+export async function openStudentFamilyThread(studentId: string): Promise<string> {
+  const { data, error } = await requireSupabase().rpc('open_student_family_thread', {
+    p_student_id: studentId,
+  });
+  if (error) throw new Error(error.message || error.details || 'Could not open family chat');
+  return data;
+}
+
 export async function setThreadMuted(threadId: string, muted: boolean): Promise<void> {
   const { error } = await requireSupabase().rpc('set_thread_muted', {
     p_thread_id: threadId,

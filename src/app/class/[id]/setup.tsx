@@ -52,8 +52,14 @@ import {
 } from '@/lib/students/api';
 import type { StudentRow } from '@/lib/supabase/types';
 import { deleteStudent, removeEnrollment } from '@/lib/students/delete';
+import { Avatar } from '@/components/ui/Avatar';
+import { MarqueeText } from '@/components/ui/MarqueeText';
 import { firstName } from '@/lib/format';
-import { openGroupThread } from '@/lib/messages/api';
+import { openStudentFamilyThread } from '@/lib/messages/api';
+import {
+  listLinkedParentsByStudentIds,
+  type LinkedParentChip,
+} from '@/lib/parents/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { RosterImportRow } from '@/lib/supabase/types';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -101,6 +107,10 @@ export default function SetupScreen() {
   const [picked, setPicked] = useState<string[]>([]);
   /** student_id → profile id when known; null = lookup not finished yet */
   const [loginByStudentId, setLoginByStudentId] = useState<Record<string, string> | null>(null);
+  /** student_id → linked parent chips (null = not loaded yet; shown under rows always once loaded) */
+  const [parentsByStudentId, setParentsByStudentId] = useState<Record<string, LinkedParentChip[]> | null>(
+    null,
+  );
   /** CTA-adjacent send / login hint (not the buried bottom error) */
   const [sendHint, setSendHint] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -108,7 +118,11 @@ export default function SetupScreen() {
     try {
       const nextClass = await getClass(id);
       setKlass(nextClass);
-      setRoster(await listRoster(id));
+      const nextRoster = await listRoster(id);
+      setRoster(nextRoster);
+      void listLinkedParentsByStudentIds(nextRoster.map((row) => row.id))
+        .then((map) => setParentsByStudentId(map))
+        .catch(() => setParentsByStudentId({}));
       if (office) {
         setAvailable(await listAvailableStudents(id));
         setImports(await listPendingRosterImports(id));
@@ -338,10 +352,31 @@ export default function SetupScreen() {
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
   const exactMatch = Boolean(possibleMatch && namesAreEquivalent(possibleMatch.displayName, name));
 
+  const familyGate = useCallback(
+    (studentId: string): 'ok' | 'needs_student_login' | 'needs_parents' | 'needs_parent_login' | 'unknown' => {
+      if (loginByStudentId == null || parentsByStudentId == null) return 'unknown';
+      if (!loginByStudentId[studentId]) return 'needs_student_login';
+      const parents = parentsByStudentId[studentId] ?? [];
+      if (!parents.length) return 'needs_parents';
+      if (parents.some((parent) => !parent.hasLogin)) return 'needs_parent_login';
+      return 'ok';
+    },
+    [loginByStudentId, parentsByStudentId],
+  );
+
+  const gateStatusLabel = (gate: ReturnType<typeof familyGate>): string | undefined => {
+    if (gate === 'needs_student_login') return 'Needs login';
+    if (gate === 'needs_parents') return 'Needs parents';
+    if (gate === 'needs_parent_login') return 'Needs parent login';
+    return undefined;
+  };
+
   const selectableStudentIds = useMemo(() => {
-    if (loginByStudentId == null) return roster.map((student) => student.id);
-    return roster.filter((student) => loginByStudentId[student.id]).map((student) => student.id);
-  }, [roster, loginByStudentId]);
+    if (loginByStudentId == null || parentsByStudentId == null) {
+      return roster.map((student) => student.id);
+    }
+    return roster.filter((student) => familyGate(student.id) === 'ok').map((student) => student.id);
+  }, [roster, loginByStudentId, parentsByStudentId, familyGate]);
 
   const allSelected = useMemo(
     () =>
@@ -350,11 +385,12 @@ export default function SetupScreen() {
     [selectableStudentIds, picked],
   );
 
-  const hasNeedsLoginRows = useMemo(
+  const hasBlockedRows = useMemo(
     () =>
       loginByStudentId != null &&
-      roster.some((student) => !loginByStudentId[student.id]),
-    [roster, loginByStudentId],
+      parentsByStudentId != null &&
+      roster.some((student) => familyGate(student.id) !== 'ok'),
+    [roster, loginByStudentId, parentsByStudentId, familyGate],
   );
 
   const exitMessaging = () => {
@@ -364,27 +400,33 @@ export default function SetupScreen() {
     setSendHint(null);
   };
 
-  const loadStudentLogins = (studentIds: string[]) => {
+  const loadMessagingMeta = (studentIds: string[]) => {
     setLoginByStudentId(null);
+    setParentsByStudentId(null);
     if (!studentIds.length) {
       setLoginByStudentId({});
+      setParentsByStudentId({});
       return;
     }
     void (async () => {
-      const { data, error: queryError } = await requireSupabase()
-        .from('profiles')
-        .select('id, student_id')
-        .in('student_id', studentIds);
+      const [{ data, error: queryError }, parentsMap] = await Promise.all([
+        requireSupabase().from('profiles').select('id, student_id').in('student_id', studentIds),
+        listLinkedParentsByStudentIds(studentIds).catch(() => {
+          const empty: Record<string, LinkedParentChip[]> = {};
+          for (const id of studentIds) empty[id] = [];
+          return empty;
+        }),
+      ]);
       if (queryError) {
-        // Non-blocking: send path will re-query and surface the error beside the CTA.
         setLoginByStudentId({});
-        return;
+      } else {
+        const map: Record<string, string> = {};
+        for (const row of data ?? []) {
+          if (row.student_id) map[row.student_id] = row.id;
+        }
+        setLoginByStudentId(map);
       }
-      const map: Record<string, string> = {};
-      for (const row of data ?? []) {
-        if (row.student_id) map[row.student_id] = row.id;
-      }
-      setLoginByStudentId(map);
+      setParentsByStudentId(parentsMap);
     })();
   };
 
@@ -392,7 +434,7 @@ export default function SetupScreen() {
     setMessaging(true);
     setPicked([]);
     setSendHint(null);
-    loadStudentLogins(roster.map((student) => student.id));
+    loadMessagingMeta(roster.map((student) => student.id));
   };
 
   const togglePick = (studentId: string) => {
@@ -407,60 +449,88 @@ export default function SetupScreen() {
     setPicked(allSelected ? [] : selectableStudentIds);
   };
 
+  // Select UX still caps picks; each pick opens its own family thread (not one shared group).
   const overCap = picked.length > 11;
-  const missingLoginAmongPicked =
-    loginByStudentId == null
+  const blockedAmongPicked =
+    loginByStudentId == null || parentsByStudentId == null
       ? 0
-      : picked.filter((id) => !loginByStudentId[id]).length;
-  const noneHaveLogin =
+      : picked.filter((id) => familyGate(id) !== 'ok').length;
+  const noneMessageable =
     loginByStudentId != null &&
+    parentsByStudentId != null &&
     picked.length > 0 &&
-    missingLoginAmongPicked === picked.length;
+    blockedAmongPicked === picked.length;
 
   const sendMessage = () => {
     if (!picked.length || overCap) return;
     setSendHint(null);
     void (async () => {
-      const { data, error: queryError } = await requireSupabase()
-        .from('profiles')
-        .select('id, student_id')
-        .in('student_id', picked);
+      // Refresh gates before open.
+      const [{ data, error: queryError }, parentsMap] = await Promise.all([
+        requireSupabase().from('profiles').select('id, student_id').in('student_id', picked),
+        listLinkedParentsByStudentIds(picked),
+      ]);
       if (queryError) {
         setSendHint(queryError.message || 'Could not look up student logins.');
         return;
       }
-      const rows = data ?? [];
-      const ids = rows.map((row) => row.id);
-      const found = new Set(rows.map((row) => row.student_id).filter(Boolean) as string[]);
-      const missingCount = picked.filter((id) => !found.has(id)).length;
-      // Keep login map fresh for row marks if send stays on screen.
-      if (rows.length) {
-        setLoginByStudentId((current) => {
-          const next = { ...(current ?? {}) };
-          for (const row of rows) {
-            if (row.student_id) next[row.student_id] = row.id;
-          }
-          return next;
-        });
+      const loginMap: Record<string, string> = {};
+      for (const row of data ?? []) {
+        if (row.student_id) loginMap[row.student_id] = row.id;
       }
-      if (!ids.length) {
+      setLoginByStudentId((current) => ({ ...(current ?? {}), ...loginMap }));
+      setParentsByStudentId((current) => ({ ...(current ?? {}), ...parentsMap }));
+
+      const gateFor = (studentId: string) => {
+        if (!loginMap[studentId]) return 'needs_student_login' as const;
+        const parents = parentsMap[studentId] ?? [];
+        if (!parents.length) return 'needs_parents' as const;
+        if (parents.some((parent) => !parent.hasLogin)) return 'needs_parent_login' as const;
+        return 'ok' as const;
+      };
+
+      const eligible = picked.filter((id) => gateFor(id) === 'ok');
+      const skipped = picked.length - eligible.length;
+      if (!eligible.length) {
         setSendHint(
           picked.length === 1
-            ? 'That student needs a login first.'
-            : 'Those students need logins first.',
+            ? 'That student needs a login and every linked parent login first.'
+            : 'Those students need logins and parent logins first.',
         );
         return;
       }
-      if (missingCount > 0) {
-        // Mixed pick: open with reachable students; leave the rest out until they get logins.
-        setSendHint(
-          `Messaging ${ids.length} of ${picked.length} — ${missingCount} need login${missingCount === 1 ? '' : 's'}`,
-        );
+
+      const opened: string[] = [];
+      const failures: string[] = [];
+      for (const studentId of eligible) {
+        try {
+          opened.push(await openStudentFamilyThread(studentId));
+        } catch (err) {
+          failures.push(err instanceof Error ? err.message : 'Could not open family chat');
+        }
       }
-      const thread = await openGroupThread('Students', ids);
-      router.push(`/messages/${thread}` as never);
+
+      if (!opened.length) {
+        setSendHint(failures[0] || 'Could not open family chats');
+        return;
+      }
+
+      const parts: string[] = [];
+      parts.push(
+        opened.length === 1
+          ? 'Opened 1 chat — parents included'
+          : `Opened ${opened.length} chats — parents included`,
+      );
+      if (skipped > 0) {
+        parts.push(`${skipped} skipped (need student + all parent logins)`);
+      }
+      if (failures.length) {
+        parts.push(`${failures.length} failed to open`);
+      }
+      setSendHint(parts.join(' · '));
+      router.push(`/messages/${opened[0]}` as never);
     })().catch((err) =>
-      setSendHint(err instanceof Error ? err.message : 'Could not start group'),
+      setSendHint(err instanceof Error ? err.message : 'Could not start family chats'),
     );
   };
 
@@ -623,29 +693,45 @@ export default function SetupScreen() {
             </Pressable>
             <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
           </View>
-          {hasNeedsLoginRows ? (
+          {messaging ? (
             <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
-              Grayed-out students need a login before you can message them. The office can create logins.
+              Parents are always included and cannot be removed. Each selected student opens their own
+              family chat (not a shared group).
+            </Text>
+          ) : null}
+          {hasBlockedRows ? (
+            <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
+              Grayed-out students need a student login, at least one linked parent, and every parent
+              login. The office can create logins and link guardians.
             </Text>
           ) : null}
         </View>
       ) : null}
       {roster.map((student) => {
         const checked = picked.includes(student.id);
-        const loginKnown = loginByStudentId != null;
-        const hasLogin = !loginKnown || Boolean(loginByStudentId[student.id]);
+        const gate = messaging ? familyGate(student.id) : 'unknown';
+        const gateKnown = messaging && loginByStudentId != null && parentsByStudentId != null;
+        const parents = parentsByStudentId?.[student.id] ?? [];
+        const statusLabel = messaging && gateKnown ? gateStatusLabel(gate) : undefined;
         const row = (
           <ListRow
             title={student.display_name}
-            status={messaging && loginKnown && !hasLogin ? 'Needs login' : undefined}
+            status={statusLabel}
+            statusNode={parents.length ? <LinkedParents parents={parents} /> : undefined}
             photoUrl={student.photoUrl}
             hasPhoto={Boolean(student.photo_asset_id)}
             selected={messaging ? checked : false}
             chevron={!messaging}
             onPress={() => {
               if (messaging) {
-                if (!hasLogin) {
-                  setSendHint('That student needs a login first.');
+                if (gateKnown && gate !== 'ok') {
+                  setSendHint(
+                    gate === 'needs_parents'
+                      ? 'Link at least one parent before messaging this student.'
+                      : gate === 'needs_parent_login'
+                        ? 'Every linked parent needs a login first.'
+                        : 'That student needs a login first.',
+                  );
                   return;
                 }
                 togglePick(student.id);
@@ -678,19 +764,28 @@ export default function SetupScreen() {
           return <View key={student.id}>{row}</View>;
         }
         return (
-          <View key={student.id} style={[styles.selectRow, !hasLogin ? { opacity: 0.55 } : null]}>
+          <View
+            key={student.id}
+            style={[styles.selectRow, gateKnown && gate !== 'ok' ? { opacity: 0.55 } : null]}
+          >
             <Pressable
               accessibilityRole="checkbox"
-              accessibilityState={{ checked, disabled: !hasLogin }}
+              accessibilityState={{ checked, disabled: gateKnown && gate !== 'ok' }}
               accessibilityLabel={
-                hasLogin
-                  ? `Select ${student.display_name}`
-                  : `${student.display_name}, needs login`
+                gateKnown && gate !== 'ok'
+                  ? `${student.display_name}, ${statusLabel ?? 'not messageable'}`
+                  : `Select ${student.display_name}`
               }
-              disabled={!hasLogin}
+              disabled={gateKnown && gate !== 'ok'}
               onPress={() => {
-                if (!hasLogin) {
-                  setSendHint('That student needs a login first.');
+                if (gateKnown && gate !== 'ok') {
+                  setSendHint(
+                    gate === 'needs_parents'
+                      ? 'Link at least one parent before messaging this student.'
+                      : gate === 'needs_parent_login'
+                        ? 'Every linked parent needs a login first.'
+                        : 'That student needs a login first.',
+                  );
                   return;
                 }
                 togglePick(student.id);
@@ -708,16 +803,16 @@ export default function SetupScreen() {
           <View style={styles.footer}>
             {overCap ? (
               <Text style={[type.meta, { color: colors.mute }]}>
-                Group chats stay small. Pick at most 11 students.
+                Pick at most 11 students at a time (each opens their own family chat).
               </Text>
             ) : null}
-            {!overCap && missingLoginAmongPicked > 0 ? (
+            {!overCap && blockedAmongPicked > 0 ? (
               <Text style={[type.meta, { color: colors.mute }]}>
-                {missingLoginAmongPicked === picked.length
+                {blockedAmongPicked === picked.length
                   ? picked.length === 1
-                    ? 'That student needs a login first.'
-                    : 'Those students need logins first.'
-                  : `${missingLoginAmongPicked} of these students need logins — send will message the rest`}
+                    ? 'That student needs a login and every linked parent login first.'
+                    : 'Those students need logins and parent logins first.'
+                  : `${blockedAmongPicked} of these need student + all parent logins — send will open the rest`}
               </Text>
             ) : null}
             {!overCap && sendHint ? (
@@ -725,7 +820,10 @@ export default function SetupScreen() {
                 style={[
                   type.meta,
                   {
-                    color: sendHint.startsWith('Messaging ') ? colors.mute : colors.danger,
+                    color:
+                      sendHint.startsWith('Opened ') || sendHint.startsWith('Messaging ')
+                        ? colors.mute
+                        : colors.danger,
                   },
                 ]}
               >
@@ -738,7 +836,7 @@ export default function SetupScreen() {
                   ? `Message ${picked.length} student${picked.length === 1 ? '' : 's'}`
                   : 'Message these students'
               }
-              disabled={!picked.length || overCap || noneHaveLogin}
+              disabled={!picked.length || overCap || noneMessageable}
               onPress={sendMessage}
             />
           </View>
@@ -895,6 +993,29 @@ export default function SetupScreen() {
   );
 }
 
+function LinkedParents({ parents }: { parents: LinkedParentChip[] }) {
+  const { colors } = useTheme();
+  if (!parents.length) return null;
+  return (
+    <View style={styles.parents}>
+      {parents.map((parent) => (
+        <View key={parent.id} style={[styles.parentChip, !parent.hasLogin ? { opacity: 0.55 } : null]}>
+          <Avatar name={parent.display_name} photoUrl={parent.photoUrl} size={28} />
+          <MarqueeText
+            text={firstName(parent.display_name)}
+            align="start"
+            fadeColor={colors.bg}
+            style={[styles.parentName, { color: colors.ink }]}
+          />
+          {!parent.hasLogin ? (
+            <Text style={[styles.parentNeeds, { color: colors.mute }]}>Needs login</Text>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function CheckBox({ checked }: { checked: boolean }) {
   const { colors } = useTheme();
   return (
@@ -957,6 +1078,29 @@ const styles = StyleSheet.create({
   footer: {
     gap: 8,
     marginTop: 8,
+  },
+  parents: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+  },
+  parentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: 140,
+  },
+  parentName: {
+    ...type.badge,
+    fontWeight: '600',
+    flex: 1,
+    minWidth: 0,
+  },
+  parentNeeds: {
+    ...type.badge,
+    fontWeight: '600',
   },
   mediaHits: {
     flexDirection: 'row',
