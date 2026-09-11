@@ -564,6 +564,8 @@ space:  4, 8, 12, 16, 24, 32, 48
 radius: sm 8, md 12, lg 18, tray 22, pill 999
 ```
 
+**Rounded corners are the app standard for buttons, pills, and CTAs (CEO 2026-09-11).** Primary page CTAs use `PrimaryButton` (`radius.md` 12, brand fill, `brandInk` label) — same color scheme as a `WorkRow` primary pill (`kind: 'primary'`). Row action pills and chips use `radius.pill` (999). Do **not** use sharp / square corners on filled primary actions. `GhostButton` stays quiet (transparent, mute label); it is **not** a primary CTA. When a control is the next create/open action on a list surface, prefer `PrimaryButton` (or a primary pill), not Ghost.
+
 Phone padding 16. Tablet / web padding 24. **Hit target ≥ 44 × 44.** Chips and pills may be 32 tall if `hitSlop` makes up the rest.
 
 Web focus: 2 px `brand` outline, offset 2.
@@ -969,16 +971,16 @@ New, Home **Needs you** only. Horizontal `ScrollView` of compact work thumbs: 72
 
 ### 10.10 Buttons
 
-Existing `src/components/ui/Button.tsx`. Four roles stay.
+Existing `src/components/ui/Button.tsx`. Four roles stay. All filled buttons share `radius.md` (12) — rounded, not square. `WorkRow` / chip pills share `radius.pill` (999). Same brand language as the **Open** primary pill.
 
-| Role | Fill | Label | Height | When |
-|---|---|---|---|---|
-| **Primary** | `brand` | `brandInk` | 52 | The one next action |
-| **Secondary** | `elevated` + 1 px `line` | `ink` | 52 | The peer that is not next |
-| **Ghost** | transparent | `mute` | 44 | Quiet |
-| **Danger** | `danger` | Light `#FFF8F3`. Dark `#1A120C` if contrast fails AA | 52 | Stop recording only |
+| Role | Fill | Label | Height | Radius | When |
+|---|---|---|---|---|---|
+| **Primary** | `brand` | `brandInk` | 52 | `md` | The one next action (page-level CTA) |
+| **Secondary** | `elevated` + 1 px `line` | `ink` | 52 | `md` | The peer that is not next |
+| **Ghost** | transparent | `mute` | 44 | `md` | Quiet only — never the primary create/open CTA |
+| **Danger** | `danger` | Light `#FFF8F3`. Dark `#1A120C` if contrast fails AA | 52 | `md` | Stop recording only |
 
-One Primary per view. Label `numberOfLines={1}`. Disabled opacity 0.4, still 52 tall.
+One Primary per view. Label `numberOfLines={1}`. Disabled opacity 0.4, still 52 tall. `align="left"` shrinks width (`width: auto`, `alignSelf: flex-start`) for list-top CTAs such as class Assignments **Create Assignment**.
 
 ### 10.11 Media frame
 
@@ -2887,13 +2889,14 @@ No tab icons. No color wheel. Dark mode uses `mute` / `wash` / `line`.
 
 ```
 Phase banner (scrolls away)
-Mute one-liner
+PrimaryButton align=left **Create Assignment**   ← brand fill, radius.md (not Ghost)
 Coming due          ← ChipRow of “Title · Aug 20” if any future due_at
 Kind filter         ← ChipRow All + every GRADE_KINDS
 WorkRow…
 WorkRow…
-[ sticky ] New assignment
 ```
+
+Page CTA: `AssignmentWorkList` top control is **Create Assignment** (`PrimaryButton`, `align="left"`) — brand fill / `brandInk`, rounded `radius.md`, matching the **Open** primary-pill color scheme. Do not use Ghost **Assign** for this surface. Desk home (`/`) Ghost **Assign** is a separate surface; leave it unless that screen is redesigned.
 
 Each `WorkRow`:
 
