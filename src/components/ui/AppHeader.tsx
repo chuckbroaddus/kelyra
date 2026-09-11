@@ -221,10 +221,10 @@ export function AppHeader() {
         </Animated.View>
 
         {showCapture ? (
-          <HoverTip label="Propose what this is">
+          <HoverTip label="Open Capture">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Propose what this is"
+              accessibilityLabel="Open Capture"
               onPress={chromeState.openHeaderCamera}
               style={({ pressed }) => [styles.hit, pressed && { opacity: 0.7 }]}
             >

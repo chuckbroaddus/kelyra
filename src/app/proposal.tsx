@@ -568,8 +568,7 @@ export default function ProposalScreen() {
 
   const retake = () => {
     setProposalDraft(null);
-    chrome.openHeaderCamera();
-    router.back();
+    router.replace('/capture');
   };
 
   const saveHomework = async (mode: 'approve' | 'inbox' | 'note') => {
@@ -836,7 +835,7 @@ export default function ProposalScreen() {
   if (!draft) {
     return (
       <Screen>
-        <Text style={[type.body, { color: colors.mute }]}>Take a photo from the header camera first.</Text>
+        <Text style={[type.body, { color: colors.mute }]}>Capture a photo, file, or note on Capture first.</Text>
         <GhostButton align="left" label="Back" onPress={() => router.back()} />
       </Screen>
     );

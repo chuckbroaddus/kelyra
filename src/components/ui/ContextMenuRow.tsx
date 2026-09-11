@@ -81,13 +81,9 @@ function chipsFor(input: {
 }): ChipSpec[] {
   const { pathname, contextTab, setContextTab, parentTokens, router } = input;
 
+  // Capture no longer uses Amazon Photo · Voice · Pages chips (unified ingest layout).
   if (pathname === '/capture') {
-    const current = contextTab || 'photo';
-    return [
-      { key: 'photo', label: 'Photo', hint: 'Photograph a page', selected: current === 'photo', onPress: () => setContextTab('photo') },
-      { key: 'voice', label: 'Voice', hint: 'Record a voice note', selected: current === 'voice', onPress: () => setContextTab('voice') },
-      { key: 'pages', label: 'Pages', hint: 'Multi-page capture', selected: current === 'pages', onPress: () => setContextTab('pages') },
-    ];
+    return [];
   }
 
   if (pathname === '/inbox') {

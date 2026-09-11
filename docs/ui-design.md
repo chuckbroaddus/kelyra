@@ -119,7 +119,7 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 
 **Capture stays on Capture after save.** Filing a stack cannot yank the teacher into a student page.
 
-**The header camera never files.** It proposes. The teacher confirms. The matcher still never inserts a student. Approve is still the last click on anything that becomes a grade.
+**The header camera never files.** It opens unified **Capture** (`/capture`) — same surface as the tray Capture tab. Ask AI proposes; the teacher confirms on Capture. The matcher still never inserts a student. Approve is still the last click on anything that becomes a grade. Do not use ListenSheet → `/proposal` as the primary header-camera path (locked 2026-09-11).
 
 ---
 
@@ -265,7 +265,7 @@ Content draws **under** the frame. Last-scroll padding on every tray screen = fr
 | # | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
 |---|---|---|---|---|---|
 | 1 | `today` (house glyph) | **Desk** | **Classes** on `/` (class picker); class name on desk panes | `/?switch=1` (Classes screen) | `/` (incl. `?switch=1`) or `/class/{id}` desk work (not setup / settings / syllabus / gradebook / family / student / parents / parent / assignments) |
-| 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (not `/proposal`) |
+| 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (header camera also routes here; not `/proposal`) |
 | 3 | `inbox` | **Needs Attention** | **Needs Attention** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
 | 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/settings` or `/syllabus` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
 | 5 | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
@@ -329,7 +329,7 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 | Tab | Chips | Default | What they do |
 |---|---|---|---|
 | Desk (teacher) | *(none — ClassTabs owns desk panes)* | — | Shipped: `PersonTabs` / `CLASS_TABS` on `/class/…` (§32.7, §37). Do not restore Amazon chips on the desk |
-| Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
+| Capture | *(none — chips removed 2026-09-11)* | — | Unified Capture: Image Preview + Camera / Photo or Video / Files + text/mic. `contextReserve` 0 on `/capture` (§13.4) |
 | Needs Attention (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs Attention** |
 | Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · **Settings** (gear, far right). Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow. Class avatar + Feed icon + Syllabus live on Settings, not Students |
 | Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37). **Assignment ground is not a header band** — student/parent ground lives composer-adjacent (§12.6). Do not add a permanent ground row under the mark. |
@@ -758,7 +758,7 @@ Reset the accumulator on direction change.
 | Pinned header (hamburger · wordmark · camera · search · bell) | Always visible |
 | `/proposal` confirm actions | Always visible |
 | Sticky **Approve** / **Save to {Name}** / **Turn in** | Always visible. The tray may hide behind/below them; the CTA does not follow the tray |
-| Live camera preview (Capture Photo chip, header-camera session) | Tray and context stay **hidden** for the whole preview so they do not fight the shutter |
+| Live camera preview (Capture **Camera** action / header-camera → `/capture`) | Tray stays **hidden** for the whole preview so it does not fight the shutter. Capture has no context chips |
 | Image viewer / pinch zoom | Chrome hidden |
 | Hamburger open | Tray hidden; drawer is the chrome |
 
@@ -1459,56 +1459,53 @@ The old `StickyTable` roster, the big-number “Needs you” card, and the fille
 
 ### 13.4 `/capture` — Capture — `src/app/capture.tsx`
 
-**Job.** Photograph a stack, say the name, file, stay put. This is the composer. The header camera is the *classifier*; this tab is the *stack*.
+**Locked 2026-09-11.** Unified Capture for **both** the header camera icon and the tray Capture tab. One surface. Do not keep a parallel ListenSheet → `/proposal` as the primary header-camera path.
 
-**Primary.** Sticky `Save to {Name}` or `Save to Inbox` (existing `preview.button`). Hidden until there is a photo, a recording, or typed text.
+**Job.** Bring anything into Kelyra (camera, library photo/video, file, typed or spoken text), let Ask AI classify it against Kelyra features, confirm, then file. Stay on Capture after save (`resetSlip()`, `mute` confirmation). Matcher never invents a student. Nothing is a grade until Approve.
 
-**Do not change save routing.** After save: `resetSlip()`, stay on Capture, `mute` confirmation.
+**No context chips on `/capture`.** Remove Photo · Voice · Pages entirely. `contextReserve` is **0** on `/capture`. Amazon chips remain on Needs Attention (`/inbox`), student To-do, and multi-child parent Home only (§3.6, §32.7).
 
-**Context chips:** Photo · Voice · Pages.
+**Primary CTA.** Sticky **Ask AI to process** appears once **any** asset is present: camera still, library photo, video, file, audio, or non-empty text. Hidden while the slip is empty. After AI returns, the confirm strip’s import action is the sticky primary (same spirit as today’s `/proposal` confirm — Save / Import / Attach — inline on Capture, not a forced hop to `/proposal`).
 
-- **Photo** — focuses the well / shutter.
-- **Voice** — focuses `Record the name`.
-- **Pages** — focuses the pager + `Add a page`.
+Omit PhaseBanner / no instructional Phase 2 Daily lead on Capture.
 
-**Portrait**
-
-Omit PhaseBanner / no instructional Phase 2 Daily lead on Capture (Approve / Pack B confirm law unchanged off-screen).
+**Portrait (top → bottom)**
 
 ```
-[ Photo well — flex ]
-Take photo / Add a page / Choose from library / Device picker
-Ask AI to guess the name     ← Ghost, only if hasMedia && !recording
-
-Who is this?
-Record the name / Stop
-Typed name field
-Hint
-Suggested gaps (chips, read-only)
-
-[ sticky ] Save to Maya Chen
+[ Image Preview — flex ]     ← label: Image Preview (not “Photo well”)
+Camera · Photo or Video · Files     ← icon row under the preview
+[ text field ......................... 🎤 ]   ← mic on the right
+[ sticky ] Ask AI to process     ← only when any asset is present
+[ confirm strip ] This will be … + import actions   ← after AI
 ```
 
-When the well is empty and nothing is typed, no sticky. `Take photo` is the only Primary. The moment a page or a name exists, `Take photo` demotes to Secondary and Save is the only Primary.
+1. **Image Preview** — keep the existing preview well; rename the label to **Image Preview**. Shows the current still, video poster, or file glyph. Empty state is quiet (no instructional Phase banner).
+2. **Icon row** (under preview), three actions, same icon recipe rules as §32.3 / `AGENTS.md`:
+   - **Camera** — device camera (`expo-image-picker` camera / `WebCameraCapture` on web). Result lands in Image Preview.
+   - **Photo or Video** — library picker (photos and videos).
+   - **Files** — document picker.
+3. **Web drag-and-drop** — desktop web: drop photos, videos, or files onto **Image Preview**. Same accept list as the icon row. Native: no drop target.
+4. **Text + mic** — one field under the icon row. Placeholder for “what this is” / spoken notes. **Mic on the right:** tap highlights the mic and runs live STT into **the same field**; the teacher may also type. Do not open a separate Voice chip or ListenSheet as the Capture composer.
+5. **Ask AI to process** — once any asset exists, show the sticky. Calls the existing `classify-capture` (and related) intents: homework, roster list, portrait, parent card, etc. Waiting copy: `Asking AI…` (§ working marks).
+6. **Confirm strip (inline)** — after classification: **This will be …** plus import actions in the same spirit as today’s `/proposal` confirm (attach to student, import roster, set portrait, file to Needs Attention / Inbox, etc.). Teacher confirms. **Nothing files until confirm.** Prefer staying on `/capture`; `/proposal` may remain as a deep review route but is **not** the header-camera primary.
 
 **Landscape — flagship split** (`isSplit` or `phone-landscape` with `width >= 640`)
 
 ```
 ┌─────────────────────────────┬──────────────────────────┐
-│  Photo well / live camera   │ Who is this?             │
-│  (whole left pane)          │ Record / typed / hint    │
-│  Shutter row under well     │ Suggested gaps           │
-│                             │ [ Save to Maya Chen ]    │
+│  Image Preview              │ Text + mic               │
+│  Camera · Photo/Video · Files│ Ask AI to process        │
+│  (web: drop onto preview)   │ This will be … / import  │
 └─────────────────────────────┴──────────────────────────┘
 ```
 
-Left `flex: 1.2`. Right min width 280. Save pinned to the bottom of the right column. Do not force a portrait camera preview.
+Left `flex: 1.2`. Right min width 280. Sticky Ask AI / confirm pinned to the bottom of the right column.
 
-**Live camera.** Hide tray + context for the preview (§9.4). Header stays (teacher can cancel).
+**Live camera.** Hide tray for the preview (§9.4). Header stays (teacher can cancel). No context row to hide on Capture.
 
 **Empty / signed out.** Existing. Tray hidden until signed in.
 
-The header camera is **available on this tab** and hops to `/proposal` rather than appending to the stack well. That is intentional: classifier vs stack.
+**Header camera = Capture.** Tapping the header camera **routes to `/capture`** (focus Camera / open device camera from the unified sheet). Do **not** open ListenSheet → `/proposal` as the primary path. Tray Capture and header camera are the same composer.
 
 ---
 
@@ -1958,7 +1955,7 @@ Cancel pops.
 
 Amazon-after-camera confidence. **A review sheet, not an auto-file.** See §14.
 
-Pushed from the header camera (and from Capture only if we route the classifier that way — default is header camera only). Wordmark `Look at this`. Back discards the unsaved photo (confirm if they typed anything: `Throw away this photo?`).
+Optional deep-review route. **Primary path is inline confirm on `/capture`** (2026-09-11). Wordmark `Look at this` if still opened. Back discards the unsaved photo (confirm if they typed anything: `Throw away this photo?`).
 
 ---
 
@@ -1966,17 +1963,18 @@ Pushed from the header camera (and from Capture only if we route the classifier 
 
 ### 14.1 Flow
 
-1. Teacher taps the header **camera**.
-2. Device camera opens (`expo-image-picker` camera, or the existing `WebCameraCapture` on web). Same capture stack as `/capture`.
-3. Teacher takes a picture (one page for this flow). Landscape preview must work.
-4. App uploads the photo to the private bucket (existing `uploadTeacherAsset`).
-5. App calls `invokeAi('classify-capture', { imageUrl, classId, rosterFirstNames })`.
-6. App `push`es `/proposal` with the asset id + the model’s JSON.
-7. Teacher confirms or edits. **Nothing is filed, no student is created, no class is created, no grade is written** until they tap the sheet’s primary.
+**Locked 2026-09-11:** header camera and tray Capture share **`/capture`** (§13.4). Classification confirm is inline on Capture. `/proposal` is optional deep review, not the primary path.
 
-If they cancel the system camera, stay put. No empty proposal.
+1. Teacher taps the header **camera** → navigate to **`/capture`** (open/focus device **Camera** from the unified sheet). Tray Capture lands on the same screen without forcing the shutter.
+2. Teacher adds any asset: Camera, Photo or Video (library), Files, web drag-and-drop onto **Image Preview**, and/or text (type or tap mic for live STT into the same field).
+3. When any asset is present, sticky **Ask AI to process**.
+4. App uploads media as needed (`uploadTeacherAsset`) and calls `invokeAi('classify-capture', …)` (reuse intents: homework, roster list, portrait, parent card, etc.).
+5. Capture shows the confirm strip: **This will be …** + import actions (same spirit as the former `/proposal` confirm).
+6. Teacher confirms or edits. **Nothing is filed, no student is created, no class is created, no grade is written** until they confirm.
 
-**Talk while you shoot.** The header camera opens a **Listening** sheet first (mic on). **Take photo** keeps the clip going and opens the camera. **Voice only** throws the picture away and files from speech. **Cancel** drops the take. Proposal first transcribes the clip. It never invents a student — spoken names must match the roster.
+If they cancel the system camera, stay on Capture with an empty or prior preview. No empty `/proposal` push.
+
+**Talk while you shoot.** Mic lives on the Capture text field (right side): tap to highlight + live STT into that field. Do **not** open a ListenSheet as the header-camera primary. Spoken names still must match the roster — the matcher never invents a student.
 
 A Grade is the job, not “homework only.” Kinds: Homework, Class participation, Presentation, Behavior. Marks: a number 0–100, **Pass**, or **Fail**. Pass/Fail never enter a numeric average.
 
@@ -3586,7 +3584,7 @@ Switching panes `replace`s so Back does not walk the tab history. Today / Needs 
 
 Office card `/admin/class/{id}` is in-page only: **Feed · Teacher · Parents · Students** (`OFFICE_CLASS_TABS` frozen — never teacher ClassTabs). School Feed is school-wide posts; class Feed is that class only.
 
-The Amazon context row remains on Capture, Needs Attention (`/inbox`), student To-do, and multi-child parent Home. `contextReserve` is 0 on `/class/…` so an empty chip row cannot leave a 44 pt gap.
+The Amazon context row remains on Needs Attention (`/inbox`), student To-do, and multi-child parent Home. **Not on Capture** (chips removed 2026-09-11, §13.4). `contextReserve` is 0 on `/capture` and on `/class/…` so an empty chip row cannot leave a 44 pt gap.
 
 ---
 
@@ -4061,7 +4059,7 @@ src/app/admin/people.tsx
 | `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
 | Desk wordmark | **Class name** on class panes (§32.7) |
 | Ask | Tray-last; teacher may bind active `classId` / class chip |
-| Header camera | **Proposes** only; tray Capture **files**. Camera mounts on **teacher seat only** (not on office seat, even if `also_teacher`) |
+| Header camera | Opens unified **Capture** (`/capture`) with tray Capture; Ask AI proposes, teacher confirms. Camera mounts on **teacher seat only** (not on office seat, even if `also_teacher`) |
 | Web ≥720 | Same five labels visible |
 | Dual-hat seat | Explicit client `office` \| `teacher` \| `parent` preference; `also_teacher` never silent-forces teacher tray; `also_parent` never silent-forces Parent or staff Ride tab; default dual-hat job-of-record = **Office** (never cold-start Parent). Switch = **HamburgerDrawer** other-seat rows only (§31.4b / §37.3) |
 | Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite; no merged trays; no header seat chip; no office/teacher Ride tray tab; no “Ride seat” as sole Parent altitude label |

@@ -153,7 +153,6 @@ type ChromeValue = {
 
 export function defaultContextTab(pathname: string): string {
   if (pathname === '/inbox') return 'all';
-  if (pathname === '/capture') return 'photo';
   if (pathname === '/todo') return 'todo';
   return '';
 }
@@ -363,7 +362,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const contextReserve = useMemo(() => {
     if (role === 'none') return 0;
     if (isPushedPath(pathname)) return 0;
-    if (pathname === '/ask' || pathname === '/profile' || pathname === '/messages' || pathname === '/activity') return 0;
+    if (pathname === '/ask' || pathname === '/profile' || pathname === '/messages' || pathname === '/activity' || pathname === '/capture') return 0;
     // School home and class desk use in-page PersonTabs, not the Amazon context row.
     if (role === 'student') return 0;
     if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname) || pathname.startsWith('/student/')) return 0;
@@ -807,18 +806,11 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   );
 
   const openHeaderCamera = useCallback(() => {
+    // Unified ingest: header camera and tray Capture both land on /capture.
     if (pathnameRef.current.startsWith('/messages')) return;
-    void (async () => {
-      try {
-        headerVoice.current = await startLiveRecording();
-        setHeaderListening(true);
-      } catch {
-        headerVoice.current = null;
-        setHeaderListening(false);
-      }
-      setHeaderListenOpen(true);
-    })();
-  }, []);
+    if (pathnameRef.current === '/capture') return;
+    router.push('/capture');
+  }, [router]);
 
   const onHeaderTakePhoto = useCallback(() => {
     if (pathnameRef.current.startsWith('/messages')) {
