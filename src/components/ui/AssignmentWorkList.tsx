@@ -4,7 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { AssignmentMark } from '@/components/ui/AssignmentMark';
 import { practiceBadge, type BadgeVariant } from '@/components/ui/Badge';
-import { GhostButton } from '@/components/ui/Button';
+import { PrimaryButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -87,7 +87,7 @@ export function AssignmentWorkList({ classId, studentId, renderAfter }: Props) {
 
   return (
     <>
-      <GhostButton align="left" label="Assign" onPress={() => router.push(assignHref as never)} />
+      <PrimaryButton align="left" label="Create Assignment" onPress={() => router.push(assignHref as never)} />
       {soon.length ? (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Coming due</Text>
