@@ -111,6 +111,8 @@ export function tabsFor(
   const classRoot = classId ? `/class/${classId}` : '/';
   const onClassCluster =
     pathname.endsWith('/setup') ||
+    pathname.endsWith('/settings') ||
+    pathname.endsWith('/syllabus') ||
     pathname.includes('/gradebook') ||
     pathname.includes('/assignment') ||
     pathname.endsWith('/parents') ||

@@ -45,7 +45,7 @@ test('L2: /inbox lists turned-in so Needs badge (countNeedsYou) and list agree',
 
 test('L3: Week / Heatmap discoverable; not restored as default CLASS_TABS', () => {
   const keys = new Set(CLASS_TABS.map((tab) => tab.key));
-  assert.ok(CLASS_TABS.length <= 7);
+  assert.ok(CLASS_TABS.length <= 8);
   for (const demoted of DEMOTED_CLASS_TAB_KEYS) {
     assert.ok(!keys.has(demoted));
   }
@@ -101,11 +101,11 @@ test('L6: Ask FALLBACK says Needs in askPrompt + ai-dev + ask-assistant', () => 
   assert.doesNotMatch(read('supabase/functions/ask-assistant/index.ts'), /Open Inbox/);
 });
 
-test('Phase A–D intact: five tray; CLASS_TABS ≤7; Class setup; Needs; canCreateClass', () => {
+test('Phase A–D intact: five tray; CLASS_TABS ≤8; Class setup; Needs; canCreateClass', () => {
   assert.deepEqual(trayKeysForRole('teacher'), ['home', 'capture', 'inbox', 'class', 'ask']);
   assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs Attention');
   assert.equal(tabsFor('teacher', '/', 'abc', 0).find((t) => t.key === 'class')?.href, '/class/abc/setup');
-  assert.ok(CLASS_TABS.length <= 7);
+  assert.ok(CLASS_TABS.length <= 8);
   const index = read('src/app/index.tsx');
   // Teachers cannot create classes: office seat + matrix grant (not job-of-record alone).
   assert.match(index, /canCreateClass\s*=\s*officeSeat\s*&&\s*can\(profile,\s*'classes\.create'/);

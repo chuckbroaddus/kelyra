@@ -124,3 +124,12 @@ test('Desk tray lands Classes picker /?switch=1; active on / and class desk', ()
   assert.equal(onSetup?.href, '/?switch=1');
   assert.equal(onSetup?.active, false);
 });
+
+test('Class tray active on Settings and Syllabus', () => {
+  for (const path of ['/class/abc/settings', '/class/abc/syllabus']) {
+    const classTab = tabsFor('teacher', path, 'abc', 0).find((tab) => tab.key === 'class');
+    assert.equal(classTab?.active, true, path);
+    const desk = tabsFor('teacher', path, 'abc', 0).find((tab) => tab.key === 'home');
+    assert.equal(desk?.active, false, path);
+  }
+});

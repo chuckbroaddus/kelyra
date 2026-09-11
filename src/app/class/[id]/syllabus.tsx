@@ -534,7 +534,7 @@ export default function SyllabusScreen() {
         {syllabusStatus === 'published' ? (
           <GhostButton align="left" label="Unpublish" onPress={() => setConfirm({ kind: 'unpublish' })} />
         ) : null}
-        <GhostButton align="left" label="Back to roster" onPress={() => router.replace(`/class/${id}/setup`)} />
+        <GhostButton align="left" label="Back to settings" onPress={() => router.replace(`/class/${id}/settings`)} />
       </View>
 
       {busy ? <WorkingLine /> : null}

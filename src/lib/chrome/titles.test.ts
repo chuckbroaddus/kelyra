@@ -20,6 +20,7 @@ test('CT-06: class panes keep class name wordmark', () => {
     '/class/c1/parents',
     '/class/c1/family',
     '/class/c1/feed',
+    '/class/c1/settings',
     '/class/c1/syllabus',
   ]) {
     const pathOnly = pathname.split('?')[0]!;

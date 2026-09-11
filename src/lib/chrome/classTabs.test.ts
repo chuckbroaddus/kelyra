@@ -17,16 +17,19 @@ const DEFAULT_ORDER = [
   'assignments',
   'gradebook',
   'parents',
+  'settings',
 ] as const;
 
 const OFFICE_ORDER = ['feed', 'teacher', 'parents', 'students'] as const;
 
-test('CT-01: CLASS_TABS default ≤7 ordered Today·Needs·Feed·Students·Assignments·Gradebook·Parents', () => {
+test('CT-01: CLASS_TABS default ≤8 ordered Today·Needs·Feed·Students·Assignments·Gradebook·Parents·Settings', () => {
   const keys = CLASS_TABS.map((tab) => tab.key);
-  assert.ok(CLASS_TABS.length <= 7);
-  assert.equal(CLASS_TABS.length, 7);
+  assert.ok(CLASS_TABS.length <= 8);
+  assert.equal(CLASS_TABS.length, 8);
   assert.deepEqual(keys, [...DEFAULT_ORDER]);
   assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs Attention');
+  assert.equal(CLASS_TABS.find((tab) => tab.key === 'settings')?.icon, 'settings');
+  assert.equal(CLASS_TABS.at(-1)?.key, 'settings');
 });
 
 test('CT-02/03/04: Week, Heatmap, Family not in default icon set', () => {
@@ -60,9 +63,12 @@ test('CT-08: demoted routes still resolve for teacher of class', () => {
   assert.equal(hrefForClassTab(id, 'today'), `/class/${id}?tab=today`);
   assert.equal(hrefForClassTab(id, 'students'), `/class/${id}/setup`);
   assert.equal(hrefForClassTab(id, 'gradebook'), `/class/${id}/gradebook`);
+  assert.equal(hrefForClassTab(id, 'settings'), `/class/${id}/settings`);
 
   assert.equal(classTabFromRoute(`/class/${id}/setup`), 'students');
   assert.equal(classTabFromRoute(`/class/${id}/gradebook`), 'gradebook');
+  assert.equal(classTabFromRoute(`/class/${id}/settings`), 'settings');
+  assert.equal(classTabFromRoute(`/class/${id}/syllabus`), 'settings');
 });
 
 test('L4: demoted deep-links highlight nearby default ClassTabs', () => {
