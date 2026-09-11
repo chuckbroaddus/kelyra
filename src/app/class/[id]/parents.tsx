@@ -41,6 +41,10 @@ export default function ParentsScreen() {
   const [busy, setBusy] = useState(false);
   const [messaging, setMessaging] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  /** parent_id → profile id when known; null = lookup not finished yet */
+  const [loginByParentId, setLoginByParentId] = useState<Record<string, string> | null>(null);
+  /** CTA-adjacent send / login hint (not the buried bottom error) */
+  const [sendHint, setSendHint] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!classId) return;
@@ -56,43 +60,120 @@ export default function ParentsScreen() {
     }, [load]),
   );
 
+  const selectableParentIds = useMemo(() => {
+    if (loginByParentId == null) return linked.map((parent) => parent.id);
+    return linked.filter((parent) => loginByParentId[parent.id]).map((parent) => parent.id);
+  }, [linked, loginByParentId]);
+
   const allSelected = useMemo(
-    () => linked.length > 0 && linked.every((parent) => picked.includes(parent.id)),
-    [linked, picked],
+    () =>
+      selectableParentIds.length > 0 &&
+      selectableParentIds.every((id) => picked.includes(id)),
+    [selectableParentIds, picked],
   );
 
   const exitMessaging = () => {
     setMessaging(false);
     setPicked([]);
+    setLoginByParentId(null);
+    setSendHint(null);
+  };
+
+  const loadParentLogins = (parentIds: string[]) => {
+    setLoginByParentId(null);
+    if (!parentIds.length) {
+      setLoginByParentId({});
+      return;
+    }
+    void (async () => {
+      const { data, error: queryError } = await requireSupabase()
+        .from('profiles')
+        .select('id, parent_id')
+        .in('parent_id', parentIds);
+      if (queryError) {
+        setLoginByParentId({});
+        return;
+      }
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) {
+        if (row.parent_id) map[row.parent_id] = row.id;
+      }
+      setLoginByParentId(map);
+    })();
+  };
+
+  const enterMessaging = () => {
+    setMessaging(true);
+    setPicked([]);
+    setSendHint(null);
+    loadParentLogins(linked.map((parent) => parent.id));
   };
 
   const togglePick = (parentId: string) => {
+    setSendHint(null);
     setPicked((current) =>
       current.includes(parentId) ? current.filter((id) => id !== parentId) : [...current, parentId],
     );
   };
 
   const toggleSelectAll = () => {
-    setPicked(allSelected ? [] : linked.map((parent) => parent.id));
+    setSendHint(null);
+    setPicked(allSelected ? [] : selectableParentIds);
   };
 
   const overCap = picked.length > 11;
+  const missingLoginAmongPicked =
+    loginByParentId == null
+      ? 0
+      : picked.filter((id) => !loginByParentId[id]).length;
+  const noneHaveLogin =
+    loginByParentId != null &&
+    picked.length > 0 &&
+    missingLoginAmongPicked === picked.length;
 
   const sendMessage = () => {
     if (!picked.length || overCap) return;
+    setSendHint(null);
     void (async () => {
-      const { data } = await requireSupabase()
+      const { data, error: queryError } = await requireSupabase()
         .from('profiles')
-        .select('id')
+        .select('id, parent_id')
         .in('parent_id', picked);
-      const ids = (data ?? []).map((row) => row.id);
-      if (!ids.length) {
-        setError('Those parents need logins first.');
+      if (queryError) {
+        setSendHint(queryError.message || 'Could not look up parent logins.');
         return;
+      }
+      const rows = data ?? [];
+      const ids = rows.map((row) => row.id);
+      const found = new Set(rows.map((row) => row.parent_id).filter(Boolean) as string[]);
+      const missingCount = picked.filter((id) => !found.has(id)).length;
+      if (rows.length) {
+        setLoginByParentId((current) => {
+          const next = { ...(current ?? {}) };
+          for (const row of rows) {
+            if (row.parent_id) next[row.parent_id] = row.id;
+          }
+          return next;
+        });
+      }
+      if (!ids.length) {
+        setSendHint(
+          picked.length === 1
+            ? 'That parent needs a login first.'
+            : 'Those parents need logins first.',
+        );
+        return;
+      }
+      if (missingCount > 0) {
+        setSendHint(
+          `Messaging ${ids.length} of ${picked.length} — ${missingCount} need login${missingCount === 1 ? '' : 's'}`,
+        );
       }
       const thread = await openGroupThread('Parents', ids);
       router.push(`/messages/${thread}` as never);
-    })().catch((err) => setError(err instanceof Error ? err.message : 'Could not start group'));
+    })().catch((err) =>
+      setSendHint(err instanceof Error ? err.message : 'Could not start group'),
+    );
   };
 
   const onDelete = async () => {
@@ -136,17 +217,31 @@ export default function ParentsScreen() {
       ) : null}
       {linked.map((parent) => {
         const checked = picked.includes(parent.id);
+        const loginKnown = loginByParentId != null;
+        const hasLogin = !loginKnown || Boolean(loginByParentId[parent.id]);
         const row = (
           <ListRow
             title={parent.display_name}
-            status={parent.children.map((child) => firstName(child.display_name)).join(', ')}
-            statusNode={<LinkedKids kids={parent.children} />}
+            status={
+              messaging && loginKnown && !hasLogin
+                ? 'Needs login'
+                : parent.children.map((child) => firstName(child.display_name)).join(', ')
+            }
+            statusNode={
+              messaging && loginKnown && !hasLogin ? undefined : (
+                <LinkedKids kids={parent.children} />
+              )
+            }
             photoUrl={parent.photoUrl}
             hasPhoto={Boolean(parent.photo_asset_id)}
             selected={messaging ? checked : false}
             chevron={!messaging}
             onPress={() => {
               if (messaging) {
+                if (!hasLogin) {
+                  setSendHint('That parent needs a login first.');
+                  return;
+                }
                 togglePick(parent.id);
                 return;
               }
@@ -188,12 +283,23 @@ export default function ParentsScreen() {
           return <View key={parent.id}>{row}</View>;
         }
         return (
-          <View key={parent.id} style={styles.selectRow}>
+          <View key={parent.id} style={[styles.selectRow, !hasLogin ? { opacity: 0.55 } : null]}>
             <Pressable
               accessibilityRole="checkbox"
-              accessibilityState={{ checked }}
-              accessibilityLabel={`Select ${parent.display_name}`}
-              onPress={() => togglePick(parent.id)}
+              accessibilityState={{ checked, disabled: !hasLogin }}
+              accessibilityLabel={
+                hasLogin
+                  ? `Select ${parent.display_name}`
+                  : `${parent.display_name}, needs login`
+              }
+              disabled={!hasLogin}
+              onPress={() => {
+                if (!hasLogin) {
+                  setSendHint('That parent needs a login first.');
+                  return;
+                }
+                togglePick(parent.id);
+              }}
               style={styles.checkHit}
             >
               <CheckBox checked={checked} />
@@ -210,24 +316,39 @@ export default function ParentsScreen() {
                 Group chats stay small. Pick at most 11 parents.
               </Text>
             ) : null}
+            {!overCap && missingLoginAmongPicked > 0 ? (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {missingLoginAmongPicked === picked.length
+                  ? picked.length === 1
+                    ? 'That parent needs a login first.'
+                    : 'Those parents need logins first.'
+                  : `${missingLoginAmongPicked} of these parents need logins — send will message the rest`}
+              </Text>
+            ) : null}
+            {!overCap && sendHint ? (
+              <Text
+                style={[
+                  type.meta,
+                  {
+                    color: sendHint.startsWith('Messaging ') ? colors.mute : colors.danger,
+                  },
+                ]}
+              >
+                {sendHint}
+              </Text>
+            ) : null}
             <PrimaryButton
               label={
                 picked.length
                   ? `Message ${picked.length} parent${picked.length === 1 ? '' : 's'}`
                   : 'Message these parents'
               }
-              disabled={!picked.length || overCap}
+              disabled={!picked.length || overCap || noneHaveLogin}
               onPress={sendMessage}
             />
           </View>
         ) : (
-          <PrimaryButton
-            label="Message these parents"
-            onPress={() => {
-              setMessaging(true);
-              setPicked([]);
-            }}
-          />
+          <PrimaryButton label="Message these parents" onPress={enterMessaging} />
         )
       ) : null}
 

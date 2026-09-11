@@ -99,6 +99,10 @@ export default function SetupScreen() {
   const [parkedAssetId, setParkedAssetId] = useState<string | null>(null);
   const [messaging, setMessaging] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  /** student_id → profile id when known; null = lookup not finished yet */
+  const [loginByStudentId, setLoginByStudentId] = useState<Record<string, string> | null>(null);
+  /** CTA-adjacent send / login hint (not the buried bottom error) */
+  const [sendHint, setSendHint] = useState<string | null>(null);
   const load = useCallback(async () => {
     if (!id || !teacher) return;
     try {
@@ -334,43 +338,123 @@ export default function SetupScreen() {
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
   const exactMatch = Boolean(possibleMatch && namesAreEquivalent(possibleMatch.displayName, name));
 
+  const selectableStudentIds = useMemo(() => {
+    if (loginByStudentId == null) return roster.map((student) => student.id);
+    return roster.filter((student) => loginByStudentId[student.id]).map((student) => student.id);
+  }, [roster, loginByStudentId]);
+
   const allSelected = useMemo(
-    () => roster.length > 0 && roster.every((student) => picked.includes(student.id)),
-    [roster, picked],
+    () =>
+      selectableStudentIds.length > 0 &&
+      selectableStudentIds.every((id) => picked.includes(id)),
+    [selectableStudentIds, picked],
   );
 
   const exitMessaging = () => {
     setMessaging(false);
     setPicked([]);
+    setLoginByStudentId(null);
+    setSendHint(null);
+  };
+
+  const loadStudentLogins = (studentIds: string[]) => {
+    setLoginByStudentId(null);
+    if (!studentIds.length) {
+      setLoginByStudentId({});
+      return;
+    }
+    void (async () => {
+      const { data, error: queryError } = await requireSupabase()
+        .from('profiles')
+        .select('id, student_id')
+        .in('student_id', studentIds);
+      if (queryError) {
+        // Non-blocking: send path will re-query and surface the error beside the CTA.
+        setLoginByStudentId({});
+        return;
+      }
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) {
+        if (row.student_id) map[row.student_id] = row.id;
+      }
+      setLoginByStudentId(map);
+    })();
+  };
+
+  const enterMessaging = () => {
+    setMessaging(true);
+    setPicked([]);
+    setSendHint(null);
+    loadStudentLogins(roster.map((student) => student.id));
   };
 
   const togglePick = (studentId: string) => {
+    setSendHint(null);
     setPicked((current) =>
       current.includes(studentId) ? current.filter((id) => id !== studentId) : [...current, studentId],
     );
   };
 
   const toggleSelectAll = () => {
-    setPicked(allSelected ? [] : roster.map((student) => student.id));
+    setSendHint(null);
+    setPicked(allSelected ? [] : selectableStudentIds);
   };
 
   const overCap = picked.length > 11;
+  const missingLoginAmongPicked =
+    loginByStudentId == null
+      ? 0
+      : picked.filter((id) => !loginByStudentId[id]).length;
+  const noneHaveLogin =
+    loginByStudentId != null &&
+    picked.length > 0 &&
+    missingLoginAmongPicked === picked.length;
 
   const sendMessage = () => {
     if (!picked.length || overCap) return;
+    setSendHint(null);
     void (async () => {
-      const { data } = await requireSupabase()
+      const { data, error: queryError } = await requireSupabase()
         .from('profiles')
-        .select('id')
+        .select('id, student_id')
         .in('student_id', picked);
-      const ids = (data ?? []).map((row) => row.id);
-      if (!ids.length) {
-        setError('Those students need logins first.');
+      if (queryError) {
+        setSendHint(queryError.message || 'Could not look up student logins.');
         return;
+      }
+      const rows = data ?? [];
+      const ids = rows.map((row) => row.id);
+      const found = new Set(rows.map((row) => row.student_id).filter(Boolean) as string[]);
+      const missingCount = picked.filter((id) => !found.has(id)).length;
+      // Keep login map fresh for row marks if send stays on screen.
+      if (rows.length) {
+        setLoginByStudentId((current) => {
+          const next = { ...(current ?? {}) };
+          for (const row of rows) {
+            if (row.student_id) next[row.student_id] = row.id;
+          }
+          return next;
+        });
+      }
+      if (!ids.length) {
+        setSendHint(
+          picked.length === 1
+            ? 'That student needs a login first.'
+            : 'Those students need logins first.',
+        );
+        return;
+      }
+      if (missingCount > 0) {
+        // Mixed pick: open with reachable students; leave the rest out until they get logins.
+        setSendHint(
+          `Messaging ${ids.length} of ${picked.length} — ${missingCount} need login${missingCount === 1 ? '' : 's'}`,
+        );
       }
       const thread = await openGroupThread('Students', ids);
       router.push(`/messages/${thread}` as never);
-    })().catch((err) => setError(err instanceof Error ? err.message : 'Could not start group'));
+    })().catch((err) =>
+      setSendHint(err instanceof Error ? err.message : 'Could not start group'),
+    );
   };
 
   const addCard = (
@@ -534,15 +618,22 @@ export default function SetupScreen() {
       ) : null}
       {roster.map((student) => {
         const checked = picked.includes(student.id);
+        const loginKnown = loginByStudentId != null;
+        const hasLogin = !loginKnown || Boolean(loginByStudentId[student.id]);
         const row = (
           <ListRow
             title={student.display_name}
+            status={messaging && loginKnown && !hasLogin ? 'Needs login' : undefined}
             photoUrl={student.photoUrl}
             hasPhoto={Boolean(student.photo_asset_id)}
             selected={messaging ? checked : false}
             chevron={!messaging}
             onPress={() => {
               if (messaging) {
+                if (!hasLogin) {
+                  setSendHint('That student needs a login first.');
+                  return;
+                }
                 togglePick(student.id);
                 return;
               }
@@ -573,12 +664,23 @@ export default function SetupScreen() {
           return <View key={student.id}>{row}</View>;
         }
         return (
-          <View key={student.id} style={styles.selectRow}>
+          <View key={student.id} style={[styles.selectRow, !hasLogin ? { opacity: 0.55 } : null]}>
             <Pressable
               accessibilityRole="checkbox"
-              accessibilityState={{ checked }}
-              accessibilityLabel={`Select ${student.display_name}`}
-              onPress={() => togglePick(student.id)}
+              accessibilityState={{ checked, disabled: !hasLogin }}
+              accessibilityLabel={
+                hasLogin
+                  ? `Select ${student.display_name}`
+                  : `${student.display_name}, needs login`
+              }
+              disabled={!hasLogin}
+              onPress={() => {
+                if (!hasLogin) {
+                  setSendHint('That student needs a login first.');
+                  return;
+                }
+                togglePick(student.id);
+              }}
               style={styles.checkHit}
             >
               <CheckBox checked={checked} />
@@ -595,24 +697,39 @@ export default function SetupScreen() {
                 Group chats stay small. Pick at most 11 students.
               </Text>
             ) : null}
+            {!overCap && missingLoginAmongPicked > 0 ? (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {missingLoginAmongPicked === picked.length
+                  ? picked.length === 1
+                    ? 'That student needs a login first.'
+                    : 'Those students need logins first.'
+                  : `${missingLoginAmongPicked} of these students need logins — send will message the rest`}
+              </Text>
+            ) : null}
+            {!overCap && sendHint ? (
+              <Text
+                style={[
+                  type.meta,
+                  {
+                    color: sendHint.startsWith('Messaging ') ? colors.mute : colors.danger,
+                  },
+                ]}
+              >
+                {sendHint}
+              </Text>
+            ) : null}
             <PrimaryButton
               label={
                 picked.length
                   ? `Message ${picked.length} student${picked.length === 1 ? '' : 's'}`
                   : 'Message these students'
               }
-              disabled={!picked.length || overCap}
+              disabled={!picked.length || overCap || noneHaveLogin}
               onPress={sendMessage}
             />
           </View>
         ) : (
-          <PrimaryButton
-            label="Message these students"
-            onPress={() => {
-              setMessaging(true);
-              setPicked([]);
-            }}
-          />
+          <PrimaryButton label="Message these students" onPress={enterMessaging} />
         )
       ) : null}
       {office ? (
