@@ -2888,7 +2888,6 @@ No tab icons. No color wheel. Dark mode uses `mute` / `wash` / `line`.
 ### 29.3 List — `/class/{id}/assignments`
 
 ```
-Phase banner (scrolls away)
 PrimaryButton align=left **Create Assignment**   ← brand fill, radius.md (not Ghost)
 Coming due          ← ChipRow of “Title · Aug 20” if any future due_at
 Kind filter         ← ChipRow All + every GRADE_KINDS
@@ -2906,7 +2905,8 @@ Each `WorkRow`:
 - Meta = weight summary (`Major · Quarter 2` / `15% · Semester 1`). Year stays off the meta line when selected.
 - Badge `assigned`
 - Pills: **Open** · **Grade book**. **Open** is the only control that starts the assignment (student work or teacher lesson preview). Tapping the media or title does nothing. Cost: do not mint a lesson-host URL or load the pack until **Open**.
-- Swipe trailing **Open**, leading **Delete** (confirm sheet, no type-the-name)
+- Swipe **trailing only** (right→left / RTL reveal): **Preview** · **Delete**. No leading swipe on this list. **Preview** opens lesson preview (`/lesson/{id}?preview=1`) for lesson rows, or the assignment sheet for other kinds. **Delete** uses `tone: danger` and opens the confirm sheet (no type-the-name). Both swipe actions use `autoCommit: false`.
+- No Phase 3 instructional banner on this screen.
 
 Empty: `No assignments yet. Create one — the column shows up empty until work is in.`
 

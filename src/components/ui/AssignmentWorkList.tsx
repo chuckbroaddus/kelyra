@@ -87,7 +87,7 @@ export function AssignmentWorkList({ classId, studentId, renderAfter }: Props) {
 
   return (
     <>
-      <PrimaryButton align="left" label="Create Assignment" onPress={() => router.push(assignHref as never)} />
+      <PrimaryButton label="Create Assignment" onPress={() => router.push(assignHref as never)} />
       {soon.length ? (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Coming due</Text>
@@ -170,27 +170,17 @@ export function AssignmentWorkList({ classId, studentId, renderAfter }: Props) {
               },
             ]}
             trailing={[
-              row.kind === 'lesson'
-                ? {
-                    key: 'preview',
-                    label: 'Preview',
-                    tone: 'brand' as const,
-                    autoCommit: false,
-                    onPress: previewLesson,
-                  }
-                : {
-                    key: 'open',
-                    label: 'Open',
-                    tone: 'brand' as const,
-                    autoCommit: false,
-                    onPress: openSheet,
-                  },
-            ]}
-            leading={[
+              {
+                key: 'preview',
+                label: 'Preview',
+                tone: 'brand' as const,
+                autoCommit: false,
+                onPress: row.kind === 'lesson' ? previewLesson : openSheet,
+              },
               {
                 key: 'delete',
                 label: 'Delete',
-                tone: 'danger',
+                tone: 'danger' as const,
                 autoCommit: false,
                 onPress: () => setPending(row),
               },
