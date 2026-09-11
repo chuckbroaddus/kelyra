@@ -263,10 +263,23 @@ export async function openChildParentThread(studentId: string): Promise<string> 
   return openGroupThread('Parents', [], studentId);
 }
 
-/** Teacher + student + all linked parent logins. One durable thread per student (FERPA). */
+/** Teacher + student + all linked parent logins. One durable thread per student. */
 export async function openStudentFamilyThread(studentId: string): Promise<string> {
   const { data, error } = await requireSupabase().rpc('open_student_family_thread', {
     p_student_id: studentId,
+  });
+  if (error) throw new Error(error.message || error.details || 'Could not open family chat');
+  return data;
+}
+
+/** Teacher + selected students + their linked parent logins. One shared family_lock group. */
+export async function openMultiStudentFamilyThread(studentIds: string[]): Promise<string> {
+  const ids = [...new Set(studentIds.filter(Boolean))];
+  if (ids.length < 2) {
+    throw new Error('Pick at least two students, or use the single-student family chat.');
+  }
+  const { data, error } = await requireSupabase().rpc('open_multi_student_family_thread', {
+    p_student_ids: ids,
   });
   if (error) throw new Error(error.message || error.details || 'Could not open family chat');
   return data;

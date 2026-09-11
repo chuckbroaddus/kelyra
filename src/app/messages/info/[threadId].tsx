@@ -46,6 +46,7 @@ export default function ThreadInfoScreen() {
   const admin = isAdminRole(profile);
   const [kind, setKind] = useState<MessageThreadKind>('direct');
   const [familyStudentId, setFamilyStudentId] = useState<string | null>(null);
+  const [familyLock, setFamilyLock] = useState(false);
   const [lockedMemberIds, setLockedMemberIds] = useState<Set<string>>(new Set());
   const [title, setTitle] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
@@ -80,15 +81,21 @@ export default function ThreadInfoScreen() {
     if (photoBusy.current) return;
     setKind(thread.kind === 'group' ? 'group' : 'direct');
     const sid = thread.student_id ?? null;
+    const locked = Boolean(thread.family_lock) || Boolean(sid);
     setFamilyStudentId(sid);
+    setFamilyLock(Boolean(thread.family_lock));
     setTitle(thread.title ?? '');
     setDraftTitle(thread.title ?? '');
     setMembers(nextMembers);
-    if (sid) {
+    if (locked) {
       setLockedMemberIds(
         new Set(
           nextMembers
-            .filter((person) => person.student_id === sid || Boolean(person.parent_id))
+            .filter((person) =>
+              sid
+                ? person.student_id === sid || Boolean(person.parent_id)
+                : Boolean(person.student_id) || Boolean(person.parent_id),
+            )
             .map((person) => person.id),
         ),
       );
@@ -270,12 +277,15 @@ export default function ThreadInfoScreen() {
       {kind === 'group' && (staff || admin) && members.length < 12 ? (
         <GhostButton align="left" label="Add people" onPress={() => void openAdd()} />
       ) : null}
-      {kind === 'group' && !(familyStudentId && profile && lockedMemberIds.has(profile.id)) ? (
+      {kind === 'group' &&
+      !((familyStudentId || familyLock) && profile && lockedMemberIds.has(profile.id)) ? (
         <DangerButton label="Leave group" onPress={() => setPending({ kind: 'leave' })} />
       ) : null}
-      {kind === 'group' && familyStudentId ? (
+      {kind === 'group' && (familyStudentId || familyLock) ? (
         <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
-          Parents and the student stay on this family chat and cannot be removed.
+          {familyLock
+            ? 'Parents and students stay on this shared family chat and cannot be removed.'
+            : 'Parents and the student stay on this family chat and cannot be removed.'}
         </Text>
       ) : null}
 

@@ -55,7 +55,7 @@ import { deleteStudent, removeEnrollment } from '@/lib/students/delete';
 import { Avatar } from '@/components/ui/Avatar';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { firstName } from '@/lib/format';
-import { openStudentFamilyThread } from '@/lib/messages/api';
+import { openMultiStudentFamilyThread, openStudentFamilyThread } from '@/lib/messages/api';
 import {
   listLinkedParentsByStudentIds,
   type LinkedParentChip,
@@ -449,7 +449,7 @@ export default function SetupScreen() {
     setPicked(allSelected ? [] : selectableStudentIds);
   };
 
-  // Select UX still caps picks; each pick opens its own family thread (not one shared group).
+  // Select UX still caps picks; ≥2 eligible → one shared family_lock group (cap 12 members in SQL).
   const overCap = picked.length > 11;
   const blockedAmongPicked =
     loginByStudentId == null || parentsByStudentId == null
@@ -500,35 +500,31 @@ export default function SetupScreen() {
         return;
       }
 
-      const opened: string[] = [];
-      const failures: string[] = [];
-      for (const studentId of eligible) {
-        try {
-          opened.push(await openStudentFamilyThread(studentId));
-        } catch (err) {
-          failures.push(err instanceof Error ? err.message : 'Could not open family chat');
+      let threadId: string;
+      try {
+        if (eligible.length === 1) {
+          threadId = await openStudentFamilyThread(eligible[0]);
+        } else {
+          threadId = await openMultiStudentFamilyThread(eligible);
         }
-      }
-
-      if (!opened.length) {
-        setSendHint(failures[0] || 'Could not open family chats');
+      } catch (err) {
+        setSendHint(err instanceof Error ? err.message : 'Could not open family chat');
         return;
       }
 
       const parts: string[] = [];
-      parts.push(
-        opened.length === 1
-          ? 'Opened 1 chat — parents included'
-          : `Opened ${opened.length} chats — parents included`,
-      );
+      if (eligible.length === 1) {
+        parts.push('Opened 1 chat — parents included');
+      } else {
+        parts.push(
+          `Opened 1 shared group with ${eligible.length} students — parents included`,
+        );
+      }
       if (skipped > 0) {
         parts.push(`${skipped} skipped (need student + at least one parent login)`);
       }
-      if (failures.length) {
-        parts.push(`${failures.length} failed to open`);
-      }
       setSendHint(parts.join(' · '));
-      router.push(`/messages/${opened[0]}` as never);
+      router.push(`/messages/${threadId}` as never);
     })().catch((err) =>
       setSendHint(err instanceof Error ? err.message : 'Could not start family chats'),
     );
@@ -803,7 +799,7 @@ export default function SetupScreen() {
           <View style={styles.footer}>
             {overCap ? (
               <Text style={[type.meta, { color: colors.mute }]}>
-                Pick at most 11 students at a time (each opens their own family chat).
+                Group chats stay small. Pick at most 11 students (shared group caps at 12 people total with parents).
               </Text>
             ) : null}
             {!overCap && blockedAmongPicked > 0 ? (

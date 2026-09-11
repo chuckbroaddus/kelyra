@@ -81,6 +81,7 @@ export type MessageThreadRow = {
   kind: MessageThreadKind;
   title: string | null;
   student_id: string | null;
+  family_lock?: boolean;
   created_by: string | null;
   photo_path: string | null;
 };
@@ -481,10 +482,11 @@ export type Database = {
           kind?: MessageThreadKind;
           title?: string | null;
           student_id?: string | null;
+          family_lock?: boolean;
           created_by?: string | null;
           photo_path?: string | null;
         },
-        Partial<Pick<MessageThreadRow, 'last_message_at' | 'title' | 'kind' | 'photo_path'>>
+        Partial<Pick<MessageThreadRow, 'last_message_at' | 'title' | 'kind' | 'photo_path' | 'family_lock'>>
       >;
       message_thread_members: Table<
         {
@@ -1072,6 +1074,7 @@ export type Database = {
       set_thread_photo: { Args: { p_thread_id: string; p_path: string | null }; Returns: undefined };
       set_thread_pinned: { Args: { p_thread_id: string; p_pinned: boolean }; Returns: undefined };
             open_student_family_thread: { Args: { p_student_id: string }; Returns: string };
+      open_multi_student_family_thread: { Args: { p_student_ids: string[] }; Returns: string };
 add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
       remove_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns: undefined };
       send_message: {
