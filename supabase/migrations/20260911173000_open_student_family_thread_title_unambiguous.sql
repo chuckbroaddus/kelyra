@@ -1,0 +1,147 @@
+-- Hotfix: PL/pgSQL variable `title` collided with column `title` in the
+-- existing-thread UPDATE, raising "column reference \"title\" is ambiguous"
+-- when reusing a student_id thread. Rename to thread_title and qualify the
+-- UPDATE target. Policy unchanged: dual-hat OK (n >= 2), at least one parent
+-- login (not every parent). CoS already applied live 2026-09-11.
+
+create or replace function public.open_student_family_thread(p_student_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  me uuid := auth.uid();
+  school uuid;
+  tid uuid;
+  members uuid[];
+  n int;
+  student_name text;
+  thread_title text;
+  parent_card_ids uuid[];
+  parent_n int;
+  parent_login_n int;
+  student_profile uuid;
+begin
+  if me is null then
+    raise exception 'sign in first';
+  end if;
+  if p_student_id is null then
+    raise exception 'pick a student';
+  end if;
+  if not public.is_staff_profile(me) then
+    raise exception 'not allowed';
+  end if;
+
+  -- Staff must teach this student (owner, class_teachers seat, or school admin).
+  if not exists (
+    select 1
+    from public.students s
+    where s.id = p_student_id
+      and (
+        public.is_school_admin()
+        or exists (select 1 from public.profiles p where p.id = me and p.also_administrator)
+        or s.teacher_id = me
+        or exists (
+          select 1
+          from public.enrollments e
+          join public.class_teachers ct on ct.class_id = e.class_id
+          where e.student_id = s.id and ct.teacher_id = me
+        )
+      )
+  ) then
+    raise exception 'not allowed';
+  end if;
+
+  select s.display_name into student_name
+  from public.students s
+  where s.id = p_student_id;
+  if student_name is null then
+    raise exception 'student not found';
+  end if;
+
+  select array_agg(distinct ps.parent_id) into parent_card_ids
+  from public.parent_students ps
+  where ps.student_id = p_student_id;
+  parent_n := coalesce(array_length(parent_card_ids, 1), 0);
+  if parent_n < 1 then
+    raise exception 'Link at least one parent or guardian before messaging this student.';
+  end if;
+
+  select count(*)::int into parent_login_n
+  from public.profiles p
+  where p.parent_id = any (parent_card_ids);
+  if parent_login_n < 1 then
+    raise exception 'At least one linked parent needs a login before messaging this student.';
+  end if;
+
+  select p.id into student_profile
+  from public.profiles p
+  where p.student_id = p_student_id
+  limit 1;
+  if student_profile is null then
+    raise exception 'That student needs a login first.';
+  end if;
+
+  -- members = me ∪ student ∪ parent profiles that exist (skip parents without login)
+  select array_agg(distinct x) into members
+  from (
+    select me
+    union
+    select student_profile
+    union
+    select p.id
+    from public.profiles p
+    where p.parent_id = any (parent_card_ids)
+  ) x(x);
+
+  n := coalesce(array_length(members, 1), 0);
+  -- Dual-hat teacher+parent: me may already be a linked parent profile, so
+  -- distinct members can be 2 (parent/teacher + student). Require student in
+  -- members and at least one linked parent profile in members.
+  if n < 2 or not (student_profile = any (members)) then
+    raise exception 'Could not open family chat — student and parent logins are required.';
+  end if;
+  if not exists (
+    select 1
+    from public.profiles p
+    where p.id = any (members)
+      and p.parent_id = any (parent_card_ids)
+  ) then
+    raise exception 'Could not open family chat — student and parent logins are required.';
+  end if;
+
+  thread_title := nullif(trim(student_name), '');
+  if thread_title is null then
+    thread_title := 'Family';
+  end if;
+
+  select t.id into tid
+  from public.message_threads t
+  where t.kind = 'group' and t.student_id = p_student_id
+  limit 1;
+
+  if tid is not null then
+    insert into public.message_thread_members (thread_id, profile_id)
+    select tid, m from unnest(members) m
+    on conflict do nothing;
+    -- Never drop parents/student; only ensure membership.
+    update public.message_threads t
+    set title = thread_title
+    where t.id = tid and (t.title is null or btrim(t.title) = '');
+    return tid;
+  end if;
+
+  select school_id into school from public.profiles where id = me;
+  insert into public.message_threads (school_id, kind, title, student_id, created_by)
+  values (school, 'group', thread_title, p_student_id, me)
+  returning id into tid;
+
+  insert into public.message_thread_members (thread_id, profile_id)
+  select tid, m from unnest(members) m;
+
+  return tid;
+end;
+$$;
+
+grant execute on function public.open_student_family_thread(uuid) to authenticated;
