@@ -73,7 +73,7 @@ export default function GradeAssignScreen() {
   return (
     <Screen keyboard maxWidth={640}>
       <Text style={[type.meta, { color: colors.mute }]}>
-        Assign a lesson or practice to classes you already teach. This does not create a class.
+        Create an Assignment
       </Text>
       {!ready ? <WorkingLine /> : null}
       {ready ? (
