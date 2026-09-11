@@ -315,40 +315,42 @@ export function HamburgerDrawer() {
                 </>
               ) : (
                 <>
-                  {chromeState.classes.filter((klass) => matches(klass.name, q)).map((klass) => (
-                    <ListRow
-                      key={klass.id}
-                      title={klass.name}
-                      avatarName={klass.name}
-                      chevron={false}
-                      selected={klass.id === chromeState.classId}
-                      onPress={() => {
-                        // Sync setActiveClassId first so Ask ground clears before refreshChrome/go
-                        // (avoids classId effect re-reading stale ground while DB write is in flight).
-                        if (teacher) {
-                          setActiveClassId(klass.id);
-                          void setActiveClass(teacher.id, klass.id);
-                        }
-                        chromeState.refreshChrome();
-                        go(teacherSeat ? `/class/${klass.id}` : `/admin/class/${klass.id}`, true);
-                      }}
-                      trailing={
-                        officeSeat && can(profile, 'classes.delete', 'school', grants)
-                          ? [
-                              {
-                                key: 'delete',
-                                label: 'Delete',
-                                tone: 'danger',
-                                autoCommit: false,
-                                onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
-                              },
-                            ]
-                          : []
-                      }
-                    />
-                  ))}
-                  {teacherSeat && matches('Another class', q) ? (
-                    <DrawerRow label="Another class" onPress={() => go('/?switch=1')} />
+                  {!teacherSeat
+                    ? chromeState.classes.filter((klass) => matches(klass.name, q)).map((klass) => (
+                        <ListRow
+                          key={klass.id}
+                          title={klass.name}
+                          avatarName={klass.name}
+                          chevron={false}
+                          selected={klass.id === chromeState.classId}
+                          onPress={() => {
+                            // Sync setActiveClassId first so Ask ground clears before refreshChrome/go
+                            // (avoids classId effect re-reading stale ground while DB write is in flight).
+                            if (teacher) {
+                              setActiveClassId(klass.id);
+                              void setActiveClass(teacher.id, klass.id);
+                            }
+                            chromeState.refreshChrome();
+                            go(`/admin/class/${klass.id}`, true);
+                          }}
+                          trailing={
+                            officeSeat && can(profile, 'classes.delete', 'school', grants)
+                              ? [
+                                  {
+                                    key: 'delete',
+                                    label: 'Delete',
+                                    tone: 'danger',
+                                    autoCommit: false,
+                                    onPress: () => setPendingClass({ id: klass.id, name: klass.name }),
+                                  },
+                                ]
+                              : []
+                          }
+                        />
+                      ))
+                    : null}
+                  {teacherSeat && matches('Classes', q) ? (
+                    <DrawerRow label="Classes" onPress={() => go('/?switch=1')} />
                   ) : null}
                   <Hairline />
                   {/* Admin extras: §31.1 People/Activity/Messages/Responsibilities.

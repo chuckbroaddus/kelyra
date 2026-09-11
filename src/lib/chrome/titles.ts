@@ -85,6 +85,7 @@ export function headerTitleFor(input: {
     }
     if (role === 'student') return 'Assignments';
     if (role === 'parent') return 'Home';
+    if (role === 'teacher') return 'Classes';
     return 'Kelyra';
   }
   return named || 'Kelyra';

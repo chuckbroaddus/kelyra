@@ -55,7 +55,7 @@ test('P-06 settle: teacher seat never office tray nouns or office People altitud
   assert.equal(trayKeysForRole(teacherRole!).length, 5);
 
   const title = headerTitleForSeatRoot(teacherRole!);
-  assert.equal(title, 'Kelyra');
+  assert.equal(title, 'Classes');
   assert.notEqual(title, 'People');
   assert.notEqual(title, 'Manage');
   assert.notEqual(title, 'Activity');
@@ -68,7 +68,7 @@ test('P-06 settle: teacher seat never office tray nouns or office People altitud
       contextTab: '',
       role: 'teacher',
     }),
-    'Kelyra',
+    'Classes',
   );
 });
 

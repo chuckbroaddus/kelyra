@@ -112,3 +112,15 @@ test('RIDE-ICON: parent Ride + Dismissal curb use ride; Assignments stay work', 
   const office = home.match(/title="Ride office"[\s\S]*?icon="([^"]+)"/);
   assert.equal(office?.[1], 'manage');
 });
+
+test('Desk tray lands Classes picker /?switch=1; active on / and class desk', () => {
+  const withClass = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'home');
+  assert.equal(withClass?.href, '/?switch=1');
+  assert.equal(withClass?.active, true);
+  const onDesk = tabsFor('teacher', '/class/abc', 'abc', 0).find((tab) => tab.key === 'home');
+  assert.equal(onDesk?.href, '/?switch=1');
+  assert.equal(onDesk?.active, true);
+  const onSetup = tabsFor('teacher', '/class/abc/setup', 'abc', 0).find((tab) => tab.key === 'home');
+  assert.equal(onSetup?.href, '/?switch=1');
+  assert.equal(onSetup?.active, false);
+});

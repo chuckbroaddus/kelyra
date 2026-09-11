@@ -108,7 +108,7 @@ test('P-04: pure teacher never shows office People/Manage/matrix as primary chro
   // Office nouns live inside officeSeat branches only.
   const teacherFamily = drawer.indexOf('label="Family update"');
   assert.ok(teacherFamily > 0);
-  assert.match(drawer, /teacherSeat && matches\('Another class'/);
+  assert.match(drawer, /teacherSeat && matches\('Classes'/);
   assert.match(drawer, /\{officeSeat \? \(/);
   assert.match(drawer, /label="Sign out"[\s\S]*?danger/);
   // Two-phase enter/exit preserved.

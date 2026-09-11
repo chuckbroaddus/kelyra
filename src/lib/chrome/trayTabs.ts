@@ -121,7 +121,7 @@ export function tabsFor(
     pathname === '/' || (onClass && !onClassCluster && !pathname.includes('/student/'));
 
   return [
-    { key: 'home', icon: 'today', label: 'Desk', href: classRoot, active: houseActive },
+    { key: 'home', icon: 'today', label: 'Desk', href: '/?switch=1', active: houseActive },
     { key: 'capture', icon: 'capture', label: 'Capture', href: '/capture', active: pathname === '/capture' },
     {
       key: 'inbox',
