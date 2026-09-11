@@ -328,7 +328,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
             <View style={styles.composer}>
               <MessageComposer
                 layout="feed"
-                placeholder={kind === 'alert' ? 'Urgent note for families' : 'Write a post'}
+                placeholder={kind === 'alert' ? 'Enter Alert Message' : 'Write a post'}
                 busy={busy}
                 onSend={publish}
                 onError={setError}
