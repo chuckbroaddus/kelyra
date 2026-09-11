@@ -16,6 +16,8 @@ export type Palette = {
   warnSoft: string;
   danger: string;
   dangerSoft: string;
+  /** Brick-red fill for Delete swipe tiles (not coral/salmon). */
+  dangerBrick: string;
   focus: string;
   wash: string;
   /** Modal / sheet dim behind content. */
@@ -39,6 +41,7 @@ export const palettes = {
     warnSoft: '#F8E7C8',
     danger: '#B53A32',
     dangerSoft: '#F8DDD9',
+    dangerBrick: '#9B2C2C',
     focus: '#B03E0E',
     wash: '#EFE8DE',
     overlay: 'rgba(26,22,18,0.40)',
@@ -59,6 +62,7 @@ export const palettes = {
     warnSoft: '#2E2416',
     danger: '#F07A70',
     dangerSoft: '#331C1A',
+    dangerBrick: '#C9403A',
     focus: '#E07A3A',
     wash: '#2A2723',
     overlay: 'rgba(0,0,0,0.55)',

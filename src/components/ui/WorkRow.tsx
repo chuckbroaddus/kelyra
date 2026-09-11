@@ -15,6 +15,7 @@ import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { UnknownMark } from '@/components/ui/UnknownMark';
 import { radius, type } from '@/constants/theme';
+import { useSwipeRowOpen } from '@/lib/ui/swipeRowOpen';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type WorkPill = {
@@ -66,16 +67,26 @@ export function WorkRow({
   trailing = [],
   onPress,
 }: Props) {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const width = useRef(0);
   const x = useRef(new Animated.Value(0)).current;
   const start = useRef(0);
+  const openOffset = useRef(0);
   const [swiping, setSwiping] = useState(false);
+  const [open, setOpen] = useState(false);
   // test-hook: leadingRef/trailingRef keep PanResponder snap widths current across renders
   const leadingRef = useRef(leading);
   const trailingRef = useRef(trailing);
   leadingRef.current = leading;
   trailingRef.current = trailing;
+
+  useSwipeRowOpen(open);
+
+  const markOpen = (value: number) => {
+    openOffset.current = value;
+    const next = value !== 0;
+    setOpen((prev) => (prev === next ? prev : next));
+  };
 
   const run = (action: WorkSwipeAction) => {
     snap(0);
@@ -88,18 +99,34 @@ export function WorkRow({
       duration: 160,
       useNativeDriver: true,
     }).start(({ finished }) => {
-      if (finished && to === 0) setSwiping(false);
+      if (!finished) return;
+      markOpen(to);
+      if (to === 0) setSwiping(false);
     });
   };
 
   const responder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) =>
-        Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+      // When actions are open, claim early so stack back-gesture cannot steal LTR close.
+      onStartShouldSetPanResponder: () => openOffset.current !== 0,
+      onStartShouldSetPanResponderCapture: () => openOffset.current !== 0,
+      onMoveShouldSetPanResponder: (_, g) => {
+        if (openOffset.current !== 0) {
+          return Math.abs(g.dx) > 2 && Math.abs(g.dx) >= Math.abs(g.dy);
+        }
+        return Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy);
+      },
+      onMoveShouldSetPanResponderCapture: (_, g) => {
+        if (openOffset.current === 0) return false;
+        return Math.abs(g.dx) > 2 && Math.abs(g.dx) >= Math.abs(g.dy);
+      },
+      onPanResponderTerminationRequest: () => openOffset.current === 0,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: () => {
         setSwiping(true);
         x.stopAnimation((value) => {
           start.current = value;
+          openOffset.current = value;
         });
       },
       onPanResponderMove: (_, g) => {
@@ -110,6 +137,7 @@ export function WorkRow({
         const next = start.current + g.dx;
         // LTR disabled when no leading (maxL=0); open snap uses full −trailing.length * 80
         const clamped = Math.max(-maxR, Math.min(maxL, next));
+        openOffset.current = clamped;
         x.setValue(clamped);
       },
       onPanResponderRelease: (_, g) => {
@@ -139,8 +167,25 @@ export function WorkRow({
         }
         snap(0);
       },
+      onPanResponderTerminate: () => {
+        const v = openOffset.current;
+        const maxL = leadingRef.current.length * 80;
+        const maxR = trailingRef.current.length * 80;
+        if (v < -56 && maxR) snap(-maxR);
+        else if (v > 56 && maxL) snap(maxL);
+        else snap(0);
+      },
     }),
   ).current;
+
+  const onCardPress = () => {
+    // Tap foreground while open closes actions only (no detail navigation).
+    if (openOffset.current !== 0) {
+      snap(0);
+      return;
+    }
+    onPress?.();
+  };
 
   const tile = (action: WorkSwipeAction) => (
     <Pressable
@@ -153,7 +198,7 @@ export function WorkRow({
             action.tone === 'brand'
               ? colors.brand
               : action.tone === 'danger'
-                ? colors.danger
+                ? colors.dangerBrick
                 : colors.wash,
           width: 80,
         },
@@ -167,9 +212,7 @@ export function WorkRow({
               action.tone === 'brand'
                 ? colors.brandInk
                 : action.tone === 'danger'
-                  ? scheme === 'dark'
-                    ? '#1A120C'
-                    : '#FFF8F3'
+                  ? '#FFF8F3'
                   : colors.ink,
           },
         ]}
@@ -179,6 +222,23 @@ export function WorkRow({
       </Text>
     </Pressable>
   );
+
+  const bodyProps = {
+    title,
+    status,
+    meta,
+    photoUrl,
+    avatarName,
+    unknown,
+    lead,
+    badge,
+    end,
+    pills,
+  };
+
+  // Always pressable when swipe actions exist so tap-to-close works without onPress.
+  const swipable = leading.length + trailing.length > 0;
+  const cardPressable = Boolean(onPress) || swipable;
 
   return (
     <View
@@ -198,45 +258,21 @@ export function WorkRow({
         ]}
         {...responder.panHandlers}
       >
-        {onPress ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={status ? `${title}. ${status}` : title}
-          onPress={onPress}
-          style={({ pressed }) => [styles.inner, pressed ? { opacity: 0.88 } : null]}
-        >
-          {({ pressed }) => (
-            <WorkRowBody
-              title={title}
-              status={status}
-              meta={meta}
-              photoUrl={photoUrl}
-              avatarName={avatarName}
-              unknown={unknown}
-              lead={lead}
-              badge={badge}
-              end={end}
-              pills={pills}
-              paused={pressed || swiping}
-            />
-          )}
-        </Pressable>
+        {cardPressable ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={status ? `${title}. ${status}` : title}
+            onPress={onCardPress}
+            style={({ pressed }) => [styles.inner, pressed ? { opacity: 0.88 } : null]}
+          >
+            {({ pressed }) => (
+              <WorkRowBody {...bodyProps} paused={pressed || swiping} />
+            )}
+          </Pressable>
         ) : (
-        <View style={styles.inner} accessibilityLabel={status ? `${title}. ${status}` : title}>
-          <WorkRowBody
-            title={title}
-            status={status}
-            meta={meta}
-            photoUrl={photoUrl}
-            avatarName={avatarName}
-            unknown={unknown}
-            lead={lead}
-            badge={badge}
-            end={end}
-            pills={pills}
-            paused={swiping}
-          />
-        </View>
+          <View style={styles.inner} accessibilityLabel={status ? `${title}. ${status}` : title}>
+            <WorkRowBody {...bodyProps} paused={swiping} />
+          </View>
         )}
       </Animated.View>
     </View>

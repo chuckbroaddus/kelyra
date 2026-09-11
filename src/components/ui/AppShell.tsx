@@ -9,6 +9,7 @@ import { ListenSheet } from '@/components/ui/ListenSheet';
 import { MarqueeScrollProvider } from '@/components/ui/MarqueeText';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { ChromeProvider, useChrome } from '@/lib/chrome/ChromeProvider';
+import { SwipeRowOpenProvider } from '@/lib/ui/swipeRowOpen';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -16,7 +17,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <ChromeProvider>
       <MarqueeScrollProvider>
-        <ShellFrame>{children}</ShellFrame>
+        <SwipeRowOpenProvider>
+          <ShellFrame>{children}</ShellFrame>
+        </SwipeRowOpenProvider>
       </MarqueeScrollProvider>
     </ChromeProvider>
   );
