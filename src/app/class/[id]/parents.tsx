@@ -3,26 +3,20 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
-import { AvatarTray } from '@/components/ui/AvatarTray';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { ClassTabs } from '@/components/ui/ClassTabs';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { isAdminRole } from '@/lib/school/roles';
+import { isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { firstName } from '@/lib/format';
 import { openGroupThread } from '@/lib/messages/api';
 import {
-  addParentToClass,
-  createParent,
   listParentsForClass,
   removeParentFromClass,
   type ClassParent,
@@ -37,13 +31,10 @@ export default function ParentsScreen() {
   usePushedTitle(chrome.className ?? 'Class');
   const router = useRouter();
   const { id: classId } = useLocalSearchParams<{ id: string }>();
-  const { teacher, profile } = useAuth();
+  const { profile } = useAuth();
+  const office = isOfficeRole(profile);
   const admin = isAdminRole(profile);
   const [linked, setLinked] = useState<ClassParent[]>([]);
-  const [unlinked, setUnlinked] = useState<ClassParent[]>([]);
-  const [available, setAvailable] = useState<ClassParent[]>([]);
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ClassParent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,8 +45,6 @@ export default function ParentsScreen() {
     if (!classId) return;
     const next = await listParentsForClass(classId);
     setLinked(next.linked);
-    setUnlinked(next.unlinked);
-    setAvailable(next.available);
   }, [classId]);
 
   useFocusEffect(
@@ -65,25 +54,6 @@ export default function ParentsScreen() {
       });
     }, [load]),
   );
-
-
-
-  const onAdd = async () => {
-    if (!teacher) return;
-    setError(null);
-    try {
-      const created = await createParent({
-        teacherId: teacher.id,
-        displayName: name,
-
-      });
-      setName('');
-      await load();
-      router.push(`/class/${classId}/parent/${created.parent.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add parent');
-    }
-  };
 
   const onDelete = async () => {
     if (!pending) return;
@@ -99,55 +69,15 @@ export default function ParentsScreen() {
     }
   };
 
-  const addParent = (parent: ClassParent) => {
-    if (!classId) return;
-    void addParentToClass(
-      classId,
-      parent.id,
-      parent.children.map((child) => child.id),
-    )
-      .then((n) => {
-        if (!n && !parent.children.length) {
-          router.push(`/class/${classId}/parent/${parent.id}`);
-          return;
-        }
-        return load();
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not add parent'));
-  };
-
-  const all = [...linked, ...available];
-
   return (
     <Screen keyboard maxWidth={640} collapse={classId ? <ClassTabs classId={classId} /> : null}>
-      {all.length ? (
-        <AvatarTray
-          people={all.map((parent) => ({
-            id: parent.id,
-            name: parent.display_name,
-            photoUrl: parent.photoUrl,
-            hasPhoto: Boolean(parent.photo_asset_id),
-          }))}
-          onPress={(person) => router.push(`/class/${classId}/parent/${person.id}`)}
-        />
-      ) : (
-        <Text style={[styles.empty, { color: colors.mute }]}>No parents yet.</Text>
-      )}
-
-      <TextField
-        placeholder="Amina Chen"
-        value={name}
-        onChangeText={setName}
-        returnKeyType="done"
-        onSubmitEditing={() => void onAdd()}
-      />
-      <View style={styles.gap} />
-      <PrimaryButton label={name.trim() ? `Add ${name.trim()}` : 'Add parent'} onPress={() => void onAdd()} />
-      <IconButton name="capture" label="Photograph a contact card" onPress={() => chrome.openHeaderCamera()} />
-
-      <SectionHeader label="In this class" />
+      <SectionHeader label="In this class" first />
       {linked.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>No parents linked to students in this class yet.</Text>
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          {office
+            ? 'No parents linked to students in this class yet.'
+            : 'No parents linked to students in this class yet. The office manages the class family list.'}
+        </Text>
       ) : null}
       {linked.map((parent) => (
         <ListRow
@@ -167,19 +97,34 @@ export default function ParentsScreen() {
             }
             router.push(`/class/${classId}/parent/${parent.id}`);
           }}
-          trailing={[
-            {
-              key: 'remove',
-              label: 'Remove',
-              tone: 'wash',
-              onPress: () => {
-                if (!classId) return;
-                void removeParentFromClass(classId, parent.id)
-                  .then(() => load())
-                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove parent'));
-              },
-            },
-          ]}
+          trailing={
+            office
+              ? [
+                  {
+                    key: 'remove',
+                    label: 'Remove',
+                    tone: 'wash' as const,
+                    onPress: () => {
+                      if (!classId) return;
+                      void removeParentFromClass(classId, parent.id)
+                        .then(() => load())
+                        .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove parent'));
+                    },
+                  },
+                  ...(admin
+                    ? [
+                        {
+                          key: 'delete',
+                          label: 'Delete',
+                          tone: 'danger' as const,
+                          autoCommit: false,
+                          onPress: () => setPending(parent),
+                        },
+                      ]
+                    : []),
+                ]
+              : undefined
+          }
         />
       ))}
       {linked.length ? (
@@ -218,50 +163,7 @@ export default function ParentsScreen() {
         />
       ) : null}
 
-      <SectionHeader label="All parents" />
-      {available.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          Parents not yet on this class show up here. Swipe left to add.
-        </Text>
-      ) : null}
-      {available.map((parent) => (
-        <ListRow
-          key={parent.id}
-          title={parent.display_name}
-          status={parent.children.map((child) => firstName(child.display_name)).join(', ') || undefined}
-          photoUrl={parent.photoUrl}
-          hasPhoto={Boolean(parent.photo_asset_id)}
-          onPress={() => router.push(`/class/${classId}/parent/${parent.id}`)}
-          trailing={[
-            {
-              key: 'add',
-              label: 'Add',
-              tone: 'brand',
-              onPress: () => addParent(parent),
-            },
-            ...(admin
-              ? [
-                  {
-                    key: 'delete',
-                    label: 'Delete',
-                    tone: 'danger' as const,
-                    autoCommit: false,
-                    onPress: () => setPending(parent),
-                  },
-                ]
-              : []),
-          ]}
-        />
-      ))}
-
-      {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={4}
-        compact
-        detail="Open a parent to link children. They sign in and see the focus skill — not the grade book."
-      />
-
       {admin ? (
         <ConfirmSheet
           visible={Boolean(pending)}
@@ -325,9 +227,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     minWidth: 0,
-  },
-  gap: {
-    height: 12,
   },
   error: {
     ...type.body,
