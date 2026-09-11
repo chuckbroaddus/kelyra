@@ -3657,7 +3657,7 @@ src/lib/posts/api.ts
 | **Alert** | Same tab chrome. Tooltip / `accessibilityLabel`: **Alert** — urgent, shows on the bell. | — |
 | **Mute** | 44 × 44 hit, far right of the tab row. Not a tab. Does not take a selected label. | Off |
 
-Staff who can post see Post · Alert + mute. Readers who are not students see mute alone, still far right, same hairline. Students never see this row. Toggling mute calls `set_feed_muted`. Empty list while muted: `This feed is muted.` Unmute restores posts. Hide-on-scroll still tucks this whole dock (§ already).
+Staff who can post see Post · Alert + mute. Readers who are not students see mute alone, still far right, same hairline. Students never see this row. The composer sits tight under that hairline (`PersonTabs compact`, 4 pt to the field) — same denser shelf as Gradebook `ChipRow compact`. Do not leave an extra 8+8 band between the tab row and the text box. Alert field placeholder: **Enter Alert Message**. Post: **Write a post**. Toggling mute calls `set_feed_muted`. Empty list while muted: `This feed is muted.` Unmute restores posts. Hide-on-scroll still tucks this whole dock (§ already).
 
 Do **not** reuse the Feed destination `compose` pencil for Post (that tab means “open the feed”). Do **not** reuse the header `bell` for Alert (that is the inbox). Do **not** reuse `mail`.
 

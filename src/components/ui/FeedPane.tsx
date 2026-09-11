@@ -321,6 +321,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
                 value={kind}
                 onChange={(key) => setKind(key === 'alert' ? 'alert' : 'post')}
                 trailing={muteBtn}
+                compact
               />
             ) : muteBtn ? (
               <View style={[styles.muteRow, { borderBottomColor: colors.line }]}>{muteBtn}</View>
@@ -382,7 +383,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-  composer: { marginTop: 8, marginBottom: 12 },
+  composer: { marginTop: 4, marginBottom: 8 },
   muteHit: {
     minWidth: 44,
     minHeight: 44,

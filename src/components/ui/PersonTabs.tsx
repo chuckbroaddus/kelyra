@@ -37,10 +37,12 @@ type Props = {
   trailing?: ReactNode;
   /** Stacked under another PersonTabs row: no extra gap or hairline. */
   stacked?: boolean;
+  /** Tighter gap under the hairline (feed compose). Keeps the 1 px line. */
+  compact?: boolean;
 };
 
 /** Icon-first section tabs. Selected tab shows its name next to the glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
@@ -60,6 +62,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked }: Props) 
       style={[
         styles.wrap,
         stacked ? styles.stacked : styles.solo,
+        compact && !stacked ? styles.compact : null,
         { borderBottomColor: colors.line },
       ]}
     >
@@ -185,6 +188,9 @@ const styles = StyleSheet.create({
   stacked: {
     marginBottom: 0,
     borderBottomWidth: 0,
+  },
+  compact: {
+    marginBottom: 0,
   },
   labelClip: {
     flexShrink: 1,
