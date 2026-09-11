@@ -56,8 +56,8 @@ export function headerTitleFor(input: {
   if (pathname.startsWith('/student/people')) return 'People';
   if (/\/class\/[^/]+\/student\//.test(pathname)) return named || 'Student';
   if (pathname.includes('/parent/')) return named || 'Parent';
-  if (pathname.endsWith('/assignment/new') || pathname.includes('/assignment/new')) return named || 'Assign';
-  if (pathname.includes('/assignment/')) return named || 'Assign';
+  if (pathname.endsWith('/assignment/new') || pathname.includes('/assignment/new')) return named || 'Assignment';
+  if (pathname.includes('/assignment/')) return named || 'Assignment';
   if (pathname.includes('/lesson-result/')) return named || 'Lesson';
   if (pathname.includes('/review/')) return named || 'Review';
   if (pathname.startsWith('/lesson')) return named || 'Lesson';
@@ -72,7 +72,7 @@ export function headerTitleFor(input: {
   ) {
     return named || className || 'Class';
   }
-  if (pathname.endsWith('/assign')) return 'Assign';
+  if (pathname.endsWith('/assign')) return 'Assignment';
   if (/^\/class\/[^/]+$/.test(pathname)) return named || className || 'Class';
   if (pathname === '/capture') return 'Capture';
   if (pathname === '/inbox') return 'Needs Attention';

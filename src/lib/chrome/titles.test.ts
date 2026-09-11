@@ -63,3 +63,42 @@ test('Parent grades book wordmark is Grades', () => {
     'Grades',
   );
 });
+
+test('assignment create/edit wordmark is Assignment', () => {
+  assert.equal(
+    headerTitleFor({ ...base, pathname: '/assignment/new' }),
+    'Assignment',
+  );
+  assert.equal(
+    headerTitleFor({ ...base, pathname: '/class/c1/assignment/new' }),
+    'Assignment',
+  );
+  assert.equal(
+    headerTitleFor({ ...base, pathname: '/class/c1/assign' }),
+    'Assignment',
+  );
+  assert.equal(
+    headerTitleFor({
+      ...base,
+      pathname: '/class/c1/assignment/a1',
+      pushedTitle: null,
+    }),
+    'Assignment',
+  );
+  assert.equal(
+    headerTitleFor({
+      ...base,
+      pathname: '/class/c1/assignment/a1',
+      pushedTitle: 'Chapter 3 Quiz',
+    }),
+    'Chapter 3 Quiz',
+  );
+  assert.equal(
+    headerTitleFor({
+      ...base,
+      pathname: '/assignment/new',
+      pushedTitle: 'Assignment',
+    }),
+    'Assignment',
+  );
+});
