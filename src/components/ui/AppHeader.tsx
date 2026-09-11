@@ -173,17 +173,20 @@ export function AppHeader() {
           <View
             pointerEvents="none"
             accessibilityElementsHidden
-            style={[styles.kelyraSlot, { width: markSize, height: bar }]}
+            style={[styles.markSlot, { width: markSize, height: bar }]}
           >
             <KelyraMark size={markSize} />
           </View>
         ) : logoUrl ? (
-          <View style={styles.logoSlot} accessibilityLabel="School logo">
+          <View
+            accessibilityLabel="School logo"
+            style={[styles.markSlot, { width: markSize, height: bar }]}
+          >
             <RemoteImage
               uri={logoUrl}
               accessibilityLabel="School logo"
               contentFit="contain"
-              style={styles.logo}
+              style={{ width: markSize, height: markSize, borderRadius: markSize / 2 }}
             />
           </View>
         ) : null}
@@ -346,7 +349,8 @@ const styles = StyleSheet.create({
     gap: 0,
     overflow: 'visible',
   },
-  kelyraSlot: {
+  // Shared Ask Kelyra mark + school logo slot (width markSize, height bar).
+  markSlot: {
     marginRight: 8,
     flexGrow: 0,
     flexShrink: 0,
@@ -395,22 +399,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 8,
-  },
-  logoSlot: {
-    width: 22,
-    height: 22,
-    marginRight: 8,
-    flexGrow: 0,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 11,
-    overflow: 'hidden',
-  },
-  logo: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
   },
   wordmark: {
     ...type.title,

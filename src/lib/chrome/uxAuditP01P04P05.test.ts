@@ -44,6 +44,12 @@ test('P-01: AppHeader trailing order is capture → search → mail → menu; ca
   assert.match(header, /Icon name="mail"/);
   assert.match(header, /Icon name="menu"/);
   assert.match(header, /School logo/);
+  // School logo matches Ask Kelyra mark size (markSize = bar + 12), shared markSlot.
+  assert.match(header, /const markSize = bar \+ 12/);
+  assert.match(header, /styles\.markSlot/);
+  assert.match(header, /width: markSize, height: bar/);
+  assert.doesNotMatch(header, /logoSlot/);
+  assert.doesNotMatch(header, /width:\s*22,\s*\n\s*height:\s*22,\s*\n\s*marginRight:\s*8/);
 });
 
 
