@@ -26,6 +26,12 @@ export type StoredHomeworkDraft = {
   model?: string | null;
   pass?: string | null;
   pending?: boolean;
+  /** KEYGRADE A1 — set when score-key scripts awarded the draft. */
+  method?: 'key_score' | 'vision_gaps' | string;
+  schema_version?: number;
+  assignment_id?: string | null;
+  items?: Array<Record<string, unknown>>;
+  residuals?: number;
 };
 
 export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
@@ -37,6 +43,8 @@ export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boo
         draft.studentName ||
         draft.scoreMark === 'pass' ||
         draft.scoreMark === 'fail' ||
+        draft.method === 'key_score' ||
+        (Array.isArray(draft.items) && draft.items.length > 0) ||
         (draft.pageAssetIds?.length ?? 0) > 1),
   );
 }

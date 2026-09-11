@@ -27,6 +27,14 @@ export const FAMILY_OMIT_CAPTURE_KEYS = [
   'audio_asset_id',
   'guessed_student_id',
   'match_confidence',
+  // KEYGRADE S1 T1 — never leak keys/extract on family payloads
+  'key_items',
+  'key_asset_id',
+  'key_notes',
+  'key_kind',
+  'key_phash',
+  'key_layout',
+  'key_header',
 ] as const;
 
 export function omitFamilyCaptureSecrets<T extends Record<string, unknown>>(row: T): Partial<T> {

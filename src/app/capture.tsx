@@ -9,6 +9,7 @@ import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
+import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
 import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
@@ -22,26 +23,44 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
+  assignmentHasKey,
+  listClassAssignments,
+} from '@/lib/assignments/api';
+import { parseKeyItems } from '@/lib/assignments/keys';
+import type { ScoredKeyItem } from '@/lib/assignments/scoreKey';
+import {
   applyTranscriptAndMatch,
+  attachCapture,
   createCapture,
   saveCaptureEvaluation,
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
 import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
 import { resolveCaptureClass } from '@/lib/classes/api';
+import { approveCapture } from '@/lib/gaps/api';
+import { invokeAi } from '@/lib/ai/invoke';
+import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
+import {
+  buildKeyScoreDraft,
+  extractMarksFromVisionItems,
+} from '@/lib/keygrade/draft';
+import { findTwinCandidates } from '@/lib/keygrade/twins';
 import { shouldAutoAttach } from '@/lib/matching/matchName';
 import { splitByRoster } from '@/lib/matching/splitTranscript';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { normalizePhoto } from '@/lib/media/photo';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
-import { uploadTeacherAsset } from '@/lib/media/upload';
+import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
+import { signedOriginalUrlsForAssetIds } from '@/lib/people/photos';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
+import type { AssignmentRow } from '@/lib/supabase/types';
 
 export default function CaptureScreen() {
   const { colors } = useTheme();
   const layout = useLayout();
   const chrome = useChrome();
   const chromeClassId = chrome.classId;
+  const chromeRole = chrome.role;
   const router = useRouter();
   const { teacher } = useAuth();
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
@@ -49,6 +68,11 @@ export default function CaptureScreen() {
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  const [assignmentId, setAssignmentId] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
   const [micId, setMicId] = useState<string | null>(null);
   const [cameraId, setCameraId] = useState<string | null>(null);
@@ -59,6 +83,23 @@ export default function CaptureScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const [evaluation, setEvaluation] = useState<CaptureEvaluation | null>(null);
+
+  const keyedAssignments = useMemo(
+    () => assignments.filter((row) => assignmentHasKey(row)),
+    [assignments],
+  );
+  const selectedAssignment = useMemo(
+    () => assignments.find((row) => row.id === assignmentId) ?? null,
+    [assignments, assignmentId],
+  );
+  const twinCandidates = useMemo(() => {
+    const names = roster.map((student) => ({
+      studentId: student.id,
+      displayName: student.display_name,
+      aliases: student.name_aliases,
+    }));
+    return findTwinCandidates(spokenName || evaluation?.studentName || '', names);
+  }, [spokenName, evaluation?.studentName, roster]);
 
   const preview = useMemo(() => {
     const names = roster.map((student) => ({
@@ -114,13 +155,14 @@ export default function CaptureScreen() {
         try {
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
           setRoster(await listRoster(klass.id));
+          setAssignments(await listClassAssignments(klass.id));
           setMicId(await getPreferredDeviceId('audio'));
           setCameraId(await getPreferredDeviceId('video'));
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Could not load roster');
         }
       })();
-    }, [teacher]),
+    }, [teacher, chromeClassId]),
   );
 
   useFocusEffect(
@@ -146,6 +188,10 @@ export default function CaptureScreen() {
     setEvaluation(null);
     setRecording(null);
     setCameraOpen(false);
+    setPackItems([]);
+    setReviewOpen(false);
+    setStudentId(null);
+    setAssignmentId(null);
   };
 
   const applyPhoto = async (uri: string, mimeType?: string | null) => {
@@ -160,6 +206,8 @@ export default function CaptureScreen() {
         },
       ]);
       setEvaluation(null);
+      setPackItems([]);
+      setReviewOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that photo.');
     }
@@ -219,6 +267,65 @@ export default function CaptureScreen() {
     }
   };
 
+  const runKeyedExtract = async (
+    photoAssets: NonNullable<CaptureEvaluation['photoAssets']>,
+    assigned: AssignmentRow,
+  ) => {
+    const imageUrls: string[] = [];
+    for (const asset of photoAssets) {
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (imageUrl) imageUrls.push(imageUrl);
+    }
+    if (!imageUrls.length) throw new Error('Could not open those photos.');
+    const keyUrls = await signedOriginalUrlsForAssetIds(
+      assigned.key_asset_id ? [assigned.key_asset_id] : [],
+    );
+    const keyItems = parseKeyItems(assigned.key_items);
+    const vision = await invokeAi<{
+      studentName?: string | null;
+      gaps?: CaptureEvaluation['gaps'];
+      draftScore?: number | null;
+      teacherNote?: string | null;
+      costUsd?: number | null;
+      items?: Array<{ n?: number; seen?: string | null; expected?: string; credit?: number | null }>;
+    }>('evaluate-homework', {
+      imageUrls,
+      imageUrl: imageUrls[0],
+      keyItems,
+      keyNotes: assigned.key_notes ?? '',
+      scoreScheme: assigned.score_scheme ?? 'numeric',
+      maxScore: assigned.max_score,
+      keyImageUrls: assigned.key_asset_id
+        ? [keyUrls.get(assigned.key_asset_id)].filter(Boolean)
+        : [],
+    });
+    const extract = extractMarksFromVisionItems(vision.items);
+    // Prefer extract rows; if vision returned no items, seed blanks from key.
+    const marks =
+      extract.length > 0
+        ? extract
+        : keyItems.map((item) => ({
+            n: item.n,
+            extracted: null as string | null,
+            confidence: 0.2,
+            flag: 'blank' as const,
+          }));
+    const { draft, scored } = buildKeyScoreDraft({
+      keyItems,
+      extract: marks,
+      assignmentId: assigned.id,
+      maxScore: assigned.max_score,
+      modelTotal: vision.draftScore,
+      teacherNote: vision.teacherNote ?? null,
+      studentName: vision.studentName ?? null,
+      gaps: vision.gaps ?? [],
+      pageAssetIds: photoAssets.map((asset) => asset.id),
+      costUsd: vision.costUsd ?? null,
+      extractModel: 'evaluate-homework',
+    });
+    return { draft, scored, vision };
+  };
+
   const onAskAi = async () => {
     if ((!pages.length && !audioUri) || asking || recording) return;
     setAsking(true);
@@ -242,11 +349,30 @@ export default function CaptureScreen() {
       } else if (!spokenName.trim() && result.transcript) {
         setSpokenName(result.transcript);
       }
-      const bits = [];
-      if (result.studentName) bits.push(`Name: ${result.studentName}`);
-      if (result.draftScore != null) bits.push(`Draft score: ${result.draftScore}`);
-      if (result.gaps.length) bits.push(result.gaps.map((gap) => gap.label).join(', '));
-      setStatus(bits.length ? bits.join(' · ') : 'AI finished. Check the save button.');
+
+      if (selectedAssignment && assignmentHasKey(selectedAssignment) && result.photoAssets.length) {
+        const keyed = await runKeyedExtract(result.photoAssets, selectedAssignment);
+        setEvaluation({
+          ...result,
+          gaps: keyed.draft.gaps,
+          draftScore: keyed.draft.draftScore,
+          teacherNote: keyed.draft.teacherNote,
+          studentName: keyed.draft.studentName ?? result.studentName,
+          costUsd: keyed.draft.costUsd ?? result.costUsd,
+          pageAssetIds: keyed.draft.pageAssetIds,
+        });
+        setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
+        setReviewOpen(true);
+        setStatus(
+          `Keyed draft ${keyed.scored.draft_score ?? '—'} · confirm items, then Approve this capture.`,
+        );
+      } else {
+        const bits = [];
+        if (result.studentName) bits.push(`Name: ${result.studentName}`);
+        if (result.draftScore != null) bits.push(`Draft score: ${result.draftScore}`);
+        if (result.gaps.length) bits.push(result.gaps.map((gap) => gap.label).join(', '));
+        setStatus(bits.length ? bits.join(' · ') : 'AI finished. Check the save button.');
+      }
     } catch (err) {
       setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not ask AI');
@@ -255,9 +381,62 @@ export default function CaptureScreen() {
     }
   };
 
-  const save = async () => {
+  const openPackBReview = async () => {
+    if (!selectedAssignment || !assignmentHasKey(selectedAssignment) || !pages.length) {
+      setError('Pick a keyed assignment and a photo first.');
+      return;
+    }
+    setAsking(true);
+    setError(null);
+    setStatus('Extracting against key…');
+    try {
+      const photoAssets =
+        evaluation?.photoAssets?.length === pages.length
+          ? evaluation.photoAssets
+          : await Promise.all(
+              pages.map((page) =>
+                uploadTeacherAsset({
+                  teacherId: teacher.id,
+                  kind: 'photo',
+                  uri: page.uri,
+                  mimeType: page.mimeType,
+                }),
+              ),
+            );
+      const keyed = await runKeyedExtract(photoAssets, selectedAssignment);
+      setEvaluation({
+        photoAssets,
+        audioAsset: evaluation?.audioAsset ?? null,
+        transcript: evaluation?.transcript ?? null,
+        studentName: keyed.draft.studentName ?? evaluation?.studentName ?? null,
+        gaps: keyed.draft.gaps,
+        draftScore: keyed.draft.draftScore,
+        teacherNote: keyed.draft.teacherNote,
+        costUsd: keyed.draft.costUsd ?? null,
+        parentSentence: null,
+        pageAssetIds: keyed.draft.pageAssetIds,
+      });
+      setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
+      setReviewOpen(true);
+      setStatus('Confirm each item, file the student if needed, then Approve.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start keyed review');
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const persistCapture = async (mode: 'draft' | 'approve', draftScore: number | null) => {
     if (!pages.length && !spokenName.trim() && !audioUri) {
       setError('Add a photo, a name, or a short note.');
+      return;
+    }
+    if (mode === 'approve' && !canApproveKeygrade(chromeRole)) {
+      setError('Teach seat required to Approve.');
+      return;
+    }
+    if (mode === 'approve' && !studentId) {
+      setError('File a student before Approve. Unassigned cannot publish.');
       return;
     }
     setBusy(true);
@@ -289,16 +468,46 @@ export default function CaptureScreen() {
               mimeType: audioMime,
             })
           : null;
-      const draftToSave = photoAssets.length
+
+      const keyItems = selectedAssignment ? parseKeyItems(selectedAssignment.key_items) : [];
+      const keyed =
+        selectedAssignment && assignmentHasKey(selectedAssignment) && packItems.length
+          ? buildKeyScoreDraft({
+              keyItems,
+              extract: packItems.map((item) => ({
+                n: item.n,
+                extracted: item.extracted,
+                confidence: item.confidence,
+                flag: item.flag,
+              })),
+              assignmentId: selectedAssignment.id,
+              maxScore: selectedAssignment.max_score,
+              teacherNote: evaluation?.teacherNote ?? null,
+              studentName: evaluation?.studentName ?? null,
+              gaps: evaluation?.gaps ?? [],
+              pageAssetIds: photoAssets.map((asset) => asset.id),
+              costUsd: evaluation?.costUsd ?? null,
+            })
+          : null;
+
+      // Re-apply teacher confirm overrides onto scored items.
+      const draftToSave = keyed
         ? {
-            gaps: evaluation?.gaps ?? [],
-            draftScore: evaluation?.draftScore ?? null,
-            teacherNote: evaluation?.teacherNote ?? null,
-            studentName: evaluation?.studentName ?? null,
-            parentSentence: evaluation?.parentSentence ?? null,
-            pageAssetIds: photoAssets.map((asset) => asset.id),
+            ...keyed.draft,
+            items: packItems,
+            draftScore: draftScore ?? keyed.draft.draftScore,
+            residuals: packItems.filter((item) => item.residual || item.awarded == null).length,
           }
-        : evaluation;
+        : photoAssets.length
+          ? {
+              gaps: evaluation?.gaps ?? [],
+              draftScore: evaluation?.draftScore ?? null,
+              teacherNote: evaluation?.teacherNote ?? null,
+              studentName: evaluation?.studentName ?? null,
+              parentSentence: evaluation?.parentSentence ?? null,
+              pageAssetIds: photoAssets.map((asset) => asset.id),
+            }
+          : evaluation;
 
       const first = await createCapture({
         classId: klass.id,
@@ -307,6 +516,7 @@ export default function CaptureScreen() {
         photoAssetId: photo?.id,
         audioAssetId: audio?.id,
         transcript: spokenName.trim() || null,
+        assignmentId: selectedAssignment?.id ?? null,
       });
 
       let fullText = spokenName.trim() || evaluation?.transcript?.trim() || '';
@@ -321,9 +531,10 @@ export default function CaptureScreen() {
       const segments = splitByRoster(fullText, names);
       const texts = segments.length ? segments.map((part) => part.text) : fullText ? [fullText] : [];
       if (!texts.length && draftToSave) {
-        await saveCaptureEvaluation(first.id, draftToSave, null);
+        await saveCaptureEvaluation(first.id, draftToSave, studentId);
       }
 
+      let targetCaptureId = first.id;
       for (const [index, segment] of texts.entries()) {
         const row =
           index === 0
@@ -335,6 +546,42 @@ export default function CaptureScreen() {
                 transcript: segment,
               });
         await applyTranscriptAndMatch(row, segment, index === 0 ? draftToSave : null);
+        if (index === 0) targetCaptureId = row.id;
+      }
+
+      let filedStudentId = studentId;
+      if (filedStudentId) {
+        await attachCapture(targetCaptureId, filedStudentId);
+      } else if (!texts.length) {
+        // keep Unassigned
+      } else {
+        const firstMatch = segments[0]?.match;
+        if (firstMatch && shouldAutoAttach(firstMatch) && firstMatch.guessedStudentId) {
+          filedStudentId = firstMatch.guessedStudentId;
+        }
+      }
+
+      if (mode === 'approve') {
+        if (!filedStudentId) throw new Error('File a student before Approve.');
+        const { listStudentCaptures } = await import('@/lib/gaps/api');
+        const studentCaps = await listStudentCaptures(filedStudentId);
+        const latest = studentCaps.find((item) => item.id === targetCaptureId);
+        const { requireSupabase } = await import('@/lib/supabase/client');
+        const { data: captureRow } = await requireSupabase()
+          .from('captures')
+          .select('*')
+          .eq('id', targetCaptureId)
+          .single();
+        if (!captureRow) throw new Error('Capture missing after save.');
+        await approveCapture(latest ?? captureRow, latest?.gaps ?? [], draftScore, {
+          scoreMark: 'numeric',
+          gradeKind: 'homework',
+          assignmentId: selectedAssignment?.id ?? null,
+        });
+        resetSlip();
+        setStatus('Approved. Grade published.');
+        router.replace(`/class/${klass.id}/student/${filedStudentId}`);
+        return;
       }
 
       resetSlip();
@@ -344,6 +591,10 @@ export default function CaptureScreen() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const save = async () => {
+    await persistCapture('draft', packItems.length ? null : evaluation?.draftScore ?? null);
   };
 
   const hasMedia = pages.length > 0 || Boolean(audioUri);
@@ -367,6 +618,8 @@ export default function CaptureScreen() {
           onRemove={(key) => {
             setPages((current) => current.filter((item) => item.key !== key));
             setEvaluation(null);
+            setPackItems([]);
+            setReviewOpen(false);
           }}
         />
       ) : null}
@@ -426,7 +679,57 @@ export default function CaptureScreen() {
         onChangeText={setSpokenName}
       />
       <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text>
-      {evaluation?.gaps.length ? (
+
+      {keyedAssignments.length ? (
+        <Card>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+            Keyed assignment
+          </Text>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Pack B: confirm extracts on this phone, then Approve this capture.
+          </Text>
+          <View style={styles.gaps}>
+            {keyedAssignments.slice(0, 8).map((row) => (
+              <Chip
+                key={row.id}
+                label={row.title}
+                selected={assignmentId === row.id}
+                onPress={() => {
+                  setAssignmentId(row.id);
+                  setPackItems([]);
+                  setReviewOpen(false);
+                }}
+              />
+            ))}
+          </View>
+          {selectedAssignment && pages.length ? (
+            <GhostButton
+              label={asking ? 'Extracting…' : 'Review & score against key'}
+              disabled={asking || busy || Boolean(recording)}
+              onPress={() => void openPackBReview()}
+            />
+          ) : null}
+        </Card>
+      ) : null}
+
+      {reviewOpen && packItems.length ? (
+        <KeygradePackBReview
+          chromeRole={chromeRole}
+          items={packItems}
+          assignmentTitle={selectedAssignment?.title}
+          maxScore={selectedAssignment?.max_score}
+          studentId={studentId}
+          twinCandidates={twinCandidates}
+          roster={roster.map((row) => ({ id: row.id, displayName: row.display_name }))}
+          busy={busy}
+          onChangeItems={setPackItems}
+          onSelectStudent={setStudentId}
+          onApprove={(score) => void persistCapture('approve', score)}
+          onSaveDraft={(score) => void persistCapture('draft', score)}
+        />
+      ) : null}
+
+      {evaluation?.gaps.length && !reviewOpen ? (
         <Card>
           <Text style={[type.section, { color: colors.mute }]}>Suggested gaps</Text>
           <View style={styles.gaps}>
@@ -463,7 +766,7 @@ export default function CaptureScreen() {
             <PhaseBanner
               phase={2}
               compact
-              detail="Photograph one student’s work, then say the name. Incomplete is fine."
+              detail="Photograph one student’s work, then say the name. Keyed: confirm + Approve on this phone (Pack B)."
             />
           </Screen>
         </View>
@@ -478,7 +781,7 @@ export default function CaptureScreen() {
       <PhaseBanner
         phase={2}
         compact
-        detail="Photograph one student’s work, then say the name. Incomplete is fine."
+        detail="Photograph one student’s work, then say the name. Keyed: confirm + Approve on this phone (Pack B)."
       />
     </Screen>
   );
