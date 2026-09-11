@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { decideSwipeSnap, decideSwipeTerminate, SWIPE_TILE } from './swipeRowSnap.ts';
+import {
+  decideSwipeSnap,
+  decideSwipeTerminate,
+  syncGrantFromCurrentX,
+  SWIPE_TILE,
+} from './swipeRowSnap.ts';
 
 const trail2 = { leadCount: 0, trailCount: 2, rowWidth: 320 };
 const both = { leadCount: 1, trailCount: 2, rowWidth: 320 };
@@ -92,4 +97,21 @@ test('terminate near open trailing rests open', () => {
 
 test('terminate near closed rests closed', () => {
   assert.equal(decideSwipeTerminate(-20, 0, 2), 0);
+});
+
+test('terminate while closing LTR from trailing-open prefers shut', () => {
+  assert.equal(decideSwipeTerminate(-90, 0, 2, 30), 0);
+});
+
+test('terminate without closing dx still rests open when past threshold', () => {
+  assert.equal(decideSwipeTerminate(-90, 0, 2, 0), -2 * SWIPE_TILE);
+});
+
+test('terminate while closing RTL from leading-open prefers shut', () => {
+  assert.equal(decideSwipeTerminate(90, 1, 0, -30), 0);
+});
+
+test('syncGrantFromCurrentX returns the sync mirror (no async race)', () => {
+  assert.equal(syncGrantFromCurrentX(-160), -160);
+  assert.equal(syncGrantFromCurrentX(0), 0);
 });

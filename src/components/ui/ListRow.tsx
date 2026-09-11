@@ -8,7 +8,12 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { type } from '@/constants/theme';
 import { useSwipeRowOpen } from '@/lib/ui/swipeRowOpen';
-import { decideSwipeSnap, decideSwipeTerminate, SWIPE_TILE } from '@/lib/ui/swipeRowSnap';
+import {
+  decideSwipeSnap,
+  decideSwipeTerminate,
+  syncGrantFromCurrentX,
+  SWIPE_TILE,
+} from '@/lib/ui/swipeRowSnap';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type ListSwipeAction = {
@@ -69,6 +74,9 @@ export function ListRow({
   const start = useRef(0);
   const openOffset = useRef(0);
   const grantFrom = useRef(0);
+  /** Sync mirror of translateX — grant must not wait on stopAnimation callback. */
+  const currentX = useRef(0);
+  const lastDx = useRef(0);
   const [swiping, setSwiping] = useState(false);
   const [open, setOpen] = useState(false);
   const swipable = leading.length + trailing.length > 0;
@@ -88,6 +96,7 @@ export function ListRow({
 
   const snap = (to: number) => {
     openOffset.current = to;
+    currentX.current = to;
     if (to !== 0) {
       setOpen((prev) => (prev ? prev : true));
     }
@@ -103,12 +112,15 @@ export function ListRow({
   };
 
   const run = (action: ListSwipeAction) => {
+    currentX.current = 0;
+    openOffset.current = 0;
     Animated.timing(x, {
       toValue: 0,
       duration: 140,
       useNativeDriver: true,
     }).start(() => {
       start.current = 0;
+      currentX.current = 0;
       markOpen(0);
       setSwiping(false);
       action.onPress();
@@ -135,19 +147,26 @@ export function ListRow({
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: () => {
         setSwiping(true);
-        x.stopAnimation((value) => {
-          start.current = value;
-          openOffset.current = value;
-          grantFrom.current = value;
-        });
+        lastDx.current = 0;
+        // stopAnimation's value callback is async — move/release can run first.
+        x.stopAnimation();
+        const from = syncGrantFromCurrentX(currentX.current);
+        start.current = from;
+        openOffset.current = from;
+        grantFrom.current = from;
       },
       onPanResponderMove: (_, g) => {
         const maxL = leadingRef.current.length * SWIPE_TILE;
         const maxR = trailingRef.current.length * SWIPE_TILE;
         const next = start.current + g.dx;
         const clamped = Math.max(-maxR, Math.min(maxL, next));
+        lastDx.current = g.dx;
         openOffset.current = clamped;
+        currentX.current = clamped;
         x.setValue(clamped);
+        if (clamped !== 0) {
+          setOpen((prev) => (prev ? prev : true));
+        }
       },
       onPanResponderRelease: (_, g) => {
         const leadActs = leadingRef.current;
@@ -177,6 +196,7 @@ export function ListRow({
             openOffset.current,
             leadingRef.current.length,
             trailingRef.current.length,
+            lastDx.current,
           ),
         );
       },
