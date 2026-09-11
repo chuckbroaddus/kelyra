@@ -350,6 +350,13 @@ export default function SetupScreen() {
     [selectableStudentIds, picked],
   );
 
+  const hasNeedsLoginRows = useMemo(
+    () =>
+      loginByStudentId != null &&
+      roster.some((student) => !loginByStudentId[student.id]),
+    [roster, loginByStudentId],
+  );
+
   const exitMessaging = () => {
     setMessaging(false);
     setPicked([]);
@@ -602,18 +609,25 @@ export default function SetupScreen() {
         </Text>
       ) : null}
       {messaging && roster.length ? (
-        <View style={styles.selectAllRow}>
-          <Pressable
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: allSelected }}
-            accessibilityLabel="Select all students"
-            onPress={toggleSelectAll}
-            style={styles.selectAll}
-          >
-            <CheckBox checked={allSelected} />
-            <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
-          </Pressable>
-          <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+        <View>
+          <View style={styles.selectAllRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: allSelected }}
+              accessibilityLabel="Select all students"
+              onPress={toggleSelectAll}
+              style={styles.selectAll}
+            >
+              <CheckBox checked={allSelected} />
+              <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+            </Pressable>
+            <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+          </View>
+          {hasNeedsLoginRows ? (
+            <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
+              Grayed-out students need a login before you can message them. The office can create logins.
+            </Text>
+          ) : null}
         </View>
       ) : null}
       {roster.map((student) => {

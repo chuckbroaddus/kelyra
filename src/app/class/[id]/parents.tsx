@@ -72,6 +72,13 @@ export default function ParentsScreen() {
     [selectableParentIds, picked],
   );
 
+  const hasNeedsLoginRows = useMemo(
+    () =>
+      loginByParentId != null &&
+      linked.some((parent) => !loginByParentId[parent.id]),
+    [linked, loginByParentId],
+  );
+
   const exitMessaging = () => {
     setMessaging(false);
     setPicked([]);
@@ -201,18 +208,25 @@ export default function ParentsScreen() {
         </Text>
       ) : null}
       {messaging && linked.length ? (
-        <View style={styles.selectAllRow}>
-          <Pressable
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: allSelected }}
-            accessibilityLabel="Select all parents"
-            onPress={toggleSelectAll}
-            style={styles.selectAll}
-          >
-            <CheckBox checked={allSelected} />
-            <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
-          </Pressable>
-          <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+        <View>
+          <View style={styles.selectAllRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: allSelected }}
+              accessibilityLabel="Select all parents"
+              onPress={toggleSelectAll}
+              style={styles.selectAll}
+            >
+              <CheckBox checked={allSelected} />
+              <Text style={[styles.selectAllLabel, { color: colors.mute }]}>Select all</Text>
+            </Pressable>
+            <GhostButton align="left" label="Cancel" onPress={exitMessaging} />
+          </View>
+          {hasNeedsLoginRows ? (
+            <Text style={[type.meta, { color: colors.mute, paddingHorizontal: 4, marginBottom: 4 }]}>
+              Grayed-out parents need a login before you can message them. The office can create logins.
+            </Text>
+          ) : null}
         </View>
       ) : null}
       {linked.map((parent) => {
