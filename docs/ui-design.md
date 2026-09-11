@@ -1771,7 +1771,7 @@ Vertical stack on `/parent/ride` when the parent has **no** live waiting trip:
 3. Children this stop chips
 4. Ahead plate field + **Photo car ahead** (Primary) + **I'm first** (Ghost)
 5. Status string card (check-in result) when present
-6. Ghost **Manage vehicles**
+6. Ghost **Manage vehicles** → `/parent/vehicles` (Add vehicle: validity chips today/range/indefinite; **range** shows Start/End `DateInput`)
 
 No Leave control. Empty / I’m-first law unchanged.
 
