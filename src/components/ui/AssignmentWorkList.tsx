@@ -129,44 +129,31 @@ export function AssignmentWorkList({ classId, studentId, renderAfter }: Props) {
         const extraStatus = studentId ? studentWorkExtras(row, subs[row.id]) : null;
         const openSheet = () => router.push(`/class/${classId}/assignment/${row.id}` as never);
         const previewLesson = () => router.push(`/lesson/${row.id}?preview=1` as never);
-        const kind = workKindLabel(row.kind);
         return (
           <WorkRow
             key={row.id}
             title={row.title}
             status={
               extraStatus?.status ??
-              ([row.due_at ? dueLabel(row.due_at) : null, lessonStatus].filter(Boolean).join(' · ') || undefined)
+              ([workKindLabel(row.kind), row.due_at ? dueLabel(row.due_at) : null, lessonStatus]
+                .filter(Boolean)
+                .join(' · ') || undefined)
             }
             meta={weight || undefined}
             lead={<AssignmentMark category={row.category} size={48} />}
             badge={extraStatus?.badge ?? 'assigned'}
             pills={[
-              { key: 'kind', label: kind, kind: 'secondary', onPress: openSheet },
-              ...(row.kind === 'lesson'
-                ? [
-                    { key: 'preview', label: 'Preview', kind: 'secondary' as const, onPress: previewLesson },
-                    { key: 'open', label: 'Open', kind: 'primary' as const, onPress: previewLesson },
-                  ]
-                : [
-                    {
-                      key: 'open',
-                      label: 'Open',
-                      kind: 'primary' as const,
-                      onPress: openSheet,
-                    },
-                  ]),
+              {
+                key: 'open',
+                label: 'Open',
+                kind: 'primary' as const,
+                onPress: row.kind === 'lesson' ? previewLesson : openSheet,
+              },
               {
                 key: 'book',
                 label: 'Grade book',
                 kind: 'secondary',
                 onPress: () => router.push(`/class/${classId}/gradebook` as never),
-              },
-              {
-                key: 'delete',
-                label: 'Delete',
-                kind: 'ghost',
-                onPress: () => setPending(row),
               },
             ]}
             trailing={[

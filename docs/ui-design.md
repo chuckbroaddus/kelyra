@@ -961,7 +961,7 @@ Wrap `WorkRow` in a horizontal gesture (implement with `react-native` `Animated`
 
 Un-filing a capture (send back to Inbox) is **not** delete. Trailing **Inbox** on the student work row, confirm `Send this back to Inbox?`, then `student_id = null`, `status = unassigned`. Delete removes the capture (§20).
 
-Every swipe action **already exists as a pill** on the same row. VoiceOver / Switch Control users never have to swipe.
+Every swipe action **already exists as a pill** on the same row — **except Assignments** (`AssignmentWorkList`), where **Preview** and **Delete** are swipe-trailing only (no pre-swipe pills) so rows stay dense; **Open** and **Grade book** remain as pills. Elsewhere, VoiceOver / Switch Control users never have to swipe.
 
 **Inbox (`unassigned` / Review) — add**
 
@@ -983,7 +983,7 @@ If a row already has two actions per side, **Delete** replaces the least-critica
 |---|---|---|
 | Leading | **Delete** | Opens delete-practice confirm |
 
-**Assignments (`AssignmentWorkList`)** — trailing-only (no leading). Swipe left reveals **two** tappable tiles, 80 pt each (open snap `−160`):
+**Assignments (`AssignmentWorkList`)** — trailing-only (no leading). Swipe left reveals **two** tappable tiles, 80 pt each (open snap `−160`). Pre-swipe row pills stay **Open** · **Grade book** only — **no** inline Preview/Delete.
 
 | Side | Action | Tile | Commit |
 |---|---|---|---|
@@ -2958,8 +2958,8 @@ Each `WorkRow`:
 - Status = kind · due
 - Meta = weight summary (`Major · Quarter 2` / `15% · Semester 1`). Year stays off the meta line when selected.
 - Badge `assigned`
-- Pills: **Open** · **Grade book**. **Open** is the only control that starts the assignment (student work or teacher lesson preview). Tapping the media or title does nothing. Cost: do not mint a lesson-host URL or load the pack until **Open**.
-- Swipe **trailing only** (right→left / RTL reveal): **Preview** · **Delete**. No leading swipe on this list. **Preview** opens lesson preview (`/lesson/{id}?preview=1`) for lesson rows, or the assignment sheet for other kinds. **Delete** uses `tone: danger` and opens the confirm sheet (no type-the-name). Both swipe actions use `autoCommit: false`.
+- Pills: **Open** · **Grade book** only — denser rows. Do **not** show pre-swipe **Preview** or **Delete** pills (those live on swipe). **Open** is the only control that starts the assignment (student work or teacher lesson preview). Tapping the media or title does nothing. Cost: do not mint a lesson-host URL or load the pack until **Open**.
+- Swipe **trailing only** (right→left / RTL reveal): **Preview** · **Delete** (brick `dangerBrick`). No leading swipe on this list. **Preview** opens lesson preview (`/lesson/{id}?preview=1`) for lesson rows, or the assignment sheet for other kinds. **Delete** uses `tone: danger` and opens the confirm sheet (no type-the-name). Both swipe actions use `autoCommit: false`. Preview/Delete are **not** duplicated as inline pills.
 - No Phase 3 instructional banner on this screen.
 
 Empty: `No assignments yet. Create one — the column shows up empty until work is in.`
