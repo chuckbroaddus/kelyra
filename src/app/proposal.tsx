@@ -23,6 +23,9 @@ import {
 } from '@/lib/matching/captureSpeech';
 import { assignmentHasKey, listClassAssignments, matchSpokenAssignment } from '@/lib/assignments/api';
 import { parseKeyItems } from '@/lib/assignments/keys';
+import { scoreKey } from '@/lib/assignments/scoreKey';
+import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
+import { extractMarksFromVisionItems } from '@/lib/keygrade/draft';
 import { AssignmentPicker } from '@/components/ui/AssignmentPicker';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -572,6 +575,10 @@ export default function ProposalScreen() {
   const saveHomework = async (mode: 'approve' | 'inbox' | 'note') => {
     if (!teacher || !chrome.classId) return;
     if (!assetId && !audioOnly) return;
+    if (mode === 'approve' && !canApproveKeygrade(chrome.role)) {
+      setError('Teach seat required to Approve keyed work.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -940,9 +947,18 @@ export default function ProposalScreen() {
                       rosterNames: roster.map((student) => student.display_name),
                       ...evaluateKeyPayload(assigned, urls),
                     });
-                    if (vision.draftScore != null) setScore(String(vision.draftScore));
                     if (vision.items?.length) setKeyDraftItems(vision.items);
                     if (vision.maxScore != null) setKeyMax(vision.maxScore);
+                    // KEYGRADE: scripts award — ignore model draftScore when key present
+                    const marks = extractMarksFromVisionItems(vision.items);
+                    const keyed = scoreKey({
+                      keyItems: parseKeyItems(assigned.key_items),
+                      extract: marks,
+                      maxScore: assigned.max_score ?? vision.maxScore,
+                      modelTotal: vision.draftScore,
+                    });
+                    if (keyed.draft_score != null) setScore(String(keyed.draft_score));
+                    else if (vision.draftScore != null && !marks.length) setScore(String(vision.draftScore));
                     if (vision.gaps?.length) setGaps(vision.gaps.slice(0, 3));
                     if (vision.teacherNote) setNote(vision.teacherNote);
                   } catch {

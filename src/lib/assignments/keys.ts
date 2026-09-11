@@ -2,6 +2,9 @@ import type { AssignmentRow } from '@/lib/supabase/types';
 
 export type AnswerKeyKind = 'none' | 'photo' | 'items' | 'both';
 
+/** v1 KEYGRADE item types — short/work always residual (needsTeacher). */
+export type KeyItemType = 'mc' | 'numeric' | 'short' | 'work';
+
 export type AnswerKeyItem = {
   n: number;
   stem?: string;
@@ -9,6 +12,8 @@ export type AnswerKeyItem = {
   points?: number;
   note?: string;
   needsTeacher?: boolean;
+  type?: KeyItemType;
+  choices?: string[];
 };
 
 export function emptyKeyItem(n = 1): AnswerKeyItem {
@@ -23,17 +28,40 @@ export function deriveKeyKind(hasPhoto: boolean, items: AnswerKeyItem[]): Answer
   return 'none';
 }
 
+const MC_ANSWER = /^(?:[a-e]|true|false|t|f|yes|no|y|n)$/i;
+const NUMERIC_ANSWER = /^-?\d[\d,]*(?:\.\d+)?%?$/;
+
+/** Infer type from answer shape when author omitted `type`. */
+export function inferKeyItemType(item: AnswerKeyItem): KeyItemType {
+  if (item.type === 'mc' || item.type === 'numeric' || item.type === 'short' || item.type === 'work') {
+    return item.type;
+  }
+  if (item.needsTeacher) return 'short';
+  const answer = String(item.answer ?? '').trim();
+  if (!answer) return 'short';
+  if (MC_ANSWER.test(answer) || (item.choices && item.choices.length > 0)) return 'mc';
+  if (NUMERIC_ANSWER.test(answer)) return 'numeric';
+  return 'short';
+}
+
 export function normalizeKeyItems(items: AnswerKeyItem[] | null | undefined): AnswerKeyItem[] {
   if (!Array.isArray(items)) return [];
   return items
-    .map((item, index) => ({
-      n: Number.isFinite(item.n) ? Number(item.n) : index + 1,
-      stem: String(item.stem ?? '').trim(),
-      answer: String(item.answer ?? '').trim(),
-      points: Number.isFinite(item.points) ? Number(item.points) : 1,
-      note: String(item.note ?? '').trim() || undefined,
-      needsTeacher: Boolean(item.needsTeacher),
-    }))
+    .map((item, index) => {
+      const base: AnswerKeyItem = {
+        n: Number.isFinite(item.n) ? Number(item.n) : index + 1,
+        stem: String(item.stem ?? '').trim(),
+        answer: String(item.answer ?? '').trim(),
+        points: Number.isFinite(item.points) ? Number(item.points) : 1,
+        note: String(item.note ?? '').trim() || undefined,
+        needsTeacher: Boolean(item.needsTeacher),
+        choices: Array.isArray(item.choices)
+          ? item.choices.map((c) => String(c)).filter(Boolean)
+          : undefined,
+      };
+      const type = item.type ?? inferKeyItemType(base);
+      return { ...base, type };
+    })
     .filter((item) => item.answer || item.stem || item.needsTeacher);
 }
 
@@ -58,6 +86,11 @@ export function parseKeyItems(raw: unknown): AnswerKeyItem[] {
   return normalizeKeyItems(
     raw.map((row, index) => {
       const item = (row ?? {}) as Record<string, unknown>;
+      const typeRaw = item.type;
+      const type =
+        typeRaw === 'mc' || typeRaw === 'numeric' || typeRaw === 'short' || typeRaw === 'work'
+          ? typeRaw
+          : undefined;
       return {
         n: Number(item.n ?? index + 1),
         stem: String(item.stem ?? ''),
@@ -65,6 +98,10 @@ export function parseKeyItems(raw: unknown): AnswerKeyItem[] {
         points: item.points != null ? Number(item.points) : 1,
         note: item.note ? String(item.note) : undefined,
         needsTeacher: Boolean(item.needsTeacher),
+        type,
+        choices: Array.isArray(item.choices)
+          ? item.choices.map((c) => String(c))
+          : undefined,
       };
     }),
   );
