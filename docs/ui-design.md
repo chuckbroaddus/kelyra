@@ -2444,11 +2444,11 @@ Also linked from: hamburger **Parents**, Class chip **Parents**, student-page Pa
 
 **Job.** Teacher view: browse parents linked to students in this class. Office/admin manages add/remove on `/admin/class/{id}` (Parents pane) and People — not teacher add/remove chrome on this tab.
 
-**Who appears.** Parents who have at least one `parent_students` child **enrolled in this class** (`In this class`). A parent linked only to a child in another class does not show here (they still exist on that other class’s Parents screen / office All parents).
+**Who appears.** Parents who have at least one `parent_students` child **enrolled in this class** (section **Parents of class' students**). A parent linked only to a child in another class does not show here (they still exist on that other class’s Parents screen / office All parents).
 
-**Teacher.** Section **In this class** → vertical `ListRow`s (photo + name + linked kids; tap → parent page). Optional **Message these parents** pick flow. No **Add parent** field/button. No photograph-a-contact-card affordance on this tab. No swipe **Remove**. No **All parents** section / swipe **Add**. No PhaseBanner / no **PHASE 4 · Family** lead. Empty: `No parents linked to students in this class yet. The office manages the class family list.`
+**Teacher.** Section **Parents of class' students** → vertical `ListRow`s (photo + name + linked kids; tap → parent page). Bottom rounded primary CTA **Message these parents** (same `PrimaryButton` / `radius.md` pattern as Assignments **Create Assignment**) enters **messaging select mode**: checkbox column on each row, **Select all** checkbox at the top of that column, **Cancel** exits (clears selection, restores normal list). While select mode is idle (none checked), footer is **Cancel** + disabled **Message these parents**. When any parent is checked, **Message N parent(s)** takes that primary slot (same send / group-thread behavior as before; max 11). Teachers get messaging select mode even though the list is browse-only (messaging ≠ add/remove). No **Add parent** field/button. No photograph-a-contact-card affordance on this tab. No swipe **Remove**. No **All parents** section / swipe **Add**. No PhaseBanner / no **PHASE 4 · Family** lead. Empty: `No parents linked to students in this class yet. The office manages the class family list.`
 
-**Office/admin (same route when `isOfficeRole`).** Same **In this class** list with swipe **Remove** (and admin swipe **Delete** type-the-name §20). No **Add parent** / **All parents** on this teacher ClassTabs surface — those live on `/admin/class/{id}` Parents pane (In this class + All parents swipe Add) and People.
+**Office/admin (same route when `isOfficeRole`).** Same **Parents of class' students** list with swipe **Remove** (and admin swipe **Delete** type-the-name §20) when not in messaging select mode. No **Add parent** / **All parents** on this teacher ClassTabs surface — those live on `/admin/class/{id}` Parents pane (In this class + All parents swipe Add) and People.
 
 **Portrait / landscape.** One column. `maxWidth` 640.
 
@@ -2671,7 +2671,7 @@ Header camera still goes to `/proposal`; roster intent still lands on the checkl
 
 ### 13.8b Class / Parents
 
-Parents tab mirrors Students enrolled-only for teachers: **In this class** `ListRow`s only. **No** teacher **Add parent**, **All parents**, or swipe **Remove**. Office add/remove for parents stays on `/admin/class/{id}` Parents pane (+ People). No Phase 4 Family banner on Parents or Family.
+Parents tab mirrors Students enrolled-only for teachers: **Parents of class' students** `ListRow`s only. Messaging select mode (rounded **Message these parents** → checkboxes / Select all / Cancel / **Message N parent(s)**) stays available for teachers. **No** teacher **Add parent**, **All parents**, or swipe **Remove**. Office add/remove for parents stays on `/admin/class/{id}` Parents pane (+ People). No Phase 4 Family banner on Parents or Family.
 
 ### 13.9 Family
 
