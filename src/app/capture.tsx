@@ -58,6 +58,7 @@ export default function CaptureScreen() {
   const { colors } = useTheme();
   const layout = useLayout();
   const chrome = useChrome();
+  const setForceHidden = chrome.setForceHidden;
   const chromeClassId = chrome.classId;
   const chromeRole = chrome.role;
   const router = useRouter();
@@ -166,9 +167,9 @@ export default function CaptureScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      chrome.setForceHidden(cameraOpen);
-      return () => chrome.setForceHidden(false);
-    }, [cameraOpen, chrome]),
+      setForceHidden(cameraOpen);
+      return () => setForceHidden(false);
+    }, [cameraOpen, setForceHidden]),
   );
 
   if (!teacher) {
