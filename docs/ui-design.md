@@ -961,7 +961,7 @@ Wrap `WorkRow` in a horizontal gesture (implement with `react-native` `Animated`
 
 Un-filing a capture (send back to Inbox) is **not** delete. Trailing **Inbox** on the student work row, confirm `Send this back to Inbox?`, then `student_id = null`, `status = unassigned`. Delete removes the capture (§20).
 
-Every swipe action **already exists as a pill** on the same row — **except Assignments** (`AssignmentWorkList`), where **Preview** and **Delete** are swipe-trailing only (no pre-swipe pills) so rows stay dense; **Open** and **Grade book** remain as pills. Elsewhere, VoiceOver / Switch Control users never have to swipe.
+Every swipe action **already exists as a pill** on the same row — **except** denser lists that drop pre-swipe duplicates: **Assignments** (`AssignmentWorkList`), where **Preview** and **Delete** are swipe-trailing only (no pre-swipe pills) so rows stay dense (**Open** and **Grade book** remain as pills); and class **Needs Attention** (`/class/{id}?tab=needs`) turned-in practice rows, where **Review** is swipe-trailing only (row tap also opens review; no inline Review pill). Capture rows on that list keep **Review** / **Assign name** as pills; **Delete** is leading-swipe only (no Delete pill). Elsewhere, VoiceOver / Switch Control users never have to swipe.
 
 **Inbox (`unassigned` / Review) — add**
 
@@ -1436,7 +1436,7 @@ Omit the instructional Phase 2 Daily `PhaseBanner` and its dynamic lead from cla
 
 **This week.** Same tray of people. Under it, a vertical `WorkRow` list of captures and practice submissions from the last 7 days (`approved_at` / `created_at` / `submitted_at` ≥ now − 7d). Include turned-in practice (`status = completed`).
 
-**Needs you.** Hide the people tray. Vertical `WorkRow` of `listInbox` + turned-in practice. This is the same pile as the bell.
+**Needs you** (ClassTabs label **Needs Attention**, `?tab=needs`). Hide the people tray. Vertical `WorkRow` of `listInbox` + turned-in practice. This is the same pile as the bell. Turned-in practice rows: **Review** via trailing swipe (and row tap) only — no inline Review pill (same denser pattern as Assignments Preview/Delete). Capture rows: keep **Review** / **Assign name** pills; **Delete** is leading swipe only. This week’s turned-in practice rows use the same swipe-only Review (no inline pill).
 
 **Portrait.** One column.
 

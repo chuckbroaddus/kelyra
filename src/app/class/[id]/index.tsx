@@ -206,7 +206,6 @@ export default function ClassHomeScreen() {
               photoUrl={photoFor(item.studentId)}
               badge={practiceBadge(item.status)}
               onPress={() => openTurnedIn(item)}
-              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => openTurnedIn(item) }]}
               trailing={[
                 {
                   key: 'open',
@@ -244,12 +243,6 @@ export default function ClassHomeScreen() {
                   kind: 'primary',
                   onPress: () => openCapture(item),
                 },
-                {
-                  key: 'delete',
-                  label: 'Delete',
-                  kind: 'ghost',
-                  onPress: () => setPending(item),
-                },
               ]}
               leading={[
                 {
@@ -272,7 +265,6 @@ export default function ClassHomeScreen() {
               photoUrl={photoFor(item.studentId)}
               badge={practiceBadge(item.status)}
               onPress={() => openTurnedIn(item)}
-              pills={[{ key: 'open', label: 'Review', kind: 'primary', onPress: () => openTurnedIn(item) }]}
               trailing={[
                 {
                   key: 'open',
