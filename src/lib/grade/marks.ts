@@ -58,6 +58,39 @@ export function parseGradeTerm(value: string | null | undefined): GradeTerm {
   return 'year';
 }
 
+/**
+ * Default Counts-toward quarter for a **new** assignment on local calendar date `d`.
+ *
+ * Nine-week quarters · mid-August start · Christmas break · mid-January restart.
+ *
+ * School year (SY) for calendar date D:
+ * - Aug 15–Dec 31 → SY starts Aug 15 of that calendar year
+ * - Jan 1–Aug 14 → SY starts Aug 15 of the prior calendar year
+ *
+ * Fixed midpoints (inclusive):
+ * - **Q1:** Aug 15 → Oct 16
+ * - **Q2:** Oct 17 → Dec 19 (Christmas break starts Dec 20). Break days Dec 20–Jan 11
+ *   still map to **q2** until school restarts.
+ * - **Q3:** Jan 12 (fixed “second week of January”) → Mar 12
+ * - **Q4:** Mar 13 → Aug 14 (summer stays **q4** of that SY until Aug 14;
+ *   Aug 15 opens **q1** of the next SY — “current quarter” for fall planning)
+ *
+ * Does not return s1/s2/year. Edit flows must keep the stored term; only create/empty
+ * form defaults use this helper.
+ */
+export function defaultGradeTermForDate(d: Date): GradeTerm {
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const md = month * 100 + day;
+
+  if (md >= 815 && md <= 1016) return 'q1';
+  if (md >= 1017 && md <= 1231) return 'q2';
+  if (md >= 101 && md <= 111) return 'q2';
+  if (md >= 112 && md <= 312) return 'q3';
+  // Mar 13 – Aug 14
+  return 'q4';
+}
+
 export function gradeTermLabel(value: string | null | undefined): string {
   if (value === 'all') return 'All';
   return GRADE_TERMS.find((row) => row.key === parseGradeTerm(value))?.label ?? 'Year';

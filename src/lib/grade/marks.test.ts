@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   GRADE_TERMS,
+  defaultGradeTermForDate,
   gradeTermLabel,
   matchesGradeTermFilter,
   parseGradeTerm,
@@ -69,4 +70,22 @@ test('weight summary skips Year and names Semester 1', () => {
   assert.equal(weightSummary({ weight_band: 'major', term: 'year' }), 'Major');
   assert.equal(weightSummary({ weight_band: 'major', term: 's1' }), 'Major · Semester 1');
   assert.equal(weightSummary({ weight_band: 'none', term: 'none' }), '');
+});
+
+test('defaultGradeTermForDate maps calendar dates onto the current nine-week quarter', () => {
+  const d = (y: number, m: number, day: number) => new Date(y, m - 1, day);
+
+  assert.equal(defaultGradeTermForDate(d(2025, 9, 15)), 'q1'); // mid-Sep
+  assert.equal(defaultGradeTermForDate(d(2025, 11, 15)), 'q2'); // mid-Nov
+  assert.equal(defaultGradeTermForDate(d(2025, 12, 28)), 'q2'); // Christmas break → still q2
+  assert.equal(defaultGradeTermForDate(d(2026, 1, 5)), 'q2'); // before Jan 12 restart
+  assert.equal(defaultGradeTermForDate(d(2026, 1, 15)), 'q3'); // second week of January
+  assert.equal(defaultGradeTermForDate(d(2026, 4, 10)), 'q4'); // Apr
+  assert.equal(defaultGradeTermForDate(d(2026, 7, 4)), 'q4'); // summer → q4 until Aug 14
+  assert.equal(defaultGradeTermForDate(d(2026, 8, 14)), 'q4');
+  assert.equal(defaultGradeTermForDate(d(2026, 8, 15)), 'q1');
+  assert.equal(defaultGradeTermForDate(d(2025, 10, 16)), 'q1');
+  assert.equal(defaultGradeTermForDate(d(2025, 10, 17)), 'q2');
+  assert.equal(defaultGradeTermForDate(d(2026, 3, 12)), 'q3');
+  assert.equal(defaultGradeTermForDate(d(2026, 3, 13)), 'q4');
 });
