@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
-import { AvatarTray } from '@/components/ui/AvatarTray';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -101,14 +100,19 @@ export default function SetupScreen() {
       const nextClass = await getClass(id);
       setKlass(nextClass);
       setRoster(await listRoster(id));
-      setAvailable(await listAvailableStudents(id));
-      setImports(await listPendingRosterImports(id));
+      if (office) {
+        setAvailable(await listAvailableStudents(id));
+        setImports(await listPendingRosterImports(id));
+      } else {
+        setAvailable([]);
+        setImports([]);
+      }
       await setActiveClass(teacher.id, id);
       setActiveClassId(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load class');
     }
-  }, [id, teacher, setActiveClassId]);
+  }, [id, teacher, office, setActiveClassId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -325,15 +329,6 @@ export default function SetupScreen() {
   const selectedCount = suggestions.filter((row) => row.selected && !row.alreadyHere && row.name.trim()).length;
   const exactMatch = Boolean(possibleMatch && namesAreEquivalent(possibleMatch.displayName, name));
 
-  const enrollNote = (
-    <View>
-      <SectionHeader label="Add students" first />
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        New names come from the office. Enroll someone already at this school from All students.
-      </Text>
-    </View>
-  );
-
   const addCard = (
     <View>
       <SectionHeader label="Add students" first />
@@ -470,25 +465,50 @@ export default function SetupScreen() {
 
   const rosterBlock = (
     <View>
-      <SectionHeader label="Students" />
+      <SectionHeader label="Students enrolled" first={!office || layout.isSplit} />
       {roster.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
           {office
             ? 'No students yet. A name is enough.'
-            : 'No students yet. Enroll someone already on the school roster.'}
+            : 'No students enrolled yet. The office manages the class roster.'}
         </Text>
       ) : (
-        <>
-          <AvatarTray
-            people={roster.map((student) => ({
-              id: student.id,
-              name: student.display_name,
-              photoUrl: student.photoUrl,
-              hasPhoto: Boolean(student.photo_asset_id),
-            }))}
-            onPress={(person) => router.push(`/class/${id}/student/${person.id}`)}
+        roster.map((student) => (
+          <ListRow
+            key={student.id}
+            title={student.display_name}
+            photoUrl={student.photoUrl}
+            hasPhoto={Boolean(student.photo_asset_id)}
+            onPress={() => router.push(`/class/${id}/student/${student.id}`)}
+            trailing={
+              office
+                ? [
+                    {
+                      key: 'remove',
+                      label: 'Remove',
+                      tone: 'wash',
+                      onPress: () => {
+                        if (!id) return;
+                        void removeEnrollment(id, student.id)
+                          .then(() => load())
+                          .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove student'));
+                      },
+                    },
+                  ]
+                : undefined
+            }
           />
-          {roster.map((student) => (
+        ))
+      )}
+      {office ? (
+        <>
+          <SectionHeader label="All students" />
+          {available.length === 0 ? (
+            <Text style={[styles.empty, { color: colors.mute }]}>
+              Students from other classes at this school show up here. Swipe left to add.
+            </Text>
+          ) : null}
+          {available.map((student) => (
             <ListRow
               key={student.id}
               title={student.display_name}
@@ -497,49 +517,21 @@ export default function SetupScreen() {
               onPress={() => router.push(`/class/${id}/student/${student.id}`)}
               trailing={[
                 {
-                  key: 'remove',
-                  label: 'Remove',
-                  tone: 'wash',
+                  key: 'add',
+                  label: 'Add',
+                  tone: 'brand',
                   onPress: () => {
                     if (!id) return;
-                    void removeEnrollment(id, student.id)
+                    void enrollExistingStudent(id, student.id)
                       .then(() => load())
-                      .catch((err) => setError(err instanceof Error ? err.message : 'Could not remove student'));
+                      .catch((err) => setError(err instanceof Error ? err.message : 'Could not add student'));
                   },
                 },
               ]}
             />
           ))}
         </>
-      )}
-      <SectionHeader label="All students" />
-      {available.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          Students from other classes at this school show up here. Swipe left to add.
-        </Text>
       ) : null}
-      {available.map((student) => (
-        <ListRow
-          key={student.id}
-          title={student.display_name}
-          photoUrl={student.photoUrl}
-          hasPhoto={Boolean(student.photo_asset_id)}
-          onPress={() => router.push(`/class/${id}/student/${student.id}`)}
-          trailing={[
-            {
-              key: 'add',
-              label: 'Add',
-              tone: 'brand',
-              onPress: () => {
-                if (!id) return;
-                void enrollExistingStudent(id, student.id)
-                  .then(() => load())
-                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not add student'));
-              },
-            },
-          ]}
-        />
-      ))}
     </View>
   );
 
@@ -553,7 +545,7 @@ export default function SetupScreen() {
         </View>
       ) : (
         <>
-          {office ? addCard : enrollNote}
+          {office ? addCard : null}
           {rosterBlock}
         </>
       )}
