@@ -11,8 +11,7 @@ export default function AssignmentsScreen() {
   usePushedTitle(className ?? 'Class');
 
   return (
-    <Screen maxWidth={720}>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen maxWidth={720} collapse={id ? <ClassTabs classId={id} /> : null}>
       {id ? <AssignmentWorkList classId={id} /> : null}
     </Screen>
   );

@@ -11,8 +11,13 @@ export default function ClassFeedScreen() {
   usePushedTitle(className ?? 'Class');
 
   return (
-    <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={false}>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen
+      keyboard
+      maxWidth={640}
+      scroll={false}
+      avoidKeyboard={false}
+      collapse={id ? <ClassTabs classId={id} /> : null}
+    >
       {id ? <FeedPane classId={id} scope="class" fill /> : null}
     </Screen>
   );

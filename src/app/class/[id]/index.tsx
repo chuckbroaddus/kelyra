@@ -98,8 +98,7 @@ export default function ClassHomeScreen() {
   };
 
   return (
-    <Screen>
-      {id ? <ClassTabs classId={id} /> : null}
+    <Screen collapse={id ? <ClassTabs classId={id} /> : null}>
       {!loaded ? <WorkingLine /> : null}
 
       {pane === 'today' || pane === 'week' ? (

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -83,4 +85,49 @@ test('L4: demoted deep-links highlight nearby default ClassTabs', () => {
   for (const demoted of DEMOTED_CLASS_TAB_KEYS) {
     assert.ok(!defaults.has(demoted));
   }
+});
+
+const root = process.cwd();
+
+function read(rel: string): string {
+  return readFileSync(join(root, rel), 'utf8');
+}
+
+test('CT-09: every class desk pane collapses ClassTabs like Feed (§9.6)', () => {
+  const screen = read('src/components/ui/Screen.tsx');
+  assert.match(screen, /collapse\?:/);
+  assert.match(screen, /CollapsingPageChrome/);
+
+  const desks = [
+    'src/app/class/[id]/feed.tsx',
+    'src/app/class/[id]/index.tsx',
+    'src/app/class/[id]/assignments.tsx',
+    'src/app/class/[id]/setup.tsx',
+    'src/app/class/[id]/parents.tsx',
+    'src/app/class/[id]/settings.tsx',
+    'src/app/class/[id]/gradebook.tsx',
+    'src/app/class/[id]/family.tsx',
+    'src/app/class/[id]/syllabus.tsx',
+  ];
+  for (const rel of desks) {
+    const src = read(rel);
+    assert.match(src, /collapse=/, `${rel} must pass ClassTabs via Screen collapse`);
+    assert.doesNotMatch(
+      src,
+      /<Screen[^>]*>\s*\{[^}\n]*<ClassTabs/,
+      `${rel} must not render ClassTabs inside Screen children`,
+    );
+  }
+
+  const feed = read('src/app/class/[id]/feed.tsx');
+  assert.match(feed, /collapse=\{id \? <ClassTabs classId=\{id\} \/> : null\}/);
+  assert.match(feed, /scroll=\{false\}/);
+
+  const book = read('src/app/class/[id]/gradebook.tsx');
+  assert.match(book, /collapse=\{collapsing\}/);
+  assert.doesNotMatch(book, /import \{ CollapsingPageChrome \}/);
+
+  const docs = read('docs/ui-design.md');
+  assert.match(docs, /Canonical reference: class Feed/);
+  assert.match(docs, /Screen collapse=/);
 });
