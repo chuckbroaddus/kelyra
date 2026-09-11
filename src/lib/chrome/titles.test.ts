@@ -32,7 +32,7 @@ test('CT-06: class panes keep class name wordmark', () => {
 });
 
 test('P-06: seat-root wordmark follows post-commit role only', () => {
-  assert.equal(headerTitleForSeatRoot('teacher'), 'Kelyra');
+  assert.equal(headerTitleForSeatRoot('teacher'), 'Classes');
   assert.equal(headerTitleForSeatRoot('administrator', 'Lincoln'), 'Lincoln');
   assert.equal(headerTitleForSeatRoot('superintendent', 'Lincoln'), 'Lincoln');
   assert.notEqual(headerTitleForSeatRoot('teacher'), 'People');

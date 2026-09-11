@@ -180,15 +180,14 @@ A left sheet. Not a settings app. Not a grid of KPI tiles.
 **Teacher rows, in order**
 
 1. Identity block (not a destination): display name or email next to the 36 photo, `meta`, **1 line, marquee** (§30). Not a bio. Do not wrap to two lines.
-2. **Classes** — one row per class, checkmark on the active class. Tap sets `active_class_id` and `replace`s to `/class/{id}`. Swipe-to-delete a class row **opens** the type-the-name confirm (§20). Full-swipe does not commit.
-3. **Another class** — only if they will type a name; pushes `/` with `?switch=1` and the create field focused.
-4. Hairline
-5. **Grade book** → `/class/{active}/gradebook?view=book`
-6. **Parents** → `/class/{active}/parents`
-7. **Family update** → `/class/{active}/family`
-8. Hairline
-9. **Menu tray** — floating bar at the bottom of the drawer (same hide-on-scroll as the app tray). Search field (magnifying glass + “Search”) filters the menu and submits to `/search`. Gear on the right (tooltip **Settings**) opens `SettingsSheet`. Theme does **not** live on Profile or as a drawer section.
-10. **Sign out** — `danger` label. Signs out, `replace`s to `/`.
+2. **Classes** — single row (not a per-class list). Opens the Classes picker (`/?switch=1`). Dual-hat on Teach seat follows the same rule: no class list in the drawer. Office/administrator seat still lists each class with swipe-to-delete (§20) when `!teacherSeat`.
+3. Hairline
+4. **Grade book** → `/class/{active}/gradebook?view=book`
+5. **Parents** → `/class/{active}/parents`
+6. **Family update** → `/class/{active}/family`
+7. Hairline
+8. **Menu tray** — floating bar at the bottom of the drawer (same hide-on-scroll as the app tray). Search field (magnifying glass + “Search”) filters the menu and submits to `/search`. Gear on the right (tooltip **Settings**) opens `SettingsSheet`. Theme does **not** live on Profile or as a drawer section.
+9. **Sign out** — `danger` label. Signs out, `replace`s to `/`.
 
 **Dual-hat office+teacher on teacher seat only (`canChooseSeat`, seat=teacher):** add one altitude row **Office** (a11y `Switch to Office seat`) with the other altitude controls — after **My children** when that parent-hat row exists, otherwise near **Sign out**. Do **not** show **Teach** while already on teacher seat. Full atomic switch: §31.4b / §37.3. Parent **My children** (if present) stays its own deep-link row. When `also_parent` and not already parent-seated, also show altitude row **Parent** (a11y `Switch to Parent seat`) after **My children** / with other seat rows, before Sign out — §31.4b Parent seat (G3); not a Ride tray tab.
 
@@ -265,15 +264,15 @@ Content draws **under** the frame. Last-scroll padding on every tray screen = fr
 
 | # | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
 |---|---|---|---|---|---|
-| 1 | `today` (house glyph) | **Desk** | class name on desk panes; `Kelyra` only when no class | `/class/{activeId}` or `/` if none | `/` or `/class/{id}` desk work (not setup / gradebook / family / student / parents / parent / assignments) |
+| 1 | `today` (house glyph) | **Desk** | **Classes** on `/` (class picker); class name on desk panes | `/?switch=1` (Classes screen) | `/` (incl. `?switch=1`) or `/class/{id}` desk work (not setup / gradebook / family / student / parents / parent / assignments) |
 | 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (not `/proposal`) |
 | 3 | `inbox` | **Needs Attention** | **Needs Attention** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
 | 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
 | 5 | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
 
-Desk is always the start (house glyph; label **Desk**). Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs Attention** badge uses `countNeedsYou` once (unassigned + draft-ready).
+Desk is always the start (house glyph; label **Desk**); it opens the **Classes** screen (`/?switch=1`), not the active class desk. Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs Attention** badge uses `countNeedsYou` once (unassigned + draft-ready).
 
-Family, All classes, Appearance, Profile, Sign out live in the hamburger, not the tray.
+Family, **Classes** (picker via `/?switch=1`), Appearance, Profile, Sign out live in the hamburger, not the tray. Teacher drawer does **not** list each class.
 
 **Student tray (6), left → right** — shipped student chrome (§31.1 / §34.2). Do **not** cut to 2 tabs. No camera. No Profile in tray. Profile stays hamburger-only.
 
@@ -304,7 +303,7 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 
 | Destination | Hamburger / tray label | Wordmark |
 |---|---|---|
-| Teacher **Desk** | class name in the drawer; tray a11y **Desk** | class name on desk panes; `Kelyra` only when no active class |
+| Teacher **Desk** / **Classes** | hamburger **Classes**; tray a11y **Desk** | **Classes** on `/` (picker); class name on desk panes |
 | Capture | Capture | `Capture` |
 | **Needs Attention** (was Inbox label) | Needs Attention | `Needs Attention` (route `/inbox` unchanged) |
 | Class (teacher) | Class / class name | class name on every Class pane (§32.7); tray lands **setup**, not gradebook-first |
@@ -1349,13 +1348,13 @@ Full-bleed splash MP4 (`SplashLanding`): **9×16** when the viewport is portrait
 
 #### Signed in, zero classes
 
-Header title `Kelyra`. Tray House active. No camera usefulness until a class exists (camera still opens, proposal will say `Name a class first`).
+Header title **Classes** (teacher). Tray Desk/House active. No camera usefulness until a class exists (camera still opens, proposal will say `Name a class first`).
 
 Vertical: `Name your class` → field → Primary `Create class` → hamburger holds Appearance + Sign out.
 
 #### Signed in, `?switch=1` or 2+ classes
 
-`ListRow` per class (initials, name, no meta) → `Another class` + field + Primary `Create class`.
+Header wordmark **Classes**. `ListRow` per class (initials, name, no meta) → create field + Primary `Create class` (no “Another class” label; hamburger **Classes** opens this screen).
 
 Portrait: `maxWidth` 480. Landscape phone: same. Tablet: left-aligned in the content well.
 

@@ -47,7 +47,8 @@ test('hamburger: class Delete swipe gated to office + classes.delete; never teac
   );
   const mapStart = src.indexOf('chromeState.classes.filter');
   assert.ok(mapStart > 0);
-  const map = src.slice(mapStart, src.indexOf('teacherSeat && matches(\'Another class\'', mapStart));
+  assert.match(src, /!teacherSeat\s*\?\s*chromeState\.classes\.filter/);
+  const map = src.slice(mapStart, src.indexOf('teacherSeat && matches(\'Classes\'', mapStart));
   assert.match(map, /officeSeat\s*&&\s*can\(profile,\s*'classes\.delete'/);
   assert.doesNotMatch(map, /trailing=\{\[/);
 });

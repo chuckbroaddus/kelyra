@@ -62,8 +62,13 @@ test('CAP-04 / D2: header camera proposes; tray Capture files', () => {
 test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab on teacher seat', () => {
   assert.ok(!trayKeysForRole('teacher').includes('classes'));
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
-  assert.match(drawer, /teacherSeat && matches\('Another class'/);
-  assert.match(drawer, /go\('\/\?switch=1'\)/);
+  assert.match(drawer, /teacherSeat && matches\('Classes'/);
+  assert.match(drawer, /label="Classes" onPress=\{\(\) => go\('\/\?switch=1'\)\}/);
+  assert.match(drawer, /!teacherSeat\s*\?\s*chromeState\.classes\.filter/);
+  assert.doesNotMatch(drawer, /Another class/);
+  const desk = tabsFor('teacher', '/', 'c1', 0).find((tab) => tab.key === 'home');
+  assert.equal(desk?.href, '/?switch=1');
+  assert.equal(desk?.active, true);
   const home = read('src/app/index.tsx');
   assert.match(home, /officeSeat\s*\?\s*schoolHomeTabs/);
   assert.match(home, /const teacherSeat = chrome\.role === 'teacher'/);
