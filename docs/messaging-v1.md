@@ -84,6 +84,7 @@ Reuse `/messages` and HandleLink. Add the minimum.
 | Staff group | People multi-select (admin or teacher) |
 | Parents of one child | Student page or that child’s parent page — **Message parents** |
 | Selected parents | Class / Parents messaging select mode — rounded **Message these parents** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N parent(s)** |
+| Selected students | Class / Students messaging select mode — rounded **Message these students** → checkboxes / Select all + Cancel (same row, Cancel far right) → **Message N student(s)** |
 | Teacher ↔ class | Class page **Post to class** → **post**, not a group |
 | Admin ↔ parents | Feed composer or admin People → **post** or **alert** |
 | Admin ↔ staff | People → staff **group chat** |
@@ -143,6 +144,7 @@ Matcher still never inserts a student. Group membership uses existing enrollment
 1. Open mail. Existing 1:1 with a colleague still works. `@handle` still opens that thread.
 2. On a student’s page, **Message parents** opens (or creates) one group with that child’s linked parents. Send a line. Each parent sees it after sign-in on `/messages`.
 3. Class / Parents: tap rounded **Message these parents**, select three parents (or **Select all**), **Message 3 parents**. Cancel clears selection. Cannot select more than 11 for one group (blocked or warned).
+3b. Class / Students: tap rounded **Message these students**, select three students (or **Select all**), **Message 3 students**. Cancel on the Select all row clears selection. Cannot select more than 11 for one group (blocked or warned). Students without logins are refused the same way parents without logins are.
 4. On that student’s practice, **Share in a message**. Card appears. **Notify parent(s)** is on. Send. Parent opens the card in-app to the practice — no browser URL. Score unchanged. Approve/Assign still required to put work on the books.
 5. Class page **Post to class**. Parents of that class see it on the feed. Replies stay under the post. Mail list does not grow by 200 threads.
 6. Super **Post to school** and one **Alert**. Alert shows on the bell next to existing Needs you rows. Mail icon still means chat.
