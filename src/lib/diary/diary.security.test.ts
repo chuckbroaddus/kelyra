@@ -219,3 +219,11 @@ test('t_0a6410cf: ledger row tap deep-links fail-closed', () => {
   assert.match(link, /export async function ledgerDeepLinkStillPermitted/);
   assert.match(link, /return null/);
 });
+
+test('t_d33aab64 / t_9a9009fd: stillPermitted re-binds entity probes to ledger class_id', () => {
+  const link = read('src/lib/diary/ledgerLink.ts');
+  assert.match(link, /\['class_id', classId\]/);
+  assert.match(link, /enrollments/);
+  assert.match(link, /assignment_id/);
+  assert.match(link, /re-bind/);
+});
