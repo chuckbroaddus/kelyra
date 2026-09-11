@@ -2951,7 +2951,7 @@ WorkRow…
 WorkRow…
 ```
 
-Page CTA: `AssignmentWorkList` top control is **Create Assignment** (`PrimaryButton`, `align="left"`) — brand fill / `brandInk`, rounded `radius.md`, matching the **Open** primary-pill color scheme. Do not use Ghost **Assign** for this surface. Desk home (`/`) Ghost **Assign** is a separate surface; leave it unless that screen is redesigned.
+Page CTA: `AssignmentWorkList` top control is **Create Assignment** (`PrimaryButton`, `align="left"`) — brand fill / `brandInk`, rounded `radius.md`, matching the **Open** primary-pill color scheme. Do not use Ghost **Assign** for this surface. Desk / Classes home (`/`, `/?switch=1`) has **no** Assign CTA — create work only from a class Assignments tab (**Create Assignment**).
 
 Each `WorkRow`:
 
