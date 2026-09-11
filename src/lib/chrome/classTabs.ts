@@ -8,7 +8,7 @@ export type ClassDeskTab = {
   icon: string;
 };
 
-/** Default Class desk icons (≤7). Week / Heatmap / Family stay reachable via hrefForClassTab. */
+/** Default Class desk icons (≤8). Week / Heatmap / Family stay reachable via hrefForClassTab. */
 export const CLASS_TABS: ClassDeskTab[] = [
   { key: 'today', label: 'Today', icon: 'today' },
   { key: 'needs', label: 'Needs Attention', icon: 'inbox' },
@@ -17,6 +17,7 @@ export const CLASS_TABS: ClassDeskTab[] = [
   { key: 'assignments', label: 'Assignments', icon: 'work' },
   { key: 'gradebook', label: 'Gradebook', icon: 'records' },
   { key: 'parents', label: 'Parents', icon: 'parents' },
+  { key: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
 export const OFFICE_CLASS_TABS: ClassDeskTab[] = [
@@ -49,6 +50,8 @@ export function hrefForClassTab(classId: string, key: string): string {
       return `/class/${classId}/assignments`;
     case 'family':
       return `/class/${classId}/family`;
+    case 'settings':
+      return `/class/${classId}/settings`;
     default:
       return `/class/${classId}?tab=today`;
   }
@@ -62,6 +65,7 @@ export function classTabFromRoute(pathname: string, tab?: string | string[]): st
   const pane = Array.isArray(tab) ? tab[0] : tab;
   if (pathname.endsWith('/feed')) return 'feed';
   if (pathname.endsWith('/setup')) return 'students';
+  if (pathname.endsWith('/settings') || pathname.endsWith('/syllabus')) return 'settings';
   if (pathname.endsWith('/parents')) return 'parents';
   if (pathname.endsWith('/family')) return 'parents';
   if (pathname.endsWith('/assignments')) return 'assignments';

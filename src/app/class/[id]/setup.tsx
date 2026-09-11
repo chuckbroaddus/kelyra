@@ -10,9 +10,7 @@ import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/But
 import { IconButton } from '@/components/ui/IconButton';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
-import { PhaseBanner } from '@/components/ui/PhaseBanner';
 import { ClassTabs } from '@/components/ui/ClassTabs';
-import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
@@ -23,10 +21,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { can } from '@/lib/school/matrix';
 import { isOfficeRole } from '@/lib/school/roles';
-import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
-import { setClassFeedIcon } from '@/lib/feeds/api';
-import { asFeedIcon, DEFAULT_CLASS_FEED_ICON } from '@/lib/feeds/icons';
 import { deleteClass } from '@/lib/classes/delete';
 import { invokeAi } from '@/lib/ai/invoke';
 import {
@@ -60,7 +56,6 @@ import { firstName } from '@/lib/format';
 import type { RosterImportRow } from '@/lib/supabase/types';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
-import { activeWeightSum, getClassSyllabus, type ClassSyllabusDraft } from '@/lib/syllabus/api';
 
 export default function SetupScreen() {
   const { colors } = useTheme();
@@ -69,7 +64,6 @@ export default function SetupScreen() {
   const router = useRouter();
   const { teacher, profile, grants, setActiveClassId } = useAuth();
   const office = isOfficeRole(profile);
-  const chrome = useChrome();
   const [klass, setKlass] = useState<ClassRow | null>(null);
   usePushedTitle(klass?.name ?? 'Class');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
@@ -101,14 +95,6 @@ export default function SetupScreen() {
   >(null);
   const [busy, setBusy] = useState(false);
   const [parkedAssetId, setParkedAssetId] = useState<string | null>(null);
-  const [syllabusMeta, setSyllabusMeta] = useState<{
-    status: ClassSyllabusDraft['status'] | 'none';
-    categoryCount: number;
-    sum: number;
-    publishToFamily: boolean;
-    hasAskDraft: boolean;
-  }>({ status: 'none', categoryCount: 0, sum: 0, publishToFamily: true, hasAskDraft: false });
-
   const load = useCallback(async () => {
     if (!id || !teacher) return;
     try {
@@ -119,30 +105,10 @@ export default function SetupScreen() {
       setImports(await listPendingRosterImports(id));
       await setActiveClass(teacher.id, id);
       setActiveClassId(id);
-      if (!office) {
-        const syllabus = await getClassSyllabus(id).catch(() => null);
-        if (!syllabus?.exists || !syllabus.syllabus) {
-          setSyllabusMeta({
-            status: 'none',
-            categoryCount: 0,
-            sum: 0,
-            publishToFamily: true,
-            hasAskDraft: false,
-          });
-        } else {
-          setSyllabusMeta({
-            status: syllabus.syllabus.status,
-            categoryCount: syllabus.categories.filter((c) => c.active).length,
-            sum: activeWeightSum(syllabus.categories),
-            publishToFamily: syllabus.syllabus.publish_to_family !== false,
-            hasAskDraft: Boolean(syllabus.syllabus.ask_draft),
-          });
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load class');
     }
-  }, [id, teacher, office]);
+  }, [id, teacher, setActiveClassId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -580,48 +546,6 @@ export default function SetupScreen() {
   return (
     <Screen keyboard>
       {id ? <ClassTabs classId={id} /> : null}
-      {klass ? (
-        <FeedIconRow
-          value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
-          onPick={async (icon) => {
-            try {
-              await setClassFeedIcon(klass.id, icon);
-              setKlass({ ...klass, feed_icon: icon });
-              chrome.refreshChrome();
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'Could not save the feed icon');
-            }
-          }}
-        />
-      ) : null}
-      {!office && id ? (
-        <Card>
-          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
-            How this class grades
-          </Text>
-          <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
-            {syllabusMeta.hasAskDraft
-              ? 'Ask draft waiting for review.'
-              : syllabusMeta.status === 'none'
-                ? 'Set categories and weights for the final average.'
-                : syllabusMeta.status === 'draft'
-                  ? 'Draft — not used in averages yet.'
-                  : `${syllabusMeta.categoryCount} categories · weights sum ${Math.round(syllabusMeta.sum * 10) / 10}%${
-                      syllabusMeta.publishToFamily ? ' · Visible to families' : ''
-                    }`}
-          </Text>
-          <PrimaryButton
-            label={
-              syllabusMeta.hasAskDraft
-                ? 'Review Ask draft'
-                : syllabusMeta.status === 'none'
-                  ? 'Set up syllabus'
-                  : 'Edit syllabus'
-            }
-            onPress={() => router.push(`/class/${id}/syllabus`)}
-          />
-        </Card>
-      ) : null}
       {layout.isSplit && office ? (
         <View style={styles.split}>
           <View style={styles.col}>{addCard}</View>
@@ -667,15 +591,6 @@ export default function SetupScreen() {
 
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      <PhaseBanner
-        phase={1}
-        detail={
-          klass
-            ? `${klass.name} is the subject context AI will use. A name like “Room 14 math” is enough.`
-            : 'Name the class so AI knows the subject. Then add students.'
-        }
-      />
-
       <ConfirmSheet
         visible={Boolean(confirm)}
         title={

@@ -96,8 +96,8 @@ test('D4 Phase A dual-hat seat still works', () => {
   assert.deepEqual(trayKeysForRole(resolveStaffChromeRole(dual, 'office')!), OFFICE_KEYS);
 });
 
-test('D4 Phase B/C intact: CLASS_TABS ≤7; Class ≠ gradebook-first; Needs + Ask chip', () => {
-  assert.ok(CLASS_TABS.length <= 7);
+test('D4 Phase B/C intact: CLASS_TABS ≤8; Class ≠ gradebook-first; Needs + Ask chip', () => {
+  assert.ok(CLASS_TABS.length <= 8);
   const classTab = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class');
   assert.equal(classTab?.href, '/class/abc/setup');
   assert.ok(!classTab?.href.includes('/gradebook'));

@@ -66,6 +66,7 @@ export function headerTitleFor(input: {
     pathname.endsWith('/assignments') ||
     pathname.endsWith('/parents') ||
     pathname.endsWith('/setup') ||
+    pathname.endsWith('/settings') ||
     pathname.endsWith('/syllabus') ||
     pathname.includes('/gradebook') ||
     (pathname.startsWith('/class/') && pathname.endsWith('/feed'))

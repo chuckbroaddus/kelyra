@@ -264,10 +264,10 @@ Content draws **under** the frame. Last-scroll padding on every tray screen = fr
 
 | # | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
 |---|---|---|---|---|---|
-| 1 | `today` (house glyph) | **Desk** | **Classes** on `/` (class picker); class name on desk panes | `/?switch=1` (Classes screen) | `/` (incl. `?switch=1`) or `/class/{id}` desk work (not setup / gradebook / family / student / parents / parent / assignments) |
+| 1 | `today` (house glyph) | **Desk** | **Classes** on `/` (class picker); class name on desk panes | `/?switch=1` (Classes screen) | `/` (incl. `?switch=1`) or `/class/{id}` desk work (not setup / settings / syllabus / gradebook / family / student / parents / parent / assignments) |
 | 2 | `capture` | **Capture** | **Capture** | `/capture` | `/capture` (not `/proposal`) |
 | 3 | `inbox` | **Needs Attention** | **Needs Attention** | `/inbox` (route name stays; do not rename path in v1) | `/inbox` |
-| 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
+| 4 | `records` | **Class** | class name on records panes | `/class/{id}/setup` (**Students/setup** — not gradebook-first) | path ends with `/setup` or `/settings` or `/syllabus` or `/gradebook` or `/parents` or `/parent/` or `/assignments` or `/family` |
 | 5 | `ask` | **Ask** | **Kelyra** (Ask slot uses the mark) | `/ask` | `/ask` |
 
 Desk is always the start (house glyph; label **Desk**); it opens the **Classes** screen (`/?switch=1`), not the active class desk. Ask is always last. Tray **Class** lands setup/Students, never forced `/gradebook`. **Needs Attention** badge uses `countNeedsYou` once (unassigned + draft-ready).
@@ -331,7 +331,7 @@ Height 44. Horizontal `ScrollView`, no snap. Chips: height 32, pad 12, radius `p
 | Desk (teacher) | *(none — ClassTabs owns desk panes)* | — | Shipped: `PersonTabs` / `CLASS_TABS` on `/class/…` (§32.7, §37). Do not restore Amazon chips on the desk |
 | Capture | **Photo** · **Voice** · **Pages** | Photo | Focuses the well / recorder / pager. Does not change route |
 | Needs Attention (`/inbox`) | **Needs a name** · **Review** · **All** | All if both queues have items, else the non-empty one | Filters `listInbox`. Tray/header noun is **Needs Attention** |
-| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents. Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow |
+| Class cluster | *(none — ClassTabs)* | Students/setup | Default ClassTabs: Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · **Settings** (gear, far right). Heatmap only via gradebook `?tab=`. Family demoted to drawer/overflow. Feed icon + Syllabus live on Settings, not Students |
 | Ask | none (or class chip when bound) | — | Empty row collapsed unless teacher Ask shows active-class chip (§37). **Assignment ground is not a header band** — student/parent ground lives composer-adjacent (§12.6). Do not add a permanent ground row under the mark. |
 | Profile | none | — | Collapsed. Appearance / Sign out live in the hamburger and on the page, not here |
 | Student Home | **To-do** · **Done** | To-do | Filters `/todo`. Wordmark stays **Assignments** |
@@ -1098,7 +1098,7 @@ Student book (one column): pin that column to the **right**. Frozen assignment t
 
 ### 10.16 Join code, Phase banner
 
-Existing. Theme-agnostic besides tokens. Phase banner **full** on Setup, Family, and Records when those screens still show it. **Omit** instructional Phase 2 Daily `PhaseBanner` leads on class Home, Capture, Inbox (Needs Attention), Student record Focus, and Review — those surfaces no longer show the compact instructional lead chrome (Approve / matcher product law unchanged off-screen).
+Existing. Theme-agnostic besides tokens. Phase banner **full** on Family, and Records when those screens still show it. **Omit** instructional Phase banners on Students/setup (no Phase 1 Setup lead), class Home, Capture, Inbox (Needs Attention), Student record Focus, and Review — those surfaces no longer show the instructional lead chrome (Approve / matcher product law unchanged off-screen).
 
 ### 10.17 Icon additions
 
@@ -1618,13 +1618,25 @@ CSV: `formatCell` strings. Theme-independent. §15.
 
 **Primary.** Context-sensitive, one at a time: `Add N students` / `Rename {old} to {new}` / `Add {name}`.
 
-**Vertical.** Phase 1 → lead → Join code card → parked roster-import card if any (§20) → Add students card (photo / record / type / confirm checklist) → `AvatarTray` of the roster (photos) → search + `ListRow`s if they need to open a student → last ghost **Delete class** (type-the-name; office/admin + `classes.delete` only — teachers never delete classes).
+**Vertical.** No PhaseBanner / Phase 1 Setup lead. Join code card → parked roster-import card if any (§20) → Add students card (photo / record / type / confirm checklist) → `AvatarTray` of the roster (photos) → search + `ListRow`s if they need to open a student → last ghost **Delete class** (type-the-name; office/admin + `classes.delete` only — teachers never delete classes). Feed icon and Syllabus editing live on **Settings** (`/class/{id}/settings`), not on this roster screen.
 
 **Portrait.** One column.
 
 **Landscape.** Join + add-students left, tray + roster right when `isSplit`. On `phone-landscape`, one column; the printed-list camera uses the wide side. Do not stretch the join-code words to 900 pt.
 
 The header camera on this tab still goes to `/proposal`. If the classifier says **roster**, the teacher lands on the existing confirm checklist. That is the same photo-of-list flow, just started from the camera icon.
+
+---
+
+### 13.8a `/class/[id]/settings` — Class / Settings
+
+**Job.** Class-level preferences that are not roster work: Feed icon and Syllabus.
+
+**Header title:** class name. Context: `ClassTabs` with **Settings** selected (gear, far right).
+
+**Vertical.** `FeedIconRow` → (teachers) Syllabus summary card with primary to `/class/{id}/syllabus`. No PhaseBanner. No roster controls.
+
+Students/setup no longer hosts Feed icon or Syllabus.
 
 ---
 
@@ -3544,6 +3556,7 @@ src/app/class/[id]/parent/[parentId].tsx
 src/app/class/[id]/index.tsx
 src/app/class/[id]/feed.tsx
 src/app/class/[id]/setup.tsx
+src/app/class/[id]/settings.tsx
 src/app/class/[id]/parents.tsx
 src/app/class/[id]/gradebook.tsx
 src/app/class/[id]/assignments.tsx
@@ -3559,9 +3572,11 @@ No new npm packages. No SQL. No `EXPO_PUBLIC_*` keys. Matcher never inserts a st
 
 Header wordmark stays the **class name** on every pane (not “Gradebook”, “Students”, or “Family”). Family is a class pane, not a pushed sheet: hamburger stays, no back chevron. Assignment create/edit (`/assignment/new`, `/class/{id}/assignment/…`) stays pushed **and keeps the hamburger** (back + menu; `keepMenu` — CEO override of hide-until-pop).
 
-**Default `CLASS_TABS` (≤7, ordered):** **Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents**. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
+**Default `CLASS_TABS` (≤8, ordered):** **Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · Settings**. Settings is last (far right) with the existing `settings` gear glyph. Default open = **Today**. Tray **Class** lands **Students** (`/setup`), not gradebook-first.
 
-**Demoted (routes stay; not default icons):** This week (`?tab=week` / Today filter), Heatmap (`/gradebook?tab=heatmap` only), Family (drawer or Class overflow). Do not restore a 10-tab default. AVG Syllabus stays Class-desk altitude via setup/gradebook entry — not an 8th default icon.
+**Settings** (`/class/{id}/settings`): class Feed icon picker + Syllabus entry (How this class grades). Those controls moved off Students/setup. Syllabus editor remains `/class/{id}/syllabus` and highlights the Settings tab.
+
+**Demoted (routes stay; not default icons):** This week (`?tab=week` / Today filter), Heatmap (`/gradebook?tab=heatmap` only), Family (drawer or Class overflow). Do not restore a 10-tab default. AVG Syllabus stays Class-desk altitude via **Settings** (and gradebook entry) — not a separate Syllabus ClassTab.
 
 Switching panes `replace`s so Back does not walk the tab history. Today / Needs Attention are `/class/{id}?tab=today|needs`.
 
@@ -3753,7 +3768,7 @@ A feed is identified in the inbox by its glyph, not by a long class name (the se
 
 - School tab on `/` — row **School feed icon** (office)
 - Office class card Teacher pane — row **Feed icon**
-- Class desk Students (`/class/{id}/setup`) — row **Feed icon**
+- Class desk Settings (`/class/{id}/settings`) — row **Feed icon** (moved off Students/setup)
 - `FeedIconPicker` is a `FormSheet` grid. Selected cell `brandSoft` + `brand` icon and label.
 
 SQL: paste `supabase/migrations/20260821000000_feed_icons.sql` (`schools.feed_icon`, `classes.feed_icon`, `list_my_feeds`, `set_school_feed_icon`, `set_class_feed_icon`). Audit action `set_feed_icon`.
@@ -4036,7 +4051,7 @@ src/app/admin/people.tsx
 | Tray (5) | **Desk · Capture · Needs Attention · Class · Ask** — keys `home`/`today`, `capture`, `inbox`, `class`/`records`, `ask` |
 | Needs Attention | Label **Needs Attention**; route **`/inbox`** unchanged; badge `countNeedsYou` |
 | Class tray href | `/class/{id}/setup` — **not** gradebook-first |
-| `CLASS_TABS` default ≤7 | Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents |
+| `CLASS_TABS` default ≤8 | Today · Needs Attention · Feed · Students · Assignments · Gradebook · Parents · Settings (gear, far right) |
 | Demoted | week, heatmap, family (routes stay) |
 | `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
 | Desk wordmark | **Class name** on class panes (§32.7) |
