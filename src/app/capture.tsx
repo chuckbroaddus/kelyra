@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -10,6 +10,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
 import { Card } from '@/components/ui/Card';
 import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
+import { FormSheet } from '@/components/ui/FormSheet';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
@@ -162,6 +163,14 @@ function spokenSuggestsSyllabus(text: string): boolean {
   return spokenSuggestsIntent(text) === 'syllabus';
 }
 
+/** Sticky CTA for syllabus confirm. Never says "this class" unless a classId is already chosen. */
+function syllabusConfirmLabel(busy: boolean, classId: string | null, className: string | null): string {
+  if (busy) return 'Reading…';
+  if (!classId) return 'Choose which class';
+  const name = className?.replace(/\s+/g, ' ').trim();
+  return name ? `Parse syllabus for ${name}` : 'Parse syllabus for this class';
+}
+
 type ClassifyResult = {
   intent: CaptureIntent;
   confidence: number;
@@ -230,6 +239,9 @@ export default function CaptureScreen() {
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
+  /** Which Capture source icon is highlighted; Camera until the teacher picks another. */
+  const [selectedSource, setSelectedSource] = useState<'camera' | 'library' | 'files'>('camera');
+  const scrollRef = useRef<ScrollView>(null);
   const [evaluation, setEvaluation] = useState<CaptureEvaluation | null>(null);
   const [intent, setIntent] = useState<CaptureIntent | null>(null);
   const [classified, setClassified] = useState<ClassifyResult | null>(null);
@@ -248,8 +260,34 @@ export default function CaptureScreen() {
     maxScore: number | null;
     header: string | null;
   } | null>(null);
+  const [syllabusClassOverride, setSyllabusClassOverride] = useState<string | null>(null);
+  const [classPickerOpen, setClassPickerOpen] = useState(false);
+  const taughtClasses = chrome.classes;
+  // Explicit pick wins. One taught class (or chrome while the list is still loading) is context.
+  // Multiple taught classes: do not silently use the last active class — ask which one.
+  const syllabusClassId =
+    syllabusClassOverride ??
+    (taughtClasses.length === 1 ? taughtClasses[0].id : null) ??
+    (taughtClasses.length === 0 ? chromeClassId : null);
+  const syllabusClassName =
+    taughtClasses.find((row) => row.id === syllabusClassId)?.name ??
+    (syllabusClassId && syllabusClassId === chromeClassId ? chrome.className : null);
 
   const micLive = Boolean(recording || dictation);
+
+  // Phone sticky CTA owns the bottom of the column; WorkingLine/status live in the
+  // scroller. When classify/save starts, pin that progress above the sticky bar
+  // without changing Screen's keyboardHeight lift from #96.
+  useEffect(() => {
+    if (!asking && !busy) return;
+    const pin = () => scrollRef.current?.scrollToEnd({ animated: true });
+    const frame = requestAnimationFrame(pin);
+    const later = setTimeout(pin, 120);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(later);
+    };
+  }, [asking, busy, status]);
 
   const keyedAssignments = useMemo(
     () => assignments.filter((row) => assignmentHasKey(row)),
@@ -397,6 +435,8 @@ export default function CaptureScreen() {
     setParentId(null);
     setParentName('');
     setAssignmentId(null);
+    setSyllabusClassOverride(null);
+    setClassPickerOpen(false);
     clearClassify();
   };
 
@@ -439,6 +479,7 @@ export default function CaptureScreen() {
   };
 
   const pickCamera = async () => {
+    setSelectedSource('camera');
     setStatus(null);
     setError(null);
     if (Platform.OS === 'web') {
@@ -457,6 +498,7 @@ export default function CaptureScreen() {
   };
 
   const pickLibrary = async () => {
+    setSelectedSource('library');
     setStatus(null);
     setError(null);
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -474,6 +516,7 @@ export default function CaptureScreen() {
   };
 
   const pickFiles = async () => {
+    setSelectedSource('files');
     setStatus(null);
     setError(null);
     try {
@@ -1455,10 +1498,10 @@ export default function CaptureScreen() {
     }
   };
 
-  const saveSyllabusConfirm = async () => {
+  const saveSyllabusConfirm = async (classId = syllabusClassId) => {
     if (!teacher) return;
-    if (!chromeClassId) {
-      setError('Name a class first — syllabus drafts need a class.');
+    if (!classId) {
+      setClassPickerOpen(true);
       return;
     }
     const firstImage = pages.find((page) => page.mimeType.startsWith('image/')) ?? pages[0] ?? null;
@@ -1483,19 +1526,15 @@ export default function CaptureScreen() {
       const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
       if (!imageUrl) throw new Error('Could not open the uploaded photo.');
       const draft = await invokeAi<Record<string, unknown>>('parse-class-syllabus', {
-        classId: chromeClassId,
+        classId,
         imageUrl,
         mimeType: firstImage?.mimeType ?? asset.mime_type ?? 'image/jpeg',
       });
       if (draft.error) throw new Error(String(draft.error));
-      await upsertSyllabusAskDraft(
-        chromeClassId,
-        { ...draft, schema_version: 1, class_id: chromeClassId },
-        asset.id,
-      );
+      await upsertSyllabusAskDraft(classId, { ...draft, schema_version: 1, class_id: classId }, asset.id);
       resetSlip();
       setStatus('Ask draft ready — review before publish.');
-      router.replace(`/class/${chromeClassId}/syllabus`);
+      router.replace(`/class/${classId}/syllabus`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that syllabus photo');
     } finally {
@@ -1555,14 +1594,18 @@ export default function CaptureScreen() {
       );
     }
     if (intent === 'syllabus') {
-      if (!chromeClassId) {
-        return <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />;
-      }
+      const canParse = Boolean(pages.length || evaluation?.photoAssets?.length);
       return (
         <PrimaryButton
-          disabled={busy || (!pages.length && !evaluation?.photoAssets?.length)}
-          label={busy ? 'Reading…' : 'Parse syllabus for this class'}
-          onPress={() => void saveSyllabusConfirm()}
+          disabled={busy || (Boolean(syllabusClassId) && !canParse)}
+          label={syllabusConfirmLabel(busy, syllabusClassId, syllabusClassName)}
+          onPress={() => {
+            if (!syllabusClassId) {
+              setClassPickerOpen(true);
+              return;
+            }
+            void saveSyllabusConfirm(syllabusClassId);
+          }}
         />
       );
     }
@@ -1779,9 +1822,27 @@ export default function CaptureScreen() {
             }}
           />
           <View style={styles.mediaHits}>
-            <IconButton name="capture" size="lg" tone="brand" label="Camera" onPress={() => void pickCamera()} />
-            <IconButton name="photo" size="lg" tone="wash" label="Photo or Video" onPress={() => void pickLibrary()} />
-            <IconButton name="file" size="lg" tone="wash" label="Files" onPress={() => void pickFiles()} />
+            <IconButton
+              name="capture"
+              size="lg"
+              tone={selectedSource === 'camera' ? 'brand' : 'wash'}
+              label="Camera"
+              onPress={() => void pickCamera()}
+            />
+            <IconButton
+              name="photo"
+              size="lg"
+              tone={selectedSource === 'library' ? 'brand' : 'wash'}
+              label="Photo or Video"
+              onPress={() => void pickLibrary()}
+            />
+            <IconButton
+              name="file"
+              size="lg"
+              tone={selectedSource === 'files' ? 'brand' : 'wash'}
+              label="Files"
+              onPress={() => void pickFiles()}
+            />
           </View>
         </>
       )}
@@ -1886,15 +1947,53 @@ export default function CaptureScreen() {
 
           {intent === 'syllabus' ? (
             <>
-              {!chromeClassId ? (
-                <Text style={[type.meta, { color: colors.mute }]}>
-                  Pick a class first. We will parse this into a syllabus draft for that class — nothing publishes until you review.
-                </Text>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {syllabusClassId
+                  ? `Parses grading policy / category weights for ${syllabusClassName ?? 'this class'}. Opens the Syllabus screen to review — no auto-publish.`
+                  : 'Which class should we parse this syllabus for? Pick one — nothing publishes until you review.'}
+              </Text>
+              {taughtClasses.length ? (
+                <View style={styles.gaps}>
+                  {taughtClasses.slice(0, 12).map((klass) => (
+                    <Chip
+                      key={klass.id}
+                      label={klass.name}
+                      selected={syllabusClassId === klass.id}
+                      onPress={() => setSyllabusClassOverride(klass.id)}
+                    />
+                  ))}
+                  {taughtClasses.length > 12 ? (
+                    <Chip label="More" onPress={() => setClassPickerOpen(true)} />
+                  ) : null}
+                </View>
               ) : (
                 <Text style={[type.meta, { color: colors.mute }]}>
-                  Parses grading policy / category weights for this class. Opens the Syllabus screen to review — no auto-publish.
+                  No taught classes yet. Create a class, then come back to parse.
                 </Text>
               )}
+              <FormSheet
+                visible={classPickerOpen}
+                title="Which class?"
+                onClose={() => setClassPickerOpen(false)}
+              >
+                {taughtClasses.map((klass) => (
+                  <ListRow
+                    key={klass.id}
+                    title={klass.name}
+                    chevron={false}
+                    selected={syllabusClassId === klass.id}
+                    onPress={() => {
+                      setSyllabusClassOverride(klass.id);
+                      setClassPickerOpen(false);
+                    }}
+                  />
+                ))}
+                {!taughtClasses.length ? (
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    Create a class first — syllabus drafts need a class.
+                  </Text>
+                ) : null}
+              </FormSheet>
             </>
           ) : null}
 
@@ -2157,7 +2256,14 @@ export default function CaptureScreen() {
   }
 
   return (
-    <Screen keyboard sticky={sticky}>
+    <Screen
+      keyboard
+      sticky={sticky}
+      scrollRef={scrollRef}
+      onContentSizeChange={() => {
+        if (asking || busy) scrollRef.current?.scrollToEnd({ animated: true });
+      }}
+    >
       {previewBlock}
       {composerBlock}
     </Screen>
