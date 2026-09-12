@@ -53,11 +53,24 @@ test('Capture recognizes syllabus intent and respects teacher note', () => {
   assert.match(source, /\['syllabus', 'Syllabus'\]/);
   assert.match(source, /parse-class-syllabus/);
   assert.match(source, /upsertSyllabusAskDraft/);
+  assert.match(source, /Parse syllabus for \$\{name\}/);
   assert.match(source, /Parse syllabus for this class/);
   assert.doesNotMatch(
     source,
     /nextIntent === 'unsure' && \(result\.studentGuessName \|\| result\.gaps\?\.length \|\| spokenName\.trim\(\)\)\)/,
   );
+});
+
+test('Capture syllabus confirm asks which class when none is selected', () => {
+  assert.match(source, /function syllabusConfirmLabel/);
+  assert.match(source, /Choose which class/);
+  assert.match(source, /title="Which class\?"/);
+  assert.match(source, /syllabusClassOverride/);
+  assert.match(source, /setClassPickerOpen\(true\)/);
+  assert.match(source, /taughtClasses\.length === 1/);
+  assert.match(source, /Which class should we parse this syllabus for/);
+  assert.doesNotMatch(source, /intent === 'syllabus'[\s\S]{0,220}Name a class/);
+  assert.doesNotMatch(source, /intent === 'syllabus'[\s\S]{0,280}router\.replace\('\/\?switch=1'\)/);
 });
 
 test('Capture classifies answer_key / vehicle / hold intents and wires confirms', () => {
