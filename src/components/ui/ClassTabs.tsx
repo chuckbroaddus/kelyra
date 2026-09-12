@@ -50,3 +50,46 @@ export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boo
 export function officeClassPersonTabs(feedIcon: IconName): PersonTab[] {
   return tabsWithFeedIcon(asPersonTabs(OFFICE_CLASS_TABS), feedIcon);
 }
+
+const DESK_SPAN_TABS: PersonTab[] = [
+  { key: 'today', label: 'Today', icon: 'today' },
+  { key: 'week', label: 'This week', icon: 'history' },
+];
+
+const GRADEBOOK_VIEW_TABS: PersonTab[] = [
+  { key: 'gradebook', label: 'Gradebook', icon: 'records' },
+  { key: 'heatmap', label: 'Heatmap', icon: 'grades' },
+];
+
+type ShelfProps = {
+  value: string;
+  onChange: (key: string) => void;
+  stacked?: boolean;
+  compact?: boolean;
+};
+
+/** Today · This week under ClassTabs — same morph as PersonTabs (demoted week route). */
+export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) {
+  return (
+    <PersonTabs
+      tabs={DESK_SPAN_TABS}
+      value={value}
+      onChange={onChange}
+      stacked={stacked}
+      compact={compact}
+    />
+  );
+}
+
+/** Gradebook · Heatmap under ClassTabs — same morph; heatmap stays demoted from CLASS_TABS. */
+export function GradebookViewTabs({ value, onChange, stacked, compact }: ShelfProps) {
+  return (
+    <PersonTabs
+      tabs={GRADEBOOK_VIEW_TABS}
+      value={value}
+      onChange={onChange}
+      stacked={stacked}
+      compact={compact}
+    />
+  );
+}

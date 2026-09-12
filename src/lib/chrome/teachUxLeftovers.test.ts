@@ -50,13 +50,19 @@ test('L3: Week / Heatmap discoverable; not restored as default CLASS_TABS', () =
     assert.ok(!keys.has(demoted));
   }
   const desk = read('src/app/class/[id]/index.tsx');
-  assert.match(desk, /This week/);
-  assert.match(desk, /hrefForClassTab\(id!, 'week'\)/);
-  assert.match(desk, /label="Today"/);
+  assert.match(desk, /DeskSpanTabs/);
+  assert.match(desk, /setParams\(\{ tab: key \}\)/);
+  assert.doesNotMatch(desk, /ChipRow/);
   const book = read('src/app/class/[id]/gradebook.tsx');
-  assert.match(book, /label="Heatmap"/);
-  assert.match(book, /hrefForClassTab\(id, 'heatmap'\)/);
-  assert.match(book, /label="Gradebook"/);
+  assert.match(book, /GradebookViewTabs/);
+  assert.match(book, /setParams\(\{ tab: next \}\)/);
+  assert.doesNotMatch(book, /ChipRow/);
+  const shelves = read('src/components/ui/ClassTabs.tsx');
+  assert.match(shelves, /label: 'This week'/);
+  assert.match(shelves, /label: 'Heatmap'/);
+  assert.match(shelves, /label: 'Gradebook'/);
+  assert.match(shelves, /label: 'Today'/);
+  assert.match(shelves, /<PersonTabs/);
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /Family update/);
   assert.match(drawer, /\/family/);

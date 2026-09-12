@@ -3,11 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
-import { ClassTabs, hrefForClassTab } from '@/components/ui/ClassTabs';
+import { ClassTabs, GradebookViewTabs } from '@/components/ui/ClassTabs';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
@@ -297,18 +295,15 @@ export default function GradebookScreen() {
       {id ? <ClassTabs classId={id} stacked /> : null}
       {id ? (
         <View style={styles.chipShelf}>
-          <ChipRow compact>
-            <Chip
-              label="Gradebook"
-              selected={!heatmap}
-              onPress={() => router.replace(hrefForClassTab(id, 'gradebook') as never)}
-            />
-            <Chip
-              label="Heatmap"
-              selected={heatmap}
-              onPress={() => router.replace(hrefForClassTab(id, 'heatmap') as never)}
-            />
-          </ChipRow>
+          <GradebookViewTabs
+            value={heatmap ? 'heatmap' : 'gradebook'}
+            compact
+            onChange={(key) => {
+              const next = key === 'heatmap' ? 'heatmap' : '';
+              if ((heatmap ? 'heatmap' : '') === next) return;
+              router.setParams({ tab: next });
+            }}
+          />
         </View>
       ) : null}
       {syllabusBanner !== 'published' && id && !heatmap ? (
