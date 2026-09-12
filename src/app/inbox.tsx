@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { captureBadge, practiceBadge } from '@/components/ui/Badge';
-import { SecondaryButton } from '@/components/ui/Button';
+import { GhostButton, SecondaryButton } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
@@ -22,6 +22,7 @@ import {
 } from '@/lib/captures/api';
 import { deleteCapture } from '@/lib/captures/delete';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { INGEST_COPY } from '@/lib/ingest/copy';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { formatWhen } from '@/lib/format';
 import { markNoteOnly, processQueuedDrafts } from '@/lib/gaps/api';
@@ -33,7 +34,9 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 export default function InboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { contextTab, classId: chromeClassId } = useChrome();
+  const chrome = useChrome();
+  const { contextTab, classId: chromeClassId } = chrome;
+  const teachSeat = chrome.role === 'teacher';
   const { teacher, refreshTeacher, setActiveClassId } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [turned, setTurned] = useState<TurnedInItem[]>([]);
@@ -145,9 +148,18 @@ export default function InboxScreen() {
       ) : null}
       {!loaded ? <WorkingLine /> : null}
       {loaded && items.length === 0 && turned.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
-        </Text>
+        <View>
+          <Text style={[styles.empty, { color: colors.mute }]}>
+            Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
+          </Text>
+          {teachSeat ? (
+            <GhostButton
+              align="left"
+              label={INGEST_COPY.entryNeeds}
+              onPress={() => router.push('/capture')}
+            />
+          ) : null}
+        </View>
       ) : null}
       {visible.map((item) => {
         const unassigned = !item.student_id;

@@ -17,7 +17,9 @@ import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
+import { ClassStackBinder } from '@/components/ingest/ClassStackBinder';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { INGEST_COPY } from '@/lib/ingest/copy';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -211,9 +213,11 @@ export default function CaptureScreen() {
   const router = useRouter();
   const { teacher } = useAuth();
   const office = chromeRole !== 'none' && isOfficeRole(chromeRole);
+  const teachSeat = chromeRole === 'teacher';
 
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
   const [files, setFiles] = useState<CaptureFile[]>([]);
+  const [stackOpen, setStackOpen] = useState(false);
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [audioMime, setAudioMime] = useState('audio/m4a');
   const [spokenName, setSpokenName] = useState('');
@@ -1844,6 +1848,18 @@ export default function CaptureScreen() {
               onPress={() => void pickFiles()}
             />
           </View>
+          {teachSeat ? (
+            <GhostButton
+              align="left"
+              label={INGEST_COPY.entry}
+              accessibilityLabel={
+                chromeClassId
+                  ? `Upload class stack for ${chrome.className ?? 'class'}`
+                  : 'Upload class stack'
+              }
+              onPress={() => setStackOpen(true)}
+            />
+          ) : null}
         </>
       )}
     </View>
@@ -2238,6 +2254,16 @@ export default function CaptureScreen() {
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      {teachSeat && teacher?.id ? (
+        <ClassStackBinder
+          visible={stackOpen}
+          onClose={() => setStackOpen(false)}
+          teacherId={teacher.id}
+          classes={chrome.classes}
+          initialClassId={chromeClassId}
+          teachSeat={teachSeat}
+        />
+      ) : null}
       {split && stickyCta ? stickyCta : null}
     </View>
   );

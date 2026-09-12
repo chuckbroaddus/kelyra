@@ -6,6 +6,7 @@ import { AvatarTray } from '@/components/ui/AvatarTray';
 import { captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
+import { INGEST_COPY } from '@/lib/ingest/copy';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { WorkRow } from '@/components/ui/WorkRow';
@@ -20,7 +21,7 @@ import { deleteCapture } from '@/lib/captures/delete';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview } from '@/lib/classes/overview';
 import { ClassTabs, DeskSpanTabs } from '@/components/ui/ClassTabs';
-import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -29,6 +30,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ClassHomeScreen() {
   const { colors } = useTheme();
+  const chrome = useChrome();
+  const teachSeat = chrome.role === 'teacher';
   const layout = useLayout();
   const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
@@ -215,9 +218,18 @@ export default function ClassHomeScreen() {
       {pane === 'needs' ? (
         <View style={styles.one}>
           {inbox.length === 0 && turned.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.mute }]}>
-              Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
-            </Text>
+            <View>
+              <Text style={[styles.empty, { color: colors.mute }]}>
+                Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
+              </Text>
+              {teachSeat ? (
+                <GhostButton
+                  align="left"
+                  label={INGEST_COPY.entryNeeds}
+                  onPress={() => router.push('/capture')}
+                />
+              ) : null}
+            </View>
           ) : null}
           {inbox.map((item) => (
             <WorkRow

@@ -1033,6 +1033,31 @@ export type Database = {
       };
       can_link_parent_student: { Args: Record<string, never>; Returns: boolean };
       create_school_class: { Args: { p_name: string }; Returns: ClassRow };
+      // BATCH-v1 ingest (migrations 20260913000000* — apply later)
+      create_ingest_batch: {
+        Args: {
+          p_class_id: string;
+          p_assignment_id?: string | null;
+          p_pages_per_student?: number;
+        };
+        Returns: Record<string, unknown>;
+      };
+      register_ingest_file: {
+        Args: {
+          p_batch_id: string;
+          p_sort_index: number;
+          p_original_filename: string;
+          p_mime_type: string;
+          p_byte_size: number;
+          p_sha256: string;
+          p_storage_path: string;
+          p_tus_upload_id?: string | null;
+        };
+        Returns: Record<string, unknown>;
+      };
+      ingest_mark_received: { Args: { p_batch_id: string }; Returns: Record<string, unknown> };
+      abandon_ingest_batch: { Args: { p_batch_id: string }; Returns: Record<string, unknown> };
+
       add_teacher_to_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
       remove_teacher_from_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
       teaches_class: { Args: { p_class_id: string }; Returns: boolean };
