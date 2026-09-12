@@ -118,3 +118,24 @@ test('ride-lpr returns make/model and front/back plates', () => {
   assert.match(edge, /"model"/);
   assert.match(edge, /Never invent a person/);
 });
+
+test('Capture source icons track selectedSource highlight', () => {
+  assert.match(source, /useState<'camera' \| 'library' \| 'files'>\('camera'\)/);
+  assert.match(source, /setSelectedSource\('camera'\)/);
+  assert.match(source, /setSelectedSource\('library'\)/);
+  assert.match(source, /setSelectedSource\('files'\)/);
+  assert.match(source, /selectedSource === 'camera' \? 'brand' : 'wash'/);
+  assert.match(source, /selectedSource === 'library' \? 'brand' : 'wash'/);
+  assert.match(source, /selectedSource === 'files' \? 'brand' : 'wash'/);
+  assert.doesNotMatch(source, /tone="brand" label="Camera"/);
+});
+
+test('Capture scrolls progress above sticky CTA when Ask AI / busy', () => {
+  assert.match(source, /scrollRef = useRef<ScrollView>\(null\)/);
+  assert.match(source, /scrollRef=\{scrollRef\}/);
+  assert.match(source, /scrollToEnd\(\{ animated: true \}\)/);
+  assert.match(source, /\[asking, busy, status\]/);
+  assert.match(source, /onContentSizeChange/);
+  assert.match(source, /sticky=\{sticky\}/);
+  assert.match(source, /keyboard/);
+});

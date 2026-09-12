@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -239,6 +239,9 @@ export default function CaptureScreen() {
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
+  /** Which Capture source icon is highlighted; Camera until the teacher picks another. */
+  const [selectedSource, setSelectedSource] = useState<'camera' | 'library' | 'files'>('camera');
+  const scrollRef = useRef<ScrollView>(null);
   const [evaluation, setEvaluation] = useState<CaptureEvaluation | null>(null);
   const [intent, setIntent] = useState<CaptureIntent | null>(null);
   const [classified, setClassified] = useState<ClassifyResult | null>(null);
@@ -271,6 +274,20 @@ export default function CaptureScreen() {
     (syllabusClassId && syllabusClassId === chromeClassId ? chrome.className : null);
 
   const micLive = Boolean(recording || dictation);
+
+  // Phone sticky CTA owns the bottom of the column; WorkingLine/status live in the
+  // scroller. When classify/save starts, pin that progress above the sticky bar
+  // without changing Screen's keyboardHeight lift from #96.
+  useEffect(() => {
+    if (!asking && !busy) return;
+    const pin = () => scrollRef.current?.scrollToEnd({ animated: true });
+    const frame = requestAnimationFrame(pin);
+    const later = setTimeout(pin, 120);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(later);
+    };
+  }, [asking, busy, status]);
 
   const keyedAssignments = useMemo(
     () => assignments.filter((row) => assignmentHasKey(row)),
@@ -462,6 +479,7 @@ export default function CaptureScreen() {
   };
 
   const pickCamera = async () => {
+    setSelectedSource('camera');
     setStatus(null);
     setError(null);
     if (Platform.OS === 'web') {
@@ -480,6 +498,7 @@ export default function CaptureScreen() {
   };
 
   const pickLibrary = async () => {
+    setSelectedSource('library');
     setStatus(null);
     setError(null);
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -497,6 +516,7 @@ export default function CaptureScreen() {
   };
 
   const pickFiles = async () => {
+    setSelectedSource('files');
     setStatus(null);
     setError(null);
     try {
@@ -1802,9 +1822,27 @@ export default function CaptureScreen() {
             }}
           />
           <View style={styles.mediaHits}>
-            <IconButton name="capture" size="lg" tone="brand" label="Camera" onPress={() => void pickCamera()} />
-            <IconButton name="photo" size="lg" tone="wash" label="Photo or Video" onPress={() => void pickLibrary()} />
-            <IconButton name="file" size="lg" tone="wash" label="Files" onPress={() => void pickFiles()} />
+            <IconButton
+              name="capture"
+              size="lg"
+              tone={selectedSource === 'camera' ? 'brand' : 'wash'}
+              label="Camera"
+              onPress={() => void pickCamera()}
+            />
+            <IconButton
+              name="photo"
+              size="lg"
+              tone={selectedSource === 'library' ? 'brand' : 'wash'}
+              label="Photo or Video"
+              onPress={() => void pickLibrary()}
+            />
+            <IconButton
+              name="file"
+              size="lg"
+              tone={selectedSource === 'files' ? 'brand' : 'wash'}
+              label="Files"
+              onPress={() => void pickFiles()}
+            />
           </View>
         </>
       )}
@@ -2218,7 +2256,14 @@ export default function CaptureScreen() {
   }
 
   return (
-    <Screen keyboard sticky={sticky}>
+    <Screen
+      keyboard
+      sticky={sticky}
+      scrollRef={scrollRef}
+      onContentSizeChange={() => {
+        if (asking || busy) scrollRef.current?.scrollToEnd({ animated: true });
+      }}
+    >
       {previewBlock}
       {composerBlock}
     </Screen>
