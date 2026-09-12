@@ -1159,7 +1159,9 @@ export default function CaptureScreen() {
 
   const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
 
-  const sticky = (() => {
+  // Sticky CTA only — note field is composed separately so it can pin above the
+  // keyboard with the bar on phones (Screen skips KAV/insets when sticky is set).
+  const stickyCta = (() => {
     if (asking) {
       return <PrimaryButton label="Asking AI…" disabled onPress={() => undefined} />;
     }
@@ -1232,6 +1234,40 @@ export default function CaptureScreen() {
     }
     return undefined;
   })();
+
+  const noteRow = (
+    <View style={styles.textRow}>
+      <View style={styles.textFlex}>
+        <TextField
+          multiline
+          placeholder="What is this? Name, note, or say it"
+          value={spokenName}
+          onChangeText={(value) => {
+            setSpokenName(value);
+            if (intent) clearClassify();
+          }}
+        />
+      </View>
+      <IconButton
+        name="mic"
+        size="lg"
+        tone={micLive ? 'danger' : 'wash'}
+        live={micLive}
+        label={micLive ? 'Stop listening' : 'Dictate into the field'}
+        onPress={() => void (micLive ? stopRecording() : startRecording())}
+      />
+    </View>
+  );
+
+  // Phone: pin note+mic in the sticky bar so Screen's keyboardHeight lift keeps
+  // them above the soft keyboard (body scroll fields stay buried otherwise).
+  // Split: note stays in the scroller — Screen has no sticky, so KAV/insets apply.
+  const sticky = (
+    <View style={styles.stickyStack}>
+      {noteRow}
+      {stickyCta}
+    </View>
+  );
 
   const webDropProps =
     Platform.OS === 'web'
@@ -1342,27 +1378,7 @@ export default function CaptureScreen() {
 
   const composerBlock = (
     <View style={styles.block}>
-      <View style={styles.textRow}>
-        <View style={styles.textFlex}>
-          <TextField
-            multiline
-            placeholder="What is this? Name, note, or say it"
-            value={spokenName}
-            onChangeText={(value) => {
-              setSpokenName(value);
-              if (intent) clearClassify();
-            }}
-          />
-        </View>
-        <IconButton
-          name="mic"
-          size="lg"
-          tone={micLive ? 'danger' : 'wash'}
-          live={micLive}
-          label={micLive ? 'Stop listening' : 'Dictate into the field'}
-          onPress={() => void (micLive ? stopRecording() : startRecording())}
-        />
-      </View>
+      {split ? noteRow : null}
       {preview.hint ? <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text> : null}
 
       {keyedAssignments.length ? (
@@ -1615,7 +1631,7 @@ export default function CaptureScreen() {
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      {split && sticky ? sticky : null}
+      {split && stickyCta ? stickyCta : null}
     </View>
   );
 
@@ -1664,6 +1680,9 @@ const styles = StyleSheet.create({
   textFlex: {
     flex: 1,
     minWidth: 0,
+  },
+  stickyStack: {
+    gap: 8,
   },
   dropWell: {
     borderRadius: 12,
