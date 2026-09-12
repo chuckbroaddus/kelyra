@@ -11,6 +11,7 @@ import {
   type AssignmentFormValue,
   type SyllabusCategoryOption,
 } from '@/components/ui/AssignmentForm';
+import { defaultCalendarPublished } from '@/lib/calendar/visibility';
 import { categoryOptionsForAssign, getClassSyllabus } from '@/lib/syllabus/api';
 import { GhostButton } from '@/components/ui/Button';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
@@ -215,6 +216,12 @@ export default function AssignmentEditScreen() {
           unit: row.unit ?? '',
           section: row.section ?? '',
           helpMode: (row.help_mode as AssignmentFormValue['helpMode']) ?? 'off',
+          showOnFamilyCalendar:
+            row.calendar_visibility === 'published'
+              ? true
+              : row.calendar_visibility === 'hidden'
+                ? false
+                : defaultCalendarPublished(row.category ?? 'homework'),
         });
         setReady(true);
       })

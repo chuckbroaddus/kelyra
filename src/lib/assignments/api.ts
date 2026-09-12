@@ -35,6 +35,8 @@ export type AssignmentInput = {
   unit?: string | null;
   section?: string | null;
   helpMode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+  /** Assign ≠ publish. Null = leave DB default / unchanged. */
+  calendarVisibility?: 'hidden' | 'published' | null;
 };
 
 export async function listClassAssignments(classId: string): Promise<AssignmentRow[]> {
@@ -223,5 +225,8 @@ function buildRow(input: AssignmentInput) {
     unit: input.unit?.trim() || null,
     section: input.section?.trim() || null,
     help_mode: input.helpMode ?? 'off',
+    ...(input.calendarVisibility === 'hidden' || input.calendarVisibility === 'published'
+      ? { calendar_visibility: input.calendarVisibility }
+      : {}),
   };
 }

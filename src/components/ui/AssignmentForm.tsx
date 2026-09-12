@@ -26,6 +26,7 @@ import {
 import { EMPTY_CATALOG_COPY } from '@/lib/lessons/allowlist';
 import { packKey } from '@/lib/lessons/protocol';
 import type { LessonPackRow } from '@/lib/supabase/types';
+import { defaultCalendarPublished } from '@/lib/calendar/visibility';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type AssignmentWorkKind = 'planned' | 'lesson';
@@ -55,6 +56,8 @@ export type AssignmentFormValue = {
   unit: string;
   section: string;
   helpMode: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+  /** Assign ≠ publish. When due is set: family calendar visibility. */
+  showOnFamilyCalendar: boolean;
 };
 
 export type SyllabusCategoryOption = {
@@ -96,6 +99,7 @@ export function emptyAssignmentForm(seed?: {
     unit: '',
     section: '',
     helpMode: 'off',
+    showOnFamilyCalendar: defaultCalendarPublished(category),
   };
 }
 
@@ -294,6 +298,7 @@ export function AssignmentForm({
                 category: kind.key,
                 includeInAverage:
                   value.scoreScheme === 'pass_fail' ? false : kind.default_include_in_average === true,
+                showOnFamilyCalendar: defaultCalendarPublished(kind.key),
               })
             }
           />
@@ -331,6 +336,28 @@ export function AssignmentForm({
           patch({ dueDate: iso ?? '' });
         }}
       />
+
+      {value.dueDate.trim() ? (
+        <>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+            Family calendar
+          </Text>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Assigning work does not publish the due date. Quiz and test kinds default hidden.
+          </Text>
+          <ChipRow>
+            <Chip
+              label={
+                value.showOnFamilyCalendar
+                  ? 'Show on student/parent calendar'
+                  : 'Hide on family calendar'
+              }
+              selected={value.showOnFamilyCalendar}
+              onPress={() => patch({ showOnFamilyCalendar: !value.showOnFamilyCalendar })}
+            />
+          </ChipRow>
+        </>
+      ) : null}
       <ChipRow>
         <Chip
           label="Tomorrow"
@@ -596,6 +623,11 @@ export function plannedAssignmentInput(
     section: value.section,
     helpMode: value.helpMode ?? 'off',
     studentId: studentId ?? null,
+    calendarVisibility: value.dueDate.trim()
+      ? value.showOnFamilyCalendar
+        ? 'published'
+        : 'hidden'
+      : null,
   };
 }
 

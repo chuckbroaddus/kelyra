@@ -219,6 +219,9 @@ export type AssignmentRow = {
   beat_start?: string | null;
   beat_end?: string | null;
   help_mode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+  calendar_visibility?: 'hidden' | 'published' | null;
+  calendar_published_at?: string | null;
+  calendar_published_by?: string | null;
 };
 
 export type LessonPackRow = {
@@ -689,6 +692,9 @@ export type Database = {
           beat_start?: string | null;
           beat_end?: string | null;
           help_mode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+          calendar_visibility?: 'hidden' | 'published' | null;
+          calendar_published_at?: string | null;
+          calendar_published_by?: string | null;
         },
         Partial<Omit<AssignmentRow, 'id' | 'created_at'>>
       >;
