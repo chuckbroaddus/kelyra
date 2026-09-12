@@ -1,6 +1,23 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
+
+function cleanPlate(raw: unknown): string {
+  return typeof raw === 'string' ? raw.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+}
+
+function cleanText(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const value = raw.replace(/\s+/g, ' ').trim();
+  return value || null;
+}
+
+function cleanSide(raw: unknown): 'front' | 'back' | 'unknown' {
+  const value = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
+  if (value === 'front' || value === 'back') return value;
+  return 'unknown';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
   try {
@@ -31,7 +48,15 @@ Deno.serve(async (req) => {
       .from('photos')
       .createSignedUrl(storagePath, 120);
     if (signedError || !signed?.signedUrl) {
-      return Response.json({ plate: null, unreadable: true }, { status: 200 });
+      return Response.json({
+        plate: null,
+        plateFront: null,
+        plateBack: null,
+        make: null,
+        model: null,
+        side: 'unknown',
+        unreadable: true,
+      }, { status: 200 });
     }
 
     const apiKey = requireXaiKey();
@@ -45,21 +70,31 @@ Deno.serve(async (req) => {
             { type: 'input_image', image_url: signed.signedUrl, detail: 'high' },
             {
               type: 'input_text',
-              text: `Read the vehicle plate in this school dismissal photo.
-JSON only: {"plate":"ABC1234","confidence":0.0,"unreadable":false}
-Plate: uppercase letters+digits only. Empty if unreadable.
-Never invent a person, parent, or student.`,
+              text: `Read the vehicle in this school dismissal / Ride photo.
+JSON only: {"plate":"ABC1234","plateFront":null,"plateBack":null,"make":"Toyota","model":"Camry","side":"back","confidence":0.0,"unreadable":false}
+Rules:
+- plate: primary readable plate, uppercase letters+digits only. Empty if unreadable.
+- plateFront / plateBack: fill when that side is clearly visible in this shot; otherwise null.
+- side: front, back, or unknown for which plate face this photo mostly shows.
+- make / model: vehicle make and model if clearly readable from badges/shape; never invent.
+- Never invent a person, parent, or student.`,
             },
           ],
         },
       ],
     });
     const parsed = extractJson(outputText(payload));
-    const raw = typeof parsed.plate === 'string' ? parsed.plate : '';
-    const plate = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const plate = cleanPlate(parsed.plate);
+    const plateFront = cleanPlate(parsed.plateFront) || null;
+    const plateBack = cleanPlate(parsed.plateBack) || null;
     const unreadable = Boolean(parsed.unreadable) || !plate;
     return Response.json({
       plate: unreadable ? null : plate,
+      plateFront: plateFront || (cleanSide(parsed.side) === 'front' && plate ? plate : null),
+      plateBack: plateBack || (cleanSide(parsed.side) === 'back' && plate ? plate : null),
+      make: cleanText(parsed.make),
+      model: cleanText(parsed.model),
+      side: cleanSide(parsed.side),
       unreadable,
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
     });
@@ -67,6 +102,11 @@ Never invent a person, parent, or student.`,
     return Response.json(
       {
         plate: null,
+        plateFront: null,
+        plateBack: null,
+        make: null,
+        model: null,
+        side: 'unknown',
         unreadable: true,
         error: err instanceof Error ? err.message : 'LPR failed',
       },

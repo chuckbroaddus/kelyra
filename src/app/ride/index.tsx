@@ -49,6 +49,8 @@ export default function StaffRideScreen() {
   const [seq, setSeq] = useState(1);
   const [attachParent, setAttachParent] = useState('');
   const [attachPlate, setAttachPlate] = useState('');
+  const [attachMake, setAttachMake] = useState('');
+  const [attachModel, setAttachModel] = useState('');
   const [status, setStatus] = useState<string | null>(null);
 
   const refresh = useCallback(async (id: string) => {
@@ -80,6 +82,9 @@ export default function StaffRideScreen() {
       const path = await uploadRidePhoto(session.user.id, photo.uri, photo.mimeType);
       const lpr = await invokeRideLpr(path);
       const plate = lpr.plate ?? attachPlate.trim() ?? null;
+      if (lpr.make) setAttachMake(lpr.make);
+      if (lpr.model) setAttachModel(lpr.model);
+      if (lpr.plate) setAttachPlate(lpr.plate);
       const result = await staffWalkPhoto({
         lineId,
         storagePath: path,
@@ -168,6 +173,8 @@ export default function StaffRideScreen() {
         <Text style={[styles.label, { color: colors.mute }]}>Attach plate (type/STT text)</Text>
         <TextField label="Parent id" value={attachParent} onChangeText={setAttachParent} />
         <TextField label="Plate" value={attachPlate} onChangeText={setAttachPlate} autoCapitalize="characters" />
+        <TextField label="Make" value={attachMake} onChangeText={setAttachMake} />
+        <TextField label="Model" value={attachModel} onChangeText={setAttachModel} />
         <PrimaryButton
           label="Attach"
           onPress={() => {
@@ -175,6 +182,8 @@ export default function StaffRideScreen() {
               parentId: attachParent,
               plateRaw: attachPlate,
               plateSource: 'typed',
+              make: attachMake.trim() || undefined,
+              model: attachModel.trim() || undefined,
             })
               .then(() => setStatus('Attached'))
               .catch((err) => setStatus(err instanceof Error ? err.message : 'Attach failed'));

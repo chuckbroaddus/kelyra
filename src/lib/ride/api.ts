@@ -141,16 +141,47 @@ export async function parentLeave(lineId: string): Promise<LeaveResult> {
   return row;
 }
 
-export async function invokeRideLpr(storagePath: string): Promise<{
+export type RideLprResult = {
   plate: string | null;
+  plateFront: string | null;
+  plateBack: string | null;
+  make: string | null;
+  model: string | null;
+  side: 'front' | 'back' | 'unknown';
   unreadable: boolean;
-}> {
+};
+
+export async function invokeRideLpr(storagePath: string): Promise<RideLprResult> {
+  const empty: RideLprResult = {
+    plate: null,
+    plateFront: null,
+    plateBack: null,
+    make: null,
+    model: null,
+    side: 'unknown',
+    unreadable: true,
+  };
   const { data, error } = await requireSupabase().functions.invoke('ride-lpr', {
     body: { storagePath },
   });
-  if (error) return { plate: null, unreadable: true };
-  const plate = typeof data?.plate === 'string' ? data.plate : null;
-  return { plate, unreadable: Boolean(data?.unreadable) || !plate };
+  if (error || !data) return empty;
+  const plate = typeof data.plate === 'string' ? data.plate : null;
+  const plateFront = typeof data.plateFront === 'string' ? data.plateFront : null;
+  const plateBack = typeof data.plateBack === 'string' ? data.plateBack : null;
+  const make = typeof data.make === 'string' ? data.make : null;
+  const model = typeof data.model === 'string' ? data.model : null;
+  const side =
+    data.side === 'front' || data.side === 'back' ? data.side : ('unknown' as const);
+  const unreadable = Boolean(data.unreadable) || !plate;
+  return {
+    plate: unreadable ? null : plate,
+    plateFront,
+    plateBack,
+    make,
+    model,
+    side,
+    unreadable,
+  };
 }
 
 export async function queueLive(lineId: string): Promise<{

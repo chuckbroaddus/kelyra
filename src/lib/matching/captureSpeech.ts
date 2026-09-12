@@ -13,7 +13,18 @@ import { Platform } from 'react-native';
 
 import { readUriAsBytes } from '@/lib/media/upload';
 
-export type CaptureSpeechIntent = 'homework' | 'syllabus' | 'roster' | 'portrait' | 'parent_card' | 'student_card';
+export type CaptureSpeechIntent =
+  | 'homework'
+  | 'syllabus'
+  | 'roster'
+  | 'portrait'
+  | 'parent_card'
+  | 'student_card'
+  | 'answer_key'
+  | 'vehicle'
+  | 'lesson_plan'
+  | 'lesson_materials'
+  | 'feed_photo';
 
 export type SpokenCaptureHint = {
   transcript: string;
@@ -33,6 +44,11 @@ const CAPTURE_INTENTS = new Set<CaptureSpeechIntent>([
   'portrait',
   'parent_card',
   'student_card',
+  'answer_key',
+  'vehicle',
+  'lesson_plan',
+  'lesson_materials',
+  'feed_photo',
 ]);
 
 function asCaptureIntent(value: unknown): CaptureSpeechIntent | null {
@@ -61,7 +77,25 @@ export function parseCaptureSpeechLocal(transcript: string): Omit<SpokenCaptureH
   const spokenScore = parseSpokenScore(transcript);
   const skipGrade = looksLikeSkipGrade(transcript);
   let captureIntent: CaptureSpeechIntent | null = null;
-  if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/.test(text)) {
+  if (/\b(answer\s*keys?|answer\s*sheet|key\s*for\s*(this\s+)?(quiz|test|homework|assignment)|keyed\s+assignment)\b/.test(text)) {
+    captureIntent = 'answer_key';
+  } else if (
+    /\b(license\s*plates?|number\s*plates?|car\s*plates?|vehicle|make\s*(and|&)\s*model|front\s*(and|&|\/)\s*back\s*plate|rider\s*check[- ]?in)\b/.test(
+      text,
+    )
+  ) {
+    captureIntent = 'vehicle';
+  } else if (/\b(lesson\s*plans?)\b/.test(text)) {
+    captureIntent = 'lesson_plan';
+  } else if (/\b(lesson\s*materials?|class\s*materials?|teaching\s*materials?)\b/.test(text)) {
+    captureIntent = 'lesson_materials';
+  } else if (
+    /\b(feed\s*photos?|class\s*photos?|event\s*photos?|photo\s*for\s*(the\s+)?feed|post\s*(to\s*)?(the\s+)?feed)\b/.test(
+      text,
+    )
+  ) {
+    captureIntent = 'feed_photo';
+  } else if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/.test(text)) {
     captureIntent = 'syllabus';
   } else if (/\b(roster|class list|attendance|seating chart|name list)\b/.test(text)) {
     captureIntent = 'roster';
