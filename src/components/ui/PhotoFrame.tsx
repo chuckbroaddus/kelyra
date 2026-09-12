@@ -35,8 +35,7 @@ export function PhotoFrame({ uri, empty, compact, page, hero, fill }: Props) {
       {page != null ? <Text style={[styles.page, { color: colors.mute }]}>Page {page}</Text> : null}
       {empty || !uri ? (
         <View style={[frameStyle, styles.empty, { backgroundColor: colors.wash }]}>
-          <Text style={[styles.emptyTitle, { color: colors.mute }]}>Photograph the work</Text>
-          <Text style={[styles.emptyMeta, { color: colors.mute }]}>One student per photo.</Text>
+          <Text style={[styles.emptyTitle, { color: colors.mute }]}>Image Preview</Text>
         </View>
       ) : (
         <View style={frameStyle}>
@@ -73,11 +72,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     ...type.body,
     textAlign: 'center',
-  },
-  emptyMeta: {
-    ...type.meta,
-    textAlign: 'center',
-    maxWidth: 260,
   },
   image: {
     width: '100%',

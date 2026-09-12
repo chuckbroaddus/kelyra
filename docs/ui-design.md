@@ -1032,7 +1032,7 @@ Existing `PhotoFrame` + `PhotoPager` + `ImageViewer`.
 
 | State | Treatment |
 |---|---|
-| Empty well | Dashed 1 px `line`, fill `wash`, title `Photograph the work`, meta `One student per photo.` |
+| Empty well | Dashed 1 px `line`, fill `wash`, title `Image Preview` (no meta / no “One student per photo.”). Capture Camera / Photo or Video / Files icon row under the well is full-width, evenly spaced and centered (`justifyContent: space-evenly`). |
 | One page | Hero `flex: 1` on Capture / Student / Proposal. `contain` in heroes so a worksheet is not cropped to death. `cover` in `WorkRow` / shelf |
 | Multi-page | Horizontal pager, `Page n of m · swipe`, 7-pt dots (`line` / `brand`) |
 | Tap (not in a swipe) | `ImageViewer`. Pinch to zoom |
@@ -1472,15 +1472,15 @@ Omit PhaseBanner / no instructional Phase 2 Daily lead on Capture.
 **Portrait (top → bottom)**
 
 ```
-[ Image Preview — flex ]     ← label: Image Preview (not “Photo well”)
-Camera · Photo or Video · Files     ← icon row under the preview
+[ Image Preview — flex ]     ← empty-well title Image Preview (not a SectionHeader above)
+Camera · Photo or Video · Files     ← icon row under the preview, evenly spaced / centered
 [ text field ......................... 🎤 ]   ← mic on the right
 [ sticky ] Ask AI to process     ← only when any asset is present
 [ confirm strip ] This will be … + import actions   ← after AI
 ```
 
-1. **Image Preview** — keep the existing preview well; rename the label to **Image Preview**. Shows the current still, video poster, or file glyph. Empty state is quiet (no instructional Phase banner).
-2. **Icon row** (under preview), three actions, same icon recipe rules as §32.3 / `AGENTS.md`:
+1. **Image Preview** — preview well only; empty-state title **Image Preview** lives inside the dashed well (no separate `SectionHeader` above). Shows the current still, video poster, or file glyph. Empty state is quiet (no instructional Phase banner; no “One student per photo.”).
+2. **Icon row** (under preview), three actions evenly spaced and centered across the row, same icon recipe rules as §32.3 / `AGENTS.md`:
    - **Camera** — device camera (`expo-image-picker` camera / `WebCameraCapture` on web). Result lands in Image Preview.
    - **Photo or Video** — library picker (photos and videos).
    - **Files** — document picker.

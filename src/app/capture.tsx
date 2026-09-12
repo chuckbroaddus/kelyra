@@ -13,7 +13,6 @@ import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
 import { ListRow } from '@/components/ui/ListRow';
 import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
-import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -1207,7 +1206,6 @@ export default function CaptureScreen() {
 
   const previewBlock = (
     <View style={styles.block}>
-      <SectionHeader label="Image Preview" first />
       {!cameraOpen ? (
         <View
           style={[
@@ -1590,9 +1588,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   mediaHits: {
+    width: '100%',
     flexDirection: 'row',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
-    gap: 12,
     marginVertical: 4,
   },
   textRow: {
