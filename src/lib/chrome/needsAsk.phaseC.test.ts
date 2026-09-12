@@ -112,9 +112,9 @@ test('P3 HB: Grade book DrawerRow indent matches Parents/Family update', () => {
   assert.equal(lead(gradeRow!), lead(familyRow!));
 });
 
-test('Phase A+B intact: five tray keys; Class setup; CLASS_TABS ≤8; no sixth', () => {
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'capture', 'inbox', 'class', 'ask']);
-  assert.equal(trayKeysForRole('teacher').length, 5);
+test('Phase A+B intact: four tray keys; Class setup; CLASS_TABS ≤8; no fifth', () => {
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'class', 'ask']);
+  assert.equal(trayKeysForRole('teacher').length, 4);
   const classTab = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class');
   assert.equal(classTab?.href, '/class/abc/setup');
   assert.ok(CLASS_TABS.length <= 8);

@@ -91,13 +91,13 @@ test('SEC-02 / A3: teacher seat home has no office PersonTabs or class-create UI
 });
 
 test('SEC-05: no sixth teacher tray tab; no student /todo skin on teacher', () => {
-  assert.equal(trayKeysForRole('teacher').length, 5);
+  assert.equal(trayKeysForRole('teacher').length, 4);
   assert.ok(!trayKeysForRole('teacher').includes('grades'));
   assert.ok(!trayKeysForRole('teacher').includes('todo'));
   const tray = read('src/lib/chrome/trayTabs.ts');
   const teacherBlock = tray.slice(tray.indexOf('const classRoot'));
   assert.doesNotMatch(teacherBlock, /\/todo/);
-  assert.match(teacherBlock, /capture/);
+  assert.doesNotMatch(teacherBlock, /capture/);
   assert.match(teacherBlock, /inbox/);
 });
 
@@ -154,7 +154,7 @@ test('no EXPO_PUBLIC secrets introduced by altitude files', () => {
 });
 
 test('SEC-05/06 Phase B: Class tray not gradebook-first; Family stays drawer; no sixth tray tab', () => {
-  assert.equal(trayKeysForRole('teacher').length, 5);
+  assert.equal(trayKeysForRole('teacher').length, 4);
   const tray = read('src/lib/chrome/trayTabs.ts');
   const teacherBlock = tray.slice(tray.indexOf('const classRoot'));
   assert.match(teacherBlock, /\$\{classRoot\}\/setup/);

@@ -42,7 +42,6 @@ export function FloatingTabTray() {
     homeTab,
     schoolFeedIcon,
   ) as Tab[]).filter((tab) => {
-    if (tab.key === 'capture') return can(profile, 'capture.use', 'own', grants);
     if (tab.key === 'people' && chromeState.role !== 'student') {
       return can(profile, 'accounts.view', 'school', grants) || can(profile, 'accounts.create', 'own', grants);
     }
@@ -147,7 +146,6 @@ function tabTip(tab: Tab): string {
   if (tab.key === 'manage' || tab.key === 'system') return 'Feed icon, activity, and responsibilities';
   if (tab.key === 'activity') return 'Immutable change log';
   if (tab.key === 'ask') return 'Ask';
-  if (tab.key === 'capture') return 'File work';
   if (tab.key === 'inbox') return 'Needs Attention';
   if (tab.key === 'class') return tab.href.startsWith('/student') ? 'Classes' : 'Grade book and class records';
   return tab.label;
