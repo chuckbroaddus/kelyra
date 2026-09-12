@@ -1486,7 +1486,7 @@ Camera · Photo or Video · Files     ← icon row under the preview, evenly spa
    - **Files** — document picker.
 3. **Web drag-and-drop** — desktop web: drop photos, videos, or files onto **Image Preview**. Same accept list as the icon row. Native: no drop target.
 4. **Text + mic** — one field under the icon row. Placeholder for “what this is” / spoken notes. **Mic on the right:** tap highlights the mic and runs live STT into **the same field**; the teacher may also type. Do not open a separate Voice chip or ListenSheet as the Capture composer. **Live STT:** on web, Web Speech (`SpeechRecognition` / `webkitSpeechRecognition`, `continuous` + `interimResults`) streams interim + finalized words into the field as they speak. Text already in the field is snapshotted as `dictationBase` at tap; the field becomes `base + live transcript` so dictation appends rather than wiping a typed prefix. Stop finalizes the last interim — no whole-utterance “Transcribing…” wait. Native (no Web Speech; do not add a custom-dev-client module) keeps record-then-`transcribe-audio`. Live web path has no audio file; Ask AI uses the text.
-5. **Ask AI to process** — once any asset exists, show the sticky. Calls the existing `classify-capture` (and related) intents: homework, roster list, portrait, parent card, etc. Waiting copy: `Asking AI…` (§ working marks).
+5. **Ask AI to process** — once any asset exists, show the sticky. Calls the existing `classify-capture` (and related) intents: homework, syllabus, answer key, vehicle/plate, lesson plan / materials, feed photo, roster, portrait, parent/student card, etc. Waiting copy: `Asking AI…` (§ working marks).
 6. **Confirm strip (inline)** — after classification: **This will be …** plus import actions in the same spirit as today’s `/proposal` confirm (attach to student, import roster, set portrait, file to Needs Attention / Inbox, etc.). Teacher confirms. **Nothing files until confirm.** Prefer staying on `/capture`; `/proposal` may remain as a deep review route but is **not** the header-camera primary.
 
 **Landscape — flagship split** (`isSplit` or `phone-landscape` with `width >= 640`)
@@ -2001,7 +2001,7 @@ The model returns:
 
 ```
 {
-  intent: 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure',
+  intent: 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'answer_key' | 'vehicle' | 'lesson_plan' | 'lesson_materials' | 'feed_photo' | 'unsure',
   confidence: number,            // 0–1
   studentGuessId: string | null, // must be an id from the provided roster or null
   studentGuessName: string | null,
@@ -2587,7 +2587,7 @@ Header camera on a form / emergency card / parent card: proposal lists each mapp
 Union (also in §14.2):
 
 ```
-'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure'
+'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'answer_key' | 'vehicle' | 'lesson_plan' | 'lesson_materials' | 'feed_photo' | 'unsure'
 ```
 
 | Intent | Teacher confirms | Writes |
@@ -2598,6 +2598,11 @@ Union (also in §14.2):
 | `student_card` | student + each field | `students.metadata` (+ `name_aliases`); card image as `note_only` capture |
 | `roster` | every name | students + enrollments for checked names; park `roster_imports` if they leave mid-confirm |
 | `syllabus` | class context + review on Syllabus screen | `parse-class-syllabus` ask draft only (no auto-publish) |
+| `answer_key` | pick existing class assignment | `analyze-answer-key` → attach key via `updateAssignment` (teacher last click; no invent) |
+| `vehicle` | edit front/back plate + make/model; optional parent | extend `ride-lpr` + `staffAttachVehicle` / Ride draft (no invent parent) |
+| `lesson_plan` | acknowledge hold | no plan writer yet |
+| `lesson_materials` | acknowledge hold | no class-landing writer yet |
+| `feed_photo` | acknowledge hold | no auto-post to feed |
 | `unsure` | they pick a job | nothing until they pick |
 
 Keep Homework / Roster / Unsure. Portrait and Parent card are new. `metadata` (old) aliases to `student_card`.

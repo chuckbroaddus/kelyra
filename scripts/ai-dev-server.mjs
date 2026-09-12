@@ -399,7 +399,7 @@ const speechPrompt = `You interpret what a K-12 teacher just said.
 Return JSON only, no markdown:
 {"intent":"add_student","captureIntent":null,"studentName":"First Last","parentName":null,"skillLabel":null,"skipGrade":false,"scoreMark":null,"numericScore":null,"gradeKind":null}
 intent is add_student, note, capture, or unknown.
-captureIntent is homework, syllabus, roster, portrait, parent_card, student_card, or null.
+captureIntent is homework, syllabus, roster, portrait, parent_card, student_card, answer_key, vehicle, lesson_plan, lesson_materials, feed_photo, or null.
 homework means a Grade (homework, participation, presentation, or behavior) — not only a worksheet.
 studentName is a person's name the teacher said, or null.
 parentName is a parent/guardian name if they said one, or null.
@@ -416,6 +416,11 @@ Rules:
 - "No need to grade this" / "Don't grade" / "Forget trying to grade" → skipGrade true, scoreMark pass.
 - "This is the class roster" → captureIntent roster.
 - "This is a syllabus" / "grading policy" / "category weights" → captureIntent syllabus.
+- "This is an answer key" / "key for the quiz" → captureIntent answer_key.
+- "License plate" / "vehicle" / "front and back plate" → captureIntent vehicle.
+- "Lesson plan" → captureIntent lesson_plan.
+- "Lesson materials" / "class materials" → captureIntent lesson_materials.
+- "Feed photo" / "photo for the feed" → captureIntent feed_photo.
 - "Profile picture for Priya" → captureIntent portrait, studentName Priya.
 - If they only named a student and no job, captureIntent is null.
 - If no name is clear, studentName is null.`;
@@ -434,7 +439,19 @@ async function interpretSpeech(body) {
     typeof parsed.parentName === 'string' ? parsed.parentName.replace(/\s+/g, ' ').trim() : '';
   const skillLabel =
     typeof parsed.skillLabel === 'string' ? parsed.skillLabel.replace(/\s+/g, ' ').trim() : '';
-  const captureAllowed = new Set(['homework', 'syllabus', 'roster', 'portrait', 'parent_card', 'student_card']);
+  const captureAllowed = new Set([
+    'homework',
+    'syllabus',
+    'roster',
+    'portrait',
+    'parent_card',
+    'student_card',
+    'answer_key',
+    'vehicle',
+    'lesson_plan',
+    'lesson_materials',
+    'feed_photo',
+  ]);
   const captureIntent = captureAllowed.has(parsed.captureIntent) ? parsed.captureIntent : null;
   const intent =
     parsed.intent === 'add_student' ||
@@ -1010,22 +1027,27 @@ Rules:
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
 {"intent":"homework","confidence":0.8,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[{"label":"skill"}],"fields":[{"label":"field","value":"value"}],"names":[{"name":"First Last","confidence":0.8}],"note":null}
-intent MUST be one of: homework, syllabus, portrait, parent_card, student_card, roster, unsure.
+intent MUST be one of: homework, syllabus, portrait, parent_card, student_card, roster, answer_key, vehicle, lesson_plan, lesson_materials, feed_photo, unsure.
 Rules:
 - Prefer homework for student worksheets, quizzes, packets, lined paper, math, writing, desk photos of student work.
 - syllabus: class grading policy / category-weight sheet / "how this class grades" (not a filled student worksheet). Prefer syllabus over homework for policy weight tables. Assignment rubrics without class category weights stay homework or unsure — not syllabus.
+- answer_key: teacher answer key / keyed worksheet answers for an assignment (filled or blank key), not a student's graded work to score.
+- vehicle: car / license plate photo(s) for Ride check-in — front and/or back plate; may include make/model visible on the vehicle.
+- lesson_plan: teacher lesson plan document (recognize only; surface may not ship yet).
+- lesson_materials: education lesson materials for a class landing (recognize only; surface may not ship yet).
+- feed_photo: class/event photograph meant for a feed post (recognize only; do not auto-post).
 - portrait: a face filling most of the frame, meant as a profile photo. Not a kid in the corner of a worksheet.
 - parent_card: a parent / guardian contact card.
 - student_card: student emergency card or printed student details.
 - roster: a printed class list or seating chart of many names.
 - unsure ONLY if the image is black, blur, ceiling, or truly not a school paper or person.
-- Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework (unless it is clearly a syllabus).
+- Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework (unless it is clearly a syllabus / answer key / vehicle / hold intent).
 - For homework, always try to read the student name at the top of the page into studentGuessName (as written). Never invent a student.
 - gaps: 0-3 short skill labels for homework.
 - names: roster names only, 0-40.
-- confidence: 0.6+ when you pick homework/syllabus/roster/portrait.
+- confidence: 0.6+ when you pick homework/syllabus/roster/portrait/answer_key/vehicle.
 - Do not approve, file, or create a student.
-- If the teacher note says this is a syllabus / grading policy / category weights, intent MUST be syllabus even when the photo is ambiguous.`;
+- If the teacher note clearly names an intent (syllabus, answer key, license plate / vehicle, lesson plan, lesson materials, feed photo), that intent MUST win even when the photo is ambiguous.`;
 
 async function classifyCapture(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -1060,9 +1082,32 @@ async function classifyCapture(body) {
   ]);
   const parsed = extractJson(outputText(payload));
   const rawIntent = parsed.intent === 'metadata' ? 'student_card' : parsed.intent;
-  const allowed = new Set(['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster', 'unsure']);
+  const allowed = new Set([
+    'homework',
+    'syllabus',
+    'portrait',
+    'parent_card',
+    'student_card',
+    'roster',
+    'answer_key',
+    'vehicle',
+    'lesson_plan',
+    'lesson_materials',
+    'feed_photo',
+    'unsure',
+  ]);
   let intent = allowed.has(rawIntent) ? rawIntent : 'unsure';
-  if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/i.test(teacherNote)) {
+  if (/\b(answer\s*keys?|answer\s*sheet|key\s*for\s*(this\s+)?(quiz|test|homework|assignment)|keyed\s+assignment)\b/i.test(teacherNote)) {
+    intent = 'answer_key';
+  } else if (/\b(license\s*plates?|number\s*plates?|car\s*plates?|vehicle|make\s*(and|&)\s*model|front\s*(and|&|\/)\s*back\s*plate|rider\s*check[- ]?in)\b/i.test(teacherNote)) {
+    intent = 'vehicle';
+  } else if (/\b(lesson\s*plans?)\b/i.test(teacherNote)) {
+    intent = 'lesson_plan';
+  } else if (/\b(lesson\s*materials?|class\s*materials?|teaching\s*materials?)\b/i.test(teacherNote)) {
+    intent = 'lesson_materials';
+  } else if (/\b(feed\s*photos?|class\s*photos?|event\s*photos?|photo\s*for\s*(the\s+)?feed|post\s*(to\s*)?(the\s+)?feed)\b/i.test(teacherNote)) {
+    intent = 'feed_photo';
+  } else if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/i.test(teacherNote)) {
     intent = 'syllabus';
   }
   const rosterIds = new Set(

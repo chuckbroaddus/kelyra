@@ -24,8 +24,10 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   assignmentHasKey,
   listClassAssignments,
+  updateAssignment,
 } from '@/lib/assignments/api';
-import { parseKeyItems } from '@/lib/assignments/keys';
+import { parseKeyItems, type AnswerKeyItem } from '@/lib/assignments/keys';
+import type { GradeKind, GradeTerm, ScoreScheme, WeightBand } from '@/lib/grade/marks';
 import type { ScoredKeyItem } from '@/lib/assignments/scoreKey';
 import {
   applyTranscriptAndMatch,
@@ -89,6 +91,8 @@ import {
 } from '@/lib/students/api';
 import { birthdayForSave } from '@/lib/date/iso';
 import { upsertSyllabusAskDraft } from '@/lib/syllabus/api';
+import { invokeRideLpr, staffAttachVehicle, uploadRidePhoto } from '@/lib/ride/api';
+import { plateNorm } from '@/lib/ride/plate';
 import type { AssignmentRow } from '@/lib/supabase/types';
 
 type CaptureIntent =
@@ -98,15 +102,64 @@ type CaptureIntent =
   | 'parent_card'
   | 'student_card'
   | 'roster'
+  | 'answer_key'
+  | 'vehicle'
+  | 'lesson_plan'
+  | 'lesson_materials'
+  | 'feed_photo'
   | 'unsure';
 
-/** Teacher note / spoken text that should force syllabus over homework. */
-function spokenSuggestsSyllabus(text: string): boolean {
+const NAMED_INTENTS = [
+  'homework',
+  'syllabus',
+  'portrait',
+  'parent_card',
+  'student_card',
+  'roster',
+  'answer_key',
+  'vehicle',
+  'lesson_plan',
+  'lesson_materials',
+  'feed_photo',
+] as const;
+
+/** Teacher note / spoken text that should force a clear Capture intent. */
+function spokenSuggestsIntent(text: string): CaptureIntent | null {
   const t = text.replace(/\s+/g, ' ').trim().toLowerCase();
-  if (!t) return false;
-  return /\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|weight(ing)?\s*(percent|%|table)|how\s+(this\s+)?class\s+grades)\b/.test(
-    t,
-  );
+  if (!t) return null;
+  if (/\b(answer\s*keys?|answer\s*sheet|key\s*for\s*(this\s+)?(quiz|test|homework|assignment)|keyed\s+assignment)\b/.test(t)) {
+    return 'answer_key';
+  }
+  if (
+    /\b(license\s*plates?|number\s*plates?|car\s*plates?|vehicle|make\s*(and|&)\s*model|front\s*(and|&|\/)\s*back\s*plate|rider\s*check[- ]?in)\b/.test(
+      t,
+    )
+  ) {
+    return 'vehicle';
+  }
+  if (/\b(lesson\s*plans?)\b/.test(t)) return 'lesson_plan';
+  if (/\b(lesson\s*materials?|class\s*materials?|teaching\s*materials?)\b/.test(t)) {
+    return 'lesson_materials';
+  }
+  if (
+    /\b(feed\s*photos?|class\s*photos?|event\s*photos?|photo\s*for\s*(the\s+)?feed|post\s*(to\s*)?(the\s+)?feed)\b/.test(
+      t,
+    )
+  ) {
+    return 'feed_photo';
+  }
+  if (
+    /\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|weight(ing)?\s*(percent|%|table)|how\s+(this\s+)?class\s+grades)\b/.test(
+      t,
+    )
+  ) {
+    return 'syllabus';
+  }
+  return null;
+}
+
+function spokenSuggestsSyllabus(text: string): boolean {
+  return spokenSuggestsIntent(text) === 'syllabus';
 }
 
 type ClassifyResult = {
@@ -131,6 +184,11 @@ const INTENT_COPY: Record<CaptureIntent, string> = {
   parent_card: 'This will be a parent card',
   student_card: 'This will be a student card',
   roster: 'This will be a roster list',
+  answer_key: 'This will be an answer key for an assignment',
+  vehicle: 'This will be a Ride vehicle / license plate',
+  lesson_plan: 'This will be a lesson plan (recognized — surface not shipping yet)',
+  lesson_materials: 'This will be lesson materials (recognized — surface not shipping yet)',
+  feed_photo: 'This will be a feed photo (recognized — no auto-post yet)',
   unsure: 'This will be… (pick a job — we will not guess)',
 };
 
@@ -181,6 +239,15 @@ export default function CaptureScreen() {
   >([]);
   const [uploadedAssetId, setUploadedAssetId] = useState<string | null>(null);
   const [dropHover, setDropHover] = useState(false);
+  const [vehiclePlateFront, setVehiclePlateFront] = useState('');
+  const [vehiclePlateBack, setVehiclePlateBack] = useState('');
+  const [vehicleMake, setVehicleMake] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [answerKeyPreview, setAnswerKeyPreview] = useState<{
+    itemCount: number;
+    maxScore: number | null;
+    header: string | null;
+  } | null>(null);
 
   const micLive = Boolean(recording || dictation);
 
@@ -306,6 +373,11 @@ export default function CaptureScreen() {
     setSuggestions([]);
     setFieldChecks([]);
     setUploadedAssetId(null);
+    setVehiclePlateFront('');
+    setVehiclePlateBack('');
+    setVehicleMake('');
+    setVehicleModel('');
+    setAnswerKeyPreview(null);
   };
 
   const resetSlip = () => {
@@ -607,8 +679,9 @@ export default function CaptureScreen() {
           spokenName: spokenName.trim() || null,
         });
       } else {
+        const spokenIntent = spokenSuggestsIntent(spokenName);
         result = {
-          intent: spokenSuggestsSyllabus(spokenName) ? 'syllabus' : 'homework',
+          intent: spokenIntent ?? 'homework',
           confidence: spokenName.trim() ? 0.6 : 0.4,
           studentGuessId: null,
           studentGuessName: null,
@@ -622,13 +695,13 @@ export default function CaptureScreen() {
       }
 
       const rawIntent = (result.intent as string) === 'metadata' ? 'student_card' : result.intent;
-      const named = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
-      let nextIntent: CaptureIntent = named.includes(rawIntent as (typeof named)[number])
+      let nextIntent: CaptureIntent = NAMED_INTENTS.includes(rawIntent as (typeof NAMED_INTENTS)[number])
         ? (rawIntent as CaptureIntent)
         : 'unsure';
-      // Teacher note wins for syllabus language; do not hammer syllabus notes into homework.
-      if (spokenSuggestsSyllabus(spokenName)) {
-        nextIntent = 'syllabus';
+      // Teacher note wins for clear language; do not hammer those notes into homework.
+      const spokenIntent = spokenSuggestsIntent(spokenName);
+      if (spokenIntent) {
+        nextIntent = spokenIntent;
       } else if (
         nextIntent === 'unsure' &&
         (result.studentGuessName || result.gaps?.length || spokenName.trim())
@@ -660,6 +733,36 @@ export default function CaptureScreen() {
       setFieldChecks(mapped.map((field) => ({ ...field, checked: true })));
       setClassified(result);
       setIntent(nextIntent);
+
+      if (nextIntent === 'vehicle' && pages.length && teacher) {
+        try {
+          setStatus('Reading plate / vehicle…');
+          let front = '';
+          let back = '';
+          let make = '';
+          let model = '';
+          for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
+            const storagePath = await uploadRidePhoto(teacher.id, page.uri, page.mimeType);
+            const lpr = await invokeRideLpr(storagePath);
+            if (lpr.plateFront) front = lpr.plateFront;
+            if (lpr.plateBack) back = lpr.plateBack;
+            if (lpr.side === 'front' && lpr.plate) front = front || lpr.plate;
+            if (lpr.side === 'back' && lpr.plate) back = back || lpr.plate;
+            if (!front && !back && lpr.plate) {
+              if (!front) front = lpr.plate;
+              else if (!back && plateNorm(lpr.plate) !== plateNorm(front)) back = lpr.plate;
+            }
+            if (lpr.make) make = lpr.make;
+            if (lpr.model) model = lpr.model;
+          }
+          setVehiclePlateFront(front);
+          setVehiclePlateBack(back);
+          setVehicleMake(make);
+          setVehicleModel(model);
+        } catch {
+          // Confirm strip still lets the teacher type plate / make / model.
+        }
+      }
 
       if (nextIntent === 'roster' && imageUrl && chromeClassId) {
         const suggested = await suggestRosterFromPhoto(
@@ -1184,6 +1287,174 @@ export default function CaptureScreen() {
   };
 
 
+  const saveAnswerKeyConfirm = async () => {
+    if (!teacher) return;
+    if (!chromeClassId) {
+      setError('Name a class first — answer keys attach to an assignment in that class.');
+      return;
+    }
+    const assigned = selectedAssignment;
+    if (!assigned || assigned.class_id !== chromeClassId) {
+      setError('Pick an existing assignment in this class. We will not invent one.');
+      return;
+    }
+    const firstImage = pages.find((page) => page.mimeType.startsWith('image/')) ?? pages[0] ?? null;
+    if (!firstImage && !evaluation?.photoAssets?.[0]) {
+      setError('Add an answer-key photo first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setStatus('Reading answer key…');
+    try {
+      let asset = evaluation?.photoAssets?.[0] ?? null;
+      if (!asset && firstImage) {
+        asset = await uploadTeacherAsset({
+          teacherId: teacher.id,
+          kind: 'photo',
+          uri: firstImage.uri,
+          mimeType: firstImage.mimeType,
+        });
+      }
+      if (!asset) throw new Error('Add an answer-key photo first.');
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (!imageUrl) throw new Error('Could not open the uploaded photo.');
+      const analysis = await invokeAi<{
+        pageState?: string;
+        header?: string | null;
+        items?: unknown;
+        maxScore?: number | null;
+        teacherNote?: string | null;
+        phash?: string | null;
+        layout?: number[] | null;
+        error?: string;
+      }>('analyze-answer-key', { imageUrl });
+      if (analysis.error) throw new Error(String(analysis.error));
+      const items = parseKeyItems(analysis.items) as AnswerKeyItem[];
+      if (!items.length) throw new Error('No key items found — check the photo and try again.');
+      await updateAssignment(assigned.id, {
+        classId: assigned.class_id,
+        title: assigned.title,
+        dueAt: assigned.due_at,
+        weightBand: (assigned.weight_band as WeightBand | undefined) ?? 'none',
+        weightPercent: assigned.weight_percent,
+        term: (assigned.term as GradeTerm | undefined) ?? 'year',
+        scoreScheme: (assigned.score_scheme as ScoreScheme | undefined) ?? 'numeric',
+        includeInAverage: assigned.include_in_average,
+        isMakeup: assigned.is_makeup,
+        category: (assigned.category as GradeKind | undefined) ?? 'homework',
+        maxScore:
+          typeof analysis.maxScore === 'number' ? analysis.maxScore : assigned.max_score,
+        keyItems: items,
+        keyAssetId: asset.id,
+        keyPhash: analysis.phash ?? null,
+        keyLayout: Array.isArray(analysis.layout) ? analysis.layout.map((n) => Number(n)) : null,
+        keyHeader: analysis.header ?? null,
+        keyNotes: analysis.teacherNote ?? assigned.key_notes,
+        unit: assigned.unit,
+        section: assigned.section,
+        helpMode: assigned.help_mode ?? 'off',
+      });
+      setAnswerKeyPreview({
+        itemCount: items.length,
+        maxScore: typeof analysis.maxScore === 'number' ? analysis.maxScore : assigned.max_score,
+        header: analysis.header ?? null,
+      });
+      resetSlip();
+      setStatus(`Key attached to ${assigned.title} (${items.length} items).`);
+      router.replace(`/class/${chromeClassId}/assignment/${assigned.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not attach that answer key');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveVehicleConfirm = async () => {
+    if (!teacher) return;
+    setBusy(true);
+    setError(null);
+    setStatus('Saving vehicle draft…');
+    try {
+      let front = plateNorm(vehiclePlateFront);
+      let back = plateNorm(vehiclePlateBack);
+      let make = vehicleMake.trim();
+      let model = vehicleModel.trim();
+      if ((!front && !back) && pages.length) {
+        for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
+          const storagePath = await uploadRidePhoto(teacher.id, page.uri, page.mimeType);
+          const lpr = await invokeRideLpr(storagePath);
+          if (lpr.plateFront) front = plateNorm(lpr.plateFront) || front;
+          if (lpr.plateBack) back = plateNorm(lpr.plateBack) || back;
+          if (lpr.side === 'front' && lpr.plate) front = front || plateNorm(lpr.plate);
+          if (lpr.side === 'back' && lpr.plate) back = back || plateNorm(lpr.plate);
+          if (!front && !back && lpr.plate) front = plateNorm(lpr.plate);
+          if (lpr.make) make = lpr.make;
+          if (lpr.model) model = lpr.model;
+        }
+        setVehiclePlateFront(front);
+        setVehiclePlateBack(back);
+        setVehicleMake(make);
+        setVehicleModel(model);
+      }
+      const primary = front || back;
+      if (!primary) throw new Error('Need at least one readable plate (front or back).');
+      if (parentId) {
+        await staffAttachVehicle({
+          parentId,
+          plateRaw: front || back,
+          plateSource: 'lpr',
+          make: make || undefined,
+          model: model || undefined,
+        });
+        if (back && front && back !== front) {
+          await staffAttachVehicle({
+            parentId,
+            plateRaw: back,
+            plateSource: 'lpr',
+            make: make || undefined,
+            model: model || undefined,
+          }).catch(() => undefined);
+        }
+        resetSlip();
+        setStatus('Vehicle attached for Ride. Confirm on the curb if needed.');
+        router.replace('/ride');
+      } else {
+        const bits = [
+          front ? `front ${front}` : null,
+          back ? `back ${back}` : null,
+          [make, model].filter(Boolean).join(' ') || null,
+        ].filter(Boolean);
+        resetSlip();
+        setStatus(
+          `Draft ready (${bits.join(' · ')}). Pick a parent on Ride to attach — we will not invent one.`,
+        );
+        router.replace('/ride');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save vehicle draft');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveHoldConfirm = async (kind: 'lesson_plan' | 'lesson_materials' | 'feed_photo') => {
+    const copy =
+      kind === 'lesson_plan'
+        ? 'Recognized — lesson plan surface not shipping yet.'
+        : kind === 'lesson_materials'
+          ? 'Recognized — lesson materials landing not shipping yet.'
+          : 'Recognized — feed photo post not shipping yet (no auto-post).';
+    setBusy(true);
+    setError(null);
+    try {
+      resetSlip();
+      setStatus(copy);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveSyllabusConfirm = async () => {
     if (!teacher) return;
     if (!chromeClassId) {
@@ -1307,6 +1578,60 @@ export default function CaptureScreen() {
                 : 'Enroll matching names'
           }
           onPress={() => void saveRosterConfirm()}
+        />
+      );
+    }
+    if (intent === 'answer_key') {
+      if (!chromeClassId) {
+        return <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />;
+      }
+      return (
+        <PrimaryButton
+          disabled={busy || !selectedAssignment || (!pages.length && !evaluation?.photoAssets?.length)}
+          label={busy ? 'Attaching key…' : 'Attach key to assignment'}
+          onPress={() => void saveAnswerKeyConfirm()}
+        />
+      );
+    }
+    if (intent === 'vehicle') {
+      return (
+        <PrimaryButton
+          disabled={busy || !(plateNorm(vehiclePlateFront) || plateNorm(vehiclePlateBack) || pages.length)}
+          label={
+            busy
+              ? 'Saving…'
+              : parentId
+                ? 'Attach vehicle for Ride'
+                : 'Save plate draft to Ride'
+          }
+          onPress={() => void saveVehicleConfirm()}
+        />
+      );
+    }
+    if (intent === 'lesson_plan') {
+      return (
+        <PrimaryButton
+          disabled={busy}
+          label={busy ? 'Saving…' : 'Recognized — lesson plan not shipping yet'}
+          onPress={() => void saveHoldConfirm('lesson_plan')}
+        />
+      );
+    }
+    if (intent === 'lesson_materials') {
+      return (
+        <PrimaryButton
+          disabled={busy}
+          label={busy ? 'Saving…' : 'Recognized — materials not shipping yet'}
+          onPress={() => void saveHoldConfirm('lesson_materials')}
+        />
+      );
+    }
+    if (intent === 'feed_photo') {
+      return (
+        <PrimaryButton
+          disabled={busy}
+          label={busy ? 'Saving…' : 'Recognized — feed post not shipping yet'}
+          onPress={() => void saveHoldConfirm('feed_photo')}
         />
       );
     }
@@ -1515,6 +1840,11 @@ export default function CaptureScreen() {
                 [
                   ['homework', 'Grade'],
                   ['syllabus', 'Syllabus'],
+                  ['answer_key', 'Answer key'],
+                  ['vehicle', 'Vehicle / plate'],
+                  ['lesson_plan', 'Lesson plan'],
+                  ['lesson_materials', 'Lesson materials'],
+                  ['feed_photo', 'Feed photo'],
                   ['roster', 'Roster'],
                   ['portrait', 'Portrait'],
                   ['parent_card', 'Parent card'],
@@ -1566,6 +1896,82 @@ export default function CaptureScreen() {
                 </Text>
               )}
             </>
+          ) : null}
+
+          {intent === 'answer_key' ? (
+            <>
+              {!chromeClassId ? (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  Pick a class first. Answer keys attach to an existing assignment — we will not invent one.
+                </Text>
+              ) : (
+                <>
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    Pick the assignment this key belongs to. Confirm attaches and parses the key — your last click.
+                  </Text>
+                  <View style={styles.gaps}>
+                    {assignments.slice(0, 12).map((row) => (
+                      <Chip
+                        key={row.id}
+                        label={row.title}
+                        selected={assignmentId === row.id}
+                        onPress={() => setAssignmentId(row.id)}
+                      />
+                    ))}
+                  </View>
+                  {answerKeyPreview ? (
+                    <Text style={[type.meta, { color: colors.mute }]}>
+                      Last scan: {answerKeyPreview.itemCount} items
+                      {answerKeyPreview.maxScore != null ? ` · max ${answerKeyPreview.maxScore}` : ''}
+                      {answerKeyPreview.header ? ` · ${answerKeyPreview.header}` : ''}
+                    </Text>
+                  ) : null}
+                </>
+              )}
+            </>
+          ) : null}
+
+          {intent === 'vehicle' ? (
+            <>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Front and/or back plate plus make and model. Match an existing parent vehicle when the plate matches; otherwise keep the draft for Ride. We will not invent a parent.
+              </Text>
+              <TextField
+                label="Front plate"
+                value={vehiclePlateFront}
+                onChangeText={setVehiclePlateFront}
+                autoCapitalize="characters"
+              />
+              <TextField
+                label="Back plate"
+                value={vehiclePlateBack}
+                onChangeText={setVehiclePlateBack}
+                autoCapitalize="characters"
+              />
+              <TextField label="Make" value={vehicleMake} onChangeText={setVehicleMake} />
+              <TextField label="Model" value={vehicleModel} onChangeText={setVehicleModel} />
+              <Text style={[type.meta, { color: colors.mute }]}>Parent (optional — required to attach now)</Text>
+              {parents.slice(0, 12).map((person) => (
+                <ListRow
+                  key={person.id}
+                  title={person.display_name}
+                  photoUrl={'photoUrl' in person ? person.photoUrl : null}
+                  chevron={false}
+                  selected={person.id === parentId}
+                  onPress={() => setParentId(person.id === parentId ? null : person.id)}
+                />
+              ))}
+            </>
+          ) : null}
+
+          {intent === 'lesson_plan' || intent === 'lesson_materials' || intent === 'feed_photo' ? (
+            <Text style={[type.meta, { color: colors.mute }]}>
+              {intent === 'lesson_plan'
+                ? 'Recognized as a lesson plan. Confirm acknowledges only — no plan writer yet.'
+                : intent === 'lesson_materials'
+                  ? 'Recognized as lesson materials. Confirm acknowledges only — class landing not shipping yet.'
+                  : 'Recognized as a feed photo. Confirm acknowledges only — nothing posts to the feed.'}
+            </Text>
           ) : null}
 
           {intent === 'portrait' ? (

@@ -47,7 +47,7 @@ test('Pack B Approve path remains reachable on Capture', () => {
 
 test('Capture recognizes syllabus intent and respects teacher note', () => {
   assert.match(source, /'syllabus'/);
-  assert.match(source, /spokenSuggestsSyllabus/);
+  assert.match(source, /spokenSuggestsSyllabus|spokenSuggestsIntent/);
   assert.match(source, /teacherNote:\s*spokenName/);
   assert.match(source, /This will be a class syllabus \/ grading policy/);
   assert.match(source, /\['syllabus', 'Syllabus'\]/);
@@ -58,4 +58,50 @@ test('Capture recognizes syllabus intent and respects teacher note', () => {
     source,
     /nextIntent === 'unsure' && \(result\.studentGuessName \|\| result\.gaps\?\.length \|\| spokenName\.trim\(\)\)\)/,
   );
+});
+
+test('Capture classifies answer_key / vehicle / hold intents and wires confirms', () => {
+  assert.match(source, /'answer_key'/);
+  assert.match(source, /'vehicle'/);
+  assert.match(source, /'lesson_plan'/);
+  assert.match(source, /'lesson_materials'/);
+  assert.match(source, /'feed_photo'/);
+  assert.match(source, /This will be an answer key for an assignment/);
+  assert.match(source, /This will be a Ride vehicle \/ license plate/);
+  assert.match(source, /Recognized — lesson plan surface not shipping yet/);
+  assert.match(source, /Recognized — feed photo post not shipping yet/);
+  assert.match(source, /\['answer_key', 'Answer key'\]/);
+  assert.match(source, /\['vehicle', 'Vehicle \/ plate'\]/);
+  assert.match(source, /\['lesson_plan', 'Lesson plan'\]/);
+  assert.match(source, /\['lesson_materials', 'Lesson materials'\]/);
+  assert.match(source, /\['feed_photo', 'Feed photo'\]/);
+  assert.match(source, /analyze-answer-key/);
+  assert.match(source, /updateAssignment/);
+  assert.match(source, /Attach key to assignment/);
+  assert.match(source, /invokeRideLpr/);
+  assert.match(source, /staffAttachVehicle/);
+  assert.match(source, /vehiclePlateFront/);
+  assert.match(source, /vehicleMake/);
+  assert.match(source, /saveHoldConfirm/);
+  assert.match(source, /spokenSuggestsIntent/);
+});
+
+test('classify-capture Edge allowlists the five new intents', () => {
+  const edge = readFileSync(join(process.cwd(), 'supabase/functions/classify-capture/index.ts'), 'utf8');
+  assert.match(edge, /answer_key/);
+  assert.match(edge, /vehicle/);
+  assert.match(edge, /lesson_plan/);
+  assert.match(edge, /lesson_materials/);
+  assert.match(edge, /feed_photo/);
+  assert.match(edge, /teacherNote/);
+  assert.match(edge, /spokenName/);
+});
+
+test('ride-lpr returns make/model and front/back plates', () => {
+  const edge = readFileSync(join(process.cwd(), 'supabase/functions/ride-lpr/index.ts'), 'utf8');
+  assert.match(edge, /plateFront/);
+  assert.match(edge, /plateBack/);
+  assert.match(edge, /"make"/);
+  assert.match(edge, /"model"/);
+  assert.match(edge, /Never invent a person/);
 });

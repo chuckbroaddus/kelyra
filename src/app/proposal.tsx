@@ -71,7 +71,7 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 
-type Intent = 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure';
+type Intent = 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'answer_key' | 'vehicle' | 'lesson_plan' | 'lesson_materials' | 'feed_photo' | 'unsure';
 
 type ClassifyResult = {
   intent: Intent;
@@ -353,13 +353,34 @@ export default function ProposalScreen() {
         if (pickedAssignmentId) setAssignmentId(pickedAssignmentId);
 
         const rawIntent = (result.intent as string) === 'metadata' ? 'student_card' : result.intent;
-        const named = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
+        const named = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster', 'answer_key', 'vehicle', 'lesson_plan', 'lesson_materials', 'feed_photo'] as const;
         let nextIntent = named.includes(rawIntent as (typeof named)[number]) ? rawIntent : 'unsure';
         const spokenText = String(spoken?.transcript ?? '').toLowerCase();
+        const spokenAnswerKey = /\b(answer\s*keys?|answer\s*sheet|key\s*for\s*(this\s+)?(quiz|test|homework|assignment))\b/.test(
+          spokenText,
+        );
+        const spokenVehicle = /\b(license\s*plates?|vehicle|make\s*(and|&)\s*model|rider\s*check[- ]?in)\b/.test(
+          spokenText,
+        );
+        const spokenLessonPlan = /\b(lesson\s*plans?)\b/.test(spokenText);
+        const spokenLessonMaterials = /\b(lesson\s*materials?|class\s*materials?)\b/.test(spokenText);
+        const spokenFeed = /\b(feed\s*photos?|class\s*photos?|event\s*photos?|photo\s*for\s*(the\s+)?feed)\b/.test(
+          spokenText,
+        );
         const spokenSyllabus = /\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/.test(
           spokenText,
         );
-        if (spokenSyllabus || spoken?.captureIntent === 'syllabus') {
+        if (spokenAnswerKey || spoken?.captureIntent === 'answer_key') {
+          nextIntent = 'answer_key';
+        } else if (spokenVehicle || spoken?.captureIntent === 'vehicle') {
+          nextIntent = 'vehicle';
+        } else if (spokenLessonPlan || spoken?.captureIntent === 'lesson_plan') {
+          nextIntent = 'lesson_plan';
+        } else if (spokenLessonMaterials || spoken?.captureIntent === 'lesson_materials') {
+          nextIntent = 'lesson_materials';
+        } else if (spokenFeed || spoken?.captureIntent === 'feed_photo') {
+          nextIntent = 'feed_photo';
+        } else if (spokenSyllabus || spoken?.captureIntent === 'syllabus') {
           nextIntent = 'syllabus';
         } else if (nextIntent === 'unsure' && (result.studentGuessName || result.gaps?.length || spokenMatch)) {
           nextIntent = 'homework';
@@ -888,17 +909,27 @@ export default function ProposalScreen() {
     ? 'Studying the photo'
     : intent === 'homework'
       ? 'Grade'
-      : intent === 'syllabus'
-        ? 'Syllabus'
-        : intent === 'roster'
-          ? 'Roster'
-          : intent === 'portrait'
-            ? 'Portrait'
-            : intent === 'parent_card'
-              ? 'Parent card'
-              : intent === 'student_card'
-                ? 'Student card'
-                : 'Not sure';
+      : intent === 'answer_key'
+        ? 'Answer key'
+        : intent === 'vehicle'
+          ? 'Vehicle / plate'
+          : intent === 'lesson_plan'
+            ? 'Lesson plan'
+            : intent === 'lesson_materials'
+              ? 'Lesson materials'
+              : intent === 'feed_photo'
+                ? 'Feed photo'
+                : intent === 'syllabus'
+                  ? 'Syllabus'
+                  : intent === 'roster'
+                    ? 'Roster'
+                    : intent === 'portrait'
+                      ? 'Portrait'
+                      : intent === 'parent_card'
+                        ? 'Parent card'
+                        : intent === 'student_card'
+                          ? 'Student card'
+                          : 'Not sure';
 
   const fields = (
     <View style={styles.fields}>
@@ -918,6 +949,11 @@ export default function ProposalScreen() {
           {error ? <SecondaryButton label="Try again" onPress={retryStudy} /> : null}
           <SecondaryButton label="Grade" onPress={pickHomework} />
           <SecondaryButton label="Syllabus" onPress={() => setIntent('syllabus')} />
+          <SecondaryButton label="Answer key" onPress={() => setIntent('answer_key')} />
+          <SecondaryButton label="Vehicle / plate" onPress={() => setIntent('vehicle')} />
+          <SecondaryButton label="Lesson plan" onPress={() => setIntent('lesson_plan')} />
+          <SecondaryButton label="Lesson materials" onPress={() => setIntent('lesson_materials')} />
+          <SecondaryButton label="Feed photo" onPress={() => setIntent('feed_photo')} />
           <SecondaryButton label="Roster" onPress={pickRoster} />
           <SecondaryButton label="Portrait" onPress={() => setIntent('portrait')} />
           <SecondaryButton label="Parent card" onPress={() => setIntent('parent_card')} />
@@ -934,6 +970,25 @@ export default function ProposalScreen() {
             <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />
           ) : null}
         </>
+      ) : null}
+
+      {!working &&
+      (intent === 'answer_key' ||
+        intent === 'vehicle' ||
+        intent === 'lesson_plan' ||
+        intent === 'lesson_materials' ||
+        intent === 'feed_photo') ? (
+        <Text style={[type.body, { color: colors.mute }]}>
+          {intent === 'answer_key'
+            ? 'This will be an answer key. Prefer Capture to attach it to an existing class assignment — we will not invent one.'
+            : intent === 'vehicle'
+              ? 'This will be a Ride vehicle / license plate. Prefer Capture to extract front/back plate + make/model into Ride.'
+              : intent === 'lesson_plan'
+                ? 'Recognized — lesson plan surface not shipping yet.'
+                : intent === 'lesson_materials'
+                  ? 'Recognized — lesson materials landing not shipping yet.'
+                  : 'Recognized — feed photo post not shipping yet (no auto-post).'}
+        </Text>
       ) : null}
 
       {!working && intent === 'homework' ? (
