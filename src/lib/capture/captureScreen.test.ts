@@ -23,6 +23,9 @@ test('unified Capture: Image Preview, icon row, text+mic, Ask AI, inline confirm
   assert.match(source, /MediaTypeOptions\.All/);
   assert.match(source, /pickMessageDocument/);
   assert.match(source, /transcribeAudioDirect/);
+  assert.match(source, /startLiveDictation/);
+  assert.match(source, /isLiveDictationSupported/);
+  assert.match(source, /dictationBaseRef/);
   assert.match(source, /onDrop/);
   assert.doesNotMatch(source, /Who is this\?/);
   assert.doesNotMatch(source, /Ask AI to guess the name/);

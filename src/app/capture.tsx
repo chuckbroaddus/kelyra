@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
@@ -50,6 +50,12 @@ import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
 import { existingRosterMatch } from '@/lib/matching/spokenName';
 import { getPreferredDeviceId, setPreferredDeviceId } from '@/lib/media/devices';
 import { normalizePhoto } from '@/lib/media/photo';
+import {
+  composeDictatedField,
+  isLiveDictationSupported,
+  startLiveDictation,
+  type LiveDictation,
+} from '@/lib/media/liveDictation';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
 import { pickMessageDocument } from '@/lib/messages/attachments';
@@ -137,6 +143,9 @@ export default function CaptureScreen() {
   const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
+  const [dictation, setDictation] = useState<LiveDictation | null>(null);
+  const dictationRef = useRef<LiveDictation | null>(null);
+  const dictationBaseRef = useRef('');
   const [micId, setMicId] = useState<string | null>(null);
   const [cameraId, setCameraId] = useState<string | null>(null);
   const [deviceTick, setDeviceTick] = useState(0);
@@ -154,6 +163,8 @@ export default function CaptureScreen() {
   >([]);
   const [uploadedAssetId, setUploadedAssetId] = useState<string | null>(null);
   const [dropHover, setDropHover] = useState(false);
+
+  const micLive = Boolean(recording || dictation);
 
   const keyedAssignments = useMemo(
     () => assignments.filter((row) => assignmentHasKey(row)),
@@ -252,6 +263,16 @@ export default function CaptureScreen() {
     }, [cameraOpen, setForceHidden]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        void dictationRef.current?.stop().catch(() => {});
+        dictationRef.current = null;
+        setDictation(null);
+      };
+    }, []),
+  );
+
   if (!teacher) {
     return (
       <Screen>
@@ -275,6 +296,9 @@ export default function CaptureScreen() {
     setAudioUri(null);
     setSpokenName('');
     setEvaluation(null);
+    void dictationRef.current?.stop().catch(() => {});
+    dictationRef.current = null;
+    setDictation(null);
     setRecording(null);
     setCameraOpen(false);
     setPackItems([]);
@@ -384,16 +408,54 @@ export default function CaptureScreen() {
     setStatus(null);
     setError(null);
     try {
+      if (isLiveDictationSupported()) {
+        dictationBaseRef.current = spokenName;
+        const session = await startLiveDictation({
+          onUpdate: ({ display }) => {
+            setSpokenName(composeDictatedField(dictationBaseRef.current, display));
+          },
+          onError: (err) => {
+            setError(err.message);
+            dictationRef.current = null;
+            setDictation(null);
+          },
+        });
+        dictationRef.current = session;
+        setDictation(session);
+        setAudioUri(null);
+        setEvaluation(null);
+        setDeviceTick((value) => value + 1);
+        return;
+      }
       setRecording(await startLiveRecording(micId));
       setAudioUri(null);
       setEvaluation(null);
       setDeviceTick((value) => value + 1);
     } catch (err) {
+      dictationRef.current = null;
+      setDictation(null);
       setError(err instanceof Error ? err.message : 'Could not start the microphone.');
     }
   };
 
   const stopRecording = async () => {
+    const live = dictationRef.current ?? dictation;
+    if (live) {
+      try {
+        const finalText = await live.stop();
+        dictationRef.current = null;
+        setDictation(null);
+        setSpokenName(composeDictatedField(dictationBaseRef.current, finalText));
+        setStatus(null);
+        clearClassify();
+      } catch (err) {
+        dictationRef.current = null;
+        setDictation(null);
+        setStatus(null);
+        setError(err instanceof Error ? err.message : 'Could not finish dictation.');
+      }
+      return;
+    }
     if (!recording) return;
     try {
       const captured = await recording.stop();
@@ -473,7 +535,7 @@ export default function CaptureScreen() {
   };
 
   const onAskAi = async () => {
-    if (!hasContent || asking || recording) return;
+    if (!hasContent || asking || micLive) return;
     setAsking(true);
     setError(null);
     setStatus('Asking AI…');
@@ -1159,7 +1221,7 @@ export default function CaptureScreen() {
         />
       );
     }
-    if (hasContent && !recording) {
+    if (hasContent && !micLive) {
       return (
         <PrimaryButton
           label="Ask AI to process"
@@ -1295,10 +1357,10 @@ export default function CaptureScreen() {
         <IconButton
           name="mic"
           size="lg"
-          tone={recording ? 'danger' : 'wash'}
-          live={Boolean(recording)}
-          label={recording ? 'Stop listening' : 'Dictate into the field'}
-          onPress={() => void (recording ? stopRecording() : startRecording())}
+          tone={micLive ? 'danger' : 'wash'}
+          live={micLive}
+          label={micLive ? 'Stop listening' : 'Dictate into the field'}
+          onPress={() => void (micLive ? stopRecording() : startRecording())}
         />
       </View>
       {preview.hint ? <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text> : null}
@@ -1328,7 +1390,7 @@ export default function CaptureScreen() {
           {selectedAssignment && pages.length ? (
             <GhostButton
               label={asking ? 'Extracting…' : 'Review & score against key'}
-              disabled={asking || busy || Boolean(recording)}
+              disabled={asking || busy || micLive}
               onPress={() => void openPackBReview()}
             />
           ) : null}
