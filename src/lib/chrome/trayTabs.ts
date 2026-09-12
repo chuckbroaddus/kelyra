@@ -124,7 +124,6 @@ export function tabsFor(
 
   return [
     { key: 'home', icon: 'today', label: 'Desk', href: '/?switch=1', active: houseActive },
-    { key: 'capture', icon: 'capture', label: 'Capture', href: '/capture', active: pathname === '/capture' },
     {
       key: 'inbox',
       icon: 'inbox',

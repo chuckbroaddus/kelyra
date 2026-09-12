@@ -13,12 +13,12 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
-const TEACHER_LABELS = ['Desk', 'Capture', 'Needs Attention', 'Class', 'Ask'];
+const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Class', 'Ask'];
 
-test('TR-09 / D1: teacher tray labels Desk · Capture · Needs · Class · Ask; today glyph', () => {
+test('TR-09 / D1: teacher tray labels Desk · Needs · Class · Ask; today glyph', () => {
   const tabs = tabsFor('teacher', '/', 'c1', 0);
   assert.deepEqual(
     tabs.map((tab) => tab.label),
@@ -28,7 +28,7 @@ test('TR-09 / D1: teacher tray labels Desk · Capture · Needs · Class · Ask; 
     tabs.map((tab) => tab.key),
     TEACHER_KEYS,
   );
-  assert.equal(tabs.length, 5);
+  assert.equal(tabs.length, 4);
   assert.ok(!tabs.some((tab) => tab.key === 'profile'));
   const desk = tabs.find((tab) => tab.key === 'home');
   assert.equal(desk?.icon, 'today');
@@ -45,7 +45,7 @@ test('TR-09 / D1: web top bar renders tab.label (labels on at ≥720)', () => {
   assert.match(tray, /if \(tab\.label === 'Desk'\) return 'Desk'/);
 });
 
-test('CAP-04 / D2: header camera and tray Capture both open /capture', () => {
+test('CAP-04 / D2: header camera opens /capture; teacher tray has no Capture tab', () => {
   const header = read('src/components/ui/AppHeader.tsx');
   const cam = header.indexOf('openHeaderCamera');
   assert.ok(cam > 0);
@@ -61,9 +61,8 @@ test('CAP-04 / D2: header camera and tray Capture both open /capture', () => {
   assert.match(openBlock, /router\.push\('\/capture'\)/);
   assert.doesNotMatch(openBlock, /setHeaderListenOpen\(true\)/);
 
-  const tray = read('src/components/ui/FloatingTabTray.tsx');
-  assert.match(tray, /if \(tab\.key === 'capture'\) return 'File work'/);
-  assert.equal(tabsFor('teacher', '/capture', 'c1', 0).find((t) => t.key === 'capture')?.href, '/capture');
+  assert.ok(!trayKeysForRole('teacher').includes('capture'));
+  assert.equal(tabsFor('teacher', '/capture', 'c1', 0).find((t) => t.key === 'capture'), undefined);
 
   const context = read('src/components/ui/ContextMenuRow.tsx');
   assert.doesNotMatch(context, /label: 'Photo'.*label: 'Voice'.*label: 'Pages'/s);
@@ -124,7 +123,7 @@ test('D5: Ask FALLBACK uses Needs not Inbox', () => {
 });
 
 test('invariants: matcher never inserts; canCreateClass untouched; no EXPO_PUBLIC_*; no sixth; no SQL seat', () => {
-  assert.equal(trayKeysForRole('teacher').length, 5);
+  assert.equal(trayKeysForRole('teacher').length, 4);
   const matchName = read('src/lib/matching/matchName.ts');
   assert.doesNotMatch(matchName, /\.insert\(|from\('students'\)\.insert/);
   const index = read('src/app/index.tsx');

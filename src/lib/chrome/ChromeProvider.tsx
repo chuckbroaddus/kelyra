@@ -806,7 +806,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   );
 
   const openHeaderCamera = useCallback(() => {
-    // Unified ingest: header camera and tray Capture both land on /capture.
+    // Unified ingest: header camera opens /capture (tray Capture tab removed).
     if (pathnameRef.current.startsWith('/messages')) return;
     if (pathnameRef.current === '/capture') return;
     router.push('/capture');

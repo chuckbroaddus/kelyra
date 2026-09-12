@@ -20,7 +20,7 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 
 test('P-06 Option A: drawer other-seat rows + a11y; My children unchanged; no header chip', () => {
@@ -52,7 +52,7 @@ test('P-06 settle: teacher seat never office tray nouns or office People altitud
   assert.ok(!trayKeysForRole(teacherRole!).includes('manage'));
   assert.ok(!trayKeysForRole(teacherRole!).includes('classes'));
   assert.ok(!trayKeysForRole(teacherRole!).includes('ride'));
-  assert.equal(trayKeysForRole(teacherRole!).length, 5);
+  assert.equal(trayKeysForRole(teacherRole!).length, 4);
 
   const title = headerTitleForSeatRoot(teacherRole!);
   assert.equal(title, 'Classes');
@@ -97,7 +97,7 @@ test('P-06: never merge trays; remount key is role; no sixth tab', () => {
   const merged = new Set([...teacher, ...office]);
   assert.ok(merged.size > teacher.length);
   assert.ok(merged.size > office.length);
-  assert.equal(teacher.length, 5);
+  assert.equal(teacher.length, 4);
   assert.equal(office.length, 5);
   // tabsFor is single-role only — never concat in the builder.
   assert.deepEqual(

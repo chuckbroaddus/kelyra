@@ -10,15 +10,15 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'capture', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
 const PARENT_KEYS = ['home', 'ride', 'ask'];
 
-test('A1 pure teacher tray: five keys, no office People/Manage', () => {
+test('A1 pure teacher tray: four keys, no office People/Manage', () => {
   const keys = trayKeysForRole('teacher');
   assert.deepEqual(keys, TEACHER_KEYS);
-  assert.equal(keys.length, 5);
+  assert.equal(keys.length, 4);
   assert.ok(!keys.includes('people'));
   assert.ok(!keys.includes('manage'));
   assert.ok(!keys.includes('classes'));
@@ -39,7 +39,7 @@ test('A1 dual-hat seats never merge tray key sets', () => {
   assert.notDeepEqual([...union].sort(), OFFICE_KEYS.slice().sort());
   assert.deepEqual(trayKeysForRole('teacher'), TEACHER_KEYS);
   assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
-  assert.ok(teacher.has('capture'));
+  assert.ok(!teacher.has('capture'));
   assert.ok(!office.has('capture'));
   assert.ok(office.has('people'));
   assert.ok(!teacher.has('people'));
@@ -56,12 +56,12 @@ test('TR-07: teacher Class tray lands setup, not gradebook-first', () => {
   assert.ok(classTab);
   assert.equal(classTab.href, `/class/${classId}/setup`);
   assert.ok(!classTab.href.includes('/gradebook'));
-  assert.equal(tabs.length, 5);
+  assert.equal(tabs.length, 4);
 });
 
 test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
-  assert.equal(trayKeysForRole('teacher').length, 5);
+  assert.equal(trayKeysForRole('teacher').length, 4);
   const studentClass = tabsFor('student', '/student/class', null, 0).find((tab) => tab.key === 'class');
   assert.equal(studentClass?.href, '/student/class');
 });
@@ -86,7 +86,7 @@ test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/offi
   assert.notDeepEqual([...union].sort(), PARENT_KEYS.slice().sort());
   assert.ok(parent.has('ride'));
   assert.ok(!teacher.has('ride'));
-  assert.ok(teacher.has('capture'));
+  assert.ok(!teacher.has('capture'));
   assert.ok(!parent.has('capture'));
 });
 
