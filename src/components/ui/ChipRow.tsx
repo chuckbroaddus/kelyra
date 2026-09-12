@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 
 type Props = {
   children: ReactNode;
-  /** Tighter vertical rhythm under ClassTabs / PersonTabs (Gradebook segment chips). */
+  /** Tighter vertical rhythm under filters / form chip shelves (not destination tab rows). */
   compact?: boolean;
 };
 

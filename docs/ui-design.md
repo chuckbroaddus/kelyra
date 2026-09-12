@@ -768,7 +768,7 @@ On Capture, Student, and `/todo`, the sticky primary sits in a **fixed** slot ju
 
 Same thresholds. Tray is shorter (44). Insets left/right still apply while hidden (the off-screen translate includes them).
 
-### 9.6 Collapsing page chrome (ClassTabs + segment chips + syllabus)
+### 9.6 Collapsing page chrome (ClassTabs + shelf PersonTabs + syllabus)
 
 **Canonical reference: class Feed.** Every teacher class desk pane uses the same ClassTabs leave/return physics as `/class/{id}/feed`: swipe-up collapses the tab row with the tray; swipe-down brings it back promptly. Do not put `ClassTabs` inside the page `ScrollView` (that only restores them near `y ≈ 0`) and do not leave them pinned while the tray hides.
 
@@ -776,7 +776,7 @@ Pass the tab row through `Screen`’s `collapse={…}` prop. That wraps it in `C
 
 | Gesture | Result |
 |---|---|
-| Swipe-up / scroll down | Class tab row collapses off-screen (height + opacity, `chrome.motion.context`, ease-out, no spring). On Gradebook / Heatmap, Gradebook·Heatmap segment chips **and** the Gradebook syllabus warning (when shown) collapse in the **same** block. |
+| Swipe-up / scroll down | Class tab row collapses off-screen (height + opacity, `chrome.motion.context`, ease-out, no spring). On Gradebook / Heatmap, Gradebook·Heatmap `GradebookViewTabs` (`PersonTabs`) **and** the Gradebook syllabus warning (when shown) collapse in the **same** block. |
 | Swipe-down / scroll up | The **class tab row** (and the rest of that collapsing block) **reappears promptly** — same show thresholds as §9.2. Do not wait for `contentOffset.y < 8` alone. |
 
 **Collapse reflow + Feed fill ScrollView.** Hiding the block reclaims space (`CollapsingPageChrome` measures then absolute-positions children like Feed’s composer dock, height → 0). That grows the page / Feed fill `ScrollView` and can leave `contentOffset.y ≈ 0` with nothing left to scroll — mid-feed `dy` restore never fires, especially on web/Android without rubber-band. Shared brain in `src/lib/chrome/hideOnScroll.ts`: (1) when viewport height grows, clamp scroll tracking so a stale `y > maxY` is not treated as end rubber-band forever; (2) `onScrollBeginDrag` at `y < 8` while hidden reveals chrome (swipe-down restore intent at the top); (3) fill / desk scrollers use `alwaysBounceVertical` so iOS overscroll still hits the §9.2 `y < 8` show path. Near-end rubber-band suppress (`y ≥ maxY − 16`) applies only when `maxY ≥ 64` so a short Feed after collapse can still swipe-down restore. Wire `chrome.onScroll` **and** `chrome.onScrollBeginDrag` on every scroller that drives collapse (Screen, `FeedPane` fill, `StickyTable` body).
@@ -789,7 +789,7 @@ Rules:
 
 - Reuse `ChromeProvider.onScroll` / `onScrollBeginDrag` / `visible` (via `hideOnScroll.ts`). Do not invent a second velocity tracker.
 - Do **not** pin `ClassTabs` as `stickyHeaderIndices` or as `chrome.contextHeight`. Counts-toward `GradeTermTabs` may stay below the collapsing block so the grid filter remains while the upper chrome is away.
-- Segment chips under ClassTabs use `ChipRow compact` — no extra vertical padding above/below the Gradebook · Heatmap shelf.
+- Secondary shelves under ClassTabs (`GradebookViewTabs`, and on desk Today/Week `DeskSpanTabs`) are `PersonTabs` with `compact` — same morph as §32.2 / §38. Do not use `ChipRow` for those destination shelves.
 - Hiding the block **does** reclaim vertical space for the grid / list (unlike the overlay tray/context). That is intentional.
 - One shared pattern: `Screen collapse={…}` on every class desk pane. No per-tab special cases.
 
@@ -1426,7 +1426,7 @@ No chrome. Centered column, `maxWidth` 400, both orientations.
 
 **Primary.** None on the page. The header camera and the Capture tab are the next actions. Do **not** put a filled `Photograph work` on Home.
 
-**Context chips:** Today · This week · Needs you.
+**ClassTabs** owns Today · Needs Attention (and the rest of the desk). Under ClassTabs on Today/Week only: **`DeskSpanTabs`** (`PersonTabs`) — **Today · This week** — demoted week stays a shelf, not a default ClassTab. Same selected-name morph as §32.2 (`setParams`, do not `replace`).
 
 **Vertical order (Today — default)**
 
@@ -1600,7 +1600,7 @@ Swipe Approve on a work row **opens this same decision**, already scrolled to th
 
 **Primary.** None. Ghost `Export CSV` floats just above the tray in a rounded `elevated` plate (`trayRadius`, 1 px `line`, same whisper shadow as the tray) so the grid does not show through the letters. On hide-on-scroll it travels farther than the tray so both leave the screen, and Screen’s bottom tray pad collapses so the grid uses the space. No PhaseBanner on this screen.
 
-**Collapsing chrome (§9.6).** Same as class Feed: `Screen collapse={…}` holds `ClassTabs` + Gradebook/Heatmap `ChipRow compact` + Gradebook syllabus warning (plain text when weights are unset; nothing when published). No syllabus setup CTA on Gradebook. Swipe-up sends that block off with the tray; swipe-down brings the tab row back promptly. Counts-toward `GradeTermTabs` stay under the block (not inside it). Tighten vertical rhythm around the segment chips — no oversized ChipRow padding.
+**Collapsing chrome (§9.6).** Same as class Feed: `Screen collapse={…}` holds `ClassTabs` (stacked) + **`GradebookViewTabs`** (`PersonTabs` compact: Gradebook · Heatmap) + Gradebook syllabus warning (plain text when weights are unset; nothing when published). No syllabus setup CTA on Gradebook. Swipe-up sends that block off with the tray; swipe-down brings the tab row back promptly. Counts-toward `GradeTermTabs` stay under the block (not inside it). Heatmap stays demoted from default `CLASS_TABS`; the shelf is the discoverability path. Toggle with `router.setParams` so the morph stays mounted.
 
 **Portrait.** Table `flex: 1` (`Screen scroll={false}`). Heatmap same.
 
@@ -3441,7 +3441,18 @@ Row height 44 (the hit). Gap 4. Leading inset = page pad (16 phone / 24 tablet).
 
 Unselected is icon-only. Only the selected tab shows its English name.
 
-**Selected-name morph.** Switching tabs animates only the old↔new pills (intermediates stay icon-only) with `chrome.motion.personTab` (975 ms = 3× prior; `context` × 3.75). Icon stays **left-pinned** in both states; the pill’s right edge grows/shrinks so the label reveals LTR (first letter first) and hides under that right edge — never clip the glyph. Soft-fill (`brandSoft`) fades with the expand value. The outgoing label stays mounted and clips away — do not unmount it at the start of deselect. Marquee only after the selected pill reaches max width. Reduce Motion jumps (`setValue` / duration 0) and `scrollTo(..., animated: false)`.
+**Selected-name morph (locked — every destination tab row).** One implementation: `PersonTabs` (`chrome.motion.personTab` = **975 ms** = 3× prior; `context` × 3.75). Do not fork expand animation in wrappers (`ClassTabs`, `GradeTermTabs`, `StudentClassTabs`, `DeskSpanTabs`, `GradebookViewTabs`, Feed compose, Messages, Diary, office/people shelves — all call `PersonTabs`).
+
+| Moment | Behavior |
+|---|---|
+| **Selected** | Icon **left-pinned** on the tab’s left edge; label starts just right of the icon (8 pt gap). Soft-fill `brandSoft`; icon ink `brand`. |
+| **Select another** | New tab icon highlights (`brand`) immediately; tab **grows** width; icon stays left; label **reveals LTR** (first letters first) until max width; **then** marquee if the title still overflows. |
+| **Deselect (old)** | Icon **mutes immediately** (`mute`) on deselect — do not wait for the shrink to finish. Tab **shrinks**; label **hides right→left** under the right edge (clip, do not unmount at deselect start). Shrink stops at icon-only width (**never clip the glyph**). |
+| **Skip / adjacent** | Adjacent **or** skip 2+ tabs either direction: animate **only** old↔new; intermediates stay collapsed icon-only for the whole duration. |
+| **Duration** | `chrome.motion.personTab` = **975**. Cubic ease-out on grow, ease-in on shrink. No spring. No Reanimated. |
+| **Reduce Motion** | `setValue` / duration 0; `scrollTo(..., animated: false)`. |
+
+Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. Full inventory + exceptions: **§38**.
 
 **Counts toward glyphs.** Grade-book period tabs use pie-slice `IconName`s (`termAll` … `termYear`), not a labels-only row. Clock from 12: Quarter 1 = upper-right fill, Q2 lower-right, Q3 lower-left, Q4 upper-left. Semester 1 = right half, Semester 2 = left half. **All** is a solid disk; **Year** is a filled disk inside a rim. Same selected-name / icon-only rule as every other PersonTabs row. Do not use `ChipRow` for this filter.
 
@@ -3871,8 +3882,9 @@ One dialect for chrome. Cubic, no springs, no Reanimated. Reduce Motion: snap to
 | `drawerOutX` | **220** | Hamburger slide left |
 | `menuIn` | **280** | Messages filter menu rise |
 | `menuOut` | **220** | Messages filter menu settle down |
+| `personTab` | **975** | Selected-name morph on every `PersonTabs` row (§32.2 / §38) — 3× the prior 325 ms; `context` × 3.75 |
 
-These are ~30–40% slower than the 180 / 200 / 220 ms of §9 / §34. Slow enough to read as premium. Fast enough that a teacher tapping through threads does not wait. Swipe-to-act on `WorkRow` / `ListRow` stays **160 ms** — that is a finger-tracking gesture, not chrome.
+These are ~30–40% slower than the 180 / 200 / 220 ms of §9 / §34 (except `personTab`, which is intentionally slower so the label reveal reads). Slow enough to read as premium. Fast enough that a teacher tapping through threads does not wait. Swipe-to-act on `WorkRow` / `ListRow` stays **160 ms** — that is a finger-tracking gesture, not chrome.
 
 ### 35.2 Search glyph (one drawing)
 
@@ -4115,4 +4127,74 @@ Hide the current seat. Do not list both seats with a check. Do not duplicate the
 
 Matcher still never inserts a student. Nothing is a grade until the teacher Approves. Parked P2s (Needs dual-hat count polish, Week/Heatmap secondary chrome, route rename `/needs`) stay out of this doc delta.
 
+---
 
+## 38. Unified tab-row morph (PersonTabs) — 2026-09-12
+
+**Product lock (Chuck).** Every horizontal **destination / pane** tab row in the app follows the same morph model as PersonTabs / ClassTabs after #100 + #101. Duration locked at `chrome.motion.personTab` = **975 ms**. Prefer reuse of `PersonTabs` over forking animation. Spec behavior: §32.2 Selected-name morph.
+
+### 38.1 Canonical primitive
+
+| Piece | Path |
+|---|---|
+| Morph + pills | `src/components/ui/PersonTabs.tsx` |
+| Width / title math | `src/components/ui/personTabsLayout.ts` |
+| Duration token | `src/constants/theme.ts` → `chrome.motion.personTab` (**975**) |
+| Class desk | `src/components/ui/ClassTabs.tsx` → `PersonTabs` |
+| Desk Today · This week | `DeskSpanTabs` in `ClassTabs.tsx` → `PersonTabs` |
+| Gradebook · Heatmap | `GradebookViewTabs` in `ClassTabs.tsx` → `PersonTabs` |
+| Counts toward | `src/components/ui/GradeTermTabs.tsx` → `PersonTabs` |
+| Student class shelf | `StudentClassTabs` in `StudentWorkList.tsx` → `PersonTabs` |
+
+**ClassTabs inherits PersonTabs** — verify and keep that. Wrappers may only map tabs / routing; they must not own `Animated.timing` expand.
+
+### 38.2 Inventory (destination tab rows)
+
+| Surface | Control | Status |
+|---|---|---|
+| Teacher ClassTabs (all desk panes) | `ClassTabs` → `PersonTabs` | Compliant |
+| Desk Today · This week | `DeskSpanTabs` → `PersonTabs` | **Migrated** (was `ChipRow`) |
+| Gradebook · Heatmap shelf | `GradebookViewTabs` → `PersonTabs` | **Migrated** (was `ChipRow compact`) |
+| Counts toward (grade book) | `GradeTermTabs` → `PersonTabs` | Compliant |
+| Office class card | `PersonTabs` + `officeClassPersonTabs` | Compliant |
+| Office home / New | `PersonTabs` | Compliant |
+| People (Staff · Parents · Students) | `PersonTabs` | Compliant |
+| Messages / Feeds / Alerts | `PersonTabs` | Compliant |
+| Diary Journal · Ledger | `PersonTabs` | Compliant |
+| Feed compose Post · Alert | `PersonTabs` (+ mute trailing) | Compliant |
+| Student / parent person pages | `PersonTabs` | Compliant |
+| Student destinations (class / feed / people / grades / todo) | `PersonTabs` / `StudentClassTabs` | Compliant |
+| Staff profile tabs | `PersonTabs` | Compliant |
+
+### 38.3 Documented exceptions (not PersonTabs morph)
+
+These are **not** destination tab rows. Keep `Chip` / `ChipRow` (always-visible labels, multi-select, or equal-width form filters). Do not morph them.
+
+| Surface | Why excepted |
+|---|---|
+| **`FloatingTabTray`** | System / seat tray — equal icon hits, hide-on-scroll tray physics (§3.4 / §10.3), not in-page selected-name morph |
+| Assignment form ChipRows | Form fields (category, due, counts-toward pickers on the **form**, not the grade-book filter row) |
+| Assignment list kind filter (`All` · kinds) | Filter chips with always-on labels; not icon-first chrome |
+| Activity / matrix / proposal filters | Multi-filter chip shelves |
+| Ride line / children pickers | Selection chips (multi or line picker), not pane tabs |
+| People create-account role / also-* chips | Form toggles |
+| Syllabus / Keygrade / TutorBrief ChipRows | Form and review filters |
+| Parent ride / vehicles ChipRows | Pickers |
+
+If a future control is a **pane switcher** (one selected destination, icon-first), it must use `PersonTabs`. If it is a true iOS equal-width segmented control or a multi-select filter, document it here with a reason.
+
+### 38.4 Future copy rule
+
+New tab rows copy **PersonTabs** (or a one-line wrapper that only supplies `tabs` / `value` / `onChange`). Do not reimplement grow/shrink, LTR reveal, RTL cover, mute-on-deselect, or marquee-after-expand. Tests: `personTabsLayout.test.ts`, `personTabsInventory.test.ts`, `teachUxLeftovers.test.ts` (L3).
+
+```
+src/components/ui/PersonTabs.tsx
+src/components/ui/personTabsLayout.ts
+src/components/ui/ClassTabs.tsx          // ClassTabs, DeskSpanTabs, GradebookViewTabs
+src/components/ui/GradeTermTabs.tsx
+src/components/ui/StudentWorkList.tsx    // StudentClassTabs
+src/constants/theme.ts                  // chrome.motion.personTab = 975
+src/app/class/[id]/index.tsx
+src/app/class/[id]/gradebook.tsx
+docs/ui-design.md                       // §32.2, §35.1, §38
+```

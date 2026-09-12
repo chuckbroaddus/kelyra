@@ -7,8 +7,6 @@ import { captureBadge, practiceBadge } from '@/components/ui/Badge';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
 import { Screen } from '@/components/ui/Screen';
 import { WorkRow } from '@/components/ui/WorkRow';
 import { WorkShelf } from '@/components/ui/WorkShelf';
@@ -21,7 +19,7 @@ import { submissionReviewPath } from '@/lib/practice/review';
 import { deleteCapture } from '@/lib/captures/delete';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview } from '@/lib/classes/overview';
-import { ClassTabs, hrefForClassTab } from '@/components/ui/ClassTabs';
+import { ClassTabs, DeskSpanTabs } from '@/components/ui/ClassTabs';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
@@ -102,18 +100,14 @@ export default function ClassHomeScreen() {
       {!loaded ? <WorkingLine /> : null}
 
       {pane === 'today' || pane === 'week' ? (
-        <ChipRow>
-          <Chip
-            label="Today"
-            selected={pane === 'today'}
-            onPress={() => router.replace(hrefForClassTab(id!, 'today') as never)}
-          />
-          <Chip
-            label="This week"
-            selected={pane === 'week'}
-            onPress={() => router.replace(hrefForClassTab(id!, 'week') as never)}
-          />
-        </ChipRow>
+        <DeskSpanTabs
+          value={pane}
+          compact
+          onChange={(key) => {
+            if (key === pane) return;
+            router.setParams({ tab: key });
+          }}
+        />
       ) : null}
 
       {pane !== 'needs' && roster.length > 0 ? (

@@ -9,7 +9,7 @@ type Props = {
 };
 
 /**
- * In-page chrome (ClassTabs, segment chips, Gradebook syllabus warning) that leaves with
+ * In-page chrome (ClassTabs, shelf PersonTabs, Gradebook syllabus warning) that leaves with
  * hide-on-scroll and returns on swipe-down — same `chrome.visible` brain as the
  * floating tray / Amazon context row / class Feed composer dock. Prefer `Screen`
  * `collapse={…}` so every class desk pane shares Feed’s leave/return physics.

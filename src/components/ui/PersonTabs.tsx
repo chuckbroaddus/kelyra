@@ -174,6 +174,7 @@ function PersonTabPill({
               ) : tab.icon ? (
                 <Icon
                   name={tab.icon}
+                  {/* Mute immediately on deselect; width morph continues separately. */}
                   color={selected ? colors.brand : colors.mute}
                   size={PERSON_TAB_GLYPH}
                 />
