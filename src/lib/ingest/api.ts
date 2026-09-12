@@ -11,6 +11,7 @@ export type IngestBatchRow = {
   bytes_total: number;
   file_count: number;
   page_count: number | null;
+  pages_done?: number | null;
   error_code: string | null;
   error_message: string | null;
   created_at: string;

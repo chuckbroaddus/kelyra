@@ -1,0 +1,24 @@
+{
+  "name": "@kelyra/ingest-rasterize",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BATCH-v1 I2 dedicated rasterize worker (not Edge). Poppler + JPEG thumbs + blank flag.",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node --experimental-strip-types src/index.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "health": "node --experimental-strip-types -e \"import { healthz } from './src/health.ts'; console.log(JSON.stringify(healthz()))\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "sharp": "^0.34.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "~5.8.3"
+  }
+}
