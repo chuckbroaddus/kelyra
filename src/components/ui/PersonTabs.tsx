@@ -86,14 +86,23 @@ function PersonTabPill({
 }: PillProps) {
   const expand = useRef(new Animated.Value(selected ? 1 : 0)).current;
   const [showLabel, setShowLabel] = useState(selected);
+  /** Marquee only after the expand settles at full width (Chuck: marquee after max). */
+  const [marqueeReady, setMarqueeReady] = useState(selected);
   const slot = labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
   const selectedMax = personTabSelectedMaxWidth(labelMax || titleWidth, hasGlyph);
+  const collapsedWidth = PERSON_TAB_ICON_HIT;
+  const expandedWidth = Math.max(collapsedWidth, selectedMax);
 
   useEffect(() => {
-    if (selected) setShowLabel(true);
+    if (selected) {
+      setShowLabel(true);
+    } else {
+      setMarqueeReady(false);
+    }
     if (reduce) {
       expand.setValue(selected ? 1 : 0);
-      if (!selected) setShowLabel(false);
+      setShowLabel(selected);
+      setMarqueeReady(selected);
       return;
     }
     Animated.timing(expand, {
@@ -102,17 +111,21 @@ function PersonTabPill({
       easing: selected ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: false,
     }).start(({ finished }) => {
-      if (finished && !selected) setShowLabel(false);
+      if (!finished) return;
+      if (!selected) setShowLabel(false);
+      if (selected) setMarqueeReady(true);
     });
   }, [expand, reduce, selected]);
 
+  // Label clip width: grows/shrinks so first letter reveals first, and the right
+  // edge covers the label on collapse (icon stays left-pinned — never clipped).
   const labelWidth = expand.interpolate({
     inputRange: [0, 1],
     outputRange: [0, slot],
   });
-  const pillMax = expand.interpolate({
+  const pillWidth = expand.interpolate({
     inputRange: [0, 1],
-    outputRange: [PERSON_TAB_ICON_HIT, Math.max(PERSON_TAB_ICON_HIT, selectedMax)],
+    outputRange: [collapsedWidth, expandedWidth],
   });
 
   return (
@@ -131,7 +144,11 @@ function PersonTabPill({
           style={[
             styles.hit,
             !hasGlyph && styles.labelHit,
-            { maxWidth: pillMax, overflow: 'hidden' },
+            {
+              width: pillWidth,
+              maxWidth: pillWidth,
+              overflow: 'hidden',
+            },
           ]}
         >
           <Animated.View
@@ -171,6 +188,7 @@ function PersonTabPill({
                 align="start"
                 accessible
                 accessibilityLabel={tab.label}
+                paused={!marqueeReady}
                 fadeColor={colors.brandSoft}
                 style={[styles.label, { color: colors.brand }]}
               />
@@ -191,7 +209,7 @@ function PersonTabPill({
   );
 }
 
-/** Icon-first section tabs. Selected tab shows its name next to the glyph. */
+/** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
 export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
@@ -318,15 +336,16 @@ const styles = StyleSheet.create({
     paddingRight: PERSON_TAB_ROW_PAD_END,
   },
   hit: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: PERSON_TAB_ICON_HIT,
+    minHeight: PERSON_TAB_ICON_HIT,
     paddingHorizontal: PERSON_TAB_HIT_PAD_X,
     borderRadius: radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    // Icon left-pinned in selected + collapsed; pill grows/shrinks from the right.
+    justifyContent: 'flex-start',
     gap: PERSON_TAB_GAP,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   labelHit: {
     gap: 0,
@@ -347,6 +366,7 @@ const styles = StyleSheet.create({
   glyph: {
     width: PERSON_TAB_GLYPH,
     height: PERSON_TAB_GLYPH,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
