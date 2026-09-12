@@ -13,7 +13,7 @@ import { Platform } from 'react-native';
 
 import { readUriAsBytes } from '@/lib/media/upload';
 
-export type CaptureSpeechIntent = 'homework' | 'roster' | 'portrait' | 'parent_card' | 'student_card';
+export type CaptureSpeechIntent = 'homework' | 'syllabus' | 'roster' | 'portrait' | 'parent_card' | 'student_card';
 
 export type SpokenCaptureHint = {
   transcript: string;
@@ -28,6 +28,7 @@ export type SpokenCaptureHint = {
 
 const CAPTURE_INTENTS = new Set<CaptureSpeechIntent>([
   'homework',
+  'syllabus',
   'roster',
   'portrait',
   'parent_card',
@@ -60,7 +61,9 @@ export function parseCaptureSpeechLocal(transcript: string): Omit<SpokenCaptureH
   const spokenScore = parseSpokenScore(transcript);
   const skipGrade = looksLikeSkipGrade(transcript);
   let captureIntent: CaptureSpeechIntent | null = null;
-  if (/\b(roster|class list|attendance|seating chart|name list)\b/.test(text)) {
+  if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/.test(text)) {
+    captureIntent = 'syllabus';
+  } else if (/\b(roster|class list|attendance|seating chart|name list)\b/.test(text)) {
     captureIntent = 'roster';
   } else if (/\b(portrait|profile (photo|picture)|school picture|yearbook)\b/.test(text)) {
     captureIntent = 'portrait';

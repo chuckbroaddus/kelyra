@@ -2001,7 +2001,7 @@ The model returns:
 
 ```
 {
-  intent: 'homework' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure',
+  intent: 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure',
   confidence: number,            // 0–1
   studentGuessId: string | null, // must be an id from the provided roster or null
   studentGuessName: string | null,
@@ -2587,7 +2587,7 @@ Header camera on a form / emergency card / parent card: proposal lists each mapp
 Union (also in §14.2):
 
 ```
-'homework' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure'
+'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure'
 ```
 
 | Intent | Teacher confirms | Writes |
@@ -2597,6 +2597,7 @@ Union (also in §14.2):
 | `parent_card` | parent name + each field + child to link | `parents` / metadata / `parent_students` after confirm |
 | `student_card` | student + each field | `students.metadata` (+ `name_aliases`); card image as `note_only` capture |
 | `roster` | every name | students + enrollments for checked names; park `roster_imports` if they leave mid-confirm |
+| `syllabus` | class context + review on Syllabus screen | `parse-class-syllabus` ask draft only (no auto-publish) |
 | `unsure` | they pick a job | nothing until they pick |
 
 Keep Homework / Roster / Unsure. Portrait and Parent card are new. `metadata` (old) aliases to `student_card`.

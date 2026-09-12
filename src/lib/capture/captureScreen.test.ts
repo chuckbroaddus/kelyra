@@ -44,3 +44,18 @@ test('Pack B Approve path remains reachable on Capture', () => {
   assert.match(source, /canApproveKeygrade/);
   assert.match(source, /persistCapture\('approve'/);
 });
+
+test('Capture recognizes syllabus intent and respects teacher note', () => {
+  assert.match(source, /'syllabus'/);
+  assert.match(source, /spokenSuggestsSyllabus/);
+  assert.match(source, /teacherNote:\s*spokenName/);
+  assert.match(source, /This will be a class syllabus \/ grading policy/);
+  assert.match(source, /\['syllabus', 'Syllabus'\]/);
+  assert.match(source, /parse-class-syllabus/);
+  assert.match(source, /upsertSyllabusAskDraft/);
+  assert.match(source, /Parse syllabus for this class/);
+  assert.doesNotMatch(
+    source,
+    /nextIntent === 'unsure' && \(result\.studentGuessName \|\| result\.gaps\?\.length \|\| spokenName\.trim\(\)\)\)/,
+  );
+});
