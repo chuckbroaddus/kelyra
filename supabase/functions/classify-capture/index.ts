@@ -24,6 +24,9 @@ Deno.serve(async (req) => {
     const apiKey = requireXaiKey();
     const imageUrl = String(body.imageUrl ?? '');
     if (!imageUrl) throw new Error('imageUrl required');
+    const teacherNote = String(body.teacherNote ?? body.spokenName ?? body.note ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
     const roster = Array.isArray(body.rosterFirstNames) ? body.rosterFirstNames : [];
     const rosterText = roster
       .map((row: unknown) => {
@@ -33,6 +36,10 @@ Deno.serve(async (req) => {
       })
       .filter(Boolean)
       .join(', ');
+    const noteBlock = teacherNote
+      ? `Teacher note / spoken text (strongly respect this — if they say it is a syllabus / grading policy / category weights, intent MUST be syllabus even when the photo is ambiguous):
+${teacherNote}`
+      : 'Teacher note / spoken text: (none)';
     const payload = await callMetered(supabase, apiKey, {
       job: 'classify',
       functionName: 'classify-capture',
@@ -45,8 +52,10 @@ Deno.serve(async (req) => {
             type: 'input_text',
             text: `Classify this photo for a teacher. JSON only:
 {"intent":"homework","confidence":0.0,"studentGuessId":null,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[{"label":"skill"}],"fields":[{"label":"field","value":"value"}],"names":[],"note":null}
-intent is homework, portrait, parent_card, student_card, roster, or unsure. metadata aliases to student_card.
+intent is homework, syllabus, portrait, parent_card, student_card, roster, or unsure. metadata aliases to student_card.
 Never invent a student. Portrait is a face for a profile photo. parent_card / student_card are contact or emergency cards.
+syllabus: class grading policy / category-weight sheet / "how this class grades" (not a student's filled worksheet). Prefer syllabus over homework when the page is policy weights. Assignment rubrics without class weights stay homework or unsure — not syllabus.
+${noteBlock}
 Roster first names only (id + first name). Guess only from this list:
 ${rosterText || '(none)'}`,
           },
@@ -56,9 +65,13 @@ ${rosterText || '(none)'}`,
     });
     const parsed = extractJson(outputText(payload));
     const rawIntent = parsed.intent === 'metadata' ? 'student_card' : parsed.intent;
-    const allowed = ['homework', 'portrait', 'parent_card', 'student_card', 'roster', 'unsure'];
+    const allowed = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster', 'unsure'];
+    let intent = allowed.includes(rawIntent) ? rawIntent : 'unsure';
+    if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/i.test(teacherNote)) {
+      intent = 'syllabus';
+    }
     return Response.json({
-      intent: allowed.includes(rawIntent) ? rawIntent : 'unsure',
+      intent,
       parentGuessName: typeof parsed.parentGuessName === 'string' ? parsed.parentGuessName : null,
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
       studentGuessId: typeof parsed.studentGuessId === 'string' ? parsed.studentGuessId : null,

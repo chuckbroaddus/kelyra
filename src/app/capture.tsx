@@ -88,9 +88,26 @@ import {
   type SuggestedRosterName,
 } from '@/lib/students/api';
 import { birthdayForSave } from '@/lib/date/iso';
+import { upsertSyllabusAskDraft } from '@/lib/syllabus/api';
 import type { AssignmentRow } from '@/lib/supabase/types';
 
-type CaptureIntent = 'homework' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure';
+type CaptureIntent =
+  | 'homework'
+  | 'syllabus'
+  | 'portrait'
+  | 'parent_card'
+  | 'student_card'
+  | 'roster'
+  | 'unsure';
+
+/** Teacher note / spoken text that should force syllabus over homework. */
+function spokenSuggestsSyllabus(text: string): boolean {
+  const t = text.replace(/\s+/g, ' ').trim().toLowerCase();
+  if (!t) return false;
+  return /\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|weight(ing)?\s*(percent|%|table)|how\s+(this\s+)?class\s+grades)\b/.test(
+    t,
+  );
+}
 
 type ClassifyResult = {
   intent: CaptureIntent;
@@ -109,6 +126,7 @@ type CaptureFile = { key: string; uri: string; mimeType: string; name: string };
 
 const INTENT_COPY: Record<CaptureIntent, string> = {
   homework: 'This will be student work / a grade draft',
+  syllabus: 'This will be a class syllabus / grading policy',
   portrait: 'This will be a profile portrait',
   parent_card: 'This will be a parent card',
   student_card: 'This will be a student card',
@@ -585,10 +603,12 @@ export default function CaptureScreen() {
           imageUrl,
           classId: chromeClassId,
           rosterFirstNames: rosterPayload,
+          teacherNote: spokenName.trim() || null,
+          spokenName: spokenName.trim() || null,
         });
       } else {
         result = {
-          intent: 'homework',
+          intent: spokenSuggestsSyllabus(spokenName) ? 'syllabus' : 'homework',
           confidence: spokenName.trim() ? 0.6 : 0.4,
           studentGuessId: null,
           studentGuessName: null,
@@ -602,11 +622,17 @@ export default function CaptureScreen() {
       }
 
       const rawIntent = (result.intent as string) === 'metadata' ? 'student_card' : result.intent;
-      const named = ['homework', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
+      const named = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
       let nextIntent: CaptureIntent = named.includes(rawIntent as (typeof named)[number])
         ? (rawIntent as CaptureIntent)
         : 'unsure';
-      if (nextIntent === 'unsure' && (result.studentGuessName || result.gaps?.length || spokenName.trim())) {
+      // Teacher note wins for syllabus language; do not hammer syllabus notes into homework.
+      if (spokenSuggestsSyllabus(spokenName)) {
+        nextIntent = 'syllabus';
+      } else if (
+        nextIntent === 'unsure' &&
+        (result.studentGuessName || result.gaps?.length || spokenName.trim())
+      ) {
         nextIntent = 'homework';
       }
 
@@ -1157,6 +1183,55 @@ export default function CaptureScreen() {
     }
   };
 
+
+  const saveSyllabusConfirm = async () => {
+    if (!teacher) return;
+    if (!chromeClassId) {
+      setError('Name a class first — syllabus drafts need a class.');
+      return;
+    }
+    const firstImage = pages.find((page) => page.mimeType.startsWith('image/')) ?? pages[0] ?? null;
+    if (!firstImage && !evaluation?.photoAssets?.[0]) {
+      setError('Add a syllabus photo first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setStatus('Reading syllabus photo…');
+    try {
+      let asset = evaluation?.photoAssets?.[0] ?? null;
+      if (!asset && firstImage) {
+        asset = await uploadTeacherAsset({
+          teacherId: teacher.id,
+          kind: 'photo',
+          uri: firstImage.uri,
+          mimeType: firstImage.mimeType,
+        });
+      }
+      if (!asset) throw new Error('Add a syllabus photo first.');
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (!imageUrl) throw new Error('Could not open the uploaded photo.');
+      const draft = await invokeAi<Record<string, unknown>>('parse-class-syllabus', {
+        classId: chromeClassId,
+        imageUrl,
+        mimeType: firstImage?.mimeType ?? asset.mime_type ?? 'image/jpeg',
+      });
+      if (draft.error) throw new Error(String(draft.error));
+      await upsertSyllabusAskDraft(
+        chromeClassId,
+        { ...draft, schema_version: 1, class_id: chromeClassId },
+        asset.id,
+      );
+      resetSlip();
+      setStatus('Ask draft ready — review before publish.');
+      router.replace(`/class/${chromeClassId}/syllabus`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not read that syllabus photo');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const split = layout.isSplit || (layout.orientation === 'landscape' && layout.width >= 640);
 
   // Sticky CTA only — note field is composed separately so it can pin above the
@@ -1205,6 +1280,18 @@ export default function CaptureScreen() {
           disabled={busy || !studentId}
           label={busy ? 'Saving…' : 'Save details'}
           onPress={() => void saveStudentCardConfirm()}
+        />
+      );
+    }
+    if (intent === 'syllabus') {
+      if (!chromeClassId) {
+        return <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />;
+      }
+      return (
+        <PrimaryButton
+          disabled={busy || (!pages.length && !evaluation?.photoAssets?.length)}
+          label={busy ? 'Reading…' : 'Parse syllabus for this class'}
+          onPress={() => void saveSyllabusConfirm()}
         />
       );
     }
@@ -1427,6 +1514,7 @@ export default function CaptureScreen() {
               {(
                 [
                   ['homework', 'Grade'],
+                  ['syllabus', 'Syllabus'],
                   ['roster', 'Roster'],
                   ['portrait', 'Portrait'],
                   ['parent_card', 'Parent card'],
@@ -1463,6 +1551,20 @@ export default function CaptureScreen() {
                 disabled={busy}
                 onPress={() => void saveHomeworkConfirm('note')}
               />
+            </>
+          ) : null}
+
+          {intent === 'syllabus' ? (
+            <>
+              {!chromeClassId ? (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  Pick a class first. We will parse this into a syllabus draft for that class — nothing publishes until you review.
+                </Text>
+              ) : (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  Parses grading policy / category weights for this class. Opens the Syllabus screen to review — no auto-publish.
+                </Text>
+              )}
             </>
           ) : null}
 

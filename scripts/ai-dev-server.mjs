@@ -399,7 +399,7 @@ const speechPrompt = `You interpret what a K-12 teacher just said.
 Return JSON only, no markdown:
 {"intent":"add_student","captureIntent":null,"studentName":"First Last","parentName":null,"skillLabel":null,"skipGrade":false,"scoreMark":null,"numericScore":null,"gradeKind":null}
 intent is add_student, note, capture, or unknown.
-captureIntent is homework, roster, portrait, parent_card, student_card, or null.
+captureIntent is homework, syllabus, roster, portrait, parent_card, student_card, or null.
 homework means a Grade (homework, participation, presentation, or behavior) — not only a worksheet.
 studentName is a person's name the teacher said, or null.
 parentName is a parent/guardian name if they said one, or null.
@@ -415,6 +415,7 @@ Rules:
 - "Give Jamal an 88 for class participation today" → captureIntent homework, studentName Jamal, numericScore 88, scoreMark numeric, gradeKind participation.
 - "No need to grade this" / "Don't grade" / "Forget trying to grade" → skipGrade true, scoreMark pass.
 - "This is the class roster" → captureIntent roster.
+- "This is a syllabus" / "grading policy" / "category weights" → captureIntent syllabus.
 - "Profile picture for Priya" → captureIntent portrait, studentName Priya.
 - If they only named a student and no job, captureIntent is null.
 - If no name is clear, studentName is null.`;
@@ -433,7 +434,7 @@ async function interpretSpeech(body) {
     typeof parsed.parentName === 'string' ? parsed.parentName.replace(/\s+/g, ' ').trim() : '';
   const skillLabel =
     typeof parsed.skillLabel === 'string' ? parsed.skillLabel.replace(/\s+/g, ' ').trim() : '';
-  const captureAllowed = new Set(['homework', 'roster', 'portrait', 'parent_card', 'student_card']);
+  const captureAllowed = new Set(['homework', 'syllabus', 'roster', 'portrait', 'parent_card', 'student_card']);
   const captureIntent = captureAllowed.has(parsed.captureIntent) ? parsed.captureIntent : null;
   const intent =
     parsed.intent === 'add_student' ||
@@ -1009,24 +1010,29 @@ Rules:
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
 {"intent":"homework","confidence":0.8,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[{"label":"skill"}],"fields":[{"label":"field","value":"value"}],"names":[{"name":"First Last","confidence":0.8}],"note":null}
-intent MUST be one of: homework, portrait, parent_card, student_card, roster, unsure.
+intent MUST be one of: homework, syllabus, portrait, parent_card, student_card, roster, unsure.
 Rules:
-- Prefer homework. Worksheets, quizzes, packets, lined paper, math, writing, photos of a desk with student work = homework.
+- Prefer homework for student worksheets, quizzes, packets, lined paper, math, writing, desk photos of student work.
+- syllabus: class grading policy / category-weight sheet / "how this class grades" (not a filled student worksheet). Prefer syllabus over homework for policy weight tables. Assignment rubrics without class category weights stay homework or unsure — not syllabus.
 - portrait: a face filling most of the frame, meant as a profile photo. Not a kid in the corner of a worksheet.
 - parent_card: a parent / guardian contact card.
 - student_card: student emergency card or printed student details.
 - roster: a printed class list or seating chart of many names.
 - unsure ONLY if the image is black, blur, ceiling, or truly not a school paper or person.
-- Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework.
+- Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework (unless it is clearly a syllabus).
 - For homework, always try to read the student name at the top of the page into studentGuessName (as written). Never invent a student.
 - gaps: 0-3 short skill labels for homework.
 - names: roster names only, 0-40.
-- confidence: 0.6+ when you pick homework/roster/portrait.
-- Do not approve, file, or create a student.`;
+- confidence: 0.6+ when you pick homework/syllabus/roster/portrait.
+- Do not approve, file, or create a student.
+- If the teacher note says this is a syllabus / grading policy / category weights, intent MUST be syllabus even when the photo is ambiguous.`;
 
 async function classifyCapture(body) {
   const imageUrl = String(body.imageUrl ?? '');
   if (!imageUrl) throw new Error('imageUrl required');
+  const teacherNote = String(body.teacherNote ?? body.spokenName ?? body.note ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   const roster = Array.isArray(body.rosterFirstNames) ? body.rosterFirstNames : [];
   const rosterText = roster
     .map((row) =>
@@ -1036,6 +1042,9 @@ async function classifyCapture(body) {
     )
     .filter(Boolean)
     .join(', ');
+  const noteBlock = teacherNote
+    ? `Teacher note / spoken text (strongly respect):\n${teacherNote}`
+    : 'Teacher note / spoken text: (none)';
   const prepared = await prepareImageForGrok(imageUrl);
   const payload = await grokCall('classify', [
     {
@@ -1044,15 +1053,18 @@ async function classifyCapture(body) {
         { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
         {
           type: 'input_text',
-          text: `${classifyPrompt}\n\nRoster first names only (id + first name). Guess only from this list:\n${rosterText || '(none)'}`,
+          text: `${classifyPrompt}\n\n${noteBlock}\n\nRoster first names only (id + first name). Guess only from this list:\n${rosterText || '(none)'}`,
         },
       ],
     },
   ]);
   const parsed = extractJson(outputText(payload));
   const rawIntent = parsed.intent === 'metadata' ? 'student_card' : parsed.intent;
-  const allowed = new Set(['homework', 'portrait', 'parent_card', 'student_card', 'roster', 'unsure']);
-  const intent = allowed.has(rawIntent) ? rawIntent : 'unsure';
+  const allowed = new Set(['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster', 'unsure']);
+  let intent = allowed.has(rawIntent) ? rawIntent : 'unsure';
+  if (/\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/i.test(teacherNote)) {
+    intent = 'syllabus';
+  }
   const rosterIds = new Set(
     roster
       .map((row) => (typeof row === 'object' && row ? String(row.id ?? '') : ''))

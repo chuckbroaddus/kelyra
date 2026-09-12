@@ -36,6 +36,7 @@ import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import { requireSupabase } from '@/lib/supabase/client';
 import { getProposalDraft, setProposalDraft } from '@/lib/proposal/session';
 import { birthdayForSave } from '@/lib/date/iso';
+import { upsertSyllabusAskDraft } from '@/lib/syllabus/api';
 import {
   createParent,
   linkChild,
@@ -70,7 +71,7 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 
-type Intent = 'homework' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure';
+type Intent = 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'unsure';
 
 type ClassifyResult = {
   intent: Intent;
@@ -341,6 +342,8 @@ export default function ProposalScreen() {
                 imageUrl: url,
                 classId: chrome.classId,
                 rosterFirstNames: rosterPayload,
+                teacherNote: spoken?.transcript?.trim() || null,
+                spokenName: spoken?.transcript?.trim() || null,
               });
 
         const [result, match] = await Promise.all([classifyPromise, matchPromise]);
@@ -350,9 +353,15 @@ export default function ProposalScreen() {
         if (pickedAssignmentId) setAssignmentId(pickedAssignmentId);
 
         const rawIntent = (result.intent as string) === 'metadata' ? 'student_card' : result.intent;
-        const named = ['homework', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
+        const named = ['homework', 'syllabus', 'portrait', 'parent_card', 'student_card', 'roster'] as const;
         let nextIntent = named.includes(rawIntent as (typeof named)[number]) ? rawIntent : 'unsure';
-        if (nextIntent === 'unsure' && (result.studentGuessName || result.gaps?.length || spokenMatch)) {
+        const spokenText = String(spoken?.transcript ?? '').toLowerCase();
+        const spokenSyllabus = /\b(syllabus|grading\s*policy|grade\s*weights?|category\s*weights?|how\s+(this\s+)?class\s+grades)\b/.test(
+          spokenText,
+        );
+        if (spokenSyllabus || spoken?.captureIntent === 'syllabus') {
+          nextIntent = 'syllabus';
+        } else if (nextIntent === 'unsure' && (result.studentGuessName || result.gaps?.length || spokenMatch)) {
           nextIntent = 'homework';
         }
 
@@ -841,20 +850,55 @@ export default function ProposalScreen() {
     );
   }
 
+  const saveSyllabus = async () => {
+    if (!chrome.classId) {
+      setError('Name a class first — syllabus drafts need a class.');
+      return;
+    }
+    if (!imageUrl) {
+      setError('Add a syllabus photo first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setStatus('Reading syllabus photo…');
+    try {
+      const draftPayload = await invokeAi<Record<string, unknown>>('parse-class-syllabus', {
+        classId: chrome.classId,
+        imageUrl,
+        mimeType: 'image/jpeg',
+      });
+      if (draftPayload.error) throw new Error(String(draftPayload.error));
+      await upsertSyllabusAskDraft(
+        chrome.classId,
+        { ...draftPayload, schema_version: 1, class_id: chrome.classId },
+        assetId || null,
+      );
+      setProposalDraft(null);
+      router.replace(`/class/${chrome.classId}/syllabus`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not read that syllabus photo');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const working = (!classified && !error) || followUp;
   const intentLabel = working
     ? 'Studying the photo'
     : intent === 'homework'
       ? 'Grade'
-      : intent === 'roster'
-        ? 'Roster'
-        : intent === 'portrait'
-          ? 'Portrait'
-          : intent === 'parent_card'
-            ? 'Parent card'
-            : intent === 'student_card'
-              ? 'Student card'
-              : 'Not sure';
+      : intent === 'syllabus'
+        ? 'Syllabus'
+        : intent === 'roster'
+          ? 'Roster'
+          : intent === 'portrait'
+            ? 'Portrait'
+            : intent === 'parent_card'
+              ? 'Parent card'
+              : intent === 'student_card'
+                ? 'Student card'
+                : 'Not sure';
 
   const fields = (
     <View style={styles.fields}>
@@ -873,10 +917,22 @@ export default function ProposalScreen() {
           </Text>
           {error ? <SecondaryButton label="Try again" onPress={retryStudy} /> : null}
           <SecondaryButton label="Grade" onPress={pickHomework} />
+          <SecondaryButton label="Syllabus" onPress={() => setIntent('syllabus')} />
           <SecondaryButton label="Roster" onPress={pickRoster} />
           <SecondaryButton label="Portrait" onPress={() => setIntent('portrait')} />
           <SecondaryButton label="Parent card" onPress={() => setIntent('parent_card')} />
           <SecondaryButton label="Student card" onPress={() => setIntent('student_card')} />
+        </>
+      ) : null}
+
+      {!working && intent === 'syllabus' ? (
+        <>
+          <Text style={[type.body, { color: colors.mute }]}>
+            This will be a class syllabus / grading policy. We parse an ask draft for the current class — nothing publishes until you review.
+          </Text>
+          {!chrome.classId ? (
+            <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />
+          ) : null}
         </>
       ) : null}
 
@@ -1245,6 +1301,16 @@ export default function ProposalScreen() {
             <PrimaryButton disabled={busy} label={busy ? 'Saving…' : 'Approve'} onPress={() => void saveHomework('approve')} />
           ) : (
             <PrimaryButton disabled={busy} label={busy ? 'Saving…' : 'Save to Inbox'} onPress={() => void saveHomework('inbox')} />
+          )
+        ) : intent === 'syllabus' ? (
+          !chrome.classId ? (
+            <PrimaryButton label="Name a class" onPress={() => router.replace('/?switch=1')} />
+          ) : (
+            <PrimaryButton
+              disabled={busy || !imageUrl}
+              label={busy ? 'Reading…' : 'Parse syllabus for this class'}
+              onPress={() => void saveSyllabus()}
+            />
           )
         ) : intent === 'portrait' ? (
           <PrimaryButton
