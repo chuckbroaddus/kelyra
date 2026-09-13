@@ -76,3 +76,23 @@ export type CalendarLayerRow = {
   is_read_only: boolean;
   can_unsubscribe: boolean;
 };
+
+export type CalendarEventKind = 'school' | 'class' | 'personal' | 'absence';
+
+export type CalendarEventDetail = {
+  id: string;
+  title: string;
+  body: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  allDay: boolean;
+  category: string;
+  visibilityScope: string;
+  visibilityCaption: string;
+  classId: string | null;
+  studentId: string | null;
+  ownerProfileId: string;
+  canEdit: boolean;
+  canDelete: boolean;
+  deleteDisabledReason: string | null;
+};

@@ -1,5 +1,7 @@
 import { mapCalendarItemRow, mapCalendarLayerRow } from '@/lib/calendar/mapItem';
 import type {
+  CalendarEventDetail,
+  CalendarEventKind,
   CalendarItem,
   CalendarItemRow,
   CalendarLayer,
@@ -89,4 +91,103 @@ export async function publishAssignmentToCalendar(assignmentId: string): Promise
   });
   if (error) throw error;
   return data as AssignmentRow;
+}
+
+export type CreateCalendarEventInput = {
+  seat: CalendarSeat;
+  kind: CalendarEventKind;
+  title: string;
+  startsAt: string;
+  endsAt?: string | null;
+  allDay?: boolean;
+  category?: string | null;
+  body?: string | null;
+  classId?: string | null;
+  childStudentId?: string | null;
+};
+
+export async function createCalendarEvent(input: CreateCalendarEventInput): Promise<{ id: string }> {
+  const { data, error } = await calDb().rpc('create_calendar_event', {
+    p_seat: input.seat,
+    p_kind: input.kind,
+    p_title: input.title,
+    p_starts_at: input.startsAt,
+    p_ends_at: input.endsAt ?? null,
+    p_all_day: input.allDay ?? true,
+    p_category: input.category ?? null,
+    p_body: input.body ?? null,
+    p_class_id: input.classId ?? null,
+    p_child_student_id: input.childStudentId ?? null,
+  });
+  if (error) throw error;
+  const row = data as { id?: string } | null;
+  if (!row?.id) throw new Error('Save did not return an event');
+  return { id: row.id };
+}
+
+export type UpdateCalendarEventInput = {
+  seat: CalendarSeat;
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt?: string | null;
+  allDay?: boolean;
+  category?: string | null;
+  body?: string | null;
+};
+
+export async function updateCalendarEvent(input: UpdateCalendarEventInput): Promise<void> {
+  const { error } = await calDb().rpc('update_calendar_event', {
+    p_seat: input.seat,
+    p_id: input.id,
+    p_title: input.title,
+    p_starts_at: input.startsAt,
+    p_ends_at: input.endsAt ?? null,
+    p_all_day: input.allDay ?? true,
+    p_category: input.category ?? null,
+    p_body: input.body ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function deleteCalendarEvent(input: { seat: CalendarSeat; id: string }): Promise<void> {
+  const { error } = await calDb().rpc('delete_calendar_event', {
+    p_seat: input.seat,
+    p_id: input.id,
+  });
+  if (error) throw error;
+}
+
+export async function getCalendarEvent(input: {
+  seat: CalendarSeat;
+  id: string;
+  classId?: string | null;
+  childStudentId?: string | null;
+}): Promise<CalendarEventDetail | null> {
+  const { data, error } = await calDb().rpc('get_calendar_event', {
+    p_seat: input.seat,
+    p_id: input.id,
+    p_class_id: input.classId ?? null,
+    p_child_student_id: input.childStudentId ?? null,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.id) return null;
+  return {
+    id: row.id,
+    title: row.title,
+    body: row.body ?? null,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at ?? null,
+    allDay: Boolean(row.all_day),
+    category: row.category,
+    visibilityScope: row.visibility_scope,
+    visibilityCaption: row.visibility_caption,
+    classId: row.class_id ?? null,
+    studentId: row.student_id ?? null,
+    ownerProfileId: row.owner_profile_id,
+    canEdit: Boolean(row.can_edit),
+    canDelete: Boolean(row.can_delete),
+    deleteDisabledReason: row.delete_disabled_reason ?? null,
+  };
 }

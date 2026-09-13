@@ -3,15 +3,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
+import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
 import { DayColumn } from '@/components/calendar/DayColumn';
+import { EventComposer } from '@/components/calendar/EventComposer';
+import { EventMenu } from '@/components/calendar/EventMenu';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { GhostButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
-import { listCalendarItems } from '@/lib/calendar/api';
+import { deleteCalendarEvent, listCalendarItems } from '@/lib/calendar/api';
+import { canCreateOnSeat } from '@/lib/calendar/eventActions';
 import {
   agendaRangeFrom,
   dayRangeContaining,
@@ -35,9 +39,9 @@ type PhoneView = 'agenda' | 'day';
 type WebView = 'week' | 'agenda' | 'day';
 
 /**
- * CAL-R2 Phase B: family read + phone Agenda/Day (VW-A) + CH-A + DP-A.
- * Teacher web Week from Phase A retained. Own chrome — not FullCalendar / Wix Agenda.
- * Desk Today/This week stay on Desk. No 6th tray tab.
+ * CAL-R2 Phase C: CR-A create/edit + MG-A menus + hat-scoped events/absence.
+ * Phase B family read + phone Agenda/Day + CH-A + DP-A retained.
+ * Own chrome — not FullCalendar / Wix Agenda. No 6th tray tab.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -63,6 +67,14 @@ export default function CalendarScreen() {
   const [items, setItems] = useState<CalendarItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [composer, setComposer] = useState<{
+    mode: 'create' | 'edit' | 'view';
+    eventId?: string | null;
+  } | null>(null);
+  const [menuItem, setMenuItem] = useState<CalendarItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<CalendarItem | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const weekRange = useMemo(() => weekRangeContaining(weekAnchor), [weekAnchor]);
   const dayRange = useMemo(() => dayRangeContaining(dayAnchor), [dayAnchor]);
@@ -188,8 +200,28 @@ export default function CalendarScreen() {
   );
 
   const openItem = (item: CalendarItem) => {
-    if (item.deepLink) {
-      router.push(item.deepLink as never);
+    if (item.source === 'assignment') {
+      if (item.deepLink) router.push(item.deepLink as never);
+      return;
+    }
+    setMenuItem(item);
+  };
+
+  const canCreate = canCreateOnSeat(seat);
+
+  const confirmDelete = async () => {
+    if (!deleteItem || !seat) return;
+    setDeleteBusy(true);
+    try {
+      await deleteCalendarEvent({ seat, id: deleteItem.id });
+      setDeleteItem(null);
+      setMenuItem(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete');
+      setDeleteItem(null);
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -244,6 +276,20 @@ export default function CalendarScreen() {
           <Chip label="Day" selected={activeView === 'day'} onPress={() => setWebView('day')} />
         </ChipRow>
       )}
+
+      {canCreate ? (
+        <View style={styles.addRow}>
+          <PrimaryButton
+            label="Add event"
+            onPress={() => setComposer({ mode: 'create' })}
+          />
+          {seat === 'parent' && parentChildMissing ? (
+            <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
+              Pick a child to add an absence for that child only.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {activeView === 'week' ? (
         <View style={styles.toolbar}>
@@ -339,9 +385,61 @@ export default function CalendarScreen() {
       {seat === 'teacher' ? (
         <Text style={[styles.hint, { color: colors.mute }]}>
           Hidden quizzes and tests show a Hidden badge until you publish them for families from the
-          assignment or Needs.
+          assignment or Needs. School events are managed by office.
         </Text>
       ) : null}
+
+      {seat ? (
+        <EventComposer
+          visible={composer != null}
+          mode={composer?.mode ?? 'create'}
+          seat={seat}
+          eventId={composer?.eventId}
+          classId={seat === 'teacher' ? chrome.classId : null}
+          childStudentId={seat === 'parent' ? parentChildId : null}
+          onClose={() => setComposer(null)}
+          onSaved={() => {
+            setComposer(null);
+            void load();
+          }}
+        />
+      ) : null}
+
+      {seat ? (
+        <EventMenu
+          visible={menuItem != null}
+          seat={seat}
+          item={menuItem}
+          onClose={() => setMenuItem(null)}
+          onView={(item) => {
+            setMenuItem(null);
+            setComposer({ mode: 'view', eventId: item.id });
+          }}
+          onEdit={(item) => {
+            setMenuItem(null);
+            setComposer({ mode: 'edit', eventId: item.id });
+          }}
+          onDelete={(item) => {
+            setMenuItem(null);
+            setDeleteItem(item);
+          }}
+          onOpenAssignment={(item) => {
+            setMenuItem(null);
+            if (item.deepLink) router.push(item.deepLink as never);
+          }}
+        />
+      ) : null}
+
+      <CalendarConfirm
+        visible={deleteItem != null}
+        title="Delete event?"
+        body="This removes it for everyone who could see it."
+        confirmLabel="Delete"
+        danger
+        busy={deleteBusy}
+        onCancel={() => setDeleteItem(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </Screen>
   );
 }
@@ -370,6 +468,10 @@ const styles = StyleSheet.create({
   stateBlock: {
     gap: 8,
     marginBottom: 12,
+  },
+  addRow: {
+    marginTop: 8,
+    marginBottom: 4,
   },
   childBlock: {
     marginBottom: 8,
