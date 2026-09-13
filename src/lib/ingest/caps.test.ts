@@ -83,4 +83,6 @@ test('I1-07 wire copy atoms present', () => {
   assert.equal(INGEST_COPY.entry, 'Upload class stack');
   assert.match(INGEST_COPY.hardFailSize, /250 MB/);
   assert.match(INGEST_COPY.phoneGate, /computer/i);
+  assert.equal(INGEST_COPY.progressPages(12, 120), '12/120 rasterized');
+  assert.match(INGEST_COPY.encryptedPdf, /encrypted|password/i);
 });

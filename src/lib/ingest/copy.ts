@@ -23,6 +23,10 @@ export const INGEST_COPY = {
   uploading: 'Uploading…',
   received: 'Upload complete. Waiting for page processing…',
   markReceivedFailed: 'Could not finish the upload. Try again.',
+  progressPages: (done: number, total: number) =>
+    `${done}/${total} rasterized`,
+  encryptedPdf:
+    'Password or encrypted PDF. Unlock on the copier and upload again.',
 } as const;
 
 function formatProgressMb(bytes: number): string {
