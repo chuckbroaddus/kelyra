@@ -13,7 +13,7 @@ import test from 'node:test';
 
 const root = process.cwd();
 const FIX =
-  'supabase/migrations/20260913000002_list_calendar_items_union_orderby_aliases.sql';
+  'supabase/migrations/20260916000001_list_calendar_items_phase_c_absence_owners.sql';
 const PHASE_A_RPCS =
   'supabase/migrations/20260912000001_calendar_r2_phase_a_rpcs.sql';
 

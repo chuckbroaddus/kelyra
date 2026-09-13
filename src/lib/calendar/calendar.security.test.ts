@@ -19,6 +19,10 @@ const rpcs = 'supabase/migrations/20260912000001_calendar_r2_phase_a_rpcs.sql';
 /** Live list_calendar_items after FIX-NOW t_dafdba90 (UNION ORDER BY aliases). */
 const itemsFix =
   'supabase/migrations/20260913000002_list_calendar_items_union_orderby_aliases.sql';
+/** Phase C list: owner-parents absence audience + parent personal. Canonical for extract. */
+const itemsPhaseC =
+  'supabase/migrations/20260916000001_list_calendar_items_phase_c_absence_owners.sql';
+const crudSql = 'supabase/migrations/20260916000000_calendar_r2_phase_c_event_crud.sql';
 
 /** Static JWT role fixtures for CAL-R2 Phase A+B (live DB apply is devops-release). */
 const JWT = {
@@ -39,7 +43,7 @@ function extractFn(sql: string, name: string): string {
 
 /** Canonical list_calendar_items (follow-up migration replaces Phase A body). */
 function listCalendarItemsSql(): string {
-  return extractFn(read(itemsFix), 'list_calendar_items');
+  return extractFn(read(itemsPhaseC), 'list_calendar_items');
 }
 
 /** Strip SQL `--` line comments so forbidden-helper asserts ignore docs. */
@@ -54,7 +58,7 @@ function stripSqlComments(sql: string): string {
 }
 
 test('CAL-S1-01 never teaches_class for family/hidden calendar reads', () => {
-  const sql = read(schema) + read(rpcs) + read(itemsFix);
+  const sql = read(schema) + read(rpcs) + read(itemsFix) + read(itemsPhaseC) + read(crudSql);
   const items = listCalendarItemsSql();
   const layers = extractFn(read(rpcs), 'list_calendars');
   assert.doesNotMatch(stripSqlComments(items), /\bteaches_class\b/);
@@ -127,7 +131,7 @@ test('CAL-S1-04 / S2-01 dual-hat by chrome seat; p_seat occupancy; wrong → emp
 
 test('CAL-S1-08 DEFINER hygiene on both RPCs', () => {
   const rpcSql = read(rpcs);
-  const itemsSql = read(itemsFix);
+  const itemsSql = read(itemsPhaseC);
   for (const name of ['list_calendars', 'calendar_seat_occupied'] as const) {
     const body = extractFn(rpcSql, name);
     assert.match(body, /security definer/i);
@@ -499,4 +503,147 @@ test('Phase B assignment form publish toggle (assign ≠ publish)', () => {
   const api = read('src/lib/assignments/api.ts');
   assert.match(api, /calendarVisibility/);
   assert.match(api, /calendar_visibility: input\.calendarVisibility/);
+});
+
+
+test('Phase C absence walls: owner parents of C + teachers of C; never office/student/twin/is_staff', () => {
+  const items = listCalendarItemsSql();
+  const crud = read(crudSql);
+  const parentBlock = items.slice(items.indexOf('-- ========== PARENT'));
+  const studentBlock = items.slice(
+    items.indexOf('-- ========== STUDENT'),
+    items.indexOf('-- ========== PARENT'),
+  );
+  const officeBlock = items.slice(
+    items.indexOf('-- ========== OFFICE'),
+    items.indexOf('-- ========== STUDENT'),
+  );
+  const teacherBlock = items.slice(
+    items.indexOf('-- ========== TEACHER'),
+    items.indexOf('-- ========== OFFICE'),
+  );
+
+  // Parent: focused child only; creator-only filter removed (all owner parents of C).
+  assert.match(parentBlock, /e\.student_id = child/);
+  assert.match(parentBlock, /visibility_scope = 'student_teachers'/);
+  assert.match(parentBlock, /category = 'absence'/);
+  assert.match(
+    parentBlock,
+    /category = 'absence'\s*\n\s*and e\.student_id = child\s*\n\s*\)/,
+  );
+  assert.doesNotMatch(
+    parentBlock,
+    /category = 'absence'\s*\n\s*and e\.student_id = child\s*\n\s*and e\.owner_profile_id/,
+  );
+  // Twin wall: missing child still empty
+  assert.match(items, /my_parent_student_count\(\)\s*>=\s*2/);
+  assert.match(parentBlock, /if child is null then/);
+
+  // Student never sees absence / student_teachers
+  assert.doesNotMatch(studentBlock, /student_teachers/);
+  assert.doesNotMatch(studentBlock, /category = 'absence'/);
+
+  // Office never absence / self / homework
+  assert.doesNotMatch(officeBlock, /student_teachers|category = 'absence'/);
+  assert.match(officeBlock, /visibility_scope = 'school'/);
+
+  // Teacher sees student_teachers via class_teacher_of enrollments (not is_staff)
+  assert.match(teacherBlock, /visibility_scope = 'student_teachers'/);
+  assert.match(teacherBlock, /class_teacher_of\(en\.class_id\)/);
+
+  const create = extractFn(crud, 'create_calendar_event');
+  const update = extractFn(crud, 'update_calendar_event');
+  const del = extractFn(crud, 'delete_calendar_event');
+  const get = extractFn(crud, 'get_calendar_event');
+  const write = extractFn(crud, 'calendar_event_write_allowed');
+  for (const [name, body] of [
+    ['create', create],
+    ['update', update],
+    ['delete', del],
+    ['get', get],
+    ['write', write],
+  ] as const) {
+    assert.doesNotMatch(stripSqlComments(body), /\bis_staff\b/, `${name} no is_staff`);
+    assert.doesNotMatch(stripSqlComments(body), /\bteaches_class\b/, `${name} no teaches_class`);
+    assert.match(body, /security definer/i);
+    assert.match(body, /set search_path = public/);
+    assert.match(body, /auth\.uid\(\)/);
+  }
+
+  // Create paths hat-scoped
+  assert.match(create, /Only office can create school events/);
+  assert.match(create, /Only teachers can create class events/);
+  assert.match(create, /class_teacher_of\(p_class_id\)/);
+  assert.match(create, /Only a parent can create an absence/);
+  assert.match(create, /i_parent_of\(p_child_student_id\)/);
+  assert.match(create, /vis := 'student_teachers'/);
+  assert.match(create, /Office cannot create personal events/);
+  assert.match(create, /calendar_seat_occupied\(p_seat\)/);
+
+  // Teacher cannot edit/delete school
+  assert.match(update, /Managed by office/);
+  assert.match(del, /Managed by office/);
+  assert.match(write, /Managed by office|visibility_scope = 'school'/);
+
+  // Parent edits own absence only
+  assert.match(write, /owner_profile_id = me/);
+  assert.match(write, /category = 'absence'/);
+  assert.match(write, /i_parent_of\(p_event\.student_id\)/);
+
+  // Student get omits student_teachers
+  assert.match(get, /Student does not see own absence/);
+  const studentGet = get.slice(get.indexOf("p_seat = 'student'"));
+  assert.doesNotMatch(
+    studentGet.slice(0, studentGet.indexOf("p_seat = 'parent'")),
+    /student_teachers/,
+  );
+
+  // Unlink: DELETE not SET NULL / deleted_at
+  assert.match(crud, /calendar_events_on_parent_unlink/);
+  assert.match(crud, /Do not SET NULL student_id/);
+  assert.match(crud, /Do not use deleted_at tombstone for absences/);
+  assert.match(crud, /delete from public\.calendar_events e/);
+  assert.match(crud, /before delete on public\.parent_students/);
+  assert.match(crud, /before delete on public\.students/);
+
+  assert.match(crud, /revoke all on function public\.create_calendar_event[\s\S]*from public, anon/i);
+  assert.match(crud, /grant execute on function public\.create_calendar_event[\s\S]*to authenticated/i);
+});
+
+test('Phase C CR-A / MG-A client: no FullCalendar; rpc only; no table writes', () => {
+  const api = read('src/lib/calendar/api.ts');
+  const screen = read('src/app/calendar.tsx');
+  const composer = read('src/components/calendar/EventComposer.tsx');
+  const menu = read('src/components/calendar/EventMenu.tsx');
+  assert.match(api, /rpc\('create_calendar_event'/);
+  assert.match(api, /rpc\('update_calendar_event'/);
+  assert.match(api, /rpc\('delete_calendar_event'/);
+  assert.match(api, /rpc\('get_calendar_event'/);
+  assert.doesNotMatch(api, /from\(['"]calendar_events['"]\)\.(insert|update|delete)/);
+  assert.doesNotMatch(api, /from\(['"]calendars['"]\)\.(insert|update|delete)/);
+  assert.match(screen, /EventComposer/);
+  assert.match(screen, /EventMenu/);
+  assert.match(screen, /Add event/);
+  assert.match(composer, /Who can see this/);
+  assert.match(composer, /Discard draft/);
+  assert.match(read('src/lib/calendar/eventActions.ts'), /Managed by office/);
+  assert.match(menu, /eventMenuActions/);
+  assert.doesNotMatch(screen, /from ['"]@fullcalendar|from ['"]fullcalendar|from ['"]react-big-calendar/);
+  assert.doesNotMatch(composer, /fullcalendar/i);
+});
+
+test('Phase C JWT fixture matrix: create/read absence walls', () => {
+  // Encodes live prove-out expectations (devops-release applies SQL).
+  assert.equal(JWT.parent.seat, 'parent');
+  assert.equal(JWT.teacher.seat, 'teacher');
+  assert.equal(JWT.student.occupiesTeacher, false);
+  assert.equal(JWT.office.occupiesTeacher, false);
+  // Student claiming teacher stays empty (occupancy)
+  assert.notEqual(calendarSeatForChrome('student'), 'teacher');
+  const items = listCalendarItemsSql();
+  const studentBlock = items.slice(
+    items.indexOf('-- ========== STUDENT'),
+    items.indexOf('-- ========== PARENT'),
+  );
+  assert.doesNotMatch(studentBlock, /student_teachers/);
 });
