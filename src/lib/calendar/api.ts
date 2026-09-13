@@ -191,3 +191,18 @@ export async function getCalendarEvent(input: {
     deleteDisabledReason: row.delete_disabled_reason ?? null,
   };
 }
+
+/** CAL-08 Leave team membership. Events remain for others. Never labeled Delete. */
+export async function unsubscribeTeam(input: {
+  seat: CalendarSeat;
+  calendarId: string;
+  childStudentId?: string | null;
+}): Promise<void> {
+  const { error } = await calDb().rpc('unsubscribe_team', {
+    p_seat: input.seat,
+    p_calendar_id: input.calendarId,
+    p_child_student_id: input.childStudentId ?? null,
+  });
+  if (error) throw error;
+}
+

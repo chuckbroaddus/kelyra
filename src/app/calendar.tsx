@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
+import { CalendarsSheet } from '@/components/calendar/CalendarsSheet';
 import { DayColumn } from '@/components/calendar/DayColumn';
 import { EventComposer } from '@/components/calendar/EventComposer';
 import { EventMenu } from '@/components/calendar/EventMenu';
@@ -14,16 +15,37 @@ import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
-import { deleteCalendarEvent, listCalendarItems } from '@/lib/calendar/api';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import {
+  deleteCalendarEvent,
+  listCalendarItems,
+  listCalendars,
+  unsubscribeTeam,
+} from '@/lib/calendar/api';
 import { canCreateOnSeat } from '@/lib/calendar/eventActions';
+import {
+  applyPreset,
+  CATEGORY_CHIPS,
+  categoriesForChips,
+  FILTER_PRESETS,
+  toggleChip,
+  toggleLayerEnabled,
+  type FilterPresetId,
+} from '@/lib/calendar/filters';
 import {
   agendaRangeFrom,
   dayRangeContaining,
   dayRpcBounds,
   shiftDay,
 } from '@/lib/calendar/day';
+import {
+  CAL_PREFS_VERSION,
+  resolveCategoryChipIds,
+  resolveEnabledCalendarIds,
+} from '@/lib/calendar/prefs';
+import { loadCalPrefs, saveCalPrefs } from '@/lib/calendar/prefsStorage';
 import { calendarSeatForChrome } from '@/lib/calendar/seat';
-import type { CalendarItem } from '@/lib/calendar/types';
+import type { CalendarItem, CalendarLayer } from '@/lib/calendar/types';
 import {
   shiftWeek,
   weekRangeContaining,
@@ -39,20 +61,21 @@ type PhoneView = 'agenda' | 'day';
 type WebView = 'week' | 'agenda' | 'day';
 
 /**
- * CAL-R2 Phase C: CR-A create/edit + MG-A menus + hat-scoped events/absence.
- * Phase B family read + phone Agenda/Day + CH-A + DP-A retained.
- * Own chrome — not FullCalendar / Wix Agenda. No 6th tray tab.
+ * CAL-R2 Phase D: LF-A chips + Calendars sheet + local prefs + thin sport Unsubscribe.
+ * Phase A–C retained. Filters are UX only — never security. No FullCalendar / 6th tray.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
   const chrome = useChrome();
   const layout = useLayout();
   const router = useRouter();
+  const { profile } = useAuth();
   usePushedTitle('Calendar');
 
   const seat = calendarSeatForChrome(chrome.role);
   const isPhone = layout.isPhone;
   const showHiddenBadge = seat === 'teacher';
+  const profileId = profile?.id ?? null;
 
   const [phoneView, setPhoneView] = useState<PhoneView>('agenda');
   const [webView, setWebView] = useState<WebView>('week');
@@ -63,6 +86,12 @@ export default function CalendarScreen() {
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
   const [childrenLoaded, setChildrenLoaded] = useState(false);
+
+  const [layers, setLayers] = useState<CalendarLayer[]>([]);
+  const [enabledIds, setEnabledIds] = useState<string[]>([]);
+  const [chipIds, setChipIds] = useState<string[]>(() => resolveCategoryChipIds(null));
+  const [prefsReady, setPrefsReady] = useState(false);
+  const [calendarsOpen, setCalendarsOpen] = useState(false);
 
   const [items, setItems] = useState<CalendarItem[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -127,13 +156,98 @@ export default function CalendarScreen() {
       ? focusedChildId ?? (children.length === 1 ? children[0]!.id : null)
       : null;
 
+  // Load layers + prefs (per profile · seat · focused child). Sport off until enabled.
+  useEffect(() => {
+    if (!seat || !profileId) {
+      setLayers([]);
+      setEnabledIds([]);
+      setChipIds(resolveCategoryChipIds(null));
+      setPrefsReady(true);
+      return;
+    }
+    if (seat === 'parent' && !childrenLoaded) {
+      setPrefsReady(false);
+      return;
+    }
+    if (seat === 'parent' && parentChildMissing) {
+      setLayers([]);
+      setEnabledIds([]);
+      setChipIds(resolveCategoryChipIds(null));
+      setPrefsReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    setPrefsReady(false);
+    void (async () => {
+      try {
+        const [layerRows, prefs] = await Promise.all([
+          listCalendars({
+            seat,
+            childStudentId: seat === 'parent' ? parentChildId : null,
+          }),
+          loadCalPrefs(profileId, seat, seat === 'parent' ? parentChildId : null),
+        ]);
+        if (cancelled) return;
+        setLayers(layerRows);
+        setEnabledIds(resolveEnabledCalendarIds(prefs, layerRows));
+        setChipIds(resolveCategoryChipIds(prefs));
+      } catch {
+        if (!cancelled) {
+          setLayers([]);
+          setEnabledIds([]);
+          setChipIds(resolveCategoryChipIds(null));
+        }
+      } finally {
+        if (!cancelled) setPrefsReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seat, profileId, parentChildId, parentChildMissing, childrenLoaded]);
+
+  const persistPrefs = useCallback(
+    async (nextEnabled: string[], nextChips: string[]) => {
+      if (!profileId || !seat) return;
+      await saveCalPrefs(profileId, seat, seat === 'parent' ? parentChildId : null, {
+        version: CAL_PREFS_VERSION,
+        enabledCalendarIds: nextEnabled,
+        categoryChipIds: nextChips,
+      });
+    },
+    [profileId, seat, parentChildId],
+  );
+
+  const onToggleChip = (chipId: string) => {
+    const next = toggleChip(chipIds, chipId);
+    setChipIds(next);
+    void persistPrefs(enabledIds, next);
+  };
+
+  const onToggleLayer = (layerId: string) => {
+    const next = toggleLayerEnabled(enabledIds, layerId);
+    setEnabledIds(next);
+    void persistPrefs(next, chipIds);
+  };
+
+  const onPreset = (preset: FilterPresetId) => {
+    const next = applyPreset(preset, layers);
+    const nextEnabled = next.enabledCalendarIds ?? [];
+    const nextChips = next.categoryChipIds ?? [];
+    setEnabledIds(nextEnabled);
+    setChipIds(nextChips);
+    void persistPrefs(nextEnabled, nextChips);
+  };
+
+  const categoryFilter = useMemo(() => categoriesForChips(chipIds), [chipIds]);
+
   const load = useCallback(async () => {
     if (!seat) {
       setItems([]);
       setLoaded(true);
       return;
     }
-    // CH-A: parent 2+ children without focus → empty (fail-closed), never twin merge.
     if (seat === 'parent' && childrenLoaded && parentChildMissing) {
       setItems([]);
       setError(null);
@@ -141,6 +255,10 @@ export default function CalendarScreen() {
       return;
     }
     if (seat === 'parent' && !childrenLoaded) {
+      setLoaded(false);
+      return;
+    }
+    if (!prefsReady) {
       setLoaded(false);
       return;
     }
@@ -163,12 +281,15 @@ export default function CalendarScreen() {
         to = bounds.to;
       }
 
+      // UX filters only — server still enforces hat walls (filters ≠ security).
       const rows = await listCalendarItems({
         from,
         to,
         seat,
         classId: seat === 'teacher' ? chrome.classId : null,
         childStudentId: seat === 'parent' ? parentChildId : null,
+        categories: categoryFilter && categoryFilter.length ? categoryFilter : null,
+        calendarIds: enabledIds.length ? enabledIds : null,
       });
       setItems(rows);
     } catch (err) {
@@ -190,6 +311,9 @@ export default function CalendarScreen() {
     parentChildId,
     parentChildMissing,
     childrenLoaded,
+    prefsReady,
+    categoryFilter,
+    enabledIds,
   ]);
 
   useFocusEffect(
@@ -225,6 +349,30 @@ export default function CalendarScreen() {
     }
   };
 
+  const handleUnsubscribe = async (layer: CalendarLayer) => {
+    if (!seat) return;
+    await unsubscribeTeam({
+      seat,
+      calendarId: layer.id,
+      childStudentId: seat === 'parent' ? parentChildId : null,
+    });
+    const nextLayers = layers.filter((l) => l.id !== layer.id);
+    setLayers(nextLayers);
+    const nextEnabled = enabledIds.filter((id) => id !== layer.id);
+    setEnabledIds(nextEnabled);
+    void persistPrefs(nextEnabled, chipIds);
+    await load();
+  };
+
+  const filtersNarrowed =
+    chipIds.length > 0 &&
+    (chipIds.length < CATEGORY_CHIPS.length ||
+      (layers.length > 0 && enabledIds.length < layers.length));
+  const filteredEmpty =
+    loaded && !error && !parentChildMissing && items.length === 0 && filtersNarrowed;
+  const naturallyEmpty =
+    loaded && !error && !parentChildMissing && items.length === 0 && !filtersNarrowed;
+
   if (!seat) {
     return (
       <Screen>
@@ -247,6 +395,7 @@ export default function CalendarScreen() {
                 onPress={() => {
                   setFocusedChildId(child.id);
                   setLoaded(false);
+                  setPrefsReady(false);
                 }}
               />
             ))}
@@ -276,6 +425,27 @@ export default function CalendarScreen() {
           <Chip label="Day" selected={activeView === 'day'} onPress={() => setWebView('day')} />
         </ChipRow>
       )}
+
+      {/* LF-A category chips (multi-select) */}
+      <View style={styles.filterBlock}>
+        <Text style={[styles.filterLabel, { color: colors.mute }]}>Show</Text>
+        <ChipRow>
+          {CATEGORY_CHIPS.map((chip) => (
+            <Chip
+              key={chip.id}
+              label={chip.label}
+              selected={chipIds.includes(chip.id)}
+              onPress={() => onToggleChip(chip.id)}
+            />
+          ))}
+          <Chip label="Calendars" selected={calendarsOpen} onPress={() => setCalendarsOpen(true)} />
+        </ChipRow>
+        <ChipRow compact>
+          {FILTER_PRESETS.map((p) => (
+            <Chip key={p.id} label={p.label} selected={false} onPress={() => onPreset(p.id)} />
+          ))}
+        </ChipRow>
+      </View>
 
       {canCreate ? (
         <View style={styles.addRow}>
@@ -341,7 +511,7 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {!loaded ? <WorkingLine /> : null}
+      {!loaded || !prefsReady ? <WorkingLine /> : null}
 
       {error ? (
         <View style={styles.stateBlock}>
@@ -356,13 +526,24 @@ export default function CalendarScreen() {
         </Text>
       ) : null}
 
-      {loaded && !error && !parentChildMissing && items.length === 0 && activeView === 'week' ? (
+      {filteredEmpty ? (
+        <View style={styles.stateBlock}>
+          <Text style={[styles.empty, { color: colors.mute }]}>
+            Nothing matches these filters.
+          </Text>
+          <GhostButton label="Clear filters" onPress={() => onPreset('reset')} />
+        </View>
+      ) : null}
+
+      {naturallyEmpty ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
-          Nothing on the calendar this week.
+          {activeView === 'week'
+            ? 'Nothing on the calendar this week.'
+            : 'Nothing on the calendar in this range.'}
         </Text>
       ) : null}
 
-      {loaded && !error && !parentChildMissing ? (
+      {loaded && !error && !parentChildMissing && items.length > 0 ? (
         activeView === 'week' ? (
           <TeacherWeekGrid days={weekRange.days} items={items} onPressItem={openItem} />
         ) : activeView === 'day' ? (
@@ -385,7 +566,8 @@ export default function CalendarScreen() {
       {seat === 'teacher' ? (
         <Text style={[styles.hint, { color: colors.mute }]}>
           Hidden quizzes and tests show a Hidden badge until you publish them for families from the
-          assignment or Needs. School events are managed by office.
+          assignment or Needs. School events are managed by office. Disable homework in Calendars
+          without hiding class events.
         </Text>
       ) : null}
 
@@ -440,6 +622,15 @@ export default function CalendarScreen() {
         onCancel={() => setDeleteItem(null)}
         onConfirm={() => void confirmDelete()}
       />
+
+      <CalendarsSheet
+        visible={calendarsOpen}
+        layers={layers}
+        enabledIds={enabledIds}
+        onToggle={onToggleLayer}
+        onUnsubscribe={handleUnsubscribe}
+        onClose={() => setCalendarsOpen(false)}
+      />
     </Screen>
   );
 }
@@ -475,6 +666,11 @@ const styles = StyleSheet.create({
   },
   childBlock: {
     marginBottom: 8,
+    gap: 4,
+  },
+  filterBlock: {
+    marginTop: 8,
+    marginBottom: 4,
     gap: 4,
   },
   filterLabel: {
