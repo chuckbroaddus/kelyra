@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AvatarTray } from '@/components/ui/AvatarTray';
 import { captureBadge, practiceBadge } from '@/components/ui/Badge';
@@ -26,6 +26,12 @@ import { formatWhen } from '@/lib/format';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useLayout } from '@/lib/theme/layout';
+import {
+  listHiddenCalendarDues,
+  publishAssignmentToCalendar,
+  type HiddenCalendarDue,
+} from '@/lib/calendar/api';
+import { dueLabel } from '@/lib/assignments/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function ClassHomeScreen() {
@@ -46,6 +52,8 @@ export default function ClassHomeScreen() {
   const [pending, setPending] = useState<InboxItem | null>(null);
   usePushedTitle(klass?.name ?? 'Class');
   const [busy, setBusy] = useState(false);
+  const [hiddenDues, setHiddenDues] = useState<HiddenCalendarDue[]>([]);
+  const [publishBusyId, setPublishBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -63,6 +71,11 @@ export default function ClassHomeScreen() {
       setInbox(await listInbox(id));
       setTurned(await listTurnedIn(id));
       setWeek(await listThisWeek(id));
+      try {
+        setHiddenDues(await listHiddenCalendarDues(id));
+      } catch {
+        setHiddenDues([]);
+      }
       await setActiveClass(teacher.id, id);
       setActiveClassId(id);
     } catch (err) {
@@ -111,6 +124,18 @@ export default function ClassHomeScreen() {
             router.setParams({ tab: key });
           }}
         />
+      ) : null}
+
+      {pane === 'today' || pane === 'week' ? (
+        <Pressable
+          onPress={() => router.push('/calendar')}
+          accessibilityRole="link"
+          accessibilityLabel="Open Calendar"
+          hitSlop={8}
+          style={styles.calendarLink}
+        >
+          <Text style={[styles.calendarLinkText, { color: colors.mute }]}>Calendar</Text>
+        </Pressable>
       ) : null}
 
       {pane !== 'needs' && roster.length > 0 ? (
@@ -217,7 +242,7 @@ export default function ClassHomeScreen() {
 
       {pane === 'needs' ? (
         <View style={styles.one}>
-          {inbox.length === 0 && turned.length === 0 ? (
+          {inbox.length === 0 && turned.length === 0 && hiddenDues.length === 0 ? (
             <View>
               <Text style={[styles.empty, { color: colors.mute }]}>
                 Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
@@ -231,6 +256,48 @@ export default function ClassHomeScreen() {
               ) : null}
             </View>
           ) : null}
+          {hiddenDues.map((item) => (
+            <WorkRow
+              key={`cal-pub-${item.id}`}
+              title={`Publish to calendar: ${item.title}`}
+              status={item.category}
+              meta={dueLabel(item.dueAt)}
+              onPress={() => router.push(`/class/${id}/assignment/${item.id}`)}
+              pills={[
+                {
+                  key: 'publish',
+                  label: publishBusyId === item.id ? 'Publishing…' : 'Publish',
+                  kind: 'primary',
+                  onPress: () => {
+                    if (publishBusyId) return;
+                    void (async () => {
+                      setPublishBusyId(item.id);
+                      try {
+                        await publishAssignmentToCalendar(item.id);
+                        setHiddenDues((rows) => rows.filter((row) => row.id !== item.id));
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Could not publish');
+                      } finally {
+                        setPublishBusyId(null);
+                      }
+                    })();
+                  },
+                },
+                {
+                  key: 'keep',
+                  label: 'Keep hidden',
+                  kind: 'ghost',
+                  onPress: () => setHiddenDues((rows) => rows.filter((row) => row.id !== item.id)),
+                },
+                {
+                  key: 'open',
+                  label: 'Open assignment',
+                  kind: 'secondary',
+                  onPress: () => router.push(`/class/${id}/assignment/${item.id}`),
+                },
+              ]}
+            />
+          ))}
           {inbox.map((item) => (
             <WorkRow
               key={item.id}
@@ -311,6 +378,14 @@ export default function ClassHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  calendarLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    marginBottom: 4,
+  },
+  calendarLinkText: {
+    ...type.meta,
+  },
   empty: type.body,
   emptyHint: type.meta,
   one: {
