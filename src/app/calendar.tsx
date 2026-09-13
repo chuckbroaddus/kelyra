@@ -7,6 +7,7 @@ import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
 import { CalendarsSheet } from '@/components/calendar/CalendarsSheet';
 import { DayColumn } from '@/components/calendar/DayColumn';
 import { EventComposer } from '@/components/calendar/EventComposer';
+import { takePendingCalendarDraft, type PendingCalendarDraft } from '@/lib/calendar/askDraft';
 import { EventMenu } from '@/components/calendar/EventMenu';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { Chip } from '@/components/ui/Chip';
@@ -100,7 +101,9 @@ export default function CalendarScreen() {
   const [composer, setComposer] = useState<{
     mode: 'create' | 'edit' | 'view';
     eventId?: string | null;
+    initialDraft?: PendingCalendarDraft | null;
   } | null>(null);
+  const [askDraft, setAskDraft] = useState<PendingCalendarDraft | null>(null);
   const [menuItem, setMenuItem] = useState<CalendarItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<CalendarItem | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -116,6 +119,22 @@ export default function CalendarScreen() {
       : webView === 'week'
         ? 'agenda'
         : webView;
+
+  // Phase E: Ask calendar_draft_event parks CR-A draft — open Review on Calendar.
+  useEffect(() => {
+    if (!profileId || !seat) return;
+    let cancelled = false;
+    void (async () => {
+      const pending = await takePendingCalendarDraft(profileId);
+      if (cancelled || !pending) return;
+      setAskDraft(pending);
+      if (pending.childStudentId) setFocusedChildId(pending.childStudentId);
+      setComposer({ mode: 'create', initialDraft: pending });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, seat]);
 
   useEffect(() => {
     if (seat !== 'parent') {
@@ -577,11 +596,24 @@ export default function CalendarScreen() {
           mode={composer?.mode ?? 'create'}
           seat={seat}
           eventId={composer?.eventId}
-          classId={seat === 'teacher' ? chrome.classId : null}
-          childStudentId={seat === 'parent' ? parentChildId : null}
-          onClose={() => setComposer(null)}
+          classId={
+            seat === 'teacher'
+              ? composer?.initialDraft?.classId ?? chrome.classId
+              : null
+          }
+          childStudentId={
+            seat === 'parent'
+              ? composer?.initialDraft?.childStudentId ?? parentChildId
+              : null
+          }
+          initialDraft={composer?.initialDraft ?? askDraft}
+          onClose={() => {
+            setComposer(null);
+            setAskDraft(null);
+          }}
           onSaved={() => {
             setComposer(null);
+            setAskDraft(null);
             void load();
           }}
         />

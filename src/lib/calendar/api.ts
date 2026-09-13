@@ -104,6 +104,8 @@ export type CreateCalendarEventInput = {
   body?: string | null;
   classId?: string | null;
   childStudentId?: string | null;
+  /** Phase E Ask Save stamps ai_nl; UI manual stays default. */
+  source?: 'manual' | 'ai_nl';
 };
 
 export async function createCalendarEvent(input: CreateCalendarEventInput): Promise<{ id: string }> {
@@ -118,6 +120,7 @@ export async function createCalendarEvent(input: CreateCalendarEventInput): Prom
     p_body: input.body ?? null,
     p_class_id: input.classId ?? null,
     p_child_student_id: input.childStudentId ?? null,
+    p_source: input.source ?? 'manual',
   });
   if (error) throw error;
   const row = data as { id?: string } | null;

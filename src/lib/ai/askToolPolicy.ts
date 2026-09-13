@@ -87,6 +87,8 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   unlink_parent_student: { capability: 'accounts.link_parent', need: null, officeOnly: true },
   set_parent_card_link: { capability: 'accounts.link_parent', need: null, officeOnly: true },
   draft_diary_entry: { capability: 'diary.draft', need: 'own' },
+  calendar_search: { capability: 'calendar.read', need: 'own' },
+  calendar_draft_event: { capability: 'calendar.write', need: 'own' },
 };
 
 export type AskActorProfile = ProfileHats & {

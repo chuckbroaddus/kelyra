@@ -260,9 +260,11 @@ test('CAL-S2-07 prefs/cache not consulted in RPC', () => {
   }
 });
 
-test('CAL-S2-08 Ask calendar tools not hung on assignments.manage (Phase A)', () => {
-  assert.equal(ASK_TOOL_POLICY.calendar_search, undefined);
-  assert.equal(ASK_TOOL_POLICY.calendar_draft_event, undefined);
+test('CAL-S2-08 Ask calendar tools use calendar.read/write — not assignments.manage (Phase E)', () => {
+  assert.equal(ASK_TOOL_POLICY.calendar_search?.capability, 'calendar.read');
+  assert.equal(ASK_TOOL_POLICY.calendar_draft_event?.capability, 'calendar.write');
+  assert.notEqual(ASK_TOOL_POLICY.calendar_search?.capability, 'assignments.manage');
+  assert.notEqual(ASK_TOOL_POLICY.calendar_draft_event?.capability, 'assignments.manage');
   assert.ok(ASK_TOOL_POLICY.create_assignment?.capability === 'assignments.manage');
 });
 
