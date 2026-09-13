@@ -24,6 +24,8 @@ import {
   getCalendarEvent,
   updateCalendarEvent,
 } from '@/lib/calendar/api';
+import type { PendingCalendarDraft } from '@/lib/calendar/askDraft';
+import { REVIEW_DRAFT_BANNER } from '@/lib/calendar/askDraft';
 import type { CalendarEventKind, CalendarSeat } from '@/lib/calendar/types';
 import {
   categoriesForKind,
@@ -47,6 +49,8 @@ type Props = {
   eventId?: string | null;
   classId?: string | null;
   childStudentId?: string | null;
+  /** Phase E Ask parked draft — CR-A Review, not saved until Save. */
+  initialDraft?: PendingCalendarDraft | null;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -93,6 +97,7 @@ export function EventComposer({
   eventId,
   classId,
   childStudentId,
+  initialDraft,
   onClose,
   onSaved,
 }: Props) {
@@ -108,6 +113,7 @@ export function EventComposer({
   const [error, setError] = useState<string | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [fromAsk, setFromAsk] = useState(false);
 
   const dirty = !sameDraft(draft, baseline);
   const kinds = kindsForSeat(seat).filter((kind) => {
@@ -123,10 +129,30 @@ export function EventComposer({
     setLoadError(null);
     setDiscardOpen(false);
     if (mode === 'create' || !eventId) {
+      if (initialDraft?.title) {
+        const next: Draft = {
+          kind: initialDraft.kind,
+          title: initialDraft.title,
+          startDate: initialDraft.startDate,
+          endDate: initialDraft.endDate,
+          allDay: initialDraft.allDay,
+          startTime: initialDraft.startTime,
+          endTime: initialDraft.endTime,
+          category: initialDraft.category,
+          body: initialDraft.body,
+        };
+        setDraft(next);
+        setBaseline(emptyDraft(seat, classId, childStudentId));
+        setReadOnly(false);
+        setFromAsk(true);
+        setCaption(visibilityCaption(scopeForKind(next.kind), next.category));
+        return;
+      }
       const next = emptyDraft(seat, classId, childStudentId);
       setDraft(next);
       setBaseline(next);
       setReadOnly(false);
+      setFromAsk(false);
       setCaption(visibilityCaption(scopeForKind(next.kind), next.category));
       return;
     }
@@ -177,13 +203,14 @@ export function EventComposer({
     return () => {
       cancelled = true;
     };
-  }, [visible, mode, eventId, seat, classId, childStudentId]);
+  }, [visible, mode, eventId, seat, classId, childStudentId, initialDraft]);
 
   const heading = useMemo(() => {
+    if (mode === 'create' && fromAsk) return REVIEW_DRAFT_BANNER;
     if (mode === 'create') return 'New event';
     if (readOnly) return 'Event';
     return 'Edit event';
-  }, [mode, readOnly]);
+  }, [mode, readOnly, fromAsk]);
 
   const requestClose = () => {
     if (dirty && !readOnly) {
@@ -250,6 +277,7 @@ export function EventComposer({
           body: draft.body,
           classId: draft.kind === 'class' ? classId : null,
           childStudentId: draft.kind === 'absence' ? childStudentId : null,
+          source: fromAsk ? 'ai_nl' : 'manual',
         });
       }
       setBaseline(draft);
@@ -303,6 +331,12 @@ export function EventComposer({
             >
               {loadError ? (
                 <Text style={[styles.error, { color: colors.danger }]}>{loadError}</Text>
+              ) : null}
+
+              {fromAsk ? (
+                <Text style={[styles.askBanner, { color: colors.mute, borderColor: colors.line }]}>
+                  {REVIEW_DRAFT_BANNER}. Nothing is on the calendar until you Save.
+                </Text>
               ) : null}
 
               {mode === 'create' && kinds.length > 1 ? (
@@ -480,6 +514,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 12,
     gap: 4,
+  },
+  askBanner: {
+    ...type.caption,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 4,
   },
   error: type.body,
 });

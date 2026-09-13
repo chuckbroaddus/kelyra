@@ -58,6 +58,9 @@ import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, Studen
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
 import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
 import { parkPendingDiaryDraft } from '@/lib/diary/api';
+import { listCalendarItems } from '@/lib/calendar/api';
+import { buildCalendarAskDraft, parkPendingCalendarDraft, REVIEW_DRAFT_BANNER } from '@/lib/calendar/askDraft';
+import { calendarSeatForChrome } from '@/lib/calendar/seat';
 import {
   attachExplainAsNote,
   discardExplainDraft,
@@ -343,8 +346,12 @@ function hrefForScreen(ctx: AskToolContext, args: Record<string, unknown>): { hr
       return classId && parentId
         ? { href: `/class/${classId}/parent/${parentId}` }
         : { error: 'Need a class and parent.' };
+    case 'diary':
+      return { href: '/diary' };
+    case 'calendar':
+      return { href: '/calendar' };
     default:
-      return { error: 'Unknown screen. Use school, people, class, office, student, parent, inbox, capture, messages, feed, gradebook, assignments, activity, or profile.' };
+      return { error: 'Unknown screen. Use school, people, class, office, student, parent, inbox, capture, messages, feed, gradebook, assignments, activity, diary, calendar, or profile.' };
   }
 }
 
@@ -1080,7 +1087,7 @@ const TOOLS: Record<string, AskToolSpec> = {
         properties: {
           screen: {
             type: 'string',
-            description: 'school, people, class, office, student, parent, inbox, capture, messages, feed, gradebook, activity, profile, students, parents',
+            description: 'school, people, class, office, student, parent, inbox, capture, messages, feed, gradebook, activity, profile, students, parents, diary, calendar',
           },
           class_id: { type: 'string' },
           class_name: { type: 'string' },
@@ -2263,6 +2270,177 @@ const TOOLS: Record<string, AskToolSpec> = {
       };
     },
   },
+
+  calendar_search: {
+    capability: 'calendar.read',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'calendar_search',
+      description:
+        'Search calendar items already visible for the active chrome seat (same walls as list_calendar_items). Never elevates, never widens via is_staff, never returns hidden family titles for parent/student. Returns ids/titles/times — not bodies.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Optional title/category substring filter over visible rows' },
+          from: { type: 'string', description: 'ISO start; default now' },
+          to: { type: 'string', description: 'ISO end; default +14 days' },
+          class_id: { type: 'string' },
+          child_student_id: { type: 'string', description: 'Parent focused child; defaults to Ask bound child' },
+          categories: { type: 'array', items: { type: 'string' } },
+        },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      const seat = calendarSeatForChrome(ctx.live.role);
+      if (!seat) return { error: 'No calendar seat for this chrome role.' };
+      const from =
+        str(args, 'from') || new Date().toISOString();
+      const toDefault = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+      const to = str(args, 'to') || toDefault;
+      const classId =
+        seat === 'teacher' ? str(args, 'class_id') || ctx.classId || ctx.live.classId || null : null;
+      const childStudentId =
+        seat === 'parent'
+          ? str(args, 'child_student_id') || ctx.live.studentId || null
+          : null;
+      if (seat === 'parent' && !childStudentId) {
+        return { error: 'Focus a linked child before searching the family calendar.' };
+      }
+      const cats = Array.isArray(args.categories)
+        ? (args.categories as unknown[]).filter((c): c is string => typeof c === 'string')
+        : null;
+      const items = await listCalendarItems({
+        from,
+        to,
+        seat,
+        classId,
+        childStudentId,
+        categories: cats,
+      });
+      const q = str(args, 'query').trim().toLowerCase();
+      const visible = q
+        ? items.filter((row) => {
+            const title = (row.title ?? '').toLowerCase();
+            const cat = (row.category ?? '').toLowerCase();
+            return title.includes(q) || cat.includes(q);
+          })
+        : items;
+      // Ids + titles only — never bodies (S1-11). Search ⊆ visible.
+      return {
+        count: visible.length,
+        items: visible.slice(0, 40).map((row) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.startsAt,
+          ends_at: row.endsAt,
+          category: row.category,
+          source: row.source,
+          visibility: row.visibility,
+          calendar_id: row.calendarId,
+        })),
+        seat,
+        note: 'Results are ⊆ list_calendar_items for this seat. Nothing hidden was elevated.',
+      };
+    },
+  },
+
+  calendar_draft_event: {
+    capability: 'calendar.write',
+    need: 'own',
+    def: {
+      type: 'function',
+      name: 'calendar_draft_event',
+      description:
+        'Park an unsaved calendar draft for CR-A Review. User must Save. Never inserts students/classes, never Approves grades, never merges twins, never school-blasts unless office, never files Diary. Teacher drafts bind the open class; parent absences use the focused child.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          kind: { type: 'string', description: 'school | class | personal | absence' },
+          category: { type: 'string' },
+          start_date: { type: 'string', description: 'YYYY-MM-DD' },
+          end_date: { type: 'string' },
+          starts_at: { type: 'string', description: 'ISO timestamptz' },
+          ends_at: { type: 'string' },
+          all_day: { type: 'boolean' },
+          body: { type: 'string' },
+          class_id: { type: 'string' },
+          child_student_id: { type: 'string' },
+          child_name: { type: 'string', description: 'Parent: resolve linked child; twins ambiguous → refuse' },
+          refuse_class_create: { type: 'boolean' },
+          refuse_student_insert: { type: 'boolean' },
+          refuse_grade_approve: { type: 'boolean' },
+          refuse_twin_merge: { type: 'boolean' },
+          refuse_file_diary: { type: 'boolean' },
+          refuse_school_blast: { type: 'boolean' },
+        },
+        required: ['title'],
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      if (!ctx.profile?.id) return { error: 'Sign in first.' };
+      const seat = calendarSeatForChrome(ctx.live.role);
+      if (!seat) return { error: 'No calendar seat for this chrome role.' };
+
+      let linkedChildren: Array<{ id: string; display_name: string }> | undefined;
+      if (seat === 'parent') {
+        try {
+          const { listParentLinkedChildren } = await import('@/lib/diary/api');
+          linkedChildren = await listParentLinkedChildren();
+        } catch {
+          // fall through — focused id from live may still work
+        }
+      }
+
+      const classId =
+        str(args, 'class_id') || ctx.classId || ctx.live.classId || null;
+      const childStudentId =
+        str(args, 'child_student_id') || (seat === 'parent' ? ctx.live.studentId : null) || null;
+
+      const built = buildCalendarAskDraft({
+        seat,
+        title: str(args, 'title'),
+        kind: str(args, 'kind') || null,
+        category: str(args, 'category') || null,
+        startDate: str(args, 'start_date') || null,
+        endDate: str(args, 'end_date') || null,
+        startsAt: str(args, 'starts_at') || null,
+        endsAt: str(args, 'ends_at') || null,
+        allDay: args.all_day === undefined ? undefined : args.all_day === true,
+        body: str(args, 'body') || null,
+        classId: seat === 'teacher' ? classId : null,
+        childStudentId,
+        childName: str(args, 'child_name') || null,
+        linkedChildren,
+        createClass: args.refuse_class_create === true,
+        addStudent: args.refuse_student_insert === true,
+        approveGrade: args.refuse_grade_approve === true,
+        twinMerge: args.refuse_twin_merge === true,
+        fileDiary: args.refuse_file_diary === true,
+        schoolBlast: args.refuse_school_blast === true,
+      });
+      if (!built.ok) return { error: built.error };
+
+      await parkPendingCalendarDraft(ctx.profile.id, built.draft);
+      // Log ids only — never body (S1-11).
+      return {
+        parked: true,
+        source: 'ai_nl',
+        kind: built.draft.kind,
+        category: built.draft.category,
+        class_id: built.draft.classId,
+        child_student_id: built.draft.childStudentId,
+        visibility_caption: built.visibilityCaption,
+        banner: REVIEW_DRAFT_BANNER,
+        note: `${REVIEW_DRAFT_BANNER}. Open Calendar and Save via CR-A. Nothing was inserted.`,
+        href: '/calendar',
+      };
+    },
+  },
+
 
 };
 

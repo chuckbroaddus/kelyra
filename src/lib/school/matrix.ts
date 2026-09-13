@@ -79,6 +79,8 @@ export const CAPABILITIES: Capability[] = [
 
   { id: 'messages.use', area: 'Messages', label: 'In-app messages', help: '1:1 threads.', superintendent: 'school', administrator: 'school', teacher: 'school', parent: 'school', student: 'school' },
   { id: 'diary.draft', area: 'Diary', label: 'Draft diary entry', help: 'Ask may draft a private diary entry. User must Save. Never Approve, create class, or write ledger.', superintendent: 'own', administrator: 'own', teacher: 'own', parent: 'own', student: 'none' },
+  { id: 'calendar.read', area: 'Calendar', label: 'Search calendar', help: 'Ask calendar_search ⊆ list_calendar_items for the active seat. Never elevates; never is_staff widen.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
+  { id: 'calendar.write', area: 'Calendar', label: 'Draft calendar event', help: 'Ask calendar_draft_event parks CR-A draft. User Save required. Not assignments.manage. Refuse class-create/student-insert/grade Approve/twin merge/non-office school blast.', superintendent: 'school', administrator: 'school', teacher: 'own', parent: 'own', student: 'own' },
   { id: 'audit.view', area: 'Audit', label: 'View activity log', help: 'Who changed what.', superintendent: 'school', administrator: 'school', teacher: 'none', parent: 'none', student: 'none' },
   { id: 'audit.mutate', area: 'Audit', label: 'Edit or delete the log', help: 'Nobody. The log is append-only.', superintendent: 'none', administrator: 'none', teacher: 'none', parent: 'none', student: 'none' },
 ];
