@@ -19,10 +19,15 @@ const rpcs = 'supabase/migrations/20260912000001_calendar_r2_phase_a_rpcs.sql';
 /** Live list_calendar_items after FIX-NOW t_dafdba90 (UNION ORDER BY aliases). */
 const itemsFix =
   'supabase/migrations/20260913000002_list_calendar_items_union_orderby_aliases.sql';
-/** Phase C list: owner-parents absence audience + parent personal. Canonical for extract. */
+/** Phase C list lineage (superseded for extract by Phase D team body). */
 const itemsPhaseC =
   'supabase/migrations/20260916000001_list_calendar_items_phase_c_absence_owners.sql';
 const crudSql = 'supabase/migrations/20260916000000_calendar_r2_phase_c_event_crud.sql';
+/** Phase D: sport layers + unsubscribe + list_calendars with teams. */
+const phaseDSport = 'supabase/migrations/20260917000000_calendar_r2_phase_d_sport.sql';
+/** Phase D list_calendar_items (+ visibility_scope=team). Canonical for extract. */
+const itemsPhaseD =
+  'supabase/migrations/20260917000001_list_calendar_items_phase_d_team.sql';
 
 /** Static JWT role fixtures for CAL-R2 Phase A+B (live DB apply is devops-release). */
 const JWT = {
@@ -41,9 +46,14 @@ function extractFn(sql: string, name: string): string {
   return rest.slice(0, end + 4);
 }
 
-/** Canonical list_calendar_items (follow-up migration replaces Phase A body). */
+/** Canonical list_calendar_items (Phase D team body replaces Phase C). */
 function listCalendarItemsSql(): string {
-  return extractFn(read(itemsPhaseC), 'list_calendar_items');
+  return extractFn(read(itemsPhaseD), 'list_calendar_items');
+}
+
+/** Canonical list_calendars (Phase D sport body replaces Phase A). */
+function listCalendarsSql(): string {
+  return extractFn(read(phaseDSport), 'list_calendars');
 }
 
 /** Strip SQL `--` line comments so forbidden-helper asserts ignore docs. */
@@ -58,9 +68,9 @@ function stripSqlComments(sql: string): string {
 }
 
 test('CAL-S1-01 never teaches_class for family/hidden calendar reads', () => {
-  const sql = read(schema) + read(rpcs) + read(itemsFix) + read(itemsPhaseC) + read(crudSql);
+  const sql = read(schema) + read(rpcs) + read(itemsFix) + read(itemsPhaseC) + read(crudSql) + read(phaseDSport) + read(itemsPhaseD);
   const items = listCalendarItemsSql();
-  const layers = extractFn(read(rpcs), 'list_calendars');
+  const layers = listCalendarsSql();
   assert.doesNotMatch(stripSqlComments(items), /\bteaches_class\b/);
   assert.doesNotMatch(stripSqlComments(layers), /\bteaches_class\b/);
   assert.match(items, /class_teacher_of/);
@@ -95,7 +105,7 @@ test('CAL-S1-02 hidden dues class_teacher_of only; assign ≠ publish', () => {
 });
 
 test('CAL-S1-03 / S2-02 parent 2+ missing child → empty (layers + items)', () => {
-  const layers = extractFn(read(rpcs), 'list_calendars');
+  const layers = listCalendarsSql();
   const items = listCalendarItemsSql();
   for (const body of [layers, items]) {
     assert.match(body, /my_parent_student_count\(\)\s*>=\s*2/);
@@ -112,7 +122,7 @@ test('CAL-S1-04 / S2-01 dual-hat by chrome seat; p_seat occupancy; wrong → emp
   assert.match(occ, /class_teachers/);
   assert.match(occ, /is_school_admin/);
   assert.doesNotMatch(stripSqlComments(occ), /\bis_staff\b|also_teacher|staff_also_parent/);
-  const layers = extractFn(rpcSql, 'list_calendars');
+  const layers = listCalendarsSql();
   const items = listCalendarItemsSql();
   for (const body of [layers, items]) {
     assert.match(body, /calendar_seat_occupied\(p_seat\)/);
@@ -197,7 +207,7 @@ test('CAL-S1-11 / S2-06 no EXPO_PUBLIC vendor keys; provider=kelyra forced; no F
 });
 
 test('CAL-S1-12 / S2-02 office list_calendars school-kind only; no class_work', () => {
-  const layers = extractFn(read(rpcs), 'list_calendars');
+  const layers = listCalendarsSql();
   assert.match(layers, /Office: school-kind only|school-kind only/i);
   const officeStart = layers.indexOf("if p_seat = 'office'");
   assert.ok(officeStart > 0);
@@ -242,7 +252,7 @@ test('CAL-S2-03 no client CRUD of school/class/class_work; calendar_id intersect
 });
 
 test('CAL-S2-07 prefs/cache not consulted in RPC', () => {
-  const layers = extractFn(read(rpcs), 'list_calendars');
+  const layers = listCalendarsSql();
   const items = listCalendarItemsSql();
   for (const body of [layers, items]) {
     assert.match(body, /Prefs\/cache (are )?not consulted/i);
@@ -647,3 +657,69 @@ test('Phase C JWT fixture matrix: create/read absence walls', () => {
   );
   assert.doesNotMatch(studentBlock, /student_teachers/);
 });
+
+test('CAL-S2-07 / Phase D prefs never consulted; Unsubscribe ≠ Delete', () => {
+  const sport = read(phaseDSport);
+  const unsub = extractFn(sport, 'unsubscribe_team');
+  assert.match(unsub, /security definer/i);
+  assert.match(unsub, /delete from public\.calendar_team_members/);
+  assert.doesNotMatch(stripSqlComments(unsub), /delete from public\.calendar_events/);
+  assert.match(sport, /Never Delete|never Delete|Leave team membership/i);
+  const layers = listCalendarsSql();
+  assert.doesNotMatch(layers, /calprefs|AsyncStorage|calendar_layer_prefs/i);
+  assert.match(layers, /Prefs\/cache are not consulted/);
+  assert.match(layers, /kind = 'team'/);
+  assert.match(layers, /can_unsubscribe/);
+});
+
+test('Phase D thin sport: team layers opted-only; default_enabled false; office no team', () => {
+  const sport = read(phaseDSport);
+  assert.match(sport, /create table if not exists public\.calendar_teams/);
+  assert.match(sport, /create table if not exists public\.calendar_team_members/);
+  assert.match(sport, /default_enabled/i);
+  assert.match(sport, /'sport', false, false/); // role_tint sport, not read_only, default_enabled false
+  assert.doesNotMatch(stripSqlComments(sport), /insert into public\.calendar_team_members[\s\S]*enrollments/);
+  const layers = listCalendarsSql();
+  const officeStart = layers.indexOf("if p_seat = 'office'");
+  const teacherStart = layers.indexOf("if p_seat = 'teacher'");
+  assert.ok(officeStart >= 0 && teacherStart > officeStart);
+  const officeBody = stripSqlComments(layers.slice(officeStart, teacherStart));
+  assert.doesNotMatch(officeBody, /kind = 'team'|calendar_team_members/);
+  assert.match(layers, /i_calendar_team_member/);
+});
+
+test('Phase D list_calendar_items includes team scope for opted seats only', () => {
+  const items = listCalendarItemsSql();
+  assert.match(items, /visibility_scope = 'team'/);
+  assert.match(items, /i_calendar_team_member/);
+  // Office branch still school-only — no team
+  const officeBlock = items.slice(items.indexOf('-- ========== OFFICE'));
+  const officeBody = stripSqlComments(
+    officeBlock.slice(0, officeBlock.indexOf('-- ========== STUDENT')),
+  );
+  assert.doesNotMatch(officeBody, /visibility_scope = 'team'/);
+});
+
+test('Phase D client: unsubscribeTeam RPC + Calendars sheet never labels Delete for teams', () => {
+  const api = read('src/lib/calendar/api.ts');
+  assert.match(api, /rpc\('unsubscribe_team'/);
+  assert.match(api, /Unsubscribe|Leave team/);
+  const sheet = read('src/components/calendar/CalendarsSheet.tsx');
+  assert.match(sheet, /Unsubscribe/);
+  assert.match(sheet, /Disable|Enable/);
+  assert.doesNotMatch(sheet, />Delete</);
+  const screen = read('src/app/calendar.tsx');
+  assert.match(screen, /CalendarsSheet/);
+  assert.match(screen, /CATEGORY_CHIPS|filters/);
+  assert.match(screen, /calprefs|loadCalPrefs|saveCalPrefs/);
+});
+
+test('filters ≠ security: p_calendar_ids / p_categories remain intersection UX args', () => {
+  const items = listCalendarItemsSql();
+  assert.match(items, /p_calendar_ids/);
+  assert.match(items, /p_categories/);
+  assert.match(items, /cw\.id = any \(p_calendar_ids\)|e\.calendar_id = any \(p_calendar_ids\)/);
+  // Still seat-gated before filters
+  assert.match(items, /calendar_seat_occupied\(p_seat\)/);
+});
+
