@@ -49,7 +49,7 @@ test('I2-sec: Dockerfile documents no model key', () => {
 
 test('I2-sec: progress migration adds pages_done only (no live apply in worker)', () => {
   const sql = readFileSync(
-    join(repoRoot, 'supabase', 'migrations', '20260913000002_ingest_rasterize_progress.sql'),
+    join(repoRoot, 'supabase', 'migrations', '20260913000003_ingest_rasterize_progress.sql'),
     'utf8',
   );
   assert.match(sql, /pages_done/);

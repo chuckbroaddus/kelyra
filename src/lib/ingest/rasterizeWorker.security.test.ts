@@ -14,7 +14,7 @@ test('I2-01 dedicated worker path exists; no Edge rasterize-* function', () => {
 
 test('I2-02 pages_done migration additive; worker polls + healthz', () => {
   const sql = readFileSync(
-    join(root, 'supabase/migrations/20260913000002_ingest_rasterize_progress.sql'),
+    join(root, 'supabase/migrations/20260913000003_ingest_rasterize_progress.sql'),
     'utf8',
   );
   assert.match(sql, /add column if not exists pages_done/);
