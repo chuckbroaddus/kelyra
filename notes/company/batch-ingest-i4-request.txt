@@ -1,0 +1,76 @@
+BATCH-v1 I4: Inbox + attach → understand (no gap AI on unassigned).
+
+Kanban: t_a069938c. Dual IQG MET. Launch as implementer inside kelyra-qa-loop.
+ARM GRANT open for this card (qa-loop). No git. No live SQL.
+
+CONTEXT (do not re-do prior slices):
+- I0+I1 live. I2 worker live. I3 Split Review + confirm_ingest_batch passed wf_01a09c2004d972439be7ad28283e5e8f (t_feabf27f).
+- confirm_ingest_batch already mints homework captures: student_id null, status unassigned, input_source batch, ingest_batch_id set, photo_asset_id = first page asset, model_draft.pageAssetIds = remaining page asset ids when multi-page. NEVER skill_gaps / matcher / Approve on Confirm.
+- NA-A: naming only in Inbox AFTER Confirm (no per-packet student UI in Split Review).
+- Existing Inbox: src/app/inbox.tsx + src/lib/captures/api.ts listInbox / attachCapture / analyzeOrReuseDraft.
+- analyze-homework Edge already refuses when !student_id || !photo_asset_id (400). Keep that invariant; extend multi-page JPEG path.
+- allPhotoAssetIds in src/lib/captures/pages.ts already merges photo_asset_id + model_draft.pageAssetIds.
+- BATCH-09/10/11 intent: unnamed = no gap AI; attach name → existing understand → draft skill_gaps → Needs you; model sees page JPEGs only ≤4 per call; never whole-class PDF / original PDF bytes to model.
+- Teach seat only for batch ingest chrome; no parent/student ingest chrome.
+
+IMPLEMENT:
+
+1) Inbox / Needs surface batch-origin captures like other unassigned homework
+   - listInbox already selects status in (unassigned, attached, draft) — ensure batch input_source / multi-page thumbs work via hydrateCaptures + allPhotoAssetIds (no filter that drops input_source=batch).
+   - WorkRow / mediaLabel: show multi-page count for batch packets (e.g. N pages) without inventing new chrome patterns; reuse existing WorkRow photoUrl/pageCount if present.
+   - Optional light badge/meta for stack/batch origin ONLY if existing Icon/copy patterns allow — do not invent View-stroke icons; prefer text meta.
+   - Teach seat: keep INGEST_COPY entry on Needs; do not add parent/student batch entry points.
+   - Class desk / Needs badge counts must include batch unassigned the same as camera unassigned (countInbox already status-based — verify no exclusion).
+
+2) Attach name via existing Inbox tools only
+   - Keep FormSheet roster pick → attachCapture(captureId, studentId).
+   - Do NOT add naming inside Split Review (I3 lock).
+   - Do NOT invent students; do NOT auto-Approve; do NOT run matcher invent path on batch confirm (already server-side).
+
+3) After attach: existing understand → skill_gaps drafts → Needs you
+   - attachCapture already calls analyzeOrReuseDraft → analyzeAttachedCapture queue.
+   - Fix/extend supabase/functions/analyze-homework (and process-ai-jobs path if needed) so multi-page batch captures send PAGE JPEG assets only:
+     * Resolve assets via photo_asset_id + model_draft.pageAssetIds (same order as allPhotoAssetIds).
+     * Cap ≤4 images per model call (first 4 page JPEGs). Document constant; unit/security test the cap.
+     * Sign each photo asset from photos bucket; NEVER fetch/read original class PDF, ingest file PDF, or FileReader whole PDF into the model payload.
+     * Preserve student_id required gate: unassigned/unnamed MUST NOT call model and MUST NOT insert skill_gaps.
+     * On success: draft skill_gaps (source=model, status=draft) + capture status draft when gaps exist (existing behavior).
+     * Paid/metered path only (existing callMetered / requireXaiKey) — no free-tier bypass, no EXPO_PUBLIC keys.
+   - Preserve pageAssetIds on model_draft when writing new draft JSON (merge carefully so multi-page ids are not wiped by gap draft write).
+   - Client: ensure storeCaptureDraft / analyze path does not clear pageAssetIds.
+
+4) Unnamed = no gap AI (hard)
+   - confirm path, list path, and any batch worker must never invoke analyze-homework / skill_gaps insert while student_id is null.
+   - Tests: security-style asserts on analyze-homework (student required), confirm SQL (no skill_gaps), client attach-only analyze, Inbox does not draft unassigned.
+
+5) Tests
+   - Add/extend src/lib/captures or src/lib/gaps or src/lib/ingest *security*.test.ts / unit tests:
+     * allPhotoAssetIds order + dedupe for batch mint shape
+     * analyze-homework source: student_id gate; ≤4 images; no PDF mime/path to model; pageAssetIds preserved
+     * Inbox/listInbox does not filter out input_source=batch
+     * attachCapture triggers analyze only after student attached
+   - typecheck clean for touched files; do not "fix" unrelated dirty-tree files.
+
+6) Copy
+   - Minimal INGEST_COPY / inbox strings only if needed for batch multi-page meta. No parent/student copy.
+
+CONSTRAINTS (hard):
+- No git commit, push, reset, clean, stash drop
+- No supabase db push / apply / live SQL
+- No hot folder / Drive watch
+- No I5 (partial retry / matcher polish beyond attach→understand is out of scope unless required for I4 acceptance)
+- Preserve unrelated dirty working tree
+- Loop children: NEVER ask_user_question / interactive Continue
+- Never EXPO_PUBLIC model keys; never invent View-stroke icons
+- Never insert students; never auto-Approve from worker
+- Never send whole-class PDF to model
+
+ACCEPTANCE:
+- kelyra-qa-loop terminal passed (or complete, 0 P0/P1)
+- Unnamed batch captures appear in Inbox/Needs; no skill_gaps / no analyze while unassigned
+- Assign name via Inbox → understand/analyze → draft gaps → Needs you / student review path
+- analyze-homework: page JPEGs only, ≤4 per call, student required, paid metered path
+- typecheck + relevant tests green; security_ok / no secrets
+- Teach seat only for batch entry chrome
+
+OUT OF SCOPE: I5, live migration apply, git ship, hot folder, Split Review naming, Approve automation.

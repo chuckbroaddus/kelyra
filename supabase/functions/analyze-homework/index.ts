@@ -2,6 +2,13 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { asPass, homeworkDraftExists, imageDetailFor } from '../_shared/aiPolicy.ts';
+import {
+  homeworkPageAssetIdsForModel,
+  isHomeworkPageImageMime,
+  MAX_HOMEWORK_PAGE_IMAGES,
+  mergePreservedPageAssetIds,
+  pageAssetIdsFromDraft,
+} from '../_shared/homeworkPages.ts';
 
 const prompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
@@ -41,6 +48,7 @@ Deno.serve(async (req) => {
       .select('id, student_id, photo_asset_id, model_draft, class_id')
       .eq('id', captureId)
       .single();
+    // Unnamed / unassigned must never call the model or insert skill_gaps.
     if (captureError || !capture?.student_id || !capture.photo_asset_id) {
       return json({ error: 'Capture must have a student and a photo' }, 400);
     }
@@ -58,23 +66,55 @@ Deno.serve(async (req) => {
         pass: 'cheap',
         status: 'pending',
       });
-      await supabase.from('captures').update({ ai_status: 'pending', model_draft: { pending: true } }).eq('id', captureId);
+      // Preserve pageAssetIds (batch multi-page) when marking pending — never wipe to {pending:true} alone.
+      const priorIds = pageAssetIdsFromDraft(capture.model_draft);
+      const queuedDraft = {
+        pending: true as const,
+        ...(priorIds.length ? { pageAssetIds: priorIds } : {}),
+      };
+      await supabase
+        .from('captures')
+        .update({ ai_status: 'pending', model_draft: queuedDraft })
+        .eq('id', captureId);
       return json({ ok: true, queued: true });
     }
 
-    const { data: asset, error: assetError } = await supabase
+    const pageIds = homeworkPageAssetIdsForModel(capture);
+    if (!pageIds.length) return json({ error: 'Photo asset missing' }, 400);
+
+    const { data: assets, error: assetError } = await supabase
       .from('assets')
-      .select('storage_path')
-      .eq('id', capture.photo_asset_id)
-      .single();
-    if (assetError || !asset) return json({ error: 'Photo asset missing' }, 400);
+      .select('id, storage_path, mime_type')
+      .in('id', pageIds);
+    if (assetError || !assets?.length) return json({ error: 'Photo asset missing' }, 400);
 
-    const { data: signed, error: signedError } = await supabase.storage
-      .from('photos')
-      .createSignedUrl(asset.storage_path, 120);
-    if (signedError || !signed?.signedUrl) return json({ error: 'Could not sign photo URL' }, 500);
+    const byId = new Map(assets.map((row) => [row.id as string, row]));
+    const imageUrls: string[] = [];
+    for (const id of pageIds) {
+      const asset = byId.get(id);
+      if (!asset?.storage_path) continue;
+      if (!isHomeworkPageImageMime(asset.mime_type as string | null)) {
+        return json({ error: 'Homework analyze accepts page images only' }, 400);
+      }
+      // Sign from photos bucket only — never ingest/files PDF bytes.
+      const { data: signed, error: signedError } = await supabase.storage
+        .from('photos')
+        .createSignedUrl(asset.storage_path as string, 120);
+      if (signedError || !signed?.signedUrl) return json({ error: 'Could not sign photo URL' }, 500);
+      imageUrls.push(signed.signedUrl);
+      if (imageUrls.length >= MAX_HOMEWORK_PAGE_IMAGES) break;
+    }
+    if (!imageUrls.length) return json({ error: 'Photo asset missing' }, 400);
 
-    const draft = await draftFromPhoto(supabase, apiKey, signed.signedUrl, pass, captureId);
+    const draft = await draftFromPhotos(supabase, apiKey, imageUrls, pass, captureId);
+    const priorPageIds = pageAssetIdsFromDraft(capture.model_draft);
+    const modelDraft = mergePreservedPageAssetIds(
+      {
+        ...draft,
+        ...(priorPageIds.length ? { pageAssetIds: priorPageIds } : {}),
+      },
+      capture.model_draft,
+    );
 
     await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
     if (draft.gaps.length) {
@@ -95,7 +135,7 @@ Deno.serve(async (req) => {
       .from('captures')
       .update({
         status: draft.gaps.length ? 'draft' : 'attached',
-        model_draft: draft,
+        model_draft: modelDraft,
         draft_score: draft.draftScore,
         teacher_note: draft.teacherNote,
         ai_status: 'done',
@@ -110,13 +150,22 @@ Deno.serve(async (req) => {
   }
 });
 
-async function draftFromPhoto(
+async function draftFromPhotos(
   supabase: ReturnType<typeof createClient>,
   apiKey: string,
-  imageUrl: string,
+  imageUrls: string[],
   pass: 'cheap' | 'look-again',
   captureId: string,
 ) {
+  const detail = imageDetailFor(pass);
+  const content: Array<Record<string, unknown>> = [
+    ...imageUrls.slice(0, MAX_HOMEWORK_PAGE_IMAGES).map((imageUrl) => ({
+      type: 'input_image',
+      image_url: imageUrl,
+      detail,
+    })),
+    { type: 'input_text', text: prompt },
+  ];
   const payload = await callMetered(supabase, apiKey, {
     job: 'homework',
     pass,
@@ -125,10 +174,7 @@ async function draftFromPhoto(
     payload: [
       {
         role: 'user',
-        content: [
-          { type: 'input_image', image_url: imageUrl, detail: imageDetailFor(pass) },
-          { type: 'input_text', text: prompt },
-        ],
+        content,
       },
     ],
   });

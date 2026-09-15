@@ -13,6 +13,86 @@ Default order when spending credits: **P2 before P3**, then **oldest open first*
 
 ## Open
 
+### BATCH I5 Abandon-for-partial depends on unapplied SQL while resume re-locks bind (P2)
+- Source: kelyra-qa-loop (2026-09-14)
+- Workflow: `wf_01a0a06a5a3372b2b63f8bd60ccde11d`
+- Request: Kanban t_c4e56b9f — BATCH-v1 I5 partial fail + retry remainder
+- Evidence: Migration `20260913000004_ingest_abandon_partial.sql` is on-disk/do-not-apply; binder resumes open partial and offers Abandon, but live I0 abandon rejects partial.
+- Recommendation: Apply 20260913000004 before prod Abandon; optional live-safe dismiss without RPC for different-sha re-upload.
+- Status: open
+
+### BATCH I5 Live abandon rejection of partial uses post-confirm copy (P2)
+- Source: kelyra-qa-loop wf_01a0a06a5a3372b2b63f8bd60ccde11d t_c4e56b9f
+- Evidence: onAbandonPartial maps cannot_abandon_after_confirm to abandonAfterConfirm even for pre-confirm partial allow-list rejects.
+- Recommendation: Distinguish allow-list vs minted capture_id refusals; hide Abandon until expanded RPC is live.
+- Status: open
+
+### BATCH I5 RLS UPDATE can bypass abandon capture_id / open_sha gate (P2)
+- Source: kelyra-qa-loop wf_01a0a06a5a3372b2b63f8bd60ccde11d t_c4e56b9f
+- Evidence: authenticated UPDATE on ingest_batches can set abandoned and drop open_sha unique without RPC capture_id guard.
+- Recommendation: BEFORE UPDATE trigger or route terminal status only via SECURITY DEFINER RPCs.
+- Status: open
+
+### BATCH I5 Confirm-partial leaves SplitReview edit/Confirm enabled (P3)
+- Source: kelyra-qa-loop wf_01a0a06a5a3372b2b63f8bd60ccde11d t_c4e56b9f
+- Evidence: After confirm→partial, chrome stays editable; save/confirm require split_review.
+- Recommendation: Disable edits/Confirm while partial; Retry remainder only.
+- Status: open
+
+### BATCH I5 duplicate capture/page proof is contract-model only (P3)
+- Source: kelyra-qa-loop wf_01a0a06a5a3372b2b63f8bd60ccde11d t_c4e56b9f
+- Evidence: partialRetry/failStatus tests assert contracts, not live confirm/upsert.
+- Recommendation: Integration fixture later if live dup regressions appear.
+- Status: open
+
+### BATCH I5 retry_ingest_remainder allows confirm-partial (minted) batches (P3)
+- Source: kelyra-qa-loop wf_01a0a06a5a3372b2b63f8bd60ccde11d t_c4e56b9f
+- Evidence: RPC only checks status=partial; worker + confirm capture_id skip mitigate dups.
+- Recommendation: Optionally refuse retry when teacher_confirmed_split or any capture_id set; dedicated remint path.
+- Status: open
+
+### BATCH I3 dismiss waiting/split without Cancel leaves orphan batches (P2)
+- Source: kelyra-qa-loop (2026-09-13)
+- Session: `01a09c1f-ba05-7ca0-a281-d55e62c4e3dc`
+- Workflow: `wf_01a09c2004d972439be7ad28283e5e8f`
+- Request: Kanban t_feabf27f — BATCH-v1 I3 Split Review SR-A + Confirm
+- Evidence: ClassStackBinder waiting Close calls reset() without abandonIngestBatch; SplitReview FormSheet onClose closes without abandon. No UI to reopen an existing split_review batch. Cancel stack correctly calls abandonIngestBatch.
+- Recommendation: On dismiss of waiting/split, either abandon with confirm, or persist batchId and offer Resume split review for open split_review batches.
+- Status: open
+
+### BATCH I3 client ordinal parkBase fixed at 1e6 can unique-collide after incomplete rollback (P2)
+- Source: kelyra-qa-loop (2026-09-13)
+- Session: `01a09c1f-ba05-7ca0-a281-d55e62c4e3dc`
+- Workflow: `wf_01a09c2004d972439be7ad28283e5e8f`
+- Request: Kanban t_feabf27f — BATCH-v1 I3 Split Review SR-A + Confirm
+- Evidence: planSaveIngestSplit parks at INGEST_PACKET_ORDINAL_PARK (1_000_000) while temp inserts use maxOrdinal+1. If a prior save parked then failed to restore priorOrdinals, server ordinals already sit in the 1e6 band and the next park/insert can hit unique(batch_id, ordinal).
+- Recommendation: Derive parkBase from max(server ordinals, 1e6)+1, or rely solely on atomic save_ingest_split upsert once live SQL includes insert/delete.
+- Status: open
+
+### BATCH I3 unused split draft UX copy / dirty flag (P3)
+- Source: kelyra-qa-loop (2026-09-13)
+- Workflow: `wf_01a09c2004d972439be7ad28283e5e8f`
+- Request: Kanban t_feabf27f — BATCH-v1 I3
+- Evidence: INGEST_COPY.splitSaving and splitCancelBody exist; SplitReview sets dirty but never surfaces saving state or a cancel confirm dialog.
+- Recommendation: Wire saving indicator and optional cancel confirm, or drop unused copy.
+- Status: open
+
+### BATCH I3 newPacketId non-UUID fallback (P3)
+- Source: kelyra-qa-loop (2026-09-13)
+- Workflow: `wf_01a09c2004d972439be7ad28283e5e8f`
+- Request: Kanban t_feabf27f — BATCH-v1 I3
+- Evidence: SplitReview newPacketId falls back to `pkt-${Date.now()}-…` when crypto.randomUUID is missing; ingest_packets.id is uuid and save would fail.
+- Recommendation: Always mint RFC4122 UUID (polyfill) since SR-A is web-primary.
+- Status: open
+
+### BATCH I3 Split Review signs photo originals when thumbs missing (P3)
+- Source: kelyra-qa-loop (2026-09-13)
+- Workflow: `wf_01a09c2004d972439be7ad28283e5e8f`
+- Request: Kanban t_feabf27f — BATCH-v1 I3
+- Evidence: api.ts signedThumbUrls(..., { fallbackOriginal: true }) for page assets in photos bucket — UI display only (not PDF/model), but can mint multi-MB signed URLs if thumbs absent.
+- Recommendation: Prefer fallbackOriginal: false once rasterize always writes thumbs.
+- Status: open
+
 ### Link payload still omits caption body (P3)
 - Source: kelyra-qa-loop (2026-09-05)
 - Session: `01a070dc-47bd-7903-bbde-c4765248d22a`

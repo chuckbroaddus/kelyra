@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readFile } from 'node:fs/promises';
 
-import { isEncryptedPdfMessage } from '../src/errors.ts';
-import { RasterizeError } from '../src/errors.ts';
+import { ERROR_COPY } from '../src/config.ts';
+import { isEncryptedPdfMessage, RasterizeError } from '../src/errors.ts';
 import { probePdf, renderPageToJpegFile } from '../src/pdf.ts';
-import { expectPagesForSinglePdf } from '../src/rasterize.ts';
+import { expectPagesForSinglePdf, teacherFacingErrorMessage } from '../src/rasterize.ts';
 import { writeEncryptedPdfStub, writeMultiPagePdf } from './fixtures/makePdf.ts';
 import { normalizePageJpeg } from '../src/jpeg.ts';
 import { detectBlank } from '../src/blank.ts';
@@ -71,4 +70,38 @@ test('I2-encrypted-helper: message classifier', () => {
   assert.equal(isEncryptedPdfMessage('Command Error: Incorrect password', ''), true);
   assert.equal(isEncryptedPdfMessage('', 'Encrypted:      yes (print:yes)'), true);
   assert.equal(isEncryptedPdfMessage('syntax error', 'Pages: 3'), false);
+});
+
+test('I2-corrupt: garbage file → corrupt_pdf with named copy; no pdfinfo/exec noise', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kelyra-i2-corrupt-'));
+  try {
+    const junkPath = join(dir, 'garbage.pdf');
+    await writeFile(junkPath, Buffer.from('%PDF-not-a-real-file\nxref trailer boom\n'));
+    await assert.rejects(
+      () => probePdf(junkPath),
+      (err: unknown) => {
+        assert.ok(err instanceof RasterizeError);
+        assert.equal(err.code, 'corrupt_pdf');
+        assert.equal(err.message, ERROR_COPY.corrupt_pdf);
+        assert.equal(err.message, 'File unreadable. Re-scan and upload again.');
+        assert.doesNotMatch(err.message, /pdfinfo|pdftoppm|Command failed|xref|trailer|poppler/i);
+        assert.equal(teacherFacingErrorMessage(err), ERROR_COPY.corrupt_pdf);
+        return true;
+      },
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('I2-corrupt: teacherFacingErrorMessage never keeps polluted corrupt_pdf message', () => {
+  const polluted = new RasterizeError(
+    'corrupt_pdf',
+    'Command failed: pdfinfo /tmp/x.pdf\nSyntax Error: xref / trailer',
+  );
+  assert.equal(teacherFacingErrorMessage(polluted), ERROR_COPY.corrupt_pdf);
+  assert.doesNotMatch(teacherFacingErrorMessage(polluted), /pdfinfo|Command failed|xref|trailer/i);
+
+  const encrypted = new RasterizeError('encrypted_pdf');
+  assert.equal(teacherFacingErrorMessage(encrypted), ERROR_COPY.encrypted_pdf);
 });

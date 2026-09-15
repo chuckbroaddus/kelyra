@@ -9,7 +9,10 @@ import { DayColumn } from '@/components/calendar/DayColumn';
 import { EventComposer } from '@/components/calendar/EventComposer';
 import { takePendingCalendarDraft, type PendingCalendarDraft } from '@/lib/calendar/askDraft';
 import { EventMenu } from '@/components/calendar/EventMenu';
+import { MonthGrid } from '@/components/calendar/MonthGrid';
+import { MultiDayStepper } from '@/components/calendar/MultiDayStepper';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
+import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
@@ -39,6 +42,13 @@ import {
   dayRpcBounds,
   shiftDay,
 } from '@/lib/calendar/day';
+import { monthContaining, shiftMonth } from '@/lib/calendar/month';
+import {
+  multidayRangeContaining,
+  multidayTodayAnchor,
+  shiftMultiday,
+  type MultidayCount,
+} from '@/lib/calendar/multiday';
 import {
   CAL_PREFS_VERSION,
   resolveCategoryChipIds,
@@ -48,22 +58,37 @@ import { loadCalPrefs, saveCalPrefs } from '@/lib/calendar/prefsStorage';
 import { calendarSeatForChrome } from '@/lib/calendar/seat';
 import type { CalendarItem, CalendarLayer } from '@/lib/calendar/types';
 import {
+  CAL_VIEW_PREFS_VERSION,
+  type CalendarViewId,
+  defaultViewFor,
+  loadCalViewPrefs,
+  saveCalViewPrefs,
+} from '@/lib/calendar/viewPrefs';
+import {
   shiftWeek,
   weekRangeContaining,
   weekRpcBounds,
 } from '@/lib/calendar/week';
+import { yearContaining, yearRpcBounds } from '@/lib/calendar/year';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { listParentLinkedChildren } from '@/lib/diary/api';
 import { firstName } from '@/lib/format';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
-type PhoneView = 'agenda' | 'day';
-type WebView = 'week' | 'agenda' | 'day';
+const VIEW_CHIPS: Array<{ id: CalendarViewId; label: string }> = [
+  { id: 'agenda', label: 'Agenda' },
+  { id: 'day', label: 'Day' },
+  { id: 'week', label: 'Week' },
+  { id: 'multiday', label: 'Days' },
+  { id: 'month', label: 'Month' },
+  { id: 'year', label: 'Year' },
+];
 
 /**
- * CAL-R2 Phase D: LF-A chips + Calendars sheet + local prefs + thin sport Unsubscribe.
- * Phase A–C retained. Filters are UX only — never security. No FullCalendar / 6th tray.
+ * CAL-R3 VW-R3-C: Year · Month · Day timeline · Week · Multi-day · Agenda.
+ * CE-A drawer entry; LF-A chips primary; lean composer; no 6th tray; own views only.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -71,18 +96,27 @@ export default function CalendarScreen() {
   const layout = useLayout();
   const router = useRouter();
   const { profile } = useAuth();
+  const reduceMotion = useReducedMotion();
   usePushedTitle('Calendar');
 
   const seat = calendarSeatForChrome(chrome.role);
   const isPhone = layout.isPhone;
+  const deviceClass = isPhone ? 'phone' : 'web';
   const showHiddenBadge = seat === 'teacher';
   const profileId = profile?.id ?? null;
 
-  const [phoneView, setPhoneView] = useState<PhoneView>('agenda');
-  const [webView, setWebView] = useState<WebView>('week');
-  const [weekAnchor, setWeekAnchor] = useState(() => weekRangeContaining().fromIso);
+  const [activeView, setActiveView] = useState<CalendarViewId>(() =>
+    defaultViewFor(isPhone ? 'phone' : 'web', seat ?? 'teacher'),
+  );
+  const [viewPrefsReady, setViewPrefsReady] = useState(false);
+  const [dayCount, setDayCount] = useState<MultidayCount>(5);
+  // Today ISO — week still resolves Sunday via weekRangeContaining; multiday 3/5 starts here.
+  const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
+  const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
+  const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
+  const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
@@ -108,17 +142,15 @@ export default function CalendarScreen() {
   const [deleteItem, setDeleteItem] = useState<CalendarItem | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
-  const weekRange = useMemo(() => weekRangeContaining(weekAnchor), [weekAnchor]);
+  const weekRange = useMemo(() => weekRangeContaining(gridAnchor), [gridAnchor]);
+  const multiRange = useMemo(
+    () => multidayRangeContaining(dayCount === 7 ? 5 : dayCount, gridAnchor),
+    [dayCount, gridAnchor],
+  );
   const dayRange = useMemo(() => dayRangeContaining(dayAnchor), [dayAnchor]);
   const agendaRange = useMemo(() => agendaRangeFrom(agendaAnchor, 14), [agendaAnchor]);
-
-  const activeView: PhoneView | WebView = isPhone
-    ? phoneView
-    : seat === 'teacher' || seat === 'office'
-      ? webView
-      : webView === 'week'
-        ? 'agenda'
-        : webView;
+  const monthRange = useMemo(() => monthContaining(monthAnchor), [monthAnchor]);
+  const year = yearAnchor;
 
   // Phase E: Ask calendar_draft_event parks CR-A draft — open Review on Calendar.
   useEffect(() => {
@@ -174,6 +206,83 @@ export default function CalendarScreen() {
     seat === 'parent'
       ? focusedChildId ?? (children.length === 1 ? children[0]!.id : null)
       : null;
+
+  // Last view + multiday days per seat + device class (CAL-36 / viewPrefs).
+  useEffect(() => {
+    if (!seat || !profileId) {
+      setViewPrefsReady(true);
+      return;
+    }
+    if (seat === 'parent' && !childrenLoaded) {
+      setViewPrefsReady(false);
+      return;
+    }
+    let cancelled = false;
+    setViewPrefsReady(false);
+    void (async () => {
+      const prefs = await loadCalViewPrefs(
+        profileId,
+        seat,
+        deviceClass,
+        seat === 'parent' ? parentChildId : null,
+      );
+      if (cancelled) return;
+      setActiveView(prefs.view);
+      setDayCount(prefs.days);
+      setViewPrefsReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [seat, profileId, deviceClass, parentChildId, childrenLoaded]);
+
+  const persistViewPrefs = useCallback(
+    (view: CalendarViewId, days: MultidayCount) => {
+      if (!profileId || !seat) return;
+      void saveCalViewPrefs(
+        profileId,
+        seat,
+        deviceClass,
+        seat === 'parent' ? parentChildId : null,
+        { version: CAL_VIEW_PREFS_VERSION, view, days },
+      );
+    },
+    [profileId, seat, deviceClass, parentChildId],
+  );
+
+  const selectView = useCallback(
+    (view: CalendarViewId) => {
+      setActiveView(view);
+      const nextDays = view === 'week' ? 7 : view === 'multiday' ? (dayCount === 7 ? 5 : dayCount) : dayCount;
+      if (view === 'week') setDayCount(7);
+      else if (view === 'multiday') {
+        if (dayCount === 7) setDayCount(5);
+        // 3/5 windows start at anchor — use today so Today is never omitted mid-week.
+        setGridAnchor(multidayTodayAnchor());
+      }
+      persistViewPrefs(view, view === 'week' ? 7 : nextDays);
+    },
+    [dayCount, persistViewPrefs],
+  );
+
+  const onChangeDayCount = useCallback(
+    (count: MultidayCount) => {
+      if (count === 7) {
+        setDayCount(7);
+        setActiveView('week');
+        persistViewPrefs('week', 7);
+        return;
+      }
+      const today = multidayTodayAnchor();
+      // If the visible week/range includes today, keep today in the 3/5 window.
+      const visible = activeView === 'week' ? weekRange.days : multiRange.days;
+      setGridAnchor(visible.includes(today) ? today : multiRange.fromIso);
+      setDayCount(count);
+      setActiveView('multiday');
+      persistViewPrefs('multiday', count);
+    },
+    [persistViewPrefs, activeView, weekRange.days, multiRange.days, multiRange.fromIso],
+  );
 
   // Load layers + prefs (per profile · seat · focused child). Sport off until enabled.
   useEffect(() => {
@@ -277,7 +386,7 @@ export default function CalendarScreen() {
       setLoaded(false);
       return;
     }
-    if (!prefsReady) {
+    if (!prefsReady || !viewPrefsReady) {
       setLoaded(false);
       return;
     }
@@ -290,8 +399,21 @@ export default function CalendarScreen() {
         const bounds = weekRpcBounds(weekRange.fromIso, weekRange.toIso);
         from = bounds.from;
         to = bounds.to;
+      } else if (activeView === 'multiday') {
+        const bounds = dayRpcBounds(multiRange.fromIso, multiRange.toIso);
+        from = bounds.from;
+        to = bounds.to;
       } else if (activeView === 'day') {
         const bounds = dayRpcBounds(dayRange.fromIso, dayRange.toIso);
+        from = bounds.from;
+        to = bounds.to;
+      } else if (activeView === 'month') {
+        const bounds = dayRpcBounds(monthRange.fromIso, monthRange.toIso);
+        from = bounds.from;
+        to = bounds.to;
+      } else if (activeView === 'year') {
+        const yb = yearRpcBounds(year);
+        const bounds = dayRpcBounds(yb.fromIso, yb.toIso);
         from = bounds.from;
         to = bounds.to;
       } else {
@@ -322,15 +444,21 @@ export default function CalendarScreen() {
     activeView,
     weekRange.fromIso,
     weekRange.toIso,
+    multiRange.fromIso,
+    multiRange.toIso,
     dayRange.fromIso,
     dayRange.toIso,
     agendaRange.fromIso,
     agendaRange.toIso,
+    monthRange.fromIso,
+    monthRange.toIso,
+    year,
     chrome.classId,
     parentChildId,
     parentChildMissing,
     childrenLoaded,
     prefsReady,
+    viewPrefsReady,
     categoryFilter,
     enabledIds,
   ]);
@@ -383,6 +511,25 @@ export default function CalendarScreen() {
     await load();
   };
 
+  const jumpToday = () => {
+    const today = dayRangeContaining().day;
+    if (activeView === 'week') {
+      setGridAnchor(weekRangeContaining(today).fromIso);
+    } else if (activeView === 'multiday') {
+      // 3/5 starts at anchor — must be today, not week Sunday (omits Wed–Sat).
+      setGridAnchor(multidayTodayAnchor(today));
+    } else if (activeView === 'day') {
+      setDayAnchor(today);
+    } else if (activeView === 'agenda') {
+      setAgendaAnchor(today);
+    } else if (activeView === 'month') {
+      setMonthAnchor(today);
+      setMonthSelectedDay(today);
+    } else if (activeView === 'year') {
+      setYearAnchor(yearContaining(today));
+    }
+  };
+
   const filtersNarrowed =
     chipIds.length > 0 &&
     (chipIds.length < CATEGORY_CHIPS.length ||
@@ -390,7 +537,18 @@ export default function CalendarScreen() {
   const filteredEmpty =
     loaded && !error && !parentChildMissing && items.length === 0 && filtersNarrowed;
   const naturallyEmpty =
-    loaded && !error && !parentChildMissing && items.length === 0 && !filtersNarrowed;
+    loaded &&
+    !error &&
+    !parentChildMissing &&
+    items.length === 0 &&
+    !filtersNarrowed &&
+    activeView === 'agenda';
+
+  const gridDays =
+    activeView === 'week' ? weekRange.days : activeView === 'multiday' ? multiRange.days : [];
+  const allowPinch = !reduceMotion && (activeView === 'week' || activeView === 'multiday');
+  const stepperCount: MultidayCount =
+    activeView === 'week' ? 7 : dayCount === 7 ? 5 : dayCount;
 
   if (!seat) {
     return (
@@ -415,6 +573,7 @@ export default function CalendarScreen() {
                   setFocusedChildId(child.id);
                   setLoaded(false);
                   setPrefsReady(false);
+                  setViewPrefsReady(false);
                 }}
               />
             ))}
@@ -422,30 +581,19 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {isPhone ? (
-        <ChipRow>
+      {/* In-Calendar view switcher (CAL-36) — not tray. Phone + web. */}
+      <ChipRow compact>
+        {VIEW_CHIPS.map((chip) => (
           <Chip
-            label="Agenda"
-            selected={phoneView === 'agenda'}
-            onPress={() => setPhoneView('agenda')}
+            key={chip.id}
+            label={chip.label}
+            selected={activeView === chip.id}
+            onPress={() => selectView(chip.id)}
           />
-          <Chip label="Day" selected={phoneView === 'day'} onPress={() => setPhoneView('day')} />
-        </ChipRow>
-      ) : (
-        <ChipRow>
-          {(seat === 'teacher' || seat === 'office') && (
-            <Chip label="Week" selected={webView === 'week'} onPress={() => setWebView('week')} />
-          )}
-          <Chip
-            label="Agenda"
-            selected={activeView === 'agenda'}
-            onPress={() => setWebView('agenda')}
-          />
-          <Chip label="Day" selected={activeView === 'day'} onPress={() => setWebView('day')} />
-        </ChipRow>
-      )}
+        ))}
+      </ChipRow>
 
-      {/* LF-A category chips (multi-select) */}
+      {/* LF-A category chips (multi-select) — stay primary (CAL-32). */}
       <View style={styles.filterBlock}>
         <Text style={[styles.filterLabel, { color: colors.mute }]}>Show</Text>
         <ChipRow>
@@ -480,27 +628,50 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {activeView === 'week' ? (
-        <View style={styles.toolbar}>
-          <GhostButton label="Previous" onPress={() => setWeekAnchor(shiftWeek(weekRange.fromIso, -1))} />
-          <Pressable
-            onPress={() => setWeekAnchor(weekRangeContaining().fromIso)}
-            accessibilityRole="button"
-            accessibilityLabel="Go to this week"
-          >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>
-              {weekRange.fromIso.slice(5)} – {weekRange.toIso.slice(5)}
-            </Text>
-          </Pressable>
-          <GhostButton label="Next" onPress={() => setWeekAnchor(shiftWeek(weekRange.fromIso, 1))} />
-        </View>
+      {activeView === 'week' || activeView === 'multiday' ? (
+        <>
+          <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
+          <View style={styles.toolbar}>
+            <GhostButton
+              label="Previous"
+              onPress={() =>
+                setGridAnchor(
+                  activeView === 'week'
+                    ? shiftWeek(weekRange.fromIso, -1)
+                    : shiftMultiday(multiRange.fromIso, stepperCount, -1),
+                )
+              }
+            />
+            <Pressable
+              onPress={jumpToday}
+              accessibilityRole="button"
+              accessibilityLabel="Go to today"
+            >
+              <Text style={[styles.rangeLabel, { color: colors.ink }]}>
+                {activeView === 'week'
+                  ? `${weekRange.fromIso.slice(5)} – ${weekRange.toIso.slice(5)}`
+                  : `${multiRange.fromIso.slice(5)} – ${multiRange.toIso.slice(5)}`}
+              </Text>
+            </Pressable>
+            <GhostButton
+              label="Next"
+              onPress={() =>
+                setGridAnchor(
+                  activeView === 'week'
+                    ? shiftWeek(weekRange.fromIso, 1)
+                    : shiftMultiday(multiRange.fromIso, stepperCount, 1),
+                )
+              }
+            />
+          </View>
+        </>
       ) : null}
 
       {activeView === 'day' ? (
         <View style={styles.toolbar}>
           <GhostButton label="Previous" onPress={() => setDayAnchor(shiftDay(dayRange.day, -1))} />
           <Pressable
-            onPress={() => setDayAnchor(dayRangeContaining().day)}
+            onPress={jumpToday}
             accessibilityRole="button"
             accessibilityLabel="Go to today"
           >
@@ -517,7 +688,7 @@ export default function CalendarScreen() {
             onPress={() => setAgendaAnchor(shiftDay(agendaRange.fromIso, -7))}
           />
           <Pressable
-            onPress={() => setAgendaAnchor(dayRangeContaining().day)}
+            onPress={jumpToday}
             accessibilityRole="button"
             accessibilityLabel="Reset agenda to today"
           >
@@ -530,7 +701,47 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {!loaded || !prefsReady ? <WorkingLine /> : null}
+      {activeView === 'month' ? (
+        <View style={styles.toolbar}>
+          <GhostButton
+            label="Previous"
+            onPress={() => {
+              setMonthAnchor(shiftMonth(monthRange.fromIso, -1));
+              setMonthSelectedDay(null);
+            }}
+          />
+          <Pressable
+            onPress={jumpToday}
+            accessibilityRole="button"
+            accessibilityLabel="Go to this month"
+          >
+            <Text style={[styles.rangeLabel, { color: colors.ink }]}>{monthRange.label}</Text>
+          </Pressable>
+          <GhostButton
+            label="Next"
+            onPress={() => {
+              setMonthAnchor(shiftMonth(monthRange.fromIso, 1));
+              setMonthSelectedDay(null);
+            }}
+          />
+        </View>
+      ) : null}
+
+      {activeView === 'year' ? (
+        <View style={styles.toolbar}>
+          <GhostButton label="Previous" onPress={() => setYearAnchor(year - 1)} />
+          <Pressable
+            onPress={jumpToday}
+            accessibilityRole="button"
+            accessibilityLabel="Go to this year"
+          >
+            <Text style={[styles.rangeLabel, { color: colors.ink }]}>{year}</Text>
+          </Pressable>
+          <GhostButton label="Next" onPress={() => setYearAnchor(year + 1)} />
+        </View>
+      ) : null}
+
+      {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
 
       {error ? (
         <View style={styles.stateBlock}>
@@ -556,15 +767,21 @@ export default function CalendarScreen() {
 
       {naturallyEmpty ? (
         <Text style={[styles.empty, { color: colors.mute }]}>
-          {activeView === 'week'
-            ? 'Nothing on the calendar this week.'
-            : 'Nothing on the calendar in this range.'}
+          Nothing on the calendar in this range.
         </Text>
       ) : null}
 
-      {loaded && !error && !parentChildMissing && items.length > 0 ? (
-        activeView === 'week' ? (
-          <TeacherWeekGrid days={weekRange.days} items={items} onPressItem={openItem} />
+      {loaded && !error && !parentChildMissing && !filteredEmpty ? (
+        activeView === 'week' || activeView === 'multiday' ? (
+          <TeacherWeekGrid
+            days={gridDays}
+            items={items}
+            showHiddenBadge={showHiddenBadge}
+            onPressItem={openItem}
+            dayCount={stepperCount}
+            onChangeDayCount={onChangeDayCount}
+            allowPinch={allowPinch}
+          />
         ) : activeView === 'day' ? (
           <DayColumn
             day={dayRange.day}
@@ -572,14 +789,42 @@ export default function CalendarScreen() {
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
           />
-        ) : (
+        ) : activeView === 'month' ? (
+          <MonthGrid
+            year={monthRange.year}
+            monthIndex0={monthRange.monthIndex0}
+            label={monthRange.label}
+            items={items}
+            selectedDay={monthSelectedDay}
+            showHiddenBadge={showHiddenBadge}
+            onSelectDay={(iso) => {
+              setMonthSelectedDay(iso);
+            }}
+            onPressItem={openItem}
+          />
+        ) : activeView === 'year' ? (
+          <YearGrid
+            year={year}
+            items={items}
+            onPressMonth={(y, m0) => {
+              const iso = `${y}-${String(m0 + 1).padStart(2, '0')}-01`;
+              setMonthAnchor(iso);
+              setMonthSelectedDay(null);
+              selectView('month');
+            }}
+            onPressDay={(iso) => {
+              setDayAnchor(iso);
+              selectView('day');
+            }}
+          />
+        ) : items.length > 0 ? (
           <AgendaList
             days={agendaRange.days}
             items={items}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
           />
-        )
+        ) : null
       ) : null}
 
       {seat === 'teacher' ? (

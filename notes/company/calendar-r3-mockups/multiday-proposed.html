@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAL-R3 Multi-day proposed</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #F5F5F7; padding: 16px; }
+  h1 { font-size: 16px; margin-bottom: 8px; }
+  p { color: #8E8E93; font-size: 13px; margin-bottom: 12px; max-width: 420px; }
+  .phone { width: 340px; border: 1px solid #3A3A3C; border-radius: 24px; padding: 12px; background: #000000; }
+  .seg { display: flex; gap: 6px; margin-bottom: 10px; }
+  .seg span { font-size: 12px; padding: 6px 10px; border-radius: 8px; background: #2C2C2E; color: #F5F5F7; }
+  .seg .on { background: #3A3A3C; color: #FFFFFF; }
+  .head { display: grid; grid-template-columns: 28px repeat(4, 1fr); text-align: center; margin-bottom: 6px; }
+  .dow { font-size: 10px; color: #8E8E93; }
+  .num { font-size: 16px; font-weight: 600; color: #F5F5F7; }
+  .num.t { color: #FFFFFF; background: #FF453A; border-radius: 999px; width: 28px; height: 28px; line-height: 28px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: 28px repeat(4, 1fr); gap: 2px; }
+  .h { font-size: 9px; color: #8E8E93; }
+  .c { min-height: 44px; border-top: 1px solid #2C2C2E; }
+  .b { margin: 2px; padding: 3px; border-radius: 4px; font-size: 10px; color: #F5F5F7; background: rgba(10,132,255,0.28); border-left: 2px solid #0A84FF; }
+  .b.s { border-left-color: #BF5AF2; background: rgba(191,90,242,0.25); }
+  .b.k { border-left-color: #FFD60A; background: rgba(255,214,10,0.2); }
+</style>
+</head>
+<body>
+  <h1>Multi-day — proposed (R3-C only)</h1>
+  <p>Current: none. Pinch week↔4-col when motion OK; reduced-motion uses 3 / 5 / 7 stepper (shown). R3-A/B drop this surface.</p>
+  <div class="phone">
+    <div class="seg"><span>3</span><span class="on">4 days</span><span>5</span><span>7</span></div>
+    <div class="head">
+      <div></div>
+      <div><div class="dow">Mon</div><div class="num">14</div></div>
+      <div><div class="dow">Tue</div><div class="num t">15</div></div>
+      <div><div class="dow">Wed</div><div class="num">16</div></div>
+      <div><div class="dow">Thu</div><div class="num">17</div></div>
+    </div>
+    <div class="grid">
+      <div class="h">9</div>
+      <div class="c"><div class="b k">Quiz · Hidden</div></div>
+      <div class="c"></div><div class="c"></div><div class="c"></div>
+      <div class="h">12</div>
+      <div class="c"></div><div class="c"><div class="b">Lab</div></div><div class="c"></div><div class="c"></div>
+      <div class="h">15</div>
+      <div class="c"></div><div class="c"><div class="b">HW</div></div><div class="c"><div class="b">Office</div></div><div class="c"></div>
+      <div class="h">17</div>
+      <div class="c"></div><div class="c"></div><div class="c"></div><div class="c"><div class="b s">Game</div></div>
+    </div>
+  </div>
+</body>
+</html>

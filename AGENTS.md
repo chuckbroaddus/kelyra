@@ -27,7 +27,7 @@ or the `workflow` tool with `name` `kelyra-qa-loop` and `args.request` set to th
 
 Do not end your turn until that run is terminal (`passed`, `escalated`, `complete`, or `cancelled`).
 
-The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless `grok -p` exits on end-of-turn and **cancels** the running loop (Q2, 2026-08-26). Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run `state.json` until `status` is not `active`.
+The workflow tool will say the run is in the background and that completion is reported automatically. Ignore that as a reason to stop. Headless `grok -p` exits on end-of-turn and **cancels** the running loop (Q2, 2026-08-26). Do not say "I'll report when it finishes" and end the turn. If you must wait, read the run `state.json` until the JSON `status` field is not `active`. Parse it with python3 (or equivalent). Never assign a zsh variable named `status` — it is read-only and kills the watcher (I3, 2026-09-13).
 
 Then:
 
@@ -38,5 +38,7 @@ Then:
 Do **not** use kelyra-qa-loop for analysis, planning, Q&A, docs-only edits, git commit/push, applying SQL that was already produced, or files under `notes/teacher-decks/` (those belong to the lesson authoring agents).
 
 Loop children (implementer, QA, verify, security) must never call `ask_user_question`, including dummy Continue / tool-existence probes. There is no UI to click; it hangs the loop. If something cannot be inspected, report it and finish.
+
+Verify/typecheck in the loop must not treat unrelated dirty-tree files as blocking, and must not edit them to make `tsc` green (I3, 2026-09-13). When wiring an existing RPC with “do not apply SQL”, match the live function body and unique constraints; do not invent a second client-side persist protocol.
 
 Do not git commit or push unless the user explicitly asks.

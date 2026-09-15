@@ -55,6 +55,28 @@ test('WorkRow claims gesture while open and tap closes without navigating', () =
   assert.doesNotMatch(src, /action\.tone === 'danger'\s*\?\s*colors\.danger\b/);
 });
 
+test('WorkRow keeps card open hit and pills as sibling buttons (no nested button on web)', () => {
+  const src = read('src/components/ui/WorkRow.tsx');
+  // Main row open/close is its own Pressable; pills render in pillsRow outside that Pressable.
+  assert.match(src, /onMainPress=\{cardPressable \? onCardPress : undefined\}/);
+  assert.match(src, /styles\.mainHit/);
+  assert.match(src, /styles\.pillsRow/);
+  assert.match(src, /styles\.pillsGutter/);
+  const mainAt = src.indexOf('const main = onMainPress');
+  const pillsAt = src.indexOf('{pills.length ? (');
+  const stylesAt = src.indexOf('const styles = StyleSheet.create');
+  assert.ok(mainAt >= 0 && pillsAt > mainAt && stylesAt > pillsAt);
+  const mainPressable = src.slice(mainAt, pillsAt);
+  assert.match(mainPressable, /accessibilityRole="button"/);
+  assert.doesNotMatch(mainPressable, /pills\.map/);
+  const pillsBlock = src.slice(pillsAt, stylesAt);
+  assert.match(pillsBlock, /accessibilityRole="button"/);
+  assert.match(pillsBlock, /styles\.pillsRow/);
+  // Outer shell is View styles.inner — not a button wrapping pills.
+  assert.match(src, /<View style=\{styles\.inner\}/);
+  assert.doesNotMatch(src, /<Pressable[\s\S]*?style=\{\(\{ pressed \}\) => \[styles\.inner/);
+});
+
 test('ListRow shares open-claim, tap-to-close, and dangerBrick Delete tiles', () => {
   const src = read('src/components/ui/ListRow.tsx');
   assert.match(src, /onStartShouldSetPanResponder:\s*\(\)\s*=>\s*openOffset\.current !== 0/);

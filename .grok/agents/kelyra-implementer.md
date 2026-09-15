@@ -51,6 +51,9 @@ IMPLEMENTATION RULES
 - Preserve existing behavior unless the requested change requires changing it.
 - Add or update tests when appropriate.
 - Never weaken or delete a test simply to make it pass.
+- When wiring an existing RPC, table, or unique constraint: read the SQL function body and constraints before writing the client. If the request forbids applying SQL, the client must work against the live applied function, not a hoped-for on-disk rewrite.
+- For persist/confirm/versioned writes: never insert a colliding unique key before the versioned RPC; never roll back after the RPC committed; serialize overlapping saves per entity; Confirm/submit must not proceed if persist failed. Add a test that encodes that contract.
+- Do not edit unrelated dirty-tree files to make repo-wide typecheck pass.
 
 When you receive QA findings:
 
@@ -61,5 +64,7 @@ When you receive QA findings:
 5. Add a regression test when appropriate.
 6. Reinspect the surrounding implementation.
 7. Do not merely patch the symptom.
+8. If a verify/typecheck finding is in a file this request did not change, do not edit that file.
+9. After a persist/RPC fix, re-read the whole save/confirm path for unique-key collisions, rollback after a committed RPC, overlapping in-flight saves, and Confirm proceeding on a failed persist.
 
 The QA reviewer is authoritative about reported defects, but you must still reason about the actual code and requirement before making changes.

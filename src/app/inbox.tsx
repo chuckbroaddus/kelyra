@@ -347,9 +347,13 @@ export default function InboxScreen() {
 }
 
 function mediaLabel(item: InboxItem): string {
-  if (item.pageCount > 1) return `${item.pageCount} pages`;
-  if (item.pageCount === 1) return '1 page';
-  return 'Voice note';
+  const pages =
+    item.pageCount > 1 ? `${item.pageCount} pages` : item.pageCount === 1 ? '1 page' : 'Voice note';
+  // Text meta only — batch packets stay on the same WorkRow chrome as camera homework.
+  if (item.input_source === 'batch') {
+    return item.pageCount > 0 ? `${pages} · stack` : 'stack';
+  }
+  return pages;
 }
 
 const styles = StyleSheet.create({

@@ -1506,6 +1506,8 @@ Left `flex: 1.2`. Right min width 280. Sticky Ask AI / confirm pinned to the bot
 
 **Header camera = Capture.** Tapping the header camera **routes to `/capture`** (focus Camera / open device camera from the unified sheet). Do **not** open ListenSheet → `/proposal` as the primary path. Header camera opens unified Capture (`/capture`); there is no tray Capture tab.
 
+**Class stack (BATCH-v1 · Teach seat · web).** Capture overflow **Upload class stack** binds one class + pages-per-student, uploads, waits on `pages_done`, then **always** opens **Split Review** (SR-A filmstrip: split / merge / blank / reorder; keyboard S / M / B). Confirm is disabled at 0 non-blank packets; Confirm calls `confirm_ingest_batch` and routes to Needs Attention with unnamed captures (`student_id` null). No per-packet student names in Split Review (NA-A naming is Inbox-only). Phone: status / “open on computer” gate — not primary Split Review. Confirm ≠ Approve.
+
 ---
 
 ### 13.5 `/inbox` — Inbox — `src/app/inbox.tsx`

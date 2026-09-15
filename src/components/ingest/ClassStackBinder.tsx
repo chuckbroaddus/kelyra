@@ -1,18 +1,28 @@
 /**
  * CE-A binder: bind exactly one class + pages-per-student N, then upload.
- * Teach seat / web primary. Phone shows gate copy (BATCH-16).
+ * After rasterize → always enter Split Review (I3). Teach seat / web primary.
+ * Phone shows gate copy (BATCH-16); not primary splitter.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { SplitReview } from '@/components/ingest/SplitReview';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
+import {
+  abandonIngestBatch,
+  fetchIngestBatch,
+  fetchOpenIngestBatchForClass,
+  IngestRpcError,
+  retryIngestRemainder,
+  type IngestBatchRow,
+} from '@/lib/ingest/api';
 import { evaluateFileCaps, formatMb } from '@/lib/ingest/caps';
-import { INGEST_COPY } from '@/lib/ingest/copy';
+import { INGEST_COPY, ingestGapCopy } from '@/lib/ingest/copy';
 import { gateStackFiles, runClassStackUpload, type StackFile } from '@/lib/ingest/runUpload';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -28,6 +38,10 @@ type Props = {
 };
 
 type Picked = StackFile & { key: string };
+
+type Phase = 'bind' | 'waiting' | 'split' | 'partial' | 'failed';
+
+const POLL_MS = 1500;
 
 export function ClassStackBinder({
   visible,
@@ -47,8 +61,25 @@ export function ClassStackBinder({
   const [progressPct, setProgressPct] = useState<number | null>(null);
   const [method, setMethod] = useState<'tus' | 'standard' | null>(null);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>('bind');
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [pagesDone, setPagesDone] = useState(0);
+  const [pageCount, setPageCount] = useState<number | null>(null);
+  const [gapMessage, setGapMessage] = useState<string | null>(null);
+  const [retryBusy, setRetryBusy] = useState(false);
+  const [abandonBusy, setAbandonBusy] = useState(false);
+  /** False after confirm-partial (minted captures) — abandon RPC refuses. */
+  const [canAbandonPartial, setCanAbandonPartial] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeAttemptedRef = useRef(false);
 
+  const stopPoll = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -57,6 +88,7 @@ export function ClassStackBinder({
       setStatus(null);
       setProgressPct(null);
       setMethod(null);
+      resumeAttemptedRef.current = false;
     }
   }, [visible, initialClassId]);
 
@@ -68,6 +100,7 @@ export function ClassStackBinder({
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
+    stopPoll();
     setPicked([]);
     setSoftWarn(null);
     setError(null);
@@ -77,12 +110,171 @@ export function ClassStackBinder({
     setBusy(false);
     setPagesPerStudent('1');
     setClassId(initialClassId);
-  }, [initialClassId]);
+    setPhase('bind');
+    setBatchId(null);
+    setPagesDone(0);
+    setPageCount(null);
+    setGapMessage(null);
+    setRetryBusy(false);
+    setAbandonBusy(false);
+    setCanAbandonPartial(true);
+  }, [initialClassId, stopPoll]);
 
   const handleClose = () => {
-    if (busy) return;
+    if (busy || retryBusy || abandonBusy) return;
+    if (phase === 'split') return;
+    // Close does not abandon — resume-on-open restores partial/retry/split_review.
     reset();
     onClose();
+  };
+
+  const applyBatchProgress = useCallback(
+    (batch: IngestBatchRow) => {
+      setPagesDone(batch.pages_done ?? 0);
+      setPageCount(batch.page_count);
+      setCanAbandonPartial(!batch.teacher_confirmed_split);
+      if (batch.status === 'split_review') {
+        stopPoll();
+        setPhase('split');
+        setStatus(null);
+        setGapMessage(null);
+        setError(null);
+        return;
+      }
+      if (batch.status === 'partial') {
+        stopPoll();
+        setPhase('partial');
+        const gap = ingestGapCopy(batch.error_code, batch.error_message);
+        const done = batch.pages_done ?? 0;
+        const total = batch.page_count;
+        setGapMessage(gap);
+        setError(INGEST_COPY.partialBanner(gap, done, total));
+        setStatus(
+          total != null && total > 0 ? INGEST_COPY.progressPages(done, total) : null,
+        );
+        return;
+      }
+      if (batch.status === 'failed' || batch.status === 'abandoned') {
+        stopPoll();
+        setPhase('failed');
+        setGapMessage(null);
+        setError(
+          batch.error_code === 'encrypted_pdf'
+            ? INGEST_COPY.encryptedPdf
+            : ingestGapCopy(batch.error_code, batch.error_message),
+        );
+        return;
+      }
+      const done = batch.pages_done ?? 0;
+      const total = batch.page_count;
+      if (total != null && total > 0) {
+        setStatus(INGEST_COPY.progressPages(done, total));
+      } else {
+        setStatus(INGEST_COPY.received);
+      }
+    },
+    [stopPoll],
+  );
+
+  const startPolling = useCallback(
+    (id: string) => {
+      stopPoll();
+      setPhase('waiting');
+      setBatchId(id);
+      const tick = async () => {
+        try {
+          const batch = await fetchIngestBatch(id);
+          applyBatchProgress(batch);
+        } catch {
+          // Keep waiting; worker may not have claimed yet.
+        }
+      };
+      void tick();
+      pollRef.current = setInterval(() => {
+        void tick();
+      }, POLL_MS);
+    },
+    [applyBatchProgress, stopPoll],
+  );
+
+  useEffect(() => () => stopPoll(), [stopPoll]);
+
+  // I5: resume open partial/retry/split_review so Close cannot strand behind open_sha.
+  useEffect(() => {
+    if (!visible || !teachSeat || Platform.OS !== 'web') return;
+    if (phase !== 'bind' || resumeAttemptedRef.current) return;
+    const cid = classId ?? initialClassId;
+    if (!cid) return;
+    resumeAttemptedRef.current = true;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const open = await fetchOpenIngestBatchForClass(cid);
+        if (cancelled || !open) return;
+        setBatchId(open.id);
+        setPagesPerStudent(String(open.pages_per_student ?? 1));
+        setStatus(INGEST_COPY.resumeOpenPartial);
+        applyBatchProgress(open);
+        if (
+          open.status === 'received' ||
+          open.status === 'receiving' ||
+          open.status === 'rasterizing' ||
+          open.status === 'retry_remainder'
+        ) {
+          startPolling(open.id);
+        }
+      } catch {
+        // Stay on bind; teacher can still upload a new stack.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    visible,
+    teachSeat,
+    phase,
+    classId,
+    initialClassId,
+    applyBatchProgress,
+    startPolling,
+  ]);
+
+  const onRetryRemainder = async () => {
+    if (!batchId || retryBusy) return;
+    setRetryBusy(true);
+    setError(null);
+    try {
+      const batch = await retryIngestRemainder(batchId);
+      setGapMessage(null);
+      setStatus(INGEST_COPY.received);
+      applyBatchProgress(batch);
+      startPolling(batchId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : INGEST_COPY.retryRemainderFailed);
+    } finally {
+      setRetryBusy(false);
+    }
+  };
+
+  const onAbandonPartial = async () => {
+    if (!batchId || abandonBusy || retryBusy) return;
+    setAbandonBusy(true);
+    setError(null);
+    try {
+      await abandonIngestBatch(batchId);
+      reset();
+      onClose();
+    } catch (err) {
+      if (err instanceof IngestRpcError && err.code === 'cannot_abandon_after_confirm') {
+        setCanAbandonPartial(false);
+        setError(INGEST_COPY.abandonAfterConfirm);
+      } else {
+        setError(err instanceof Error ? err.message : INGEST_COPY.abandonPartialFailed);
+      }
+    } finally {
+      setAbandonBusy(false);
+    }
   };
 
   const onPickFiles = (list: FileList | File[] | null | undefined) => {
@@ -186,119 +378,230 @@ export function ClassStackBinder({
     setProgressPct(100);
     setStatus(INGEST_COPY.received);
     if (result.softWarnings[0]) setSoftWarn(result.softWarnings[0]);
+    startPolling(result.batch.id);
   };
 
   const phoneGate = Platform.OS !== 'web';
+  const showBind = !phoneGate && teachSeat && phase === 'bind';
+  const showWaiting = !phoneGate && teachSeat && phase === 'waiting';
+  const showPartial = !phoneGate && teachSeat && phase === 'partial';
+  const showFailed = !phoneGate && teachSeat && phase === 'failed';
 
   return (
-    <FormSheet visible={visible} title={INGEST_COPY.binderTitle} onClose={handleClose}>
-      {!teachSeat ? (
-        <Text style={[type.body, { color: colors.mute }]}>{INGEST_COPY.teachSeatOnly}</Text>
-      ) : null}
+    <>
+      <FormSheet
+        visible={visible && phase !== 'split'}
+        title={INGEST_COPY.binderTitle}
+        onClose={handleClose}
+      >
+        {!teachSeat ? (
+          <Text style={[type.body, { color: colors.mute }]}>{INGEST_COPY.teachSeatOnly}</Text>
+        ) : null}
 
-      {phoneGate && teachSeat ? (
-        <View style={styles.gaps}>
-          <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.phoneGate}</Text>
-          <Text style={[type.meta, { color: colors.mute }]}>
-            You can start a stack on a Chromebook or computer. Split review needs a larger screen.
-          </Text>
-          <GhostButton label="Close" onPress={handleClose} />
-        </View>
-      ) : null}
-
-      {!phoneGate && teachSeat ? (
-        <View style={styles.gaps}>
-          <Text style={[type.meta, { color: colors.mute }]}>Class</Text>
-          <View style={styles.wrapChips}>
-            {classes.map((klass) => (
-              <Chip
-                key={klass.id}
-                label={klass.name}
-                selected={classId === klass.id}
-                onPress={() => setClassId(klass.id)}
-              />
-            ))}
-          </View>
-          {!classId ? (
-            <Text style={[type.meta, { color: colors.danger }]}>{INGEST_COPY.classRequired}</Text>
-          ) : (
+        {phoneGate && teachSeat ? (
+          <View style={styles.gaps}>
+            <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.phoneGate}</Text>
             <Text style={[type.meta, { color: colors.mute }]}>
-              Upload class stack for {className}
+              You can start a stack on a Chromebook or computer. Split review needs a larger screen.
             </Text>
-          )}
-
-          <TextField
-            label={INGEST_COPY.pagesPerStudent}
-            value={pagesPerStudent}
-            onChangeText={setPagesPerStudent}
-            keyboardType="number-pad"
-            editable={!busy}
-          />
-
-          <View
-            style={[styles.drop, { borderColor: colors.line, backgroundColor: colors.wash }]}
-            // @ts-expect-error web drag events on RN View
-            onDragOver={(e: { preventDefault?: () => void }) => e.preventDefault?.()}
-            onDrop={(e: {
-              preventDefault?: () => void;
-              dataTransfer?: { files?: FileList };
-            }) => {
-              e.preventDefault?.();
-              if (busy || !classId) return;
-              onPickFiles(e.dataTransfer?.files);
-            }}
-          >
-            <Text style={[type.body, { color: colors.mute }]}>{INGEST_COPY.dropZone}</Text>
-            <SecondaryButton
-              label="Choose files"
-              disabled={busy || !classId}
-              onPress={openFilePicker}
-            />
+            {phase === 'waiting' ? (
+              <Text style={[type.meta, { color: colors.mute }]} accessibilityLiveRegion="polite">
+                {pageCount != null
+                  ? INGEST_COPY.progressPages(pagesDone, pageCount)
+                  : INGEST_COPY.received}
+              </Text>
+            ) : null}
+            {phase === 'split' || (batchId && pagesDone > 0 && pageCount != null && pagesDone >= pageCount) ? (
+              <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.splitPhoneWaiting}</Text>
+            ) : null}
+            <GhostButton label="Close" onPress={handleClose} />
           </View>
+        ) : null}
 
-          {picked.length ? (
-            <View style={styles.gaps}>
-              {picked.map((p) => (
+        {showBind ? (
+          <View style={styles.gaps}>
+            <Text style={[type.meta, { color: colors.mute }]}>Class</Text>
+            <View style={styles.wrapChips}>
+              {classes.map((klass) => (
                 <Chip
-                  key={p.key}
-                  label={`${p.name} (${formatMb(p.file.size)} MB)`}
-                  onPress={() => {
-                    if (busy) return;
-                    setPicked((cur) => cur.filter((x) => x.key !== p.key));
-                  }}
+                  key={klass.id}
+                  label={klass.name}
+                  selected={classId === klass.id}
+                  onPress={() => setClassId(klass.id)}
                 />
               ))}
             </View>
-          ) : null}
+            {!classId ? (
+              <Text style={[type.meta, { color: colors.danger }]}>{INGEST_COPY.classRequired}</Text>
+            ) : (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Upload class stack for {className}
+              </Text>
+            )}
 
-          {softWarn ? <Text style={[type.meta, { color: colors.mute }]}>{softWarn}</Text> : null}
-          {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : null}
-          {status ? (
+            <TextField
+              label={INGEST_COPY.pagesPerStudent}
+              value={pagesPerStudent}
+              onChangeText={setPagesPerStudent}
+              keyboardType="number-pad"
+              editable={!busy}
+            />
+
+            <View
+              style={[styles.drop, { borderColor: colors.line, backgroundColor: colors.wash }]}
+              // @ts-expect-error web drag events on RN View
+              onDragOver={(e: { preventDefault?: () => void }) => e.preventDefault?.()}
+              onDrop={(e: {
+                preventDefault?: () => void;
+                dataTransfer?: { files?: FileList };
+              }) => {
+                e.preventDefault?.();
+                if (busy || !classId) return;
+                onPickFiles(e.dataTransfer?.files);
+              }}
+            >
+              <Text style={[type.body, { color: colors.mute }]}>{INGEST_COPY.dropZone}</Text>
+              <SecondaryButton
+                label="Choose files"
+                disabled={busy || !classId}
+                onPress={openFilePicker}
+              />
+            </View>
+
+            {picked.length ? (
+              <View style={styles.gaps}>
+                {picked.map((p) => (
+                  <Chip
+                    key={p.key}
+                    label={`${p.name} (${formatMb(p.file.size)} MB)`}
+                    onPress={() => {
+                      if (busy) return;
+                      setPicked((cur) => cur.filter((x) => x.key !== p.key));
+                    }}
+                  />
+                ))}
+              </View>
+            ) : null}
+
+            {softWarn ? <Text style={[type.meta, { color: colors.mute }]}>{softWarn}</Text> : null}
+            {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : null}
+            {status ? (
+              <Text style={[type.meta, { color: colors.mute }]} accessibilityLiveRegion="polite">
+                {status}
+                {method === 'tus' ? ' (TUS)' : null}
+                {progressPct != null ? ` · ${progressPct}%` : null}
+              </Text>
+            ) : null}
+
+            <PrimaryButton
+              label={busy ? 'Uploading…' : INGEST_COPY.entry}
+              disabled={busy || !classId || picked.length === 0}
+              onPress={() => void startUpload()}
+            />
+            {busy ? (
+              <GhostButton
+                label={INGEST_COPY.cancel}
+                onPress={() => {
+                  abortRef.current?.abort();
+                }}
+              />
+            ) : (
+              <GhostButton label="Close" onPress={handleClose} />
+            )}
+          </View>
+        ) : null}
+
+        {showWaiting ? (
+          <View style={styles.gaps}>
+            <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.received}</Text>
             <Text style={[type.meta, { color: colors.mute }]} accessibilityLiveRegion="polite">
-              {status}
-              {method === 'tus' ? ' (TUS)' : null}
-              {progressPct != null ? ` · ${progressPct}%` : null}
+              {pageCount != null
+                ? INGEST_COPY.progressPages(pagesDone, pageCount)
+                : 'Waiting for page count…'}
             </Text>
-          ) : null}
+            {softWarn ? <Text style={[type.meta, { color: colors.mute }]}>{softWarn}</Text> : null}
+            {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : null}
+            <GhostButton label="Close" onPress={handleClose} />
+          </View>
+        ) : null}
 
-          <PrimaryButton
-            label={busy ? 'Uploading…' : INGEST_COPY.entry}
-            disabled={busy || !classId || picked.length === 0}
-            onPress={() => void startUpload()}
-          />
-          {busy ? (
+        {showPartial ? (
+          <View style={styles.gaps}>
+            <Text
+              style={[type.body, { color: colors.danger }]}
+              accessibilityLiveRegion="polite"
+            >
+              {error ??
+                INGEST_COPY.partialBanner(
+                  gapMessage ?? INGEST_COPY.splitFailed,
+                  pagesDone,
+                  pageCount,
+                )}
+            </Text>
+            {pageCount != null ? (
+              <Text style={[type.meta, { color: colors.mute }]}>
+                {INGEST_COPY.progressPages(pagesDone, pageCount)}
+              </Text>
+            ) : null}
+            <PrimaryButton
+              label={retryBusy ? INGEST_COPY.retryRemainderBusy : INGEST_COPY.retryRemainder}
+              disabled={retryBusy || abandonBusy}
+              onPress={() => void onRetryRemainder()}
+            />
+            {canAbandonPartial ? (
+              <GhostButton
+                label={abandonBusy ? INGEST_COPY.abandonPartialBusy : INGEST_COPY.abandonPartial}
+                disabled={retryBusy || abandonBusy}
+                onPress={() => void onAbandonPartial()}
+              />
+            ) : (
+              <GhostButton
+                label="Close"
+                disabled={retryBusy || abandonBusy}
+                onPress={handleClose}
+              />
+            )}
+          </View>
+        ) : null}
+
+        {showFailed ? (
+          <View style={styles.gaps}>
+            <Text style={[type.body, { color: colors.danger }]}>
+              {error ?? INGEST_COPY.splitFailed}
+            </Text>
             <GhostButton
-              label={INGEST_COPY.cancel}
+              label="Close"
               onPress={() => {
-                abortRef.current?.abort();
+                reset();
+                onClose();
               }}
             />
-          ) : (
-            <GhostButton label="Close" onPress={handleClose} />
-          )}
-        </View>
+          </View>
+        ) : null}
+      </FormSheet>
+
+      {batchId && teachSeat ? (
+        <SplitReview
+          visible={visible && phase === 'split'}
+          batchId={batchId}
+          onClose={() => {
+            reset();
+            onClose();
+          }}
+          onConfirmed={() => {
+            reset();
+            onClose();
+          }}
+          onRetryRemainder={() => {
+            // Keep batchId; mirror binder partial retry — poll until split_review.
+            setGapMessage(null);
+            setError(null);
+            setStatus(INGEST_COPY.received);
+            startPolling(batchId);
+          }}
+        />
       ) : null}
-    </FormSheet>
+    </>
   );
 }
 

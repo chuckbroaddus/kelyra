@@ -1,10 +1,12 @@
 import { invokeAi } from '@/lib/ai/invoke';
-import { allPhotoAssetIds } from '@/lib/captures/pages';
+import { allPhotoAssetIds, mergePreservedPageAssetIds } from '@/lib/captures/pages';
 import { gradeKindLabel, type GradeKind, type ScoreMark } from '@/lib/grade/marks';
 import { loadPhotoAssetPaths } from '@/lib/media/upload';
 import { signedThumbUrls, signedUrls } from '@/lib/media/signedUrl';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { CaptureRow, SkillGapRow } from '@/lib/supabase/types';
+
+export { draftHasWork } from '@/lib/gaps/draftWork';
 
 export type StudentCapture = CaptureRow & {
   photoUrl: string | null;
@@ -34,42 +36,33 @@ export type StoredHomeworkDraft = {
   residuals?: number;
 };
 
-export function draftHasWork(draft: StoredHomeworkDraft | null | undefined): boolean {
-  return Boolean(
-    draft &&
-      (draft.gaps?.length ||
-        draft.teacherNote ||
-        draft.draftScore != null ||
-        draft.studentName ||
-        draft.scoreMark === 'pass' ||
-        draft.scoreMark === 'fail' ||
-        draft.method === 'key_score' ||
-        (Array.isArray(draft.items) && draft.items.length > 0) ||
-        (draft.pageAssetIds?.length ?? 0) > 1),
-  );
-}
-
 export async function storeCaptureDraft(
   captureId: string,
   draft: StoredHomeworkDraft,
   studentId?: string | null,
 ): Promise<void> {
   const supabase = requireSupabase();
+  let prior: unknown = null;
+  if (!draft.pageAssetIds?.length) {
+    const { data } = await supabase.from('captures').select('model_draft').eq('id', captureId).maybeSingle();
+    prior = data?.model_draft ?? null;
+  }
+  const merged = mergePreservedPageAssetIds(draft, prior);
   await supabase
     .from('captures')
     .update({
-      model_draft: draft,
-      draft_score: draft.draftScore,
-      teacher_note: draft.teacherNote,
-      ...(studentId && draft.gaps.length ? { status: 'draft' } : {}),
+      model_draft: merged,
+      draft_score: merged.draftScore,
+      teacher_note: merged.teacherNote,
+      ...(studentId && merged.gaps.length ? { status: 'draft' } : {}),
     })
     .eq('id', captureId);
 
-  if (!studentId || !draft.gaps.length) return;
+  if (!studentId || !merged.gaps.length) return;
 
   await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
   const { error } = await supabase.from('skill_gaps').insert(
-    draft.gaps.map((gap, index) => ({
+    merged.gaps.map((gap, index) => ({
       capture_id: captureId,
       student_id: studentId,
       label: gap.label,

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -26,6 +27,7 @@ import {
 } from '@/lib/calendar/api';
 import type { PendingCalendarDraft } from '@/lib/calendar/askDraft';
 import { REVIEW_DRAFT_BANNER } from '@/lib/calendar/askDraft';
+import { roleTintColor, roleTintLabel } from '@/lib/calendar/roleTint';
 import type { CalendarEventKind, CalendarSeat } from '@/lib/calendar/types';
 import {
   categoriesForKind,
@@ -39,6 +41,7 @@ import {
 } from '@/lib/calendar/visibility';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 type Mode = 'create' | 'edit' | 'view';
 
@@ -86,9 +89,16 @@ function sameDraft(a: Draft, b: Draft): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function kindRoleTint(kind: CalendarEventKind): string {
+  if (kind === 'school') return 'school';
+  if (kind === 'class') return 'academic';
+  return 'personal';
+}
+
 /**
- * CR-A: sheet on phone, modal on web. Title, start, optional end, all-day,
- * category, visibility caption, body. Dirty dismiss confirms. Save commits.
+ * CR-A lean (CAL-30): sheet/modal. Title, DATE-P1, all-day, kind, category, body,
+ * AI draft banner, visibility, Calendar row ≤4 role tints. No Reminder/Travel/URL/
+ * Attachments/Invitees/Alert/Repeat. Dirty dismiss confirms. Save commits.
  */
 export function EventComposer({
   visible,
@@ -104,6 +114,7 @@ export function EventComposer({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const layout = useLayout();
+  const reduceMotion = useReducedMotion();
   const phone = layout.isPhone && Platform.OS !== 'web';
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(seat, classId, childStudentId));
   const [baseline, setBaseline] = useState<Draft>(() => emptyDraft(seat, classId, childStudentId));
@@ -114,6 +125,8 @@ export function EventComposer({
   const [discardOpen, setDiscardOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fromAsk, setFromAsk] = useState(false);
+  const sheetY = useRef(new Animated.Value(phone ? 24 : 0)).current;
+  const sheetOpacity = useRef(new Animated.Value(1)).current;
 
   const dirty = !sameDraft(draft, baseline);
   const kinds = kindsForSeat(seat).filter((kind) => {
@@ -122,6 +135,35 @@ export function EventComposer({
     return true;
   });
   const cats = categoriesForKind(draft.kind);
+
+  useEffect(() => {
+    if (!visible) return;
+    sheetY.setValue(phone ? 28 : 0);
+    sheetOpacity.setValue(reduceMotion ? 0 : 1);
+    if (reduceMotion) {
+      Animated.timing(sheetOpacity, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+    if (phone) {
+      Animated.spring(sheetY, {
+        toValue: 0,
+        damping: 18,
+        stiffness: 180,
+        mass: 0.9,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(sheetOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, phone, reduceMotion, sheetY, sheetOpacity]);
 
   useEffect(() => {
     if (!visible) return;
@@ -289,11 +331,13 @@ export function EventComposer({
     }
   };
 
+  const modalAnimation = reduceMotion ? 'fade' : phone ? 'slide' : 'fade';
+
   return (
     <>
       <Modal
         visible={visible}
-        animationType={phone ? 'slide' : 'fade'}
+        animationType={modalAnimation}
         presentationStyle={phone ? (Platform.OS === 'ios' ? 'pageSheet' : 'fullScreen') : 'overFullScreen'}
         transparent={!phone}
         onRequestClose={requestClose}
@@ -309,18 +353,24 @@ export function EventComposer({
           {!phone ? (
             <Pressable style={styles.scrim} onPress={requestClose} accessibilityLabel="Dismiss" />
           ) : null}
-          <View
+          <Animated.View
             style={[
               phone ? styles.sheet : styles.modal,
               {
                 backgroundColor: colors.bg,
                 borderColor: colors.line,
                 paddingTop: phone && Platform.OS !== 'ios' ? insets.top : phone ? 12 : 0,
+                opacity: sheetOpacity,
+                transform: phone && !reduceMotion ? [{ translateY: sheetY }] : undefined,
               },
             ]}
           >
             <View style={[styles.header, { borderBottomColor: colors.line }]}>
-              <Text style={[styles.title, { color: colors.ink }]} numberOfLines={1}>
+              <Text
+                style={[styles.title, { color: colors.ink }]}
+                numberOfLines={1}
+                accessibilityRole="header"
+              >
                 {heading}
               </Text>
               <GhostButton align="left" label={readOnly ? 'Close' : 'Discard'} onPress={requestClose} />
@@ -339,19 +389,47 @@ export function EventComposer({
                 </Text>
               ) : null}
 
-              {mode === 'create' && kinds.length > 1 ? (
+              {/* CAL-31 Calendar row ≤4 role tints (kind pick). No Reminder tab. */}
+              {mode === 'create' && kinds.length > 0 ? (
                 <View style={styles.block}>
-                  <Text style={[styles.label, { color: colors.mute }]}>Type</Text>
-                  <ChipRow>
-                    {kinds.map((kind) => (
-                      <Chip
-                        key={kind}
-                        label={kind === 'absence' ? 'Absence' : kind[0]!.toUpperCase() + kind.slice(1)}
-                        selected={draft.kind === kind}
-                        onPress={() => !readOnly && setKind(kind)}
-                      />
-                    ))}
-                  </ChipRow>
+                  <Text style={[styles.label, { color: colors.mute }]}>Calendar</Text>
+                  <View style={styles.calRow}>
+                    {kinds.map((kind) => {
+                      const tint = kindRoleTint(kind);
+                      const selected = draft.kind === kind;
+                      const label =
+                        kind === 'absence'
+                          ? 'Absence'
+                          : kind === 'class'
+                            ? roleTintLabel('academic')
+                            : roleTintLabel(tint);
+                      return (
+                        <Pressable
+                          key={kind}
+                          disabled={readOnly}
+                          onPress={() => !readOnly && setKind(kind)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                          accessibilityLabel={`Calendar ${label}`}
+                          style={[
+                            styles.calChip,
+                            {
+                              borderColor: selected ? roleTintColor(tint, colors) : colors.line,
+                              backgroundColor: selected ? colors.wash : colors.elevated,
+                            },
+                          ]}
+                        >
+                          <View
+                            style={[
+                              styles.calDot,
+                              { backgroundColor: roleTintColor(tint, colors) },
+                            ]}
+                          />
+                          <Text style={[styles.calLabel, { color: colors.ink }]}>{label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               ) : null}
 
@@ -454,7 +532,7 @@ export function EventComposer({
                 />
               ) : null}
             </ScrollView>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -479,7 +557,7 @@ export function EventComposer({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   webRoot: { justifyContent: 'center', alignItems: 'center', padding: 24 },
-  scrim: { ...StyleSheet.absoluteFillObject },
+  scrim: { ...StyleSheet.absoluteFill },
   sheet: { flex: 1 },
   modal: {
     width: '100%',
@@ -516,12 +594,25 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   askBanner: {
-    ...type.caption,
+    ...type.meta,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 4,
   },
+  calRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  calChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minHeight: 44,
+  },
+  calDot: { width: 10, height: 10, borderRadius: 5 },
+  calLabel: { ...type.meta, fontWeight: '600' },
   error: type.body,
 });

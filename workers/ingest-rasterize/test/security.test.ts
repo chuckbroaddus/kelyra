@@ -56,3 +56,20 @@ test('I2-sec: progress migration adds pages_done only (no live apply in worker)'
   assert.match(sql, /do not apply/i);
   assert.doesNotMatch(sql, /drop table/i);
 });
+
+test('I5-sec: claim retry_remainder; failBatch can set partial; upsert skips rasterized', () => {
+  const db = readFileSync(join(workerRoot, 'src/db.ts'), 'utf8');
+  assert.match(db, /received',\s*'retry_remainder/);
+  assert.match(db, /status === 'rasterized'/);
+  assert.match(db, /is\('capture_id',\s*null\)/);
+  // Must delete failed non-minted too (not draft-only).
+  const replaceAt = db.indexOf('export async function replaceDraftPackets');
+  const replaceFn = db.slice(replaceAt, db.indexOf('export async function markIncompletePagesFailed'));
+  assert.doesNotMatch(replaceFn, /\.eq\('status',\s*'draft'\)/);
+
+  const rasterize = readFileSync(join(workerRoot, 'src/rasterize.ts'), 'utf8');
+  assert.match(rasterize, /batchFailStatus/);
+  assert.match(rasterize, /resolveFailPagesDone/);
+  assert.match(rasterize, /partial/);
+  assert.match(rasterize, /pagesDone/);
+});

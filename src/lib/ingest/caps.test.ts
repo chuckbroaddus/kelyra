@@ -86,3 +86,21 @@ test('I1-07 wire copy atoms present', () => {
   assert.equal(INGEST_COPY.progressPages(12, 120), '12/120 rasterized');
   assert.match(INGEST_COPY.encryptedPdf, /encrypted|password/i);
 });
+
+test('I5-07 partial / retry copy atoms present', () => {
+  assert.equal(INGEST_COPY.retryRemainder, 'Retry remainder');
+  assert.match(INGEST_COPY.rasterTimeout, /Retry the remainder/);
+  assert.match(INGEST_COPY.workerDead, /Retry the remainder/);
+  assert.match(INGEST_COPY.partialBanner('Gap named.', 20, 40), /20\/40/);
+  assert.match(INGEST_COPY.partialBanner('Gap named.', 20, 40), /Gap named/);
+  assert.equal(INGEST_COPY.abandonPartial, 'Abandon stack');
+  assert.match(INGEST_COPY.resumeOpenPartial, /Resuming|open stack/i);
+});
+
+test('I3-07 SR-A copy atoms present', () => {
+  assert.equal(INGEST_COPY.splitTitle, 'Split review');
+  assert.match(INGEST_COPY.splitConfirm, /Confirm/i);
+  assert.match(INGEST_COPY.splitKeys, /S split/);
+  assert.match(INGEST_COPY.splitLead, /Needs Attention/i);
+  assert.match(INGEST_COPY.splitPhoneWaiting, /computer/i);
+});

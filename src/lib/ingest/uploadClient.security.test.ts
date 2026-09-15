@@ -22,6 +22,8 @@ test('I1-SEC no FileReader / no base64 whole PDF in ingest upload path', () => {
     'src/lib/ingest/hash.ts',
     'src/lib/ingest/runUpload.ts',
     'src/components/ingest/ClassStackBinder.tsx',
+    'src/components/ingest/SplitReview.tsx',
+    'src/lib/ingest/api.ts',
   ];
   for (const rel of files) {
     const src = stripComments(read(rel));

@@ -1,0 +1,57 @@
+BATCH-v1 I3: Split Review (SR-A) persist + keyboard S/M/B + Confirm RPC → captures.
+
+Kanban: t_feabf27f. Dual IQG MET. Launch as implementer inside kelyra-qa-loop.
+
+CONTEXT (do not re-do prior slices):
+- I0+I1 merged PR 104 live. I2 worker PR 107 merged.
+- Live ingest_batches already has pages_done (I2). SKIP re-apply 20260913000003. Do NOT supabase db push / apply any SQL.
+- SQL already on disk has save_ingest_split + confirm_ingest_batch in supabase/migrations/20260913000000_ingest_batches.sql — wire client, do not reinvent mint rules.
+- ClassStackBinder (CE-A) exists under src/components/ingest/. Teach seat / class already bound (I1).
+- Architecture I3: ALWAYS enter Split Review after rasterize ready; Confirm disabled at 0 eligible packets; each non-blank packet → capture with student_id null, status unassigned, input_source batch; NEVER Approve; NEVER invent student; NEVER send whole-class PDF / FileReader-all PDF to model.
+- Phone gate: not primary splitter (status / open on computer). Web/tablet SR-A filmstrip is primary.
+- NA-A Inbox naming only AFTER Confirm — no per-packet student name UI in Split Review.
+- PM/lock if present: notes/company/batch-ingest-pm-lock.md BATCH-06/07/08; DITL-T-01 BATCH notes; docs/ui-design.md Capture. Else GitHub main + existing I0 SQL + this request.
+
+IMPLEMENT:
+1) src/lib/ingest/ API client:
+   - fetch batch + pages + packets for split_review
+   - saveIngestSplit(batchId, packets, version) → rpc save_ingest_split
+   - confirmIngestBatch(batchId, version) → rpc confirm_ingest_batch
+   - abandon already exists; reuse
+   - types for pages/packets; pages_done progress for waiting state
+2) Split Review UI (SR-A) under src/components/ingest/ (web/tablet primary):
+   - Filmstrip of page thumbs (signed page assets only — never original PDF URL to model)
+   - Packet stacks: split / merge / blank / reorder
+   - Keyboard: S = split at focus, M = merge with previous/next, B = toggle blank
+   - Roster count check-off (e.g. N packets vs roster×pages) — NOT per-packet student names
+   - Confirm button: disabled when 0 non-blank eligible packets OR busy OR version conflict
+   - Persist draft via save_ingest_split (debounce/version); Confirm calls confirm_ingest_batch then routes to existing Inbox/Needs (captures appear unassigned)
+   - Cancel/abandon pre-confirm → 0 captures
+   - Phone: gate copy only (reuse INGEST_COPY patterns); do not build full filmstrip as primary phone UX
+3) Wire entry from ClassStackBinder / Capture flow after upload+rasterize reaches split_review (poll pages_done / status). Worker already sets status; client consumes pages_done only — do not change worker contract beyond consuming progress.
+4) Tests:
+   - Unit/security-style tests for client: Confirm disabled at 0 packets; no student_id assignment in UI; confirm path uses RPC; no FileReader whole PDF to model
+   - Extend/add src/lib/ingest tests; component logic tests if pattern exists
+5) Copy in src/lib/ingest/copy.ts for SR-A strings as needed
+6) Light docs touch docs/ui-design.md Capture section ONLY if required for SR-A accuracy — keep minimal
+
+CONSTRAINTS (hard):
+- No git commit, push, reset, clean, stash drop
+- No supabase apply / db push / live SQL
+- No hot folder / Drive watch
+- No I4/I5 (matcher attach, naming in review, Approve)
+- Preserve unrelated dirty tree
+- Loop children: NEVER ask_user_question / interactive Continue
+- Never EXPO_PUBLIC model keys; never invent View-stroke icons (use existing Icon set or skip new glyphs)
+- Never insert students; never auto-Approve; captures only unassigned + student_id null
+
+ACCEPTANCE:
+- kelyra-qa-loop terminal passed (or complete, 0 P0/P1)
+- Split Review exists before any capture insert path from batch
+- Confirm → confirm_ingest_batch; teacher_confirmed_split path remains server-side
+- 0 packets → Confirm disabled
+- Keyboard S/M/B wired
+- typecheck clean for touched files; relevant tests pass
+- security_ok / no secrets
+
+OUT OF SCOPE: I4/I5, live migration apply, git ship, phone-primary filmstrip, hot folder.

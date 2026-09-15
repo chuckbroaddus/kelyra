@@ -147,7 +147,7 @@ export type PostRow = {
   created_at: string;
 };
 export type CaptureKind = 'homework' | 'voice_note';
-export type CaptureInputSource = 'voice' | 'camera' | 'typed';
+export type CaptureInputSource = 'voice' | 'camera' | 'typed' | 'batch';
 export type CaptureStatus =
   | 'unassigned'
   | 'attached'
@@ -407,6 +407,7 @@ export type CaptureRow = {
   attached_at: string | null;
   approved_at: string | null;
   assignment_id?: string | null;
+  ingest_batch_id?: string | null;
   ai_status?: string | null;
   explain_draft?: Record<string, unknown> | null;
   explain_status?: 'none' | 'draft' | 'noted';
@@ -624,6 +625,7 @@ export type Database = {
           audio_asset_id?: string | null;
           transcript?: string | null;
           assignment_id?: string | null;
+          ingest_batch_id?: string | null;
         },
         Partial<Omit<CaptureRow, 'id' | 'class_id' | 'created_at'>>
       >;
@@ -747,6 +749,143 @@ export type Database = {
         },
         { thread_id: string; role: 'user' | 'assistant'; body?: string; payload?: MessagePayload | null },
         Partial<{ body: string; payload: MessagePayload | null }>
+      >;
+      // BATCH-v1 ingest (migrations 20260913000000* — apply later)
+      ingest_batches: Table<
+        {
+          id: string;
+          teacher_id: string;
+          class_id: string;
+          assignment_id: string | null;
+          pages_per_student: number;
+          ignore_blank_backs: boolean;
+          split_method: string;
+          teacher_confirmed_split: boolean;
+          status: string;
+          original_sha256: string | null;
+          bytes_total: number;
+          page_count: number | null;
+          pages_done: number;
+          file_count: number;
+          roster_count: number | null;
+          error_code: string | null;
+          error_message: string | null;
+          split_draft_version: number;
+          abandoned_at: string | null;
+          confirmed_at: string | null;
+          ttl_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          teacher_id: string;
+          class_id: string;
+          assignment_id?: string | null;
+          pages_per_student?: number;
+          ignore_blank_backs?: boolean;
+          status?: string;
+        },
+        Partial<{
+          status: string;
+          pages_done: number;
+          page_count: number | null;
+          split_draft_version: number;
+          teacher_confirmed_split: boolean;
+          error_code: string | null;
+          error_message: string | null;
+          roster_count: number | null;
+        }>
+      >;
+      ingest_files: Table<
+        {
+          id: string;
+          batch_id: string;
+          sort_index: number;
+          original_filename: string;
+          mime_type: string;
+          byte_size: number;
+          sha256: string;
+          storage_path: string;
+          tus_upload_id: string | null;
+          status: string;
+          page_count: number | null;
+          error_code: string | null;
+          created_at: string;
+        },
+        {
+          batch_id: string;
+          sort_index: number;
+          original_filename: string;
+          mime_type: string;
+          byte_size: number;
+          sha256: string;
+          storage_path: string;
+          tus_upload_id?: string | null;
+          status?: string;
+        },
+        Partial<{ status: string; page_count: number | null; error_code: string | null }>
+      >;
+      ingest_pages: Table<
+        {
+          id: string;
+          batch_id: string;
+          file_id: string;
+          page_index: number;
+          file_page_index: number;
+          asset_id: string | null;
+          blank: boolean;
+          quality: string | null;
+          status: string;
+          error_code: string | null;
+          byte_size: number | null;
+          created_at: string;
+        },
+        {
+          batch_id: string;
+          file_id: string;
+          page_index: number;
+          file_page_index: number;
+          asset_id?: string | null;
+          blank?: boolean;
+          status?: string;
+        },
+        Partial<{
+          asset_id: string | null;
+          blank: boolean;
+          quality: string | null;
+          status: string;
+          error_code: string | null;
+          byte_size: number | null;
+        }>
+      >;
+      ingest_packets: Table<
+        {
+          id: string;
+          batch_id: string;
+          ordinal: number;
+          page_ids: string[];
+          blank: boolean;
+          capture_id: string | null;
+          status: string;
+          error_code: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          batch_id: string;
+          ordinal: number;
+          page_ids?: string[];
+          blank?: boolean;
+          status?: string;
+        },
+        Partial<{
+          ordinal: number;
+          page_ids: string[];
+          blank: boolean;
+          capture_id: string | null;
+          status: string;
+          error_code: string | null;
+        }>
       >;
     };
     Views: Record<string, never>;
@@ -1063,6 +1202,18 @@ export type Database = {
       };
       ingest_mark_received: { Args: { p_batch_id: string }; Returns: Record<string, unknown> };
       abandon_ingest_batch: { Args: { p_batch_id: string }; Returns: Record<string, unknown> };
+      save_ingest_split: {
+        Args: { p_batch_id: string; p_packets: unknown; p_version: number };
+        Returns: Record<string, unknown>;
+      };
+      confirm_ingest_batch: {
+        Args: { p_batch_id: string; p_version: number };
+        Returns: Record<string, unknown>;
+      };
+      retry_ingest_remainder: {
+        Args: { p_batch_id: string };
+        Returns: Record<string, unknown>;
+      };
 
       add_teacher_to_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
       remove_teacher_from_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };

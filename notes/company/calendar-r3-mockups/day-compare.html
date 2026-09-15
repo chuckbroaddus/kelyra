@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAL-R3 Day compare</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #F5F5F7; padding: 16px; }
+  h1 { font-size: 16px; margin-bottom: 12px; color: #F5F5F7; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .phone { width: 280px; min-height: 520px; background: #000000; border: 1px solid #3A3A3C; border-radius: 24px; padding: 14px 12px 20px; }
+  .label { font-size: 11px; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .chiprow { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #2C2C2E; color: #F5F5F7; }
+  .chip.on { background: #0A84FF; color: #FFFFFF; }
+  .card { background: #1C1C1E; border: 1px solid #3A3A3C; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .card h3 { font-size: 14px; color: #F5F5F7; }
+  .meta { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+  .badge { display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700; color: #FFD60A; text-transform: uppercase; }
+  .allday { background: #1C1C1E; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border-left: 3px solid #30D158; color: #F5F5F7; font-size: 13px; }
+  .gutter { display: grid; grid-template-columns: 40px 1fr; gap: 4px; }
+  .hour { font-size: 10px; color: #8E8E93; padding-top: 2px; }
+  .slot { min-height: 36px; border-top: 1px solid #2C2C2E; position: relative; }
+  .block { position: absolute; left: 0; right: 8px; top: 2px; bottom: 2px; background: rgba(10,132,255,0.28); border-left: 3px solid #0A84FF; border-radius: 6px; padding: 4px 6px; font-size: 11px; color: #F5F5F7; }
+  .block.warn { background: rgba(255,214,10,0.18); border-left-color: #FFD60A; }
+  .today { color: #FF453A; font-size: 12px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+  <h1>Day — current vs proposed</h1>
+  <div class="row">
+    <div class="phone">
+      <div class="label">Current (DayColumn cards)</div>
+      <div class="chiprow"><span class="chip">Agenda</span><span class="chip on">Day</span></div>
+      <div class="title">Mon, Sep 14</div>
+      <div class="card"><h3>Algebra quiz</h3><div class="meta">academic</div><span class="badge">Hidden</span></div>
+      <div class="card"><h3>Practice problems</h3><div class="meta">homework · 3:00 PM</div></div>
+      <div class="card"><h3>Soccer away</h3><div class="meta">sport · 5:30 PM</div></div>
+    </div>
+    <div class="phone">
+      <div class="label">Proposed (timeline + laws)</div>
+      <div class="chiprow"><span class="chip">Agenda</span><span class="chip on">Day</span></div>
+      <div class="today">Monday</div>
+      <div class="title">14 <span style="font-size:14px;color:#8E8E93;font-weight:500">September</span></div>
+      <div class="allday">School holiday — all-day</div>
+      <div class="gutter">
+        <div class="hour">9</div><div class="slot"><div class="block warn">Algebra quiz · Hidden</div></div>
+        <div class="hour">10</div><div class="slot"></div>
+        <div class="hour">15</div><div class="slot"><div class="block">Practice problems</div></div>
+        <div class="hour">17</div><div class="slot"><div class="block" style="border-left-color:#BF5AF2;background:rgba(191,90,242,0.25)">Soccer away</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

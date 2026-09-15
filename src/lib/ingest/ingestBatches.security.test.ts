@@ -207,6 +207,11 @@ test('I0-09 RPCs use class_teacher_of only (not teaches_class office bypass)', (
   assert.doesNotMatch(stripSqlComments(mark), /insert\s+into\s+public\.captures/i);
 
   // abandon pre-confirm; retry from partial
-  assert.match(extractFn(sql, 'abandon_ingest_batch'), /cannot abandon after confirm|abandoned/);
+  const abandon = extractFn(sql, 'abandon_ingest_batch');
+  assert.match(abandon, /cannot abandon after confirm|abandoned/);
+  // I5: pre-confirm partial/retry_remainder abandonable when no capture_id
+  assert.match(abandon, /'partial'|partial/);
+  assert.match(abandon, /retry_remainder/);
+  assert.match(abandon, /capture_id is not null/);
   assert.match(extractFn(sql, 'retry_ingest_remainder'), /status is distinct from 'partial'|retry_remainder/);
 });

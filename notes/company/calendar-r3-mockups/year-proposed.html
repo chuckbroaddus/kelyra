@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAL-R3 Year proposed</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #F5F5F7; padding: 16px; }
+  h1 { font-size: 16px; margin-bottom: 8px; }
+  p { color: #8E8E93; font-size: 13px; margin-bottom: 12px; }
+  .phone { width: 300px; border: 1px solid #3A3A3C; border-radius: 24px; padding: 14px; background: #000000; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .y { font-size: 28px; font-weight: 700; color: #F5F5F7; }
+  .icons { color: #0A84FF; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+  .mo h2 { font-size: 13px; color: #FF453A; margin-bottom: 4px; font-weight: 600; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+  .d { font-size: 9px; color: #F5F5F7; height: 14px; line-height: 14px; position: relative; }
+  .d.m { color: #636366; }
+  .dot::after { content: ""; position: absolute; bottom: 0; left: 50%; width: 3px; height: 3px; margin-left: -1.5px; border-radius: 50%; background: #0A84FF; }
+  .dot.s::after { background: #BF5AF2; }
+  .dot.k::after { background: #FFD60A; }
+  .foot { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .today { background: #2C2C2E; color: #F5F5F7; border-radius: 999px; padding: 8px 14px; font-size: 13px; }
+  .note { margin-top: 12px; font-size: 12px; color: #AEAEB2; max-width: 300px; }
+</style>
+</head>
+<body>
+  <h1>Year — proposed (R3-B / R3-C)</h1>
+  <p>Current Kelyra: none. Dots = role tints (≤4), not per-calendar rainbow. No Inbox (Needs owns publish).</p>
+  <div class="phone">
+    <div class="top"><div class="y">2026</div><div class="icons">Calendars · +</div></div>
+    <div class="grid">
+      <div class="mo">
+        <h2>September</h2>
+        <div class="days">
+          <div class="d m">31</div><div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div><div class="d">5</div><div class="d">6</div>
+          <div class="d">7</div><div class="d">8</div><div class="d">9</div><div class="d">10</div><div class="d">11</div><div class="d">12</div><div class="d">13</div>
+          <div class="d dot">14</div><div class="d dot k">15</div><div class="d dot">16</div><div class="d">17</div><div class="d">18</div><div class="d dot s">19</div><div class="d">20</div>
+          <div class="d">21</div><div class="d">22</div><div class="d">23</div><div class="d">24</div><div class="d">25</div><div class="d">26</div><div class="d">27</div>
+          <div class="d">28</div><div class="d">29</div><div class="d">30</div><div class="d m">1</div><div class="d m">2</div><div class="d m">3</div><div class="d m">4</div>
+        </div>
+      </div>
+      <div class="mo">
+        <h2 style="color:#F5F5F7">October</h2>
+        <div class="days">
+          <div class="d m">28</div><div class="d m">29</div><div class="d m">30</div><div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div>
+          <div class="d">5</div><div class="d">6</div><div class="d">7</div><div class="d">8</div><div class="d">9</div><div class="d">10</div><div class="d">11</div>
+          <div class="d">12</div><div class="d">13</div><div class="d">14</div><div class="d">15</div><div class="d">16</div><div class="d">17</div><div class="d">18</div>
+        </div>
+      </div>
+      <div class="mo"><h2 style="color:#F5F5F7">November</h2><div class="days"><div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div><div class="d">5</div><div class="d">6</div><div class="d">7</div></div></div>
+      <div class="mo"><h2 style="color:#F5F5F7">December</h2><div class="days"><div class="d">1</div><div class="d">2</div><div class="d">3</div><div class="d">4</div><div class="d">5</div><div class="d">6</div><div class="d">7</div></div></div>
+    </div>
+    <div class="foot"><span class="today">Today</span><span style="color:#8E8E93;font-size:12px">View · List</span></div>
+  </div>
+  <p class="note">R3-A drops year. Entry remains drawer Calendar — not Desk home, not tray.</p>
+</body>
+</html>

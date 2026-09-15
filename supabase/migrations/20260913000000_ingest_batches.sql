@@ -513,6 +513,8 @@ grant execute on function public.ingest_mark_received(uuid) to authenticated;
 -- ---------------------------------------------------------------------------
 -- RPC: save_ingest_split
 -- p_packets: [{id, ordinal, page_ids, blank}, ...]
+-- Atomic under batch lock: park ordinals → upsert payload → delete absent drafts.
+-- (Client also inserts with temp ordinals before RPC for older update-only deploys.)
 -- ---------------------------------------------------------------------------
 
 create or replace function public.save_ingest_split(
@@ -532,6 +534,7 @@ declare
   pkt_ordinal int;
   pkt_page_ids uuid[];
   pkt_blank boolean;
+  keep_ids uuid[] := '{}';
 begin
   if auth.uid() is null then
     raise exception 'not allowed';
@@ -557,6 +560,13 @@ begin
     raise exception 'invalid packets';
   end if;
 
+  -- Free unique (batch_id, ordinal) before dense renumber / upsert.
+  update public.ingest_packets
+  set ordinal = ordinal + 1000000
+  where batch_id = p_batch_id
+    and capture_id is null
+    and status = 'draft';
+
   for elem in select value from jsonb_array_elements(p_packets)
   loop
     pkt_id := nullif(elem->>'id', '')::uuid;
@@ -570,6 +580,8 @@ begin
       continue;
     end if;
 
+    keep_ids := array_append(keep_ids, pkt_id);
+
     update public.ingest_packets
     set
       ordinal = pkt_ordinal,
@@ -579,7 +591,22 @@ begin
       and batch_id = p_batch_id
       and capture_id is null
       and status = 'draft';
+
+    if not found then
+      insert into public.ingest_packets (
+        id, batch_id, ordinal, page_ids, blank, status
+      ) values (
+        pkt_id, p_batch_id, pkt_ordinal, pkt_page_ids, pkt_blank, 'draft'
+      );
+    end if;
   end loop;
+
+  -- Drop draft packets removed by Merge only after upsert under the same lock.
+  delete from public.ingest_packets p
+  where p.batch_id = p_batch_id
+    and p.capture_id is null
+    and p.status = 'draft'
+    and not (p.id = any (keep_ids));
 
   update public.ingest_batches
   set
@@ -800,6 +827,8 @@ grant execute on function public.confirm_ingest_batch(uuid, int) to authenticate
 
 -- ---------------------------------------------------------------------------
 -- RPC: abandon_ingest_batch — pre-confirm only → abandoned; 0 captures
+-- I5: also allow partial/retry_remainder when no packet has capture_id
+-- (releases open_sha lock). Confirm-partial with minted captures still blocked.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.abandon_ingest_batch(p_batch_id uuid)
@@ -810,6 +839,7 @@ set search_path = public
 as $$
 declare
   b public.ingest_batches;
+  has_minted boolean;
 begin
   if auth.uid() is null then
     raise exception 'not allowed';
@@ -826,8 +856,20 @@ begin
     raise exception 'not_class_teacher';
   end if;
   if b.status not in (
-    'draft', 'receiving', 'received', 'rasterizing', 'split_review', 'failed'
+    'draft', 'receiving', 'received', 'rasterizing', 'split_review', 'failed',
+    'partial', 'retry_remainder'
   ) then
+    raise exception 'cannot abandon after confirm';
+  end if;
+
+  -- Confirm-partial leaves capture_id on packets; refuse so Inbox captures stay.
+  select exists (
+    select 1
+    from public.ingest_packets p
+    where p.batch_id = p_batch_id
+      and p.capture_id is not null
+  ) into has_minted;
+  if has_minted then
     raise exception 'cannot abandon after confirm';
   end if;
 

@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { planDraftPacketsAfterMinted } from './failStatus.ts';
+
 export type BatchRow = {
   id: string;
   teacher_id: string;
@@ -229,17 +231,32 @@ export async function replaceDraftPackets(
   batchId: string,
   packets: { ordinal: number; pageIds: string[]; blank: boolean }[],
 ): Promise<void> {
-  // Delete only draft packets without capture_id
+  // Never touch minted packets (capture_id set).
+  const { data: mintedRows, error: mintedErr } = await supabase
+    .from('ingest_packets')
+    .select('ordinal, page_ids, capture_id')
+    .eq('batch_id', batchId)
+    .not('capture_id', 'is', null);
+  if (mintedErr) throw mintedErr;
+
+  const minted = (mintedRows ?? []).map((r) => ({
+    ordinal: r.ordinal as number,
+    pageIds: Array.isArray(r.page_ids) ? (r.page_ids as string[]) : [],
+  }));
+
+  // Delete ALL non-minted packets (draft + failed). confirm_ingest_batch can leave
+  // status=failed with capture_id null; leaving those ordinals collides on unique(batch_id, ordinal).
+  // Never delete/update rows with capture_id set.
   const { error: delErr } = await supabase
     .from('ingest_packets')
     .delete()
     .eq('batch_id', batchId)
-    .eq('status', 'draft')
     .is('capture_id', null);
   if (delErr) throw delErr;
 
-  if (packets.length === 0) return;
-  const rows = packets.map((p) => ({
+  const planned = planDraftPacketsAfterMinted(packets, minted);
+  if (planned.length === 0) return;
+  const rows = planned.map((p) => ({
     batch_id: batchId,
     ordinal: p.ordinal,
     page_ids: p.pageIds,
@@ -248,6 +265,59 @@ export async function replaceDraftPackets(
   }));
   const { error } = await supabase.from('ingest_packets').insert(rows);
   if (error) throw error;
+}
+
+/** Mark not-yet-rasterized page indexes failed (keep completed rasterized rows). */
+export async function markIncompletePagesFailed(
+  supabase: SupabaseClient,
+  input: {
+    batchId: string;
+    plans: { fileId: string; pages: number }[];
+    rasterizedIndexes: Set<number>;
+    errorCode: string;
+  },
+): Promise<void> {
+  let pageIndex = 0;
+  for (const plan of input.plans) {
+    for (let filePage = 0; filePage < plan.pages; filePage += 1) {
+      const idx = pageIndex;
+      pageIndex += 1;
+      if (input.rasterizedIndexes.has(idx)) continue;
+
+      const { data: existing, error: findErr } = await supabase
+        .from('ingest_pages')
+        .select('id, status')
+        .eq('batch_id', input.batchId)
+        .eq('page_index', idx)
+        .maybeSingle();
+      if (findErr) throw findErr;
+
+      if (existing) {
+        if (existing.status === 'rasterized') continue;
+        const { error } = await supabase
+          .from('ingest_pages')
+          .update({
+            status: 'failed',
+            error_code: input.errorCode,
+            file_id: plan.fileId,
+            file_page_index: filePage,
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('ingest_pages').insert({
+          batch_id: input.batchId,
+          file_id: plan.fileId,
+          page_index: idx,
+          file_page_index: filePage,
+          blank: false,
+          status: 'failed',
+          error_code: input.errorCode,
+        });
+        if (error) throw error;
+      }
+    }
+  }
 }
 
 export async function updateFilePageCount(

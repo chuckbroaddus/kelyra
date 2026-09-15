@@ -241,6 +241,54 @@ fn collect_paths(impl_out, qa_out) {
     paths
 }
 
+fn merge_path_list(into, impl_out) {
+    let out = [];
+    if is_array(into) {
+        for p in into { out.push(p); }
+    }
+    if is_map(impl_out) {
+        for p in string_list(impl_out.changed_paths) {
+            let seen = false;
+            for e in out {
+                if e == p { seen = true; }
+            }
+            if !seen && p != "" { out.push(p); }
+        }
+    }
+    out
+}
+
+fn hay_matches_any_path(hay, paths) {
+    let h = as_lower(hay);
+    if h == "" { return false; }
+    if !is_array(paths) { return false; }
+    for p in paths {
+        let pp = as_lower(p);
+        if pp != "" && h.contains(pp) { return true; }
+    }
+    false
+}
+
+fn keep_verify_blocking(items, changed) {
+    if !is_array(items) { return []; }
+    if !is_array(changed) || changed.len() == 0 { return items; }
+    let kept = [];
+    for item in items {
+        if !is_map(item) { continue; }
+        let hay = as_string(item.failure_path);
+        hay += "\n";
+        hay += as_string(item.evidence);
+        hay += "\n";
+        hay += as_string(item.title);
+        if hay_matches_any_path(hay, changed) {
+            kept.push(item);
+        } else {
+            log("Dropping verify finding outside this request's paths: " + as_string(item.title));
+        }
+    }
+    kept
+}
+
 fn needs_security_review(request, impl_out, qa_out) {
     if is_map(qa_out) && qa_out.touched_security_boundary == true { return true; }
     if request_looks_sensitive(request) { return true; }
@@ -299,6 +347,14 @@ fn impl_initial_prompt(request_json) {
     p += kelyra_invariants_text();
     p += "Use read_file, grep, and search_replace/write on the actual tree. Do not answer from memory.\n";
     p += "Add or update tests when appropriate. Never weaken or delete a test to make it pass.\n";
+    p += "When wiring an existing RPC, table, or unique constraint: read the SQL function body and ";
+    p += "constraints before writing the client. If the request forbids applying SQL, the client must ";
+    p += "work against the live applied function, not a hoped-for on-disk rewrite. You may edit on-disk ";
+    p += "SQL only when the request allows, and the client must still be compatible with live.\n";
+    p += "For persist/confirm/versioned writes: never insert a colliding unique key before the versioned ";
+    p += "RPC; never roll back after the RPC committed; serialize overlapping saves per entity; ";
+    p += "Confirm/submit must not proceed if persist failed. Add a test that encodes that contract.\n";
+    p += "Do not edit unrelated dirty-tree files to make repo-wide typecheck pass.\n";
     p += "When done, set summary to what you changed and changed_paths to repo-relative paths you edited.\n";
     p += "REQUEST (JSON):\n";
     p += request_json;
@@ -313,6 +369,11 @@ fn impl_fix_prompt(kind, request_json, findings_json) {
     p += "Preserve unrelated working-tree changes. No git reset/checkout/restore/clean/stash.\n";
     p += "Fix only the blocking P0/P1 findings below. Smallest correct fix. Add a regression test when appropriate.\n";
     p += "Inspect the actual code for each finding. Do not patch a symptom if the root cause is nearby.\n";
+    p += "If a verify/typecheck finding is in a file this request did not change, do not edit that file. ";
+    p += "Record it as unrelated/pre-existing and leave changed_paths empty for that repair.\n";
+    p += "After a persist/RPC fix, re-read the whole save/confirm path for unique-key collisions, ";
+    p += "rollback after a committed RPC, overlapping in-flight saves, and Confirm proceeding on a ";
+    p += "failed persist. Add a regression test for the reported failure path.\n";
     p += kelyra_invariants_text();
     p += "KIND: ";
     p += kind;
@@ -334,6 +395,9 @@ fn qa_prompt(request_json, impl_json) {
     p += "Read Agents.md and docs/mvp.md when scope or invariants apply.\n";
     p += "Review correctness, regressions, edge cases, data integrity, auth, RLS, student PII, ";
     p += "grade-approval behavior, UI, web vs phone, tests, and unintended MVP expansion.\n";
+    p += "For persist/RPC/versioned writes, inspect unique constraints, live SQL vs client ";
+    p += "(especially when SQL apply is forbidden), rollback after commit, overlapping saves, ";
+    p += "and Confirm/submit after a failed persist.\n";
     p += kelyra_invariants_text();
     p += "ONLY P0 and P1 are blocking. P0 = catastrophic/security/data-loss/integrity. ";
     p += "P1 = serious correctness/auth/security/regression that must be fixed before acceptance. ";
@@ -379,7 +443,7 @@ fn security_prompt(request_json, impl_json, prior_json) {
     p
 }
 
-fn verify_prompt(request_json, impl_json) {
+fn verify_prompt(request_json, impl_json, changed_paths_json) {
     let p = "";
     p += "Run deterministic verification for this Kelyra change. Do not edit files.\n";
     p += "Do not spawn subagents. Do not git reset/checkout/restore/clean/stash.\n";
@@ -391,7 +455,13 @@ fn verify_prompt(request_json, impl_json) {
     p += "3. Run unit tests with node --test (and --experimental-strip-types if needed) for src/**/*.test.ts ";
     p += "or tests next to changed_paths. Skip a command that would take many minutes or needs a network/app.\n";
     p += "Do not npm install. Do not hit production. Quote command output in ran[].output (trim to essentials).\n";
-    p += "Set ok=true only if every command you ran passed. Put failures in blocking as P1 with evidence.\n";
+    p += "CHANGED_PATHS for THIS request (JSON):\n";
+    p += changed_paths_json;
+    p += "\nIf typecheck fails, classify each tsc error. A failure is blocking only when its file is in ";
+    p += "CHANGED_PATHS (or was clearly edited for THIS request). Pre-existing errors in unrelated ";
+    p += "dirty-tree files go in skipped with reason 'unrelated dirty-tree typecheck' — do not set ";
+    p += "ok=false for those alone, and do not put them in blocking.\n";
+    p += "Set ok=true if every in-scope command passed. Put in-scope failures in blocking as P1 with evidence.\n";
     p += "List skipped commands in skipped with a one-line reason.\n";
     p += "ORIGINAL REQUEST (JSON):\n";
     p += request_json;
@@ -515,7 +585,7 @@ fn render_findings(title, items) {
     t
 }
 
-fn finish(outcome, summary, request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out) {
+fn finish(outcome, summary, request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out) {
     let report = "";
     report += "# kelyra-qa-loop\n\n";
     report += "- outcome: ";
@@ -535,9 +605,20 @@ fn finish(outcome, summary, request, qa_repairs, verify_repairs, security_repair
     report += "\n\n## Request\n\n";
     report += request;
     report += "\n\n## Implementation summary\n\n";
-    if is_map(impl_out) {
-        report += as_string(impl_out.summary);
+    let primary = first_impl_out;
+    if !is_map(primary) { primary = impl_out; }
+    if is_map(primary) {
+        report += as_string(primary.summary);
         report += "\n";
+        if is_map(impl_out) {
+            let last = as_string(impl_out.summary);
+            let firsts = as_string(primary.summary);
+            if last != "" && last != firsts {
+                report += "\nLast repair summary: ";
+                report += last;
+                report += "\n";
+            }
+        }
     } else {
         report += encode(impl_out);
         report += "\n";
@@ -550,6 +631,8 @@ fn finish(outcome, summary, request, qa_repairs, verify_repairs, security_repair
     }
     let path = write_scratch_file("report.md", report);
     log(summary);
+    let impl_for_result = impl_out;
+    if is_map(first_impl_out) { impl_for_result = first_impl_out; }
     complete(#{
         path: path,
         report: report,
@@ -562,7 +645,7 @@ fn finish(outcome, summary, request, qa_repairs, verify_repairs, security_repair
         security_ok: security_ok,
         blocking: blocking,
         nonblocking: nonblocking,
-        implementation: impl_out,
+        implementation: impl_for_result,
     });
 }
 
@@ -574,6 +657,8 @@ if request == () {
 let request_json = encode(request);
 let impl_id = ();
 let impl_out = ();
+let first_impl_out = ();
+let all_changed = [];
 let qa_out = ();
 let blocking = [];
 let nonblocking = [];
@@ -596,8 +681,10 @@ if !agent_ok(impl_res) && unknown_subagent_type(impl_res) {
 }
 impl_id = latest_impl_id(impl_res, impl_id);
 impl_out = impl_output_of(impl_res);
+all_changed = merge_path_list(all_changed, impl_out);
+if is_map(impl_out) { first_impl_out = impl_out; }
 if !agent_ok(impl_res) {
-    finish("escalated", "Implementation agent failed.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+    finish("escalated", "Implementation agent failed.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
 }
 
 let step = "qa";
@@ -616,7 +703,7 @@ while looping {
             qa_res = agent(qa_prompt(request_json, encode(impl_out)), qa_opts("[kelyra-qa] review retry", qa_schema, qa_type));
         }
         if !agent_ok(qa_res) {
-            finish("escalated", "QA agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "QA agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         }
         qa_out = qa_res.output;
         blocking = extract_blocking(qa_out);
@@ -626,9 +713,9 @@ while looping {
         if nblock == 0 {
             step = "verify";
         } else if qa_repairs >= MAX_QA_REPAIR {
-            finish("escalated", "QA still reports P0/P1 after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "QA still reports P0/P1 after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         } else if impl_id == () {
-            finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         } else {
             qa_repairs += 1;
             phase("Repair");
@@ -636,30 +723,34 @@ while looping {
             impl_res = agent(impl_fix_prompt("qa", request_json, encode(blocking)), impl_opts("[kelyra-implementer] fix QA findings", impl_id, impl_schema, impl_type));
             impl_id = latest_impl_id(impl_res, impl_id);
             impl_out = impl_output_of(impl_res);
+            all_changed = merge_path_list(all_changed, impl_out);
             if !agent_ok(impl_res) {
-                finish("escalated", "Resumed implementer failed while fixing QA findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+                finish("escalated", "Resumed implementer failed while fixing QA findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
             }
         }
     } else if step == "verify" {
         phase("Verify");
         log("Deterministic typecheck/tests when inexpensive and applicable");
-        let ver_res = agent(verify_prompt(request_json, encode(impl_out)), verify_opts(verify_schema));
+        let ver_res = agent(verify_prompt(request_json, encode(impl_out), encode(all_changed)), verify_opts(verify_schema));
         if !agent_ok(ver_res) {
             log("Verify agent failed; retrying once");
-            ver_res = agent(verify_prompt(request_json, encode(impl_out)), verify_opts(verify_schema));
+            ver_res = agent(verify_prompt(request_json, encode(impl_out), encode(all_changed)), verify_opts(verify_schema));
         }
         if !agent_ok(ver_res) {
-            finish("escalated", "Verify agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "Verify agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         }
         let verify_out = ver_res.output;
-        let verify_blocking = findings_as_blocking(verify_out);
-        if verify_blocking.len() == 0 && !(is_map(verify_out) && verify_out.ok == false) {
+        let verify_blocking = keep_verify_blocking(findings_as_blocking(verify_out), all_changed);
+        if verify_blocking.len() == 0 {
+            if is_map(verify_out) && verify_out.ok == false {
+                log("Verify reported ok=false but remaining findings are outside this request's paths; continuing");
+            }
             step = "security";
         } else if verify_repairs >= MAX_VERIFY_REPAIR {
             blocking = verify_blocking;
-            finish("escalated", "Typecheck/tests still failing after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "Typecheck/tests still failing after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         } else if impl_id == () {
-            finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+            finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
         } else {
             verify_repairs += 1;
             phase("Repair");
@@ -667,8 +758,9 @@ while looping {
             impl_res = agent(impl_fix_prompt("verify", request_json, encode(verify_blocking)), impl_opts("[kelyra-implementer] fix verify failures", impl_id, impl_schema, impl_type));
             impl_id = latest_impl_id(impl_res, impl_id);
             impl_out = impl_output_of(impl_res);
+            all_changed = merge_path_list(all_changed, impl_out);
             if !agent_ok(impl_res) {
-                finish("escalated", "Resumed implementer failed while fixing verify failures.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+                finish("escalated", "Resumed implementer failed while fixing verify failures.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
             }
             step = "qa";
         }
@@ -687,7 +779,7 @@ while looping {
                 sec_res = agent(security_prompt(request_json, encode(impl_out), encode(last_security_blocking)), qa_opts("[kelyra-qa] security review retry", qa_schema, qa_type));
             }
             if !agent_ok(sec_res) {
-                finish("escalated", "Security QA agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, false, blocking, nonblocking, impl_out);
+                finish("escalated", "Security QA agent failed twice; escalating to the parent session.", request, qa_repairs, verify_repairs, security_repairs, security_ran, false, blocking, nonblocking, impl_out, first_impl_out);
             }
             let sec_out = sec_res.output;
             last_security_blocking = extract_blocking(sec_out);
@@ -701,9 +793,9 @@ while looping {
             } else if security_repairs >= MAX_SECURITY_REPAIR {
                 security_ok = false;
                 blocking = last_security_blocking;
-                finish("escalated", "Security QA still reports P0/P1 after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+                finish("escalated", "Security QA still reports P0/P1 after three repair cycles.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);
             } else if impl_id == () {
-                finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, false, last_security_blocking, nonblocking, impl_out);
+                finish("escalated", "Cannot resume implementer: missing agent_id.", request, qa_repairs, verify_repairs, security_repairs, security_ran, false, last_security_blocking, nonblocking, impl_out, first_impl_out);
             } else {
                 security_ok = false;
                 security_repairs += 1;
@@ -712,8 +804,9 @@ while looping {
                 impl_res = agent(impl_fix_prompt("security", request_json, encode(last_security_blocking)), impl_opts("[kelyra-implementer] fix security findings", impl_id, impl_schema, impl_type));
                 impl_id = latest_impl_id(impl_res, impl_id);
                 impl_out = impl_output_of(impl_res);
+                all_changed = merge_path_list(all_changed, impl_out);
                 if !agent_ok(impl_res) {
-                    finish("escalated", "Resumed implementer failed while fixing security findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, last_security_blocking, nonblocking, impl_out);
+                    finish("escalated", "Resumed implementer failed while fixing security findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, last_security_blocking, nonblocking, impl_out, first_impl_out);
                 }
                 step = "qa";
             }
@@ -723,4 +816,4 @@ while looping {
     }
 }
 
-finish("passed", "QA passed with no P0/P1 findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out);
+finish("passed", "QA passed with no P0/P1 findings.", request, qa_repairs, verify_repairs, security_repairs, security_ran, security_ok, blocking, nonblocking, impl_out, first_impl_out);

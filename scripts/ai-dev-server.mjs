@@ -47,6 +47,13 @@ import {
 } from '../supabase/functions/_shared/askHomeworkRefuse.ts';
 import { formatTutorBriefForAsk, parseTutorBriefSafe } from '../supabase/functions/_shared/tutorBrief.ts';
 import { canPublish } from '../supabase/functions/_shared/publishLessonPackPolicy.ts';
+import {
+  homeworkPageAssetIdsForModel,
+  isHomeworkPageImageMime,
+  MAX_HOMEWORK_PAGE_IMAGES,
+  mergePreservedPageAssetIds,
+  pageAssetIdsFromDraft,
+} from '../supabase/functions/_shared/homeworkPages.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -295,6 +302,7 @@ async function analyzeHomework(supabase, body) {
     .select('id, student_id, photo_asset_id, model_draft')
     .eq('id', captureId)
     .single();
+  // Unnamed / unassigned must never call the model or insert skill_gaps.
   if (captureError || !capture?.student_id || !capture.photo_asset_id) {
     throw new Error('Capture must have a student and a photo');
   }
@@ -312,23 +320,55 @@ async function analyzeHomework(supabase, body) {
       pass: 'cheap',
       status: 'pending',
     });
-    await supabase.from('captures').update({ ai_status: 'pending', model_draft: { pending: true } }).eq('id', captureId);
+    // Preserve pageAssetIds (batch multi-page) when marking pending — never wipe to {pending:true} alone.
+    const priorIds = pageAssetIdsFromDraft(capture.model_draft);
+    const queuedDraft = {
+      pending: true,
+      ...(priorIds.length ? { pageAssetIds: priorIds } : {}),
+    };
+    await supabase
+      .from('captures')
+      .update({ ai_status: 'pending', model_draft: queuedDraft })
+      .eq('id', captureId);
     return { ok: true, queued: true };
   }
 
-  const { data: asset, error: assetError } = await supabase
+  const pageIds = homeworkPageAssetIdsForModel(capture);
+  if (!pageIds.length) throw new Error('Photo asset missing');
+
+  const { data: assets, error: assetError } = await supabase
     .from('assets')
-    .select('storage_path')
-    .eq('id', capture.photo_asset_id)
-    .single();
-  if (assetError || !asset) throw new Error('Photo asset missing');
+    .select('id, storage_path, mime_type')
+    .in('id', pageIds);
+  if (assetError || !assets?.length) throw new Error('Photo asset missing');
 
-  const { data: signed, error: signedError } = await supabase.storage
-    .from('photos')
-    .createSignedUrl(asset.storage_path, 120);
-  if (signedError || !signed?.signedUrl) throw new Error('Could not sign photo URL');
+  const byId = new Map(assets.map((row) => [row.id, row]));
+  const imageUrls = [];
+  for (const id of pageIds) {
+    const asset = byId.get(id);
+    if (!asset?.storage_path) continue;
+    if (!isHomeworkPageImageMime(asset.mime_type)) {
+      throw new Error('Homework analyze accepts page images only');
+    }
+    // Sign from photos bucket only — never ingest/files PDF bytes.
+    const { data: signed, error: signedError } = await supabase.storage
+      .from('photos')
+      .createSignedUrl(asset.storage_path, 120);
+    if (signedError || !signed?.signedUrl) throw new Error('Could not sign photo URL');
+    imageUrls.push(signed.signedUrl);
+    if (imageUrls.length >= MAX_HOMEWORK_PAGE_IMAGES) break;
+  }
+  if (!imageUrls.length) throw new Error('Photo asset missing');
 
-  const draft = await draftFromPhoto(signed.signedUrl, pass, supabase, captureId);
+  const draft = await draftFromPhotos(imageUrls, pass, supabase, captureId);
+  const priorPageIds = pageAssetIdsFromDraft(capture.model_draft);
+  const modelDraft = mergePreservedPageAssetIds(
+    {
+      ...draft,
+      ...(priorPageIds.length ? { pageAssetIds: priorPageIds } : {}),
+    },
+    capture.model_draft,
+  );
 
   await supabase.from('skill_gaps').delete().eq('capture_id', captureId).eq('source', 'model');
   if (draft.gaps.length) {
@@ -349,7 +389,7 @@ async function analyzeHomework(supabase, body) {
     .from('captures')
     .update({
       status: draft.gaps.length ? 'draft' : 'attached',
-      model_draft: draft,
+      model_draft: modelDraft,
       draft_score: draft.draftScore,
       teacher_note: draft.teacherNote,
       ai_status: 'done',
@@ -1476,15 +1516,24 @@ function parseHomeworkDraft(parsed) {
   };
 }
 
-async function draftFromPhoto(imageUrl, pass = 'cheap', supabase = null, captureId = null) {
-  const prepared = await prepareImageForGrok(imageUrl);
+async function draftFromPhotos(imageUrls, pass = 'cheap', supabase = null, captureId = null) {
+  const detail = imageDetailFor(pass);
+  const urls = imageUrls.slice(0, MAX_HOMEWORK_PAGE_IMAGES);
+  const prepared = [];
+  for (const imageUrl of urls) {
+    prepared.push(await prepareImageForGrok(imageUrl));
+  }
   const payload = await grokCall(
     'homework',
     [
       {
         role: 'user',
         content: [
-          { type: 'input_image', image_url: prepared, detail: imageDetailFor(pass) },
+          ...prepared.map((imageUrl) => ({
+            type: 'input_image',
+            image_url: imageUrl,
+            detail,
+          })),
           { type: 'input_text', text: homeworkPrompt },
         ],
       },

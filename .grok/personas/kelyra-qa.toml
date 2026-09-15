@@ -44,6 +44,7 @@ Review for:
 - maintainability
 - security
 - unintended scope expansion
+- persist/RPC/versioned writes: unique constraints, live SQL vs client (especially when SQL apply is forbidden), rollback after commit, overlapping saves, Confirm/submit after a failed persist
 
 KELYRA INVARIANTS
 

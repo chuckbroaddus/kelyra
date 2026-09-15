@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAL-R3 Week compare</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #F5F5F7; padding: 16px; }
+  h1 { font-size: 16px; margin-bottom: 12px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .phone { width: 320px; min-height: 480px; border: 1px solid #3A3A3C; border-radius: 24px; padding: 12px; background: #000000; }
+  .label { font-size: 11px; color: #8E8E93; text-transform: uppercase; margin-bottom: 8px; }
+  .head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 8px; text-align: center; }
+  .dow { font-size: 10px; color: #8E8E93; }
+  .num { font-size: 13px; color: #F5F5F7; margin-top: 2px; }
+  .num.today { background: #FF453A; color: #FFFFFF; border-radius: 999px; width: 24px; height: 24px; line-height: 24px; margin: 2px auto 0; }
+  .cols { display: grid; grid-template-columns: 28px repeat(7, 1fr); gap: 2px; }
+  .h { font-size: 9px; color: #8E8E93; }
+  .cell { min-height: 48px; border-top: 1px solid #2C2C2E; position: relative; }
+  .ev { font-size: 9px; background: rgba(10,132,255,0.3); border-left: 2px solid #0A84FF; border-radius: 3px; padding: 2px; color: #F5F5F7; margin: 1px; }
+  .ev.h { border-left-color: #FFD60A; background: rgba(255,214,10,0.2); }
+  .pill { font-size: 11px; background: #1C1C1E; border-radius: 8px; padding: 6px; margin-bottom: 4px; color: #F5F5F7; border: 1px solid #3A3A3C; }
+</style>
+</head>
+<body>
+  <h1>Week — current vs denser proposed</h1>
+  <div class="row">
+    <div class="phone">
+      <div class="label">Current TeacherWeekGrid (simplified)</div>
+      <div class="head">
+        <div><div class="dow">M</div><div class="num">14</div></div>
+        <div><div class="dow">T</div><div class="num today">15</div></div>
+        <div><div class="dow">W</div><div class="num">16</div></div>
+        <div><div class="dow">T</div><div class="num">17</div></div>
+        <div><div class="dow">F</div><div class="num">18</div></div>
+        <div><div class="dow">S</div><div class="num">19</div></div>
+        <div><div class="dow">S</div><div class="num">20</div></div>
+      </div>
+      <div class="pill">Quiz · academic · Hidden</div>
+      <div class="pill">HW due · homework</div>
+      <div class="pill">Game · sport</div>
+      <p style="color:#8E8E93;font-size:12px;margin-top:12px">Items as stacked chips per day — not hour gutter.</p>
+    </div>
+    <div class="phone">
+      <div class="label">Proposed denser week</div>
+      <div class="head">
+        <div><div class="dow">M</div><div class="num">14</div></div>
+        <div><div class="dow">T</div><div class="num today">15</div></div>
+        <div><div class="dow">W</div><div class="num">16</div></div>
+        <div><div class="dow">T</div><div class="num">17</div></div>
+        <div><div class="dow">F</div><div class="num">18</div></div>
+        <div><div class="dow">S</div><div class="num">19</div></div>
+        <div><div class="dow">S</div><div class="num">20</div></div>
+      </div>
+      <div style="font-size:11px;color:#30D158;margin:4px 0 8px;padding:4px 6px;background:#1C1C1E;border-radius:6px">All-day · Staff meeting</div>
+      <div class="cols">
+        <div class="h">9</div>
+        <div class="cell"><div class="ev h">Quiz</div></div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="h">15</div>
+        <div class="cell"></div><div class="cell"><div class="ev">HW</div></div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="h">17</div>
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="cell"><div class="ev" style="border-left-color:#BF5AF2;background:rgba(191,90,242,0.25)">Game</div></div>
+        <div class="cell"></div><div class="cell"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

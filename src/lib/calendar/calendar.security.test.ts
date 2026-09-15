@@ -481,12 +481,19 @@ test('Phase B CH-A: parent 2+ missing child empty (S1-03); UI fail-closed', () =
   assert.match(items, /my_parent_student_count\(\)\s*>=\s*2/);
 });
 
-test('Phase B VW-A phone Agenda+Day; DP-A teacher badge; family never hidden titles (S2-04)', () => {
+test('CAL-R3 VW-R3-C views + DP-A teacher badge; family never hidden titles (S2-04)', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /phoneView/);
+  // Phone default Agenda (not Year-as-Desk); all VW-R3-C views reachable in-route.
+  assert.match(screen, /defaultViewFor/);
   assert.match(screen, /Agenda/);
   assert.match(screen, /Day/);
+  assert.match(screen, /YearGrid/);
+  assert.match(screen, /MonthGrid/);
+  assert.match(screen, /TeacherWeekGrid/);
+  assert.match(screen, /MultiDayStepper/);
+  assert.match(screen, /activeView/);
   assert.match(screen, /showHiddenBadge = seat === 'teacher'/);
+  assert.doesNotMatch(screen, /label=["']Inbox["']|accessibilityLabel=["']Inbox["']/);
   const agenda = read('src/components/calendar/AgendaList.tsx');
   assert.match(agenda, /showHiddenBadge/);
   assert.match(agenda, /Hidden/);

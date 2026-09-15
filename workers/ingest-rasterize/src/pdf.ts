@@ -32,7 +32,8 @@ export async function probePdf(filePath: string): Promise<PdfInfo> {
     if (enc) throw new RasterizeError('encrypted_pdf');
 
     const m = /^\s*Pages:\s*(\d+)\s*$/im.exec(text);
-    if (!m) throw new RasterizeError('corrupt_pdf', 'Could not read page count');
+    // Teacher-facing: ERROR_COPY.corrupt_pdf only — never pdfinfo stderr.
+    if (!m) throw new RasterizeError('corrupt_pdf');
     return { pages: Number(m[1]), encrypted: false };
   } catch (err) {
     if (err instanceof RasterizeError) throw err;
@@ -48,7 +49,8 @@ export async function probePdf(filePath: string): Promise<PdfInfo> {
     if (isEncryptedPdfMessage(out + msg, stdout)) {
       throw new RasterizeError('encrypted_pdf');
     }
-    throw new RasterizeError('corrupt_pdf', msg);
+    // Do not persist Command failed / pdfinfo / xref / trailer on the batch row.
+    throw new RasterizeError('corrupt_pdf');
   }
 }
 
@@ -97,14 +99,15 @@ export async function renderPageToJpegFile(
     if (isEncryptedPdfMessage(stderr + msg, stdout)) {
       throw new RasterizeError('encrypted_pdf');
     }
-    throw new RasterizeError('corrupt_pdf', msg);
+    // Named ERROR_COPY.corrupt_pdf only — never pdftoppm command/stderr.
+    throw new RasterizeError('corrupt_pdf');
   }
 
   const jpegPath = `${prefix}.jpg`;
   try {
     await access(jpegPath, constants.R_OK);
   } catch {
-    throw new RasterizeError('corrupt_pdf', `Missing render output for page ${pageOneBased}`);
+    throw new RasterizeError('corrupt_pdf');
   }
   return jpegPath;
 }

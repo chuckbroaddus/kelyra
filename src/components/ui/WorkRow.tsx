@@ -264,6 +264,7 @@ export function WorkRow({
   // Always pressable when swipe actions exist so tap-to-close works without onPress.
   const swipable = leading.length + trailing.length > 0;
   const cardPressable = Boolean(onPress) || swipable;
+  const rowLabel = status ? `${title}. ${status}` : title;
 
   return (
     <View
@@ -283,22 +284,15 @@ export function WorkRow({
         ]}
         {...responder.panHandlers}
       >
-        {cardPressable ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={status ? `${title}. ${status}` : title}
-            onPress={onCardPress}
-            style={({ pressed }) => [styles.inner, pressed ? { opacity: 0.88 } : null]}
-          >
-            {({ pressed }) => (
-              <WorkRowBody {...bodyProps} paused={pressed || swiping} />
-            )}
-          </Pressable>
-        ) : (
-          <View style={styles.inner} accessibilityLabel={status ? `${title}. ${status}` : title}>
-            <WorkRowBody {...bodyProps} paused={swiping} />
-          </View>
-        )}
+        {/* Shell is not role=button; main hit + pills are sibling buttons (no nested <button> on web). */}
+        <View style={styles.inner} accessibilityLabel={cardPressable ? undefined : rowLabel}>
+          <WorkRowBody
+            {...bodyProps}
+            paused={swiping}
+            onMainPress={cardPressable ? onCardPress : undefined}
+            mainAccessibilityLabel={rowLabel}
+          />
+        </View>
       </Animated.View>
     </View>
   );
@@ -316,6 +310,8 @@ function WorkRowBody({
   end,
   pills,
   paused,
+  onMainPress,
+  mainAccessibilityLabel,
 }: {
   title: string;
   status?: string;
@@ -328,51 +324,84 @@ function WorkRowBody({
   end?: ReactNode;
   pills: WorkPill[];
   paused: boolean;
+  onMainPress?: () => void;
+  mainAccessibilityLabel: string;
 }) {
   const { colors } = useTheme();
-  return (
-    <>
-      {lead ? (
-        <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
-          {lead}
-        </View>
-      ) : photoUri(photoUrl) ? (
-        <RemoteImage
-          uri={photoUri(photoUrl)!}
-          style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]}
+
+  const media = lead ? (
+    <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
+      {lead}
+    </View>
+  ) : photoUri(photoUrl) ? (
+    <RemoteImage
+      uri={photoUri(photoUrl)!}
+      style={[styles.media, { borderColor: colors.line, backgroundColor: colors.card }]}
+    />
+  ) : (
+    <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
+      {unknown ? <UnknownMark size={56} /> : <AvatarInitials name={avatarName ?? title} size={56} />}
+    </View>
+  );
+
+  const textBlock = (marqueePaused: boolean) => (
+    <View style={styles.body}>
+      <View style={styles.head}>
+        <MarqueeText
+          text={title}
+          align="start"
+          paused={marqueePaused}
+          fadeColor={colors.bg}
+          style={[styles.title, { color: colors.ink }]}
         />
-      ) : (
-        <View style={[styles.media, styles.mediaEmpty, { borderColor: colors.line, backgroundColor: colors.wash }]}>
-          {unknown ? <UnknownMark size={56} /> : <AvatarInitials name={avatarName ?? title} size={56} />}
+        {end ? end : badge ? <Badge variant={badge} /> : null}
+      </View>
+      {status ? (
+        <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
+          {status}
+        </Text>
+      ) : null}
+      {meta ? (
+        <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={1}>
+          {meta}
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const main = onMainPress ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={mainAccessibilityLabel}
+      onPress={onMainPress}
+      style={({ pressed }) => [pressed ? { opacity: 0.88 } : null]}
+    >
+      {({ pressed }) => (
+        <View style={styles.mainHit}>
+          {media}
+          {textBlock(paused || pressed)}
         </View>
       )}
-      <View style={styles.body}>
-        <View style={styles.head}>
-          <MarqueeText
-            text={title}
-            align="start"
-            paused={paused}
-            fadeColor={colors.bg}
-            style={[styles.title, { color: colors.ink }]}
-          />
-          {end ? end : badge ? <Badge variant={badge} /> : null}
-        </View>
-        {status ? (
-          <Text style={[styles.status, { color: colors.mute }]} numberOfLines={1}>
-            {status}
-          </Text>
-        ) : null}
-        {meta ? (
-          <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={1}>
-            {meta}
-          </Text>
-        ) : null}
-        {pills.length ? (
+    </Pressable>
+  ) : (
+    <View style={styles.mainHit}>
+      {media}
+      {textBlock(paused)}
+    </View>
+  );
+
+  return (
+    <>
+      {main}
+      {pills.length ? (
+        <View style={styles.pillsRow}>
+          <View style={styles.pillsGutter} />
           <View style={styles.pills}>
             {pills.map((pill) => (
               <Pressable
                 key={pill.key}
                 accessibilityRole="button"
+                accessibilityLabel={pill.label}
                 hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                 onPress={pill.onPress}
                 style={({ pressed }) => [
@@ -405,8 +434,8 @@ function WorkRowBody({
               </Pressable>
             ))}
           </View>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </>
   );
 }
@@ -444,8 +473,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   inner: {
+    flexDirection: 'column',
+  },
+  mainHit: {
     flexDirection: 'row',
     gap: 12,
+    minWidth: 0,
   },
   media: {
     width: 72,
@@ -474,11 +507,21 @@ const styles = StyleSheet.create({
   },
   status: type.meta,
   meta: type.meta,
+  // Align pills under body text (media 72 + mainHit gap 12).
+  pillsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 10,
+  },
+  pillsGutter: {
+    width: 72,
+  },
   pills: {
+    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 10,
+    minWidth: 0,
   },
   pill: {
     height: 32,

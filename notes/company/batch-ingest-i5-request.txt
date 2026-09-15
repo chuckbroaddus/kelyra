@@ -1,0 +1,75 @@
+BATCH-v1 I5: partial failure + retry remainder + sha256 skip duplicate captures.
+
+Kanban: t_c4e56b9f. Dual IQG MET (PM + QAS 2026-09-12). Launch as implementer inside kelyra-qa-loop.
+ARM GRANT a_0df378bef4 pool=supergrok class=qa-loop. No git. No live SQL apply.
+
+CONTEXT (do not re-do prior slices):
+- I0–I4 landed. I4 passed wf_01a0a058b7197c5286a07ad7d7c82277 (t_a069938c): Inbox batch stacks; attach→analyze multi-page ≤4 JPEGs; unnamed never gap AI.
+- I0 SQL already defines status 'partial' / 'retry_remainder' and RPC retry_ingest_remainder(partial→retry_remainder) in supabase/migrations/20260913000000_ingest_batches.sql.
+- I2 worker (workers/ingest-rasterize/) already claims received|retry_remainder, skips already-rasterized page_index via upsertIngestPage / listRasterizedPages, but failBatch always sets status='failed' (wipes partial progress semantics for UI).
+- confirm_ingest_batch already can leave batch status='partial' when some packets mint and some fail; packets with capture_id stay minted.
+- register_ingest_file is idempotent on (batch_id, sha256). Open-batch unique on (teacher_id, class_id, original_sha256).
+- Architecture I5 / BATCH-14: kill worker mid-stack (e.g. page 20/40); keep completed pages/packets/captures; teacher retries remainder; no duplicate page rows or capture rows for same content/sha256.
+- ERROR_COPY already has raster_timeout / worker_dead: "…Retry the remainder."
+- Teach seat only; no hot folder; no parent/student ingest chrome.
+
+IMPLEMENT:
+
+1) Worker partial failure (not total wipe)
+   - On mid-run error AFTER ≥1 page rasterized (timeout, crash-sim, render fail, worker_dead): set batch status='partial' (not 'failed'), keep pages_done/page_count, set error_code + error_message naming the gap (use ERROR_COPY worker_dead / raster_timeout / corrupt_pdf as appropriate).
+   - On hard total fails with 0 pages done (encrypted_pdf, unsupported_type, too_many_pages before any page, empty files): keep status='failed' as today.
+   - Never delete already-rasterized ingest_pages or assets on partial fail.
+   - replaceDraftPackets only for packets without capture_id; never touch minted packets.
+   - On claim of retry_remainder: resume from already rasterized indexes (already partially present); do not re-upload/re-insert pages that are rasterized.
+   - Prefer marking incomplete pages failed/pending rather than orphaning; completed pages stay rasterized.
+
+2) Client: retry remainder + banner names the gap
+   - Wire retryIngestRemainder → rpc('retry_ingest_remainder') in src/lib/ingest/api.ts.
+   - ClassStackBinder / SplitReview / Needs batch UI:
+     * Treat status 'partial' as recoverable: show banner/copy that NAMES the gap (error_message or INGEST_COPY for error_code) + pages_done/page_count when known.
+     * Primary action: "Retry remainder" calling retry_ingest_remainder then resume polling (received/retry_remainder → rasterizing).
+     * status 'failed' with 0 useful pages stays abandon/re-upload path; 'partial' must not force full re-upload of the same stack.
+   - Add INGEST_COPY atoms only as needed (partialBanner, retryRemainder, etc.). No new View-stroke icons.
+   - After successful remainder rasterize → split_review as today; Confirm path unchanged for fully ready packets.
+
+3) sha256 / duplicate capture guard (BATCH-14)
+   - Retry same file bytes must not mint extra captures for packets that already have capture_id.
+   - confirm_ingest_batch already skips capture_id IS NOT NULL — preserve and test.
+   - If I5 needs stronger guard: when minting, never insert a second capture for the same packet; unique/idempotent on packet.capture_id link.
+   - register_ingest_file + upload path: re-register same sha256 returns existing row (already I0); do not create duplicate ingest_files.
+   - Worker page upsert remains idempotent on (batch_id, page_index).
+   - Tests must prove: simulate partial at page 20/40 (or unit equivalent), retry remainder, count captures after confirm (or after dual confirm attempts) → 0 extra captures vs single successful path; page rows not doubled.
+
+4) Understand / attach path unchanged for I4 invariants
+   - Unnamed = no gap AI; never Approve; never invent student; never class PDF / original PDF bytes to model; ≤4 page JPEGs.
+   - Partial/retry must not invoke analyze-homework or skill_gaps.
+
+5) Tests
+   - workers/ingest-rasterize tests and/or src/lib/ingest/*security*.test.ts / unit:
+     * partial fail keeps rasterized pages; status partial + error_code set
+     * retry_ingest_remainder SQL: only from partial → retry_remainder; class_teacher_of; no teaches_class bypass
+     * worker claim includes retry_remainder; skips existing rasterized page_index
+     * confirm skips packets with capture_id; second confirm / retry path → 0 extra captures
+     * copy/banner names gap (error_code/message surface)
+     * fail with 0 pages still 'failed'
+   - typecheck clean for touched files; do not "fix" unrelated dirty-tree files.
+
+CONSTRAINTS (hard):
+- No git commit, push, reset, clean, stash drop
+- No supabase db push / apply / live SQL
+- No hot folder / Drive watch
+- No I6 chrome recut; no matcher invent; no Approve automation
+- Preserve unrelated dirty working tree
+- Loop children: NEVER ask_user_question / interactive Continue
+- Never EXPO_PUBLIC model keys; never invent View-stroke icons
+- Never insert students; never auto-Approve from worker
+- Never send whole-class PDF to model
+
+ACCEPTANCE:
+- kelyra-qa-loop terminal passed (or complete, 0 P0/P1)
+- Partial rasterize fail → status partial, completed pages kept, banner names gap
+- Retry remainder does not re-mint sha256/page/capture duplicates (retry same bytes → 0 extra captures)
+- typecheck + relevant tests green; security_ok / no secrets
+- Teach seat only for batch entry chrome
+
+OUT OF SCOPE: live migration apply, git ship, hot folder, I6, Split Review naming, Approve automation.

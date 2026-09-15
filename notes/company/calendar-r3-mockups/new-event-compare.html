@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAL-R3 New event compare</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #000000; color: #F5F5F7; padding: 16px; }
+  h1 { font-size: 16px; margin-bottom: 12px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .sheet { width: 300px; border-radius: 16px 16px 0 0; background: #1C1C1E; border: 1px solid #3A3A3C; padding: 12px 14px 20px; min-height: 460px; }
+  .label { font-size: 11px; color: #8E8E93; text-transform: uppercase; margin-bottom: 8px; }
+  .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .bar button, .bar .t { background: none; border: 0; color: #0A84FF; font-size: 16px; }
+  .bar .t { color: #F5F5F7; font-weight: 600; font-size: 15px; }
+  .banner { background: rgba(10,132,255,0.18); color: #F5F5F7; border: 1px solid #0A84FF; border-radius: 10px; padding: 8px 10px; font-size: 12px; margin-bottom: 10px; }
+  .field { background: #2C2C2E; border-radius: 10px; padding: 12px; margin-bottom: 8px; color: #F5F5F7; font-size: 14px; }
+  .field .k { color: #8E8E93; font-size: 12px; margin-bottom: 4px; }
+  .row2 { display: flex; justify-content: space-between; align-items: center; }
+  .sw { width: 40px; height: 24px; border-radius: 999px; background: #30D158; }
+  .cap { font-size: 12px; color: #AEAEB2; margin: 8px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #FFD60A; display: inline-block; margin-right: 6px; }
+  .tabs { display: flex; gap: 0; margin-bottom: 10px; background: #2C2C2E; border-radius: 8px; padding: 2px; }
+  .tabs span { flex: 1; text-align: center; padding: 6px; font-size: 13px; color: #8E8E93; border-radius: 6px; }
+  .tabs .on { background: #3A3A3C; color: #F5F5F7; }
+  .strike { color: #636366; text-decoration: line-through; }
+  .note { font-size: 11px; color: #FF453A; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>New event — current lean vs proposed sheet</h1>
+  <div class="row">
+    <div class="sheet">
+      <div class="label">Current EventComposer (CR-A)</div>
+      <div class="bar"><button type="button">Close</button><span class="t">Add event</span><button type="button">Save</button></div>
+      <div class="banner">Review draft — not saved</div>
+      <div class="field">Title</div>
+      <div class="field"><div class="k">Kind / category</div>class · academic</div>
+      <div class="field"><div class="row2"><span>All-day</span><span class="sw"></span></div></div>
+      <div class="field"><div class="k">Starts</div>DATE-P1</div>
+      <div class="field"><div class="k">Ends</div>optional</div>
+      <div class="field"><div class="k">Notes</div>body</div>
+      <div class="cap">Visible to this class families when published rules allow.</div>
+    </div>
+    <div class="sheet">
+      <div class="label">Proposed hierarchy (still Event-only)</div>
+      <div class="bar"><button type="button">✕</button><span class="t">New</span><button type="button">✓</button></div>
+      <div class="tabs"><span class="on">Event</span><span class="strike">Reminder</span></div>
+      <div class="note">Reminder tab DROPPED — not Diary</div>
+      <div class="banner">Review draft — not saved</div>
+      <div class="field" style="font-size:18px;font-weight:600">Title</div>
+      <div class="field"><div class="row2"><span>All-day</span><span class="sw"></span></div></div>
+      <div class="field"><div class="row2"><span>Starts</span><span style="color:#8E8E93">Sep 15, 9:00 AM</span></div></div>
+      <div class="field"><div class="row2"><span>Ends</span><span style="color:#8E8E93">Sep 15, 9:45 AM</span></div></div>
+      <div class="field"><div class="row2"><span>Calendar</span><span><span class="dot"></span>Class · Academic</span></div></div>
+      <div class="field"><div class="row2"><span>Alert</span><span style="color:#8E8E93">None ▾</span></div></div>
+      <div class="field">Notes</div>
+      <div class="cap">Hidden badge path unchanged for quizzes. Save commits.</div>
+    </div>
+  </div>
+</body>
+</html>

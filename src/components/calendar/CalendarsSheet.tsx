@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -14,8 +15,10 @@ import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
 import { GhostButton } from '@/components/ui/Button';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { radius, type } from '@/constants/theme';
+import { roleTintColor, roleTintLabel } from '@/lib/calendar/roleTint';
 import type { CalendarLayer } from '@/lib/calendar/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 type Props = {
   visible: boolean;
@@ -28,6 +31,7 @@ type Props = {
 
 /**
  * LF-A Calendars sheet — layer Disable/Enable + team ⋯ Unsubscribe (never Delete).
+ * Role-tint dots ≤4. M-SHEET spring; RM = fade.
  * Search appears at ≥8 layers (multical-viz).
  */
 export function CalendarsSheet({
@@ -40,11 +44,14 @@ export function CalendarsSheet({
 }: Props) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
   const web = Platform.OS === 'web';
   const [query, setQuery] = useState('');
   const [menuLayer, setMenuLayer] = useState<CalendarLayer | null>(null);
   const [unsubLayer, setUnsubLayer] = useState<CalendarLayer | null>(null);
   const [busy, setBusy] = useState(false);
+  const sheetY = useRef(new Animated.Value(web ? 0 : 28)).current;
+  const sheetOpacity = useRef(new Animated.Value(1)).current;
 
   const showSearch = layers.length >= 8;
   const filtered = useMemo(() => {
@@ -52,6 +59,35 @@ export function CalendarsSheet({
     if (!q) return layers;
     return layers.filter((l) => l.name.toLowerCase().includes(q));
   }, [layers, query]);
+
+  useEffect(() => {
+    if (!visible) return;
+    sheetY.setValue(web ? 0 : 28);
+    sheetOpacity.setValue(reduceMotion ? 0 : 1);
+    if (reduceMotion) {
+      Animated.timing(sheetOpacity, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+    if (web) {
+      Animated.timing(sheetOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+    Animated.spring(sheetY, {
+      toValue: 0,
+      damping: 18,
+      stiffness: 180,
+      mass: 0.9,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, web, reduceMotion, sheetY, sheetOpacity]);
 
   const confirmUnsub = async () => {
     if (!unsubLayer) return;
@@ -76,7 +112,7 @@ export function CalendarsSheet({
           ]}
         >
           <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Close Calendars" />
-          <View
+          <Animated.View
             pointerEvents="auto"
             style={[
               styles.sheet,
@@ -86,10 +122,14 @@ export function CalendarsSheet({
                 borderColor: colors.line,
                 paddingBottom: web ? 16 : 16 + insets.bottom,
                 maxHeight: web ? '80%' : '88%',
+                opacity: sheetOpacity,
+                transform: !web && !reduceMotion ? [{ translateY: sheetY }] : undefined,
               },
             ]}
           >
-            <Text style={[styles.title, { color: colors.ink }]}>Calendars</Text>
+            <Text style={[styles.title, { color: colors.ink }]} accessibilityRole="header">
+              Calendars
+            </Text>
             <Text style={[styles.hint, { color: colors.mute }]}>
               Turn off a layer to hide it on your calendar. Others are unchanged. Filters are not
               security.
@@ -118,6 +158,13 @@ export function CalendarsSheet({
                     key={layer.id}
                     style={[styles.row, { borderBottomColor: colors.line }]}
                   >
+                    <View
+                      style={[
+                        styles.tintDot,
+                        { backgroundColor: roleTintColor(layer.roleTint, colors) },
+                      ]}
+                      accessibilityLabel={roleTintLabel(layer.roleTint)}
+                    />
                     <View style={styles.rowMain}>
                       <Text style={[styles.rowTitle, { color: colors.ink }]} numberOfLines={2}>
                         {layer.name}
@@ -128,6 +175,8 @@ export function CalendarsSheet({
                           : layer.kind === 'team'
                             ? 'Sport'
                             : layer.kind}
+                        {' · '}
+                        {roleTintLabel(layer.roleTint)}
                       </Text>
                     </View>
                     <Pressable
@@ -169,7 +218,7 @@ export function CalendarsSheet({
             </ScrollView>
 
             <GhostButton label="Done" onPress={onClose} />
-          </View>
+          </Animated.View>
         </View>
       </ScreenOverlay>
 
@@ -252,6 +301,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  tintDot: { width: 10, height: 10, borderRadius: 5 },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: type.section,
   rowMeta: type.meta,
