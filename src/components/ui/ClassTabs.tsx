@@ -36,9 +36,8 @@ function asPersonTabs(tabs: ClassDeskTab[]): PersonTab[] {
 
 /**
  * Icon-first class desk tabs. Selected name, everyone else icon-only — same as people.
- * CT-A: visibilityReserve. Layout-hosted so PersonTabs stays mounted across pane nav.
- * Needs Attention: read `tab` from global search params (layout-local omits query) and
- * use setParams on the index for today/week/needs so selection sticks (no bounce).
+ * FoM PersonTabs default (visibilityReserve). Layout-hosted so PersonTabs stays
+ * mounted across pane nav. Needs Attention: global `tab` + setParams on index.
  */
 export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boolean }) {
   const router = useRouter();
@@ -54,7 +53,6 @@ export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boo
       tabs={tabsWithFeedIcon(asPersonTabs(CLASS_TABS), feedIcon)}
       value={value}
       stacked={stacked}
-      labelPolicy="visibilityReserve"
       onChange={(key) => {
         if (key === value) return;
         // Same-route index panes: setParams keeps `?tab=` without a replace that
@@ -92,7 +90,7 @@ type ShelfProps = {
   compact?: boolean;
 };
 
-/** Today · This week under ClassTabs — CT-A hug/reserve; same morph (demoted week route). */
+/** Today · This week under ClassTabs — FoM PersonTabs default; demoted week route. */
 export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) {
   return (
     <PersonTabs
@@ -101,12 +99,11 @@ export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) 
       onChange={onChange}
       stacked={stacked}
       compact={compact}
-      labelPolicy="visibilityReserve"
     />
   );
 }
 
-/** Gradebook · Heatmap under ClassTabs — default fraction until a later copy card. */
+/** Gradebook · Heatmap under ClassTabs — FoM PersonTabs default. */
 export function GradebookViewTabs({ value, onChange, stacked, compact }: ShelfProps) {
   return (
     <PersonTabs

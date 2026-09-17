@@ -74,3 +74,19 @@ test('no second horizontal tab morph beside PersonTabs / FloatingTabTray', () =>
   }
   assert.deepEqual(offenders, []);
 });
+
+test('FoM default labelPolicy is visibilityReserve on PersonTabs', () => {
+  const pills = read('src/components/ui/PersonTabs.tsx');
+  const layout = read('src/components/ui/personTabsLayout.ts');
+  const docs = read('docs/ui-design.md');
+  assert.match(pills, /labelPolicy = 'visibilityReserve'/);
+  assert.match(layout, /policy: PersonTabLabelPolicy = 'visibilityReserve'/);
+  assert.match(docs, /visibilityReserve.*product default|default is `visibilityReserve`/i);
+  assert.match(docs, /personTabScrollX/);
+  // Wrappers must not fork fraction as default destination policy
+  const classTabs = read('src/components/ui/ClassTabs.tsx');
+  assert.doesNotMatch(classTabs, /labelPolicy=["']fraction["']/);
+  // Tray / NT-A stay out of PersonTabs morph
+  assert.doesNotMatch(read('src/components/ui/FloatingTabTray.tsx'), /from '@\/components\/ui\/PersonTabs'/);
+  assert.doesNotMatch(read('src/components/ui/ContextMenuRow.tsx'), /from '@\/components\/ui\/PersonTabs'/);
+});

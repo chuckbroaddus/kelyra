@@ -13,9 +13,10 @@ export const PERSON_TAB_ICON_HIT = 44;
 export const PERSON_TAB_ROW_GAP = 4;
 
 /**
- * `fraction` — legacy half-row cap (default; inbox / Settings / student / diary / people).
- * `visibilityReserve` — hug painted title but reserve collapsed hits so ≥3 tabs
- * stay on-screen (CEO 9); 2-tab rows keep both visible (CEO 7). Opt-in: ClassTabs + DeskSpanTabs.
+ * `visibilityReserve` — **product default** (CEO FoM lock 2026-09-17): hug painted
+ * title; marquee ceiling reserves collapsed 44-hits so min(3,n) stay on-screen;
+ * 2-tab rows keep both visible. Extra row space shows more tabs.
+ * `fraction` — legacy half-row cap (opt-out only; do not use for destination rows).
  */
 export type PersonTabLabelPolicy = 'fraction' | 'visibilityReserve';
 
@@ -28,14 +29,14 @@ export function personTabAvailableTitleWidth(rowWidth: number, glyph = true): nu
 
 /**
  * Max width of the selected title. One tab may use the leftover row after the
- * glyph (or after pad when the row is labels only). Several tabs default to half
- * the row; visibilityReserve opts into CEO hug + min-visible reserve.
+ * glyph (or after pad when the row is labels only). Several tabs default to
+ * visibilityReserve (FoM hug + ≥3 visible); pass `fraction` only for legacy half-row.
  */
 export function personTabLabelMax(
   rowWidth: number,
   tabCount: number,
   glyph = true,
-  policy: PersonTabLabelPolicy = 'fraction',
+  policy: PersonTabLabelPolicy = 'visibilityReserve',
 ): number {
   const available = personTabAvailableTitleWidth(rowWidth, glyph);
   if (tabCount <= 1) return available;
