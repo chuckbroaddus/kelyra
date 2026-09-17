@@ -8,6 +8,7 @@ import { KelyraMark } from '@/components/ui/KelyraMark';
 import { chrome, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { useChromeKWorking } from '@/lib/chrome/globalProcessing';
 import { can } from '@/lib/school/matrix';
 import { tabsFor, trayRemountKey, type TrayTab } from '@/lib/chrome/trayTabs';
 import { useSchoolFeedIcon } from '@/lib/feeds/useFeedIcon';
@@ -20,6 +21,7 @@ type Tab = TrayTab & { icon: IconName };
 export function FloatingTabTray() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
+  const chromeKWorking = useChromeKWorking();
   const { profile, grants } = useAuth();
   // chromePathname is seat root during Option A switch — never prior-seat path for active tabs.
   const pathname = chromeState.chromePathname;
@@ -58,7 +60,7 @@ export function FloatingTabTray() {
           <HoverTip key={tab.key} label={tipIfNew(tab.label, tabTip(tab))}>
           <Pressable
             accessibilityRole="tab"
-            accessibilityState={{ selected: tab.active }}
+            accessibilityState={{ selected: tab.active, ...(tab.icon === 'ask' && chromeKWorking ? { busy: true } : null) }}
             accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
             onPress={() => router.push(tab.href as never)}
             style={({ pressed }) => [styles.topItem, pressed && { opacity: 0.7 }]}
@@ -113,7 +115,7 @@ export function FloatingTabTray() {
           <HoverTip key={tab.key} label={tabTip(tab)}>
           <Pressable
             accessibilityRole="tab"
-            accessibilityState={{ selected: tab.active }}
+            accessibilityState={{ selected: tab.active, ...(tab.icon === 'ask' && chromeKWorking ? { busy: true } : null) }}
             accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
             onPress={() => router.push(tab.href as never)}
             style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}

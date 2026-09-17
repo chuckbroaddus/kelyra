@@ -15,6 +15,7 @@ import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
+import { useGlobalProcessingActive } from '@/lib/chrome/globalProcessing';
 import { radius, type } from '@/constants/theme';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -87,6 +88,7 @@ export default function SetupScreen() {
   const [deviceTick, setDeviceTick] = useState(0);
   const [heard, setHeard] = useState<string | null>(null);
   const [hearing, setHearing] = useState(false);
+  useGlobalProcessingActive(readingList || hearing);
   const [possibleMatch, setPossibleMatch] = useState<{
     studentId: string;
     displayName: string;

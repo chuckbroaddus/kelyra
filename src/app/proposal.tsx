@@ -70,6 +70,7 @@ import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { WorkingLine } from '@/components/ui/WorkingMark';
+import { useGlobalProcessingActive } from '@/lib/chrome/globalProcessing';
 
 type Intent = 'homework' | 'syllabus' | 'portrait' | 'parent_card' | 'student_card' | 'roster' | 'answer_key' | 'vehicle' | 'lesson_plan' | 'lesson_materials' | 'feed_photo' | 'unsure';
 
@@ -905,6 +906,7 @@ export default function ProposalScreen() {
   };
 
   const working = (!classified && !error) || followUp;
+  useGlobalProcessingActive(working);
   const intentLabel = working
     ? 'Studying the photo'
     : intent === 'homework'

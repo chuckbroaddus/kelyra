@@ -16,6 +16,7 @@ import { PhotoPager } from '@/components/ui/PhotoPager';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
+import { useGlobalProcessingActive } from '@/lib/chrome/globalProcessing';
 import { type } from '@/constants/theme';
 import { ClassStackBinder } from '@/components/ingest/ClassStackBinder';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
@@ -243,6 +244,7 @@ export default function CaptureScreen() {
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [asking, setAsking] = useState(false);
+  useGlobalProcessingActive(asking);
   /** Which Capture source icon is highlighted; Camera until the teacher picks another. */
   const [selectedSource, setSelectedSource] = useState<'camera' | 'library' | 'files'>('camera');
   const scrollRef = useRef<ScrollView>(null);
