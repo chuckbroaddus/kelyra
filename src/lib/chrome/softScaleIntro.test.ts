@@ -118,3 +118,16 @@ test('SoftMark comet: oval placement + SoT yaw; web CSS not Animated.loop rotate
   // Native still may interpolate yawToDeg (−360); web must not rely on Animated.loop alone
   assert.match(soft, /if \(Platform\.OS === 'web'\)/);
 });
+
+test('web CSS yaw is on plain View — never className on Animated.View', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  assert.match(soft, /webYawClass/);
+  assert.match(soft, /Platform\.OS === 'web'/);
+  // Crash fix: no className prop on an opening Animated.View tag
+  assert.doesNotMatch(soft, /<Animated\.View[^>]*className/);
+  assert.doesNotMatch(
+    soft,
+    /<Animated\.View[\s\S]{0,120}\{\.\.\.\([\s\S]{0,80}className:\s*COMET_ORBIT\.webYawClass/,
+  );
+  assert.match(soft, /<View[\s\S]{0,220}className:\s*COMET_ORBIT\.webYawClass/);
+});
