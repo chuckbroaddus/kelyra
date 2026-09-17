@@ -35,9 +35,10 @@ function ensureSoftCometYawCss(durationMs: number) {
     el.id = WEB_YAW_STYLE_ID;
     doc.head.appendChild(el);
   }
-  // HTML SoT: @keyframes yaw-rev { to { transform: rotateY(-360deg); } } — 2D oval uses rotate(-360).
-  el.textContent = `@keyframes ${COMET_ORBIT.webYawKeyframes}{to{transform:rotate(${COMET_ORBIT.yawToDeg}deg)}}.` +
-    `${COMET_ORBIT.webYawClass}{animation:${COMET_ORBIT.webYawKeyframes} ${durationMs}ms linear infinite;transform-origin:50% 50%}`;
+  // HTML SoT yaw-rev; target #nativeID (RN-web sets id). Never className on RN View.
+  el.textContent =
+    `@keyframes ${COMET_ORBIT.webYawKeyframes}{to{transform:rotate(${COMET_ORBIT.yawToDeg}deg)}}` +
+    `#${COMET_ORBIT.webYawNativeId}{animation:${COMET_ORBIT.webYawKeyframes} ${durationMs}ms linear infinite;transform-origin:50% 50%}`;
 }
 
 
@@ -47,7 +48,7 @@ const u = (size: number, n: number) => (size * n) / LETTER_INK.canvas;
  * Soft v8b working mark — idle `kelyra.png` letter 1:1 + vector face + comet.
  * Morph (intro/outro) owns lids/smile/comet; look loop independent of blink;
  * wobble is rotate-only (no letter scale-up).
- * Comet: oval (COMET_ORBIT.ovalY) + yaw −360 (SoT yaw-rev); web CSS infinite, native Animated.
+ * Comet: oval + yaw −360; web CSS via nativeID (no RN className); native Animated.
  */
 export function SoftMark({
   size,
@@ -622,12 +623,12 @@ export function SoftMark({
           transform: [{ rotateZ: `${COMET_ORBIT.cantZDeg}deg` }, { scale: cometScale }],
         }}
       >
-        {/* Web: CSS yaw on plain View — never className on Animated.View (RN-web forEach null). */}
+        {/* Web: CSS yaw via nativeID → #id selector. Zero className on RN View/Animated.View. */}
         {Platform.OS === 'web' ? (
           <View
             pointerEvents="none"
             collapsable={false}
-            {...(showMotion ? ({ className: COMET_ORBIT.webYawClass } as object) : {})}
+            nativeID={showMotion ? COMET_ORBIT.webYawNativeId : undefined}
             style={{ width: gimbal, height: gimbal }}
           >
             {trail.map((bit) => {
@@ -661,7 +662,7 @@ export function SoftMark({
             style={{
               width: gimbal,
               height: gimbal,
-              transform: showMotion ? [{ rotate }] : undefined,
+              transform: [{ rotate: showMotion ? rotate : '0deg' }],
             }}
           >
             {trail.map((bit) => {
