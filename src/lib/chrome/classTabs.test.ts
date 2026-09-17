@@ -173,3 +173,45 @@ test('Needs stay: /feed wins only on feed path; index needs sticks', () => {
   assert.ok(isClassIndexTab('today'));
   assert.equal(isClassIndexTab('feed'), false);
 });
+
+test('AC-STU-CT-01/02: layout hosts ClassTabs; setup does not', () => {
+  const layout = read('src/app/class/[id]/_layout.tsx');
+  const setup = read('src/app/class/[id]/setup.tsx');
+  assert.match(layout, /<ClassTabs classId=\{classId\}/);
+  assert.match(setup, /pageChromeHosted/);
+  assert.doesNotMatch(setup, /<ClassTabs\b/);
+  assert.doesNotMatch(setup, /collapse=\{[^}]*ClassTabs/);
+  assert.doesNotMatch(setup, /from '@\/components\/ui\/ClassTabs'/);
+});
+
+test('AC-STU-CT-03..06: peer desk panes single-host (no ClassTabs; pageChromeHosted)', () => {
+  const peers = [
+    'src/app/class/[id]/index.tsx',
+    'src/app/class/[id]/feed.tsx',
+    'src/app/class/[id]/assignments.tsx',
+    'src/app/class/[id]/parents.tsx',
+    'src/app/class/[id]/settings.tsx',
+    'src/app/class/[id]/family.tsx',
+    'src/app/class/[id]/syllabus.tsx',
+    'src/app/class/[id]/gradebook.tsx',
+  ];
+  for (const rel of peers) {
+    const src = read(rel);
+    assert.match(src, /pageChromeHosted/, rel);
+    assert.doesNotMatch(src, /<ClassTabs\b/, rel);
+  }
+});
+
+test('AC-STU-CT-07: gradebook collapse may host shelf/warning only — not ClassTabs', () => {
+  const book = read('src/app/class/[id]/gradebook.tsx');
+  assert.match(book, /pageChromeHosted/);
+  assert.match(book, /collapse=\{collapsing\}/);
+  assert.doesNotMatch(book, /<ClassTabs\b/);
+  assert.match(book, /GradebookViewTabs/);
+});
+
+test('AC-STU-CT-08: Students href is setup; selection students', () => {
+  const id = 'class-1';
+  assert.equal(hrefForClassTab(id, 'students'), `/class/${id}/setup`);
+  assert.equal(classTabFromRoute(`/class/${id}/setup`), 'students');
+});
