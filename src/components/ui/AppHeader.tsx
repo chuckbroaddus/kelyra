@@ -173,14 +173,14 @@ export function AppHeader() {
           <View
             pointerEvents="none"
             accessibilityElementsHidden
-            style={[styles.markSlot, { width: markSize, height: bar }]}
+            style={[styles.markSlot, { width: markSize, height: markSize }]}
           >
             <KelyraMark size={markSize} />
           </View>
         ) : logoUrl ? (
           <View
             accessibilityLabel="School logo"
-            style={[styles.markSlot, { width: markSize, height: bar }]}
+            style={[styles.markSlot, { width: markSize, height: markSize }]}
           >
             <RemoteImage
               uri={logoUrl}
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     gap: 0,
     overflow: 'visible',
   },
-  // Shared Ask Kelyra mark + school logo slot (width markSize, height bar).
+  // Shared Ask Kelyra mark + school logo slot — square markSize box (idle + Soft share center).
   markSlot: {
     marginRight: 8,
     flexGrow: 0,
