@@ -73,7 +73,7 @@ export const COMET_ORBIT = {
   /** Screen-plane spin matching SoT yaw-rev (negative full turn). */
   yawToDeg: -360,
   ballOfLetter: 0.08,
-  /** CSS keyframe name — web only (infinite; no Animated.loop hang). */
-  webYawClass: 'kelyra-soft-yaw-rev',
+  /** Web: keyframes + nativeID (maps to DOM id). Never RN className. */
+  webYawNativeId: 'kelyra-soft-yaw-spin',
   webYawKeyframes: 'kelyra-soft-yaw-rev',
 } as const;

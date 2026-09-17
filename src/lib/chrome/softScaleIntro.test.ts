@@ -100,34 +100,27 @@ test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
   assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
   assert.equal(COMET_ORBIT.yawToDeg, -360);
   assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
-  assert.equal(COMET_ORBIT.webYawClass, 'kelyra-soft-yaw-rev');
+  assert.equal(COMET_ORBIT.webYawNativeId, 'kelyra-soft-yaw-spin');
 });
 
-test('SoftMark comet: oval placement + SoT yaw; web CSS not Animated.loop rotate', () => {
+test('SoftMark comet: oval + SoT yaw; web CSS via nativeID (no Animated.loop hang)', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   assert.match(soft, /COMET_ORBIT/);
   assert.match(soft, /ovalY/);
   assert.match(soft, /orbitR \* Math\.cos/);
   assert.match(soft, /orbitR \* Math\.sin\(rad\) \* ovalY/);
   assert.doesNotMatch(soft, /rotateX:\s*['"]26deg['"]/);
-  // Web path: CSS keyframes / class — not looping interpolate deg strings on web
   assert.match(soft, /ensureSoftCometYawCss/);
-  assert.match(soft, /webYawClass/);
+  assert.match(soft, /webYawNativeId/);
   assert.match(soft, /Platform\.OS === 'web'/);
-  assert.match(soft, /kelyra-soft-yaw-rev|webYawKeyframes/);
-  // Native still may interpolate yawToDeg (−360); web must not rely on Animated.loop alone
-  assert.match(soft, /if \(Platform\.OS === 'web'\)/);
 });
 
-test('web CSS yaw is on plain View — never className on Animated.View', () => {
+test('SoftMark has zero RN className; web yaw via nativeID + #id CSS', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /webYawClass/);
-  assert.match(soft, /Platform\.OS === 'web'/);
-  // Crash fix: no className prop on an opening Animated.View tag
-  assert.doesNotMatch(soft, /<Animated\.View[^>]*className/);
-  assert.doesNotMatch(
-    soft,
-    /<Animated\.View[\s\S]{0,120}\{\.\.\.\([\s\S]{0,80}className:\s*COMET_ORBIT\.webYawClass/,
-  );
-  assert.match(soft, /<View[\s\S]{0,220}className:\s*COMET_ORBIT\.webYawClass/);
+  assert.doesNotMatch(soft, /\bclassName\s*:/);
+  assert.doesNotMatch(soft, /className=/);
+  assert.match(soft, /nativeID=\{showMotion \? COMET_ORBIT\.webYawNativeId/);
+  assert.match(soft, /#\$\{COMET_ORBIT\.webYawNativeId\}/);
+  assert.match(soft, /ensureSoftCometYawCss/);
+  assert.doesNotMatch(soft, /transform:\s*showMotion \? \[\{ rotate \}\] : undefined/);
 });
