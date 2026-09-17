@@ -11,15 +11,19 @@ import {
 } from 'react-native';
 
 import softFace from '../../../assets/brand/kelyra-soft.png';
+import { SOFT_INTRO, SOFT_LETTER_SCALE } from '@/components/ui/softLetterScale';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 export type SoftMode = 'static' | 'working';
 
-const TX_MS = 200;
 const ORBIT_MS = 2450;
 const WOBBLE_MS = 1700;
 
-/** Soft brand avatar — modes static | working (CEO Soft peek). Never tint. */
+/**
+ * Soft brand avatar — working look for chrome Soft (CEO Soft peek).
+ * Letter scaled by SOFT_LETTER_SCALE to match idle kelyra.png optical size.
+ * Intro: blink-open + face/mouth grow + comet zoom into orbit (no larger Soft pop).
+ */
 export function SoftMark({
   size,
   mode = 'static',
@@ -39,26 +43,90 @@ export function SoftMark({
 
   const yaw = useRef(new Animated.Value(0)).current;
   const wobble = useRef(new Animated.Value(0)).current;
-  const cometOpacity = useRef(new Animated.Value(working ? 1 : 0)).current;
+  const faceGrow = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const faceOpacity = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const blink = useRef(new Animated.Value(1)).current;
+  const cometIn = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
 
   useEffect(() => {
-    // Reduce-motion: comet off; face stays Soft (WK-TX-03).
-    const to = working && !reduce ? 1 : 0;
     if (reduce) {
-      cometOpacity.setValue(to);
+      faceGrow.setValue(working ? 1 : 0);
+      faceOpacity.setValue(working ? 1 : 0);
+      blink.setValue(1);
+      cometIn.setValue(working ? 1 : 0);
       return;
     }
-    const anim = Animated.timing(cometOpacity, {
-      toValue: to,
-      duration: TX_MS,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-    anim.start();
+    if (working) {
+      faceGrow.setValue(0);
+      faceOpacity.setValue(0);
+      blink.setValue(0);
+      cometIn.setValue(0);
+      const grow = Animated.timing(faceGrow, {
+        toValue: 1,
+        duration: SOFT_INTRO.faceMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      const show = Animated.timing(faceOpacity, {
+        toValue: 1,
+        duration: SOFT_INTRO.faceMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      const blinkOpen = Animated.sequence([
+        Animated.timing(blink, {
+          toValue: 1,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blink, {
+          toValue: 0.12,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blink, {
+          toValue: 1,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]);
+      const cometZoom = Animated.timing(cometIn, {
+        toValue: 1,
+        duration: SOFT_INTRO.cometMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      Animated.parallel([grow, show, blinkOpen, cometZoom]).start();
+      return;
+    }
+    const outro = Animated.parallel([
+      Animated.timing(faceGrow, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(faceOpacity, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cometIn, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]);
+    outro.start();
     return () => {
-      anim.stop();
+      outro.stop();
     };
-  }, [working, reduce, cometOpacity]);
+  }, [working, reduce, faceGrow, faceOpacity, blink, cometIn]);
 
   useEffect(() => {
     if (!showMotion) {
@@ -123,14 +191,24 @@ export function SoftMark({
     inputRange: [0, 1],
     outputRange: ['-2.2deg', '2.6deg'],
   });
-  // Wobble must not grow Soft past idle K optical size (CEO: letter match).
   const faceScaleX = wobble.interpolate({
     inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 1.012, 0.988, 1],
+    outputRange: [1, 1.01, 0.99, 1],
   });
   const faceScaleY = wobble.interpolate({
     inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 0.992, 1.01, 1],
+    outputRange: [1, 0.995, 1.008, 1],
+  });
+
+  const growScale = faceGrow.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.2, SOFT_LETTER_SCALE],
+  });
+  const eyesOpen = Animated.multiply(faceOpacity, blink);
+  // Comet zooms from large → rest (falls into orbit).
+  const cometScale = cometIn.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2.35, 1],
   });
 
   const trail = [
@@ -149,14 +227,19 @@ export function SoftMark({
       collapsable={false}
       style={[styles.canvas, { width: size, height: size }, style]}
     >
-      {/* Absolute face — transforms must not expand Yoga layout on iOS. */}
       <Animated.View
         pointerEvents="none"
         collapsable={false}
         style={[
           styles.layer,
           {
-            transform: [{ rotate: faceRotate }, { scaleX: faceScaleX }, { scaleY: faceScaleY }],
+            opacity: eyesOpen,
+            transform: [
+              { rotate: faceRotate },
+              { scale: growScale },
+              { scaleX: faceScaleX },
+              { scaleY: faceScaleY },
+            ],
           },
         ]}
       >
@@ -166,9 +249,36 @@ export function SoftMark({
           resizeMode="contain"
           style={{ width: size, height: size }}
         />
+        {/* Mouth grows into smile with faceGrow (scaleX/Y from nothing). */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mouth,
+            {
+              width: size * 0.2,
+              height: size * 0.07,
+              borderRadius: size * 0.07,
+              bottom: size * 0.27,
+              opacity: faceGrow,
+              transform: [
+                {
+                  scaleX: faceGrow.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.12, 1],
+                  }),
+                },
+                {
+                  scaleY: faceGrow.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.15, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
       </Animated.View>
 
-      {/* Comet: canted reverse-yaw orbit; trail trails the ball (WK-LOOK-04). */}
       <Animated.View
         pointerEvents="none"
         collapsable={false}
@@ -177,8 +287,8 @@ export function SoftMark({
           {
             width: orbit,
             height: orbit,
-            opacity: cometOpacity,
-            transform: [{ rotateZ: '14deg' }, { rotate }],
+            opacity: cometIn,
+            transform: [{ rotateZ: '14deg' }, { scale: cometScale }, { rotate }],
           },
         ]}
       >
@@ -218,16 +328,19 @@ export function SoftMark({
 
 const styles = StyleSheet.create({
   canvas: {
-    // Native: clip so Soft/comet never expand the header/tray row.
-    // Web: allow slight comet bleed (already OK after PR 116).
     overflow: Platform.OS === 'web' ? 'visible' : 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  mouth: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(40, 30, 50, 0.5)',
   },
   gimbal: {
     position: 'absolute',
