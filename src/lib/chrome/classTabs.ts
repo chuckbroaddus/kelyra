@@ -30,6 +30,17 @@ export const OFFICE_CLASS_TABS: ClassDeskTab[] = [
 /** Demoted keys: not default ClassTabs icons; routes stay for teacher deep links. */
 export const DEMOTED_CLASS_TAB_KEYS = ['week', 'heatmap', 'family'] as const;
 
+
+/** True for `/class/:id` (index desk) — no dedicated pane segment. */
+export function isClassIndexPath(pathname: string): boolean {
+  return /\/class\/[^/]+\/?$/.test(pathname);
+}
+
+/** Today / week / needs live on the class index via `?tab=`. */
+export function isClassIndexTab(key: string): boolean {
+  return key === 'today' || key === 'week' || key === 'needs';
+}
+
 export function hrefForClassTab(classId: string, key: string): string {
   switch (key) {
     case 'week':
@@ -63,6 +74,13 @@ export function hrefForClassTab(classId: string, key: string): string {
  */
 export function classTabFromRoute(pathname: string, tab?: string | string[]): string {
   const pane = Array.isArray(tab) ? tab[0] : tab;
+  // Index query panes (needs/today/week) — check BEFORE dedicated segments so a
+  // stale /feed pathname cannot win after replace to `?tab=needs` (CEO bounce).
+  if (isClassIndexPath(pathname)) {
+    if (pane === 'needs') return 'needs';
+    if (pane === 'week' || pane === 'today') return 'today';
+    return 'today';
+  }
   if (pathname.endsWith('/feed')) return 'feed';
   if (pathname.endsWith('/setup')) return 'students';
   if (pathname.endsWith('/settings') || pathname.endsWith('/syllabus')) return 'settings';
@@ -70,6 +88,7 @@ export function classTabFromRoute(pathname: string, tab?: string | string[]): st
   if (pathname.endsWith('/family')) return 'parents';
   if (pathname.endsWith('/assignments')) return 'assignments';
   if (pathname.includes('/gradebook')) return 'gradebook';
+  // Non-index fallback: honor explicit needs query if present.
   if (pane === 'needs') return 'needs';
   if (pane === 'week' || pane === 'today') return 'today';
   return 'today';

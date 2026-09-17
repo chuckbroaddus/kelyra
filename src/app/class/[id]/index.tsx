@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useGlobalSearchParams, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -39,7 +39,9 @@ export default function ClassHomeScreen() {
   const chrome = useChrome();
   const teachSeat = chrome.role === 'teacher';
   const layout = useLayout();
-  const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const globalParams = useGlobalSearchParams<{ tab?: string | string[] }>();
+  const tabParam = Array.isArray(globalParams.tab) ? globalParams.tab[0] : globalParams.tab;
   const router = useRouter();
   const { teacher, setActiveClassId} = useAuth();
   const [klass, setKlass] = useState<ClassRow | null>(null);

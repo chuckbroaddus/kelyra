@@ -9,6 +9,8 @@ import {
   OFFICE_CLASS_TABS,
   classTabFromRoute,
   hrefForClassTab,
+  isClassIndexPath,
+  isClassIndexTab,
 } from './classTabs.ts';
 
 const DEFAULT_ORDER = [
@@ -93,10 +95,11 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-test('CT-09: every class desk pane collapses ClassTabs like Feed (§9.6)', () => {
-  const screen = read('src/components/ui/Screen.tsx');
-  assert.match(screen, /collapse\?:/);
-  assert.match(screen, /CollapsingPageChrome/);
+test('CT-09: ClassTabs hosted in class _layout (pageChromeHosted panes; no per-pane ClassTabs)', () => {
+  const layout = read('src/app/class/[id]/_layout.tsx');
+  assert.match(layout, /<ClassTabs classId=\{classId\}/);
+  assert.match(layout, /isClassDeskTabsRoute/);
+  assert.match(layout, /CollapsingPageChrome/);
 
   const desks = [
     'src/app/class/[id]/feed.tsx',
@@ -111,25 +114,17 @@ test('CT-09: every class desk pane collapses ClassTabs like Feed (§9.6)', () =>
   ];
   for (const rel of desks) {
     const src = read(rel);
-    assert.match(src, /collapse=/, `${rel} must pass ClassTabs via Screen collapse`);
-    assert.doesNotMatch(
-      src,
-      /<Screen[^>]*>\s*\{[^}\n]*<ClassTabs/,
-      `${rel} must not render ClassTabs inside Screen children`,
-    );
+    assert.match(src, /pageChromeHosted/, `${rel} must use pageChromeHosted (layout hosts ClassTabs)`);
+    assert.doesNotMatch(src, /<ClassTabs\b/, `${rel} must not mount its own ClassTabs`);
   }
 
-  const feed = read('src/app/class/[id]/feed.tsx');
-  assert.match(feed, /collapse=\{id \? <ClassTabs classId=\{id\} \/> : null\}/);
-  assert.match(feed, /scroll=\{false\}/);
+  const tabs = read('src/components/ui/ClassTabs.tsx');
+  assert.match(tabs, /useGlobalSearchParams/);
+  assert.match(tabs, /setParams/);
+  assert.match(tabs, /isClassIndexTab/);
 
   const book = read('src/app/class/[id]/gradebook.tsx');
-  assert.match(book, /collapse=\{collapsing\}/);
-  assert.doesNotMatch(book, /import \{ CollapsingPageChrome \}/);
-
-  const docs = read('docs/ui-design.md');
-  assert.match(docs, /Canonical reference: class Feed/);
-  assert.match(docs, /Screen collapse=/);
+  assert.match(book, /pageChromeHosted/);
 });
 
 
@@ -148,4 +143,33 @@ test('CT-10: collapse restore wiring — begin-drag reveal + dock-style absolute
   const screen = read('src/components/ui/Screen.tsx');
   assert.match(screen, /onScrollBeginDrag/);
   assert.match(screen, /alwaysBounceVertical/);
+});
+
+test('Needs stay: href feed→needs lands on index ?tab=needs', () => {
+  const id = 'class-1';
+  assert.equal(hrefForClassTab(id, 'needs'), `/class/${id}?tab=needs`);
+  assert.equal(hrefForClassTab(id, 'today'), `/class/${id}?tab=today`);
+  assert.equal(hrefForClassTab(id, 'feed'), `/class/${id}/feed`);
+});
+
+test('Needs stay: selection when URL is /class/id?tab=needs', () => {
+  const id = 'class-1';
+  assert.equal(classTabFromRoute(`/class/${id}`, 'needs'), 'needs');
+  assert.equal(classTabFromRoute(`/class/${id}/`, 'needs'), 'needs');
+  assert.equal(classTabFromRoute(`/class/${id}`, 'today'), 'today');
+  assert.equal(classTabFromRoute(`/class/${id}`, undefined), 'today');
+  // Index path + needs must not fall through to today
+  assert.notEqual(classTabFromRoute(`/class/${id}`, 'needs'), 'today');
+});
+
+test('Needs stay: /feed wins only on feed path; index needs sticks', () => {
+  const id = 'class-1';
+  assert.equal(classTabFromRoute(`/class/${id}/feed`, 'needs'), 'feed');
+  assert.equal(classTabFromRoute(`/class/${id}`, 'needs'), 'needs');
+  assert.ok(isClassIndexPath(`/class/${id}`));
+  assert.ok(isClassIndexPath(`/class/${id}/`));
+  assert.equal(isClassIndexPath(`/class/${id}/feed`), false);
+  assert.ok(isClassIndexTab('needs'));
+  assert.ok(isClassIndexTab('today'));
+  assert.equal(isClassIndexTab('feed'), false);
 });
