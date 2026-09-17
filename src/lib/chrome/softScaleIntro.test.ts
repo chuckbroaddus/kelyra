@@ -93,24 +93,28 @@ test('KelyraMark: idle unmount Soft after outro; SoftMark owns morph', () => {
   assert.match(mark, /assets\/brand\/kelyra\.png/);
 });
 
-test('COMET_ORBIT: tilt 26° oval squash + yaw-rev sign (+360)', () => {
+test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
   assert.equal(COMET_ORBIT.tiltXDeg, 26);
   assert.equal(COMET_ORBIT.cantZDeg, 14);
   assert.ok(Math.abs(COMET_ORBIT.ovalY - Math.cos((26 * Math.PI) / 180)) < 1e-9);
   assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
-  assert.equal(COMET_ORBIT.yawToDeg, 360);
+  assert.equal(COMET_ORBIT.yawToDeg, -360);
   assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
+  assert.equal(COMET_ORBIT.webYawClass, 'kelyra-soft-yaw-rev');
 });
 
-test('SoftMark comet uses oval placement + +360 yaw (not rotateX circle / −360)', () => {
+test('SoftMark comet: oval placement + SoT yaw; web CSS not Animated.loop rotate', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   assert.match(soft, /COMET_ORBIT/);
   assert.match(soft, /ovalY/);
-  assert.match(soft, /yawToDeg/);
-  // Fake oval: ellipse ox/oy — not rely on rotateX for the path
   assert.match(soft, /orbitR \* Math\.cos/);
   assert.match(soft, /orbitR \* Math\.sin\(rad\) \* ovalY/);
   assert.doesNotMatch(soft, /rotateX:\s*['"]26deg['"]/);
-  assert.doesNotMatch(soft, /outputRange:\s*\[[^\]]*'-360deg'/);
-  assert.match(soft, /ballDepthScale/);
+  // Web path: CSS keyframes / class — not looping interpolate deg strings on web
+  assert.match(soft, /ensureSoftCometYawCss/);
+  assert.match(soft, /webYawClass/);
+  assert.match(soft, /Platform\.OS === 'web'/);
+  assert.match(soft, /kelyra-soft-yaw-rev|webYawKeyframes/);
+  // Native still may interpolate yawToDeg (−360); web must not rely on Animated.loop alone
+  assert.match(soft, /if \(Platform\.OS === 'web'\)/);
 });
