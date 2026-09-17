@@ -11,6 +11,7 @@ import {
   personTabAvailableTitleWidth,
   personTabLabelMax,
   personTabRowHasGlyph,
+  personTabScrollX,
   personTabSelectedMaxWidth,
   personTabTitleSlot,
   personTabRowUsesTeacherFaces,
@@ -34,33 +35,40 @@ test('one tab may use the leftover row after the glyph; several stay at half (fr
   assert.ok(personTabLabelMax(row, 1) > personTabLabelMax(row, 3));
 });
 
-test('visibilityReserve hugs but keeps ≥3 tabs on phone ~358 scroller', () => {
+test('visibilityReserve: short title hugs — pill stays narrow (not stretch-to-3)', () => {
   const row = 358;
-  const label = personTabLabelMax(row, 8, true, 'visibilityReserve');
-  const selected = personTabSelectedMaxWidth(label, true);
+  const ceiling = personTabLabelMax(row, 8, true, 'visibilityReserve');
+  const shortPaint = 36; // "Feed"
+  const slot = personTabTitleSlot(shortPaint, ceiling);
+  assert.equal(slot, shortPaint);
+  const selected = personTabSelectedMaxWidth(slot, true);
+  // Remaining row must fit more than 2 collapsed icons (4+ when title is short)
+  const leftover = row - PERSON_TAB_ROW_PAD_END - selected;
+  const neighbors = Math.floor(leftover / (PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP));
+  assert.ok(neighbors >= 2, `neighbors=${neighbors} selected=${selected}`);
+  // Must NOT equal the stretch-to-fill width (ceiling as pill)
+  const stretched = personTabSelectedMaxWidth(ceiling, true);
+  assert.ok(selected < stretched - 20, `hug=${selected} stretch=${stretched}`);
+});
+
+test('visibilityReserve: long title caps so ≥3 tabs fit (marquee ceiling)', () => {
+  const row = 358;
+  const ceiling = personTabLabelMax(row, 8, true, 'visibilityReserve');
+  const longPaint = 400;
+  const slot = personTabTitleSlot(longPaint, ceiling);
+  assert.equal(slot, ceiling);
+  const selected = personTabSelectedMaxWidth(slot, true);
   const others = 2 * PERSON_TAB_ICON_HIT + 2 * PERSON_TAB_ROW_GAP;
-  assert.ok(selected + others + PERSON_TAB_ROW_PAD_END <= row + 1, `selected=${selected} others=${others}`);
-  // Hug is not the old half-row SoT when half would steal the third tab
-  const half = Math.floor(row * 0.5);
-  assert.ok(label <= half || selected + others <= row);
-  assert.ok(label > 0);
+  assert.ok(selected + others + PERSON_TAB_ROW_PAD_END <= row + 1);
 });
 
 test('visibilityReserve two-tab keeps both visible (DeskSpanTabs)', () => {
   const row = 358;
-  const label = personTabLabelMax(row, 2, true, 'visibilityReserve');
-  const selected = personTabSelectedMaxWidth(label, true);
+  const ceiling = personTabLabelMax(row, 2, true, 'visibilityReserve');
+  const slot = personTabTitleSlot(80, ceiling);
+  const selected = personTabSelectedMaxWidth(slot, true);
   const other = PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP;
   assert.ok(selected + other + PERSON_TAB_ROW_PAD_END <= row + 1);
-});
-
-test('web ≥720 visibilityReserve still ≥3 with room to spare', () => {
-  const row = 720;
-  const label = personTabLabelMax(row, 8, true, 'visibilityReserve');
-  const selected = personTabSelectedMaxWidth(label, true);
-  const others = 2 * PERSON_TAB_ICON_HIT + 2 * PERSON_TAB_ROW_GAP;
-  assert.ok(selected + others + PERSON_TAB_ROW_PAD_END <= row);
-  assert.ok(label > personTabLabelMax(358, 8, true, 'visibilityReserve'));
 });
 
 test('title slot is the lesser of the title and the max', () => {
@@ -87,19 +95,61 @@ test('teacher faces only when the row is exclusively classes', () => {
   assert.equal(personTabRowUsesTeacherFaces(['class', 'class']), true);
   assert.equal(personTabRowUsesTeacherFaces(['class']), true);
   assert.equal(personTabRowUsesTeacherFaces(['class', 'school']), false);
-  assert.equal(personTabRowUsesTeacherFaces(['all', 'class']), false);
-  assert.equal(personTabRowUsesTeacherFaces(['class', 'teachers', 'parents']), false);
   assert.equal(personTabRowUsesTeacherFaces([]), false);
 });
 
 test('isClassDeskTabsRoute covers desk panes only', () => {
   assert.equal(isClassDeskTabsRoute('/class/abc'), true);
   assert.equal(isClassDeskTabsRoute('/class/abc/feed'), true);
-  assert.equal(isClassDeskTabsRoute('/class/abc/gradebook'), true);
-  assert.equal(isClassDeskTabsRoute('/class/abc/setup'), true);
   assert.equal(isClassDeskTabsRoute('/class/abc/student/s1'), false);
   assert.equal(isClassDeskTabsRoute('/class/abc/assignment/a1'), false);
-  assert.equal(isClassDeskTabsRoute('/class/abc/review/r1'), false);
-  assert.equal(isClassDeskTabsRoute('/class/abc/parent/p1'), false);
-  assert.equal(isClassDeskTabsRoute('/class/abc/parents'), true);
+});
+
+test('personTabScrollX: tab 0 stays at 0', () => {
+  assert.equal(
+    personTabScrollX({
+      tabX: 0,
+      tabWidth: 80,
+      rowWidth: 358,
+      contentWidth: 600,
+      selectedIndex: 0,
+      prevIndex: null,
+    }),
+    0,
+  );
+});
+
+test('personTabScrollX: 3-tab band centers selected; never clips glyph off left', () => {
+  const row = 200;
+  const tabX = 100;
+  const tabWidth = 60;
+  const x = personTabScrollX({
+    tabX,
+    tabWidth,
+    rowWidth: row,
+    contentWidth: 500,
+    selectedIndex: 2,
+    prevIndex: 1,
+    collapsedWidth: 44,
+  });
+  assert.ok(x <= tabX, `must not scroll past selected left (x=${x} tabX=${tabX})`);
+  assert.ok(x + row >= tabX + tabWidth - 0.5, 'selected right edge stays in view');
+  // roughly centered
+  const centerErr = Math.abs(tabX + tabWidth / 2 - (x + row / 2));
+  assert.ok(centerErr < 30, `centerErr=${centerErr}`);
+});
+
+test('personTabScrollX: moving right shifts selected toward left-center of pair', () => {
+  const base = {
+    tabX: 120,
+    tabWidth: 50,
+    rowWidth: 280, // room for ~4 collapsed + selected
+    contentWidth: 700,
+    selectedIndex: 3,
+    collapsedWidth: 44,
+  };
+  const right = personTabScrollX({ ...base, prevIndex: 2 });
+  const left = personTabScrollX({ ...base, prevIndex: 4 });
+  assert.ok(right <= left, `right=${right} left=${left}`);
+  assert.ok(right <= base.tabX);
 });

@@ -74,3 +74,59 @@ export function personTabRowHasGlyph(tabs: ReadonlyArray<{ icon?: unknown; photo
 export function personTabRowUsesTeacherFaces(kinds: readonly string[]): boolean {
   return kinds.length > 0 && kinds.every((kind) => kind === 'class');
 }
+
+/**
+ * Scroll offset so the selected tab sits in a readable middle band — never
+ * left-pinned (except tab 0) and never with the selected glyph clipped off the left.
+ * 3-tab viewport feel: center selected. 4-tab: direction-aware center pair.
+ */
+export function personTabScrollX(input: {
+  tabX: number;
+  tabWidth: number;
+  rowWidth: number;
+  contentWidth: number;
+  selectedIndex: number;
+  prevIndex: number | null;
+  collapsedWidth?: number;
+}): number {
+  const {
+    tabX,
+    tabWidth,
+    rowWidth,
+    contentWidth,
+    selectedIndex,
+    prevIndex,
+    collapsedWidth = PERSON_TAB_ICON_HIT,
+  } = input;
+  if (rowWidth <= 0) return 0;
+  const maxScroll = Math.max(0, contentWidth - rowWidth);
+  if (selectedIndex <= 0) return 0;
+
+  const tabCenter = tabX + tabWidth / 2;
+  let ideal = tabCenter - rowWidth / 2;
+
+  // ~how many collapsed hits fit beside a hugged selected in this row
+  const neighborRoom = Math.max(0, rowWidth - tabWidth);
+  const neighborsFit = Math.floor(neighborRoom / (collapsedWidth + PERSON_TAB_ROW_GAP));
+  const movingRight = prevIndex != null && selectedIndex > prevIndex;
+  const movingLeft = prevIndex != null && selectedIndex < prevIndex;
+
+  if (neighborsFit >= 3) {
+    // 4+ visible: direction-aware — selected is left-center (moved right) or right-center (moved left)
+    const pairShift = (collapsedWidth + PERSON_TAB_ROW_GAP) / 2;
+    if (movingRight) ideal -= pairShift;
+    else if (movingLeft) ideal += pairShift;
+  }
+  // else 3-visible or fewer: pure center (ideal already)
+
+  // Never clip selected glyph off the left (or right).
+  const minX = tabX + tabWidth - rowWidth; // selected right edge at viewport right
+  const maxX = tabX; // selected left edge at viewport left
+  let x = ideal;
+  if (x > maxX) x = maxX;
+  if (x < minX) x = minX;
+  if (x < 0) x = 0;
+  if (x > maxScroll) x = maxScroll;
+  return x;
+}
+

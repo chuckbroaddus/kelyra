@@ -26,6 +26,7 @@ import {
   personTabRowHasGlyph,
   personTabSelectedMaxWidth,
   personTabTitleSlot,
+  personTabScrollX,
   type PersonTabLabelPolicy,
 } from '@/components/ui/personTabsLayout';
 import { chrome, radius, type } from '@/constants/theme';
@@ -76,7 +77,7 @@ type PillProps = {
   colors: ThemeColors;
   reduce: boolean;
   onChange: (key: string) => void;
-  onLayoutX: (x: number) => void;
+  onLayoutX: (x: number, width: number) => void;
 };
 
 function PersonTabPill({
@@ -95,7 +96,8 @@ function PersonTabPill({
   /** Marquee only after the expand settles at full width (Chuck: marquee after max). */
   const [marqueeReady, setMarqueeReady] = useState(selected);
   const slot = labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
-  const selectedMax = personTabSelectedMaxWidth(labelMax || titleWidth, hasGlyph);
+  // Hug painted title — labelMax is marquee ceiling only (AC-CT-02 correction).
+  const selectedMax = personTabSelectedMaxWidth(slot, hasGlyph);
   const collapsedWidth = PERSON_TAB_ICON_HIT;
   const expandedWidth = Math.max(collapsedWidth, selectedMax);
 
@@ -142,7 +144,7 @@ function PersonTabPill({
         accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
         onPress={() => onChange(tab.key)}
         onLayout={(event) => {
-          onLayoutX(event.nativeEvent.layout.x);
+          onLayoutX(event.nativeEvent.layout.x, event.nativeEvent.layout.width);
         }}
         style={({ pressed }) => [pressed && { opacity: 0.85 }]}
       >
@@ -189,7 +191,7 @@ function PersonTabPill({
             </View>
           ) : null}
           {showLabel && slot > 0 ? (
-            <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: labelMax }]}>
+            <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: slot }]}>
               <MarqueeText
                 text={tab.label}
                 align="start"
@@ -224,6 +226,9 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const [titleByKey, setTitleByKey] = useState<Record<string, number>>({});
   const [reduce, setReduce] = useState(false);
   const xOf = useRef<Record<string, number>>({});
+  const widthOf = useRef<Record<string, number>>({});
+  const prevValueRef = useRef<string | null>(null);
+  const [contentWidth, setContentWidth] = useState(0);
   const hasGlyph = personTabRowHasGlyph(tabs);
   const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
 
@@ -241,9 +246,22 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
 
   useEffect(() => {
     const x = xOf.current[value];
-    if (x == null) return;
-    scroller.current?.scrollTo({ x: Math.max(0, x - 12), animated: !reduce });
-  }, [value, rowWidth, reduce]);
+    if (x == null || rowWidth <= 0) return;
+    const selectedIndex = tabs.findIndex((tab) => tab.key === value);
+    const prevKey = prevValueRef.current;
+    const prevIndex = prevKey == null ? null : tabs.findIndex((tab) => tab.key === prevKey);
+    const tabWidth = widthOf.current[value] ?? PERSON_TAB_ICON_HIT;
+    const target = personTabScrollX({
+      tabX: x,
+      tabWidth,
+      rowWidth,
+      contentWidth: contentWidth > 0 ? contentWidth : rowWidth,
+      selectedIndex: Math.max(0, selectedIndex),
+      prevIndex: prevIndex != null && prevIndex >= 0 ? prevIndex : null,
+    });
+    scroller.current?.scrollTo({ x: target, animated: !reduce });
+    prevValueRef.current = value;
+  }, [value, rowWidth, contentWidth, reduce, tabs]);
 
   return (
     <View
@@ -286,6 +304,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         contentContainerStyle={styles.row}
         style={styles.scroller}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
+        onContentSizeChange={(width) => setContentWidth(width)}
       >
         {tabs.map((tab) => (
           <PersonTabPill
@@ -298,8 +317,9 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
             colors={colors}
             reduce={reduce}
             onChange={onChange}
-            onLayoutX={(x) => {
+            onLayoutX={(x, width) => {
               xOf.current[tab.key] = x;
+              widthOf.current[tab.key] = width;
             }}
           />
         ))}
