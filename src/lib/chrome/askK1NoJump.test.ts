@@ -55,8 +55,9 @@ test('Soft PNG recentered; Soft letter smaller than full idle ink (no upscale)',
   assert.match(out, /size_ok=True/);
 });
 
-test('SoftMark wobble does not grow Soft past idle (max scale ≤1.02)', () => {
+test('SoftMark scales Soft letter down and does not grow past idle', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   assert.doesNotMatch(soft, /1\.045/);
-  assert.match(soft, /1\.012/);
+  assert.match(soft, /SOFT_LETTER_SCALE/);
+  assert.match(soft, /growScale/);
 });

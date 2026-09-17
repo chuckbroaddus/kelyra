@@ -24,7 +24,8 @@ const TX_MS = 200;
 /**
  * Chrome brand K (K1/K3/K4/K5).
  * Idle: original `kelyra.png` only — Soft face is never mounted at rest.
- * Busy (`globalProcessingCount > 0`): Soft + comet. Crossfade both ways.
+ * Busy (`globalProcessingCount > 0`): Soft + comet. Idle fades out; SoftMark
+ * owns blink/grow/orbit intro (no pop of a larger Soft).
  */
 export function KelyraMark({
   size,
@@ -68,13 +69,18 @@ export function KelyraMark({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
-    softAnim.start(({ finished }) => {
-      if (finished && !working) setSoftMounted(false);
-    });
+    softAnim.start();
     idleAnim.start();
+    let unmountTimer: ReturnType<typeof setTimeout> | undefined;
+    if (!working) {
+      // Let SoftMark outro finish before unmount (SOFT_INTRO.outroMs ≈ 220).
+      unmountTimer = setTimeout(() => setSoftMounted(false), 260);
+    }
+
     return () => {
       softAnim.stop();
       idleAnim.stop();
+      if (unmountTimer) clearTimeout(unmountTimer);
     };
   }, [working, reduce, softOpacity, idleOpacity]);
 
@@ -96,10 +102,11 @@ export function KelyraMark({
         />
       </Animated.View>
       {softMounted ? (
-        <Animated.View style={[styles.layer, { opacity: softOpacity }]} pointerEvents="none">
-          {/* Always Soft working while mounted — never Soft-static at chrome idle. */}
-          <SoftMark size={size} mode="working" accessible={false} />
-        </Animated.View>
+        <View style={styles.layer} pointerEvents="none">
+          {/* SoftMark owns intro/outro; wrapper stays fully opaque so Soft is not
+              double-faded into a “bigger Soft pop”. */}
+          <SoftMark size={size} mode={working ? 'working' : 'static'} accessible={false} />
+        </View>
       ) : null}
     </View>
   );
