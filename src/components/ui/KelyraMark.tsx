@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   StyleSheet,
   View,
   type StyleProp,
@@ -83,7 +84,8 @@ export function KelyraMark({
       accessibilityLabel={accessibilityLabel || undefined}
       accessibilityRole={working ? 'progressbar' : undefined}
       accessibilityState={working ? { busy: true } : undefined}
-      style={[{ width: size, height: size }, style]}
+      collapsable={false}
+      style={[{ width: size, height: size, overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }, style]}
     >
       <Animated.View style={[styles.layer, { opacity: idleOpacity }]} pointerEvents="none">
         <Image
@@ -105,7 +107,7 @@ export function KelyraMark({
 
 const styles = StyleSheet.create({
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

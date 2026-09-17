@@ -1,5 +1,5 @@
 import { useGlobalSearchParams, useRouter } from 'expo-router';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HoverTip, tipIfNew } from '@/components/ui/HoverTip';
@@ -65,7 +65,7 @@ export function FloatingTabTray() {
             onPress={() => router.push(tab.href as never)}
             style={({ pressed }) => [styles.topItem, pressed && { opacity: 0.7 }]}
           >
-            <View style={{ width: glyphSize(tab, 20), height: glyphSize(tab, 20), alignItems: 'center', justifyContent: 'center' }}>
+            <View collapsable={false} style={{ width: glyphSize(tab, 20), height: glyphSize(tab, 20), alignItems: 'center', justifyContent: 'center', overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }}>
               <TabGlyph tab={tab} active={tab.active} size={glyphSize(tab, 20)} colors={colors} />
               {tab.badge ? <CountBadge count={tab.badge} danger={colors.danger} ink={scheme === 'dark' ? '#1A120C' : colors.brandInk} /> : null}
             </View>
@@ -120,7 +120,7 @@ export function FloatingTabTray() {
             onPress={() => router.push(tab.href as never)}
             style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
           >
-            <View style={{ width: glyphSize(tab, iconSize), height: glyphSize(tab, iconSize), alignItems: 'center', justifyContent: 'center' }}>
+            <View collapsable={false} style={{ width: glyphSize(tab, iconSize), height: glyphSize(tab, iconSize), alignItems: 'center', justifyContent: 'center', overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }}>
               <TabGlyph tab={tab} active={tab.active} size={glyphSize(tab, iconSize)} colors={colors} />
               {tab.badge ? (
                 <CountBadge count={tab.badge} danger={colors.danger} ink={scheme === 'dark' ? '#1A120C' : colors.brandInk} />

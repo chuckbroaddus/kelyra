@@ -173,6 +173,7 @@ export function AppHeader() {
           <View
             pointerEvents="none"
             accessibilityElementsHidden
+            collapsable={false}
             style={[styles.markSlot, { width: markSize, height: markSize }]}
           >
             <KelyraMark size={markSize} />
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 0,
-    overflow: 'visible',
+    overflow: Platform.OS === 'web' ? 'visible' : 'hidden',
   },
   // Shared Ask Kelyra mark + school logo slot — square markSize box (idle + Soft share center).
   markSlot: {
@@ -356,7 +357,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'visible',
+    // iOS: Soft/comet must not grow the header row. Web keeps visible comet bleed.
+    overflow: Platform.OS === 'web' ? 'visible' : 'hidden',
     zIndex: 2,
   },
   hit: {
