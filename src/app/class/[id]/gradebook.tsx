@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
-import { ClassTabs, GradebookViewTabs } from '@/components/ui/ClassTabs';
+import { GradebookViewTabs } from '@/components/ui/ClassTabs';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton } from '@/components/ui/Button';
 import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
@@ -292,7 +292,6 @@ export default function GradebookScreen() {
 
   const collapsing = (
     <>
-      {id ? <ClassTabs classId={id} stacked /> : null}
       {id ? (
         <View style={styles.chipShelf}>
           <GradebookViewTabs
@@ -318,7 +317,7 @@ export default function GradebookScreen() {
 
   return (
     <View style={styles.shell}>
-    <Screen maxWidth={1100} scroll={false} collapse={collapsing}>
+    <Screen maxWidth={1100} scroll={false} pageChromeHosted collapse={collapsing}>
       {termTabs}
       <View style={styles.pane}>
       {heatmap ? (

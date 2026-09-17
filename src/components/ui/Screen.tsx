@@ -39,6 +39,11 @@ type Props = {
    * Do not also place ClassTabs inside `children` when this is set.
    */
   collapse?: ReactNode;
+  /**
+   * Class `_layout` already hosts ClassTabs + top pad / contextReserve.
+   * Skip duplicate top chrome padding on this Screen.
+   */
+  pageChromeHosted?: boolean;
 };
 
 export function useScreenPad() {
@@ -67,6 +72,7 @@ export function Screen({
   scrollRef,
   onContentSizeChange,
   collapse,
+  pageChromeHosted,
 }: Props) {
   const { colors } = useTheme();
   const { pad } = useScreenPad();
@@ -107,7 +113,7 @@ export function Screen({
   const padStyle = {
     maxWidth,
     paddingHorizontal: pad,
-    paddingTop: pad + topReserve,
+    paddingTop: pageChromeHosted ? 0 : pad + topReserve,
     // When a sticky CTA is in the layout flow, it already sits above the tray.
     // Extra tray padding here would only push Throw away / Retake under the overlay.
     paddingBottom: sticky ? 16 : 16 + (keyboardUp ? 12 : bottomReserve),
@@ -151,7 +157,7 @@ export function Screen({
     body = (
       <FlushBody
         pad={pad}
-        topReserve={topReserve}
+        topGap={pageChromeHosted ? 0 : pad + topReserve}
         maxWidth={maxWidth}
         paddingBottom={padStyle.paddingBottom}
         centered={centered}
@@ -166,7 +172,7 @@ export function Screen({
     body = (
       <FlushBody
         pad={pad}
-        topReserve={topReserve}
+        topGap={pageChromeHosted ? 0 : pad + topReserve}
         maxWidth={maxWidth}
         paddingBottom={padStyle.paddingBottom}
         centered={centered}
@@ -216,21 +222,22 @@ export function Screen({
 function FlushBody({
   children,
   pad,
-  topReserve,
+  topGap,
   maxWidth,
   paddingBottom,
   centered,
 }: {
   children: ReactNode;
   pad: number;
-  topReserve: number;
+  /** Space above collapse chrome. 0 when class `_layout` already hosts ClassTabs. */
+  topGap: number;
   maxWidth: number;
   paddingBottom: number;
   centered?: boolean;
 }) {
   const chrome = useOptionalChrome();
   const visible = chrome?.visible ?? true;
-  const openGap = pad + topReserve;
+  const openGap = topGap;
   const gap = useRef(new Animated.Value(openGap)).current;
   const bottomPad = useRef(new Animated.Value(paddingBottom)).current;
 

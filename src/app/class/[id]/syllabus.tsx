@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -278,7 +277,7 @@ export default function SyllabusScreen() {
   const rulesCategory = categories.find((c) => c.key === editingRulesKey) ?? null;
 
   return (
-    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
+    <Screen keyboard pageChromeHosted>
       <SectionHeader label="How this class grades" first />
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>

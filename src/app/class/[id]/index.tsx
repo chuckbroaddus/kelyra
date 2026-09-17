@@ -20,7 +20,7 @@ import { submissionReviewPath } from '@/lib/practice/review';
 import { deleteCapture } from '@/lib/captures/delete';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { loadClassOverview } from '@/lib/classes/overview';
-import { ClassTabs, DeskSpanTabs } from '@/components/ui/ClassTabs';
+import { DeskSpanTabs } from '@/components/ui/ClassTabs';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { formatWhen } from '@/lib/format';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
@@ -112,7 +112,7 @@ export default function ClassHomeScreen() {
   };
 
   return (
-    <Screen collapse={id ? <ClassTabs classId={id} /> : null}>
+    <Screen pageChromeHosted>
       {!loaded ? <WorkingLine /> : null}
 
       {pane === 'today' || pane === 'week' ? (

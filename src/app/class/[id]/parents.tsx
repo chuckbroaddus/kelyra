@@ -8,7 +8,6 @@ import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { ListRow } from '@/components/ui/ListRow';
 import { MarqueeText } from '@/components/ui/MarqueeText';
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { type } from '@/constants/theme';
@@ -198,7 +197,7 @@ export default function ParentsScreen() {
   };
 
   return (
-    <Screen keyboard maxWidth={640} collapse={classId ? <ClassTabs classId={classId} /> : null}>
+    <Screen keyboard maxWidth={640} pageChromeHosted>
       <SectionHeader label="Parents of class' students" first />
       {linked.length === 0 ? (
         <Text style={[styles.empty, { color: colors.mute }]}>

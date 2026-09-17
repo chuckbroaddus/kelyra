@@ -5,7 +5,6 @@ import { Text } from 'react-native';
 import { PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ClassAvatarRow } from '@/components/ui/ClassAvatarRow';
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { Screen } from '@/components/ui/Screen';
 import { type } from '@/constants/theme';
@@ -74,7 +73,7 @@ export default function ClassSettingsScreen() {
   );
 
   return (
-    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
+    <Screen keyboard pageChromeHosted>
       {klass ? (
         <>
           <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />

@@ -10,7 +10,6 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
@@ -874,7 +873,7 @@ export default function SetupScreen() {
   );
 
   return (
-    <Screen keyboard collapse={id ? <ClassTabs classId={id} /> : null}>
+    <Screen keyboard pageChromeHosted>
       {layout.isSplit && office ? (
         <View style={styles.split}>
           <View style={styles.col}>{addCard}</View>
