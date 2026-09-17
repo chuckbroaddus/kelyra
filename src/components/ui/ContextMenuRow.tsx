@@ -18,7 +18,8 @@ export function ContextMenuRow() {
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
   const height = landscape ? chrome.contextHeightLandscape : chrome.contextHeight;
 
-  if (chromeState.role === 'none' || chromeState.contextReserve === 0) return null;
+  // contextReserve gates Screen pad only — row may be in-flow under web tray (reserve 0).
+  if (chromeState.role === 'none') return null;
 
   const chips = chipsFor({
     pathname,
@@ -32,17 +33,22 @@ export function ContextMenuRow() {
 
   if (!chips.length) return null;
 
+  // Web top bar: in-flow under tray (AppShell). /inbox: never share tray hide (AC-NTA-VIS-01..03).
+  const flow = layout.showTopBar;
+  const pinVisible = pathname === '/inbox';
+
   return (
     <Animated.View
       pointerEvents="box-none"
       style={[
-        styles.wrap,
+        flow ? styles.wrapFlow : styles.wrap,
         {
           height,
           backgroundColor: colors.elevated,
           borderBottomColor: colors.line,
-          transform: [{ translateY: chromeState.contextTranslate }],
-          opacity: chromeState.contextOpacity,
+          // Phone /inbox stays absolute at body top but never fades/translates with tray.
+          transform: flow || pinVisible ? undefined : [{ translateY: chromeState.contextTranslate }],
+          opacity: pinVisible ? 1 : chromeState.contextOpacity,
         },
       ]}
     >
@@ -124,6 +130,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
+    zIndex: 12,
+    borderBottomWidth: 1,
+  },
+  /** In-flow (web top tray stack) or phone /inbox pin — never translate under tray. */
+  wrapFlow: {
+    position: 'relative',
     zIndex: 12,
     borderBottomWidth: 1,
   },

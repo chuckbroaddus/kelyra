@@ -366,8 +366,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     // School home and class desk use in-page PersonTabs, not the Amazon context row.
     if (role === 'student') return 0;
     if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname) || pathname.startsWith('/student/')) return 0;
+    // Web top bar: ContextMenuRow is in-flow under the tray (outside body) — no Screen top pad.
+    if (layout.showTopBar) return 0;
     return contextH;
-  }, [role, pathname, contextH]);
+  }, [role, pathname, contextH, layout.showTopBar]);
 
   const contextTab = contextByPath[pathname] ?? defaultContextTab(pathname);
   const setContextTab = useCallback((tab: string, path?: string) => {
