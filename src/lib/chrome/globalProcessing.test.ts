@@ -47,7 +47,8 @@ test('WK Soft WorkingMark has no pencil geometry; SoftMark Soft face + modes', (
   assert.match(working, /mode="working"/);
   assert.match(working, /driveChromeK/);
   assert.match(working, /useGlobalProcessingActive\(driveChromeK\)/);
-  assert.match(soft, /kelyra-soft\.png/);
+  assert.match(soft, /kelyra\.png/);
+  assert.doesNotMatch(soft, /kelyra-soft\.png/);
   assert.match(soft, /mode === 'working'/);
   assert.match(soft, /useReducedMotion/);
   assert.match(mark, /useChromeKWorking/);
@@ -62,8 +63,8 @@ test('WK idle chrome uses original brand K; Soft only while working', () => {
   assert.match(mark, /SoftMark/);
   assert.match(mark, /useChromeKWorking/);
   assert.match(mark, /softMounted/);
-  assert.match(mark, /mode="working"/);
-  assert.doesNotMatch(mark, /SoftMark[\s\S]*mode=\{working \? 'working' : 'static'\}|mode=\{effective\}/);
+  assert.match(mark, /mode=\{working \? 'working' : 'static'\}/);
+  assert.match(mark, /softMounted/);
 });
 
 test('WK chrome K1/K3/K4/K5 follow Soft SoT; K2 school logo stays RemoteImage', () => {
