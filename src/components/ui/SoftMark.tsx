@@ -622,54 +622,80 @@ export function SoftMark({
           transform: [{ rotateZ: `${COMET_ORBIT.cantZDeg}deg` }, { scale: cometScale }],
         }}
       >
-        <Animated.View
-          pointerEvents="none"
-          collapsable={false}
-          // RN-web: CSS class — do not Animated.loop rotate deg strings (hangs after ~2 orbits).
-          {...(Platform.OS === 'web' && showMotion
-            ? ({ className: COMET_ORBIT.webYawClass } as object)
-            : {})}
-          style={
-            Platform.OS === 'web'
-              ? { width: gimbal, height: gimbal }
-              : {
-                  width: gimbal,
-                  height: gimbal,
-                  transform: showMotion ? [{ rotate }] : undefined,
-                }
-          }
-        >
-          {trail.map((bit) => {
-            const rad = (bit.angle * Math.PI) / 180;
-            const ox = orbitR * Math.cos(rad);
-            const oy = orbitR * Math.sin(rad) * ovalY;
-            const isLead = bit.angle === 0;
-            const bead = (
-              <View
-                style={{
-                  position: 'absolute',
-                  left: gimbal / 2 + ox - (ball * bit.scale) / 2,
-                  top: gimbal / 2 + oy - (ball * bit.scale) / 2,
-                  width: ball * bit.scale,
-                  height: ball * bit.scale,
-                  borderRadius: (ball * bit.scale) / 2,
-                  opacity: bit.opacity,
-                  backgroundColor: isLead ? '#9AF7FF' : 'rgba(154,247,255,0.85)',
-                  borderWidth: isLead ? StyleSheet.hairlineWidth : 0,
-                  borderColor: '#E8FFFF',
-                }}
-              />
-            );
-            if (isLead && Platform.OS !== 'web') {
+        {/* Web: CSS yaw on plain View — never className on Animated.View (RN-web forEach null). */}
+        {Platform.OS === 'web' ? (
+          <View
+            pointerEvents="none"
+            collapsable={false}
+            {...(showMotion ? ({ className: COMET_ORBIT.webYawClass } as object) : {})}
+            style={{ width: gimbal, height: gimbal }}
+          >
+            {trail.map((bit) => {
+              const rad = (bit.angle * Math.PI) / 180;
+              const ox = orbitR * Math.cos(rad);
+              const oy = orbitR * Math.sin(rad) * ovalY;
+              const isLead = bit.angle === 0;
               return (
-                <Animated.View key={bit.angle} style={{ transform: [{ scale: ballDepthScale }] }}>
-                  {bead}
-                </Animated.View>
+                <View
+                  key={bit.angle}
+                  style={{
+                    position: 'absolute',
+                    left: gimbal / 2 + ox - (ball * bit.scale) / 2,
+                    top: gimbal / 2 + oy - (ball * bit.scale) / 2,
+                    width: ball * bit.scale,
+                    height: ball * bit.scale,
+                    borderRadius: (ball * bit.scale) / 2,
+                    opacity: bit.opacity,
+                    backgroundColor: isLead ? '#9AF7FF' : 'rgba(154,247,255,0.85)',
+                    borderWidth: isLead ? StyleSheet.hairlineWidth : 0,
+                    borderColor: '#E8FFFF',
+                  }}
+                />
               );
-            }
-            return <View key={bit.angle}>{bead}</View>;
-          })}
-        </Animated.View>
+            })}
+          </View>
+        ) : (
+          <Animated.View
+            pointerEvents="none"
+            collapsable={false}
+            style={{
+              width: gimbal,
+              height: gimbal,
+              transform: showMotion ? [{ rotate }] : undefined,
+            }}
+          >
+            {trail.map((bit) => {
+              const rad = (bit.angle * Math.PI) / 180;
+              const ox = orbitR * Math.cos(rad);
+              const oy = orbitR * Math.sin(rad) * ovalY;
+              const isLead = bit.angle === 0;
+              const bead = (
+                <View
+                  style={{
+                    position: 'absolute',
+                    left: gimbal / 2 + ox - (ball * bit.scale) / 2,
+                    top: gimbal / 2 + oy - (ball * bit.scale) / 2,
+                    width: ball * bit.scale,
+                    height: ball * bit.scale,
+                    borderRadius: (ball * bit.scale) / 2,
+                    opacity: bit.opacity,
+                    backgroundColor: isLead ? '#9AF7FF' : 'rgba(154,247,255,0.85)',
+                    borderWidth: isLead ? StyleSheet.hairlineWidth : 0,
+                    borderColor: '#E8FFFF',
+                  }}
+                />
+              );
+              if (isLead) {
+                return (
+                  <Animated.View key={bit.angle} style={{ transform: [{ scale: ballDepthScale }] }}>
+                    {bead}
+                  </Animated.View>
+                );
+              }
+              return <View key={bit.angle}>{bead}</View>;
+            })}
+          </Animated.View>
+        )}
       </Animated.View>
     </View>
   );
