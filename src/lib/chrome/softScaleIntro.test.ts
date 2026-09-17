@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import {
+  COMET_ORBIT,
   LETTER_INK,
   SOFT_FACE,
   SOFT_INTRO,
@@ -90,4 +91,26 @@ test('KelyraMark: idle unmount Soft after outro; SoftMark owns morph', () => {
   assert.match(mark, /SOFT_INTRO\.outroMs/);
   assert.doesNotMatch(mark, /opacity: softOpacity[\s\S]{0,80}SoftMark/);
   assert.match(mark, /assets\/brand\/kelyra\.png/);
+});
+
+test('COMET_ORBIT: tilt 26° oval squash + yaw-rev sign (+360)', () => {
+  assert.equal(COMET_ORBIT.tiltXDeg, 26);
+  assert.equal(COMET_ORBIT.cantZDeg, 14);
+  assert.ok(Math.abs(COMET_ORBIT.ovalY - Math.cos((26 * Math.PI) / 180)) < 1e-9);
+  assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
+  assert.equal(COMET_ORBIT.yawToDeg, 360);
+  assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
+});
+
+test('SoftMark comet uses oval placement + +360 yaw (not rotateX circle / −360)', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  assert.match(soft, /COMET_ORBIT/);
+  assert.match(soft, /ovalY/);
+  assert.match(soft, /yawToDeg/);
+  // Fake oval: ellipse ox/oy — not rely on rotateX for the path
+  assert.match(soft, /orbitR \* Math\.cos/);
+  assert.match(soft, /orbitR \* Math\.sin\(rad\) \* ovalY/);
+  assert.doesNotMatch(soft, /rotateX:\s*['"]26deg['"]/);
+  assert.doesNotMatch(soft, /outputRange:\s*\[[^\]]*'-360deg'/);
+  assert.match(soft, /ballDepthScale/);
 });
