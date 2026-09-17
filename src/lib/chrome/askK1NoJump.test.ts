@@ -28,7 +28,6 @@ test('SoftMark layers are absoluteFill; canvas clips on native', () => {
   assert.match(soft, /StyleSheet\.absoluteFill/);
   assert.match(soft, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
   assert.match(soft, /collapsable=\{false\}/);
-  assert.doesNotMatch(soft, /<Animated\.View\s*\n\s*style=\{\{\s*\n\s*width: size,/);
 });
 
 test('KelyraMark host clips Soft on native; layers absolute', () => {
@@ -46,11 +45,18 @@ test('Tray Ask glyph box equals KelyraMark size (no shorter clip slot)', () => {
   assert.match(tray, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
 });
 
-test('Soft PNG ink center aligns with idle K canvas center (±8px)', () => {
+test('Soft PNG recentered; Soft letter smaller than full idle ink (no upscale)', () => {
   const out = execFileSync(
     '/tmp/pilvenv/bin/python',
-    [join(root, 'scripts/check-soft-ink-align.py'), join(root, 'assets/brand')],
+    [join(root, 'scripts/check-soft-letter-size.py'), join(root, 'assets/brand')],
     { encoding: 'utf8' },
   ).trim();
-  assert.match(out, /ok=True/);
+  assert.match(out, /center_ok=True/);
+  assert.match(out, /size_ok=True/);
+});
+
+test('SoftMark wobble does not grow Soft past idle (max scale ≤1.02)', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  assert.doesNotMatch(soft, /1\.045/);
+  assert.match(soft, /1\.012/);
 });

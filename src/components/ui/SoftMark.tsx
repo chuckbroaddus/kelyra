@@ -123,13 +123,14 @@ export function SoftMark({
     inputRange: [0, 1],
     outputRange: ['-2.2deg', '2.6deg'],
   });
+  // Wobble must not grow Soft past idle K optical size (CEO: letter match).
   const faceScaleX = wobble.interpolate({
     inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 1.045, 0.97, 1],
+    outputRange: [1, 1.012, 0.988, 1],
   });
   const faceScaleY = wobble.interpolate({
     inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 0.96, 1.03, 1],
+    outputRange: [1, 0.992, 1.01, 1],
   });
 
   const trail = [
