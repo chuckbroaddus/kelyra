@@ -18,6 +18,7 @@ export {
   OFFICE_CLASS_TABS,
   classTabFromRoute,
   hrefForClassTab,
+  isClassDeskTabsRoute,
   tabsWithFeedIcon,
 } from '@/lib/chrome/classTabs';
 
@@ -25,7 +26,11 @@ function asPersonTabs(tabs: ClassDeskTab[]): PersonTab[] {
   return tabs.map((tab) => ({ ...tab, icon: tab.icon as IconName }));
 }
 
-/** Icon-first class desk tabs. Selected name, everyone else icon-only — same as people. */
+/**
+ * Icon-first class desk tabs. Selected name, everyone else icon-only — same as people.
+ * CT-A: visibilityReserve label policy. Prefer a layout-hosted instance so
+ * PersonTabs stays mounted across desk pane navigations (no replace remount kill).
+ */
 export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,8 +43,11 @@ export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boo
       tabs={tabsWithFeedIcon(asPersonTabs(CLASS_TABS), feedIcon)}
       value={value}
       stacked={stacked}
+      labelPolicy="visibilityReserve"
       onChange={(key) => {
         if (key === value) return;
+        // Content route may change; PersonTabs itself must live in class `_layout`
+        // so this replace does not remount the morph row.
         router.replace(hrefForClassTab(classId, key) as never);
       }}
     />
@@ -68,7 +76,7 @@ type ShelfProps = {
   compact?: boolean;
 };
 
-/** Today · This week under ClassTabs — same morph as PersonTabs (demoted week route). */
+/** Today · This week under ClassTabs — CT-A hug/reserve; same morph (demoted week route). */
 export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) {
   return (
     <PersonTabs
@@ -77,11 +85,12 @@ export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) 
       onChange={onChange}
       stacked={stacked}
       compact={compact}
+      labelPolicy="visibilityReserve"
     />
   );
 }
 
-/** Gradebook · Heatmap under ClassTabs — same morph; heatmap stays demoted from CLASS_TABS. */
+/** Gradebook · Heatmap under ClassTabs — default fraction until a later copy card. */
 export function GradebookViewTabs({ value, onChange, stacked, compact }: ShelfProps) {
   return (
     <PersonTabs

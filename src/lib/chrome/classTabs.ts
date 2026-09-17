@@ -78,3 +78,16 @@ export function classTabFromRoute(pathname: string, tab?: string | string[]): st
 export function tabsWithFeedIcon<T extends { key: string; icon?: string }>(tabs: T[], icon: string): T[] {
   return tabs.map((tab) => (tab.key === 'feed' ? { ...tab, icon } : tab));
 }
+
+/** Desk panes that show ClassTabs (not student/assignment/review/parent-detail). */
+export function isClassDeskTabsRoute(pathname: string): boolean {
+  if (!pathname.includes('/class/')) return false;
+  if (pathname.includes('/student/')) return false;
+  if (pathname.includes('/assignment/')) return false;
+  if (pathname.includes('/review/')) return false;
+  if (pathname.includes('/lesson-result/')) return false;
+  if (pathname.includes('/parent/') && !pathname.endsWith('/parents')) return false;
+  if (pathname.endsWith('/assign')) return false;
+  return true;
+}
+

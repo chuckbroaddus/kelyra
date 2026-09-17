@@ -3453,7 +3453,7 @@ Unselected is icon-only. Only the selected tab shows its English name.
 | **Duration** | `chrome.motion.personTab` = **975**. Cubic ease-out on grow, ease-in on shrink. No spring. No Reanimated. |
 | **Reduce Motion** | `setValue` / duration 0; `scrollTo(..., animated: false)`. |
 
-Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. Full inventory + exceptions: **§38**.
+Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. **Title-slot policy (2026-09-17 CT-A):** default multi-tab cap remains half-row (`fraction`). `ClassTabs` + `DeskSpanTabs` opt into `visibilityReserve` (hug painted title; reserve collapsed 44-hits so ≥3 tabs stay on-screen). Other PersonTabs rows stay on `fraction` until a later copy card. Class desk `PersonTabs` is hosted in `src/app/class/[id]/_layout.tsx` so pane `router.replace` does not remount the morph row. Full inventory + exceptions: **§38**.
 
 **Counts toward glyphs.** Grade-book period tabs use pie-slice `IconName`s (`termAll` … `termYear`), not a labels-only row. Clock from 12: Quarter 1 = upper-right fill, Q2 lower-right, Q3 lower-left, Q4 upper-left. Semester 1 = right half, Semester 2 = left half. **All** is a solid disk; **Year** is a filled disk inside a rim. Same selected-name / icon-only rule as every other PersonTabs row. Do not use `ChipRow` for this filter.
 

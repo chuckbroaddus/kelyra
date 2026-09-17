@@ -26,6 +26,7 @@ import {
   personTabRowHasGlyph,
   personTabSelectedMaxWidth,
   personTabTitleSlot,
+  type PersonTabLabelPolicy,
 } from '@/components/ui/personTabsLayout';
 import { chrome, radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -50,6 +51,11 @@ type Props = {
   stacked?: boolean;
   /** Tighter gap under the hairline (feed compose). Keeps the 1 px line. */
   compact?: boolean;
+  /**
+   * Title-slot policy. Default `fraction` (half-row) for most rows.
+   * `visibilityReserve` = CT-A hug + ≥3 visible — ClassTabs / DeskSpanTabs only.
+   */
+  labelPolicy?: PersonTabLabelPolicy;
 };
 
 /** Icon-only hit (styles.hit minWidth / minHeight). */
@@ -211,7 +217,7 @@ function PersonTabPill({
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'fraction' }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
@@ -219,7 +225,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact }
   const [reduce, setReduce] = useState(false);
   const xOf = useRef<Record<string, number>>({});
   const hasGlyph = personTabRowHasGlyph(tabs);
-  const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph) : 0;
+  const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
 
   useEffect(() => {
     let live = true;

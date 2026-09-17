@@ -1,6 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { Screen } from '@/components/ui/Screen';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
@@ -16,7 +15,7 @@ export default function ClassFeedScreen() {
       maxWidth={640}
       scroll={false}
       avoidKeyboard={false}
-      collapse={id ? <ClassTabs classId={id} /> : null}
+      pageChromeHosted
     >
       {id ? <FeedPane classId={id} scope="class" fill /> : null}
     </Screen>

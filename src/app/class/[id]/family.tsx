@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
-import { ClassTabs } from '@/components/ui/ClassTabs';
 import { Card } from '@/components/ui/Card';
 import { ListRow } from '@/components/ui/ListRow';
 import { Screen } from '@/components/ui/Screen';
@@ -86,7 +85,7 @@ export default function FamilyScreen() {
   usePushedTitle(klass?.name ?? 'Class');
 
   return (
-    <Screen keyboard maxWidth={640} collapse={id ? <ClassTabs classId={id} /> : null}>
+    <Screen keyboard maxWidth={640} pageChromeHosted>
       <SectionHeader label="Send a note home" first />
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>
