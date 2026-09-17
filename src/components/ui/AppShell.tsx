@@ -33,10 +33,17 @@ function ShellFrame({ children }: { children: ReactNode }) {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <AppHeader />
-      {layout.showTopBar ? <FloatingTabTray /> : null}
+      {layout.showTopBar ? (
+        <>
+          {/* Tray self-hides. Job tabs are a sibling — never one disappearing unit (AC-NTA-VIS-03). */}
+          <FloatingTabTray />
+          {/* In-flow under tray — never covered; always painted (AC-NTA-VIS-01). */}
+          <ContextMenuRow />
+        </>
+      ) : null}
       <View style={styles.body}>
         {children}
-        <ContextMenuRow />
+        {!layout.showTopBar ? <ContextMenuRow /> : null}
         {!layout.showTopBar ? <FloatingTabTray /> : null}
       </View>
       <HamburgerDrawer />
