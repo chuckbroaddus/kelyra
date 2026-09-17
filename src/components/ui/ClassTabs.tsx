@@ -1,4 +1,8 @@
-import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import {
+  useGlobalSearchParams,
+  usePathname,
+  useRouter,
+} from 'expo-router';
 
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import type { IconName } from '@/components/ui/Icon';
@@ -8,6 +12,8 @@ import {
   OFFICE_CLASS_TABS,
   classTabFromRoute,
   hrefForClassTab,
+  isClassIndexPath,
+  isClassIndexTab,
   tabsWithFeedIcon,
   type ClassDeskTab,
 } from '@/lib/chrome/classTabs';
@@ -19,6 +25,8 @@ export {
   classTabFromRoute,
   hrefForClassTab,
   isClassDeskTabsRoute,
+  isClassIndexPath,
+  isClassIndexTab,
   tabsWithFeedIcon,
 } from '@/lib/chrome/classTabs';
 
@@ -28,13 +36,16 @@ function asPersonTabs(tabs: ClassDeskTab[]): PersonTab[] {
 
 /**
  * Icon-first class desk tabs. Selected name, everyone else icon-only — same as people.
- * CT-A: visibilityReserve label policy. Prefer a layout-hosted instance so
- * PersonTabs stays mounted across desk pane navigations (no replace remount kill).
+ * CT-A: visibilityReserve. Layout-hosted so PersonTabs stays mounted across pane nav.
+ * Needs Attention: read `tab` from global search params (layout-local omits query) and
+ * use setParams on the index for today/week/needs so selection sticks (no bounce).
  */
 export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  // Layout-local useLocalSearchParams often omits `?tab=` — global keeps Needs selected.
+  const params = useGlobalSearchParams<{ tab?: string | string[] }>();
+  const tab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const value = classTabFromRoute(pathname, tab);
   const feedIcon = useClassFeedIcon(classId);
 
@@ -46,8 +57,13 @@ export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boo
       labelPolicy="visibilityReserve"
       onChange={(key) => {
         if (key === value) return;
-        // Content route may change; PersonTabs itself must live in class `_layout`
-        // so this replace does not remount the morph row.
+        // Same-route index panes: setParams keeps `?tab=` without a replace that
+        // drops query / remounts selection (Today ↔ Needs ↔ week).
+        if (isClassIndexTab(key) && isClassIndexPath(pathname)) {
+          router.setParams({ tab: key });
+          return;
+        }
+        // Cross-route (e.g. Feed → Needs): replace must land on index `?tab=needs`.
         router.replace(hrefForClassTab(classId, key) as never);
       }}
     />
