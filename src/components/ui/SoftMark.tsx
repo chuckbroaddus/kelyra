@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -10,19 +10,23 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import softFace from '../../../assets/brand/kelyra-soft.png';
-import { SOFT_INTRO, SOFT_LETTER_SCALE } from '@/components/ui/softLetterScale';
+import brandMark from '../../../assets/brand/kelyra.png';
+import {
+  LETTER_INK,
+  SOFT_FACE,
+  SOFT_INTRO,
+  SOFT_MOTION,
+} from '@/components/ui/softLetterScale';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 export type SoftMode = 'static' | 'working';
 
-const ORBIT_MS = 2450;
-const WOBBLE_MS = 1700;
+const u = (size: number, n: number) => (size * n) / LETTER_INK.canvas;
 
 /**
- * Soft brand avatar — working look for chrome Soft (CEO Soft peek).
- * Letter scaled by SOFT_LETTER_SCALE to match idle kelyra.png optical size.
- * Intro: blink-open + face/mouth grow + comet zoom into orbit (no larger Soft pop).
+ * Soft v8b working mark — idle `kelyra.png` letter 1:1 + vector face + comet.
+ * Morph (intro/outro) owns lids/smile/comet; look loop independent of blink;
+ * wobble is rotate-only (no letter scale-up).
  */
 export function SoftMark({
   size,
@@ -41,47 +45,46 @@ export function SoftMark({
   const working = mode === 'working';
   const showMotion = working && !reduce;
 
-  const yaw = useRef(new Animated.Value(0)).current;
-  const wobble = useRef(new Animated.Value(0)).current;
   const faceGrow = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
   const faceOpacity = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
-  const blink = useRef(new Animated.Value(1)).current;
+  const lids = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const mouth = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
   const cometIn = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const blink = useRef(new Animated.Value(1)).current;
+  const lookX = useRef(new Animated.Value(0)).current;
+  const lookY = useRef(new Animated.Value(0)).current;
+  const pupilX = useRef(new Animated.Value(0)).current;
+  const pupilY = useRef(new Animated.Value(0)).current;
+  const yaw = useRef(new Animated.Value(0)).current;
+  const wobble = useRef(new Animated.Value(0)).current;
 
+  // Intro / outro morph
   useEffect(() => {
     if (reduce) {
       faceGrow.setValue(working ? 1 : 0);
       faceOpacity.setValue(working ? 1 : 0);
-      blink.setValue(1);
+      lids.setValue(working ? 1 : 0);
+      mouth.setValue(working ? 1 : 0);
       cometIn.setValue(working ? 1 : 0);
+      blink.setValue(1);
       return;
     }
     if (working) {
       faceGrow.setValue(0);
       faceOpacity.setValue(0);
-      blink.setValue(0);
+      lids.setValue(0);
+      mouth.setValue(0);
       cometIn.setValue(0);
-      const grow = Animated.timing(faceGrow, {
-        toValue: 1,
-        duration: SOFT_INTRO.faceMs,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      });
-      const show = Animated.timing(faceOpacity, {
-        toValue: 1,
-        duration: SOFT_INTRO.faceMs,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      });
+      blink.setValue(0);
       const blinkOpen = Animated.sequence([
-        Animated.timing(blink, {
+        Animated.timing(lids, {
           toValue: 1,
           duration: SOFT_INTRO.blinkMs,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(blink, {
-          toValue: 0.12,
+          toValue: 0.08,
           duration: SOFT_INTRO.blinkMs,
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
@@ -93,13 +96,33 @@ export function SoftMark({
           useNativeDriver: true,
         }),
       ]);
-      const cometZoom = Animated.timing(cometIn, {
-        toValue: 1,
-        duration: SOFT_INTRO.cometMs,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      });
-      Animated.parallel([grow, show, blinkOpen, cometZoom]).start();
+      Animated.parallel([
+        Animated.timing(faceGrow, {
+          toValue: 1,
+          duration: SOFT_INTRO.faceMs,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(faceOpacity, {
+          toValue: 1,
+          duration: SOFT_INTRO.faceMs,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(mouth, {
+          toValue: 1,
+          duration: SOFT_INTRO.faceMs,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        blinkOpen,
+        Animated.timing(cometIn, {
+          toValue: 1,
+          duration: SOFT_INTRO.cometMs,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
       return;
     }
     const outro = Animated.parallel([
@@ -110,6 +133,18 @@ export function SoftMark({
         useNativeDriver: true,
       }),
       Animated.timing(faceOpacity, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(mouth, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(lids, {
         toValue: 0,
         duration: SOFT_INTRO.outroMs,
         easing: Easing.in(Easing.cubic),
@@ -126,8 +161,110 @@ export function SoftMark({
     return () => {
       outro.stop();
     };
-  }, [working, reduce, faceGrow, faceOpacity, blink, cometIn]);
+  }, [working, reduce, faceGrow, faceOpacity, lids, mouth, cometIn, blink]);
 
+  // Blink loop (independent of look) — 4.4s
+  useEffect(() => {
+    if (!showMotion) {
+      blink.stopAnimation();
+      blink.setValue(1);
+      return;
+    }
+    const closeMs = 90;
+    const openMs = 110;
+    const hold = Math.max(400, SOFT_MOTION.blinkPeriodMs - closeMs - openMs);
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(hold),
+        Animated.timing(blink, {
+          toValue: 0.06,
+          duration: closeMs,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blink, {
+          toValue: 1,
+          duration: openMs,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => {
+      loop.stop();
+      blink.setValue(1);
+    };
+  }, [showMotion, blink]);
+
+  // Glance / look loop (~8s), independent of blink.
+  // Path: right → pause → center → pause → upper-left → pause → right → pause → center → pause
+  useEffect(() => {
+    if (!showMotion) {
+      lookX.stopAnimation();
+      lookY.stopAnimation();
+      pupilX.stopAnimation();
+      pupilY.stopAnimation();
+      lookX.setValue(0);
+      lookY.setValue(0);
+      pupilX.setValue(0);
+      pupilY.setValue(0);
+      return;
+    }
+    const move = 220;
+    const pause = 580;
+    // Normalized look targets (group); pupils exaggerate ~1.7×
+    const right = { x: 1, y: 0.05 };
+    const center = { x: 0, y: 0 };
+    const upperLeft = { x: -0.85, y: -0.7 };
+    const go = (t: { x: number; y: number }) =>
+      Animated.parallel([
+        Animated.timing(lookX, {
+          toValue: t.x,
+          duration: move,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(lookY, {
+          toValue: t.y,
+          duration: move,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pupilX, {
+          toValue: t.x * 1.7,
+          duration: move,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pupilY, {
+          toValue: t.y * 1.7,
+          duration: move,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]);
+    const loop = Animated.loop(
+      Animated.sequence([
+        go(right),
+        Animated.delay(pause),
+        go(center),
+        Animated.delay(pause),
+        go(upperLeft),
+        Animated.delay(pause),
+        go(right),
+        Animated.delay(pause),
+        go(center),
+        Animated.delay(pause),
+      ]),
+    );
+    loop.start();
+    return () => {
+      loop.stop();
+    };
+  }, [showMotion, lookX, lookY, pupilX, pupilY]);
+
+  // Reverse yaw orbit 2.45s
   useEffect(() => {
     if (!showMotion) {
       yaw.stopAnimation();
@@ -137,7 +274,7 @@ export function SoftMark({
     const loop = Animated.loop(
       Animated.timing(yaw, {
         toValue: 1,
-        duration: ORBIT_MS,
+        duration: SOFT_MOTION.orbitMs,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
@@ -150,6 +287,7 @@ export function SoftMark({
     };
   }, [showMotion, yaw]);
 
+  // Wobble: rotate only (no letter scale grow)
   useEffect(() => {
     if (!showMotion) {
       wobble.stopAnimation();
@@ -160,13 +298,13 @@ export function SoftMark({
       Animated.sequence([
         Animated.timing(wobble, {
           toValue: 1,
-          duration: WOBBLE_MS / 2,
+          duration: SOFT_MOTION.wobbleMs / 2,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(wobble, {
           toValue: 0,
-          duration: WOBBLE_MS / 2,
+          duration: SOFT_MOTION.wobbleMs / 2,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
@@ -180,43 +318,80 @@ export function SoftMark({
     };
   }, [showMotion, wobble]);
 
-  const ball = Math.max(2, size * 0.08);
-  const radius = size * 0.41;
-  const orbit = size;
+  const letterH = size * (LETTER_INK.height / LETTER_INK.canvas);
+  const letterCx = u(size, LETTER_INK.cx);
+  const letterCy = u(size, LETTER_INK.cy);
+  const ball = Math.max(2, letterH * 0.08);
+  const orbitR = letterH * 0.41;
+  const gimbal = letterH * 1.44;
+
   const rotate = yaw.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '-360deg'],
   });
-  const faceRotate = wobble.interpolate({
+  const wobbleRotate = wobble.interpolate({
     inputRange: [0, 1],
     outputRange: ['-2.2deg', '2.6deg'],
   });
-  const faceScaleX = wobble.interpolate({
-    inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 1.01, 0.99, 1],
-  });
-  const faceScaleY = wobble.interpolate({
-    inputRange: [0, 0.35, 0.68, 1],
-    outputRange: [1, 0.995, 1.008, 1],
-  });
-
-  const growScale = faceGrow.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.2, SOFT_LETTER_SCALE],
-  });
-  const eyesOpen = Animated.multiply(faceOpacity, blink);
-  // Comet zooms from large → rest (falls into orbit).
   const cometScale = cometIn.interpolate({
     inputRange: [0, 1],
     outputRange: [2.35, 1],
   });
+  const faceScale = faceGrow.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.35, 1],
+  });
+  const lidsOpen = Animated.multiply(
+    Animated.multiply(lids, blink),
+    faceOpacity,
+  );
+  const lookTX = lookX.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [-u(size, 7), u(size, 7)],
+  });
+  const lookTY = lookY.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [-u(size, 6), u(size, 6)],
+  });
+  const pupilTX = pupilX.interpolate({
+    inputRange: [-1.7, 1.7],
+    outputRange: [-u(size, 5.5), u(size, 5.5)],
+  });
+  const pupilTY = pupilY.interpolate({
+    inputRange: [-1.7, 1.7],
+    outputRange: [-u(size, 4.5), u(size, 4.5)],
+  });
 
-  const trail = [
-    { angle: 0, scale: 1, opacity: 1 },
-    { angle: -28, scale: 0.72, opacity: 0.55 },
-    { angle: -56, scale: 0.48, opacity: 0.32 },
-    { angle: -84, scale: 0.28, opacity: 0.16 },
-  ];
+  // Trail covers ~75% of orbit (taper) — denser near ball
+  const trail = useMemo(
+    () => [
+      { angle: 0, scale: 1, opacity: 1 },
+      { angle: -22, scale: 0.82, opacity: 0.72 },
+      { angle: -44, scale: 0.64, opacity: 0.52 },
+      { angle: -68, scale: 0.48, opacity: 0.36 },
+      { angle: -96, scale: 0.34, opacity: 0.24 },
+      { angle: -128, scale: 0.22, opacity: 0.14 },
+      { angle: -168, scale: 0.14, opacity: 0.08 },
+      { angle: -210, scale: 0.08, opacity: 0.04 },
+    ],
+    [],
+  );
+
+  const eyeR = u(size, SOFT_FACE.eyeR);
+  const pupilR = u(size, SOFT_FACE.pupilR);
+  const gL = u(size, SOFT_FACE.glassesLeftR);
+  const gR = u(size, SOFT_FACE.glassesRightR);
+  const mouthW = u(size, SOFT_FACE.mouth.halfW * 2);
+  const mouthH = u(size, 12);
+
+  const placeEye = (ex: number, ey: number) => ({
+    position: 'absolute' as const,
+    left: u(size, ex) - eyeR,
+    top: u(size, ey) - eyeR,
+    width: eyeR * 2,
+    height: eyeR * 2,
+    borderRadius: eyeR,
+  });
 
   return (
     <View
@@ -233,64 +408,193 @@ export function SoftMark({
         style={[
           styles.layer,
           {
-            opacity: eyesOpen,
-            transform: [
-              { rotate: faceRotate },
-              { scale: growScale },
-              { scaleX: faceScaleX },
-              { scaleY: faceScaleY },
-            ],
+            transform: [{ rotate: wobbleRotate }],
           },
         ]}
       >
+        {/* Letter = idle kelyra.png 1:1 (same contain as chrome idle). */}
         <Image
-          source={softFace}
+          source={brandMark}
           accessibilityIgnoresInvertColors
           resizeMode="contain"
           style={{ width: size, height: size }}
         />
-        {/* Mouth grows into smile with faceGrow (scaleX/Y from nothing). */}
+
         <Animated.View
           pointerEvents="none"
+          collapsable={false}
           style={[
-            styles.mouth,
+            styles.layer,
             {
-              width: size * 0.2,
-              height: size * 0.07,
-              borderRadius: size * 0.07,
-              bottom: size * 0.27,
-              opacity: faceGrow,
+              opacity: faceOpacity,
+              transform: [{ scale: faceScale }],
+            },
+          ]}
+        >
+          {/* Look group: eyes + glasses share glance path */}
+          <Animated.View
+            collapsable={false}
+            style={[
+              styles.layer,
+              {
+                transform: [{ translateX: lookTX }, { translateY: lookTY }],
+              },
+            ]}
+          >
+            {/* Left eye */}
+            <View style={[placeEye(SOFT_FACE.leftEye.x, SOFT_FACE.leftEye.y), styles.eyeWhite]}>
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  left: eyeR - pupilR,
+                  top: eyeR - pupilR,
+                  width: pupilR * 2,
+                  height: pupilR * 2,
+                  borderRadius: pupilR,
+                  backgroundColor: '#1A1228',
+                  transform: [{ translateX: pupilTX }, { translateY: pupilTY }],
+                }}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: '#2A1E3A',
+                    borderRadius: eyeR,
+                    opacity: Animated.subtract(1, lidsOpen),
+                    transform: [{ scaleY: Animated.subtract(1, lidsOpen) }],
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Right eye */}
+            <View style={[placeEye(SOFT_FACE.rightEye.x, SOFT_FACE.rightEye.y), styles.eyeWhite]}>
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  left: eyeR - pupilR,
+                  top: eyeR - pupilR,
+                  width: pupilR * 2,
+                  height: pupilR * 2,
+                  borderRadius: pupilR,
+                  backgroundColor: '#1A1228',
+                  transform: [{ translateX: pupilTX }, { translateY: pupilTY }],
+                }}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: '#2A1E3A',
+                    borderRadius: eyeR,
+                    opacity: Animated.subtract(1, lidsOpen),
+                    transform: [{ scaleY: Animated.subtract(1, lidsOpen) }],
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Glasses — left / right rings + shortened arch bridge */}
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: u(size, SOFT_FACE.leftEye.x) - gL,
+                top: u(size, SOFT_FACE.leftEye.y) - gL,
+                width: gL * 2,
+                height: gL * 2,
+                borderRadius: gL,
+                borderWidth: Math.max(1.2, u(size, 2.4)),
+                borderColor: 'rgba(30, 22, 48, 0.92)',
+              }}
+            />
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: u(size, SOFT_FACE.rightEye.x) - gR,
+                top: u(size, SOFT_FACE.rightEye.y) - gR,
+                width: gR * 2,
+                height: gR * 2,
+                borderRadius: gR,
+                borderWidth: Math.max(1.2, u(size, 2.4)),
+                borderColor: 'rgba(30, 22, 48, 0.92)',
+              }}
+            />
+            {/* Shortened arch bridge */}
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: u(size, (SOFT_FACE.leftEye.x + SOFT_FACE.rightEye.x) / 2) - u(size, 14),
+                top: u(size, SOFT_FACE.leftEye.y) - u(size, 10),
+                width: u(size, 28),
+                height: u(size, 14),
+                borderTopWidth: Math.max(1.2, u(size, 2.2)),
+                borderLeftWidth: Math.max(1, u(size, 1.6)),
+                borderRightWidth: Math.max(1, u(size, 1.6)),
+                borderBottomWidth: 0,
+                borderColor: 'rgba(30, 22, 48, 0.92)',
+                borderTopLeftRadius: u(size, 16),
+                borderTopRightRadius: u(size, 16),
+                backgroundColor: 'transparent',
+              }}
+            />
+          </Animated.View>
+
+          {/* Mouth — grows into smile; no nose */}
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: u(size, SOFT_FACE.mouth.x) - mouthW / 2,
+              top: u(size, SOFT_FACE.mouth.y) - mouthH / 2,
+              width: mouthW,
+              height: mouthH,
+              borderRadius: mouthH,
+              backgroundColor: 'rgba(40, 30, 50, 0.55)',
+              opacity: mouth,
               transform: [
                 {
-                  scaleX: faceGrow.interpolate({
+                  scaleX: mouth.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0.12, 1],
                   }),
                 },
                 {
-                  scaleY: faceGrow.interpolate({
+                  scaleY: mouth.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0.15, 1],
                   }),
                 },
               ],
-            },
-          ]}
-        />
+            }}
+          />
+        </Animated.View>
       </Animated.View>
 
+      {/* Comet gimbal ~1.44× letter, centered on letter ink center */}
       <Animated.View
         pointerEvents="none"
         collapsable={false}
-        style={[
-          styles.gimbal,
-          {
-            width: orbit,
-            height: orbit,
-            opacity: cometIn,
-            transform: [{ rotateZ: '14deg' }, { scale: cometScale }, { rotate }],
-          },
-        ]}
+        style={{
+          position: 'absolute',
+          left: letterCx - gimbal / 2,
+          top: letterCy - gimbal / 2,
+          width: gimbal,
+          height: gimbal,
+          opacity: cometIn,
+          transform: [
+            { perspective: 600 },
+            { rotateX: '26deg' },
+            { rotateZ: '14deg' },
+            { scale: cometScale },
+            { rotate },
+          ],
+        }}
       >
         {trail.map((bit) => (
           <View
@@ -298,8 +602,8 @@ export function SoftMark({
             collapsable={false}
             style={{
               position: 'absolute',
-              left: size / 2,
-              top: size / 2,
+              left: gimbal / 2,
+              top: gimbal / 2,
               width: 0,
               height: 0,
               transform: [{ rotate: `${bit.angle}deg` }],
@@ -308,7 +612,7 @@ export function SoftMark({
             <View
               style={{
                 position: 'absolute',
-                left: radius - (ball * bit.scale) / 2,
+                left: orbitR - (ball * bit.scale) / 2,
                 top: -(ball * bit.scale) / 2,
                 width: ball * bit.scale,
                 height: ball * bit.scale,
@@ -337,14 +641,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mouth: {
-    position: 'absolute',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(40, 30, 50, 0.5)',
-  },
-  gimbal: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
+  eyeWhite: {
+    backgroundColor: '#F7F4FF',
+    overflow: 'hidden',
   },
 });

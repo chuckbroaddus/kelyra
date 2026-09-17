@@ -25,7 +25,7 @@ const TX_MS = 200;
  * Chrome brand K (K1/K3/K4/K5).
  * Idle: original `kelyra.png` only — Soft face is never mounted at rest.
  * Busy (`globalProcessingCount > 0`): Soft + comet. Idle fades out; SoftMark
- * owns blink/grow/orbit intro (no pop of a larger Soft).
+ * owns lids/smile/comet morph on idle kelyra.png letter (no Soft PNG pop).
  */
 export function KelyraMark({
   size,
@@ -74,7 +74,7 @@ export function KelyraMark({
     let unmountTimer: ReturnType<typeof setTimeout> | undefined;
     if (!working) {
       // Let SoftMark outro finish before unmount (SOFT_INTRO.outroMs ≈ 220).
-      unmountTimer = setTimeout(() => setSoftMounted(false), 260);
+      unmountTimer = setTimeout(() => setSoftMounted(false), SOFT_INTRO.outroMs + 40);
     }
 
     return () => {

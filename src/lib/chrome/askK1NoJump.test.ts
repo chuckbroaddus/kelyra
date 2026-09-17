@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -45,19 +44,19 @@ test('Tray Ask glyph box equals KelyraMark size (no shorter clip slot)', () => {
   assert.match(tray, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
 });
 
-test('Soft PNG recentered; Soft letter smaller than full idle ink (no upscale)', () => {
-  const out = execFileSync(
-    '/tmp/pilvenv/bin/python',
-    [join(root, 'scripts/check-soft-letter-size.py'), join(root, 'assets/brand')],
-    { encoding: 'utf8' },
-  ).trim();
-  assert.match(out, /center_ok=True/);
-  assert.match(out, /size_ok=True/);
+test('SoftMark does not size from Soft PNG bbox (idle kelyra.png is the letter)', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  assert.match(soft, /LETTER_INK/);
+  assert.match(soft, /443|LETTER_INK\.height|letterH/);
+  assert.doesNotMatch(soft, /kelyra-soft\.png/);
+  assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
 });
 
-test('SoftMark scales Soft letter down and does not grow past idle', () => {
+test('SoftMark letter is idle kelyra.png 1:1; wobble has no scale grow', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
+  assert.match(soft, /assets\/brand\/kelyra\.png/);
+  assert.doesNotMatch(soft, /kelyra-soft\.png/);
+  assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
   assert.doesNotMatch(soft, /1\.045/);
-  assert.match(soft, /SOFT_LETTER_SCALE/);
-  assert.match(soft, /growScale/);
+  assert.match(soft, /wobbleRotate/);
 });
