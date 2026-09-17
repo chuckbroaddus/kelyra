@@ -12,6 +12,7 @@ import {
 
 import brandMark from '../../../assets/brand/kelyra.png';
 import {
+  COMET_ORBIT,
   LETTER_INK,
   SOFT_FACE,
   SOFT_INTRO,
@@ -21,12 +22,32 @@ import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 export type SoftMode = 'static' | 'working';
 
+const WEB_YAW_STYLE_ID = 'kelyra-soft-comet-yaw-css';
+
+/** Inject SoT-style infinite yaw CSS once (web). Avoids RN-web Animated.loop hang. */
+function ensureSoftCometYawCss(durationMs: number) {
+  if (Platform.OS !== 'web') return;
+  const doc = typeof document !== 'undefined' ? document : undefined;
+  if (!doc?.head) return;
+  let el = doc.getElementById(WEB_YAW_STYLE_ID) as HTMLStyleElement | null;
+  if (!el) {
+    el = doc.createElement('style');
+    el.id = WEB_YAW_STYLE_ID;
+    doc.head.appendChild(el);
+  }
+  // HTML SoT: @keyframes yaw-rev { to { transform: rotateY(-360deg); } } — 2D oval uses rotate(-360).
+  el.textContent = `@keyframes ${COMET_ORBIT.webYawKeyframes}{to{transform:rotate(${COMET_ORBIT.yawToDeg}deg)}}.` +
+    `${COMET_ORBIT.webYawClass}{animation:${COMET_ORBIT.webYawKeyframes} ${durationMs}ms linear infinite;transform-origin:50% 50%}`;
+}
+
+
 const u = (size: number, n: number) => (size * n) / LETTER_INK.canvas;
 
 /**
  * Soft v8b working mark — idle `kelyra.png` letter 1:1 + vector face + comet.
  * Morph (intro/outro) owns lids/smile/comet; look loop independent of blink;
  * wobble is rotate-only (no letter scale-up).
+ * Comet: oval (COMET_ORBIT.ovalY) + yaw −360 (SoT yaw-rev); web CSS infinite, native Animated.
  */
 export function SoftMark({
   size,
@@ -264,8 +285,12 @@ export function SoftMark({
     };
   }, [showMotion, lookX, lookY, pupilX, pupilY]);
 
-  // Reverse yaw orbit 2.45s
+  // Yaw orbit 2.45s — native Animated only. Web uses CSS (SoT); RN-web loop hangs ~2 orbits.
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      ensureSoftCometYawCss(SOFT_MOTION.orbitMs);
+      return;
+    }
     if (!showMotion) {
       yaw.stopAnimation();
       yaw.setValue(0);
@@ -321,13 +346,20 @@ export function SoftMark({
   const letterH = size * (LETTER_INK.height / LETTER_INK.canvas);
   const letterCx = u(size, LETTER_INK.cx);
   const letterCy = u(size, LETTER_INK.cy);
-  const ball = Math.max(2, letterH * 0.08);
-  const orbitR = letterH * 0.41;
-  const gimbal = letterH * 1.44;
+  const ball = Math.max(2, letterH * COMET_ORBIT.ballOfLetter);
+  const orbitR = letterH * COMET_ORBIT.radiusOfLetter;
+  const gimbal = letterH * COMET_ORBIT.gimbalOfLetter;
+  const ovalY = COMET_ORBIT.ovalY;
 
+  // Screen-plane yaw — +360 matches HTML yaw-rev on iPhone (not Z −360 circle).
   const rotate = yaw.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '-360deg'],
+    outputRange: ['0deg', `${COMET_ORBIT.yawToDeg}deg`],
+  });
+  // Near/far: larger in front, smaller in back (fake translateZ).
+  const ballDepthScale = yaw.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [1.22, 0.92, 0.72, 0.92, 1.22],
   });
   const wobbleRotate = wobble.interpolate({
     inputRange: [0, 1],
@@ -576,7 +608,7 @@ export function SoftMark({
         </Animated.View>
       </Animated.View>
 
-      {/* Comet gimbal ~1.44× letter, centered on letter ink center */}
+      {/* Comet: oval beads + yaw-rev. Web = CSS infinite; native = Animated (no rotateX). */}
       <Animated.View
         pointerEvents="none"
         collapsable={false}
@@ -587,44 +619,57 @@ export function SoftMark({
           width: gimbal,
           height: gimbal,
           opacity: cometIn,
-          transform: [
-            { perspective: 600 },
-            { rotateX: '26deg' },
-            { rotateZ: '14deg' },
-            { scale: cometScale },
-            { rotate },
-          ],
+          transform: [{ rotateZ: `${COMET_ORBIT.cantZDeg}deg` }, { scale: cometScale }],
         }}
       >
-        {trail.map((bit) => (
-          <View
-            key={bit.angle}
-            collapsable={false}
-            style={{
-              position: 'absolute',
-              left: gimbal / 2,
-              top: gimbal / 2,
-              width: 0,
-              height: 0,
-              transform: [{ rotate: `${bit.angle}deg` }],
-            }}
-          >
-            <View
-              style={{
-                position: 'absolute',
-                left: orbitR - (ball * bit.scale) / 2,
-                top: -(ball * bit.scale) / 2,
-                width: ball * bit.scale,
-                height: ball * bit.scale,
-                borderRadius: (ball * bit.scale) / 2,
-                opacity: bit.opacity,
-                backgroundColor: bit.angle === 0 ? '#9AF7FF' : 'rgba(154,247,255,0.85)',
-                borderWidth: bit.angle === 0 ? StyleSheet.hairlineWidth : 0,
-                borderColor: '#E8FFFF',
-              }}
-            />
-          </View>
-        ))}
+        <Animated.View
+          pointerEvents="none"
+          collapsable={false}
+          // RN-web: CSS class — do not Animated.loop rotate deg strings (hangs after ~2 orbits).
+          {...(Platform.OS === 'web' && showMotion
+            ? ({ className: COMET_ORBIT.webYawClass } as object)
+            : {})}
+          style={
+            Platform.OS === 'web'
+              ? { width: gimbal, height: gimbal }
+              : {
+                  width: gimbal,
+                  height: gimbal,
+                  transform: showMotion ? [{ rotate }] : undefined,
+                }
+          }
+        >
+          {trail.map((bit) => {
+            const rad = (bit.angle * Math.PI) / 180;
+            const ox = orbitR * Math.cos(rad);
+            const oy = orbitR * Math.sin(rad) * ovalY;
+            const isLead = bit.angle === 0;
+            const bead = (
+              <View
+                style={{
+                  position: 'absolute',
+                  left: gimbal / 2 + ox - (ball * bit.scale) / 2,
+                  top: gimbal / 2 + oy - (ball * bit.scale) / 2,
+                  width: ball * bit.scale,
+                  height: ball * bit.scale,
+                  borderRadius: (ball * bit.scale) / 2,
+                  opacity: bit.opacity,
+                  backgroundColor: isLead ? '#9AF7FF' : 'rgba(154,247,255,0.85)',
+                  borderWidth: isLead ? StyleSheet.hairlineWidth : 0,
+                  borderColor: '#E8FFFF',
+                }}
+              />
+            );
+            if (isLead && Platform.OS !== 'web') {
+              return (
+                <Animated.View key={bit.angle} style={{ transform: [{ scale: ballDepthScale }] }}>
+                  {bead}
+                </Animated.View>
+              );
+            }
+            return <View key={bit.angle}>{bead}</View>;
+          })}
+        </Animated.View>
       </Animated.View>
     </View>
   );

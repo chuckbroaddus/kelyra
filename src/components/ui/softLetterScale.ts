@@ -52,3 +52,28 @@ export const SOFT_FACE = {
   /** Mouth center + half-width (78% of ±50). */
   mouth: { x: 230, y: 268, halfW: 39 },
 } as const;
+
+/**
+ * Soft v8b comet orbit (SoT: working-k-avatar-soft-v8b.html).
+ * CSS uses rotateX(26) + rotateY(-360) + translateZ(0.41×letter).
+ * RN/iOS often drops rotateX → flat circle; Z-spin can read opposite to CSS yaw.
+ * Fake oval: place beads on an ellipse (squash = cos 26°) and spin in screen plane.
+ * Yaw: screen-plane rotate to −360deg = HTML `@keyframes yaw-rev` / rotateY(-360).
+ * Web must use CSS animation (not RN Animated.loop of rotate strings — hangs after ~2 orbits).
+ */
+export const COMET_ORBIT = {
+  tiltXDeg: 26,
+  cantZDeg: 14,
+  /** Ellipse vertical squash ≈ cos(tiltX) — oval, not circle. */
+  ovalY: Math.cos((26 * Math.PI) / 180),
+  /** Orbit radius as fraction of letter ink height. */
+  radiusOfLetter: 0.41,
+  /** Gimbal box as fraction of letter ink height. */
+  gimbalOfLetter: 1.44,
+  /** Screen-plane spin matching SoT yaw-rev (negative full turn). */
+  yawToDeg: -360,
+  ballOfLetter: 0.08,
+  /** CSS keyframe name — web only (infinite; no Animated.loop hang). */
+  webYawClass: 'kelyra-soft-yaw-rev',
+  webYawKeyframes: 'kelyra-soft-yaw-rev',
+} as const;
