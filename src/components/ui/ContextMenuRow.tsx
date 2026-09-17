@@ -32,16 +32,19 @@ export function ContextMenuRow() {
 
   if (!chips.length) return null;
 
+  const flow = layout.showTopBar;
+
   return (
     <Animated.View
       pointerEvents="box-none"
       style={[
-        styles.wrap,
+        flow ? styles.wrapFlow : styles.wrap,
         {
           height,
           backgroundColor: colors.elevated,
           borderBottomColor: colors.line,
-          transform: [{ translateY: chromeState.contextTranslate }],
+          // Web top-bar: opacity only — do not translate under the static tray (AC-WEB-01).
+          transform: flow ? undefined : [{ translateY: chromeState.contextTranslate }],
           opacity: chromeState.contextOpacity,
         },
       ]}
@@ -124,6 +127,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
+    zIndex: 12,
+    borderBottomWidth: 1,
+  },
+  wrapFlow: {
+    position: 'relative',
     zIndex: 12,
     borderBottomWidth: 1,
   },

@@ -366,8 +366,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     // School home and class desk use in-page PersonTabs, not the Amazon context row.
     if (role === 'student') return 0;
     if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname) || pathname.startsWith('/student/')) return 0;
+    // Web top bar: ContextMenuRow is in-flow under the tray (outside body) — no Screen top pad.
+    if (layout.showTopBar) return 0;
     return contextH;
-  }, [role, pathname, contextH]);
+  }, [role, pathname, contextH, layout.showTopBar]);
 
   const contextTab = contextByPath[pathname] ?? defaultContextTab(pathname);
   const setContextTab = useCallback((tab: string, path?: string) => {
@@ -375,8 +377,16 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     setContextByPath((current) => (current[key] === tab ? current : { ...current, [key]: tab }));
   }, [pathname]);
 
+  // Web top bar: tray+job-tabs share one Animated wrapper (AppShell) driven by trayTranslate.
+  // Distance = topBar + context row when /inbox (etc.) still shows ContextMenuRow chips.
+  const topChromeHide =
+    chrome.topBarHeight +
+    (pathname === '/inbox' || pathname === '/todo' || pathname === '/parent' ? contextH : 0);
   const hideDistance =
-    (layout.showTopBar ? 0 : trayHeight) + (localTray ? trayHeight + 8 : 0) + bottomInset + 28;
+    (layout.showTopBar ? topChromeHide : trayHeight) +
+    (localTray ? trayHeight + 8 : 0) +
+    bottomInset +
+    (layout.showTopBar ? 0 : 28);
 
   const animate = useCallback(
     (show: boolean, opts?: { system?: boolean; local?: boolean }) => {

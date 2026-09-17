@@ -33,10 +33,21 @@ function ShellFrame({ children }: { children: ReactNode }) {
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <AppHeader />
-      {layout.showTopBar ? <FloatingTabTray /> : null}
+      {layout.showTopBar ? (
+        <Animated.View
+          pointerEvents="box-none"
+          style={{
+            opacity: chromeState.trayOpacity,
+            transform: [{ translateY: chromeState.trayTranslate }],
+          }}
+        >
+          <FloatingTabTray />
+          <ContextMenuRow />
+        </Animated.View>
+      ) : null}
       <View style={styles.body}>
         {children}
-        <ContextMenuRow />
+        {!layout.showTopBar ? <ContextMenuRow /> : null}
         {!layout.showTopBar ? <FloatingTabTray /> : null}
       </View>
       <HamburgerDrawer />
