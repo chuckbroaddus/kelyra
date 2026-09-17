@@ -26,13 +26,15 @@ test('available title width subtracts glyph, gap, hit pad, and row end', () => {
   assert.equal(personTabAvailableTitleWidth(0), 0);
 });
 
-test('one tab may use the leftover row after the glyph; several stay at half (fraction)', () => {
+test('legacy fraction: one tab leftover; several stay at half (opt-out only)', () => {
   const row = 360;
   const available = personTabAvailableTitleWidth(row);
-  assert.equal(personTabLabelMax(row, 1), available);
-  assert.equal(personTabLabelMax(row, 0), available);
-  assert.equal(personTabLabelMax(row, 2), Math.floor(row * 0.5));
-  assert.ok(personTabLabelMax(row, 1) > personTabLabelMax(row, 3));
+  assert.equal(personTabLabelMax(row, 1, true, 'fraction'), available);
+  assert.equal(personTabLabelMax(row, 0, true, 'fraction'), available);
+  assert.equal(personTabLabelMax(row, 2, true, 'fraction'), Math.floor(row * 0.5));
+  assert.ok(personTabLabelMax(row, 1, true, 'fraction') > personTabLabelMax(row, 3, true, 'fraction'));
+  // Default policy is visibilityReserve (FoM lock) — not half-row.
+  assert.notEqual(personTabLabelMax(row, 2), Math.floor(row * 0.5));
 });
 
 test('visibilityReserve: short title hugs — pill stays narrow (not stretch-to-3)', () => {
@@ -152,4 +154,11 @@ test('personTabScrollX: moving right shifts selected toward left-center of pair'
   const left = personTabScrollX({ ...base, prevIndex: 4 });
   assert.ok(right <= left, `right=${right} left=${left}`);
   assert.ok(right <= base.tabX);
+});
+
+test('default personTabLabelMax policy is visibilityReserve (FoM lock)', () => {
+  const row = 390;
+  const def = personTabLabelMax(row, 8, true);
+  const reserved = personTabLabelMax(row, 8, true, 'visibilityReserve');
+  assert.equal(def, reserved);
 });

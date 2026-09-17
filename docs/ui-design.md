@@ -3453,14 +3453,15 @@ Unselected is icon-only. Only the selected tab shows its English name.
 | **Duration** | `chrome.motion.personTab` = **975**. Cubic ease-out on grow, ease-in on shrink. No spring. No Reanimated. |
 | **Reduce Motion** | `setValue` / duration 0; `scrollTo(..., animated: false)`. |
 
-Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. **Title-slot policy (2026-09-17 CT-A):** default multi-tab cap remains half-row (`fraction`). `ClassTabs` + `DeskSpanTabs` opt into `visibilityReserve` (hug painted title; reserve collapsed 44-hits so ≥3 tabs stay on-screen). Other PersonTabs rows stay on `fraction` until a later copy card. Class desk `PersonTabs` is hosted in `src/app/class/[id]/_layout.tsx` so pane `router.replace` does not remount the morph row. Full inventory + exceptions: **§38**.
+Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. **Title-slot policy (FoM lock 2026-09-17):** default is `visibilityReserve` on **every** destination `PersonTabs` row (all hats). Selected pill **hugs** painted title (`personTabTitleSlot`); marquee ceiling reserves collapsed 44-hits so **min(3, n)** tabs stay on-screen without scroll for those; extra row width shows more tabs; 2-tab shelves keep both visible. Legacy `fraction` (half-row) is opt-out only — do not use for destination rows. Class desk `PersonTabs` is hosted in `src/app/class/[id]/_layout.tsx` so pane nav does not remount the morph row. Full inventory + exceptions: **§38**.
 
 **Counts toward glyphs.** Grade-book period tabs use pie-slice `IconName`s (`termAll` … `termYear`), not a labels-only row. Clock from 12: Quarter 1 = upper-right fill, Q2 lower-right, Q3 lower-left, Q4 upper-left. Semester 1 = right half, Semester 2 = left half. **All** is a solid disk; **Year** is a filled disk inside a rim. Same selected-name / icon-only rule as every other PersonTabs row. Do not use `ChipRow` for this filter.
 
 **Title slot.** The width used for the selected name is the lesser of (1) the painted title at `type.pill` and (2) the max allowed for that row. Subtract the 22 glyph (icon or teacher avatar), 8 gap, 22 hit pad, and 8 row-end pad from the measured tab scroller before the title may grow. Trailing mute / extra chrome sits outside the scroller and is already gone from that width.
 
-- **Several tabs:** max is **50% of the measured tab row** (so unselected 44-hits still fit). Marquee if the title is longer than that half.
-- **One tab in the row:** max is the leftover scroller after the glyph/avatar chrome above — **not** half the row. A short class name hugs the title. A long class name uses the rest of the row and marquees only if it still overflows. Do not ellipsis.
+- **Several tabs (`visibilityReserve`, product default):** selected label max is the **marquee ceiling** that still leaves room for **min(3, n)** collapsed 44-hits (plus gaps) on-screen. Short titles **hug** paint — the pill does **not** stretch to that ceiling. Long titles cap at the ceiling and marquee. Extra row space shows more than three tabs when they fit. Do not ellipsis.
+- **One tab in the row:** max is the leftover scroller after the glyph/avatar chrome above — **not** a half-row fraction. A short name hugs the title. A long name uses the rest of the row and marquees only if it still overflows. Do not ellipsis.
+- **Legacy `fraction`:** half-row cap — documented opt-out only; not for destination rows.
 
 Fade color is the selected pill (`brandSoft`). This is the one exception to §30.1 “no marquee on chips”: `PersonTabs` is icon-first chrome, not a ChipRow. Helper: `src/components/ui/personTabsLayout.ts`.
 
@@ -3472,7 +3473,7 @@ Fade color is the selected pill (`brandSoft`). This is the one exception to §30
 
 **Stacked rows** (student Class, Assignments). Consecutive `PersonTabs` share one hairline under the last row. Inner rows set `stacked`: `marginBottom: 0`, no border. No Amazon context row on student screens — those filters are `PersonTabs` in the page, same as school home. Do not use `Chip` / `ChipRow` for student destination filters.
 
-**Scroll into view.** On select, `scrollTo` the tab’s `x` minus a 12 pt lead so the selected pill is not clipped. First tab (Focus / Login) scrolls to `x = 0`. Reduce Motion: jump with `animated: false`. Do not spring. Do not auto-center the way a `UITabBar` would.
+**Scroll into view (`personTabScrollX`).** On select, scroll so the selected pill sits in a readable middle band — **not** left-pin `x − 12`. First tab scrolls to `x = 0`. With three-ish visible, center the selected tab; with four-plus, prefer a direction-aware center pair so the selected glyph is never clipped off the left. Reduce Motion: jump with `animated: false`. Do not spring.
 
 **Not sticky.** The row lives in the page body under the hero. It is not `chrome.contextHeight`, not `stickyPlacement`, and it must not tuck under or overlap `AppHeader`. Student destinations omit the Amazon context row entirely (`contextReserve = 0`) so there is no empty band above the first `PersonTabs`. Pushed person pages still omit the Amazon Class context row (§3.6). Teacher **ClassTabs** on every desk pane use `Screen collapse={…}` / `CollapsingPageChrome` so they leave and return with the tray brain — same physics as class Feed (§9.6). Other in-page `PersonTabs` (student destinations, office home non-feed panes) may still scroll with page content unless a flush pane says otherwise.
 
@@ -4132,7 +4133,7 @@ Matcher still never inserts a student. Nothing is a grade until the teacher Appr
 
 ## 38. Unified tab-row morph (PersonTabs) — 2026-09-12
 
-**Product lock (Chuck).** Every horizontal **destination / pane** tab row in the app follows the same morph model as PersonTabs / ClassTabs after #100 + #101. Duration locked at `chrome.motion.personTab` = **975 ms**. Prefer reuse of `PersonTabs` over forking animation. Spec behavior: §32.2 Selected-name morph.
+**Product lock (Chuck, FoM 2026-09-17).** Every horizontal **destination / pane** tab row in the app follows the same morph model as FoM ClassTabs: hug painted title, marquee ceiling so **min(3, n)** stay on-screen, `personTabScrollX` center/pair scroll, duration `chrome.motion.personTab` = **975 ms**. Default `PersonTabs` `labelPolicy` = `visibilityReserve`. Prefer reuse of `PersonTabs` over forking animation. Spec behavior: §32.2. Lock note: `notes/company/class-tabs-morph-appwide-lock.md`.
 
 ### 38.1 Canonical primitive
 
@@ -4147,7 +4148,7 @@ Matcher still never inserts a student. Nothing is a grade until the teacher Appr
 | Counts toward | `src/components/ui/GradeTermTabs.tsx` → `PersonTabs` |
 | Student class shelf | `StudentClassTabs` in `StudentWorkList.tsx` → `PersonTabs` |
 
-**ClassTabs inherits PersonTabs** — verify and keep that. Wrappers may only map tabs / routing; they must not own `Animated.timing` expand.
+**ClassTabs inherits PersonTabs** — verify and keep that. Wrappers may only map tabs / routing; they must not own `Animated.timing` expand. Title math + scroll: `personTabLabelMax(..., 'visibilityReserve')` (default) + `personTabScrollX` — same for every inventory row below.
 
 ### 38.2 Inventory (destination tab rows)
 
@@ -4174,6 +4175,8 @@ These are **not** destination tab rows. Keep `Chip` / `ChipRow` (always-visible 
 | Surface | Why excepted |
 |---|---|
 | **`FloatingTabTray`** | System / seat tray — equal icon hits, hide-on-scroll tray physics (§3.4 / §10.3), not in-page selected-name morph |
+| **NT-A `/inbox` job tabs** (`ContextMenuRow` Name · Review · Waiting) | Amazon-style context segments — always-visible labels; do **not** convert to PersonTabs |
+| **Form / filter `ChipRow`s** | Always-visible labels, multi-select, or equal-width form filters (see rows below) |
 | Assignment form ChipRows | Form fields (category, due, counts-toward pickers on the **form**, not the grade-book filter row) |
 | Assignment list kind filter (`All` · kinds) | Filter chips with always-on labels; not icon-first chrome |
 | Activity / matrix / proposal filters | Multi-filter chip shelves |
@@ -4186,7 +4189,7 @@ If a future control is a **pane switcher** (one selected destination, icon-first
 
 ### 38.4 Future copy rule
 
-New tab rows copy **PersonTabs** (or a one-line wrapper that only supplies `tabs` / `value` / `onChange`). Do not reimplement grow/shrink, LTR reveal, RTL cover, mute-on-deselect, or marquee-after-expand. Tests: `personTabsLayout.test.ts`, `personTabsInventory.test.ts`, `teachUxLeftovers.test.ts` (L3).
+New tab rows copy **PersonTabs** (or a one-line wrapper that only supplies `tabs` / `value` / `onChange`) and inherit the FoM default (`visibilityReserve` + `personTabScrollX`). Do not reimplement grow/shrink, LTR reveal, RTL cover, mute-on-deselect, or marquee-after-expand. Do not pass `labelPolicy="fraction"` on destination rows. Tests: `personTabsLayout.test.ts`, `personTabsInventory.test.ts`, `teachUxLeftovers.test.ts` (L3).
 
 ```
 src/components/ui/PersonTabs.tsx

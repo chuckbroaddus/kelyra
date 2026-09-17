@@ -53,8 +53,8 @@ type Props = {
   /** Tighter gap under the hairline (feed compose). Keeps the 1 px line. */
   compact?: boolean;
   /**
-   * Title-slot policy. Default `fraction` (half-row) for most rows.
-   * `visibilityReserve` = CT-A hug + ≥3 visible — ClassTabs / DeskSpanTabs only.
+   * Title-slot policy. Default `visibilityReserve` (FoM hug + ≥3 visible) app-wide.
+   * Pass `fraction` only for a documented legacy half-row exception.
    */
   labelPolicy?: PersonTabLabelPolicy;
 };
@@ -219,7 +219,7 @@ function PersonTabPill({
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'fraction' }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve' }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
