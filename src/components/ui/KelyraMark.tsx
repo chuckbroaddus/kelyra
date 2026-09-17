@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -22,8 +22,8 @@ const TX_MS = 200;
 
 /**
  * Chrome brand K (K1/K3/K4/K5).
- * Idle: original `kelyra.png`. Working (`globalProcessingCount > 0`): Soft + comet.
- * Forced `mode` overrides chrome SoT (tests).
+ * Idle: original `kelyra.png` only — Soft face is never mounted at rest.
+ * Busy (`globalProcessingCount > 0`): Soft + comet. Crossfade both ways.
  */
 export function KelyraMark({
   size,
@@ -43,13 +43,16 @@ export function KelyraMark({
 
   const softOpacity = useRef(new Animated.Value(working ? 1 : 0)).current;
   const idleOpacity = useRef(new Animated.Value(working ? 0 : 1)).current;
+  const [softMounted, setSoftMounted] = useState(working);
 
   useEffect(() => {
+    if (working) setSoftMounted(true);
     const softTo = working ? 1 : 0;
     const idleTo = working ? 0 : 1;
     if (reduce) {
       softOpacity.setValue(softTo);
       idleOpacity.setValue(idleTo);
+      if (!working) setSoftMounted(false);
       return;
     }
     const softAnim = Animated.timing(softOpacity, {
@@ -64,7 +67,9 @@ export function KelyraMark({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
-    softAnim.start();
+    softAnim.start(({ finished }) => {
+      if (finished && !working) setSoftMounted(false);
+    });
     idleAnim.start();
     return () => {
       softAnim.stop();
@@ -88,13 +93,12 @@ export function KelyraMark({
           style={{ width: size, height: size }}
         />
       </Animated.View>
-      <Animated.View style={[styles.layer, { opacity: softOpacity }]} pointerEvents="none">
-        <SoftMark
-          size={size}
-          mode={working ? 'working' : 'static'}
-          accessible={false}
-        />
-      </Animated.View>
+      {softMounted ? (
+        <Animated.View style={[styles.layer, { opacity: softOpacity }]} pointerEvents="none">
+          {/* Always Soft working while mounted — never Soft-static at chrome idle. */}
+          <SoftMark size={size} mode="working" accessible={false} />
+        </Animated.View>
+      ) : null}
     </View>
   );
 }

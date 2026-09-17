@@ -10,7 +10,6 @@ import { MessageComposer } from '@/components/ui/MessageComposer';
 import { MessagePayloadView } from '@/components/ui/MessageAttach';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { useGlobalProcessingActive } from '@/lib/chrome/globalProcessing';
 import { type } from '@/constants/theme';
 import { runAskAgent, type AskChatLine } from '@/lib/ai/askAgent';
 import { GAUTH_REFUSAL_TITLE } from '@/lib/ai/askHomeworkRefuse';
@@ -64,10 +63,7 @@ export default function AskScreen() {
   const [messages, setMessages] = useState<Bubble[]>([]);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [aiWait, setAiWait] = useState(false);
   const [status, setStatus] = useState('Asking AI…');
-  // §4.1 Ask assistant wait — not Opening Kelyra / new-thread.
-  useGlobalProcessingActive(aiWait);
   const [error, setError] = useState<string | null>(null);
   const office = isOfficeRole(profile);
 
@@ -153,7 +149,6 @@ export default function AskScreen() {
     setMessages(next);
     setBusy(true);
     setStatus('Asking AI…');
-    setAiWait(true);
     setError(null);
     try {
       const savedId = await appendAskMessage('user', body, payload).catch(() => null);
@@ -189,7 +184,6 @@ export default function AskScreen() {
     } catch {
       setError('Kelyra is offline. Try again in a moment.');
     } finally {
-      setAiWait(false);
       setBusy(false);
     }
   };
@@ -236,7 +230,7 @@ export default function AskScreen() {
       {returnTo ? (
         <GhostButton align="left" label="Back to the assignment" onPress={() => router.push(returnTo as never)} />
       ) : null}
-      {!ready ? <WorkingLine text="Opening Kelyra…" /> : null}
+      {!ready ? <WorkingLine text="Opening Kelyra…" driveChromeK={false} /> : null}
       {chrome.role === 'teacher' && chrome.className ? (
         <View style={styles.contextRow}>
           <Chip

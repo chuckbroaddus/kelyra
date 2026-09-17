@@ -45,6 +45,8 @@ test('WK Soft WorkingMark has no pencil geometry; SoftMark Soft face + modes', (
   assert.doesNotMatch(working, /pencil|F4C430|eraser|ferrule/);
   assert.match(working, /SoftMark/);
   assert.match(working, /mode="working"/);
+  assert.match(working, /driveChromeK/);
+  assert.match(working, /useGlobalProcessingActive\(driveChromeK\)/);
   assert.match(soft, /kelyra-soft\.png/);
   assert.match(soft, /mode === 'working'/);
   assert.match(soft, /useReducedMotion/);
@@ -59,7 +61,9 @@ test('WK idle chrome uses original brand K; Soft only while working', () => {
   assert.match(mark, /assets\/brand\/kelyra\.png/);
   assert.match(mark, /SoftMark/);
   assert.match(mark, /useChromeKWorking/);
-  assert.match(mark, /working \? 'working' : 'static'|chromeWorking \? 'working' : 'static'/);
+  assert.match(mark, /softMounted/);
+  assert.match(mark, /mode="working"/);
+  assert.doesNotMatch(mark, /SoftMark[\s\S]*mode=\{working \? 'working' : 'static'\}|mode=\{effective\}/);
 });
 
 test('WK chrome K1/K3/K4/K5 follow Soft SoT; K2 school logo stays RemoteImage', () => {
@@ -87,13 +91,17 @@ test('WK chrome K1/K3/K4/K5 follow Soft SoT; K2 school logo stays RemoteImage', 
 
 test('WK §4.1 owners register useGlobalProcessingActive / begin-end; §4.2 Opening Kelyra does not', () => {
   const ask = read('src/app/ask.tsx');
-  assert.match(ask, /useGlobalProcessingActive\(aiWait\)/);
-  assert.match(ask, /setAiWait\(true\)/);
+  const workingLine = read('src/components/ui/WorkingMark.tsx');
+  assert.match(workingLine, /useGlobalProcessingActive\(driveChromeK\)/);
   assert.match(ask, /Opening Kelyra…/);
+  assert.match(ask, /driveChromeK=\{false\}/);
+  assert.doesNotMatch(ask, /useGlobalProcessingActive\(aiWait\)/);
 
-  assert.match(read('src/app/capture.tsx'), /useGlobalProcessingActive\(asking\)/);
-  assert.match(read('src/app/proposal.tsx'), /useGlobalProcessingActive\(working\)/);
-  assert.match(read('src/app/class/[id]/setup.tsx'), /useGlobalProcessingActive\(readingList \|\| hearing\)/);
+  // Screens with WorkingLine rely on driveChromeK SoT (no duplicate job hooks).
+  assert.doesNotMatch(read('src/app/capture.tsx'), /useGlobalProcessingActive/);
+  assert.doesNotMatch(read('src/app/proposal.tsx'), /useGlobalProcessingActive/);
+  assert.doesNotMatch(read('src/app/class/[id]/setup.tsx'), /useGlobalProcessingActive/);
+  // Waiting UI without WorkingLine still registers the slot.
   assert.match(
     read('src/components/ingest/ClassStackBinder.tsx'),
     /useGlobalProcessingActive\(Boolean\((?:resumeChecking \|\| )?showWaiting\)\)/,
