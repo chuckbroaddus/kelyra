@@ -13,6 +13,7 @@ import {
 import brandMark from '../../../assets/brand/kelyra.png';
 
 import { SoftMark, type SoftMode } from '@/components/ui/SoftMark';
+import { SOFT_INTRO } from '@/components/ui/softLetterScale';
 import { useChromeKWorking } from '@/lib/chrome/globalProcessing';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
