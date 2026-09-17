@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   StyleSheet,
   View,
   type StyleProp,
@@ -144,14 +145,19 @@ export function SoftMark({
       accessibilityLabel={accessible ? accessibilityLabel : undefined}
       accessibilityRole={accessible && working ? 'progressbar' : undefined}
       accessibilityState={accessible && working ? { busy: true } : undefined}
+      collapsable={false}
       style={[styles.canvas, { width: size, height: size }, style]}
     >
+      {/* Absolute face — transforms must not expand Yoga layout on iOS. */}
       <Animated.View
-        style={{
-          width: size,
-          height: size,
-          transform: [{ rotate: faceRotate }, { scaleX: faceScaleX }, { scaleY: faceScaleY }],
-        }}
+        pointerEvents="none"
+        collapsable={false}
+        style={[
+          styles.layer,
+          {
+            transform: [{ rotate: faceRotate }, { scaleX: faceScaleX }, { scaleY: faceScaleY }],
+          },
+        ]}
       >
         <Image
           source={softFace}
@@ -164,6 +170,7 @@ export function SoftMark({
       {/* Comet: canted reverse-yaw orbit; trail trails the ball (WK-LOOK-04). */}
       <Animated.View
         pointerEvents="none"
+        collapsable={false}
         style={[
           styles.gimbal,
           {
@@ -177,6 +184,7 @@ export function SoftMark({
         {trail.map((bit) => (
           <View
             key={bit.angle}
+            collapsable={false}
             style={{
               position: 'absolute',
               left: size / 2,
@@ -209,7 +217,14 @@ export function SoftMark({
 
 const styles = StyleSheet.create({
   canvas: {
-    overflow: 'visible',
+    // Native: clip so Soft/comet never expand the header/tray row.
+    // Web: allow slight comet bleed (already OK after PR 116).
+    overflow: Platform.OS === 'web' ? 'visible' : 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  layer: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
   },
