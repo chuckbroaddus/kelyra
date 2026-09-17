@@ -26,6 +26,7 @@ import { INGEST_COPY, ingestGapCopy } from '@/lib/ingest/copy';
 import { gateStackFiles, runClassStackUpload, type StackFile } from '@/lib/ingest/runUpload';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { useGlobalProcessingActive } from '@/lib/chrome/globalProcessing';
 
 type Props = {
   visible: boolean;
@@ -384,6 +385,7 @@ export function ClassStackBinder({
   const phoneGate = Platform.OS !== 'web';
   const showBind = !phoneGate && teachSeat && phase === 'bind';
   const showWaiting = !phoneGate && teachSeat && phase === 'waiting';
+  useGlobalProcessingActive(Boolean(showWaiting));
   const showPartial = !phoneGate && teachSeat && phase === 'partial';
   const showFailed = !phoneGate && teachSeat && phase === 'failed';
 
