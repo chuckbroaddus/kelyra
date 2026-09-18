@@ -3,12 +3,14 @@ import type { StyleProp, ViewStyle } from 'react-native';
 
 import { softV8bHostInnerHtml } from '@/components/ui/softV8bHostHtml';
 import { SOFT_INTRO } from '@/components/ui/softLetterScale';
+import { startSoftCometFacing } from '@/components/ui/softCometFacing';
 
 export type SoftMode = 'static' | 'working';
 
 /**
- * Soft v8b web host — real DOM div + SoT CSS (preserve-3d, gas-svg).
+ * Soft v8b web host — real DOM div + SoT CSS (gas-svg / face).
  * Zero RN className on View/Animated.View. Morph via `.is-on` on `.av`.
+ * Comet: JS always-facing + phase-z (inline <script> does not run via innerHTML).
  */
 export function SoftMark({
   size,
@@ -34,6 +36,13 @@ export function SoftMark({
     else root.classList.remove('is-on');
   }, [working]);
 
+  useEffect(() => {
+    const root = hostRef.current?.querySelector('#soft-root') as HTMLElement | null;
+    if (!root) return;
+    const handle = startSoftCometFacing(root);
+    return () => handle.stop();
+  }, [inner]);
+
   // Outro: parent removes is-on (mode=static) before unmount (SOFT_INTRO.outroMs).
   void SOFT_INTRO.outroMs;
 
@@ -50,7 +59,7 @@ export function SoftMark({
       overflow: 'visible' as const,
       ...flat,
     },
-    // Real DOM so CSS preserve-3d + gas-svg work (RN View cannot).
+    // Real DOM so CSS gas-svg + face work (RN View cannot).
     dangerouslySetInnerHTML: { __html: inner },
   });
 }

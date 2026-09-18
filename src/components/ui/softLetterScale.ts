@@ -76,4 +76,10 @@ export const COMET_ORBIT = {
   /** Web: keyframes + nativeID (maps to DOM id). Never RN className. */
   webYawNativeId: 'kelyra-soft-yaw-spin',
   webYawKeyframes: 'kelyra-soft-yaw-rev',
+  /**
+   * Native/WebView: do not trust CSS .billboard counter-rotateY.
+   * Host uses JS always-facing ball (data-soft-facing=js-always) + phase-z occlusion.
+   */
+  facingMode: 'js-always' as const,
+  occlusionMode: 'phase-z' as const,
 } as const;
