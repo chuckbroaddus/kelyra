@@ -7,6 +7,92 @@ import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
 
 export type SoftCometFacingHandle = { stop: () => void };
 
+/**
+ * Injectable IIFE for native SoftMark WebView (onLoadEnd).
+ * Hard-hides .mouth and runs the same always-facing ball + gas-orbit + phase-z
+ * logic as startSoftCometFacing. RN WebView often does not execute HTML inline
+ * <script>, so SoftMark.tsx must inject this — do not rely on host script alone.
+ */
+export function softCometFacingInjectScript(): string {
+  const period = SOFT_MOTION.orbitMs;
+  const cantZDeg = COMET_ORBIT.cantZDeg;
+  const ovalY = COMET_ORBIT.ovalY;
+  const radiusOfLetter = COMET_ORBIT.radiusOfLetter;
+  const facingMode = COMET_ORBIT.facingMode;
+  const occlusionMode = COMET_ORBIT.occlusionMode;
+  const trailMode = COMET_ORBIT.trailMode;
+  const faceMode = COMET_ORBIT.faceMode;
+
+  // Values inlined so WebView has no module imports.
+  return `(function(){
+  try {
+    var root = document.getElementById('soft-root');
+    if (!root) return true;
+    root.querySelectorAll('.mouth').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('opacity','0','important');
+    });
+    if (root.getAttribute('data-soft-facing-injected') === '1') return true;
+    root.setAttribute('data-soft-facing-injected','1');
+    root.setAttribute('data-soft-facing',${JSON.stringify(facingMode)});
+    root.setAttribute('data-soft-occlusion',${JSON.stringify(occlusionMode)});
+    root.setAttribute('data-soft-trail',${JSON.stringify(trailMode)});
+    root.setAttribute('data-soft-face',${JSON.stringify(faceMode)});
+    var scene = root.querySelector('.scene');
+    var bit = root.querySelector('.bit.head');
+    var gas = root.querySelector('.gas-orbit') || root.querySelector('[data-soft-trail="js-orbit"]');
+    if (!scene || !bit) return true;
+    var period = ${period};
+    var cantDeg = ${cantZDeg};
+    var ovalY = ${ovalY};
+    var cosC = Math.cos(${cantZDeg} * Math.PI / 180);
+    var sinC = Math.sin(${cantZDeg} * Math.PI / 180);
+    var radiusOfLetter = ${radiusOfLetter};
+    var reduced = false;
+    try {
+      reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (e) { reduced = false; }
+    var start = null;
+    function letterPx(){
+      var raw = getComputedStyle(root).getPropertyValue('--s');
+      var s = parseFloat(raw) || root.clientWidth || 128;
+      return s * 468 / 512;
+    }
+    function frame(now){
+      var on = root.classList.contains('is-on') || root.classList.contains('demo-in') || root.classList.contains('demo-out');
+      if (!on) {
+        bit.style.transform = 'translate(0px, 0px)';
+        if (gas) gas.style.transform = 'none';
+        scene.classList.remove('comet-front','comet-behind');
+        requestAnimationFrame(frame);
+        return;
+      }
+      if (start == null) start = now;
+      var t = reduced ? 0 : (now - start) % period;
+      var phase = t / period;
+      var theta = -phase * Math.PI * 2;
+      var r = letterPx() * radiusOfLetter;
+      var x = r * Math.sin(theta);
+      var y = r * Math.cos(theta) * ovalY;
+      var xr = x * cosC - y * sinC;
+      var yr = x * sinC + y * cosC;
+      bit.style.transform = 'translate(' + xr.toFixed(2) + 'px,' + yr.toFixed(2) + 'px)';
+      if (gas) {
+        var deg = phase * -360;
+        gas.style.transform = 'rotate(' + cantDeg + 'deg) scale(1,' + ovalY.toFixed(6) + ') rotate(' + deg.toFixed(2) + 'deg)';
+      }
+      var front = Math.cos(theta) > 0;
+      scene.classList.toggle('comet-front', front);
+      scene.classList.toggle('comet-behind', !front);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  } catch (err) {}
+  return true;
+})();`;
+}
+
 /** Drive scene-level .bit.head + .gas-orbit + .comet-front/.comet-behind on a Soft host root. */
 export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
   const scene = root.querySelector('.scene') as HTMLElement | null;

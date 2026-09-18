@@ -8,6 +8,7 @@ import {
 import { WebView } from 'react-native-webview';
 
 import { softV8bHostDocument } from '@/components/ui/softV8bHostHtml';
+import { softCometFacingInjectScript } from '@/components/ui/softCometFacing';
 import { SOFT_INTRO } from '@/components/ui/softLetterScale';
 
 export type SoftMode = 'static' | 'working';
@@ -22,6 +23,8 @@ const ORBIT_PAD_FRAC = 0.22;
  * SoftMark only while working — KelyraMark removes `.is-on` (mode=static) before unmount.
  *
  * Native FIX-NOW: opaque={false}; overflow visible; host JS always-facing ball + phase occlusion.
+ * Native Soft does NOT rely on HTML inline <script> (RN WebView often skips it) —
+ * onLoadEnd injects softCometFacingInjectScript (mouth hide + facing/trail/phase-z).
  */
 export function SoftMark({
   size,
@@ -43,6 +46,7 @@ export function SoftMark({
     () => softV8bHostDocument(size, working, pad),
     [size, working, pad],
   );
+  const facingInject = useMemo(() => softCometFacingInjectScript(), []);
   const webRef = useRef<WebView>(null);
 
   useEffect(() => {
@@ -83,6 +87,14 @@ export function SoftMark({
         allowFileAccess={false}
         setSupportMultipleWindows={false}
         pointerEvents="none"
+        onLoadEnd={() => {
+          webRef.current?.injectJavaScript(facingInject);
+          if (working) {
+            webRef.current?.injectJavaScript(
+              `document.getElementById('soft-root')?.classList.add('is-on'); true;`,
+            );
+          }
+        }}
         // RNW 13 types omit `opaque`; required so WKWebView stays transparent under Soft.
         {...({ opaque: false } as Record<string, unknown>)}
       />
