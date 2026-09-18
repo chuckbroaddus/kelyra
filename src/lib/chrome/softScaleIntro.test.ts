@@ -156,10 +156,25 @@ test('Soft comet: JS always-facing ball + phase-z front/behind K (not CSS billbo
 });
 
 
+test('SoftMark native: onLoadEnd injects softCometFacing (not HTML inline script alone)', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.match(soft, /onLoadEnd/);
+  assert.match(soft, /softCometFacingInjectScript/);
+  assert.match(soft, /injectJavaScript\(facingInject\)/);
+  assert.match(facing, /export function softCometFacingInjectScript/);
+  assert.match(facing, /\.mouth/);
+  assert.match(facing, /gas-orbit|js-orbit/);
+  assert.match(facing, /comet-front/);
+  assert.match(facing, /data-soft-facing-injected/);
+});
+
+
 test('softCometFacing module exports startSoftCometFacing (web DOM driver)', () => {
   const facing = read('src/components/ui/softCometFacing.ts');
   const softWeb = read('src/components/ui/SoftMark.web.tsx');
   assert.match(facing, /export function startSoftCometFacing/);
+  assert.match(facing, /export function softCometFacingInjectScript/);
   assert.match(facing, /comet-front/);
   assert.match(facing, /js-always|facingMode/);
   assert.match(softWeb, /startSoftCometFacing/);
