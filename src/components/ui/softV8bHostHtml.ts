@@ -20,3 +20,14 @@ export function softV8bHostDocument(sizePx: number, isOn: boolean): string {
   }
   return html;
 }
+
+
+/** Inner HTML for SoftMark.web DOM div (style + host; not a full document). */
+export function softV8bHostInnerHtml(sizePx: number, isOn: boolean): string {
+  const doc = softV8bHostDocument(sizePx, isOn);
+  const styleMatch = doc.match(/<style>[\s\S]*?<\/style>/);
+  const bodyMatch = doc.match(/<body>([\s\S]*)<\/body>/);
+  const style = styleMatch ? styleMatch[0] : '';
+  const body = bodyMatch ? bodyMatch[1] : doc;
+  return `${style}${body}`;
+}
