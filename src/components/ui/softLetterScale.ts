@@ -8,6 +8,10 @@
  *
  * Ink box on 512 canvas: 443×468 at (24,21)→(466,488).
  * Letter height = size * 468/512; letter center at size*(245/512, 254.5/512).
+ *
+ * Runtime Soft is native RN Views (SoftMark.tsx). HTML Soft v8b is design SoT only
+ * (notes/company/working-k-avatar-soft-v8b.html / assets/brand/soft-v8b-host.html).
+ * Face runtime: react-native-svg Soft v8b ellipses + glasses (no mouth).
  */
 
 export const LETTER_INK = {
@@ -40,32 +44,45 @@ export const SOFT_MOTION = {
   wobbleMs: 1700,
 } as const;
 
-/** Face layout in 512-space (Soft v8b). Eyes are 60% of Peek v7 Soft size. */
+/**
+ * Face layout in 512-space (Soft v8b host SVG).
+ * Eyes are ellipses (not circles); glasses stroke 6.5; no mouth at runtime.
+ */
 export const SOFT_FACE = {
   leftEye: { x: 169, y: 198 },
   rightEye: { x: 292, y: 198 },
-  /** Eye white radius (512-space), ~60% of v7. */
-  eyeR: 14.4,
-  pupilR: 6.2,
-  glassesLeftR: 31.1,
-  glassesRightR: 32.4,
-  /** Mouth center + half-width (78% of ±50). */
+  /** Left white ellipse rx/ry (Soft v8b SoT). */
+  eyeRx: 27.2,
+  eyeRy: 29.9,
+  /** Alias for left eye rx — chrome scale / tests. */
+  eyeR: 27.2,
+  rightEyeRx: 25.9,
+  rightEyeRy: 28.6,
+  pupilR: 14.3,
+  rightPupilR: 13.6,
+  catchlightR: 5.1,
+  rightCatchlightR: 4.8,
+  /** Glasses circles — SoT left r=32.4 @ (169,198), right r=31.1 @ (292,198). */
+  glassesLeftR: 32.4,
+  glassesRightR: 31.1,
+  glassesStroke: 6.5,
+  glassesMidX: 230.5,
+  glassesMidY: 198,
+  glassesBridge: 'M201.4 198 Q230.5 176.0 260.9 198',
+  /** Mouth center + half-width — design SoT only; runtime Soft has no mouth. */
   mouth: { x: 230, y: 268, halfW: 39 },
 } as const;
 
 /**
  * Soft v8b comet orbit (SoT: working-k-avatar-soft-v8b.html).
- * CSS uses rotateX(26) + rotateY(-360) + translateZ(0.41×letter).
- * RN/iOS often drops rotateX → flat circle; Z-spin can read opposite to CSS yaw.
- * Fake oval: place beads on an ellipse (squash = cos 26°) and spin in screen plane.
- * Yaw: screen-plane rotate to −360deg = HTML `@keyframes yaw-rev` / rotateY(-360).
- * Web must use CSS animation (not RN Animated.loop of rotate strings — hangs after ~2 orbits).
+ * Locked for iPhone chrome ~40px: ovalY 0.58, cantZ 14, tilt 26, radius 0.41.
+ * Native SoftMark drives place(theta) via requestAnimationFrame (softCometFacing).
  */
 export const COMET_ORBIT = {
   tiltXDeg: 26,
   cantZDeg: 14,
-  /** Ellipse vertical squash ≈ cos(tiltX) — oval, not circle. */
-  ovalY: Math.cos((26 * Math.PI) / 180),
+  /** Locked squash for iPhone chrome ~40px — cos(26°)≈0.90 reads circular; 0.58 reads oval. */
+  ovalY: 0.58,
   /** Orbit radius as fraction of letter ink height. */
   radiusOfLetter: 0.41,
   /** Gimbal box as fraction of letter ink height. */
@@ -77,14 +94,13 @@ export const COMET_ORBIT = {
   webYawNativeId: 'kelyra-soft-yaw-spin',
   webYawKeyframes: 'kelyra-soft-yaw-rev',
   /**
-   * Native/WebView: do not trust CSS .billboard counter-rotateY.
-   * Host uses JS always-facing ball + js-orbit gas (data-soft-facing/trail) + phase-z occlusion.
+   * Native Soft: always-facing circular View ball + bead trail + phase-z occlusion.
    * Face: eyes-glasses-nomouth (CEO — no mouth).
    */
   facingMode: 'js-always' as const,
   occlusionMode: 'phase-z' as const,
-  /** Gas trail: JS screen-plane orbit (not CSS rotateX(90°) alone on WKWebView). */
-  trailMode: 'js-orbit' as const,
-  /** CEO Soft face: eyes + glasses; mouth hard-hidden in host. */
+  /** Gas trail: RN View beads along orbit (HTML js-beads SoT). */
+  trailMode: 'js-beads' as const,
+  /** CEO Soft face: eyes + glasses; no mouth. */
   faceMode: 'eyes-glasses-nomouth' as const,
 } as const;

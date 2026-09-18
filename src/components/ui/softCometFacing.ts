@@ -1,95 +1,76 @@
 /**
- * Soft comet always-facing ball + JS gas trail + phase occlusion (WKWebView / web DOM).
- * Mirrors host inline script: 2D ellipse yaw-rev, z-order front/behind K.
- * Do not use CSS .billboard counter-rotateY or CSS rotateX(90°) gas alone on native WebView.
+ * Soft comet orbit math — shared by native SoftMark (RN Views).
+ * Same place(theta) as Soft Soft v8b / HTML SoT: 2D ellipse yaw-rev + cantZ,
+ * phase-z front/behind K, thick bead trail for ~40px chrome.
+ *
+ * HTML Soft v8b host remains design SoT only; WebView Soft is abandoned.
  */
-import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
+import { COMET_ORBIT, LETTER_INK, SOFT_MOTION } from './softLetterScale';
 
-export type SoftCometFacingHandle = { stop: () => void };
+/** Trail bead count — thick enough for ~40px chrome. */
+export const BEAD_N = 14;
+/** Phase lag span (fraction of orbit) for bead trail. */
+export const TRAIL_SPAN = 0.38;
+/** Head bead size as fraction of letter ink height. */
+export const BEAD_SIZE_HEAD = 0.14;
+/** Head→tail size drop (letter * (0.14 − 0.095 * tFrac)). */
+export const BEAD_SIZE_TAIL_DELTA = 0.095;
 
-/** Drive scene-level .bit.head + .gas-orbit + .comet-front/.comet-behind on a Soft host root. */
-export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
-  const scene = root.querySelector('.scene') as HTMLElement | null;
-  const bit = root.querySelector('.bit.head') as HTMLElement | null;
-  const gas =
-    (root.querySelector('.gas-orbit') as HTMLElement | null) ||
-    (root.querySelector('[data-soft-trail="js-orbit"]') as HTMLElement | null);
-  if (!scene || !bit) {
-    return { stop() {} };
-  }
+export type SoftCometPoint = { x: number; y: number };
+export type SoftCometBead = SoftCometPoint & { size: number; opacity: number };
+export type SoftCometFrame = {
+  head: SoftCometPoint;
+  headSize: number;
+  beads: SoftCometBead[];
+  /** true → ball+beads paint in front of letter (zIndex). */
+  front: boolean;
+  theta: number;
+};
 
-  root.setAttribute('data-soft-facing', COMET_ORBIT.facingMode);
-  root.setAttribute('data-soft-occlusion', COMET_ORBIT.occlusionMode);
-  root.setAttribute('data-soft-trail', COMET_ORBIT.trailMode);
-  root.setAttribute('data-soft-face', COMET_ORBIT.faceMode);
+/** Letter ink height in px for a mark canvas of `markSize`. */
+export function softLetterHeight(markSize: number): number {
+  return (markSize * LETTER_INK.height) / LETTER_INK.canvas;
+}
 
-  const period = SOFT_MOTION.orbitMs;
-  const tilt = (COMET_ORBIT.tiltXDeg * Math.PI) / 180;
+/**
+ * Screen-plane place on the Soft oval (yaw-rev).
+ * x = r·sin(θ), y = r·cos(θ)·ovalY, then cantZ rotation.
+ */
+export function softCometPlace(theta: number, r: number): SoftCometPoint {
   const cant = (COMET_ORBIT.cantZDeg * Math.PI) / 180;
-  const cantDeg = COMET_ORBIT.cantZDeg;
-  const ovalY = COMET_ORBIT.ovalY;
   const cosC = Math.cos(cant);
   const sinC = Math.sin(cant);
+  const x = r * Math.sin(theta);
+  const y = r * Math.cos(theta) * COMET_ORBIT.ovalY;
+  return { x: x * cosC - y * sinC, y: x * sinC + y * cosC };
+}
 
-  let reduced = false;
-  try {
-    reduced = !!(
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    );
-  } catch {
-    reduced = false;
+/**
+ * One Soft orbit frame at phase ∈ [0,1) for mark canvas `markSize`.
+ * theta = −phase·2π (yaw-rev). front when cos(theta) > 0.
+ */
+export function softCometFrame(phase: number, markSize: number): SoftCometFrame {
+  const letter = softLetterHeight(markSize);
+  const r = letter * COMET_ORBIT.radiusOfLetter;
+  const theta = -phase * Math.PI * 2;
+  const head = softCometPlace(theta, r);
+  const headSize = letter * BEAD_SIZE_HEAD;
+  const beads: SoftCometBead[] = [];
+  for (let b = 0; b < BEAD_N; b++) {
+    const lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
+    const p = softCometPlace(-(phase - lag) * Math.PI * 2, r);
+    const tFrac = (b + 1) / BEAD_N;
+    const size = letter * (BEAD_SIZE_HEAD - BEAD_SIZE_TAIL_DELTA * tFrac);
+    const opacity = 0.95 - 0.7 * tFrac;
+    beads.push({ x: p.x, y: p.y, size, opacity });
   }
-
-  let start: number | null = null;
-  let raf = 0;
-  let alive = true;
-
-  function letterPx(): number {
-    const raw = getComputedStyle(root).getPropertyValue('--s');
-    const s = parseFloat(raw) || root.clientWidth || 128;
-    return s * 468 / 512;
-  }
-
-  function frame(now: number) {
-    if (!alive) return;
-    const on =
-      root.classList.contains('is-on') ||
-      root.classList.contains('demo-in') ||
-      root.classList.contains('demo-out');
-    if (!on) {
-      bit!.style.transform = 'translate(0px, 0px)';
-      if (gas) gas.style.transform = 'none';
-      scene!.classList.remove('comet-front', 'comet-behind');
-      raf = requestAnimationFrame(frame);
-      return;
-    }
-    if (start == null) start = now;
-    const t = reduced ? 0 : (now - start) % period;
-    const phase = t / period;
-    const theta = -phase * Math.PI * 2; // yaw-rev
-    const r = letterPx() * COMET_ORBIT.radiusOfLetter;
-    const x = r * Math.sin(theta);
-    const y = r * Math.cos(theta) * ovalY;
-    const xr = x * cosC - y * sinC;
-    const yr = x * sinC + y * cosC;
-    bit!.style.transform = `translate(${xr.toFixed(2)}px,${yr.toFixed(2)}px)`;
-    if (gas) {
-      const deg = phase * -360;
-      gas.style.transform = `rotate(${cantDeg}deg) scale(1,${ovalY.toFixed(6)}) rotate(${deg.toFixed(2)}deg)`;
-    }
-    const front = Math.cos(theta) > 0;
-    scene!.classList.toggle('comet-front', front);
-    scene!.classList.toggle('comet-behind', !front);
-    raf = requestAnimationFrame(frame);
-  }
-
-  raf = requestAnimationFrame(frame);
   return {
-    stop() {
-      alive = false;
-      if (raf) cancelAnimationFrame(raf);
-    },
+    head,
+    headSize,
+    beads,
+    front: Math.cos(theta) > 0,
+    theta,
   };
 }
+
+export { SOFT_MOTION, COMET_ORBIT };

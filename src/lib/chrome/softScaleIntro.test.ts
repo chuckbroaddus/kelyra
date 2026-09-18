@@ -4,6 +4,15 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import {
+  BEAD_N,
+  BEAD_SIZE_HEAD,
+  BEAD_SIZE_TAIL_DELTA,
+  TRAIL_SPAN,
+  softCometFrame,
+  softCometPlace,
+  softLetterHeight,
+} from '../../components/ui/softCometFacing.ts';
+import {
   COMET_ORBIT,
   LETTER_INK,
   SOFT_FACE,
@@ -26,61 +35,107 @@ test('LETTER_INK documents 512-space Soft v8b letter box (not Soft PNG scale)', 
   assert.equal(LETTER_INK.cy, 254.5);
 });
 
-test('SoftMark hosts Soft v8b SoT (soft-v8b-host / gas-svg / preserve-3d) — not bead SoftMark alone', () => {
+test('SoftMark is native RN Views — no WebView / no HTML host runtime', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   const softWeb = read('src/components/ui/SoftMark.web.tsx');
-  const host = read('assets/brand/soft-v8b-host.html');
-  const hostTs = read('src/components/ui/softV8bHostHtml.ts');
-  assert.match(host, /soft-v8b-host|class="av"|id="soft-root"/);
-  assert.match(host, /gas-svg/);
-  assert.match(host, /preserve-3d/);
-  assert.match(hostTs, /soft-v8b-host|SOFT_V8B_HOST_HTML|gas-svg/);
-  assert.match(hostTs, /preserve-3d/);
-  // Native: WebView host; web: real DOM host
-  assert.match(soft, /WebView|react-native-webview/);
-  assert.match(soft, /softV8bHostDocument|soft-v8b-host/);
-  assert.match(softWeb, /dangerouslySetInnerHTML|createElement\('div'/);
-  assert.match(softWeb, /softV8bHostInnerHtml|soft-v8b-host/);
-  assert.doesNotMatch(soft, /kelyra-soft\.png/);
-  assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
+  assert.doesNotMatch(soft, /from ['"]react-native-webview['"]/);
+  assert.doesNotMatch(soft, /import\s*\{[^}]*\bWebView\b/);
+  assert.doesNotMatch(soft, /softV8bHostDocument|softV8bHostInnerHtml/);
+  assert.doesNotMatch(soft, /injectJavaScript|onLoadEnd/);
+  assert.doesNotMatch(softWeb, /from ['"]react-native-webview['"]/);
+  assert.doesNotMatch(softWeb, /import\s*\{[^}]*\bWebView\b/);
+  assert.doesNotMatch(softWeb, /dangerouslySetInnerHTML|softV8bHost/);
+  assert.match(soft, /SoftMark/);
+  assert.match(soft, /SoftMode/);
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
+  assert.match(shared, /export function SoftMark/);
+  assert.match(shared, /export type SoftMode/);
+  assert.match(shared, /requestAnimationFrame/);
+  assert.match(shared, /softCometFrame/);
+  assert.match(shared, /kelyra\.png/);
+  assert.doesNotMatch(shared, /kelyra-soft\.png/);
+  assert.doesNotMatch(shared, /SOFT_LETTER_SCALE/);
+  // Web shares SoftMarkShared tree — no separate HTML host
+  assert.match(softWeb, /export \{[\s\S]*SoftMark/);
+  assert.match(softWeb, /SoftMarkShared/);
+  assert.doesNotMatch(shared, /from ['"]react-native-webview['"]/);
+  assert.doesNotMatch(shared, /import\s*\{[^}]*\bWebView\b/);
 });
 
-test('SoftMark morph via .is-on; SoftMode + SoftMark export kept', () => {
+test('SoftMark SoftMode static|working + ORBIT_PAD + absolute -pad host (no center-align)', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  const softWeb = read('src/components/ui/SoftMark.web.tsx');
-  const host = read('assets/brand/soft-v8b-host.html');
-  assert.match(soft, /export type SoftMode/);
-  assert.match(soft, /export function SoftMark/);
-  assert.match(softWeb, /export function SoftMark/);
-  assert.match(host, /\.is-on/);
-  assert.match(soft, /is-on/);
-  assert.match(softWeb, /is-on/);
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
+  assert.match(soft, /SoftMode/);
+  assert.match(shared, /export type SoftMode/);
+  assert.match(shared, /'static' \| 'working'|static.*working/);
+  assert.match(shared, /ORBIT_PAD_FRAC/);
+  assert.match(shared, /overflow:\s*['"]visible['"]/);
+  // P0 letter align: host absolutely at -pad (not margin + canvas center — that shifts Soft off idle K)
+  assert.match(shared, /position:\s*['"]absolute['"]/);
+  assert.match(shared, /left:\s*-pad/);
+  assert.match(shared, /top:\s*-pad/);
+  assert.doesNotMatch(shared, /marginLeft:\s*-pad/);
+  assert.doesNotMatch(shared, /alignItems:\s*['"]center['"]/);
+  assert.doesNotMatch(shared, /justifyContent:\s*['"]center['"]/);
+  // Letter Image is kelyra.png contain at size×size — 1:1 with idle KelyraMark
+  assert.match(shared, /resizeMode\s*=\s*['"]contain['"]/);
+  assert.match(shared, /width:\s*size,[\s\S]*height:\s*size/);
   assert.ok(SOFT_INTRO.faceMs >= 200);
   assert.ok(SOFT_INTRO.cometMs >= 300);
   assert.ok(SOFT_INTRO.outroMs >= 150);
 });
 
-test('SoftMark has zero RN className on View/Animated.View props', () => {
+test('SoftMark has zero RN className on View props', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   const softWeb = read('src/components/ui/SoftMark.web.tsx');
-  assert.doesNotMatch(soft, /\bclassName\s*:/);
-  assert.doesNotMatch(soft, /className=/);
-  assert.doesNotMatch(soft, /Animated\.View/);
-  assert.doesNotMatch(softWeb, /\bclassName\s*:/);
-  // Web may toggle DOM classList on the host root — that is not RN View className
-  assert.match(softWeb, /classList\.(add|remove)\('is-on'\)|is-on/);
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
+  for (const src of [soft, softWeb, shared]) {
+    assert.doesNotMatch(src, /\bclassName\s*:/);
+    assert.doesNotMatch(src, /className=/);
+  }
 });
 
-test('face coords match Soft v8b lock (eyes/glasses/mouth)', () => {
+test('face coords match Soft v8b lock; SoftFace uses react-native-svg (no mouth, no WebView)', () => {
   assert.equal(SOFT_FACE.leftEye.x, 169);
   assert.equal(SOFT_FACE.leftEye.y, 198);
   assert.equal(SOFT_FACE.rightEye.x, 292);
   assert.equal(SOFT_FACE.rightEye.y, 198);
-  assert.equal(SOFT_FACE.glassesLeftR, 31.1);
-  assert.equal(SOFT_FACE.glassesRightR, 32.4);
+  assert.equal(SOFT_FACE.glassesLeftR, 32.4);
+  assert.equal(SOFT_FACE.glassesRightR, 31.1);
+  assert.equal(SOFT_FACE.glassesStroke, 6.5);
+  assert.equal(SOFT_FACE.eyeRx, 27.2);
+  assert.equal(SOFT_FACE.eyeRy, 29.9);
   assert.equal(SOFT_FACE.mouth.x, 230);
   assert.equal(SOFT_FACE.mouth.y, 268);
   assert.equal(SOFT_FACE.mouth.halfW, 39);
+  assert.equal(COMET_ORBIT.faceMode, 'eyes-glasses-nomouth');
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
+  assert.match(shared, /SoftFaceEyesGlasses|eyes-glasses-nomouth/);
+  assert.match(shared, /from ['"]react-native-svg['"]/);
+  assert.match(shared, /viewBox=["']0 0 512 512["']/);
+  assert.match(shared, /strokeWidth=\{SOFT_FACE\.glassesStroke\}|strokeWidth=\{6\.5\}|#1c1428/);
+  assert.match(shared, /stroke=["']#1c1428["']/);
+  assert.match(shared, /zIndex:\s*Z_FACE|zIndex:\s*20/);
+  assert.doesNotMatch(shared, /faceScale\s*=/);
+  assert.match(shared, /Ellipse/);
+  assert.doesNotMatch(shared, /SoftMouth|className=\"mouth\"|<.*mouth/i);
+  assert.doesNotMatch(shared, /from ['"]react-native-webview['"]/);
+  assert.doesNotMatch(shared, /import\s*\{[^}]*\bWebView\b/);
+  // Whites + dark pupils must read as a face
+  assert.match(shared, /#FFFFFF|#fff/i);
+  assert.match(shared, /#1a1230|#1A1030/i);
+  assert.ok(SOFT_FACE.eyeR >= 24, 'Soft eyeR must match SoT white disc, not half-size dots');
+  assert.ok(SOFT_FACE.pupilR >= 10);
+  // Soft v8b face animation: glance + blink lids (shared comet rAF)
+  assert.match(shared, /blink/i);
+  assert.match(shared, /glance/i);
+  assert.match(shared, /lid/i);
+  assert.match(shared, /sampleSoftFaceMotion|SOFT_MOTION\.glancePeriodMs|SOFT_MOTION\.blinkPeriodMs/);
+  assert.match(shared, /#8a5cff/);
+  assert.match(shared, /#4cc8f8/);
+  assert.match(shared, /Rect/);
+  assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
+  assert.equal(SOFT_MOTION.glancePeriodMs, 8000);
 });
 
 test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro before unmount', () => {
@@ -90,115 +145,76 @@ test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro bef
   assert.match(mark, /SOFT_INTRO\.outroMs/);
   assert.match(mark, /assets\/brand\/kelyra\.png/);
   assert.doesNotMatch(mark, /opacity: softOpacity[\s\S]{0,80}SoftMark/);
+  // Soft orbit not clipped while Soft mounted
+  assert.match(mark, /softMounted \|\| Platform\.OS === 'web' \? 'visible'/);
 });
 
-test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
+test('COMET_ORBIT locked oval for iPhone chrome (ovalY 0.58, cant 14, tilt 26)', () => {
   assert.equal(COMET_ORBIT.tiltXDeg, 26);
   assert.equal(COMET_ORBIT.cantZDeg, 14);
-  assert.ok(Math.abs(COMET_ORBIT.ovalY - Math.cos((26 * Math.PI) / 180)) < 1e-9);
-  assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
+  assert.equal(COMET_ORBIT.ovalY, 0.58);
+  assert.ok(COMET_ORBIT.ovalY < 0.75, 'ovalY must read elliptical at ~40px chrome');
+  assert.ok(COMET_ORBIT.ovalY >= 0.55 && COMET_ORBIT.ovalY <= 0.62);
   assert.equal(COMET_ORBIT.yawToDeg, -360);
   assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
+  assert.equal(COMET_ORBIT.facingMode, 'js-always');
+  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
+  assert.equal(COMET_ORBIT.trailMode, 'js-beads');
   assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
   assert.equal(SOFT_MOTION.glancePeriodMs, 8000);
+  assert.equal(SOFT_MOTION.orbitMs, 2450);
 });
 
-test('soft-v8b-host embeds idle PNG data URL + SoT motion hooks', () => {
-  const host = read('assets/brand/soft-v8b-host.html');
-  assert.match(host, /data:image\/png;base64,/);
-  assert.match(host, /breathe|breath/);
-  assert.match(host, /gimbal|gimbal/);
-  assert.match(host, /ring-spin/);
-  assert.match(host, /billboard/);
-  assert.match(host, /yaw-rev/);
-  assert.match(host, /blink/);
-  assert.match(host, /glance|look/);
-  assert.match(host, /prefers-reduced-motion/);
+test('softCometFacing exports place/frame math + thick bead trail contracts', () => {
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.match(facing, /export function softCometPlace/);
+  assert.match(facing, /export function softCometFrame/);
+  assert.match(facing, /export const BEAD_N = 14/);
+  assert.match(facing, /export const TRAIL_SPAN = 0\.38/);
+  assert.match(facing, /0\.14/);
+  assert.match(facing, /0\.095/);
+  assert.equal(BEAD_N, 14);
+  assert.equal(TRAIL_SPAN, 0.38);
+  assert.equal(BEAD_SIZE_HEAD, 0.14);
+  assert.equal(BEAD_SIZE_TAIL_DELTA, 0.095);
+  // No WebView inject path
+  assert.doesNotMatch(facing, /softCometFacingInjectScript|injectJavaScript/);
+  assert.doesNotMatch(facing, /startSoftCometFacing/);
 });
 
-test('Soft v8b host is SoT extract (gas trail + face gates)', () => {
-  const host = read('assets/brand/soft-v8b-host.html');
-  const ts = read('src/components/ui/softV8bHostHtml.ts');
-  for (const src of [host, ts]) {
-    assert.match(src, /feGaussianBlur/);
-    assert.match(src, /stroke-dasharray/);
-    assert.match(src, /rotateX\(90deg\)/);
-    assert.match(src, /blush/);
-    assert.match(src, /clipPath/);
-    assert.doesNotMatch(src, /radialGradient id="gasGlow"/);
-  }
+test('softCometPlace / softCometFrame: yaw-rev oval + phase-z front/behind', () => {
+  const mark = 40;
+  const letter = softLetterHeight(mark);
+  assert.ok(Math.abs(letter - (mark * 468) / 512) < 1e-9);
+  const r = letter * COMET_ORBIT.radiusOfLetter;
+  // theta=0 → place near bottom of oval (cos), then cantZ
+  const p0 = softCometPlace(0, r);
+  assert.ok(Number.isFinite(p0.x) && Number.isFinite(p0.y));
+  // front when cos(theta)>0 → phase 0 → theta 0 → front
+  const f0 = softCometFrame(0, mark);
+  assert.equal(f0.front, true);
+  assert.equal(f0.beads.length, BEAD_N);
+  assert.ok(f0.headSize > f0.beads[BEAD_N - 1]!.size);
+  // phase 0.5 → theta = −π → cos(theta) = −1 → behind
+  const fHalf = softCometFrame(0.5, mark);
+  assert.equal(fHalf.front, false);
 });
 
-
-test('Soft comet: JS always-facing ball + phase-z front/behind K (not CSS billboard alone)', () => {
+test('HTML Soft v8b remains design SoT only (not SoftMark runtime)', () => {
   const host = read('assets/brand/soft-v8b-host.html');
+  const note = read('notes/company/soft-native-rn-runtime.md');
+  assert.match(host, /soft-v8b-host|id="soft-root"/);
+  assert.match(note, /native RN|WebView Soft abandoned|design SoT/i);
+  assert.match(note, /2026-09-17/);
   const soft = read('src/components/ui/SoftMark.tsx');
-  const ts = read('src/components/ui/softV8bHostHtml.ts');
-  assert.equal(COMET_ORBIT.facingMode, 'js-always');
-  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
-  // Host file (unescaped HTML attrs)
-  assert.match(host, /data-soft-facing=["']js-always["']/);
-  assert.match(host, /data-soft-occlusion=["']phase-z["']/);
-  assert.match(host, /data-soft-ball=["']always-facing["']/);
-  assert.match(host, /comet-front/);
-  assert.match(host, /comet-behind/);
-  assert.match(host, /requestAnimationFrame/);
-  // softV8bHostHtml.ts embeds JSON-escaped HTML — match tokens, not raw quotes
-  assert.match(ts, /js-always/);
-  assert.match(ts, /phase-z/);
-  assert.match(ts, /always-facing/);
-  assert.match(ts, /comet-front/);
-  assert.match(ts, /requestAnimationFrame/);
-  // Native SoftMark: transparent WebView + visible overflow (gas/orbit not clipped)
-  assert.match(soft, /opaque=\{false\}/);
-  assert.match(soft, /overflow:\s*['"]visible['"]/);
+  assert.doesNotMatch(soft, /soft-v8b-host\.html/);
+});
+
+test('SoftMark comet: always-facing ball + bead trail zIndex swap', () => {
+  const soft = read('src/components/ui/SoftMarkShared.tsx');
+  assert.match(soft, /SoftCometBall|LinearGradient/);
+  assert.match(soft, /BEAD_N|frame\.beads/);
+  assert.match(soft, /zIndex/);
+  assert.match(soft, /frame\.front/);
   assert.match(soft, /ORBIT_PAD_FRAC/);
-});
-
-
-test('softCometFacing module exports startSoftCometFacing (web DOM driver)', () => {
-  const facing = read('src/components/ui/softCometFacing.ts');
-  const softWeb = read('src/components/ui/SoftMark.web.tsx');
-  assert.match(facing, /export function startSoftCometFacing/);
-  assert.match(facing, /comet-front/);
-  assert.match(facing, /js-always|facingMode/);
-  assert.match(softWeb, /startSoftCometFacing/);
-  assert.doesNotMatch(softWeb, /\bclassName\s*:/);
-  assert.doesNotMatch(softWeb, /Animated\.loop/);
-});
-
-
-test('Soft CEO face: eyes+glasses; mouth hard-hidden (no mouth any phase)', () => {
-  const host = read('assets/brand/soft-v8b-host.html');
-  const ts = read('src/components/ui/softV8bHostHtml.ts');
-  const facing = read('src/components/ui/softCometFacing.ts');
-  assert.equal(COMET_ORBIT.faceMode, 'eyes-glasses-nomouth');
-  for (const src of [host, ts]) {
-    assert.match(src, /eyes-glasses-nomouth|data-soft-face/);
-    // Hard-hide mouth — must not paint
-    assert.match(src, /\.mouth\s*\{[^}]*display:\s*none\s*!important/);
-    assert.match(src, /glasses/);
-    assert.match(src, /class="lid"|\.lid/);
-  }
-  assert.match(facing, /faceMode|eyes-glasses-nomouth/);
-});
-
-test('Soft gas trail: JS orbit with ball (not CSS rotateX(90) alone on native)', () => {
-  const host = read('assets/brand/soft-v8b-host.html');
-  const ts = read('src/components/ui/softV8bHostHtml.ts');
-  const facing = read('src/components/ui/softCometFacing.ts');
-  assert.equal(COMET_ORBIT.trailMode, 'js-orbit');
-  assert.equal(COMET_ORBIT.facingMode, 'js-always');
-  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
-  for (const src of [host, ts]) {
-    assert.match(src, /data-soft-trail=["']js-orbit["']|js-orbit/);
-    assert.match(src, /gas-orbit/);
-    // SoT Peek gas layers retained
-    assert.match(src, /feGaussianBlur/);
-    assert.match(src, /stroke-dasharray/);
-    // rotateX(90) may remain as SoT reference but js-always must not rely on it alone
-    assert.match(src, /rotateX\(90deg\)/);
-  }
-  assert.match(facing, /gas-orbit|js-orbit/);
-  assert.match(facing, /trailMode/);
 });
