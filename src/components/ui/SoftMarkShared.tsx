@@ -266,19 +266,12 @@ function SoftCometBall({
 
 /**
  * Soft v8b SoT face via react-native-svg (ellipses + glasses stroke) — no mouth.
- * Chrome (~40px): scale about glasses midpoint so eye diameter ≥ ~28% of mark
- * and glasses stroke ≥ 2px on screen (linear 512-space would otherwise vanish).
+ * Proportions are 1:1 Soft v8b (viewBox 0 0 512 512). Do not chrome-boost
+ * faceScale — that made Soft glasses span ~full mark width.
  */
 function SoftFaceEyesGlasses({ size }: { size: number }) {
-  const canvas = LETTER_INK.canvas;
-  const linear = size / canvas;
-  const eyeDiam512 = SOFT_FACE.eyeRx * 2;
-  const scaleForEye = (0.28 * size) / (eyeDiam512 * linear);
-  const scaleForStroke = 2 / (SOFT_FACE.glassesStroke * linear);
-  const faceScale = Math.max(1, scaleForEye, scaleForStroke);
-  const ox = SOFT_FACE.glassesMidX;
-  const oy = SOFT_FACE.glassesMidY;
-
+  // Soft v8b SoT proportions 1:1 in viewBox 0 0 512 512 — no chrome faceScale
+  // boost (0.28× mark eye diameter made glasses span ~full Soft K).
   return (
     <Svg
       width={size}
@@ -294,10 +287,7 @@ function SoftFaceEyesGlasses({ size }: { size: number }) {
         overflow: 'visible',
       }}
     >
-      <G
-        // SoftFace chrome readability scale about glasses midpoint
-        transform={`translate(${ox} ${oy}) scale(${faceScale}) translate(${-ox} ${-oy})`}
-      >
+      <G>
         {/* Left eye — Soft v8b SoT */}
         <G transform="translate(169 198) rotate(-2)">
           <Ellipse cx={0} cy={0} rx={SOFT_FACE.eyeRx} ry={SOFT_FACE.eyeRy} fill="#FFFFFF" />

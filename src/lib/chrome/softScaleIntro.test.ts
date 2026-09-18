@@ -116,7 +116,7 @@ test('face coords match Soft v8b lock; SoftFace uses react-native-svg (no mouth,
   assert.match(shared, /strokeWidth=\{SOFT_FACE\.glassesStroke\}|strokeWidth=\{6\.5\}|#1c1428/);
   assert.match(shared, /stroke=["']#1c1428["']/);
   assert.match(shared, /zIndex:\s*Z_FACE|zIndex:\s*20/);
-  assert.match(shared, /faceScale/);
+  assert.doesNotMatch(shared, /faceScale\s*=/);
   assert.match(shared, /Ellipse/);
   assert.doesNotMatch(shared, /SoftMouth|className=\"mouth\"|<.*mouth/i);
   assert.doesNotMatch(shared, /from ['"]react-native-webview['"]/);
