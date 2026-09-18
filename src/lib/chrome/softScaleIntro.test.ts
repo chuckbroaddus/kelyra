@@ -95,8 +95,9 @@ test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro bef
 test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
   assert.equal(COMET_ORBIT.tiltXDeg, 26);
   assert.equal(COMET_ORBIT.cantZDeg, 14);
-  assert.ok(Math.abs(COMET_ORBIT.ovalY - Math.cos((26 * Math.PI) / 180)) < 1e-9);
-  assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
+  assert.equal(COMET_ORBIT.ovalY, 0.58);
+  assert.ok(COMET_ORBIT.ovalY < 0.75, 'ovalY must read elliptical at ~40px chrome');
+  assert.ok(COMET_ORBIT.ovalY >= 0.55 && COMET_ORBIT.ovalY <= 0.62);
   assert.equal(COMET_ORBIT.yawToDeg, -360);
   assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
   assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
@@ -120,7 +121,8 @@ test('Soft v8b host is SoT extract (gas trail + face gates)', () => {
   const host = read('assets/brand/soft-v8b-host.html');
   const ts = read('src/components/ui/softV8bHostHtml.ts');
   for (const src of [host, ts]) {
-    assert.match(src, /feGaussianBlur/);
+    // Gimbal Peek layers may still mention blur; js-orbit trail is css-dash
+    assert.match(src, /css-dash|stroke-dasharray/);
     assert.match(src, /stroke-dasharray/);
     assert.match(src, /rotateX\(90deg\)/);
     assert.match(src, /blush/);
@@ -198,7 +200,7 @@ test('Soft CEO face: eyes+glasses; mouth hard-hidden (no mouth any phase)', () =
   assert.match(facing, /faceMode|eyes-glasses-nomouth/);
 });
 
-test('Soft gas trail: JS orbit with ball (not CSS rotateX(90) alone on native)', () => {
+test('Soft gas trail: JS orbit CSS-dash (not blur-filter-only on WKWebView)', () => {
   const host = read('assets/brand/soft-v8b-host.html');
   const ts = read('src/components/ui/softV8bHostHtml.ts');
   const facing = read('src/components/ui/softCometFacing.ts');
@@ -208,12 +210,31 @@ test('Soft gas trail: JS orbit with ball (not CSS rotateX(90) alone on native)',
   for (const src of [host, ts]) {
     assert.match(src, /data-soft-trail=["']js-orbit["']|js-orbit/);
     assert.match(src, /gas-orbit/);
-    // SoT Peek gas layers retained
-    assert.match(src, /feGaussianBlur/);
+    assert.match(src, /data-soft-trail-draw=["']css-dash["']|css-dash/);
     assert.match(src, /stroke-dasharray/);
-    // rotateX(90) may remain as SoT reference but js-always must not rely on it alone
+    // gas-orbit SVG: no SVG blur filter / filter=url (WKWebView-safe dashed trail)
+    const idx = src.search(/<svg[^>]*gas-orbit|class=\"gas-svg gas-orbit/);
+    assert.ok(idx >= 0, 'gas-orbit svg present');
+    const slice = src.slice(idx, idx + 2000);
+    assert.doesNotMatch(slice, /<feGaussianBlur|filter=["']url\(/);
     assert.match(src, /rotateX\(90deg\)/);
   }
   assert.match(facing, /gas-orbit|js-orbit/);
   assert.match(facing, /trailMode/);
+  assert.match(facing, /css-dash|data-soft-trail-draw/);
+});
+
+
+
+test('Soft iPhone oval+trail lock: inject + ovalY<0.75 + css-dash trail', () => {
+  const soft = read('src/components/ui/SoftMark.tsx');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  const host = read('assets/brand/soft-v8b-host.html');
+  assert.match(soft, /onLoadEnd/);
+  assert.match(soft, /softCometFacingInjectScript/);
+  assert.ok(COMET_ORBIT.ovalY < 0.75);
+  assert.equal(COMET_ORBIT.cantZDeg, 14);
+  assert.match(host, /data-soft-trail-draw=["']css-dash["']/);
+  assert.match(host, /var OVAL_Y = 0\.58/);
+  assert.match(facing, /css-dash/);
 });

@@ -64,8 +64,8 @@ export const SOFT_FACE = {
 export const COMET_ORBIT = {
   tiltXDeg: 26,
   cantZDeg: 14,
-  /** Ellipse vertical squash ≈ cos(tiltX) — oval, not circle. */
-  ovalY: Math.cos((26 * Math.PI) / 180),
+  /** Locked squash for iPhone chrome ~40px — cos(26°)≈0.90 reads circular; 0.58 reads oval. */
+  ovalY: 0.58,
   /** Orbit radius as fraction of letter ink height. */
   radiusOfLetter: 0.41,
   /** Gimbal box as fraction of letter ink height. */

@@ -2,6 +2,7 @@
  * Soft comet always-facing ball + JS gas trail + phase occlusion (WKWebView / web DOM).
  * Mirrors host inline script: 2D ellipse yaw-rev, z-order front/behind K.
  * Do not use CSS .billboard counter-rotateY or CSS rotateX(90°) gas alone on native WebView.
+ * Trail: CSS dash on .gas-orbit (data-soft-trail-draw=css-dash) — never feGaussianBlur-only on WKWebView.
  */
 import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
 
@@ -38,6 +39,7 @@ export function softCometFacingInjectScript(): string {
     root.setAttribute('data-soft-facing',${JSON.stringify(facingMode)});
     root.setAttribute('data-soft-occlusion',${JSON.stringify(occlusionMode)});
     root.setAttribute('data-soft-trail',${JSON.stringify(trailMode)});
+    root.setAttribute('data-soft-trail-draw','css-dash');
     root.setAttribute('data-soft-face',${JSON.stringify(faceMode)});
     var scene = root.querySelector('.scene');
     var bit = root.querySelector('.bit.head');
@@ -107,6 +109,7 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
   root.setAttribute('data-soft-facing', COMET_ORBIT.facingMode);
   root.setAttribute('data-soft-occlusion', COMET_ORBIT.occlusionMode);
   root.setAttribute('data-soft-trail', COMET_ORBIT.trailMode);
+  root.setAttribute('data-soft-trail-draw', 'css-dash');
   root.setAttribute('data-soft-face', COMET_ORBIT.faceMode);
 
   const period = SOFT_MOTION.orbitMs;

@@ -309,9 +309,15 @@
         </div>
       </div>
 
-        <svg class="gas-svg gas-orbit" data-soft-trail="js-orbit" viewBox="0 0 200 200" aria-hidden="true">
-                <defs><filter id="fo1280" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.4"/></filter><filter id="fo1281" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="fo1282" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter><filter id="fo1283" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.05"/></filter><filter id="fo1284" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="0.7"/></filter></defs>
-                <g transform="translate(100,100) rotate(90) scale(1,-1) translate(-100,-100)"><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="11.2" stroke-linecap="round" stroke-dasharray="22 338" stroke-dashoffset="0" opacity="0.7" filter="url(#fo1280)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(210,255,255,0.72)" stroke-width="7.0" stroke-linecap="round" stroke-dasharray="90 270" stroke-dashoffset="0" opacity="0.48" filter="url(#fo1281)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.52)" stroke-width="4.0" stroke-linecap="round" stroke-dasharray="155 205" stroke-dashoffset="0" opacity="0.36" filter="url(#fo1282)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.36)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="215 145" stroke-dashoffset="0" opacity="0.26" filter="url(#fo1283)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.22)" stroke-width="1.0" stroke-linecap="round" stroke-dasharray="270 90" stroke-dashoffset="0" opacity="0.18" filter="url(#fo1284)"/></g>
+        <svg class="gas-svg gas-orbit" data-soft-trail="js-orbit" data-soft-trail-draw="css-dash" viewBox="0 0 200 200" aria-hidden="true">
+                <!-- WKWebView-visible trail: no SVG blur filters. CSS dash taper ~75% of orbit. -->
+                <g transform="translate(100,100) rotate(90) scale(1,-1) translate(-100,-100)">
+                  <circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="12" stroke-linecap="round" stroke-dasharray="24 336" opacity="0.85"/>
+                  <circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(210,255,255,0.8)" stroke-width="8" stroke-linecap="round" stroke-dasharray="90 270" opacity="0.55"/>
+                  <circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.65)" stroke-width="5" stroke-linecap="round" stroke-dasharray="155 205" opacity="0.42"/>
+                  <circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.5)" stroke-width="3" stroke-linecap="round" stroke-dasharray="215 145" opacity="0.32"/>
+                  <circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.35)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="270 90" opacity="0.22"/>
+                </g>
               </svg>
           <div class="bit head" style="--a:0deg" data-soft-ball="always-facing">
             <div class="billboard"><span class="zoom"><i class="ball"></i></span></div>
@@ -361,7 +367,7 @@
   var TILT = 26 * Math.PI / 180;
   var CANT = 14 * Math.PI / 180;
   var CANT_DEG = 14;
-  var OVAL_Y = Math.cos(TILT);
+  var OVAL_Y = 0.58; /* locked iPhone chrome oval; was cos(TILT)≈0.90 */
   var root = document.getElementById('soft-root');
   if (!root) return;
   var scene = root.querySelector('.scene');
