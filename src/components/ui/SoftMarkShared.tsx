@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Image,
+  Platform,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 
 import brandMark from '../../../assets/brand/kelyra.png';
 
@@ -31,16 +33,17 @@ export const ORBIT_PAD_FRAC = 0.22;
 const Z_BEHIND = 1;
 const Z_LETTER = 2;
 const Z_FRONT = 3;
+/** Face Svg paints above letter Image (RN Image often stacks over later siblings). */
+const Z_FACE = 20;
 
 const CYAN = '#9AF7FF';
 const PURPLE = '#B46BFF';
-const GLASS = 'rgba(154, 247, 255, 0.85)';
 
 /**
  * Soft working mark — native React Native Views (no WebView / no HTML host).
  * Design SoT remains HTML Soft v8b; runtime uses locked COMET_ORBIT + softCometFacing.
  * Idle letter is KelyraMark Image `kelyra.png`; SoftMark only while working.
- * Face: eyes + glasses only (no mouth). SoftMode static|working for outro.
+ * Face: Soft v8b SVG eyes + glasses only (no mouth). SoftMode static|working for outro.
  */
 export function SoftMark({
   size,
@@ -144,6 +147,7 @@ export function SoftMark({
             resizeMode="contain"
             style={{ width: size, height: size }}
           />
+          {/* Sibling after letter Image — zIndex/elevation so face is not under PNG */}
           <SoftFaceEyesGlasses size={size} />
         </View>
         {working && frame.front ? comet : null}
@@ -260,113 +264,77 @@ function SoftCometBall({
   );
 }
 
-/** Soft face: eyes + glasses only — no mouth (CEO lock). */
+/**
+ * Soft v8b SoT face via react-native-svg (ellipses + glasses stroke) — no mouth.
+ * Chrome (~40px): scale about glasses midpoint so eye diameter ≥ ~28% of mark
+ * and glasses stroke ≥ 2px on screen (linear 512-space would otherwise vanish).
+ */
 function SoftFaceEyesGlasses({ size }: { size: number }) {
-  // Map 512-space Soft v8b face onto the letter box. At chrome (~40px) linear
-  // scale collapses eyes to ~2px dots — boost radii (keep centers) so white
-  // discs + pupils + glasses rings stay readable (min eye diameter ~7px).
-  const s = size / LETTER_INK.canvas;
-  const rawEyeR = SOFT_FACE.eyeR * s;
-  const minEyeR = 3.5; // ~7px diameter at chrome
-  const faceBoost = rawEyeR > 0 && rawEyeR < minEyeR ? minEyeR / rawEyeR : 1;
-  const eyeR = rawEyeR * faceBoost;
-  const pupilR = SOFT_FACE.pupilR * s * faceBoost;
-  const gL = SOFT_FACE.glassesLeftR * s * faceBoost;
-  const gR = SOFT_FACE.glassesRightR * s * faceBoost;
-  const border = Math.max(1.25, 2.2 * s * faceBoost);
+  const canvas = LETTER_INK.canvas;
+  const linear = size / canvas;
+  const eyeDiam512 = SOFT_FACE.eyeRx * 2;
+  const scaleForEye = (0.28 * size) / (eyeDiam512 * linear);
+  const scaleForStroke = 2 / (SOFT_FACE.glassesStroke * linear);
+  const faceScale = Math.max(1, scaleForEye, scaleForStroke);
+  const ox = SOFT_FACE.glassesMidX;
+  const oy = SOFT_FACE.glassesMidY;
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-      <View
-        style={{
-          position: 'absolute',
-          left: SOFT_FACE.leftEye.x * s - gL,
-          top: SOFT_FACE.leftEye.y * s - gL,
-          width: gL * 2,
-          height: gL * 2,
-          borderRadius: gL,
-          borderWidth: border,
-          borderColor: GLASS,
-          backgroundColor: 'transparent',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          left: SOFT_FACE.rightEye.x * s - gR,
-          top: SOFT_FACE.rightEye.y * s - gR,
-          width: gR * 2,
-          height: gR * 2,
-          borderRadius: gR,
-          borderWidth: border,
-          borderColor: GLASS,
-          backgroundColor: 'transparent',
-        }}
-      />
-      {/* bridge */}
-      <View
-        style={{
-          position: 'absolute',
-          left: SOFT_FACE.leftEye.x * s + gL * 0.55,
-          top: SOFT_FACE.leftEye.y * s - border / 2,
-          width: (SOFT_FACE.rightEye.x - SOFT_FACE.leftEye.x) * s - gL * 0.55 - gR * 0.55,
-          height: border,
-          backgroundColor: GLASS,
-          borderRadius: border,
-        }}
-      />
-      <Eye
-        cx={SOFT_FACE.leftEye.x * s}
-        cy={SOFT_FACE.leftEye.y * s}
-        eyeR={eyeR}
-        pupilR={pupilR}
-      />
-      <Eye
-        cx={SOFT_FACE.rightEye.x * s}
-        cy={SOFT_FACE.rightEye.y * s}
-        eyeR={eyeR}
-        pupilR={pupilR}
-      />
-    </View>
-  );
-}
-
-function Eye({
-  cx,
-  cy,
-  eyeR,
-  pupilR,
-}: {
-  cx: number;
-  cy: number;
-  eyeR: number;
-  pupilR: number;
-}) {
-  return (
-    <>
-      <View
-        style={{
-          position: 'absolute',
-          left: cx - eyeR,
-          top: cy - eyeR,
-          width: eyeR * 2,
-          height: eyeR * 2,
-          borderRadius: eyeR,
-          backgroundColor: '#FFFFFF',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          left: cx - pupilR,
-          top: cy - pupilR,
-          width: pupilR * 2,
-          height: pupilR * 2,
-          borderRadius: pupilR,
-          backgroundColor: '#1A1030',
-        }}
-      />
-    </>
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        zIndex: Z_FACE,
+        elevation: Platform.OS === 'android' ? Z_FACE : undefined,
+        overflow: 'visible',
+      }}
+    >
+      <G
+        // SoftFace chrome readability scale about glasses midpoint
+        transform={`translate(${ox} ${oy}) scale(${faceScale}) translate(${-ox} ${-oy})`}
+      >
+        {/* Left eye — Soft v8b SoT */}
+        <G transform="translate(169 198) rotate(-2)">
+          <Ellipse cx={0} cy={0} rx={SOFT_FACE.eyeRx} ry={SOFT_FACE.eyeRy} fill="#FFFFFF" />
+          <Circle cx={2.4} cy={3.6} r={SOFT_FACE.pupilR} fill="#1a1230" />
+          <Circle cx={6.6} cy={-1.8} r={SOFT_FACE.catchlightR} fill="#FFFFFF" />
+        </G>
+        {/* Right eye — Soft v8b SoT */}
+        <G transform="translate(292 198) rotate(-4)">
+          <Ellipse
+            cx={0}
+            cy={0}
+            rx={SOFT_FACE.rightEyeRx}
+            ry={SOFT_FACE.rightEyeRy}
+            fill="#FFFFFF"
+          />
+          <Circle cx={2.4} cy={3.6} r={SOFT_FACE.rightPupilR} fill="#1a1230" />
+          <Circle cx={6.6} cy={-1.8} r={SOFT_FACE.rightCatchlightR} fill="#FFFFFF" />
+        </G>
+        {/* Glasses — fill none, stroke #1c1428, strokeWidth 6.5 */}
+        <G
+          fill="none"
+          stroke="#1c1428"
+          strokeWidth={SOFT_FACE.glassesStroke}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <Circle cx={SOFT_FACE.leftEye.x} cy={SOFT_FACE.leftEye.y} r={SOFT_FACE.glassesLeftR} />
+          <Circle
+            cx={SOFT_FACE.rightEye.x}
+            cy={SOFT_FACE.rightEye.y}
+            r={SOFT_FACE.glassesRightR}
+          />
+          <Path d={SOFT_FACE.glassesBridge} />
+        </G>
+        {/* no mouth — CEO Soft lock */}
+      </G>
+    </Svg>
   );
 }
 

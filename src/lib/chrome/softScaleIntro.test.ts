@@ -95,25 +95,35 @@ test('SoftMark has zero RN className on View props', () => {
   }
 });
 
-test('face coords match Soft v8b lock; runtime face is eyes+glasses no mouth', () => {
+test('face coords match Soft v8b lock; SoftFace uses react-native-svg (no mouth, no WebView)', () => {
   assert.equal(SOFT_FACE.leftEye.x, 169);
   assert.equal(SOFT_FACE.leftEye.y, 198);
   assert.equal(SOFT_FACE.rightEye.x, 292);
   assert.equal(SOFT_FACE.rightEye.y, 198);
-  assert.equal(SOFT_FACE.glassesLeftR, 31.1);
-  assert.equal(SOFT_FACE.glassesRightR, 32.4);
+  assert.equal(SOFT_FACE.glassesLeftR, 32.4);
+  assert.equal(SOFT_FACE.glassesRightR, 31.1);
+  assert.equal(SOFT_FACE.glassesStroke, 6.5);
+  assert.equal(SOFT_FACE.eyeRx, 27.2);
+  assert.equal(SOFT_FACE.eyeRy, 29.9);
   assert.equal(SOFT_FACE.mouth.x, 230);
   assert.equal(SOFT_FACE.mouth.y, 268);
   assert.equal(SOFT_FACE.mouth.halfW, 39);
   assert.equal(COMET_ORBIT.faceMode, 'eyes-glasses-nomouth');
   const shared = read('src/components/ui/SoftMarkShared.tsx');
   assert.match(shared, /SoftFaceEyesGlasses|eyes-glasses-nomouth/);
-  assert.doesNotMatch(shared, /SoftMouth|className=\"mouth\"/);
-  // Soft face readable at chrome: white discs + dark pupils + glasses rings (not dots)
-  assert.match(shared, /faceBoost|minEyeR/);
-  assert.match(shared, /#FFFFFF/);
-  assert.match(shared, /#1A1030|#1a1030/);
-  // SoT Soft eye white is large on the purple stem (~rx 27 in 512-space)
+  assert.match(shared, /from ['"]react-native-svg['"]/);
+  assert.match(shared, /viewBox=["']0 0 512 512["']/);
+  assert.match(shared, /strokeWidth=\{SOFT_FACE\.glassesStroke\}|strokeWidth=\{6\.5\}|#1c1428/);
+  assert.match(shared, /stroke=["']#1c1428["']/);
+  assert.match(shared, /zIndex:\s*Z_FACE|zIndex:\s*20/);
+  assert.match(shared, /faceScale/);
+  assert.match(shared, /Ellipse/);
+  assert.doesNotMatch(shared, /SoftMouth|className=\"mouth\"|<.*mouth/i);
+  assert.doesNotMatch(shared, /from ['"]react-native-webview['"]/);
+  assert.doesNotMatch(shared, /import\s*\{[^}]*\bWebView\b/);
+  // Whites + dark pupils must read as a face
+  assert.match(shared, /#FFFFFF|#fff/i);
+  assert.match(shared, /#1a1230|#1A1030/i);
   assert.ok(SOFT_FACE.eyeR >= 24, 'Soft eyeR must match SoT white disc, not half-size dots');
   assert.ok(SOFT_FACE.pupilR >= 10);
 });

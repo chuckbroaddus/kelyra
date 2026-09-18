@@ -11,6 +11,7 @@
  *
  * Runtime Soft is native RN Views (SoftMark.tsx). HTML Soft v8b is design SoT only
  * (notes/company/working-k-avatar-soft-v8b.html / assets/brand/soft-v8b-host.html).
+ * Face runtime: react-native-svg Soft v8b ellipses + glasses (no mouth).
  */
 
 export const LETTER_INK = {
@@ -43,16 +44,32 @@ export const SOFT_MOTION = {
   wobbleMs: 1700,
 } as const;
 
-/** Face layout in 512-space (Soft v8b). Eye radii match Soft v8b SoT white discs (~rx 27 on 512 canvas). */
+/**
+ * Face layout in 512-space (Soft v8b host SVG).
+ * Eyes are ellipses (not circles); glasses stroke 6.5; no mouth at runtime.
+ */
 export const SOFT_FACE = {
   leftEye: { x: 169, y: 198 },
   rightEye: { x: 292, y: 198 },
-  /** Eye white radius (512-space), Soft v8b SoT white-disc radius. */
+  /** Left white ellipse rx/ry (Soft v8b SoT). */
+  eyeRx: 27.2,
+  eyeRy: 29.9,
+  /** Alias for left eye rx — chrome scale / tests. */
   eyeR: 27.2,
+  rightEyeRx: 25.9,
+  rightEyeRy: 28.6,
   pupilR: 14.3,
-  glassesLeftR: 31.1,
-  glassesRightR: 32.4,
-  /** Mouth center + half-width (78% of ±50) — design SoT only; runtime Soft has no mouth. */
+  rightPupilR: 13.6,
+  catchlightR: 5.1,
+  rightCatchlightR: 4.8,
+  /** Glasses circles — SoT left r=32.4 @ (169,198), right r=31.1 @ (292,198). */
+  glassesLeftR: 32.4,
+  glassesRightR: 31.1,
+  glassesStroke: 6.5,
+  glassesMidX: 230.5,
+  glassesMidY: 198,
+  glassesBridge: 'M201.4 198 Q230.5 176.0 260.9 198',
+  /** Mouth center + half-width — design SoT only; runtime Soft has no mouth. */
   mouth: { x: 230, y: 268, halfW: 39 },
 } as const;
 
