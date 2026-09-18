@@ -143,8 +143,6 @@ export const SplashVideo = forwardRef<SplashVideoHandle, SplashVideoProps>(funct
     objectFit: 'cover',
     objectPosition: 'center',
     pointerEvents: 'none',
-    // DOM CSS alias — some RN-web paths only forward kebab-case.
-    'pointer-events': 'none',
   };
 
   return createElement('video', {

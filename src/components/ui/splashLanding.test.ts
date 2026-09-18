@@ -683,7 +683,6 @@ test('web splash video uses HTML5 absolute fill + object-fit cover (not expo-av 
   assert.match(web, /playAsync/);
   // Video must not steal Pressable taps — parent receives unmute / skip.
   assert.match(web, /pointerEvents:\s*'none'/);
-  assert.match(web, /['"]pointer-events['"]:\s*'none'/);
   // Default muted until parent clears awaitingGesture.
   assert.match(web, /isMuted = true/);
   assert.match(web, /el\.muted = muted/);
