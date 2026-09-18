@@ -22,18 +22,23 @@ test('K1 markSlot / bar clip Soft on native (no Yoga expand)', () => {
   assert.match(header, /collapsable=\{false\}/);
 });
 
-test('SoftMark layers are absoluteFill; canvas clips on native', () => {
+test('SoftMark uses Soft v8b host (WebView/DOM) — not bead SoftMark alone', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /StyleSheet\.absoluteFill/);
-  assert.match(soft, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
-  assert.match(soft, /collapsable=\{false\}/);
+  const softWeb = read('src/components/ui/SoftMark.web.tsx');
+  assert.match(soft, /WebView|react-native-webview/);
+  assert.match(soft, /softV8bHostDocument|soft-v8b-host/);
+  assert.match(softWeb, /dangerouslySetInnerHTML|createElement\('div'/);
+  assert.doesNotMatch(soft, /\bclassName\s*:/);
+  assert.doesNotMatch(soft, /className=/);
+  assert.doesNotMatch(softWeb, /\bclassName\s*:/);
 });
 
-test('KelyraMark host clips Soft on native; layers absolute', () => {
+test('KelyraMark host clips Soft on native; idle letter kelyra.png', () => {
   const mark = read('src/components/ui/KelyraMark.tsx');
   assert.match(mark, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
   assert.match(mark, /StyleSheet\.absoluteFill/);
   assert.match(mark, /collapsable=\{false\}/);
+  assert.match(mark, /assets\/brand\/kelyra\.png/);
 });
 
 test('Tray Ask glyph box equals KelyraMark size (no shorter clip slot)', () => {
@@ -46,17 +51,15 @@ test('Tray Ask glyph box equals KelyraMark size (no shorter clip slot)', () => {
 
 test('SoftMark does not size from Soft PNG bbox (idle kelyra.png is the letter)', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /LETTER_INK/);
-  assert.match(soft, /443|LETTER_INK\.height|letterH/);
+  const host = read('assets/brand/soft-v8b-host.html');
+  assert.match(host, /data:image\/png;base64,/);
   assert.doesNotMatch(soft, /kelyra-soft\.png/);
   assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
 });
 
-test('SoftMark letter is idle kelyra.png 1:1; wobble has no scale grow', () => {
-  const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /assets\/brand\/kelyra\.png/);
-  assert.doesNotMatch(soft, /kelyra-soft\.png/);
-  assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
-  assert.doesNotMatch(soft, /1\.045/);
-  assert.match(soft, /wobbleRotate/);
+test('Idle letter remains kelyra.png in KelyraMark; SoftMark only while working', () => {
+  const mark = read('src/components/ui/KelyraMark.tsx');
+  assert.match(mark, /assets\/brand\/kelyra\.png/);
+  assert.match(mark, /SoftMark size=\{size\} mode=\{working \? 'working' : 'static'\}/);
+  assert.match(mark, /softMounted/);
 });

@@ -26,50 +26,49 @@ test('LETTER_INK documents 512-space Soft v8b letter box (not Soft PNG scale)', 
   assert.equal(LETTER_INK.cy, 254.5);
 });
 
-test('SoftMark letter is kelyra.png 1:1; no SOFT_LETTER_SCALE size solution', () => {
+test('SoftMark hosts Soft v8b SoT (soft-v8b-host / gas-svg / preserve-3d) — not bead SoftMark alone', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  const metrics = read('src/components/ui/softLetterScale.ts');
-  assert.match(soft, /assets\/brand\/kelyra\.png/);
+  const softWeb = read('src/components/ui/SoftMark.web.tsx');
+  const host = read('assets/brand/soft-v8b-host.html');
+  const hostTs = read('src/components/ui/softV8bHostHtml.ts');
+  assert.match(host, /soft-v8b-host|class="av"|id="soft-root"/);
+  assert.match(host, /gas-svg/);
+  assert.match(host, /preserve-3d/);
+  assert.match(hostTs, /soft-v8b-host|SOFT_V8B_HOST_HTML|gas-svg/);
+  assert.match(hostTs, /preserve-3d/);
+  // Native: WebView host; web: real DOM host
+  assert.match(soft, /WebView|react-native-webview/);
+  assert.match(soft, /softV8bHostDocument|soft-v8b-host/);
+  assert.match(softWeb, /dangerouslySetInnerHTML|createElement\('div'/);
+  assert.match(softWeb, /softV8bHostInnerHtml|soft-v8b-host/);
   assert.doesNotMatch(soft, /kelyra-soft\.png/);
   assert.doesNotMatch(soft, /SOFT_LETTER_SCALE/);
-  assert.doesNotMatch(metrics, /export const SOFT_LETTER_SCALE/);
-  assert.match(soft, /LETTER_INK/);
-  assert.match(soft, /resizeMode="contain"/);
 });
 
-test('SoftMark morph intro keys: lids/faceGrow/mouth/cometIn', () => {
+test('SoftMark morph via .is-on; SoftMode + SoftMark export kept', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /faceGrow/);
-  assert.match(soft, /lids/);
-  assert.match(soft, /mouth/);
-  assert.match(soft, /cometIn/);
-  assert.match(soft, /cometScale/);
-  assert.match(soft, /SOFT_INTRO/);
+  const softWeb = read('src/components/ui/SoftMark.web.tsx');
+  const host = read('assets/brand/soft-v8b-host.html');
+  assert.match(soft, /export type SoftMode/);
+  assert.match(soft, /export function SoftMark/);
+  assert.match(softWeb, /export function SoftMark/);
+  assert.match(host, /\.is-on/);
+  assert.match(soft, /is-on/);
+  assert.match(softWeb, /is-on/);
   assert.ok(SOFT_INTRO.faceMs >= 200);
   assert.ok(SOFT_INTRO.cometMs >= 300);
   assert.ok(SOFT_INTRO.outroMs >= 150);
 });
 
-test('look loop independent of blink; glance ~8s; blink 4.4s', () => {
+test('SoftMark has zero RN className on View/Animated.View props', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /lookX/);
-  assert.match(soft, /pupilX/);
-  assert.match(soft, /blinkPeriodMs/);
-  assert.match(soft, /glancePeriodMs|upperLeft|upper-left|go\(upperLeft\)/);
-  assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
-  assert.equal(SOFT_MOTION.glancePeriodMs, 8000);
-  // Separate effects: blink loop and look loop both gated on showMotion
-  assert.match(soft, /\/\/ Blink loop/);
-  assert.match(soft, /Glance \/ look loop/);
-});
-
-test('wobble is rotate-only (no letter scale grow)', () => {
-  const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /wobbleRotate/);
-  assert.match(soft, /rotate only|Wobble: rotate only/);
-  assert.doesNotMatch(soft, /faceScaleX|1\.045|SOFT_LETTER_SCALE/);
-  // Letter Image itself is not scaled by wobble
-  assert.match(soft, /transform: \[\{ rotate: wobbleRotate \}\]/);
+  const softWeb = read('src/components/ui/SoftMark.web.tsx');
+  assert.doesNotMatch(soft, /\bclassName\s*:/);
+  assert.doesNotMatch(soft, /className=/);
+  assert.doesNotMatch(soft, /Animated\.View/);
+  assert.doesNotMatch(softWeb, /\bclassName\s*:/);
+  // Web may toggle DOM classList on the host root — that is not RN View className
+  assert.match(softWeb, /classList\.(add|remove)\('is-on'\)|is-on/);
 });
 
 test('face coords match Soft v8b lock (eyes/glasses/mouth)', () => {
@@ -84,13 +83,13 @@ test('face coords match Soft v8b lock (eyes/glasses/mouth)', () => {
   assert.equal(SOFT_FACE.mouth.halfW, 39);
 });
 
-test('KelyraMark: idle unmount Soft after outro; SoftMark owns morph', () => {
+test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro before unmount', () => {
   const mark = read('src/components/ui/KelyraMark.tsx');
   assert.match(mark, /mode=\{working \? 'working' : 'static'\}/);
   assert.match(mark, /softMounted/);
   assert.match(mark, /SOFT_INTRO\.outroMs/);
-  assert.doesNotMatch(mark, /opacity: softOpacity[\s\S]{0,80}SoftMark/);
   assert.match(mark, /assets\/brand\/kelyra\.png/);
+  assert.doesNotMatch(mark, /opacity: softOpacity[\s\S]{0,80}SoftMark/);
 });
 
 test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
@@ -100,27 +99,19 @@ test('COMET_ORBIT: tilt 26° oval squash + yaw-rev (−360)', () => {
   assert.ok(COMET_ORBIT.ovalY < 1 && COMET_ORBIT.ovalY > 0.85);
   assert.equal(COMET_ORBIT.yawToDeg, -360);
   assert.equal(COMET_ORBIT.radiusOfLetter, 0.41);
-  assert.equal(COMET_ORBIT.webYawNativeId, 'kelyra-soft-yaw-spin');
+  assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
+  assert.equal(SOFT_MOTION.glancePeriodMs, 8000);
 });
 
-test('SoftMark comet: oval + SoT yaw; web CSS via nativeID (no Animated.loop hang)', () => {
-  const soft = read('src/components/ui/SoftMark.tsx');
-  assert.match(soft, /COMET_ORBIT/);
-  assert.match(soft, /ovalY/);
-  assert.match(soft, /orbitR \* Math\.cos/);
-  assert.match(soft, /orbitR \* Math\.sin\(rad\) \* ovalY/);
-  assert.doesNotMatch(soft, /rotateX:\s*['"]26deg['"]/);
-  assert.match(soft, /ensureSoftCometYawCss/);
-  assert.match(soft, /webYawNativeId/);
-  assert.match(soft, /Platform\.OS === 'web'/);
-});
-
-test('SoftMark has zero RN className; web yaw via nativeID + #id CSS', () => {
-  const soft = read('src/components/ui/SoftMark.tsx');
-  assert.doesNotMatch(soft, /\bclassName\s*:/);
-  assert.doesNotMatch(soft, /className=/);
-  assert.match(soft, /nativeID=\{showMotion \? COMET_ORBIT\.webYawNativeId/);
-  assert.match(soft, /#\$\{COMET_ORBIT\.webYawNativeId\}/);
-  assert.match(soft, /ensureSoftCometYawCss/);
-  assert.doesNotMatch(soft, /transform:\s*showMotion \? \[\{ rotate \}\] : undefined/);
+test('soft-v8b-host embeds idle PNG data URL + SoT motion hooks', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  assert.match(host, /data:image\/png;base64,/);
+  assert.match(host, /breathe|breath/);
+  assert.match(host, /gimbal|gimbal/);
+  assert.match(host, /ring-spin/);
+  assert.match(host, /billboard/);
+  assert.match(host, /yaw-rev/);
+  assert.match(host, /blink/);
+  assert.match(host, /glance|look/);
+  assert.match(host, /prefers-reduced-motion/);
 });
