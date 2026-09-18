@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
-  Platform,
   StyleSheet,
   View,
   type StyleProp,
@@ -13,11 +12,16 @@ import { SOFT_INTRO } from '@/components/ui/softLetterScale';
 
 export type SoftMode = 'static' | 'working';
 
+/** Extra canvas pad so comet orbit / gas blur is not clipped on native WebView. */
+const ORBIT_PAD_FRAC = 0.22;
+
 /**
  * Soft v8b working mark — SoT HTML host (WebView on native; SoftMark.web.tsx on web).
  * Bead SoftMark cannot match SoT preserve-3d + gas-svg; this ports the host.
  * Morph via `.is-on` on `.av`; idle letter stays KelyraMark Image `kelyra.png`.
  * SoftMark only while working — KelyraMark removes `.is-on` (mode=static) before unmount.
+ *
+ * Native FIX-NOW: opaque={false}; overflow visible; host JS always-facing ball + phase occlusion.
  */
 export function SoftMark({
   size,
@@ -33,7 +37,12 @@ export function SoftMark({
   accessible?: boolean;
 }) {
   const working = mode === 'working';
-  const htmlDoc = useMemo(() => softV8bHostDocument(size, working), [size, working]);
+  const pad = Math.ceil(size * ORBIT_PAD_FRAC);
+  const hostSize = size + pad * 2;
+  const htmlDoc = useMemo(
+    () => softV8bHostDocument(size, working, pad),
+    [size, working, pad],
+  );
   const webRef = useRef<WebView>(null);
 
   useEffect(() => {
@@ -59,7 +68,13 @@ export function SoftMark({
         ref={webRef}
         originWhitelist={['*']}
         source={{ html: htmlDoc }}
-        style={{ width: size, height: size, backgroundColor: 'transparent' }}
+        style={{
+          width: hostSize,
+          height: hostSize,
+          marginLeft: -pad,
+          marginTop: -pad,
+          backgroundColor: 'transparent',
+        }}
         containerStyle={{ backgroundColor: 'transparent' }}
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
@@ -68,6 +83,8 @@ export function SoftMark({
         allowFileAccess={false}
         setSupportMultipleWindows={false}
         pointerEvents="none"
+        // RNW 13 types omit `opaque`; required so WKWebView stays transparent under Soft.
+        {...({ opaque: false } as Record<string, unknown>)}
       />
     </View>
   );
@@ -75,7 +92,7 @@ export function SoftMark({
 
 const styles = StyleSheet.create({
   canvas: {
-    overflow: Platform.OS === 'web' ? 'visible' : 'hidden',
+    overflow: 'visible',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -128,3 +128,77 @@ test('Soft v8b host is SoT extract (gas trail + face gates)', () => {
     assert.doesNotMatch(src, /radialGradient id="gasGlow"/);
   }
 });
+
+
+test('Soft comet: JS always-facing ball + phase-z front/behind K (not CSS billboard alone)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const soft = read('src/components/ui/SoftMark.tsx');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  assert.equal(COMET_ORBIT.facingMode, 'js-always');
+  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
+  // Host file (unescaped HTML attrs)
+  assert.match(host, /data-soft-facing=["']js-always["']/);
+  assert.match(host, /data-soft-occlusion=["']phase-z["']/);
+  assert.match(host, /data-soft-ball=["']always-facing["']/);
+  assert.match(host, /comet-front/);
+  assert.match(host, /comet-behind/);
+  assert.match(host, /requestAnimationFrame/);
+  // softV8bHostHtml.ts embeds JSON-escaped HTML — match tokens, not raw quotes
+  assert.match(ts, /js-always/);
+  assert.match(ts, /phase-z/);
+  assert.match(ts, /always-facing/);
+  assert.match(ts, /comet-front/);
+  assert.match(ts, /requestAnimationFrame/);
+  // Native SoftMark: transparent WebView + visible overflow (gas/orbit not clipped)
+  assert.match(soft, /opaque=\{false\}/);
+  assert.match(soft, /overflow:\s*['"]visible['"]/);
+  assert.match(soft, /ORBIT_PAD_FRAC/);
+});
+
+
+test('softCometFacing module exports startSoftCometFacing (web DOM driver)', () => {
+  const facing = read('src/components/ui/softCometFacing.ts');
+  const softWeb = read('src/components/ui/SoftMark.web.tsx');
+  assert.match(facing, /export function startSoftCometFacing/);
+  assert.match(facing, /comet-front/);
+  assert.match(facing, /js-always|facingMode/);
+  assert.match(softWeb, /startSoftCometFacing/);
+  assert.doesNotMatch(softWeb, /\bclassName\s*:/);
+  assert.doesNotMatch(softWeb, /Animated\.loop/);
+});
+
+
+test('Soft CEO face: eyes+glasses; mouth hard-hidden (no mouth any phase)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.equal(COMET_ORBIT.faceMode, 'eyes-glasses-nomouth');
+  for (const src of [host, ts]) {
+    assert.match(src, /eyes-glasses-nomouth|data-soft-face/);
+    // Hard-hide mouth — must not paint
+    assert.match(src, /\.mouth\s*\{[^}]*display:\s*none\s*!important/);
+    assert.match(src, /glasses/);
+    assert.match(src, /class="lid"|\.lid/);
+  }
+  assert.match(facing, /faceMode|eyes-glasses-nomouth/);
+});
+
+test('Soft gas trail: JS orbit with ball (not CSS rotateX(90) alone on native)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.equal(COMET_ORBIT.trailMode, 'js-orbit');
+  assert.equal(COMET_ORBIT.facingMode, 'js-always');
+  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
+  for (const src of [host, ts]) {
+    assert.match(src, /data-soft-trail=["']js-orbit["']|js-orbit/);
+    assert.match(src, /gas-orbit/);
+    // SoT Peek gas layers retained
+    assert.match(src, /feGaussianBlur/);
+    assert.match(src, /stroke-dasharray/);
+    // rotateX(90) may remain as SoT reference but js-always must not rely on it alone
+    assert.match(src, /rotateX\(90deg\)/);
+  }
+  assert.match(facing, /gas-orbit|js-orbit/);
+  assert.match(facing, /trailMode/);
+});
