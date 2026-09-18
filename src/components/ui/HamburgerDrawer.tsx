@@ -1,10 +1,11 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -36,6 +37,7 @@ import {
   isOfficeChromeRole,
   otherOfficeTeacherSeatRow,
 } from '@/lib/chrome/seat';
+import { canOpenDiary } from '@/lib/diary/seat';
 import { formatHandle, isAlsoParent } from '@/lib/school/roles';
 import { setActiveClass } from '@/lib/classes/api';
 import { can } from '@/lib/school/matrix';
@@ -45,6 +47,11 @@ function matches(label: string, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (!needle) return true;
   return label.toLowerCase().includes(needle);
+}
+
+/** Settings remount key follows seat (ST-22) — never merge teach/parent tab sets. */
+function traySeatKey(role: string): string {
+  return role;
 }
 
 export function HamburgerDrawer() {
@@ -67,8 +74,35 @@ export function HamburgerDrawer() {
   const lastDir = useRef<1 | -1 | 0>(0);
   const [pendingClass, setPendingClass] = useState<{ id: string; name: string } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** After OAuth ?drive=settings — open Settings and resume folder picker. */
+  const [resumeDrivePicker, setResumeDrivePicker] = useState(false);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState('');
+  const teachSeat = chromeState.role === 'teacher';
+  const params = useGlobalSearchParams<{ drive?: string | string[] }>();
+  const driveReturn = useMemo(() => {
+    const raw =
+      typeof params.drive === 'string'
+        ? params.drive
+        : Array.isArray(params.drive)
+          ? params.drive[0]
+          : null;
+    return raw?.trim() || null;
+  }, [params.drive]);
+
+  // DRIVE-NEEDS I2: Settings OAuth return (?drive=settings) — not Capture binder.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || driveReturn !== 'settings') return;
+    setSettingsOpen(true);
+    setResumeDrivePicker(true);
+    // Strip drive query so refresh does not re-open picker.
+    if (typeof window !== 'undefined') {
+      const u = new URL(window.location.href);
+      u.searchParams.delete('drive');
+      const next = `${u.pathname}${u.search}${u.hash}`;
+      router.replace(next as never);
+    }
+  }, [driveReturn, router]);
 
   const trayH = 56;
   const trayBottom = 8 + Math.max(insets.bottom, 8);
@@ -312,6 +346,8 @@ export function HamburgerDrawer() {
                       leading={<KelyraMark size={22} />}
                     />
                   ) : null}
+                  {/* ST-A: office hamburger Diary — superintendent branch (admin uses officeSeat block below). */}
+                  {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
                   {matches('Calendar', q) ? (
                     <DrawerRow label="Calendar" onPress={() => go('/calendar')} />
                   ) : null}
@@ -375,6 +411,23 @@ export function HamburgerDrawer() {
                   ) : null}
                   {chromeState.classId && teacherSeat ? (
                     <>
+                      {/* TC-A: structure home after Class tray drop — always-on when classId. */}
+                      {matches(chromeState.className || 'This class', q) ||
+                      matches('Students', q) ||
+                      matches('Grade book', q) ||
+                      matches('Parents', q) ||
+                      matches('Family update', q) ||
+                      matches('Class settings', q) ? (
+                        <Text style={[styles.sectionLabel, { color: colors.mute }]}>
+                          {chromeState.className || 'This class'}
+                        </Text>
+                      ) : null}
+                      {matches('Students', q) ? (
+                        <DrawerRow
+                          label="Students"
+                          onPress={() => go(`/class/${chromeState.classId}/setup`)}
+                        />
+                      ) : null}
                       {matches('Grade book', q) ? (
                         <DrawerRow
                           label="Grade book"
@@ -389,6 +442,12 @@ export function HamburgerDrawer() {
                       ) : null}
                       {matches('Family update', q) ? (
                         <DrawerRow label="Family update" onPress={() => go(`/class/${chromeState.classId}/family`)} />
+                      ) : null}
+                      {matches('Class settings', q) ? (
+                        <DrawerRow
+                          label="Class settings"
+                          onPress={() => go(`/class/${chromeState.classId}/settings`)}
+                        />
                       ) : null}
                       <Hairline />
                     </>
@@ -433,7 +492,7 @@ export function HamburgerDrawer() {
                   ) : null}
                 </>
               ) : null}
-              {!officeSeat && matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
+              {/* ST-20: teacher tray owns Diary — no hamburger synonym on teach seat. */}
               {matches('Calendar', q) ? <DrawerRow label="Calendar" onPress={() => go('/calendar')} /> : null}
               <Hairline />
               {matches('Sign out', q) ? (
@@ -628,7 +687,19 @@ export function HamburgerDrawer() {
         />
       </View>
     </Modal>
-    <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    <SettingsSheet
+      key={traySeatKey(chromeState.role)}
+      visible={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+      teachSeat={teachSeat}
+      resumeDrivePicker={resumeDrivePicker}
+      onResumeDrivePickerConsumed={() => setResumeDrivePicker(false)}
+      allowOpenDiary={canOpenDiary(profile) && chromeState.role !== 'student'}
+      onOpenDiary={() => {
+        setSettingsOpen(false);
+        router.push('/diary' as never);
+      }}
+    />
     </>
   );
 }
@@ -806,6 +877,14 @@ const styles = StyleSheet.create({
     ...type.body,
     fontWeight: '600',
     flexShrink: 1,
+    textAlign: 'right',
+  },
+  sectionLabel: {
+    ...type.section,
+    textTransform: 'uppercase',
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 4,
     textAlign: 'right',
   },
 });

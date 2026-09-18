@@ -19,7 +19,7 @@ function read(rel: string): string {
 }
 
 const PARENT_KEYS = ['home', 'ride', 'ask'];
-const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 
 test('DH-01 / DH-05: Parent drawer row + land /parent + parent tray Home·Ride·Ask', () => {

@@ -25,6 +25,9 @@ import check from '../../../assets/icons/check.png';
 import mail from '../../../assets/icons/mail.png';
 import chat from '../../../assets/icons/chat.png';
 import settings from '../../../assets/icons/settings.png';
+import theme from '../../../assets/icons/theme.png';
+import ingestFolders from '../../../assets/icons/ingestFolders.png';
+import diary from '../../../assets/icons/diary.png';
 import share from '../../../assets/icons/share.png';
 import save from '../../../assets/icons/save.png';
 import compose from '../../../assets/icons/compose.png';
@@ -120,6 +123,9 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'mail': mail,
   'chat': chat,
   'settings': settings,
+  'theme': theme,
+  'ingestFolders': ingestFolders,
+  'diary': diary,
   'share': share,
   'save': save,
   'compose': compose,

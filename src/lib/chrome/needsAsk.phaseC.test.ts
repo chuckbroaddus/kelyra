@@ -99,12 +99,15 @@ test('P3 HB: Grade book DrawerRow indent matches Parents/Family update', () => {
   assert.ok(blockStart > 0);
   const familyAt = drawer.indexOf('label="Family update"', blockStart);
   assert.ok(familyAt > blockStart);
-  const block = drawer.slice(blockStart, familyAt + 80);
+  const block = drawer.slice(blockStart, familyAt + 120);
   const lines = block.split('\n');
-  const gradeRow = lines.find((line) => /<DrawerRow\s*$/.test(line) && lines[lines.indexOf(line) + 1]?.includes('label="Grade book"'));
+  const gradeLabelIdx = lines.findIndex((line) => line.includes('label="Grade book"'));
+  assert.ok(gradeLabelIdx > 0, 'Grade book DrawerRow present');
+  const gradeRow = lines[gradeLabelIdx - 1]?.match(/<DrawerRow\s*$/)
+    ? lines[gradeLabelIdx - 1]
+    : lines[gradeLabelIdx];
   const parentsRow = lines.find((line) => /<DrawerRow label="Parents"/.test(line));
   const familyRow = lines.find((line) => /<DrawerRow label="Family update"/.test(line));
-  assert.ok(gradeRow, 'Grade book DrawerRow present');
   assert.ok(parentsRow, 'Parents DrawerRow present');
   assert.ok(familyRow, 'Family update DrawerRow present');
   const lead = (line: string) => (line.match(/^[ \t]*/)?.[0] ?? '').length;
@@ -113,10 +116,10 @@ test('P3 HB: Grade book DrawerRow indent matches Parents/Family update', () => {
 });
 
 test('Phase A+B intact: four tray keys; Class setup; CLASS_TABS ≤8; no fifth', () => {
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'class', 'ask']);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
   assert.equal(trayKeysForRole('teacher').length, 4);
-  const classTab = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class');
-  assert.equal(classTab?.href, '/class/abc/setup');
+  assert.equal(tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class'), undefined);
+  assert.equal(tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'diary')?.href, '/diary');
   assert.ok(CLASS_TABS.length <= 8);
 });
 

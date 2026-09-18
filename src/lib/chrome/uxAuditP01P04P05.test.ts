@@ -44,10 +44,10 @@ test('P-01: AppHeader trailing order is capture → search → mail → menu; ca
   assert.match(header, /Icon name="mail"/);
   assert.match(header, /Icon name="menu"/);
   assert.match(header, /School logo/);
-  // School logo matches Ask Kelyra mark size (markSize = bar + 12), shared markSlot.
+  // SoftMark #134: school logo / Ask mark share square markSlot (markSize = bar + 12).
   assert.match(header, /const markSize = bar \+ 12/);
   assert.match(header, /styles\.markSlot/);
-  assert.match(header, /width: markSize, height: bar/);
+  assert.match(header, /width: markSize, height: markSize/);
   assert.doesNotMatch(header, /logoSlot/);
   assert.doesNotMatch(header, /width:\s*22,\s*\n\s*height:\s*22,\s*\n\s*marginRight:\s*8/);
 });
@@ -63,19 +63,24 @@ test('P-01: ASSIGN chrome keeps hamburger on pushed Assign (keepMenu)', () => {
   assert.match(header, /headerChrome\.keepMenu/);
 });
 
-/** P-05 — §34.2: tray a11y/web label Ask on every seat; Ask last. */
-test('P-05: Ask tray label is Ask on every seat; Ask remains last', () => {
-  for (const role of ['teacher', 'superintendent', 'administrator', 'student', 'parent'] as const) {
-    const tabs = tabsFor(role, '/', role === 'teacher' ? 'c1' : null, 0);
+/** P-05 / KL-A — Ask key last; teacher tray label Kelyra; other seats Ask. */
+test('P-05 / KL-A: teacher Ask slot labels Kelyra; other seats Ask; Ask remains last', () => {
+  const teacherAsk = tabsFor('teacher', '/', 'c1', 0).find((tab) => tab.key === 'ask');
+  assert.equal(teacherAsk?.label, 'Kelyra');
+  assert.equal(teacherAsk?.href, '/ask');
+  for (const role of ['superintendent', 'administrator', 'student', 'parent'] as const) {
+    const tabs = tabsFor(role, '/', null, 0);
     const ask = tabs.find((tab) => tab.key === 'ask');
     assert.ok(ask, role);
     assert.equal(ask.label, 'Ask', role);
     assert.equal(tabs[tabs.length - 1]?.key, 'ask', role);
     assert.equal(trayKeysForRole(role).at(-1), 'ask', role);
   }
+  assert.equal(tabsFor('teacher', '/', 'c1', 0).at(-1)?.key, 'ask');
+  assert.equal(trayKeysForRole('teacher').at(-1), 'ask');
   const tray = read('src/components/ui/FloatingTabTray.tsx');
   assert.match(tray, /accessibilityLabel=\{tab\.badge \? `\$\{tab\.label\}, \$\{tab\.badge\} waiting` : tab\.label\}/);
-  assert.match(tray, /if \(tab\.key === 'ask'\) return 'Ask'/);
+  assert.match(tray, /if \(tab\.key === 'ask'\) return tab\.label/);
 });
 
 /** P-04 — §3.3 / §36.2 drawer order conformance. */

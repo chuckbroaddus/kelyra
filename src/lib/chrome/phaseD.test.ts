@@ -13,12 +13,12 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
-const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Class', 'Ask'];
+const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Diary', 'Kelyra'];
 
-test('TR-09 / D1: teacher tray labels Desk · Needs · Class · Ask; today glyph', () => {
+test('TR-09 / D1: teacher tray labels Desk · Needs · Diary · Kelyra; today glyph', () => {
   const tabs = tabsFor('teacher', '/', 'c1', 0);
   assert.deepEqual(
     tabs.map((tab) => tab.label),
@@ -108,9 +108,8 @@ test('D4 Phase A dual-hat seat still works', () => {
 
 test('D4 Phase B/C intact: CLASS_TABS ≤8; Class ≠ gradebook-first; Needs + Ask chip', () => {
   assert.ok(CLASS_TABS.length <= 8);
-  const classTab = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class');
-  assert.equal(classTab?.href, '/class/abc/setup');
-  assert.ok(!classTab?.href.includes('/gradebook'));
+  assert.equal(tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'class'), undefined);
+  assert.equal(tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'diary')?.href, '/diary');
   assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs Attention');
   const ask = read('src/app/ask.tsx');
   assert.match(ask, /Working in \$\{chrome\.className\}/);

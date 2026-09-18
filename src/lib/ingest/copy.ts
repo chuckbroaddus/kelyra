@@ -19,6 +19,7 @@ export const INGEST_COPY = {
   progressBytes: (uploaded: number, total: number) =>
     `${formatProgressMb(uploaded)} / ${formatProgressMb(total)} MB`,
   classRequired: 'Choose a class before uploading the stack.',
+  classStackSources: 'Ingest Folders',
   teachSeatOnly: 'Class stacks are available on the Teach seat.',
   uploading: 'Uploading…',
   received: 'Upload complete. Waiting for page processing…',

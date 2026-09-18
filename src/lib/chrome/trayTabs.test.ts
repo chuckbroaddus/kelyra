@@ -10,7 +10,7 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
 const PARENT_KEYS = ['home', 'ride', 'ask'];
@@ -49,14 +49,19 @@ test('A1 student tray golden path unchanged', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
 });
 
-test('TR-07: teacher Class tray lands setup, not gradebook-first', () => {
+test('ST-A / TR-07: teacher Class tray dropped; setup stays demoted route via hamburger', () => {
   const classId = 'abc';
   const tabs = tabsFor('teacher', '/', classId, 0);
-  const classTab = tabs.find((tab) => tab.key === 'class');
-  assert.ok(classTab);
-  assert.equal(classTab.href, `/class/${classId}/setup`);
-  assert.ok(!classTab.href.includes('/gradebook'));
+  assert.equal(tabs.find((tab) => tab.key === 'class'), undefined);
+  const diary = tabs.find((tab) => tab.key === 'diary');
+  assert.ok(diary);
+  assert.equal(diary.href, '/diary');
+  assert.equal(diary.label, 'Diary');
   assert.equal(tabs.length, 4);
+  assert.deepEqual(
+    tabs.map((tab) => tab.label),
+    ['Desk', 'Needs Attention', 'Diary', 'Kelyra'],
+  );
 });
 
 test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () => {
@@ -64,6 +69,9 @@ test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () =>
   assert.equal(trayKeysForRole('teacher').length, 4);
   const studentClass = tabsFor('student', '/student/class', null, 0).find((tab) => tab.key === 'class');
   assert.equal(studentClass?.href, '/student/class');
+  assert.ok(!trayKeysForRole('teacher').includes('class'));
+  assert.ok(!trayKeysForRole('parent').includes('diary'));
+  assert.ok(!trayKeysForRole('administrator').includes('diary'));
 });
 
 test('TR-06: teacher Needs Attention label; route stays /inbox', () => {
@@ -90,10 +98,14 @@ test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/offi
   assert.ok(!parent.has('capture'));
 });
 
-test('P-05: Ask label unified across seats', () => {
-  for (const role of ['teacher', 'superintendent', 'administrator', 'student', 'parent']) {
-    const ask = tabsFor(role, '/ask', role === 'teacher' ? 'c1' : null, 0).find((tab) => tab.key === 'ask');
+test('P-05 / KL-A: teacher Ask slot labels Kelyra; other seats keep Ask; key/href ask', () => {
+  const teacherAsk = tabsFor('teacher', '/ask', 'c1', 0).find((tab) => tab.key === 'ask');
+  assert.equal(teacherAsk?.label, 'Kelyra');
+  assert.equal(teacherAsk?.href, '/ask');
+  for (const role of ['superintendent', 'administrator', 'student', 'parent']) {
+    const ask = tabsFor(role, '/ask', null, 0).find((tab) => tab.key === 'ask');
     assert.equal(ask?.label, 'Ask', role);
+    assert.equal(ask?.href, '/ask', role);
   }
 });
 
@@ -113,7 +125,7 @@ test('RIDE-ICON: parent Ride + Dismissal curb use ride; Assignments stay work', 
   assert.equal(office?.[1], 'manage');
 });
 
-test('Desk tray lands Classes picker /?switch=1; active on / and class desk', () => {
+test('Desk tray lands Classes picker /?switch=1; Desk-active-on-cluster', () => {
   const withClass = tabsFor('teacher', '/', 'abc', 0).find((tab) => tab.key === 'home');
   assert.equal(withClass?.href, '/?switch=1');
   assert.equal(withClass?.active, true);
@@ -122,14 +134,17 @@ test('Desk tray lands Classes picker /?switch=1; active on / and class desk', ()
   assert.equal(onDesk?.active, true);
   const onSetup = tabsFor('teacher', '/class/abc/setup', 'abc', 0).find((tab) => tab.key === 'home');
   assert.equal(onSetup?.href, '/?switch=1');
-  assert.equal(onSetup?.active, false);
+  assert.equal(onSetup?.active, true);
+  const onDiary = tabsFor('teacher', '/diary', 'abc', 0);
+  assert.equal(onDiary.find((tab) => tab.key === 'diary')?.active, true);
+  assert.equal(onDiary.find((tab) => tab.key === 'home')?.active, false);
 });
 
-test('Class tray active on Settings and Syllabus', () => {
-  for (const path of ['/class/abc/settings', '/class/abc/syllabus']) {
-    const classTab = tabsFor('teacher', path, 'abc', 0).find((tab) => tab.key === 'class');
-    assert.equal(classTab?.active, true, path);
-    const desk = tabsFor('teacher', path, 'abc', 0).find((tab) => tab.key === 'home');
-    assert.equal(desk?.active, false, path);
+test('Desk-active-on-cluster: setup/settings/syllabus light Desk, never Diary or Class', () => {
+  for (const path of ['/class/abc/settings', '/class/abc/syllabus', '/class/abc/setup', '/class/abc/gradebook']) {
+    const tabs = tabsFor('teacher', path, 'abc', 0);
+    assert.equal(tabs.find((tab) => tab.key === 'class'), undefined, path);
+    assert.equal(tabs.find((tab) => tab.key === 'home')?.active, true, path);
+    assert.equal(tabs.find((tab) => tab.key === 'diary')?.active, false, path);
   }
 });

@@ -94,11 +94,13 @@ test('SEC-05: no sixth teacher tray tab; no student /todo skin on teacher', () =
   assert.equal(trayKeysForRole('teacher').length, 4);
   assert.ok(!trayKeysForRole('teacher').includes('grades'));
   assert.ok(!trayKeysForRole('teacher').includes('todo'));
+  assert.ok(!trayKeysForRole('teacher').includes('class'));
   const tray = read('src/lib/chrome/trayTabs.ts');
-  const teacherBlock = tray.slice(tray.indexOf('const classRoot'));
+  const teacherBlock = tray.slice(tray.indexOf("label: 'Desk'"));
   assert.doesNotMatch(teacherBlock, /\/todo/);
-  assert.doesNotMatch(teacherBlock, /capture/);
+  assert.doesNotMatch(teacherBlock, /key: 'capture'/);
   assert.match(teacherBlock, /inbox/);
+  assert.match(teacherBlock, /key: 'diary'/);
 });
 
 test('SEC-08: no current_seat SQL table or seat migrations', () => {
@@ -153,15 +155,20 @@ test('no EXPO_PUBLIC secrets introduced by altitude files', () => {
   }
 });
 
-test('SEC-05/06 Phase B: Class tray not gradebook-first; Family stays drawer; no sixth tray tab', () => {
+test('SEC-05/06 Phase B: ST-A Class tray dropped; setup via hamburger; Family stays drawer; no sixth', () => {
   assert.equal(trayKeysForRole('teacher').length, 4);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
+  assert.ok(!trayKeysForRole('teacher').includes('class'));
   const tray = read('src/lib/chrome/trayTabs.ts');
-  const teacherBlock = tray.slice(tray.indexOf('const classRoot'));
-  assert.match(teacherBlock, /\$\{classRoot\}\/setup/);
-  assert.doesNotMatch(teacherBlock, /\$\{classRoot\}\/gradebook/);
+  const teacherBlock = tray.slice(tray.indexOf("label: 'Desk'"));
+  assert.match(teacherBlock, /key: 'diary'/);
+  assert.match(teacherBlock, /href: '\/diary'/);
+  assert.doesNotMatch(teacherBlock, /key: 'class'/);
   assert.match(teacherBlock, /label: 'Needs Attention'/);
   assert.match(teacherBlock, /href: '\/inbox'/);
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
+  assert.match(drawer, /label="Students"/);
+  assert.match(drawer, /\/class\/\$\{chromeState\.classId\}\/setup/);
   assert.match(drawer, /label="Family update"/);
   assert.match(drawer, /\/family/);
   // §3.3: Grade book always visible with empty filter (not q.trim()-gated).

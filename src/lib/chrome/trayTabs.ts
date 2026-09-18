@@ -108,19 +108,10 @@ export function tabsFor(
     ];
   }
 
-  const classRoot = classId ? `/class/${classId}` : '/';
-  const onClassCluster =
-    pathname.endsWith('/setup') ||
-    pathname.endsWith('/settings') ||
-    pathname.endsWith('/syllabus') ||
-    pathname.includes('/gradebook') ||
-    pathname.includes('/assignment') ||
-    pathname.endsWith('/parents') ||
-    pathname.includes('/parent/') ||
-    pathname.endsWith('/family');
+  // ST-A / Desk-active-on-cluster: structure routes light Desk after Class tray drop.
   const onClass = pathname.startsWith('/class/');
-  const houseActive =
-    pathname === '/' || (onClass && !onClassCluster && !pathname.includes('/student/'));
+  const houseActive = pathname === '/' || (onClass && !pathname.includes('/student/'));
+  const onDiary = pathname === '/diary' || pathname.startsWith('/diary/');
 
   return [
     { key: 'home', icon: 'today', label: 'Desk', href: '/?switch=1', active: houseActive },
@@ -133,13 +124,14 @@ export function tabsFor(
       badge: badgeCount > 0 ? badgeCount : undefined,
     },
     {
-      key: 'class',
-      icon: 'records',
-      label: 'Class',
-      href: classId ? `${classRoot}/setup` : '/',
-      active: onClassCluster,
+      key: 'diary',
+      icon: 'diary',
+      label: 'Diary',
+      href: '/diary',
+      active: onDiary,
     },
-    { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
+    // KL-A: tray label Kelyra; key/href stay ask /ask.
+    { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
   ];
 }
 

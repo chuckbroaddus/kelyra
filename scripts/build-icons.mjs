@@ -293,6 +293,33 @@ const RECIPES = {
       line(p, x1, y1, x2, y2, ST + 0.4);
     }
   },
+  /** Settings Theme tab — sun disk + rays (not the footer gear). */
+  theme: (p) => {
+    circle(p, 12, 12, 4.0, ST, false);
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4 - Math.PI / 2;
+      const x1 = 12 + Math.cos(a) * 6.2;
+      const y1 = 12 + Math.sin(a) * 6.2;
+      const x2 = 12 + Math.cos(a) * 9.4;
+      const y2 = 12 + Math.sin(a) * 9.4;
+      line(p, x1, y1, x2, y2, ST);
+    }
+  },
+  /** Settings Ingest Folders tab — stacked folders. */
+  ingestFolders: (p) => {
+    roundRect(p, 2.8, 5.6, 13.6, 10.8, 1.2, ST, false);
+    roundRect(p, 2.8, 3.8, 6.0, 2.4, 0.8, ST, false);
+    roundRect(p, 6.4, 8.4, 14.0, 11.0, 1.2, ST, false);
+    roundRect(p, 6.4, 6.6, 6.0, 2.4, 0.8, ST, false);
+  },
+  /** Diary tray + Settings Diary tab — bound notebook. */
+  diary: (p) => {
+    roundRect(p, 5.0, 3.0, 14.0, 18.0, 1.4, ST, false);
+    line(p, 9.0, 3.0, 9.0, 21.0, ST);
+    line(p, 11.4, 8.0, 16.4, 8.0, ST);
+    line(p, 11.4, 11.6, 16.4, 11.6, ST);
+    line(p, 11.4, 15.2, 15.0, 15.2, ST);
+  },
   share: (p) => {
     roundRect(p, 5.2, 8.4, 13.6, 12.4, 1.4, ST, false);
     line(p, 12, 3.4, 12, 12.4, ST);

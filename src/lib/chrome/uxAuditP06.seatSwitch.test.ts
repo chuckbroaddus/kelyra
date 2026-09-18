@@ -20,7 +20,7 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'class', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
 const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
 
 test('P-06 Option A: drawer other-seat rows + a11y; My children unchanged; no header chip', () => {
