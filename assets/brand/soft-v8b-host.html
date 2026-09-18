@@ -301,10 +301,11 @@
     left: 0;
     top: 0;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
+    /* No translate(-50%,-50%) — JS sets translate(x - size/2, y - size/2) only */
+    transform: none;
     transform-style: flat;
     background: radial-gradient(circle at 32% 28%, #fff 0 14%, #e8ffff 22%, #9af7ff 40%, #7a5cff 68%, #2a1848 100%);
-    box-shadow: 0 0 2px rgba(154, 247, 255, 0.55);
+    box-shadow: 0 0 4px rgba(154, 247, 255, 0.85), 0 0 8px rgba(122, 92, 255, 0.45);
     pointer-events: none;
     will-change: transform, opacity, width, height;
   }
@@ -388,8 +389,8 @@
   var PERIOD = 2450;
   var CANT = 14 * Math.PI / 180;
   var OVAL_Y = 0.58; /* locked iPhone chrome oval; was cos(TILT)≈0.90 */
-  var BEAD_N = 12;
-  var TRAIL_SPAN = 0.30; /* fraction of orbit behind the ball */
+  var BEAD_N = 14;
+  var TRAIL_SPAN = 0.38; /* fraction of orbit behind the ball */
   var root = document.getElementById('soft-root');
   if (!root) return;
   var scene = root.querySelector('.scene');
@@ -456,7 +457,6 @@
     var theta = -phase * Math.PI * 2;
     var letter = letterPx();
     var r = letter * 0.41;
-    var ballPx = letter * 0.08;
     var cosC = Math.cos(CANT), sinC = Math.sin(CANT);
     var head = place(theta, r, cosC, sinC);
     bit.style.transform = 'translate(' + head.x.toFixed(2) + 'px,' + head.y.toFixed(2) + 'px)';
@@ -464,8 +464,9 @@
       var lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
       var p = place(-(phase - lag) * Math.PI * 2, r, cosC, sinC);
       var tFrac = (b + 1) / BEAD_N;
-      var size = ballPx * (0.72 - 0.48 * tFrac);
-      var op = 0.88 - 0.72 * tFrac;
+      // Visible on ~40px chrome: head ~letter*0.14 → ~letter*0.045
+      var size = letter * (0.14 - 0.095 * tFrac);
+      var op = 0.95 - 0.70 * tFrac;
       var el = beads[b];
       el.style.width = size.toFixed(2) + 'px';
       el.style.height = size.toFixed(2) + 'px';

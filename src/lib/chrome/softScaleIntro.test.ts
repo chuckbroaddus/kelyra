@@ -230,6 +230,9 @@ test('Soft iPhone oval+trail lock: inject + ovalY<0.75 + js-beads trail', () => 
   const host = read('assets/brand/soft-v8b-host.html');
   assert.match(soft, /onLoadEnd/);
   assert.match(soft, /softCometFacingInjectScript/);
+  // Remount when host HTML changes — HMR does not remount WebView source.html
+  assert.match(soft, /key=\{webKey\}/);
+  assert.match(soft, /htmlDoc\.length/);
   assert.ok(COMET_ORBIT.ovalY < 0.75);
   assert.equal(COMET_ORBIT.ovalY, 0.58);
   assert.equal(COMET_ORBIT.cantZDeg, 14);
@@ -238,4 +241,12 @@ test('Soft iPhone oval+trail lock: inject + ovalY<0.75 + js-beads trail', () => 
   assert.match(host, /var OVAL_Y = 0\.58/);
   assert.match(facing, /js-beads/);
   assert.match(facing, /gas-beads|gas-bead/);
+  // Amplified beads: visible on ~40px chrome (letter*0.14 head, BEAD_N=14, TRAIL_SPAN≈0.38)
+  assert.match(facing, /BEAD_N = 14/);
+  assert.match(facing, /TRAIL_SPAN = 0\.38/);
+  assert.match(facing, /letter \* \(0\.14 - 0\.095 \* tFrac\)/);
+  assert.match(host, /var BEAD_N = 14/);
+  assert.match(host, /var TRAIL_SPAN = 0\.38/);
+  assert.match(host, /letter \* \(0\.14 - 0\.095 \* tFrac\)/);
+  assert.match(host, /box-shadow: 0 0 4px rgba\(154, 247, 255, 0\.85\)/);
 });

@@ -8,8 +8,8 @@ import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
 
 export type SoftCometFacingHandle = { stop: () => void };
 
-const BEAD_N = 12;
-const TRAIL_SPAN = 0.3;
+const BEAD_N = 14;
+const TRAIL_SPAN = 0.38;
 
 /**
  * Injectable IIFE for native SoftMark WebView (onLoadEnd).
@@ -106,15 +106,15 @@ export function softCometFacingInjectScript(): string {
       var theta = -phase * Math.PI * 2;
       var letter = letterPx();
       var r = letter * radiusOfLetter;
-      var ballPx = letter * 0.08;
       var head = place(theta, r);
       bit.style.transform = 'translate(' + head.x.toFixed(2) + 'px,' + head.y.toFixed(2) + 'px)';
       for (var b = 0; b < BEAD_N; b++) {
         var lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
         var p = place(-(phase - lag) * Math.PI * 2, r);
         var tFrac = (b + 1) / BEAD_N;
-        var size = ballPx * (0.72 - 0.48 * tFrac);
-        var op = 0.88 - 0.72 * tFrac;
+        // Visible on ~40px chrome: head ~letter*0.14 → ~letter*0.045 (was ballPx*0.72 ≈ 2px)
+        var size = letter * (0.14 - 0.095 * tFrac);
+        var op = 0.95 - 0.70 * tFrac;
         var el = beads[b];
         el.style.width = size.toFixed(2) + 'px';
         el.style.height = size.toFixed(2) + 'px';
@@ -222,15 +222,15 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
     const theta = -phase * Math.PI * 2; // yaw-rev
     const letter = letterPx();
     const r = letter * COMET_ORBIT.radiusOfLetter;
-    const ballPx = letter * 0.08;
     const head = place(theta, r);
     bit!.style.transform = `translate(${head.x.toFixed(2)}px,${head.y.toFixed(2)}px)`;
     for (let b = 0; b < BEAD_N; b++) {
       const lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
       const p = place(-(phase - lag) * Math.PI * 2, r);
       const tFrac = (b + 1) / BEAD_N;
-      const size = ballPx * (0.72 - 0.48 * tFrac);
-      const op = 0.88 - 0.72 * tFrac;
+      // Visible on ~40px chrome: head ~letter*0.14 → ~letter*0.045 (was ballPx*0.72 ≈ 2px)
+      const size = letter * (0.14 - 0.095 * tFrac);
+      const op = 0.95 - 0.70 * tFrac;
       const el = beads[b];
       el.style.width = `${size.toFixed(2)}px`;
       el.style.height = `${size.toFixed(2)}px`;

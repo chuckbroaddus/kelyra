@@ -9,7 +9,7 @@ import { WebView } from 'react-native-webview';
 
 import { softV8bHostDocument } from '@/components/ui/softV8bHostHtml';
 import { softCometFacingInjectScript } from '@/components/ui/softCometFacing';
-import { SOFT_INTRO } from '@/components/ui/softLetterScale';
+import { COMET_ORBIT, SOFT_INTRO } from '@/components/ui/softLetterScale';
 
 export type SoftMode = 'static' | 'working';
 
@@ -47,6 +47,8 @@ export function SoftMark({
     [size, working, pad],
   );
   const facingInject = useMemo(() => softCometFacingInjectScript(), []);
+  // Remount WebView when host HTML changes — HMR alone does not remount source.html
+  const webKey = `${htmlDoc.length}-js-beads-${COMET_ORBIT.ovalY}-${COMET_ORBIT.trailMode}`;
   const webRef = useRef<WebView>(null);
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export function SoftMark({
       style={[styles.canvas, { width: size, height: size }, style]}
     >
       <WebView
+        key={webKey}
         ref={webRef}
         originWhitelist={['*']}
         source={{ html: htmlDoc }}
