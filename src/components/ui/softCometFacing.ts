@@ -1,26 +1,32 @@
 /**
- * Soft comet always-facing + phase occlusion (WKWebView / web DOM).
+ * Soft comet always-facing ball + JS gas trail + phase occlusion (WKWebView / web DOM).
  * Mirrors host inline script: 2D ellipse yaw-rev, z-order front/behind K.
- * Do not use CSS .billboard counter-rotateY alone on native WebView.
+ * Do not use CSS .billboard counter-rotateY or CSS rotateX(90°) gas alone on native WebView.
  */
 import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
 
 export type SoftCometFacingHandle = { stop: () => void };
 
-/** Drive scene-level .bit.head + .comet-front/.comet-behind on a Soft host root. */
+/** Drive scene-level .bit.head + .gas-orbit + .comet-front/.comet-behind on a Soft host root. */
 export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
   const scene = root.querySelector('.scene') as HTMLElement | null;
   const bit = root.querySelector('.bit.head') as HTMLElement | null;
+  const gas =
+    (root.querySelector('.gas-orbit') as HTMLElement | null) ||
+    (root.querySelector('[data-soft-trail="js-orbit"]') as HTMLElement | null);
   if (!scene || !bit) {
     return { stop() {} };
   }
 
   root.setAttribute('data-soft-facing', COMET_ORBIT.facingMode);
   root.setAttribute('data-soft-occlusion', COMET_ORBIT.occlusionMode);
+  root.setAttribute('data-soft-trail', COMET_ORBIT.trailMode);
+  root.setAttribute('data-soft-face', COMET_ORBIT.faceMode);
 
   const period = SOFT_MOTION.orbitMs;
   const tilt = (COMET_ORBIT.tiltXDeg * Math.PI) / 180;
   const cant = (COMET_ORBIT.cantZDeg * Math.PI) / 180;
+  const cantDeg = COMET_ORBIT.cantZDeg;
   const ovalY = COMET_ORBIT.ovalY;
   const cosC = Math.cos(cant);
   const sinC = Math.sin(cant);
@@ -54,6 +60,7 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
       root.classList.contains('demo-out');
     if (!on) {
       bit!.style.transform = 'translate(0px, 0px)';
+      if (gas) gas.style.transform = 'none';
       scene!.classList.remove('comet-front', 'comet-behind');
       raf = requestAnimationFrame(frame);
       return;
@@ -68,6 +75,10 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
     const xr = x * cosC - y * sinC;
     const yr = x * sinC + y * cosC;
     bit!.style.transform = `translate(${xr.toFixed(2)}px,${yr.toFixed(2)}px)`;
+    if (gas) {
+      const deg = phase * -360;
+      gas.style.transform = `rotate(${cantDeg}deg) scale(1,${ovalY.toFixed(6)}) rotate(${deg.toFixed(2)}deg)`;
+    }
     const front = Math.cos(theta) > 0;
     scene!.classList.toggle('comet-front', front);
     scene!.classList.toggle('comet-behind', !front);

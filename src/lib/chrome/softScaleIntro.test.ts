@@ -166,3 +166,39 @@ test('softCometFacing module exports startSoftCometFacing (web DOM driver)', () 
   assert.doesNotMatch(softWeb, /\bclassName\s*:/);
   assert.doesNotMatch(softWeb, /Animated\.loop/);
 });
+
+
+test('Soft CEO face: eyes+glasses; mouth hard-hidden (no mouth any phase)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.equal(COMET_ORBIT.faceMode, 'eyes-glasses-nomouth');
+  for (const src of [host, ts]) {
+    assert.match(src, /eyes-glasses-nomouth|data-soft-face/);
+    // Hard-hide mouth — must not paint
+    assert.match(src, /\.mouth\s*\{[^}]*display:\s*none\s*!important/);
+    assert.match(src, /glasses/);
+    assert.match(src, /class="lid"|\.lid/);
+  }
+  assert.match(facing, /faceMode|eyes-glasses-nomouth/);
+});
+
+test('Soft gas trail: JS orbit with ball (not CSS rotateX(90) alone on native)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  const facing = read('src/components/ui/softCometFacing.ts');
+  assert.equal(COMET_ORBIT.trailMode, 'js-orbit');
+  assert.equal(COMET_ORBIT.facingMode, 'js-always');
+  assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
+  for (const src of [host, ts]) {
+    assert.match(src, /data-soft-trail=["']js-orbit["']|js-orbit/);
+    assert.match(src, /gas-orbit/);
+    // SoT Peek gas layers retained
+    assert.match(src, /feGaussianBlur/);
+    assert.match(src, /stroke-dasharray/);
+    // rotateX(90) may remain as SoT reference but js-always must not rely on it alone
+    assert.match(src, /rotateX\(90deg\)/);
+  }
+  assert.match(facing, /gas-orbit|js-orbit/);
+  assert.match(facing, /trailMode/);
+});

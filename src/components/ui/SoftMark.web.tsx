@@ -7,6 +7,9 @@ import { startSoftCometFacing } from '@/components/ui/softCometFacing';
 
 export type SoftMode = 'static' | 'working';
 
+/** Extra canvas pad so comet orbit / gas blur is not clipped. */
+const ORBIT_PAD_FRAC = 0.22;
+
 /**
  * Soft v8b web host — real DOM div + SoT CSS (gas-svg / face).
  * Zero RN className on View/Animated.View. Morph via `.is-on` on `.av`.
@@ -27,7 +30,8 @@ export function SoftMark({
 }) {
   const working = mode === 'working';
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const inner = useMemo(() => softV8bHostInnerHtml(size, working), [size, working]);
+  const pad = Math.ceil(size * ORBIT_PAD_FRAC);
+  const inner = useMemo(() => softV8bHostInnerHtml(size, working, pad), [size, working, pad]);
 
   useEffect(() => {
     const root = hostRef.current?.querySelector('#soft-root') as HTMLElement | null;

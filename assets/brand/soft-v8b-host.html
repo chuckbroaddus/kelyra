@@ -113,7 +113,9 @@
   }
 
   .face { opacity: 0; }
-  .mouth { transform-box: fill-box; transform-origin: 50% 0%; transform: scaleX(0.2) scaleY(0.15); }
+  /* CEO Soft FIX-NOW: eyes+glasses only — NO mouth (overrides Soft SoT mouth) */
+  .mouth { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0; height: 0; opacity: 0 !important; }
+  .mouth * { display: none !important; }
   .lid { transform: scaleY(1); transform-box: fill-box; transform-origin: 50% 0%; }
   .pupils { transform-box: fill-box; transform-origin: center; }
   .blush { opacity: .45; }
@@ -125,7 +127,7 @@
   .is-on .ring-spin { animation: yaw-rev 2.45s linear infinite; }
   .is-on .billboard { animation: billboard 2.45s linear infinite; }
   .is-on .face { opacity: 1; }
-  .is-on .mouth { transform: none; }
+  .is-on .mouth { display: none !important; }
   .is-on .lid { transform: scaleY(0.06); animation: blink 4.4s ease-in-out infinite; }
   .is-on .lid2 { animation-delay: .12s; }
   .look { transform-box: fill-box; transform-origin: 50% 42%; }
@@ -251,17 +253,41 @@
   }
 
 
+
   /* JS always-facing + phase occlusion (data-soft-facing=js-always) */
   [data-soft-facing="js-always"] .is-on .billboard,
   [data-soft-facing="js-always"] .demo-in .billboard,
   [data-soft-facing="js-always"] .demo-out .billboard { animation: none !important; transform: none !important; }
   [data-soft-facing="js-always"] .bit.head { /* orbit via JS translate — not rotateY+translateZ */ }
+  /* Gas trail: do not trust CSS rotateX(90deg) alone on WKWebView — scene-level JS orbit */
+  [data-soft-facing="js-always"] .gimbal .gas-svg { display: none !important; }
+  [data-soft-facing="js-always"] .gas-orbit {
+    display: block;
+    position: absolute;
+    width: calc(var(--letter) * 1.44);
+    height: calc(var(--letter) * 1.44);
+    left: calc(var(--lcx) - var(--letter) * 0.72);
+    top: calc(var(--lcy) - var(--letter) * 0.72);
+    transform-origin: 50% 50%;
+    transform: none;
+    overflow: visible;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  [data-soft-facing="js-always"] .is-on .gas-orbit,
+  [data-soft-facing="js-always"] .demo-in .gas-orbit { opacity: 1; }
+  [data-soft-facing="js-always"] .scene.comet-front .gas-orbit { z-index: 3; }
+  [data-soft-facing="js-always"] .scene.comet-behind .gas-orbit { z-index: 1; }
+  [data-soft-facing="js-always"] .is-on .ring-spin,
+  [data-soft-facing="js-always"] .demo-in .ring-spin,
+  [data-soft-facing="js-always"] .demo-out .ring-spin { animation: none !important; }
 
   @media (prefers-reduced-motion: reduce) {
     .pupils, .look, .lid, .breathe, .ring-spin, .billboard, .face, .mouth, .gas-svg, .zoom { animation: none !important; }
     .is-on .gimbal, .demo-in .gimbal, .demo-out .gimbal { display: block; }
     .is-on .face, .demo-in .face { opacity: 1; }
-    .is-on .mouth { transform: none; }
+    .is-on .mouth { display: none !important; }
     .is-on .lid { transform: scaleY(0.06); }
     .is-on .gas-svg, .demo-in .gas-svg { opacity: 1; }
     .is-on .zoom { transform: none; opacity: 1; }
@@ -283,6 +309,10 @@
         </div>
       </div>
 
+        <svg class="gas-svg gas-orbit" data-soft-trail="js-orbit" viewBox="0 0 200 200" aria-hidden="true">
+                <defs><filter id="fo1280" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.4"/></filter><filter id="fo1281" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="fo1282" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.6"/></filter><filter id="fo1283" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.05"/></filter><filter id="fo1284" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="0.7"/></filter></defs>
+                <g transform="translate(100,100) rotate(90) scale(1,-1) translate(-100,-100)"><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="11.2" stroke-linecap="round" stroke-dasharray="22 338" stroke-dashoffset="0" opacity="0.7" filter="url(#fo1280)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(210,255,255,0.72)" stroke-width="7.0" stroke-linecap="round" stroke-dasharray="90 270" stroke-dashoffset="0" opacity="0.48" filter="url(#fo1281)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.52)" stroke-width="4.0" stroke-linecap="round" stroke-dasharray="155 205" stroke-dashoffset="0" opacity="0.36" filter="url(#fo1282)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.36)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="215 145" stroke-dashoffset="0" opacity="0.26" filter="url(#fo1283)"/><circle cx="100" cy="100" r="56.94" pathLength="360" fill="none" stroke="rgba(154,247,255,0.22)" stroke-width="1.0" stroke-linecap="round" stroke-dasharray="270 90" stroke-dashoffset="0" opacity="0.18" filter="url(#fo1284)"/></g>
+              </svg>
           <div class="bit head" style="--a:0deg" data-soft-ball="always-facing">
             <div class="billboard"><span class="zoom"><i class="ball"></i></span></div>
           </div>
@@ -322,22 +352,26 @@
 </div>
 
 <script>
-/* Soft FIX-NOW: always-facing comet ball + front/behind K (WKWebView-safe).
- * Do not trust CSS .billboard counter-rotateY under preserve-3d on native WebView.
- * Ball lives at scene level; 2D ellipse tracks SoT yaw-rev; z-order swaps with phase.
+/* Soft FIX-NOW: always-facing comet ball + JS gas trail + front/behind K (WKWebView-safe).
+ * Ball + gas: same 2D ellipse / screen-plane orbit (not CSS rotateX(90) gas alone).
+ * Face: eyes+glasses; mouth hard-hidden (CEO).
  */
 (function () {
   var PERIOD = 2450;
   var TILT = 26 * Math.PI / 180;
   var CANT = 14 * Math.PI / 180;
+  var CANT_DEG = 14;
   var OVAL_Y = Math.cos(TILT);
   var root = document.getElementById('soft-root');
   if (!root) return;
   var scene = root.querySelector('.scene');
   var bit = root.querySelector('.bit.head');
+  var gas = root.querySelector('.gas-orbit') || root.querySelector('[data-soft-trail="js-orbit"]');
   if (!scene || !bit) return;
   root.setAttribute('data-soft-facing', 'js-always');
   root.setAttribute('data-soft-occlusion', 'phase-z');
+  root.setAttribute('data-soft-trail', 'js-orbit');
+  root.setAttribute('data-soft-face', 'eyes-glasses-nomouth');
 
   function letterPx() {
     var s = parseFloat(getComputedStyle(root).getPropertyValue('--s')) || root.clientWidth || 128;
@@ -355,6 +389,7 @@
         !root.classList.contains('demo-in') &&
         !root.classList.contains('demo-out')) {
       bit.style.transform = 'translate(0px, 0px)';
+      if (gas) gas.style.transform = 'none';
       scene.classList.remove('comet-front', 'comet-behind');
       requestAnimationFrame(frame);
       return;
@@ -372,6 +407,11 @@
     var xr = x * cosC - y * sinC;
     var yr = x * sinC + y * cosC;
     bit.style.transform = 'translate(' + xr.toFixed(2) + 'px,' + yr.toFixed(2) + 'px)';
+    // Gas: same yaw phase on flat (always-facing) ellipse — not CSS 3D rotateX(90)
+    if (gas) {
+      var deg = phase * -360;
+      gas.style.transform = 'rotate(' + CANT_DEG + 'deg) scale(1,' + OVAL_Y.toFixed(6) + ') rotate(' + deg.toFixed(2) + 'deg)';
+    }
     // +Z toward camera at θ=0 → front when cos(θ) > 0
     var front = Math.cos(theta) > 0;
     scene.classList.toggle('comet-front', front);
