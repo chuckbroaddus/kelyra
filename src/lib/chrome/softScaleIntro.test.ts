@@ -126,6 +126,16 @@ test('face coords match Soft v8b lock; SoftFace uses react-native-svg (no mouth,
   assert.match(shared, /#1a1230|#1A1030/i);
   assert.ok(SOFT_FACE.eyeR >= 24, 'Soft eyeR must match SoT white disc, not half-size dots');
   assert.ok(SOFT_FACE.pupilR >= 10);
+  // Soft v8b face animation: glance + blink lids (shared comet rAF)
+  assert.match(shared, /blink/i);
+  assert.match(shared, /glance/i);
+  assert.match(shared, /lid/i);
+  assert.match(shared, /sampleSoftFaceMotion|SOFT_MOTION\.glancePeriodMs|SOFT_MOTION\.blinkPeriodMs/);
+  assert.match(shared, /#8a5cff/);
+  assert.match(shared, /#4cc8f8/);
+  assert.match(shared, /Rect/);
+  assert.equal(SOFT_MOTION.blinkPeriodMs, 4400);
+  assert.equal(SOFT_MOTION.glancePeriodMs, 8000);
 });
 
 test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro before unmount', () => {
