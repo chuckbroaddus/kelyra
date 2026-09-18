@@ -1,0 +1,52 @@
+FIX-NOW CEO re-land stamped ST-A Teach chrome (Diary tray + Settings tabs). Dual stamp still MET (PM t_78e0c247 + GAP-S1 t_e49263ed; QAS t_b7a73dff / ST-A+TC-A+KL-A). Prior loop t_7fcec413 passed then never git-shipped; SoftMark #134 stashed the dirt as stash@{0} "pre-soft-134-merge local dirt". LIVE main ad107d3 still has teacher tray home,inbox,class,ask (Class). Re-land FULL ST-A — no thinner tray-only slice. No design reopen.
+
+RECOVERY (do NOT git stash pop the whole bag — SoftMark/other dirt mixed):
+Prefer restoring ONLY these four paths from stash@{0} then reconciling against current main:
+  git show 'stash@{0}:src/lib/chrome/trayTabs.ts'
+  git show 'stash@{0}:src/lib/chrome/trayTabs.test.ts'
+  git show 'stash@{0}:src/components/ui/HamburgerDrawer.tsx'
+  git show 'stash@{0}:src/components/ui/SettingsSheet.tsx'
+Or re-implement equivalent from BINDING below if restore conflicts. Do not invent chrome/glyphs. Icon name 'diary' and 'theme' already exist in icon pipeline if used by stash.
+
+BINDING (ST-A + TC-A + KL-A + GAP-S1):
+1. Teacher tray EXACTLY 4 tabs: Desk · Needs Attention · Diary · Kelyra
+   - keys: home, inbox, diary, ask
+   - Diary href /diary, icon diary, label Diary
+   - Ask key/href stay ask /ask; label **Kelyra** (KL-A)
+   - NO Class tray key. NO Capture tray. NO 6th slot.
+   - After Class drop: structure/class cluster routes light Desk (houseActive includes /class/* except student)
+2. Parent tray: NO Diary. Parent/office hamburger Diary → /diary. Student: ZERO Diary everywhere (GAP-S1) — no hamburger Diary, no Settings Open Diary, no tray Diary. Dual-hat = signed-in chrome (role from chromeState).
+3. Settings sheet becomes tab strip + icons:
+   - Theme (default selected)
+   - Ingest Folders — Teach seat ONLY (absent not grayed off-teach; PZ-A)
+   - Diary — privacy copy only (DIARY_PRIVACY_*), not the app shell; optional Open Diary ghost when allowOpenDiary (never student)
+4. Header camera stays Teach (not a tray tab).
+5. Update ALL unit tests that still assert teacher keys ['home','inbox','class','ask'] to ST-A keys ['home','inbox','diary','ask']. Labels Desk, Needs Attention, Diary, Kelyra. Parent/office/student trays unchanged except teacher.
+6. Teacher hamburger: NO Diary row (tray owns it). Parent + office keep hamburger Diary → /diary. Student never.
+
+CONSTRAINTS:
+- Application code via this kelyra-qa-loop only.
+- Never call ask_user_question / interactive prompts.
+- Do NOT git stash pop entire stash@{0}.
+- Preserve unrelated dirty tree (notes/company/needs-attention-*, notes/dashboard/last-build.json, DITL notes, etc). Do not reset/clean/checkout unrelated files. Do not "fix" dirty notes to make tsc green.
+- NO git commit/push (devops after TREE GATE).
+- NO SQL. NO Calendar merge. Diary day-browse DB-B (JournalMonthGrid) already on main — do not revert src/app/diary.tsx or day-browse work.
+- Do not invent View-stroke glyphs; use existing IconName assets only.
+
+ACCEPTANCE / TREE GATE:
+- trayKeysForRole('teacher') === ['home','inbox','diary','ask']
+- tabs labels Desk, Needs Attention, Diary, Kelyra
+- no class key on teacher tray
+- parent/student/admin trays have no diary key
+- SettingsSheet has Theme / Ingest Folders (teach-only) / Diary tabs; default Theme
+- Hamburger: teacher no Diary; parent+office Diary; student zero Diary
+- related unit tests pass; typecheck green for touched files
+- loop passed with 0 P0/P1
+
+FILES/AREAS:
+- src/lib/chrome/trayTabs.ts + trayTabs.test.ts
+- src/components/ui/HamburgerDrawer.tsx
+- src/components/ui/SettingsSheet.tsx
+- any related settings/tray tests
+
+Prior successful implement shape is in stash@{0} for those four files — restore or match it.

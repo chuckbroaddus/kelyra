@@ -1,0 +1,60 @@
+FIX-NOW P1: Re-land stamped DB-B Journal day-browse on the working tree. Dual stamp still binding — do not reopen design. No thinner slice. Full-featured DB-B only.
+
+DEFECT: t_b7f02a5f · PM FIX-NOW t_db7a8d34 · Eng card t_27fe04b0 · IQG parent t_ea554343
+SoT prove-out: notes/company/diary-day-browse-proveout-objective.md (§1 full-featured + §5 anchors)
+TREE GATE defect note: notes/company/diary-day-browse-tree-gate-defect.md
+Prior loop claim (wiped, never git-shipped): t_ce15c1c9 / wf_01a0b09fca8f70e2b131fd383e3c995d
+Prior report: ~/.grok/sessions/%2FUsers%2Fchuckbroaddus%2Fprojects%2Fkelyra/01a0b09f-2d05-7302-b6da-faf576fe3ccd/workflows/wf_01a0b09fca8f70e2b131fd383e3c995d/scratch/report.md
+
+LIVE TREE NOW (broken):
+- src/app/diary.tsx still Journal From/To YYYY-MM-DD text + Apply filters (pre-DB-B)
+- MISSING: src/lib/diary/dayBrowse.ts, dayBrowse.test.ts, src/components/diary/JournalMonthGrid.tsx
+- src/components/diary/ directory absent
+- Stamp notes (spec/intent/research/ux-options/mockups) mostly off-disk — implement from prove-out OBJECTIVE + pack lock below; restore stamp notes from recoverable sources WITHOUT inventing if possible
+
+RECOVERABLE PRIOR LAND (prefer restore + re-verify over inventing from scratch):
+- git stash@{0}:src/app/diary.tsx — full DB-B Journal wiring (JournalMonthGrid, selectedDay, dayBrowse imports, twin chips, empty-day New entry). Inspect with `git show 'stash@{0}:src/app/diary.tsx'`
+- git blobs still in object DB:
+  - a31ba1e176fdfd09f57660ccffc354d1d19420d9 → src/lib/diary/dayBrowse.ts
+  - 66ec86828669a0216c5cb252478b59f8dbac4f77 → src/lib/diary/dayBrowse.test.ts
+  - ab895fe7d79bbb790e8dcaf8776263a630be2ae4 → src/components/diary/JournalMonthGrid.tsx
+  Restore via `git cat-file -p <blob> > path` then re-integrate cleanly against CURRENT main diary.tsx / security tests (do not wholesale clobber unrelated dirt).
+- stash@{0} may also hold diary.security.test.ts updates for month window — merge carefully with current file.
+- Do NOT git stash apply / reset / clean / commit / push. Cherry-pick file contents only into the working tree.
+- Preserve unrelated dirty/untracked files. Do not "fix" unrelated tsc errors by editing unrelated files.
+
+PACK LOCK (binding dual stamp 2026-09-17 PM t_f766ae6a + QAS t_d717511a):
+DB-B + PR-BOTH · RG-DROP · SR-KEEP · EM-PRIMARY · FW-FORK · RR-L reject
+
+REQUIREMENTS (full DB-B):
+1. Journal-only: month grid, selected day, Today control, month ◀▶, auto-apply focus (no primary Apply), agenda with sticky day SectionHeaders, empty-day copy "No entries yet on this day." + primary New entry opening Diary composer with DATE-P1 entry_date prefilled = selected day.
+2. RG-DROP: drop primary From/To text+Apply on Journal. Keep Newest/Oldest sort chips. Search/tag/teacher soft pointer stay orthogonal (NOT painted into day cells).
+3. PR-BOTH presence: owner-only — single entry = neutral dot; count >1 = small count capped 9+. Parent = focused child only. NEVER roleTint / CalendarItem / other people / multi-tint.
+4. Parent 2+ children: chips ABOVE month grid; fail-closed empty journal until a child is focused; never mix twin streams in grid or agenda.
+5. Student: no Diary. Dual-hat = signed-in chrome seat only. Teacher ST-A tray Diary; parent/office hamburger. No 6th tray. Do not change chrome composition in this card unless broken by accident.
+6. Ledger segment UNCHANGED list + range filters (From/To+Apply OK on Ledger). No month grid/strip/stepper on Ledger (RR-L reject).
+7. No Calendar events/layers/composer/CalendarsSheet/hour-gutter DayColumn/DB-C view chips on Diary. No Diary body on Calendar route. Do not change Calendar product behavior.
+8. FW-FORK: Diary-named primitives only — JournalMonthGrid, dayBrowse helpers. Thin shared date math OK. Do NOT pipe CalendarItem into Journal data path. No hour-gutter DayColumn reuse as Journal body.
+9. Restore notes/company/diary-day-browse-*.md stamp notes ONLY if recoverable from kanban/session/prior workflow WITHOUT inventing content. Otherwise skip notes restore; implement from prove-out OBJECTIVE.
+10. No invented View-stroke glyphs / icon recipes. No Ask NL. No git commit/push. No live SQL / migrations (expect UI-only; handoff must say SQL: none).
+11. Never call ask_user_question or interactive prompts.
+
+ACCEPTANCE / TREE GATE:
+- Files on disk: src/lib/diary/dayBrowse.ts, src/lib/diary/dayBrowse.test.ts, src/components/diary/JournalMonthGrid.tsx
+- src/app/diary.tsx Journal primary chrome = month grid + Today + ◀▶ + agenda; From/To+Apply gone as Journal primary
+- Typecheck green for touched paths; diary unit tests including dayBrowse.test.ts pass
+- diary.security.test.ts still holds seat/privacy contracts (update only if month-window contract requires it)
+- Loop passed / security_ok; 0 blocking P0/P1 (known leftover P2/P3 may remain parked: filter-miss empty copy t_df7cf4c6, parent chips on Ledger t_626792a2, web month not sticky t_f368074b — do not expand scope to "fix" those unless they fall out of a correct re-land)
+- Handoff names SQL: none
+
+FILES/AREAS:
+- src/app/diary.tsx
+- src/lib/diary/* (dayBrowse.ts, dayBrowse.test.ts; seat/privacy/security only if needed)
+- src/components/diary/JournalMonthGrid.tsx (create dir)
+- Do not change Calendar product files unless accidental import breakage
+
+CONSTRAINTS:
+- Implement via this kelyra-qa-loop only
+- Preserve unrelated dirty tree
+- Do not merge Calendar+Diary modules/routes
+- No thinner cosmetic strip — full DB-B

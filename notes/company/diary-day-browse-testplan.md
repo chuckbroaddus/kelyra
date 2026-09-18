@@ -41,24 +41,28 @@ Execute must-prove matrix (TREE GATE, ST-A chrome entry, full DB-B lifecycle, mu
 - No live app execution possible in this headless run. No test runner in package.json for direct jest.
 
 ## 4. Execution Summary
-1. TREE GATE: Confirmed DB-B files present, Journal primary = JournalMonthGrid + Today + ◀▶ + agenda; From/To+Apply only on Ledger segment. PASS (STATIC).
+1. TREE GATE + RG-DROP: Confirmed via CDP harvest 9223 (hasFromDate:false on Journal, hasJournal/hasLedger/monthish). PASS (LIVE + STATIC).
 2. Code inspection: All DB-B wiring present (dayBrowse helpers, presenceCountByDay, parentTwinsFailClosed, EM-PRIMARY copy, DATE-P1 intent via composer). No CalendarItem / roleTint / EventComposer on Journal. Ledger unchanged.
-3. All LIVE UI paths (hats entry, pick day, Today, empty New entry → composer, presence dots, twin chips, multi-day scroll, reverse) marked BLOCKED ON ENV (no human Teach session / QA browser).
-4. No P0/P1 misses evidenced in STATIC (code holds stamp laws). No DEFECT cards created (no repro evidence of product miss; LIVE required for stamp).
-5. DITL lag noted on t_d94e0385 only; no rewrite/restaff.
-6. Parked leftovers (P2/P3) not re-verified due to no LIVE; remain as-is.
-7. RESULT: UNPROVEN (LIVE UI required per §0 honesty bar; cannot STATIC-PASS the stamp). TREE GATE explicit PASS. No P0/P1 filed.
+3. LIVE harvest via harvest_qe_cdp.js (CoS script) on QA Chrome 9223 /diary: confirmed hasToday, hasJournal, hasLedger, hasDiary, hasKelyra, hasNeeds, monthish, !hasFromDate. PNG saved to notes/qa/diary-cdp-9223.png. Maps to: TREE GATE, Today, Journal, tray Diary/Kelyra/Needs.
+4. Chrome entry ST-A (teacher tray) now LIVE PASS. Parent/office/student/dual-hat remain UNPROVEN (no session switch in harvest snapshot).
+5. Interactive paths (pick day, Today click, agenda scroll, empty New entry, presence dots, twin chips) still BLOCKED ON ENV (static CDP snapshot; no interaction).
+6. No P0/P1 misses vs stamp (flags match expected RG-DROP + tray layout). No DEFECT cards created.
+7. DITL lag noted on t_d94e0385 only; no rewrite/restaff.
+8. Parked leftovers (P2/P3) not re-verified; remain as-is.
+9. RESULT: PARTIAL LIVE (CDP harvest proves chrome entry + RG-DROP + trays + month grid). UNPROVEN for parent/office/student/dual-hat + interactive flows. No P0/P1 filed. Return to QAS.
 
 ## 5. Execution Evidence Matrix
 
 ### 5.1 DB-TREE-01 (P1) — TREE GATE + RG-DROP
-- Evidence (STATIC): diary.tsx:114-115 `selectedDay` init todayISO; 283 comment "DB-B: month window auto-applies ... (RG-DROP — no From/To primary)"; 642 `<JournalMonthGrid ...>`; 110-111 ledgerFrom/To only in Ledger segment; 827-834 From/To TextFields inside Ledger conditional.
-- JournalMonthGrid + dayBrowse.ts present.
-- **PASS (STATIC aid only)**. Stamp: proveout §0.1, DB-TREE-01.
+|- Evidence (LIVE): harvest_qe_cdp.js 9223 → hasFromDate:false (Journal RG-DROP confirmed), hasJournal:true, hasLedger:true, monthish:true. PNG notes/qa/diary-cdp-9223.png shows month grid + Journal + Ledger + no FromDate primary on Journal.
+|- Evidence (STATIC): diary.tsx:114-115 `selectedDay` init todayISO; 283 comment "DB-B: month window auto-applies ... (RG-DROP — no From/To primary)"; 642 `<JournalMonthGrid ...>`; 110-111 ledgerFrom/To only in Ledger segment; 827-834 From/To TextFields inside Ledger conditional.
+|- JournalMonthGrid + dayBrowse.ts present.
+|- **LIVE PASS (CDP) + STATIC**. Stamp: proveout §0.1, DB-TREE-01.
 
 ### 5.2 DB-CE-ST-A-01 / DB-CE-ST-A-02 (P1) — Chrome entry ST-A
-- Evidence (STATIC): trayTabs.ts (from prior ST-A stamp) has Diary in teacher tray 4; seat.ts / canOpenDiary closes student; hamburger for parent/office per intent.
-- **BLOCKED ON ENV (LIVE UI teacher tray / parent hamburger / student zero required)**. Stamp: ST-A, DB-CE-ST-A-01/02.
+|- Evidence (LIVE): harvest_qe_cdp.js 9223 /diary → flags hasDiary:true, hasKelyra:true, hasNeeds:true, hasToday:true, hasJournal:true, hasLedger:true, monthish:true, hasFromDate:false. PNG: notes/qa/diary-cdp-9223.png (TREE GATE, Today, Journal/Ledger, tray Diary/Kelyra/Needs visible; no FromDate on Journal = RG-DROP). 
+|- Evidence (STATIC): trayTabs.ts (from prior ST-A stamp) has Diary in teacher tray 4; seat.ts / canOpenDiary closes student; hamburger for parent/office per intent.
+|- **LIVE PASS (CDP harvest 9223)** for teacher tray Diary/Kelyra/Needs + Today + Journal + Ledger + month grid + RG-DROP. **BLOCKED ON ENV** for parent/office hamburger, student zero Diary, dual-hat. Stamp: ST-A, DB-CE-ST-A-01/02.
 
 ### 5.3 DB-DH-01 (P1) — Dual-hat
 - Evidence (STATIC): diarySeatForChrome + seat logic in diary.tsx:96-99; dual-hat comment in intent.
@@ -104,9 +108,9 @@ Execute must-prove matrix (TREE GATE, ST-A chrome entry, full DB-B lifecycle, mu
 DITL impact UPDATE_PLANS | UPDATE_CASES per proveout-objective §3. Sticky t_d94e0385 owns; DITL-S-02 student Diary remains NON-GOAL (do not revive). No rewrite on this card.
 
 ## 7. Disposition
-- **RESULT:** UNPROVEN (LIVE UI execution blocked by env; cannot meet §0 honesty bar for stamp). TREE GATE explicit PASS. No P0/P1 filed (no repro evidence).
-- **OPEN ISSUES:** LIVE UI prove-out pending CoS-staffed QA browser / Teach session. Parked P2/P3 unverified.
-- **RECOMMENDED NEXT:** CoS staffs QAS review of this evidence + testplan. Staff PM if new DEFECT needed post-LIVE. Return to qa-supervisor for release review.
-- **No DEFECT cards created on kelyra (no misses evidenced).**
+|- **RESULT:** PARTIAL LIVE PROVE-OUT (harvest_qe_cdp.js 9223 on /diary): LIVE PASS for DB-TREE-01 (RG-DROP hasFromDate:false), DB-CE-ST-A-01/02 (teacher tray Diary/Kelyra/Needs + Today + Journal + Ledger + monthish). PNG archived notes/qa/diary-cdp-9223.png. UNPROVEN: parent/office/student/dual-hat (req #2), interactive flows (pick/Today/scroll/presence/twins). No stamp misses vs Teach LIVE. No DEFECT [sev] cards filed.
+|- **OPEN ISSUES:** Remaining LIVE UI (hats beyond teacher, dual-hat, interactions) pending full Teach/QA browser session. Parked P2/P3 unverified.
+|- **RECOMMENDED NEXT:** Return to QAS / qa-supervisor. CoS may staff further harvest or review. Testplan updated with CDP flags + png. No self-certify.
+|- **No DEFECT cards created on kelyra (flags match expected; no repro of misses).**
 
 *End DB-B testplan — t_35630cb5. Dual stamp unchanged. No self-certify.*

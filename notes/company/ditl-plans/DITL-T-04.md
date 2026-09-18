@@ -32,7 +32,7 @@ Full teacher academic day on shipped surfaces: apply syllabus to class; create a
 | 8 | Grade assignment submission | SUPPORTED | gradebook / submission score after Approve gate | Ask `list_grade_cells`; score write may be UI-primary if no grade-write tool → **PARTIAL** score-via-Ask |
 | 9 | Grade quiz submission | SUPPORTED | gradebook | same PARTIAL Ask score |
 | 10 | Message student’s parent | SUPPORTED | `/messages` or class parent page | `/ask` `send_message` / `list_threads` |
-| 11 | Diary entries multiple types | SUPPORTED | `/diary` create text + photo + filters if present | `/ask` `draft_diary_entry` then user **Save** (never auto-ledger) |
+| 11 | Diary day-browse multiple types | SUPPORTED | `/diary` Journal day-browse (month grid + agenda); Today; multi-day scroll; empty day + New entry | `/ask` `draft_diary_entry` then user **Save** (never auto-ledger); day-browse Ask **GAP** |
 | 12 | Class feed multiple posts | SUPPORTED | class feed composer posts | Ask `list_feed` read; create **PARTIAL/GAP** |
 | 13 | Reverse: unpublish syllabus; discard draft gap; discard diary draft; discard msg | SUPPORTED | respective UIs | Ask discard_class_syllabus_draft / delete_gap / abandon |
 | 14 | Multiplicity: second student no cross-file; second class independent | SUPPORTED | class switch | Ask class_id grounded tools; class switch clears assignment ground |
