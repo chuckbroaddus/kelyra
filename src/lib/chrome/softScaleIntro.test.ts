@@ -115,3 +115,16 @@ test('soft-v8b-host embeds idle PNG data URL + SoT motion hooks', () => {
   assert.match(host, /glance|look/);
   assert.match(host, /prefers-reduced-motion/);
 });
+
+test('Soft v8b host is SoT extract (gas trail + face gates)', () => {
+  const host = read('assets/brand/soft-v8b-host.html');
+  const ts = read('src/components/ui/softV8bHostHtml.ts');
+  for (const src of [host, ts]) {
+    assert.match(src, /feGaussianBlur/);
+    assert.match(src, /stroke-dasharray/);
+    assert.match(src, /rotateX\(90deg\)/);
+    assert.match(src, /blush/);
+    assert.match(src, /clipPath/);
+    assert.doesNotMatch(src, /radialGradient id="gasGlow"/);
+  }
+});
