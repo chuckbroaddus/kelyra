@@ -121,9 +121,9 @@ test('Soft v8b host is SoT extract (gas trail + face gates)', () => {
   const host = read('assets/brand/soft-v8b-host.html');
   const ts = read('src/components/ui/softV8bHostHtml.ts');
   for (const src of [host, ts]) {
-    // Gimbal Peek layers may still mention blur; js-orbit trail is css-dash
-    assert.match(src, /css-dash|stroke-dasharray/);
-    assert.match(src, /stroke-dasharray/);
+    // Live trail is js-beads; Peek gimbal may still mention blur / rotateX(90)
+    assert.match(src, /js-beads|gas-beads/);
+    assert.match(src, /gas-bead/);
     assert.match(src, /rotateX\(90deg\)/);
     assert.match(src, /blush/);
     assert.match(src, /clipPath/);
@@ -166,7 +166,7 @@ test('SoftMark native: onLoadEnd injects softCometFacing (not HTML inline script
   assert.match(soft, /injectJavaScript\(facingInject\)/);
   assert.match(facing, /export function softCometFacingInjectScript/);
   assert.match(facing, /\.mouth/);
-  assert.match(facing, /gas-orbit|js-orbit/);
+  assert.match(facing, /gas-beads|js-beads/);
   assert.match(facing, /comet-front/);
   assert.match(facing, /data-soft-facing-injected/);
 });
@@ -200,41 +200,42 @@ test('Soft CEO face: eyes+glasses; mouth hard-hidden (no mouth any phase)', () =
   assert.match(facing, /faceMode|eyes-glasses-nomouth/);
 });
 
-test('Soft gas trail: JS orbit CSS-dash (not blur-filter-only on WKWebView)', () => {
+test('Soft gas trail: JS bead trail (not SVG css-dash / blur-only on WKWebView)', () => {
   const host = read('assets/brand/soft-v8b-host.html');
   const ts = read('src/components/ui/softV8bHostHtml.ts');
   const facing = read('src/components/ui/softCometFacing.ts');
-  assert.equal(COMET_ORBIT.trailMode, 'js-orbit');
+  assert.equal(COMET_ORBIT.trailMode, 'js-beads');
   assert.equal(COMET_ORBIT.facingMode, 'js-always');
   assert.equal(COMET_ORBIT.occlusionMode, 'phase-z');
   for (const src of [host, ts]) {
-    assert.match(src, /data-soft-trail=["']js-orbit["']|js-orbit/);
-    assert.match(src, /gas-orbit/);
-    assert.match(src, /data-soft-trail-draw=["']css-dash["']|css-dash/);
-    assert.match(src, /stroke-dasharray/);
-    // gas-orbit SVG: no SVG blur filter / filter=url (WKWebView-safe dashed trail)
-    const idx = src.search(/<svg[^>]*gas-orbit|class=\"gas-svg gas-orbit/);
-    assert.ok(idx >= 0, 'gas-orbit svg present');
-    const slice = src.slice(idx, idx + 2000);
-    assert.doesNotMatch(slice, /<feGaussianBlur|filter=["']url\(/);
-    assert.match(src, /rotateX\(90deg\)/);
+    assert.match(src, /data-soft-trail=["']js-beads["']|js-beads/);
+    assert.match(src, /gas-beads/);
+    assert.match(src, /gas-bead/);
+    assert.match(src, /data-soft-trail-draw=["']js-beads["']|js-beads/);
+    // Live trail must not rely on SVG stroke-dash as the visible trail under js-always
+    assert.match(src, /\.gas-beads/);
+    assert.match(src, /display:\s*none\s*!important/);
   }
-  assert.match(facing, /gas-orbit|js-orbit/);
+  assert.match(facing, /gas-beads|js-beads/);
   assert.match(facing, /trailMode/);
-  assert.match(facing, /css-dash|data-soft-trail-draw/);
+  assert.match(facing, /js-beads|data-soft-trail-draw/);
+  assert.match(facing, /gas-bead/);
 });
 
 
 
-test('Soft iPhone oval+trail lock: inject + ovalY<0.75 + css-dash trail', () => {
+test('Soft iPhone oval+trail lock: inject + ovalY<0.75 + js-beads trail', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   const facing = read('src/components/ui/softCometFacing.ts');
   const host = read('assets/brand/soft-v8b-host.html');
   assert.match(soft, /onLoadEnd/);
   assert.match(soft, /softCometFacingInjectScript/);
   assert.ok(COMET_ORBIT.ovalY < 0.75);
+  assert.equal(COMET_ORBIT.ovalY, 0.58);
   assert.equal(COMET_ORBIT.cantZDeg, 14);
-  assert.match(host, /data-soft-trail-draw=["']css-dash["']/);
+  assert.match(host, /data-soft-trail-draw=["']js-beads["']/);
+  assert.match(host, /gas-beads/);
   assert.match(host, /var OVAL_Y = 0\.58/);
-  assert.match(facing, /css-dash/);
+  assert.match(facing, /js-beads/);
+  assert.match(facing, /gas-beads|gas-bead/);
 });

@@ -78,13 +78,13 @@ export const COMET_ORBIT = {
   webYawKeyframes: 'kelyra-soft-yaw-rev',
   /**
    * Native/WebView: do not trust CSS .billboard counter-rotateY.
-   * Host uses JS always-facing ball + js-orbit gas (data-soft-facing/trail) + phase-z occlusion.
+   * Host uses JS always-facing ball + js-beads gas trail (data-soft-facing/trail) + phase-z occlusion.
    * Face: eyes-glasses-nomouth (CEO — no mouth).
    */
   facingMode: 'js-always' as const,
   occlusionMode: 'phase-z' as const,
-  /** Gas trail: JS screen-plane orbit (not CSS rotateX(90°) alone on WKWebView). */
-  trailMode: 'js-orbit' as const,
+  /** Gas trail: JS DOM beads along orbit (not SVG css-dash / rotateX(90°) on WKWebView). */
+  trailMode: 'js-beads' as const,
   /** CEO Soft face: eyes + glasses; mouth hard-hidden in host. */
   faceMode: 'eyes-glasses-nomouth' as const,
 } as const;

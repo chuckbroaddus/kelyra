@@ -1,16 +1,19 @@
 /**
- * Soft comet always-facing ball + JS gas trail + phase occlusion (WKWebView / web DOM).
+ * Soft comet always-facing ball + JS bead gas trail + phase occlusion (WKWebView / web DOM).
  * Mirrors host inline script: 2D ellipse yaw-rev, z-order front/behind K.
  * Do not use CSS .billboard counter-rotateY or CSS rotateX(90°) gas alone on native WebView.
- * Trail: CSS dash on .gas-orbit (data-soft-trail-draw=css-dash) — never feGaussianBlur-only on WKWebView.
+ * Trail: DOM .gas-beads (data-soft-trail-draw=js-beads) — never SVG stroke-dash / feGaussianBlur-only on WKWebView.
  */
 import { COMET_ORBIT, SOFT_MOTION } from '@/components/ui/softLetterScale';
 
 export type SoftCometFacingHandle = { stop: () => void };
 
+const BEAD_N = 12;
+const TRAIL_SPAN = 0.3;
+
 /**
  * Injectable IIFE for native SoftMark WebView (onLoadEnd).
- * Hard-hides .mouth and runs the same always-facing ball + gas-orbit + phase-z
+ * Hard-hides .mouth and runs the same always-facing ball + gas-beads + phase-z
  * logic as startSoftCometFacing. RN WebView often does not execute HTML inline
  * <script>, so SoftMark.tsx must inject this — do not rely on host script alone.
  */
@@ -39,14 +42,36 @@ export function softCometFacingInjectScript(): string {
     root.setAttribute('data-soft-facing',${JSON.stringify(facingMode)});
     root.setAttribute('data-soft-occlusion',${JSON.stringify(occlusionMode)});
     root.setAttribute('data-soft-trail',${JSON.stringify(trailMode)});
-    root.setAttribute('data-soft-trail-draw','css-dash');
+    root.setAttribute('data-soft-trail-draw','js-beads');
     root.setAttribute('data-soft-face',${JSON.stringify(faceMode)});
     var scene = root.querySelector('.scene');
     var bit = root.querySelector('.bit.head');
-    var gas = root.querySelector('.gas-orbit') || root.querySelector('[data-soft-trail="js-orbit"]');
     if (!scene || !bit) return true;
+    var beadsHost = root.querySelector('.gas-beads');
+    if (!beadsHost) {
+      beadsHost = document.createElement('div');
+      beadsHost.className = 'gas-beads';
+      beadsHost.setAttribute('data-soft-trail','js-beads');
+      beadsHost.setAttribute('data-soft-trail-draw','js-beads');
+      beadsHost.setAttribute('aria-hidden','true');
+      scene.appendChild(beadsHost);
+    }
+    var BEAD_N = ${BEAD_N};
+    var TRAIL_SPAN = ${TRAIL_SPAN};
+    var beads = [];
+    function ensureBeads(){
+      if (beads.length === BEAD_N) return;
+      beadsHost.innerHTML = '';
+      beads = [];
+      for (var i = 0; i < BEAD_N; i++) {
+        var el = document.createElement('span');
+        el.className = 'gas-bead';
+        beadsHost.appendChild(el);
+        beads.push(el);
+      }
+    }
+    ensureBeads();
     var period = ${period};
-    var cantDeg = ${cantZDeg};
     var ovalY = ${ovalY};
     var cosC = Math.cos(${cantZDeg} * Math.PI / 180);
     var sinC = Math.sin(${cantZDeg} * Math.PI / 180);
@@ -55,17 +80,22 @@ export function softCometFacingInjectScript(): string {
     try {
       reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     } catch (e) { reduced = false; }
-    var start = null;
     function letterPx(){
       var raw = getComputedStyle(root).getPropertyValue('--s');
       var s = parseFloat(raw) || root.clientWidth || 128;
       return s * 468 / 512;
     }
+    function place(theta, r){
+      var x = r * Math.sin(theta);
+      var y = r * Math.cos(theta) * ovalY;
+      return { x: x * cosC - y * sinC, y: x * sinC + y * cosC };
+    }
+    var start = null;
     function frame(now){
       var on = root.classList.contains('is-on') || root.classList.contains('demo-in') || root.classList.contains('demo-out');
       if (!on) {
         bit.style.transform = 'translate(0px, 0px)';
-        if (gas) gas.style.transform = 'none';
+        for (var hi = 0; hi < beads.length; hi++) beads[hi].style.opacity = '0';
         scene.classList.remove('comet-front','comet-behind');
         requestAnimationFrame(frame);
         return;
@@ -74,15 +104,22 @@ export function softCometFacingInjectScript(): string {
       var t = reduced ? 0 : (now - start) % period;
       var phase = t / period;
       var theta = -phase * Math.PI * 2;
-      var r = letterPx() * radiusOfLetter;
-      var x = r * Math.sin(theta);
-      var y = r * Math.cos(theta) * ovalY;
-      var xr = x * cosC - y * sinC;
-      var yr = x * sinC + y * cosC;
-      bit.style.transform = 'translate(' + xr.toFixed(2) + 'px,' + yr.toFixed(2) + 'px)';
-      if (gas) {
-        var deg = phase * -360;
-        gas.style.transform = 'rotate(' + cantDeg + 'deg) scale(1,' + ovalY.toFixed(6) + ') rotate(' + deg.toFixed(2) + 'deg)';
+      var letter = letterPx();
+      var r = letter * radiusOfLetter;
+      var ballPx = letter * 0.08;
+      var head = place(theta, r);
+      bit.style.transform = 'translate(' + head.x.toFixed(2) + 'px,' + head.y.toFixed(2) + 'px)';
+      for (var b = 0; b < BEAD_N; b++) {
+        var lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
+        var p = place(-(phase - lag) * Math.PI * 2, r);
+        var tFrac = (b + 1) / BEAD_N;
+        var size = ballPx * (0.72 - 0.48 * tFrac);
+        var op = 0.88 - 0.72 * tFrac;
+        var el = beads[b];
+        el.style.width = size.toFixed(2) + 'px';
+        el.style.height = size.toFixed(2) + 'px';
+        el.style.opacity = String(op.toFixed(3));
+        el.style.transform = 'translate(' + (p.x - size / 2).toFixed(2) + 'px,' + (p.y - size / 2).toFixed(2) + 'px)';
       }
       var front = Math.cos(theta) > 0;
       scene.classList.toggle('comet-front', front);
@@ -95,27 +132,46 @@ export function softCometFacingInjectScript(): string {
 })();`;
 }
 
-/** Drive scene-level .bit.head + .gas-orbit + .comet-front/.comet-behind on a Soft host root. */
+/** Drive scene-level .bit.head + .gas-beads + .comet-front/.comet-behind on a Soft host root. */
 export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
   const scene = root.querySelector('.scene') as HTMLElement | null;
   const bit = root.querySelector('.bit.head') as HTMLElement | null;
-  const gas =
-    (root.querySelector('.gas-orbit') as HTMLElement | null) ||
-    (root.querySelector('[data-soft-trail="js-orbit"]') as HTMLElement | null);
   if (!scene || !bit) {
     return { stop() {} };
   }
 
+  let beadsHost = root.querySelector('.gas-beads') as HTMLElement | null;
+  if (!beadsHost) {
+    beadsHost = document.createElement('div');
+    beadsHost.className = 'gas-beads';
+    beadsHost.setAttribute('data-soft-trail', 'js-beads');
+    beadsHost.setAttribute('data-soft-trail-draw', 'js-beads');
+    beadsHost.setAttribute('aria-hidden', 'true');
+    scene.appendChild(beadsHost);
+  }
+
+  const beads: HTMLElement[] = [];
+  function ensureBeads() {
+    if (beads.length === BEAD_N) return;
+    beadsHost!.innerHTML = '';
+    beads.length = 0;
+    for (let i = 0; i < BEAD_N; i++) {
+      const el = document.createElement('span');
+      el.className = 'gas-bead';
+      beadsHost!.appendChild(el);
+      beads.push(el);
+    }
+  }
+  ensureBeads();
+
   root.setAttribute('data-soft-facing', COMET_ORBIT.facingMode);
   root.setAttribute('data-soft-occlusion', COMET_ORBIT.occlusionMode);
   root.setAttribute('data-soft-trail', COMET_ORBIT.trailMode);
-  root.setAttribute('data-soft-trail-draw', 'css-dash');
+  root.setAttribute('data-soft-trail-draw', 'js-beads');
   root.setAttribute('data-soft-face', COMET_ORBIT.faceMode);
 
   const period = SOFT_MOTION.orbitMs;
-  const tilt = (COMET_ORBIT.tiltXDeg * Math.PI) / 180;
   const cant = (COMET_ORBIT.cantZDeg * Math.PI) / 180;
-  const cantDeg = COMET_ORBIT.cantZDeg;
   const ovalY = COMET_ORBIT.ovalY;
   const cosC = Math.cos(cant);
   const sinC = Math.sin(cant);
@@ -141,6 +197,12 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
     return s * 468 / 512;
   }
 
+  function place(theta: number, r: number) {
+    const x = r * Math.sin(theta);
+    const y = r * Math.cos(theta) * ovalY;
+    return { x: x * cosC - y * sinC, y: x * sinC + y * cosC };
+  }
+
   function frame(now: number) {
     if (!alive) return;
     const on =
@@ -149,7 +211,7 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
       root.classList.contains('demo-out');
     if (!on) {
       bit!.style.transform = 'translate(0px, 0px)';
-      if (gas) gas.style.transform = 'none';
+      for (const el of beads) el.style.opacity = '0';
       scene!.classList.remove('comet-front', 'comet-behind');
       raf = requestAnimationFrame(frame);
       return;
@@ -158,15 +220,22 @@ export function startSoftCometFacing(root: HTMLElement): SoftCometFacingHandle {
     const t = reduced ? 0 : (now - start) % period;
     const phase = t / period;
     const theta = -phase * Math.PI * 2; // yaw-rev
-    const r = letterPx() * COMET_ORBIT.radiusOfLetter;
-    const x = r * Math.sin(theta);
-    const y = r * Math.cos(theta) * ovalY;
-    const xr = x * cosC - y * sinC;
-    const yr = x * sinC + y * cosC;
-    bit!.style.transform = `translate(${xr.toFixed(2)}px,${yr.toFixed(2)}px)`;
-    if (gas) {
-      const deg = phase * -360;
-      gas.style.transform = `rotate(${cantDeg}deg) scale(1,${ovalY.toFixed(6)}) rotate(${deg.toFixed(2)}deg)`;
+    const letter = letterPx();
+    const r = letter * COMET_ORBIT.radiusOfLetter;
+    const ballPx = letter * 0.08;
+    const head = place(theta, r);
+    bit!.style.transform = `translate(${head.x.toFixed(2)}px,${head.y.toFixed(2)}px)`;
+    for (let b = 0; b < BEAD_N; b++) {
+      const lag = ((b + 1) / (BEAD_N + 1)) * TRAIL_SPAN;
+      const p = place(-(phase - lag) * Math.PI * 2, r);
+      const tFrac = (b + 1) / BEAD_N;
+      const size = ballPx * (0.72 - 0.48 * tFrac);
+      const op = 0.88 - 0.72 * tFrac;
+      const el = beads[b];
+      el.style.width = `${size.toFixed(2)}px`;
+      el.style.height = `${size.toFixed(2)}px`;
+      el.style.opacity = op.toFixed(3);
+      el.style.transform = `translate(${(p.x - size / 2).toFixed(2)}px,${(p.y - size / 2).toFixed(2)}px)`;
     }
     const front = Math.cos(theta) > 0;
     scene!.classList.toggle('comet-front', front);
