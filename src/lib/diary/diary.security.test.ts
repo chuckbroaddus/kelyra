@@ -174,10 +174,14 @@ test('TD-05 / t_5f2574b1: diary UI lists media and signs private diary URLs for 
   assert.match(api, /signedDiaryUrl\(storagePath\)/);
 });
 
-test('t_05f7f139: journal filters wire from/to/tag/studentId into listDiaryEntries', () => {
+test('t_05f7f139 / DB-B: journal month window + tag/studentId into listDiaryEntries (RG-DROP)', () => {
   const screen = read('src/app/diary.tsx');
-  assert.match(screen, /diaryFilterDate\(journalFrom\)/);
-  assert.match(screen, /diaryFilterDate\(journalTo\)/);
+  // Primary From/To text dropped; month window auto-applies with selected day.
+  assert.doesNotMatch(screen, /diaryFilterDate\(journalFrom\)/);
+  assert.doesNotMatch(screen, /journalFrom|setJournalFrom/);
+  assert.match(screen, /journalMonthContaining\(selectedDay\)/);
+  assert.match(screen, /from:\s*month\.fromIso/);
+  assert.match(screen, /to:\s*month\.toIso/);
   assert.match(screen, /journalTag/);
   assert.match(screen, /studentId:\s*studentFilter/);
   assert.match(screen, /listDiaryEntries\(\{/);

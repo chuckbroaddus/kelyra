@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DB-C Calendar-parity browse</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161616; color: #eee; padding: 16px; line-height: 1.4; }
+  h1 { font-size: 16px; color: #fff; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: #888; margin-bottom: 12px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tabs button { appearance: none; border: 1px solid #444; background: #222; color: #eee;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .tabs button.on { border-color: #8cb4ff; color: #8cb4ff; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .frame-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .phone { width: 300px; min-height: 600px; background: #0d0d0d; border: 1px solid #333;
+    border-radius: 28px; padding: 14px 12px 18px; }
+  .web { width: 680px; min-height: 520px; background: #0d0d0d; border: 1px solid #333;
+    border-radius: 12px; padding: 14px 16px; }
+  .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid #2a2a2a; }
+  .hdr .wm { font-weight: 700; font-size: 15px; color: #fff; }
+  .hdr .icons { color: #888; font-size: 11px; }
+  .seg { display: flex; gap: 0; margin-bottom: 8px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+  .seg span { flex: 1; text-align: center; padding: 8px; font-size: 13px; color: #888; background: #1a1a1a; }
+  .seg span.on { color: #fff; background: #2a2a2a; font-weight: 600; }
+  .ferpa { font-size: 11px; color: #777; margin-bottom: 8px; }
+  .child { display: flex; gap: 6px; margin-bottom: 8px; }
+  .chip { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #222; color: #ccc; border: 1px solid #333; }
+  .chip.on { background: #1a3a5c; color: #8cb4ff; border-color: #3a6a9c; }
+  .views { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .views .chip.on { background: #3d7eff; color: #fff; border-color: #3d7eff; }
+  .nav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .nav .arrow { width: 28px; height: 28px; border-radius: 6px; background: #222; border: 1px solid #333;
+    color: #eee; display: grid; place-items: center; }
+  .nav .date { font-size: 14px; font-weight: 600; color: #fff; }
+  .nav .today { margin-left: auto; font-size: 12px; color: #8cb4ff; padding: 4px 8px; border: 1px solid #3a5a8a; border-radius: 6px; }
+  .stepper { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; color: #888; }
+  .stepper .chip { min-width: 32px; text-align: center; }
+  .days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .daycol { min-width: 140px; flex: 1; background: #141414; border: 1px solid #2a2a2a; border-radius: 10px; padding: 8px; }
+  .daycol.sel { border-color: #3a6a9c; }
+  .daycol .h { font-size: 11px; font-weight: 700; color: #8cb4ff; margin-bottom: 6px; }
+  .daycol .cnt { font-size: 10px; color: #777; font-weight: 500; }
+  .mini { background: #1b1b1b; border-radius: 8px; padding: 8px; margin-bottom: 6px; font-size: 12px; color: #eee; border: 1px solid #2e2e2e; }
+  .mini .m { font-size: 11px; color: #888; margin-top: 2px; }
+  .empty-mini { border: 1px dashed #333; color: #666; text-align: center; padding: 12px 6px; font-size: 11px; border-radius: 8px; }
+  .section { font-size: 11px; font-weight: 700; color: #8cb4ff; text-transform: uppercase; margin: 8px 0 6px; }
+  .card { background: #1b1b1b; border: 1px solid #2e2e2e; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .card h3 { font-size: 14px; color: #fff; }
+  .card .meta { font-size: 12px; color: #888; margin-top: 2px; }
+  .empty { text-align: center; padding: 24px 12px; border: 1px dashed #333; border-radius: 12px; }
+  .empty p { color: #888; font-size: 13px; margin-bottom: 12px; }
+  .btn { background: #3d7eff; color: #fff; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; }
+  .tray { margin-top: 14px; display: flex; justify-content: space-around; padding: 10px 4px;
+    background: #1a1a1a; border-radius: 14px; border: 1px solid #2a2a2a; font-size: 10px; color: #666; }
+  .note { margin-top: 16px; font-size: 12px; color: #888; max-width: 1000px; }
+  .warn { color: #c9a227; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 10px; }
+  .cell { min-height: 32px; text-align: center; border-radius: 6px; padding: 4px 0; }
+  .cell .n { font-size: 12px; color: #ddd; }
+  .cell.sel { background: #1a3a5c; }
+  .cell .dot { width: 4px; height: 4px; border-radius: 50%; background: #9a9a9a; margin: 3px auto 0; }
+  .cell .dot.none { background: transparent; }
+  .wdrow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+  .wdrow span { text-align: center; font-size: 10px; color: #666; }
+  .month-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .month-bar .title { flex: 1; font-weight: 700; color: #fff; font-size: 14px; }
+</style>
+</head>
+<body>
+  <h1>DB-C — Calendar-parity browse chrome</h1>
+  <p class="sub">Stance: Journal-local view chips Day · Days · Month. Multi-day stepper *kind*. Entry cards only — <span class="warn">not</span> Calendar events, layers, or hour timeline.</p>
+  <div class="tabs" id="states">
+    <button type="button" data-s="pick" class="on">Day pick (Day mode)</button>
+    <button type="button" data-s="empty">Empty day</button>
+    <button type="button" data-s="scroll">Multi-day scroll (Days)</button>
+    <button type="button" data-s="parent">Parent 2-child</button>
+  </div>
+  <div class="row">
+    <div>
+      <div class="frame-label">Phone</div>
+      <div class="phone" id="phone"></div>
+    </div>
+    <div>
+      <div class="frame-label">Web</div>
+      <div class="web" id="web"></div>
+    </div>
+  </div>
+  <p class="note">Highest Calendar resemblance + highest misread risk. Copy says “entries.” Presence = neutral counts/dots. No role tints. Ledger unchanged. Function-out: EventComposer, CalendarsSheet, Hidden dues, sports layers, TeacherWeekGrid.</p>
+<script>
+function views(active) {
+  return `<div class="views">
+    <span class="chip ${active==='day'?'on':''}">Day</span>
+    <span class="chip ${active==='days'?'on':''}">Days</span>
+    <span class="chip ${active==='month'?'on':''}">Month</span>
+    <span class="chip ${active==='list'?'on':''}">List</span>
+  </div>`;
+}
+function dayMode(state) {
+  if (state === 'empty') {
+    return `
+      <div class="nav"><div class="arrow">‹</div><div class="date">Thu, Sep 18</div><div class="arrow">›</div><div class="today">Today</div></div>
+      <div class="empty"><p>No entries yet on this day.</p><button class="btn" type="button">New entry</button></div>`;
+  }
+  const who = state === 'parent' ? ' · Maya' : '';
+  return `
+    <div class="nav"><div class="arrow">‹</div><div class="date">Wed, Sep 17${who}</div><div class="arrow">›</div><div class="today">Today</div></div>
+    <div class="section">Entries</div>
+    <div class="card"><h3>${state==='parent'?'Soccer carpool note':'Conference prep notes'}</h3>
+      <div class="meta">${state==='parent'?'Scoped to Maya':'2 photos · private'}</div></div>
+    ${state==='parent'?'':`<div class="card"><h3>Call with counselor</h3><div class="meta">STT cleaned</div></div>`}`;
+}
+function daysMode(wide) {
+  const cols = [
+    { h: 'Tue 16', cnt: '1 entry', cards: [{ t: 'Bus duty', m: '' }] },
+    { h: 'Wed 17', cnt: '2 entries', cards: [{ t: 'Conference prep', m: 'photos' }, { t: 'Counselor call', m: '' }], sel: true },
+    { h: 'Thu 18', cnt: '0', cards: [] },
+    { h: 'Fri 19', cnt: '1 entry', cards: [{ t: 'Reading idea', m: '' }] },
+    { h: 'Sat 20', cnt: '0', cards: [] }
+  ];
+  const show = wide ? cols : cols.slice(0, 3);
+  return `
+    <div class="stepper">Days window
+      <span class="chip">3</span><span class="chip on">5</span><span class="chip">7</span>
+      <span class="today" style="margin-left:auto;border:1px solid #3a5a8a;padding:4px 8px;border-radius:6px;color:#8cb4ff">Today</span>
+    </div>
+    <div class="days">${show.map(c => `
+      <div class="daycol ${c.sel?'sel':''}">
+        <div class="h">${c.h} <span class="cnt">${c.cnt}</span></div>
+        ${c.cards.length ? c.cards.map(x => `<div class="mini">${x.t}${x.m?`<div class="m">${x.m}</div>`:''}</div>`).join('')
+          : `<div class="empty-mini">No entries<br/><span style="color:#8cb4ff">New</span></div>`}
+      </div>`).join('')}</div>`;
+}
+function monthMode() {
+  let cells = '';
+  for (let d = 1; d <= 30; d++) {
+    const has = [10,12,15,16,17,19,22].includes(d);
+    cells += `<div class="cell ${d===17?'sel':''}"><div class="n">${d}</div><div class="dot ${has?'':'none'}"></div></div>`;
+  }
+  return `
+    <div class="month-bar"><div class="title">September 2026</div><div class="today" style="border:1px solid #3a5a8a;padding:4px 8px;border-radius:6px;color:#8cb4ff;font-size:12px">Today</div></div>
+    <div class="wdrow">${['S','M','T','W','T','F','S'].map(w=>`<span>${w}</span>`).join('')}</div>
+    <div class="grid">${cells}</div>
+    <div class="section">Wed, Sep 17</div>
+    <div class="card"><h3>Conference prep notes</h3><div class="meta">Selected from month</div></div>`;
+}
+function shell(state, wide) {
+  const parent = state === 'parent';
+  const mode = state === 'scroll' ? 'days' : state === 'pick' && wide ? 'month' : 'day';
+  // phone pick = day; web pick shows month for split contrast; scroll = days; empty = day; parent = day with chips
+  const active = state === 'scroll' ? 'days' : (state === 'pick' && wide) ? 'month' : 'day';
+  const child = parent ? `<div class="child"><span class="chip on">Maya</span><span class="chip">Jordan</span></div>` : '';
+  let body = '';
+  if (state === 'scroll') body = daysMode(wide);
+  else if (state === 'pick' && wide) body = monthMode();
+  else body = dayMode(state);
+  return `
+    <div class="hdr"><div class="wm">Diary</div><div class="icons">search · menu</div></div>
+    <div class="seg"><span class="on">Journal</span><span>Ledger</span></div>
+    <div class="ferpa">Browse chrome resembles Calendar. Content is your entries only — never school events.</div>
+    ${child}
+    ${views(active)}
+    ${body}
+    ${wide ? '' : '<div class="tray"><span>Desk</span><span>Capture</span><span>Needs</span><span>Ask</span></div>'}`;
+}
+function render(state) {
+  document.getElementById('phone').innerHTML = shell(state, false);
+  document.getElementById('web').innerHTML = shell(state, true);
+  document.querySelectorAll('#states button').forEach(b => b.classList.toggle('on', b.dataset.s === state));
+}
+document.getElementById('states').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; render(b.dataset.s);
+});
+render('pick');
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DB-A Lean day-pager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161616; color: #eee; padding: 16px; line-height: 1.4; }
+  h1 { font-size: 16px; color: #fff; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: #888; margin-bottom: 12px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tabs button { appearance: none; border: 1px solid #444; background: #222; color: #eee;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .tabs button.on { border-color: #8cb4ff; color: #8cb4ff; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .frame-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .phone { width: 300px; min-height: 560px; background: #0d0d0d; border: 1px solid #333;
+    border-radius: 28px; padding: 14px 12px 18px; }
+  .web { width: 520px; min-height: 480px; background: #0d0d0d; border: 1px solid #333;
+    border-radius: 12px; padding: 14px 16px; }
+  .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    padding-bottom: 8px; border-bottom: 1px solid #2a2a2a; }
+  .hdr .wm { font-weight: 700; font-size: 15px; color: #fff; }
+  .hdr .icons { color: #888; font-size: 11px; }
+  .seg { display: flex; gap: 0; margin-bottom: 10px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+  .seg span { flex: 1; text-align: center; padding: 8px; font-size: 13px; color: #888; background: #1a1a1a; }
+  .seg span.on { color: #fff; background: #2a2a2a; font-weight: 600; }
+  .ferpa { font-size: 11px; color: #777; margin-bottom: 8px; }
+  .child { display: flex; gap: 6px; margin-bottom: 10px; }
+  .chip { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #222; color: #ccc; border: 1px solid #333; }
+  .chip.on { background: #1a3a5c; color: #8cb4ff; border-color: #3a6a9c; }
+  .nav { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .nav .today { margin-left: auto; font-size: 12px; color: #8cb4ff; padding: 4px 8px; border: 1px solid #3a5a8a; border-radius: 6px; }
+  .nav .arrow { width: 28px; height: 28px; border-radius: 6px; background: #222; border: 1px solid #333;
+    color: #eee; display: grid; place-items: center; font-size: 14px; }
+  .nav .date { font-size: 14px; font-weight: 600; color: #fff; }
+  .strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
+  .dcell { text-align: center; padding: 6px 2px; border-radius: 8px; background: #1a1a1a; }
+  .dcell .wd { font-size: 9px; color: #666; }
+  .dcell .num { font-size: 13px; color: #eee; margin-top: 2px; }
+  .dcell.on { background: #1a3a5c; }
+  .dcell.on .num { color: #8cb4ff; font-weight: 700; }
+  .dcell .dot { width: 4px; height: 4px; border-radius: 50%; background: #8a8a8a; margin: 4px auto 0; }
+  .dcell .dot.none { background: transparent; }
+  .sort { display: flex; gap: 6px; margin-bottom: 10px; }
+  .section { font-size: 11px; font-weight: 700; color: #8cb4ff; text-transform: uppercase;
+    letter-spacing: .03em; margin: 10px 0 6px; }
+  .card { background: #1b1b1b; border: 1px solid #2e2e2e; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .card h3 { font-size: 14px; color: #fff; font-weight: 600; }
+  .card .meta { font-size: 12px; color: #888; margin-top: 2px; }
+  .empty { text-align: center; padding: 28px 12px; border: 1px dashed #333; border-radius: 12px; margin-top: 8px; }
+  .empty p { color: #888; font-size: 13px; margin-bottom: 12px; }
+  .btn { display: inline-block; background: #3d7eff; color: #fff; font-size: 13px; font-weight: 600;
+    padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; }
+  .tray { margin-top: 16px; display: flex; justify-content: space-around; padding: 10px 4px;
+    background: #1a1a1a; border-radius: 14px; border: 1px solid #2a2a2a; font-size: 10px; color: #666; }
+  .note { margin-top: 16px; font-size: 12px; color: #888; max-width: 860px; }
+  .hide { display: none !important; }
+  .web-cols { display: flex; gap: 16px; }
+  .web-main { flex: 1; min-width: 0; }
+</style>
+</head>
+<body>
+  <h1>DB-A — Lean day-pager</h1>
+  <p class="sub">Stance: week strip + focused day + multi-day entry stream. No month grid. No view chips. Recommendation label only in options.md — not a lock.</p>
+  <div class="tabs" id="states">
+    <button type="button" data-s="pick" class="on">Day pick</button>
+    <button type="button" data-s="empty">Empty day</button>
+    <button type="button" data-s="scroll">Multi-day scroll</button>
+    <button type="button" data-s="parent">Parent 2-child</button>
+  </div>
+  <div class="row">
+    <div>
+      <div class="frame-label">Phone</div>
+      <div class="phone" id="phone"></div>
+    </div>
+    <div>
+      <div class="frame-label">Web ≥720</div>
+      <div class="web" id="web"></div>
+    </div>
+  </div>
+  <p class="note">Look-only: strip + today + sticky day headers. Function-out: events, role tints, Calendars sheet, hour timeline. Ledger unchanged (not shown). Presence dots = owner-only neutral.</p>
+<script>
+const entries = {
+  pick: [
+    { day: 'Wed, Sep 17', cards: [
+      { t: 'Conference prep notes', m: 'Tag · conference · 2 photos' },
+      { t: 'Call with counselor', m: 'Private · STT draft cleaned' }
+    ]}],
+  empty: [{ day: 'Thu, Sep 18', cards: [] }],
+  scroll: [
+    { day: 'Tue, Sep 16', cards: [{ t: 'Field trip permission follow-up', m: 'Tag · logistics' }] },
+    { day: 'Wed, Sep 17', cards: [
+      { t: 'Conference prep notes', m: '2 photos' },
+      { t: 'Call with counselor', m: 'Private' }
+    ]},
+    { day: 'Fri, Sep 19', cards: [{ t: 'Weekend reading list idea', m: 'Tag · ideas' }] }
+  ],
+  parent: [
+    { day: 'Wed, Sep 17', cards: [{ t: 'Soccer carpool note (Maya)', m: 'Scoped to Maya' }] }
+  ]
+};
+
+function strip(selIdx, dots) {
+  const days = ['S','M','T','W','T','F','S'];
+  const nums = [14,15,16,17,18,19,20];
+  return `<div class="strip">${nums.map((n,i)=>`
+    <div class="dcell ${i===selIdx?'on':''}">
+      <div class="wd">${days[i]}</div>
+      <div class="num">${n}</div>
+      <div class="dot ${dots[i]?'':'none'}"></div>
+    </div>`).join('')}</div>`;
+}
+
+function body(state, wide) {
+  const parent = state === 'parent';
+  const data = entries[state];
+  const sel = state === 'empty' ? 4 : 3;
+  const dots = state === 'empty' ? [1,1,1,1,0,0,1] : [1,0,1,1,0,1,0];
+  let list = '';
+  data.forEach(block => {
+    list += `<div class="section">${block.day}</div>`;
+    if (!block.cards.length) {
+      list += `<div class="empty"><p>No entries yet on this day.</p><button class="btn" type="button">New entry</button></div>`;
+    } else {
+      block.cards.forEach(c => {
+        list += `<div class="card"><h3>${c.t}</h3><div class="meta">${c.m}</div></div>`;
+      });
+    }
+  });
+  const child = parent ? `<div class="child"><span class="chip on">Maya</span><span class="chip">Jordan</span></div>` : '';
+  const titleDate = state === 'empty' ? 'Thu, Sep 18' : 'Wed, Sep 17';
+  const main = `
+    <div class="hdr"><div class="wm">Diary</div><div class="icons">search · menu</div></div>
+    <div class="seg"><span class="on">Journal</span><span>Ledger</span></div>
+    <div class="ferpa">Private to you. Not a grade. Not shared to class Calendar.</div>
+    ${child}
+    <div class="nav">
+      <div class="arrow">‹</div>
+      <div class="date">${titleDate}</div>
+      <div class="arrow">›</div>
+      <div class="today">Today</div>
+    </div>
+    ${strip(sel, dots)}
+    <div class="sort"><span class="chip on">Newest</span><span class="chip">Oldest</span></div>
+    ${list}
+    ${wide ? '' : '<div class="tray"><span>Desk</span><span>Capture</span><span>Needs</span><span>Ask</span></div>'}
+  `;
+  if (wide) return `<div class="web-cols"><div class="web-main">${main}</div></div>`;
+  return main;
+}
+
+function render(state) {
+  document.getElementById('phone').innerHTML = body(state, false);
+  document.getElementById('web').innerHTML = body(state, true);
+  document.querySelectorAll('#states button').forEach(b => {
+    b.classList.toggle('on', b.dataset.s === state);
+  });
+}
+document.getElementById('states').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; render(b.dataset.s);
+});
+render('pick');
+</script>
+</body>
+</html>
