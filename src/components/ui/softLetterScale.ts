@@ -43,13 +43,13 @@ export const SOFT_MOTION = {
   wobbleMs: 1700,
 } as const;
 
-/** Face layout in 512-space (Soft v8b). Eyes are 60% of Peek v7 Soft size. */
+/** Face layout in 512-space (Soft v8b). Eye radii match Soft v8b SoT white discs (~rx 27 on 512 canvas). */
 export const SOFT_FACE = {
   leftEye: { x: 169, y: 198 },
   rightEye: { x: 292, y: 198 },
-  /** Eye white radius (512-space), ~60% of v7. */
-  eyeR: 14.4,
-  pupilR: 6.2,
+  /** Eye white radius (512-space), Soft v8b SoT white-disc radius. */
+  eyeR: 27.2,
+  pupilR: 14.3,
   glassesLeftR: 31.1,
   glassesRightR: 32.4,
   /** Mouth center + half-width (78% of ±50) — design SoT only; runtime Soft has no mouth. */

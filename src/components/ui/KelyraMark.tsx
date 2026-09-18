@@ -92,7 +92,7 @@ export function KelyraMark({
       accessibilityRole={working ? 'progressbar' : undefined}
       accessibilityState={working ? { busy: true } : undefined}
       collapsable={false}
-      style={[{ width: size, height: size, overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }, style]}
+      style={[{ width: size, height: size, overflow: softMounted || Platform.OS === 'web' ? 'visible' : 'hidden' }, style]}
     >
       <Animated.View style={[styles.layer, { opacity: idleOpacity }]} pointerEvents="none">
         <Image

@@ -62,7 +62,7 @@ test('SoftMark is native RN Views — no WebView / no HTML host runtime', () => 
   assert.doesNotMatch(shared, /import\s*\{[^}]*\bWebView\b/);
 });
 
-test('SoftMark SoftMode static|working + ORBIT_PAD + overflow visible', () => {
+test('SoftMark SoftMode static|working + ORBIT_PAD + absolute -pad host (no center-align)', () => {
   const soft = read('src/components/ui/SoftMark.tsx');
   const shared = read('src/components/ui/SoftMarkShared.tsx');
   assert.match(soft, /SoftMode/);
@@ -70,6 +70,16 @@ test('SoftMark SoftMode static|working + ORBIT_PAD + overflow visible', () => {
   assert.match(shared, /'static' \| 'working'|static.*working/);
   assert.match(shared, /ORBIT_PAD_FRAC/);
   assert.match(shared, /overflow:\s*['"]visible['"]/);
+  // P0 letter align: host absolutely at -pad (not margin + canvas center — that shifts Soft off idle K)
+  assert.match(shared, /position:\s*['"]absolute['"]/);
+  assert.match(shared, /left:\s*-pad/);
+  assert.match(shared, /top:\s*-pad/);
+  assert.doesNotMatch(shared, /marginLeft:\s*-pad/);
+  assert.doesNotMatch(shared, /alignItems:\s*['"]center['"]/);
+  assert.doesNotMatch(shared, /justifyContent:\s*['"]center['"]/);
+  // Letter Image is kelyra.png contain at size×size — 1:1 with idle KelyraMark
+  assert.match(shared, /resizeMode\s*=\s*['"]contain['"]/);
+  assert.match(shared, /width:\s*size,[\s\S]*height:\s*size/);
   assert.ok(SOFT_INTRO.faceMs >= 200);
   assert.ok(SOFT_INTRO.cometMs >= 300);
   assert.ok(SOFT_INTRO.outroMs >= 150);
@@ -99,6 +109,13 @@ test('face coords match Soft v8b lock; runtime face is eyes+glasses no mouth', (
   const shared = read('src/components/ui/SoftMarkShared.tsx');
   assert.match(shared, /SoftFaceEyesGlasses|eyes-glasses-nomouth/);
   assert.doesNotMatch(shared, /SoftMouth|className=\"mouth\"/);
+  // Soft face readable at chrome: white discs + dark pupils + glasses rings (not dots)
+  assert.match(shared, /faceBoost|minEyeR/);
+  assert.match(shared, /#FFFFFF/);
+  assert.match(shared, /#1A1030|#1a1030/);
+  // SoT Soft eye white is large on the purple stem (~rx 27 in 512-space)
+  assert.ok(SOFT_FACE.eyeR >= 24, 'Soft eyeR must match SoT white disc, not half-size dots');
+  assert.ok(SOFT_FACE.pupilR >= 10);
 });
 
 test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro before unmount', () => {
@@ -108,6 +125,8 @@ test('KelyraMark: idle letter kelyra.png; SoftMark only while working; outro bef
   assert.match(mark, /SOFT_INTRO\.outroMs/);
   assert.match(mark, /assets\/brand\/kelyra\.png/);
   assert.doesNotMatch(mark, /opacity: softOpacity[\s\S]{0,80}SoftMark/);
+  // Soft orbit not clipped while Soft mounted
+  assert.match(mark, /softMounted \|\| Platform\.OS === 'web' \? 'visible'/);
 });
 
 test('COMET_ORBIT locked oval for iPhone chrome (ovalY 0.58, cant 14, tilt 26)', () => {

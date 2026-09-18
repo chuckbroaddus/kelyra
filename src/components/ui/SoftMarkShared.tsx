@@ -116,10 +116,11 @@ export function SoftMark({
       <View
         collapsable={false}
         style={{
+          position: 'absolute',
+          left: -pad,
+          top: -pad,
           width: hostSize,
           height: hostSize,
-          marginLeft: -pad,
-          marginTop: -pad,
           overflow: 'visible',
         }}
       >
@@ -261,12 +262,18 @@ function SoftCometBall({
 
 /** Soft face: eyes + glasses only — no mouth (CEO lock). */
 function SoftFaceEyesGlasses({ size }: { size: number }) {
+  // Map 512-space Soft v8b face onto the letter box. At chrome (~40px) linear
+  // scale collapses eyes to ~2px dots — boost radii (keep centers) so white
+  // discs + pupils + glasses rings stay readable (min eye diameter ~7px).
   const s = size / LETTER_INK.canvas;
-  const eyeR = SOFT_FACE.eyeR * s;
-  const pupilR = SOFT_FACE.pupilR * s;
-  const gL = SOFT_FACE.glassesLeftR * s;
-  const gR = SOFT_FACE.glassesRightR * s;
-  const border = Math.max(1.2, 2.2 * s);
+  const rawEyeR = SOFT_FACE.eyeR * s;
+  const minEyeR = 3.5; // ~7px diameter at chrome
+  const faceBoost = rawEyeR > 0 && rawEyeR < minEyeR ? minEyeR / rawEyeR : 1;
+  const eyeR = rawEyeR * faceBoost;
+  const pupilR = SOFT_FACE.pupilR * s * faceBoost;
+  const gL = SOFT_FACE.glassesLeftR * s * faceBoost;
+  const gR = SOFT_FACE.glassesRightR * s * faceBoost;
+  const border = Math.max(1.25, 2.2 * s * faceBoost);
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
@@ -364,10 +371,9 @@ function Eye({
 }
 
 const styles = StyleSheet.create({
+  // Plain size×size box — do NOT center the oversized orbit host (that shifts Soft off idle K).
   canvas: {
     overflow: 'visible',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   letterStack: {
     position: 'absolute',
