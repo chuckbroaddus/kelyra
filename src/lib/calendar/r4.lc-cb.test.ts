@@ -25,46 +25,47 @@ test('R4 L-C: Year→Month→Day zoom + hierarchical back (no RTL-only gesture)'
   assert.doesNotMatch(screen, /RTL.?only|I18nManager\.isRTL/);
 });
 
-test('R4 chrome: chip row Year · Month · Week · Day only (no Days / Agenda chips)', () => {
+test('R4 chrome: PersonTabs Year · Month · Week · Day only (no Days / Agenda tabs)', () => {
   const screen = read('src/app/calendar.tsx');
-  const m = screen.match(/const VIEW_CHIPS[\s\S]*?\];/);
-  assert.ok(m, 'VIEW_CHIPS block missing');
+  const m = screen.match(/const VIEW_TABS[\s\S]*?\];/);
+  assert.ok(m, 'VIEW_TABS block missing');
   const block = m![0];
-  assert.match(block, /id: 'year'/);
-  assert.match(block, /id: 'month'/);
-  assert.match(block, /id: 'week'/);
-  assert.match(block, /id: 'day'/);
-  assert.doesNotMatch(block, /id: 'agenda'/);
-  assert.doesNotMatch(block, /id: 'multiday'|label: 'Days'/);
+  assert.match(block, /key: 'year'/);
+  assert.match(block, /key: 'month'/);
+  assert.match(block, /key: 'week'/);
+  assert.match(block, /key: 'day'/);
+  assert.doesNotMatch(block, /key: 'agenda'/);
+  assert.doesNotMatch(block, /key: 'multiday'|label: 'Days'/);
   // Order: Year before Month before Week before Day
-  const yi = block.indexOf("id: 'year'");
-  const mi = block.indexOf("id: 'month'");
-  const wi = block.indexOf("id: 'week'");
-  const di = block.indexOf("id: 'day'");
-  assert.ok(yi < mi && mi < wi && wi < di, 'VIEW_CHIPS order must be Year·Month·Week·Day');
+  const yi = block.indexOf("key: 'year'");
+  const mi = block.indexOf("key: 'month'");
+  const wi = block.indexOf("key: 'week'");
+  const di = block.indexOf("key: 'day'");
+  assert.ok(yi < mi && mi < wi && wi < di, 'VIEW_TABS order must be Year·Month·Week·Day');
 });
 
-test('R4 C-B: quiet view chips; LF-A category chips stay primary', () => {
+test('R4 C-B: LF-A Show chips live under gear (not quiet-chip canvas row)', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /VIEW_CHIPS[\s\S]*quiet/);
-  assert.match(screen, /CATEGORY_CHIPS/);
-  const catIdx = screen.indexOf('CATEGORY_CHIPS.map');
+  assert.match(screen, /<PersonTabs/);
+  const sheet = read('src/components/calendar/ViewCustomizeSheet.tsx');
+  assert.match(sheet, /CATEGORY_CHIPS/);
+  const catIdx = sheet.indexOf('CATEGORY_CHIPS.map');
   assert.ok(catIdx > 0);
-  const catBlock = screen.slice(catIdx, catIdx + 400);
+  const catBlock = sheet.slice(catIdx, catIdx + 400);
   assert.doesNotMatch(catBlock, /\bquiet\b/);
 });
 
-test('R4 chrome: header trio gear · search · plus (LTR)', () => {
+test('R4 chrome: CR-CalTabs cluster + · search · gear (LTR) on PersonTabs row', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /headerTrio/);
-  const trioStart = screen.indexOf('styles.headerTrio');
-  assert.ok(trioStart > 0);
-  const trio = screen.slice(trioStart, trioStart + 900);
-  const settings = trio.indexOf('name="settings"');
-  const search = trio.indexOf('name="search"');
-  const plus = trio.indexOf('name="plus"');
-  assert.ok(settings >= 0 && search >= 0 && plus >= 0, 'header icons missing');
-  assert.ok(settings < search && search < plus, 'header order must be gear · search · plus');
+  assert.match(screen, /chromeCluster/);
+  const clusterStart = screen.indexOf('styles.chromeCluster');
+  assert.ok(clusterStart > 0);
+  const cluster = screen.slice(clusterStart, clusterStart + 900);
+  const plus = cluster.indexOf('name="plus"');
+  const search = cluster.indexOf('name="search"');
+  const settings = cluster.indexOf('name="settings"');
+  assert.ok(plus >= 0 && search >= 0 && settings >= 0, 'header icons missing');
+  assert.ok(plus < search && search < settings, 'header order must be + · search · gear');
   assert.match(screen, /ViewCustomizeSheet/);
   assert.match(screen, /monthMode/);
   assert.match(screen, /dayMode/);
@@ -72,15 +73,15 @@ test('R4 chrome: header trio gear · search · plus (LTR)', () => {
   assert.match(screen, /seat-visible/);
 });
 
-test('R4 C-B: Month Compact|List only; Day Single|List in gear (Agenda not chip)', () => {
+test('R4 C-B: Month Compact|List only; Day Single|List in gear (Agenda not tab)', () => {
   const sheet = read('src/components/calendar/ViewCustomizeSheet.tsx');
   assert.match(sheet, /Compact/);
   assert.match(sheet, /Single Day/);
   assert.doesNotMatch(sheet, /label=["']Stacked["']|label=["']Details["']/);
   assert.match(sheet, /Day List stays here/);
   const screen = read('src/app/calendar.tsx');
-  const chips = screen.match(/const VIEW_CHIPS[\s\S]*?\];/)![0];
-  assert.doesNotMatch(chips, /id: 'agenda'/);
+  const tabs = screen.match(/const VIEW_TABS[\s\S]*?\];/)![0];
+  assert.doesNotMatch(tabs, /key: 'agenda'/);
   const month = read('src/components/calendar/MonthGrid.tsx');
   assert.match(month, /mode === 'list'|mode = 'compact'/);
 });
@@ -136,7 +137,7 @@ test('R4 Year card: no per-day zoom; entire card → Month only', () => {
   assert.match(screen, /<YearGrid[\s\S]*?onPressMonth[\s\S]*?\/>/);
 });
 
-test('R4: no GhostButton Up row (Year/Month label) above VIEW_CHIPS', () => {
+test('R4: no GhostButton Up row (Year/Month label) above VIEW_TABS', () => {
   const screen = read('src/app/calendar.tsx');
   assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
   assert.doesNotMatch(

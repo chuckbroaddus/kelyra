@@ -29,6 +29,10 @@ import theme from '../../../assets/icons/theme.png';
 import ingestFolders from '../../../assets/icons/ingestFolders.png';
 import diary from '../../../assets/icons/diary.png';
 import calendar from '../../../assets/icons/calendar.png';
+import calYear from '../../../assets/icons/calYear.png';
+import calMonth from '../../../assets/icons/calMonth.png';
+import calWeek from '../../../assets/icons/calWeek.png';
+import calDay from '../../../assets/icons/calDay.png';
 import share from '../../../assets/icons/share.png';
 import save from '../../../assets/icons/save.png';
 import compose from '../../../assets/icons/compose.png';
@@ -128,6 +132,10 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'ingestFolders': ingestFolders,
   'diary': diary,
   'calendar': calendar,
+  'calYear': calYear,
+  'calMonth': calMonth,
+  'calWeek': calWeek,
+  'calDay': calDay,
   'share': share,
   'save': save,
   'compose': compose,
