@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
@@ -84,18 +84,16 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 const VIEW_CHIPS: Array<{ id: CalendarViewId; label: string }> = [
-  { id: 'agenda', label: 'Agenda' },
-  { id: 'day', label: 'Day' },
-  { id: 'week', label: 'Week' },
-  { id: 'multiday', label: 'Days' },
-  { id: 'month', label: 'Month' },
   { id: 'year', label: 'Year' },
+  { id: 'month', label: 'Month' },
+  { id: 'week', label: 'Week' },
+  { id: 'day', label: 'Day' },
 ];
 
 /**
- * CAL-R4 L-C + C-B: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
- * quiet view chips (LF-A category chips stay primary); header + / search / customizer;
- * Month Compact|List; Day Single|List; Agenda chip stays. No tray chrome.
+ * CAL-R4 L-C + C-B chrome: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
+ * quiet chips Year·Month·Week·Day (Days/Agenda off chip row; Day List in gear);
+ * header gear · search · +; Month Compact|List; Day Single|List. No tray chrome.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -132,6 +130,8 @@ export default function CalendarScreen() {
   const [customizeOpen, setCustomizeOpen] = useState(false);
   /** In-route zoom stack for Year→Month→Day (platform back / Up chrome). */
   const [zoomStack, setZoomStack] = useState<CalendarViewId[]>([]);
+  /** Apply stored view once per prefs key — never snap zoomTo(month) back to Year. */
+  const viewPrefsHydratedKeyRef = useRef<string | null>(null);
 
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
@@ -223,8 +223,11 @@ export default function CalendarScreen() {
       : null;
 
   // Last view + multiday days per seat + device class (CAL-36 / viewPrefs).
+  // Hydrate once per prefs key so an in-flight reload cannot snap activeView back to Year
+  // after zoomTo('month'), and so viewPrefsReady flicker does not leave loaded=false.
   useEffect(() => {
     if (!seat || !profileId) {
+      viewPrefsHydratedKeyRef.current = null;
       setViewPrefsReady(true);
       return;
     }
@@ -232,8 +235,11 @@ export default function CalendarScreen() {
       setViewPrefsReady(false);
       return;
     }
+    const prefsKey = `${profileId}:${seat}:${deviceClass}:${seat === 'parent' ? parentChildId ?? 'none' : 'none'}`;
+    const freshKey = viewPrefsHydratedKeyRef.current !== prefsKey;
     let cancelled = false;
-    setViewPrefsReady(false);
+    // Only blank ready on a new prefs key (cold start / child switch) — not on every re-entry.
+    if (freshKey) setViewPrefsReady(false);
     void (async () => {
       const prefs = await loadCalViewPrefs(
         profileId,
@@ -242,10 +248,14 @@ export default function CalendarScreen() {
         seat === 'parent' ? parentChildId : null,
       );
       if (cancelled) return;
-      setActiveView(prefs.view);
-      setDayCount(prefs.days);
-      setMonthMode(prefs.monthMode);
-      setDayMode(prefs.dayMode);
+      if (viewPrefsHydratedKeyRef.current !== prefsKey) {
+        setActiveView(prefs.view);
+        setDayCount(prefs.days);
+        setMonthMode(prefs.monthMode);
+        setDayMode(prefs.dayMode);
+        setZoomStack([]);
+        viewPrefsHydratedKeyRef.current = prefsKey;
+      }
       setViewPrefsReady(true);
     })();
     return () => {
@@ -445,7 +455,7 @@ export default function CalendarScreen() {
       return;
     }
     if (!prefsReady || !viewPrefsReady) {
-      setLoaded(false);
+      // Keep prior paint — clearing loaded here blanks MonthGrid after Year→Month zoom.
       return;
     }
 
@@ -523,7 +533,6 @@ export default function CalendarScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setLoaded(false);
       void load();
     }, [load]),
   );
@@ -612,7 +621,7 @@ export default function CalendarScreen() {
 
   const gridDays =
     activeView === 'week' ? weekRange.days : activeView === 'multiday' ? multiRange.days : [];
-  const allowPinch = !reduceMotion && (activeView === 'week' || activeView === 'multiday');
+  const allowPinch = !reduceMotion && activeView === 'week';
   const stepperCount: MultidayCount =
     activeView === 'week' ? 7 : dayCount === 7 ? 5 : dayCount;
 
@@ -640,6 +649,7 @@ export default function CalendarScreen() {
                   setLoaded(false);
                   setPrefsReady(false);
                   setViewPrefsReady(false);
+                  viewPrefsHydratedKeyRef.current = null;
                 }}
               />
             ))}
@@ -647,8 +657,21 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {/* CAL-R4 C-B header trio: + · search · view customizer (no tray). */}
+      {/* CAL-R4 chrome header trio LTR: gear (customizer) · search · + (no tray). */}
       <View style={styles.headerTrio}>
+        <IconButton
+          name="settings"
+          label="Customize views"
+          onPress={() => setCustomizeOpen(true)}
+        />
+        <IconButton
+          name="search"
+          label={searchOpen ? 'Close search' : 'Search calendar'}
+          onPress={() => {
+            setSearchOpen((v) => !v);
+            if (searchOpen) setSearchQuery('');
+          }}
+        />
         {canCreate ? (
           <IconButton
             name="plus"
@@ -658,19 +681,6 @@ export default function CalendarScreen() {
         ) : (
           <View style={styles.headerTrioSpacer} />
         )}
-        <IconButton
-          name="search"
-          label={searchOpen ? 'Close search' : 'Search calendar'}
-          onPress={() => {
-            setSearchOpen((v) => !v);
-            if (searchOpen) setSearchQuery('');
-          }}
-        />
-        <IconButton
-          name="settings"
-          label="Customize views"
-          onPress={() => setCustomizeOpen(true)}
-        />
       </View>
 
       {searchOpen ? (
@@ -891,7 +901,11 @@ export default function CalendarScreen() {
         </Text>
       ) : null}
 
-      {loaded && !error && !parentChildMissing && !filteredEmpty ? (
+      {/* Month/Year/Day mount even when !loaded so Year→Month never blanks on prefs/load flicker. */}
+      {(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
+      !error &&
+      !parentChildMissing &&
+      !filteredEmpty ? (
         activeView === 'week' || activeView === 'multiday' ? (
           <TeacherWeekGrid
             days={gridDays}
