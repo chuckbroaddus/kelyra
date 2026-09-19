@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge, practiceBadge } from '@/components/ui/Badge';
@@ -26,6 +26,7 @@ import {
   withPendingGap,
   type SubmissionReviewDraft,
 } from '@/lib/practice/review';
+import { buildReviewDecision } from '@/lib/practice/reviewDecision';
 import {
   analyzeTurnedInReview,
   approveTurnedInReview,
@@ -48,6 +49,8 @@ export default function SubmissionReviewScreen() {
   const [ready, setReady] = useState(false);
   const [asking, setAsking] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingDraft, setEditingDraft] = useState(false);
+  const [workExpanded, setWorkExpanded] = useState(false);
   const askingRef = useRef(false);
   const reviewRef = useRef<TurnedInReview | null>(null);
   const draftRef = useRef<SubmissionReviewDraft | null>(null);
@@ -173,6 +176,10 @@ export default function SubmissionReviewScreen() {
   const liveDraft = draft ?? review?.draft ?? null;
   const hasGap = reviewHasGap(liveDraft);
   const kindLabel = review?.kind === 'lesson' ? 'Lesson' : 'Practice';
+  const decision = useMemo(
+    () => buildReviewDecision({ draft: liveDraft, scoreText: score }),
+    [liveDraft, score],
+  );
 
   const patchDraft = (partial: Partial<SubmissionReviewDraft>) => {
     setDraft((current) => {
@@ -289,47 +296,8 @@ export default function SubmissionReviewScreen() {
     );
   }
 
-  return (
-    <Screen
-      maxWidth={640}
-      keyboard
-      sticky={
-        editable ? (
-          <View style={styles.sticky}>
-            <PrimaryButton
-              disabled={saving || asking}
-              label={saving ? 'Approving…' : 'Approve'}
-              onPress={() => void onApprove()}
-            />
-            {hasGap ? (
-              <SecondaryButton
-                disabled={saving || asking}
-                label="Add item"
-                onPress={() => void onAddItem()}
-              />
-            ) : null}
-          </View>
-        ) : undefined
-      }
-    >
-      <View style={styles.hero}>
-        <Avatar name={review.studentName} photoUrl={review.photoUrl} size={48} />
-        <View style={styles.heroText}>
-          <Text style={[type.title, { color: colors.ink }]}>{review.studentName}</Text>
-          <Text style={[type.meta, { color: colors.mute }]}>
-            {[
-              kindLabel,
-              review.submission.submitted_at
-                ? `Turned in ${formatWhen(review.submission.submitted_at)}`
-                : 'Not turned in yet',
-            ].join(' · ')}
-          </Text>
-        </View>
-        <Badge variant={practiceBadge(review.submission.status)} />
-      </View>
-      <Text style={[type.rowTitle, { color: colors.ink }]}>{practiceTitle(review.title)}</Text>
-
-      <SectionHeader label="What they turned in" first />
+  const workBody = (
+    <>
       {liveDraft.summary ? <Text style={[type.body, { color: colors.ink }]}>{liveDraft.summary}</Text> : null}
       {review.kind === 'lesson' ? (
         review.lessonWork ? (
@@ -360,7 +328,11 @@ export default function SubmissionReviewScreen() {
           onPress={() => router.push(`/lesson/${review.assignment.id}?preview=1` as never)}
         />
       ) : null}
+    </>
+  );
 
+  const draftEditors = (
+    <>
       <SectionHeader label="Suggested grade" />
       {editable ? (
         <TextField
@@ -508,6 +480,108 @@ export default function SubmissionReviewScreen() {
           onPress={() => router.push(`/class/${id}/student/${review.studentId}` as never)}
         />
       )}
+    </>
+  );
+
+  return (
+    <Screen
+      maxWidth={640}
+      keyboard
+      sticky={
+        editable && hasGap ? (
+          <View style={styles.sticky}>
+            <SecondaryButton
+              disabled={saving || asking}
+              label="Add item"
+              onPress={() => void onAddItem()}
+            />
+          </View>
+        ) : undefined
+      }
+    >
+      <View style={styles.hero}>
+        <Avatar name={review.studentName} photoUrl={review.photoUrl} size={48} />
+        <View style={styles.heroText}>
+          <Text style={[type.title, { color: colors.ink }]}>{review.studentName}</Text>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            {[
+              kindLabel,
+              review.submission.submitted_at
+                ? `Turned in ${formatWhen(review.submission.submitted_at)}`
+                : 'Not turned in yet',
+            ].join(' · ')}
+          </Text>
+        </View>
+        <Badge variant={practiceBadge(review.submission.status)} />
+      </View>
+      <Text style={[type.rowTitle, { color: colors.ink }]}>{practiceTitle(review.title)}</Text>
+
+      {editable ? (
+        <Card>
+          <Text
+            style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}
+            accessibilityLabel="Decision card"
+          >
+            Decision card
+          </Text>
+          <Text style={[type.rowTitle, { color: colors.ink }]}>Recommendation</Text>
+          {decision.draftOnlyLabel ? (
+            <Text style={[type.meta, { color: colors.mute }]}>Draft only</Text>
+          ) : null}
+          <Text style={[type.meta, { color: colors.mute }]}>Recommended draft</Text>
+          <Text style={[type.body, { color: colors.ink }]}>{decision.recommendedDraftText}</Text>
+          {decision.hasRecommendation && liveDraft.summary ? (
+            <Text style={[type.meta, { color: colors.mute }]} numberOfLines={3}>
+              {liveDraft.summary}
+            </Text>
+          ) : null}
+          <PrimaryButton
+            disabled={saving || asking || !decision.canAccept}
+            label={saving ? 'Approving…' : 'Accept recommendation'}
+            onPress={() => void onApprove()}
+          />
+          <SecondaryButton
+            disabled={saving || asking}
+            label={editingDraft ? 'Hide draft tools' : 'Edit draft'}
+            onPress={() => setEditingDraft((v) => !v)}
+          />
+        </Card>
+      ) : (
+        <Card>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+            Decision card
+          </Text>
+          <Text style={[type.body, { color: colors.ink }]}>
+            {formatScoreMark(review.submission.score_mark, review.submission.approved_score) || 'Approved'}
+          </Text>
+        </Card>
+      )}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: workExpanded }}
+        onPress={() => setWorkExpanded((v) => !v)}
+        style={styles.foldHeader}
+      >
+        <SectionHeader
+          label="What they turned in"
+          first
+          right={
+            <Text style={[type.meta, { color: colors.mute }]}>
+              {workExpanded ? 'Hide' : 'Show'}
+            </Text>
+          }
+        />
+      </Pressable>
+      {workExpanded ? workBody : (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          Collapsed — tap Show to review the submission.
+        </Text>
+      )}
+
+      {editable && editingDraft ? draftEditors : null}
+      {!editable ? draftEditors : null}
+
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
@@ -525,6 +599,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  foldHeader: {
+    marginTop: 8,
   },
   gapRow: {
     flexDirection: 'row',

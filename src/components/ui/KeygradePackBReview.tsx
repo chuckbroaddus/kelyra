@@ -1,7 +1,8 @@
 /**
- * Pack B — Contextual inline confirm on Capture review.
- * Per-item confirm/override, twins confirm, Unassigned file-then-confirm,
- * Approve this capture → approved_score. Teach seat only.
+ * Pack B — Contextual inline confirm on Capture review (RS-B-K fold).
+ * Per-item confirm/override, twins confirm, Unassigned file-then-confirm.
+ * Pack B banner is informational — Accept lives on the Decision card.
+ * Accept recommendation → onApprove(draftScore). Teach seat only.
  */
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -16,6 +17,7 @@ import type { ScoredKeyItem } from '@/lib/assignments/scoreKey';
 import { canApproveKeygrade, keygradeApproveDeniedReason } from '@/lib/keygrade/approveGate';
 import { draftScoreFromItems } from '@/lib/keygrade/draft';
 import type { TwinCandidate } from '@/lib/keygrade/twins';
+import { buildPackBDecision } from '@/lib/practice/reviewDecision';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type PackBStudentOption = {
@@ -55,6 +57,7 @@ export function KeygradePackBReview({
   const { colors } = useTheme();
   const [editingN, setEditingN] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editingDraft, setEditingDraft] = useState(false);
   const allowApprove = canApproveKeygrade(chromeRole);
   const denyReason = keygradeApproveDeniedReason(chromeRole);
   const draftScore = useMemo(() => draftScoreFromItems(items, maxScore), [items, maxScore]);
@@ -62,6 +65,7 @@ export function KeygradePackBReview({
   const twinsNeedConfirm = twinCandidates.length >= 2 && !studentId;
   const unassigned = !studentId;
   const canPublish = allowApprove && allConfirmed && !unassigned && !twinsNeedConfirm;
+  const decision = buildPackBDecision({ draftScore, canPublish });
 
   const confirmItem = (n: number, extractedOverride?: string | null) => {
     onChangeItems(
@@ -197,27 +201,48 @@ export function KeygradePackBReview({
         <Text style={[type.meta, { color: colors.danger }]}>{denyReason}</Text>
       ) : null}
 
-      <View style={styles.actions}>
-        <PrimaryButton
-          label={busy ? 'Approving…' : 'Approve this capture'}
-          disabled={busy || !canPublish}
-          onPress={() => onApprove(draftScore)}
-        />
-        <SecondaryButton
-          label={busy ? 'Saving…' : 'Save draft (no publish)'}
-          disabled={busy}
-          onPress={() => onSaveDraft(draftScore)}
-        />
-      </View>
-      {!canPublish && allowApprove ? (
-        <Text style={[type.meta, { color: colors.mute }]}>
-          {unassigned
-            ? 'File the student, then confirm each item to Approve.'
-            : twinsNeedConfirm
-              ? 'Confirm which twin, then Approve.'
-              : 'Confirm each item before Approve. Nothing is a grade until Approve.'}
+      <View style={[styles.decision, { borderColor: colors.line }]} accessibilityLabel="Decision card">
+        <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+          Decision card
         </Text>
-      ) : null}
+        <Text style={[type.rowTitle, { color: colors.ink }]}>Recommendation</Text>
+        {decision.draftOnlyLabel ? (
+          <Text style={[type.meta, { color: colors.mute }]}>Draft only</Text>
+        ) : null}
+        <Text style={[type.meta, { color: colors.mute }]}>Recommended draft</Text>
+        <Text style={[type.body, { color: colors.ink }]}>
+          {decision.recommendedDraftText}
+          {maxScore != null && draftScore != null ? ` / ${maxScore}` : ''}
+        </Text>
+        <View style={styles.actions}>
+          <PrimaryButton
+            label={busy ? 'Approving…' : 'Accept recommendation'}
+            disabled={busy || !decision.canAccept}
+            onPress={() => onApprove(draftScore)}
+          />
+          <SecondaryButton
+            label={editingDraft ? 'Hide draft tools' : 'Edit draft'}
+            disabled={busy}
+            onPress={() => setEditingDraft((v) => !v)}
+          />
+        </View>
+        {editingDraft ? (
+          <SecondaryButton
+            label={busy ? 'Saving…' : 'Save draft (no publish)'}
+            disabled={busy}
+            onPress={() => onSaveDraft(draftScore)}
+          />
+        ) : null}
+        {!canPublish && allowApprove ? (
+          <Text style={[type.meta, { color: colors.mute }]}>
+            {unassigned
+              ? 'File the student, then confirm each item to Accept recommendation.'
+              : twinsNeedConfirm
+                ? 'Confirm which twin, then Accept recommendation.'
+                : 'Confirm each item before Accept recommendation. Nothing is a grade until Accept.'}
+          </Text>
+        ) : null}
+      </View>
     </Card>
   );
 }
@@ -231,5 +256,11 @@ const styles = StyleSheet.create({
   },
   sheet: { gap: 8, marginTop: 4 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  actions: { gap: 8, marginTop: 12 },
+  decision: {
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  actions: { gap: 8, marginTop: 4 },
 });
