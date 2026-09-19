@@ -85,6 +85,27 @@ test('RS-B source wall: Decision card + Accept recommendation on review screen',
   assert.match(screen, /What they turned in/);
 });
 
+test('RS-B CEO fold: Suggested grade above Accept and What they turned in; not gated on editingDraft', () => {
+  const screen = readFileSync(join(root, 'src/app/class/[id]/review/[submissionId].tsx'), 'utf8');
+  const grade = screen.indexOf('label="Suggested grade"');
+  const accept = screen.indexOf("Accept recommendation");
+  const work = screen.indexOf('label="What they turned in"');
+  assert.ok(grade >= 0, 'Suggested grade SectionHeader present');
+  assert.ok(accept >= 0, 'Accept recommendation present');
+  assert.ok(work >= 0, 'What they turned in present');
+  assert.ok(grade < accept, 'Suggested grade appears above Accept recommendation in JSX');
+  assert.ok(grade < work, 'Suggested grade appears above What they turned in in JSX');
+  assert.ok(accept < work, 'Accept recommendation appears above What they turned in in JSX');
+  // Suggested grade block must not be behind editingDraft gate
+  assert.match(screen, /const suggestedGrade =/);
+  assert.match(screen, /\{suggestedGrade\}/);
+  assert.doesNotMatch(
+    screen,
+    /editingDraft \? suggestedGrade/,
+  );
+  assert.match(screen, /editable && editingDraft \? draftTools/);
+});
+
 test('RS-B-K source wall: Pack B Decision card Accept; banner is not Accept', () => {
   const packB = readFileSync(join(root, 'src/components/ui/KeygradePackBReview.tsx'), 'utf8');
   assert.match(packB, /Decision card/);
