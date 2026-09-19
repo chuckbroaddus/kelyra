@@ -320,6 +320,25 @@ const RECIPES = {
     line(p, 11.4, 11.6, 16.4, 11.6, ST);
     line(p, 11.4, 15.2, 15.0, 15.2, ST);
   },
+  /**
+   * G1 calendar tray glyph — month pad + 2 binding rings + day-dot grid.
+   * NEVER reuse today (house). Distinct from diary (notebook).
+   */
+  calendar: (p) => {
+    // month pad body
+    roundRect(p, 4.0, 5.2, 16.0, 15.2, 1.6, ST, false);
+    // header rule under rings
+    line(p, 4.0, 9.0, 20.0, 9.0, ST);
+    // 2 binding rings (top)
+    circle(p, 8.2, 5.2, 1.45, ST, false);
+    circle(p, 15.8, 5.2, 1.45, ST, false);
+    // day-dot grid 3×3
+    for (const cy of [11.8, 14.8, 17.8]) {
+      for (const cx of [7.4, 12.0, 16.6]) {
+        circle(p, cx, cy, 0.85, 0, true);
+      }
+    }
+  },
   share: (p) => {
     roundRect(p, 5.2, 8.4, 13.6, 12.4, 1.4, ST, false);
     line(p, 12, 3.4, 12, 12.4, ST);

@@ -32,6 +32,7 @@ export type IconName =
   | 'theme'
   | 'ingestFolders'
   | 'diary'
+  | 'calendar'
   | 'share'
   | 'save'
   | 'compose'

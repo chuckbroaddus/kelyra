@@ -13,10 +13,10 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
-const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
-const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Diary', 'Kelyra'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
+const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'calendar', 'ask'];
+const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Diary', 'Calendar', 'Kelyra'];
 
 test('TR-09 / D1: teacher tray labels Desk · Needs · Diary · Kelyra; today glyph', () => {
   const tabs = tabsFor('teacher', '/', 'c1', 0);
@@ -28,7 +28,7 @@ test('TR-09 / D1: teacher tray labels Desk · Needs · Diary · Kelyra; today gl
     tabs.map((tab) => tab.key),
     TEACHER_KEYS,
   );
-  assert.equal(tabs.length, 4);
+  assert.equal(tabs.length, 5);
   assert.ok(!tabs.some((tab) => tab.key === 'profile'));
   const desk = tabs.find((tab) => tab.key === 'home');
   assert.equal(desk?.icon, 'today');
@@ -122,7 +122,7 @@ test('D5: Ask FALLBACK uses Needs not Inbox', () => {
 });
 
 test('invariants: matcher never inserts; canCreateClass untouched; no EXPO_PUBLIC_*; no sixth; no SQL seat', () => {
-  assert.equal(trayKeysForRole('teacher').length, 4);
+  assert.equal(trayKeysForRole('teacher').length, 5);
   const matchName = read('src/lib/matching/matchName.ts');
   assert.doesNotMatch(matchName, /\.insert\(|from\('students'\)\.insert/);
   const index = read('src/app/index.tsx');

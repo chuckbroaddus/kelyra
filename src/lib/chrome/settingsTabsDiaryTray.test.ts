@@ -15,11 +15,11 @@ function read(rel: string): string {
 }
 
 test('ST-A tray: Desk · Needs Attention · Diary · Kelyra; Class gone; no Capture', () => {
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'calendar', 'ask']);
   const tabs = tabsFor('teacher', '/', 'c1', 0);
   assert.deepEqual(
     tabs.map((t) => t.label),
-    ['Desk', 'Needs Attention', 'Diary', 'Kelyra'],
+    ['Desk', 'Needs Attention', 'Diary', 'Calendar', 'Kelyra'],
   );
   assert.ok(!tabs.some((t) => t.key === 'class' || t.key === 'capture'));
   assert.equal(tabs.at(-1)?.key, 'ask');
@@ -31,9 +31,9 @@ test('ST-A other seats: no Diary tray slot', () => {
   assert.ok(!trayKeysForRole('administrator').includes('diary'));
   assert.ok(!trayKeysForRole('superintendent').includes('diary'));
   assert.ok(!trayKeysForRole('student').includes('diary'));
-  assert.equal(trayKeysForRole('parent').length, 3);
-  assert.equal(trayKeysForRole('administrator').length, 5);
-  assert.equal(trayKeysForRole('student').length, 6);
+  assert.equal(trayKeysForRole('parent').length, 4);
+  assert.equal(trayKeysForRole('administrator').length, 6);
+  assert.equal(trayKeysForRole('student').length, 7);
 });
 
 test('ST-A SettingsSheet: tab strip Theme · Ingest (teach) · Diary; Open Diary gated', () => {

@@ -28,6 +28,7 @@ import settings from '../../../assets/icons/settings.png';
 import theme from '../../../assets/icons/theme.png';
 import ingestFolders from '../../../assets/icons/ingestFolders.png';
 import diary from '../../../assets/icons/diary.png';
+import calendar from '../../../assets/icons/calendar.png';
 import share from '../../../assets/icons/share.png';
 import save from '../../../assets/icons/save.png';
 import compose from '../../../assets/icons/compose.png';
@@ -126,6 +127,7 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'theme': theme,
   'ingestFolders': ingestFolders,
   'diary': diary,
+  'calendar': calendar,
   'share': share,
   'save': save,
   'compose': compose,

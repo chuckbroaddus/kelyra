@@ -57,6 +57,13 @@ export function tabsFor(
         href: '/?tab=manage',
         active: office === 'manage',
       },
+      {
+        key: 'calendar',
+        icon: 'calendar',
+        label: 'Calendar',
+        href: '/calendar',
+        active: office === 'calendar',
+      },
       { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
@@ -97,6 +104,13 @@ export function tabsFor(
         href: '/student/people',
         active: pathname.startsWith('/student/people'),
       },
+      {
+        key: 'calendar',
+        icon: 'calendar',
+        label: 'Calendar',
+        href: '/calendar',
+        active: pathname === '/calendar' || pathname.startsWith('/calendar/'),
+      },
       { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
@@ -104,6 +118,13 @@ export function tabsFor(
     return [
       { key: 'home', icon: 'today', label: 'Home', href: '/parent', active: pathname === '/parent' },
       { key: 'ride', icon: 'ride', label: 'Ride', href: '/parent/ride', active: pathname.startsWith('/parent/ride') || pathname.startsWith('/parent/vehicles') },
+      {
+        key: 'calendar',
+        icon: 'calendar',
+        label: 'Calendar',
+        href: '/calendar',
+        active: pathname === '/calendar' || pathname.startsWith('/calendar/'),
+      },
       { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
     ];
   }
@@ -130,6 +151,13 @@ export function tabsFor(
       href: '/diary',
       active: onDiary,
     },
+    {
+      key: 'calendar',
+      icon: 'calendar',
+      label: 'Calendar',
+      href: '/calendar',
+      active: pathname === '/calendar' || pathname.startsWith('/calendar/'),
+    },
     // KL-A: tray label Kelyra; key/href stay ask /ask.
     { key: 'ask', icon: 'ask', label: 'Kelyra', href: '/ask', active: pathname === '/ask' },
   ];
@@ -138,7 +166,8 @@ export function tabsFor(
 function officeTrayKey(
   pathname: string,
   homeTab?: string,
-): 'feed' | 'classes' | 'people' | 'manage' | 'ask' | null {
+): 'feed' | 'classes' | 'people' | 'manage' | 'calendar' | 'ask' | null {
+  if (pathname === '/calendar' || pathname.startsWith('/calendar/')) return 'calendar';
   if (pathname === '/ask') return 'ask';
   if (pathname === '/activity' || pathname === '/admin/matrix' || pathname.startsWith('/admin/ride') || pathname.startsWith('/ride')) return 'manage';
   if (pathname.startsWith('/admin/people') || pathname === '/admin') return 'people';
