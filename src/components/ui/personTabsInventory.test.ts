@@ -91,22 +91,44 @@ test('FoM default labelPolicy is visibilityReserve on PersonTabs', () => {
   assert.doesNotMatch(read('src/components/ui/ContextMenuRow.tsx'), /from '@\/components\/ui\/PersonTabs'/);
 });
 
-test('FoM Class Desk opt-in CM-Linear; PersonTabs default stays Current', () => {
+test('PersonTabs default CM-Linear; ClassTabs mapping-only; current is opt-out only', () => {
   const pills = read('src/components/ui/PersonTabs.tsx');
   const classTabs = read('src/components/ui/ClassTabs.tsx');
   const layout = read('src/components/ui/personTabsLayout.ts');
-  // PersonTabs owns timing; default motionPack = current (cubic out/in)
-  assert.match(pills, /motionPack = 'current'/);
+  const docs = read('docs/ui-design.md');
+  // PersonTabs owns timing; default motionPack = cm-linear (linear both ways)
+  assert.match(pills, /motionPack = 'cm-linear'/);
   assert.match(pills, /personTabExpandEasingKind\(selected, motionPack\)/);
   assert.match(pills, /chrome\.motion\.personTab/);
   assert.match(layout, /PersonTabMotionPack = 'current' \| 'cm-linear'/);
-  // Class desk only — mapping-only ClassTabs passes linear opt-in
+  assert.match(layout, /motionPack: PersonTabMotionPack = 'cm-linear'/);
+  // ClassTabs mapping-only — inherits default (no Animated.timing fork)
   assert.match(classTabs, /export function ClassTabs/);
-  assert.match(classTabs, /motionPack=["']cm-linear["']/);
   assert.doesNotMatch(classTabs, /Animated\.timing/);
-  // Secondary shelves keep Current (no cm-linear)
-  const deskSpan = classTabs.slice(classTabs.indexOf('export function DeskSpanTabs'));
-  assert.doesNotMatch(deskSpan, /motionPack=["']cm-linear["']/);
-  const gradeView = classTabs.slice(classTabs.indexOf('export function GradebookViewTabs'));
-  assert.doesNotMatch(gradeView, /motionPack=["']cm-linear["']/);
+  // No destination row passes cubic opt-out
+  assert.doesNotMatch(classTabs, /motionPack=["']current["']/);
+  for (const rel of [
+    'src/components/ui/GradeTermTabs.tsx',
+    'src/components/ui/StudentWorkList.tsx',
+    'src/components/ui/FeedPane.tsx',
+    'src/components/ui/PeopleAdmin.tsx',
+    'src/app/index.tsx',
+    'src/app/diary.tsx',
+    'src/app/messages/index.tsx',
+    'src/app/todo.tsx',
+    'src/app/profile.tsx',
+    'src/app/student/class.tsx',
+    'src/app/student/feed.tsx',
+    'src/app/student/people.tsx',
+    'src/app/admin/class/[id].tsx',
+    'src/app/class/[id]/student/[studentId].tsx',
+    'src/app/class/[id]/parent/[parentId].tsx',
+  ]) {
+    assert.doesNotMatch(read(rel), /motionPack=["']current["']/, rel);
+  }
+  // Spec lock: linear both ways + FoM CM-Linear default
+  assert.match(docs, /linear both ways|Easing\.linear.*grow.*shrink|CM-Linear/i);
+  // Tray / ChipRow / inbox job tabs stay exceptions
+  assert.doesNotMatch(read('src/components/ui/FloatingTabTray.tsx'), /from '@\/components\/ui\/PersonTabs'/);
+  assert.doesNotMatch(read('src/components/ui/ContextMenuRow.tsx'), /from '@\/components\/ui\/PersonTabs'/);
 });

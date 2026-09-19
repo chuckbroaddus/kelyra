@@ -69,8 +69,8 @@ type Props = {
    */
   labelPolicy?: PersonTabLabelPolicy;
   /**
-   * Morph easing. Default `current` (cubic out grow / cubic in shrink) — no app-wide change.
-   * Pass `cm-linear` only where dual-stamped (FoM Class Desk).
+   * Morph easing. Default `cm-linear` (Easing.linear grow AND shrink) — FoM lock app-wide.
+   * Pass `current` only for a documented cubic opt-out — never on destination rows.
    */
   motionPack?: PersonTabMotionPack;
 };
@@ -237,7 +237,7 @@ function PersonTabPill({
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve', motionPack = 'current' }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve', motionPack = 'cm-linear' }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
