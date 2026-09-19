@@ -88,15 +88,16 @@ test('I4-SEC listInbox/countInbox status-based — no input_source=batch exclusi
   const src = stripComments(read(capturesApi));
   const listAt = src.indexOf('export async function listInbox');
   const listBody = src.slice(listAt, src.indexOf('export async function', listAt + 10));
-  assert.match(listBody, /\.in\('status',\s*\['unassigned',\s*'attached',\s*'draft'\]\)/);
+  assert.match(listBody, /\.in\('status',\s*needsCaptureFilter\(\)\)/);
   assert.doesNotMatch(listBody, /input_source/);
   assert.doesNotMatch(listBody, /neq\('input_source'|eq\('input_source',\s*'camera'/);
 
   const countAt = src.indexOf('export async function countInbox');
   const countBody = src.slice(countAt, src.indexOf('export async function', countAt + 10));
-  assert.match(countBody, /\.in\('status',\s*\['unassigned',\s*'attached',\s*'draft'\]\)/);
+  assert.match(countBody, /\.in\('status',\s*needsCaptureFilter\(\)\)/);
   assert.doesNotMatch(countBody, /input_source/);
 
+  assert.match(src, /NEEDS_CAPTURE_STATUSES = \['unassigned', 'attached', 'draft'\]/);
   assert.match(src, /allPhotoAssetIds/);
   assert.match(src, /hydrateCaptures/);
 });

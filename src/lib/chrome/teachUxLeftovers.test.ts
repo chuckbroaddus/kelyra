@@ -20,7 +20,7 @@ function read(rel: string): string {
 
 test('L1: Needs count gates on chrome seat role===teacher, not isOfficeRole(profile)', () => {
   const chrome = read('src/lib/chrome/ChromeProvider.tsx');
-  assert.match(chrome, /role === 'teacher' \? await countNeedsYou/);
+  assert.match(chrome, /role === 'teacher'\s*\n\s*\? await readNeedsCountCached/);
   assert.match(chrome, /if \(role === 'teacher' && teacher && classId\)/);
   assert.doesNotMatch(chrome, /isOfficeRole\(profile\) \? 0 : await countNeedsYou/);
   assert.doesNotMatch(chrome, /teacher && !isOfficeRole\(profile\) && classId/);
@@ -40,7 +40,12 @@ test('L2: /inbox lists turned-in so Needs badge (countNeedsYou) and list agree',
   const api = read('src/lib/captures/api.ts');
   assert.match(api, /export async function countNeedsYou/);
   assert.match(api, /listTurnedIn/);
-  assert.match(api, /\.in\('status', \['completed'\]\)/);
+  assert.match(api, /export function needsCaptureFilter/);
+  assert.match(api, /export function completedSubmissionFilter/);
+  assert.match(api, /NEEDS_CAPTURE_STATUSES = \['unassigned', 'attached', 'draft'\]/);
+  assert.match(api, /NEEDS_SUBMISSION_STATUSES = \['completed'\]/);
+  assert.match(api, /\.in\('status', needsCaptureFilter\(\)\)/);
+  assert.match(api, /\.in\('status', completedSubmissionFilter\(\)\)/);
 });
 
 test('L3: Week / Heatmap discoverable; not restored as default CLASS_TABS', () => {

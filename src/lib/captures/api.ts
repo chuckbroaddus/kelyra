@@ -7,7 +7,7 @@ import { loadPhotoAssetPaths } from '@/lib/media/upload';
 import { signedThumbUrls } from '@/lib/media/signedUrl';
 import { listRoster } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { AssignmentKind, CaptureRow, SubmissionStatus } from '@/lib/supabase/types';
+import type { AssignmentKind, CaptureRow, CaptureStatus, SubmissionStatus } from '@/lib/supabase/types';
 
 export type InboxItem = CaptureRow & {
   photoUrl: string | null;
@@ -166,12 +166,35 @@ export function describeMatch(match: NameMatch): string {
   return 'No roster name found. Pick the student in the inbox.';
 }
 
+/** Capture statuses in Needs Attention / tray badge (L2). */
+export const NEEDS_CAPTURE_STATUSES = ['unassigned', 'attached', 'draft'] as const satisfies readonly CaptureStatus[];
+
+/** Submission statuses in Needs Attention turned-in / tray badge (L2). */
+export const NEEDS_SUBMISSION_STATUSES = ['completed'] as const satisfies readonly SubmissionStatus[];
+
+/** Shared capture status filter for countNeedsYou + listInbox (PERF-18). */
+export function needsCaptureFilter(): CaptureStatus[] {
+  return [...NEEDS_CAPTURE_STATUSES];
+}
+
+/** Shared submission status filter for countNeedsYou + listTurnedIn (PERF-18). */
+export function completedSubmissionFilter(): SubmissionStatus[] {
+  return [...NEEDS_SUBMISSION_STATUSES];
+}
+
+/** List path: omit model_draft / explain_draft JSON (PERF-09). */
+const INBOX_LIST_COLUMNS =
+  'id, class_id, student_id, kind, photo_asset_id, audio_asset_id, transcript, input_source, status, guessed_student_id, match_confidence, draft_score, approved_score, score_mark, grade_kind, teacher_note, parent_sentence, created_at, attached_at, approved_at, assignment_id, ingest_batch_id, ai_status, explain_status';
+
+/** Turned-in list: omit answers / model_draft JSON (PERF-09). */
+const TURNED_IN_LIST_COLUMNS = 'id, student_id, assignment_id, submitted_at, created_at, status';
+
 export async function countInbox(classId: string): Promise<number> {
   const { count, error } = await requireSupabase()
     .from('captures')
     .select('*', { count: 'exact', head: true })
     .eq('class_id', classId)
-    .in('status', ['unassigned', 'attached', 'draft']);
+    .in('status', needsCaptureFilter());
   if (error) throw error;
   return count ?? 0;
 }
@@ -193,7 +216,7 @@ export async function countNeedsYou(classId: string): Promise<number> {
       'assignment_id',
       assignments.map((row) => row.id),
     )
-    .in('status', ['completed']);
+    .in('status', completedSubmissionFilter());
   if (error) throw error;
   return inbox + (count ?? 0);
 }
@@ -218,12 +241,12 @@ export async function listTurnedIn(classId: string): Promise<TurnedInItem[]> {
   if (!assignments?.length) return [];
   const { data: submissions, error } = await supabase
     .from('submissions')
-    .select('*')
+    .select(TURNED_IN_LIST_COLUMNS)
     .in(
       'assignment_id',
       assignments.map((row) => row.id),
     )
-    .in('status', ['completed'])
+    .in('status', completedSubmissionFilter())
     .order('submitted_at', { ascending: false });
   if (error) throw error;
   if (!submissions?.length) return [];
@@ -275,19 +298,32 @@ export async function returnCaptureToInbox(captureId: string) {
   if (error) throw error;
 }
 
-export async function listInbox(classId: string): Promise<InboxItem[]> {
+export async function listInbox(
+  classId: string,
+  options?: { signThumbs?: boolean },
+): Promise<InboxItem[]> {
   const { data: captures, error } = await requireSupabase()
     .from('captures')
-    .select('*')
+    .select(INBOX_LIST_COLUMNS)
     .eq('class_id', classId)
-    .in('status', ['unassigned', 'attached', 'draft'])
+    .in('status', needsCaptureFilter())
     .order('created_at', { ascending: false });
   if (error) throw error;
   if (!captures?.length) return [];
-  return hydrateCaptures(captures);
+  return hydrateCaptures(captures as CaptureRow[], { signThumbs: options?.signThumbs !== false });
 }
 
-async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
+/** Second-pass thumb signing after first WorkRow paint (PERF-06). */
+export async function signInboxThumbs(items: InboxItem[]): Promise<InboxItem[]> {
+  if (!items.length) return items;
+  return hydrateCaptures(items, { signThumbs: true });
+}
+
+async function hydrateCaptures(
+  captures: CaptureRow[],
+  options?: { signThumbs?: boolean },
+): Promise<InboxItem[]> {
+  const signThumbs = options?.signThumbs !== false;
   const supabase = requireSupabase();
   const photoIds = [...new Set(captures.flatMap((row) => allPhotoAssetIds(row)))];
   const studentIds = captures.map((row) => row.student_id).filter((id): id is string => Boolean(id));
@@ -300,13 +336,16 @@ async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
   ]);
   const pathById = new Map(assets.map((asset) => [asset.id, asset.storage_path]));
   const knownThumbs = new Map(assets.map((asset) => [asset.storage_path, asset.thumb_storage_path]));
-  const thumbUrls = await signedThumbUrls([...pathById.values()], knownThumbs, {
-    fallbackOriginal: false,
-  });
+  const thumbUrls = signThumbs
+    ? await signedThumbUrls([...pathById.values()], knownThumbs, {
+        fallbackOriginal: false,
+      })
+    : new Map<string, string>();
   const nameById = new Map((students ?? []).map((student) => [student.id, student.display_name]));
   return captures.map((capture) => {
+    const assetIds = allPhotoAssetIds(capture);
     const photoUrls: string[] = [];
-    for (const assetId of allPhotoAssetIds(capture)) {
+    for (const assetId of assetIds) {
       const path = pathById.get(assetId);
       const url = path ? thumbUrls.get(path) : null;
       if (url) photoUrls.push(url);
@@ -314,9 +353,10 @@ async function hydrateCaptures(captures: CaptureRow[]): Promise<InboxItem[]> {
     const matchedName = capture.student_id ? (nameById.get(capture.student_id) ?? null) : null;
     return {
       ...capture,
+      model_draft: capture.model_draft ?? null,
       photoUrl: photoUrls[0] ?? null,
       photoUrls,
-      pageCount: photoUrls.length || allPhotoAssetIds(capture).length,
+      pageCount: photoUrls.length || assetIds.length || (capture.photo_asset_id ? 1 : 0),
       matchedName,
     };
   });

@@ -43,6 +43,12 @@ import {
   type ChromeSeatPreference,
 } from '@/lib/chrome/seat';
 import { countNeedsYou } from '@/lib/captures/api';
+import {
+  invalidateNeedsCountCache,
+  needsCountCacheHit,
+  peekNeedsCountCache,
+  readNeedsCountCached,
+} from '@/lib/chrome/needsCountCache';
 import { countAlertsForMe, markAlertRead, subscribeAlertBell } from '@/lib/posts/api';
 import { listClasses, resolveCaptureClass } from '@/lib/classes/api';
 import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
@@ -247,6 +253,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const [keepLocalTray, setKeepLocalTrayState] = useState(false);
   const localTrayRef = useRef(false);
   const keepLocalRef = useRef(false);
+  const classIdRef = useRef<string | null>(null);
+  const classesReadyRef = useRef(false);
+  const classesTickRef = useRef(-1);
+  const teacherIdRef = useRef<string | null>(null);
   const [seatPreference, setSeatPreference] = useState<ChromeSeatPreference | null>(null);
   /** Optimistic seat-root path until router.replace settles (P-06 Option A). */
   const [seatNavPath, setSeatNavPath] = useState<string | null>(null);
@@ -587,7 +597,14 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     [animate, drawerOpen, forceHidden, headerCameraOpen, keyboardVisible],
   );
 
-  const refreshChrome = useCallback(() => setTick((value) => value + 1), []);
+  const refreshChrome = useCallback(() => {
+    invalidateNeedsCountCache();
+    setTick((value) => value + 1);
+  }, []);
+
+  useEffect(() => {
+    classIdRef.current = classId;
+  }, [classId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -608,16 +625,59 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       const alerts = await countAlertsForMe().catch(() => 0);
       if (teacher) {
         try {
-          const all = await listClasses();
-          if (cancelled) return;
-          setClasses(all);
+          if (teacherIdRef.current !== teacher.id) {
+            teacherIdRef.current = teacher.id;
+            classesReadyRef.current = false;
+            invalidateNeedsCountCache();
+          }
+
           const pathClass = pathname.match(/^\/class\/([^/]+)/)?.[1] ?? null;
+          const knownId = classIdRef.current;
+          const activeId = teacher.active_class_id;
+          const hopSameClass = Boolean(
+            knownId &&
+              classesReadyRef.current &&
+              (!pathClass || pathClass === knownId) &&
+              (!activeId || activeId === knownId || pathClass === knownId),
+          );
+          const cacheHit = Boolean(knownId && needsCountCacheHit(knownId));
+
+          // PERF-12/13: pathname-only hop with same classId + Needs TTL hit — no listClasses, no countNeedsYou.
+          if (hopSameClass && cacheHit) {
+            if (cancelled) return;
+            if (role === 'teacher') {
+              const cached = peekNeedsCountCache()?.count ?? 0;
+              setNeedsCount(cached);
+              setBadgeCount(alerts + cached);
+            } else {
+              setNeedsCount(0);
+              setBadgeCount(alerts);
+            }
+            return;
+          }
+
+          const mustReloadClasses = !classesReadyRef.current || tick !== classesTickRef.current;
+          if (mustReloadClasses) {
+            const all = await listClasses();
+            if (cancelled) return;
+            setClasses(all);
+            classesReadyRef.current = true;
+            classesTickRef.current = tick;
+          }
+
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, pathClass);
           if (cancelled) return;
+          if (classIdRef.current && classIdRef.current !== klass.id) {
+            invalidateNeedsCountCache();
+          }
           setClassId(klass.id);
+          classIdRef.current = klass.id;
           setClassName(klass.name);
           // Needs badge follows chrome seat, not profile hats (dual-hat Teach seat).
-          const work = role === 'teacher' ? await countNeedsYou(klass.id).catch(() => 0) : 0;
+          const work =
+            role === 'teacher'
+              ? await readNeedsCountCached(klass.id, (id) => countNeedsYou(id).catch(() => 0))
+              : 0;
           if (!cancelled) {
             setNeedsCount(work);
             setBadgeCount(alerts + work);
@@ -625,6 +685,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
         } catch {
           if (!cancelled) {
             setClassId(null);
+            classIdRef.current = null;
             setClassName(null);
             setNeedsCount(0);
             setBadgeCount(alerts);
@@ -632,6 +693,9 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
+      teacherIdRef.current = null;
+      classesReadyRef.current = false;
+      invalidateNeedsCountCache();
       if (profile?.role === 'student') return;
       const parentNotes = await parentBellCount(tokens);
       if (!cancelled) {
@@ -687,7 +751,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (role === 'teacher' && teacher && classId) {
-      const work = await countNeedsYou(classId).catch(() => 0);
+      // PERF-14/15: share TTL + inflight with pathname effect (no double full count same tick).
+      const work = await readNeedsCountCached(classId, (id) => countNeedsYou(id).catch(() => 0));
       setNeedsCount(work);
       setBadgeCount(alerts + work);
       return;

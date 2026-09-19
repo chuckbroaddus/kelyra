@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { captureBadge, practiceBadge } from '@/components/ui/Badge';
@@ -17,6 +17,7 @@ import {
   attachCapture,
   listInbox,
   listTurnedIn,
+  signInboxThumbs,
   type InboxItem,
   type TurnedInItem,
 } from '@/lib/captures/api';
@@ -35,7 +36,7 @@ export default function InboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const chrome = useChrome();
-  const { contextTab, classId: chromeClassId } = chrome;
+  const { contextTab, classId: chromeClassId, refreshChrome } = chrome;
   const teachSeat = chrome.role === 'teacher';
   const { teacher, refreshTeacher, setActiveClassId } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -43,37 +44,100 @@ export default function InboxScreen() {
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  /** Lists settled for active class — empty ≠ loading (PERF-07/08). */
+  const [rowsReady, setRowsReady] = useState(false);
   const [picking, setPicking] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [pending, setPending] = useState<InboxItem | null>(null);
   const [notePending, setNotePending] = useState<InboxItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const loadGen = useRef(0);
+  const rosterForClass = useRef<string | null>(null);
+  /** Class that owns currently painted items/turned — soft-refresh only when unchanged (US-PERF-05). */
+  const rowsClassIdRef = useRef('');
+
+  const ensureRoster = useCallback(async (forClassId: string) => {
+    if (!forClassId) return;
+    if (rosterForClass.current === forClassId) return;
+    setRosterLoading(true);
+    try {
+      const next = await listRoster(forClassId);
+      setRoster(next);
+      rosterForClass.current = forClassId;
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not load roster');
+    } finally {
+      setRosterLoading(false);
+    }
+  }, []);
+
+  const openAssign = useCallback(
+    (captureId: string) => {
+      setPicking(captureId);
+      if (classId) void ensureRoster(classId);
+    },
+    [classId, ensureRoster],
+  );
 
   const load = useCallback(async () => {
     if (!teacher) return;
+    const gen = ++loadGen.current;
     try {
-      // Prefer class being viewed; else refresh teacher row so memory matches DB.
-      await refreshTeacher();
-      const { requireSupabase } = await import("@/lib/supabase/client");
-      const { data: teacherRow } = await requireSupabase()
-        .from("teachers")
-        .select("active_class_id")
-        .eq("id", teacher.id)
-        .maybeSingle();
-      const activeId = (teacherRow?.active_class_id as string | null) ?? teacher.active_class_id;
-      const klass = await resolveCaptureClass(teacher.id, activeId, chromeClassId);
-      setClassId(klass.id);
-      setActiveClassId(klass.id);
-      setRoster(await listRoster(klass.id));
-      const [captures, completed] = await Promise.all([listInbox(klass.id), listTurnedIn(klass.id)]);
+      // PERF-01/02: use existing teacher/chrome classId; do not refreshTeacher every focus.
+      let resolvedId = (chromeClassId || teacher.active_class_id || '').trim();
+      if (!resolvedId) {
+        // True cold unknown classId — resolve once.
+        await refreshTeacher();
+        if (gen !== loadGen.current) return;
+        const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+        if (gen !== loadGen.current) return;
+        resolvedId = klass.id;
+        setActiveClassId(klass.id);
+      } else if (teacher.active_class_id !== resolvedId) {
+        setActiveClassId(resolvedId);
+      }
+
+      // Class switch: drop prior-class rows before lists settle so Review cannot bind new classId to old ids.
+      const classChanged = Boolean(rowsClassIdRef.current && rowsClassIdRef.current !== resolvedId);
+      if (classChanged) {
+        rowsClassIdRef.current = '';
+        setItems([]);
+        setTurned([]);
+        setRowsReady(false);
+        setPicking(null);
+        setPending(null);
+        setNotePending(null);
+        setStatus(null);
+      }
+      setClassId(resolvedId);
+      if (rosterForClass.current && rosterForClass.current !== resolvedId) {
+        rosterForClass.current = null;
+        setRoster([]);
+      }
+      // Soft refresh keeps prior rows only for the same classId (PERF-07/08); never flash empty on same-class refocus.
+      const [captures, completed] = await Promise.all([
+        listInbox(resolvedId, { signThumbs: false }),
+        listTurnedIn(resolvedId),
+      ]);
+      if (gen !== loadGen.current) return;
+      rowsClassIdRef.current = resolvedId;
       setItems(captures);
       setTurned(completed);
+      setRowsReady(true);
+      setStatus(null);
+
+      // PERF-06: thumbs after first WorkRow-capable paint.
+      void signInboxThumbs(captures).then((withThumbs) => {
+        if (gen !== loadGen.current) return;
+        if (rowsClassIdRef.current !== resolvedId) return;
+        setItems(withThumbs);
+      });
     } catch (err) {
+      if (gen !== loadGen.current) return;
       setStatus(err instanceof Error ? err.message : 'Could not load inbox');
-    } finally {
-      setLoaded(true);
+      setRowsReady(true);
     }
   }, [teacher, chromeClassId, refreshTeacher, setActiveClassId]);
 
@@ -83,7 +147,12 @@ export default function InboxScreen() {
     }, [load]),
   );
 
-  const queued = items.filter((item) => item.ai_status === 'pending' || (item.model_draft as { pending?: boolean } | null)?.pending).length;
+  const queued = items.filter(
+    (item) =>
+      item.ai_status === 'pending' ||
+      item.ai_status === 'running' ||
+      (item.model_draft as { pending?: boolean } | null)?.pending,
+  ).length;
 
   const onDraftQueued = async () => {
     setDrafting(true);
@@ -91,6 +160,7 @@ export default function InboxScreen() {
     try {
       const result = await processQueuedDrafts();
       setStatus(result.processed ? `Drafted ${result.processed} queued page${result.processed === 1 ? '' : 's'}.` : 'Nothing queued.');
+      refreshChrome();
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not draft queued pages');
@@ -116,12 +186,16 @@ export default function InboxScreen() {
     try {
       await attachCapture(captureId, studentId);
       setPicking(null);
+      refreshChrome();
       if (classId) router.push(`/class/${classId}/student/${studentId}`);
       else await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not assign student');
     }
   };
+
+  const showWorking = !rowsReady && items.length === 0 && turned.length === 0;
+  const showEmpty = rowsReady && !status && items.length === 0 && turned.length === 0;
 
   const photoFor = (studentId: string) => roster.find((row) => row.id === studentId)?.photoUrl;
   const turnedCopy = (item: TurnedInItem) => {
@@ -146,8 +220,8 @@ export default function InboxScreen() {
           onPress={() => void onDraftQueued()}
         />
       ) : null}
-      {!loaded ? <WorkingLine /> : null}
-      {loaded && items.length === 0 && turned.length === 0 ? (
+      {showWorking ? <WorkingLine /> : null}
+      {showEmpty ? (
         <View>
           <Text style={[styles.empty, { color: colors.mute }]}>
             Nothing waiting. Capture work, review it in Needs Attention, then Approve on the student page on web.
@@ -176,12 +250,12 @@ export default function InboxScreen() {
             onPress={() =>
               item.student_id
                 ? router.push(`/class/${item.class_id}/student/${item.student_id}`)
-                : setPicking(item.id)
+                : openAssign(item.id)
             }
             pills={
               unassigned
                 ? [
-                    { key: 'assign', label: 'Assign name', kind: 'primary', onPress: () => setPicking(item.id) },
+                    { key: 'assign', label: 'Assign name', kind: 'primary', onPress: () => openAssign(item.id) },
                     { key: 'delete', label: 'Delete', kind: 'ghost', onPress: () => setPending(item) },
                   ]
                 : [
@@ -208,7 +282,7 @@ export default function InboxScreen() {
             trailing={
               unassigned
                 ? [
-                    { key: 'assign', label: 'Assign', tone: 'brand', onPress: () => setPicking(item.id), autoCommit: false },
+                    { key: 'assign', label: 'Assign', tone: 'brand', onPress: () => openAssign(item.id), autoCommit: false },
                   ]
                 : [
                     {
@@ -283,6 +357,7 @@ export default function InboxScreen() {
       ))}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
       <FormSheet visible={Boolean(picking)} title="Who is this?" onClose={() => setPicking(null)}>
+            {rosterLoading && roster.length === 0 ? <WorkingLine /> : null}
             {roster.length > 8 ? (
               <TextField placeholder="Find a student" value={filter} onChangeText={setFilter} />
             ) : null}
@@ -294,7 +369,7 @@ export default function InboxScreen() {
                 onPress={() => picking && void onAssign(picking, student.id)}
               />
             ))}
-            {roster.length > 8 && visibleRoster.length === 0 ? (
+            {!rosterLoading && roster.length > 8 && visibleRoster.length === 0 ? (
               <Text style={[type.meta, { color: colors.mute }]}>No names match that search.</Text>
             ) : null}
       </FormSheet>
@@ -312,6 +387,7 @@ export default function InboxScreen() {
           void markNoteOnly(notePending.id)
             .then(() => {
               setNotePending(null);
+              refreshChrome();
               return load();
             })
             .catch((err) => {
@@ -334,6 +410,7 @@ export default function InboxScreen() {
           void deleteCapture(pending.id)
             .then(() => {
               setPending(null);
+              refreshChrome();
               return load();
             })
             .catch((err) => {

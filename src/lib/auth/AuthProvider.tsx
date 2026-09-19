@@ -108,8 +108,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const mine = await loadMyProfile().catch(() => null);
       setProfile(mine);
       setGrants(await loadGrants().catch(() => grantsFromCapabilities()));
-      if (shouldLoadTeacherRow(mine)) setTeacher(await loadTeacherProfile());
-      else setTeacher(null);
+      if (shouldLoadTeacherRow(mine)) {
+        const loaded = await loadTeacherProfile();
+        // PERF-16: unchanged id + active_class_id must not thrash chrome deps.
+        setTeacher((current) => {
+          if (
+            current &&
+            loaded &&
+            current.id === loaded.id &&
+            current.active_class_id === loaded.active_class_id
+          ) {
+            return current;
+          }
+          return loaded;
+        });
+      } else setTeacher(null);
     } catch {
       // Keep the current teacher row if a silent refresh fails.
     }
