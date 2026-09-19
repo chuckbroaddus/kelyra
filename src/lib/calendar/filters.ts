@@ -88,6 +88,29 @@ export function applyPreset(
   }
 }
 
+
+/**
+ * True when UX filters differ from Reset defaults.
+ * Sport chip / team layers off is the default — not "narrowed" — so an empty
+ * month must not show "Nothing matches these filters" or hide MonthGrid.
+ */
+export function areFiltersNarrowed(
+  chipIds: string[],
+  enabledIds: string[],
+  layers: CalendarLayer[],
+): boolean {
+  const defaults = defaultCategoryChipIds();
+  const chipSet = new Set(chipIds);
+  if (chipSet.size !== defaults.length || defaults.some((id) => !chipSet.has(id))) {
+    return true;
+  }
+  if (!layers.length) return false;
+  const defaultEnabled = defaultEnabledCalendarIds(layers);
+  if (enabledIds.length !== defaultEnabled.length) return true;
+  const enabledSet = new Set(enabledIds);
+  return defaultEnabled.some((id) => !enabledSet.has(id));
+}
+
 /** Client-side filter is never security — server already gated. Used for empty-state copy. */
 export function filterItemsByEnabledLayers<T extends { calendarId: string }>(
   items: T[],

@@ -29,6 +29,7 @@ import {
 import { canCreateOnSeat } from '@/lib/calendar/eventActions';
 import {
   applyPreset,
+  areFiltersNarrowed,
   CATEGORY_CHIPS,
   categoriesForChips,
   FILTER_PRESETS,
@@ -597,10 +598,8 @@ export default function CalendarScreen() {
     }
   };
 
-  const filtersNarrowed =
-    chipIds.length > 0 &&
-    (chipIds.length < CATEGORY_CHIPS.length ||
-      (layers.length > 0 && enabledIds.length < layers.length));
+  // Defaults keep Sport off — that is NOT narrowed (empty month still mounts MonthGrid).
+  const filtersNarrowed = areFiltersNarrowed(chipIds, enabledIds, layers);
   const filteredEmpty =
     loaded && !error && !parentChildMissing && items.length === 0 && filtersNarrowed;
   const naturallyEmpty =
@@ -700,23 +699,7 @@ export default function CalendarScreen() {
         />
       ) : null}
 
-      {/* Hierarchical Up — Year ← Month ← Day (platform back also wired). */}
-      {canZoomUp(activeView) || zoomStack.length > 0 ? (
-        <View style={styles.upRow}>
-          <GhostButton
-            label={
-              activeView === 'day'
-                ? 'Month'
-                : activeView === 'month'
-                  ? 'Year'
-                  : 'Up'
-            }
-            onPress={() => {
-              void zoomUp();
-            }}
-          />
-        </View>
-      ) : null}
+      {/* Hierarchy back = Year/Month chips + platform back (no GhostButton Up row above chips). */}
 
       {/* In-Calendar view switcher (CAL-36 / R4) — quieter secondary; not tray. */}
       <ChipRow compact>
@@ -901,11 +884,10 @@ export default function CalendarScreen() {
         </Text>
       ) : null}
 
-      {/* Month/Year/Day mount even when !loaded so Year→Month never blanks on prefs/load flicker. */}
+      {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
       {(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
       !error &&
-      !parentChildMissing &&
-      !filteredEmpty ? (
+      !parentChildMissing ? (
         activeView === 'week' || activeView === 'multiday' ? (
           <TeacherWeekGrid
             days={gridDays}
@@ -960,11 +942,6 @@ export default function CalendarScreen() {
               setMonthAnchor(iso);
               setMonthSelectedDay(null);
               zoomTo('month');
-            }}
-            onPressDay={(iso) => {
-              setDayAnchor(iso);
-              setMonthAnchor(iso);
-              zoomTo('day');
             }}
           />
         ) : items.length > 0 ? (
@@ -1134,9 +1111,5 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 8,
     ...type.body,
-  },
-  upRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
   },
 });

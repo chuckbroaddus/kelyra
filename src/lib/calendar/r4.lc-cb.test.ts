@@ -101,3 +101,55 @@ test('R4: no tray chrome / no hamburger Calendar restore war', () => {
   const screen = read('src/app/calendar.tsx');
   assert.doesNotMatch(screen, /FloatingTabTray|trayCalendar|restoreHamburgerCalendar/);
 });
+
+test('R4 Year→Month empty: MonthGrid mounts; filter-empty copy does not replace grid', () => {
+  const screen = read('src/app/calendar.tsx');
+  assert.match(screen, /areFiltersNarrowed/);
+  assert.match(screen, /Nothing matches these filters/);
+  assert.match(screen, /Clear filters/);
+  // Mount gate must not suppress grids when filteredEmpty (empty month still paints).
+  const mountMarker = 'Month/Year/Day mount even when';
+  const mountIdx = screen.indexOf(mountMarker);
+  assert.ok(mountIdx > 0, 'mount comment missing');
+  const mountBlock = screen.slice(mountIdx, mountIdx + 400);
+  assert.doesNotMatch(mountBlock, /!filteredEmpty/);
+  assert.match(
+    mountBlock,
+    /\(loaded \|\| activeView === 'month' \|\| activeView === 'year' \|\| activeView === 'day'\)/,
+  );
+  assert.match(screen, /activeView === 'month' \? \([\s\S]*?<MonthGrid/);
+  // Year tap → zoomTo month still present
+  assert.match(screen, /onPressMonth[\s\S]*?zoomTo\('month'\)/);
+});
+
+test('R4 Year card: no per-day zoom; entire card → Month only', () => {
+  const year = read('src/components/calendar/YearGrid.tsx');
+  assert.doesNotMatch(year, /onPressDay/);
+  assert.match(year, /onPressMonth/);
+  // Nested day Pressables removed (card Pressable only).
+  assert.equal((year.match(/<Pressable/g) || []).length, 1);
+  const screen = read('src/app/calendar.tsx');
+  assert.doesNotMatch(screen, /YearGrid[\s\S]*?onPressDay/);
+  assert.match(screen, /<YearGrid[\s\S]*?onPressMonth[\s\S]*?\/>/);
+});
+
+test('R4: no GhostButton Up row (Year/Month label) above VIEW_CHIPS', () => {
+  const screen = read('src/app/calendar.tsx');
+  assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
+  assert.doesNotMatch(
+    screen,
+    /GhostButton[\s\S]{0,120}label=\{[\s\S]{0,80}'Year'[\s\S]{0,80}'Month'/,
+  );
+  // Platform hierarchical back still wired
+  assert.match(screen, /canZoomUp/);
+  assert.match(screen, /setPushedBackHandler/);
+  assert.match(screen, /zoomUp/);
+});
+
+test('R4 Year mobile: last week padded to 7 equal flex cells', () => {
+  const year = read('src/components/calendar/YearGrid.tsx');
+  assert.match(year, /7 - week\.length|length >= 7/);
+  assert.match(year, /minWidth:\s*0/);
+  assert.match(year, /overflow:\s*['"]hidden['"]/);
+  assert.match(year, /flexWrap:\s*['"]nowrap['"]/);
+});

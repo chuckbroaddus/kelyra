@@ -4,12 +4,14 @@ import test from 'node:test';
 import type { CalendarLayer } from './types.ts';
 import {
   applyPreset,
+  areFiltersNarrowed,
   categoriesForChips,
   CATEGORY_CHIPS,
   filterItemsByEnabledLayers,
   toggleChip,
   toggleLayerEnabled,
 } from './filters.ts';
+import { defaultCategoryChipIds, defaultEnabledCalendarIds } from './prefs.ts';
 
 const layers: CalendarLayer[] = [
   {
@@ -103,4 +105,21 @@ test('toggle helpers', () => {
   assert.deepEqual(toggleChip(['academic', 'sport'], 'sport'), ['academic']);
   assert.deepEqual(toggleLayerEnabled(['c', 'w'], 'w'), ['c']);
   assert.deepEqual(toggleLayerEnabled(['c'], 't'), ['c', 't']);
+});
+
+test('areFiltersNarrowed: defaults (sport off) are not narrowed; presets are', () => {
+  const defaults = defaultCategoryChipIds();
+  const defaultEnabled = defaultEnabledCalendarIds(layers);
+  assert.equal(areFiltersNarrowed(defaults, defaultEnabled, layers), false);
+  assert.equal(areFiltersNarrowed(defaults, defaultEnabled, []), false);
+  const school = applyPreset('school_only', layers);
+  assert.equal(
+    areFiltersNarrowed(school.categoryChipIds!, school.enabledCalendarIds!, layers),
+    true,
+  );
+  const reset = applyPreset('reset', layers);
+  assert.equal(
+    areFiltersNarrowed(reset.categoryChipIds!, reset.enabledCalendarIds!, layers),
+    false,
+  );
 });
