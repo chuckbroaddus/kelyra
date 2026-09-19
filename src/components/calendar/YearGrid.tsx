@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radius, type } from '@/constants/theme';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import type { CalendarItem } from '@/lib/calendar/types';
-import { yearMonthBlocks } from '@/lib/calendar/year';
+import { yearMonthBlocks, type YearMonthCell } from '@/lib/calendar/year';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
@@ -46,7 +46,11 @@ export function YearGrid({ year, items, onPressMonth }: Props) {
               </View>
               {block.weeks.map((week, wi) => {
                 // Pad last week to 7 equal cells so mobile columns stay even (no wrap/minWidth blowout).
-                const cells = week.length >= 7 ? week.slice(0, 7) : [...week, ...Array(7 - week.length).fill(null)];
+                // Typed pad: Array.fill(null) is any[] and would widen cell/tint to implicit any.
+                const cells: YearMonthCell[] =
+                  week.length >= 7
+                    ? week.slice(0, 7)
+                    : [...week, ...Array<YearMonthCell>(7 - week.length).fill(null)];
                 return (
                   <View key={`w-${wi}`} style={styles.week}>
                     {cells.map((cell, ci) => {
@@ -61,6 +65,10 @@ export function YearGrid({ year, items, onPressMonth }: Props) {
                           importantForAccessibility="no-hide-descendants"
                         >
                           <Text
+                            // iPhone Year 2-col: ~1/7 of half-phone — two-digit days must not wrap (30≠3/0).
+                            numberOfLines={1}
+                            allowFontScaling={false}
+                            ellipsizeMode="clip"
                             style={[
                               styles.dayNum,
                               {
@@ -127,12 +135,15 @@ const styles = StyleSheet.create({
   },
   dayNum: {
     ...type.meta,
-    fontSize: 11,
+    // ~390/2/7 ≈ 24pt cell; font 9 + no H-pad keeps "30"/"31" on one line.
+    fontSize: 9,
+    lineHeight: 11,
+    paddingHorizontal: 0,
     textAlign: 'center',
     borderRadius: radius.pill,
     overflow: 'hidden',
-    paddingHorizontal: 2,
     maxWidth: '100%',
+    fontVariant: ['tabular-nums'],
   },
   dots: { flexDirection: 'row', gap: 2, height: 4, marginTop: 1, maxWidth: '100%', overflow: 'hidden' },
   dot: { width: 3, height: 3, borderRadius: 1.5 },

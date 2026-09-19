@@ -156,3 +156,14 @@ test('R4 Year mobile: last week padded to 7 equal flex cells', () => {
   assert.match(year, /overflow:\s*['"]hidden['"]/);
   assert.match(year, /flexWrap:\s*['"]nowrap['"]/);
 });
+
+test('R4 Year iPhone: two-digit dayNum does not wrap (numberOfLines=1)', () => {
+  const year = read('src/components/calendar/YearGrid.tsx');
+  // dayNum Text must stay single-line on ~390 native 2-col (30/31 ≠ stacked digits).
+  assert.match(year, /numberOfLines=\{1\}/);
+  assert.match(year, /allowFontScaling=\{false\}/);
+  assert.match(year, /dayNum:[\s\S]*?fontSize:\s*9/);
+  assert.match(year, /dayNum:[\s\S]*?paddingHorizontal:\s*0/);
+  // Still one card Pressable — no nested day buttons.
+  assert.equal((year.match(/<Pressable/g) || []).length, 1);
+});
