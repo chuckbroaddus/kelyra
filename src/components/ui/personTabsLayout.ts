@@ -20,6 +20,21 @@ export const PERSON_TAB_ROW_GAP = 4;
  */
 export type PersonTabLabelPolicy = 'fraction' | 'visibilityReserve';
 
+/**
+ * Morph easing pack (PersonTabs). Default `current` = cubic out grow / cubic in shrink.
+ * Opt-in `cm-linear` = Easing.linear both ways (FoM Class Desk only — no app-wide default change).
+ */
+export type PersonTabMotionPack = 'current' | 'cm-linear';
+
+/** Resolve expand easing kind for grow (selected) / shrink (!selected). */
+export function personTabExpandEasingKind(
+  selected: boolean,
+  motionPack: PersonTabMotionPack = 'current',
+): 'linear' | 'cubic-out' | 'cubic-in' {
+  if (motionPack === 'cm-linear') return 'linear';
+  return selected ? 'cubic-out' : 'cubic-in';
+}
+
 /** Title slot left after hit padding, row end pad, and the 22 glyph when the row has one. */
 export function personTabAvailableTitleWidth(rowWidth: number, glyph = true): number {
   const chrome =

@@ -9,6 +9,7 @@ import {
   PERSON_TAB_ROW_GAP,
   PERSON_TAB_ROW_PAD_END,
   personTabAvailableTitleWidth,
+  personTabExpandEasingKind,
   personTabLabelMax,
   personTabRowHasGlyph,
   personTabScrollX,
@@ -161,4 +162,21 @@ test('default personTabLabelMax policy is visibilityReserve (FoM lock)', () => {
   const def = personTabLabelMax(row, 8, true);
   const reserved = personTabLabelMax(row, 8, true, 'visibilityReserve');
   assert.equal(def, reserved);
+});
+
+test('CM-Linear: motionPack cm-linear is linear both ways; default is Current cubic', () => {
+  assert.equal(personTabExpandEasingKind(true), 'cubic-out');
+  assert.equal(personTabExpandEasingKind(false), 'cubic-in');
+  assert.equal(personTabExpandEasingKind(true, 'current'), 'cubic-out');
+  assert.equal(personTabExpandEasingKind(false, 'current'), 'cubic-in');
+  assert.equal(personTabExpandEasingKind(true, 'cm-linear'), 'linear');
+  assert.equal(personTabExpandEasingKind(false, 'cm-linear'), 'linear');
+});
+
+test('occupancy ceiling ≠ hug slot (short painted title)', () => {
+  const row = 358;
+  const occupancy = personTabLabelMax(row, 8, true, 'visibilityReserve');
+  const hug = personTabTitleSlot(36, occupancy);
+  assert.ok(occupancy > hug, `occupancy=${occupancy} hug=${hug}`);
+  assert.notEqual(occupancy, hug);
 });

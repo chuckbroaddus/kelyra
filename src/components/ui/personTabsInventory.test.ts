@@ -90,3 +90,23 @@ test('FoM default labelPolicy is visibilityReserve on PersonTabs', () => {
   assert.doesNotMatch(read('src/components/ui/FloatingTabTray.tsx'), /from '@\/components\/ui\/PersonTabs'/);
   assert.doesNotMatch(read('src/components/ui/ContextMenuRow.tsx'), /from '@\/components\/ui\/PersonTabs'/);
 });
+
+test('FoM Class Desk opt-in CM-Linear; PersonTabs default stays Current', () => {
+  const pills = read('src/components/ui/PersonTabs.tsx');
+  const classTabs = read('src/components/ui/ClassTabs.tsx');
+  const layout = read('src/components/ui/personTabsLayout.ts');
+  // PersonTabs owns timing; default motionPack = current (cubic out/in)
+  assert.match(pills, /motionPack = 'current'/);
+  assert.match(pills, /personTabExpandEasingKind\(selected, motionPack\)/);
+  assert.match(pills, /chrome\.motion\.personTab/);
+  assert.match(layout, /PersonTabMotionPack = 'current' \| 'cm-linear'/);
+  // Class desk only — mapping-only ClassTabs passes linear opt-in
+  assert.match(classTabs, /export function ClassTabs/);
+  assert.match(classTabs, /motionPack=["']cm-linear["']/);
+  assert.doesNotMatch(classTabs, /Animated\.timing/);
+  // Secondary shelves keep Current (no cm-linear)
+  const deskSpan = classTabs.slice(classTabs.indexOf('export function DeskSpanTabs'));
+  assert.doesNotMatch(deskSpan, /motionPack=["']cm-linear["']/);
+  const gradeView = classTabs.slice(classTabs.indexOf('export function GradebookViewTabs'));
+  assert.doesNotMatch(gradeView, /motionPack=["']cm-linear["']/);
+});

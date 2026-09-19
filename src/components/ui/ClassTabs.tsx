@@ -38,6 +38,8 @@ function asPersonTabs(tabs: ClassDeskTab[]): PersonTab[] {
  * Icon-first class desk tabs. Selected name, everyone else icon-only — same as people.
  * FoM PersonTabs default (visibilityReserve). Layout-hosted so PersonTabs stays
  * mounted across pane nav. Needs Attention: global `tab` + setParams on index.
+ * CM-Linear morph: passes motionPack="cm-linear" only — PersonTabs owns timing
+ * (mapping-only wrapper). Other PersonTabs rows keep Current cubic.
  */
 export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boolean }) {
   const router = useRouter();
@@ -53,6 +55,7 @@ export function ClassTabs({ classId, stacked }: { classId: string; stacked?: boo
       tabs={tabsWithFeedIcon(asPersonTabs(CLASS_TABS), feedIcon)}
       value={value}
       stacked={stacked}
+      motionPack="cm-linear"
       onChange={(key) => {
         if (key === value) return;
         // Same-route index panes: setParams keeps `?tab=` without a replace that

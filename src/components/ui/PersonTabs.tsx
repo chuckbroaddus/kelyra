@@ -22,13 +22,18 @@ import {
   PERSON_TAB_GLYPH,
   PERSON_TAB_HIT_PAD_X,
   PERSON_TAB_ROW_PAD_END,
+  personTabExpandEasingKind,
   personTabLabelMax,
   personTabRowHasGlyph,
   personTabSelectedMaxWidth,
   personTabTitleSlot,
   personTabScrollX,
   type PersonTabLabelPolicy,
+  type PersonTabMotionPack,
 } from '@/components/ui/personTabsLayout';
+
+export type { PersonTabMotionPack } from '@/components/ui/personTabsLayout';
+export { personTabExpandEasingKind } from '@/components/ui/personTabsLayout';
 import { chrome, radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -42,6 +47,12 @@ export type PersonTab = {
   photoName?: string | null;
   badge?: number;
 };
+
+function easingForKind(kind: ReturnType<typeof personTabExpandEasingKind>) {
+  if (kind === 'linear') return Easing.linear;
+  if (kind === 'cubic-out') return Easing.out(Easing.cubic);
+  return Easing.in(Easing.cubic);
+}
 
 type Props = {
   tabs: PersonTab[];
@@ -57,6 +68,11 @@ type Props = {
    * Pass `fraction` only for a documented legacy half-row exception.
    */
   labelPolicy?: PersonTabLabelPolicy;
+  /**
+   * Morph easing. Default `current` (cubic out grow / cubic in shrink) — no app-wide change.
+   * Pass `cm-linear` only where dual-stamped (FoM Class Desk).
+   */
+  motionPack?: PersonTabMotionPack;
 };
 
 /** Icon-only hit (styles.hit minWidth / minHeight). */
@@ -76,6 +92,7 @@ type PillProps = {
   titleWidth: number;
   colors: ThemeColors;
   reduce: boolean;
+  motionPack: PersonTabMotionPack;
   onChange: (key: string) => void;
   onLayoutX: (x: number, width: number) => void;
 };
@@ -88,6 +105,7 @@ function PersonTabPill({
   titleWidth,
   colors,
   reduce,
+  motionPack,
   onChange,
   onLayoutX,
 }: PillProps) {
@@ -116,14 +134,14 @@ function PersonTabPill({
     Animated.timing(expand, {
       toValue: selected ? 1 : 0,
       duration: chrome.motion.personTab,
-      easing: selected ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      easing: easingForKind(personTabExpandEasingKind(selected, motionPack)),
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (!finished) return;
       if (!selected) setShowLabel(false);
       if (selected) setMarqueeReady(true);
     });
-  }, [expand, reduce, selected]);
+  }, [expand, motionPack, reduce, selected]);
 
   // Label clip width: grows/shrinks so first letter reveals first, and the right
   // edge covers the label on collapse (icon stays left-pinned — never clipped).
@@ -219,7 +237,7 @@ function PersonTabPill({
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve' }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve', motionPack = 'current' }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
@@ -316,6 +334,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
             titleWidth={titleByKey[tab.key] ?? 0}
             colors={colors}
             reduce={reduce}
+            motionPack={motionPack}
             onChange={onChange}
             onLayoutX={(x, width) => {
               xOf.current[tab.key] = x;
