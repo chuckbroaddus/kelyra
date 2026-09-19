@@ -21,15 +21,16 @@ export const PERSON_TAB_ROW_GAP = 4;
 export type PersonTabLabelPolicy = 'fraction' | 'visibilityReserve';
 
 /**
- * Morph easing pack (PersonTabs). Default `current` = cubic out grow / cubic in shrink.
- * Opt-in `cm-linear` = Easing.linear both ways (FoM Class Desk only — no app-wide default change).
+ * Morph easing pack (PersonTabs). Default `cm-linear` = Easing.linear both ways
+ * (FoM CM-Linear lock — every destination row, all hats). Documented opt-out
+ * `current` = cubic out grow / cubic in shrink — do not use on destination rows.
  */
 export type PersonTabMotionPack = 'current' | 'cm-linear';
 
 /** Resolve expand easing kind for grow (selected) / shrink (!selected). */
 export function personTabExpandEasingKind(
   selected: boolean,
-  motionPack: PersonTabMotionPack = 'current',
+  motionPack: PersonTabMotionPack = 'cm-linear',
 ): 'linear' | 'cubic-out' | 'cubic-in' {
   if (motionPack === 'cm-linear') return 'linear';
   return selected ? 'cubic-out' : 'cubic-in';

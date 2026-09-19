@@ -3450,7 +3450,7 @@ Unselected is icon-only. Only the selected tab shows its English name.
 | **Select another** | New tab icon highlights (`brand`) immediately; tab **grows** width; icon stays left; label **reveals LTR** (first letters first) until max width; **then** marquee if the title still overflows. |
 | **Deselect (old)** | Icon **mutes immediately** (`mute`) on deselect — do not wait for the shrink to finish. Tab **shrinks**; label **hides right→left** under the right edge (clip, do not unmount at deselect start). Shrink stops at icon-only width (**never clip the glyph**). |
 | **Skip / adjacent** | Adjacent **or** skip 2+ tabs either direction: animate **only** old↔new; intermediates stay collapsed icon-only for the whole duration. |
-| **Duration** | `chrome.motion.personTab` = **975**. Cubic ease-out on grow, ease-in on shrink. No spring. No Reanimated. |
+| **Duration / easing** | `chrome.motion.personTab` = **975**. **CM-Linear** default: `Easing.linear` on grow **and** shrink (same rate both ways). Documented opt-out `motionPack="current"` = cubic ease-out grow / ease-in shrink — do **not** use on destination rows. No spring. No Reanimated. |
 | **Reduce Motion** | `setValue` / duration 0; `scrollTo(..., animated: false)`. |
 
 Soft-fill (`brandSoft`) opacity tracks the expand value. Marquee only after the selected pill reaches max width (`marqueeReady`). Helper: `src/components/ui/personTabsLayout.ts`. **Title-slot policy (FoM lock 2026-09-17):** default is `visibilityReserve` on **every** destination `PersonTabs` row (all hats). Selected pill **hugs** painted title (`personTabTitleSlot`); marquee ceiling reserves collapsed 44-hits so **min(3, n)** tabs stay on-screen without scroll for those; extra row width shows more tabs; 2-tab shelves keep both visible. Legacy `fraction` (half-row) is opt-out only — do not use for destination rows. Class desk `PersonTabs` is hosted in `src/app/class/[id]/_layout.tsx` so pane nav does not remount the morph row. Full inventory + exceptions: **§38**.
@@ -4133,7 +4133,7 @@ Matcher still never inserts a student. Nothing is a grade until the teacher Appr
 
 ## 38. Unified tab-row morph (PersonTabs) — 2026-09-12
 
-**Product lock (Chuck, FoM 2026-09-17).** Every horizontal **destination / pane** tab row in the app follows the same morph model as FoM ClassTabs: hug painted title, marquee ceiling so **min(3, n)** stay on-screen, `personTabScrollX` center/pair scroll, duration `chrome.motion.personTab` = **975 ms**. Default `PersonTabs` `labelPolicy` = `visibilityReserve`. Prefer reuse of `PersonTabs` over forking animation. Spec behavior: §32.2. Lock note: `notes/company/class-tabs-morph-appwide-lock.md`.
+**Product lock (Chuck, FoM 2026-09-17 · CM-Linear default 2026-09-18).** Every horizontal **destination / pane** tab row in the app follows the same morph model as FoM ClassTabs: hug painted title, marquee ceiling so **min(3, n)** stay on-screen, `personTabScrollX` center/pair scroll, duration `chrome.motion.personTab` = **975 ms**, and **CM-Linear** easing (`Easing.linear` grow **and** shrink). Default `PersonTabs` `labelPolicy` = `visibilityReserve`. Default `PersonTabs` `motionPack` = `cm-linear`. Prefer reuse of `PersonTabs` over forking animation. Spec behavior: §32.2. Lock note: `notes/company/class-tabs-morph-appwide-lock.md`.
 
 ### 38.1 Canonical primitive
 
@@ -4148,7 +4148,7 @@ Matcher still never inserts a student. Nothing is a grade until the teacher Appr
 | Counts toward | `src/components/ui/GradeTermTabs.tsx` → `PersonTabs` |
 | Student class shelf | `StudentClassTabs` in `StudentWorkList.tsx` → `PersonTabs` |
 
-**ClassTabs inherits PersonTabs** — verify and keep that. Wrappers may only map tabs / routing; they must not own `Animated.timing` expand. Title math + scroll: `personTabLabelMax(..., 'visibilityReserve')` (default) + `personTabScrollX` — same for every inventory row below.
+**ClassTabs inherits PersonTabs** — verify and keep that. Wrappers may only map tabs / routing; they must not own `Animated.timing` expand. Title math + scroll + easing: `personTabLabelMax(..., 'visibilityReserve')` (default) + `personTabScrollX` + default `motionPack='cm-linear'` — same for every inventory row below. Do not pass `motionPack="current"` on destination rows.
 
 ### 38.2 Inventory (destination tab rows)
 
@@ -4189,7 +4189,7 @@ If a future control is a **pane switcher** (one selected destination, icon-first
 
 ### 38.4 Future copy rule
 
-New tab rows copy **PersonTabs** (or a one-line wrapper that only supplies `tabs` / `value` / `onChange`) and inherit the FoM default (`visibilityReserve` + `personTabScrollX`). Do not reimplement grow/shrink, LTR reveal, RTL cover, mute-on-deselect, or marquee-after-expand. Do not pass `labelPolicy="fraction"` on destination rows. Tests: `personTabsLayout.test.ts`, `personTabsInventory.test.ts`, `teachUxLeftovers.test.ts` (L3).
+New tab rows copy **PersonTabs** (or a one-line wrapper that only supplies `tabs` / `value` / `onChange`) and inherit the FoM defaults (`visibilityReserve` + `personTabScrollX` + `motionPack='cm-linear'`). Do not reimplement grow/shrink, LTR reveal, RTL cover, mute-on-deselect, or marquee-after-expand. Do not pass `labelPolicy="fraction"` or `motionPack="current"` on destination rows. Tests: `personTabsLayout.test.ts`, `personTabsInventory.test.ts`, `teachUxLeftovers.test.ts` (L3).
 
 ```
 src/components/ui/PersonTabs.tsx

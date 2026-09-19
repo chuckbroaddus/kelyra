@@ -164,13 +164,13 @@ test('default personTabLabelMax policy is visibilityReserve (FoM lock)', () => {
   assert.equal(def, reserved);
 });
 
-test('CM-Linear: motionPack cm-linear is linear both ways; default is Current cubic', () => {
-  assert.equal(personTabExpandEasingKind(true), 'cubic-out');
-  assert.equal(personTabExpandEasingKind(false), 'cubic-in');
-  assert.equal(personTabExpandEasingKind(true, 'current'), 'cubic-out');
-  assert.equal(personTabExpandEasingKind(false, 'current'), 'cubic-in');
+test('CM-Linear: default and cm-linear are linear both ways; current is cubic opt-out', () => {
+  assert.equal(personTabExpandEasingKind(true), 'linear');
+  assert.equal(personTabExpandEasingKind(false), 'linear');
   assert.equal(personTabExpandEasingKind(true, 'cm-linear'), 'linear');
   assert.equal(personTabExpandEasingKind(false, 'cm-linear'), 'linear');
+  assert.equal(personTabExpandEasingKind(true, 'current'), 'cubic-out');
+  assert.equal(personTabExpandEasingKind(false, 'current'), 'cubic-in');
 });
 
 test('occupancy ceiling ≠ hug slot (short painted title)', () => {
