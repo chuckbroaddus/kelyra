@@ -20,7 +20,20 @@ export const DIARY_PRESENCE_COUNT_CAP = 9;
 export type DiaryPresenceMark =
   | { kind: 'none' }
   | { kind: 'dot' }
+  | { kind: 'tick' }
   | { kind: 'count'; label: string };
+
+/** Layout B: web split threshold (PersonTabs full width, then month | stream). */
+export const DAYCHROME_WEB_SPLIT_MIN = 720;
+
+export type DayChromeLayout = 'phone-stack' | 'web-split';
+
+/** Phone <720: month above PersonTabs. Web ≥720: tabs full width, then month|stream. */
+export function dayChromeLayout(width: number): DayChromeLayout {
+  return width >= DAYCHROME_WEB_SPLIT_MIN ? 'web-split' : 'phone-stack';
+}
+
+export const DIARY_LEDGER_EMPTY_DAY_COPY = 'No ledger actions on this day.';
 
 export type JournalMonthModel = {
   year: number;
@@ -149,4 +162,67 @@ export function parentTwinsFailClosed(
   focusedChildId: string | null | undefined,
 ): boolean {
   return childCount >= 2 && !focusedChildId;
+}
+
+
+/** Ledger presence by local calendar day of created_at (YYYY-MM-DD prefix). */
+export function ledgerPresenceCountByDay(
+  rows: Array<{ created_at: string }>,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    const day = (row.created_at ?? '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    map.set(day, (map.get(day) ?? 0) + 1);
+  }
+  return map;
+}
+
+/**
+ * Follow-active-tab Ledger marks — mute tick (shape ≠ journal dot); count when >1.
+ * Never roleTint.
+ */
+export function ledgerPresenceMark(count: number): DiaryPresenceMark {
+  if (!Number.isFinite(count) || count <= 0) return { kind: 'none' };
+  if (count === 1) return { kind: 'tick' };
+  if (count >= DIARY_PRESENCE_COUNT_CAP) return { kind: 'count', label: '9+' };
+  return { kind: 'count', label: String(count) };
+}
+
+/**
+ * Ledger agenda anchored on selectedDay (created_at day).
+ * Empty selected day shows empty card — never a New entry CTA (caller).
+ */
+export function buildLedgerAgendaGroups<T extends { created_at: string }>(
+  rows: T[],
+  selectedDay: string,
+  sortOldest: boolean,
+): JournalAgendaGroup<T>[] {
+  const byDay = new Map<string, T[]>();
+  for (const row of rows) {
+    const day = (row.created_at ?? '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    const list = byDay.get(day) ?? [];
+    list.push(row);
+    byDay.set(day, list);
+  }
+
+  const otherDays = [...byDay.keys()].filter((day) => day !== selectedDay);
+  otherDays.sort((a, b) => (sortOldest ? (a < b ? -1 : a > b ? 1 : 0) : a > b ? -1 : a < b ? 1 : 0));
+
+  const selectedRows = byDay.get(selectedDay) ?? [];
+  const groups: JournalAgendaGroup<T>[] = [
+    {
+      day: selectedDay,
+      rows: selectedRows,
+      isSelected: true,
+      empty: selectedRows.length === 0,
+    },
+  ];
+  for (const day of otherDays) {
+    const dayRows = byDay.get(day) ?? [];
+    if (!dayRows.length) continue;
+    groups.push({ day, rows: dayRows, isSelected: false, empty: false });
+  }
+  return groups;
 }

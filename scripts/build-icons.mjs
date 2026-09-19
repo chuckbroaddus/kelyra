@@ -312,17 +312,77 @@ const RECIPES = {
     roundRect(p, 6.4, 8.4, 14.0, 11.0, 1.2, ST, false);
     roundRect(p, 6.4, 6.6, 6.0, 2.4, 0.8, ST, false);
   },
-  /** Diary tray + Settings Diary tab — bound notebook. */
+  /**
+   * Diary tray + Settings Diary tab — open book lying on a table.
+   * Two perspective pages + gutter; ribbon bookmark inserted BETWEEN pages
+   * (not a closed notebook; not a ribbon merely on top of one page).
+   * Distinct from work/file/classes/compose.
+   */
   diary: (p) => {
-    roundRect(p, 5.0, 3.0, 14.0, 18.0, 1.4, ST, false);
-    line(p, 9.0, 3.0, 9.0, 21.0, ST);
-    line(p, 11.4, 8.0, 16.4, 8.0, ST);
-    line(p, 11.4, 11.6, 16.4, 11.6, ST);
-    line(p, 11.4, 15.2, 15.0, 15.2, ST);
+    // table surface (ellipse via poly) under the book
+    poly(
+      p,
+      [
+        [2.2, 18.6],
+        [4.0, 17.4],
+        [12.0, 16.8],
+        [20.0, 17.4],
+        [21.8, 18.6],
+        [20.0, 19.8],
+        [12.0, 20.4],
+        [4.0, 19.8],
+      ],
+      ST,
+      false,
+    );
+    // left page (perspective trapezoid)
+    poly(
+      p,
+      [
+        [3.2, 9.2],
+        [11.2, 7.6],
+        [11.2, 16.4],
+        [3.6, 17.2],
+      ],
+      ST,
+      false,
+    );
+    // right page (perspective trapezoid)
+    poly(
+      p,
+      [
+        [12.8, 7.6],
+        [20.8, 9.2],
+        [20.4, 17.2],
+        [12.8, 16.4],
+      ],
+      ST,
+      false,
+    );
+    // gutter / binding between pages
+    line(p, 12.0, 7.8, 12.0, 16.6, ST);
+    // page ruling (read as open pages)
+    line(p, 5.0, 11.0, 9.6, 10.4, ST);
+    line(p, 5.2, 13.2, 9.6, 12.6, ST);
+    line(p, 14.4, 10.4, 19.0, 11.0, ST);
+    line(p, 14.4, 12.6, 18.8, 13.2, ST);
+    // ribbon bookmark INSERTTED in the binding between pages (extends above + into gutter)
+    poly(
+      p,
+      [
+        [11.15, 4.2],
+        [12.85, 4.2],
+        [12.85, 12.2],
+        [12.0, 13.4],
+        [11.15, 12.2],
+      ],
+      ST,
+      true,
+    );
   },
   /**
    * G1 calendar tray glyph — month pad + 2 binding rings + day-dot grid.
-   * NEVER reuse today (house). Distinct from diary (notebook).
+   * NEVER reuse today (house). Distinct from diary (open book on table).
    */
   calendar: (p) => {
     // month pad body

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radius, type } from '@/constants/theme';
 import {
   journalMonthWeeks,
+  ledgerPresenceMark,
   presenceMark,
   type JournalMonthModel,
 } from '@/lib/diary/dayBrowse';
@@ -12,8 +13,13 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 type Props = {
   month: JournalMonthModel;
   selectedDay: string;
-  /** Owner-only entry counts by ISO day (PR-BOTH). Never roleTint. */
+  /** Owner-only counts by ISO day. Never roleTint. */
   presenceByDay: Map<string, number>;
+  /**
+   * Follow-active-tab: journal = PR-BOTH dots; ledger = distinct mute ticks.
+   * Shape of ledger mark must ≠ journal dot.
+   */
+  presenceMode?: 'journal' | 'ledger';
   onSelectDay: (iso: string) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
@@ -28,6 +34,7 @@ export function JournalMonthGrid({
   month,
   selectedDay,
   presenceByDay,
+  presenceMode = 'journal',
   onSelectDay,
   onPrevMonth,
   onNextMonth,
@@ -92,7 +99,9 @@ export function JournalMonthGrid({
             const inMonth = cell.iso.slice(0, 7) === monthKey;
             const isToday = cell.iso === today;
             const isSelected = cell.iso === selectedDay;
-            const mark = presenceMark(presenceByDay.get(cell.iso) ?? 0);
+            const count = presenceByDay.get(cell.iso) ?? 0;
+            const mark =
+              presenceMode === 'ledger' ? ledgerPresenceMark(count) : presenceMark(count);
             return (
               <Pressable
                 key={cell.iso}
@@ -129,6 +138,8 @@ export function JournalMonthGrid({
                 </Text>
                 {mark.kind === 'dot' ? (
                   <View style={[styles.dot, { backgroundColor: colors.mute }]} />
+                ) : mark.kind === 'tick' ? (
+                  <View style={[styles.tick, { backgroundColor: colors.mute }]} />
                 ) : mark.kind === 'count' ? (
                   <Text style={[styles.cnt, { color: colors.mute }]}>{mark.label}</Text>
                 ) : (
@@ -204,6 +215,13 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginTop: 3,
+  },
+  /** Ledger mute mark — short bar, shape ≠ journal round dot. */
+  tick: {
+    width: 8,
+    height: 2,
+    borderRadius: 1,
+    marginTop: 4,
   },
   cnt: {
     ...type.meta,
