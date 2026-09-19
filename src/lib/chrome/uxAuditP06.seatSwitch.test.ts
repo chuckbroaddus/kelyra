@@ -20,8 +20,8 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
+const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
 
 test('P-06 Option A: drawer other-seat rows + a11y; My children unchanged; no header chip', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
@@ -52,7 +52,7 @@ test('P-06 settle: teacher seat never office tray nouns or office People altitud
   assert.ok(!trayKeysForRole(teacherRole!).includes('manage'));
   assert.ok(!trayKeysForRole(teacherRole!).includes('classes'));
   assert.ok(!trayKeysForRole(teacherRole!).includes('ride'));
-  assert.equal(trayKeysForRole(teacherRole!).length, 4);
+  assert.equal(trayKeysForRole(teacherRole!).length, 5);
 
   const title = headerTitleForSeatRoot(teacherRole!);
   assert.equal(title, 'Classes');
@@ -97,8 +97,8 @@ test('P-06: never merge trays; remount key is role; no sixth tab', () => {
   const merged = new Set([...teacher, ...office]);
   assert.ok(merged.size > teacher.length);
   assert.ok(merged.size > office.length);
-  assert.equal(teacher.length, 4);
-  assert.equal(office.length, 5);
+  assert.equal(teacher.length, 5);
+  assert.equal(office.length, 6);
   // tabsFor is single-role only — never concat in the builder.
   assert.deepEqual(
     tabsFor('teacher', '/', 'c1', 0).map((t) => t.key),

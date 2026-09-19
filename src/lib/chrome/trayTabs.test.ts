@@ -10,15 +10,15 @@ function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), 'utf8');
 }
 
-const TEACHER_KEYS = ['home', 'inbox', 'diary', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'ask'];
-const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'ask'];
-const PARENT_KEYS = ['home', 'ride', 'ask'];
+const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
+const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'calendar', 'ask'];
+const PARENT_KEYS = ['home', 'ride', 'calendar', 'ask'];
 
 test('A1 pure teacher tray: four keys, no office People/Manage', () => {
   const keys = trayKeysForRole('teacher');
   assert.deepEqual(keys, TEACHER_KEYS);
-  assert.equal(keys.length, 4);
+  assert.equal(keys.length, 5);
   assert.ok(!keys.includes('people'));
   assert.ok(!keys.includes('manage'));
   assert.ok(!keys.includes('classes'));
@@ -28,7 +28,7 @@ test('A1 pure teacher tray: four keys, no office People/Manage', () => {
 test('A1 office seat tray unchanged for superintendent and administrator', () => {
   assert.deepEqual(trayKeysForRole('superintendent'), OFFICE_KEYS);
   assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
-  assert.equal(trayKeysForRole('superintendent').length, 5);
+  assert.equal(trayKeysForRole('superintendent').length, 6);
 });
 
 test('A1 dual-hat seats never merge tray key sets', () => {
@@ -57,16 +57,16 @@ test('ST-A / TR-07: teacher Class tray dropped; setup stays demoted route via ha
   assert.ok(diary);
   assert.equal(diary.href, '/diary');
   assert.equal(diary.label, 'Diary');
-  assert.equal(tabs.length, 4);
+  assert.equal(tabs.length, 5);
   assert.deepEqual(
     tabs.map((tab) => tab.label),
-    ['Desk', 'Needs Attention', 'Diary', 'Kelyra'],
+    ['Desk', 'Needs Attention', 'Diary', 'Calendar', 'Kelyra'],
   );
 });
 
 test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
-  assert.equal(trayKeysForRole('teacher').length, 4);
+  assert.equal(trayKeysForRole('teacher').length, 5);
   const studentClass = tabsFor('student', '/student/class', null, 0).find((tab) => tab.key === 'class');
   assert.equal(studentClass?.href, '/student/class');
   assert.ok(!trayKeysForRole('teacher').includes('class'));
@@ -147,4 +147,35 @@ test('Desk-active-on-cluster: setup/settings/syllabus light Desk, never Diary or
     assert.equal(tabs.find((tab) => tab.key === 'home')?.active, true, path);
     assert.equal(tabs.find((tab) => tab.key === 'diary')?.active, false, path);
   }
+});
+
+test('CT-A: calendar before ask on every seat; ask last', () => {
+  for (const role of ['teacher', 'superintendent', 'administrator', 'student', 'parent']) {
+    const keys = trayKeysForRole(role);
+    assert.ok(keys.includes('calendar'), role);
+    assert.equal(keys.at(-1), 'ask', role);
+    assert.ok(keys.indexOf('calendar') < keys.indexOf('ask'), role);
+  }
+  const cal = tabsFor('teacher', '/calendar', 'c1', 0).find((tab) => tab.key === 'calendar');
+  assert.equal(cal?.icon, 'calendar');
+  assert.equal(cal?.label, 'Calendar');
+  assert.equal(cal?.href, '/calendar');
+  assert.equal(cal?.active, true);
+  assert.equal(tabsFor('administrator', '/calendar', null, 0).find((tab) => tab.key === 'calendar')?.active, true);
+  assert.equal(tabsFor('administrator', '/calendar', null, 0).find((tab) => tab.key === 'manage')?.active, false);
+});
+
+test('CT-A: G1 calendar icon wired; hamburger Calendar rows dropped; class muted link kept', () => {
+  const icons = read('scripts/build-icons.mjs');
+  assert.match(icons, /calendar:\s*\(p\)\s*=>/);
+  assert.match(icons, /NEVER reuse today/);
+  assert.match(icons, /binding rings/);
+  const names = read('src/components/ui/Icon.tsx');
+  assert.match(names, /\| 'calendar'/);
+  const drawer = read('src/components/ui/HamburgerDrawer.tsx');
+  assert.equal(drawer.includes("matches('Calendar'"), false);
+  assert.equal(/label="Calendar"/.test(drawer), false);
+  const classPage = read('src/app/class/[id]/index.tsx');
+  assert.match(classPage, /Open Calendar/);
+  assert.match(classPage, /calendarLinkText/);
 });

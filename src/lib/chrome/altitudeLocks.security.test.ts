@@ -39,7 +39,7 @@ test('SEC-01 also_parent: parent seat tray === parent (incl Ride); never merge o
   const teacherParent = { role: 'teacher' as const, parent_id: 'p1' };
   assert.equal(resolveStaffChromeRole(teacherParent, null), 'teacher');
   assert.equal(resolveStaffChromeRole(teacherParent, 'parent'), 'parent');
-  assert.deepEqual(trayKeysForRole('parent'), ['home', 'ride', 'ask']);
+  assert.deepEqual(trayKeysForRole('parent'), ['home', 'ride', 'calendar', 'ask']);
   assert.deepEqual(
     trayKeysForRole(resolveStaffChromeRole(teacherParent, 'parent')!),
     trayKeysForRole('parent'),
@@ -91,7 +91,7 @@ test('SEC-02 / A3: teacher seat home has no office PersonTabs or class-create UI
 });
 
 test('SEC-05: no sixth teacher tray tab; no student /todo skin on teacher', () => {
-  assert.equal(trayKeysForRole('teacher').length, 4);
+  assert.equal(trayKeysForRole('teacher').length, 5);
   assert.ok(!trayKeysForRole('teacher').includes('grades'));
   assert.ok(!trayKeysForRole('teacher').includes('todo'));
   assert.ok(!trayKeysForRole('teacher').includes('class'));
@@ -156,8 +156,8 @@ test('no EXPO_PUBLIC secrets introduced by altitude files', () => {
 });
 
 test('SEC-05/06 Phase B: ST-A Class tray dropped; setup via hamburger; Family stays drawer; no sixth', () => {
-  assert.equal(trayKeysForRole('teacher').length, 4);
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
+  assert.equal(trayKeysForRole('teacher').length, 5);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'calendar', 'ask']);
   assert.ok(!trayKeysForRole('teacher').includes('class'));
   const tray = read('src/lib/chrome/trayTabs.ts');
   const teacherBlock = tray.slice(tray.indexOf("label: 'Desk'"));

@@ -28,7 +28,7 @@ test('L1: Needs count gates on chrome seat role===teacher, not isOfficeRole(prof
   const dual = { role: 'administrator' as const, also_teacher: true };
   assert.equal(resolveStaffChromeRole(dual, 'teacher'), 'teacher');
   assert.equal(resolveStaffChromeRole(dual, 'office'), 'administrator');
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'calendar', 'ask']);
   assert.ok(!trayKeysForRole('administrator').includes('inbox'));
 });
 
@@ -108,7 +108,7 @@ test('L6: Ask FALLBACK says Needs in askPrompt + ai-dev + ask-assistant', () => 
 });
 
 test('Phase A–D intact: four tray; CLASS_TABS ≤8; Class setup; Needs; canCreateClass', () => {
-  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'ask']);
+  assert.deepEqual(trayKeysForRole('teacher'), ['home', 'inbox', 'diary', 'calendar', 'ask']);
   assert.equal(tabsFor('teacher', '/inbox', 'c1', 0).find((t) => t.key === 'inbox')?.label, 'Needs Attention');
   assert.equal(tabsFor('teacher', '/', 'abc', 0).find((t) => t.key === 'class'), undefined);
   assert.equal(tabsFor('teacher', '/', 'abc', 0).find((t) => t.key === 'diary')?.href, '/diary');
