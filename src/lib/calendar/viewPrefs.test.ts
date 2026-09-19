@@ -10,13 +10,11 @@ import {
   zoomParentView,
 } from './viewPrefs.ts';
 
-test('defaultViewFor: phone Year; teacher web Week; office web Month (R4 L-C)', () => {
-  assert.equal(defaultViewFor('phone', 'teacher'), 'year');
-  assert.equal(defaultViewFor('phone', 'parent'), 'year');
-  assert.equal(defaultViewFor('phone', 'student'), 'year');
-  assert.equal(defaultViewFor('web', 'teacher'), 'week');
-  assert.equal(defaultViewFor('web', 'office'), 'month');
-  assert.equal(defaultViewFor('web', 'student'), 'agenda');
+test('defaultViewFor: phone and web Year for every seat', () => {
+  for (const seat of ['teacher', 'office', 'parent', 'student'] as const) {
+    assert.equal(defaultViewFor('phone', seat), 'year');
+    assert.equal(defaultViewFor('web', seat), 'year');
+  }
 });
 
 test('calViewPrefsKey scopes by profile · seat · device · child', () => {
@@ -30,10 +28,10 @@ test('calViewPrefsKey scopes by profile · seat · device · child', () => {
   );
 });
 
-test('parseCalViewPrefsJson accepts views + days + modes; migrates v1', () => {
+test('parseCalViewPrefsJson accepts views + days + modes; migrates v1/v2', () => {
   const ok = parseCalViewPrefsJson(
     JSON.stringify({
-      version: 2,
+      version: 3,
       view: 'year',
       days: 3,
       monthMode: 'list',
@@ -46,6 +44,7 @@ test('parseCalViewPrefsJson accepts views + days + modes; migrates v1', () => {
   assert.equal(ok.days, 3);
   assert.equal(ok.monthMode, 'list');
   assert.equal(ok.dayMode, 'list');
+  assert.equal(ok.version, 3);
 
   const v1 = parseCalViewPrefsJson(
     JSON.stringify({ version: 1, view: 'month', days: 5 }),
@@ -55,7 +54,7 @@ test('parseCalViewPrefsJson accepts views + days + modes; migrates v1', () => {
   assert.equal(v1.view, 'month');
   assert.equal(v1.monthMode, 'compact');
   assert.equal(v1.dayMode, 'single');
-  assert.equal(v1.version, 2);
+  assert.equal(v1.version, 3);
 
   const multi = parseCalViewPrefsJson(
     JSON.stringify({ version: 1, view: 'multiday', days: 5 }),
@@ -67,7 +66,7 @@ test('parseCalViewPrefsJson accepts views + days + modes; migrates v1', () => {
 
   const bad = parseCalViewPrefsJson('not-json', 'web', 'office');
   assert.deepEqual(bad, emptyViewPrefs('web', 'office'));
-  assert.equal(bad.view, 'month');
+  assert.equal(bad.view, 'year');
 
   const badDays = parseCalViewPrefsJson(
     JSON.stringify({ version: 1, view: 'week', days: 4 }),
@@ -76,6 +75,50 @@ test('parseCalViewPrefsJson accepts views + days + modes; migrates v1', () => {
   );
   assert.equal(badDays.view, 'week');
   assert.equal(badDays.days, 5);
+});
+
+test('parseCalViewPrefsJson: web week/month/agenda at v<3 migrate to year', () => {
+  for (const view of ['week', 'month', 'agenda'] as const) {
+    for (const ver of [1, 2] as const) {
+      const migrated = parseCalViewPrefsJson(
+        JSON.stringify({ version: ver, view, days: 5 }),
+        'web',
+        'teacher',
+      );
+      assert.equal(migrated.view, 'year', `web ${view} @v${ver} → year`);
+      assert.equal(migrated.version, 3);
+    }
+  }
+
+  // day / year / multiday stay; already-year stays
+  for (const view of ['day', 'year', 'multiday'] as const) {
+    const kept = parseCalViewPrefsJson(
+      JSON.stringify({ version: 2, view, days: 3 }),
+      'web',
+      'office',
+    );
+    assert.equal(kept.view, view, `web ${view} @v2 preserved`);
+    assert.equal(kept.version, 3);
+  }
+
+  // After bump, intentional week/month/agenda at v3 are preserved
+  for (const view of ['week', 'month', 'agenda'] as const) {
+    const kept = parseCalViewPrefsJson(
+      JSON.stringify({ version: 3, view, days: 5 }),
+      'web',
+      'teacher',
+    );
+    assert.equal(kept.view, view, `web ${view} @v3 preserved`);
+  }
+
+  // Phone week/month/agenda at v2 are not force-migrated (phone already defaulted year)
+  const phoneWeek = parseCalViewPrefsJson(
+    JSON.stringify({ version: 2, view: 'week', days: 5 }),
+    'phone',
+    'teacher',
+  );
+  assert.equal(phoneWeek.view, 'week');
+  assert.equal(phoneWeek.version, 3);
 });
 
 test('zoom ladder Day → Month → Year; no invented RTL gesture', () => {
@@ -92,4 +135,11 @@ test('empty phone prefs default Year + compact/single modes', () => {
   assert.equal(p.view, 'year');
   assert.equal(p.monthMode, 'compact');
   assert.equal(p.dayMode, 'single');
+  assert.equal(p.version, 3);
+});
+
+test('empty web prefs default Year for every seat', () => {
+  for (const seat of ['teacher', 'office', 'parent', 'student'] as const) {
+    assert.equal(emptyViewPrefs('web', seat).view, 'year');
+  }
 });

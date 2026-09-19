@@ -7,10 +7,13 @@ function read(rel: string): string {
   return readFileSync(new URL(rel, root), 'utf8');
 }
 
-test('R4 L-C: phone default Year in viewPrefs', () => {
+test('R4 L-C: phone and web default Year in viewPrefs (all seats)', () => {
   const prefs = read('src/lib/calendar/viewPrefs.ts');
-  assert.match(prefs, /deviceClass === 'phone'\) return 'year'/);
-  assert.doesNotMatch(prefs, /deviceClass === 'phone'\) return 'agenda'/);
+  assert.match(prefs, /return 'year'/);
+  assert.doesNotMatch(prefs, /seat === 'teacher'\) return 'week'/);
+  assert.doesNotMatch(prefs, /seat === 'office'\) return 'month'/);
+  assert.doesNotMatch(prefs, /return 'agenda'/);
+  assert.match(prefs, /CAL_VIEW_PREFS_VERSION = 3/);
 });
 
 test('R4 L-C: Year→Month→Day zoom + hierarchical back (no RTL-only gesture)', () => {
