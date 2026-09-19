@@ -10,7 +10,7 @@ export type CalendarViewId = 'agenda' | 'day' | 'week' | 'month' | 'year' | 'mul
 /** Month presentation — Compact + List only (CAL-R4 C-B). No Stacked/Detail stubs. */
 export type MonthMode = 'compact' | 'list';
 
-/** Day presentation — Single Day + List (CAL-R4 C-B). Agenda chip stays separate. */
+/** Day presentation — Single Day + List (CAL-R4 C-B). Day List lives in the gear customizer. */
 export type DayMode = 'single' | 'list';
 
 export type CalViewPrefsV1 = {

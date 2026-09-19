@@ -21,8 +21,8 @@ type Props = {
 };
 
 /**
- * CAL-R4 C-B view customizer — Month Compact|List, Day Single|List.
- * No Stacked or Detail stubs. Agenda remains its own view chip.
+ * CAL-R4 C-B view customizer — Month Compact|List, Day Single|List (Day List lives here).
+ * No Stacked or Detail stubs. Agenda is not a chip-row entry (Day List stays in gear).
  */
 export function ViewCustomizeSheet({
   visible,
@@ -92,7 +92,8 @@ export function ViewCustomizeSheet({
           />
         </ChipRow>
         <Text style={[styles.hint, { color: colors.mute }]}>
-          Agenda stays on its own chip. Use Year → Month → Day tap-zoom for hierarchy.
+          Day List stays here in the customizer. Chip row is Year · Month · Week · Day. Use
+          Year → Month → Day tap-zoom for hierarchy.
         </Text>
         <View style={styles.footer}>
           <GhostButton label="Done" onPress={onClose} />
