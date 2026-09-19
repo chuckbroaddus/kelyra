@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clampMultidayCount, isMultidayCount, type MultidayCount } from './multiday.ts';
 import type { CalendarSeat } from './types.ts';
 
-export const CAL_VIEW_PREFS_VERSION = 2 as const;
+export const CAL_VIEW_PREFS_VERSION = 3 as const;
 
 export type CalendarViewId = 'agenda' | 'day' | 'week' | 'month' | 'year' | 'multiday';
 
@@ -37,15 +37,14 @@ export function calViewPrefsKey(
 }
 
 /**
- * CAL-R4 L-C: phone default Year.
- * Web holds R3: teacher Week; office Month; else Agenda.
- * Desk ≠ Year (Desk is a different route).
+ * Calendar default is Year for phone and web, every seat.
+ * Desk ≠ Year (Desk is a different route — do not change desk).
  */
-export function defaultViewFor(deviceClass: 'phone' | 'web', seat: CalendarSeat): CalendarViewId {
-  if (deviceClass === 'phone') return 'year';
-  if (seat === 'office') return 'month';
-  if (seat === 'teacher') return 'week';
-  return 'agenda';
+export function defaultViewFor(
+  _deviceClass: 'phone' | 'web',
+  _seat: CalendarSeat,
+): CalendarViewId {
+  return 'year';
 }
 
 export function emptyViewPrefs(
@@ -77,12 +76,16 @@ export function parseCalViewPrefsJson(
       dayMode?: DayMode;
     };
     const ver = parsed.version;
-    if (!parsed || (ver !== 1 && ver !== 2)) {
+    if (!parsed || (ver !== 1 && ver !== 2 && ver !== 3)) {
       return fallback;
     }
-    const view = VIEWS.includes(parsed.view as CalendarViewId)
+    let view = VIEWS.includes(parsed.view as CalendarViewId)
       ? (parsed.view as CalendarViewId)
       : fallback.view;
+    // v3: one-time migrate persisted web Week/Month/Agenda defaults → Year.
+    if (deviceClass === 'web' && (ver === 1 || ver === 2) && (view === 'week' || view === 'month' || view === 'agenda')) {
+      view = 'year';
+    }
     const days =
       typeof parsed.days === 'number' && isMultidayCount(parsed.days)
         ? parsed.days
