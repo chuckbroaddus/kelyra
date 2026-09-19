@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
@@ -60,10 +60,16 @@ import type { CalendarItem, CalendarLayer } from '@/lib/calendar/types';
 import {
   CAL_VIEW_PREFS_VERSION,
   type CalendarViewId,
+  type DayMode,
+  type MonthMode,
+  canZoomUp,
   defaultViewFor,
   loadCalViewPrefs,
   saveCalViewPrefs,
+  zoomParentView,
 } from '@/lib/calendar/viewPrefs';
+import { ViewCustomizeSheet } from '@/components/calendar/ViewCustomizeSheet';
+import { IconButton } from '@/components/ui/IconButton';
 import {
   shiftWeek,
   weekRangeContaining,
@@ -87,8 +93,9 @@ const VIEW_CHIPS: Array<{ id: CalendarViewId; label: string }> = [
 ];
 
 /**
- * CAL-R3 VW-R3-C: Year · Month · Day timeline · Week · Multi-day · Agenda.
- * CE-A drawer entry; LF-A chips primary; lean composer; no 6th tray; own views only.
+ * CAL-R4 L-C + C-B: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
+ * quiet view chips (LF-A category chips stay primary); header + / search / customizer;
+ * Month Compact|List; Day Single|List; Agenda chip stays. No tray chrome.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -117,6 +124,14 @@ export default function CalendarScreen() {
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
+
+  const [monthMode, setMonthMode] = useState<MonthMode>('compact');
+  const [dayMode, setDayMode] = useState<DayMode>('single');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  /** In-route zoom stack for Year→Month→Day (platform back / Up chrome). */
+  const [zoomStack, setZoomStack] = useState<CalendarViewId[]>([]);
 
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
@@ -229,6 +244,8 @@ export default function CalendarScreen() {
       if (cancelled) return;
       setActiveView(prefs.view);
       setDayCount(prefs.days);
+      setMonthMode(prefs.monthMode);
+      setDayMode(prefs.dayMode);
       setViewPrefsReady(true);
     })();
     return () => {
@@ -237,21 +254,33 @@ export default function CalendarScreen() {
   }, [seat, profileId, deviceClass, parentChildId, childrenLoaded]);
 
   const persistViewPrefs = useCallback(
-    (view: CalendarViewId, days: MultidayCount) => {
+    (
+      view: CalendarViewId,
+      days: MultidayCount,
+      nextMonthMode: MonthMode = monthMode,
+      nextDayMode: DayMode = dayMode,
+    ) => {
       if (!profileId || !seat) return;
       void saveCalViewPrefs(
         profileId,
         seat,
         deviceClass,
         seat === 'parent' ? parentChildId : null,
-        { version: CAL_VIEW_PREFS_VERSION, view, days },
+        {
+          version: CAL_VIEW_PREFS_VERSION,
+          view,
+          days,
+          monthMode: nextMonthMode,
+          dayMode: nextDayMode,
+        },
       );
     },
-    [profileId, seat, deviceClass, parentChildId],
+    [profileId, seat, deviceClass, parentChildId, monthMode, dayMode],
   );
 
   const selectView = useCallback(
-    (view: CalendarViewId) => {
+    (view: CalendarViewId, opts?: { fromZoom?: boolean }) => {
+      if (!opts?.fromZoom) setZoomStack([]);
       setActiveView(view);
       const nextDays = view === 'week' ? 7 : view === 'multiday' ? (dayCount === 7 ? 5 : dayCount) : dayCount;
       if (view === 'week') setDayCount(7);
@@ -264,6 +293,35 @@ export default function CalendarScreen() {
     },
     [dayCount, persistViewPrefs],
   );
+
+  const zoomTo = useCallback(
+    (view: CalendarViewId) => {
+      setZoomStack((stack) => [...stack, activeView]);
+      selectView(view, { fromZoom: true });
+    },
+    [activeView, selectView],
+  );
+
+  const zoomUp = useCallback(() => {
+    const parent = zoomStack.length > 0 ? zoomStack[zoomStack.length - 1]! : zoomParentView(activeView);
+    if (!parent) return false;
+    setZoomStack((stack) => (stack.length ? stack.slice(0, -1) : []));
+    setActiveView(parent);
+    persistViewPrefs(parent, dayCount);
+    return true;
+  }, [zoomStack, activeView, dayCount, persistViewPrefs]);
+
+  // Platform / chrome back pops Year←Month←Day hierarchy before leaving Calendar.
+  useEffect(() => {
+    if (!canZoomUp(activeView) && zoomStack.length === 0) {
+      chrome.setPushedBackHandler?.(null);
+      return;
+    }
+    chrome.setPushedBackHandler?.(() => zoomUp());
+    return () => {
+      chrome.setPushedBackHandler?.(null);
+    };
+  }, [chrome, activeView, zoomStack, zoomUp]);
 
   const onChangeDayCount = useCallback(
     (count: MultidayCount) => {
@@ -544,6 +602,14 @@ export default function CalendarScreen() {
     !filtersNarrowed &&
     activeView === 'agenda';
 
+  /** Search scopes to seat-visible loaded items only (server already hat-walled). */
+  const visibleItems = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((item) => item.title.toLowerCase().includes(q));
+  }, [items, searchQuery]);
+
+
   const gridDays =
     activeView === 'week' ? weekRange.days : activeView === 'multiday' ? multiRange.days : [];
   const allowPinch = !reduceMotion && (activeView === 'week' || activeView === 'multiday');
@@ -581,12 +647,74 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {/* In-Calendar view switcher (CAL-36) — not tray. Phone + web. */}
+      {/* CAL-R4 C-B header trio: + · search · view customizer (no tray). */}
+      <View style={styles.headerTrio}>
+        {canCreate ? (
+          <IconButton
+            name="plus"
+            label="Add event"
+            onPress={() => setComposer({ mode: 'create' })}
+          />
+        ) : (
+          <View style={styles.headerTrioSpacer} />
+        )}
+        <IconButton
+          name="search"
+          label={searchOpen ? 'Close search' : 'Search calendar'}
+          onPress={() => {
+            setSearchOpen((v) => !v);
+            if (searchOpen) setSearchQuery('');
+          }}
+        />
+        <IconButton
+          name="settings"
+          label="Customize views"
+          onPress={() => setCustomizeOpen(true)}
+        />
+      </View>
+
+      {searchOpen ? (
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search seat-visible items"
+          placeholderTextColor={colors.mute}
+          style={[
+            styles.searchInput,
+            { color: colors.ink, borderColor: colors.line, backgroundColor: colors.elevated },
+          ]}
+          accessibilityLabel="Search seat-visible calendar items"
+          autoCorrect={false}
+          autoCapitalize="none"
+          clearButtonMode="while-editing"
+        />
+      ) : null}
+
+      {/* Hierarchical Up — Year ← Month ← Day (platform back also wired). */}
+      {canZoomUp(activeView) || zoomStack.length > 0 ? (
+        <View style={styles.upRow}>
+          <GhostButton
+            label={
+              activeView === 'day'
+                ? 'Month'
+                : activeView === 'month'
+                  ? 'Year'
+                  : 'Up'
+            }
+            onPress={() => {
+              void zoomUp();
+            }}
+          />
+        </View>
+      ) : null}
+
+      {/* In-Calendar view switcher (CAL-36 / R4) — quieter secondary; not tray. */}
       <ChipRow compact>
         {VIEW_CHIPS.map((chip) => (
           <Chip
             key={chip.id}
             label={chip.label}
+            quiet
             selected={activeView === chip.id}
             onPress={() => selectView(chip.id)}
           />
@@ -614,18 +742,10 @@ export default function CalendarScreen() {
         </ChipRow>
       </View>
 
-      {canCreate ? (
-        <View style={styles.addRow}>
-          <PrimaryButton
-            label="Add event"
-            onPress={() => setComposer({ mode: 'create' })}
-          />
-          {seat === 'parent' && parentChildMissing ? (
-            <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
-              Pick a child to add an absence for that child only.
-            </Text>
-          ) : null}
-        </View>
+      {canCreate && seat === 'parent' && parentChildMissing ? (
+        <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
+          Pick a child to add an absence for that child only.
+        </Text>
       ) : null}
 
       {activeView === 'week' || activeView === 'multiday' ? (
@@ -775,7 +895,7 @@ export default function CalendarScreen() {
         activeView === 'week' || activeView === 'multiday' ? (
           <TeacherWeekGrid
             days={gridDays}
-            items={items}
+            items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
             dayCount={stepperCount}
@@ -783,44 +903,60 @@ export default function CalendarScreen() {
             allowPinch={allowPinch}
           />
         ) : activeView === 'day' ? (
-          <DayColumn
-            day={dayRange.day}
-            items={items}
-            showHiddenBadge={showHiddenBadge}
-            onPressItem={openItem}
-          />
+          dayMode === 'list' ? (
+            <AgendaList
+              days={[dayRange.day]}
+              items={visibleItems}
+              showHiddenBadge={showHiddenBadge}
+              onPressItem={openItem}
+            />
+          ) : (
+            <DayColumn
+              day={dayRange.day}
+              items={visibleItems}
+              showHiddenBadge={showHiddenBadge}
+              onPressItem={openItem}
+            />
+          )
         ) : activeView === 'month' ? (
           <MonthGrid
             year={monthRange.year}
             monthIndex0={monthRange.monthIndex0}
             label={monthRange.label}
-            items={items}
+            items={visibleItems}
             selectedDay={monthSelectedDay}
             showHiddenBadge={showHiddenBadge}
+            mode={monthMode}
             onSelectDay={(iso) => {
               setMonthSelectedDay(iso);
+            }}
+            onZoomDay={(iso) => {
+              setDayAnchor(iso);
+              setMonthSelectedDay(iso);
+              zoomTo('day');
             }}
             onPressItem={openItem}
           />
         ) : activeView === 'year' ? (
           <YearGrid
             year={year}
-            items={items}
+            items={visibleItems}
             onPressMonth={(y, m0) => {
               const iso = `${y}-${String(m0 + 1).padStart(2, '0')}-01`;
               setMonthAnchor(iso);
               setMonthSelectedDay(null);
-              selectView('month');
+              zoomTo('month');
             }}
             onPressDay={(iso) => {
               setDayAnchor(iso);
-              selectView('day');
+              setMonthAnchor(iso);
+              zoomTo('day');
             }}
           />
         ) : items.length > 0 ? (
           <AgendaList
             days={agendaRange.days}
-            items={items}
+            items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
           />
@@ -908,6 +1044,21 @@ export default function CalendarScreen() {
         onUnsubscribe={handleUnsubscribe}
         onClose={() => setCalendarsOpen(false)}
       />
+
+      <ViewCustomizeSheet
+        visible={customizeOpen}
+        monthMode={monthMode}
+        dayMode={dayMode}
+        onChangeMonthMode={(mode) => {
+          setMonthMode(mode);
+          persistViewPrefs(activeView, dayCount, mode, dayMode);
+        }}
+        onChangeDayMode={(mode) => {
+          setDayMode(mode);
+          persistViewPrefs(activeView, dayCount, monthMode, mode);
+        }}
+        onClose={() => setCustomizeOpen(false)}
+      />
     </Screen>
   );
 }
@@ -953,5 +1104,25 @@ const styles = StyleSheet.create({
   filterLabel: {
     ...type.meta,
     textTransform: 'uppercase',
+  },
+  headerTrio: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  headerTrioSpacer: { width: 44, height: 44 },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    ...type.body,
+  },
+  upRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
   },
 });

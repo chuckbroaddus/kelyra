@@ -9,10 +9,12 @@ type Props = {
   tooltip?: string;
   selected?: boolean;
   disabled?: boolean;
+  /** Secondary / quieter chrome (CAL-R4 view chips). LF-A category chips stay primary. */
+  quiet?: boolean;
   onPress?: () => void;
 };
 
-export function Chip({ label, tooltip, selected, disabled, onPress }: Props) {
+export function Chip({ label, tooltip, selected, disabled, quiet, onPress }: Props) {
   const { colors } = useTheme();
   return (
     <HoverTip label={tipIfNew(label, tooltip)}>
@@ -24,16 +26,25 @@ export function Chip({ label, tooltip, selected, disabled, onPress }: Props) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
+        quiet && styles.quiet,
         {
-          borderColor: selected ? colors.brand : colors.line,
-          backgroundColor: selected ? colors.brandSoft : colors.elevated,
+          borderColor: selected ? colors.brand : quiet ? colors.line : colors.line,
+          backgroundColor: selected
+            ? colors.brandSoft
+            : quiet
+              ? 'transparent'
+              : colors.elevated,
         },
         disabled && styles.disabled,
         pressed && { opacity: 0.85 },
       ]}
     >
       <Text
-        style={[styles.label, { color: selected ? colors.brand : colors.ink }]}
+        style={[
+          styles.label,
+          quiet && styles.quietLabel,
+          { color: selected ? colors.brand : quiet ? colors.mute : colors.ink },
+        ]}
         numberOfLines={1}
       >
         {label}
@@ -62,5 +73,15 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.4,
+  },
+  quiet: {
+    minHeight: 28,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  quietLabel: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '500',
   },
 });

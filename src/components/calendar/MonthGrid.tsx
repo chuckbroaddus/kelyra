@@ -7,6 +7,7 @@ import { itemDayKey } from '@/lib/calendar/mapItem';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import { dayRoleTints } from '@/lib/calendar/timeline';
 import type { CalendarItem } from '@/lib/calendar/types';
+import type { MonthMode } from '@/lib/calendar/viewPrefs';
 import { todayISO } from '@/lib/calendar/week';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -17,13 +18,17 @@ type Props = {
   items: CalendarItem[];
   selectedDay: string | null;
   showHiddenBadge?: boolean;
+  /** CAL-R4 C-B — Compact grid or List. No Stacked/Detail stubs. */
+  mode?: MonthMode;
   onSelectDay: (iso: string) => void;
+  /** Tap-zoom Month → Day (CAL-R4 L-C). */
+  onZoomDay?: (iso: string) => void;
   onPressItem?: (item: CalendarItem) => void;
 };
 
 /**
- * CAL-26 Month grid + list hybrid.
- * Grid on top; selected-day list below (AgendaList). No parallax title.
+ * CAL-26 / CAL-R4 C-B Month — Compact grid or List only.
+ * Compact: grid (+ selected-day list when not zooming). List: month AgendaList.
  */
 export function MonthGrid({
   year,
@@ -32,7 +37,9 @@ export function MonthGrid({
   items,
   selectedDay,
   showHiddenBadge,
+  mode = 'compact',
   onSelectDay,
+  onZoomDay,
   onPressItem,
 }: Props) {
   const { colors } = useTheme();
@@ -40,10 +47,32 @@ export function MonthGrid({
   const weeks = buildMonthGrid(year, monthIndex0, 0);
   const weekdays = weekdayLabels(0);
   const fromIso = `${year}-${String(monthIndex0 + 1).padStart(2, '0')}-01`;
+  const monthPrefix = fromIso.slice(0, 7);
 
   const selectedItems = selectedDay
     ? items.filter((item) => itemDayKey(item) === selectedDay)
     : [];
+
+  const inMonthDays = weeks
+    .flat()
+    .filter((cell): cell is { day: number; iso: string } =>
+      Boolean(cell && cell.iso.startsWith(monthPrefix)),
+    )
+    .map((cell) => cell.iso);
+
+  if (mode === 'list') {
+    return (
+      <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`${label}, list`}>
+        <Text style={[styles.monthTitle, { color: colors.ink }]}>{label}</Text>
+        <AgendaList
+          days={inMonthDays}
+          items={items.filter((item) => itemDayKey(item).startsWith(monthPrefix))}
+          showHiddenBadge={showHiddenBadge}
+          onPressItem={onPressItem}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={label}>
@@ -61,19 +90,20 @@ export function MonthGrid({
             if (!cell) {
               return <View key={`e-${ci}`} style={styles.dayCell} />;
             }
-            const inMonth = cell.iso.slice(0, 7) === fromIso.slice(0, 7);
+            const inMonth = cell.iso.slice(0, 7) === monthPrefix;
             const isToday = cell.iso === today;
             const isSelected = cell.iso === selectedDay;
             const tints = dayRoleTints(items, cell.iso, 4);
             return (
               <Pressable
                 key={cell.iso}
-                onPress={() => onSelectDay(cell.iso)}
+                onPress={() => (onZoomDay ? onZoomDay(cell.iso) : onSelectDay(cell.iso))}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={cell.iso}
                 style={[
                   styles.dayCell,
+                  styles.compactCell,
                   isSelected && {
                     backgroundColor: colors.brandSoft,
                     borderRadius: radius.sm,
@@ -114,7 +144,7 @@ export function MonthGrid({
         </View>
       ))}
 
-      {selectedDay ? (
+      {selectedDay && !onZoomDay ? (
         <View style={styles.listBlock}>
           {selectedItems.length === 0 ? (
             <Text style={[styles.empty, { color: colors.mute }]}>Nothing on this day.</Text>
@@ -143,6 +173,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 44,
     paddingVertical: 4,
+  },
+  compactCell: {
+    minHeight: 36,
+    paddingVertical: 2,
   },
   dayNum: {
     ...type.body,
