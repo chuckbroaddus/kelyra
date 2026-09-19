@@ -331,7 +331,8 @@ export default function SubmissionReviewScreen() {
     </>
   );
 
-  const draftEditors = (
+  // Suggested grade stays above Accept / work fold — not gated on editingDraft.
+  const suggestedGrade = (
     <>
       <SectionHeader label="Suggested grade" />
       {editable ? (
@@ -358,7 +359,12 @@ export default function SubmissionReviewScreen() {
       ) : liveDraft.teacherNote ? (
         <Text style={[type.body, { color: colors.ink }]}>{liveDraft.teacherNote}</Text>
       ) : null}
+    </>
+  );
 
+  // Gaps / practice / Ask AI — Edit draft may still reveal these.
+  const draftTools = (
+    <>
       <SectionHeader label="Suggested gap" />
       {liveDraft.gaps.length === 0 ? (
         <Text style={[type.meta, { color: colors.mute }]}>
@@ -535,16 +541,6 @@ export default function SubmissionReviewScreen() {
               {liveDraft.summary}
             </Text>
           ) : null}
-          <PrimaryButton
-            disabled={saving || asking || !decision.canAccept}
-            label={saving ? 'Approving…' : 'Accept recommendation'}
-            onPress={() => void onApprove()}
-          />
-          <SecondaryButton
-            disabled={saving || asking}
-            label={editingDraft ? 'Hide draft tools' : 'Edit draft'}
-            onPress={() => setEditingDraft((v) => !v)}
-          />
         </Card>
       ) : (
         <Card>
@@ -556,6 +552,23 @@ export default function SubmissionReviewScreen() {
           </Text>
         </Card>
       )}
+
+      {suggestedGrade}
+
+      {editable ? (
+        <>
+          <PrimaryButton
+            disabled={saving || asking || !decision.canAccept}
+            label={saving ? 'Approving…' : 'Accept recommendation'}
+            onPress={() => void onApprove()}
+          />
+          <SecondaryButton
+            disabled={saving || asking}
+            label={editingDraft ? 'Hide draft tools' : 'Edit draft'}
+            onPress={() => setEditingDraft((v) => !v)}
+          />
+        </>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"
@@ -579,8 +592,8 @@ export default function SubmissionReviewScreen() {
         </Text>
       )}
 
-      {editable && editingDraft ? draftEditors : null}
-      {!editable ? draftEditors : null}
+      {editable && editingDraft ? draftTools : null}
+      {!editable ? draftTools : null}
 
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
