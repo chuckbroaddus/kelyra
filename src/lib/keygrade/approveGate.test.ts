@@ -26,7 +26,7 @@ test('Approve wall: Parent seat denied with clear reason', () => {
 test('Pack B capture review gates Approve on canApproveKeygrade', () => {
   const ui = readFileSync(join(root, 'src/components/ui/KeygradePackBReview.tsx'), 'utf8');
   assert.match(ui, /canApproveKeygrade/);
-  assert.match(ui, /Approve this capture/);
+  assert.match(ui, /Accept recommendation/);
   assert.match(ui, /Confirm & next/);
   assert.match(ui, /twinsNeedConfirm|twinCandidates/);
   assert.match(ui, /Unassigned/);

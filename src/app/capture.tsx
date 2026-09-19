@@ -1876,7 +1876,7 @@ export default function CaptureScreen() {
             Keyed assignment
           </Text>
           <Text style={[type.meta, { color: colors.mute }]}>
-            Pack B: confirm extracts on this phone, then Approve this capture.
+            Pack B: confirm extracts on this phone, then Accept recommendation.
           </Text>
           <View style={styles.gaps}>
             {keyedAssignments.slice(0, 8).map((row) => (
