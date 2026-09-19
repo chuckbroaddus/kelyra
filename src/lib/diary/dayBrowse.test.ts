@@ -232,15 +232,18 @@ test('ledger day filter: agenda anchors selectedDay; empty has no New entry', ()
   assert.doesNotMatch(grid, /pointer|Student pointer|journalStudentId/);
 });
 
-test('diary glyph: open book on table with between-pages ribbon (not closed notebook)', () => {
+test('diary glyph: locked C3 closed cover + spine + bottom forked ribbon (no table)', () => {
   const icons = read('scripts/build-icons.mjs');
   const start = icons.indexOf('diary: (p) =>');
   assert.ok(start > 0);
   const recipe = icons.slice(start, icons.indexOf('\n  calendar:', start));
-  assert.match(recipe, /open book|lying on a table|table/i);
-  assert.match(recipe, /bookmark|ribbon/i);
-  assert.match(recipe, /between/i);
-  assert.match(recipe, /poly\(/);
-  // Must not be the old closed notebook recipe
-  assert.doesNotMatch(recipe, /roundRect\(p, 5\.0, 3\.0, 14\.0, 18\.0/);
+  // C3: closed cover rect + vertical spine + forked ribbon out the bottom
+  assert.match(recipe, /roundRect\(p, 5\.2, 2\.8, 13\.6, 15\.6, 1\.4/);
+  assert.match(recipe, /line\(p, 8\.8, 2\.8, 8\.8, 18\.4/);
+  assert.match(recipe, /line\(p, 15\.2, 18\.2, 15\.2, 21\.6/);
+  assert.match(recipe, /line\(p, 14\.3, 21\.4, 15\.2, 23\.0/);
+  assert.match(recipe, /line\(p, 15\.2, 23\.0, 16\.1, 21\.4/);
+  // No open spread / table oval
+  assert.doesNotMatch(recipe, /poly\(/);
+  assert.doesNotMatch(recipe, /table|open book|lying on a table/i);
 });
