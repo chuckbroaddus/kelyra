@@ -101,3 +101,23 @@ test('R4: no tray chrome / no hamburger Calendar restore war', () => {
   const screen = read('src/app/calendar.tsx');
   assert.doesNotMatch(screen, /FloatingTabTray|trayCalendar|restoreHamburgerCalendar/);
 });
+
+test('R4 Year→Month empty: MonthGrid mounts; filter-empty copy does not replace grid', () => {
+  const screen = read('src/app/calendar.tsx');
+  assert.match(screen, /areFiltersNarrowed/);
+  assert.match(screen, /Nothing matches these filters/);
+  assert.match(screen, /Clear filters/);
+  // Mount gate must not suppress grids when filteredEmpty (empty month still paints).
+  const mountMarker = 'Month/Year/Day mount even when';
+  const mountIdx = screen.indexOf(mountMarker);
+  assert.ok(mountIdx > 0, 'mount comment missing');
+  const mountBlock = screen.slice(mountIdx, mountIdx + 400);
+  assert.doesNotMatch(mountBlock, /!filteredEmpty/);
+  assert.match(
+    mountBlock,
+    /\(loaded \|\| activeView === 'month' \|\| activeView === 'year' \|\| activeView === 'day'\)/,
+  );
+  assert.match(screen, /activeView === 'month' \? \([\s\S]*?<MonthGrid/);
+  // Year tap → zoomTo month still present
+  assert.match(screen, /onPressMonth[\s\S]*?zoomTo\('month'\)/);
+});
