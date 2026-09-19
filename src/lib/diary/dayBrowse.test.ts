@@ -5,11 +5,17 @@ import test from 'node:test';
 
 import {
   buildJournalAgendaGroups,
+  buildLedgerAgendaGroups,
+  dayChromeLayout,
+  DAYCHROME_WEB_SPLIT_MIN,
   DIARY_EMPTY_DAY_COPY,
+  DIARY_LEDGER_EMPTY_DAY_COPY,
   DIARY_PRESENCE_COUNT_CAP,
   DIARY_PRESENCE_HONESTY,
   DIARY_TWIN_FAIL_CLOSED,
   journalMonthContaining,
+  ledgerPresenceCountByDay,
+  ledgerPresenceMark,
   parentTwinsFailClosed,
   presenceCountByDay,
   presenceMark,
@@ -141,16 +147,103 @@ test('DB-B UI: JournalMonthGrid + RG-DROP; no CalendarItem on Journal path', () 
   assert.match(grid, /presenceMark/);
 });
 
-test('SEAT: student closed; Ledger has no JournalMonthGrid', () => {
+test('SEAT: student closed; ST-A tray IA unchanged (no fifth tray invent)', () => {
   const screen = read('src/app/diary.tsx');
   assert.match(screen, /Student seat has no Diary/);
   assert.match(screen, /canOpenDiary/);
-  // Month grid only under journal segment
-  const journalBlockStart = screen.indexOf("segment === 'journal' && !failClosedEmpty");
-  assert.ok(journalBlockStart > 0);
-  const journalBlock = screen.slice(journalBlockStart, screen.indexOf("segment === 'ledger' ?", journalBlockStart));
-  assert.match(journalBlock, /JournalMonthGrid/);
-  const ledgerStart = screen.indexOf("segment === 'ledger' ?");
-  const ledgerFilters = screen.slice(ledgerStart, ledgerStart + 2500);
-  assert.doesNotMatch(ledgerFilters, /JournalMonthGrid/);
+  assert.doesNotMatch(screen, /from ['"]@\/components\/calendar/);
+});
+
+test('layout B: phone month-above-tabs; web ≥720 split; month survives Ledger', () => {
+  assert.equal(DAYCHROME_WEB_SPLIT_MIN, 720);
+  assert.equal(dayChromeLayout(390), 'phone-stack');
+  assert.equal(dayChromeLayout(719), 'phone-stack');
+  assert.equal(dayChromeLayout(720), 'web-split');
+  assert.equal(dayChromeLayout(1280), 'web-split');
+
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /dayChromeLayout\(layout\.width\)/);
+  assert.match(screen, /dayChromeSplit/);
+  assert.match(screen, /!dayChromeSplit \? monthChrome/);
+  assert.match(screen, /journal-daychrome-web-split/);
+  // Shared month chrome for both segments (follow-active-tab)
+  assert.match(screen, /presenceMode=\{presenceMode\}/);
+  assert.match(screen, /presenceMode = segment === 'journal'/);
+  assert.match(screen, /ledgerPresenceByDay|ledgerPresenceCountByDay/);
+  // Month survives Ledger path
+  assert.match(screen, /segment === 'journal' \? journalStream : ledgerStream/);
+  // Shared selectedDay kept across tab switch (single state)
+  assert.match(screen, /const \[selectedDay, setSelectedDay\]/);
+  assert.equal(screen.split('setSelectedDay').length > 2, true);
+});
+
+test('follow-active-tab: Journal PR-BOTH dots; Ledger tick ≠ journal dot', () => {
+  assert.deepEqual(presenceMark(1), { kind: 'dot' });
+  assert.deepEqual(ledgerPresenceMark(1), { kind: 'tick' });
+  assert.notEqual(presenceMark(1).kind, ledgerPresenceMark(1).kind);
+  assert.deepEqual(ledgerPresenceMark(0), { kind: 'none' });
+  assert.deepEqual(ledgerPresenceMark(3), { kind: 'count', label: '3' });
+  assert.deepEqual(ledgerPresenceMark(9), { kind: 'count', label: '9+' });
+
+  const map = ledgerPresenceCountByDay([
+    { created_at: '2026-09-17T15:00:00.000Z' },
+    { created_at: '2026-09-17T18:00:00.000Z' },
+    { created_at: '2026-09-15T08:00:00.000Z' },
+    { created_at: 'bad' },
+  ]);
+  assert.equal(map.get('2026-09-17'), 2);
+  assert.equal(map.get('2026-09-15'), 1);
+
+  const grid = read('src/components/diary/JournalMonthGrid.tsx');
+  assert.match(grid, /presenceMode/);
+  assert.match(grid, /ledgerPresenceMark/);
+  assert.match(grid, /styles\.tick/);
+  assert.doesNotMatch(grid, /from ['"]@\/lib\/calendar\/roleTint|import\s*\{[^}]*\broleTint\b/);
+});
+
+test('ledger day filter: agenda anchors selectedDay; empty has no New entry', () => {
+  const rows = [
+    { id: 'a', created_at: '2026-09-16T10:00:00.000Z' },
+    { id: 'b', created_at: '2026-09-19T10:00:00.000Z' },
+    { id: 'c', created_at: '2026-09-16T12:00:00.000Z' },
+  ];
+  const emptySel = buildLedgerAgendaGroups(rows, '2026-09-17', false);
+  assert.equal(emptySel[0]?.day, '2026-09-17');
+  assert.equal(emptySel[0]?.empty, true);
+  assert.deepEqual(
+    emptySel.slice(1).map((g) => g.day),
+    ['2026-09-19', '2026-09-16'],
+  );
+
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /buildLedgerAgendaGroups/);
+  assert.match(screen, /DIARY_LEDGER_EMPTY_DAY_COPY/);
+  assert.equal(DIARY_LEDGER_EMPTY_DAY_COPY, 'No ledger actions on this day.');
+  // Ledger empty card must not offer New entry
+  const ledgerStreamStart = screen.indexOf('const ledgerStream');
+  const ledgerStream = screen.slice(ledgerStreamStart, screen.indexOf('return (', ledgerStreamStart));
+  assert.doesNotMatch(ledgerStream, /label="New entry"/);
+  // Journal empty still has New entry
+  const journalStreamStart = screen.indexOf('const journalStream');
+  const journalStream = screen.slice(journalStreamStart, ledgerStreamStart);
+  assert.match(journalStream, /label="New entry"/);
+  // Teacher pointer never in month cells
+  const grid = read('src/components/diary/JournalMonthGrid.tsx');
+  assert.doesNotMatch(grid, /pointer|Student pointer|journalStudentId/);
+});
+
+test('diary glyph: locked C3 closed cover + spine + bottom forked ribbon (no table)', () => {
+  const icons = read('scripts/build-icons.mjs');
+  const start = icons.indexOf('diary: (p) =>');
+  assert.ok(start > 0);
+  const recipe = icons.slice(start, icons.indexOf('\n  calendar:', start));
+  // C3: closed cover rect + vertical spine + forked ribbon out the bottom
+  assert.match(recipe, /roundRect\(p, 5\.2, 2\.8, 13\.6, 15\.6, 1\.4/);
+  assert.match(recipe, /line\(p, 8\.8, 2\.8, 8\.8, 18\.4/);
+  assert.match(recipe, /line\(p, 15\.2, 18\.2, 15\.2, 21\.6/);
+  assert.match(recipe, /line\(p, 14\.3, 21\.4, 15\.2, 23\.0/);
+  assert.match(recipe, /line\(p, 15\.2, 23\.0, 16\.1, 21\.4/);
+  // No open spread / table oval
+  assert.doesNotMatch(recipe, /poly\(/);
+  assert.doesNotMatch(recipe, /table|open book|lying on a table/i);
 });

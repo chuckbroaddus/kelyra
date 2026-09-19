@@ -312,17 +312,22 @@ const RECIPES = {
     roundRect(p, 6.4, 8.4, 14.0, 11.0, 1.2, ST, false);
     roundRect(p, 6.4, 6.6, 6.0, 2.4, 0.8, ST, false);
   },
-  /** Diary tray + Settings Diary tab — bound notebook. */
+  /**
+   * Diary tray + Settings Diary tab — locked C3 closed cover.
+   * Closed cover + spine + forked ribbon out the bottom.
+   * No ruled lines, no open spread, no table oval. SoT: journal-icon-c3-lock.
+   * Distinct from work/file/classes/compose/calendar.
+   */
   diary: (p) => {
-    roundRect(p, 5.0, 3.0, 14.0, 18.0, 1.4, ST, false);
-    line(p, 9.0, 3.0, 9.0, 21.0, ST);
-    line(p, 11.4, 8.0, 16.4, 8.0, ST);
-    line(p, 11.4, 11.6, 16.4, 11.6, ST);
-    line(p, 11.4, 15.2, 15.0, 15.2, ST);
+    roundRect(p, 5.2, 2.8, 13.6, 15.6, 1.4, ST, false);
+    line(p, 8.8, 2.8, 8.8, 18.4, ST);
+    line(p, 15.2, 18.2, 15.2, 21.6, ST);
+    line(p, 14.3, 21.4, 15.2, 23.0, ST);
+    line(p, 15.2, 23.0, 16.1, 21.4, ST);
   },
   /**
    * G1 calendar tray glyph — month pad + 2 binding rings + day-dot grid.
-   * NEVER reuse today (house). Distinct from diary (notebook).
+   * NEVER reuse today (house). Distinct from diary (C3 closed cover + spine + forked ribbon).
    */
   calendar: (p) => {
     // month pad body
