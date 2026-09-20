@@ -1,6 +1,6 @@
 /**
- * Calendar period pager (Rolodex) — pure helpers.
- * SoT: notes/company/calendar-period-pager-*.md (dual stamp 2026-09-20).
+ * Calendar period window helpers (shared by 3D period wheel).
+ * Wheel look/curves: src/lib/calendar/periodWheel.ts + calendar-3d-wheel-* SoT.
  * Uses existing shifters only; no new SQL.
  */
 import {
@@ -46,7 +46,7 @@ export type PeriodWindow = {
   next: PeriodTileModel;
 };
 
-/** Surfaces that mount the Rolodex. Day List keeps no chevron (CAL-R5-11 HOLD). */
+/** Surfaces that mount the period wheel. Day List keeps no chevron (CAL-R5-11 HOLD). */
 export function showsPeriodPager(view: CalendarViewId, dayMode: DayMode): boolean {
   if (view === 'day' && dayMode === 'list') return false;
   return (

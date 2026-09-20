@@ -110,12 +110,13 @@ test('calendar wires PeriodPager; day list excluded; no PNG atlas leaves', () =>
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.doesNotMatch(leaf, /\.png|ImageBackground|require\(/);
   assert.match(leaf, /MonthHangingGrid|hangGrid/);
-  assert.match(leaf, /danger/);
+  assert.match(leaf, /YearIcon|WeekIcon|DayIcon/);
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.match(pager, /useReducedMotion/);
   assert.match(pager, /label=["']<<["']/);
   assert.match(pager, /snapPeriodPage/);
+  assert.match(pager, /rotateY/);
 });
 
 test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multiday', () => {
