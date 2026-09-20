@@ -26,6 +26,7 @@ import {
   personTabLabelMax,
   personTabRowHasGlyph,
   personTabSelectedMaxWidth,
+  personTabTitleNeedsMarquee,
   personTabTitleSlot,
   personTabScrollX,
   type PersonTabLabelPolicy,
@@ -114,6 +115,8 @@ function PersonTabPill({
   /** Marquee only after the expand settles at full width (Chuck: marquee after max). */
   const [marqueeReady, setMarqueeReady] = useState(selected);
   const slot = labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
+  // Paint vs ceiling — never treat occupancy/hug slot alone as overflow.
+  const needsMarquee = personTabTitleNeedsMarquee(titleWidth, labelMax);
   // Hug painted title — labelMax is marquee ceiling only (AC-CT-02 correction).
   const selectedMax = personTabSelectedMaxWidth(slot, hasGlyph);
   const collapsedWidth = PERSON_TAB_ICON_HIT;
@@ -215,7 +218,7 @@ function PersonTabPill({
                 align="start"
                 accessible
                 accessibilityLabel={tab.label}
-                paused={!marqueeReady}
+                paused={!marqueeReady || !needsMarquee}
                 fadeColor={colors.brandSoft}
                 style={[styles.label, { color: colors.brand }]}
               />

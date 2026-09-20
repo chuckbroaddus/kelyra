@@ -14,6 +14,7 @@ import {
   personTabRowHasGlyph,
   personTabScrollX,
   personTabSelectedMaxWidth,
+  personTabTitleNeedsMarquee,
   personTabTitleSlot,
   personTabRowUsesTeacherFaces,
 } from './personTabsLayout.ts';
@@ -179,4 +180,23 @@ test('occupancy ceiling ≠ hug slot (short painted title)', () => {
   const hug = personTabTitleSlot(36, occupancy);
   assert.ok(occupancy > hug, `occupancy=${occupancy} hug=${hug}`);
   assert.notEqual(occupancy, hug);
+});
+
+test('fit painted title → no marquee; overflow → marquee (not occupancy-as-hug)', () => {
+  const row = 390; // phone ~390
+  const ceiling = personTabLabelMax(row, 8, true, 'visibilityReserve');
+  // Assignments-scale paint that fits ceiling → zero marquee cycles
+  const assignmentsPaint = 96;
+  assert.ok(assignmentsPaint < ceiling, `paint=${assignmentsPaint} ceiling=${ceiling}`);
+  assert.equal(personTabTitleNeedsMarquee(assignmentsPaint, ceiling), false);
+  assert.equal(personTabTitleSlot(assignmentsPaint, ceiling), assignmentsPaint);
+  // Long title overflows ceiling → marquee after ready
+  assert.equal(personTabTitleNeedsMarquee(ceiling + 40, ceiling), true);
+  assert.equal(personTabTitleSlot(ceiling + 40, ceiling), ceiling);
+  // Occupancy ceiling alone is not hug — short paint must not be treated as overflow
+  assert.ok(ceiling > 36);
+  assert.equal(personTabTitleNeedsMarquee(36, ceiling), false);
+  // Unknown / zero paint → no marquee
+  assert.equal(personTabTitleNeedsMarquee(0, ceiling), false);
+  assert.equal(personTabTitleNeedsMarquee(100, 0), false);
 });
