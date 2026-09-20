@@ -23,9 +23,9 @@ export function YearGrid({ year, items, onPressMonth }: Props) {
     rows.push(blocks.slice(i, i + 2));
   }
 
+  // CAL-R5-02: chevron year row lives in calendar toolbar — no duplicate bold year here.
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`Year ${year}`}>
-      <Text style={[styles.yearTitle, { color: colors.ink }]}>{year}</Text>
       {rows.map((pair, rowIndex) => (
         <View key={`row-${rowIndex}`} style={styles.row}>
           {pair.map((block) => (
@@ -111,7 +111,6 @@ export function YearGrid({ year, items, onPressMonth }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
-  yearTitle: { ...type.title, fontSize: 28, textAlign: 'center', marginBottom: 4 },
   row: { flexDirection: 'row', gap: 10 },
   monthCard: {
     flex: 1,

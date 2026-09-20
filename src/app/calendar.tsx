@@ -27,15 +27,18 @@ import {
   listCalendars,
   unsubscribeTeam,
 } from '@/lib/calendar/api';
-import { formatCalendarDisplayDate } from '@/lib/calendar/displayDate';
+import {
+  formatCalendarDisplayDate,
+  formatCalendarMonthYear,
+  formatCalendarNumericRange,
+} from '@/lib/calendar/displayDate';
 import { canCreateOnSeat } from '@/lib/calendar/eventActions';
 import {
-  applyPreset,
   areFiltersNarrowed,
   categoriesForChips,
+  clearFilters,
   toggleChip,
   toggleLayerEnabled,
-  type FilterPresetId,
 } from '@/lib/calendar/filters';
 import {
   agendaRangeFrom,
@@ -117,7 +120,7 @@ export default function CalendarScreen() {
   );
   const [viewPrefsReady, setViewPrefsReady] = useState(false);
   const [dayCount, setDayCount] = useState<MultidayCount>(5);
-  // Today ISO — week still resolves Sunday via weekRangeContaining; multiday 3/5 starts here.
+  // Today ISO — week Sunday via weekRangeContaining; 3 = center; 5 = Mon–Fri (CAL-R5-04).
   const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
@@ -166,6 +169,8 @@ export default function CalendarScreen() {
   );
   const dayRange = useMemo(() => dayRangeContaining(dayAnchor), [dayAnchor]);
   const agendaRange = useMemo(() => agendaRangeFrom(agendaAnchor, 14), [agendaAnchor]);
+  /** CAL-R5-11 Day List — continuous multi-day window from day anchor. */
+  const dayListRange = useMemo(() => agendaRangeFrom(dayAnchor, 14), [dayAnchor]);
   const monthRange = useMemo(() => monthContaining(monthAnchor), [monthAnchor]);
   const year = yearAnchor;
 
@@ -298,7 +303,7 @@ export default function CalendarScreen() {
       if (view === 'week') setDayCount(7);
       else if (view === 'multiday') {
         if (dayCount === 7) setDayCount(5);
-        // 3/5 windows start at anchor — use today so Today is never omitted mid-week.
+        // 3 centers on today; 5 = Mon–Fri containing today — keep today visible.
         setGridAnchor(multidayTodayAnchor());
       }
       persistViewPrefs(view, view === 'week' ? 7 : nextDays);
@@ -429,8 +434,9 @@ export default function CalendarScreen() {
     void persistPrefs(next, chipIds);
   };
 
-  const onPreset = (preset: FilterPresetId) => {
-    const next = applyPreset(preset, layers);
+  /** CAL-R5-08 Clear Filters — none selected (not reset-to-defaults multi-select). */
+  const onClearFilters = () => {
+    const next = clearFilters(layers);
     const nextEnabled = next.enabledCalendarIds ?? [];
     const nextChips = next.categoryChipIds ?? [];
     setEnabledIds(nextEnabled);
@@ -474,7 +480,9 @@ export default function CalendarScreen() {
         from = bounds.from;
         to = bounds.to;
       } else if (activeView === 'day') {
-        const bounds = dayRpcBounds(dayRange.fromIso, dayRange.toIso);
+        // List mode loads the continuous multi-day window (CAL-R5-11).
+        const range = dayMode === 'list' ? dayListRange : dayRange;
+        const bounds = dayRpcBounds(range.fromIso, range.toIso);
         from = bounds.from;
         to = bounds.to;
       } else if (activeView === 'month') {
@@ -499,7 +507,7 @@ export default function CalendarScreen() {
         seat,
         classId: seat === 'teacher' ? chrome.classId : null,
         childStudentId: seat === 'parent' ? parentChildId : null,
-        categories: categoryFilter && categoryFilter.length ? categoryFilter : null,
+        categories: categoryFilter,
         calendarIds: enabledIds.length ? enabledIds : null,
       });
       setItems(rows);
@@ -512,12 +520,15 @@ export default function CalendarScreen() {
   }, [
     seat,
     activeView,
+    dayMode,
     weekRange.fromIso,
     weekRange.toIso,
     multiRange.fromIso,
     multiRange.toIso,
     dayRange.fromIso,
     dayRange.toIso,
+    dayListRange.fromIso,
+    dayListRange.toIso,
     agendaRange.fromIso,
     agendaRange.toIso,
     monthRange.fromIso,
@@ -585,7 +596,7 @@ export default function CalendarScreen() {
     if (activeView === 'week') {
       setGridAnchor(weekRangeContaining(today).fromIso);
     } else if (activeView === 'multiday') {
-      // 3/5 starts at anchor — must be today, not week Sunday (omits Wed–Sat).
+      // 3 centers on today; 5 = Mon–Fri containing today — not week Sunday.
       setGridAnchor(multidayTodayAnchor(today));
     } else if (activeView === 'day') {
       setDayAnchor(today);
@@ -627,14 +638,15 @@ export default function CalendarScreen() {
 
   if (!seat) {
     return (
-      <Screen>
+      <Screen pageChromeHosted>
         <Text style={[styles.empty, { color: colors.mute }]}>Sign in to view Calendar.</Text>
       </Screen>
     );
   }
 
+  // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
   return (
-    <Screen>
+    <Screen pageChromeHosted>
       {parentNeedsChild ? (
         <View style={styles.childBlock}>
           <Text style={[styles.childLabel, { color: colors.mute }]}>Child</Text>
@@ -732,7 +744,7 @@ export default function CalendarScreen() {
                 setGridAnchor(
                   activeView === 'week'
                     ? shiftWeek(weekRange.fromIso, -1)
-                    : shiftMultiday(multiRange.fromIso, stepperCount, -1),
+                    : shiftMultiday(gridAnchor, stepperCount, -1),
                 )
               }
             />
@@ -743,8 +755,8 @@ export default function CalendarScreen() {
             >
               <Text style={[styles.rangeLabel, { color: colors.ink }]}>
                 {activeView === 'week'
-                  ? `${formatCalendarDisplayDate(weekRange.fromIso)} – ${formatCalendarDisplayDate(weekRange.toIso)}`
-                  : `${formatCalendarDisplayDate(multiRange.fromIso)} – ${formatCalendarDisplayDate(multiRange.toIso)}`}
+                  ? formatCalendarNumericRange(weekRange.fromIso, weekRange.toIso)
+                  : formatCalendarNumericRange(multiRange.fromIso, multiRange.toIso)}
               </Text>
             </Pressable>
             <GhostButton
@@ -754,7 +766,7 @@ export default function CalendarScreen() {
                 setGridAnchor(
                   activeView === 'week'
                     ? shiftWeek(weekRange.fromIso, 1)
-                    : shiftMultiday(multiRange.fromIso, stepperCount, 1),
+                    : shiftMultiday(gridAnchor, stepperCount, 1),
                 )
               }
             />
@@ -762,7 +774,8 @@ export default function CalendarScreen() {
         </>
       ) : null}
 
-      {activeView === 'day' ? (
+      {/* CAL-R5-11: Day List has no << date >> chevron — Single Day keeps it. */}
+      {activeView === 'day' && dayMode !== 'list' ? (
         <View style={styles.toolbar}>
           <GhostButton
             label="<<"
@@ -824,7 +837,7 @@ export default function CalendarScreen() {
             accessibilityLabel="Go to this month"
           >
             <Text style={[styles.rangeLabel, { color: colors.ink }]}>
-              {formatCalendarDisplayDate(monthAnchor)}
+              {formatCalendarMonthYear(monthAnchor)}
             </Text>
           </Pressable>
           <GhostButton
@@ -880,7 +893,7 @@ export default function CalendarScreen() {
           <Text style={[styles.empty, { color: colors.mute }]}>
             Nothing matches these filters.
           </Text>
-          <GhostButton label="Clear filters" onPress={() => onPreset('reset')} />
+          <GhostButton label="Clear filters" onPress={onClearFilters} />
         </View>
       ) : null}
 
@@ -907,10 +920,11 @@ export default function CalendarScreen() {
         ) : activeView === 'day' ? (
           dayMode === 'list' ? (
             <AgendaList
-              days={[dayRange.day]}
+              days={dayListRange.days}
               items={visibleItems}
               showHiddenBadge={showHiddenBadge}
               onPressItem={openItem}
+              includeEmptyDays
             />
           ) : (
             <DayColumn
@@ -1025,17 +1039,8 @@ export default function CalendarScreen() {
         onConfirm={() => void confirmDelete()}
       />
 
-      <CalendarsSheet
-        visible={calendarsOpen}
-        layers={layers}
-        enabledIds={enabledIds}
-        onToggle={onToggleLayer}
-        onUnsubscribe={handleUnsubscribe}
-        onClose={() => setCalendarsOpen(false)}
-      />
-
       <ViewCustomizeSheet
-        visible={customizeOpen}
+        visible={customizeOpen && !calendarsOpen}
         monthMode={monthMode}
         dayMode={dayMode}
         onChangeMonthMode={(mode) => {
@@ -1048,12 +1053,22 @@ export default function CalendarScreen() {
         }}
         chipIds={chipIds}
         onToggleChip={onToggleChip}
-        onPreset={onPreset}
-        onClearFilters={() => onPreset('reset')}
+        onClearFilters={onClearFilters}
         onOpenCalendars={() => setCalendarsOpen(true)}
-        onJumpAgenda={() => selectView('agenda')}
-        onJumpDays={() => selectView('multiday')}
-        onClose={() => setCustomizeOpen(false)}
+        onClose={() => {
+          setCustomizeOpen(false);
+          setCalendarsOpen(false);
+        }}
+      />
+
+      {/* CAL-R5-09: Calendars stacks above Settings; Done pops one level (Settings stays open). */}
+      <CalendarsSheet
+        visible={calendarsOpen}
+        layers={layers}
+        enabledIds={enabledIds}
+        onToggle={onToggleLayer}
+        onUnsubscribe={handleUnsubscribe}
+        onClose={() => setCalendarsOpen(false)}
       />
     </Screen>
   );

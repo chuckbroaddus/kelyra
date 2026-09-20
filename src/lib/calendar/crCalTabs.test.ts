@@ -47,17 +47,20 @@ test('CR-CalTabs: one-row cluster LTR + · search · gear', () => {
   assert.match(screen, /motionPack=["']cm-linear["']/);
 });
 
-test('CR-CalTabs: date helper Month Name DD, YYYY; ISO not SoT for display', () => {
+test('CR-CalTabs: Day Single still Month Name DD, YYYY; ISO not SoT for display', () => {
   const label = formatCalendarDisplayDate('2026-09-19', 'en-US');
   assert.equal(label, 'September 19, 2026');
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /formatCalendarDisplayDate/);
-  // Day toolbar shows helper, not raw ISO as the visible label.
+  // Day Single toolbar shows helper, not raw ISO as the visible label.
   assert.match(screen, /formatCalendarDisplayDate\(dayRange\.day\)/);
   assert.doesNotMatch(screen, /styles\.rangeLabel[\s\S]{0,80}\{dayRange\.day\}/);
   const helper = read('src/lib/calendar/displayDate.ts');
   assert.match(helper, /Month Name DD, YYYY|month: 'long'/);
   assert.match(helper, /never persist|ISO/);
+  // CAL-R5-03/05: Month + week range formatters live alongside Day Single helper.
+  assert.match(helper, /formatCalendarMonthYear/);
+  assert.match(helper, /formatCalendarNumericRange/);
 });
 
 test('CR-CalTabs: << >> nav labels with a11y Previous/Next', () => {
@@ -82,10 +85,12 @@ test('CR-CalTabs: no Hidden-quizzes teacher blurb; gear owns Show/Calendars/Clea
   assert.match(sheet, />Show</);
   assert.match(sheet, /Calendars/);
   assert.match(sheet, /Clear filters/);
-  assert.match(sheet, /Agenda/);
-  assert.match(sheet, /Days/);
   assert.match(sheet, /CATEGORY_CHIPS/);
-  assert.match(sheet, /onJumpAgenda|onJumpDays/);
+  // CAL-R5-06: JUMP Agenda/Days section dropped from gear (supersedes CR JUMP chrome).
+  assert.doesNotMatch(sheet, />Jump</);
+  assert.doesNotMatch(sheet, /onJumpAgenda|onJumpDays/);
+  assert.doesNotMatch(sheet, /label=["']Agenda["']/);
+  assert.doesNotMatch(sheet, /label=["']Days["']/);
 });
 
 test('CR-CalTabs: icons via build-icons; ≠ Desk today / diary', () => {

@@ -65,6 +65,50 @@ test('Parent grades book wordmark is Grades', () => {
   );
 });
 
+test('CAL-R5-01: /calendar and /diary static titles on first paint', () => {
+  assert.equal(
+    headerTitleFor({
+      pathname: '/calendar',
+      pushedTitle: null,
+      className: null,
+      contextTab: '',
+      role: 'teacher',
+    }),
+    'Calendar',
+  );
+  assert.equal(
+    headerTitleFor({
+      pathname: '/calendar/extra',
+      pushedTitle: null,
+      className: null,
+      contextTab: '',
+      role: 'parent',
+    }),
+    'Calendar',
+  );
+  assert.equal(
+    headerTitleFor({
+      pathname: '/diary',
+      pushedTitle: null,
+      className: null,
+      contextTab: '',
+      role: 'teacher',
+    }),
+    'Diary',
+  );
+  // Must not fall through to seat-root / Kelyra when push is absent.
+  assert.notEqual(
+    headerTitleFor({
+      pathname: '/calendar',
+      pushedTitle: null,
+      className: null,
+      contextTab: '',
+      role: 'teacher',
+    }),
+    'Kelyra',
+  );
+});
+
 test('assignment create/edit wordmark is Assignment', () => {
   assert.equal(
     headerTitleFor({ ...base, pathname: '/assignment/new' }),

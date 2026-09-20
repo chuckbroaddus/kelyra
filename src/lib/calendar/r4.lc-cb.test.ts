@@ -78,7 +78,8 @@ test('R4 C-B: Month Compact|List only; Day Single|List in gear (Agenda not tab)'
   assert.match(sheet, /Compact/);
   assert.match(sheet, /Single Day/);
   assert.doesNotMatch(sheet, /label=["']Stacked["']|label=["']Details["']/);
-  assert.match(sheet, /Day List stays here/);
+  // CAL-R5-10: helper footer copy dropped — modes remain labeled without essay.
+  assert.doesNotMatch(sheet, /Day List stays here/);
   const screen = read('src/app/calendar.tsx');
   const tabs = screen.match(/const VIEW_TABS[\s\S]*?\];/)![0];
   assert.doesNotMatch(tabs, /key: 'agenda'/);

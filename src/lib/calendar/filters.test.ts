@@ -7,6 +7,7 @@ import {
   areFiltersNarrowed,
   categoriesForChips,
   CATEGORY_CHIPS,
+  clearFilters,
   filterItemsByEnabledLayers,
   toggleChip,
   toggleLayerEnabled,
@@ -122,4 +123,16 @@ test('areFiltersNarrowed: defaults (sport off) are not narrowed; presets are', (
     areFiltersNarrowed(reset.categoryChipIds!, reset.enabledCalendarIds!, layers),
     false,
   );
+});
+
+test('CAL-R5-08 Clear Filters: deselect every chip (none selected); not multi-select reset', () => {
+  const cleared = clearFilters(layers);
+  assert.deepEqual(cleared.categoryChipIds, []);
+  assert.deepEqual(cleared.enabledCalendarIds, defaultEnabledCalendarIds(layers));
+  assert.equal(categoriesForChips([]), null);
+  assert.equal(areFiltersNarrowed([], cleared.enabledCalendarIds!, layers), false);
+  // Must not leave academic/school/personal selected (old reset bug).
+  assert.ok(!cleared.categoryChipIds!.includes('academic'));
+  assert.ok(!cleared.categoryChipIds!.includes('school'));
+  assert.ok(!cleared.categoryChipIds!.includes('personal'));
 });

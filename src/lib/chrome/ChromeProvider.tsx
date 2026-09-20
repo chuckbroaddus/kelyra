@@ -372,7 +372,17 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const contextReserve = useMemo(() => {
     if (role === 'none') return 0;
     if (isPushedPath(pathname)) return 0;
-    if (pathname === '/ask' || pathname === '/profile' || pathname === '/messages' || pathname === '/activity' || pathname === '/capture') return 0;
+    if (
+      pathname === '/ask' ||
+      pathname === '/profile' ||
+      pathname === '/messages' ||
+      pathname === '/activity' ||
+      pathname === '/capture' ||
+      // CAL-R5-12: Calendar has in-page PersonTabs — no Amazon context-row reserve gap.
+      pathname === '/calendar' ||
+      pathname.startsWith('/calendar/')
+    )
+      return 0;
     // School home and class desk use in-page PersonTabs, not the Amazon context row.
     if (role === 'student') return 0;
     if (pathname === '/' || pathname === '' || /^\/class\//.test(pathname) || pathname.startsWith('/student/')) return 0;

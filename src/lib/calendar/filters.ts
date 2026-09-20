@@ -32,15 +32,28 @@ export const FILTER_PRESETS: Array<{ id: FilterPresetId; label: string }> = [
   { id: 'reset', label: 'Reset' },
 ];
 
-/** Expand selected chip ids → category strings for list_calendar_items. Empty → null (no UX filter). */
+/**
+ * Expand selected chip ids → category strings for list_calendar_items.
+ * Empty selection (Clear Filters) → null = unfiltered categories (CAL-R5-08).
+ */
 export function categoriesForChips(chipIds: string[]): string[] | null {
-  if (!chipIds.length) return [];
+  if (!chipIds.length) return null;
   const set = new Set<string>();
   for (const chip of CATEGORY_CHIPS) {
     if (!chipIds.includes(chip.id)) continue;
     for (const c of chip.categories) set.add(c);
   }
   return [...set];
+}
+
+/** CAL-R5-08 Clear Filters — deselect every Show chip; restore default layers. */
+export function clearFilters(
+  layers: CalendarLayer[],
+): Pick<CalPrefsV1, 'enabledCalendarIds' | 'categoryChipIds'> {
+  return {
+    categoryChipIds: [],
+    enabledCalendarIds: defaultEnabledCalendarIds(layers),
+  };
 }
 
 export function toggleChip(chipIds: string[], chipId: string): string[] {
@@ -90,7 +103,9 @@ export function applyPreset(
 
 
 /**
- * True when UX filters differ from Reset defaults.
+ * True when UX filters are narrowed vs Clear (none selected) or cold-start defaults.
+ * Clear = chips [] (unfiltered categories) — not narrowed (CAL-R5-08).
+ * Cold-start defaults trio + sport off — not narrowed.
  * Sport chip / team layers off is the default — not "narrowed" — so an empty
  * month must not show "Nothing matches these filters" or hide MonthGrid.
  */
@@ -99,10 +114,13 @@ export function areFiltersNarrowed(
   enabledIds: string[],
   layers: CalendarLayer[],
 ): boolean {
-  const defaults = defaultCategoryChipIds();
-  const chipSet = new Set(chipIds);
-  if (chipSet.size !== defaults.length || defaults.some((id) => !chipSet.has(id))) {
-    return true;
+  // Clear Filters baseline: no chips selected = unfiltered categories.
+  if (chipIds.length > 0) {
+    const defaults = defaultCategoryChipIds();
+    const chipSet = new Set(chipIds);
+    if (chipSet.size !== defaults.length || defaults.some((id) => !chipSet.has(id))) {
+      return true;
+    }
   }
   if (!layers.length) return false;
   const defaultEnabled = defaultEnabledCalendarIds(layers);

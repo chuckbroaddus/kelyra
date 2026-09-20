@@ -33,7 +33,9 @@ export function headerTitleFor(input: {
   if (pathname === '/proposal') return 'Look at this';
   if (pathname === '/feed') return named || 'Feed';
   if (pathname === '/activity') return 'Activity';
-  if (pathname === '/diary') return named || 'Diary';
+  if (pathname === '/diary' || pathname.startsWith('/diary/')) return named || 'Diary';
+  // CAL-R5-01: static Calendar title — first paint must not wait on usePushedTitle.
+  if (pathname === '/calendar' || pathname.startsWith('/calendar/')) return named || 'Calendar';
   if (pathname === '/password') return 'Password';
   if (pathname === '/messages/new') return named || 'New Message';
   if (pathname.startsWith('/messages/info/')) return named || 'Details';

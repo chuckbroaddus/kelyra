@@ -128,7 +128,7 @@ export function TeacherWeekGrid({
               <Text
                 style={[styles.weekday, { color: isToday ? colors.brand : colors.mute }]}
               >
-                {weekdayShort(day)}
+                {weekdayShort(day).toUpperCase()}
               </Text>
               <Text
                 style={[
