@@ -15,7 +15,8 @@ import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { GhostButton } from '@/components/ui/Button';
+import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -26,13 +27,12 @@ import {
   listCalendars,
   unsubscribeTeam,
 } from '@/lib/calendar/api';
+import { formatCalendarDisplayDate } from '@/lib/calendar/displayDate';
 import { canCreateOnSeat } from '@/lib/calendar/eventActions';
 import {
   applyPreset,
   areFiltersNarrowed,
-  CATEGORY_CHIPS,
   categoriesForChips,
-  FILTER_PRESETS,
   toggleChip,
   toggleLayerEnabled,
   type FilterPresetId,
@@ -84,17 +84,18 @@ import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
-const VIEW_CHIPS: Array<{ id: CalendarViewId; label: string }> = [
-  { id: 'year', label: 'Year' },
-  { id: 'month', label: 'Month' },
-  { id: 'week', label: 'Week' },
-  { id: 'day', label: 'Day' },
+/** CR-CalTabs PersonTabs row — Year·Month·Week·Day only (Agenda/Days via gear). */
+const VIEW_TABS: PersonTab[] = [
+  { key: 'year', label: 'Year', icon: 'calYear' },
+  { key: 'month', label: 'Month', icon: 'calMonth' },
+  { key: 'week', label: 'Week', icon: 'calWeek' },
+  { key: 'day', label: 'Day', icon: 'calDay' },
 ];
 
 /**
- * CAL-R4 L-C + C-B chrome: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
- * quiet chips Year·Month·Week·Day (Days/Agenda off chip row; Day List in gear);
- * header gear · search · +; Month Compact|List; Day Single|List. No tray chrome.
+ * CR-CalTabs + R4 L-C: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
+ * one-row PersonTabs Y/M/W/D + +·search·gear; modes/Show/Calendars/Clear under gear.
+ * No tray chrome. PersonTabs opt-in on /calendar only — no §32.2 flip.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -636,7 +637,7 @@ export default function CalendarScreen() {
     <Screen>
       {parentNeedsChild ? (
         <View style={styles.childBlock}>
-          <Text style={[styles.filterLabel, { color: colors.mute }]}>Child</Text>
+          <Text style={[styles.childLabel, { color: colors.mute }]}>Child</Text>
           <ChipRow>
             {children.map((child) => (
               <Chip
@@ -656,31 +657,44 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {/* CAL-R4 chrome header trio LTR: gear (customizer) · search · + (no tray). */}
-      <View style={styles.headerTrio}>
-        <IconButton
-          name="settings"
-          label="Customize views"
-          onPress={() => setCustomizeOpen(true)}
-        />
-        <IconButton
-          name="search"
-          label={searchOpen ? 'Close search' : 'Search calendar'}
-          onPress={() => {
-            setSearchOpen((v) => !v);
-            if (searchOpen) setSearchQuery('');
-          }}
-        />
-        {canCreate ? (
-          <IconButton
-            name="plus"
-            label="Add event"
-            onPress={() => setComposer({ mode: 'create' })}
-          />
-        ) : (
-          <View style={styles.headerTrioSpacer} />
-        )}
-      </View>
+      {/* CR-CalTabs one-row: PersonTabs Y/M/W/D + + · search · gear (no headerTrio above). */}
+      <PersonTabs
+        tabs={VIEW_TABS}
+        value={
+          activeView === 'year' ||
+          activeView === 'month' ||
+          activeView === 'week' ||
+          activeView === 'day'
+            ? activeView
+            : ''
+        }
+        onChange={(key) => selectView(key as CalendarViewId)}
+        motionPack="cm-linear"
+        trailing={
+          <View style={styles.chromeCluster}>
+            {canCreate ? (
+              <IconButton
+                name="plus"
+                label="Add event"
+                onPress={() => setComposer({ mode: 'create' })}
+              />
+            ) : null}
+            <IconButton
+              name="search"
+              label={searchOpen ? 'Close search' : 'Search calendar'}
+              onPress={() => {
+                setSearchOpen((v) => !v);
+                if (searchOpen) setSearchQuery('');
+              }}
+            />
+            <IconButton
+              name="settings"
+              label="Customize views"
+              onPress={() => setCustomizeOpen(true)}
+            />
+          </View>
+        }
+      />
 
       {searchOpen ? (
         <TextInput
@@ -699,41 +713,7 @@ export default function CalendarScreen() {
         />
       ) : null}
 
-      {/* Hierarchy back = Year/Month chips + platform back (no GhostButton Up row above chips). */}
-
-      {/* In-Calendar view switcher (CAL-36 / R4) — quieter secondary; not tray. */}
-      <ChipRow compact>
-        {VIEW_CHIPS.map((chip) => (
-          <Chip
-            key={chip.id}
-            label={chip.label}
-            quiet
-            selected={activeView === chip.id}
-            onPress={() => selectView(chip.id)}
-          />
-        ))}
-      </ChipRow>
-
-      {/* LF-A category chips (multi-select) — stay primary (CAL-32). */}
-      <View style={styles.filterBlock}>
-        <Text style={[styles.filterLabel, { color: colors.mute }]}>Show</Text>
-        <ChipRow>
-          {CATEGORY_CHIPS.map((chip) => (
-            <Chip
-              key={chip.id}
-              label={chip.label}
-              selected={chipIds.includes(chip.id)}
-              onPress={() => onToggleChip(chip.id)}
-            />
-          ))}
-          <Chip label="Calendars" selected={calendarsOpen} onPress={() => setCalendarsOpen(true)} />
-        </ChipRow>
-        <ChipRow compact>
-          {FILTER_PRESETS.map((p) => (
-            <Chip key={p.id} label={p.label} selected={false} onPress={() => onPreset(p.id)} />
-          ))}
-        </ChipRow>
-      </View>
+      {/* Hierarchy back = Year/Month tabs + platform back (no GhostButton Up row above tabs). */}
 
       {canCreate && seat === 'parent' && parentChildMissing ? (
         <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
@@ -746,7 +726,8 @@ export default function CalendarScreen() {
           <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
           <View style={styles.toolbar}>
             <GhostButton
-              label="Previous"
+              label="<<"
+              accessibilityLabel="Previous"
               onPress={() =>
                 setGridAnchor(
                   activeView === 'week'
@@ -762,12 +743,13 @@ export default function CalendarScreen() {
             >
               <Text style={[styles.rangeLabel, { color: colors.ink }]}>
                 {activeView === 'week'
-                  ? `${weekRange.fromIso.slice(5)} – ${weekRange.toIso.slice(5)}`
-                  : `${multiRange.fromIso.slice(5)} – ${multiRange.toIso.slice(5)}`}
+                  ? `${formatCalendarDisplayDate(weekRange.fromIso)} – ${formatCalendarDisplayDate(weekRange.toIso)}`
+                  : `${formatCalendarDisplayDate(multiRange.fromIso)} – ${formatCalendarDisplayDate(multiRange.toIso)}`}
               </Text>
             </Pressable>
             <GhostButton
-              label="Next"
+              label=">>"
+              accessibilityLabel="Next"
               onPress={() =>
                 setGridAnchor(
                   activeView === 'week'
@@ -782,22 +764,33 @@ export default function CalendarScreen() {
 
       {activeView === 'day' ? (
         <View style={styles.toolbar}>
-          <GhostButton label="Previous" onPress={() => setDayAnchor(shiftDay(dayRange.day, -1))} />
+          <GhostButton
+            label="<<"
+            accessibilityLabel="Previous"
+            onPress={() => setDayAnchor(shiftDay(dayRange.day, -1))}
+          />
           <Pressable
             onPress={jumpToday}
             accessibilityRole="button"
             accessibilityLabel="Go to today"
           >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>{dayRange.day}</Text>
+            <Text style={[styles.rangeLabel, { color: colors.ink }]}>
+              {formatCalendarDisplayDate(dayRange.day)}
+            </Text>
           </Pressable>
-          <GhostButton label="Next" onPress={() => setDayAnchor(shiftDay(dayRange.day, 1))} />
+          <GhostButton
+            label=">>"
+            accessibilityLabel="Next"
+            onPress={() => setDayAnchor(shiftDay(dayRange.day, 1))}
+          />
         </View>
       ) : null}
 
       {activeView === 'agenda' ? (
         <View style={styles.toolbar}>
           <GhostButton
-            label="Earlier"
+            label="<<"
+            accessibilityLabel="Earlier"
             onPress={() => setAgendaAnchor(shiftDay(agendaRange.fromIso, -7))}
           />
           <Pressable
@@ -808,7 +801,8 @@ export default function CalendarScreen() {
             <Text style={[styles.rangeLabel, { color: colors.ink }]}>Next 2 weeks</Text>
           </Pressable>
           <GhostButton
-            label="Later"
+            label=">>"
+            accessibilityLabel="Later"
             onPress={() => setAgendaAnchor(shiftDay(agendaRange.fromIso, 7))}
           />
         </View>
@@ -817,7 +811,8 @@ export default function CalendarScreen() {
       {activeView === 'month' ? (
         <View style={styles.toolbar}>
           <GhostButton
-            label="Previous"
+            label="<<"
+            accessibilityLabel="Previous"
             onPress={() => {
               setMonthAnchor(shiftMonth(monthRange.fromIso, -1));
               setMonthSelectedDay(null);
@@ -828,10 +823,13 @@ export default function CalendarScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go to this month"
           >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>{monthRange.label}</Text>
+            <Text style={[styles.rangeLabel, { color: colors.ink }]}>
+              {formatCalendarDisplayDate(monthAnchor)}
+            </Text>
           </Pressable>
           <GhostButton
-            label="Next"
+            label=">>"
+            accessibilityLabel="Next"
             onPress={() => {
               setMonthAnchor(shiftMonth(monthRange.fromIso, 1));
               setMonthSelectedDay(null);
@@ -842,7 +840,11 @@ export default function CalendarScreen() {
 
       {activeView === 'year' ? (
         <View style={styles.toolbar}>
-          <GhostButton label="Previous" onPress={() => setYearAnchor(year - 1)} />
+          <GhostButton
+            label="<<"
+            accessibilityLabel="Previous"
+            onPress={() => setYearAnchor(year - 1)}
+          />
           <Pressable
             onPress={jumpToday}
             accessibilityRole="button"
@@ -850,7 +852,11 @@ export default function CalendarScreen() {
           >
             <Text style={[styles.rangeLabel, { color: colors.ink }]}>{year}</Text>
           </Pressable>
-          <GhostButton label="Next" onPress={() => setYearAnchor(year + 1)} />
+          <GhostButton
+            label=">>"
+            accessibilityLabel="Next"
+            onPress={() => setYearAnchor(year + 1)}
+          />
         </View>
       ) : null}
 
@@ -954,14 +960,6 @@ export default function CalendarScreen() {
         ) : null
       ) : null}
 
-      {seat === 'teacher' ? (
-        <Text style={[styles.hint, { color: colors.mute }]}>
-          Hidden quizzes and tests show a Hidden badge until you publish them for families from the
-          assignment or Needs. School events are managed by office. Disable homework in Calendars
-          without hiding class events.
-        </Text>
-      ) : null}
-
       {seat ? (
         <EventComposer
           visible={composer != null}
@@ -1048,6 +1046,13 @@ export default function CalendarScreen() {
           setDayMode(mode);
           persistViewPrefs(activeView, dayCount, monthMode, mode);
         }}
+        chipIds={chipIds}
+        onToggleChip={onToggleChip}
+        onPreset={onPreset}
+        onClearFilters={() => onPreset('reset')}
+        onOpenCalendars={() => setCalendarsOpen(true)}
+        onJumpAgenda={() => selectView('agenda')}
+        onJumpDays={() => selectView('multiday')}
         onClose={() => setCustomizeOpen(false)}
       />
     </Screen>
@@ -1087,23 +1092,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 4,
   },
-  filterBlock: {
-    marginTop: 8,
-    marginBottom: 4,
-    gap: 4,
-  },
-  filterLabel: {
+  childLabel: {
     ...type.meta,
     textTransform: 'uppercase',
   },
-  headerTrio: {
+  chromeCluster: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    marginTop: 4,
+    flexShrink: 0,
+    gap: 2,
   },
-  headerTrioSpacer: { width: 44, height: 44 },
   searchInput: {
     borderWidth: 1,
     borderRadius: 10,

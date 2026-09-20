@@ -344,6 +344,46 @@ const RECIPES = {
       }
     }
   },
+  /**
+   * CR-CalTabs Year — pad + rings, two columns of three small dots.
+   * Not Desk today house; not diary; not Month denser grid.
+   */
+  calYear: (p) => {
+    roundRect(p, 5.0, 6.2, 14.0, 13.2, 1.4, ST, false);
+    line(p, 8.2, 4.2, 8.2, 7.4, ST);
+    line(p, 15.8, 4.2, 15.8, 7.4, ST);
+    for (const cy of [11.2, 13.6, 16.0]) {
+      circle(p, 9.2, cy, 0.55, 0, true);
+      circle(p, 14.8, cy, 0.55, 0, true);
+    }
+  },
+  /**
+   * CR-CalTabs Month — denser day-dot grid, no Year rings.
+   */
+  calMonth: (p) => {
+    roundRect(p, 4.0, 5.0, 16.0, 15.0, 1.2, ST, false);
+    for (const cy of [11.0, 15.0]) {
+      for (const cx of [8.0, 12.0, 16.0]) {
+        circle(p, cx, cy, 0.7, 0, true);
+      }
+    }
+  },
+  /**
+   * CR-CalTabs Week — seven short ticks.
+   */
+  calWeek: (p) => {
+    for (let i = 0; i < 7; i++) {
+      const x = 4.0 + i * 2.67;
+      line(p, x, 10.2, x, 13.8, ST);
+    }
+  },
+  /**
+   * CR-CalTabs Day — single cell.
+   */
+  calDay: (p) => {
+    roundRect(p, 7.0, 6.0, 10.0, 12.0, 1.2, ST, false);
+    line(p, 12.0, 10.0, 12.0, 14.0, ST);
+  },
   share: (p) => {
     roundRect(p, 5.2, 8.4, 13.6, 12.4, 1.4, ST, false);
     line(p, 12, 3.4, 12, 12.4, ST);

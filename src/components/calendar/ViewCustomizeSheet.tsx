@@ -7,6 +7,11 @@ import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { type } from '@/constants/theme';
+import {
+  CATEGORY_CHIPS,
+  FILTER_PRESETS,
+  type FilterPresetId,
+} from '@/lib/calendar/filters';
 import type { DayMode, MonthMode } from '@/lib/calendar/viewPrefs';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
@@ -17,12 +22,21 @@ type Props = {
   dayMode: DayMode;
   onChangeMonthMode: (mode: MonthMode) => void;
   onChangeDayMode: (mode: DayMode) => void;
+  /** LF-A Show chips (under gear — CAL-51 / CAL-45 placement). */
+  chipIds: string[];
+  onToggleChip: (chipId: string) => void;
+  onPreset: (preset: FilterPresetId) => void;
+  onClearFilters: () => void;
+  onOpenCalendars: () => void;
+  /** Agenda / Days jumps for ≤2-tap reach (CAL-41). */
+  onJumpAgenda: () => void;
+  onJumpDays: () => void;
   onClose: () => void;
 };
 
 /**
- * CAL-R4 C-B view customizer — Month Compact|List, Day Single|List (Day List lives here).
- * No Stacked or Detail stubs. Agenda is not a chip-row entry (Day List stays in gear).
+ * CR-CalTabs gear sheet — Month Compact|List, Day Single|List, Show filters,
+ * Calendars, Clear filters, Agenda/Days jumps. No Stacked/Details.
  */
 export function ViewCustomizeSheet({
   visible,
@@ -30,6 +44,13 @@ export function ViewCustomizeSheet({
   dayMode,
   onChangeMonthMode,
   onChangeDayMode,
+  chipIds,
+  onToggleChip,
+  onPreset,
+  onClearFilters,
+  onOpenCalendars,
+  onJumpAgenda,
+  onJumpDays,
   onClose,
 }: Props) {
   const { colors } = useTheme();
@@ -91,8 +112,58 @@ export function ViewCustomizeSheet({
             onPress={() => onChangeDayMode('list')}
           />
         </ChipRow>
+
+        <Text style={[styles.section, { color: colors.mute }]}>Jump</Text>
+        <ChipRow>
+          <Chip
+            label="Agenda"
+            selected={false}
+            onPress={() => {
+              onJumpAgenda();
+              onClose();
+            }}
+          />
+          <Chip
+            label="Days"
+            selected={false}
+            onPress={() => {
+              onJumpDays();
+              onClose();
+            }}
+          />
+        </ChipRow>
+
+        <Text style={[styles.section, { color: colors.mute }]}>Show</Text>
+        <ChipRow>
+          {CATEGORY_CHIPS.map((chip) => (
+            <Chip
+              key={chip.id}
+              label={chip.label}
+              selected={chipIds.includes(chip.id)}
+              onPress={() => onToggleChip(chip.id)}
+            />
+          ))}
+        </ChipRow>
+        <ChipRow compact>
+          {FILTER_PRESETS.map((p) => (
+            <Chip key={p.id} label={p.label} selected={false} onPress={() => onPreset(p.id)} />
+          ))}
+        </ChipRow>
+
+        <ChipRow>
+          <Chip
+            label="Calendars"
+            selected={false}
+            onPress={() => {
+              onOpenCalendars();
+              onClose();
+            }}
+          />
+          <Chip label="Clear filters" selected={false} onPress={onClearFilters} />
+        </ChipRow>
+
         <Text style={[styles.hint, { color: colors.mute }]}>
-          Day List stays here in the customizer. Chip row is Year · Month · Week · Day. Use
+          Day List stays here in the customizer. Tab row is Year · Month · Week · Day. Use
           Year → Month → Day tap-zoom for hierarchy.
         </Text>
         <View style={styles.footer}>
