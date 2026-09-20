@@ -50,10 +50,12 @@ test('CR-CalTabs: one-row cluster LTR + · search · gear', () => {
 test('CR-CalTabs: Day Single still Month Name DD, YYYY; ISO not SoT for display', () => {
   const label = formatCalendarDisplayDate('2026-09-19', 'en-US');
   assert.equal(label, 'September 19, 2026');
+  // Period pager leaf uses displayDate helpers (not raw ISO as SoT).
+  const pager = read('src/lib/calendar/periodPager.ts');
+  assert.match(pager, /formatCalendarDisplayDate/);
+  assert.match(pager, /dayTile|kind === 'day'/);
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /formatCalendarDisplayDate/);
-  // Day Single toolbar shows helper, not raw ISO as the visible label.
-  assert.match(screen, /formatCalendarDisplayDate\(dayRange\.day\)/);
+  assert.match(screen, /PeriodPager/);
   assert.doesNotMatch(screen, /styles\.rangeLabel[\s\S]{0,80}\{dayRange\.day\}/);
   const helper = read('src/lib/calendar/displayDate.ts');
   assert.match(helper, /Month Name DD, YYYY|month: 'long'/);
@@ -64,11 +66,16 @@ test('CR-CalTabs: Day Single still Month Name DD, YYYY; ISO not SoT for display'
 });
 
 test('CR-CalTabs: << >> nav labels with a11y Previous/Next', () => {
+  // Rolodex replaces chrome << >>; leaf-fail fallback keeps << >> + a11y Previous/Next.
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(pager, /label=["']<<["']/);
+  assert.match(pager, /label=["']>>["']/);
+  assert.match(pager, /accessibilityPrevLabel/);
+  assert.match(pager, /accessibilityNextLabel/);
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /label=["']<<["']/);
-  assert.match(screen, /label=["']>>["']/);
-  assert.match(screen, /accessibilityLabel=["']Previous["']/);
-  assert.match(screen, /accessibilityLabel=["']Next["']/);
+  assert.match(screen, /PeriodPager/);
+  assert.match(screen, /accessibilityPrevLabel/);
+  assert.match(screen, /accessibilityNextLabel=["']Next["']|accessibilityNextLabel=\{/);
   assert.doesNotMatch(screen, /GhostButton[\s\S]{0,40}label=["']Previous["']/);
   assert.doesNotMatch(screen, /GhostButton[\s\S]{0,40}label=["']Next["']/);
 });
