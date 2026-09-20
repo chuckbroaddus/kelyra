@@ -10,6 +10,7 @@ import { EventComposer } from '@/components/calendar/EventComposer';
 import { takePendingCalendarDraft, type PendingCalendarDraft } from '@/lib/calendar/askDraft';
 import { EventMenu } from '@/components/calendar/EventMenu';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
+import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { MultiDayStepper } from '@/components/calendar/MultiDayStepper';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { YearGrid } from '@/components/calendar/YearGrid';
@@ -28,10 +29,9 @@ import {
   unsubscribeTeam,
 } from '@/lib/calendar/api';
 import {
-  formatCalendarDisplayDate,
-  formatCalendarMonthYear,
-  formatCalendarNumericRange,
-} from '@/lib/calendar/displayDate';
+  periodKindForView,
+  showsPeriodPager,
+} from '@/lib/calendar/periodPager';
 import { canCreateOnSeat } from '@/lib/calendar/eventActions';
 import {
   areFiltersNarrowed,
@@ -734,143 +734,57 @@ export default function CalendarScreen() {
       ) : null}
 
       {activeView === 'week' || activeView === 'multiday' ? (
-        <>
-          <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
-          <View style={styles.toolbar}>
-            <GhostButton
-              label="<<"
-              accessibilityLabel="Previous"
-              onPress={() =>
-                setGridAnchor(
-                  activeView === 'week'
-                    ? shiftWeek(weekRange.fromIso, -1)
-                    : shiftMultiday(gridAnchor, stepperCount, -1),
-                )
-              }
-            />
-            <Pressable
-              onPress={jumpToday}
-              accessibilityRole="button"
-              accessibilityLabel="Go to today"
-            >
-              <Text style={[styles.rangeLabel, { color: colors.ink }]}>
-                {activeView === 'week'
-                  ? formatCalendarNumericRange(weekRange.fromIso, weekRange.toIso)
-                  : formatCalendarNumericRange(multiRange.fromIso, multiRange.toIso)}
-              </Text>
-            </Pressable>
-            <GhostButton
-              label=">>"
-              accessibilityLabel="Next"
-              onPress={() =>
-                setGridAnchor(
-                  activeView === 'week'
-                    ? shiftWeek(weekRange.fromIso, 1)
-                    : shiftMultiday(gridAnchor, stepperCount, 1),
-                )
-              }
-            />
-          </View>
-        </>
+        <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
       ) : null}
 
-      {/* CAL-R5-11: Day List has no << date >> chevron — Single Day keeps it. */}
-      {activeView === 'day' && dayMode !== 'list' ? (
-        <View style={styles.toolbar}>
-          <GhostButton
-            label="<<"
-            accessibilityLabel="Previous"
-            onPress={() => setDayAnchor(shiftDay(dayRange.day, -1))}
-          />
-          <Pressable
-            onPress={jumpToday}
-            accessibilityRole="button"
-            accessibilityLabel="Go to today"
-          >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>
-              {formatCalendarDisplayDate(dayRange.day)}
-            </Text>
-          </Pressable>
-          <GhostButton
-            label=">>"
-            accessibilityLabel="Next"
-            onPress={() => setDayAnchor(shiftDay(dayRange.day, 1))}
-          />
-        </View>
-      ) : null}
-
-      {activeView === 'agenda' ? (
-        <View style={styles.toolbar}>
-          <GhostButton
-            label="<<"
-            accessibilityLabel="Earlier"
-            onPress={() => setAgendaAnchor(shiftDay(agendaRange.fromIso, -7))}
-          />
-          <Pressable
-            onPress={jumpToday}
-            accessibilityRole="button"
-            accessibilityLabel="Reset agenda to today"
-          >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>Next 2 weeks</Text>
-          </Pressable>
-          <GhostButton
-            label=">>"
-            accessibilityLabel="Later"
-            onPress={() => setAgendaAnchor(shiftDay(agendaRange.fromIso, 7))}
-          />
-        </View>
-      ) : null}
-
-      {activeView === 'month' ? (
-        <View style={styles.toolbar}>
-          <GhostButton
-            label="<<"
-            accessibilityLabel="Previous"
-            onPress={() => {
-              setMonthAnchor(shiftMonth(monthRange.fromIso, -1));
+      {/* Period pager Rolodex — replaces << / label / >> only (PersonTabs + Tray G1 HOLD). */}
+      {showsPeriodPager(activeView, dayMode) && periodKindForView(activeView) ? (
+        <PeriodPager
+          kind={periodKindForView(activeView)!}
+          anchor={
+            activeView === 'year'
+              ? String(year)
+              : activeView === 'month'
+                ? monthAnchor
+                : activeView === 'week'
+                  ? weekRange.fromIso
+                  : activeView === 'multiday'
+                    ? gridAnchor
+                    : activeView === 'day'
+                      ? dayRange.day
+                      : agendaRange.fromIso
+          }
+          dayCount={stepperCount}
+          onJumpToday={jumpToday}
+          accessibilityPrevLabel={activeView === 'agenda' ? 'Earlier' : 'Previous'}
+          accessibilityNextLabel={activeView === 'agenda' ? 'Later' : 'Next'}
+          onShift={(dir) => {
+            if (activeView === 'year') {
+              setYearAnchor(year + dir);
+              return;
+            }
+            if (activeView === 'month') {
+              setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
               setMonthSelectedDay(null);
-            }}
-          />
-          <Pressable
-            onPress={jumpToday}
-            accessibilityRole="button"
-            accessibilityLabel="Go to this month"
-          >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>
-              {formatCalendarMonthYear(monthAnchor)}
-            </Text>
-          </Pressable>
-          <GhostButton
-            label=">>"
-            accessibilityLabel="Next"
-            onPress={() => {
-              setMonthAnchor(shiftMonth(monthRange.fromIso, 1));
-              setMonthSelectedDay(null);
-            }}
-          />
-        </View>
-      ) : null}
-
-      {activeView === 'year' ? (
-        <View style={styles.toolbar}>
-          <GhostButton
-            label="<<"
-            accessibilityLabel="Previous"
-            onPress={() => setYearAnchor(year - 1)}
-          />
-          <Pressable
-            onPress={jumpToday}
-            accessibilityRole="button"
-            accessibilityLabel="Go to this year"
-          >
-            <Text style={[styles.rangeLabel, { color: colors.ink }]}>{year}</Text>
-          </Pressable>
-          <GhostButton
-            label=">>"
-            accessibilityLabel="Next"
-            onPress={() => setYearAnchor(year + 1)}
-          />
-        </View>
+              return;
+            }
+            if (activeView === 'week') {
+              setGridAnchor(shiftWeek(weekRange.fromIso, dir));
+              return;
+            }
+            if (activeView === 'multiday') {
+              setGridAnchor(shiftMultiday(gridAnchor, stepperCount, dir));
+              return;
+            }
+            if (activeView === 'day') {
+              setDayAnchor(shiftDay(dayRange.day, dir));
+              return;
+            }
+            if (activeView === 'agenda') {
+              setAgendaAnchor(shiftDay(agendaRange.fromIso, dir * 7));
+            }
+          }}
+        />
       ) : null}
 
       {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
@@ -1075,18 +989,6 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    marginTop: 8,
-    gap: 8,
-  },
-  rangeLabel: {
-    ...type.section,
-    textAlign: 'center',
-  },
   empty: {
     ...type.body,
     marginVertical: 12,

@@ -34,7 +34,8 @@ test('CAL-R5-02: YearGrid has no bold yearTitle under chevron row', () => {
   assert.match(year, /accessibilityLabel=\{`Year \$\{year\}`\}/);
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /activeView === 'year'/);
-  assert.match(screen, /\{year\}/);
+  // Period pager Rolodex carries the year chrome (String(year) anchor).
+  assert.match(screen, /String\(year\)|setYearAnchor\(year/);
 });
 
 test('CAL-R5-03: Month chevron is Month, Year (no day)', () => {
@@ -43,8 +44,11 @@ test('CAL-R5-03: Month chevron is Month, Year (no day)', () => {
   const dayForm = formatCalendarDisplayDate('2026-09-20', 'en-US');
   assert.equal(dayForm, 'September 20, 2026');
   assert.notEqual(label, dayForm);
+  const pager = read('src/lib/calendar/periodPager.ts');
+  assert.match(pager, /formatCalendarMonthYear/);
+  assert.doesNotMatch(pager, /formatCalendarDisplayDate\(m\.fromIso\)|formatCalendarDisplayDate\(anchor/);
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /formatCalendarMonthYear\(monthAnchor\)/);
+  assert.match(screen, /PeriodPager/);
   assert.doesNotMatch(screen, /formatCalendarDisplayDate\(monthAnchor\)/);
 });
 
@@ -73,9 +77,12 @@ test('CAL-R5-05: Week range MM/DD/YYYY – MM/DD/YYYY', () => {
     formatCalendarNumericRange('2026-09-14', '2026-09-20'),
     '09/14/2026 – 09/20/2026',
   );
+  const pager = read('src/lib/calendar/periodPager.ts');
+  assert.match(pager, /formatCalendarNumericRange/);
+  assert.match(pager, /kind === 'week'|weekTile/);
+  assert.match(pager, /kind === 'multiday'|multidayTile/);
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /formatCalendarNumericRange\(weekRange/);
-  assert.match(screen, /formatCalendarNumericRange\(multiRange/);
+  assert.match(screen, /PeriodPager/);
 });
 
 test('CAL-R5-06/07/10: gear DROP JUMP + academic preset row + helper footer', () => {
@@ -127,7 +134,11 @@ test('CAL-R5-09: Calendars Done pops to Settings (stack; Settings stays open)', 
 
 test('CAL-R5-11: Day List continuous multi-day; no date chevron; density A headers', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /dayMode !== 'list'/);
+  // Rolodex omitted on Day List via showsPeriodPager(view, dayMode).
+  assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
+  const pager = read('src/lib/calendar/periodPager.ts');
+  assert.match(pager, /dayMode === 'list'/);
+  assert.match(pager, /return false/);
   assert.match(screen, /dayListRange\.days/);
   assert.match(screen, /includeEmptyDays/);
   assert.match(screen, /agendaRangeFrom\(dayAnchor, 14\)/);
