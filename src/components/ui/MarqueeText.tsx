@@ -28,6 +28,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { MARQUEE_MIN_CLIP as MIN_CLIP, marqueeMetrics } from '@/components/ui/marqueeMetrics';
+export { marqueeMetrics } from '@/components/ui/marqueeMetrics';
+
 export type MarqueeAlign = 'start' | 'center' | 'end';
 
 export type MarqueeScroll = {
@@ -50,36 +53,27 @@ const idleScroll: MarqueeScroll = {
 
 const MarqueeScrollContext = createContext<MarqueeScroll>(idleScroll);
 
-/** Collapsed chrome (search expand) can report a 2–8 pt clip. Ignore it so a short title does not start crawling. */
-const MIN_CLIP = 24;
-/** Header reflow on push/pop is a few pixels. Real overflow is clearly more than a hairline. */
-const OVERFLOW_SLACK = 8;
 /**
- * First onLayout after a push is often the text’s intrinsic width (~40pt for “Ask”),
+ * First onLayout after a push is often the text's intrinsic width (~40pt for "Ask"),
  * not the flex slot. Keep collecting the MAX clip for this long before crawling.
  */
 const WARMUP_MS = 400;
 /** After warmup, debounce clip shrinks so a one-frame blip cannot restart a crawl. */
 const STABLE_MS = 80;
 
-export function marqueeMetrics(clipWidth: number, textWidth: number, speed = 30) {
-  const overflowing = clipWidth >= MIN_CLIP && textWidth > clipWidth + OVERFLOW_SLACK;
-  const distance = Math.max(0, textWidth - clipWidth);
-  const duration = (distance / Math.max(1, speed)) * 1000;
-  return { distance, duration, overflowing };
-}
-
 function useClipWidth(resetKey: string | number) {
   const [clip, setClip] = useState(0);
   const [ready, setReady] = useState(false);
   const [key, setKey] = useState(resetKey);
   const maxSeen = useRef(0);
+  const clipRef = useRef(0);
   const warmupUntil = useRef(0);
   const stable = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warmup = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (resetKey !== key) {
     maxSeen.current = 0;
+    clipRef.current = 0;
     warmupUntil.current = Date.now() + WARMUP_MS;
     setKey(resetKey);
     setClip(0);
@@ -91,7 +85,10 @@ function useClipWidth(resetKey: string | number) {
     if (warmup.current) clearTimeout(warmup.current);
     warmup.current = setTimeout(() => {
       const next = maxSeen.current;
-      if (next >= MIN_CLIP) setClip(next);
+      if (next >= MIN_CLIP) {
+        clipRef.current = next;
+        setClip(next);
+      }
       setReady(next >= MIN_CLIP);
     }, WARMUP_MS);
     return () => {
@@ -105,13 +102,25 @@ function useClipWidth(resetKey: string | number) {
     maxSeen.current = Math.max(maxSeen.current, next);
     if (Date.now() < warmupUntil.current) {
       const grown = maxSeen.current;
-      setClip((current) => (grown > current + 0.5 ? grown : current));
+      if (grown > clipRef.current + 0.5) {
+        clipRef.current = grown;
+        setClip(grown);
+      }
       return;
     }
+    // After warmup: apply growth immediately (morph settle / remasure). Debounce shrinks only.
+    if (next > clipRef.current + 0.5) {
+      if (stable.current) clearTimeout(stable.current);
+      clipRef.current = next;
+      setClip(next);
+      return;
+    }
+    if (Math.abs(clipRef.current - next) < 0.5) return;
     if (stable.current) clearTimeout(stable.current);
     const sample = next;
     stable.current = setTimeout(() => {
-      setClip((current) => (Math.abs(current - sample) < 0.5 ? current : sample));
+      clipRef.current = sample;
+      setClip(sample);
     }, STABLE_MS);
   }, []);
 
@@ -174,6 +183,7 @@ function WebMarquee({
   const [shift, setShift] = useState(0);
   const [ink, setInk] = useState(1);
   const measureRef = useRef<Text>(null);
+  const clipHostRef = useRef<View>(null);
   const clipFromStyle = typeof layout.width === 'number' ? layout.width : 0;
   const clip = clipWidth || clipFromStyle;
 
@@ -192,6 +202,16 @@ function WebMarquee({
   useLayoutEffect(() => {
     takeText(hostWidth(measureRef.current));
   }, [takeText, text, resetKey, ready, type.fontFamily, type.fontSize, type.fontWeight, type.letterSpacing]);
+
+  // PersonTabs unpauses after expand settle — remasure so mid-morph clip cannot false-overflow.
+  useLayoutEffect(() => {
+    if (paused || parentPaused) return;
+    const node = clipHostRef.current;
+    if (!node) return;
+    node.measure?.((_x, _y, width) => {
+      if (width > 0) takeClip(width);
+    });
+  }, [paused, parentPaused, takeClip]);
 
   const { distance, overflowing: fitsOverflow } = marqueeMetrics(clip, textWidth);
   const overflowing = ready && fitsOverflow;
@@ -271,6 +291,7 @@ function WebMarquee({
 
   return (
     <View
+      ref={clipHostRef}
       collapsable={false}
       pointerEvents="box-only"
       accessible={accessible}
@@ -526,6 +547,16 @@ function NativeMarquee({
       if (width > 0) takeClip(width);
     });
   }, [resetKey, takeClip, offset, ink]);
+
+  // Remasure when PersonTabs releases pause after expand — avoid one false crawl from mid-morph clip.
+  useLayoutEffect(() => {
+    if (paused || parentPaused) return;
+    const node = clipRef.current;
+    if (!node) return;
+    node.measure((_x, _y, width) => {
+      if (width > 0) takeClip(width);
+    });
+  }, [paused, parentPaused, takeClip]);
 
   useEffect(() => {
     setVisible(true);

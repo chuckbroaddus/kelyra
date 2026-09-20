@@ -79,6 +79,16 @@ export function personTabTitleSlot(titleWidth: number, labelMax: number): number
   return Math.min(titleWidth, labelMax);
 }
 
+/**
+ * True only when painted title exceeds the marquee ceiling (labelMax).
+ * Hug-fit titles (paint ≤ ceiling) must never marquee — occupancy ceiling alone
+ * is not overflow. Matches personTabTitleSlot: slot === paint when it fits.
+ */
+export function personTabTitleNeedsMarquee(titleWidth: number, labelMax: number): boolean {
+  if (titleWidth <= 0 || labelMax <= 0) return false;
+  return titleWidth > labelMax;
+}
+
 export function personTabSelectedMaxWidth(labelMax: number, glyph = true): number {
   return PERSON_TAB_HIT_PAD_X * 2 + (glyph ? PERSON_TAB_GLYPH + PERSON_TAB_GAP : 0) + labelMax;
 }
