@@ -1,5 +1,7 @@
 /**
- * Runtime-composed period leaf (Set B). View/Text only — no PNG atlas / build-icons.
+ * Runtime-composed Set B period tiles (View/Text only — no PNG atlas / build-icons).
+ * Year / Month / Week / Day icon tiles; multiday/agenda keep wrap chrome.
+ * Light + dark via theme. Supersedes PR 149 full-danger pink-pill year leaf.
  */
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -51,27 +53,82 @@ function MonthHangingGrid({
   );
 }
 
+/** Tiny year glyph: stacked bars suggesting a year block. */
+function YearIcon({ accent, ink }: { accent: string; ink: string }) {
+  return (
+    <View style={styles.iconBox} accessibilityElementsHidden>
+      <View style={[styles.yearBar, { backgroundColor: accent }]} />
+      <View style={[styles.yearBar, styles.yearBarMid, { backgroundColor: ink }]} />
+      <View style={[styles.yearBar, { backgroundColor: accent }]} />
+    </View>
+  );
+}
+
+/** Week glyph: 7 dots. */
+function WeekIcon({ accent, mute }: { accent: string; mute: string }) {
+  return (
+    <View style={styles.weekDots} accessibilityElementsHidden>
+      {Array.from({ length: 7 }, (_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.weekDot,
+            { backgroundColor: i === 0 || i === 6 ? accent : mute },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** Day glyph: circled day number fragment. */
+function DayIcon({
+  label,
+  accent,
+  ink,
+  elevated,
+}: {
+  label: string;
+  accent: string;
+  ink: string;
+  elevated: string;
+}) {
+  return (
+    <View
+      style={[styles.dayCircle, { borderColor: accent, backgroundColor: elevated }]}
+      accessibilityElementsHidden
+    >
+      <Text style={[styles.dayCircleText, { color: ink }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function PeriodLeafImpl({ tile, role, showCenterExtras, width }: Props) {
   const { colors } = useTheme();
   const isCenter = role === 'current';
   const caption = isCenter && showCenterExtras ? tile.centerCaption : tile.sideCaption;
   const leafWidth = Math.max(72, width - 8);
+  const cardStyle = [
+    styles.leaf,
+    styles.card,
+    {
+      width: leafWidth,
+      backgroundColor: colors.elevated,
+      borderColor: colors.line,
+    },
+  ];
 
   if (tile.kind === 'year') {
     return (
-      <View
-        style={[
-          styles.leaf,
-          styles.yearLeaf,
-          { width: leafWidth, backgroundColor: colors.danger },
-        ]}
-        accessibilityLabel={tile.centerCaption}
-      >
+      <View style={cardStyle} accessibilityLabel={tile.centerCaption}>
+        <YearIcon accent={colors.danger} ink={colors.ink} />
         <Text
           style={[
-            styles.yearText,
-            isCenter && showCenterExtras ? styles.yearTextCenter : styles.yearTextSide,
-            { color: '#FFF8F3' },
+            styles.caption,
+            isCenter && showCenterExtras ? styles.captionCenter : styles.captionSide,
+            { color: colors.ink },
           ]}
           numberOfLines={1}
         >
@@ -83,19 +140,11 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, width }: Props) {
 
   if (tile.kind === 'month') {
     return (
-      <View
-        style={[
-          styles.leaf,
-          styles.monthLeaf,
-          { width: leafWidth, backgroundColor: colors.elevated, borderColor: colors.line },
-        ]}
-        accessibilityLabel={tile.centerCaption}
-      >
-        <View style={[styles.monthHeader, { backgroundColor: colors.danger }]}>
-          <Text style={[styles.monthHeaderText, { color: '#FFF8F3' }]} numberOfLines={1}>
-            {caption}
-          </Text>
-        </View>
+      <View style={cardStyle} accessibilityLabel={tile.centerCaption}>
+        <View style={[styles.accentStrip, { backgroundColor: colors.danger }]} />
+        <Text style={[styles.caption, styles.captionSide, { color: colors.ink }]} numberOfLines={1}>
+          {caption}
+        </Text>
         {isCenter && showCenterExtras && tile.monthYear != null && tile.monthIndex0 != null ? (
           <MonthHangingGrid
             year={tile.monthYear}
@@ -111,31 +160,66 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, width }: Props) {
     );
   }
 
-  // week / multiday / day / agenda — double-height red header wrap
-  return (
-    <View
-      style={[
-        styles.leaf,
-        styles.wrapLeaf,
-        { width: leafWidth, backgroundColor: colors.elevated, borderColor: colors.line },
-      ]}
-      accessibilityLabel={tile.centerCaption}
-    >
-      <View style={[styles.wrapHeader, { backgroundColor: colors.danger }]}>
+  if (tile.kind === 'week') {
+    return (
+      <View style={cardStyle} accessibilityLabel={tile.centerCaption}>
+        <WeekIcon accent={colors.danger} mute={colors.mute} />
         <Text
-          style={[styles.wrapHeaderText, { color: '#FFF8F3' }]}
+          style={[
+            styles.caption,
+            isCenter && showCenterExtras ? styles.captionCenter : styles.captionSide,
+            { color: colors.ink },
+          ]}
           numberOfLines={isCenter && showCenterExtras ? 2 : 1}
         >
           {caption}
         </Text>
       </View>
-      <View style={styles.wrapBody}>
+    );
+  }
+
+  if (tile.kind === 'day') {
+    const dayNum = tile.dayIso ? String(Number(tile.dayIso.slice(8, 10))) : caption;
+    return (
+      <View style={cardStyle} accessibilityLabel={tile.centerCaption}>
+        <DayIcon
+          label={dayNum}
+          accent={colors.danger}
+          ink={colors.ink}
+          elevated={colors.bg}
+        />
         {isCenter && showCenterExtras ? (
-          <Text style={[styles.wrapBodyText, { color: colors.mute }]} numberOfLines={2}>
-            {tile.kind === 'agenda' ? 'Agenda' : tile.kind === 'day' ? 'Day' : 'Range'}
+          <Text style={[styles.caption, styles.captionCenter, { color: colors.ink }]} numberOfLines={2}>
+            {tile.centerCaption}
           </Text>
-        ) : null}
+        ) : (
+          <Text style={[styles.caption, styles.captionSide, { color: colors.mute }]} numberOfLines={1}>
+            {tile.sideCaption}
+          </Text>
+        )}
       </View>
+    );
+  }
+
+  // multiday / agenda — wrap card (no full-bleed pink pill)
+  return (
+    <View style={cardStyle} accessibilityLabel={tile.centerCaption}>
+      <View style={[styles.accentStrip, { backgroundColor: colors.danger }]} />
+      <Text
+        style={[
+          styles.caption,
+          isCenter && showCenterExtras ? styles.captionCenter : styles.captionSide,
+          { color: colors.ink },
+        ]}
+        numberOfLines={isCenter && showCenterExtras ? 2 : 1}
+      >
+        {caption}
+      </Text>
+      {isCenter && showCenterExtras ? (
+        <Text style={[styles.meta, { color: colors.mute }]} numberOfLines={1}>
+          {tile.kind === 'agenda' ? 'Agenda' : 'Range'}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -144,48 +228,89 @@ export const PeriodLeaf = memo(PeriodLeafImpl);
 
 const styles = StyleSheet.create({
   leaf: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     alignSelf: 'center',
   },
-  yearLeaf: {
-    minHeight: 52,
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: 64,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    gap: 4,
   },
-  yearText: {
-    ...type.section,
-    fontWeight: '700',
+  accentStrip: {
+    alignSelf: 'stretch',
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 2,
   },
-  yearTextSide: {
-    fontSize: 18,
-  },
-  yearTextCenter: {
-    fontSize: 22,
-  },
-  monthLeaf: {
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 52,
-  },
-  monthHeader: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-  },
-  monthHeaderText: {
+  caption: {
     ...type.meta,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  captionSide: {
+    fontSize: 13,
+  },
+  captionCenter: {
+    fontSize: 15,
+  },
+  meta: {
+    ...type.meta,
+    fontSize: 11,
+  },
+  iconBox: {
+    width: 28,
+    height: 22,
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  yearBar: {
+    height: 5,
+    borderRadius: 2,
+    width: '100%',
+  },
+  yearBarMid: {
+    width: '72%',
+    alignSelf: 'center',
+  },
+  weekDots: {
+    flexDirection: 'row',
+    gap: 3,
+    marginBottom: 2,
+  },
+  weekDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dayCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  dayCircleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   monthStub: {
-    height: 28,
+    height: 20,
   },
   hangGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 4,
-    paddingBottom: 6,
+    paddingHorizontal: 2,
+    paddingBottom: 2,
     paddingTop: 2,
+    alignSelf: 'stretch',
   },
   hangDay: {
     width: '14.28%',
@@ -193,30 +318,5 @@ const styles = StyleSheet.create({
     fontSize: 8,
     lineHeight: 11,
     fontVariant: ['tabular-nums'],
-  },
-  wrapLeaf: {
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 56,
-  },
-  wrapHeader: {
-    minHeight: 36,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    justifyContent: 'center',
-  },
-  wrapHeaderText: {
-    ...type.meta,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  wrapBody: {
-    minHeight: 18,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  wrapBodyText: {
-    ...type.meta,
-    fontSize: 11,
   },
 });

@@ -1,7 +1,10 @@
 /**
- * 3-tile Rolodex period pager. Recycles prev/current/next on settle.
- * RM: tappable prev/next, no zoom anim. Leaf-fail → << label >> fallback.
+ * Shared 3D horizontal period wheel (drum). Recycles prev/current/next on settle.
+ * rotateY + scale + dim; snap center; tap side → center; momentum + spring.
+ * RM: no tilt — keep scale/fade/snap + tappable sides.
+ * Touch-only. Leaf-fail → << label >> fallback.
  * Does not steal iOS edge-back (PERIOD_PAGER_EDGE_GUARD_PX).
+ * SoT: notes/company/calendar-3d-wheel-*.md (Mac-local at implement; curves in periodWheel.ts).
  */
 import {
   Component,
@@ -30,13 +33,18 @@ import { GhostButton } from '@/components/ui/Button';
 import {
   PERIOD_PAGER_EDGE_GUARD_PX,
   buildPeriodWindow,
-  rolodexOpacityForOffset,
-  rolodexScaleForOffset,
-  snapPeriodPage,
   type PeriodKind,
   type PeriodTileModel,
   type PeriodWindow,
 } from '@/lib/calendar/periodPager';
+import {
+  WHEEL_PERSPECTIVE,
+  WHEEL_SPRING,
+  snapPeriodPage,
+  wheelOpacityForNorm,
+  wheelRotateYDegForNorm,
+  wheelScaleForNorm,
+} from '@/lib/calendar/periodWheel';
 import type { MultidayCount } from '@/lib/calendar/multiday';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
@@ -126,6 +134,7 @@ export function PeriodPager({
   const dragX = useRef(new Animated.Value(0)).current;
   const settling = useRef(false);
   const pageWidthRef = useRef(0);
+  const velocityRef = useRef(0);
 
   const window = useMemo(
     () => buildPeriodWindow({ kind, anchor, dayCount }),
@@ -145,7 +154,6 @@ export function PeriodPager({
       settling.current = true;
       setShowCenterExtras(false);
       onShift(dir);
-      // Parent rebuilds window; effect resets dragX + extras.
     },
     [onShift],
   );
@@ -157,8 +165,9 @@ export function PeriodPager({
       Animated.spring(dragX, {
         toValue,
         useNativeDriver: true,
-        friction: 9,
-        tension: 80,
+        friction: WHEEL_SPRING.friction,
+        tension: WHEEL_SPRING.tension,
+        velocity: velocityRef.current,
       }).start(({ finished }) => {
         if (!finished) return;
         if (dir === 0) {
@@ -171,6 +180,19 @@ export function PeriodPager({
       });
     },
     [dragX, finishShift],
+  );
+
+  const tapSide = useCallback(
+    (dir: -1 | 1) => {
+      if (settling.current) return;
+      if (reduceMotion) {
+        onShift(dir);
+        return;
+      }
+      velocityRef.current = dir === 1 ? -1.4 : 1.4;
+      animateSnap(dir);
+    },
+    [animateSnap, onShift, reduceMotion],
   );
 
   const pan = useMemo(
@@ -191,15 +213,19 @@ export function PeriodPager({
         onPanResponderGrant: () => {
           setShowCenterExtras(false);
           dragX.stopAnimation();
+          velocityRef.current = 0;
         },
         onPanResponderMove: (_e, g) => {
           dragX.setValue(g.dx);
+          velocityRef.current = g.vx;
         },
         onPanResponderRelease: (_e, g) => {
+          velocityRef.current = g.vx;
           const dir = snapPeriodPage(g.dx, pageWidthRef.current, g.vx * 1000);
           animateSnap(dir);
         },
         onPanResponderTerminate: () => {
+          velocityRef.current = 0;
           animateSnap(0);
         },
       }),
@@ -235,8 +261,14 @@ export function PeriodPager({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityPrevLabel}
-            onPress={() => onShift(-1)}
-            style={styles.rmSide}
+            onPress={() => tapSide(-1)}
+            style={[
+              styles.rmSide,
+              {
+                opacity: wheelOpacityForNorm(-1),
+                transform: [{ scale: wheelScaleForNorm(-1) }],
+              },
+            ]}
           >
             <PeriodLeaf
               tile={window.prev}
@@ -261,8 +293,14 @@ export function PeriodPager({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={accessibilityNextLabel}
-            onPress={() => onShift(1)}
-            style={styles.rmSide}
+            onPress={() => tapSide(1)}
+            style={[
+              styles.rmSide,
+              {
+                opacity: wheelOpacityForNorm(1),
+                transform: [{ scale: wheelScaleForNorm(1) }],
+              },
+            ]}
           >
             <PeriodLeaf
               tile={window.next}
@@ -284,7 +322,7 @@ export function PeriodPager({
       <View
         style={styles.viewport}
         onLayout={onLayout}
-        accessibilityLabel={`Period pager ${window.current.centerCaption}`}
+        accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
         {...pan.panHandlers}
       >
         {pageWidth > 0 ? (
@@ -301,25 +339,22 @@ export function PeriodPager({
             {roles.map((role, index) => {
               const tile = tileAt(window, role);
               const tileCenter = index * pageWidth + pageWidth / 2;
-              // Offset of this tile's center from viewport center while parked + during drag.
-              const parkedCenter = pageWidth * 1.5; // middle of 3-tile track at translate -pageWidth
-              const relative = tileCenter - parkedCenter;
+              const parkedCenter = pageWidth * 1.5;
+              const relative = tileCenter - parkedCenter; // -pageWidth | 0 | +pageWidth
+              const norms = [-pageWidth, 0, pageWidth].map((d) => (relative + d) / pageWidth);
               const scale = dragX.interpolate({
                 inputRange: [-pageWidth, 0, pageWidth],
-                outputRange: [
-                  rolodexScaleForOffset(relative - pageWidth, pageWidth),
-                  rolodexScaleForOffset(relative, pageWidth),
-                  rolodexScaleForOffset(relative + pageWidth, pageWidth),
-                ],
+                outputRange: norms.map(wheelScaleForNorm),
                 extrapolate: 'clamp',
               });
               const opacity = dragX.interpolate({
                 inputRange: [-pageWidth, 0, pageWidth],
-                outputRange: [
-                  rolodexOpacityForOffset(relative - pageWidth, pageWidth),
-                  rolodexOpacityForOffset(relative, pageWidth),
-                  rolodexOpacityForOffset(relative + pageWidth, pageWidth),
-                ],
+                outputRange: norms.map(wheelOpacityForNorm),
+                extrapolate: 'clamp',
+              });
+              const rotateY = dragX.interpolate({
+                inputRange: [-pageWidth, 0, pageWidth],
+                outputRange: norms.map((t) => `${wheelRotateYDegForNorm(t)}deg`),
                 extrapolate: 'clamp',
               });
               return (
@@ -327,7 +362,15 @@ export function PeriodPager({
                   key={tile.key}
                   style={[
                     styles.tileSlot,
-                    { width: pageWidth, opacity, transform: [{ scale }] },
+                    {
+                      width: pageWidth,
+                      opacity,
+                      transform: [
+                        { perspective: WHEEL_PERSPECTIVE },
+                        { rotateY },
+                        { scale },
+                      ],
+                    },
                   ]}
                 >
                   {role === 'current' ? (
@@ -344,12 +387,20 @@ export function PeriodPager({
                       />
                     </Pressable>
                   ) : (
-                    <PeriodLeaf
-                      tile={tile}
-                      role={role}
-                      showCenterExtras={false}
-                      width={pageWidth}
-                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        role === 'prev' ? accessibilityPrevLabel : accessibilityNextLabel
+                      }
+                      onPress={() => tapSide(role === 'prev' ? -1 : 1)}
+                    >
+                      <PeriodLeaf
+                        tile={tile}
+                        role={role}
+                        showCenterExtras={false}
+                        width={pageWidth}
+                      />
+                    </Pressable>
                   )}
                 </Animated.View>
               );
@@ -367,7 +418,7 @@ export function PeriodPager({
 
 const styles = StyleSheet.create({
   viewport: {
-    height: 88,
+    height: 96,
     marginTop: 8,
     marginBottom: 12,
     overflow: 'hidden',
