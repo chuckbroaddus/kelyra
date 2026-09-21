@@ -1,7 +1,7 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
  * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
- * Soft MAX_FLING~48; inertial coast; programmed snap freezes SlotPool (no mid-spring recycle).
+ * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤4) freezes SlotPool; long coast recycles for silhouettes.
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
@@ -233,8 +233,8 @@ function NativeSlotMotion({
     const totalDrag = dragShared.value;
     const P = pitch > 0 ? pitch : 1;
     const freeze = snapFreezeShared.value === 1;
-    // Live drag: trunc residual keeps N=9 near focus. Programmed snap: absolute drag
-    // (SlotPool content frozen — no mid-spring wrap + content swap flicker).
+    // Live / long-coast: trunc residual keeps N=9 near focus + silhouettes.
+    // Short snap freeze: absolute drag (already residual after rebase, or 0→−steps·P).
     let dragPx: number;
     if (freeze) {
       dragPx = totalDrag;
@@ -382,8 +382,10 @@ export function PeriodPager({
   const snapFreezeRef = useRef(false);
   /** React mirror of snap freeze for WebSlotMotion (refs alone do not re-render). */
   const [slotPoolFrozen, setSlotPoolFrozen] = useState(false);
-  /** Absolute steps the in-flight snap will commit on rest (content frozen at 0). */
+  /** Absolute steps the in-flight snap will commit on rest (intended targetSteps). */
   const pendingSnapStepsRef = useRef(0);
+  /** Mirrors latest total drag px (web state + native shared) for residual rebase on release. */
+  const dragPxRef = useRef(0);
   const settling = useRef(false);
   /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
   const velocityRef = useRef(0);
@@ -402,6 +404,7 @@ export function PeriodPager({
   // Layout effect: extras paint with the rebound SlotPool window after parent commits.
   useLayoutEffect(() => {
     dragShared.value = 0;
+    dragPxRef.current = 0;
     snapFreezeShared.value = 0;
     snapFreezeRef.current = false;
     setSlotPoolFrozen(false);
@@ -440,8 +443,9 @@ export function PeriodPager({
 
   const onSpringRest = useCallback(() => {
     // End of spring/coast: drop silhouette, show full center ledger.
-    // Programmed snap freezes SlotPool at fling-start (visualShift=0); commit absolute
-    // pending steps. Soft-clamp via commitShiftFromVisual for ceiling parity.
+    // Short snap may freeze SlotPool at release-time liveShift (or 0 for taps);
+    // long coast kept recycling. Commit absolute pending steps. Soft-clamp via
+    // commitShiftFromVisual for ceiling parity.
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
@@ -467,23 +471,56 @@ export function PeriodPager({
   }, [dragShared, finishShift, pitch, snapFreezeShared, updateVisualShift]);
 
   const animateSnap = useCallback(
-    (targetSteps: number) => {
-      // Absolute coast 0 → -steps*pitch; SlotPool frozen at fling-start until rest.
-      const toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
+    (targetSteps: number, releaseDragPx?: number) => {
+      const liveShift = visualShiftRef.current;
+      const absSteps = Math.abs(targetSteps);
+      // Freeze ONLY short programmed snaps (|steps|≤4). Long coasts keep recycling
+      // so ContentPolicy silhouettes beyond ±4 can mount.
+      const freeze = shouldFreezeSlotPoolDuringSnap(true, absSteps);
       pendingSnapStepsRef.current = targetSteps;
-      snapFreezeRef.current = shouldFreezeSlotPoolDuringSnap(true);
-      snapFreezeShared.value = snapFreezeRef.current ? 1 : 0;
-      setSlotPoolFrozen(snapFreezeRef.current);
-      // Freeze content at fling-start window (visualShift stays 0 for the spring).
-      updateVisualShift(
-        visualShiftForSlotPool({ freezeSlotPool: true, liveShift: visualShiftRef.current }),
-      );
+      snapFreezeRef.current = freeze;
+      snapFreezeShared.value = freeze ? 1 : 0;
+      setSlotPoolFrozen(freeze);
+
+      const currentDrag =
+        typeof releaseDragPx === 'number' ? releaseDragPx : dragPxRef.current;
+
+      let toValue: number;
+      if (freeze) {
+        // Keep SlotPool at release-time liveShift — never flash content back to origin
+        // when the user already recycled (liveShift ≠ 0).
+        updateVisualShift(
+          visualShiftForSlotPool({
+            freezeSlotPool: true,
+            liveShift,
+            frozenShift: liveShift,
+          }),
+        );
+        if (liveShift === 0) {
+          // Pure tap from rest: absolute spring 0 → −steps·P with freeze-at-0.
+          toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
+          dragPxRef.current = 0;
+          if (!IS_WEB) dragShared.value = 0;
+          else setWebDragPx(0);
+        } else {
+          // Rebase into residual (−P,P], spring residual → 0 (window stays at liveShift).
+          const { localDrag } = residualFromTotalDrag(currentDrag, pitch);
+          toValue = 0;
+          dragPxRef.current = localDrag;
+          if (!IS_WEB) dragShared.value = localDrag;
+          else setWebDragPx(localDrag);
+        }
+      } else {
+        // Long coast: absolute spring to −targetSteps·P; reaction keeps updating
+        // visualShift so distant tiles silhouette. Flinging stays true until rest.
+        toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
+      }
+
       // Keep flinging===true (silhouettes) for the entire spring/coast.
       // onSpringRest flips flinging false + showCenterExtras + onShift(pending steps).
       if (IS_WEB || reduceMotion) {
-        // Web / RM: jump to target with frozen pool; commit pending steps at rest.
         setWebDragPx(toValue);
-        // Microtask → onSpringRest (flinging stays true until then).
+        dragPxRef.current = toValue;
         Promise.resolve().then(() => onSpringRest());
         return;
       }
@@ -555,6 +592,7 @@ export function PeriodPager({
         onPanResponderMove: (_e, g) => {
           // PanResponder vx is px/ms → store px/s for withSpring.
           velocityRef.current = g.vx * 1000;
+          dragPxRef.current = g.dx;
           if (IS_WEB) {
             setWebDragPx(g.dx);
             updateVisualShift(residualFromTotalDrag(g.dx, pitch).shift);
@@ -564,14 +602,15 @@ export function PeriodPager({
         },
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx * 1000;
+          dragPxRef.current = g.dx;
           // CAL-P6-1A-07: period commits on snap complete only.
-          // targetSteps drives coast destination; onSpringRest commits visualShiftRef.
+          // targetSteps drives coast destination; onSpringRest commits pending steps.
           const targetSteps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
-          animateSnap(targetSteps);
+          animateSnap(targetSteps, g.dx);
         },
         onPanResponderTerminate: () => {
           velocityRef.current = 0;
-          animateSnap(0);
+          animateSnap(0, dragPxRef.current);
         },
       }),
     [animateSnap, anchor, dragShared, failed, pitch, reduceMotion, updateVisualShift],

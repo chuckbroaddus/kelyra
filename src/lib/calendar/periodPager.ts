@@ -426,23 +426,30 @@ export function commitShiftFromVisual(
 
 /**
  * Short programmed snaps (|steps| ≤ this) are where SlotPool recycle mid-spring
- * is most visible (one/two-step tap flicker). Freeze is required for all programmed
- * snaps; this constant documents the critical band.
+ * is most visible (one/two-step tap flicker). Freeze ONLY this critical band —
+ * long coasts (|steps| > 4) must keep recycling so silhouettes beyond ±4 can mount.
  */
 export const SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS = 4;
 
 /**
- * While a programmed snap/coast (withSpring / withDecay settle) is in flight,
- * SlotPool content must stay frozen at the fling-start window.
- * Live finger-drag may still recycle; settle paths must not.
+ * While a short programmed snap (withSpring settle) is in flight, SlotPool content
+ * stays frozen. Freeze only when programmed AND |targetSteps| ≤ CRITICAL (4).
+ * Long coasts must NOT freeze so recycle continues and far-slot silhouettes appear.
+ * Live finger-drag never freezes.
  */
-export function shouldFreezeSlotPoolDuringSnap(programmedSnapActive: boolean): boolean {
-  return programmedSnapActive === true;
+export function shouldFreezeSlotPoolDuringSnap(
+  programmedSnapActive: boolean,
+  targetStepsAbs: number = 0,
+): boolean {
+  if (programmedSnapActive !== true) return false;
+  return Math.abs(targetStepsAbs) <= SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS;
 }
 
 /**
  * visualShift applied to the SlotPool window.
- * When freeze is on, return the captured fling-start shift (usually 0).
+ * When freeze is on, keep the captured release-time shift (`frozenShift`) —
+ * do not force 0 if the user already recycled (liveShift ≠ 0).
+ * Pure tap from rest passes frozenShift 0 / omits it → window stays at origin.
  */
 export function visualShiftForSlotPool(args: {
   freezeSlotPool: boolean;
@@ -458,8 +465,9 @@ export function visualShiftForSlotPool(args: {
 
 /**
  * Drag px fed into slot transforms.
- * - Live drag: trunc residual (localDrag in (-P, P]) so N=9 stays near focus.
- * - Programmed snap/coast: absolute total drag (no residual wrap / content recycle).
+ * - Live drag / long coast (freeze off): trunc residual (localDrag in (-P, P]) so N=9 stays near focus.
+ * - Short programmed snap (freeze on): absolute total drag after animateSnap rebase
+ *   (residual→0 when frozen at liveShift, or 0→−steps·P when frozen at origin).
  */
 export function transformDragForSlotMotion(args: {
   totalDrag: number;
