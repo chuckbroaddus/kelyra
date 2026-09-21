@@ -21,6 +21,7 @@ import {
   WHEEL_SIDE_OPACITY,
   WHEEL_SIDE_SCALE,
   WHEEL_CENTER_INDEX,
+  WHEEL_FLING_DECEL,
   WHEEL_MAX_FLING_SLOTS,
   WHEEL_LOCAL_SAMPLE_SLOTS,
   WHEEL_SLOT_OFFSETS,
@@ -156,6 +157,8 @@ test('MAX_FLING soft ceiling uncapped (≥30, ~48); SlotPool N=9 rebounds mid-fl
   assert.equal(WHEEL_MAX_FLING_SLOTS, 48);
   assert.ok(WHEEL_MAX_FLING_SLOTS >= 30);
   assert.ok(WHEEL_MAX_FLING_SLOTS <= 60);
+  assert.equal(WHEEL_FLING_DECEL, 2000);
+  assert.ok(WHEEL_FLING_DECEL >= 1800 && WHEEL_FLING_DECEL <= 2800);
   assert.equal(WHEEL_LOCAL_SAMPLE_SLOTS, 5);
   assert.ok(WHEEL_LOCAL_SAMPLE_SLOTS >= 4);
   // N=9 still covers local residual after rebound (not the soft ceiling)
@@ -179,4 +182,11 @@ test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + per-kind silhouettes'
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
   assert.match(leaf, /mountGrid|showExtras/);
+  // Real soft look: textShadow (not opacity-only), SoftBlurText ghost, year red+white.
+  assert.match(leaf, /SoftBlurText/);
+  assert.match(leaf, /textShadowRadius/);
+  assert.match(leaf, /textShadowColor/);
+  assert.doesNotMatch(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  assert.match(leaf, /yearPage/);
+  assert.match(leaf, /SET_B\.header|#C62828/);
 });

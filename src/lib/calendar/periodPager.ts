@@ -18,7 +18,11 @@ import {
 import type { CalendarViewId, DayMode } from './viewPrefs.ts';
 import { shiftWeek, weekRangeContaining } from './week.ts';
 import { yearContaining } from './year.ts';
-import { WHEEL_MAX_FLING_SLOTS, WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
+import {
+  WHEEL_FLING_DECEL,
+  WHEEL_MAX_FLING_SLOTS,
+  WHEEL_SLOT_OFFSETS,
+} from './periodWheel.ts';
 
 /** Local SoT mirrors (pitch only — slot offsets / fling from periodWheel). */
 const SLOT_PITCH = 78;
@@ -288,6 +292,11 @@ export function shiftPeriodAnchor(
  * Map finger release to integer slot steps (−max…+max soft ceiling).
  * Negative translation (drag left) → next (+); positive → prev (−).
  * Soft max = WHEEL_MAX_FLING_SLOTS (~48); must not clamp realistic 30+ coasts to 4.
+ *
+ * High-velocity coast uses inertial distance (content-following sign):
+ *   coastPx = −velocityX · |velocityX| / (2 · decel)
+ *   slots   = round((−translationX + coastPx) / P)
+ * with velocityX in px/s and decel ≈ WHEEL_FLING_DECEL (px/s²).
  */
 export function snapPeriodPage(
   translationX: number,
@@ -296,6 +305,7 @@ export function snapPeriodPage(
   distanceRatio = 0.28,
   velocityThreshold = 600,
   maxSlots = WHEEL_MAX_FLING_SLOTS,
+  decel = WHEEL_FLING_DECEL,
 ): number {
   const P = pitch > 0 ? pitch : SLOT_PITCH;
   // Content follows finger: slots advanced ≈ −translationX / P
@@ -311,9 +321,10 @@ export function snapPeriodPage(
       slots = rounded === 0 ? (distanceSlots > 0 ? 1 : -1) : rounded;
     }
   } else {
-    // Momentum coast (mockup ~180ms * v): add velocity contribution then round
-    const coast = (-velocityX / 1000) * (180 / P);
-    slots = Math.round(distanceSlots + coast);
+    // Inertial coast: |coastPx| = v² / (2·a); sign matches content direction (−vx).
+    const a = decel > 0 ? decel : WHEEL_FLING_DECEL;
+    const coastPx = (-velocityX * speed) / (2 * a);
+    slots = Math.round((-translationX + coastPx) / P);
     if (slots === 0) {
       slots = velocityX < 0 ? 1 : -1;
     }

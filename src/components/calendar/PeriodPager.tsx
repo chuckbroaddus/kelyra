@@ -1,7 +1,7 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
- * P0: silhouette during fling; full Set B center+neighbors on snap intent (<100ms);
- * Soft MAX_FLING~48; mid-fling SlotPool rebounds so flybys match committed advance.
+ * P0: silhouette for entire spring/coast until onSpringRest; then full Set B + onShift.
+ * Soft MAX_FLING~48; inertial coast; mid-fling SlotPool rebounds match committed advance.
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
@@ -375,7 +375,7 @@ export function PeriodPager({
 
   const onSpringRest = useCallback(
     (steps: number) => {
-      // Idempotent — already flipped on snap intent; keep true through commit.
+      // End of spring/coast: drop silhouette, show full center ledger, commit steps.
       setShowCenterExtras(true);
       setFlinging(false);
       if (steps === 0) {
@@ -394,15 +394,13 @@ export function PeriodPager({
   const animateSnap = useCallback(
     (steps: number) => {
       const toValue = steps === 0 ? 0 : -steps * pitch;
-      // Snap intent: drop silhouette + paint center ledger immediately (<50–100ms).
-      // Do not wait for spring completion / layout thrash chain.
-      setFlinging(false);
-      setShowCenterExtras(true);
+      // Keep flinging===true (silhouettes) for the entire spring/coast.
+      // onSpringRest flips flinging false + showCenterExtras + onShift(fullSteps).
       if (IS_WEB || reduceMotion) {
         // Web / RM: settle via immediate commit (no RN Animated fling path).
         setWebDragPx(toValue);
         setVisualShift(steps);
-        // Microtask → commit advance; extras already painted on intent.
+        // Microtask → onSpringRest (flinging stays true until then).
         Promise.resolve().then(() => onSpringRest(steps));
         return;
       }

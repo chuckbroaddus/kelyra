@@ -11,7 +11,11 @@ import {
   snapPeriodPage,
   shiftPeriodAnchor,
 } from './periodPager.ts';
-import { WHEEL_MAX_FLING_SLOTS, WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
+import {
+  WHEEL_FLING_DECEL,
+  WHEEL_MAX_FLING_SLOTS,
+  WHEEL_SLOT_OFFSETS,
+} from './periodWheel.ts';
 import { shiftDay } from './day.ts';
 import { shiftMonth } from './month.ts';
 import { shiftMultiday } from './multiday.ts';
@@ -152,15 +156,42 @@ test('snapPeriodPage: distance + velocity; soft max fling ~48; pitch-based', () 
   assert.equal(snapPeriodPage(5, 100, 700), -1);
   assert.equal(WHEEL_MAX_FLING_SLOTS, 48);
   assert.ok(WHEEL_MAX_FLING_SLOTS >= 30);
-  // High/uncapped coast: must allow 30+ (not clamp to 4)
-  const high = snapPeriodPage(-78 * 32, 78, -4000);
-  assert.ok(Math.abs(high) >= 30, `expected |steps|>=30, got ${high}`);
-  assert.ok(Math.abs(high) <= WHEEL_MAX_FLING_SLOTS);
-  const highNeg = snapPeriodPage(78 * 32, 78, 4000);
-  assert.ok(Math.abs(highNeg) >= 30);
+  assert.equal(WHEEL_FLING_DECEL, 2000);
   // Soft ceiling still clamps absurd springs
   assert.equal(snapPeriodPage(-78 * 200, 78, -50000), WHEEL_MAX_FLING_SLOTS);
   assert.equal(snapPeriodPage(78 * 200, 78, 50000), -WHEEL_MAX_FLING_SLOTS);
+});
+
+test('snapPeriodPage inertial coast: hard flick → 20–40+ slots; gentle → few', () => {
+  // Physics: coastPx = −vx·|vx|/(2·a); slots = round((−dx + coastPx)/P)
+  // Hard flick ~2500–3500 px/s (PanResponder vx≈2.5–3.5 px/ms ×1000), little translation.
+  const hard = snapPeriodPage(0, 78, -3000);
+  assert.ok(
+    Math.abs(hard) >= 20 && Math.abs(hard) <= 40,
+    `hard flick expected 20–40 slots, got ${hard}`,
+  );
+  const harder = snapPeriodPage(0, 78, -3500);
+  assert.ok(
+    Math.abs(harder) >= 30 && Math.abs(harder) <= WHEEL_MAX_FLING_SLOTS,
+    `stronger flick expected ≥30 slots, got ${harder}`,
+  );
+  const hardNeg = snapPeriodPage(0, 78, 3000);
+  assert.equal(hardNeg, -hard);
+
+  // Gentle fling just above velocity threshold → only a few slots
+  const gentle = snapPeriodPage(0, 78, -800);
+  assert.ok(
+    Math.abs(gentle) >= 1 && Math.abs(gentle) <= 6,
+    `gentle fling expected few slots, got ${gentle}`,
+  );
+
+  // Must NOT regress to old ~4–7 coast for a hard flick with no distance
+  assert.ok(Math.abs(hard) > 10, `hard flick must exceed old ~4–7 coast, got ${hard}`);
+
+  // Combined distance + inertia still allows 30+
+  const combo = snapPeriodPage(-78 * 5, 78, -3000);
+  assert.ok(Math.abs(combo) >= 25, `combo expected large coast, got ${combo}`);
+  assert.ok(Math.abs(combo) <= WHEEL_MAX_FLING_SLOTS);
 });
 
 test('shiftPeriodAnchor: kind-aware mid-fling rebound helper', () => {
@@ -202,6 +233,14 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /shiftPeriodAnchor|visualShift/);
   assert.match(pager, /setFlinging\(false\)/);
   assert.match(pager, /setShowCenterExtras\(true\)/);
+  // Flinging stays true for entire spring — flip only in onSpringRest, not at snap intent.
+  const restIdx = pager.indexOf('onSpringRest');
+  const animateIdx = pager.indexOf('const animateSnap');
+  assert.ok(restIdx > 0 && animateIdx > restIdx);
+  const animateBlock = pager.slice(animateIdx, pager.indexOf('const tapSide'));
+  assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
+  assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
+  assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
 });
 
 test('PeriodPager slot map never reads tile.key on undefined (guards + shared offsets)', () => {
