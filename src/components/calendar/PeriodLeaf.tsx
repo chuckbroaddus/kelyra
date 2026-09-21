@@ -334,7 +334,7 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
   return <BlurOut>{body}</BlurOut>;
 }
 
-function PeriodLeafImplfunction PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
+function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
   const isCenter = role === 'current';
   const showExtras = isCenter && showCenterExtras;
 
