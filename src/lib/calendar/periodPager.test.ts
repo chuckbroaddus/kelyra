@@ -305,15 +305,41 @@ test('rolodex scale/opacity: center larger/brighter than sides', () => {
 });
 
 
-test('shouldFreezeSlotPoolDuringSnap: programmed snap freezes; live drag does not', () => {
-  assert.equal(shouldFreezeSlotPoolDuringSnap(true), true);
-  assert.equal(shouldFreezeSlotPoolDuringSnap(false), false);
+test('shouldFreezeSlotPoolDuringSnap: freeze only |steps|≤4 programmed; live/long do not', () => {
   assert.equal(SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS, 4);
+  // Programmed short snaps (critical band) freeze
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 0), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 1), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 2), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 4), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, -3), true);
+  // Long coasts must NOT freeze (silhouettes beyond ±4 need recycle)
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 5), false);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 12), false);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, -30), false);
+  // Not programmed → never freeze
+  assert.equal(shouldFreezeSlotPoolDuringSnap(false), false);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(false, 1), false);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(false, 5), false);
 });
 
-test('visualShiftForSlotPool: frozen → captured fling-start (0); live → liveShift', () => {
+test('visualShiftForSlotPool: freeze keeps frozenShift; does not force 0 when provided', () => {
+  // Omitting frozenShift → fling-start origin (0) — pure tap path
   assert.equal(visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3 }), 0);
-  assert.equal(visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3, frozenShift: 2 }), 2);
+  // When frozenShift provided (release-time liveShift), keep that window — no origin flash
+  assert.equal(
+    visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3, frozenShift: 3 }),
+    3,
+  );
+  assert.equal(
+    visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3, frozenShift: 2 }),
+    2,
+  );
+  assert.equal(
+    visualShiftForSlotPool({ freezeSlotPool: true, liveShift: -2, frozenShift: -2 }),
+    -2,
+  );
+  // Live / long coast (freeze off) → liveShift
   assert.equal(visualShiftForSlotPool({ freezeSlotPool: false, liveShift: 3 }), 3);
   assert.equal(visualShiftForSlotPool({ freezeSlotPool: false, liveShift: -1 }), -1);
 });
@@ -349,20 +375,21 @@ test('transformDragForSlotMotion: freeze uses absolute drag; live uses trunc res
   );
 });
 
-test('PeriodPager freezes SlotPool during animateSnap (no visualShift mid-spring)', () => {
+test('PeriodPager freezes SlotPool only for short snaps; residual rebase when liveShift≠0', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true\)/);
+  // Freeze gated by abs steps (not always freeze on every programmed snap)
+  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
   assert.match(pager, /pendingSnapStepsRef/);
   assert.match(pager, /snapFreezeShared/);
   assert.match(pager, /slotPoolFrozen/);
-  // Reaction must bail while snapFreezeShared === 1
+  // Reaction must bail while snapFreezeShared === 1 (short freeze only)
   assert.match(pager, /snapFreezeShared\.value === 1/);
   const rxnIdx = pager.indexOf('useAnimatedReaction(');
   assert.ok(rxnIdx > 0, 'useAnimatedReaction call site');
   const rxnBlock = pager.slice(rxnIdx, rxnIdx + 450);
   assert.match(rxnBlock, /snapFreezeShared/);
   assert.match(rxnBlock, /return;/);
-  // animateSnap arms freeze before withSpring
+  // animateSnap: freeze gated by steps; must not always zero the pool after live drag
   const animIdx = pager.indexOf('const animateSnap');
   const tapIdx = pager.indexOf('const tapSide');
   assert.ok(animIdx > 0 && tapIdx > animIdx);
@@ -370,8 +397,16 @@ test('PeriodPager freezes SlotPool during animateSnap (no visualShift mid-spring
   assert.match(animBlock, /setSlotPoolFrozen/);
   assert.match(animBlock, /pendingSnapStepsRef\.current/);
   assert.match(animBlock, /visualShiftForSlotPool/);
+  assert.match(animBlock, /frozenShift:\s*liveShift/);
+  assert.match(animBlock, /residualFromTotalDrag/);
+  assert.match(animBlock, /liveShift === 0/);
   assert.match(animBlock, /withSpring/);
-  // Native absolute drag when frozen
+  // Must not unconditionally force pool to origin (old #164 one-liner without frozenShift)
+  assert.doesNotMatch(
+    animBlock,
+    /visualShiftForSlotPool\(\{\s*freezeSlotPool:\s*true,\s*liveShift:\s*visualShiftRef\.current\s*\}\)/,
+  );
+  // Native absolute drag when frozen (residual already rebased, or 0→−steps·P)
   assert.match(pager, /snapFreezeShared\.value === 1/);
   assert.match(pager, /dragPx = totalDrag/);
 });
@@ -420,11 +455,12 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
-  // Settle commits pendingSnapStepsRef (absolute target); SlotPool frozen mid-spring.
+  // Settle commits pendingSnapStepsRef (absolute target); short snaps freeze mid-spring.
   assert.match(pager.slice(restIdx, animateIdx), /pendingSnapStepsRef\.current/);
   assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual/);
   assert.match(pager, /shouldFreezeSlotPoolDuringSnap|snapFreezeShared/);
   assert.match(pager, /snapFreezeShared\.value === 1/);
+  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
   assert.doesNotMatch(pager.slice(restIdx, animateIdx), /finishShift\(steps\)/);
 });
 
