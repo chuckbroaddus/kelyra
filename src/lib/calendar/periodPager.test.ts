@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   buildPeriodWindow,
+  commitShiftFromVisual,
   periodKindForView,
   rolodexOpacityForOffset,
   rolodexScaleForOffset,
@@ -195,6 +196,29 @@ test('snapPeriodPage inertial coast: hard flick → 20–40+ slots; gentle → f
   assert.ok(Math.abs(combo) <= WHEEL_MAX_FLING_SLOTS);
 });
 
+test('commitShiftFromVisual: settle commit === tracked flyby shift (soft max 48)', () => {
+  // Identity: commit steps must equal the visual flyby tracker (not release prediction).
+  assert.equal(commitShiftFromVisual(0), 0);
+  assert.equal(commitShiftFromVisual(7), 7);
+  assert.equal(commitShiftFromVisual(-12), -12);
+  assert.equal(commitShiftFromVisual(30), 30);
+  assert.equal(commitShiftFromVisual(-39), -39);
+  // Soft ceiling
+  assert.equal(commitShiftFromVisual(100), WHEEL_MAX_FLING_SLOTS);
+  assert.equal(commitShiftFromVisual(-100), -WHEEL_MAX_FLING_SLOTS);
+  assert.equal(commitShiftFromVisual(48), 48);
+  assert.equal(commitShiftFromVisual(-48), -48);
+  // Truncate non-integers toward zero (visualShift is already round()'d in UI)
+  assert.equal(commitShiftFromVisual(3.9), 3);
+  assert.equal(commitShiftFromVisual(-3.9), -3);
+  assert.equal(commitShiftFromVisual(Number.NaN), 0);
+  // Divergent prediction vs visual: commit uses visual
+  const predicted = snapPeriodPage(0, 78, -3000);
+  const visualSeen = predicted > 0 ? predicted - 5 : predicted + 5;
+  assert.equal(commitShiftFromVisual(visualSeen), visualSeen);
+  assert.notEqual(commitShiftFromVisual(visualSeen), predicted);
+});
+
 test('shiftPeriodAnchor: kind-aware mid-fling rebound helper', () => {
   assert.equal(shiftPeriodAnchor('year', '2026', 3), '2029');
   assert.equal(shiftPeriodAnchor('year', '2026', -2), '2024');
@@ -232,8 +256,13 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /useLayoutEffect/);
   assert.match(pager, /slotPoolKey/);
   assert.match(pager, /shiftPeriodAnchor|visualShift/);
+  assert.match(pager, /visualShiftRef/);
+  assert.match(pager, /commitShiftFromVisual/);
+  assert.match(pager, /updateVisualShift/);
   assert.match(pager, /setFlinging\(false\)/);
   assert.match(pager, /setShowCenterExtras\(true\)/);
+  // Spring velocity must be px/s (PanResponder vx * 1000), not raw vx.
+  assert.match(pager, /g\.vx \* 1000/);
   // Flinging stays true for entire spring — flip only in onSpringRest, not at snap intent.
   const restIdx = pager.indexOf('onSpringRest');
   const animateIdx = pager.indexOf('const animateSnap');
@@ -242,6 +271,10 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
+  // Settle commits visualShiftRef (actual flybys), not predicted steps alone.
+  assert.match(pager.slice(restIdx, animateIdx), /visualShiftRef\.current/);
+  assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual/);
+  assert.doesNotMatch(pager.slice(restIdx, animateIdx), /finishShift\(steps\)/);
 });
 
 test('PeriodPager slot map never reads tile.key on undefined (guards + shared offsets)', () => {

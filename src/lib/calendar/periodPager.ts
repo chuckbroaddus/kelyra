@@ -384,6 +384,22 @@ export function snapPeriodPage(
   return slots;
 }
 
+/**
+ * Soft-clamp the tracked visual flyby count for settle commit.
+ * Prefer this over the release-time snapPeriodPage prediction so commit
+ * matches SlotPool rebound / round(-drag/pitch) flybys the user saw.
+ */
+export function commitShiftFromVisual(
+  visualShift: number,
+  maxSlots: number = WHEEL_MAX_FLING_SLOTS,
+): number {
+  if (!Number.isFinite(visualShift) || visualShift === 0) return 0;
+  const steps = Math.trunc(visualShift);
+  if (steps > maxSlots) return maxSlots;
+  if (steps < -maxSlots) return -maxSlots;
+  return steps;
+}
+
 /** Scale at a tile's center given drag offset (0 = parked on current). Legacy helper. */
 export function rolodexScaleForOffset(
   tileOffsetX: number,
