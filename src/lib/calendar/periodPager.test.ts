@@ -14,6 +14,10 @@ import {
   snapPeriodPage,
   shiftPeriodAnchor,
   periodDistance,
+  shouldFreezeSlotPoolDuringSnap,
+  SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS,
+  transformDragForSlotMotion,
+  visualShiftForSlotPool,
 } from './periodPager.ts';
 import {
   WHEEL_FLING_DECEL,
@@ -300,6 +304,78 @@ test('rolodex scale/opacity: center larger/brighter than sides', () => {
   assert.ok(rolodexOpacityForOffset(0, 100) > rolodexOpacityForOffset(100, 100));
 });
 
+
+test('shouldFreezeSlotPoolDuringSnap: programmed snap freezes; live drag does not', () => {
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(false), false);
+  assert.equal(SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS, 4);
+});
+
+test('visualShiftForSlotPool: frozen → captured fling-start (0); live → liveShift', () => {
+  assert.equal(visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3 }), 0);
+  assert.equal(visualShiftForSlotPool({ freezeSlotPool: true, liveShift: 3, frozenShift: 2 }), 2);
+  assert.equal(visualShiftForSlotPool({ freezeSlotPool: false, liveShift: 3 }), 3);
+  assert.equal(visualShiftForSlotPool({ freezeSlotPool: false, liveShift: -1 }), -1);
+});
+
+test('transformDragForSlotMotion: freeze uses absolute drag; live uses trunc residual', () => {
+  const P = 78;
+  // One-step snap mid-flight at -0.5P: absolute stays -0.5P (no wrap).
+  assert.equal(
+    transformDragForSlotMotion({ totalDrag: -0.5 * P, pitch: P, freezeSlotPool: true }),
+    -0.5 * P,
+  );
+  // Two-step target -2P absolute while frozen (no residual recycle).
+  assert.equal(
+    transformDragForSlotMotion({ totalDrag: -2 * P, pitch: P, freezeSlotPool: true }),
+    -2 * P,
+  );
+  // Live drag at -1.5P → shift 1, localDrag -0.5P (trunc residual).
+  const live = transformDragForSlotMotion({ totalDrag: -1.5 * P, pitch: P, freezeSlotPool: false });
+  assert.equal(live, -0.5 * P);
+  // Live at -0.5P (short drag, |steps| critical band) still residual=same (shift 0).
+  assert.equal(
+    transformDragForSlotMotion({ totalDrag: -0.5 * P, pitch: P, freezeSlotPool: false }),
+    -0.5 * P,
+  );
+  // Crossing full pitch while live wraps; frozen does not.
+  assert.equal(
+    transformDragForSlotMotion({ totalDrag: -P - 1, pitch: P, freezeSlotPool: false }),
+    -1,
+  );
+  assert.equal(
+    transformDragForSlotMotion({ totalDrag: -P - 1, pitch: P, freezeSlotPool: true }),
+    -P - 1,
+  );
+});
+
+test('PeriodPager freezes SlotPool during animateSnap (no visualShift mid-spring)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true\)/);
+  assert.match(pager, /pendingSnapStepsRef/);
+  assert.match(pager, /snapFreezeShared/);
+  assert.match(pager, /slotPoolFrozen/);
+  // Reaction must bail while snapFreezeShared === 1
+  assert.match(pager, /snapFreezeShared\.value === 1/);
+  const rxnIdx = pager.indexOf('useAnimatedReaction(');
+  assert.ok(rxnIdx > 0, 'useAnimatedReaction call site');
+  const rxnBlock = pager.slice(rxnIdx, rxnIdx + 450);
+  assert.match(rxnBlock, /snapFreezeShared/);
+  assert.match(rxnBlock, /return;/);
+  // animateSnap arms freeze before withSpring
+  const animIdx = pager.indexOf('const animateSnap');
+  const tapIdx = pager.indexOf('const tapSide');
+  assert.ok(animIdx > 0 && tapIdx > animIdx);
+  const animBlock = pager.slice(animIdx, tapIdx);
+  assert.match(animBlock, /setSlotPoolFrozen/);
+  assert.match(animBlock, /pendingSnapStepsRef\.current/);
+  assert.match(animBlock, /visualShiftForSlotPool/);
+  assert.match(animBlock, /withSpring/);
+  // Native absolute drag when frozen
+  assert.match(pager, /snapFreezeShared\.value === 1/);
+  assert.match(pager, /dragPx = totalDrag/);
+});
+
 test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG atlas', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /PeriodPager/);
@@ -344,9 +420,11 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
-  // Settle commits visualShiftRef (actual flybys), not predicted steps alone.
-  assert.match(pager.slice(restIdx, animateIdx), /visualShiftRef\.current/);
+  // Settle commits pendingSnapStepsRef (absolute target); SlotPool frozen mid-spring.
+  assert.match(pager.slice(restIdx, animateIdx), /pendingSnapStepsRef\.current/);
   assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual/);
+  assert.match(pager, /shouldFreezeSlotPoolDuringSnap|snapFreezeShared/);
+  assert.match(pager, /snapFreezeShared\.value === 1/);
   assert.doesNotMatch(pager.slice(restIdx, animateIdx), /finishShift\(steps\)/);
 });
 

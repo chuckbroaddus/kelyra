@@ -1,7 +1,7 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
  * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
- * Soft MAX_FLING~48; inertial coast; settle commits visualShift flybys (not release prediction).
+ * Soft MAX_FLING~48; inertial coast; programmed snap freezes SlotPool (no mid-spring recycle).
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
@@ -46,6 +46,9 @@ import {
   periodDistance,
   residualFromTotalDrag,
   shiftPeriodAnchor,
+  shouldFreezeSlotPoolDuringSnap,
+  transformDragForSlotMotion,
+  visualShiftForSlotPool,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
@@ -209,6 +212,8 @@ type SlotMotionProps = {
   parked: number;
   pitch: number;
   dragShared: SharedValue<number>;
+  /** 1 while programmed snap/coast runs — absolute drag, no residual wrap. */
+  snapFreezeShared: SharedValue<number>;
   reduceMotion: boolean;
   children: ReactNode;
 };
@@ -218,17 +223,52 @@ function NativeSlotMotion({
   parked,
   pitch,
   dragShared,
+  snapFreezeShared,
   reduceMotion,
   children,
 }: SlotMotionProps) {
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
   const style = useAnimatedStyle(() => {
     'worklet';
-    // Rebound residual: total drag may be 30+ pitches; local stays near center.
     const totalDrag = dragShared.value;
     const P = pitch > 0 ? pitch : 1;
-    const shift = Math.trunc(-totalDrag / P);
-    const dragPx = totalDrag + shift * P;
+    const freeze = snapFreezeShared.value === 1;
+    // Live drag: trunc residual keeps N=9 near focus. Programmed snap: absolute drag
+    // (SlotPool content frozen — no mid-spring wrap + content swap flicker).
+    let dragPx: number;
+    if (freeze) {
+      dragPx = totalDrag;
+    } else {
+      const shift = Math.trunc(-totalDrag / P);
+      dragPx = totalDrag + shift * P;
+    }
+    // When frozen and |drag| exceeds local sample span, evaluate curves directly.
+    if (freeze && Math.abs(dragPx) > P * 5) {
+      const d = parked + dragPx / P;
+      const a = Math.abs(d);
+      const scale = Math.min(1, Math.max(0.46, 1 - 0.22 * a - 0.02 * d * d));
+      const opacity = Math.min(1, Math.max(0.22, 1 - 0.24 * a - 0.03 * d * d));
+      const c = d < -3 ? -3 : d > 3 ? 3 : d;
+      const rotateYDeg = c === 0 ? 0 : c * -14;
+      const translateX = d * P;
+      if (reduceMotion) {
+        return {
+          opacity,
+          zIndex: 100 - Math.abs(parked) * 10,
+          transform: [{ scale }],
+        };
+      }
+      return {
+        opacity,
+        zIndex: 100 - Math.abs(parked) * 10,
+        transform: [
+          { perspective: WHEEL_PERSPECTIVE },
+          { translateX },
+          { rotateY: `${rotateYDeg}deg` },
+          { scale },
+        ],
+      };
+    }
     // Inline lerp (worklet-safe; no JS helpers).
     const input = samples.input;
     const last = input.length - 1;
@@ -264,7 +304,7 @@ function NativeSlotMotion({
         { scale },
       ],
     };
-  }, [samples, parked, pitch, reduceMotion]);
+  }, [samples, parked, pitch, reduceMotion, snapFreezeShared]);
 
   return <Reanimated.View style={[styles.tileSlot, style]}>{children}</Reanimated.View>;
 }
@@ -274,17 +314,23 @@ function WebSlotMotion({
   parked,
   pitch,
   dragPx,
+  freezeSlotPool,
   reduceMotion,
   children,
 }: {
   parked: number;
   pitch: number;
   dragPx: number;
+  freezeSlotPool: boolean;
   reduceMotion: boolean;
   children: ReactNode;
 }) {
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
-  const localDrag = residualFromTotalDrag(dragPx, pitch).localDrag;
+  const localDrag = transformDragForSlotMotion({
+    totalDrag: dragPx,
+    pitch,
+    freezeSlotPool,
+  });
   const sample = lerpSamples(samples, localDrag);
   const transform = reduceMotion
     ? [{ scale: sample.scale }]
@@ -331,6 +377,13 @@ export function PeriodPager({
   /** Web drag px (CSS path). Native uses dragShared. */
   const [webDragPx, setWebDragPx] = useState(0);
   const dragShared = useSharedValue(0);
+  /** 1 during programmed snap/coast — freezes SlotPool + absolute transforms. */
+  const snapFreezeShared = useSharedValue(0);
+  const snapFreezeRef = useRef(false);
+  /** React mirror of snap freeze for WebSlotMotion (refs alone do not re-render). */
+  const [slotPoolFrozen, setSlotPoolFrozen] = useState(false);
+  /** Absolute steps the in-flight snap will commit on rest (content frozen at 0). */
+  const pendingSnapStepsRef = useRef(0);
   const settling = useRef(false);
   /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
   const velocityRef = useRef(0);
@@ -349,24 +402,30 @@ export function PeriodPager({
   // Layout effect: extras paint with the rebound SlotPool window after parent commits.
   useLayoutEffect(() => {
     dragShared.value = 0;
+    snapFreezeShared.value = 0;
+    snapFreezeRef.current = false;
+    setSlotPoolFrozen(false);
+    pendingSnapStepsRef.current = 0;
     setWebDragPx(0);
     updateVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
     settling.current = false;
-  }, [anchor, kind, dayCount, dragShared, updateVisualShift]);
+  }, [anchor, kind, dayCount, dragShared, snapFreezeShared, updateVisualShift]);
 
   // Native: rebound period keys as total drag / pitch crosses integers (trunc, not round).
+  // Skip while programmed snap/coast freezes SlotPool (no mid-spring content recycle).
   useAnimatedReaction(
     () => Math.trunc(-dragShared.value / pitch),
     (shift, prev) => {
       'worklet';
+      if (snapFreezeShared.value === 1) return;
       if (shift !== prev) {
         runOnJS(updateVisualShift)(shift);
       }
     },
-    [pitch, updateVisualShift],
+    [pitch, snapFreezeShared, updateVisualShift],
   );
 
   const onFail = useCallback(() => setFailed(true), []);
@@ -381,12 +440,18 @@ export function PeriodPager({
 
   const onSpringRest = useCallback(() => {
     // End of spring/coast: drop silhouette, show full center ledger.
-    // Commit actual flybys (visualShiftRef), NOT release-time snapPeriodPage prediction.
+    // Programmed snap freezes SlotPool at fling-start (visualShift=0); commit absolute
+    // pending steps. Soft-clamp via commitShiftFromVisual for ceiling parity.
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
-    const commit = commitShiftFromVisual(visualShiftRef.current);
-    // Snap drag to integer pitch matching the flybys we commit.
+    snapFreezeShared.value = 0;
+    snapFreezeRef.current = false;
+    setSlotPoolFrozen(false);
+    const pending = pendingSnapStepsRef.current;
+    pendingSnapStepsRef.current = 0;
+    const commit = commitShiftFromVisual(pending);
+    // Snap drag to integer pitch matching the steps we commit.
     const snapped = -commit * pitch;
     dragShared.value = snapped;
     setWebDragPx(snapped);
@@ -399,18 +464,25 @@ export function PeriodPager({
     }
     // visualShift resets in layout effect when parent anchor updates.
     finishShift(commit);
-  }, [dragShared, finishShift, pitch, updateVisualShift]);
+  }, [dragShared, finishShift, pitch, snapFreezeShared, updateVisualShift]);
 
   const animateSnap = useCallback(
     (targetSteps: number) => {
-      // targetSteps drives coast animation destination only; settle commits visualShiftRef.
+      // Absolute coast 0 → -steps*pitch; SlotPool frozen at fling-start until rest.
       const toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
+      pendingSnapStepsRef.current = targetSteps;
+      snapFreezeRef.current = shouldFreezeSlotPoolDuringSnap(true);
+      snapFreezeShared.value = snapFreezeRef.current ? 1 : 0;
+      setSlotPoolFrozen(snapFreezeRef.current);
+      // Freeze content at fling-start window (visualShift stays 0 for the spring).
+      updateVisualShift(
+        visualShiftForSlotPool({ freezeSlotPool: true, liveShift: visualShiftRef.current }),
+      );
       // Keep flinging===true (silhouettes) for the entire spring/coast.
-      // onSpringRest flips flinging false + showCenterExtras + onShift(visual flybys).
+      // onSpringRest flips flinging false + showCenterExtras + onShift(pending steps).
       if (IS_WEB || reduceMotion) {
-        // Web / RM: jump to target, sync visual tracker, then commit visual at rest.
+        // Web / RM: jump to target with frozen pool; commit pending steps at rest.
         setWebDragPx(toValue);
-        updateVisualShift(targetSteps);
         // Microtask → onSpringRest (flinging stays true until then).
         Promise.resolve().then(() => onSpringRest());
         return;
@@ -431,7 +503,7 @@ export function PeriodPager({
         },
       );
     },
-    [dragShared, onSpringRest, pitch, reduceMotion, updateVisualShift],
+    [dragShared, onSpringRest, pitch, reduceMotion, snapFreezeShared, updateVisualShift],
   );
 
   const tapSide = useCallback(
@@ -470,6 +542,11 @@ export function PeriodPager({
           setFlinging(true);
           setFlingOriginAnchor(anchor);
           velocityRef.current = 0;
+          // Live finger-drag may recycle; clear programmed-snap freeze.
+          snapFreezeShared.value = 0;
+          snapFreezeRef.current = false;
+          setSlotPoolFrozen(false);
+          pendingSnapStepsRef.current = 0;
           if (!IS_WEB) {
             // cancel spring by freezing shared value
             dragShared.value = dragShared.value;
@@ -597,6 +674,7 @@ export function PeriodPager({
           parked={parked}
           pitch={pitch}
           dragPx={webDragPx}
+          freezeSlotPool={slotPoolFrozen}
           reduceMotion={false}
         >
           {leaf}
@@ -609,6 +687,7 @@ export function PeriodPager({
         parked={parked}
         pitch={pitch}
         dragShared={dragShared}
+        snapFreezeShared={snapFreezeShared}
         reduceMotion={false}
       >
         {leaf}

@@ -423,6 +423,54 @@ export function commitShiftFromVisual(
   return steps;
 }
 
+
+/**
+ * Short programmed snaps (|steps| ≤ this) are where SlotPool recycle mid-spring
+ * is most visible (one/two-step tap flicker). Freeze is required for all programmed
+ * snaps; this constant documents the critical band.
+ */
+export const SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS = 4;
+
+/**
+ * While a programmed snap/coast (withSpring / withDecay settle) is in flight,
+ * SlotPool content must stay frozen at the fling-start window.
+ * Live finger-drag may still recycle; settle paths must not.
+ */
+export function shouldFreezeSlotPoolDuringSnap(programmedSnapActive: boolean): boolean {
+  return programmedSnapActive === true;
+}
+
+/**
+ * visualShift applied to the SlotPool window.
+ * When freeze is on, return the captured fling-start shift (usually 0).
+ */
+export function visualShiftForSlotPool(args: {
+  freezeSlotPool: boolean;
+  liveShift: number;
+  frozenShift?: number;
+}): number {
+  if (args.freezeSlotPool) {
+    const frozen = args.frozenShift ?? 0;
+    return frozen === 0 ? 0 : frozen;
+  }
+  return args.liveShift;
+}
+
+/**
+ * Drag px fed into slot transforms.
+ * - Live drag: trunc residual (localDrag in (-P, P]) so N=9 stays near focus.
+ * - Programmed snap/coast: absolute total drag (no residual wrap / content recycle).
+ */
+export function transformDragForSlotMotion(args: {
+  totalDrag: number;
+  pitch: number;
+  freezeSlotPool: boolean;
+}): number {
+  const P = args.pitch > 0 ? args.pitch : SLOT_PITCH;
+  if (args.freezeSlotPool) return args.totalDrag;
+  return residualFromTotalDrag(args.totalDrag, P).localDrag;
+}
+
 /** Scale at a tile's center given drag offset (0 = parked on current). Legacy helper. */
 export function rolodexScaleForOffset(
   tileOffsetX: number,
