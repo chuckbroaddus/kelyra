@@ -9,6 +9,7 @@ import {
   rolodexScaleForOffset,
   showsPeriodPager,
   snapPeriodPage,
+  shiftPeriodAnchor,
 } from './periodPager.ts';
 import { WHEEL_MAX_FLING_SLOTS, WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
 import { shiftDay } from './day.ts';
@@ -133,7 +134,7 @@ test('buildPeriodWindow agenda: ±7 day step across 9 slots', () => {
   assert.equal(w.next4.anchor, shiftDay('2026-09-20', 28));
 });
 
-test('MAX_FLING=4 fling never empty: window has real tiles at ±4', () => {
+test('SlotPool N=9: window has real tiles at ±4 (local residual cover)', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
   assert.equal(w.slots.length, 9);
   assert.ok(w.prev4.key);
@@ -142,17 +143,33 @@ test('MAX_FLING=4 fling never empty: window has real tiles at ±4', () => {
   assert.notEqual(w.next4.key, w.current.key);
 });
 
-test('snapPeriodPage: distance + velocity; max fling 4; pitch-based', () => {
+test('snapPeriodPage: distance + velocity; soft max fling ~48; pitch-based', () => {
   assert.equal(snapPeriodPage(0, 78, 0), 0);
   assert.equal(snapPeriodPage(-30, 100, 0), 1);
   assert.equal(snapPeriodPage(30, 100, 0), -1);
   assert.equal(snapPeriodPage(-10, 100, 0), 0);
   assert.equal(snapPeriodPage(-5, 100, -700), 1);
   assert.equal(snapPeriodPage(5, 100, 700), -1);
-  assert.equal(WHEEL_MAX_FLING_SLOTS, 4);
-  // multi-slot fling clamped to ±4
-  assert.equal(snapPeriodPage(-500, 78, -2500), 4);
-  assert.equal(snapPeriodPage(500, 78, 2500), -4);
+  assert.equal(WHEEL_MAX_FLING_SLOTS, 48);
+  assert.ok(WHEEL_MAX_FLING_SLOTS >= 30);
+  // High/uncapped coast: must allow 30+ (not clamp to 4)
+  const high = snapPeriodPage(-78 * 32, 78, -4000);
+  assert.ok(Math.abs(high) >= 30, `expected |steps|>=30, got ${high}`);
+  assert.ok(Math.abs(high) <= WHEEL_MAX_FLING_SLOTS);
+  const highNeg = snapPeriodPage(78 * 32, 78, 4000);
+  assert.ok(Math.abs(highNeg) >= 30);
+  // Soft ceiling still clamps absurd springs
+  assert.equal(snapPeriodPage(-78 * 200, 78, -50000), WHEEL_MAX_FLING_SLOTS);
+  assert.equal(snapPeriodPage(78 * 200, 78, 50000), -WHEEL_MAX_FLING_SLOTS);
+});
+
+test('shiftPeriodAnchor: kind-aware mid-fling rebound helper', () => {
+  assert.equal(shiftPeriodAnchor('year', '2026', 3), '2029');
+  assert.equal(shiftPeriodAnchor('year', '2026', -2), '2024');
+  assert.equal(shiftPeriodAnchor('day', '2026-09-20', 5), '2026-09-25');
+  assert.equal(shiftPeriodAnchor('day', '2026-09-20', 0), '2026-09-20');
+  const m = shiftPeriodAnchor('month', '2026-09-15', 1);
+  assert.match(m, /^2026-10/);
 });
 
 test('rolodex scale/opacity: center larger/brighter than sides', () => {
@@ -182,6 +199,9 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /useLayoutEffect/);
   assert.match(pager, /slotPoolKey/);
+  assert.match(pager, /shiftPeriodAnchor|visualShift/);
+  assert.match(pager, /setFlinging\(false\)/);
+  assert.match(pager, /setShowCenterExtras\(true\)/);
 });
 
 test('PeriodPager slot map never reads tile.key on undefined (guards + shared offsets)', () => {

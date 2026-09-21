@@ -1,6 +1,7 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
- * P0: silhouette during fling; full Set B center+neighbors post-snap;
+ * P0: silhouette during fling; full Set B center+neighbors on snap intent (<100ms);
+ * Soft MAX_FLING~48; mid-fling SlotPool rebounds so flybys match committed advance.
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
@@ -30,6 +31,7 @@ import {
 } from 'react-native';
 import Reanimated, {
   runOnJS,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -40,13 +42,14 @@ import { PeriodLeaf, type PeriodLeafRole } from '@/components/calendar/PeriodLea
 import { GhostButton } from '@/components/ui/Button';
 import {
   buildPeriodWindow,
+  shiftPeriodAnchor,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
-  WHEEL_MAX_FLING_SLOTS,
+  WHEEL_LOCAL_SAMPLE_SLOTS,
   WHEEL_PERSPECTIVE,
   WHEEL_PITCH,
   WHEEL_REANIMATED_SPRING,
@@ -75,7 +78,7 @@ type Props = {
   /** Year number string or ISO anchor. */
   anchor: string;
   dayCount?: MultidayCount;
-  /** Signed slot steps (−4…+4). */
+  /** Signed slot steps (soft-capped by WHEEL_MAX_FLING_SLOTS; may be 30+). */
   onShift: (steps: number) => void;
   onJumpToday: () => void;
   accessibilityPrevLabel?: string;
@@ -154,7 +157,7 @@ function makeNormSamples(parked: number, pitch: number) {
   const opacities: number[] = [];
   const rotateYs: number[] = [];
   const xs: number[] = [];
-  for (let steps = -WHEEL_MAX_FLING_SLOTS; steps <= WHEEL_MAX_FLING_SLOTS; steps += 1) {
+  for (let steps = -WHEEL_LOCAL_SAMPLE_SLOTS; steps <= WHEEL_LOCAL_SAMPLE_SLOTS; steps += 1) {
     const drag = steps * pitch;
     const d = parked + drag / pitch;
     input.push(drag);
@@ -199,6 +202,13 @@ function lerpSamples(samples: ReturnType<typeof makeNormSamples>, dragPx: number
   };
 }
 
+/** Map total finger drag → SlotPool shift + residual local drag (keeps N=9 near focus). */
+function residualFromTotalDrag(dragPx: number, pitch: number): { shift: number; localDrag: number } {
+  const P = pitch > 0 ? pitch : 1;
+  const shift = Math.round(-dragPx / P);
+  return { shift, localDrag: dragPx + shift * P };
+}
+
 type SlotMotionProps = {
   parked: number;
   pitch: number;
@@ -218,7 +228,11 @@ function NativeSlotMotion({
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
   const style = useAnimatedStyle(() => {
     'worklet';
-    const dragPx = dragShared.value;
+    // Rebound residual: total drag may be 30+ pitches; local stays near center.
+    const totalDrag = dragShared.value;
+    const P = pitch > 0 ? pitch : 1;
+    const shift = Math.round(-totalDrag / P);
+    const dragPx = totalDrag + shift * P;
     // Inline lerp (worklet-safe; no JS helpers).
     const input = samples.input;
     const last = input.length - 1;
@@ -254,7 +268,7 @@ function NativeSlotMotion({
         { scale },
       ],
     };
-  }, [samples, parked, reduceMotion]);
+  }, [samples, parked, pitch, reduceMotion]);
 
   return <Reanimated.View style={[styles.tileSlot, style]}>{children}</Reanimated.View>;
 }
@@ -274,7 +288,8 @@ function WebSlotMotion({
   children: ReactNode;
 }) {
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
-  const sample = lerpSamples(samples, dragPx);
+  const localDrag = residualFromTotalDrag(dragPx, pitch).localDrag;
+  const sample = lerpSamples(samples, localDrag);
   const transform = reduceMotion
     ? [{ scale: sample.scale }]
     : [
@@ -307,6 +322,8 @@ export function PeriodPager({
   const [failed, setFailed] = useState(false);
   const [showCenterExtras, setShowCenterExtras] = useState(true);
   const [flinging, setFlinging] = useState(false);
+  /** Integer SlotPool rebound during long fling (flyby count ↔ committed advance). */
+  const [visualShift, setVisualShift] = useState(0);
   /** Web drag px (CSS path). Native uses dragShared. */
   const [webDragPx, setWebDragPx] = useState(0);
   const dragShared = useSharedValue(0);
@@ -315,18 +332,36 @@ export function PeriodPager({
   const pitch = WHEEL_PITCH;
 
   const window = useMemo(
-    () => buildPeriodWindow({ kind, anchor, dayCount }),
-    [kind, anchor, dayCount],
+    () =>
+      buildPeriodWindow({
+        kind,
+        anchor: shiftPeriodAnchor(kind, anchor, visualShift, dayCount),
+        dayCount,
+      }),
+    [kind, anchor, dayCount, visualShift],
   );
 
-  // Layout effect: extras paint with the rebound SlotPool window.
+  // Layout effect: extras paint with the rebound SlotPool window after parent commits.
   useLayoutEffect(() => {
     dragShared.value = 0;
     setWebDragPx(0);
+    setVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
     settling.current = false;
   }, [anchor, kind, dayCount, dragShared]);
+
+  // Native: rebound period keys as total drag / pitch crosses integers.
+  useAnimatedReaction(
+    () => Math.round(-dragShared.value / pitch),
+    (shift, prev) => {
+      'worklet';
+      if (shift !== prev) {
+        runOnJS(setVisualShift)(shift);
+      }
+    },
+    [pitch],
+  );
 
   const onFail = useCallback(() => setFailed(true), []);
 
@@ -340,14 +375,17 @@ export function PeriodPager({
 
   const onSpringRest = useCallback(
     (steps: number) => {
+      // Idempotent — already flipped on snap intent; keep true through commit.
       setShowCenterExtras(true);
       setFlinging(false);
       if (steps === 0) {
         settling.current = false;
+        setVisualShift(0);
         return;
       }
       dragShared.value = 0;
       setWebDragPx(0);
+      // visualShift resets in layout effect when parent anchor updates.
       finishShift(steps);
     },
     [dragShared, finishShift],
@@ -356,10 +394,15 @@ export function PeriodPager({
   const animateSnap = useCallback(
     (steps: number) => {
       const toValue = steps === 0 ? 0 : -steps * pitch;
+      // Snap intent: drop silhouette + paint center ledger immediately (<50–100ms).
+      // Do not wait for spring completion / layout thrash chain.
+      setFlinging(false);
+      setShowCenterExtras(true);
       if (IS_WEB || reduceMotion) {
         // Web / RM: settle via immediate commit (no RN Animated fling path).
         setWebDragPx(toValue);
-        // Microtask → extras within <100ms of snap intent.
+        setVisualShift(steps);
+        // Microtask → commit advance; extras already painted on intent.
         Promise.resolve().then(() => onSpringRest(steps));
         return;
       }
@@ -423,6 +466,7 @@ export function PeriodPager({
           velocityRef.current = g.vx;
           if (IS_WEB) {
             setWebDragPx(g.dx);
+            setVisualShift(residualFromTotalDrag(g.dx, pitch).shift);
           } else {
             dragShared.value = g.dx;
           }

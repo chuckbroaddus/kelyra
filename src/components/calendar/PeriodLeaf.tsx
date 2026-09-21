@@ -188,14 +188,121 @@ function monthHeaderLabel(year: number, monthIndex0: number): string {
   return label.length > 12 ? `${mon}\n${year}` : label;
 }
 
-/** Lightweight Set B shell — no Month 35-cell / Week strip mounts. */
-function SilhouetteLeaf({ label }: { label: string }) {
+/**
+ * Per-kind fling silhouette — RN-friendly soft type (low opacity), no blur deps.
+ * year: red bg + blurred white year; month: black blurry day-of-month hint;
+ * week/day/multiday/agenda: matching blur chrome hints.
+ */
+function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
+  const label = tile.centerCaption;
+
+  if (tile.kind === 'year') {
+    const yearLabel = String(tile.year ?? tile.centerCaption);
+    return (
+      <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
+        <MetalTabs />
+        <View style={[styles.page, styles.yearPage]}>
+          <Text
+            style={[styles.yearText, styles.yearTextCenter, styles.silhouetteBlurYear]}
+            numberOfLines={1}
+            allowFontScaling={false}
+          >
+            {yearLabel}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (tile.kind === 'month') {
+    const year = tile.monthYear ?? 0;
+    const monthIndex0 = tile.monthIndex0 ?? 0;
+    // Lightweight 7-cell row — soft/black day numbers, not full 35-cell grid.
+    const hintDays =
+      year > 0
+        ? monthGridDays(year, monthIndex0, 0)
+            .filter((iso) => {
+              return (
+                Number(iso.slice(0, 4)) === year && Number(iso.slice(5, 7)) - 1 === monthIndex0
+              );
+            })
+            .slice(0, 7)
+        : [];
+    return (
+      <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
+        <MetalTabs />
+        <View style={styles.page}>
+          <View style={styles.silhouetteHeader} />
+          <View style={styles.silhouetteHintRow}>
+            {hintDays.map((iso) => (
+              <Text
+                key={`sil-m-${iso}`}
+                style={styles.silhouetteBlurDay}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
+                {Number(iso.slice(8, 10))}
+              </Text>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (tile.kind === 'week' && tile.fromIso) {
+    const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    return (
+      <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
+        <MetalTabs />
+        <View style={styles.page}>
+          <View style={styles.silhouetteHeader} />
+          <View style={styles.silhouetteHintRow}>
+            {labels.map((lab, i) => (
+              <Text
+                key={`sil-w-${i}`}
+                style={styles.silhouetteBlurLabel}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
+                {lab}
+              </Text>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (tile.kind === 'day' && tile.dayIso) {
+    const dayNum = String(Number(tile.dayIso.slice(8, 10)));
+    return (
+      <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
+        <MetalTabs />
+        <View style={styles.page}>
+          <View style={styles.silhouetteHeader} />
+          <Text
+            style={styles.silhouetteBlurDayNumeral}
+            numberOfLines={1}
+            allowFontScaling={false}
+          >
+            {dayNum}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // multiday / agenda — matching blur chrome (header stub + soft caption)
+  const hint = tile.sideCaption || tile.centerCaption;
   return (
     <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
       <MetalTabs />
       <View style={styles.page}>
         <View style={styles.silhouetteHeader} />
-        <View style={styles.monthStub} />
+        <Text style={styles.silhouetteBlurCaption} numberOfLines={2} allowFontScaling={false}>
+          {hint}
+        </Text>
       </View>
     </View>
   );
@@ -206,7 +313,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
   const showExtras = isCenter && showCenterExtras;
 
   if (contentMode === 'silhouette') {
-    return <SilhouetteLeaf label={tile.centerCaption} />;
+    return <SilhouetteLeaf tile={tile} />;
   }
 
   if (tile.kind === 'year') {
@@ -479,5 +586,57 @@ const styles = StyleSheet.create({
   },
   wrapBodyEmpty: {
     flex: 1,
+  },
+  // Soft-type "blur" stand-ins (no expo-blur / no new deps).
+  silhouetteBlurYear: {
+    opacity: 0.28,
+    letterSpacing: 1.5,
+  },
+  silhouetteHintRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 4,
+  },
+  silhouetteBlurDay: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 8,
+    lineHeight: 12,
+    fontWeight: '600',
+    color: SET_B.type,
+    opacity: 0.22,
+    fontVariant: ['tabular-nums'],
+  },
+  silhouetteBlurLabel: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 8,
+    lineHeight: 12,
+    fontWeight: '600',
+    color: SET_B.type,
+    opacity: 0.22,
+  },
+  silhouetteBlurDayNumeral: {
+    flex: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 42,
+    fontWeight: '700',
+    color: SET_B.type,
+    opacity: 0.2,
+    fontVariant: ['tabular-nums'],
+    marginTop: 2,
+  },
+  silhouetteBlurCaption: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: SET_B.type,
+    opacity: 0.22,
+    paddingHorizontal: 6,
+    paddingTop: 10,
   },
 });

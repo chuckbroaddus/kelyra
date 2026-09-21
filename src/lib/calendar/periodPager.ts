@@ -260,10 +260,34 @@ export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
   return packWindow(offsets.map((d) => agendaTile(shiftDay(anchor, d * 7))));
 }
 
+
+/** Shift a period anchor by signed integer steps (kind-aware). Used for mid-fling SlotPool rebound. */
+export function shiftPeriodAnchor(
+  kind: PeriodKind,
+  anchor: string,
+  steps: number,
+  dayCount: MultidayCount = 3,
+): string {
+  if (steps === 0) return anchor;
+  if (kind === 'year') {
+    const y = Number(anchor) || yearContaining(anchor);
+    return String(y + steps);
+  }
+  if (kind === 'month') return shiftMonth(anchor, steps);
+  if (kind === 'week') {
+    const cur = weekRangeContaining(anchor).fromIso;
+    return shiftWeek(cur, steps);
+  }
+  if (kind === 'multiday') return shiftMultidayBy(anchor, dayCount, steps);
+  if (kind === 'day') return shiftDay(anchor, steps);
+  // agenda — step by 7 days (existing toolbar law)
+  return shiftDay(anchor, steps * 7);
+}
+
 /**
- * Map finger release to integer slot steps (−max…+max).
+ * Map finger release to integer slot steps (−max…+max soft ceiling).
  * Negative translation (drag left) → next (+); positive → prev (−).
- * Max fling WHEEL_MAX_FLING_SLOTS.
+ * Soft max = WHEEL_MAX_FLING_SLOTS (~48); must not clamp realistic 30+ coasts to 4.
  */
 export function snapPeriodPage(
   translationX: number,
