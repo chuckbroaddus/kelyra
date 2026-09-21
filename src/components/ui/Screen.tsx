@@ -40,6 +40,12 @@ type Props = {
    */
   collapse?: ReactNode;
   /**
+   * CAL-P6-8A pin band: stays visible while `collapse` hides with the tray
+   * (e.g. calendar PeriodPager drum). Rendered outside CollapsingPageChrome,
+   * still inside FlushBody so it shares the same horizontal pad.
+   */
+  pin?: ReactNode;
+  /**
    * Class `_layout` already hosts ClassTabs + top pad / contextReserve.
    * Skip duplicate top chrome padding on this Screen.
    */
@@ -72,6 +78,7 @@ export function Screen({
   scrollRef,
   onContentSizeChange,
   collapse,
+  pin,
   pageChromeHosted,
 }: Props) {
   const { colors } = useTheme();
@@ -92,13 +99,14 @@ export function Screen({
     sticky && keyboardUp && Platform.OS !== 'android' && keyboardHeight > 0
       ? keyboardHeight
       : stickyLift;
-  const pinChrome = collapse != null;
+  // CAL-P6-8A: pin-only still uses FlushBody pin band (drum stays visible).
+  const pinChrome = collapse != null || pin != null;
 
   useEffect(() => {
     if (!keyboard || !keyboardUp) return;
-    const pin = () => scrollRef?.current?.scrollToEnd({ animated: true });
-    const frame = requestAnimationFrame(pin);
-    const later = setTimeout(pin, 280);
+    const scrollToEnd = () => scrollRef?.current?.scrollToEnd({ animated: true });
+    const frame = requestAnimationFrame(scrollToEnd);
+    const later = setTimeout(scrollToEnd, 280);
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(later);
@@ -163,6 +171,8 @@ export function Screen({
         centered={centered}
       >
         <CollapsingPageChrome>{collapse}</CollapsingPageChrome>
+        {/* CAL-P6-8A pinBand: outside CollapsingPageChrome — stays visible with tray hide */}
+        {pin}
         {scroll ? scroller(children, pinnedContentStyle) : <View style={styles.flushFill}>{children}</View>}
       </FlushBody>
     );
