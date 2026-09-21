@@ -1,5 +1,5 @@
 /**
- * Shared 3D horizontal period wheel (drum). Five-slot rest window (center ±2).
+ * Shared 3D horizontal period wheel (drum). Seven-slot rest window (center ±3).
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity).
  * No Z-axis translation in RN style.transform — Fabric processTransform rejects it (even 0).
@@ -35,7 +35,6 @@ import { GhostButton } from '@/components/ui/Button';
 import {
   buildPeriodWindow,
   type PeriodKind,
-  type PeriodTileModel,
 } from '@/lib/calendar/periodPager';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
@@ -128,11 +127,16 @@ function FallbackToolbar({
 type SlotRole = 'prev2' | 'prev' | 'current' | 'next' | 'next2';
 
 function roleForOffset(offset: number): SlotRole {
-  if (offset === -2) return 'prev2';
+  if (offset <= -2) return 'prev2';
   if (offset === -1) return 'prev';
   if (offset === 1) return 'next';
-  if (offset === 2) return 'next2';
+  if (offset >= 2) return 'next2';
   return 'current';
+}
+
+/** Index into buildPeriodWindow.slots for a parked WHEEL_SLOT_OFFSETS entry. */
+function slotIndexForOffset(offset: number): number {
+  return offset - WHEEL_SLOT_OFFSETS[0];
 }
 
 /** Sample interpolate ranges for a parked slot over dragX ∈ [−3P … +3P]. */
@@ -296,8 +300,9 @@ export function PeriodPager({
         <View style={plateStyle}>
           <View style={styles.rmRow}>
             {WHEEL_SLOT_OFFSETS.map((offset) => {
-              const idx = offset + 2;
-              const tile = window.slots[idx]!;
+              const idx = slotIndexForOffset(offset);
+              const tile = window.slots[idx];
+              if (!tile) return null;
               const role = roleForOffset(offset);
               const isCenter = offset === 0;
               return (
@@ -345,8 +350,9 @@ export function PeriodPager({
       >
         <View style={styles.track}>
           {WHEEL_SLOT_OFFSETS.map((parked) => {
-            const idx = parked + 2;
-            const tile: PeriodTileModel = window.slots[idx]!;
+            const idx = slotIndexForOffset(parked);
+            const tile = window.slots[idx];
+            if (!tile) return null;
             const role = roleForOffset(parked);
             const samples = makeNormSamples(parked, pitch);
             const scale = dragX.interpolate({

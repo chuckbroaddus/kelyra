@@ -52,9 +52,9 @@ export const WHEEL_MIN_OPACITY = 0.22;
 /** Max integer slots committed per fling (AC-M04). */
 export const WHEEL_MAX_FLING_SLOTS = 3;
 
-/** Visible rest window: center ±2. */
-export const WHEEL_VISIBLE_SLOTS = 5;
-export const WHEEL_SLOT_OFFSETS = [-2, -1, 0, 1, 2] as const;
+/** Visible rest window: center ±3 (7 slots). Peek ±3 per SoT. */
+export const WHEEL_VISIBLE_SLOTS = 7;
+export const WHEEL_SLOT_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
 
 /** Spring ~300 ms settle (friction/tension pair). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;

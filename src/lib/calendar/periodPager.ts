@@ -18,8 +18,9 @@ import {
 import type { CalendarViewId, DayMode } from './viewPrefs.ts';
 import { shiftWeek, weekRangeContaining } from './week.ts';
 import { yearContaining } from './year.ts';
+import { WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
 
-/** Local SoT mirrors (avoid circular import with periodWheel). */
+/** Local SoT mirrors (pitch/fling only — slot offsets come from WHEEL_SLOT_OFFSETS). */
 const SLOT_PITCH = 78;
 const MAX_FLING_SLOTS = 3;
 
@@ -44,9 +45,9 @@ export type PeriodTileModel = {
   dayIso?: string;
 };
 
-/** Five-slot rest window: center ±2 (CAL-3DW-05 / AC-M01). */
+/** Seven-slot rest window: center ±3 (matches WHEEL_SLOT_OFFSETS). */
 export type PeriodWindow = {
-  /** Slots at offsets -2,-1,0,+1,+2. Index 2 = center. */
+  /** Slots aligned 1:1 with WHEEL_SLOT_OFFSETS. Center at index of 0. */
   slots: PeriodTileModel[];
   prev2: PeriodTileModel;
   prev: PeriodTileModel;
@@ -198,13 +199,20 @@ export type BuildPeriodWindowArgs = {
 };
 
 function packWindow(slots: PeriodTileModel[]): PeriodWindow {
+  if (slots.length !== WHEEL_SLOT_OFFSETS.length) {
+    throw new Error(
+      `packWindow: expected ${WHEEL_SLOT_OFFSETS.length} slots, got ${slots.length}`,
+    );
+  }
+  const centerIdx = WHEEL_SLOT_OFFSETS.indexOf(0);
+  // Named ±1/±2 neighbors (centerIdx±1/±2); far ±3 live only in slots[].
   return {
     slots,
-    prev2: slots[0]!,
-    prev: slots[1]!,
-    current: slots[2]!,
-    next: slots[3]!,
-    next2: slots[4]!,
+    prev2: slots[centerIdx - 2]!,
+    prev: slots[centerIdx - 1]!,
+    current: slots[centerIdx]!,
+    next: slots[centerIdx + 1]!,
+    next2: slots[centerIdx + 2]!,
   };
 }
 
@@ -218,10 +226,10 @@ function shiftMultidayBy(anchor: string, count: MultidayCount, steps: number): s
   return a;
 }
 
-/** Build five tiles (center ±2) around the current anchor. */
+/** Build tiles for every WHEEL_SLOT_OFFSETS entry (center ±3). */
 export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
   const { kind, anchor, dayCount = 3 } = args;
-  const offsets = [-2, -1, 0, 1, 2] as const;
+  const offsets = WHEEL_SLOT_OFFSETS;
 
   if (kind === 'year') {
     const y = Number(anchor) || yearContaining(anchor);

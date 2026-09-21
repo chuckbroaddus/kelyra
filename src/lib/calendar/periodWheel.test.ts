@@ -44,8 +44,8 @@ test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 14
   assert.equal(WHEEL_HERO_WIDTH, 108);
   assert.equal(WHEEL_HERO_HEIGHT, 126);
   assert.equal(WHEEL_STAGE_HEIGHT, 148);
-  assert.equal(WHEEL_VISIBLE_SLOTS, 5);
-  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-2, -1, 0, 1, 2]);
+  assert.equal(WHEEL_VISIBLE_SLOTS, 7);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-3, -2, -1, 0, 1, 2, 3]);
   assert.equal(WHEEL_ROTATE_Y_PER_SLOT, -14);
   assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
   assert.equal(WHEEL_Z_CENTER, 36);
@@ -111,7 +111,7 @@ test('Set B palette locked (CAL-3DW-10)', () => {
   assert.equal(SET_B.tabHighlight, '#ECEFF1');
 });
 
-test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY; no translateZ in style; RM no tilt; no className', () => {
+test('PeriodPager is 7-slot SoT wheel: pitch/perspective/rotateY; no translateZ in style; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
