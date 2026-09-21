@@ -41,12 +41,14 @@ import Reanimated, {
 import { PeriodLeaf, type PeriodLeafRole } from '@/components/calendar/PeriodLeaf';
 import { GhostButton } from '@/components/ui/Button';
 import {
+  absorbInterruptShift,
   buildPeriodWindow,
   commitShiftFromVisual,
   periodDistance,
   residualFromTotalDrag,
   shiftPeriodAnchor,
   shouldFreezeSlotPoolDuringSnap,
+  shouldIgnoreSpringRest,
   transformDragForSlotMotion,
   visualShiftForSlotPool,
   type PeriodKind,
@@ -384,6 +386,21 @@ export function PeriodPager({
   const [slotPoolFrozen, setSlotPoolFrozen] = useState(false);
   /** Absolute steps the in-flight snap will commit on rest (intended targetSteps). */
   const pendingSnapStepsRef = useRef(0);
+  /**
+   * Progress folded in when a gesture interrupts an in-flight snap/coast.
+   * Applied in the window build with visualShift; committed on next successful rest.
+   * Never call onShift mid-gesture — parent anchor layout effect would wipe the new drag.
+   */
+  const [absorbedShift, setAbsorbedShiftState] = useState(0);
+  const absorbedShiftRef = useRef(0);
+  const updateAbsorbedShift = useCallback((steps: number) => {
+    absorbedShiftRef.current = steps;
+    setAbsorbedShiftState(steps);
+  }, []);
+  /** Bumped on interrupt / each animateSnap so late cancelled withSpring rests no-op. */
+  const snapGenerationRef = useRef(0);
+  /** True while a programmed snap/coast spring (or web microtask rest) is outstanding. */
+  const snapActiveRef = useRef(false);
   /** Mirrors latest total drag px (web state + native shared) for residual rebase on release. */
   const dragPxRef = useRef(0);
   const settling = useRef(false);
@@ -395,10 +412,10 @@ export function PeriodPager({
     () =>
       buildPeriodWindow({
         kind,
-        anchor: shiftPeriodAnchor(kind, anchor, visualShift, dayCount),
+        anchor: shiftPeriodAnchor(kind, anchor, absorbedShift + visualShift, dayCount),
         dayCount,
       }),
-    [kind, anchor, dayCount, visualShift],
+    [kind, anchor, dayCount, absorbedShift, visualShift],
   );
 
   // Layout effect: extras paint with the rebound SlotPool window after parent commits.
@@ -409,13 +426,15 @@ export function PeriodPager({
     snapFreezeRef.current = false;
     setSlotPoolFrozen(false);
     pendingSnapStepsRef.current = 0;
+    updateAbsorbedShift(0);
+    snapActiveRef.current = false;
     setWebDragPx(0);
     updateVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
     settling.current = false;
-  }, [anchor, kind, dayCount, dragShared, snapFreezeShared, updateVisualShift]);
+  }, [anchor, kind, dayCount, dragShared, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
 
   // Native: rebound period keys as total drag / pitch crosses integers (trunc, not round).
   // Skip while programmed snap/coast freezes SlotPool (no mid-spring content recycle).
@@ -441,11 +460,51 @@ export function PeriodPager({
     [onShift],
   );
 
-  const onSpringRest = useCallback(() => {
+  /**
+   * Fold in-flight snap/coast progress into absorbedShift without calling onShift.
+   * Parent layout effect on anchor would wipe a mid-gesture drag if we committed now.
+   */
+  const absorbInFlightSnap = useCallback(() => {
+    const inFlight =
+      pendingSnapStepsRef.current !== 0 ||
+      visualShiftRef.current !== 0 ||
+      snapFreezeRef.current ||
+      snapActiveRef.current;
+    if (!inFlight) return;
+    // Invalidate any late onSpringRest from the cancelled withSpring.
+    snapGenerationRef.current += 1;
+    snapActiveRef.current = false;
+    const owed = absorbInterruptShift({
+      pendingSteps: pendingSnapStepsRef.current,
+      visualShift: visualShiftRef.current,
+    });
+    if (owed !== 0) {
+      updateAbsorbedShift(absorbedShiftRef.current + owed);
+    }
+    pendingSnapStepsRef.current = 0;
+    updateVisualShift(0);
+    snapFreezeShared.value = 0;
+    snapFreezeRef.current = false;
+    setSlotPoolFrozen(false);
+    dragPxRef.current = 0;
+    dragShared.value = 0;
+    setWebDragPx(0);
+  }, [dragShared, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
+
+  const onSpringRest = useCallback((callbackGeneration: number) => {
     // End of spring/coast: drop silhouette, show full center ledger.
+    // Generation mismatch → cancelled spring after interrupt absorb; no-op.
+    if (
+      shouldIgnoreSpringRest({
+        activeGeneration: snapGenerationRef.current,
+        callbackGeneration,
+      })
+    ) {
+      return;
+    }
+    snapActiveRef.current = false;
     // Short snap may freeze SlotPool at release-time liveShift (or 0 for taps);
-    // long coast kept recycling. Commit absolute pending steps. Soft-clamp via
-    // commitShiftFromVisual for ceiling parity.
+    // long coast kept recycling. Commit pending + any absorbed interrupt progress.
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
@@ -453,8 +512,10 @@ export function PeriodPager({
     snapFreezeRef.current = false;
     setSlotPoolFrozen(false);
     const pending = pendingSnapStepsRef.current;
+    const absorbed = absorbedShiftRef.current;
     pendingSnapStepsRef.current = 0;
-    const commit = commitShiftFromVisual(pending);
+    updateAbsorbedShift(0);
+    const commit = commitShiftFromVisual(pending + absorbed);
     // Snap drag to integer pitch matching the steps we commit.
     const snapped = -commit * pitch;
     dragShared.value = snapped;
@@ -466,9 +527,9 @@ export function PeriodPager({
       setWebDragPx(0);
       return;
     }
-    // visualShift resets in layout effect when parent anchor updates.
+    // visualShift / absorbedShift reset in layout effect when parent anchor updates.
     finishShift(commit);
-  }, [dragShared, finishShift, pitch, snapFreezeShared, updateVisualShift]);
+  }, [dragShared, finishShift, pitch, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
 
   const animateSnap = useCallback(
     (targetSteps: number, releaseDragPx?: number) => {
@@ -517,11 +578,14 @@ export function PeriodPager({
       }
 
       // Keep flinging===true (silhouettes) for the entire spring/coast.
-      // onSpringRest flips flinging false + showCenterExtras + onShift(pending steps).
+      // onSpringRest flips flinging false + showCenterExtras + onShift(pending+absorbed).
+      snapGenerationRef.current += 1;
+      const springGeneration = snapGenerationRef.current;
+      snapActiveRef.current = true;
       if (IS_WEB || reduceMotion) {
         setWebDragPx(toValue);
         dragPxRef.current = toValue;
-        Promise.resolve().then(() => onSpringRest());
+        Promise.resolve().then(() => onSpringRest(springGeneration));
         return;
       }
       dragShared.value = withSpring(
@@ -536,7 +600,7 @@ export function PeriodPager({
         (finished) => {
           'worklet';
           if (!finished) return;
-          runOnJS(onSpringRest)();
+          runOnJS(onSpringRest)(springGeneration);
         },
       );
     },
@@ -550,6 +614,8 @@ export function PeriodPager({
         onShift(steps);
         return;
       }
+      // Absorb any in-flight snap before programming a new one (no mid-gesture onShift).
+      absorbInFlightSnap();
       setFlinging(true);
       setFlingOriginAnchor(anchor);
       setShowCenterExtras(false);
@@ -557,7 +623,7 @@ export function PeriodPager({
       velocityRef.current = steps > 0 ? -1400 : 1400;
       animateSnap(steps);
     },
-    [anchor, animateSnap, onShift, reduceMotion],
+    [absorbInFlightSnap, anchor, animateSnap, onShift, reduceMotion],
   );
 
   const pan = useMemo(
@@ -579,13 +645,16 @@ export function PeriodPager({
           setFlinging(true);
           setFlingOriginAnchor(anchor);
           velocityRef.current = 0;
-          // Live finger-drag may recycle; clear programmed-snap freeze.
-          snapFreezeShared.value = 0;
-          snapFreezeRef.current = false;
-          setSlotPoolFrozen(false);
-          pendingSnapStepsRef.current = 0;
-          if (!IS_WEB) {
-            // cancel spring by freezing shared value
+          // Interrupt absorb: fold pending/visual into absorbedShift (do NOT drop,
+          // do NOT onShift — parent anchor reset would wipe this new drag).
+          const hadInFlight =
+            pendingSnapStepsRef.current !== 0 ||
+            visualShiftRef.current !== 0 ||
+            snapFreezeRef.current ||
+            snapActiveRef.current;
+          absorbInFlightSnap();
+          if (!hadInFlight && !IS_WEB) {
+            // No snap in flight: cancel any residual spring by freezing the shared value.
             dragShared.value = dragShared.value;
           }
         },
@@ -613,7 +682,7 @@ export function PeriodPager({
           animateSnap(0, dragPxRef.current);
         },
       }),
-    [animateSnap, anchor, dragShared, failed, pitch, reduceMotion, updateVisualShift],
+    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, reduceMotion, updateVisualShift],
   );
 
   if (failed) {
