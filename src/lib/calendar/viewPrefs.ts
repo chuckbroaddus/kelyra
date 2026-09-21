@@ -137,10 +137,15 @@ export async function saveCalViewPrefs(
   );
 }
 
-/** Tap-zoom ladder: Day → Month → Year (CAL-R4 L-C). No RTL-only back gesture. */
+/**
+ * Tap-zoom ladder fallback when zoom stack is empty (CAL-R4 L-C + CAL-P6-3A).
+ * Live stack honesty wins: Day may return to Week when drilled from Week.
+ */
 export function zoomParentView(view: CalendarViewId): CalendarViewId | null {
   if (view === 'day') return 'month';
+  if (view === 'week' || view === 'multiday') return 'month';
   if (view === 'month') return 'year';
+  if (view === 'agenda') return 'month';
   return null;
 }
 

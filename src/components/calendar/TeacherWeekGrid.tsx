@@ -38,6 +38,8 @@ type Props = {
   items: CalendarItem[];
   showHiddenBadge?: boolean;
   onPressItem?: (item: CalendarItem) => void;
+  /** CAL-P6-3A: Week day column/header → Day. */
+  onPressDay?: (iso: string) => void;
   /** When set with onChangeDayCount, pinch (full motion) adjusts 7↔5↔3. */
   dayCount?: MultidayCount;
   onChangeDayCount?: (count: MultidayCount) => void;
@@ -54,6 +56,7 @@ export function TeacherWeekGrid({
   items,
   showHiddenBadge,
   onPressItem,
+  onPressDay,
   dayCount,
   onChangeDayCount,
   allowPinch = false,
@@ -123,14 +126,27 @@ export function TeacherWeekGrid({
         {showTimeline ? <View style={styles.gutterSpacer} /> : null}
         {days.map((day) => {
           const isToday = isSameDayIso(day, today);
+          const Header = onPressDay ? Pressable : View;
           return (
-            <View key={`h-${day}`} style={styles.col}>
+            <Header
+              key={`h-${day}`}
+              style={styles.col}
+              {...(onPressDay
+                ? {
+                    onPress: () => onPressDay(day),
+                    accessibilityRole: 'button' as const,
+                    accessibilityLabel: `Open day ${day}`,
+                  }
+                : null)}
+            >
               <Text
                 style={[styles.weekday, { color: isToday ? colors.brand : colors.mute }]}
               >
                 {weekdayShort(day).toUpperCase()}
               </Text>
               <Text
+                numberOfLines={1}
+                allowFontScaling={false}
                 style={[
                   styles.dayNum,
                   {
@@ -141,7 +157,7 @@ export function TeacherWeekGrid({
               >
                 {dayNumber(day)}
               </Text>
-            </View>
+            </Header>
           );
         })}
       </View>
@@ -394,12 +410,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     alignSelf: 'center',
     minWidth: 26,
-    paddingHorizontal: 5,
+    // Item 7 KEEP: two-digit dayNum single-line.
+    paddingHorizontal: 0,
     paddingVertical: 2,
     borderRadius: radius.pill,
     overflow: 'hidden',
     marginTop: 2,
-    fontSize: 13,
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
   },
   dayCell: {
     borderWidth: StyleSheet.hairlineWidth,

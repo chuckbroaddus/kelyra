@@ -55,9 +55,12 @@ export type PeriodWindow = {
   next2: PeriodTileModel;
 };
 
-/** Surfaces that mount the period wheel. Day List keeps no chevron (CAL-R5-11 HOLD). */
-export function showsPeriodPager(view: CalendarViewId, dayMode: DayMode): boolean {
-  if (view === 'day' && dayMode === 'list') return false;
+/**
+ * Surfaces that mount the period wheel (Set B drum).
+ * CAL-P6-5C-01: Day List mounts drum (drops CAL-R5-11 / CAL-3DW-14 no-drum).
+ * dayMode kept for call-site compat; list no longer excludes the pager.
+ */
+export function showsPeriodPager(view: CalendarViewId, _dayMode?: DayMode): boolean {
   return (
     view === 'year' ||
     view === 'month' ||
@@ -307,5 +310,9 @@ export function rolodexOpacityForOffset(
   return centerOpacity + (sideOpacity - centerOpacity) * t;
 }
 
-/** Left-edge dead zone so iOS back edge-swipe is not stolen (CAL-40 / Q17). */
-export const PERIOD_PAGER_EDGE_GUARD_PX = 24;
+/**
+ * CAL-P6-1A-03: on-drum leading carve dropped (was CAL-3DW-12 ~20–24px).
+ * Full-band drum stage owns LTR/RTL period paging. Off-row edge pop KEEP
+ * because system interactive-pop only starts outside this stage View.
+ */
+export const PERIOD_PAGER_EDGE_GUARD_PX = 0;

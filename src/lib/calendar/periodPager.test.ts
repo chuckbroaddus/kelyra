@@ -20,14 +20,14 @@ function read(rel: string): string {
   return readFileSync(new URL(rel, root), 'utf8');
 }
 
-test('showsPeriodPager: all surfaces except day list', () => {
+test('showsPeriodPager: all surfaces including day list (CAL-P6-5C)', () => {
   assert.equal(showsPeriodPager('year', 'single'), true);
   assert.equal(showsPeriodPager('month', 'single'), true);
   assert.equal(showsPeriodPager('week', 'single'), true);
   assert.equal(showsPeriodPager('multiday', 'single'), true);
   assert.equal(showsPeriodPager('day', 'single'), true);
   assert.equal(showsPeriodPager('agenda', 'single'), true);
-  assert.equal(showsPeriodPager('day', 'list'), false);
+  assert.equal(showsPeriodPager('day', 'list'), true);
 });
 
 test('periodKindForView maps CalendarViewId', () => {
@@ -129,7 +129,7 @@ test('rolodex scale/opacity: center larger/brighter than sides', () => {
   assert.ok(rolodexOpacityForOffset(0, 100) > rolodexOpacityForOffset(100, 100));
 });
 
-test('calendar wires PeriodPager; day list excluded; Set B leaf identity; no PNG atlas', () => {
+test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG atlas', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /PeriodPager/);
   assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
@@ -141,7 +141,9 @@ test('calendar wires PeriodPager; day list excluded; Set B leaf identity; no PNG
   assert.match(leaf, /yearPage|WeekDayStrip|dayNumeral/);
   assert.doesNotMatch(leaf, /YearIcon|WeekIcon|DayIcon/);
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  assert.match(pager, /PERIOD_PAGER_EDGE_GUARD_PX/);
+  // CAL-P6-1A: full-band claim — no on-drum pageX carve.
+  assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
+  assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX|CAL-P6-1A/);
   assert.match(pager, /useReducedMotion/);
   assert.match(pager, /label=["']<<["']/);
   assert.match(pager, /snapPeriodPage/);

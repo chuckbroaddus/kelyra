@@ -121,11 +121,13 @@ test('parseCalViewPrefsJson: web week/month/agenda at v<3 migrate to year', () =
   assert.equal(phoneWeek.version, 3);
 });
 
-test('zoom ladder Day → Month → Year; no invented RTL gesture', () => {
+test('zoom ladder Day → Month → Year; week/agenda climb (CAL-P6-3A); no invented RTL gesture', () => {
   assert.equal(zoomParentView('day'), 'month');
   assert.equal(zoomParentView('month'), 'year');
   assert.equal(zoomParentView('year'), null);
-  assert.equal(zoomParentView('agenda'), null);
+  assert.equal(zoomParentView('week'), 'month');
+  assert.equal(zoomParentView('multiday'), 'month');
+  assert.equal(zoomParentView('agenda'), 'month');
   assert.equal(canZoomUp('day'), true);
   assert.equal(canZoomUp('year'), false);
 });

@@ -1,6 +1,16 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type GestureResponderEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
@@ -28,6 +38,27 @@ import {
   listCalendars,
   unsubscribeTeam,
 } from '@/lib/calendar/api';
+import {
+  calendarSessionKey,
+  loadCalendarSession,
+  saveCalendarSession,
+} from '@/lib/calendar/calendarSession';
+import {
+  DAY_LIST_WINDOW_DAYS,
+  dayListOriginForTarget,
+  listAnchorDayFromScroll,
+  planDayListDrumShift,
+  planDayListScrollSettle,
+  scrollYForListAnchorDay,
+  type DaySectionOffset,
+} from '@/lib/calendar/listAnchorDay';
+import {
+  CAL_P6_3A_HIERARCHY,
+  CAL_P6_5C_LIST_ANCHOR,
+  CAL_P6_8A_PIN_DRUM,
+  CAL_P6_9A_STACK_RESTORE,
+  CAL_P6_10B_SLOT_CREATE,
+} from '@/lib/calendar/p6Laws';
 import {
   periodKindForView,
   showsPeriodPager,
@@ -60,6 +91,7 @@ import {
 } from '@/lib/calendar/prefs';
 import { loadCalPrefs, saveCalPrefs } from '@/lib/calendar/prefsStorage';
 import { calendarSeatForChrome } from '@/lib/calendar/seat';
+import { slotCreateDraft } from '@/lib/calendar/slotCreate';
 import type { CalendarItem, CalendarLayer } from '@/lib/calendar/types';
 import {
   CAL_VIEW_PREFS_VERSION,
@@ -86,6 +118,20 @@ import { firstName } from '@/lib/format';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
+
+void CAL_P6_3A_HIERARCHY;
+void CAL_P6_5C_LIST_ANCHOR;
+void CAL_P6_8A_PIN_DRUM;
+void CAL_P6_9A_STACK_RESTORE;
+void CAL_P6_10B_SLOT_CREATE;
+
+function touchDistance(e: GestureResponderEvent): number {
+  const touches = e.nativeEvent.touches;
+  if (!touches || touches.length < 2) return 0;
+  const a = touches[0]!;
+  const b = touches[1]!;
+  return Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
+}
 
 /** CR-CalTabs PersonTabs row — Year·Month·Week·Day only (Agenda/Days via gear). */
 const VIEW_TABS: PersonTab[] = [
@@ -123,6 +169,8 @@ export default function CalendarScreen() {
   // Today ISO — week Sunday via weekRangeContaining; 3 = center; 5 = Mon–Fri (CAL-R5-04).
   const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
+  /** CAL-P6-5C: painted Day List window origin — separate from listAnchorDay (dayAnchor). */
+  const [dayListOrigin, setDayListOrigin] = useState(() => dayRangeContaining().day);
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
@@ -137,6 +185,16 @@ export default function CalendarScreen() {
   const [zoomStack, setZoomStack] = useState<CalendarViewId[]>([]);
   /** Apply stored view once per prefs key — never snap zoomTo(month) back to Year. */
   const viewPrefsHydratedKeyRef = useRef<string | null>(null);
+  /** CAL-P6-8A / 5C: body scroller + Day List↔drum lockstep. */
+  const screenScrollRef = useRef<ScrollView>(null);
+  const dayListSectionsRef = useRef<DaySectionOffset[]>([]);
+  const dayListOriginYRef = useRef(0);
+  const dayListScrollYRef = useRef(0);
+  const dayListSyncFromDrumRef = useRef(false);
+  const dayListSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** After window rebase, scroll this day to top once sections remeasure. */
+  const pendingDayListScrollRef = useRef<string | null>(null);
+  const hierarchyPinchRef = useRef({ startDist: 0, armed: false, fired: false });
 
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
   const [focusedChildId, setFocusedChildId] = useState<string | null>(null);
@@ -169,10 +227,17 @@ export default function CalendarScreen() {
   );
   const dayRange = useMemo(() => dayRangeContaining(dayAnchor), [dayAnchor]);
   const agendaRange = useMemo(() => agendaRangeFrom(agendaAnchor, 14), [agendaAnchor]);
-  /** CAL-R5-11 Day List — continuous multi-day window from day anchor. */
-  const dayListRange = useMemo(() => agendaRangeFrom(dayAnchor, 14), [dayAnchor]);
+  /**
+   * CAL-R5-11 / CAL-P6-5C Day List — continuous window from dayListOrigin.
+   * dayAnchor is listAnchorDay (drum center); origin stays stable on settle.
+   */
+  const dayListRange = useMemo(
+    () => agendaRangeFrom(dayListOrigin, DAY_LIST_WINDOW_DAYS),
+    [dayListOrigin],
+  );
   const monthRange = useMemo(() => monthContaining(monthAnchor), [monthAnchor]);
   const year = yearAnchor;
+  const monthListMode = activeView === 'month' && monthMode === 'list';
 
   // Phase E: Ask calendar_draft_event parks CR-A draft — open Review on Calendar.
   useEffect(() => {
@@ -261,6 +326,25 @@ export default function CalendarScreen() {
         setMonthMode(prefs.monthMode);
         setDayMode(prefs.dayMode);
         setZoomStack([]);
+        // CAL-P6-9A: remount / forward restore rehydrates anchors when session matches view.
+        const session = loadCalendarSession(
+          calendarSessionKey(profileId, seat, seat === 'parent' ? parentChildId : null),
+        );
+        if (session) {
+          setDayAnchor(session.dayAnchor);
+          setDayListOrigin(dayListOriginForTarget(session.dayAnchor, session.dayAnchor));
+          setGridAnchor(session.gridAnchor);
+          setMonthAnchor(session.monthAnchor);
+          setYearAnchor(session.yearAnchor);
+          setAgendaAnchor(session.agendaAnchor);
+          setMonthSelectedDay(session.monthSelectedDay);
+          if (session.activeView === prefs.view) {
+            setZoomStack(session.zoomStack);
+            setDayCount(session.dayCount);
+            setMonthMode(session.monthMode);
+            setDayMode(session.dayMode);
+          }
+        }
         viewPrefsHydratedKeyRef.current = prefsKey;
       }
       setViewPrefsReady(true);
@@ -328,9 +412,47 @@ export default function CalendarScreen() {
     return true;
   }, [zoomStack, activeView, dayCount, persistViewPrefs]);
 
+  const canClimb = canZoomUp(activeView) || zoomStack.length > 0;
+  /** CAL-P6-3A: web / RM climb control — not Ghost strip above PersonTabs. */
+  const showClimbControl = canClimb && (!isPhone || reduceMotion);
+
+  // CAL-P6-9A: persist surface anchors for stack-honest forward restore.
+  useEffect(() => {
+    if (!profileId || !seat || !viewPrefsReady) return;
+    saveCalendarSession(calendarSessionKey(profileId, seat, parentChildId), {
+      activeView,
+      dayMode,
+      monthMode,
+      dayCount,
+      dayAnchor,
+      gridAnchor,
+      monthAnchor,
+      yearAnchor,
+      agendaAnchor,
+      monthSelectedDay,
+      zoomStack,
+    });
+  }, [
+    profileId,
+    seat,
+    parentChildId,
+    viewPrefsReady,
+    activeView,
+    dayMode,
+    monthMode,
+    dayCount,
+    dayAnchor,
+    gridAnchor,
+    monthAnchor,
+    yearAnchor,
+    agendaAnchor,
+    monthSelectedDay,
+    zoomStack,
+  ]);
+
   // Platform / chrome back pops Year←Month←Day hierarchy before leaving Calendar.
   useEffect(() => {
-    if (!canZoomUp(activeView) && zoomStack.length === 0) {
+    if (!canClimb) {
       chrome.setPushedBackHandler?.(null);
       return;
     }
@@ -338,7 +460,113 @@ export default function CalendarScreen() {
     return () => {
       chrome.setPushedBackHandler?.(null);
     };
-  }, [chrome, activeView, zoomStack, zoomUp]);
+  }, [chrome, canClimb, zoomUp]);
+
+  // CAL-P6-3A: phone pinch-out on chrome climb zone (not multi-day body pinch).
+  const hierarchyPinch = useMemo(() => {
+    if (!isPhone || reduceMotion || !canClimb) return null;
+    return PanResponder.create({
+      onStartShouldSetPanResponder: (e) => (e.nativeEvent.touches?.length ?? 0) >= 2,
+      onMoveShouldSetPanResponder: (e) => (e.nativeEvent.touches?.length ?? 0) >= 2,
+      onPanResponderGrant: (e) => {
+        const dist = touchDistance(e);
+        hierarchyPinchRef.current = { startDist: dist, armed: dist > 0, fired: false };
+      },
+      onPanResponderMove: (e) => {
+        if (!hierarchyPinchRef.current.armed || hierarchyPinchRef.current.fired) return;
+        const dist = touchDistance(e);
+        if (!(hierarchyPinchRef.current.startDist > 0) || !(dist > 0)) return;
+        const scale = dist / hierarchyPinchRef.current.startDist;
+        if (scale > 1.25) {
+          hierarchyPinchRef.current.fired = true;
+          zoomUp();
+        }
+      },
+      onPanResponderRelease: () => {
+        hierarchyPinchRef.current = { startDist: 0, armed: false, fired: false };
+      },
+      onPanResponderTerminate: () => {
+        hierarchyPinchRef.current = { startDist: 0, armed: false, fired: false };
+      },
+    });
+  }, [canClimb, isPhone, reduceMotion, zoomUp]);
+
+  const scrollDayListToAnchor = useCallback(
+    (day: string, opts?: { forceZero?: boolean }) => {
+      const sectionY = opts?.forceZero
+        ? 0
+        : scrollYForListAnchorDay(dayListSectionsRef.current, day);
+      if (sectionY == null) return;
+      const y = Math.max(0, dayListOriginYRef.current + sectionY);
+      dayListSyncFromDrumRef.current = true;
+      dayListScrollYRef.current = y;
+      screenScrollRef.current?.scrollTo({ y, animated: !reduceMotion });
+      if (dayListSettleTimerRef.current) clearTimeout(dayListSettleTimerRef.current);
+      dayListSettleTimerRef.current = setTimeout(() => {
+        dayListSyncFromDrumRef.current = false;
+      }, 320);
+    },
+    [reduceMotion],
+  );
+
+  const onDayListSectionsChange = useCallback(
+    (sections: DaySectionOffset[]) => {
+      dayListSectionsRef.current = sections;
+      const pending = pendingDayListScrollRef.current;
+      if (!pending) return;
+      if (!sections.some((s) => s.day === pending)) return;
+      pendingDayListScrollRef.current = null;
+      scrollDayListToAnchor(pending, { forceZero: pending === dayListOrigin });
+    },
+    [dayListOrigin, scrollDayListToAnchor],
+  );
+
+  const settleDayListAnchorFromScroll = useCallback(() => {
+    if (activeView !== 'day' || dayMode !== 'list') return;
+    if (dayListSyncFromDrumRef.current) return;
+    const localY = Math.max(0, dayListScrollYRef.current - dayListOriginYRef.current);
+    const day = listAnchorDayFromScroll(dayListSectionsRef.current, localY);
+    if (!day || day === dayAnchor) return;
+    // CAL-P6-5C-03: settle writes SoT only — do not rebase painted window.
+    const plan = planDayListScrollSettle({
+      origin: dayListOrigin,
+      currentAnchor: dayAnchor,
+      topDay: day,
+    });
+    setDayAnchor(plan.nextAnchor);
+  }, [activeView, dayMode, dayAnchor, dayListOrigin]);
+
+  const onScreenScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      dayListScrollYRef.current = event.nativeEvent.contentOffset.y;
+      if (activeView !== 'day' || dayMode !== 'list') return;
+      if (dayListSyncFromDrumRef.current) return;
+      if (dayListSettleTimerRef.current) clearTimeout(dayListSettleTimerRef.current);
+      dayListSettleTimerRef.current = setTimeout(() => {
+        settleDayListAnchorFromScroll();
+      }, 140);
+    },
+    [activeView, dayMode, settleDayListAnchorFromScroll],
+  );
+
+  const applyDayListDrumShift = useCallback(
+    (steps: number) => {
+      const plan = planDayListDrumShift({
+        origin: dayListOrigin,
+        anchor: dayAnchor,
+        steps,
+        windowDays: DAY_LIST_WINDOW_DAYS,
+      });
+      setDayAnchor(plan.nextAnchor);
+      if (plan.scroll === 'zero') {
+        pendingDayListScrollRef.current = plan.nextAnchor;
+        setDayListOrigin(plan.nextOrigin);
+        return;
+      }
+      scrollDayListToAnchor(plan.nextAnchor);
+    },
+    [dayAnchor, dayListOrigin, scrollDayListToAnchor],
+  );
 
   const onChangeDayCount = useCallback(
     (count: MultidayCount) => {
@@ -600,6 +828,10 @@ export default function CalendarScreen() {
       setGridAnchor(multidayTodayAnchor(today));
     } else if (activeView === 'day') {
       setDayAnchor(today);
+      if (dayMode === 'list') {
+        pendingDayListScrollRef.current = today;
+        setDayListOrigin(today);
+      }
     } else if (activeView === 'agenda') {
       setAgendaAnchor(today);
     } else if (activeView === 'month') {
@@ -644,9 +876,8 @@ export default function CalendarScreen() {
     );
   }
 
-  // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
-  return (
-    <Screen pageChromeHosted>
+  const collapsingChrome = (
+    <>
       {parentNeedsChild ? (
         <View style={styles.childBlock}>
           <Text style={[styles.childLabel, { color: colors.mute }]}>Child</Text>
@@ -724,8 +955,23 @@ export default function CalendarScreen() {
           clearButtonMode="while-editing"
         />
       ) : null}
+    </>
+  );
 
-      {/* Hierarchy back = Year/Month tabs + platform back (no GhostButton Up row above tabs). */}
+  const pinnedChrome = (
+    <View {...(hierarchyPinch?.panHandlers ?? {})}>
+      {/* CAL-P6-3A: web/RM `<` under tabs in pin band — not Ghost above PersonTabs. */}
+      {showClimbControl ? (
+        <View style={styles.climbRow}>
+          <GhostButton
+            label="<"
+            accessibilityLabel="Zoom up one level"
+            onPress={() => {
+              zoomUp();
+            }}
+          />
+        </View>
+      ) : null}
 
       {canCreate && seat === 'parent' && parentChildMissing ? (
         <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
@@ -737,7 +983,7 @@ export default function CalendarScreen() {
         <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
       ) : null}
 
-      {/* Period pager Rolodex — replaces << / label / >> only (PersonTabs + Tray G1 HOLD). */}
+      {/* CAL-P6-8A: period drum pinned while PersonTabs hide with tray. */}
       {showsPeriodPager(activeView, dayMode) && periodKindForView(activeView) ? (
         <PeriodPager
           kind={periodKindForView(activeView)!}
@@ -783,6 +1029,11 @@ export default function CalendarScreen() {
               return;
             }
             if (activeView === 'day') {
+              // CAL-P6-5C: drum snap writes listAnchorDay; list projects (stable window).
+              if (dayMode === 'list') {
+                applyDayListDrumShift(steps);
+                return;
+              }
               setDayAnchor(shiftDay(dayRange.day, steps));
               return;
             }
@@ -792,7 +1043,21 @@ export default function CalendarScreen() {
           }}
         />
       ) : null}
+    </View>
+  );
 
+  // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
+  // CAL-P6-8A: PersonTabs collapse with tray; drum stays in pin band.
+  // CAL-P6-6B: Month List owns a flex-bounded scroller — disable page scroll so soft-edge can fire.
+  return (
+    <Screen
+      pageChromeHosted
+      collapse={collapsingChrome}
+      pin={pinnedChrome}
+      scroll={!monthListMode}
+      scrollRef={screenScrollRef}
+      onScroll={onScreenScroll}
+    >
       {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
 
       {error ? (
@@ -833,46 +1098,79 @@ export default function CalendarScreen() {
             items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
+            onPressDay={(iso) => {
+              setDayAnchor(iso);
+              setDayListOrigin(iso);
+              zoomTo('day');
+            }}
             dayCount={stepperCount}
             onChangeDayCount={onChangeDayCount}
             allowPinch={allowPinch}
           />
         ) : activeView === 'day' ? (
           dayMode === 'list' ? (
-            <AgendaList
-              days={dayListRange.days}
-              items={visibleItems}
-              showHiddenBadge={showHiddenBadge}
-              onPressItem={openItem}
-              includeEmptyDays
-            />
+            <View
+              onLayout={(event) => {
+                dayListOriginYRef.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <AgendaList
+                days={dayListRange.days}
+                items={visibleItems}
+                showHiddenBadge={showHiddenBadge}
+                onPressItem={openItem}
+                includeEmptyDays
+                onSectionOffsetsChange={onDayListSectionsChange}
+              />
+            </View>
           ) : (
             <DayColumn
               day={dayRange.day}
               items={visibleItems}
               showHiddenBadge={showHiddenBadge}
               onPressItem={openItem}
+              onPressSlot={
+                canCreate
+                  ? (day, hour) => {
+                      setComposer({
+                        mode: 'create',
+                        initialDraft: slotCreateDraft(day, hour),
+                      });
+                    }
+                  : undefined
+              }
             />
           )
         ) : activeView === 'month' ? (
-          <MonthGrid
-            year={monthRange.year}
-            monthIndex0={monthRange.monthIndex0}
-            label={monthRange.label}
-            items={visibleItems}
-            selectedDay={monthSelectedDay}
-            showHiddenBadge={showHiddenBadge}
-            mode={monthMode}
-            onSelectDay={(iso) => {
-              setMonthSelectedDay(iso);
-            }}
-            onZoomDay={(iso) => {
-              setDayAnchor(iso);
-              setMonthSelectedDay(iso);
-              zoomTo('day');
-            }}
-            onPressItem={openItem}
-          />
+          <View style={monthListMode ? styles.monthListHost : undefined}>
+            <MonthGrid
+              year={monthRange.year}
+              monthIndex0={monthRange.monthIndex0}
+              label={monthRange.label}
+              items={visibleItems}
+              selectedDay={monthSelectedDay}
+              showHiddenBadge={showHiddenBadge}
+              mode={monthMode}
+              onSelectDay={(iso) => {
+                setMonthSelectedDay(iso);
+              }}
+              onZoomDay={(iso) => {
+                setDayAnchor(iso);
+                setDayListOrigin(iso);
+                setMonthSelectedDay(iso);
+                zoomTo('day');
+              }}
+              onZoomWeek={(iso) => {
+                setGridAnchor(weekRangeContaining(iso).fromIso);
+                zoomTo('week');
+              }}
+              onCommitAdjacentMonth={(dir) => {
+                setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
+                setMonthSelectedDay(null);
+              }}
+              onPressItem={openItem}
+            />
+          </View>
         ) : activeView === 'year' ? (
           <YearGrid
             year={year}
@@ -969,6 +1267,11 @@ export default function CalendarScreen() {
         }}
         onChangeDayMode={(mode) => {
           setDayMode(mode);
+          // Entering List: paint window from current listAnchorDay (stable until drum leaves range).
+          if (mode === 'list') {
+            setDayListOrigin(dayAnchor);
+            pendingDayListScrollRef.current = dayAnchor;
+          }
           persistViewPrefs(activeView, dayCount, monthMode, mode);
         }}
         chipIds={chipIds}
@@ -1024,6 +1327,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
     gap: 2,
+  },
+  climbRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 0,
+  },
+  monthListHost: {
+    flex: 1,
+    minHeight: 0,
   },
   searchInput: {
     borderWidth: 1,

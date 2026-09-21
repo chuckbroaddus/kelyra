@@ -95,7 +95,12 @@ function MonthHangingGrid({
           Number(iso.slice(0, 4)) === year && Number(iso.slice(5, 7)) - 1 === monthIndex0;
         const color = !inMonth ? SET_B.grid : dow === 0 ? SET_B.sunday : SET_B.type;
         return (
-          <Text key={`${iso}-${i}`} style={[styles.hangDay, { color }]}>
+          <Text
+            key={`${iso}-${i}`}
+            numberOfLines={1}
+            allowFontScaling={false}
+            style={[styles.hangDay, { color }]}
+          >
             {inMonth ? dayNum : ''}
           </Text>
         );
@@ -246,7 +251,11 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
               </Text>
             ))}
           </View>
-          <Text style={styles.dayNumeral} numberOfLines={1}>
+          <Text
+            style={styles.dayNumeral}
+            numberOfLines={1}
+            allowFontScaling={false}
+          >
             {dayNum}
           </Text>
         </View>
@@ -375,6 +384,7 @@ const styles = StyleSheet.create({
     lineHeight: 11,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
+    paddingHorizontal: 0,
   },
   wrapHeader: {
     backgroundColor: SET_B.header,
@@ -422,6 +432,7 @@ const styles = StyleSheet.create({
     color: SET_B.type,
     fontVariant: ['tabular-nums'],
     marginTop: 4,
+    paddingHorizontal: 0,
   },
   wrapBodyEmpty: {
     flex: 1,
