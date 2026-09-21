@@ -2,10 +2,12 @@
  * Calendar 3D horizontal period wheel — SoT curve helpers.
  *
  * Binding SoT:
- *   notes/company/calendar-3d-wheel-spec.md §2
- *   notes/company/calendar-3d-wheel-pm-lock.md geometry §2 / CAL-3DW-01..18
- *   notes/company/calendar-3d-wheel-mockups/index.html
+ *   notes/company/calendar-item2-p0p1-pm-lock.md
+ *   notes/company/calendar-item2-p0p1-intent.md
+ *   notes/company/calendar-item2-perf-architecture.md
+ *   notes/company/calendar-3d-wheel-spec.md §2 (geometry curves)
  *
+ * P0: SlotPool N=9 (center ±4); MAX_FLING = N/2 headroom (=4).
  * Ship curves from dual-stamped SoT (not the prior brief defaults).
  */
 export { snapPeriodPage, PERIOD_PAGER_EDGE_GUARD_PX } from './periodPager.ts';
@@ -35,7 +37,7 @@ export const WHEEL_ROTATE_Y_PER_SLOT = -14;
 /** Max |rotateY| at |d|≥3. */
 export const WHEEL_MAX_ROTATE_Y_DEG = 42; // 3 * 14
 
-/** Z lift at center; sides recede by 18*|d|. */
+/** Z lift at center; sides recede by 18*|d|. Not applied to RN transform. */
 export const WHEEL_Z_CENTER = 36;
 export const WHEEL_Z_PER_SLOT = 18;
 
@@ -49,20 +51,34 @@ export const WHEEL_SIDE_OPACITY = 0.73; // |d|=1 → 1 - 0.24 - 0.03
 export const WHEEL_FAR_OPACITY = 0.4; // |d|=2 → 1 - 0.48 - 0.12
 export const WHEEL_MIN_OPACITY = 0.22;
 
-/** Max integer slots committed per fling (AC-M04). */
-export const WHEEL_MAX_FLING_SLOTS = 3;
+/**
+ * Max integer slots committed per fling.
+ * Arch: MAX_FLING ≈ N/2 headroom for SlotPool N=9 → 4.
+ */
+export const WHEEL_MAX_FLING_SLOTS = 4;
 
 /**
- * Mounted recycle window: center ±3 (7 leaves). Hero still reads as five;
- * |d|=3 peeks so MAX_FLING=3 never hits a blank slot (CAL-P6 Item 2 Approach A).
+ * SlotPool N=9 circular buffer — offsets -4..+4.
+ * Stable React keys: slotPoolKey(periodKey, slotIndex).
+ * Hero still reads as five; ±3/±4 peek so MAX_FLING=4 never hits a blank slot.
  */
-export const WHEEL_VISIBLE_SLOTS = 7;
-export const WHEEL_SLOT_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
+export const WHEEL_VISIBLE_SLOTS = 9;
+export const WHEEL_SLOT_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4] as const;
 /** Index of offset 0 inside WHEEL_SLOT_OFFSETS / buildPeriodWindow.slots. */
-export const WHEEL_CENTER_INDEX = 3;
+export const WHEEL_CENTER_INDEX = 4;
 
-/** Spring ~300 ms settle (friction/tension pair). */
+/** Neighbor half-width for full Set B ledger after snap (|d| ≤ this). */
+export const WHEEL_FULL_LEDGER_RADIUS = 1;
+
+/** Spring ~300 ms settle (friction/tension pair for RN Animated compat). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;
+
+/** Reanimated spring (maps WHEEL_SPRING feel onto worklet driver). */
+export const WHEEL_REANIMATED_SPRING = {
+  damping: 18,
+  stiffness: 180,
+  mass: 1,
+} as const;
 
 /** Set B hanging-ledger hex — unchanged across themes (CAL-3DW-10). */
 export const SET_B = {
@@ -75,6 +91,18 @@ export const SET_B = {
   tabHighlight: '#ECEFF1',
   softEdge: 'rgba(0,0,0,0.18)',
 } as const;
+
+export type WheelSlotOffset = (typeof WHEEL_SLOT_OFFSETS)[number];
+
+/** Stable SlotPool key — remount only when periodKey or slotIndex changes. */
+export function slotPoolKey(periodKey: string, slotIndex: number): string {
+  return `${periodKey}:${slotIndex}`;
+}
+
+/** Index into buildPeriodWindow.slots for a parked WHEEL_SLOT_OFFSETS entry. */
+export function slotIndexForOffset(offset: number): number {
+  return offset - WHEEL_SLOT_OFFSETS[0];
+}
 
 function clamp(n: number, lo: number, hi: number): number {
   if (n < lo) return lo;
@@ -129,6 +157,23 @@ export function wheelTranslateXForNorm(d: number, pitch = WHEEL_PITCH): number {
 /** True when |d| is inside the focus band (center chrome / extras). */
 export function wheelInFocusBand(d: number, band = WHEEL_FOCUS_BAND): boolean {
   return Math.abs(d) <= band;
+}
+
+/**
+ * ContentPolicy (P0 fling/snap):
+ * - fling → silhouette for every slot (no Month 35-cell / heavy Week strip)
+ * - snap → full Set B for center+neighbors; far slots stay silhouette
+ */
+export type WheelContentMode = 'silhouette' | 'full';
+
+export function wheelContentModeFor(args: {
+  parkedOffset: number;
+  flinging: boolean;
+  fullRadius?: number;
+}): WheelContentMode {
+  if (args.flinging) return 'silhouette';
+  const radius = args.fullRadius ?? WHEEL_FULL_LEDGER_RADIUS;
+  return Math.abs(args.parkedOffset) <= radius ? 'full' : 'silhouette';
 }
 
 /**

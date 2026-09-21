@@ -1,7 +1,8 @@
 /**
  * Set B hanging-ledger period tiles (View/Text — no PNG atlas / build-icons).
  * Leaf hex fixed across themes (CAL-3DW-10). Chrome plate themes elsewhere.
- * SoT: calendar-3d-wheel-spec.md §3 · mockups/index.html · pm-lock CAL-3DW-16.
+ * P0 ContentPolicy: silhouette during fling; full center+neighbors post-snap;
+ * MonthHangingGrid only post-snap on center. P1: memo grid + stable keys.
  */
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -12,15 +13,29 @@ import {
   SET_B,
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
+  type WheelContentMode,
 } from '@/lib/calendar/periodWheel';
 import { addDaysISO } from '@/lib/date/iso';
+
+export type PeriodLeafRole =
+  | 'prev4'
+  | 'prev3'
+  | 'prev2'
+  | 'prev'
+  | 'current'
+  | 'next'
+  | 'next2'
+  | 'next3'
+  | 'next4';
 
 type Props = {
   tile: PeriodTileModel;
   /** Side tiles stay abbreviated; center shows full caption after snap. */
-  role: 'prev3' | 'prev2' | 'prev' | 'current' | 'next' | 'next2' | 'next3';
+  role: PeriodLeafRole;
   /** Extra center caption / hanging grid after finger-up snap. */
   showCenterExtras: boolean;
+  /** P0 ContentPolicy: silhouette during fling; full ledger after snap. */
+  contentMode: WheelContentMode;
   /** Ignored for layout — hero box is SoT 108×126. Kept for call-site compat. */
   width?: number;
 };
@@ -68,7 +83,7 @@ function MetalTabs() {
   );
 }
 
-function MonthHangingGrid({
+function MonthHangingGridImpl({
   year,
   monthIndex0,
 }: {
@@ -109,21 +124,23 @@ function MonthHangingGrid({
   );
 }
 
+const MonthHangingGrid = memo(MonthHangingGridImpl);
+
 function WeekDayStrip({ fromIso }: { fromIso: string }) {
   const days = useMemo(() => {
-    const out: { n: number; sunday: boolean }[] = [];
+    const out: { n: number; sunday: boolean; iso: string }[] = [];
     for (let i = 0; i < 7; i += 1) {
       const iso = addDaysISO(fromIso, i) ?? fromIso;
-      out.push({ n: Number(iso.slice(8, 10)), sunday: i === 0 });
+      out.push({ n: Number(iso.slice(8, 10)), sunday: i === 0, iso });
     }
     return out;
   }, [fromIso]);
 
   return (
     <View style={styles.weekStrip} accessibilityElementsHidden>
-      {days.map((d, i) => (
+      {days.map((d) => (
         <View
-          key={i}
+          key={d.iso}
           style={[
             styles.weekCell,
             { borderColor: d.sunday ? SET_B.sunday : SET_B.type },
@@ -171,9 +188,26 @@ function monthHeaderLabel(year: number, monthIndex0: number): string {
   return label.length > 12 ? `${mon}\n${year}` : label;
 }
 
-function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
+/** Lightweight Set B shell — no Month 35-cell / Week strip mounts. */
+function SilhouetteLeaf({ label }: { label: string }) {
+  return (
+    <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
+      <MetalTabs />
+      <View style={styles.page}>
+        <View style={styles.silhouetteHeader} />
+        <View style={styles.monthStub} />
+      </View>
+    </View>
+  );
+}
+
+function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
   const isCenter = role === 'current';
   const showExtras = isCenter && showCenterExtras;
+
+  if (contentMode === 'silhouette') {
+    return <SilhouetteLeaf label={tile.centerCaption} />;
+  }
 
   if (tile.kind === 'year') {
     const label = isCenter ? String(tile.year ?? tile.centerCaption) : tile.sideCaption;
@@ -199,6 +233,8 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
     const header = monthHeaderLabel(year, monthIndex0);
+    // Month heavy 35-cell grid only post-snap on center (showCenterExtras).
+    const mountGrid = isCenter && showExtras && year > 0;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -208,7 +244,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
               {header}
             </Text>
           </View>
-          {year > 0 ? (
+          {mountGrid ? (
             <MonthHangingGrid year={year} monthIndex0={monthIndex0} />
           ) : (
             <View style={styles.monthStub} />
@@ -220,18 +256,20 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
     const lines = weekHeaderLines(tile.fromIso, tile.toIso, showExtras);
+    // Heavy week strip only for center+neighbors full mode; center extras gate strip density.
+    const mountStrip = isCenter ? showExtras : true;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
           <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
             {lines.map((line) => (
-              <Text key={line} style={styles.wrapHeaderText} numberOfLines={1}>
+              <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
                 {line}
               </Text>
             ))}
           </View>
-          <WeekDayStrip fromIso={tile.fromIso} />
+          {mountStrip ? <WeekDayStrip fromIso={tile.fromIso} /> : <View style={styles.wrapBodyEmpty} />}
         </View>
       </View>
     );
@@ -246,7 +284,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
         <View style={styles.page}>
           <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
             {lines.map((line) => (
-              <Text key={line} style={styles.wrapHeaderText} numberOfLines={1}>
+              <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
                 {line}
               </Text>
             ))}
@@ -275,7 +313,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras }: Props) {
       <View style={styles.page}>
         <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
           {wrapLines.map((line) => (
-            <Text key={line} style={styles.wrapHeaderText} numberOfLines={2}>
+            <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={2}>
               {line}
             </Text>
           ))}
@@ -358,6 +396,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  silhouetteHeader: {
+    backgroundColor: SET_B.header,
+    height: 24,
+    width: '100%',
   },
   monthStub: {
     flex: 1,
