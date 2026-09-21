@@ -4,7 +4,9 @@
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity).
  * No Z-axis translation in RN style.transform — Fabric processTransform rejects it (even 0).
  * RM: drop rotateY; keep scale, opacity, snap, taps, hierarchy.
- * Fail closed → << label >>. Touch-only. No iOS edge-back steal.
+ * Fail closed → << label >>. Touch-only.
+ * CAL-P6-1A: full-band stage claim (LTR+RTL); commit on snap only; no on-drum carve.
+ * CAL-P6-9A: on-drum LTR is period page only — never app-back / route-pop.
  */
 import {
   Component,
@@ -31,11 +33,11 @@ import {
 import { PeriodLeaf } from '@/components/calendar/PeriodLeaf';
 import { GhostButton } from '@/components/ui/Button';
 import {
-  PERIOD_PAGER_EDGE_GUARD_PX,
   buildPeriodWindow,
   type PeriodKind,
   type PeriodTileModel,
 } from '@/lib/calendar/periodPager';
+import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
@@ -53,6 +55,10 @@ import {
 import type { MultidayCount } from '@/lib/calendar/multiday';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+
+// CAL-P6-1A: carve must stay 0 on drum face (named law pin).
+void CAL_P6_1A_FULL_BAND;
+void CAL_P6_1A_ON_DRUM_CARVE_PX;
 
 type Props = {
   kind: PeriodKind;
@@ -228,15 +234,15 @@ export function PeriodPager({
   const pan = useMemo(
     () =>
       PanResponder.create({
+        // CAL-P6-1A-01: contact begun inside stage band → horizontal pan pages period.
+        // No on-drum left carve (CAL-P6-1A-03 / CAL_P6_1A_ON_DRUM_CARVE_PX = 0).
         onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponder: (e: GestureResponderEvent, g: PanResponderGestureState) => {
+        onMoveShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
           if (reduceMotion || settling.current || failed) return false;
-          if (e.nativeEvent.pageX < PERIOD_PAGER_EDGE_GUARD_PX) return false;
           return Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
-        onMoveShouldSetPanResponderCapture: (e, g) => {
+        onMoveShouldSetPanResponderCapture: (_e, g) => {
           if (reduceMotion || settling.current || failed) return false;
-          if (e.nativeEvent.pageX < PERIOD_PAGER_EDGE_GUARD_PX) return false;
           return Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
         onPanResponderTerminationRequest: () => false,
@@ -251,6 +257,7 @@ export function PeriodPager({
         },
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx;
+          // CAL-P6-1A-07: period commits on snap complete only.
           const steps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
           animateSnap(steps);
         },

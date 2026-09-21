@@ -134,8 +134,11 @@ test('R4 Year card: no per-day zoom; entire card → Month only', () => {
   // Nested day Pressables removed (card Pressable only).
   assert.equal((year.match(/<Pressable/g) || []).length, 1);
   const screen = read('src/app/calendar.tsx');
-  assert.doesNotMatch(screen, /YearGrid[\s\S]*?onPressDay/);
-  assert.match(screen, /<YearGrid[\s\S]*?onPressMonth[\s\S]*?\/>/);
+  // Scope to YearGrid JSX — Week onPressDay (CAL-P6-3A) must not false-trigger.
+  const yearJsx = screen.match(/<YearGrid[\s\S]*?\/>/);
+  assert.ok(yearJsx, 'YearGrid JSX missing');
+  assert.doesNotMatch(yearJsx[0], /onPressDay/);
+  assert.match(yearJsx[0], /onPressMonth/);
 });
 
 test('R4: no GhostButton Up row (Year/Month label) above VIEW_TABS', () => {

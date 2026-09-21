@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { radius, type } from '@/constants/theme';
 import { formatDayHeading } from '@/lib/calendar/day';
+import type { DaySectionOffset } from '@/lib/calendar/listAnchorDay';
 import { itemDayKey } from '@/lib/calendar/mapItem';
 import type { CalendarItem } from '@/lib/calendar/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -17,6 +19,11 @@ type Props = {
    * (one-line muted) so multi-day scroll stays oriented.
    */
   includeEmptyDays?: boolean;
+  /**
+   * CAL-P6-5C: report section Y offsets (relative to list origin) so the parent
+   * can write `listAnchorDay` from scroll position / scroll the list from drum.
+   */
+  onSectionOffsetsChange?: (sections: DaySectionOffset[]) => void;
 };
 
 /** Phone Agenda / Day List — own list, not FullCalendar / Wix Agenda. */
@@ -26,8 +33,10 @@ export function AgendaList({
   showHiddenBadge,
   onPressItem,
   includeEmptyDays = false,
+  onSectionOffsetsChange,
 }: Props) {
   const { colors } = useTheme();
+  const offsetsRef = useRef<Map<string, number>>(new Map());
   const byDay = new Map<string, CalendarItem[]>();
   for (const day of days) byDay.set(day, []);
   for (const item of items) {
@@ -52,6 +61,24 @@ export function AgendaList({
     ? orderedDays
     : orderedDays.filter((d) => (byDay.get(d) ?? []).length > 0);
 
+  const publishOffsets = () => {
+    if (!onSectionOffsetsChange) return;
+    const sections: DaySectionOffset[] = visibleDays
+      .map((day) => {
+        const y = offsetsRef.current.get(day);
+        return y == null ? null : { day, y };
+      })
+      .filter((s): s is DaySectionOffset => s != null)
+      .sort((a, b) => a.y - b.y);
+    onSectionOffsetsChange(sections);
+  };
+
+  useEffect(() => {
+    publishOffsets();
+    // Re-publish when the visible day set changes (drum re-anchor / range shift).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- publish from latest offsets map
+  }, [visibleDays.join('|'), onSectionOffsetsChange]);
+
   if (visibleDays.length === 0) {
     return (
       <Text style={[styles.empty, { color: colors.mute }]}>Nothing coming up on the calendar.</Text>
@@ -64,7 +91,16 @@ export function AgendaList({
         const list = byDay.get(day) ?? [];
         const empty = list.length === 0;
         return (
-          <View key={day} style={styles.section}>
+          <View
+            key={day}
+            style={styles.section}
+            onLayout={(event) => {
+              if (!onSectionOffsetsChange) return;
+              offsetsRef.current.set(day, event.nativeEvent.layout.y);
+              publishOffsets();
+            }}
+            accessibilityLabel={`Day section ${day}`}
+          >
             <Text
               style={[
                 styles.heading,

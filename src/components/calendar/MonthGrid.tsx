@@ -1,9 +1,23 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { radius, type } from '@/constants/theme';
+import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { buildMonthGrid, weekdayLabels } from '@/lib/date/iso';
 import { itemDayKey } from '@/lib/calendar/mapItem';
+import {
+  CAL_P6_6B_SOFT_BOUNDARY,
+  monthListCommitDir,
+} from '@/lib/calendar/monthListBoundary';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import { dayRoleTints } from '@/lib/calendar/timeline';
 import type { CalendarItem } from '@/lib/calendar/types';
@@ -23,12 +37,20 @@ type Props = {
   onSelectDay: (iso: string) => void;
   /** Tap-zoom Month → Day (CAL-R4 L-C). */
   onZoomDay?: (iso: string) => void;
+  /** CAL-P6-3A: week-number / week-row → Week containing that week. */
+  onZoomWeek?: (iso: string) => void;
   onPressItem?: (item: CalendarItem) => void;
+  /**
+   * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
+   * dir −1 = previous month, +1 = next month.
+   */
+  onCommitAdjacentMonth?: (dir: -1 | 1) => void;
 };
 
 /**
  * CAL-26 / CAL-R4 C-B Month — Compact grid or List only.
  * Compact: grid (+ selected-day list when not zooming). List: month AgendaList.
+ * CAL-P6-6B List: open at month start; soft boundary then commit next/prev month.
  */
 export function MonthGrid({
   year,
@@ -40,14 +62,21 @@ export function MonthGrid({
   mode = 'compact',
   onSelectDay,
   onZoomDay,
+  onZoomWeek,
   onPressItem,
+  onCommitAdjacentMonth,
 }: Props) {
   const { colors } = useTheme();
+  const chrome = useOptionalChrome();
   const today = todayISO();
   const weeks = buildMonthGrid(year, monthIndex0, 0);
   const weekdays = weekdayLabels(0);
   const fromIso = `${year}-${String(monthIndex0 + 1).padStart(2, '0')}-01`;
   const monthPrefix = fromIso.slice(0, 7);
+  const overscrollRef = useRef(0);
+  const listKey = `${year}-${monthIndex0}`;
+
+  void CAL_P6_6B_SOFT_BOUNDARY;
 
   const selectedItems = selectedDay
     ? items.filter((item) => itemDayKey(item) === selectedDay)
@@ -60,16 +89,75 @@ export function MonthGrid({
     )
     .map((cell) => cell.iso);
 
+  const onListScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // CAL-P6-8A: Month List owns vertical scroll while Screen scroll=false — forward
+    // into chrome hide/show so PersonTabs + tray still leave together.
+    chrome?.onScroll(event);
+    if (!onCommitAdjacentMonth) return;
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const y = contentOffset.y;
+    const maxY = Math.max(0, contentSize.height - layoutMeasurement.height);
+    if (y < 0) {
+      overscrollRef.current = y;
+      return;
+    }
+    if (y > maxY) {
+      overscrollRef.current = y - maxY;
+      return;
+    }
+    overscrollRef.current = 0;
+  };
+
+  const onListScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!onCommitAdjacentMonth) return;
+    const { contentOffset, contentSize, layoutMeasurement, velocity } = event.nativeEvent;
+    const y = contentOffset.y;
+    const maxY = Math.max(0, contentSize.height - layoutMeasurement.height);
+    const over = overscrollRef.current;
+    overscrollRef.current = 0;
+    const dir = monthListCommitDir({
+      overscrollPx: over,
+      y,
+      maxY,
+      velocityY: velocity?.y,
+    });
+    if (dir === -1 || dir === 1) onCommitAdjacentMonth(dir);
+  };
+
   if (mode === 'list') {
+    // CAL-P6-6B: flex-bounded scroller (parent Screen scroll=false in list mode).
+    // Unbounded nested ScrollView never self-scrolls → soft-boundary never fires.
     return (
-      <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`${label}, list`}>
+      <View
+        style={[styles.wrap, styles.listWrap]}
+        accessibilityRole="summary"
+        accessibilityLabel={`${label}, list`}
+      >
         <Text style={[styles.monthTitle, { color: colors.ink }]}>{label}</Text>
-        <AgendaList
-          days={inMonthDays}
-          items={items.filter((item) => itemDayKey(item).startsWith(monthPrefix))}
-          showHiddenBadge={showHiddenBadge}
-          onPressItem={onPressItem}
-        />
+        <ScrollView
+          key={listKey}
+          style={styles.listScroller}
+          nestedScrollEnabled
+          bounces
+          alwaysBounceVertical
+          scrollEventThrottle={16}
+          onScroll={onListScroll}
+          onScrollBeginDrag={(event) => {
+            chrome?.onScrollBeginDrag(event);
+          }}
+          onScrollEndDrag={onListScrollEnd}
+          onMomentumScrollEnd={onListScrollEnd}
+          contentContainerStyle={styles.listScrollContent}
+          accessibilityLabel="Month activity list"
+        >
+          <AgendaList
+            days={inMonthDays}
+            items={items.filter((item) => itemDayKey(item).startsWith(monthPrefix))}
+            showHiddenBadge={showHiddenBadge}
+            onPressItem={onPressItem}
+            includeEmptyDays
+          />
+        </ScrollView>
       </View>
     );
   }
@@ -78,71 +166,95 @@ export function MonthGrid({
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={label}>
       <Text style={[styles.monthTitle, { color: colors.ink }]}>{label}</Text>
       <View style={styles.weekdays}>
+        {onZoomWeek ? (
+          <Text style={[styles.weekNumHdr, { color: colors.mute }]} accessibilityElementsHidden>
+            W
+          </Text>
+        ) : null}
         {weekdays.map((d, i) => (
           <Text key={`${d}-${i}`} style={[styles.wd, { color: colors.mute }]}>
             {d}
           </Text>
         ))}
       </View>
-      {weeks.map((week, wi) => (
-        <View key={`w-${wi}`} style={styles.week}>
-          {week.map((cell, ci) => {
-            if (!cell) {
-              return <View key={`e-${ci}`} style={styles.dayCell} />;
-            }
-            const inMonth = cell.iso.slice(0, 7) === monthPrefix;
-            const isToday = cell.iso === today;
-            const isSelected = cell.iso === selectedDay;
-            const tints = dayRoleTints(items, cell.iso, 4);
-            return (
+      {weeks.map((week, wi) => {
+        const firstInMonth = week.find((cell) => cell && cell.iso.startsWith(monthPrefix));
+        const weekAnchor = firstInMonth?.iso ?? week.find(Boolean)?.iso ?? null;
+        return (
+          <View key={`w-${wi}`} style={styles.week}>
+            {onZoomWeek && weekAnchor ? (
               <Pressable
-                key={cell.iso}
-                onPress={() => (onZoomDay ? onZoomDay(cell.iso) : onSelectDay(cell.iso))}
+                onPress={() => onZoomWeek(weekAnchor)}
                 accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={cell.iso}
-                style={[
-                  styles.dayCell,
-                  styles.compactCell,
-                  isSelected && {
-                    backgroundColor: colors.brandSoft,
-                    borderRadius: radius.sm,
-                  },
-                ]}
+                accessibilityLabel={`Week of ${weekAnchor}`}
+                style={styles.weekNumHit}
               >
-                <Text
+                <Text style={[styles.weekNum, { color: colors.mute }]}>{wi + 1}</Text>
+              </Pressable>
+            ) : onZoomWeek ? (
+              <View style={styles.weekNumHit} />
+            ) : null}
+            {week.map((cell, ci) => {
+              if (!cell) {
+                return <View key={`e-${ci}`} style={styles.dayCell} />;
+              }
+              const inMonth = cell.iso.slice(0, 7) === monthPrefix;
+              const isToday = cell.iso === today;
+              const isSelected = cell.iso === selectedDay;
+              const tints = dayRoleTints(items, cell.iso, 4);
+              return (
+                <Pressable
+                  key={cell.iso}
+                  onPress={() => (onZoomDay ? onZoomDay(cell.iso) : onSelectDay(cell.iso))}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={cell.iso}
                   style={[
-                    styles.dayNum,
-                    {
-                      color: isToday
-                        ? colors.brandInk
-                        : inMonth
-                          ? colors.ink
-                          : colors.mute,
-                      backgroundColor: isToday ? colors.brand : 'transparent',
-                      opacity: inMonth ? 1 : 0.45,
+                    styles.dayCell,
+                    styles.compactCell,
+                    isSelected && {
+                      backgroundColor: colors.brandSoft,
+                      borderRadius: radius.sm,
                     },
                   ]}
                 >
-                  {cell.day}
-                </Text>
-                {tints.length > 0 ? (
-                  <View style={styles.dots}>
-                    {tints.map((tint) => (
-                      <View
-                        key={tint}
-                        style={[styles.dot, { backgroundColor: roleTintColor(tint, colors) }]}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View style={styles.dotSpacer} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
+                  <Text
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    ellipsizeMode="clip"
+                    style={[
+                      styles.dayNum,
+                      {
+                        color: isToday
+                          ? colors.brandInk
+                          : inMonth
+                            ? colors.ink
+                            : colors.mute,
+                        backgroundColor: isToday ? colors.brand : 'transparent',
+                        opacity: inMonth ? 1 : 0.45,
+                      },
+                    ]}
+                  >
+                    {cell.day}
+                  </Text>
+                  {tints.length > 0 ? (
+                    <View style={styles.dots}>
+                      {tints.map((tint) => (
+                        <View
+                          key={tint}
+                          style={[styles.dot, { backgroundColor: roleTintColor(tint, colors) }]}
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={styles.dotSpacer} />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        );
+      })}
 
       {selectedDay && !onZoomDay ? (
         <View style={styles.listBlock}>
@@ -164,10 +276,25 @@ export function MonthGrid({
 
 const styles = StyleSheet.create({
   wrap: { gap: 4 },
+  listWrap: { flex: 1, minHeight: 0 },
+  listScroller: { flex: 1, minHeight: 0 },
   monthTitle: { ...type.title, fontSize: 22, marginBottom: 8 },
-  weekdays: { flexDirection: 'row', marginBottom: 4 },
+  weekdays: { flexDirection: 'row', marginBottom: 4, alignItems: 'center' },
+  weekNumHdr: {
+    width: 28,
+    textAlign: 'center',
+    ...type.meta,
+    fontSize: 11,
+  },
   wd: { flex: 1, textAlign: 'center', ...type.meta, fontSize: 12 },
-  week: { flexDirection: 'row' },
+  week: { flexDirection: 'row', alignItems: 'center' },
+  weekNumHit: {
+    width: 28,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekNum: { ...type.meta, fontSize: 11, fontVariant: ['tabular-nums'] },
   dayCell: {
     flex: 1,
     alignItems: 'center',
@@ -180,18 +307,21 @@ const styles = StyleSheet.create({
   },
   dayNum: {
     ...type.body,
-    fontSize: 15,
+    // Item 7 KEEP: two-digit dayNum single-line on phone Month grid.
+    fontSize: 14,
     fontWeight: '600',
     minWidth: 28,
     textAlign: 'center',
     borderRadius: radius.pill,
     overflow: 'hidden',
-    paddingHorizontal: 4,
+    paddingHorizontal: 0,
     paddingVertical: 2,
+    fontVariant: ['tabular-nums'],
   },
   dots: { flexDirection: 'row', gap: 3, height: 5, marginTop: 2 },
   dot: { width: 4, height: 4, borderRadius: 2 },
   dotSpacer: { height: 5 },
   listBlock: { marginTop: 16, gap: 8 },
+  listScrollContent: { paddingBottom: 24 },
   empty: { ...type.body, marginVertical: 8 },
 });

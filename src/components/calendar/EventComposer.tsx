@@ -171,22 +171,36 @@ export function EventComposer({
     setLoadError(null);
     setDiscardOpen(false);
     if (mode === 'create' || !eventId) {
-      if (initialDraft?.title) {
-        const next: Draft = {
-          kind: initialDraft.kind,
-          title: initialDraft.title,
-          startDate: initialDraft.startDate,
-          endDate: initialDraft.endDate,
-          allDay: initialDraft.allDay,
-          startTime: initialDraft.startTime,
-          endTime: initialDraft.endTime,
-          category: initialDraft.category,
-          body: initialDraft.body,
-        };
+      // CAL-P6-10B: slot create may pass initialDraft with empty title + day/time prefill.
+      if (initialDraft) {
+        const base = emptyDraft(seat, classId, childStudentId);
+        const askTitle = String(initialDraft.title ?? '').trim();
+        const fromAskDraft = initialDraft.source === 'ai_nl' && Boolean(askTitle);
+        const next: Draft = fromAskDraft
+          ? {
+              kind: initialDraft.kind,
+              title: askTitle,
+              startDate: initialDraft.startDate,
+              endDate: initialDraft.endDate,
+              allDay: initialDraft.allDay,
+              startTime: initialDraft.startTime,
+              endTime: initialDraft.endTime,
+              category: initialDraft.category,
+              body: initialDraft.body,
+            }
+          : {
+              ...base,
+              startDate: initialDraft.startDate ?? base.startDate,
+              endDate: initialDraft.endDate ?? initialDraft.startDate ?? base.endDate,
+              allDay: initialDraft.allDay,
+              startTime: initialDraft.startTime || base.startTime,
+              endTime: initialDraft.endTime || '',
+              title: '',
+            };
         setDraft(next);
-        setBaseline(emptyDraft(seat, classId, childStudentId));
+        setBaseline(fromAskDraft ? emptyDraft(seat, classId, childStudentId) : next);
         setReadOnly(false);
-        setFromAsk(true);
+        setFromAsk(fromAskDraft);
         setCaption(visibilityCaption(scopeForKind(next.kind), next.category));
         return;
       }

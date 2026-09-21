@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { radius, type } from '@/constants/theme';
 import { formatDayHeading } from '@/lib/calendar/day';
+import { CAL_P6_4A_ALWAYS_HOURS, CAL_P6_10B_SLOT_CREATE } from '@/lib/calendar/p6Laws';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import {
   formatHourLabel,
@@ -20,18 +22,31 @@ type Props = {
   items: CalendarItem[];
   showHiddenBadge?: boolean;
   onPressItem?: (item: CalendarItem) => void;
+  /**
+   * CAL-P6-10B: tap empty hour slot → Add Event immediately (day + hour prefilled).
+   * Existing event blocks still open/edit via onPressItem.
+   */
+  onPressSlot?: (day: string, hour: number) => void;
 };
 
 /**
  * CAL-27 Day timeline — hour gutter + all-day strip + timed blocks (not card list).
  * Teacher Hidden badge (DP-A) stays on hidden dues.
+ * CAL-P6-4A: always mount full hour gutter/track even with zero events.
+ * CAL-P6-10B: empty slot tap opens composer (press highlight OK; no confirm).
  */
-export function DayColumn({ day, items, showHiddenBadge, onPressItem }: Props) {
+export function DayColumn({ day, items, showHiddenBadge, onPressItem, onPressSlot }: Props) {
   const { colors } = useTheme();
   const { allDay, timed } = splitDayItems(items, day);
   const hours = timelineHours();
   const layouts = layoutTimedBlocks(timed);
   const bodyHeight = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * HOUR_HEIGHT;
+  const empty = allDay.length === 0 && timed.length === 0;
+  const [pressedHour, setPressedHour] = useState<number | null>(null);
+
+  // Named law pins (static analysis / tests).
+  void CAL_P6_4A_ALWAYS_HOURS;
+  void CAL_P6_10B_SLOT_CREATE;
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`Day ${day}`}>
@@ -79,76 +94,89 @@ export function DayColumn({ day, items, showHiddenBadge, onPressItem }: Props) {
         </View>
       ) : null}
 
-      {allDay.length === 0 && timed.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>Nothing on this day.</Text>
-      ) : (
-        <ScrollView
-          style={styles.timelineScroll}
-          contentContainerStyle={{ minHeight: bodyHeight + 8 }}
-          nestedScrollEnabled
-        >
-          <View style={[styles.timeline, { minHeight: bodyHeight }]}>
-            <View style={styles.gutter}>
-              {hours.map((hour) => (
-                <View key={hour} style={[styles.hourRow, { height: HOUR_HEIGHT }]}>
-                  <Text style={[styles.hourLabel, { color: colors.mute }]}>
-                    {formatHourLabel(hour)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            <View style={[styles.track, { borderColor: colors.line, height: bodyHeight }]}>
-              {hours.map((hour) => (
-                <View
-                  key={`line-${hour}`}
-                  style={[
-                    styles.hourLine,
-                    { top: (hour - TIMELINE_START_HOUR) * HOUR_HEIGHT, borderColor: colors.line },
-                  ]}
-                />
-              ))}
-              {layouts.map(({ item, top, height }) => {
-                const hidden = Boolean(showHiddenBadge && item.isHidden);
-                const tint = roleTintColor(item.roleTint, colors);
-                return (
-                  <Pressable
-                    key={`t:${item.source}:${item.id}`}
-                    onPress={() => onPressItem?.(item)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      hidden
-                        ? `${item.title}, ${item.category}, Hidden`
-                        : `${item.title}, ${item.category}`
-                    }
-                    style={[
-                      styles.block,
-                      {
-                        top,
-                        height,
-                        backgroundColor: hidden ? colors.warnSoft : colors.elevated,
-                        borderColor: hidden ? colors.warn : tint,
-                      },
-                    ]}
-                  >
-                    <View style={[styles.tintBar, { backgroundColor: tint }]} />
-                    <View style={styles.blockText}>
-                      <Text style={[styles.blockTitle, { color: colors.ink }]} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={[styles.blockMeta, { color: colors.mute }]} numberOfLines={1}>
-                        {item.category}
-                      </Text>
-                      {hidden ? (
-                        <Text style={[styles.badge, { color: colors.warn }]}>Hidden</Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
+      {/* CAL-P6-4A-02: optional one-line muted cue — never replaces the hour gutter. */}
+      {empty ? (
+        <Text style={[styles.emptyCue, { color: colors.mute }]}>Nothing on this day.</Text>
+      ) : null}
+
+      <ScrollView
+        style={styles.timelineScroll}
+        contentContainerStyle={{ minHeight: bodyHeight + 8 }}
+        nestedScrollEnabled
+      >
+        <View style={[styles.timeline, { minHeight: bodyHeight }]}>
+          <View style={styles.gutter}>
+            {hours.map((hour) => (
+              <View key={hour} style={[styles.hourRow, { height: HOUR_HEIGHT }]}>
+                <Text style={[styles.hourLabel, { color: colors.mute }]}>
+                  {formatHourLabel(hour)}
+                </Text>
+              </View>
+            ))}
           </View>
-        </ScrollView>
-      )}
+          <View style={[styles.track, { borderColor: colors.line, height: bodyHeight }]}>
+            {hours.map((hour) => (
+              <Pressable
+                key={`slot-${hour}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Add event at ${formatHourLabel(hour)}`}
+                disabled={!onPressSlot}
+                onPressIn={() => setPressedHour(hour)}
+                onPressOut={() => setPressedHour((cur) => (cur === hour ? null : cur))}
+                onPress={() => onPressSlot?.(day, hour)}
+                style={[
+                  styles.hourSlot,
+                  {
+                    top: (hour - TIMELINE_START_HOUR) * HOUR_HEIGHT,
+                    height: HOUR_HEIGHT,
+                    borderColor: colors.line,
+                    backgroundColor:
+                      pressedHour === hour ? colors.brandSoft : 'transparent',
+                  },
+                ]}
+              />
+            ))}
+            {layouts.map(({ item, top, height }) => {
+              const hidden = Boolean(showHiddenBadge && item.isHidden);
+              const tint = roleTintColor(item.roleTint, colors);
+              return (
+                <Pressable
+                  key={`t:${item.source}:${item.id}`}
+                  onPress={() => onPressItem?.(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    hidden
+                      ? `${item.title}, ${item.category}, Hidden`
+                      : `${item.title}, ${item.category}`
+                  }
+                  style={[
+                    styles.block,
+                    {
+                      top,
+                      height,
+                      backgroundColor: hidden ? colors.warnSoft : colors.elevated,
+                      borderColor: hidden ? colors.warn : tint,
+                    },
+                  ]}
+                >
+                  <View style={[styles.tintBar, { backgroundColor: tint }]} />
+                  <View style={styles.blockText}>
+                    <Text style={[styles.blockTitle, { color: colors.ink }]} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.blockMeta, { color: colors.mute }]} numberOfLines={1}>
+                      {item.category}
+                    </Text>
+                    {hidden ? (
+                      <Text style={[styles.badge, { color: colors.warn }]}>Hidden</Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -187,7 +215,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderLeftWidth: StyleSheet.hairlineWidth,
   },
-  hourLine: {
+  hourSlot: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -202,10 +230,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     minHeight: 18,
+    zIndex: 2,
   },
   blockText: { flex: 1, paddingHorizontal: 6, paddingVertical: 2, gap: 0, minWidth: 0 },
   blockTitle: { ...type.meta, fontSize: 12, fontWeight: '600' },
   blockMeta: { ...type.meta, fontSize: 10 },
   badge: { ...type.meta, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
-  empty: { ...type.body, marginVertical: 8 },
+  emptyCue: { ...type.meta, marginTop: 2 },
 });

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+import { showsPeriodPager } from './periodPager.ts';
 import {
   SET_B,
   WHEEL_CENTER_OPACITY,
@@ -119,7 +120,9 @@ test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY; no translateZ 
   assert.match(pager, /tapSide/);
   assert.match(pager, /useReducedMotion/);
   assert.match(pager, /WHEEL_SPRING|friction/);
-  assert.match(pager, /PERIOD_PAGER_EDGE_GUARD_PX/);
+  // CAL-P6-1A: carve dropped; full-band stage claim (no pageX left guard).
+  assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
+  assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX|CAL-P6-1A/);
   assert.match(pager, /label=["']<<["']/);
   assert.doesNotMatch(pager, /className\s*:/);
   // RN Fabric rejects translateZ in style.transform — must not appear as a transform key
@@ -165,10 +168,11 @@ test('PeriodLeaf Set B hanging-ledger: fixed hex; metal tabs; no YearIcon bars; 
   assert.doesNotMatch(leaf, /borderRadius:\s*14|dayCircle/);
 });
 
-test('calendar still wires PeriodPager; day list excluded; SoT ship defaults; no SQL', () => {
+test('calendar still wires PeriodPager; day list included; SoT ship defaults; no SQL', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /PeriodPager/);
   assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
+  assert.equal(showsPeriodPager('day', 'list'), true);
   const src = read('src/lib/calendar/periodWheel.ts');
   assert.doesNotMatch(src, /supabase|execute_sql|from\('/);
   assert.match(src, /WHEEL_FOCUS_BAND/);
