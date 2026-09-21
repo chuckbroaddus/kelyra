@@ -8,8 +8,8 @@
  *   notes/company/calendar-3d-wheel-spec.md §2 (geometry curves)
  *
  * P0: SlotPool N=9 (center ±4). Soft MAX_FLING ceiling (~48) for absurd springs only;
- * momentum coast is uncapped up to that ceiling (must allow 30+). Mid-fling SlotPool
- * rebounds period keys so visual flybys match committed advance.
+ * inertial coast |coastPx|=v²/(2·WHEEL_FLING_DECEL) uncapped up to that ceiling (30+).
+ * Mid-fling SlotPool rebounds period keys so visual flybys match committed advance.
  * Ship curves from dual-stamped SoT (not the prior brief defaults).
  */
 export { snapPeriodPage, PERIOD_PAGER_EDGE_GUARD_PX } from './periodPager.ts';
@@ -58,6 +58,12 @@ export const WHEEL_MIN_OPACITY = 0.22;
  * Must allow 30+; SlotPool N=9 rebounds mid-fling so visuals stay populated.
  */
 export const WHEEL_MAX_FLING_SLOTS = 48;
+
+/**
+ * Fling deceleration (px/s²) for inertial coast distance: |coastPx| = v² / (2·a).
+ * Tuned so a hard flick (~2500–3500 px/s) yields ~20–40 slots; gentle fling a few.
+ */
+export const WHEEL_FLING_DECEL = 2000;
 
 /**
  * Local sample half-width for TransformDriver lerp tables.

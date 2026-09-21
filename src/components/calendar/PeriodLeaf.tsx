@@ -189,9 +189,67 @@ function monthHeaderLabel(year: number, monthIndex0: number): string {
 }
 
 /**
- * Per-kind fling silhouette — RN-friendly soft type (low opacity), no blur deps.
- * year: red bg + blurred white year; month: black blurry day-of-month hint;
- * week/day/multiday/agenda: matching blur chrome hints.
+ * Soft-type glyph: oversized text + heavy textShadow + optional 1px ghost.
+ * No expo-blur / no new deps — reads as blur, not faint sharp type.
+ */
+function SoftBlurText({
+  children,
+  style,
+  ghostColor,
+  numberOfLines = 1,
+}: {
+  children: string | number;
+  style: object | object[];
+  ghostColor: string;
+  numberOfLines?: number;
+}) {
+  const flat = (StyleSheet.flatten(style) ?? {}) as Record<string, unknown>;
+  // Layout props on the wrap so row % widths / flex still work.
+  const {
+    width,
+    flex,
+    marginTop,
+    paddingHorizontal,
+    paddingTop,
+    alignSelf,
+    ...textFlat
+  } = flat;
+  const wrapExtra = {
+    ...(width !== undefined ? { width } : null),
+    ...(flex !== undefined ? { flex } : null),
+    ...(marginTop !== undefined ? { marginTop } : null),
+    ...(paddingHorizontal !== undefined ? { paddingHorizontal } : null),
+    ...(paddingTop !== undefined ? { paddingTop } : null),
+    ...(alignSelf !== undefined ? { alignSelf } : null),
+  };
+  return (
+    <View style={[styles.softBlurWrap, wrapExtra]} pointerEvents="none">
+      <Text
+        style={[
+          textFlat,
+          styles.softBlurGhost,
+          { color: ghostColor, textShadowColor: ghostColor },
+        ]}
+        numberOfLines={numberOfLines}
+        allowFontScaling={false}
+      >
+        {children}
+      </Text>
+      <Text
+        style={[textFlat, { textShadowColor: ghostColor }]}
+        numberOfLines={numberOfLines}
+        allowFontScaling={false}
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Per-kind fling silhouette — stacked soft type (textShadow), no blur deps.
+ * year: red yearPage bg + white year digits with heavy soft shadow (unreadable);
+ * month: black soft day-number hints; week/day: soft label/numeral hints.
  */
 function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
   const label = tile.centerCaption;
@@ -202,13 +260,12 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text
+          <SoftBlurText
             style={[styles.yearText, styles.yearTextCenter, styles.silhouetteBlurYear]}
-            numberOfLines={1}
-            allowFontScaling={false}
+            ghostColor={SET_B.body}
           >
             {yearLabel}
-          </Text>
+          </SoftBlurText>
         </View>
       </View>
     );
@@ -235,14 +292,13 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
           <View style={styles.silhouetteHeader} />
           <View style={styles.silhouetteHintRow}>
             {hintDays.map((iso) => (
-              <Text
+              <SoftBlurText
                 key={`sil-m-${iso}`}
                 style={styles.silhouetteBlurDay}
-                numberOfLines={1}
-                allowFontScaling={false}
+                ghostColor={SET_B.type}
               >
                 {Number(iso.slice(8, 10))}
-              </Text>
+              </SoftBlurText>
             ))}
           </View>
         </View>
@@ -259,14 +315,13 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
           <View style={styles.silhouetteHeader} />
           <View style={styles.silhouetteHintRow}>
             {labels.map((lab, i) => (
-              <Text
+              <SoftBlurText
                 key={`sil-w-${i}`}
                 style={styles.silhouetteBlurLabel}
-                numberOfLines={1}
-                allowFontScaling={false}
+                ghostColor={SET_B.type}
               >
                 {lab}
-              </Text>
+              </SoftBlurText>
             ))}
           </View>
         </View>
@@ -281,13 +336,9 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.silhouetteHeader} />
-          <Text
-            style={styles.silhouetteBlurDayNumeral}
-            numberOfLines={1}
-            allowFontScaling={false}
-          >
+          <SoftBlurText style={styles.silhouetteBlurDayNumeral} ghostColor={SET_B.type}>
             {dayNum}
-          </Text>
+          </SoftBlurText>
         </View>
       </View>
     );
@@ -300,9 +351,13 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <MetalTabs />
       <View style={styles.page}>
         <View style={styles.silhouetteHeader} />
-        <Text style={styles.silhouetteBlurCaption} numberOfLines={2} allowFontScaling={false}>
+        <SoftBlurText
+          style={styles.silhouetteBlurCaption}
+          ghostColor={SET_B.type}
+          numberOfLines={2}
+        >
           {hint}
-        </Text>
+        </SoftBlurText>
       </View>
     </View>
   );
@@ -587,10 +642,24 @@ const styles = StyleSheet.create({
   wrapBodyEmpty: {
     flex: 1,
   },
-  // Soft-type "blur" stand-ins (no expo-blur / no new deps).
+  // Soft-type blur (no expo-blur): oversized + heavy textShadow + 1px ghost.
+  softBlurWrap: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  softBlurGhost: {
+    position: 'absolute',
+    top: 1,
+    left: 1,
+    opacity: 0.35,
+  },
   silhouetteBlurYear: {
-    opacity: 0.28,
+    opacity: 0.42,
     letterSpacing: 1.5,
+    fontSize: 30,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 18,
   },
   silhouetteHintRow: {
     flex: 1,
@@ -602,41 +671,49 @@ const styles = StyleSheet.create({
   silhouetteBlurDay: {
     width: '14.28%',
     textAlign: 'center',
-    fontSize: 8,
-    lineHeight: 12,
+    fontSize: 11,
+    lineHeight: 14,
     fontWeight: '600',
     color: SET_B.type,
-    opacity: 0.22,
+    opacity: 0.38,
     fontVariant: ['tabular-nums'],
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
   silhouetteBlurLabel: {
     width: '14.28%',
     textAlign: 'center',
-    fontSize: 8,
-    lineHeight: 12,
+    fontSize: 11,
+    lineHeight: 14,
     fontWeight: '600',
     color: SET_B.type,
-    opacity: 0.22,
+    opacity: 0.38,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
   },
   silhouetteBlurDayNumeral: {
     flex: 1,
     textAlign: 'center',
     textAlignVertical: 'center',
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: '700',
     color: SET_B.type,
-    opacity: 0.2,
+    opacity: 0.36,
     fontVariant: ['tabular-nums'],
     marginTop: 2,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 22,
   },
   silhouetteBlurCaption: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '600',
     color: SET_B.type,
-    opacity: 0.22,
+    opacity: 0.36,
     paddingHorizontal: 6,
     paddingTop: 10,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 14,
   },
 });
