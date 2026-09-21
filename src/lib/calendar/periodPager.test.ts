@@ -5,7 +5,9 @@ import test from 'node:test';
 import {
   buildPeriodWindow,
   commitShiftFromVisual,
+  dragToSlotShift,
   periodKindForView,
+  residualFromTotalDrag,
   rolodexOpacityForOffset,
   rolodexScaleForOffset,
   showsPeriodPager,
@@ -208,7 +210,7 @@ test('commitShiftFromVisual: settle commit === tracked flyby shift (soft max 48)
   assert.equal(commitShiftFromVisual(-100), -WHEEL_MAX_FLING_SLOTS);
   assert.equal(commitShiftFromVisual(48), 48);
   assert.equal(commitShiftFromVisual(-48), -48);
-  // Truncate non-integers toward zero (visualShift is already round()'d in UI)
+  // Truncate non-integers toward zero (visualShift is already trunc'd in UI)
   assert.equal(commitShiftFromVisual(3.9), 3);
   assert.equal(commitShiftFromVisual(-3.9), -3);
   assert.equal(commitShiftFromVisual(Number.NaN), 0);
@@ -218,6 +220,71 @@ test('commitShiftFromVisual: settle commit === tracked flyby shift (soft max 48)
   assert.equal(commitShiftFromVisual(visualSeen), visualSeen);
   assert.notEqual(commitShiftFromVisual(visualSeen), predicted);
 });
+
+
+test('dragToSlotShift: trunc not round — no half-pitch flicker; monotonic slow drag', () => {
+  const P = 78;
+  // Half-pitch: round would flip early (shift=1 at -0.5P); trunc stays 0 until full pitch.
+  assert.equal(dragToSlotShift(-0.49 * P, P), 0);
+  assert.equal(dragToSlotShift(-0.5 * P, P), 0);
+  assert.equal(dragToSlotShift(-0.99 * P, P), 0);
+  assert.equal(dragToSlotShift(-1.0 * P, P), 1);
+  assert.equal(dragToSlotShift(-1.49 * P, P), 1);
+  assert.equal(dragToSlotShift(-1.5 * P, P), 1);
+  assert.equal(dragToSlotShift(-2.0 * P, P), 2);
+  // Opposite direction
+  assert.equal(dragToSlotShift(0.5 * P, P), 0);
+  assert.equal(dragToSlotShift(0.99 * P, P), 0);
+  assert.equal(dragToSlotShift(1.0 * P, P), -1);
+  assert.equal(dragToSlotShift(1.5 * P, P), -1);
+  assert.equal(dragToSlotShift(2.0 * P, P), -2);
+  // Slow continuous drag: shifts are monotonic non-decreasing as drag goes more negative
+  let prev = dragToSlotShift(0, P);
+  for (let drag = 0; drag >= -5 * P; drag -= 1) {
+    const s = dragToSlotShift(drag, P);
+    assert.ok(s >= prev, `shift ${s} < prev ${prev} at drag=${drag}`);
+    prev = s;
+  }
+  // Contrast: Math.round would jump at half pitch
+  assert.equal(Math.round(-(-0.5 * P) / P), 1);
+  assert.equal(dragToSlotShift(-0.5 * P, P), 0);
+});
+
+test('residualFromTotalDrag: residual continuous in (-P, P) across ±P boundaries', () => {
+  const P = 78;
+  const eps = 1e-9;
+  // Across negative boundary (content next)
+  const a = residualFromTotalDrag(-P + 1, P);
+  const b = residualFromTotalDrag(-P, P);
+  const c = residualFromTotalDrag(-P - 1, P);
+  assert.equal(a.shift, 0);
+  assert.equal(b.shift, 1);
+  assert.equal(c.shift, 1);
+  assert.ok(a.localDrag > -P - eps && a.localDrag < P + eps);
+  assert.ok(b.localDrag > -P - eps && b.localDrag < P + eps);
+  assert.ok(c.localDrag > -P - eps && c.localDrag < P + eps);
+  // localDrag approaches -P then resets near 0 after trunc flip (no half-pitch +P jump)
+  assert.ok(Math.abs(a.localDrag - (-P + 1)) < eps);
+  assert.ok(Math.abs(b.localDrag - 0) < eps);
+  assert.ok(Math.abs(c.localDrag - (-1)) < eps);
+  // Across positive boundary (content prev)
+  const d = residualFromTotalDrag(P - 1, P);
+  const e = residualFromTotalDrag(P, P);
+  const f = residualFromTotalDrag(P + 1, P);
+  assert.equal(d.shift, 0);
+  assert.equal(e.shift, -1);
+  assert.equal(f.shift, -1);
+  assert.ok(d.localDrag > -P - eps && d.localDrag < P + eps);
+  assert.ok(e.localDrag > -P - eps && e.localDrag < P + eps);
+  assert.ok(f.localDrag > -P - eps && f.localDrag < P + eps);
+  // Slow sweep: residual never jumps by ~P at half-pitch (round bug)
+  const half = residualFromTotalDrag(-0.5 * P, P);
+  assert.equal(half.shift, 0);
+  assert.ok(Math.abs(half.localDrag - (-0.5 * P)) < eps);
+  // Round-style residual would be +0.5P here — pin we do not
+  assert.ok(half.localDrag < 0);
+});
+
 
 test('shiftPeriodAnchor: kind-aware mid-fling rebound helper', () => {
   assert.equal(shiftPeriodAnchor('year', '2026', 3), '2029');
@@ -255,6 +322,12 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /useLayoutEffect/);
   assert.match(pager, /slotPoolKey/);
+  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
+  assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
+  assert.match(pager, /Math\.trunc\(-/);
+  assert.doesNotMatch(pager, /Math\.round\(-drag/);
+  assert.doesNotMatch(pager, /Math\.round\(-totalDrag/);
+  assert.doesNotMatch(pager, /Math\.round\(-dragShared/);
   assert.match(pager, /shiftPeriodAnchor|visualShift/);
   assert.match(pager, /visualShiftRef/);
   assert.match(pager, /commitShiftFromVisual/);

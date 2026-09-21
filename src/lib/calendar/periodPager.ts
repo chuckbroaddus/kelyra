@@ -337,6 +337,29 @@ export function periodDistance(
 }
 
 
+
+/**
+ * Integer SlotPool shift from total finger drag.
+ * Uses Math.trunc (not Math.round) so residual stays continuous in (-P, P)
+ * without flipping at half-pitch — slow sweeps no longer double-advance.
+ */
+export function dragToSlotShift(dragPx: number, pitch: number = SLOT_PITCH): number {
+  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  const shift = Math.trunc(-dragPx / P);
+  // Normalize -0 from trunc of negative fractions (Object.is(-0, 0) is false).
+  return shift === 0 ? 0 : shift;
+}
+
+/** Map total finger drag → SlotPool shift + residual local drag (keeps N=9 near focus). */
+export function residualFromTotalDrag(
+  dragPx: number,
+  pitch: number = SLOT_PITCH,
+): { shift: number; localDrag: number } {
+  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  const shift = dragToSlotShift(dragPx, P);
+  return { shift, localDrag: dragPx + shift * P };
+}
+
 /**
  * Map finger release to integer slot steps (−max…+max soft ceiling).
  * Negative translation (drag left) → next (+); positive → prev (−).
@@ -387,7 +410,7 @@ export function snapPeriodPage(
 /**
  * Soft-clamp the tracked visual flyby count for settle commit.
  * Prefer this over the release-time snapPeriodPage prediction so commit
- * matches SlotPool rebound / round(-drag/pitch) flybys the user saw.
+ * matches SlotPool rebound / trunc(-drag/pitch) flybys the user saw.
  */
 export function commitShiftFromVisual(
   visualShift: number,

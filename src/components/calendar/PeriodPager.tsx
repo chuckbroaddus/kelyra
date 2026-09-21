@@ -44,6 +44,7 @@ import {
   buildPeriodWindow,
   commitShiftFromVisual,
   periodDistance,
+  residualFromTotalDrag,
   shiftPeriodAnchor,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
@@ -204,13 +205,6 @@ function lerpSamples(samples: ReturnType<typeof makeNormSamples>, dragPx: number
   };
 }
 
-/** Map total finger drag → SlotPool shift + residual local drag (keeps N=9 near focus). */
-function residualFromTotalDrag(dragPx: number, pitch: number): { shift: number; localDrag: number } {
-  const P = pitch > 0 ? pitch : 1;
-  const shift = Math.round(-dragPx / P);
-  return { shift, localDrag: dragPx + shift * P };
-}
-
 type SlotMotionProps = {
   parked: number;
   pitch: number;
@@ -233,7 +227,7 @@ function NativeSlotMotion({
     // Rebound residual: total drag may be 30+ pitches; local stays near center.
     const totalDrag = dragShared.value;
     const P = pitch > 0 ? pitch : 1;
-    const shift = Math.round(-totalDrag / P);
+    const shift = Math.trunc(-totalDrag / P);
     const dragPx = totalDrag + shift * P;
     // Inline lerp (worklet-safe; no JS helpers).
     const input = samples.input;
@@ -363,9 +357,9 @@ export function PeriodPager({
     settling.current = false;
   }, [anchor, kind, dayCount, dragShared, updateVisualShift]);
 
-  // Native: rebound period keys as total drag / pitch crosses integers.
+  // Native: rebound period keys as total drag / pitch crosses integers (trunc, not round).
   useAnimatedReaction(
-    () => Math.round(-dragShared.value / pitch),
+    () => Math.trunc(-dragShared.value / pitch),
     (shift, prev) => {
       'worklet';
       if (shift !== prev) {
@@ -563,7 +557,7 @@ export function PeriodPager({
         />
       </Pressable>
     );
-    const poolKey = slotPoolKey(kind, slotIndex);
+    const poolKey = slotPoolKey(tile.key, slotIndex);
     if (reduceMotion) {
       return (
         <Pressable
