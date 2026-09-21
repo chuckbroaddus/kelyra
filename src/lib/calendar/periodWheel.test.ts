@@ -119,6 +119,8 @@ test('Set B palette locked (CAL-3DW-10)', () => {
 
 test('SlotPool keys + content policy', () => {
   assert.equal(slotPoolKey('month', 4), 'month:4');
+  assert.equal(slotPoolKey('year:2026', 0), 'year:2026:0');
+  assert.equal(slotPoolKey('month:2026-09', 4), 'month:2026-09:4');
   assert.equal(slotIndexForOffset(0), WHEEL_CENTER_INDEX);
   assert.equal(slotIndexForOffset(-4), 0);
   assert.equal(slotIndexForOffset(4), 8);
@@ -140,6 +142,10 @@ test('PeriodPager is 9-slot SlotPool: reanimated native / CSS web; no translateZ
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /slotPoolKey/);
+  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
+  assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
+  assert.match(pager, /Math\.trunc\(-/);
+  assert.doesNotMatch(pager, /Math\.round\(-dragShared/);
   assert.match(pager, /react-native-reanimated/);
   assert.match(pager, /willChange/);
   assert.match(pager, /wheelContentModeFor|contentMode/);
