@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Kelyra Calendar — 3D period wheel (Set B tiles)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #141210; color: #F4EFE6; line-height: 1.45;
+  padding: 20px 12px 72px; -webkit-font-smoothing: antialiased;
+  touch-action: pan-y;
+}
+h1 { font-size: 18px; font-weight: 650; margin-bottom: 6px; color: #FFFCFA; }
+.meta { font-size: 12px; color: #A89F93; margin-bottom: 16px; max-width: 420px; }
+.meta code { color: #F4EFE6; }
+.hex { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #F4EFE6; }
+/* skeleton shell — drums patched in */
+#app { max-width: 420px; }
+.phone {
+  width: 390px; max-width: 100%; margin: 0 0 18px;
+  background: #1E1C19; border: 1px solid #3A342C; border-radius: 14px;
+  padding: 12px 0 16px; overflow: hidden;
+}
+.phone.light { background: #FFFCFA; border-color: #E6DFD4; color: #1A1612; }
+.row-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #A89F93; padding: 0 14px 8px;
+}
+.phone.light .row-label { color: #6B645C; }
+.wheel-host {
+  position: relative; height: 148px; width: 100%;
+  perspective: 920px; perspective-origin: 50% 45%;
+  touch-action: none; user-select: none; cursor: grab;
+  -webkit-user-select: none;
+}
+.wheel-host:active { cursor: grabbing; }
+.wheel-track {
+  position: absolute; left: 0; top: 0; height: 100%; width: 100%;
+  transform-style: preserve-3d;
+}
+.tile {
+  position: absolute; top: 50%; left: 50%;
+  width: 108px; height: 126px;
+  margin-left: -54px; margin-top: -63px;
+  transform-style: preserve-3d; will-change: transform, opacity;
+  pointer-events: none;
+}
+.tile svg { display: block; width: 100%; height: 100%;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
+  pointer-events: none;
+}
+.phone.light .tile svg { filter: drop-shadow(0 3px 8px rgba(26,22,18,0.18)); }
+.focus-band {
+  position: absolute; left: 50%; top: 8px; bottom: 8px;
+  width: 118px; margin-left: -59px; border-radius: 12px;
+  border: 1px dashed rgba(198,40,40,0.35); pointer-events: none; z-index: 0;
+}
+.phone.light .focus-band { border-color: rgba(198,40,40,0.28); }
+.caption {
+  text-align: center; font-size: 12px; font-weight: 600;
+  color: #F4EFE6; margin-top: 6px; min-height: 18px;
+}
+.phone.light .caption { color: #1A1612; }
+.hint { font-size: 11px; color: #A89F93; max-width: 420px; margin-top: 8px; }
+.hint li { margin: 3px 0 3px 16px; }
+.theme-toggle {
+  display: inline-flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap;
+}
+.theme-toggle button {
+  border: 1px solid #3A342C; background: #2A2621; color: #F4EFE6;
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+}
+.theme-toggle button.on { background: #C62828; border-color: #C62828; color: #FFFFFF; }
+.rm-note { font-size: 11px; color: #A89F93; margin: -6px 0 12px; }
+body.light-page { background: #F7F3EC; color: #1A1612; }
+body.light-page h1 { color: #1A1612; }
+body.light-page .meta, body.light-page .hint, body.light-page .rm-note { color: #6B645C; }
+body.light-page .meta code, body.light-page .hex { color: #1A1612; }
+body.light-page .theme-toggle button { background: #FFFFFF; border-color: #E6DFD4; color: #1A1612; }
+body.light-page .theme-toggle button.on { background: #C62828; border-color: #C62828; color: #FFFFFF; }
+body.rm .wheel-host { perspective: none; }
+</style>
+</head>
+<body>
+  <h1>Calendar 3D period wheel — Set B tiles</h1>
+  <p class="meta">Card <code>t_f2203851</code> · Docs + HTML sample · No lock · No src<br/>
+  Hex: header/year <span class="hex">#C62828</span> · Sunday <span class="hex">#E53935</span> · body <span class="hex">#FFFFFF</span> · type <span class="hex">#1A1A1A</span> · metal <span class="hex">#B0BEC5</span><br/>
+  Touch drag the drum · tap a side tile to snap center · same wheel on Y/M/W/D · not PersonTabs</p>
+  <div class="theme-toggle" id="themeToggle"></div>
+  <p class="rm-note" id="rmNote">Motion: full 3D (scale + fade + rotateY). Toggle RM to drop tilt.</p>
+  <div id="app"></div>
+  <ul class="hint">
+    <li>Spec: <code>notes/company/calendar-3d-wheel-spec.md</code> — pitch 78 · hero 108×126 · spring ~300ms.</li>
+    <li>Set B hanging-ledger only. Not pink pills. Not text Rolodex. Not flat equal cards.</li>
+    <li>Center = current period; center tap flashes Today jump. Side tap snaps that period to center.</li>
+    <li>Desktop pointer stands in for touch; no hover-required UI.</li>
+  </ul>
+<script>
+const H='#C62828', S='#E53935', W='#FFFFFF', K='#1A1A1A', G='#E0E0E0', M='#B0BEC5', MH='#ECEFF1';
+const FONT="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+const P = 78; /* slot pitch */
+const VIS = 2; /* ± neighbors drawn */
+let reducedMotion = false;
+let pageLight = false;
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function scaleOf(d) { return clamp(1 - 0.22 * Math.abs(d) - 0.02 * d * d, 0.46, 1); }
+function opacityOf(d) { return clamp(1 - 0.24 * Math.abs(d) - 0.03 * d * d, 0.22, 1); }
+function rotYOf(d) {
+  if (reducedMotion) return 0;
+  return clamp(d, -3, 3) * -14;
+}
+function zOf(d) {
+  if (reducedMotion) return 0;
+  return 36 - 18 * Math.abs(d);
+}
+
+function tabs() {
+  return [
+    '<rect x="18" y="6" width="14" height="16" rx="3.5" fill="'+M+'"/>',
+    '<rect x="68" y="6" width="14" height="16" rx="3.5" fill="'+M+'"/>',
+    '<rect x="20" y="8" width="10" height="5" rx="2" fill="'+MH+'"/>',
+    '<rect x="70" y="8" width="10" height="5" rx="2" fill="'+MH+'"/>'
+  ].join('');
+}
+function headerTexts(lines, fs, top, gap) {
+  fs = fs || 11; top = top || 29.5; gap = gap || 12;
+  return lines.map(function(t, i) {
+    return '<text x="50" y="'+(top + i*gap)+'" text-anchor="middle" font-size="'+fs+'" font-weight="700" fill="'+W+'" font-family="'+FONT+'">'+t+'</text>';
+  }).join('');
+}
+function yearLeaf(label, fs) {
+  fs = fs || (String(label).length > 3 ? 26 : 28);
+  return '<svg viewBox="0 0 100 118" aria-hidden="true">'
+    + '<rect x="8" y="14" width="84" height="98" rx="8" fill="'+H+'" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>'
+    + '<text x="50" y="78" text-anchor="middle" font-size="'+fs+'" font-weight="700" fill="'+W+'" font-family="'+FONT+'">'+label+'</text>'
+    + tabs() + '</svg>';
+}
+function monthBody(startBlank, days) {
+  var labels = ['S','M','T','W','T','F','S'], c = '', n = 1, i, r, col, idx, x, y, sun;
+  for (i = 0; i < 7; i++) {
+    x = 18 + i * 10.5;
+    c += '<text x="'+x+'" y="48" text-anchor="middle" font-size="7" font-weight="600" fill="'+(i===0?S:K)+'" font-family="'+FONT+'">'+labels[i]+'</text>';
+  }
+  for (r = 0; r < 5; r++) for (col = 0; col < 7; col++) {
+    idx = r * 7 + col;
+    if (idx < startBlank || n > days) continue;
+    x = 18 + col * 10.5; y = 60 + r * 10.2; sun = col === 0;
+    c += '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-size="7.2" font-weight="600" fill="'+(sun?S:K)+'" font-family="'+FONT+'">'+n+'</text>';
+    n++;
+  }
+  return c;
+}
+function weekBody(startDay, todayIdx) {
+  var y = 64, c = '', i, x, sun, isToday;
+  for (i = 0; i < 7; i++) {
+    x = 14 + i * 11.5; sun = i === 0; isToday = i === todayIdx;
+    c += '<rect x="'+x+'" y="'+y+'" width="10" height="40" rx="2.5" fill="'+(isToday?K:'none')+'" stroke="'+(sun?S:K)+'" stroke-width="1"/>';
+    c += '<text x="'+(x+5)+'" y="'+(y+12)+'" text-anchor="middle" font-size="7" font-weight="700" fill="'+(isToday?W:(sun?S:K))+'" font-family="'+FONT+'">'+(startDay+i)+'</text>';
+    if (isToday) c += '<circle cx="'+(x+5)+'" cy="'+(y+28)+'" r="2.2" fill="'+W+'"/>';
+  }
+  return c;
+}
+function dayBody(num) {
+  return '<text x="50" y="96" text-anchor="middle" font-size="38" font-weight="700" fill="'+K+'" font-family="'+FONT+'">'+num+'</text>';
+}
+function shellLeaf(headerLines, body, opts) {
+  opts = opts || {};
+  var hb = opts.headerBottom || 36;
+  var fs = opts.headerFs || 11;
+  var top = opts.headerTop || 29.5;
+  var gap = opts.headerGap || 12;
+  return '<svg viewBox="0 0 100 118" aria-hidden="true">'
+    + '<rect x="8" y="14" width="84" height="98" rx="8" fill="'+W+'" stroke="rgba(0,0,0,0.14)" stroke-width="1"/>'
+    + '<path d="M8 '+hb+' V22 A8 8 0 0 1 16 14 H84 A8 8 0 0 1 92 22 V'+hb+' Z" fill="'+H+'"/>'
+    + headerTexts(headerLines, fs, top, gap) + body + tabs() + '</svg>';
+}
+
+/* LEAF_DATA_AND_ENGINE */
+var MONS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+var MONS_FULL = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+var DAYS_IN = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+function yearItem(y, preferShort) {
+  /* Center/current prefers full four-digit; immediate sides may use 'YY in a denser ship — sample keeps full year on all for scroll-to-center legibility, short only when preferShort. */
+  var label = preferShort ? ("'" + String(y).slice(2)) : String(y);
+  return { key: 'y'+y+(preferShort?'s':''), caption: String(y), html: yearLeaf(label, preferShort ? 28 : 24) };
+}
+function monthItem(year, mon) { /* mon 0-11 */
+  var blank = (new Date(year, mon, 1)).getDay();
+  var days = DAYS_IN[mon] + ((mon===1 && year%4===0) ? 1 : 0);
+  var hdr = (mon === 5 && year === 2025) ? ['JUNE 2025'] : [MONS[mon] + (year === 2025 || year === 2026 ? ' '+year : '')];
+  if (hdr[0].length > 12) hdr = [MONS[mon], String(year)];
+  return {
+    key: 'm'+year+'-'+mon,
+    caption: MONS_FULL[mon].slice(0,1)+MONS_FULL[mon].slice(1).toLowerCase() + ' ' + year,
+    html: shellLeaf(hdr, monthBody(blank, days), { headerFs: 11, headerBottom: 36 })
+  };
+}
+function weekItem(labelLines, startDay, todayIdx, caption) {
+  return {
+    key: 'w'+labelLines.join('-')+startDay,
+    caption: caption,
+    html: shellLeaf(labelLines, weekBody(startDay, todayIdx), {
+      headerBottom: 58, headerTop: 32, headerGap: 13, headerFs: 10
+    })
+  };
+}
+function dayItem(monName, year, dayNum, isCenter) {
+  var lines = isCenter ? [monName, String(year)] : [monName];
+  return {
+    key: 'd'+monName+dayNum+year,
+    caption: monName.charAt(0)+monName.slice(1).toLowerCase() + ' ' + dayNum + ', ' + year,
+    html: shellLeaf(lines, dayBody(dayNum), {
+      headerBottom: 58, headerTop: 32, headerGap: 13, headerFs: 11
+    })
+  };
+}
+
+function buildYearItems() {
+  var out = [], y;
+  for (y = 2022; y <= 2030; y++) {
+    /* Full four-digit on every leaf so any snap-to-center stays legible in the HTML sample.
+       Spec still allows ship sides as 'YY when not centered (runtime can swap label). */
+    out.push(yearItem(y, false));
+  }
+  return out;
+}
+function buildMonthItems() {
+  var out = [], m;
+  for (m = 0; m < 12; m++) out.push(monthItem(2025, m));
+  return out;
+}
+function buildWeekItems() {
+  return [
+    weekItem(['MAY 25–31'], 25, -1, 'May 25–31, 2025'),
+    weekItem(['JUN 1–7'], 1, -1, 'Jun 1–7, 2025'),
+    weekItem(['JUN 8–14', '2025'], 8, 2, 'Jun 8–14, 2025'),
+    weekItem(['JUN 15–21'], 15, -1, 'Jun 15–21, 2025'),
+    weekItem(['JUN 22–28'], 22, -1, 'Jun 22–28, 2025'),
+    weekItem(['JUN 29–JUL 5'], 29, -1, 'Jun 29–Jul 5, 2025'),
+    weekItem(['JUL 6–12'], 6, -1, 'Jul 6–12, 2025')
+  ];
+}
+function buildDayItems() {
+  var out = [], d;
+  for (d = 11; d <= 20; d++) out.push(dayItem('JUNE', 2025, d, d === 15));
+  return out;
+}
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeSnap(t) {
+  /* approx cubic-bezier(0.22, 1, 0.36, 1) */
+  var t1 = 1 - t;
+  return 1 - t1 * t1 * t1 * (1 - 0.22 * t);
+}
+
+function createWheel(host, items, startIndex, onCommit) {
+  var track = host.querySelector('.wheel-track');
+  var caption = host.parentElement.querySelector('.caption');
+  var index = startIndex;
+  var offset = startIndex; /* continuous center index */
+  var tiles = [];
+  var dragging = false;
+  var lastX = 0, lastT = 0, vel = 0;
+  var samples = [];
+  var anim = null;
+  var pointerId = null;
+
+  function ensureTiles() {
+    var need = VIS * 2 + 3;
+    while (tiles.length < need) {
+      var el = document.createElement('div');
+      el.className = 'tile';
+      track.appendChild(el);
+      tiles.push(el);
+    }
+  }
+  ensureTiles();
+
+  function render() {
+    var base = Math.round(offset);
+    var i, d, el, idx, item, sc, op, ry, z, x;
+    for (i = -VIS - 1; i <= VIS + 1; i++) {
+      el = tiles[i + VIS + 1];
+      idx = base + i;
+      d = idx - offset;
+      if (idx < 0 || idx >= items.length) {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.innerHTML = '';
+        el.dataset.idx = '';
+        continue;
+      }
+      item = items[idx];
+      sc = scaleOf(d); op = opacityOf(d); ry = rotYOf(d); z = zOf(d); x = d * P;
+      if (el.dataset.key !== item.key) {
+        el.innerHTML = item.html;
+        el.dataset.key = item.key;
+      }
+      el.dataset.idx = String(idx);
+      el.style.opacity = String(op);
+      el.style.zIndex = String(100 - Math.round(Math.abs(d) * 10));
+      el.style.transform = 'translateX('+x+'px) translateZ('+z+'px) rotateY('+ry+'deg) scale('+sc+')';
+    }
+    var ci = clamp(Math.round(offset), 0, items.length - 1);
+    if (caption && !dragging) caption.textContent = items[ci].caption;
+  }
+
+  function stopAnim() {
+    if (anim) { cancelAnimationFrame(anim); anim = null; }
+  }
+
+  function springTo(target, dur) {
+    stopAnim();
+    target = clamp(target, 0, items.length - 1);
+    var from = offset;
+    var dist = target - from;
+    if (Math.abs(dist) < 0.001) {
+      offset = target; index = target; render();
+      if (onCommit) onCommit(items[index], index);
+      return;
+    }
+    dur = reducedMotion ? 90 : (dur || 300);
+    var t0 = performance.now();
+    function step(now) {
+      var t = clamp((now - t0) / dur, 0, 1);
+      var e = reducedMotion ? t : easeSnap(t);
+      offset = from + dist * e;
+      render();
+      if (t < 1) anim = requestAnimationFrame(step);
+      else {
+        anim = null; offset = target; index = target; render();
+        if (onCommit) onCommit(items[index], index);
+      }
+    }
+    anim = requestAnimationFrame(step);
+  }
+
+  function fling(vPxMs) {
+    /* v positive = finger right = content should increase index? finger right → tiles move right → see earlier = decrease index */
+    var slots = vPxMs / (P / 16); /* rough */
+    var coast = clamp(-vPxMs * 180 / P, -3, 3); /* px/ms * ms-ish / pitch */
+    var projected = offset + coast;
+    var target = Math.round(projected);
+    if (Math.abs(vPxMs) > 0.35) {
+      var dir = vPxMs > 0 ? -1 : 1;
+      if (target === Math.round(offset)) target = Math.round(offset) + dir;
+    }
+    target = clamp(target, 0, items.length - 1);
+    springTo(target, reducedMotion ? 90 : 300);
+  }
+
+  function onDown(e) {
+    if (e.button != null && e.button !== 0) return;
+    stopAnim();
+    dragging = true;
+    pointerId = e.pointerId;
+    host.setPointerCapture(pointerId);
+    lastX = e.clientX; lastT = performance.now();
+    vel = 0; samples = [{ x: lastX, t: lastT }];
+    host.style.cursor = 'grabbing';
+  }
+  function onMove(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    var now = performance.now();
+    var dx = e.clientX - lastX;
+    lastX = e.clientX;
+    offset -= dx / P;
+    offset = clamp(offset, -0.35, items.length - 1 + 0.35);
+    samples.push({ x: e.clientX, t: now });
+    while (samples.length > 6) samples.shift();
+    if (samples.length >= 2) {
+      var a = samples[0], b = samples[samples.length - 1];
+      var dt = b.t - a.t;
+      vel = dt > 0 ? (b.x - a.x) / dt : 0;
+    }
+    lastT = now;
+    render();
+  }
+  function onUp(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    dragging = false;
+    try { host.releasePointerCapture(pointerId); } catch (err) {}
+    pointerId = null;
+    host.style.cursor = 'grab';
+    var tapDx = 0;
+    if (samples.length) tapDx = e.clientX - samples[0].x;
+    var moved = Math.abs(tapDx) > 8 || Math.abs(vel) > 0.05;
+    if (!moved) {
+      /* tap: pick nearest tile by x */
+      var rect = host.getBoundingClientRect();
+      var localX = e.clientX - rect.left - rect.width / 2;
+      var slot = Math.round(localX / P);
+      var tapIndex = clamp(Math.round(offset) + slot, 0, items.length - 1);
+      if (tapIndex === Math.round(offset)) {
+        /* center tap = Today flash */
+        if (caption) {
+          var prev = caption.textContent;
+          caption.textContent = 'Today → ' + items[tapIndex].caption;
+          setTimeout(function() { if (!dragging) caption.textContent = items[Math.round(offset)].caption; }, 700);
+        }
+        springTo(Math.round(offset), 180);
+      } else {
+        springTo(tapIndex, reducedMotion ? 90 : 300);
+      }
+      return;
+    }
+    if (Math.abs(vel) > 0.08) fling(vel);
+    else springTo(Math.round(clamp(offset, 0, items.length - 1)), reducedMotion ? 90 : 280);
+  }
+
+  host.addEventListener('pointerdown', onDown);
+  host.addEventListener('pointermove', onMove);
+  host.addEventListener('pointerup', onUp);
+  host.addEventListener('pointercancel', onUp);
+
+  offset = startIndex; index = startIndex; render();
+  return {
+    refresh: render,
+    retheme: function() { /* leaf hex fixed */ render(); },
+    go: function(i) { springTo(i); }
+  };
+}
+
+var wheels = [];
+
+function mountDrum(title, items, startIndex) {
+  var phone = document.createElement('div');
+  phone.className = 'phone' + (pageLight ? ' light' : '');
+  phone.innerHTML = '<div class="row-label">'+title+' · Set B 3D wheel · drag / tap</div>'
+    + '<div class="wheel-host"><div class="focus-band"></div><div class="wheel-track"></div></div>'
+    + '<div class="caption"></div>';
+  document.getElementById('app').appendChild(phone);
+  var host = phone.querySelector('.wheel-host');
+  var w = createWheel(host, items, startIndex, null);
+  wheels.push({ phone: phone, wheel: w });
+}
+
+function mountAll() {
+  document.getElementById('app').innerHTML = '';
+  wheels = [];
+  var years = buildYearItems();
+  var months = buildMonthItems();
+  var weeks = buildWeekItems();
+  var days = buildDayItems();
+  mountDrum('Year', years, years.findIndex(function(x){ return x.caption === '2026'; }));
+  mountDrum('Month', months, 5); /* June */
+  mountDrum('Week', weeks, 2);
+  mountDrum('Day', days, days.findIndex(function(x){ return x.key.indexOf('dJUNE15') === 0; }));
+}
+
+function syncChrome() {
+  document.body.classList.toggle('light-page', pageLight);
+  document.body.classList.toggle('rm', reducedMotion);
+  wheels.forEach(function(w) {
+    w.phone.classList.toggle('light', pageLight);
+    w.wheel.refresh();
+  });
+  document.getElementById('rmNote').textContent = reducedMotion
+    ? 'Motion: reduced — scale + fade + snap only (no rotateY / no Z lift).'
+    : 'Motion: full 3D (scale + fade + rotateY + Z). Toggle RM to drop tilt.';
+  var btns = document.querySelectorAll('#themeToggle button');
+  btns.forEach(function(b) {
+    var id = b.dataset.id;
+    b.classList.toggle('on',
+      (id === 'dark' && !pageLight) ||
+      (id === 'light' && pageLight) ||
+      (id === 'full' && !reducedMotion) ||
+      (id === 'rm' && reducedMotion)
+    );
+  });
+}
+
+(function initToggle() {
+  var box = document.getElementById('themeToggle');
+  [
+    { id: 'dark', label: 'Dark plate' },
+    { id: 'light', label: 'Light plate' },
+    { id: 'full', label: 'Full 3D' },
+    { id: 'rm', label: 'RM flat' }
+  ].forEach(function(t) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.dataset.id = t.id; b.textContent = t.label;
+    b.addEventListener('click', function() {
+      if (t.id === 'dark') pageLight = false;
+      if (t.id === 'light') pageLight = true;
+      if (t.id === 'full') reducedMotion = false;
+      if (t.id === 'rm') reducedMotion = true;
+      syncChrome();
+    });
+    box.appendChild(b);
+  });
+})();
+
+mountAll();
+syncChrome();
+</script>
+</body>
+</html>

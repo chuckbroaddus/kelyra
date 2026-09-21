@@ -3,21 +3,33 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  SET_B,
   WHEEL_CENTER_OPACITY,
   WHEEL_CENTER_SCALE,
+  WHEEL_FAR_OPACITY,
+  WHEEL_FAR_SCALE,
   WHEEL_FOCUS_BAND,
+  WHEEL_HERO_HEIGHT,
+  WHEEL_HERO_WIDTH,
   WHEEL_MAX_ROTATE_Y_DEG,
+  WHEEL_MIN_OPACITY,
+  WHEEL_MIN_SCALE,
   WHEEL_PERSPECTIVE,
+  WHEEL_PITCH,
+  WHEEL_ROTATE_Y_PER_SLOT,
   WHEEL_SIDE_OPACITY,
   WHEEL_SIDE_SCALE,
-  WHEEL_SPACING_RATIO,
+  WHEEL_SLOT_OFFSETS,
+  WHEEL_STAGE_HEIGHT,
+  WHEEL_VISIBLE_SLOTS,
+  WHEEL_Z_CENTER,
   wheelInFocusBand,
   wheelNormFromOffset,
   wheelOpacityForNorm,
   wheelRotateYDegForNorm,
   wheelSample,
   wheelScaleForNorm,
-  wheelSpacingNudgePx,
+  wheelZForNorm,
 } from './periodWheel.ts';
 
 const root = new URL('../../../', import.meta.url);
@@ -25,77 +37,132 @@ function read(rel: string): string {
   return readFileSync(new URL(rel, root), 'utf8');
 }
 
-test('wheel curves: center larger/brighter than sides; far dimmer still', () => {
+test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 148', () => {
+  assert.equal(WHEEL_PERSPECTIVE, 920);
+  assert.equal(WHEEL_PITCH, 78);
+  assert.equal(WHEEL_HERO_WIDTH, 108);
+  assert.equal(WHEEL_HERO_HEIGHT, 126);
+  assert.equal(WHEEL_STAGE_HEIGHT, 148);
+  assert.equal(WHEEL_VISIBLE_SLOTS, 5);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-2, -1, 0, 1, 2]);
+  assert.equal(WHEEL_ROTATE_Y_PER_SLOT, -14);
+  assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
+  assert.equal(WHEEL_Z_CENTER, 36);
+});
+
+test('wheel scale SoT: clamp(1 - 0.22*|d| - 0.02*d², 0.46, 1)', () => {
   assert.equal(wheelScaleForNorm(0), WHEEL_CENTER_SCALE);
+  assert.ok(Math.abs(wheelScaleForNorm(1) - WHEEL_SIDE_SCALE) < 0.02);
+  assert.ok(Math.abs(wheelScaleForNorm(2) - WHEEL_FAR_SCALE) < 0.02);
+  assert.equal(wheelScaleForNorm(3), WHEEL_MIN_SCALE);
   assert.ok(wheelScaleForNorm(0) > wheelScaleForNorm(1));
-  assert.ok(wheelScaleForNorm(1) >= WHEEL_SIDE_SCALE - 0.001);
-  assert.ok(wheelScaleForNorm(2) <= WHEEL_SIDE_SCALE);
-  assert.ok(wheelScaleForNorm(2) >= 0.5);
+  assert.ok(wheelScaleForNorm(1) > wheelScaleForNorm(2));
+});
+
+test('wheel opacity SoT: clamp(1 - 0.24*|d| - 0.03*d², 0.22, 1)', () => {
   assert.equal(wheelOpacityForNorm(0), WHEEL_CENTER_OPACITY);
+  assert.ok(Math.abs(wheelOpacityForNorm(1) - WHEEL_SIDE_OPACITY) < 0.05);
+  assert.ok(Math.abs(wheelOpacityForNorm(2) - WHEEL_FAR_OPACITY) < 0.05);
+  assert.ok(wheelOpacityForNorm(3) >= WHEEL_MIN_OPACITY);
   assert.ok(wheelOpacityForNorm(0) > wheelOpacityForNorm(1));
-  assert.ok(wheelOpacityForNorm(1) <= WHEEL_SIDE_OPACITY + 0.001);
 });
 
-test('wheel rotateY: left positive, right negative, |t|=1 → max', () => {
+test('wheel rotateY SoT: clamp(d,-3,3) * -14; left +, right −', () => {
   assert.equal(wheelRotateYDegForNorm(0), 0);
-  assert.equal(wheelRotateYDegForNorm(-1), WHEEL_MAX_ROTATE_Y_DEG);
-  assert.equal(wheelRotateYDegForNorm(1), -WHEEL_MAX_ROTATE_Y_DEG);
-  assert.ok(wheelRotateYDegForNorm(-0.5) > 0);
-  assert.ok(wheelRotateYDegForNorm(0.5) < 0);
+  assert.equal(wheelRotateYDegForNorm(-1), 14);
+  assert.equal(wheelRotateYDegForNorm(1), -14);
+  assert.equal(wheelRotateYDegForNorm(-2), 28);
+  assert.equal(wheelRotateYDegForNorm(2), -28);
+  assert.equal(wheelRotateYDegForNorm(-3), 42);
+  assert.equal(wheelRotateYDegForNorm(3), -42);
+  assert.equal(wheelRotateYDegForNorm(-4), 42); // clamp
 });
 
-test('wheel spacing + focus band + sample', () => {
-  assert.ok(WHEEL_SPACING_RATIO < 1);
-  assert.ok(WHEEL_SPACING_RATIO > 0.5);
-  assert.equal(wheelSpacingNudgePx(0, 100), 0);
-  assert.ok(wheelSpacingNudgePx(1, 100) < 0); // pull inward
+test('wheel z SoT: 36 - 18*|d|', () => {
+  assert.equal(wheelZForNorm(0), 36);
+  assert.equal(wheelZForNorm(1), 18);
+  assert.equal(wheelZForNorm(2), 0);
+  assert.equal(wheelZForNorm(-1), 18);
+});
+
+test('wheel focus band + sample + norm', () => {
+  assert.ok(WHEEL_FOCUS_BAND > 0.5);
   assert.equal(wheelInFocusBand(0), true);
   assert.equal(wheelInFocusBand(WHEEL_FOCUS_BAND), true);
   assert.equal(wheelInFocusBand(WHEEL_FOCUS_BAND + 0.01), false);
-  assert.equal(wheelNormFromOffset(72, 72), 1);
-  const s = wheelSample({ parkedOffsetPx: 0, dragPx: 0, slotWidth: 100 });
+  assert.equal(wheelNormFromOffset(78, 78), 1);
+  const s = wheelSample({ parkedSlot: 0, dragPx: 0 });
   assert.equal(s.norm, 0);
   assert.equal(s.scale, WHEEL_CENTER_SCALE);
+  assert.equal(s.translateZ, 36);
   assert.equal(s.inFocus, true);
+  const side = wheelSample({ parkedSlot: 1, dragPx: 0 });
+  assert.equal(side.translateX, 78);
+  assert.equal(side.rotateYDeg, -14);
 });
 
-test('PeriodPager is 3D wheel: rotateY + perspective; RM no tilt; tap side; no className', () => {
+test('Set B palette locked (CAL-3DW-10)', () => {
+  assert.equal(SET_B.header, '#C62828');
+  assert.equal(SET_B.sunday, '#E53935');
+  assert.equal(SET_B.body, '#FFFFFF');
+  assert.equal(SET_B.type, '#1A1A1A');
+  assert.equal(SET_B.tabMetal, '#B0BEC5');
+  assert.equal(SET_B.tabHighlight, '#ECEFF1');
+});
+
+test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY/Z; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(pager, /WHEEL_SLOT_OFFSETS/);
+  assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /rotateY/);
-  assert.match(pager, /WHEEL_PERSPECTIVE|perspective/);
+  assert.match(pager, /translateZ/);
+  assert.match(pager, /WHEEL_PERSPECTIVE/);
   assert.match(pager, /tapSide/);
   assert.match(pager, /useReducedMotion/);
-  assert.match(pager, /velocity/);
   assert.match(pager, /WHEEL_SPRING|friction/);
   assert.match(pager, /PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.match(pager, /label=["']<<["']/);
   assert.doesNotMatch(pager, /className\s*:/);
-  // RM path must not apply rotateY
-  assert.match(pager, /reduceMotion/);
-  const rmBlock = pager.slice(pager.indexOf('if (reduceMotion)'), pager.indexOf('const roles'));
-  assert.doesNotMatch(rmBlock, /rotateY/);
-  assert.match(rmBlock, /wheelScaleForNorm/);
-  assert.match(rmBlock, /wheelOpacityForNorm/);
-  void WHEEL_PERSPECTIVE;
+  // RM branch: scale+opacity only (no rotateY / translateZ in that block)
+  const rmStart = pager.indexOf('if (reduceMotion)');
+  assert.ok(rmStart >= 0);
+  const rmReturn = pager.indexOf('return (', rmStart);
+  const afterRm = pager.indexOf('const samples = makeNormSamples', rmReturn);
+  const rmSrc = pager.slice(rmStart, afterRm > rmStart ? afterRm : rmStart + 1200);
+  assert.doesNotMatch(rmSrc, /rotateY/);
+  assert.doesNotMatch(rmSrc, /translateZ/);
+  assert.match(rmSrc, /wheelScaleForNorm/);
+  assert.match(rmSrc, /wheelOpacityForNorm/);
+  // Full-motion path still has rotateY + Z
+  assert.match(pager.slice(afterRm), /rotateY/);
+  assert.match(pager.slice(afterRm), /translateZ/);
 });
 
-test('PeriodLeaf Set B icon tiles: no PNG; no full-bleed year danger pill; Y/M/W/D glyphs', () => {
+test('PeriodLeaf Set B hanging-ledger: fixed hex; metal tabs; no YearIcon bars; no theme recolor', () => {
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.doesNotMatch(leaf, /\.png|ImageBackground|require\(/);
-  assert.match(leaf, /YearIcon|WeekIcon|DayIcon/);
+  assert.match(leaf, /MetalTabs|tabMetal|SET_B/);
+  assert.match(leaf, /#C62828|SET_B\.header/);
   assert.match(leaf, /MonthHangingGrid|hangGrid/);
-  assert.match(leaf, /elevated/);
-  // year leaf must not be a full danger background pill
-  assert.doesNotMatch(leaf, /yearLeaf[\s\S]{0,120}backgroundColor:\s*colors\.danger/);
-  assert.doesNotMatch(leaf, /styles\.yearLeaf[\s\S]{0,80}danger/);
+  assert.match(leaf, /WeekDayStrip|weekStrip/);
+  assert.match(leaf, /dayNumeral/);
+  assert.doesNotMatch(leaf, /YearIcon|WeekIcon|DayIcon/);
+  assert.doesNotMatch(leaf, /colors\.elevated|colors\.danger|colors\.ink/);
+  assert.doesNotMatch(leaf, /body caption|wrapBodyText/);
+  assert.doesNotMatch(leaf, /borderRadius:\s*14|dayCircle/);
 });
 
-test('calendar still wires PeriodPager; day list excluded; no SQL', () => {
+test('calendar still wires PeriodPager; day list excluded; SoT ship defaults; no SQL', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /PeriodPager/);
   assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
   const src = read('src/lib/calendar/periodWheel.ts');
   assert.doesNotMatch(src, /supabase|execute_sql|from\('/);
   assert.match(src, /WHEEL_FOCUS_BAND/);
-  assert.match(src, /WHEEL_SPACING_RATIO/);
+  assert.match(src, /WHEEL_PITCH/);
+  assert.equal(WHEEL_PERSPECTIVE, 920);
+  // SoT ship defaults (not prior brief)
+  assert.doesNotMatch(src, /export const WHEEL_PERSPECTIVE = 900/);
+  assert.doesNotMatch(src, /WHEEL_MAX_ROTATE_Y_DEG = 48/);
+  assert.doesNotMatch(src, /WHEEL_SPACING_RATIO = 0\.72/);
 });

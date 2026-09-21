@@ -19,6 +19,10 @@ import type { CalendarViewId, DayMode } from './viewPrefs.ts';
 import { shiftWeek, weekRangeContaining } from './week.ts';
 import { yearContaining } from './year.ts';
 
+/** Local SoT mirrors (avoid circular import with periodWheel). */
+const SLOT_PITCH = 78;
+const MAX_FLING_SLOTS = 3;
+
 export type PeriodKind = 'year' | 'month' | 'week' | 'multiday' | 'day' | 'agenda';
 
 export type PeriodTileModel = {
@@ -40,10 +44,15 @@ export type PeriodTileModel = {
   dayIso?: string;
 };
 
+/** Five-slot rest window: center ±2 (CAL-3DW-05 / AC-M01). */
 export type PeriodWindow = {
+  /** Slots at offsets -2,-1,0,+1,+2. Index 2 = center. */
+  slots: PeriodTileModel[];
+  prev2: PeriodTileModel;
   prev: PeriodTileModel;
   current: PeriodTileModel;
   next: PeriodTileModel;
+  next2: PeriodTileModel;
 };
 
 /** Surfaces that mount the period wheel. Day List keeps no chevron (CAL-R5-11 HOLD). */
@@ -185,72 +194,96 @@ export type BuildPeriodWindowArgs = {
   dayCount?: MultidayCount;
 };
 
-/** Build exactly three tiles (prev / current / next) around the current anchor. */
-export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
-  const { kind, anchor, dayCount = 3 } = args;
-  if (kind === 'year') {
-    const y = Number(anchor) || yearContaining(anchor);
-    return {
-      prev: yearTile(y - 1),
-      current: yearTile(y),
-      next: yearTile(y + 1),
-    };
-  }
-  if (kind === 'month') {
-    return {
-      prev: monthTile(shiftMonth(anchor, -1)),
-      current: monthTile(anchor),
-      next: monthTile(shiftMonth(anchor, 1)),
-    };
-  }
-  if (kind === 'week') {
-    const cur = weekRangeContaining(anchor).fromIso;
-    return {
-      prev: weekTile(shiftWeek(cur, -1)),
-      current: weekTile(cur),
-      next: weekTile(shiftWeek(cur, 1)),
-    };
-  }
-  if (kind === 'multiday') {
-    return {
-      prev: multidayTile(shiftMultiday(anchor, dayCount, -1), dayCount),
-      current: multidayTile(anchor, dayCount),
-      next: multidayTile(shiftMultiday(anchor, dayCount, 1), dayCount),
-    };
-  }
-  if (kind === 'day') {
-    return {
-      prev: dayTile(shiftDay(anchor, -1)),
-      current: dayTile(anchor),
-      next: dayTile(shiftDay(anchor, 1)),
-    };
-  }
-  // agenda — step by 7 days (existing toolbar law)
+function packWindow(slots: PeriodTileModel[]): PeriodWindow {
   return {
-    prev: agendaTile(shiftDay(anchor, -7)),
-    current: agendaTile(anchor),
-    next: agendaTile(shiftDay(anchor, 7)),
+    slots,
+    prev2: slots[0]!,
+    prev: slots[1]!,
+    current: slots[2]!,
+    next: slots[3]!,
+    next2: slots[4]!,
   };
 }
 
+function shiftMultidayBy(anchor: string, count: MultidayCount, steps: number): string {
+  let a = anchor;
+  const dir: -1 | 1 = steps >= 0 ? 1 : -1;
+  const n = Math.abs(steps);
+  for (let i = 0; i < n; i += 1) {
+    a = shiftMultiday(a, count, dir);
+  }
+  return a;
+}
+
+/** Build five tiles (center ±2) around the current anchor. */
+export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
+  const { kind, anchor, dayCount = 3 } = args;
+  const offsets = [-2, -1, 0, 1, 2] as const;
+
+  if (kind === 'year') {
+    const y = Number(anchor) || yearContaining(anchor);
+    return packWindow(offsets.map((d) => yearTile(y + d)));
+  }
+  if (kind === 'month') {
+    return packWindow(offsets.map((d) => monthTile(shiftMonth(anchor, d))));
+  }
+  if (kind === 'week') {
+    const cur = weekRangeContaining(anchor).fromIso;
+    return packWindow(offsets.map((d) => weekTile(shiftWeek(cur, d))));
+  }
+  if (kind === 'multiday') {
+    return packWindow(
+      offsets.map((d) => multidayTile(shiftMultidayBy(anchor, dayCount, d), dayCount)),
+    );
+  }
+  if (kind === 'day') {
+    return packWindow(offsets.map((d) => dayTile(shiftDay(anchor, d))));
+  }
+  // agenda — step by 7 days (existing toolbar law)
+  return packWindow(offsets.map((d) => agendaTile(shiftDay(anchor, d * 7))));
+}
+
 /**
- * Map finger release to page step.
- * Negative translation (drag left) → next (+1); positive → prev (−1).
+ * Map finger release to integer slot steps (−max…+max).
+ * Negative translation (drag left) → next (+); positive → prev (−).
+ * Max fling WHEEL_MAX_FLING_SLOTS (AC-M04).
  */
 export function snapPeriodPage(
   translationX: number,
-  pageWidth: number,
+  pitch: number = SLOT_PITCH,
   velocityX = 0,
   distanceRatio = 0.28,
   velocityThreshold = 600,
-): -1 | 0 | 1 {
-  const width = pageWidth > 0 ? pageWidth : 1;
-  if (translationX <= -width * distanceRatio || velocityX <= -velocityThreshold) return 1;
-  if (translationX >= width * distanceRatio || velocityX >= velocityThreshold) return -1;
-  return 0;
+  maxSlots = MAX_FLING_SLOTS,
+): number {
+  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  // Content follows finger: slots advanced ≈ −translationX / P
+  const distanceSlots = -translationX / P;
+  const speed = Math.abs(velocityX);
+
+  let slots: number;
+  if (speed < velocityThreshold) {
+    if (Math.abs(distanceSlots) < distanceRatio) {
+      slots = 0;
+    } else {
+      const rounded = Math.round(distanceSlots);
+      slots = rounded === 0 ? (distanceSlots > 0 ? 1 : -1) : rounded;
+    }
+  } else {
+    // Momentum coast (mockup ~180ms * v): add velocity contribution then round
+    const coast = (-velocityX / 1000) * (180 / P);
+    slots = Math.round(distanceSlots + coast);
+    if (slots === 0) {
+      slots = velocityX < 0 ? 1 : -1;
+    }
+  }
+
+  if (slots > maxSlots) return maxSlots;
+  if (slots < -maxSlots) return -maxSlots;
+  return slots;
 }
 
-/** Scale at a tile's center given drag offset (0 = parked on current). */
+/** Scale at a tile's center given drag offset (0 = parked on current). Legacy helper. */
 export function rolodexScaleForOffset(
   tileOffsetX: number,
   pageWidth: number,
@@ -262,7 +295,7 @@ export function rolodexScaleForOffset(
   return centerScale + (sideScale - centerScale) * t;
 }
 
-/** Opacity for side vs center. */
+/** Opacity for side vs center. Legacy helper. */
 export function rolodexOpacityForOffset(
   tileOffsetX: number,
   pageWidth: number,

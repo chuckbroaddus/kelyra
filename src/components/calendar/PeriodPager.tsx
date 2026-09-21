@@ -1,10 +1,9 @@
 /**
- * Shared 3D horizontal period wheel (drum). Recycles prev/current/next on settle.
- * rotateY + scale + dim; snap center; tap side → center; momentum + spring.
- * RM: no tilt — keep scale/fade/snap + tappable sides.
- * Touch-only. Leaf-fail → << label >> fallback.
- * Does not steal iOS edge-back (PERIOD_PAGER_EDGE_GUARD_PX).
- * SoT: notes/company/calendar-3d-wheel-*.md (Mac-local at implement; curves in periodWheel.ts).
+ * Shared 3D horizontal period wheel (drum). Five-slot rest window (center ±2).
+ * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
+ * Composite: translateX(d*P) · translateZ(z) · rotateY(ry) · scale(s).
+ * RM: drop rotateY + Z; keep scale, opacity, snap, taps, hierarchy.
+ * Fail closed → << label >>. Touch-only. No iOS edge-back steal.
  */
 import {
   Component,
@@ -24,8 +23,8 @@ import {
   Text,
   View,
   type GestureResponderEvent,
-  type LayoutChangeEvent,
   type PanResponderGestureState,
+  type ViewStyle,
 } from 'react-native';
 
 import { PeriodLeaf } from '@/components/calendar/PeriodLeaf';
@@ -35,25 +34,33 @@ import {
   buildPeriodWindow,
   type PeriodKind,
   type PeriodTileModel,
-  type PeriodWindow,
 } from '@/lib/calendar/periodPager';
 import {
+  WHEEL_HERO_HEIGHT,
+  WHEEL_HERO_WIDTH,
+  WHEEL_MAX_FLING_SLOTS,
   WHEEL_PERSPECTIVE,
+  WHEEL_PITCH,
+  WHEEL_SLOT_OFFSETS,
   WHEEL_SPRING,
+  WHEEL_STAGE_HEIGHT,
   snapPeriodPage,
   wheelOpacityForNorm,
   wheelRotateYDegForNorm,
   wheelScaleForNorm,
+  wheelZForNorm,
 } from '@/lib/calendar/periodWheel';
 import type { MultidayCount } from '@/lib/calendar/multiday';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
+import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   kind: PeriodKind;
   /** Year number string or ISO anchor. */
   anchor: string;
   dayCount?: MultidayCount;
-  onShift: (direction: -1 | 1) => void;
+  /** Signed slot steps (−3…+3). */
+  onShift: (steps: number) => void;
   onJumpToday: () => void;
   accessibilityPrevLabel?: string;
   accessibilityNextLabel?: string;
@@ -112,10 +119,35 @@ function FallbackToolbar({
   );
 }
 
-function tileAt(window: PeriodWindow, role: 'prev' | 'current' | 'next'): PeriodTileModel {
-  if (role === 'prev') return window.prev;
-  if (role === 'next') return window.next;
-  return window.current;
+type SlotRole = 'prev2' | 'prev' | 'current' | 'next' | 'next2';
+
+function roleForOffset(offset: number): SlotRole {
+  if (offset === -2) return 'prev2';
+  if (offset === -1) return 'prev';
+  if (offset === 1) return 'next';
+  if (offset === 2) return 'next2';
+  return 'current';
+}
+
+/** Sample interpolate ranges for a parked slot over dragX ∈ [−3P … +3P]. */
+function makeNormSamples(parked: number, pitch: number) {
+  const input: number[] = [];
+  const scales: number[] = [];
+  const opacities: number[] = [];
+  const rotateYs: string[] = [];
+  const zs: number[] = [];
+  const xs: number[] = [];
+  for (let steps = -WHEEL_MAX_FLING_SLOTS; steps <= WHEEL_MAX_FLING_SLOTS; steps += 1) {
+    const drag = steps * pitch; // dragX sample (content follows finger)
+    const d = parked + drag / pitch;
+    input.push(drag);
+    scales.push(wheelScaleForNorm(d));
+    opacities.push(wheelOpacityForNorm(d));
+    rotateYs.push(`${wheelRotateYDegForNorm(d)}deg`);
+    zs.push(wheelZForNorm(d));
+    xs.push(d * pitch);
+  }
+  return { input, scales, opacities, rotateYs, zs, xs };
 }
 
 export function PeriodPager({
@@ -128,13 +160,13 @@ export function PeriodPager({
   accessibilityNextLabel = 'Next',
 }: Props) {
   const reduceMotion = useReducedMotion();
-  const [pageWidth, setPageWidth] = useState(0);
+  const { colors } = useTheme();
   const [failed, setFailed] = useState(false);
   const [showCenterExtras, setShowCenterExtras] = useState(true);
   const dragX = useRef(new Animated.Value(0)).current;
   const settling = useRef(false);
-  const pageWidthRef = useRef(0);
   const velocityRef = useRef(0);
+  const pitch = WHEEL_PITCH;
 
   const window = useMemo(
     () => buildPeriodWindow({ kind, anchor, dayCount }),
@@ -150,18 +182,18 @@ export function PeriodPager({
   const onFail = useCallback(() => setFailed(true), []);
 
   const finishShift = useCallback(
-    (dir: -1 | 1) => {
+    (steps: number) => {
       settling.current = true;
       setShowCenterExtras(false);
-      onShift(dir);
+      onShift(steps);
     },
     [onShift],
   );
 
   const animateSnap = useCallback(
-    (dir: -1 | 0 | 1) => {
-      const width = pageWidthRef.current || 1;
-      const toValue = dir === 0 ? 0 : dir === 1 ? -width : width;
+    (steps: number) => {
+      // Bring slot `steps` to center: content follows finger → dragX = -steps * P
+      const toValue = steps === 0 ? 0 : -steps * pitch;
       Animated.spring(dragX, {
         toValue,
         useNativeDriver: true,
@@ -170,27 +202,27 @@ export function PeriodPager({
         velocity: velocityRef.current,
       }).start(({ finished }) => {
         if (!finished) return;
-        if (dir === 0) {
+        if (steps === 0) {
           setShowCenterExtras(true);
           settling.current = false;
           return;
         }
         dragX.setValue(0);
-        finishShift(dir);
+        finishShift(steps);
       });
     },
-    [dragX, finishShift],
+    [dragX, finishShift, pitch],
   );
 
   const tapSide = useCallback(
-    (dir: -1 | 1) => {
-      if (settling.current) return;
+    (steps: number) => {
+      if (settling.current || steps === 0) return;
       if (reduceMotion) {
-        onShift(dir);
+        onShift(steps);
         return;
       }
-      velocityRef.current = dir === 1 ? -1.4 : 1.4;
-      animateSnap(dir);
+      velocityRef.current = steps > 0 ? -1.4 : 1.4;
+      animateSnap(steps);
     },
     [animateSnap, onShift, reduceMotion],
   );
@@ -202,12 +234,12 @@ export function PeriodPager({
         onMoveShouldSetPanResponder: (e: GestureResponderEvent, g: PanResponderGestureState) => {
           if (reduceMotion || settling.current || failed) return false;
           if (e.nativeEvent.pageX < PERIOD_PAGER_EDGE_GUARD_PX) return false;
-          return Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
+          return Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
         onMoveShouldSetPanResponderCapture: (e, g) => {
           if (reduceMotion || settling.current || failed) return false;
           if (e.nativeEvent.pageX < PERIOD_PAGER_EDGE_GUARD_PX) return false;
-          return Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
+          return Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
@@ -221,25 +253,16 @@ export function PeriodPager({
         },
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx;
-          const dir = snapPeriodPage(g.dx, pageWidthRef.current, g.vx * 1000);
-          animateSnap(dir);
+          const steps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
+          animateSnap(steps);
         },
         onPanResponderTerminate: () => {
           velocityRef.current = 0;
           animateSnap(0);
         },
       }),
-    [animateSnap, dragX, failed, reduceMotion],
+    [animateSnap, dragX, failed, pitch, reduceMotion],
   );
-
-  const onLayout = (e: LayoutChangeEvent) => {
-    const w = e.nativeEvent.layout.width;
-    if (w > 0 && Math.abs(w / 3 - pageWidth) > 1) {
-      const tile = w / 3;
-      pageWidthRef.current = tile;
-      setPageWidth(tile);
-    }
-  };
 
   if (failed) {
     return (
@@ -254,181 +277,167 @@ export function PeriodPager({
     );
   }
 
+  const plateStyle = [
+    styles.stage,
+    {
+      backgroundColor: colors.elevated,
+      borderColor: colors.line,
+    },
+  ];
+
   if (reduceMotion) {
     return (
       <PeriodLeafBoundary onFail={onFail}>
-        <View style={styles.toolbar} onLayout={onLayout}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={accessibilityPrevLabel}
-            onPress={() => tapSide(-1)}
-            style={[
-              styles.rmSide,
-              {
-                opacity: wheelOpacityForNorm(-1),
-                transform: [{ scale: wheelScaleForNorm(-1) }],
-              },
-            ]}
-          >
-            <PeriodLeaf
-              tile={window.prev}
-              role="prev"
-              showCenterExtras={false}
-              width={pageWidth || 100}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go to today"
-            onPress={onJumpToday}
-            style={styles.rmCenter}
-          >
-            <PeriodLeaf
-              tile={window.current}
-              role="current"
-              showCenterExtras
-              width={pageWidth || 120}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={accessibilityNextLabel}
-            onPress={() => tapSide(1)}
-            style={[
-              styles.rmSide,
-              {
-                opacity: wheelOpacityForNorm(1),
-                transform: [{ scale: wheelScaleForNorm(1) }],
-              },
-            ]}
-          >
-            <PeriodLeaf
-              tile={window.next}
-              role="next"
-              showCenterExtras={false}
-              width={pageWidth || 100}
-            />
-          </Pressable>
+        <View style={plateStyle}>
+          <View style={styles.rmRow}>
+            {WHEEL_SLOT_OFFSETS.map((offset) => {
+              const idx = offset + 2;
+              const tile = window.slots[idx]!;
+              const role = roleForOffset(offset);
+              const isCenter = offset === 0;
+              return (
+                <Pressable
+                  key={tile.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isCenter
+                      ? 'Go to today'
+                      : offset < 0
+                        ? accessibilityPrevLabel
+                        : accessibilityNextLabel
+                  }
+                  onPress={() => (isCenter ? onJumpToday() : tapSide(offset))}
+                  style={[
+                    styles.rmHit,
+                    {
+                      opacity: wheelOpacityForNorm(offset),
+                      transform: [{ scale: wheelScaleForNorm(offset) }],
+                      zIndex: 10 - Math.abs(offset),
+                    },
+                  ]}
+                >
+                  <PeriodLeaf
+                    tile={tile}
+                    role={role}
+                    showCenterExtras={isCenter}
+                    width={WHEEL_HERO_WIDTH}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </PeriodLeafBoundary>
     );
   }
 
-  const roles = ['prev', 'current', 'next'] as const;
-  const baseX = pageWidth > 0 ? -pageWidth : 0;
-
   return (
     <PeriodLeafBoundary onFail={onFail}>
       <View
-        style={styles.viewport}
-        onLayout={onLayout}
+        style={plateStyle}
         accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
         {...pan.panHandlers}
       >
-        {pageWidth > 0 ? (
-          <Animated.View
-            style={[
-              styles.track,
-              {
-                width: pageWidth * 3,
-                marginLeft: baseX,
-                transform: [{ translateX: dragX }],
-              },
-            ]}
-          >
-            {roles.map((role, index) => {
-              const tile = tileAt(window, role);
-              const tileCenter = index * pageWidth + pageWidth / 2;
-              const parkedCenter = pageWidth * 1.5;
-              const relative = tileCenter - parkedCenter; // -pageWidth | 0 | +pageWidth
-              const norms = [-pageWidth, 0, pageWidth].map((d) => (relative + d) / pageWidth);
-              const scale = dragX.interpolate({
-                inputRange: [-pageWidth, 0, pageWidth],
-                outputRange: norms.map(wheelScaleForNorm),
-                extrapolate: 'clamp',
-              });
-              const opacity = dragX.interpolate({
-                inputRange: [-pageWidth, 0, pageWidth],
-                outputRange: norms.map(wheelOpacityForNorm),
-                extrapolate: 'clamp',
-              });
-              const rotateY = dragX.interpolate({
-                inputRange: [-pageWidth, 0, pageWidth],
-                outputRange: norms.map((t) => `${wheelRotateYDegForNorm(t)}deg`),
-                extrapolate: 'clamp',
-              });
-              return (
-                <Animated.View
-                  key={tile.key}
-                  style={[
-                    styles.tileSlot,
-                    {
-                      width: pageWidth,
-                      opacity,
-                      transform: [
-                        { perspective: WHEEL_PERSPECTIVE },
-                        { rotateY },
-                        { scale },
-                      ],
-                    },
-                  ]}
+        <View style={styles.track}>
+          {WHEEL_SLOT_OFFSETS.map((parked) => {
+            const idx = parked + 2;
+            const tile: PeriodTileModel = window.slots[idx]!;
+            const role = roleForOffset(parked);
+            const samples = makeNormSamples(parked, pitch);
+            const scale = dragX.interpolate({
+              inputRange: samples.input,
+              outputRange: samples.scales,
+              extrapolate: 'clamp',
+            });
+            const opacity = dragX.interpolate({
+              inputRange: samples.input,
+              outputRange: samples.opacities,
+              extrapolate: 'clamp',
+            });
+            const rotateY = dragX.interpolate({
+              inputRange: samples.input,
+              outputRange: samples.rotateYs,
+              extrapolate: 'clamp',
+            });
+            const translateZ = dragX.interpolate({
+              inputRange: samples.input,
+              outputRange: samples.zs,
+              extrapolate: 'clamp',
+            });
+            const translateX = dragX.interpolate({
+              inputRange: samples.input,
+              outputRange: samples.xs,
+              extrapolate: 'clamp',
+            });
+            const isCenter = parked === 0;
+            // translateZ + rotateY are SoT full-motion; RN Animated typings omit translateZ.
+            const tileMotion = {
+              opacity,
+              zIndex: 100 - Math.abs(parked) * 10,
+              transform: [
+                { perspective: WHEEL_PERSPECTIVE },
+                { translateX },
+                { translateZ },
+                { rotateY },
+                { scale },
+              ],
+            } as unknown as ViewStyle;
+            return (
+              <Animated.View key={tile.key} style={[styles.tileSlot, tileMotion]}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isCenter
+                      ? 'Go to today'
+                      : parked < 0
+                        ? accessibilityPrevLabel
+                        : accessibilityNextLabel
+                  }
+                  onPress={() => (isCenter ? onJumpToday() : tapSide(parked))}
+                  style={styles.hitTarget}
                 >
-                  {role === 'current' ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Go to today"
-                      onPress={onJumpToday}
-                    >
-                      <PeriodLeaf
-                        tile={tile}
-                        role={role}
-                        showCenterExtras={showCenterExtras}
-                        width={pageWidth}
-                      />
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        role === 'prev' ? accessibilityPrevLabel : accessibilityNextLabel
-                      }
-                      onPress={() => tapSide(role === 'prev' ? -1 : 1)}
-                    >
-                      <PeriodLeaf
-                        tile={tile}
-                        role={role}
-                        showCenterExtras={false}
-                        width={pageWidth}
-                      />
-                    </Pressable>
-                  )}
-                </Animated.View>
-              );
-            })}
-          </Animated.View>
-        ) : (
-          <View style={styles.toolbar}>
-            <PeriodLeaf tile={window.current} role="current" showCenterExtras width={120} />
-          </View>
-        )}
+                  <PeriodLeaf
+                    tile={tile}
+                    role={role}
+                    showCenterExtras={isCenter && showCenterExtras}
+                    width={WHEEL_HERO_WIDTH}
+                  />
+                </Pressable>
+              </Animated.View>
+            );
+          })}
+        </View>
       </View>
     </PeriodLeafBoundary>
   );
 }
 
 const styles = StyleSheet.create({
-  viewport: {
-    height: 96,
+  stage: {
+    height: WHEEL_STAGE_HEIGHT,
     marginTop: 8,
     marginBottom: 12,
     overflow: 'hidden',
     justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   track: {
-    flexDirection: 'row',
+    height: WHEEL_STAGE_HEIGHT,
+    width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tileSlot: {
+    position: 'absolute',
+    width: WHEEL_HERO_WIDTH,
+    height: WHEEL_HERO_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hitTarget: {
+    minWidth: 56,
+    minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -449,12 +458,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  rmSide: {
-    flex: 1,
+  rmRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    height: WHEEL_STAGE_HEIGHT,
+    gap: 0,
   },
-  rmCenter: {
-    flex: 1.2,
+  rmHit: {
+    minWidth: 56,
+    minHeight: 56,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: -8,
   },
 });
