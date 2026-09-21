@@ -423,6 +423,29 @@ export function commitShiftFromVisual(
   return steps;
 }
 
+/**
+ * Steps owed when a new gesture interrupts an in-flight snap/coast.
+ * Prefer programmed pending steps; otherwise fold trunc(visualShift).
+ * Caller adds the result into absorbedShift and does NOT call onShift mid-gesture.
+ */
+export function absorbInterruptShift(args: {
+  pendingSteps: number;
+  visualShift: number;
+}): number {
+  if (args.pendingSteps !== 0) {
+    return commitShiftFromVisual(args.pendingSteps);
+  }
+  return commitShiftFromVisual(args.visualShift);
+}
+
+/** True when a cancelled withSpring's late onSpringRest must no-op. */
+export function shouldIgnoreSpringRest(args: {
+  activeGeneration: number;
+  callbackGeneration: number;
+}): boolean {
+  return args.activeGeneration !== args.callbackGeneration;
+}
+
 
 /**
  * Short programmed snaps (|steps| ≤ this) are where SlotPool recycle mid-spring

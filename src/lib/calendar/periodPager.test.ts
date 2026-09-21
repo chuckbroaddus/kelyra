@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  absorbInterruptShift,
   buildPeriodWindow,
   commitShiftFromVisual,
   dragToSlotShift,
@@ -15,6 +16,7 @@ import {
   shiftPeriodAnchor,
   periodDistance,
   shouldFreezeSlotPoolDuringSnap,
+  shouldIgnoreSpringRest,
   SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS,
   transformDragForSlotMotion,
   visualShiftForSlotPool,
@@ -225,6 +227,36 @@ test('commitShiftFromVisual: settle commit === tracked flyby shift (soft max 48)
   assert.notEqual(commitShiftFromVisual(visualSeen), predicted);
 });
 
+
+test('absorbInterruptShift: prefer pending; else trunc visual; never invent steps', () => {
+  // Programmed pending wins (short snap interrupt before rest).
+  assert.equal(absorbInterruptShift({ pendingSteps: 2, visualShift: 1 }), 2);
+  assert.equal(absorbInterruptShift({ pendingSteps: -1, visualShift: 0 }), -1);
+  assert.equal(absorbInterruptShift({ pendingSteps: 12, visualShift: 7 }), 12);
+  // No pending → fold visualShift (long coast / freeze-at-liveShift interrupt).
+  assert.equal(absorbInterruptShift({ pendingSteps: 0, visualShift: 3 }), 3);
+  assert.equal(absorbInterruptShift({ pendingSteps: 0, visualShift: -2 }), -2);
+  assert.equal(absorbInterruptShift({ pendingSteps: 0, visualShift: 3.9 }), 3);
+  assert.equal(absorbInterruptShift({ pendingSteps: 0, visualShift: 0 }), 0);
+  // Soft ceiling via commitShiftFromVisual
+  assert.equal(absorbInterruptShift({ pendingSteps: 100, visualShift: 0 }), WHEEL_MAX_FLING_SLOTS);
+  assert.equal(absorbInterruptShift({ pendingSteps: 0, visualShift: -100 }), -WHEEL_MAX_FLING_SLOTS);
+});
+
+test('shouldIgnoreSpringRest: generation mismatch no-ops cancelled spring', () => {
+  assert.equal(
+    shouldIgnoreSpringRest({ activeGeneration: 3, callbackGeneration: 3 }),
+    false,
+  );
+  assert.equal(
+    shouldIgnoreSpringRest({ activeGeneration: 4, callbackGeneration: 3 }),
+    true,
+  );
+  assert.equal(
+    shouldIgnoreSpringRest({ activeGeneration: 0, callbackGeneration: 1 }),
+    true,
+  );
+});
 
 test('dragToSlotShift: trunc not round — no half-pitch flicker; monotonic slow drag', () => {
   const P = 78;
@@ -455,9 +487,11 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
-  // Settle commits pendingSnapStepsRef (absolute target); short snaps freeze mid-spring.
+  // Settle commits pending + absorbedShift; short snaps freeze mid-spring.
   assert.match(pager.slice(restIdx, animateIdx), /pendingSnapStepsRef\.current/);
-  assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual/);
+  assert.match(pager.slice(restIdx, animateIdx), /absorbedShiftRef\.current/);
+  assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual\(pending \+ absorbed\)/);
+  assert.match(pager.slice(restIdx, animateIdx), /shouldIgnoreSpringRest/);
   assert.match(pager, /shouldFreezeSlotPoolDuringSnap|snapFreezeShared/);
   assert.match(pager, /snapFreezeShared\.value === 1/);
   assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
@@ -485,6 +519,43 @@ test('PeriodPager slot map never reads tile.key on undefined (guards + shared of
       }
     });
   }
+});
+
+test('PeriodPager grant absorbs in-flight snap (does not drop pending)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  // Interrupt path folds owed steps into absorbedShift — never mid-gesture onShift.
+  assert.match(pager, /absorbInterruptShift/);
+  assert.match(pager, /absorbInFlightSnap/);
+  assert.match(pager, /absorbedShift/);
+  assert.match(pager, /updateAbsorbedShift/);
+  assert.match(pager, /snapGenerationRef/);
+  assert.match(pager, /shouldIgnoreSpringRest/);
+  // Window applies absorbed + visual so SlotPool does not repeat cards on interrupt.
+  assert.match(
+    pager,
+    /shiftPeriodAnchor\(kind,\s*anchor,\s*absorbedShift \+ visualShift,\s*dayCount\)/,
+  );
+  // Layout effect clears absorbed with the other snap resets.
+  const layoutIdx = pager.indexOf('useLayoutEffect(');
+  assert.ok(layoutIdx > 0);
+  const layoutBlock = pager.slice(layoutIdx, layoutIdx + 700);
+  assert.match(layoutBlock, /updateAbsorbedShift\(0\)/);
+  // Grant must absorb — not merely clear pending to 0 without folding.
+  const grantIdx = pager.indexOf('onPanResponderGrant');
+  assert.ok(grantIdx > 0);
+  const grantBlock = pager.slice(grantIdx, grantIdx + 900);
+  assert.match(grantBlock, /absorbInFlightSnap\(\)/);
+  assert.doesNotMatch(
+    grantBlock,
+    /pendingSnapStepsRef\.current = 0;\s*\n\s*if \(!IS_WEB\)/,
+  );
+  // tapSide also absorbs when a snap is in flight.
+  const tapIdx = pager.indexOf('const tapSide');
+  const tapBlock = pager.slice(tapIdx, tapIdx + 500);
+  assert.match(tapBlock, /absorbInFlightSnap\(\)/);
+  // animateSnap stamps springGeneration for late-rest ignore.
+  assert.match(pager, /onSpringRest\(springGeneration\)/);
+  assert.match(pager, /runOnJS\(onSpringRest\)\(springGeneration\)/);
 });
 
 test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multiday', () => {
