@@ -110,12 +110,11 @@ test('Set B palette locked (CAL-3DW-10)', () => {
   assert.equal(SET_B.tabHighlight, '#ECEFF1');
 });
 
-test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY/Z; RM no tilt; no className', () => {
+test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY; no translateZ in style; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /rotateY/);
-  assert.match(pager, /translateZ/);
   assert.match(pager, /WHEEL_PERSPECTIVE/);
   assert.match(pager, /tapSide/);
   assert.match(pager, /useReducedMotion/);
@@ -123,7 +122,11 @@ test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY/Z; RM no tilt; 
   assert.match(pager, /PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.match(pager, /label=["']<<["']/);
   assert.doesNotMatch(pager, /className\s*:/);
-  // RM branch: scale+opacity only (no rotateY / translateZ in that block)
+  // RN Fabric rejects translateZ in style.transform — must not appear as a transform key
+  assert.doesNotMatch(pager, /\{\s*translateZ\s*[,}]/);
+  assert.doesNotMatch(pager, /translateZ\s*,/);
+  assert.doesNotMatch(pager, /outputRange:\s*samples\.zs/);
+  // RM branch: scale+opacity only (no rotateY in that block)
   const rmStart = pager.indexOf('if (reduceMotion)');
   assert.ok(rmStart >= 0);
   const rmReturn = pager.indexOf('return (', rmStart);
@@ -133,9 +136,19 @@ test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY/Z; RM no tilt; 
   assert.doesNotMatch(rmSrc, /translateZ/);
   assert.match(rmSrc, /wheelScaleForNorm/);
   assert.match(rmSrc, /wheelOpacityForNorm/);
-  // Full-motion path still has rotateY + Z
-  assert.match(pager.slice(afterRm), /rotateY/);
-  assert.match(pager.slice(afterRm), /translateZ/);
+  // Full-motion path keeps rotateY + translateX + scale; still no translateZ in style array
+  const full = pager.slice(afterRm);
+  assert.match(full, /rotateY/);
+  assert.match(full, /translateX/);
+  assert.match(full, /\{\s*scale\s*[,}]|\{\s*scale\s*\}/);
+  assert.doesNotMatch(full, /translateZ/);
+  // Transform array keys must not include translateZ
+  const transformMatch = full.match(/transform:\s*\[([\s\S]*?)\]/);
+  assert.ok(transformMatch, 'expected transform array in full-motion path');
+  assert.doesNotMatch(transformMatch[1], /translateZ/);
+  assert.match(transformMatch[1], /translateX/);
+  assert.match(transformMatch[1], /rotateY/);
+  assert.match(transformMatch[1], /scale/);
 });
 
 test('PeriodLeaf Set B hanging-ledger: fixed hex; metal tabs; no YearIcon bars; no theme recolor', () => {

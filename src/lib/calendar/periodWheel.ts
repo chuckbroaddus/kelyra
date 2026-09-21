@@ -110,7 +110,7 @@ export function wheelRotateYDegForNorm(d: number): number {
   return deg === 0 ? 0 : deg;
 }
 
-/** translateZ lift. SoT: z(d) = 36 - 18*|d|. RM callers pass 0. */
+/** SoT Z lift curve: z(d) = 36 - 18*|d|. Not applied to RN style.transform (Fabric rejects translateZ). */
 export function wheelZForNorm(d: number): number {
   return WHEEL_Z_CENTER - WHEEL_Z_PER_SLOT * Math.abs(d);
 }
