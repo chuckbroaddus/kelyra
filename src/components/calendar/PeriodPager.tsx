@@ -1,7 +1,7 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
  * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
- * Soft MAX_FLING~48; inertial coast; mid-fling SlotPool rebounds match committed advance.
+ * Soft MAX_FLING~48; inertial coast; settle commits visualShift flybys (not release prediction).
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
@@ -42,6 +42,7 @@ import { PeriodLeaf, type PeriodLeafRole } from '@/components/calendar/PeriodLea
 import { GhostButton } from '@/components/ui/Button';
 import {
   buildPeriodWindow,
+  commitShiftFromVisual,
   periodDistance,
   shiftPeriodAnchor,
   type PeriodKind,
@@ -326,11 +327,18 @@ export function PeriodPager({
   /** Anchor captured on pan grant / fling start — ±4 clear window origin. */
   const [flingOriginAnchor, setFlingOriginAnchor] = useState<string | null>(null);
   /** Integer SlotPool rebound during long fling (flyby count ↔ committed advance). */
-  const [visualShift, setVisualShift] = useState(0);
+  const [visualShift, setVisualShiftState] = useState(0);
+  /** Always mirrors latest visualShift for settle commit (avoids stale predicted steps). */
+  const visualShiftRef = useRef(0);
+  const updateVisualShift = useCallback((shift: number) => {
+    visualShiftRef.current = shift;
+    setVisualShiftState(shift);
+  }, []);
   /** Web drag px (CSS path). Native uses dragShared. */
   const [webDragPx, setWebDragPx] = useState(0);
   const dragShared = useSharedValue(0);
   const settling = useRef(false);
+  /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
   const velocityRef = useRef(0);
   const pitch = WHEEL_PITCH;
 
@@ -348,12 +356,12 @@ export function PeriodPager({
   useLayoutEffect(() => {
     dragShared.value = 0;
     setWebDragPx(0);
-    setVisualShift(0);
+    updateVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
     setFlingOriginAnchor(null);
     settling.current = false;
-  }, [anchor, kind, dayCount, dragShared]);
+  }, [anchor, kind, dayCount, dragShared, updateVisualShift]);
 
   // Native: rebound period keys as total drag / pitch crosses integers.
   useAnimatedReaction(
@@ -361,10 +369,10 @@ export function PeriodPager({
     (shift, prev) => {
       'worklet';
       if (shift !== prev) {
-        runOnJS(setVisualShift)(shift);
+        runOnJS(updateVisualShift)(shift);
       }
     },
-    [pitch],
+    [pitch, updateVisualShift],
   );
 
   const onFail = useCallback(() => setFailed(true), []);
@@ -377,36 +385,40 @@ export function PeriodPager({
     [onShift],
   );
 
-  const onSpringRest = useCallback(
-    (steps: number) => {
-      // End of spring/coast: drop silhouette, show full center ledger, commit steps.
-      setShowCenterExtras(true);
-      setFlinging(false);
-      setFlingOriginAnchor(null);
-      if (steps === 0) {
-        settling.current = false;
-        setVisualShift(0);
-        return;
-      }
+  const onSpringRest = useCallback(() => {
+    // End of spring/coast: drop silhouette, show full center ledger.
+    // Commit actual flybys (visualShiftRef), NOT release-time snapPeriodPage prediction.
+    setShowCenterExtras(true);
+    setFlinging(false);
+    setFlingOriginAnchor(null);
+    const commit = commitShiftFromVisual(visualShiftRef.current);
+    // Snap drag to integer pitch matching the flybys we commit.
+    const snapped = -commit * pitch;
+    dragShared.value = snapped;
+    setWebDragPx(snapped);
+    if (commit === 0) {
+      settling.current = false;
+      updateVisualShift(0);
       dragShared.value = 0;
       setWebDragPx(0);
-      // visualShift resets in layout effect when parent anchor updates.
-      finishShift(steps);
-    },
-    [dragShared, finishShift],
-  );
+      return;
+    }
+    // visualShift resets in layout effect when parent anchor updates.
+    finishShift(commit);
+  }, [dragShared, finishShift, pitch, updateVisualShift]);
 
   const animateSnap = useCallback(
-    (steps: number) => {
-      const toValue = steps === 0 ? 0 : -steps * pitch;
+    (targetSteps: number) => {
+      // targetSteps drives coast animation destination only; settle commits visualShiftRef.
+      const toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
       // Keep flinging===true (silhouettes) for the entire spring/coast.
-      // onSpringRest flips flinging false + showCenterExtras + onShift(fullSteps).
+      // onSpringRest flips flinging false + showCenterExtras + onShift(visual flybys).
       if (IS_WEB || reduceMotion) {
-        // Web / RM: settle via immediate commit (no RN Animated fling path).
+        // Web / RM: jump to target, sync visual tracker, then commit visual at rest.
         setWebDragPx(toValue);
-        setVisualShift(steps);
+        updateVisualShift(targetSteps);
         // Microtask → onSpringRest (flinging stays true until then).
-        Promise.resolve().then(() => onSpringRest(steps));
+        Promise.resolve().then(() => onSpringRest());
         return;
       }
       dragShared.value = withSpring(
@@ -415,16 +427,17 @@ export function PeriodPager({
           damping: WHEEL_REANIMATED_SPRING.damping,
           stiffness: WHEEL_REANIMATED_SPRING.stiffness,
           mass: WHEEL_REANIMATED_SPRING.mass,
+          // velocityRef is already px/s (PanResponder vx * 1000).
           velocity: velocityRef.current,
         },
         (finished) => {
           'worklet';
           if (!finished) return;
-          runOnJS(onSpringRest)(steps);
+          runOnJS(onSpringRest)();
         },
       );
     },
-    [dragShared, onSpringRest, pitch, reduceMotion],
+    [dragShared, onSpringRest, pitch, reduceMotion, updateVisualShift],
   );
 
   const tapSide = useCallback(
@@ -437,7 +450,8 @@ export function PeriodPager({
       setFlinging(true);
       setFlingOriginAnchor(anchor);
       setShowCenterExtras(false);
-      velocityRef.current = steps > 0 ? -1.4 : 1.4;
+      // px/s nudge so spring coasts toward the tapped neighbor.
+      velocityRef.current = steps > 0 ? -1400 : 1400;
       animateSnap(steps);
     },
     [anchor, animateSnap, onShift, reduceMotion],
@@ -468,26 +482,28 @@ export function PeriodPager({
           }
         },
         onPanResponderMove: (_e, g) => {
-          velocityRef.current = g.vx;
+          // PanResponder vx is px/ms → store px/s for withSpring.
+          velocityRef.current = g.vx * 1000;
           if (IS_WEB) {
             setWebDragPx(g.dx);
-            setVisualShift(residualFromTotalDrag(g.dx, pitch).shift);
+            updateVisualShift(residualFromTotalDrag(g.dx, pitch).shift);
           } else {
             dragShared.value = g.dx;
           }
         },
         onPanResponderRelease: (_e, g) => {
-          velocityRef.current = g.vx;
+          velocityRef.current = g.vx * 1000;
           // CAL-P6-1A-07: period commits on snap complete only.
-          const steps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
-          animateSnap(steps);
+          // targetSteps drives coast destination; onSpringRest commits visualShiftRef.
+          const targetSteps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
+          animateSnap(targetSteps);
         },
         onPanResponderTerminate: () => {
           velocityRef.current = 0;
           animateSnap(0);
         },
       }),
-    [animateSnap, anchor, dragShared, failed, pitch, reduceMotion],
+    [animateSnap, anchor, dragShared, failed, pitch, reduceMotion, updateVisualShift],
   );
 
   if (failed) {
