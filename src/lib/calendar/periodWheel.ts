@@ -84,6 +84,9 @@ export const WHEEL_CENTER_INDEX = 4;
 /** Neighbor half-width for full Set B ledger after snap (|d| ≤ this). */
 export const WHEEL_FULL_LEDGER_RADIUS = 1;
 
+/** Half-width (period steps) that stays sharp during fling from fling-origin. */
+export const WHEEL_FLING_CLEAR_RADIUS = 4;
+
 /** Spring ~300 ms settle (friction/tension pair for RN Animated compat). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;
 
@@ -175,17 +178,26 @@ export function wheelInFocusBand(d: number, band = WHEEL_FOCUS_BAND): boolean {
 
 /**
  * ContentPolicy (P0 fling/snap):
- * - fling → silhouette for every slot (no Month 35-cell / heavy Week strip)
- * - snap → full Set B for center+neighbors; far slots stay silhouette
+ * - fling → full (sharp) when |distanceFromOrigin| ≤ clearRadius (default 4);
+ *   silhouette (blur-out) beyond that. Origin = anchor captured at pan grant.
+ * - snap / not flinging → full Set B for center+neighbors; far slots silhouette
  */
 export type WheelContentMode = 'silhouette' | 'full';
 
 export function wheelContentModeFor(args: {
   parkedOffset: number;
   flinging: boolean;
+  /** Signed period steps from fling-start origin to this tile (kind-aware). */
+  distanceFromOrigin?: number;
+  /** Clear (full) radius while flinging. Default WHEEL_FLING_CLEAR_RADIUS (4). */
+  clearRadius?: number;
   fullRadius?: number;
 }): WheelContentMode {
-  if (args.flinging) return 'silhouette';
+  if (args.flinging) {
+    const dist = args.distanceFromOrigin ?? Number.POSITIVE_INFINITY;
+    const clear = args.clearRadius ?? WHEEL_FLING_CLEAR_RADIUS;
+    return Math.abs(dist) <= clear ? 'full' : 'silhouette';
+  }
   const radius = args.fullRadius ?? WHEEL_FULL_LEDGER_RADIUS;
   return Math.abs(args.parkedOffset) <= radius ? 'full' : 'silhouette';
 }
