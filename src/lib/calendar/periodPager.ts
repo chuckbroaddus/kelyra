@@ -18,6 +18,7 @@ import {
 import type { CalendarViewId, DayMode } from './viewPrefs.ts';
 import { shiftWeek, weekRangeContaining } from './week.ts';
 import { yearContaining } from './year.ts';
+import { parseISODate } from '../date/iso.ts';
 import {
   WHEEL_FLING_DECEL,
   WHEEL_MAX_FLING_SLOTS,
@@ -287,6 +288,54 @@ export function shiftPeriodAnchor(
   // agenda — step by 7 days (existing toolbar law)
   return shiftDay(anchor, steps * 7);
 }
+
+function isoDayDelta(fromIso: string, toIso: string): number {
+  const a = parseISODate(fromIso);
+  const b = parseISODate(toIso);
+  if (!a || !b) return 0;
+  const ms =
+    Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
+    Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+  return Math.round(ms / 86_400_000);
+}
+
+/**
+ * Signed kind-aware period steps from `fromAnchor` to `toAnchor`.
+ * Used for fling ±4 clear-window policy (distance from fling-origin).
+ */
+export function periodDistance(
+  kind: PeriodKind,
+  fromAnchor: string,
+  toAnchor: string,
+  dayCount: MultidayCount = 3,
+): number {
+  if (fromAnchor === toAnchor) return 0;
+  if (kind === 'year') {
+    const a = Number(fromAnchor) || yearContaining(fromAnchor);
+    const b = Number(toAnchor) || yearContaining(toAnchor);
+    return b - a;
+  }
+  if (kind === 'month') {
+    const a = monthContaining(fromAnchor);
+    const b = monthContaining(toAnchor);
+    return (b.year - a.year) * 12 + (b.monthIndex0 - a.monthIndex0);
+  }
+  if (kind === 'week') {
+    const a = weekRangeContaining(fromAnchor).fromIso;
+    const b = weekRangeContaining(toAnchor).fromIso;
+    return Math.round(isoDayDelta(a, b) / 7);
+  }
+  if (kind === 'multiday') {
+    const step = dayCount === 3 ? 3 : 7;
+    return Math.round(isoDayDelta(fromAnchor, toAnchor) / step);
+  }
+  if (kind === 'day') {
+    return isoDayDelta(fromAnchor, toAnchor);
+  }
+  // agenda — 7-day toolbar steps
+  return Math.round(isoDayDelta(fromAnchor, toAnchor) / 7);
+}
+
 
 /**
  * Map finger release to integer slot steps (−max…+max soft ceiling).

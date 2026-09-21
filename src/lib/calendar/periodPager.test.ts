@@ -10,6 +10,7 @@ import {
   showsPeriodPager,
   snapPeriodPage,
   shiftPeriodAnchor,
+  periodDistance,
 } from './periodPager.ts';
 import {
   WHEEL_FLING_DECEL,
@@ -286,4 +287,24 @@ test('Y/M/W/D leaf identity source contracts (CAL-3DW-16)', () => {
   assert.doesNotMatch(leaf, /wrapBodyText/);
   assert.match(leaf, /dayNumeral/);
   assert.doesNotMatch(leaf, /dayCircle|borderRadius:\s*14/);
+});
+
+test('periodDistance: kind-aware signed steps from fling origin', () => {
+  assert.equal(periodDistance('year', '2026', '2026'), 0);
+  assert.equal(periodDistance('year', '2026', '2030'), 4);
+  assert.equal(periodDistance('year', '2026', '2031'), 5);
+  assert.equal(periodDistance('year', '2026', '2022'), -4);
+  assert.equal(periodDistance('year', '2026', '2021'), -5);
+  assert.equal(periodDistance('month', '2026-09-15', '2027-01-01'), 4);
+  assert.equal(periodDistance('month', '2026-09-15', '2027-02-01'), 5);
+  assert.equal(periodDistance('day', '2026-09-20', '2026-09-24'), 4);
+  assert.equal(periodDistance('day', '2026-09-20', '2026-09-25'), 5);
+  assert.equal(periodDistance('week', '2026-09-13', '2026-10-11'), 4);
+  assert.equal(periodDistance('week', '2026-09-13', '2026-10-18'), 5);
+});
+
+test('wheelContentModeFor fling clear window uses periodDistance radius 4', () => {
+  // imported via periodWheel in sibling test; pin policy contract here via distance helper
+  assert.ok(Math.abs(periodDistance('year', '2026', '2030')) <= 4);
+  assert.ok(Math.abs(periodDistance('year', '2026', '2031')) > 4);
 });

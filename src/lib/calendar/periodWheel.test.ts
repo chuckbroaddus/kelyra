@@ -122,8 +122,13 @@ test('SlotPool keys + content policy', () => {
   assert.equal(slotIndexForOffset(0), WHEEL_CENTER_INDEX);
   assert.equal(slotIndexForOffset(-4), 0);
   assert.equal(slotIndexForOffset(4), 8);
-  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true }), 'silhouette');
-  assert.equal(wheelContentModeFor({ parkedOffset: 2, flinging: true }), 'silhouette');
+  // Flinging: ±4 from origin stay full; beyond → silhouette
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 0 }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 4 }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -4 }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 5 }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -5 }), 'silhouette');
+  // Not flinging: center neighbors full
   assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: false }), 'full');
   assert.equal(wheelContentModeFor({ parkedOffset: 1, flinging: false }), 'full');
   assert.equal(wheelContentModeFor({ parkedOffset: 2, flinging: false }), 'silhouette');
@@ -175,18 +180,18 @@ test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + per-kind silhouettes'
   assert.match(leaf, /memo\(MonthHangingGridImpl\)|const MonthHangingGrid = memo/);
   assert.match(leaf, /contentMode/);
   assert.match(leaf, /SilhouetteLeaf|silhouetteHeader/);
-  assert.match(leaf, /silhouetteBlurYear|styles\.yearPage/);
+  assert.match(leaf, /silhouetteYearText|silhouetteBlurYear|styles\.yearPage|yearPage/);
   assert.match(leaf, /tile\.kind === 'year'|kind === 'year'/);
-  assert.match(leaf, /silhouetteBlurDay|silhouetteHintRow/);
-  assert.match(leaf, /silhouetteBlurLabel|silhouetteBlurDayNumeral|silhouetteBlurCaption/);
+  assert.match(leaf, /silhouetteDayHint|silhouetteHintRow|silhouetteBlurDay/);
+  assert.match(leaf, /silhouetteLabelHint|silhouetteDayNumeral|silhouetteCaption|silhouetteBlurLabel|silhouetteBlurDayNumeral|silhouetteBlurCaption/);
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
   assert.match(leaf, /mountGrid|showExtras/);
-  // Real soft look: textShadow (not opacity-only), SoftBlurText ghost, year red+white.
-  assert.match(leaf, /SoftBlurText/);
-  assert.match(leaf, /textShadowRadius/);
-  assert.match(leaf, /textShadowColor/);
-  assert.doesNotMatch(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  // Blur-out: expo-blur BlurView / web CSS filter; no SoftBlurText ghost.
+  assert.match(leaf, /BlurOut/);
+  assert.match(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  assert.doesNotMatch(leaf, /SoftBlurText/);
+  assert.match(leaf, /blur\(6px\)/);
   assert.match(leaf, /yearPage/);
   assert.match(leaf, /SET_B\.header|#C62828/);
 });

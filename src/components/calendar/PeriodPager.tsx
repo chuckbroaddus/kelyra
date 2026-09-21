@@ -1,6 +1,6 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
- * P0: silhouette for entire spring/coast until onSpringRest; then full Set B + onShift.
+ * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
  * Soft MAX_FLING~48; inertial coast; mid-fling SlotPool rebounds match committed advance.
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
@@ -42,6 +42,7 @@ import { PeriodLeaf, type PeriodLeafRole } from '@/components/calendar/PeriodLea
 import { GhostButton } from '@/components/ui/Button';
 import {
   buildPeriodWindow,
+  periodDistance,
   shiftPeriodAnchor,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
@@ -322,6 +323,8 @@ export function PeriodPager({
   const [failed, setFailed] = useState(false);
   const [showCenterExtras, setShowCenterExtras] = useState(true);
   const [flinging, setFlinging] = useState(false);
+  /** Anchor captured on pan grant / fling start — ±4 clear window origin. */
+  const [flingOriginAnchor, setFlingOriginAnchor] = useState<string | null>(null);
   /** Integer SlotPool rebound during long fling (flyby count ↔ committed advance). */
   const [visualShift, setVisualShift] = useState(0);
   /** Web drag px (CSS path). Native uses dragShared. */
@@ -348,6 +351,7 @@ export function PeriodPager({
     setVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
+    setFlingOriginAnchor(null);
     settling.current = false;
   }, [anchor, kind, dayCount, dragShared]);
 
@@ -378,6 +382,7 @@ export function PeriodPager({
       // End of spring/coast: drop silhouette, show full center ledger, commit steps.
       setShowCenterExtras(true);
       setFlinging(false);
+      setFlingOriginAnchor(null);
       if (steps === 0) {
         settling.current = false;
         setVisualShift(0);
@@ -430,11 +435,12 @@ export function PeriodPager({
         return;
       }
       setFlinging(true);
+      setFlingOriginAnchor(anchor);
       setShowCenterExtras(false);
       velocityRef.current = steps > 0 ? -1.4 : 1.4;
       animateSnap(steps);
     },
-    [animateSnap, onShift, reduceMotion],
+    [anchor, animateSnap, onShift, reduceMotion],
   );
 
   const pan = useMemo(
@@ -454,6 +460,7 @@ export function PeriodPager({
         onPanResponderGrant: () => {
           setShowCenterExtras(false);
           setFlinging(true);
+          setFlingOriginAnchor(anchor);
           velocityRef.current = 0;
           if (!IS_WEB) {
             // cancel spring by freezing shared value
@@ -480,7 +487,7 @@ export function PeriodPager({
           animateSnap(0);
         },
       }),
-    [animateSnap, dragShared, failed, pitch, reduceMotion],
+    [animateSnap, anchor, dragShared, failed, pitch, reduceMotion],
   );
 
   if (failed) {
@@ -509,7 +516,15 @@ export function PeriodPager({
     if (!tile) return null;
     const role = roleForOffset(parked);
     const isCenter = parked === 0;
-    const contentMode = wheelContentModeFor({ parkedOffset: parked, flinging });
+    const distanceFromOrigin =
+      flinging && flingOriginAnchor != null
+        ? periodDistance(kind, flingOriginAnchor, tile.anchor, dayCount)
+        : 0;
+    const contentMode = wheelContentModeFor({
+      parkedOffset: parked,
+      flinging,
+      distanceFromOrigin,
+    });
     const leaf = (
       <Pressable
         accessibilityRole="button"
