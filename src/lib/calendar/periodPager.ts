@@ -44,15 +44,17 @@ export type PeriodTileModel = {
   dayIso?: string;
 };
 
-/** Five-slot rest window: center ±2 (CAL-3DW-05 / AC-M01). */
+/** Seven-slot recycle window: center ±3 (CAL-P6 Item 2 Approach A). */
 export type PeriodWindow = {
-  /** Slots at offsets -2,-1,0,+1,+2. Index 2 = center. */
+  /** Slots at offsets -3..+3. Index 3 = center. */
   slots: PeriodTileModel[];
+  prev3: PeriodTileModel;
   prev2: PeriodTileModel;
   prev: PeriodTileModel;
   current: PeriodTileModel;
   next: PeriodTileModel;
   next2: PeriodTileModel;
+  next3: PeriodTileModel;
 };
 
 /**
@@ -200,11 +202,13 @@ export type BuildPeriodWindowArgs = {
 function packWindow(slots: PeriodTileModel[]): PeriodWindow {
   return {
     slots,
-    prev2: slots[0]!,
-    prev: slots[1]!,
-    current: slots[2]!,
-    next: slots[3]!,
-    next2: slots[4]!,
+    prev3: slots[0]!,
+    prev2: slots[1]!,
+    prev: slots[2]!,
+    current: slots[3]!,
+    next: slots[4]!,
+    next2: slots[5]!,
+    next3: slots[6]!,
   };
 }
 
@@ -218,10 +222,10 @@ function shiftMultidayBy(anchor: string, count: MultidayCount, steps: number): s
   return a;
 }
 
-/** Build five tiles (center ±2) around the current anchor. */
+/** Build seven tiles (center ±3) around the current anchor. */
 export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
   const { kind, anchor, dayCount = 3 } = args;
-  const offsets = [-2, -1, 0, 1, 2] as const;
+  const offsets = [-3, -2, -1, 0, 1, 2, 3] as const;
 
   if (kind === 'year') {
     const y = Number(anchor) || yearContaining(anchor);

@@ -18,7 +18,7 @@ import { addDaysISO } from '@/lib/date/iso';
 type Props = {
   tile: PeriodTileModel;
   /** Side tiles stay abbreviated; center shows full caption after snap. */
-  role: 'prev' | 'current' | 'next' | 'prev2' | 'next2';
+  role: 'prev3' | 'prev2' | 'prev' | 'current' | 'next' | 'next2' | 'next3';
   /** Extra center caption / hanging grid after finger-up snap. */
   showCenterExtras: boolean;
   /** Ignored for layout — hero box is SoT 108×126. Kept for call-site compat. */

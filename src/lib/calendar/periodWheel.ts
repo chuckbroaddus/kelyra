@@ -52,9 +52,14 @@ export const WHEEL_MIN_OPACITY = 0.22;
 /** Max integer slots committed per fling (AC-M04). */
 export const WHEEL_MAX_FLING_SLOTS = 3;
 
-/** Visible rest window: center ±2. */
-export const WHEEL_VISIBLE_SLOTS = 5;
-export const WHEEL_SLOT_OFFSETS = [-2, -1, 0, 1, 2] as const;
+/**
+ * Mounted recycle window: center ±3 (7 leaves). Hero still reads as five;
+ * |d|=3 peeks so MAX_FLING=3 never hits a blank slot (CAL-P6 Item 2 Approach A).
+ */
+export const WHEEL_VISIBLE_SLOTS = 7;
+export const WHEEL_SLOT_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
+/** Index of offset 0 inside WHEEL_SLOT_OFFSETS / buildPeriodWindow.slots. */
+export const WHEEL_CENTER_INDEX = 3;
 
 /** Spring ~300 ms settle (friction/tension pair). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;
