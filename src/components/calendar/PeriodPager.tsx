@@ -1,8 +1,9 @@
 /**
  * Shared 3D horizontal period wheel (drum). Five-slot rest window (center ±2).
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
- * Composite: translateX(d*P) · translateZ(z) · rotateY(ry) · scale(s).
- * RM: drop rotateY + Z; keep scale, opacity, snap, taps, hierarchy.
+ * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity).
+ * No Z-axis translation in RN style.transform — Fabric processTransform rejects it (even 0).
+ * RM: drop rotateY; keep scale, opacity, snap, taps, hierarchy.
  * Fail closed → << label >>. Touch-only. No iOS edge-back steal.
  */
 import {
@@ -48,7 +49,6 @@ import {
   wheelOpacityForNorm,
   wheelRotateYDegForNorm,
   wheelScaleForNorm,
-  wheelZForNorm,
 } from '@/lib/calendar/periodWheel';
 import type { MultidayCount } from '@/lib/calendar/multiday';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
@@ -135,7 +135,6 @@ function makeNormSamples(parked: number, pitch: number) {
   const scales: number[] = [];
   const opacities: number[] = [];
   const rotateYs: string[] = [];
-  const zs: number[] = [];
   const xs: number[] = [];
   for (let steps = -WHEEL_MAX_FLING_SLOTS; steps <= WHEEL_MAX_FLING_SLOTS; steps += 1) {
     const drag = steps * pitch; // dragX sample (content follows finger)
@@ -144,10 +143,9 @@ function makeNormSamples(parked: number, pitch: number) {
     scales.push(wheelScaleForNorm(d));
     opacities.push(wheelOpacityForNorm(d));
     rotateYs.push(`${wheelRotateYDegForNorm(d)}deg`);
-    zs.push(wheelZForNorm(d));
     xs.push(d * pitch);
   }
-  return { input, scales, opacities, rotateYs, zs, xs };
+  return { input, scales, opacities, rotateYs, xs };
 }
 
 export function PeriodPager({
@@ -359,25 +357,19 @@ export function PeriodPager({
               outputRange: samples.rotateYs,
               extrapolate: 'clamp',
             });
-            const translateZ = dragX.interpolate({
-              inputRange: samples.input,
-              outputRange: samples.zs,
-              extrapolate: 'clamp',
-            });
             const translateX = dragX.interpolate({
               inputRange: samples.input,
               outputRange: samples.xs,
               extrapolate: 'clamp',
             });
             const isCenter = parked === 0;
-            // translateZ + rotateY are SoT full-motion; RN Animated typings omit translateZ.
+            // Fabric processTransform rejects Z translation (even 0) — keep rotateY/scale/translateX only.
             const tileMotion = {
               opacity,
               zIndex: 100 - Math.abs(parked) * 10,
               transform: [
                 { perspective: WHEEL_PERSPECTIVE },
                 { translateX },
-                { translateZ },
                 { rotateY },
                 { scale },
               ],
