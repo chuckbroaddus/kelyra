@@ -758,30 +758,36 @@ export default function CalendarScreen() {
           onJumpToday={jumpToday}
           accessibilityPrevLabel={activeView === 'agenda' ? 'Earlier' : 'Previous'}
           accessibilityNextLabel={activeView === 'agenda' ? 'Later' : 'Next'}
-          onShift={(dir) => {
+          onShift={(steps) => {
+            if (!steps) return;
             if (activeView === 'year') {
-              setYearAnchor(year + dir);
+              setYearAnchor(year + steps);
               return;
             }
             if (activeView === 'month') {
-              setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
+              setMonthAnchor(shiftMonth(monthRange.fromIso, steps));
               setMonthSelectedDay(null);
               return;
             }
             if (activeView === 'week') {
-              setGridAnchor(shiftWeek(weekRange.fromIso, dir));
+              setGridAnchor(shiftWeek(weekRange.fromIso, steps));
               return;
             }
             if (activeView === 'multiday') {
-              setGridAnchor(shiftMultiday(gridAnchor, stepperCount, dir));
+              let next = gridAnchor;
+              const dir: -1 | 1 = steps > 0 ? 1 : -1;
+              for (let i = 0; i < Math.abs(steps); i += 1) {
+                next = shiftMultiday(next, stepperCount, dir);
+              }
+              setGridAnchor(next);
               return;
             }
             if (activeView === 'day') {
-              setDayAnchor(shiftDay(dayRange.day, dir));
+              setDayAnchor(shiftDay(dayRange.day, steps));
               return;
             }
             if (activeView === 'agenda') {
-              setAgendaAnchor(shiftDay(agendaRange.fromIso, dir * 7));
+              setAgendaAnchor(shiftDay(agendaRange.fromIso, steps * 7));
             }
           }}
         />

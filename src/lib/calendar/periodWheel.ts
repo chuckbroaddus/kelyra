@@ -1,132 +1,165 @@
 /**
- * Calendar 3D horizontal period wheel — pure curve helpers.
+ * Calendar 3D horizontal period wheel — SoT curve helpers.
  *
- * Binding SoT (Mac-local / not on origin/main at implement):
- *   notes/company/calendar-3d-wheel-spec.md
- *   notes/company/calendar-3d-wheel-pm-lock.md
- *   notes/company/calendar-3d-wheel-intent.md
+ * Binding SoT:
+ *   notes/company/calendar-3d-wheel-spec.md §2
+ *   notes/company/calendar-3d-wheel-pm-lock.md geometry §2 / CAL-3DW-01..18
  *   notes/company/calendar-3d-wheel-mockups/index.html
- *   notes/company/calendar-view-icon-pm-lock.md (Set B icons, if present)
  *
- * Curves below are Hermes-brief defaults (scale + opacity + rotateY + spacing +
- * focus band) until those notes land. Dual stamp 2026-09-20 + Chuck send.
- * Supersedes PR 149 flat Rolodex scale/opacity-only row as ship look.
+ * Ship curves from dual-stamped SoT (not the prior brief defaults).
  */
 export { snapPeriodPage, PERIOD_PAGER_EDGE_GUARD_PX } from './periodPager.ts';
 
-/** Perspective (px) applied before rotateY on each tile. */
-export const WHEEL_PERSPECTIVE = 900;
+/** Perspective (px) on the wheel host. Spec §2.1. */
+export const WHEEL_PERSPECTIVE = 920;
 
-/** Max |rotateY| at |t|=1 (deg). Linear in t for Animated-friendly ranges. */
-export const WHEEL_MAX_ROTATE_Y_DEG = 48;
+/** Slot pitch P (px) on 390 stage — center-to-center. */
+export const WHEEL_PITCH = 78;
 
-/** Scale / opacity anchors (Hermes brief defaults). */
+/** Hero leaf layout box. */
+export const WHEEL_HERO_WIDTH = 108;
+export const WHEEL_HERO_HEIGHT = 126;
+
+/** Stage height (thumb drag band). */
+export const WHEEL_STAGE_HEIGHT = 148;
+
+/** Focus band half-width in px (±59 → 118 wide). */
+export const WHEEL_FOCUS_BAND_PX = 59;
+
+/** Focus band in slot units (|d|). */
+export const WHEEL_FOCUS_BAND = WHEEL_FOCUS_BAND_PX / WHEEL_PITCH;
+
+/** rotateY deg per slot: clamp(d,-3,3) * -14. */
+export const WHEEL_ROTATE_Y_PER_SLOT = -14;
+
+/** Max |rotateY| at |d|≥3. */
+export const WHEEL_MAX_ROTATE_Y_DEG = 42; // 3 * 14
+
+/** Z lift at center; sides recede by 18*|d|. */
+export const WHEEL_Z_CENTER = 36;
+export const WHEEL_Z_PER_SLOT = 18;
+
+/** Scale / opacity anchors from SoT formulas (at integer |d|). */
 export const WHEEL_CENTER_SCALE = 1;
-export const WHEEL_SIDE_SCALE = 0.78;
-export const WHEEL_FAR_SCALE = 0.62;
+export const WHEEL_SIDE_SCALE = 0.76; // |d|=1 → 1 - 0.22 - 0.02
+export const WHEEL_FAR_SCALE = 0.48; // |d|=2 → 1 - 0.44 - 0.08
+export const WHEEL_MIN_SCALE = 0.46;
 export const WHEEL_CENTER_OPACITY = 1;
-export const WHEEL_SIDE_OPACITY = 0.52;
-export const WHEEL_FAR_OPACITY = 0.28;
+export const WHEEL_SIDE_OPACITY = 0.73; // |d|=1 → 1 - 0.24 - 0.03
+export const WHEEL_FAR_OPACITY = 0.4; // |d|=2 → 1 - 0.48 - 0.12
+export const WHEEL_MIN_OPACITY = 0.22;
 
-/**
- * Slot spacing as a fraction of measured tile width (tighter than flat row → drum).
- * 1 = flat pager; <1 pulls sides inward.
- */
-export const WHEEL_SPACING_RATIO = 0.72;
+/** Max integer slots committed per fling (AC-M04). */
+export const WHEEL_MAX_FLING_SLOTS = 3;
 
-/**
- * Focus band in normalized slot units (|t|). Inside → center extras / full chrome.
- * Outside → side caption only.
- */
-export const WHEEL_FOCUS_BAND = 0.34;
+/** Visible rest window: center ±2. */
+export const WHEEL_VISIBLE_SLOTS = 5;
+export const WHEEL_SLOT_OFFSETS = [-2, -1, 0, 1, 2] as const;
 
-/** Spring used on snap / momentum settle. */
+/** Spring ~300 ms settle (friction/tension pair). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;
 
-/** Normalize a pixel offset from the focus center into slot units. */
-export function wheelNormFromOffset(offsetPx: number, slotWidth: number): number {
-  const w = slotWidth > 0 ? slotWidth : 1;
-  return offsetPx / w;
-}
+/** Set B hanging-ledger hex — unchanged across themes (CAL-3DW-10). */
+export const SET_B = {
+  header: '#C62828',
+  sunday: '#E53935',
+  body: '#FFFFFF',
+  type: '#1A1A1A',
+  grid: '#E0E0E0',
+  tabMetal: '#B0BEC5',
+  tabHighlight: '#ECEFF1',
+  softEdge: 'rgba(0,0,0,0.18)',
+} as const;
 
-function clamp01(n: number): number {
-  if (n <= 0) return 0;
-  if (n >= 1) return 1;
+function clamp(n: number, lo: number, hi: number): number {
+  if (n < lo) return lo;
+  if (n > hi) return hi;
   return n;
 }
 
-/** Smooth hermite between side and far anchors by |t|. */
-function blendByAbsT(absT: number, center: number, side: number, far: number): number {
-  const a = Math.abs(absT);
-  if (a <= 1) {
-    const u = clamp01(a);
-    const s = u * u * (3 - 2 * u);
-    return center + (side - center) * s;
-  }
-  const u = clamp01(a - 1);
-  const s = u * u * (3 - 2 * u);
-  return side + (far - side) * s;
-}
-
-/** Scale curve vs normalized slot offset. */
-export function wheelScaleForNorm(t: number): number {
-  return blendByAbsT(t, WHEEL_CENTER_SCALE, WHEEL_SIDE_SCALE, WHEEL_FAR_SCALE);
-}
-
-/** Opacity curve vs normalized slot offset. */
-export function wheelOpacityForNorm(t: number): number {
-  return blendByAbsT(t, WHEEL_CENTER_OPACITY, WHEEL_SIDE_OPACITY, WHEEL_FAR_OPACITY);
+/** Normalize a pixel offset from the focus center into slot units (÷ pitch). */
+export function wheelNormFromOffset(offsetPx: number, pitch = WHEEL_PITCH): number {
+  const p = pitch > 0 ? pitch : WHEEL_PITCH;
+  return offsetPx / p;
 }
 
 /**
- * rotateY in degrees. Tile left of center (t<0) → positive Y (faces inward);
- * tile right (t>0) → negative Y. Linear for native driver interpolations.
+ * Scale curve vs signed distance d (slot units).
+ * SoT: clamp(1 - 0.22*|d| - 0.02*d², 0.46, 1)
  */
-export function wheelRotateYDegForNorm(t: number): number {
-  const deg = -t * WHEEL_MAX_ROTATE_Y_DEG;
+export function wheelScaleForNorm(d: number): number {
+  const a = Math.abs(d);
+  return clamp(1 - 0.22 * a - 0.02 * d * d, WHEEL_MIN_SCALE, WHEEL_CENTER_SCALE);
+}
+
+/**
+ * Opacity curve vs signed distance d.
+ * SoT: clamp(1 - 0.24*|d| - 0.03*d², 0.22, 1)
+ */
+export function wheelOpacityForNorm(d: number): number {
+  const a = Math.abs(d);
+  return clamp(1 - 0.24 * a - 0.03 * d * d, WHEEL_MIN_OPACITY, WHEEL_CENTER_OPACITY);
+}
+
+/**
+ * rotateY in degrees. SoT: clamp(d,-3,3) * -14
+ * Left (d&lt;0) → positive yaw; right (d&gt;0) → negative.
+ */
+export function wheelRotateYDegForNorm(d: number): number {
+  const deg = clamp(d, -3, 3) * WHEEL_ROTATE_Y_PER_SLOT;
   return deg === 0 ? 0 : deg;
 }
 
-/**
- * Extra translateX so visual spacing follows WHEEL_SPACING_RATIO vs flat slots.
- * parked flat offset is `t * slotWidth`; drum wants `t * slotWidth * ratio`.
- */
-export function wheelSpacingNudgePx(t: number, slotWidth: number): number {
-  const w = slotWidth > 0 ? slotWidth : 1;
-  const nudge = t * w * (WHEEL_SPACING_RATIO - 1);
-  return nudge === 0 ? 0 : nudge;
+/** translateZ lift. SoT: z(d) = 36 - 18*|d|. RM callers pass 0. */
+export function wheelZForNorm(d: number): number {
+  return WHEEL_Z_CENTER - WHEEL_Z_PER_SLOT * Math.abs(d);
 }
 
-/** True when |t| is inside the focus band (center chrome / extras). */
-export function wheelInFocusBand(t: number, band = WHEEL_FOCUS_BAND): boolean {
-  return Math.abs(t) <= band;
+/** World X at rest / during drag: d * P. */
+export function wheelTranslateXForNorm(d: number, pitch = WHEEL_PITCH): number {
+  const p = pitch > 0 ? pitch : WHEEL_PITCH;
+  return d * p;
+}
+
+/** True when |d| is inside the focus band (center chrome / extras). */
+export function wheelInFocusBand(d: number, band = WHEEL_FOCUS_BAND): boolean {
+  return Math.abs(d) <= band;
 }
 
 /**
- * Sample curve outputs for a tile whose parked center is `parkedOffsetPx`
- * from the viewport focus, given current drag translateX.
+ * Sample curve outputs for a tile whose parked slot index is `parkedSlot`
+ * (…-2,-1,0,1,2…), given current finger drag translateX (content follows finger).
  */
 export function wheelSample(args: {
-  parkedOffsetPx: number;
+  parkedSlot: number;
   dragPx: number;
-  slotWidth: number;
+  pitch?: number;
 }): {
   norm: number;
   scale: number;
   opacity: number;
   rotateYDeg: number;
-  spacingNudgePx: number;
+  translateX: number;
+  translateZ: number;
   inFocus: boolean;
 } {
-  const spacing = args.slotWidth * WHEEL_SPACING_RATIO;
-  const offset = args.parkedOffsetPx + args.dragPx;
-  const norm = wheelNormFromOffset(offset, spacing > 0 ? spacing : args.slotWidth);
+  const pitch = args.pitch && args.pitch > 0 ? args.pitch : WHEEL_PITCH;
+  const norm = args.parkedSlot + args.dragPx / pitch;
   return {
     norm,
     scale: wheelScaleForNorm(norm),
     opacity: wheelOpacityForNorm(norm),
     rotateYDeg: wheelRotateYDegForNorm(norm),
-    spacingNudgePx: wheelSpacingNudgePx(norm, args.slotWidth),
+    translateX: wheelTranslateXForNorm(norm, pitch),
+    translateZ: wheelZForNorm(norm),
     inFocus: wheelInFocusBand(norm),
   };
+}
+
+/** @deprecated Prefer WHEEL_PITCH. Kept for import compat. */
+export const WHEEL_SPACING_RATIO = 1;
+
+/** @deprecated Prefer wheelTranslateXForNorm / WHEEL_PITCH. */
+export function wheelSpacingNudgePx(_t: number, _slotWidth: number): number {
+  return 0;
 }
