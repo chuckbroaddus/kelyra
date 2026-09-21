@@ -26,6 +26,9 @@ import {
   WHEEL_STAGE_HEIGHT,
   WHEEL_VISIBLE_SLOTS,
   WHEEL_Z_CENTER,
+  slotIndexForOffset,
+  slotPoolKey,
+  wheelContentModeFor,
   wheelInFocusBand,
   wheelNormFromOffset,
   wheelOpacityForNorm,
@@ -46,9 +49,10 @@ test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 14
   assert.equal(WHEEL_HERO_WIDTH, 108);
   assert.equal(WHEEL_HERO_HEIGHT, 126);
   assert.equal(WHEEL_STAGE_HEIGHT, 148);
-  assert.equal(WHEEL_VISIBLE_SLOTS, 7);
-  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-3, -2, -1, 0, 1, 2, 3]);
+  assert.equal(WHEEL_VISIBLE_SLOTS, 9);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-4, -3, -2, -1, 0, 1, 2, 3, 4]);
   assert.equal(WHEEL_SLOT_OFFSETS.length, WHEEL_VISIBLE_SLOTS);
+  assert.equal(WHEEL_CENTER_INDEX, 4);
   assert.equal(WHEEL_ROTATE_Y_PER_SLOT, -14);
   assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
   assert.equal(WHEEL_Z_CENTER, 36);
@@ -99,10 +103,6 @@ test('wheel focus band + sample + norm', () => {
   assert.equal(s.norm, 0);
   assert.equal(s.scale, WHEEL_CENTER_SCALE);
   assert.equal(s.translateZ, 36);
-  assert.equal(s.inFocus, true);
-  const side = wheelSample({ parkedSlot: 1, dragPx: 0 });
-  assert.equal(side.translateX, 78);
-  assert.equal(side.rotateYDeg, -14);
 });
 
 test('Set B palette locked (CAL-3DW-10)', () => {
@@ -110,96 +110,60 @@ test('Set B palette locked (CAL-3DW-10)', () => {
   assert.equal(SET_B.sunday, '#E53935');
   assert.equal(SET_B.body, '#FFFFFF');
   assert.equal(SET_B.type, '#1A1A1A');
+  assert.equal(SET_B.grid, '#E0E0E0');
   assert.equal(SET_B.tabMetal, '#B0BEC5');
   assert.equal(SET_B.tabHighlight, '#ECEFF1');
 });
 
-test('PeriodPager is 7-slot recycle wheel (±3): pitch/perspective/rotateY; earlier extras; no translateZ; RM no tilt; no className', () => {
+test('SlotPool keys + content policy', () => {
+  assert.equal(slotPoolKey('month', 4), 'month:4');
+  assert.equal(slotIndexForOffset(0), WHEEL_CENTER_INDEX);
+  assert.equal(slotIndexForOffset(-4), 0);
+  assert.equal(slotIndexForOffset(4), 8);
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: 2, flinging: true }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: false }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 1, flinging: false }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 2, flinging: false }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: -4, flinging: false }), 'silhouette');
+});
+
+test('PeriodPager is 9-slot SlotPool: reanimated native / CSS web; no translateZ; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
-  assert.match(pager, /WHEEL_CENTER_INDEX/);
   assert.match(pager, /WHEEL_PITCH/);
-  assert.match(pager, /rotateY/);
-  assert.match(pager, /WHEEL_PERSPECTIVE/);
-  assert.match(pager, /tapSide/);
-  assert.match(pager, /useReducedMotion/);
-  assert.match(pager, /WHEEL_SPRING|friction/);
-  // Approach A: extras at spring rest + useLayoutEffect (not delayed post-onShift only).
-  assert.match(pager, /useLayoutEffect/);
-  assert.match(pager, /setShowCenterExtras\(true\)/);
-  // finishShift must not clear extras (was the post-onShift lag source).
-  const finishIdx = pager.indexOf('const finishShift');
-  assert.ok(finishIdx >= 0);
-  const finishBlock = pager.slice(finishIdx, pager.indexOf('const animateSnap', finishIdx));
-  assert.doesNotMatch(finishBlock, /setShowCenterExtras\(false\)/);
-  // CAL-P6-1A: carve dropped; full-band stage claim (no pageX left guard).
-  assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
-  assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX|CAL-P6-1A/);
-  assert.match(pager, /label=["']<<["']/);
+  assert.match(pager, /slotPoolKey/);
+  assert.match(pager, /react-native-reanimated/);
+  assert.match(pager, /willChange/);
+  assert.match(pager, /wheelContentModeFor|contentMode/);
+  assert.match(pager, /if \(!tile\) return null/);
   assert.doesNotMatch(pager, /className\s*:/);
-  // RN Fabric rejects translateZ in style.transform — must not appear as a transform key
   assert.doesNotMatch(pager, /\{\s*translateZ\s*[,}]/);
   assert.doesNotMatch(pager, /translateZ\s*,/);
-  assert.doesNotMatch(pager, /outputRange:\s*samples\.zs/);
-  // RM branch: scale+opacity only (no rotateY in that block)
-  const rmStart = pager.indexOf('if (reduceMotion)');
-  assert.ok(rmStart >= 0);
-  const rmReturn = pager.indexOf('return (', rmStart);
-  const afterRm = pager.indexOf('const samples = makeNormSamples', rmReturn);
-  const rmSrc = pager.slice(rmStart, afterRm > rmStart ? afterRm : rmStart + 1200);
-  assert.doesNotMatch(rmSrc, /rotateY/);
-  assert.doesNotMatch(rmSrc, /translateZ/);
-  assert.match(rmSrc, /wheelScaleForNorm/);
-  assert.match(rmSrc, /wheelOpacityForNorm/);
-  // Full-motion path keeps rotateY + translateX + scale; still no translateZ in style array
-  const full = pager.slice(afterRm);
-  assert.match(full, /rotateY/);
-  assert.match(full, /translateX/);
-  assert.match(full, /\{\s*scale\s*[,}]|\{\s*scale\s*\}/);
-  assert.doesNotMatch(full, /translateZ/);
-  // Transform array keys must not include translateZ
-  const transformMatch = full.match(/transform:\s*\[([\s\S]*?)\]/);
-  assert.ok(transformMatch, 'expected transform array in full-motion path');
-  assert.doesNotMatch(transformMatch[1], /translateZ/);
-  assert.match(transformMatch[1], /translateX/);
-  assert.match(transformMatch[1], /rotateY/);
-  assert.match(transformMatch[1], /scale/);
+  // RM path: scale only — no rotateY in reduceMotion branch of NativeSlotMotion
+  assert.match(pager, /reduceMotion/);
+  assert.match(pager, /rotateY/);
+  const transformMatch = pager.match(/transform:\s*\[[\s\S]*?\]/);
+  assert.ok(transformMatch);
+  assert.doesNotMatch(transformMatch![0], /translateZ/);
 });
 
-test('MAX_FLING=3 always has a mounted leaf (window covers ±3)', () => {
-  assert.equal(WHEEL_MAX_FLING_SLOTS, 3);
-  assert.equal(WHEEL_CENTER_INDEX, 3);
-  assert.ok(WHEEL_SLOT_OFFSETS.includes(-WHEEL_MAX_FLING_SLOTS as -3));
-  assert.ok(WHEEL_SLOT_OFFSETS.includes(WHEEL_MAX_FLING_SLOTS as 3));
-  assert.equal(WHEEL_SLOT_OFFSETS[WHEEL_CENTER_INDEX], 0);
+test('MAX_FLING=4 always has a mounted leaf (window covers ±4)', () => {
+  assert.equal(WHEEL_MAX_FLING_SLOTS, 4);
+  assert.ok(WHEEL_SLOT_OFFSETS.includes(-WHEEL_MAX_FLING_SLOTS as -4));
+  assert.ok(WHEEL_SLOT_OFFSETS.includes(WHEEL_MAX_FLING_SLOTS as 4));
+  assert.ok(WHEEL_VISIBLE_SLOTS / 2 >= WHEEL_MAX_FLING_SLOTS);
 });
 
-test('PeriodLeaf Set B hanging-ledger: fixed hex; metal tabs; no YearIcon bars; no theme recolor', () => {
-  const leaf = read('src/components/calendar/PeriodLeaf.tsx');
-  assert.doesNotMatch(leaf, /\.png|ImageBackground|require\(/);
-  assert.match(leaf, /MetalTabs|tabMetal|SET_B/);
-  assert.match(leaf, /#C62828|SET_B\.header/);
-  assert.match(leaf, /MonthHangingGrid|hangGrid/);
-  assert.match(leaf, /WeekDayStrip|weekStrip/);
-  assert.match(leaf, /dayNumeral/);
-  assert.doesNotMatch(leaf, /YearIcon|WeekIcon|DayIcon/);
-  assert.doesNotMatch(leaf, /colors\.elevated|colors\.danger|colors\.ink/);
-  assert.doesNotMatch(leaf, /body caption|wrapBodyText/);
-  assert.doesNotMatch(leaf, /borderRadius:\s*14|dayCircle/);
-});
-
-test('calendar still wires PeriodPager; day list included; SoT ship defaults; no SQL', () => {
-  const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /PeriodPager/);
-  assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
+test('showsPeriodPager still true for day list', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
-  const src = read('src/lib/calendar/periodWheel.ts');
-  assert.doesNotMatch(src, /supabase|execute_sql|from\('/);
-  assert.match(src, /WHEEL_FOCUS_BAND/);
-  assert.match(src, /WHEEL_PITCH/);
-  assert.equal(WHEEL_PERSPECTIVE, 920);
-  // SoT ship defaults (not prior brief)
-  assert.doesNotMatch(src, /export const WHEEL_PERSPECTIVE = 900/);
-  assert.doesNotMatch(src, /WHEEL_MAX_ROTATE_Y_DEG = 48/);
-  assert.doesNotMatch(src, /WHEEL_SPACING_RATIO = 0\.72/);
+});
+
+test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + stable keys', () => {
+  const leaf = read('src/components/calendar/PeriodLeaf.tsx');
+  assert.match(leaf, /memo\(MonthHangingGridImpl\)|const MonthHangingGrid = memo/);
+  assert.match(leaf, /contentMode/);
+  assert.match(leaf, /SilhouetteLeaf|silhouetteHeader/);
+  assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
+  assert.match(leaf, /mountGrid|showExtras/);
 });

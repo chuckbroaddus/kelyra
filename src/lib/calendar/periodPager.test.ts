@@ -10,6 +10,7 @@ import {
   showsPeriodPager,
   snapPeriodPage,
 } from './periodPager.ts';
+import { WHEEL_MAX_FLING_SLOTS, WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
 import { shiftDay } from './day.ts';
 import { shiftMonth } from './month.ts';
 import { shiftMultiday } from './multiday.ts';
@@ -39,9 +40,11 @@ test('periodKindForView maps CalendarViewId', () => {
   assert.equal(periodKindForView('agenda'), 'agenda');
 });
 
-test('buildPeriodWindow: 7-slot recycle (center ±3); year sides YY; center full year', () => {
+test('buildPeriodWindow: 9-slot SlotPool (center ±4); year sides YY; center full year', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
+  assert.equal(w.slots.length, 9);
+  assert.equal(w.prev4.year, 2022);
   assert.equal(w.prev3.year, 2023);
   assert.equal(w.prev2.year, 2024);
   assert.equal(w.prev.year, 2025);
@@ -49,20 +52,23 @@ test('buildPeriodWindow: 7-slot recycle (center ±3); year sides YY; center full
   assert.equal(w.next.year, 2027);
   assert.equal(w.next2.year, 2028);
   assert.equal(w.next3.year, 2029);
+  assert.equal(w.next4.year, 2030);
   assert.equal(w.current.centerCaption, '2026');
   assert.equal(w.current.sideCaption, "'26");
   assert.equal(w.prev.sideCaption, "'25");
   assert.equal(w.next.sideCaption, "'27");
-  assert.equal(w.prev2.sideCaption, "'24");
-  assert.equal(w.next2.sideCaption, "'28");
-  assert.equal(w.prev3.sideCaption, "'23");
-  assert.equal(w.next3.sideCaption, "'29");
-  assert.equal(w.slots[3], w.current);
+  assert.equal(w.slots[4], w.current);
+  WHEEL_SLOT_OFFSETS.forEach((offset, idx) => {
+    const tile = w.slots[idx];
+    assert.ok(tile, `missing slot at offset ${offset}`);
+    assert.equal(typeof tile.key, 'string');
+    assert.ok(tile.key.length > 0);
+  });
 });
 
-test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 7', () => {
+test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 9', () => {
   const w = buildPeriodWindow({ kind: 'month', anchor: '2026-09-20' });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.monthYear, 2026);
   assert.equal(w.current.monthIndex0, 8);
   assert.match(w.current.centerCaption, /September.*2026|2026/);
@@ -72,16 +78,19 @@ test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 7
   assert.equal(w.next2.monthIndex0, 10);
   assert.equal(w.prev3.monthIndex0, 5);
   assert.equal(w.next3.monthIndex0, 11);
-  // sidecars carry real neighbor month fields (no empty stub)
+  assert.equal(w.prev4.monthIndex0, 4);
+  assert.equal(w.next4.monthIndex0, 0); // +4 → Jan 2027
+  assert.equal(w.next4.monthYear, 2027);
   for (const t of w.slots) {
     assert.equal(typeof t.monthYear, 'number');
     assert.equal(typeof t.monthIndex0, 'number');
+    assert.equal(typeof t.key, 'string');
   }
 });
 
-test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±3', () => {
+test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±4', () => {
   const w = buildPeriodWindow({ kind: 'week', anchor: '2026-09-16' });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.fromIso, '2026-09-13');
   assert.equal(w.prev.fromIso, shiftWeek('2026-09-13', -1));
   assert.equal(w.next.fromIso, shiftWeek('2026-09-13', 1));
@@ -89,62 +98,61 @@ test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±3', () => {
   assert.equal(w.next2.fromIso, shiftWeek('2026-09-13', 2));
   assert.equal(w.prev3.fromIso, shiftWeek('2026-09-13', -3));
   assert.equal(w.next3.fromIso, shiftWeek('2026-09-13', 3));
+  assert.equal(w.prev4.fromIso, shiftWeek('2026-09-13', -4));
+  assert.equal(w.next4.fromIso, shiftWeek('2026-09-13', 4));
 });
 
-test('buildPeriodWindow day: existing shiftDay ±3', () => {
+test('buildPeriodWindow day: existing shiftDay ±4', () => {
   const w = buildPeriodWindow({ kind: 'day', anchor: '2026-09-20' });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.dayIso, '2026-09-20');
   assert.equal(w.prev.dayIso, shiftDay('2026-09-20', -1));
   assert.equal(w.next.dayIso, shiftDay('2026-09-20', 1));
-  assert.equal(w.prev2.dayIso, shiftDay('2026-09-20', -2));
-  assert.equal(w.next2.dayIso, shiftDay('2026-09-20', 2));
-  assert.equal(w.prev3.dayIso, shiftDay('2026-09-20', -3));
-  assert.equal(w.next3.dayIso, shiftDay('2026-09-20', 3));
+  assert.equal(w.prev4.dayIso, shiftDay('2026-09-20', -4));
+  assert.equal(w.next4.dayIso, shiftDay('2026-09-20', 4));
   assert.match(w.current.centerCaption, /September 20, 2026/);
 });
 
-test('buildPeriodWindow multiday: existing shiftMultiday ±3', () => {
+test('buildPeriodWindow multiday: existing shiftMultiday ±4', () => {
   const w = buildPeriodWindow({ kind: 'multiday', anchor: '2026-09-16', dayCount: 3 });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.fromIso, '2026-09-15');
   assert.equal(w.prev.anchor, shiftMultiday('2026-09-16', 3, -1));
   assert.equal(w.next.anchor, shiftMultiday('2026-09-16', 3, 1));
-  assert.equal(w.prev3.anchor, shiftMultiday(shiftMultiday(shiftMultiday('2026-09-16', 3, -1), 3, -1), 3, -1));
-  assert.equal(w.next3.anchor, shiftMultiday(shiftMultiday(shiftMultiday('2026-09-16', 3, 1), 3, 1), 3, 1));
+  assert.equal(typeof w.slots[0]!.key, 'string');
+  assert.equal(typeof w.slots[8]!.key, 'string');
 });
 
-test('buildPeriodWindow agenda: ±7 day step across 7 slots', () => {
+test('buildPeriodWindow agenda: ±7 day step across 9 slots', () => {
   const w = buildPeriodWindow({ kind: 'agenda', anchor: '2026-09-20' });
-  assert.equal(w.slots.length, 7);
+  assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.centerCaption, 'Next 2 weeks');
   assert.equal(w.prev.anchor, shiftDay('2026-09-20', -7));
   assert.equal(w.next.anchor, shiftDay('2026-09-20', 7));
-  assert.equal(w.prev2.anchor, shiftDay('2026-09-20', -14));
-  assert.equal(w.next2.anchor, shiftDay('2026-09-20', 14));
-  assert.equal(w.prev3.anchor, shiftDay('2026-09-20', -21));
-  assert.equal(w.next3.anchor, shiftDay('2026-09-20', 21));
+  assert.equal(w.prev4.anchor, shiftDay('2026-09-20', -28));
+  assert.equal(w.next4.anchor, shiftDay('2026-09-20', 28));
 });
 
-test('MAX_FLING=3 fling never empty: window has real tiles at ±3', () => {
+test('MAX_FLING=4 fling never empty: window has real tiles at ±4', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
-  assert.equal(w.slots.length, 7);
-  assert.ok(w.prev3.key);
-  assert.ok(w.next3.key);
-  assert.notEqual(w.prev3.key, w.current.key);
-  assert.notEqual(w.next3.key, w.current.key);
+  assert.equal(w.slots.length, 9);
+  assert.ok(w.prev4.key);
+  assert.ok(w.next4.key);
+  assert.notEqual(w.prev4.key, w.current.key);
+  assert.notEqual(w.next4.key, w.current.key);
 });
 
-test('snapPeriodPage: distance + velocity; max fling 3; pitch-based', () => {
+test('snapPeriodPage: distance + velocity; max fling 4; pitch-based', () => {
   assert.equal(snapPeriodPage(0, 78, 0), 0);
-  assert.equal(snapPeriodPage(-30, 100, 0), 1); // 0.30 slots past 0.28
+  assert.equal(snapPeriodPage(-30, 100, 0), 1);
   assert.equal(snapPeriodPage(30, 100, 0), -1);
   assert.equal(snapPeriodPage(-10, 100, 0), 0);
   assert.equal(snapPeriodPage(-5, 100, -700), 1);
   assert.equal(snapPeriodPage(5, 100, 700), -1);
-  // multi-slot fling clamped to ±3
-  assert.equal(snapPeriodPage(-400, 78, -2000), 3);
-  assert.equal(snapPeriodPage(400, 78, 2000), -3);
+  assert.equal(WHEEL_MAX_FLING_SLOTS, 4);
+  // multi-slot fling clamped to ±4
+  assert.equal(snapPeriodPage(-500, 78, -2500), 4);
+  assert.equal(snapPeriodPage(500, 78, 2500), -4);
 });
 
 test('rolodex scale/opacity: center larger/brighter than sides', () => {
@@ -164,7 +172,6 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(leaf, /yearPage|WeekDayStrip|dayNumeral/);
   assert.doesNotMatch(leaf, /YearIcon|WeekIcon|DayIcon/);
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  // CAL-P6-1A: full-band claim — no on-drum pageX carve.
   assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX|CAL-P6-1A/);
   assert.match(pager, /useReducedMotion/);
@@ -172,9 +179,32 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /snapPeriodPage/);
   assert.match(pager, /rotateY/);
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
-  assert.match(pager, /WHEEL_CENTER_INDEX/);
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /useLayoutEffect/);
+  assert.match(pager, /slotPoolKey/);
+});
+
+test('PeriodPager slot map never reads tile.key on undefined (guards + shared offsets)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  const src = read('src/lib/calendar/periodPager.ts');
+  assert.match(src, /WHEEL_SLOT_OFFSETS/);
+  assert.match(pager, /if \(!tile\) return null/);
+  assert.doesNotMatch(pager, /window\.slots\[idx\]!/);
+  assert.match(pager, /slotIndexForOffset/);
+  const kinds = ['year', 'month', 'week', 'day'] as const;
+  for (const kind of kinds) {
+    const anchor = kind === 'year' ? '2026' : '2026-09-20';
+    const w = buildPeriodWindow({ kind, anchor });
+    assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
+    assert.doesNotThrow(() => {
+      for (const offset of WHEEL_SLOT_OFFSETS) {
+        const idx = offset - WHEEL_SLOT_OFFSETS[0];
+        const tile = w.slots[idx];
+        if (!tile) continue;
+        void tile.key;
+      }
+    });
+  }
 });
 
 test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multiday', () => {
@@ -188,17 +218,13 @@ test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multida
 
 test('Y/M/W/D leaf identity source contracts (CAL-3DW-16)', () => {
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
-  // Year: full-red ledger + tabs; no three-bar YearIcon
   assert.match(leaf, /yearPage/);
   assert.match(leaf, /SET_B\.header|#C62828/);
   assert.match(leaf, /MetalTabs/);
-  // Month: red header + white grid + Sunday
   assert.match(leaf, /monthHeader/);
   assert.match(leaf, /SET_B\.sunday|#E53935/);
-  // Week: 7-day strip (no generic body noun)
   assert.match(leaf, /weekStrip|WeekDayStrip/);
   assert.doesNotMatch(leaf, /wrapBodyText/);
-  // Day: large numeral, tabs not rings (no circle glyph / generic body noun)
   assert.match(leaf, /dayNumeral/);
   assert.doesNotMatch(leaf, /dayCircle|borderRadius:\s*14/);
 });

@@ -1,6 +1,6 @@
 /**
  * Calendar period window helpers (shared by 3D period wheel).
- * Wheel look/curves: src/lib/calendar/periodWheel.ts + calendar-3d-wheel-* SoT.
+ * Wheel look/curves: src/lib/calendar/periodWheel.ts + calendar-item2-p0p1-* SoT.
  * Uses existing shifters only; no new SQL.
  */
 import {
@@ -18,10 +18,10 @@ import {
 import type { CalendarViewId, DayMode } from './viewPrefs.ts';
 import { shiftWeek, weekRangeContaining } from './week.ts';
 import { yearContaining } from './year.ts';
+import { WHEEL_MAX_FLING_SLOTS, WHEEL_SLOT_OFFSETS } from './periodWheel.ts';
 
-/** Local SoT mirrors (avoid circular import with periodWheel). */
+/** Local SoT mirrors (pitch only — slot offsets / fling from periodWheel). */
 const SLOT_PITCH = 78;
-const MAX_FLING_SLOTS = 3;
 
 export type PeriodKind = 'year' | 'month' | 'week' | 'multiday' | 'day' | 'agenda';
 
@@ -44,10 +44,11 @@ export type PeriodTileModel = {
   dayIso?: string;
 };
 
-/** Seven-slot recycle window: center ±3 (CAL-P6 Item 2 Approach A). */
+/** Nine-slot SlotPool window: center ±4 (matches WHEEL_SLOT_OFFSETS). */
 export type PeriodWindow = {
-  /** Slots at offsets -3..+3. Index 3 = center. */
+  /** Slots aligned 1:1 with WHEEL_SLOT_OFFSETS. Center at index of 0. */
   slots: PeriodTileModel[];
+  prev4: PeriodTileModel;
   prev3: PeriodTileModel;
   prev2: PeriodTileModel;
   prev: PeriodTileModel;
@@ -55,6 +56,7 @@ export type PeriodWindow = {
   next: PeriodTileModel;
   next2: PeriodTileModel;
   next3: PeriodTileModel;
+  next4: PeriodTileModel;
 };
 
 /**
@@ -200,15 +202,23 @@ export type BuildPeriodWindowArgs = {
 };
 
 function packWindow(slots: PeriodTileModel[]): PeriodWindow {
+  if (slots.length !== WHEEL_SLOT_OFFSETS.length) {
+    throw new Error(
+      `packWindow: expected ${WHEEL_SLOT_OFFSETS.length} slots, got ${slots.length}`,
+    );
+  }
+  const centerIdx = WHEEL_SLOT_OFFSETS.indexOf(0);
   return {
     slots,
-    prev3: slots[0]!,
-    prev2: slots[1]!,
-    prev: slots[2]!,
-    current: slots[3]!,
-    next: slots[4]!,
-    next2: slots[5]!,
-    next3: slots[6]!,
+    prev4: slots[centerIdx - 4]!,
+    prev3: slots[centerIdx - 3]!,
+    prev2: slots[centerIdx - 2]!,
+    prev: slots[centerIdx - 1]!,
+    current: slots[centerIdx]!,
+    next: slots[centerIdx + 1]!,
+    next2: slots[centerIdx + 2]!,
+    next3: slots[centerIdx + 3]!,
+    next4: slots[centerIdx + 4]!,
   };
 }
 
@@ -222,10 +232,10 @@ function shiftMultidayBy(anchor: string, count: MultidayCount, steps: number): s
   return a;
 }
 
-/** Build seven tiles (center ±3) around the current anchor. */
+/** Build tiles for every WHEEL_SLOT_OFFSETS entry (center ±4 → N=9). */
 export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
   const { kind, anchor, dayCount = 3 } = args;
-  const offsets = [-3, -2, -1, 0, 1, 2, 3] as const;
+  const offsets = WHEEL_SLOT_OFFSETS;
 
   if (kind === 'year') {
     const y = Number(anchor) || yearContaining(anchor);
@@ -253,7 +263,7 @@ export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
 /**
  * Map finger release to integer slot steps (−max…+max).
  * Negative translation (drag left) → next (+); positive → prev (−).
- * Max fling WHEEL_MAX_FLING_SLOTS (AC-M04).
+ * Max fling WHEEL_MAX_FLING_SLOTS.
  */
 export function snapPeriodPage(
   translationX: number,
@@ -261,7 +271,7 @@ export function snapPeriodPage(
   velocityX = 0,
   distanceRatio = 0.28,
   velocityThreshold = 600,
-  maxSlots = MAX_FLING_SLOTS,
+  maxSlots = WHEEL_MAX_FLING_SLOTS,
 ): number {
   const P = pitch > 0 ? pitch : SLOT_PITCH;
   // Content follows finger: slots advanced ≈ −translationX / P
