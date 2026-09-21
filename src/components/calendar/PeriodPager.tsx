@@ -1,5 +1,6 @@
 /**
- * Shared 3D horizontal period wheel (drum). Five-slot rest window (center ±2).
+ * Shared 3D horizontal period wheel (drum). Seven-slot recycle (center ±3);
+ * hero still reads five with |d|=3 peek (CAL-P6 Item 2 Approach A).
  * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity).
  * No Z-axis translation in RN style.transform — Fabric processTransform rejects it (even 0).
@@ -13,7 +14,7 @@ import {
   type ErrorInfo,
   type ReactNode,
   useCallback,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -39,6 +40,7 @@ import {
 } from '@/lib/calendar/periodPager';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
+  WHEEL_CENTER_INDEX,
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
   WHEEL_MAX_FLING_SLOTS,
@@ -125,13 +127,15 @@ function FallbackToolbar({
   );
 }
 
-type SlotRole = 'prev2' | 'prev' | 'current' | 'next' | 'next2';
+type SlotRole = 'prev3' | 'prev2' | 'prev' | 'current' | 'next' | 'next2' | 'next3';
 
 function roleForOffset(offset: number): SlotRole {
+  if (offset === -3) return 'prev3';
   if (offset === -2) return 'prev2';
   if (offset === -1) return 'prev';
   if (offset === 1) return 'next';
   if (offset === 2) return 'next2';
+  if (offset === 3) return 'next3';
   return 'current';
 }
 
@@ -177,7 +181,8 @@ export function PeriodPager({
     [kind, anchor, dayCount],
   );
 
-  useEffect(() => {
+  // Layout effect: extras paint with the remounted window (earlier than post-paint useEffect).
+  useLayoutEffect(() => {
     dragX.setValue(0);
     setShowCenterExtras(true);
     settling.current = false;
@@ -188,7 +193,8 @@ export function PeriodPager({
   const finishShift = useCallback(
     (steps: number) => {
       settling.current = true;
-      setShowCenterExtras(false);
+      // Do not clear showCenterExtras — spring onRest already turned them on;
+      // useLayoutEffect keeps them true across the remount (Approach A timing).
       onShift(steps);
     },
     [onShift],
@@ -206,8 +212,9 @@ export function PeriodPager({
         velocity: velocityRef.current,
       }).start(({ finished }) => {
         if (!finished) return;
+        // Approach A: extras at spring rest (not delayed after onShift remount).
+        setShowCenterExtras(true);
         if (steps === 0) {
-          setShowCenterExtras(true);
           settling.current = false;
           return;
         }
@@ -296,7 +303,7 @@ export function PeriodPager({
         <View style={plateStyle}>
           <View style={styles.rmRow}>
             {WHEEL_SLOT_OFFSETS.map((offset) => {
-              const idx = offset + 2;
+              const idx = offset + WHEEL_CENTER_INDEX;
               const tile = window.slots[idx]!;
               const role = roleForOffset(offset);
               const isCenter = offset === 0;
@@ -345,7 +352,7 @@ export function PeriodPager({
       >
         <View style={styles.track}>
           {WHEEL_SLOT_OFFSETS.map((parked) => {
-            const idx = parked + 2;
+            const idx = parked + WHEEL_CENTER_INDEX;
             const tile: PeriodTileModel = window.slots[idx]!;
             const role = roleForOffset(parked);
             const samples = makeNormSamples(parked, pitch);

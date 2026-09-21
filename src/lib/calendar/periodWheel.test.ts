@@ -20,6 +20,8 @@ import {
   WHEEL_ROTATE_Y_PER_SLOT,
   WHEEL_SIDE_OPACITY,
   WHEEL_SIDE_SCALE,
+  WHEEL_CENTER_INDEX,
+  WHEEL_MAX_FLING_SLOTS,
   WHEEL_SLOT_OFFSETS,
   WHEEL_STAGE_HEIGHT,
   WHEEL_VISIBLE_SLOTS,
@@ -44,8 +46,9 @@ test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 14
   assert.equal(WHEEL_HERO_WIDTH, 108);
   assert.equal(WHEEL_HERO_HEIGHT, 126);
   assert.equal(WHEEL_STAGE_HEIGHT, 148);
-  assert.equal(WHEEL_VISIBLE_SLOTS, 5);
-  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-2, -1, 0, 1, 2]);
+  assert.equal(WHEEL_VISIBLE_SLOTS, 7);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-3, -2, -1, 0, 1, 2, 3]);
+  assert.equal(WHEEL_SLOT_OFFSETS.length, WHEEL_VISIBLE_SLOTS);
   assert.equal(WHEEL_ROTATE_Y_PER_SLOT, -14);
   assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
   assert.equal(WHEEL_Z_CENTER, 36);
@@ -111,15 +114,24 @@ test('Set B palette locked (CAL-3DW-10)', () => {
   assert.equal(SET_B.tabHighlight, '#ECEFF1');
 });
 
-test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY; no translateZ in style; RM no tilt; no className', () => {
+test('PeriodPager is 7-slot recycle wheel (±3): pitch/perspective/rotateY; earlier extras; no translateZ; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
+  assert.match(pager, /WHEEL_CENTER_INDEX/);
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /rotateY/);
   assert.match(pager, /WHEEL_PERSPECTIVE/);
   assert.match(pager, /tapSide/);
   assert.match(pager, /useReducedMotion/);
   assert.match(pager, /WHEEL_SPRING|friction/);
+  // Approach A: extras at spring rest + useLayoutEffect (not delayed post-onShift only).
+  assert.match(pager, /useLayoutEffect/);
+  assert.match(pager, /setShowCenterExtras\(true\)/);
+  // finishShift must not clear extras (was the post-onShift lag source).
+  const finishIdx = pager.indexOf('const finishShift');
+  assert.ok(finishIdx >= 0);
+  const finishBlock = pager.slice(finishIdx, pager.indexOf('const animateSnap', finishIdx));
+  assert.doesNotMatch(finishBlock, /setShowCenterExtras\(false\)/);
   // CAL-P6-1A: carve dropped; full-band stage claim (no pageX left guard).
   assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX|CAL-P6-1A/);
@@ -152,6 +164,14 @@ test('PeriodPager is 5-slot SoT wheel: pitch/perspective/rotateY; no translateZ 
   assert.match(transformMatch[1], /translateX/);
   assert.match(transformMatch[1], /rotateY/);
   assert.match(transformMatch[1], /scale/);
+});
+
+test('MAX_FLING=3 always has a mounted leaf (window covers ±3)', () => {
+  assert.equal(WHEEL_MAX_FLING_SLOTS, 3);
+  assert.equal(WHEEL_CENTER_INDEX, 3);
+  assert.ok(WHEEL_SLOT_OFFSETS.includes(-WHEEL_MAX_FLING_SLOTS as -3));
+  assert.ok(WHEEL_SLOT_OFFSETS.includes(WHEEL_MAX_FLING_SLOTS as 3));
+  assert.equal(WHEEL_SLOT_OFFSETS[WHEEL_CENTER_INDEX], 0);
 });
 
 test('PeriodLeaf Set B hanging-ledger: fixed hex; metal tabs; no YearIcon bars; no theme recolor', () => {
