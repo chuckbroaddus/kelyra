@@ -7,7 +7,9 @@
  *   notes/company/calendar-item2-perf-architecture.md
  *   notes/company/calendar-3d-wheel-spec.md §2 (geometry curves)
  *
- * P0: SlotPool N=9 (center ±4); MAX_FLING = N/2 headroom (=4).
+ * P0: SlotPool N=9 (center ±4). Soft MAX_FLING ceiling (~48) for absurd springs only;
+ * momentum coast is uncapped up to that ceiling (must allow 30+). Mid-fling SlotPool
+ * rebounds period keys so visual flybys match committed advance.
  * Ship curves from dual-stamped SoT (not the prior brief defaults).
  */
 export { snapPeriodPage, PERIOD_PAGER_EDGE_GUARD_PX } from './periodPager.ts';
@@ -52,15 +54,21 @@ export const WHEEL_FAR_OPACITY = 0.4; // |d|=2 → 1 - 0.48 - 0.12
 export const WHEEL_MIN_OPACITY = 0.22;
 
 /**
- * Max integer slots committed per fling.
- * Arch: MAX_FLING ≈ N/2 headroom for SlotPool N=9 → 4.
+ * Soft ceiling on integer slots committed per fling (absurd-spring guard only).
+ * Must allow 30+; SlotPool N=9 rebounds mid-fling so visuals stay populated.
  */
-export const WHEEL_MAX_FLING_SLOTS = 4;
+export const WHEEL_MAX_FLING_SLOTS = 48;
+
+/**
+ * Local sample half-width for TransformDriver lerp tables.
+ * Mid-fling rebound keeps residual drag near center; ±5 covers local motion.
+ */
+export const WHEEL_LOCAL_SAMPLE_SLOTS = 5;
 
 /**
  * SlotPool N=9 circular buffer — offsets -4..+4.
  * Stable React keys: slotPoolKey(periodKey, slotIndex).
- * Hero still reads as five; ±3/±4 peek so MAX_FLING=4 never hits a blank slot.
+ * Rebound period props on the same slot instance during long flings.
  */
 export const WHEEL_VISIBLE_SLOTS = 9;
 export const WHEEL_SLOT_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4] as const;

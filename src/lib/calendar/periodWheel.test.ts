@@ -22,6 +22,7 @@ import {
   WHEEL_SIDE_SCALE,
   WHEEL_CENTER_INDEX,
   WHEEL_MAX_FLING_SLOTS,
+  WHEEL_LOCAL_SAMPLE_SLOTS,
   WHEEL_SLOT_OFFSETS,
   WHEEL_STAGE_HEIGHT,
   WHEEL_VISIBLE_SLOTS,
@@ -146,24 +147,36 @@ test('PeriodPager is 9-slot SlotPool: reanimated native / CSS web; no translateZ
   const transformMatch = pager.match(/transform:\s*\[[\s\S]*?\]/);
   assert.ok(transformMatch);
   assert.doesNotMatch(transformMatch![0], /translateZ/);
+  assert.match(pager, /WHEEL_LOCAL_SAMPLE_SLOTS|residualFromTotalDrag|visualShift/);
+  assert.match(pager, /shiftPeriodAnchor/);
+  assert.match(pager, /useAnimatedReaction/);
 });
 
-test('MAX_FLING=4 always has a mounted leaf (window covers ±4)', () => {
-  assert.equal(WHEEL_MAX_FLING_SLOTS, 4);
-  assert.ok(WHEEL_SLOT_OFFSETS.includes(-WHEEL_MAX_FLING_SLOTS as -4));
-  assert.ok(WHEEL_SLOT_OFFSETS.includes(WHEEL_MAX_FLING_SLOTS as 4));
-  assert.ok(WHEEL_VISIBLE_SLOTS / 2 >= WHEEL_MAX_FLING_SLOTS);
+test('MAX_FLING soft ceiling uncapped (≥30, ~48); SlotPool N=9 rebounds mid-fling', () => {
+  assert.equal(WHEEL_MAX_FLING_SLOTS, 48);
+  assert.ok(WHEEL_MAX_FLING_SLOTS >= 30);
+  assert.ok(WHEEL_MAX_FLING_SLOTS <= 60);
+  assert.equal(WHEEL_LOCAL_SAMPLE_SLOTS, 5);
+  assert.ok(WHEEL_LOCAL_SAMPLE_SLOTS >= 4);
+  // N=9 still covers local residual after rebound (not the soft ceiling)
+  assert.ok(WHEEL_VISIBLE_SLOTS / 2 >= WHEEL_LOCAL_SAMPLE_SLOTS - 1);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-4, -3, -2, -1, 0, 1, 2, 3, 4]);
 });
 
 test('showsPeriodPager still true for day list', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
 });
 
-test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + stable keys', () => {
+test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + per-kind silhouettes', () => {
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.match(leaf, /memo\(MonthHangingGridImpl\)|const MonthHangingGrid = memo/);
   assert.match(leaf, /contentMode/);
   assert.match(leaf, /SilhouetteLeaf|silhouetteHeader/);
+  assert.match(leaf, /silhouetteBlurYear|styles\.yearPage/);
+  assert.match(leaf, /tile\.kind === 'year'|kind === 'year'/);
+  assert.match(leaf, /silhouetteBlurDay|silhouetteHintRow/);
+  assert.match(leaf, /silhouetteBlurLabel|silhouetteBlurDayNumeral|silhouetteBlurCaption/);
+  assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
   assert.match(leaf, /mountGrid|showExtras/);
 });
