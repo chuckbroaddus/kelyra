@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { ERROR_COPY } from '../src/config.ts';
 import { isEncryptedPdfMessage, RasterizeError } from '../src/errors.ts';
@@ -105,3 +106,17 @@ test('I2-corrupt: teacherFacingErrorMessage never keeps polluted corrupt_pdf mes
   const encrypted = new RasterizeError('encrypted_pdf');
   assert.equal(teacherFacingErrorMessage(encrypted), ERROR_COPY.encrypted_pdf);
 });
+
+test('B-SIZE-01 / FL-05: committed encrypted.pdf fixture rejected by probePdf with encrypted_pdf', async () => {
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+  const fixturePath = join(repoRoot, 'notes/qa-fixtures/batch-ingest/encrypted.pdf');
+  await assert.rejects(
+    () => probePdf(fixturePath),
+    (err: unknown) => {
+      assert.ok(err instanceof RasterizeError);
+      assert.equal(err.code, 'encrypted_pdf');
+      return true;
+    },
+  );
+});
+

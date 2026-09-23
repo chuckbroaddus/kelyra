@@ -108,3 +108,6 @@ supabase/functions/.secrets.*
 # Local CoS dumps — Hermes profile tarballs can contain credentials
 notes/company/backups/
 .tmp_still*.png
+
+# FL-05 / B-SIZE-01 oversized fixture (≥250 MiB) — generate via scripts/generate-batch-size-fixtures.mjs
+notes/qa-fixtures/batch-ingest/oversized-300mb.pdf
