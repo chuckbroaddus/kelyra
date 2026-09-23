@@ -8,6 +8,7 @@ import * as tus from 'tus-js-client';
 
 import { supabaseUrl } from '@/constants/config';
 import { TUS_CHUNK_BYTES, shouldUseTus } from '@/lib/ingest/caps';
+import { ingestStoragePathPrefix } from '@/lib/ingest/storagePath';
 import { requireSupabase } from '@/lib/supabase/client';
 
 export type UploadProgress = {
@@ -61,7 +62,7 @@ export async function uploadIngestObject(input: {
   signal?: AbortSignal;
 }): Promise<UploadResult> {
   const ext = extensionFor(input.mimeType, input.filename);
-  const storagePath = `${input.teacherId}/ingest/${input.batchId}/${input.fileId}.${ext}`;
+  const storagePath = `${ingestStoragePathPrefix(input.teacherId, input.batchId)}${input.fileId}.${ext}`;
   const size = input.file.size;
 
   if (shouldUseTus(size)) {

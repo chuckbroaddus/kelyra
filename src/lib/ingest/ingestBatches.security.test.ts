@@ -10,6 +10,7 @@ function read(rel: string): string {
 
 const batches = 'supabase/migrations/20260913000000_ingest_batches.sql';
 const storage = 'supabase/migrations/20260913000001_ingest_storage.sql';
+const pathBind = 'supabase/migrations/20260923090000_register_ingest_file_path_bind.sql';
 
 function extractFn(sql: string, name: string): string {
   const start = sql.indexOf(`create or replace function public.${name}`);
@@ -214,4 +215,20 @@ test('I0-09 RPCs use class_teacher_of only (not teaches_class office bypass)', (
   assert.match(abandon, /retry_remainder/);
   assert.match(abandon, /capture_id is not null/);
   assert.match(extractFn(sql, 'retry_ingest_remainder'), /status is distinct from 'partial'|retry_remainder/);
+});
+
+test('FL-19 register_ingest_file refuses path outside {uid}/ingest/{batch_id}/', () => {
+  const body = extractFn(read(pathBind), 'register_ingest_file');
+  assert.match(body, /security definer/i);
+  assert.match(body, /invalid_storage_path/);
+  assert.match(
+    body,
+    /auth\.uid\(\)::text\s*\|\|\s*'\/ingest\/'\s*\|\|\s*p_batch_id::text\s*\|\|\s*'\/'/,
+  );
+  assert.match(body, /left\(p_storage_path,\s*length\(expected_prefix\)\)/);
+  assert.match(body, /class_teacher_of/);
+  assert.match(body, /teacher_id is distinct from auth\.uid\(\)/);
+  // Still keeps MIME + caps + idempotent behavior
+  assert.match(body, /unsupported_type/);
+  assert.match(body, /sha256 = p_sha256/);
 });
