@@ -293,10 +293,6 @@ export default function CaptureScreen() {
     };
   }, [asking, busy, status]);
 
-  const keyedAssignments = useMemo(
-    () => assignments.filter((row) => assignmentHasKey(row)),
-    [assignments],
-  );
   const selectedAssignment = useMemo(
     () => assignments.find((row) => row.id === assignmentId) ?? null,
     [assignments, assignmentId],
@@ -320,42 +316,29 @@ export default function CaptureScreen() {
       aliases: student.name_aliases,
     }));
     const parts = splitByRoster(spokenName, names);
-    const lines = parts.map((part) => {
-      const student = roster.find((row) => row.id === part.match.guessedStudentId);
-      const target =
-        shouldAutoAttach(part.match) && student ? student.display_name : 'Inbox';
-      return `${target}: ${part.text}`;
-    });
 
     if (parts.length > 1) {
       return {
         button: `Save ${parts.length} notes`,
-        hint: lines.join('\n'),
         saved: `${parts.length} notes saved. Next photo whenever you’re ready.`,
       };
     }
-    if (lines[0] && parts[0]) {
+    if (parts[0]) {
       const only = parts[0].match;
       const student = roster.find((row) => row.id === only.guessedStudentId);
       if (shouldAutoAttach(only) && student) {
         return {
           button: `Save to ${student.display_name}`,
-          hint: `This goes on ${student.display_name}’s record.`,
           saved: `Saved to ${student.display_name}. Next photo whenever you’re ready.`,
         };
       }
       return {
         button: 'Save to Inbox',
-        hint:
-          only.confidence > 0
-            ? 'Name is unclear — it will wait in Inbox.'
-            : 'No name yet — it will wait in Inbox.',
         saved: 'Saved to Inbox. You can put a name on it after class.',
       };
     }
     return {
       button: 'Save to Inbox',
-      hint: 'No name is fine — it goes to Inbox.',
       saved: 'Saved to Inbox. You can put a name on it after class.',
     };
   }, [spokenName, roster]);
@@ -862,52 +845,6 @@ export default function CaptureScreen() {
     } catch (err) {
       setStatus(null);
       setError(err instanceof Error ? err.message : 'Could not ask AI');
-    } finally {
-      setAsking(false);
-    }
-  };
-
-  const openPackBReview = async () => {
-    if (!selectedAssignment || !assignmentHasKey(selectedAssignment) || !pages.length) {
-      setError('Pick a keyed assignment and a photo first.');
-      return;
-    }
-    setAsking(true);
-    setError(null);
-    setStatus('Extracting against key…');
-    try {
-      const photoAssets =
-        evaluation?.photoAssets?.length === pages.length
-          ? evaluation.photoAssets
-          : await Promise.all(
-              pages.map((page) =>
-                uploadTeacherAsset({
-                  teacherId: teacher.id,
-                  kind: 'photo',
-                  uri: page.uri,
-                  mimeType: page.mimeType,
-                }),
-              ),
-            );
-      const keyed = await runKeyedExtract(photoAssets, selectedAssignment);
-      setEvaluation({
-        photoAssets,
-        audioAsset: evaluation?.audioAsset ?? null,
-        transcript: evaluation?.transcript ?? null,
-        studentName: keyed.draft.studentName ?? evaluation?.studentName ?? null,
-        gaps: keyed.draft.gaps,
-        draftScore: keyed.draft.draftScore,
-        teacherNote: keyed.draft.teacherNote,
-        costUsd: keyed.draft.costUsd ?? null,
-        parentSentence: null,
-        pageAssetIds: keyed.draft.pageAssetIds,
-      });
-      setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
-      setReviewOpen(true);
-      setIntent('homework');
-      setStatus('Confirm each item, file the student if needed, then Approve.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start keyed review');
     } finally {
       setAsking(false);
     }
@@ -1868,39 +1805,6 @@ export default function CaptureScreen() {
   const composerBlock = (
     <View style={styles.block}>
       {split ? noteRow : null}
-      {preview.hint ? <Text style={[type.meta, { color: colors.mute }]}>{preview.hint}</Text> : null}
-
-      {keyedAssignments.length ? (
-        <Card>
-          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
-            Keyed assignment
-          </Text>
-          <Text style={[type.meta, { color: colors.mute }]}>
-            Pack B: confirm extracts on this phone, then Accept recommendation.
-          </Text>
-          <View style={styles.gaps}>
-            {keyedAssignments.slice(0, 8).map((row) => (
-              <Chip
-                key={row.id}
-                label={row.title}
-                selected={assignmentId === row.id}
-                onPress={() => {
-                  setAssignmentId(row.id);
-                  setPackItems([]);
-                  setReviewOpen(false);
-                }}
-              />
-            ))}
-          </View>
-          {selectedAssignment && pages.length ? (
-            <GhostButton
-              label={asking ? 'Extracting…' : 'Review & score against key'}
-              disabled={asking || busy || micLive}
-              onPress={() => void openPackBReview()}
-            />
-          ) : null}
-        </Card>
-      ) : null}
 
       {intent ? (
         <Card>
