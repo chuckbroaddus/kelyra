@@ -181,7 +181,9 @@ export function planSaveIngestSplit(
     .filter((r) => localIds.has(r.id))
     .map((r) => r.id);
   const parkIds = [...keptServerIds, ...toInsert.map((row) => row.id)];
-  const parkBase = INGEST_PACKET_ORDINAL_PARK;
+  // Next free park band: above any leftover park ordinals from a failed restore,
+  // and at least one past INGEST_PACKET_ORDINAL_PARK.
+  const parkBase = Math.max(maxOrdinal, INGEST_PACKET_ORDINAL_PARK) + 1;
 
   return {
     toInsert,
