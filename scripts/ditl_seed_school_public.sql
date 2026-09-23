@@ -34,6 +34,10 @@ create table if not exists public.ditl_seed_state (
   v text not null
 );
 
+-- Service-role only; clears Supabase advisor rls_disabled_in_public
+alter table public.ditl_seed_state enable row level security;
+revoke all on table public.ditl_seed_state from anon, authenticated;
+
 -- F-SCHOOL
 insert into public.schools (id, name, feed_icon, created_at)
 values ('d1715000-0000-4000-a000-000000000001'::uuid, 'ditl-Sandbox Academy', 'feedSchool', now())
