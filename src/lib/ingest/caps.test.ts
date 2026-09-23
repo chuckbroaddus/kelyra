@@ -104,3 +104,39 @@ test('I3-07 SR-A copy atoms present', () => {
   assert.match(INGEST_COPY.splitLead, /Needs Attention/i);
   assert.match(INGEST_COPY.splitPhoneWaiting, /computer/i);
 });
+
+test('B-SIZE-01 / FL-05: generator-backed oversized file fails evaluateFileCaps with too_large_bytes', async () => {
+  const { mkdtemp, open, rm, stat } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+
+  const dir = await mkdtemp(join(tmpdir(), 'kelyra-bsize-'));
+  try {
+    const pdfPath = join(dir, 'oversized-300mb.pdf');
+    // Fast sparse/truncated file — same approach as scripts/generate-batch-size-fixtures.mjs
+    const targetBytes = HARD_FAIL_BYTES_EXACT + 1;
+    const fh = await open(pdfPath, 'w');
+    try {
+      const header = Buffer.from('%PDF-1.4\n% B-SIZE-01 oversized fixture (no student names)\n');
+      await fh.write(header, 0, header.length, 0);
+      await fh.truncate(targetBytes);
+    } finally {
+      await fh.close();
+    }
+    const { size } = await stat(pdfPath);
+    assert.ok(size > HARD_FAIL_BYTES_EXACT, `expected size > ${HARD_FAIL_BYTES_EXACT}, got ${size}`);
+
+    const verdict = evaluateFileCaps({
+      mimeType: 'application/pdf',
+      byteSize: size,
+    });
+    assert.equal(verdict.ok, false);
+    if (!verdict.ok) {
+      assert.equal(verdict.errorCode, 'too_large_bytes');
+      assert.match(verdict.message, /split|250 MB|MFP|copier/i);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
