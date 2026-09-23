@@ -153,12 +153,18 @@ test('PeriodPager is 9-slot SlotPool: reanimated native / CSS web; no translateZ
   assert.doesNotMatch(pager, /className\s*:/);
   assert.doesNotMatch(pager, /\{\s*translateZ\s*[,}]/);
   assert.doesNotMatch(pager, /translateZ\s*,/);
+  // FL-08 / t_df6159db P0: Fabric rejects translateZ — lock EVERY style.transform array
+  // (prior assert only checked the first match, often the RM scale-only branch).
+  const transformBlocks = [...pager.matchAll(/transform:\s*\[[\s\S]*?\]/g)].map((m) => m[0]);
+  assert.ok(transformBlocks.length >= 3, `expected ≥3 transform arrays, got ${transformBlocks.length}`);
+  for (const block of transformBlocks) {
+    assert.doesNotMatch(block, /translateZ/);
+  }
+  // SoT wheelZForNorm / wheelSample.translateZ must never wire into PeriodPager styles.
+  assert.doesNotMatch(pager, /wheelZForNorm|wheelSample|\.translateZ/);
   // RM path: scale only — no rotateY in reduceMotion branch of NativeSlotMotion
   assert.match(pager, /reduceMotion/);
   assert.match(pager, /rotateY/);
-  const transformMatch = pager.match(/transform:\s*\[[\s\S]*?\]/);
-  assert.ok(transformMatch);
-  assert.doesNotMatch(transformMatch![0], /translateZ/);
   assert.match(pager, /WHEEL_LOCAL_SAMPLE_SLOTS|residualFromTotalDrag|visualShift/);
   assert.match(pager, /shiftPeriodAnchor/);
   assert.match(pager, /useAnimatedReaction/);

@@ -504,7 +504,22 @@ test('PeriodPager slot map never reads tile.key on undefined (guards + shared of
   assert.match(src, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /if \(!tile\) return null/);
   assert.doesNotMatch(pager, /window\.slots\[idx\]!/);
+  // FL-08 / t_df6159db P0: renderSlot must null-guard before any tile.key read; no slot bangs.
+  assert.match(
+    pager,
+    /const tile = window\.slots\[slotIndex\];\s*if \(!tile\) return null;/,
+  );
+  assert.doesNotMatch(pager, /window\.slots\[[^\]]+\]!/);
+  const keyReads = [...pager.matchAll(/tile\.key/g)];
+  assert.equal(
+    keyReads.length,
+    1,
+    `PeriodPager should have exactly one tile.key read (after guard); got ${keyReads.length}`,
+  );
+  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.match(pager, /slotIndexForOffset/);
+  // packWindow length-guards so SlotPool never ships a short window to the slot map.
+  assert.match(src, /packWindow: expected \$\{WHEEL_SLOT_OFFSETS\.length\} slots/);
   const kinds = ['year', 'month', 'week', 'day'] as const;
   for (const kind of kinds) {
     const anchor = kind === 'year' ? '2026' : '2026-09-20';
