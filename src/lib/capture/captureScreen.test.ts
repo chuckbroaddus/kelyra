@@ -45,6 +45,23 @@ test('Pack B Approve path remains reachable on Capture', () => {
   assert.match(source, /persistCapture\('approve'/);
 });
 
+test('Capture drops inbox hint and keyed-assignment chip card (t_93c16147)', () => {
+  assert.doesNotMatch(source, /No name is fine — it goes to Inbox/);
+  assert.doesNotMatch(source, /Name is unclear — it will wait in Inbox/);
+  assert.doesNotMatch(source, /No name yet — it will wait in Inbox/);
+  assert.doesNotMatch(source, /This goes on \$\{student\.display_name\}/);
+  assert.doesNotMatch(source, /Keyed assignment/);
+  assert.doesNotMatch(source, /Pack B: confirm extracts on this phone/);
+  assert.doesNotMatch(source, /Review & score against key/);
+  assert.doesNotMatch(source, /preview\.hint/);
+  assert.doesNotMatch(source, /keyedAssignments/);
+  assert.doesNotMatch(source, /openPackBReview/);
+  assert.match(source, /Ask AI to process/);
+  assert.match(source, /label="Camera"/);
+  assert.match(source, /label="Photo or Video"/);
+  assert.match(source, /label="Files"/);
+});
+
 test('Capture recognizes syllabus intent and respects teacher note', () => {
   assert.match(source, /'syllabus'/);
   assert.match(source, /spokenSuggestsSyllabus|spokenSuggestsIntent/);
