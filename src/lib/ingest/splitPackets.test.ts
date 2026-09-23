@@ -120,6 +120,30 @@ test('I3-05 mid-stack Split inserts with non-colliding temp ordinal (not final d
   assert.ok(plan.parkBase >= 1_000_000);
 });
 
+test('FL-20 parkBase clears leftover park ordinals after failed restore', () => {
+  // Simulate rows left parked at/above INGEST_PACKET_ORDINAL_PARK after a failed restore.
+  const server = [
+    { id: 'a', ordinal: 1_000_000, capture_id: null, status: 'draft' },
+    { id: 'b', ordinal: 1_000_001, capture_id: null, status: 'draft' },
+  ];
+  const local = [pkt('a', ['p1'], false, 1), pkt('b', ['p2'], false, 2)];
+  const plan = planSaveIngestSplit(local, server);
+  const serverOrdinals = new Set(server.map((r) => r.ordinal));
+  assert.ok(plan.parkBase > 1_000_000);
+  assert.equal(plan.parkBase, Math.max(1_000_001, 1_000_000) + 1);
+  assert.ok(
+    !serverOrdinals.has(plan.parkBase),
+    'parkBase itself must not collide with unique(batch_id, ordinal)',
+  );
+  for (let i = 0; i < plan.parkIds.length; i++) {
+    const parked = plan.parkBase + i;
+    assert.ok(
+      !serverOrdinals.has(parked),
+      `parked ordinal ${parked} must not collide with existing server ordinals`,
+    );
+  }
+});
+
 test('I3-06 Merge defers delete until after RPC — pages stay on removed id if RPC fails', () => {
   const server = [
     { id: 'a', ordinal: 1, capture_id: null, status: 'draft' },
