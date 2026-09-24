@@ -189,6 +189,21 @@ test('QG-08 / PERF-11: invalidate mid-flight drops inflight and fetches fresh (n
   assert.equal(needsCountCacheHit('cMut'), true);
 });
 
+test('t_21501990: refreshBell discards Needs count when epoch moved during await', () => {
+  const chrome = read('src/lib/chrome/ChromeProvider.tsx');
+  const cache = read('src/lib/chrome/needsCountCache.ts');
+  assert.match(cache, /export function needsCountEpoch/);
+  assert.match(chrome, /needsCountEpoch/);
+  assert.match(chrome, /bellEpoch/);
+  assert.match(chrome, /bellEpoch !== needsCountEpoch\(\)/);
+  // Must return before setNeedsCount when epoch moved.
+  const bellAt = chrome.indexOf('const refreshBell = useCallback');
+  assert.ok(bellAt > 0);
+  const setNeeds = chrome.indexOf('setNeedsCount(work)', bellAt);
+  const discard = chrome.indexOf('bellEpoch !== needsCountEpoch()', bellAt);
+  assert.ok(discard > 0 && discard < setNeeds, 'epoch discard before setNeedsCount(work)');
+});
+
 test('S2 ChromeProvider: pathname hop cache hit skips listClasses + countNeedsYou', () => {
   const chrome = read('src/lib/chrome/ChromeProvider.tsx');
   assert.match(chrome, /needsCountCacheHit/);

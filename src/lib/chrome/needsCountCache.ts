@@ -19,6 +19,11 @@ export function invalidateNeedsCountCache(): void {
   epoch += 1;
 }
 
+/** Current invalidation epoch — callers (refreshBell) discard results when this moves. */
+export function needsCountEpoch(): number {
+  return epoch;
+}
+
 export function peekNeedsCountCache(): NeedsCountSnap | null {
   return snap;
 }
