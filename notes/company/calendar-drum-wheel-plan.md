@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-24  
 **Author:** Chief of Staff / Grok Bot (Kelyra)  
-**Status:** Ready for Chuck review  
+**Status:** P1 shipped  
 **Revision:** R1  
 **Research:** `notes/company/calendar-drum-wheel-research.md`  
 **Digest:** `notes/research/2026-09-24-calendar-drum-wheel-report.md`  
@@ -30,6 +30,19 @@
 | Network | **0** |
 | Rejected sole fixes | Springs-only; live grids on all slots; FlashList as primary; Skia-first |
 | Implementation | Future Eng card(s); this card = research + plan + HTML prototype only |
+
+---
+
+## CEO locks (2026-09-24) — Eng authorized
+
+| Lock | Decision |
+|---|---|
+| Idle look | **Fixed plate** (F1) — red header + single body line/numeral/range |
+| Drum grid | **None on picker** — month/week grids stay in Calendar **body** only |
+| Segment binder / atlas | **Dropped** for this path |
+| Pan driver | **RNGH 2** `Gesture.Pan` (P1) |
+| N=9 → N=7 | **N=7 locked** — `WHEEL_SLOT_OFFSETS = [-3..+3]`, clear radius 3, freeze ≤3 |
+| Implement | **Shipped** (CAL-DRUM P1) |
 
 ---
 

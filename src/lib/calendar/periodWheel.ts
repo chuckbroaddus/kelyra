@@ -7,7 +7,7 @@
  *   notes/company/calendar-item2-perf-architecture.md
  *   notes/company/calendar-3d-wheel-spec.md §2 (geometry curves)
  *
- * P0: SlotPool N=9 (center ±4). Soft MAX_FLING ceiling (~48) for absurd springs only;
+ * P1: SlotPool N=7 (center ±3). Soft MAX_FLING ceiling (~48) for absurd springs only;
  * inertial coast |coastPx|=v²/(2·WHEEL_FLING_DECEL) uncapped up to that ceiling (30+).
  * Mid-fling SlotPool rebounds period keys so visual flybys match committed advance.
  * Ship curves from dual-stamped SoT (not the prior brief defaults).
@@ -61,7 +61,7 @@ export const WHEEL_MIN_OPACITY = 0.22;
 
 /**
  * Soft ceiling on integer slots committed per fling (absurd-spring guard only).
- * Must allow 30+; SlotPool N=9 rebounds mid-fling so visuals stay populated.
+ * Must allow 30+; SlotPool N=7 rebounds mid-fling so visuals stay populated.
  */
 export const WHEEL_MAX_FLING_SLOTS = 48;
 
@@ -73,26 +73,26 @@ export const WHEEL_FLING_DECEL = 2000;
 
 /**
  * Local sample half-width for TransformDriver lerp tables.
- * Mid-fling rebound keeps residual drag near center; ±5 covers local motion.
+ * Mid-fling rebound keeps residual drag near center; ±4 covers local motion within N=7.
  */
-export const WHEEL_LOCAL_SAMPLE_SLOTS = 5;
+export const WHEEL_LOCAL_SAMPLE_SLOTS = 4;
 
 /**
- * SlotPool N=9 circular buffer — offsets -4..+4.
+ * SlotPool N=7 circular buffer — offsets -3..+3.
  * React mount keys are stableSlotHostKey(slotIndex) = `slot-${index}` (P0 CAL-DRUM).
  * Rebound period props on the same slot host during long flings — never remount on periodKey.
  * slotPoolKey(periodKey, slotIndex) remains for tests/compat identity only.
  */
-export const WHEEL_VISIBLE_SLOTS = 9;
-export const WHEEL_SLOT_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4] as const;
+export const WHEEL_VISIBLE_SLOTS = 7;
+export const WHEEL_SLOT_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
 /** Index of offset 0 inside WHEEL_SLOT_OFFSETS / buildPeriodWindow.slots. */
-export const WHEEL_CENTER_INDEX = 4;
+export const WHEEL_CENTER_INDEX = 3;
 
 /** Neighbor half-width for full Set B ledger after snap (|d| ≤ this). */
 export const WHEEL_FULL_LEDGER_RADIUS = 1;
 
 /** Half-width (period steps) that stays sharp during fling from fling-origin. */
-export const WHEEL_FLING_CLEAR_RADIUS = 4;
+export const WHEEL_FLING_CLEAR_RADIUS = 3;
 
 /** Spring ~300 ms settle (friction/tension pair for RN Animated compat). */
 export const WHEEL_SPRING = { friction: 8, tension: 92 } as const;
@@ -193,7 +193,7 @@ export function wheelInFocusBand(d: number, band = WHEEL_FOCUS_BAND): boolean {
 
 /**
  * ContentPolicy (P0 fling/snap):
- * - fling → full (sharp) when |distanceFromOrigin| ≤ clearRadius (default 4);
+ * - fling → full (sharp) when |distanceFromOrigin| ≤ clearRadius (default 3);
  *   silhouette (opacity-dim, no BlurView) beyond that. Origin = anchor at pan grant.
  * - snap / not flinging → full Set B for center+neighbors; far slots silhouette
  */
@@ -204,7 +204,7 @@ export function wheelContentModeFor(args: {
   flinging: boolean;
   /** Signed period steps from fling-start origin to this tile (kind-aware). */
   distanceFromOrigin?: number;
-  /** Clear (full) radius while flinging. Default WHEEL_FLING_CLEAR_RADIUS (4). */
+  /** Clear (full) radius while flinging. Default WHEEL_FLING_CLEAR_RADIUS (3). */
   clearRadius?: number;
   fullRadius?: number;
 }): WheelContentMode {

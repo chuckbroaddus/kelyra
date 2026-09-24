@@ -55,11 +55,10 @@ test('periodKindForView maps CalendarViewId', () => {
   assert.equal(periodKindForView('agenda'), 'agenda');
 });
 
-test('buildPeriodWindow: 9-slot SlotPool (center ±4); year sides YY; center full year', () => {
+test('buildPeriodWindow: 7-slot SlotPool (center ±3); year sides YY; center full year', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
-  assert.equal(w.slots.length, 9);
-  assert.equal(w.prev4.year, 2022);
+  assert.equal(w.slots.length, 7);
   assert.equal(w.prev3.year, 2023);
   assert.equal(w.prev2.year, 2024);
   assert.equal(w.prev.year, 2025);
@@ -67,12 +66,11 @@ test('buildPeriodWindow: 9-slot SlotPool (center ±4); year sides YY; center ful
   assert.equal(w.next.year, 2027);
   assert.equal(w.next2.year, 2028);
   assert.equal(w.next3.year, 2029);
-  assert.equal(w.next4.year, 2030);
   assert.equal(w.current.centerCaption, '2026');
   assert.equal(w.current.sideCaption, "'26");
   assert.equal(w.prev.sideCaption, "'25");
   assert.equal(w.next.sideCaption, "'27");
-  assert.equal(w.slots[4], w.current);
+  assert.equal(w.slots[3], w.current);
   WHEEL_SLOT_OFFSETS.forEach((offset, idx) => {
     const tile = w.slots[idx];
     assert.ok(tile, `missing slot at offset ${offset}`);
@@ -81,7 +79,7 @@ test('buildPeriodWindow: 9-slot SlotPool (center ±4); year sides YY; center ful
   });
 });
 
-test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 9', () => {
+test('buildPeriodWindow month: existing shiftMonth; plate fields on all 7', () => {
   const w = buildPeriodWindow({ kind: 'month', anchor: '2026-09-20' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.monthYear, 2026);
@@ -93,9 +91,6 @@ test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 9
   assert.equal(w.next2.monthIndex0, 10);
   assert.equal(w.prev3.monthIndex0, 5);
   assert.equal(w.next3.monthIndex0, 11);
-  assert.equal(w.prev4.monthIndex0, 4);
-  assert.equal(w.next4.monthIndex0, 0); // +4 → Jan 2027
-  assert.equal(w.next4.monthYear, 2027);
   for (const t of w.slots) {
     assert.equal(typeof t.monthYear, 'number');
     assert.equal(typeof t.monthIndex0, 'number');
@@ -103,7 +98,7 @@ test('buildPeriodWindow month: existing shiftMonth; hanging grid fields on all 9
   }
 });
 
-test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±4', () => {
+test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±3', () => {
   const w = buildPeriodWindow({ kind: 'week', anchor: '2026-09-16' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.fromIso, '2026-09-13');
@@ -113,48 +108,46 @@ test('buildPeriodWindow week: existing shiftWeek recycle neighbors ±4', () => {
   assert.equal(w.next2.fromIso, shiftWeek('2026-09-13', 2));
   assert.equal(w.prev3.fromIso, shiftWeek('2026-09-13', -3));
   assert.equal(w.next3.fromIso, shiftWeek('2026-09-13', 3));
-  assert.equal(w.prev4.fromIso, shiftWeek('2026-09-13', -4));
-  assert.equal(w.next4.fromIso, shiftWeek('2026-09-13', 4));
 });
 
-test('buildPeriodWindow day: existing shiftDay ±4', () => {
+test('buildPeriodWindow day: existing shiftDay ±3', () => {
   const w = buildPeriodWindow({ kind: 'day', anchor: '2026-09-20' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.dayIso, '2026-09-20');
   assert.equal(w.prev.dayIso, shiftDay('2026-09-20', -1));
   assert.equal(w.next.dayIso, shiftDay('2026-09-20', 1));
-  assert.equal(w.prev4.dayIso, shiftDay('2026-09-20', -4));
-  assert.equal(w.next4.dayIso, shiftDay('2026-09-20', 4));
+  assert.equal(w.prev3.dayIso, shiftDay('2026-09-20', -3));
+  assert.equal(w.next3.dayIso, shiftDay('2026-09-20', 3));
   assert.match(w.current.centerCaption, /September 20, 2026/);
 });
 
-test('buildPeriodWindow multiday: existing shiftMultiday ±4', () => {
+test('buildPeriodWindow multiday: existing shiftMultiday ±3', () => {
   const w = buildPeriodWindow({ kind: 'multiday', anchor: '2026-09-16', dayCount: 3 });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.fromIso, '2026-09-15');
   assert.equal(w.prev.anchor, shiftMultiday('2026-09-16', 3, -1));
   assert.equal(w.next.anchor, shiftMultiday('2026-09-16', 3, 1));
   assert.equal(typeof w.slots[0]!.key, 'string');
-  assert.equal(typeof w.slots[8]!.key, 'string');
+  assert.equal(typeof w.slots[6]!.key, 'string');
 });
 
-test('buildPeriodWindow agenda: ±7 day step across 9 slots', () => {
+test('buildPeriodWindow agenda: ±7 day step across 7 slots', () => {
   const w = buildPeriodWindow({ kind: 'agenda', anchor: '2026-09-20' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.current.centerCaption, 'Next 2 weeks');
   assert.equal(w.prev.anchor, shiftDay('2026-09-20', -7));
   assert.equal(w.next.anchor, shiftDay('2026-09-20', 7));
-  assert.equal(w.prev4.anchor, shiftDay('2026-09-20', -28));
-  assert.equal(w.next4.anchor, shiftDay('2026-09-20', 28));
+  assert.equal(w.prev3.anchor, shiftDay('2026-09-20', -21));
+  assert.equal(w.next3.anchor, shiftDay('2026-09-20', 21));
 });
 
-test('SlotPool N=9: window has real tiles at ±4 (local residual cover)', () => {
+test('SlotPool N=7: window has real tiles at ±3 (local residual cover)', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
-  assert.equal(w.slots.length, 9);
-  assert.ok(w.prev4.key);
-  assert.ok(w.next4.key);
-  assert.notEqual(w.prev4.key, w.current.key);
-  assert.notEqual(w.next4.key, w.current.key);
+  assert.equal(w.slots.length, 7);
+  assert.ok(w.prev3.key);
+  assert.ok(w.next3.key);
+  assert.notEqual(w.prev3.key, w.current.key);
+  assert.notEqual(w.next3.key, w.current.key);
 });
 
 test('snapPeriodPage: distance + velocity; soft max fling ~48; pitch-based', () => {
@@ -337,15 +330,16 @@ test('rolodex scale/opacity: center larger/brighter than sides', () => {
 });
 
 
-test('shouldFreezeSlotPoolDuringSnap: freeze only |steps|≤4 programmed; live/long do not', () => {
-  assert.equal(SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS, 4);
-  // Programmed short snaps (critical band) freeze
+test('shouldFreezeSlotPoolDuringSnap: freeze only |steps|≤3 programmed; live/long do not', () => {
+  assert.equal(SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS, 3);
+  // Programmed short snaps (critical band / half-window) freeze
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, 0), true);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, 1), true);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, 2), true);
-  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 4), true);
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 3), true);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, -3), true);
-  // Long coasts must NOT freeze (silhouettes beyond ±4 need recycle)
+  // Long coasts must NOT freeze (silhouettes beyond ±3 need recycle)
+  assert.equal(shouldFreezeSlotPoolDuringSnap(true, 4), false);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, 5), false);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, 12), false);
   assert.equal(shouldFreezeSlotPoolDuringSnap(true, -30), false);
@@ -451,9 +445,9 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(screen, /label=["']<<["']/);
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.doesNotMatch(leaf, /\.png|ImageBackground|require\(/);
-  assert.match(leaf, /MonthHangingGrid|hangGrid/);
+  assert.doesNotMatch(leaf, /function MonthHangingGrid|const MonthHangingGrid|<MonthHangingGrid|function WeekDayStrip|<WeekDayStrip|styles\.hangGrid|styles\.weekStrip|weekStrip:\s*\{/);
   assert.match(leaf, /MetalTabs|SET_B/);
-  assert.match(leaf, /yearPage|WeekDayStrip|dayNumeral/);
+  assert.match(leaf, /yearPage|monthStub|dayNumeral|plateBodyLine/);
   assert.doesNotMatch(leaf, /YearIcon|WeekIcon|DayIcon/);
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
@@ -478,8 +472,8 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /updateVisualShift/);
   assert.match(pager, /setFlinging\(false\)/);
   assert.match(pager, /setShowCenterExtras\(true\)/);
-  // Spring velocity must be px/s (PanResponder vx * 1000), not raw vx.
-  assert.match(pager, /g\.vx \* 1000/);
+  // Spring velocity must be px/s (RNGH velocityX is already px/s).
+  assert.match(pager, /velocityX|velocityRef\.current = velocityX/);
   // Flinging stays true for entire spring — flip only in onSpringRest, not at snap intent.
   const restIdx = pager.indexOf('onSpringRest');
   const animateIdx = pager.indexOf('const animateSnap');
@@ -558,8 +552,8 @@ test('PeriodPager grant absorbs in-flight snap (does not drop pending)', () => {
   assert.ok(layoutIdx > 0);
   const layoutBlock = pager.slice(layoutIdx, layoutIdx + 700);
   assert.match(layoutBlock, /updateAbsorbedShift\(0\)/);
-  // Grant must absorb — not merely clear pending to 0 without folding.
-  const grantIdx = pager.indexOf('onPanResponderGrant');
+  // Grant/begin must absorb — not merely clear pending to 0 without folding.
+  const grantIdx = pager.indexOf('onPanBegin');
   assert.ok(grantIdx > 0);
   const grantBlock = pager.slice(grantIdx, grantIdx + 900);
   assert.match(grantBlock, /absorbInFlightSnap\(\)/);
@@ -584,14 +578,15 @@ test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multida
   assert.doesNotMatch(src, /supabase|execute_sql|from\('/);
 });
 
-test('Y/M/W/D leaf identity source contracts (CAL-3DW-16)', () => {
+test('Y/M/W/D leaf identity source contracts (CAL-3DW-16) — fixed plate', () => {
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.match(leaf, /yearPage/);
   assert.match(leaf, /SET_B\.header|#C62828/);
   assert.match(leaf, /MetalTabs/);
   assert.match(leaf, /monthHeader/);
   assert.match(leaf, /SET_B\.sunday|#E53935/);
-  assert.match(leaf, /weekStrip|WeekDayStrip/);
+  assert.doesNotMatch(leaf, /function MonthHangingGrid|const MonthHangingGrid|<MonthHangingGrid|function WeekDayStrip|<WeekDayStrip|styles\.hangGrid|styles\.weekStrip|weekStrip:\s*\{/);
+  assert.match(leaf, /plateBodyLine|monthStub/);
   assert.doesNotMatch(leaf, /wrapBodyText/);
   assert.match(leaf, /dayNumeral/);
   assert.doesNotMatch(leaf, /dayCircle|borderRadius:\s*14/);
@@ -611,10 +606,10 @@ test('periodDistance: kind-aware signed steps from fling origin', () => {
   assert.equal(periodDistance('week', '2026-09-13', '2026-10-18'), 5);
 });
 
-test('wheelContentModeFor fling clear window uses periodDistance radius 4', () => {
+test('wheelContentModeFor fling clear window uses periodDistance radius 3', () => {
   // imported via periodWheel in sibling test; pin policy contract here via distance helper
-  assert.ok(Math.abs(periodDistance('year', '2026', '2030')) <= 4);
-  assert.ok(Math.abs(periodDistance('year', '2026', '2031')) > 4);
+  assert.ok(Math.abs(periodDistance('year', '2026', '2029')) <= 3);
+  assert.ok(Math.abs(periodDistance('year', '2026', '2030')) > 3);
 });
 
 
@@ -631,13 +626,11 @@ test('CAL-3DW host perspective-origin 50% 45% (t_15feb999)', () => {
 
 test('CAL-3DW RM keeps drag; drops rotateY only (t_b9051be5)', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  // No separate tap-only RM tree without panHandlers.
+  // No separate tap-only RM tree without gesture.
   assert.doesNotMatch(pager, /styles\.rmRow/);
-  // Pan move gate must not bail solely on reduceMotion.
-  const moveIdx = pager.indexOf('onMoveShouldSetPanResponder:');
-  assert.ok(moveIdx > 0);
-  const moveBlock = pager.slice(moveIdx, moveIdx + 280);
-  assert.doesNotMatch(moveBlock, /if \(reduceMotion/);
+  // Pan gesture must not bail solely on reduceMotion.
+  assert.match(pager, /Gesture\.Pan\(\)/);
+  assert.doesNotMatch(pager, /if \(reduceMotion\).*Gesture\.Pan|Gesture\.Pan[\s\S]{0,200}reduceMotion/);
   // Slot motion still branches rotateY off under RM.
   assert.match(pager, /if \(reduceMotion\) \{[\s\S]*?transform:\s*\[\{\s*scale/);
 });
@@ -655,11 +648,10 @@ test('CAL-3DW side hits outside scale ≥56 (t_1a0f176c)', () => {
 
 test('CAL-P6-1A start-claim full-band (t_80d16cbc)', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  assert.match(
-    pager,
-    /onStartShouldSetPanResponder:\s*\(\)\s*=>\s*!settling\.current\s*&&\s*!failed/,
-  );
-  assert.match(pager, /onStartShouldSetPanResponderCapture:/);
+  assert.match(pager, /manualActivation\(true\)/);
+  assert.match(pager, /onTouchesDown/);
+  assert.match(pager, /stateManager\.activate\(\)/);
+  assert.match(pager, /GestureDetector/);
   assert.match(pager, /tapAtStageX/);
   assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX/);
 });
@@ -668,8 +660,8 @@ test('CAL-P6-1A start-claim full-band (t_80d16cbc)', () => {
 test('CAL-3DW mid-spring interrupt rebases from visual drag (t_72512eeb)', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /grantDragBaseRef/);
-  assert.match(pager, /grantDragBaseRef\.current \+ g\.dx/);
-  const grantIdx = pager.indexOf('onPanResponderGrant');
+  assert.match(pager, /grantDragBaseRef\.current \+ translationX/);
+  const grantIdx = pager.indexOf('onPanBegin');
   const grantBlock = pager.slice(grantIdx, grantIdx + 1200);
   assert.match(grantBlock, /grantDragBaseRef\.current =/);
 });

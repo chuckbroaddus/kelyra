@@ -58,10 +58,10 @@ test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 14
   assert.equal(WHEEL_HERO_WIDTH, 108);
   assert.equal(WHEEL_HERO_HEIGHT, 126);
   assert.equal(WHEEL_STAGE_HEIGHT, 148);
-  assert.equal(WHEEL_VISIBLE_SLOTS, 9);
-  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-4, -3, -2, -1, 0, 1, 2, 3, 4]);
+  assert.equal(WHEEL_VISIBLE_SLOTS, 7);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-3, -2, -1, 0, 1, 2, 3]);
   assert.equal(WHEEL_SLOT_OFFSETS.length, WHEEL_VISIBLE_SLOTS);
-  assert.equal(WHEEL_CENTER_INDEX, 4);
+  assert.equal(WHEEL_CENTER_INDEX, 3);
   assert.equal(WHEEL_ROTATE_Y_PER_SLOT, -14);
   assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
   assert.equal(WHEEL_Z_CENTER, 36);
@@ -130,25 +130,25 @@ test('SlotPool keys + content policy', () => {
   assert.equal(slotPoolKey('month:2026-09', 4), 'month:2026-09:4');
   // P0: React hosts are slot-index only (no periodKey remount mid-fling).
   assert.equal(stableSlotHostKey(0), 'slot-0');
-  assert.equal(stableSlotHostKey(4), 'slot-4');
-  assert.equal(stableSlotHostKey(8), 'slot-8');
+  assert.equal(stableSlotHostKey(3), 'slot-3');
+  assert.equal(stableSlotHostKey(6), 'slot-6');
   assert.equal(slotIndexForOffset(0), WHEEL_CENTER_INDEX);
-  assert.equal(slotIndexForOffset(-4), 0);
-  assert.equal(slotIndexForOffset(4), 8);
-  // Flinging: ±4 from origin stay full; beyond → silhouette
+  assert.equal(slotIndexForOffset(-3), 0);
+  assert.equal(slotIndexForOffset(3), 6);
+  // Flinging: ±3 from origin stay full; beyond → silhouette
   assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 0 }), 'full');
-  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 4 }), 'full');
-  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -4 }), 'full');
-  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 5 }), 'silhouette');
-  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -5 }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 3 }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -3 }), 'full');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: 4 }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: true, distanceFromOrigin: -4 }), 'silhouette');
   // Not flinging: center neighbors full
   assert.equal(wheelContentModeFor({ parkedOffset: 0, flinging: false }), 'full');
   assert.equal(wheelContentModeFor({ parkedOffset: 1, flinging: false }), 'full');
   assert.equal(wheelContentModeFor({ parkedOffset: 2, flinging: false }), 'silhouette');
-  assert.equal(wheelContentModeFor({ parkedOffset: -4, flinging: false }), 'silhouette');
+  assert.equal(wheelContentModeFor({ parkedOffset: -3, flinging: false }), 'silhouette');
 });
 
-test('PeriodPager is 9-slot SlotPool: reanimated native+web; no translateZ; RM no tilt; no className', () => {
+test('PeriodPager is 7-slot SlotPool: reanimated native+web; no translateZ; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
@@ -187,40 +187,39 @@ test('PeriodPager is 9-slot SlotPool: reanimated native+web; no translateZ; RM n
   assert.match(pager, /useAnimatedReaction/);
 });
 
-test('MAX_FLING soft ceiling uncapped (≥30, ~48); SlotPool N=9 rebounds mid-fling', () => {
+test('MAX_FLING soft ceiling uncapped (≥30, ~48); SlotPool N=7 rebounds mid-fling', () => {
   assert.equal(WHEEL_MAX_FLING_SLOTS, 48);
   assert.ok(WHEEL_MAX_FLING_SLOTS >= 30);
   assert.ok(WHEEL_MAX_FLING_SLOTS <= 60);
   assert.equal(WHEEL_FLING_DECEL, 2000);
   assert.ok(WHEEL_FLING_DECEL >= 1800 && WHEEL_FLING_DECEL <= 2800);
-  assert.equal(WHEEL_LOCAL_SAMPLE_SLOTS, 5);
-  assert.ok(WHEEL_LOCAL_SAMPLE_SLOTS >= 4);
-  // N=9 still covers local residual after rebound (not the soft ceiling)
+  assert.equal(WHEEL_LOCAL_SAMPLE_SLOTS, 4);
+  assert.ok(WHEEL_LOCAL_SAMPLE_SLOTS >= 3);
+  // N=7 covers local residual after rebound (not the soft ceiling)
   assert.ok(WHEEL_VISIBLE_SLOTS / 2 >= WHEEL_LOCAL_SAMPLE_SLOTS - 1);
-  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-4, -3, -2, -1, 0, 1, 2, 3, 4]);
+  assert.deepEqual([...WHEEL_SLOT_OFFSETS], [-3, -2, -1, 0, 1, 2, 3]);
 });
 
 test('showsPeriodPager still true for day list', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
 });
 
-test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + per-kind silhouettes', () => {
+test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMode + silhouettes', () => {
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
-  assert.match(leaf, /memo\(MonthHangingGridImpl\)|const MonthHangingGrid = memo/);
+  assert.doesNotMatch(leaf, /function MonthHangingGrid|const MonthHangingGrid|<MonthHangingGrid|function WeekDayStrip|<WeekDayStrip|styles\.hangGrid|styles\.weekStrip|weekStrip:\s*\{/);
   assert.match(leaf, /contentMode/);
   assert.match(leaf, /SilhouetteLeaf|silhouetteHeader/);
-  assert.match(leaf, /silhouetteYearText|silhouetteBlurYear|styles\.yearPage|yearPage/);
+  assert.match(leaf, /silhouetteYearText|styles\.yearPage|yearPage/);
   assert.match(leaf, /tile\.kind === 'year'|kind === 'year'/);
-  assert.match(leaf, /silhouetteDayHint|silhouetteHintRow|silhouetteBlurDay/);
-  assert.match(leaf, /silhouetteLabelHint|silhouetteDayNumeral|silhouetteCaption|silhouetteBlurLabel|silhouetteBlurDayNumeral|silhouetteBlurCaption/);
+  assert.match(leaf, /silhouetteDayHint|silhouetteHintRow/);
+  assert.match(leaf, /silhouetteLabelHint|silhouetteDayNumeral|silhouetteCaption/);
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
-  assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
-  assert.match(leaf, /mountGrid|showExtras/);
-  assert.match(leaf, /motionCompact/);
+  assert.match(leaf, /fixed plate|monthStub|plateBodyLine|dayNumeral/);
+  assert.match(leaf, /showCenterExtras|motionCompact/);
   // CAL-DRUM P0 N4: opacity-dim silhouette — no BlurView / CSS blur on hot path.
   assert.match(leaf, /DimOut/);
   assert.match(leaf, /dimOutOpacity|opacity:\s*0\.4/);
-  assert.doesNotMatch(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  assert.doesNotMatch(leaf, /from ['"]expo-blur['"]|<BlurView/);
   assert.doesNotMatch(leaf, /BlurOut/);
   assert.doesNotMatch(leaf, /SoftBlurText/);
   assert.doesNotMatch(leaf, /blur\(6px\)/);

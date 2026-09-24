@@ -64,11 +64,11 @@ test('CAL-P6-1A: full-band drum — carve 0; start-on-drum pages; no pageX left 
   assert.match(pager, /CAL-P6-1A|CAL_P6_1A/);
   assert.doesNotMatch(pager, /pageX\s*<\s*PERIOD_PAGER_EDGE_GUARD_PX/);
   assert.doesNotMatch(pager, /pageX\s*<\s*20|pageX\s*<\s*24/);
-  assert.match(pager, /onMoveShouldSetPanResponder/);
+  assert.match(pager, /Gesture\.Pan\(\)|activeOffsetX|manualActivation/);
   assert.match(pager, /commits on snap|CAL-P6-1A-07/);
   // LTR+RTL both page via shared snap (no direction carve-out).
   assert.match(pager, /snapPeriodPage/);
-  assert.match(pager, /onPanResponderTerminationRequest:\s*\(\)\s*=>\s*false/);
+  assert.match(pager, /GestureDetector|manualActivation\(true\)/);
 });
 
 test('CAL-P6-5C: Day List mounts drum; listAnchorDay lockstep helpers + wiring', () => {
