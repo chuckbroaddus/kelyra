@@ -18,6 +18,7 @@ import {
   parentLeaveSuccessMessage,
   RIDE_LEAVE_FAIL_MESSAGE,
 } from './copy.ts';
+import { applyWalkAttachForm } from './attachForm.ts';
 
 const root = process.cwd();
 function read(rel: string): string {
@@ -338,4 +339,65 @@ test('P-LEFT ConfirmSheet parent-safe tone unlocks parent seat; no undo coda', (
   assert.match(sheet, /PrimaryButton/);
   assert.match(sheet, /parentSafe/);
   assert.match(sheet, /chrome\.role === 'parent' && !parentSafe/);
+});
+
+test('RIDE attach form: always write LPR fields; empty clears prior car', () => {
+  const cleared = applyWalkAttachForm({ plate: 'YGT8194', make: 'Tesla', model: null });
+  assert.equal(cleared.plate, 'YGT8194');
+  assert.equal(cleared.make, 'Tesla');
+  assert.equal(cleared.model, '');
+  assert.equal(cleared.parentId, '');
+  const blank = applyWalkAttachForm({ plate: null, make: null, model: null });
+  assert.deepEqual(blank, { parentId: '', plate: '', make: '', model: '' });
+});
+
+test('RIDE attach form: registry wins make/model/parent_id; plate from LPR then plate_norm', () => {
+  const applied = applyWalkAttachForm(
+    { plate: 'YGT8194', make: 'Tesla', model: null },
+    {
+      parent_id: 'parent-amina',
+      make: 'Tesla',
+      model: 'Model 3',
+      plate_norm: 'YGT8194',
+    },
+  );
+  assert.equal(applied.parentId, 'parent-amina');
+  assert.equal(applied.plate, 'YGT8194');
+  assert.equal(applied.make, 'Tesla');
+  assert.equal(applied.model, 'Model 3');
+
+  // Stale Expedition must not survive when LPR omits model and registry has Model 3
+  const fromStaleShape = applyWalkAttachForm(
+    { plate: 'YGT8194', make: 'Tesla', model: null },
+    { parent_id: 'p1', make: 'Tesla', model: 'Model 3', plate_norm: 'YGT8194' },
+  );
+  assert.notEqual(fromStaleShape.model, 'Expedition');
+  assert.equal(fromStaleShape.model, 'Model 3');
+
+  // Plate prefers LPR; falls back to plate_norm when LPR plate null
+  const normOnly = applyWalkAttachForm(
+    { plate: null, make: null, model: null },
+    { parent_id: 'p1', make: 'Ford', model: 'Expedition', plate_norm: 'ABC123' },
+  );
+  assert.equal(normOnly.plate, 'ABC123');
+  assert.equal(normOnly.make, 'Ford');
+  assert.equal(normOnly.model, 'Expedition');
+});
+
+test('RIDE walk photo migration: matched vehicle keys on dismissal_staff_walk_photo', () => {
+  const mig = read('supabase/migrations/20260923220000_dismissal_staff_walk_photo_matched_vehicle.sql');
+  assert.match(mig, /create or replace function public\.dismissal_staff_walk_photo/);
+  assert.match(mig, /matched_make/);
+  assert.match(mig, /matched_model/);
+  assert.match(mig, /matched_plate_norm/);
+  assert.match(mig, /matched_parent_id/);
+  assert.match(mig, /'parent_id', matched_parent_id/);
+  assert.match(mig, /'make', matched_make/);
+  assert.match(mig, /'model', matched_model/);
+  assert.match(mig, /'plate_norm', matched_plate_norm/);
+  assert.match(mig, /from public\.parent_vehicles pv/);
+  const ui = read('src/app/ride/index.tsx');
+  assert.match(ui, /applyWalkAttachForm/);
+  assert.match(ui, /setAttachModel\(applied\.model\)/);
+  assert.doesNotMatch(ui, /if \(lpr\.model\) setAttachModel/);
 });
