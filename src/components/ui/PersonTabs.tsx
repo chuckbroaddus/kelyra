@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -21,15 +21,11 @@ import {
   PERSON_TAB_GAP,
   PERSON_TAB_GLYPH,
   PERSON_TAB_HIT_PAD_X,
-  PERSON_TAB_ICON_HIT,
-  PERSON_TAB_ROW_GAP,
   PERSON_TAB_ROW_PAD_END,
-  personTabAbsoluteSettledLefts,
   personTabExpandEasingKind,
   personTabLabelMax,
   personTabRowHasGlyph,
   personTabPillWidthRange,
-  personTabRowMaxContentWidth,
   personTabTitleNeedsMarquee,
   personTabScrollTabWidth,
   personTabScrollX,
@@ -83,11 +79,7 @@ type Props = {
 };
 
 /** Icon-only hit (styles.hit minWidth / minHeight). */
-const PERSON_TAB_ICON_HIT_LOCAL = PERSON_TAB_ICON_HIT;
-/** Row vertical pad (styles.row paddingVertical) — absolute pills need explicit top. */
-const PERSON_TAB_ROW_PAD_Y = 6;
-/** Absolute strip height: pad + icon hit + pad. */
-const PERSON_TAB_STRIP_HEIGHT = PERSON_TAB_ICON_HIT_LOCAL + PERSON_TAB_ROW_PAD_Y * 2;
+const PERSON_TAB_ICON_HIT = 44;
 
 type ThemeColors = {
   brand: string;
@@ -104,11 +96,8 @@ type PillProps = {
   colors: ThemeColors;
   reduce: boolean;
   motionPack: PersonTabMotionPack;
-  /** Shared expand 0..1 — parent owns so sibling `left` can interpolate off it. */
-  expand: Animated.Value;
-  /** Absolute strip left — Animated sum of prior pill widths + gaps (no Yoga). */
-  left: Animated.AnimatedNode | number;
   onChange: (key: string) => void;
+  onLayoutX: (x: number, width: number) => void;
 };
 
 function PersonTabPill({
@@ -120,10 +109,10 @@ function PersonTabPill({
   colors,
   reduce,
   motionPack,
-  expand,
-  left,
   onChange,
+  onLayoutX,
 }: PillProps) {
+  const expand = useRef(new Animated.Value(selected ? 1 : 0)).current;
   const [showLabel, setShowLabel] = useState(selected);
   /** Marquee only after the expand settles at full width (Chuck: marquee after max). */
   const [marqueeReady, setMarqueeReady] = useState(selected);
@@ -174,120 +163,85 @@ function PersonTabPill({
 
   return (
     <HoverTip label={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}>
-      <Animated.View
-        collapsable={false}
-        style={[
-          styles.absolutePill,
-          {
-            left,
-            width: pillWidth,
-          },
-        ]}
+      <Pressable
+        accessibilityRole="tab"
+        accessibilityState={{ selected }}
+        accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
+        onPress={() => onChange(tab.key)}
+        onLayout={(event) => {
+          onLayoutX(event.nativeEvent.layout.x, event.nativeEvent.layout.width);
+        }}
+        style={({ pressed }) => [pressed && { opacity: 0.85 }]}
       >
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected }}
-          accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
-          onPress={() => onChange(tab.key)}
-          style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+        <Animated.View
+          style={[
+            styles.hit,
+            !hasGlyph && styles.labelHit,
+            {
+              // Width alone drives the morph. Animated maxWidth + leading-pill
+              // reflow was snapping labels shut on first-tab transitions.
+              width: pillWidth,
+              overflow: 'hidden',
+            },
+          ]}
         >
-          <View
+          <Animated.View
+            pointerEvents="none"
             style={[
-              styles.hit,
-              !hasGlyph && styles.labelHit,
+              StyleSheet.absoluteFill,
               {
-                // Width comes from absolute wrapper; hit fills it. Labels stay in
-                // normal flow inside (NOT absolute past collapsed — underlay failed).
-                width: '100%',
-                overflow: 'hidden',
+                backgroundColor: colors.brandSoft,
+                borderRadius: radius.pill,
+                opacity: expand,
               },
             ]}
-          >
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: colors.brandSoft,
-                  borderRadius: radius.pill,
-                  opacity: expand,
-                },
-              ]}
-            />
-            {hasGlyph ? (
-              <View style={styles.glyph}>
-                {tab.photoName || tab.photoUrl ? (
-                  <Avatar
-                    name={tab.photoName || tab.label}
-                    photoUrl={tab.photoUrl}
-                    hasPhoto={Boolean(tab.photoUrl)}
-                    size={PERSON_TAB_GLYPH}
-                  />
-                ) : tab.icon ? (
-                  <Icon
-                    // Mute immediately on deselect; width morph continues separately.
-                    name={tab.icon}
-                    color={selected ? colors.brand : colors.mute}
-                    size={PERSON_TAB_GLYPH}
-                  />
-                ) : null}
-                <CountBadge count={tab.badge ?? 0} />
-              </View>
-            ) : null}
-            {showLabel && slot > 0 ? (
-              <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: slot }]}>
-                <MarqueeText
-                  text={tab.label}
-                  align="start"
-                  accessible
-                  accessibilityLabel={tab.label}
-                  paused={!marqueeReady || !needsMarquee}
-                  fadeColor={colors.brandSoft}
-                  style={[styles.label, { color: colors.brand }]}
+          />
+          {hasGlyph ? (
+            <View style={styles.glyph}>
+              {tab.photoName || tab.photoUrl ? (
+                <Avatar
+                  name={tab.photoName || tab.label}
+                  photoUrl={tab.photoUrl}
+                  hasPhoto={Boolean(tab.photoUrl)}
+                  size={PERSON_TAB_GLYPH}
                 />
-              </Animated.View>
-            ) : showLabel && selected && slot === 0 ? (
-              <Text
-                numberOfLines={1}
+              ) : tab.icon ? (
+                <Icon
+                  // Mute immediately on deselect; width morph continues separately.
+                  name={tab.icon}
+                  color={selected ? colors.brand : colors.mute}
+                  size={PERSON_TAB_GLYPH}
+                />
+              ) : null}
+              <CountBadge count={tab.badge ?? 0} />
+            </View>
+          ) : null}
+          {showLabel && slot > 0 ? (
+            <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: slot }]}>
+              <MarqueeText
+                text={tab.label}
+                align="start"
                 accessible
                 accessibilityLabel={tab.label}
+                paused={!marqueeReady || !needsMarquee}
+                fadeColor={colors.brandSoft}
                 style={[styles.label, { color: colors.brand }]}
-              >
-                {tab.label}
-              </Text>
-            ) : null}
-          </View>
-        </Pressable>
-      </Animated.View>
+              />
+            </Animated.View>
+          ) : showLabel && selected && slot === 0 ? (
+            <Text
+              numberOfLines={1}
+              accessible
+              accessibilityLabel={tab.label}
+              style={[styles.label, { color: colors.brand }]}
+            >
+              {tab.label}
+            </Text>
+          ) : null}
+        </Animated.View>
+      </Pressable>
     </HoverTip>
   );
-}
-
-/** Build Animated left for each pill: sum of prior morphing widths + gaps (no Yoga). */
-function buildAbsoluteLeftAnims(
-  expandValues: Animated.Value[],
-  expandedWidths: number[],
-): Array<Animated.AnimatedNode | number> {
-  const lefts: Array<Animated.AnimatedNode | number> = [];
-  for (let i = 0; i < expandValues.length; i++) {
-    if (i === 0) {
-      lefts.push(0);
-      continue;
-    }
-    const prevExpanded = Math.max(PERSON_TAB_ICON_HIT, expandedWidths[i - 1] ?? PERSON_TAB_ICON_HIT);
-    // Prior pill contributes its live width + row gap to this left.
-    const prevSpan = expandValues[i - 1].interpolate({
-      inputRange: [0, 1],
-      outputRange: [PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP, prevExpanded + PERSON_TAB_ROW_GAP],
-    });
-    const prevLeft = lefts[i - 1];
-    lefts.push(
-      typeof prevLeft === 'number'
-        ? Animated.add(prevSpan, prevLeft)
-        : Animated.add(prevLeft, prevSpan),
-    );
-  }
-  return lefts;
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
@@ -305,77 +259,17 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const contentWidthRef = useRef(0);
   /** Live contentOffset.x — skip no-op scrollTo (iOS cancels leading width morph). */
   const scrollOffsetRef = useRef(0);
+  /** Bumps to cancel a deferred leave-first scroll when selection changes again. */
+  const scrollGenRef = useRef(0);
   /** Last value we applied a scroll policy for (blocks layout-only re-scroll). */
   const scrolledValueRef = useRef<string | null>(null);
-  /** Parent-owned expand values so absolute `left` can track sibling morph widths. */
-  const expandByKeyRef = useRef<Map<string, Animated.Value>>(new Map());
   const hasGlyph = personTabRowHasGlyph(tabs);
   const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
-  const tabKeys = tabs.map((tab) => tab.key);
-  const tabKeyList = tabKeys.join('\0');
-  /** Worst-case strip width — pins UIScrollView contentSize while pills morph. */
-  const maxContentWidth =
-    labelMax > 0 ? personTabRowMaxContentWidth(tabKeys, titleByKey, labelMax, hasGlyph) : 0;
-  /** Stable overflow (prefer maxContentWidth vs rowWidth — not live onContentSizeChange). */
-  const rowOverflows = rowWidth > 0 && maxContentWidth > rowWidth + 0.5;
-  if (maxContentWidth > 0) contentWidthRef.current = maxContentWidth;
-
-  const expandedWidths = useMemo(
-    () =>
-      tabs.map((tab) =>
-        personTabPillWidthRange(titleByKey[tab.key] ?? 0, labelMax, hasGlyph).expanded,
-      ),
-    // tabs identity via keys; titleByKey object is fine (measures settle quickly).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tabKeyList, titleByKey, labelMax, hasGlyph],
-  );
-
-  const expandValues = useMemo(() => {
-    const map = expandByKeyRef.current;
-    // Drop keys that left the row (avoid stale Animated nodes growing forever).
-    for (const key of [...map.keys()]) {
-      if (!tabKeys.includes(key)) map.delete(key);
-    }
-    return tabs.map((tab) => {
-      let expand = map.get(tab.key);
-      if (!expand) {
-        expand = new Animated.Value(tab.key === value ? 1 : 0);
-        map.set(tab.key, expand);
-      }
-      return expand;
-    });
-    // Intentionally omit `value` — new keys initialize from current value once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabKeyList]);
-
-  const leftAnims = useMemo(
-    () => buildAbsoluteLeftAnims(expandValues, expandedWidths),
-    // expandValues stable per key list; widths change after title measure.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tabKeyList, expandedWidths.join(',')],
-  );
-
-  // Settled absolute left/width for scroll math — not Yoga onLayout mid-morph.
-  useEffect(() => {
-    if (labelMax <= 0 || tabs.length === 0) return;
-    const selectedIndex = Math.max(
-      0,
-      tabs.findIndex((tab) => tab.key === value),
-    );
-    const lefts = personTabAbsoluteSettledLefts(selectedIndex, expandedWidths);
-    tabs.forEach((tab, i) => {
-      xOf.current[tab.key] = lefts[i] ?? 0;
-      widthOf.current[tab.key] =
-        i === selectedIndex
-          ? Math.max(PERSON_TAB_ICON_HIT, expandedWidths[i] ?? PERSON_TAB_ICON_HIT)
-          : PERSON_TAB_ICON_HIT;
-    });
-  }, [value, labelMax, tabKeyList, expandedWidths, tabs]);
 
   useEffect(() => {
     let live = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (live) setReduce(enabled);
+    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
+      if (live) setReduce(value);
     });
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
     return () => {
@@ -412,22 +306,13 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     const prevIndex = prevKey == null ? null : row.findIndex((tab) => tab.key === prevKey);
     const safeSelected = Math.max(0, selectedIndex);
     const safePrev = prevIndex != null && prevIndex >= 0 ? prevIndex : null;
-    const motion = personTabScrollMotion(safeSelected, safePrev);
-    // Leading-pill (index 0) enter/leave: any programmatic scrollTo — instant or
-    // deferred — races the CM-Linear width morph on iOS UIScrollView (and web).
-    // Skip all scrollTo for instant/defer; mid↔mid keeps animated scroll.
-    if (motion === 'instant' || motion === 'defer') {
-      scrolledValueRef.current = value;
-      prevValueRef.current = value;
-      return;
-    }
     const { selectedTitleWidth, labelMax: maxLabel, hasGlyph: glyph } = scrollMetricsRef.current;
     // Predicted hugged width — not live onLayout — so we scroll once per select.
     const tabWidth = personTabScrollTabWidth(
       selectedTitleWidth,
       maxLabel,
       glyph,
-      widthOf.current[value] ?? PERSON_TAB_ICON_HIT_LOCAL,
+      widthOf.current[value] ?? PERSON_TAB_ICON_HIT,
     );
     const contentWidth = contentWidthRef.current > 0 ? contentWidthRef.current : rowWidth;
     const target = personTabScrollX({
@@ -438,20 +323,57 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       selectedIndex: safeSelected,
       prevIndex: safePrev,
     });
-    if (!personTabScrollNeeded(scrollOffsetRef.current, target)) {
-      scrolledValueRef.current = value;
-      prevValueRef.current = value;
-      return;
+    const motion = personTabScrollMotion(safeSelected, safePrev);
+    const runScroll = (animated: boolean) => {
+      if (!personTabScrollNeeded(scrollOffsetRef.current, target)) return;
+      scroller.current?.scrollTo({ x: target, animated });
+    };
+    // Leading-pill (index 0) width morph on iOS UIScrollView: concurrent
+    // animated scrollTo — especially scrollTo(0) — cancels the JS width timing
+    // so the outgoing/incoming label snaps instead of CM-Linear closing/growing.
+    let deferTimer: ReturnType<typeof setTimeout> | undefined;
+    if (motion === 'instant') {
+      runScroll(false);
+    } else if (motion === 'defer') {
+      const token = ++scrollGenRef.current;
+      const delay = reduce ? 0 : chrome.motion.personTab;
+      deferTimer = setTimeout(() => {
+        if (token !== scrollGenRef.current) return;
+        // Recompute after leading pill settled — siblings' x shifted as index 0 shrank.
+        const xNow = xOf.current[value];
+        if (xNow == null || rowWidth <= 0) return;
+        const metrics = scrollMetricsRef.current;
+        const tabWidthNow = personTabScrollTabWidth(
+          metrics.selectedTitleWidth,
+          metrics.labelMax,
+          metrics.hasGlyph,
+          widthOf.current[value] ?? PERSON_TAB_ICON_HIT,
+        );
+        const contentNow = contentWidthRef.current > 0 ? contentWidthRef.current : rowWidth;
+        const targetNow = personTabScrollX({
+          tabX: xNow,
+          tabWidth: tabWidthNow,
+          rowWidth,
+          contentWidth: contentNow,
+          selectedIndex: safeSelected,
+          prevIndex: safePrev,
+        });
+        if (!personTabScrollNeeded(scrollOffsetRef.current, targetNow)) return;
+        scroller.current?.scrollTo({ x: targetNow, animated: !reduce });
+      }, delay);
+    } else {
+      runScroll(!reduce);
     }
-    scroller.current?.scrollTo({ x: target, animated: !reduce });
     scrolledValueRef.current = value;
     prevValueRef.current = value;
+    return () => {
+      if (deferTimer) clearTimeout(deferTimer);
+    };
     // Deps: value + rowWidth + reduce only. contentWidth / tabs[] / title metrics
     // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
   }, [value, rowWidth, reduce]);
 
   return (
-
     <View
       style={[
         styles.wrap,
@@ -488,53 +410,38 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       <ScrollView
         ref={scroller}
         horizontal
-        // Always ScrollView (never View↔ScrollView host swap — that hid tabs).
-        // Post/Alert (content fits): scrollEnabled false; overflow rows scroll.
-        // Index-0 enter/leave: skip scrollTo (instant/defer).
-        scrollEnabled={rowOverflows}
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
         removeClippedSubviews={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.row}
         style={styles.scroller}
         scrollEventThrottle={16}
         onScroll={(event) => {
           scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
         }}
-        onLayout={(event) => {
-          const w = event.nativeEvent.layout.width;
-          setRowWidth((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
+        onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
+        onContentSizeChange={(width) => {
+          contentWidthRef.current = width;
         }}
       >
-        {/* Fixed max width so UIScrollView contentSize stays put while pills morph.
-            Absolute pills: left+width from expand Animated values — Yoga flex does
-            not reflow sibling x against the leading clip edge (first-tab snap). */}
-        <View
-          collapsable={false}
-          style={[
-            styles.row,
-            maxContentWidth > 0
-              ? { width: maxContentWidth, height: PERSON_TAB_STRIP_HEIGHT }
-              : { height: PERSON_TAB_STRIP_HEIGHT },
-          ]}
-        >
-          {tabs.map((tab, index) => (
-            <PersonTabPill
-              key={tab.key}
-              tab={tab}
-              selected={tab.key === value}
-              hasGlyph={hasGlyph}
-              labelMax={labelMax}
-              titleWidth={titleByKey[tab.key] ?? 0}
-              colors={colors}
-              reduce={reduce}
-              motionPack={motionPack}
-              expand={expandValues[index]!}
-              left={leftAnims[index] ?? 0}
-              onChange={onChange}
-            />
-          ))}
-        </View>
+        {tabs.map((tab) => (
+          <PersonTabPill
+            key={tab.key}
+            tab={tab}
+            selected={tab.key === value}
+            hasGlyph={hasGlyph}
+            labelMax={labelMax}
+            titleWidth={titleByKey[tab.key] ?? 0}
+            colors={colors}
+            reduce={reduce}
+            motionPack={motionPack}
+            onChange={onChange}
+            onLayoutX={(x, width) => {
+              xOf.current[tab.key] = x;
+              widthOf.current[tab.key] = width;
+            }}
+          />
+        ))}
       </ScrollView>
       {trailing}
     </View>
@@ -546,12 +453,6 @@ const styles = StyleSheet.create({
     marginHorizontal: -4,
     flexDirection: 'row',
     alignItems: 'center',
-    // Morphing pill widths must not change the office column layout width.
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-    overflow: 'hidden',
   },
   solo: {
     marginBottom: 8,
@@ -572,27 +473,17 @@ const styles = StyleSheet.create({
   scroller: {
     flex: 1,
     minWidth: 0,
-    maxWidth: '100%',
-    // Clip morphing pills; do not let content width grow the host.
-    overflow: 'hidden',
-  },
-  scrollContent: {
-    flexGrow: 0,
   },
   row: {
-    // Absolute strip: pills position via left+width Animated nodes (no flex-row
-    // sibling reflow during leading CM-Linear morph).
-    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
     paddingRight: PERSON_TAB_ROW_PAD_END,
-    flexGrow: 0,
-  },
-  absolutePill: {
-    position: 'absolute',
-    top: PERSON_TAB_ROW_PAD_Y,
   },
   hit: {
-    minWidth: PERSON_TAB_ICON_HIT_LOCAL,
-    minHeight: PERSON_TAB_ICON_HIT_LOCAL,
+    minWidth: PERSON_TAB_ICON_HIT,
+    minHeight: PERSON_TAB_ICON_HIT,
     paddingHorizontal: PERSON_TAB_HIT_PAD_X,
     borderRadius: radius.pill,
     flexDirection: 'row',

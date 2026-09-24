@@ -177,15 +177,18 @@ export default function HomeScreen() {
   ];
   const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
-  // Stable FlushBody tree: never swap ScrollView↔FlushBody (that remounted
-  // PersonTabs). Collapse/CollapsingPageChrome is also wrong for a horizontally
-  // morphing row. Office tabs stay a stable sibling; only pane bodies scroll.
+  // Stable FlushBody + stable Feed host (student/class pattern):
+  // - scroll={false} always — never swap Screen ScrollView↔FlushBody (remounts tabs)
+  // - avoidKeyboard={false} always — toggling wraps/unwraps KeyboardAvoidingView and
+  //   remounts PersonTabs (Animated morph snaps). FeedPane handles its own keyboard.
+  // - Feed host View always mounted for office; height 0 when off so pane swap does
+  //   not thrash PersonTabs rowWidth. Keep CM-Linear label morph in PersonTabs.
   return (
     <Screen
       keyboard
       maxWidth={640}
       scroll={false}
-      avoidKeyboard={pane !== 'feed'}
+      avoidKeyboard={false}
     >
       <View style={styles.officeColumn}>
       {profile ? (
@@ -206,9 +209,18 @@ export default function HomeScreen() {
       ) : null}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
 
-      {pane === 'feed' && officeSeat ? (
-        <FeedPane scope="school" fill />
-      ) : (
+      {officeSeat ? (
+        <View
+          style={pane === 'feed' ? styles.feedOn : styles.feedOff}
+          pointerEvents={pane === 'feed' ? 'auto' : 'none'}
+          accessibilityElementsHidden={pane !== 'feed'}
+          importantForAccessibility={pane === 'feed' ? 'yes' : 'no-hide-descendants'}
+        >
+          <FeedPane scope="school" fill />
+        </View>
+      ) : null}
+
+      {pane !== 'feed' || !officeSeat ? (
         <ScrollView
           style={[
             styles.paneScroll,
@@ -364,7 +376,7 @@ export default function HomeScreen() {
             </>
           ) : null}
         </ScrollView>
-      )}
+      ) : null}
       </View>
       <ConfirmSheet
         visible={Boolean(pending)}
@@ -437,6 +449,17 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     overflow: 'hidden',
+  },
+  feedOn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  feedOff: {
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
+    width: '100%',
   },
   paneScroll: {
     flex: 1,

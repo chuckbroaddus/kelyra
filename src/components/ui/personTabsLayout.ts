@@ -139,76 +139,6 @@ export function personTabScrollTabWidth(
 
 
 /**
- * Worst-case horizontal content width for the tab strip: one pill at its hugged
- * expanded size + every other pill collapsed + row gaps + end pad.
- * Used to pin an inner row width so UIScrollView contentSize stays stable while
- * individual pill widths animate (Expo Go iOS first-tab snap). Independent of
- * which tab is selected — must not flicker mid-morph.
- */
-export function personTabRowMaxContentWidth(
-  tabKeys: readonly string[],
-  titleByKey: Readonly<Record<string, number>>,
-  labelMax: number,
-  glyph = true,
-): number {
-  if (tabKeys.length === 0) return 0;
-  let maxExpanded = PERSON_TAB_ICON_HIT;
-  for (const key of tabKeys) {
-    const { expanded } = personTabPillWidthRange(titleByKey[key] ?? 0, labelMax, glyph);
-    if (expanded > maxExpanded) maxExpanded = expanded;
-  }
-  const others = Math.max(0, tabKeys.length - 1);
-  return (
-    maxExpanded +
-    others * PERSON_TAB_ICON_HIT +
-    others * PERSON_TAB_ROW_GAP +
-    PERSON_TAB_ROW_PAD_END
-  );
-}
-
-/**
- * Absolute strip frame for one pill. `expandByIndex[j]` is 0..1; width is the
- * CM-Linear morph between collapsed and predicted expanded. `left` is the sum of
- * prior widths + gaps — independent of Yoga flex-row reflow. Used so leading-pill
- * morph does not shove sibling `x` through UIScrollView layout (Expo Go snap).
- */
-export function personTabAbsolutePillFrame(
-  index: number,
-  expandByIndex: readonly number[],
-  expandedByIndex: readonly number[],
-  collapsed = PERSON_TAB_ICON_HIT,
-  gap = PERSON_TAB_ROW_GAP,
-): { left: number; width: number } {
-  let left = 0;
-  for (let j = 0; j < index; j++) {
-    const exp = Math.max(collapsed, expandedByIndex[j] ?? collapsed);
-    const e = expandByIndex[j] ?? 0;
-    left += collapsed + (exp - collapsed) * e + gap;
-  }
-  const exp = Math.max(collapsed, expandedByIndex[index] ?? collapsed);
-  const e = expandByIndex[index] ?? 0;
-  const width = collapsed + (exp - collapsed) * e;
-  return { left, width };
-}
-
-/**
- * Settled absolute lefts for scroll targeting: selected tab expanded, others
- * collapsed. Matches the strip after CM-Linear finishes (not mid-morph Yoga x).
- */
-export function personTabAbsoluteSettledLefts(
-  selectedIndex: number,
-  expandedByIndex: readonly number[],
-  collapsed = PERSON_TAB_ICON_HIT,
-  gap = PERSON_TAB_ROW_GAP,
-): number[] {
-  const n = expandedByIndex.length;
-  const expand = Array.from({ length: n }, (_, i) => (i === selectedIndex ? 1 : 0));
-  return Array.from({ length: n }, (_, i) =>
-    personTabAbsolutePillFrame(i, expand, expandedByIndex, collapsed, gap).left,
-  );
-}
-
-/**
  * Whether a programmatic scroll is worth issuing. No-op scrollTo (especially
  * scrollTo(0) while already at 0) still ticks UIScrollView on iOS and cancels
  * in-flight JS-driven width morphs on the leading pill.
@@ -223,11 +153,9 @@ export function personTabScrollNeeded(
 
 /**
  * Scroll policy when the leading pill (index 0) is morphing.
- * PersonTabs must **not** call scrollTo for `instant` or `defer` — any
- * programmatic scroll (including deferred) races the CM-Linear width morph.
- * - `instant`: enter index 0 — skip scrollTo entirely.
- * - `defer`: leave index 0 — skip scrollTo entirely (was: wait then scroll).
- * - `animated`: mid↔mid only; concurrent animated scroll + width morph is fine.
+ * - `instant`: jump offset (never animated scrollTo(0) — races leading width).
+ * - `defer`: wait until morph ends before scrolling away from 0.
+ * - `animated`: mid-row only; concurrent scroll + width morph is fine.
  */
 export function personTabScrollMotion(
   selectedIndex: number,

@@ -192,9 +192,10 @@ export default function ClassOfficeScreen() {
   const tabs = officeClassPersonTabs(feedIcon);
   const pane = tabs.some((item) => item.key === tab) ? tab : 'teacher';
 
-  // Stable FlushBody: never toggle Screen.scroll by pane (remounts PersonTabs / L-R gutter flip).
+  // Stable FlushBody + Feed host (same as office home): no scroll/avoidKeyboard toggle,
+  // Feed host stays mounted so PersonTabs rowWidth does not jump on first-tab morph.
   return (
-    <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={pane !== 'feed'}>
+    <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={false}>
       <View style={styles.officeColumn}>
       <Text style={[type.display, { color: colors.ink }]}>{klass.name}</Text>
       <Text style={[styles.lead, { color: colors.mute }]}>
@@ -203,9 +204,16 @@ export default function ClassOfficeScreen() {
       <PersonTabs tabs={tabs} value={pane} onChange={setTab} />
       {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
 
-      {pane === 'feed' ? (
+      <View
+        style={pane === 'feed' ? styles.feedOn : styles.feedOff}
+        pointerEvents={pane === 'feed' ? 'auto' : 'none'}
+        accessibilityElementsHidden={pane !== 'feed'}
+        importantForAccessibility={pane === 'feed' ? 'yes' : 'no-hide-descendants'}
+      >
         <FeedPane classId={klass.id} scope="class" fill />
-      ) : (
+      </View>
+
+      {pane !== 'feed' ? (
         <ScrollView
           style={[
             styles.paneScroll,
@@ -412,7 +420,7 @@ export default function ClassOfficeScreen() {
       ) : null}
 
         </ScrollView>
-      )}
+      ) : null}
       </View>
 
       <FormSheet
@@ -481,6 +489,17 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     overflow: 'hidden',
+  },
+  feedOn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  feedOff: {
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
+    width: '100%',
   },
   paneScroll: {
     flex: 1,
