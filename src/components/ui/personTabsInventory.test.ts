@@ -132,3 +132,17 @@ test('PersonTabs default CM-Linear; ClassTabs mapping-only; current is opt-out o
   assert.doesNotMatch(read('src/components/ui/FloatingTabTray.tsx'), /from '@\/components\/ui\/PersonTabs'/);
   assert.doesNotMatch(read('src/components/ui/ContextMenuRow.tsx'), /from '@\/components\/ui\/PersonTabs'/);
 });
+
+test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth deps; width not maxWidth', () => {
+  const pills = read('src/components/ui/PersonTabs.tsx');
+  // Mid-morph contentSize must not setState / re-scroll.
+  assert.match(pills, /contentWidthRef/);
+  assert.doesNotMatch(pills, /setContentWidth/);
+  assert.doesNotMatch(pills, /\[value, rowWidth, contentWidth/);
+  assert.match(pills, /Intentionally omit contentWidth|must not re-scroll/);
+  assert.match(pills, /personTabScrollTabWidth/);
+  assert.match(pills, /personTabPillWidthRange/);
+  // Animated maxWidth + width fought leading-pill reflow — width alone.
+  assert.doesNotMatch(pills, /maxWidth:\s*pillWidth/);
+  assert.match(pills, /width:\s*pillWidth/);
+});
