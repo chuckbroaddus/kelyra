@@ -2,26 +2,29 @@
  * Sticky calendar period titles (Month / Week / Day) + Week↔Day morph segments.
  * Keep strings continuous across Month→Week; morph text at Week↔Day.
  *
- * Week: `February 2026` (long month). Day: `Feb 4, 2026, Wed` (short month + short weekday).
- * Morph: month trims `February`→`Feb`, then `4,` slides in, then `Wed` types in.
+ * Week: `February 2026` (long month). Day: `Feb. 4, 2026, Wed.` (abbreviations carry a period).
+ * Morph (three sequential phases, reversed for Day→Week):
+ *   1. `February` shrinks to `Feb.` (tail clips away, period fades in); the year rides left.
+ *   2. The year shifts right as `4,` appears.
+ *   3. A comma appears at once, then `Wed` slides out to the right from behind it.
  */
 import { parseISODate } from '../date/iso.ts';
 
-/** Month word finishes trimming long→short by this progress. */
-export const MORPH_MONTH_TRIM_END = 0.3;
-/** Day insert (`4,`) completes by this progress; weekday letters follow. */
-export const MORPH_DAY_INSERT_END = 0.6;
+/** Phase 1 (month shrink) ends here. */
+export const MORPH_MONTH_TRIM_END = 1 / 3;
+/** Phase 2 (`4,` insert, year shifts right) ends here; phase 3 (comma + weekday) follows. */
+export const MORPH_DAY_INSERT_END = 2 / 3;
 
 export type PeriodTitleMorphSegments = {
   /** Long month name, e.g. "February" (Week / collapsed title). */
   month: string;
-  /** Short month name, e.g. "Feb" (Day title). */
+  /** Abbreviated month with period, e.g. "Feb." (Day title). Unabbreviated months stay bare ("May"). */
   monthShort: string;
   /** Day + comma, e.g. "4," — inserted between month and year. */
   dayPart: string;
   /** Calendar year, e.g. "2026". */
   year: string;
-  /** Short weekday, e.g. "Wed" (Day title). */
+  /** Abbreviated weekday with period, e.g. "Wed." (Day title). */
   weekday: string;
   /** Long weekday, e.g. "Wednesday" (spoken label only). */
   weekdayLong: string;
@@ -64,24 +67,32 @@ export function dayPeriodTitleSegments(
 ): PeriodTitleMorphSegments | null {
   const d = parseISODate(iso);
   if (!d) return null;
+  const month = d.toLocaleDateString(locale, { month: 'long' });
+  const weekdayLong = d.toLocaleDateString(locale, { weekday: 'long' });
   return {
-    month: d.toLocaleDateString(locale, { month: 'long' }),
-    monthShort: d.toLocaleDateString(locale, { month: 'short' }),
+    month,
+    monthShort: withAbbrevPeriod(d.toLocaleDateString(locale, { month: 'short' }), month),
     dayPart: `${d.getDate()},`,
     year: String(d.getFullYear()),
-    weekday: d.toLocaleDateString(locale, { weekday: 'short' }),
-    weekdayLong: d.toLocaleDateString(locale, { weekday: 'long' }),
+    weekday: withAbbrevPeriod(d.toLocaleDateString(locale, { weekday: 'short' }), weekdayLong),
+    weekdayLong,
   };
 }
 
-/** `Feb 4, 2026, Wed` (short month first; short weekday after year). */
+/** `Feb`→`Feb.`; leaves full words (`May`) and locale forms that already end in `.` alone. */
+export function withAbbrevPeriod(short: string, full: string): string {
+  if (!short || short === full || short.endsWith('.')) return short;
+  return `${short}.`;
+}
+
+/** `Feb. 4, 2026, Wed.` (abbreviated month first; abbreviated weekday after year). */
 export function formatDayPeriodTitle(iso: string, locale?: string): string {
   const seg = dayPeriodTitleSegments(iso, locale);
   if (!seg) return iso;
   return joinDayPeriodTitle(seg);
 }
 
-/** Visible Day title: `Feb 4, 2026, Wed`. */
+/** Visible Day title: `Feb. 4, 2026, Wed.`. */
 export function joinDayPeriodTitle(seg: PeriodTitleMorphSegments): string {
   return `${seg.monthShort} ${seg.dayPart} ${seg.year}, ${seg.weekday}`;
 }
@@ -107,31 +118,65 @@ function clamp01(p: number): number {
   return p;
 }
 
-/** Week→Day morph duration (runs alongside the week-day drill spring). */
-export const PERIOD_TITLE_MORPH_IN_MS = 560;
-
-/** Day→Week reverse morph (starts with Day exit, finishes during climb). */
-export const PERIOD_TITLE_MORPH_OUT_MS = 420;
-
-/**
- * How many letters of the LONG month are visible while it trims to the short form
- * (`February` 8 → `Feb` 3). Only meaningful when short is a prefix of long.
- */
-export function morphMonthLetterCount(progress: number, longLen: number, shortLen: number): number {
+/** Per-phase ease. Declared before callers (Reanimated no-hoist). */
+function easeInOutCubic(t: number): number {
   'worklet';
-  const p = clamp01(progress);
-  if (longLen <= shortLen) return longLen;
-  const t = p >= MORPH_MONTH_TRIM_END ? 1 : p / MORPH_MONTH_TRIM_END;
-  return longLen - Math.round(t * (longLen - shortLen));
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-/** 0→1 progress for inserting `dayPart` between month and year (after the month trim). */
-export function morphDayInsertProgress(progress: number): number {
+/** Eased 0→1 inside [start, end] of overall progress. Declared before callers. */
+function phaseProgress(progress: number, start: number, end: number): number {
   'worklet';
   const p = clamp01(progress);
-  if (p <= MORPH_MONTH_TRIM_END) return 0;
-  if (p >= MORPH_DAY_INSERT_END) return 1;
-  return (p - MORPH_MONTH_TRIM_END) / (MORPH_DAY_INSERT_END - MORPH_MONTH_TRIM_END);
+  if (p <= start) return 0;
+  if (p >= end) return 1;
+  return easeInOutCubic((p - start) / (end - start));
+}
+
+/**
+ * Week→Day morph duration. Overall progress is LINEAR; each phase eases itself so
+ * the three steps read as separate beats (runs alongside the week-day drill spring).
+ */
+export const PERIOD_TITLE_MORPH_IN_MS = 720;
+
+/** Day→Week reverse morph (same phases backwards). */
+export const PERIOD_TITLE_MORPH_OUT_MS = 540;
+
+/** Phase 1: 0→1 as `February` shrinks to `Feb` (year rides left). */
+export function morphMonthTrimProgress(progress: number): number {
+  'worklet';
+  return phaseProgress(progress, 0, MORPH_MONTH_TRIM_END);
+}
+
+/** Phase 3: 0→1 as the weekday slides out to the right from behind the comma. */
+export function morphWeekdayRevealProgress(progress: number): number {
+  'worklet';
+  return phaseProgress(progress, MORPH_DAY_INSERT_END, 1);
+}
+
+/** Phase 3 starts with the comma appearing at once (no fade). */
+export function morphCommaVisible(progress: number): boolean {
+  'worklet';
+  return clamp01(progress) > MORPH_DAY_INSERT_END;
+}
+
+/**
+ * Phase-1 pieces: `Feb` stays, `ruary` clips away, `.` fades in. null when the
+ * abbreviation is not a prefix of the long month (swap at the midpoint instead).
+ */
+export function monthTrimParts(
+  seg: Pick<PeriodTitleMorphSegments, 'month' | 'monthShort'>,
+): { stem: string; tail: string; dot: string } | null {
+  const dot = seg.monthShort.endsWith('.') && !seg.month.endsWith('.') ? '.' : '';
+  const stem = dot ? seg.monthShort.slice(0, -1) : seg.monthShort;
+  if (!seg.month.startsWith(stem)) return null;
+  return { stem, tail: seg.month.slice(stem.length), dot };
+}
+
+/** Phase 2: 0→1 as `dayPart` opens between month and year (year shifts right). */
+export function morphDayInsertProgress(progress: number): number {
+  'worklet';
+  return phaseProgress(progress, MORPH_MONTH_TRIM_END, MORPH_DAY_INSERT_END);
 }
 
 /**
@@ -143,24 +188,27 @@ export function morphWeekdayLetterCount(progress: number, weekdayLen: number): n
   const p = clamp01(progress);
   if (weekdayLen <= 0) return 0;
   if (p <= MORPH_DAY_INSERT_END) return 0;
-  const t = (p - MORPH_DAY_INSERT_END) / (1 - MORPH_DAY_INSERT_END);
+  const t = morphWeekdayRevealProgress(p);
   return Math.min(weekdayLen, Math.max(1, Math.ceil(t * weekdayLen - 1e-9)));
 }
 
 /**
- * Month word at a letter count. Prefix locales (`Feb` ⊂ `February`) trim letter by
- * letter; others swap to the short form halfway through the trim.
+ * Month word at phase-1 progress `trim` (string form for reduceMotion + tests).
+ * Prefix: `February` → `Febru` → `Feb` → `Feb.` (period lands when the trim does).
+ * Non-prefix: swap long→short at the midpoint.
  */
-export function morphMonthText(seg: PeriodTitleMorphSegments, letterCount: number): string {
-  const { month, monthShort } = seg;
-  if (month.startsWith(monthShort)) return month.slice(0, Math.max(monthShort.length, letterCount));
-  const mid = (month.length + monthShort.length) / 2;
-  return letterCount > mid ? month : monthShort;
+export function morphMonthText(seg: PeriodTitleMorphSegments, trim: number): string {
+  const t = clamp01(trim);
+  if (t >= 1) return seg.monthShort;
+  if (t <= 0) return seg.month;
+  const parts = monthTrimParts(seg);
+  if (!parts) return t < 0.5 ? seg.month : seg.monthShort;
+  return parts.stem + parts.tail.slice(0, Math.round((1 - t) * parts.tail.length));
 }
 
 /**
  * Progressive title string at morph progress (reduceMotion snap + unit tests).
- * 0 → `February 2026`; 1 → `Feb 4, 2026, Wed`.
+ * 0 → `February 2026`; 1 → `Feb. 4, 2026, Wed.`.
  * The `, ` before the weekday appears together with its first letter.
  */
 export function formatMorphTitleAtProgress(
@@ -170,10 +218,7 @@ export function formatMorphTitleAtProgress(
   const p = clamp01(progress);
   if (p <= 0) return joinMonthYearTitle(seg);
   if (p >= 1) return joinDayPeriodTitle(seg);
-  const monthText = morphMonthText(
-    seg,
-    morphMonthLetterCount(p, seg.month.length, seg.monthShort.length),
-  );
+  const monthText = morphMonthText(seg, morphMonthTrimProgress(p));
   const insert = morphDayInsertProgress(p);
   const shown = Math.ceil(insert * seg.dayPart.length - 1e-9);
   const mid = shown <= 0 ? ' ' : ` ${seg.dayPart.slice(0, shown)} `;
