@@ -155,22 +155,23 @@ test('CAL-P6-10B: empty hour slot → Add Event prefill; no confirm sheet', () =
   );
 });
 
-test('CAL-P6-8A: drum pinned; PersonTabs collapse with tray', () => {
+test('CAL-P6-8A: drum pinned; nav row collapses with tray', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /collapse=\{collapsingChrome\}/);
   assert.match(screen, /pin=\{pinnedChrome\}/);
-  assert.match(screen, /<PersonTabs/);
+  assert.match(screen, /styles\.navRow/);
   assert.match(screen, /PeriodPager/);
-  // PersonTabs live in collapse band; PeriodPager in pin band.
+  // Nav row lives in collapse band; PeriodPager in pin band.
   const collapseIdx = screen.indexOf('const collapsingChrome');
   const pinIdx = screen.indexOf('const pinnedChrome');
   assert.ok(collapseIdx > 0 && pinIdx > collapseIdx);
   const collapseBlock = screen.slice(collapseIdx, pinIdx);
   const pinBlock = screen.slice(pinIdx, screen.indexOf('return (', pinIdx));
-  assert.match(collapseBlock, /<PersonTabs/);
+  assert.match(collapseBlock, /styles\.navRow/);
+  assert.match(collapseBlock, /label=["']Today["']/);
   assert.doesNotMatch(collapseBlock, /<PeriodPager/);
   assert.match(pinBlock, /<PeriodPager/);
-  assert.doesNotMatch(pinBlock, /<PersonTabs/);
+  assert.doesNotMatch(pinBlock, /styles\.navRow/);
 
   const screenUi = read('src/components/ui/Screen.tsx');
   assert.match(screenUi, /pin\?:/);
@@ -181,13 +182,15 @@ test('CAL-P6-8A: drum pinned; PersonTabs collapse with tray', () => {
   assert.match(month, /chrome\?\.onScrollBeginDrag\(event\)/);
 });
 
-test('CAL-P6-3A: tap-down + pinch/`<` climb; no Ghost above tabs', () => {
+test('CAL-P6-3A: tap-down + pinch/`<` climb; Today on nav row', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /hierarchyPinch|pinch-out|scale > 1\.25/);
-  assert.match(screen, /showClimbControl/);
+  assert.match(screen, /canClimb/);
   assert.match(screen, /label=["']<["']/);
+  assert.match(screen, /label=["']Today["']/);
   assert.match(screen, /onZoomWeek/);
   assert.match(screen, /onPressDay/);
+  assert.doesNotMatch(screen, /showClimbControl/);
   assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
   assert.doesNotMatch(
     screen,

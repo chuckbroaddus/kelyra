@@ -25,28 +25,21 @@ test('R4 L-C: Year→Month→Day zoom + hierarchical back (no RTL-only gesture)'
   assert.doesNotMatch(screen, /RTL.?only|I18nManager\.isRTL/);
 });
 
-test('R4 chrome: PersonTabs Year · Month · Week · Day only (no Days / Agenda tabs)', () => {
+test('R4 chrome: no Y/M/W/D tabs — `<` climbs Day→Week→Month→Year + Today', () => {
   const screen = read('src/app/calendar.tsx');
-  const m = screen.match(/const VIEW_TABS[\s\S]*?\];/);
-  assert.ok(m, 'VIEW_TABS block missing');
-  const block = m![0];
-  assert.match(block, /key: 'year'/);
-  assert.match(block, /key: 'month'/);
-  assert.match(block, /key: 'week'/);
-  assert.match(block, /key: 'day'/);
-  assert.doesNotMatch(block, /key: 'agenda'/);
-  assert.doesNotMatch(block, /key: 'multiday'|label: 'Days'/);
-  // Order: Year before Month before Week before Day
-  const yi = block.indexOf("key: 'year'");
-  const mi = block.indexOf("key: 'month'");
-  const wi = block.indexOf("key: 'week'");
-  const di = block.indexOf("key: 'day'");
-  assert.ok(yi < mi && mi < wi && wi < di, 'VIEW_TABS order must be Year·Month·Week·Day');
+  assert.doesNotMatch(screen, /VIEW_TABS|<PersonTabs/);
+  assert.match(screen, /styles\.navRow/);
+  assert.match(screen, /label=["']<["']/);
+  assert.match(screen, /label=["']Today["']/);
+  assert.match(screen, /jumpToday/);
+  assert.match(screen, /zoomUp/);
+  const prefs = read('src/lib/calendar/viewPrefs.ts');
+  assert.match(prefs, /view === 'day'\) return 'week'/);
 });
 
 test('R4 C-B: LF-A Show chips live under gear (not quiet-chip canvas row)', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /<PersonTabs/);
+  assert.match(screen, /styles\.navRow/);
   const sheet = read('src/components/calendar/ViewCustomizeSheet.tsx');
   assert.match(sheet, /CATEGORY_CHIPS/);
   const catIdx = sheet.indexOf('CATEGORY_CHIPS.map');
@@ -55,7 +48,7 @@ test('R4 C-B: LF-A Show chips live under gear (not quiet-chip canvas row)', () =
   assert.doesNotMatch(catBlock, /\bquiet\b/);
 });
 
-test('R4 chrome: CR-CalTabs cluster + · search · gear (LTR) on PersonTabs row', () => {
+test('R4 chrome: `<` + Today leading; + · search · gear (LTR) trailing', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /chromeCluster/);
   const clusterStart = screen.indexOf('styles.chromeCluster');
@@ -85,8 +78,7 @@ test('R4 C-B: Month Compact|List; Week 3|5|7; Day Single|List in gear (Agenda no
   // CAL-R5-10: helper footer copy dropped — modes remain labeled without essay.
   assert.doesNotMatch(sheet, /Day List stays here/);
   const screen = read('src/app/calendar.tsx');
-  const tabs = screen.match(/const VIEW_TABS[\s\S]*?\];/)![0];
-  assert.doesNotMatch(tabs, /key: 'agenda'/);
+  assert.doesNotMatch(screen, /VIEW_TABS|key: 'agenda'/);
   const month = read('src/components/calendar/MonthGrid.tsx');
   assert.match(month, /mode === 'list'|mode = 'compact'/);
 });
@@ -145,14 +137,15 @@ test('R4 Year card: no per-day zoom; entire card → Month only', () => {
   assert.match(yearJsx[0], /onPressMonth/);
 });
 
-test('R4: no GhostButton Up row (Year/Month label) above VIEW_TABS', () => {
+test('R4: climb is `<` + Today on nav row (no Year/Month Ghost Up strip)', () => {
   const screen = read('src/app/calendar.tsx');
   assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
   assert.doesNotMatch(
     screen,
     /GhostButton[\s\S]{0,120}label=\{[\s\S]{0,80}'Year'[\s\S]{0,80}'Month'/,
   );
-  // Platform hierarchical back still wired
+  assert.match(screen, /label=["']<["']/);
+  assert.match(screen, /label=["']Today["']/);
   assert.match(screen, /canZoomUp/);
   assert.match(screen, /setPushedBackHandler/);
   assert.match(screen, /zoomUp/);

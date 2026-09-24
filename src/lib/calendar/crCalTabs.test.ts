@@ -9,27 +9,15 @@ function read(rel: string): string {
   return readFileSync(new URL(rel, root), 'utf8');
 }
 
-test('CR-CalTabs: chip row replaced by PersonTabs Year·Month·Week·Day', () => {
+test('CR-CalTabs: Y/M/W/D tabs replaced by `<` + Today nav row', () => {
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /VIEW_TABS/);
-  assert.match(screen, /<PersonTabs/);
+  assert.doesNotMatch(screen, /VIEW_TABS|<PersonTabs/);
   assert.doesNotMatch(screen, /VIEW_CHIPS/);
-  assert.doesNotMatch(screen, /ChipRow compact[\s\S]{0,80}VIEW_/);
-  const tabs = screen.match(/const VIEW_TABS[\s\S]*?\];/)![0];
-  assert.match(tabs, /key: 'year'/);
-  assert.match(tabs, /key: 'month'/);
-  assert.match(tabs, /key: 'week'/);
-  assert.match(tabs, /key: 'day'/);
-  assert.match(tabs, /icon: 'calYear'/);
-  assert.match(tabs, /icon: 'calMonth'/);
-  assert.match(tabs, /icon: 'calWeek'/);
-  assert.match(tabs, /icon: 'calDay'/);
-  assert.doesNotMatch(tabs, /key: 'agenda'|key: 'multiday'/);
-  const yi = tabs.indexOf("key: 'year'");
-  const mi = tabs.indexOf("key: 'month'");
-  const wi = tabs.indexOf("key: 'week'");
-  const di = tabs.indexOf("key: 'day'");
-  assert.ok(yi < mi && mi < wi && wi < di, 'VIEW_TABS order must be Year·Month·Week·Day');
+  assert.match(screen, /styles\.navRow/);
+  assert.match(screen, /label=["']<["']/);
+  assert.match(screen, /label=["']Today["']/);
+  assert.match(screen, /jumpToday/);
+  assert.match(screen, /zoomUp/);
 });
 
 test('CR-CalTabs: one-row cluster LTR + · search · gear', () => {
@@ -44,7 +32,6 @@ test('CR-CalTabs: one-row cluster LTR + · search · gear', () => {
   const settings = cluster.indexOf('name="settings"');
   assert.ok(plus >= 0 && search >= 0 && settings >= 0, 'cluster icons missing');
   assert.ok(plus < search && search < settings, 'cluster order must be + · search · gear');
-  assert.match(screen, /motionPack=["']cm-linear["']/);
 });
 
 test('CR-CalTabs: Day Single still Month Name DD, YYYY; ISO not SoT for display', () => {
@@ -125,9 +112,10 @@ test('CR-CalTabs: icons via build-icons; ≠ Desk today / diary', () => {
   assert.match(assets, /calDay/);
 });
 
-test('CR-CalTabs: no Ghost Up; no §32.2 / PersonTabs default flip in docs', () => {
+test('CR-CalTabs: no Ghost Up strip; no tray Calendar restore war', () => {
   const screen = read('src/app/calendar.tsx');
   assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
-  assert.match(screen, /PersonTabs opt-in|\/calendar only|no §32\.2/);
   assert.doesNotMatch(screen, /FloatingTabTray|trayCalendar|restoreHamburgerCalendar/);
+  assert.match(screen, /label=["']<["']/);
+  assert.match(screen, /label=["']Today["']/);
 });

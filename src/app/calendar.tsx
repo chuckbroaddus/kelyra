@@ -25,7 +25,6 @@ import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { GhostButton } from '@/components/ui/Button';
-import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -127,18 +126,9 @@ function touchDistance(e: GestureResponderEvent): number {
   return Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
 }
 
-/** CR-CalTabs PersonTabs row — Year·Month·Week·Day only (no Agenda/Days tab). */
-const VIEW_TABS: PersonTab[] = [
-  { key: 'year', label: 'Year', icon: 'calYear' },
-  { key: 'month', label: 'Month', icon: 'calMonth' },
-  { key: 'week', label: 'Week', icon: 'calWeek' },
-  { key: 'day', label: 'Day', icon: 'calDay' },
-];
-
 /**
- * CR-CalTabs + R4 L-C: phone Year-first; tap-zoom Year→Month→Day; hierarchical back;
- * one-row PersonTabs Y/M/W/D + +·search·gear; modes/Show/Calendars/Clear under gear.
- * No tray chrome. PersonTabs opt-in on /calendar only — no §32.2 flip.
+ * Calendar chrome: `<` climbs Day→Week→Month→Year; Today jumps to today in-view;
+ * + · search · gear on the right. Modes / Show / Calendars under gear. No Y/M/W/D tabs.
  */
 export default function CalendarScreen() {
   const { colors } = useTheme();
@@ -386,13 +376,13 @@ export default function CalendarScreen() {
     if (!parent) return false;
     setZoomStack((stack) => (stack.length ? stack.slice(0, -1) : []));
     setActiveView(parent);
-    persistViewPrefs(parent, dayCount);
+    const nextDays = parent === 'week' ? 7 : dayCount;
+    if (parent === 'week') setDayCount(7);
+    persistViewPrefs(parent, nextDays);
     return true;
   }, [zoomStack, activeView, dayCount, persistViewPrefs]);
 
   const canClimb = canZoomUp(activeView) || zoomStack.length > 0;
-  /** CAL-P6-3A: web / RM climb control — not Ghost strip above PersonTabs. */
-  const showClimbControl = canClimb && (!isPhone || reduceMotion);
 
   // CAL-P6-9A: persist surface anchors for stack-honest forward restore.
   useEffect(() => {
@@ -817,44 +807,43 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
-      {/* CR-CalTabs one-row: PersonTabs Y/M/W/D + + · search · gear (no headerTrio above). */}
-      <PersonTabs
-        tabs={VIEW_TABS}
-        value={
-          activeView === 'year' ||
-          activeView === 'month' ||
-          activeView === 'week' ||
-          activeView === 'day'
-            ? activeView
-            : ''
-        }
-        onChange={(key) => selectView(key as CalendarViewId)}
-        motionPack="cm-linear"
-        trailing={
-          <View style={styles.chromeCluster}>
-            {canCreate ? (
-              <IconButton
-                name="plus"
-                label="Add event"
-                onPress={() => setComposer({ mode: 'create' })}
-              />
-            ) : null}
-            <IconButton
-              name="search"
-              label={searchOpen ? 'Close search' : 'Search calendar'}
+      {/* `<` + Today ····· + · search · gear (CEO 2026-09-24 — no Y/M/W/D tabs). */}
+      <View style={styles.navRow}>
+        <View style={styles.navLeading}>
+          {canClimb ? (
+            <GhostButton
+              label="<"
+              accessibilityLabel="Zoom up one level"
               onPress={() => {
-                setSearchOpen((v) => !v);
-                if (searchOpen) setSearchQuery('');
+                zoomUp();
               }}
             />
+          ) : null}
+          <GhostButton label="Today" accessibilityLabel="Jump to today" onPress={jumpToday} />
+        </View>
+        <View style={styles.chromeCluster}>
+          {canCreate ? (
             <IconButton
-              name="settings"
-              label="Customize views"
-              onPress={() => setCustomizeOpen(true)}
+              name="plus"
+              label="Add event"
+              onPress={() => setComposer({ mode: 'create' })}
             />
-          </View>
-        }
-      />
+          ) : null}
+          <IconButton
+            name="search"
+            label={searchOpen ? 'Close search' : 'Search calendar'}
+            onPress={() => {
+              setSearchOpen((v) => !v);
+              if (searchOpen) setSearchQuery('');
+            }}
+          />
+          <IconButton
+            name="settings"
+            label="Customize views"
+            onPress={() => setCustomizeOpen(true)}
+          />
+        </View>
+      </View>
 
       {searchOpen ? (
         <TextInput
@@ -877,26 +866,13 @@ export default function CalendarScreen() {
 
   const pinnedChrome = (
     <View {...(hierarchyPinch?.panHandlers ?? {})}>
-      {/* CAL-P6-3A: web/RM `<` under tabs in pin band — not Ghost above PersonTabs. */}
-      {showClimbControl ? (
-        <View style={styles.climbRow}>
-          <GhostButton
-            label="<"
-            accessibilityLabel="Zoom up one level"
-            onPress={() => {
-              zoomUp();
-            }}
-          />
-        </View>
-      ) : null}
-
       {canCreate && seat === 'parent' && parentChildMissing ? (
         <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
           Pick a child to add an absence for that child only.
         </Text>
       ) : null}
 
-      {/* CAL-P6-8A: period drum pinned while PersonTabs hide with tray. */}
+      {/* CAL-P6-8A: period drum pinned while nav row collapses with tray. */}
       {showsPeriodPager(activeView, dayMode) && periodKindForView(activeView) ? (
         <PeriodPager
           kind={periodKindForView(activeView)!}
@@ -960,7 +936,7 @@ export default function CalendarScreen() {
   );
 
   // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
-  // CAL-P6-8A: PersonTabs collapse with tray; drum stays in pin band.
+  // CAL-P6-8A: nav row collapses with tray; drum stays in pin band.
   // CAL-P6-6B: Month List owns a flex-bounded scroller — disable page scroll so soft-edge can fire.
   return (
     <Screen
@@ -1224,17 +1200,24 @@ const styles = StyleSheet.create({
     ...type.meta,
     textTransform: 'uppercase',
   },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    minHeight: 44,
+  },
+  navLeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+  },
   chromeCluster: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 0,
     gap: 2,
-  },
-  climbRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 0,
   },
   monthListHost: {
     flex: 1,

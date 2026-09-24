@@ -142,7 +142,8 @@ export async function saveCalViewPrefs(
  * Live stack honesty wins: Day may return to Week when drilled from Week.
  */
 export function zoomParentView(view: CalendarViewId): CalendarViewId | null {
-  if (view === 'day') return 'month';
+  // CEO 2026-09-24: Day → Week → Month → Year (tabs removed; `<` climbs this ladder).
+  if (view === 'day') return 'week';
   if (view === 'week' || view === 'multiday') return 'month';
   if (view === 'month') return 'year';
   if (view === 'agenda') return 'month';
