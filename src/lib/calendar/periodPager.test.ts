@@ -614,3 +614,50 @@ test('wheelContentModeFor fling clear window uses periodDistance radius 4', () =
   assert.ok(Math.abs(periodDistance('year', '2026', '2030')) <= 4);
   assert.ok(Math.abs(periodDistance('year', '2026', '2031')) > 4);
 });
+
+
+test('CAL-3DW host perspective-origin 50% 45% (t_15feb999)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  const wheel = read('src/lib/calendar/periodWheel.ts');
+  assert.match(wheel, /WHEEL_PERSPECTIVE_ORIGIN\s*=\s*'50% 45%'/);
+  assert.match(pager, /WHEEL_PERSPECTIVE_ORIGIN/);
+  assert.match(pager, /perspectiveOrigin:\s*WHEEL_PERSPECTIVE_ORIGIN/);
+  assert.match(pager, /transformOrigin:\s*WHEEL_PERSPECTIVE_ORIGIN/);
+  // Perspective on host — not per-tile transform perspective.
+  assert.doesNotMatch(pager, /transform:\s*\[[^\]]*(?:perspective:\s*WHEEL_PERSPECTIVE)/);
+});
+
+test('CAL-3DW RM keeps drag; drops rotateY only (t_b9051be5)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  // No separate tap-only RM tree without panHandlers.
+  assert.doesNotMatch(pager, /styles\.rmRow/);
+  // Pan move gate must not bail solely on reduceMotion.
+  const moveIdx = pager.indexOf('onMoveShouldSetPanResponder:');
+  assert.ok(moveIdx > 0);
+  const moveBlock = pager.slice(moveIdx, moveIdx + 280);
+  assert.doesNotMatch(moveBlock, /if \(reduceMotion/);
+  // Slot motion still branches rotateY off under RM.
+  assert.match(pager, /if \(reduceMotion\) \{[\s\S]*?transform:\s*\[\{\s*scale/);
+});
+
+test('CAL-3DW side hits outside scale ≥56 (t_1a0f176c)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  const wheel = read('src/lib/calendar/periodWheel.ts');
+  assert.match(wheel, /WHEEL_MIN_HIT_PX\s*=\s*56/);
+  assert.match(pager, /WHEEL_MIN_HIT_PX/);
+  // Hit Pressable wraps inner scaled visual with pointerEvents none.
+  assert.match(pager, /style=\{styles\.hitTarget\}/);
+  assert.match(pager, /pointerEvents="none"/);
+  assert.match(pager, /minWidth:\s*WHEEL_MIN_HIT_PX/);
+});
+
+test('CAL-P6-1A start-claim full-band (t_80d16cbc)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(
+    pager,
+    /onStartShouldSetPanResponder:\s*\(\)\s*=>\s*!settling\.current\s*&&\s*!failed/,
+  );
+  assert.match(pager, /onStartShouldSetPanResponderCapture:/);
+  assert.match(pager, /tapAtStageX/);
+  assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX/);
+});

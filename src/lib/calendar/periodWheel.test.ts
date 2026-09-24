@@ -16,6 +16,8 @@ import {
   WHEEL_MIN_OPACITY,
   WHEEL_MIN_SCALE,
   WHEEL_PERSPECTIVE,
+  WHEEL_PERSPECTIVE_ORIGIN,
+  WHEEL_MIN_HIT_PX,
   WHEEL_PITCH,
   WHEEL_ROTATE_Y_PER_SLOT,
   WHEEL_SIDE_OPACITY,
@@ -47,6 +49,10 @@ function read(rel: string): string {
 
 test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 148', () => {
   assert.equal(WHEEL_PERSPECTIVE, 920);
+  assert.equal(WHEEL_PERSPECTIVE_ORIGIN, '50% 45%');
+  assert.equal(WHEEL_MIN_HIT_PX, 56);
+  // |d|=2 scale 0.48 → 108*0.48=51.84 < 56 → hits must live outside scale.
+  assert.ok(WHEEL_HERO_WIDTH * 0.48 < WHEEL_MIN_HIT_PX);
   assert.equal(WHEEL_PITCH, 78);
   assert.equal(WHEEL_HERO_WIDTH, 108);
   assert.equal(WHEEL_HERO_HEIGHT, 126);
