@@ -11,11 +11,15 @@ import {
   formatMorphTitleAtProgress,
   joinDayPeriodTitle,
   joinMonthYearTitle,
+  monthTrimParts,
+  morphCommaVisible,
   morphDayInsertProgress,
-  morphMonthLetterCount,
   morphMonthText,
+  morphMonthTrimProgress,
   morphWeekdayLetterCount,
+  morphWeekdayRevealProgress,
   spokenDayPeriodTitle,
+  withAbbrevPeriod,
 } from './periodTitle.ts';
 import { monthContaining } from './month.ts';
 
@@ -32,79 +36,89 @@ test('formatMonthYearTitle → long month + year (matches Month label)', () => {
   assert.equal(formatMonthYearTitle(2026, 1), monthContaining('2026-02-04').label);
 });
 
-test('formatDayPeriodTitle → short "Feb 4, 2026, Wed"', () => {
-  assert.equal(formatDayPeriodTitle('2026-02-04', 'en-US'), 'Feb 4, 2026, Wed');
-  assert.equal(formatDayPeriodTitle('2026-09-24', 'en-US'), 'Sep 24, 2026, Thu');
-  assert.equal(formatDayPeriodTitle('2026-05-06', 'en-US'), 'May 6, 2026, Wed');
+test('formatDayPeriodTitle → "Feb. 4, 2026, Wed." (periods on abbreviations only)', () => {
+  assert.equal(formatDayPeriodTitle('2026-02-04', 'en-US'), 'Feb. 4, 2026, Wed.');
+  assert.equal(formatDayPeriodTitle('2026-09-24', 'en-US'), 'Sep. 24, 2026, Thu.');
+  assert.equal(formatDayPeriodTitle('2026-05-06', 'en-US'), 'May 6, 2026, Wed.');
   assert.equal(formatDayPeriodTitle('bogus', 'en-US'), 'bogus');
+  assert.equal(withAbbrevPeriod('Feb', 'February'), 'Feb.');
+  assert.equal(withAbbrevPeriod('May', 'May'), 'May');
+  assert.equal(withAbbrevPeriod('févr.', 'février'), 'févr.');
 });
 
-test('dayPeriodTitleSegments → long + short month/weekday; spoken label stays full', () => {
+test('dayPeriodTitleSegments → long + abbreviated month/weekday; spoken label stays full', () => {
   const seg = dayPeriodTitleSegments('2026-02-04', 'en-US');
   assert.deepEqual(seg, {
     month: 'February',
-    monthShort: 'Feb',
+    monthShort: 'Feb.',
     dayPart: '4,',
     year: '2026',
-    weekday: 'Wed',
+    weekday: 'Wed.',
     weekdayLong: 'Wednesday',
   });
   assert.equal(joinMonthYearTitle(seg!), 'February 2026');
-  assert.equal(joinDayPeriodTitle(seg!), 'Feb 4, 2026, Wed');
+  assert.equal(joinDayPeriodTitle(seg!), 'Feb. 4, 2026, Wed.');
   assert.equal(spokenDayPeriodTitle(seg!), 'February 4, 2026, Wednesday');
   assert.equal(dayPeriodTitleSegments('2026-13-01'), null);
 });
 
-test('morph phases: month trims, then day inserts, then weekday letter-by-letter', () => {
-  const [L, S] = ['February'.length, 'Feb'.length];
-  assert.equal(morphMonthLetterCount(0, L, S), L);
-  assert.equal(morphMonthLetterCount(MORPH_MONTH_TRIM_END, L, S), S);
-  assert.equal(morphMonthLetterCount(1, L, S), S);
-  assert.equal(morphMonthLetterCount(0.5, 3, 3), 3); // May: nothing to trim
-  let prevM = L;
-  for (let i = 0; i <= 100; i += 1) {
-    const n = morphMonthLetterCount(i / 100, L, S);
-    assert.ok(n <= prevM && prevM - n <= 1, `month jumped at ${i}`);
-    prevM = n;
-  }
-
-  assert.equal(morphDayInsertProgress(0), 0);
-  assert.equal(morphDayInsertProgress(MORPH_MONTH_TRIM_END), 0);
-  assert.ok(Math.abs(morphDayInsertProgress((MORPH_MONTH_TRIM_END + MORPH_DAY_INSERT_END) / 2) - 0.5) < 1e-9);
-  assert.equal(morphDayInsertProgress(MORPH_DAY_INSERT_END), 1);
-  assert.equal(morphDayInsertProgress(1), 1);
-
-  const len = 'Wed'.length;
-  assert.equal(morphWeekdayLetterCount(0, len), 0);
-  assert.equal(morphWeekdayLetterCount(MORPH_DAY_INSERT_END, len), 0);
-  assert.equal(morphWeekdayLetterCount(MORPH_DAY_INSERT_END + 0.001, len), 1);
-  assert.equal(morphWeekdayLetterCount(1, len), len);
-  let prev = 0;
-  for (let i = 0; i <= 100; i += 1) {
-    const n = morphWeekdayLetterCount(i / 100, len);
-    assert.ok(n >= prev && n - prev <= 1, `letters jumped at ${i}`);
-    prev = n;
-  }
-});
-
-test('morphMonthText: prefix locales trim; non-prefix swaps at the midpoint', () => {
+test('monthTrimParts: Feb stays, ruary clips, period lands; null for non-prefix', () => {
   const seg = dayPeriodTitleSegments('2026-02-04', 'en-US')!;
-  assert.equal(morphMonthText(seg, 8), 'February');
-  assert.equal(morphMonthText(seg, 5), 'Febru');
-  assert.equal(morphMonthText(seg, 3), 'Feb');
-  assert.equal(morphMonthText(seg, 1), 'Feb');
-  const odd = { ...seg, month: 'Juillet', monthShort: 'juil.' };
-  assert.equal(morphMonthText(odd, 7), 'Juillet');
-  assert.equal(morphMonthText(odd, 5), 'juil.');
+  assert.deepEqual(monthTrimParts(seg), { stem: 'Feb', tail: 'ruary', dot: '.' });
+  const may = dayPeriodTitleSegments('2026-05-06', 'en-US')!;
+  assert.deepEqual(monthTrimParts(may), { stem: 'May', tail: '', dot: '' });
+  assert.equal(monthTrimParts({ month: 'Juillet', monthShort: 'juil.' }), null);
 });
 
-test('formatMorphTitleAtProgress: February 2026 → Feb 4, 2026, Wed', () => {
+test('morph phases run one after another: shrink, then day insert, then comma + weekday', () => {
+  const T = MORPH_MONTH_TRIM_END;
+  const D = MORPH_DAY_INSERT_END;
+  // Phase 1 only moves the month.
+  assert.equal(morphMonthTrimProgress(0), 0);
+  assert.equal(morphMonthTrimProgress(T), 1);
+  assert.equal(morphDayInsertProgress(T), 0);
+  assert.equal(morphCommaVisible(T), false);
+  // Phase 2 only moves the day slot.
+  assert.ok(Math.abs(morphDayInsertProgress((T + D) / 2) - 0.5) < 1e-9);
+  assert.equal(morphDayInsertProgress(D), 1);
+  assert.equal(morphCommaVisible(D), false);
+  assert.equal(morphWeekdayRevealProgress(D), 0);
+  // Phase 3: comma at once, weekday slides.
+  assert.equal(morphCommaVisible(D + 0.001), true);
+  assert.ok(morphWeekdayRevealProgress(D + 0.001) < 0.01);
+  assert.equal(morphWeekdayRevealProgress(1), 1);
+  // Each phase is monotonic.
+  let a = 0, b = 0, c = 0;
+  for (let i = 0; i <= 100; i += 1) {
+    const p = i / 100;
+    const [na, nb, nc] = [morphMonthTrimProgress(p), morphDayInsertProgress(p), morphWeekdayRevealProgress(p)];
+    assert.ok(na >= a && nb >= b && nc >= c, `non-monotonic at ${i}`);
+    [a, b, c] = [na, nb, nc];
+  }
+  const len = 'Wed.'.length;
+  assert.equal(morphWeekdayLetterCount(D, len), 0);
+  assert.equal(morphWeekdayLetterCount(1, len), len);
+});
+
+test('morphMonthText: February → Febru → Feb → Feb.; non-prefix swaps at midpoint', () => {
+  const seg = dayPeriodTitleSegments('2026-02-04', 'en-US')!;
+  assert.equal(morphMonthText(seg, 0), 'February');
+  assert.equal(morphMonthText(seg, 0.4), 'Februa');
+  assert.equal(morphMonthText(seg, 0.6), 'Febru');
+  assert.equal(morphMonthText(seg, 0.99), 'Feb');
+  assert.equal(morphMonthText(seg, 1), 'Feb.');
+  const odd = { ...seg, month: 'Juillet', monthShort: 'juil.' };
+  assert.equal(morphMonthText(odd, 0.3), 'Juillet');
+  assert.equal(morphMonthText(odd, 0.6), 'juil.');
+});
+
+test('formatMorphTitleAtProgress: February 2026 → Feb. 4, 2026, Wed.', () => {
   const seg = dayPeriodTitleSegments('2026-02-04', 'en-US')!;
   assert.equal(formatMorphTitleAtProgress(seg, 0), 'February 2026');
-  assert.equal(formatMorphTitleAtProgress(seg, MORPH_MONTH_TRIM_END), 'Feb 2026');
-  assert.equal(formatMorphTitleAtProgress(seg, MORPH_DAY_INSERT_END), 'Feb 4, 2026');
-  assert.equal(formatMorphTitleAtProgress(seg, MORPH_DAY_INSERT_END + 0.01), 'Feb 4, 2026, W');
-  assert.equal(formatMorphTitleAtProgress(seg, 1), 'Feb 4, 2026, Wed');
+  assert.equal(formatMorphTitleAtProgress(seg, MORPH_MONTH_TRIM_END), 'Feb. 2026');
+  assert.equal(formatMorphTitleAtProgress(seg, MORPH_DAY_INSERT_END), 'Feb. 4, 2026');
+  assert.match(formatMorphTitleAtProgress(seg, MORPH_DAY_INSERT_END + 0.05), /^Feb\. 4, 2026, W/);
+  assert.equal(formatMorphTitleAtProgress(seg, 1), 'Feb. 4, 2026, Wed.');
   for (let i = 0; i <= 20; i += 1) {
     const s = formatMorphTitleAtProgress(seg, i / 20);
     assert.ok(s.startsWith('Feb'), s);
@@ -119,8 +133,10 @@ test('CalendarPeriodTitle: fixed 22pt ink header + reduceMotion snap', () => {
   assert.match(comp, /accessibilityRole="header"/);
   assert.match(comp, /reduceMotion/);
   assert.match(comp, /morphDayInsertProgress/);
-  assert.match(comp, /morphWeekdayLetterCount/);
-  assert.match(comp, /morphMonthLetterCount/);
+  assert.match(comp, /morphMonthTrimProgress/);
+  assert.match(comp, /morphWeekdayRevealProgress/);
+  assert.match(comp, /morphCommaVisible/);
+  assert.match(comp, /Easing\.linear/);
   assert.match(comp, /accessibilityLabel=\{a11yLabel\}/);
   assert.match(comp, /<MarqueeText text=\{visibleTitle\}/);
   assert.doesNotMatch(comp, /colors\.brand\b/);
@@ -131,13 +147,18 @@ test('periodTitle: worklet helper clamp01 is declared before its worklet callers
   const decl = src.indexOf('function clamp01(');
   const firstUse = src.indexOf('clamp01(progress)');
   assert.ok(decl >= 0 && firstUse >= 0 && decl < firstUse);
+  for (const helper of ['easeInOutCubic', 'phaseProgress']) {
+    const d = src.indexOf(`function ${helper}(`);
+    const u = src.indexOf(`${helper}(`, d + helper.length + 10);
+    assert.ok(d >= 0 && u > d, `${helper} declared before use`);
+  }
 });
 
 test('CalendarPeriodTitle: uses the app-standard MarqueeText (§30), not a bespoke loop', () => {
   const comp = read('src/components/calendar/CalendarPeriodTitle.tsx');
   assert.match(comp, /from '@\/components\/ui\/MarqueeText'/);
   assert.match(comp, /<MarqueeText[^>]*fadeColor=\{colors\.bg\}/);
-  assert.match(comp, /settled \?/);
+  assert.match(comp, /settled( \|\| !seg)? \?/);
   assert.doesNotMatch(comp, /withRepeat|marqueeX|PERIOD_TITLE_MARQUEE/);
   const lib = read('src/lib/calendar/periodTitle.ts');
   assert.doesNotMatch(lib, /PERIOD_TITLE_MARQUEE|periodTitleNeedsMarquee|periodTitleMarqueeMs/);

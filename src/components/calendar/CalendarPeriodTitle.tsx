@@ -16,10 +16,11 @@ import {
   PERIOD_TITLE_MORPH_OUT_MS,
   dayPeriodTitleSegments,
   joinDayPeriodTitle,
+  monthTrimParts,
+  morphCommaVisible,
   morphDayInsertProgress,
-  morphMonthLetterCount,
-  morphMonthText,
-  morphWeekdayLetterCount,
+  morphMonthTrimProgress,
+  morphWeekdayRevealProgress,
   spokenDayPeriodTitle,
   type PeriodTitleMorphSegments,
 } from '@/lib/calendar/periodTitle';
@@ -35,7 +36,7 @@ type Props = {
   year: string;
   /** Day whose `4,` + weekday are morphed in when `expanded` (Week→Day). */
   dayIso?: string | null;
-  /** true = `February 4, 2026, Wednesday`; false = `February 2026`. */
+  /** true = `Feb. 4, 2026, Wed.`; false = `February 2026`. */
   expanded?: boolean;
   /** Snap between states (no morph). */
   reduceMotion?: boolean;
@@ -43,13 +44,22 @@ type Props = {
   enterFade?: boolean;
 };
 
+/** Measure one string in the title font (off-screen). */
+function useTextWidth(): [number, (w: number) => void] {
+  const [w, setW] = useState(0);
+  return [w, (next: number) => setW((cur) => (cur === next ? cur : next))];
+}
+
 /**
  * Sticky calendar period title (Month / Week / Day). Lives OUTSIDE CalendarZoomDrill
  * so drill transforms never move/fade it. One fixed size (22 / type.title, ink).
  *
- * Week→Day morph: month word stays put; `4,` is inserted between month and year
- * (year slides right as the slot widens), then the weekday rolls in letter by letter.
- * Day→Week plays the same morph backwards.
+ * Week→Day morph, three sequential beats (Day→Week plays them backwards):
+ *   1. `February` shrinks to `Feb.` — `ruary` clips away, the period fades in, and the
+ *      year rides left with it.
+ *   2. The year shifts right as `4,` opens between month and year.
+ *   3. A comma appears at once, then `Wed.` slides out to the right from behind it.
+ * At rest the title is the app-standard MarqueeText.
  */
 export function CalendarPeriodTitle({
   month,
@@ -67,27 +77,15 @@ export function CalendarPeriodTitle({
   const lastSegRef = useRef<PeriodTitleMorphSegments | null>(nextSeg);
   if (nextSeg) lastSegRef.current = nextSeg;
   const seg = lastSegRef.current;
-  const dayPart = seg?.dayPart ?? '';
-  const weekday = seg?.weekday ?? '';
+  const parts = seg ? monthTrimParts(seg) : null;
   const target = expanded && seg ? 1 : 0;
 
+  // Linear overall progress; each phase eases itself (periodTitle.ts).
   const progress = useSharedValue(target);
-  const [letters, setLetters] = useState(() => (target === 1 ? weekday.length : 0));
-  const monthLongLen = seg?.month.length ?? 0;
-  const monthShortLen = seg?.monthShort.length ?? 0;
-  const [monthLetters, setMonthLetters] = useState(() =>
-    target === 1 ? monthShortLen : monthLongLen,
-  );
-  const [dayWidth, setDayWidth] = useState(0);
-  const dayW = useSharedValue(0);
-
-  // Standard MarqueeText takes over only after the Week↔Day morph settles.
   const [settled, setSettled] = useState(true);
   useEffect(() => {
     if (reduceMotion) {
       progress.value = target;
-      setLetters(target === 1 ? weekday.length : 0);
-      setMonthLetters(target === 1 ? monthShortLen : monthLongLen);
       setSettled(true);
       return;
     }
@@ -96,37 +94,71 @@ export function CalendarPeriodTitle({
       target,
       {
         duration: target === 1 ? PERIOD_TITLE_MORPH_IN_MS : PERIOD_TITLE_MORPH_OUT_MS,
-        easing: Easing.inOut(Easing.cubic),
+        easing: Easing.linear,
       },
       (finished) => {
         'worklet';
         if (finished) runOnJS(setSettled)(true);
       },
     );
-  }, [target, reduceMotion, progress, weekday.length, monthShortLen, monthLongLen]);
+  }, [target, reduceMotion, progress]);
 
-  // Month word trims `February`→`Feb` letter by letter before `4,` slides in.
+  // Measured widths (title font) for the three animated slots.
+  const [tailW, takeTailW] = useTextWidth();
+  const [dotW, takeDotW] = useTextWidth();
+  const [dayW, takeDayW] = useTextWidth();
+  const [wdW, takeWdW] = useTextWidth();
+  const tailWv = useSharedValue(0);
+  const dotWv = useSharedValue(0);
+  const dayWv = useSharedValue(0);
+  const wdWv = useSharedValue(0);
+  useEffect(() => {
+    tailWv.value = tailW;
+    dotWv.value = dotW;
+    dayWv.value = dayW;
+    wdWv.value = wdW;
+  }, [tailW, dotW, dayW, wdW, tailWv, dotWv, dayWv, wdWv]);
+
+  // Phase 1 — tail slot narrows from `ruary` to `.`; tail fades out, period fades in.
+  const tailSlotStyle = useAnimatedStyle(() => {
+    // Unmeasured first frame: natural width, so `February` never flashes as `Feb`.
+    if (tailWv.value <= 0) return {};
+    const t = morphMonthTrimProgress(progress.value);
+    return { width: tailWv.value + (dotWv.value - tailWv.value) * t };
+  });
+  const tailTextStyle = useAnimatedStyle(() => ({
+    opacity: 1 - morphMonthTrimProgress(progress.value),
+  }));
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: morphMonthTrimProgress(progress.value),
+  }));
+  // Non-prefix locales: swap long→short month at the phase-1 midpoint.
+  const [shortSwap, setShortSwap] = useState(target === 1);
   useAnimatedReaction(
-    () => morphMonthLetterCount(progress.value, monthLongLen, monthShortLen),
+    () => morphMonthTrimProgress(progress.value) >= 0.5,
     (next, prev) => {
-      if (next !== prev) runOnJS(setMonthLetters)(next);
+      if (next !== prev) runOnJS(setShortSwap)(next);
     },
-    [monthLongLen, monthShortLen],
   );
 
-  const weekdayLen = weekday.length;
-  useAnimatedReaction(
-    () => morphWeekdayLetterCount(progress.value, weekdayLen),
-    (next, prev) => {
-      if (next !== prev) runOnJS(setLetters)(next);
-    },
-    [weekdayLen],
-  );
-
+  // Phase 2 — `4, ` opens; the year shifts right.
   const daySlotStyle = useAnimatedStyle(() => {
     const insert = morphDayInsertProgress(progress.value);
-    return { width: dayW.value * insert, opacity: insert };
+    return { width: dayWv.value * insert, opacity: insert };
   });
+
+  // Phase 3 — comma pops in, then the weekday slides out rightward from behind it.
+  const commaStyle = useAnimatedStyle(() => ({
+    opacity: morphCommaVisible(progress.value) ? 1 : 0,
+  }));
+  const wdSlotStyle = useAnimatedStyle(() => ({
+    width: wdWv.value * morphWeekdayRevealProgress(progress.value),
+  }));
+  const wdTextStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: -wdWv.value * (1 - morphWeekdayRevealProgress(progress.value)) },
+    ],
+  }));
 
   const enterOpacity = useSharedValue(enterFade && !reduceMotion ? 0 : 1);
   useEffect(() => {
@@ -139,13 +171,10 @@ export function CalendarPeriodTitle({
   }, [enterFade, reduceMotion, enterOpacity]);
   const enterStyle = useAnimatedStyle(() => ({ opacity: enterOpacity.value }));
 
-  // Visible: `February 2026` / `Feb 4, 2026, Wed`. Spoken: full words.
+  // Visible: `February 2026` / `Feb. 4, 2026, Wed.`. Spoken: full words.
   const visibleTitle = expanded && seg ? joinDayPeriodTitle(seg) : `${month} ${year}`;
   const a11yLabel = expanded && seg ? spokenDayPeriodTitle(seg) : `${month} ${year}`;
-  const morphingMonth = seg != null && (expanded || monthLetters < seg.month.length);
-  const displayMonth = morphingMonth && seg ? morphMonthText(seg, monthLetters) : month;
-  const displayYear = expanded && seg ? seg.year : year;
-  const shownWeekday = weekday.slice(0, letters);
+  const weekdayTail = seg ? `${NBSP}${seg.weekday}` : '';
 
   return (
     <Reanimated.View
@@ -154,56 +183,79 @@ export function CalendarPeriodTitle({
       accessibilityRole="header"
       accessibilityLabel={a11yLabel}
     >
-      {/* Off-screen measurer for the inserted `4, ` slot (same font). */}
-      {dayPart ? (
-        <Text
-          style={[textStyle, styles.measure]}
-          numberOfLines={1}
-          onLayout={(event) => {
-            const w = Math.ceil(event.nativeEvent.layout.width);
-            if (w !== dayWidth) {
-              setDayWidth(w);
-              dayW.value = w;
-            }
-          }}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        >
-          {`${dayPart}${NBSP}`}
-        </Text>
+      {/* Off-screen measurers (same font) for the animated slots. */}
+      {seg ? (
+        <View style={styles.measureBox} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {parts ? (
+            <>
+              <Text style={textStyle} onLayout={(e) => takeTailW(Math.ceil(e.nativeEvent.layout.width))}>
+                {parts.tail}
+              </Text>
+              <Text style={textStyle} onLayout={(e) => takeDotW(parts.dot ? Math.ceil(e.nativeEvent.layout.width) : 0)}>
+                {parts.dot || '.'}
+              </Text>
+            </>
+          ) : null}
+          <Text style={textStyle} onLayout={(e) => takeDayW(Math.ceil(e.nativeEvent.layout.width))}>
+            {`${seg.dayPart}${NBSP}`}
+          </Text>
+          <Text style={textStyle} onLayout={(e) => takeWdW(Math.ceil(e.nativeEvent.layout.width))}>
+            {weekdayTail}
+          </Text>
+        </View>
       ) : null}
-      {/* At rest: the app-standard MarqueeText (ui-design §30 — 30 pt/s, 1200 ms start
-          hold, 800 ms end hold, fade-out / snap / fade-in, edge fades, pauses on scroll,
-          Reduce Motion, VoiceOver, background). During the Week↔Day morph: the morph row,
-          clipped, no crawl, so the two motions never fight. */}
-      {settled ? (
+      {/* At rest: the app-standard MarqueeText (ui-design §30). During the Week↔Day
+          morph: the phased row, clipped, no crawl, so the two motions never fight. */}
+      {settled || !seg ? (
         <MarqueeText text={visibleTitle} style={textStyle} fadeColor={colors.bg} />
       ) : (
-      <ScrollView
-        horizontal
-        scrollEnabled={false}
-        showsHorizontalScrollIndicator={false}
-        style={styles.clip}
-      >
-      <View style={styles.row}>
-        <Text style={textStyle} numberOfLines={1}>
-          {`${displayMonth}${NBSP}`}
-        </Text>
-        <Reanimated.View style={[styles.daySlot, daySlotStyle]}>
-          <Text style={[textStyle, { width: dayWidth }]} numberOfLines={1}>
-            {`${dayPart}${NBSP}`}
-          </Text>
-        </Reanimated.View>
-        <Text style={textStyle} numberOfLines={1}>
-          {displayYear}
-        </Text>
-        {letters > 0 ? (
-          <Text style={textStyle} numberOfLines={1}>
-            {`,${NBSP}${shownWeekday}`}
-          </Text>
-        ) : null}
-      </View>
-      </ScrollView>
+        <ScrollView
+          horizontal
+          scrollEnabled={false}
+          showsHorizontalScrollIndicator={false}
+          style={styles.clip}
+        >
+          <View style={styles.row}>
+            {parts ? (
+              <>
+                <Text style={textStyle} numberOfLines={1}>
+                  {parts.stem}
+                </Text>
+                <Reanimated.View style={[styles.slot, tailSlotStyle]}>
+                  <Reanimated.Text style={[textStyle, tailW > 0 ? { width: tailW } : null, tailTextStyle]} numberOfLines={1}>
+                    {parts.tail}
+                  </Reanimated.Text>
+                  {parts.dot ? (
+                    <Reanimated.Text style={[textStyle, styles.dot, dotStyle]} numberOfLines={1}>
+                      {parts.dot}
+                    </Reanimated.Text>
+                  ) : null}
+                </Reanimated.View>
+              </>
+            ) : (
+              <Text style={textStyle} numberOfLines={1}>
+                {shortSwap ? seg.monthShort : seg.month}
+              </Text>
+            )}
+            <Text style={textStyle}>{NBSP}</Text>
+            <Reanimated.View style={[styles.slot, daySlotStyle]}>
+              <Text style={[textStyle, { width: dayW }]} numberOfLines={1}>
+                {`${seg.dayPart}${NBSP}`}
+              </Text>
+            </Reanimated.View>
+            <Text style={textStyle} numberOfLines={1}>
+              {seg.year}
+            </Text>
+            <Reanimated.Text style={[textStyle, commaStyle]} numberOfLines={1}>
+              ,
+            </Reanimated.Text>
+            <Reanimated.View style={[styles.slot, wdSlotStyle]}>
+              <Reanimated.Text style={[textStyle, { width: wdW }, wdTextStyle]} numberOfLines={1}>
+                {weekdayTail}
+              </Reanimated.Text>
+            </Reanimated.View>
+          </View>
+        </ScrollView>
       )}
     </Reanimated.View>
   );
@@ -213,7 +265,8 @@ const styles = StyleSheet.create({
   wrap: { marginBottom: 8 },
   row: { flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'flex-start' },
   title: { ...type.title, fontSize: 22 },
-  daySlot: { overflow: 'hidden' },
+  slot: { overflow: 'hidden' },
+  dot: { position: 'absolute', left: 0, top: 0 },
   clip: { flexGrow: 0 },
-  measure: { position: 'absolute', opacity: 0, left: 0, top: 0 },
+  measureBox: { position: 'absolute', opacity: 0, left: 0, top: 0, flexDirection: 'row', width: 4000 },
 });
