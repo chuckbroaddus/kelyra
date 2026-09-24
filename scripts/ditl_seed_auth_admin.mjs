@@ -42,6 +42,18 @@ async function ensureProfile(username, role, display, schoolId) {
     .single();
   if (existing) {
     console.log(`  skip existing profile: ${username}`);
+    // Still ensure email for username login (t_cddd654c).
+    const email = `${username}@ditl.test`;
+    const { data: full } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', existing.id)
+      .maybeSingle();
+    if (!full?.email || !String(full.email).includes('@')) {
+      const { error } = await supabase.from('profiles').update({ email }).eq('id', existing.id);
+      if (error) console.log(`  email patch warn ${username}: ${error.message}`);
+      else console.log(`  email patch existing: ${username} -> ${email}`);
+    }
     return existing.id;
   }
   const { data: user, error: authErr } = await supabase.auth.admin.createUser({
@@ -62,18 +74,40 @@ async function ensureProfile(username, role, display, schoolId) {
     console.log(`  auth create skipped for ${username} (may need manual)`);
     return null;
   }
+  const email = `${username}@ditl.test`;
   const profileData = {
     id: userId,
     school_id: schoolId,
     username,
+    email,
     role,
     display_name: display,
     created_at: new Date().toISOString()
   };
   const { error: profErr } = await supabase.from('profiles').insert(profileData);
   if (profErr && !profErr.message.includes('duplicate')) throw profErr;
-  console.log(`  created profile + auth: ${username} (${role})`);
+  console.log(`  created profile + auth: ${username} (${role}) email=${email}`);
   return userId;
+}
+
+/** t_cddd654c: Lane B historically omitted profiles.email → login_identifier miss. */
+async function backfillMissingProfileEmails() {
+  for (const u of USERS) {
+    const email = `${u.username}@ditl.test`;
+    const { data: row } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('username', u.username)
+      .maybeSingle();
+    if (!row) continue;
+    if (row.email && String(row.email).includes('@')) continue;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email })
+      .eq('id', row.id);
+    if (error) console.log(`  email backfill warn ${u.username}: ${error.message}`);
+    else console.log(`  email backfill: ${u.username} -> ${email}`);
+  }
 }
 
 async function updateDualHatProfiles() {
@@ -153,6 +187,7 @@ async function main() {
   }
   await updateDualHatProfiles();
   await ensureDismissalLines();
+  await backfillMissingProfileEmails();
   await verifyEvidence();
   console.log('Lane B auth seed COMPLETE. Evidence SELECTs logged above.');
 }
