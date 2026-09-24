@@ -29,6 +29,8 @@ import {
   personTabTitleNeedsMarquee,
   personTabScrollTabWidth,
   personTabScrollX,
+  personTabScrollNeeded,
+  personTabScrollMotion,
   type PersonTabLabelPolicy,
   type PersonTabMotionPack,
 } from '@/components/ui/personTabsLayout';
@@ -255,6 +257,12 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   /** Content width is ref-only — setState here re-rendered every morph frame and
    *  re-fired scrollTo(0) on first-tab transitions, snapping the outgoing label. */
   const contentWidthRef = useRef(0);
+  /** Live contentOffset.x — skip no-op scrollTo (iOS cancels leading width morph). */
+  const scrollOffsetRef = useRef(0);
+  /** Bumps to cancel a deferred leave-first scroll when selection changes again. */
+  const scrollGenRef = useRef(0);
+  /** Last value we applied a scroll policy for (blocks layout-only re-scroll). */
+  const scrolledValueRef = useRef<string | null>(null);
   const hasGlyph = personTabRowHasGlyph(tabs);
   const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
 
@@ -270,18 +278,40 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     };
   }, []);
 
-  const selectedTitleWidth = titleByKey[value] ?? 0;
+  // Scroll math reads these via refs so title/labelMax updates mid-morph cannot
+  // re-fire scrollTo or clear a deferred leave-first timer (Expo Go iOS snap).
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+  const scrollMetricsRef = useRef({
+    selectedTitleWidth: titleByKey[value] ?? 0,
+    labelMax,
+    hasGlyph,
+  });
+  scrollMetricsRef.current = {
+    selectedTitleWidth: titleByKey[value] ?? 0,
+    labelMax,
+    hasGlyph,
+  };
+
   useEffect(() => {
+    const row = tabsRef.current;
     const x = xOf.current[value];
     if (x == null || rowWidth <= 0) return;
-    const selectedIndex = tabs.findIndex((tab) => tab.key === value);
+    const selectedIndex = row.findIndex((tab) => tab.key === value);
     const prevKey = prevValueRef.current;
-    const prevIndex = prevKey == null ? null : tabs.findIndex((tab) => tab.key === prevKey);
+    const selectionChanged = prevKey !== value;
+    // rowWidth-only re-run after first layout: still need one scroll. Mid-morph
+    // re-runs with the same value must not start a second scroll.
+    if (!selectionChanged && scrolledValueRef.current === value) return;
+    const prevIndex = prevKey == null ? null : row.findIndex((tab) => tab.key === prevKey);
+    const safeSelected = Math.max(0, selectedIndex);
+    const safePrev = prevIndex != null && prevIndex >= 0 ? prevIndex : null;
+    const { selectedTitleWidth, labelMax: maxLabel, hasGlyph: glyph } = scrollMetricsRef.current;
     // Predicted hugged width — not live onLayout — so we scroll once per select.
     const tabWidth = personTabScrollTabWidth(
       selectedTitleWidth,
-      labelMax,
-      hasGlyph,
+      maxLabel,
+      glyph,
       widthOf.current[value] ?? PERSON_TAB_ICON_HIT,
     );
     const contentWidth = contentWidthRef.current > 0 ? contentWidthRef.current : rowWidth;
@@ -290,14 +320,58 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       tabWidth,
       rowWidth,
       contentWidth,
-      selectedIndex: Math.max(0, selectedIndex),
-      prevIndex: prevIndex != null && prevIndex >= 0 ? prevIndex : null,
+      selectedIndex: safeSelected,
+      prevIndex: safePrev,
     });
-    scroller.current?.scrollTo({ x: target, animated: !reduce });
+    const motion = personTabScrollMotion(safeSelected, safePrev);
+    const runScroll = (animated: boolean) => {
+      if (!personTabScrollNeeded(scrollOffsetRef.current, target)) return;
+      scroller.current?.scrollTo({ x: target, animated });
+    };
+    // Leading-pill (index 0) width morph on iOS UIScrollView: concurrent
+    // animated scrollTo — especially scrollTo(0) — cancels the JS width timing
+    // so the outgoing/incoming label snaps instead of CM-Linear closing/growing.
+    let deferTimer: ReturnType<typeof setTimeout> | undefined;
+    if (motion === 'instant') {
+      runScroll(false);
+    } else if (motion === 'defer') {
+      const token = ++scrollGenRef.current;
+      const delay = reduce ? 0 : chrome.motion.personTab;
+      deferTimer = setTimeout(() => {
+        if (token !== scrollGenRef.current) return;
+        // Recompute after leading pill settled — siblings' x shifted as index 0 shrank.
+        const xNow = xOf.current[value];
+        if (xNow == null || rowWidth <= 0) return;
+        const metrics = scrollMetricsRef.current;
+        const tabWidthNow = personTabScrollTabWidth(
+          metrics.selectedTitleWidth,
+          metrics.labelMax,
+          metrics.hasGlyph,
+          widthOf.current[value] ?? PERSON_TAB_ICON_HIT,
+        );
+        const contentNow = contentWidthRef.current > 0 ? contentWidthRef.current : rowWidth;
+        const targetNow = personTabScrollX({
+          tabX: xNow,
+          tabWidth: tabWidthNow,
+          rowWidth,
+          contentWidth: contentNow,
+          selectedIndex: safeSelected,
+          prevIndex: safePrev,
+        });
+        if (!personTabScrollNeeded(scrollOffsetRef.current, targetNow)) return;
+        scroller.current?.scrollTo({ x: targetNow, animated: !reduce });
+      }, delay);
+    } else {
+      runScroll(!reduce);
+    }
+    scrolledValueRef.current = value;
     prevValueRef.current = value;
-    // Intentionally omit contentWidth: mid-morph contentSize must not re-scroll
-    // (first tab → scrollTo(0) was snapping the previous label shut).
-  }, [value, rowWidth, reduce, tabs, selectedTitleWidth, labelMax, hasGlyph]);
+    return () => {
+      if (deferTimer) clearTimeout(deferTimer);
+    };
+    // Deps: value + rowWidth + reduce only. contentWidth / tabs[] / title metrics
+    // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
+  }, [value, rowWidth, reduce]);
 
   return (
     <View
@@ -337,8 +411,14 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         ref={scroller}
         horizontal
         showsHorizontalScrollIndicator={false}
+        // Animating child widths + clipped subviews snaps leading labels on iOS.
+        removeClippedSubviews={false}
         contentContainerStyle={styles.row}
         style={styles.scroller}
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
+        }}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
         onContentSizeChange={(width) => {
           contentWidthRef.current = width;

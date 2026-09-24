@@ -139,10 +139,28 @@ test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth
   assert.match(pills, /contentWidthRef/);
   assert.doesNotMatch(pills, /setContentWidth/);
   assert.doesNotMatch(pills, /\[value, rowWidth, contentWidth/);
-  assert.match(pills, /Intentionally omit contentWidth|must not re-scroll/);
+  assert.match(pills, /contentWidth \/ tabs\[\]|mid-morph cannot re-scroll|must not re-scroll/);
   assert.match(pills, /personTabScrollTabWidth/);
   assert.match(pills, /personTabPillWidthRange/);
   // Animated maxWidth + width fought leading-pill reflow — width alone.
   assert.doesNotMatch(pills, /maxWidth:\s*pillWidth/);
   assert.match(pills, /width:\s*pillWidth/);
+});
+
+test('expo iOS first-tab snap: leading scroll motion + no-op skip + no clipped subviews', () => {
+  const pills = read('src/components/ui/PersonTabs.tsx');
+  const layout = read('src/components/ui/personTabsLayout.ts');
+  // Native cause lock: animated scrollTo(0) / leave-first scroll races leading width morph.
+  assert.match(layout, /export function personTabScrollNeeded/);
+  assert.match(layout, /export function personTabScrollMotion/);
+  assert.match(pills, /personTabScrollNeeded/);
+  assert.match(pills, /personTabScrollMotion/);
+  assert.match(pills, /scrollOffsetRef/);
+  assert.match(pills, /scrolledValueRef/);
+  assert.match(pills, /removeClippedSubviews=\{false\}/);
+  // Scroll effect deps are value/rowWidth/reduce only — metrics via refs.
+  assert.match(pills, /tabsRef/);
+  assert.match(pills, /scrollMetricsRef/);
+  assert.match(pills, /\[value, rowWidth, reduce\]/);
+  assert.doesNotMatch(pills, /\[value, rowWidth, reduce, tabs,/);
 });
