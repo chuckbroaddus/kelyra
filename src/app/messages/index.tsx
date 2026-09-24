@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FeedPane } from '@/components/ui/FeedPane';
 import { ListRow } from '@/components/ui/ListRow';
@@ -122,15 +122,34 @@ export default function MessagesScreen() {
     );
   }
 
+  // Stable FlushBody: never swap ScrollView↔FlushBody across panes (remounts PersonTabs).
+  // Feed fills; Messages/Alerts scroll in a pane ScrollView with stable web gutter.
   return (
     <View style={styles.shell}>
     <Screen
       keyboard={onMessages || fillFeed}
       maxWidth={640}
-      scroll={!fillFeed}
+      scroll={false}
       avoidKeyboard={!fillFeed}
     >
+      <View style={styles.messagesColumn}>
       <PersonTabs tabs={tabs} value={pane} onChange={setPane} />
+      {fillFeed && activeFeed ? (
+        <FeedPane
+          classId={activeFeed.kind === 'class' ? activeFeed.id : null}
+          scope={activeFeed.kind === 'class' ? 'class' : 'school'}
+          fill
+        />
+      ) : (
+        <ScrollView
+          style={[
+            styles.paneScroll,
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
+          contentContainerStyle={styles.paneScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       {onMessages ? (
         <>
           {favorites.length ? (
@@ -225,16 +244,10 @@ export default function MessagesScreen() {
 
         </>
       ) : null}
-
-      {activeFeed ? (
-        <FeedPane
-          classId={activeFeed.kind === 'class' ? activeFeed.id : null}
-          scope={activeFeed.kind === 'class' ? 'class' : 'school'}
-          fill
-        />
-      ) : null}
-
       {onAlerts ? <NotificationsPane /> : null}
+        </ScrollView>
+      )}
+      </View>
     </Screen>
     {onMessages ? (
       <>
@@ -263,6 +276,23 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
+  },
+  messagesColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  paneScroll: {
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+  },
+  paneScrollContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
   },
   favRow: {
     gap: 16,

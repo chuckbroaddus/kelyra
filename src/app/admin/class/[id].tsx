@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
@@ -192,8 +192,10 @@ export default function ClassOfficeScreen() {
   const tabs = officeClassPersonTabs(feedIcon);
   const pane = tabs.some((item) => item.key === tab) ? tab : 'teacher';
 
+  // Stable FlushBody: never toggle Screen.scroll by pane (remounts PersonTabs / L-R gutter flip).
   return (
-    <Screen keyboard maxWidth={640} scroll={pane !== 'feed'} avoidKeyboard={pane !== 'feed'}>
+    <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={pane !== 'feed'}>
+      <View style={styles.officeColumn}>
       <Text style={[type.display, { color: colors.ink }]}>{klass.name}</Text>
       <Text style={[styles.lead, { color: colors.mute }]}>
         School office card. This is not the teacher desk — no capture, no grade book from here.
@@ -201,6 +203,18 @@ export default function ClassOfficeScreen() {
       <PersonTabs tabs={tabs} value={pane} onChange={setTab} />
       {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
 
+      {pane === 'feed' ? (
+        <FeedPane classId={klass.id} scope="class" fill />
+      ) : (
+        <ScrollView
+          style={[
+            styles.paneScroll,
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
+          contentContainerStyle={styles.paneScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       {pane === 'teacher' ? (
         <>
           <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />
@@ -397,7 +411,9 @@ export default function ClassOfficeScreen() {
         </>
       ) : null}
 
-      {pane === 'feed' ? <FeedPane classId={klass.id} scope="class" fill /> : null}
+        </ScrollView>
+      )}
+      </View>
 
       <FormSheet
         visible={Boolean(picking)}
@@ -459,6 +475,23 @@ function CheckBox({ checked }: { checked: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  officeColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  paneScroll: {
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+  },
+  paneScrollContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
+  },
   lead: {
     ...type.body,
     marginTop: 8,

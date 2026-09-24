@@ -109,6 +109,57 @@ test('office home: stable FlushBody + PersonTabs sibling (no collapse / no scrol
 });
 
 
+test('messages + admin class office: stable FlushBody (no pane scroll swap / L-R recenter)', () => {
+  const messages = read('src/app/messages/index.tsx');
+  assert.match(messages, /scroll=\{false\}/);
+  assert.doesNotMatch(messages, /scroll=\{!fillFeed\}/);
+  assert.match(messages, /maxWidth=\{640\}/);
+  assert.doesNotMatch(messages, /collapse=\{/);
+  assert.match(messages, /messagesColumn/);
+  assert.match(messages, /scrollbarGutter: 'stable'/);
+  assert.match(messages, /FeedPane[\s\S]*fill/);
+  assert.equal((messages.match(/<PersonTabs/g) || []).length, 1);
+
+  const admin = read('src/app/admin/class/[id].tsx');
+  assert.match(admin, /scroll=\{false\}/);
+  assert.doesNotMatch(admin, /scroll=\{pane !== 'feed'\}/);
+  assert.match(admin, /maxWidth=\{640\}/);
+  assert.doesNotMatch(admin, /collapse=\{/);
+  assert.match(admin, /officeColumn/);
+  assert.match(admin, /scrollbarGutter: 'stable'/);
+  assert.match(admin, /FeedPane classId=\{klass\.id\} scope="class" fill/);
+  assert.equal((admin.match(/<PersonTabs/g) || []).length, 1);
+});
+
+test('PersonTabs hosts: no Screen scroll toggle by tab/pane (inventory)', () => {
+  // Hosts that mount PersonTabs under a Screen must not flip scroll/maxWidth by pane.
+  // Calendar scroll={!monthListMode} is mode/gear (PersonTabs stays in collapse) — excluded.
+  // class/_layout maxWidth by pathname is route swap for ClassTabs host — excluded.
+  const hosts: Array<{ rel: string; allowScrollFalseOnly?: boolean }> = [
+    { rel: 'src/app/index.tsx' },
+    { rel: 'src/app/messages/index.tsx' },
+    { rel: 'src/app/admin/class/[id].tsx' },
+    { rel: 'src/app/todo.tsx' },
+    { rel: 'src/app/profile.tsx' },
+    { rel: 'src/app/diary.tsx' },
+    { rel: 'src/app/student/feed.tsx' },
+    { rel: 'src/app/student/class.tsx' },
+    { rel: 'src/app/student/people.tsx' },
+    { rel: 'src/app/class/[id]/student/[studentId].tsx' },
+    { rel: 'src/app/class/[id]/parent/[parentId].tsx' },
+  ];
+  for (const { rel } of hosts) {
+    const src = read(rel);
+    assert.doesNotMatch(src, /scroll=\{[^}]*pane/, rel);
+    assert.doesNotMatch(src, /scroll=\{[^}]*tab/, rel);
+    assert.doesNotMatch(src, /scroll=\{[^}]*fillFeed/, rel);
+    // maxWidth must not swap by pane/tab key (layout isSplit OK).
+    assert.doesNotMatch(src, /maxWidth=\{[^}]*pane/, rel);
+    assert.doesNotMatch(src, /maxWidth=\{[^}]*tab/, rel);
+  }
+});
+
+
 test('STU-02 / OFF-08 / D4: student tray + OFFICE_CLASS_TABS unchanged; office Home·Diary·Calendar·Ask', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
   assert.deepEqual(trayKeysForRole('superintendent'), OFFICE_KEYS);
