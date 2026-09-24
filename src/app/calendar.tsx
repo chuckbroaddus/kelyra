@@ -133,7 +133,7 @@ function touchDistance(e: GestureResponderEvent): number {
   return Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
 }
 
-/** CR-CalTabs PersonTabs row — Year·Month·Week·Day only (Agenda/Days via gear). */
+/** CR-CalTabs PersonTabs row — Year·Month·Week·Day only (no Agenda/Days tab). */
 const VIEW_TABS: PersonTab[] = [
   { key: 'year', label: 'Year', icon: 'calYear' },
   { key: 'month', label: 'Month', icon: 'calMonth' },

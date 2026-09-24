@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { isSupabaseConfigured } from '@/constants/config';
 import { clearAskGroundOnActiveClassChange } from '@/lib/ask/assignmentGround';
 import { loadTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
+import { invalidateNeedsCountCache } from '@/lib/chrome/needsCountCache';
 import { bindSignedUrlCacheUser, clearSignedUrlCache } from '@/lib/media/signedUrl';
 import { loadMyProfile } from '@/lib/school/api';
 import { loadGrants } from '@/lib/school/matrixApi';
@@ -155,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         await signOutRequest();
         await clearSignedUrlCache();
+        invalidateNeedsCountCache();
         setSession(null);
         setTeacher(null);
         setProfile(null);
