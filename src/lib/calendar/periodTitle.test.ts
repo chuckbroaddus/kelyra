@@ -86,3 +86,10 @@ test('CalendarPeriodTitle: fixed 22pt ink header + reduceMotion snap', () => {
   assert.match(comp, /morphWeekdayLetterCount/);
   assert.doesNotMatch(comp, /colors\.brand\b/);
 });
+
+test('periodTitle: worklet helper clamp01 is declared before its worklet callers (Reanimated no-hoist)', () => {
+  const src = readFileSync(new URL('./periodTitle.ts', import.meta.url), 'utf8');
+  const decl = src.indexOf('function clamp01(');
+  const firstUse = src.indexOf('clamp01(progress)');
+  assert.ok(decl >= 0 && firstUse >= 0 && decl < firstUse);
+});
