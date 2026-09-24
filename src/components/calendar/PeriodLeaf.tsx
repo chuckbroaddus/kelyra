@@ -72,7 +72,13 @@ function MetalTabs() {
   );
 }
 
-function weekHeaderLine(fromIso: string, toIso: string): string {
+/** Red header on week plate — year only (CEO 2026-09-24). */
+function weekHeaderYear(fromIso: string): string {
+  return String(Number(fromIso.slice(0, 4)));
+}
+
+/** Body on week plate — date range (CEO 2026-09-24). */
+function weekBodyRange(fromIso: string, toIso: string): string {
   const fm = Number(fromIso.slice(5, 7)) - 1;
   const fd = Number(fromIso.slice(8, 10));
   const tm = Number(toIso.slice(5, 7)) - 1;
@@ -80,11 +86,6 @@ function weekHeaderLine(fromIso: string, toIso: string): string {
   const fromMon = MONS_SHORT[fm] ?? '';
   const toMon = MONS_SHORT[tm] ?? '';
   return fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
-}
-
-function weekBodyRange(fromIso: string, toIso: string): string {
-  const fy = Number(fromIso.slice(0, 4));
-  return `${weekHeaderLine(fromIso, toIso)} · ${fy}`;
 }
 
 function dayHeaderLine(dayIso: string): string {
@@ -248,12 +249,19 @@ function PeriodLeafImpl({
   }
 
   if (tile.kind === 'year') {
-    const label = isCenter ? String(tile.year ?? tile.centerCaption) : tile.sideCaption;
+    // Always 4-digit year on every plate (sides used to show 'YY; center ellipsized with Dynamic Type).
+    void isCenter;
+    const label = String(tile.year ?? tile.centerCaption);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text style={[styles.yearText, styles.yearTextPlate]} numberOfLines={1}>
+          <Text
+            style={[styles.yearText, styles.yearTextPlate]}
+            numberOfLines={1}
+            allowFontScaling={false}
+            ellipsizeMode="clip"
+          >
             {label}
           </Text>
         </View>
@@ -281,7 +289,7 @@ function PeriodLeafImpl({
   }
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
-    const header = weekHeaderLine(tile.fromIso, tile.toIso);
+    const header = weekHeaderYear(tile.fromIso);
     const body = weekBodyRange(tile.fromIso, tile.toIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
@@ -391,7 +399,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   yearTextPlate: {
-    fontSize: 28,
+    fontSize: 24,
   },
   monthHeader: {
     backgroundColor: SET_B.header,
