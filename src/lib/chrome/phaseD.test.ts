@@ -85,19 +85,23 @@ test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab o
   assert.match(home, /const teacherSeat = chrome\.role === 'teacher'/);
 });
 
-test('office home: PersonTabs in Screen.collapse (Feed scroll swap must not remount tabs)', () => {
+test('office home: stable FlushBody + PersonTabs sibling (no collapse / no scroll swap)', () => {
   const home = read('src/app/index.tsx');
-  // Root cause: scroll={pane !== 'feed'} swaps ScrollView ↔ FlushBody; tabs in children remounted → snap.
-  assert.match(home, /scroll=\{pane !== 'feed'\}/);
+  // Always FlushBody — never scroll={pane !== 'feed'} (that remounted tabs).
+  assert.match(home, /scroll=\{false\}/);
+  assert.doesNotMatch(home, /scroll=\{pane !== 'feed'\}/);
   assert.match(home, /maxWidth=\{640\}/);
-  // Office row PersonTabs must live in the collapse prop (pinned above the scroll tree swap).
-  assert.match(
-    home,
-    /collapse=\{\s*officeSeat && tabs\.length \? \(\s*<PersonTabs/,
-  );
-  // Only office collapse row + nested New-pane PersonTabs — no third remounting child row.
+  // No collapse — CollapsingPageChrome absolute clip is wrong for horizontal morph.
+  assert.doesNotMatch(home, /collapse=\{/);
+  // Office PersonTabs is a stable child (handle → tabs → status → panes).
+  assert.match(home, /officeSeat && tabs\.length \? \(\s*<PersonTabs/);
+  // Exactly two PersonTabs: office row + nested New-pane.
   assert.equal((home.match(/<PersonTabs/g) || []).length, 2);
+  // Non-feed panes scroll inside a pane ScrollView; Feed stays Fill FeedPane.
+  assert.match(home, /<ScrollView/);
+  assert.match(home, /FeedPane scope="school" fill/);
 });
+
 
 test('STU-02 / OFF-08 / D4: student tray + OFFICE_CLASS_TABS unchanged; office Home·Diary·Calendar·Ask', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);

@@ -153,9 +153,11 @@ export function personTabScrollNeeded(
 
 /**
  * Scroll policy when the leading pill (index 0) is morphing.
- * - `instant`: jump offset (never animated scrollTo(0) — races leading width).
- * - `defer`: wait until morph ends before scrolling away from 0.
- * - `animated`: mid-row only; concurrent scroll + width morph is fine.
+ * PersonTabs must **not** call scrollTo for `instant` or `defer` — any
+ * programmatic scroll (including deferred) races the CM-Linear width morph.
+ * - `instant`: enter index 0 — skip scrollTo entirely.
+ * - `defer`: leave index 0 — skip scrollTo entirely (was: wait then scroll).
+ * - `animated`: mid↔mid only; concurrent animated scroll + width morph is fine.
  */
 export function personTabScrollMotion(
   selectedIndex: number,

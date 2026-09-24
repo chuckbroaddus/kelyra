@@ -249,6 +249,8 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
+  /** Content wider than row — enables horizontal scroll (Post/Alert usually false). */
+  const [rowOverflows, setRowOverflows] = useState(false);
   const [titleByKey, setTitleByKey] = useState<Record<string, number>>({});
   const [reduce, setReduce] = useState(false);
   const xOf = useRef<Record<string, number>>({});
@@ -259,8 +261,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const contentWidthRef = useRef(0);
   /** Live contentOffset.x — skip no-op scrollTo (iOS cancels leading width morph). */
   const scrollOffsetRef = useRef(0);
-  /** Bumps to cancel a deferred leave-first scroll when selection changes again. */
-  const scrollGenRef = useRef(0);
   /** Last value we applied a scroll policy for (blocks layout-only re-scroll). */
   const scrolledValueRef = useRef<string | null>(null);
   const hasGlyph = personTabRowHasGlyph(tabs);
@@ -306,6 +306,15 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     const prevIndex = prevKey == null ? null : row.findIndex((tab) => tab.key === prevKey);
     const safeSelected = Math.max(0, selectedIndex);
     const safePrev = prevIndex != null && prevIndex >= 0 ? prevIndex : null;
+    const motion = personTabScrollMotion(safeSelected, safePrev);
+    // Leading-pill (index 0) enter/leave: any programmatic scrollTo — instant or
+    // deferred — races the CM-Linear width morph on iOS UIScrollView (and web).
+    // Skip all scrollTo for instant/defer; mid↔mid keeps animated scroll.
+    if (motion === 'instant' || motion === 'defer') {
+      scrolledValueRef.current = value;
+      prevValueRef.current = value;
+      return;
+    }
     const { selectedTitleWidth, labelMax: maxLabel, hasGlyph: glyph } = scrollMetricsRef.current;
     // Predicted hugged width — not live onLayout — so we scroll once per select.
     const tabWidth = personTabScrollTabWidth(
@@ -323,57 +332,20 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       selectedIndex: safeSelected,
       prevIndex: safePrev,
     });
-    const motion = personTabScrollMotion(safeSelected, safePrev);
-    const runScroll = (animated: boolean) => {
-      if (!personTabScrollNeeded(scrollOffsetRef.current, target)) return;
-      scroller.current?.scrollTo({ x: target, animated });
-    };
-    // Leading-pill (index 0) width morph on iOS UIScrollView: concurrent
-    // animated scrollTo — especially scrollTo(0) — cancels the JS width timing
-    // so the outgoing/incoming label snaps instead of CM-Linear closing/growing.
-    let deferTimer: ReturnType<typeof setTimeout> | undefined;
-    if (motion === 'instant') {
-      runScroll(false);
-    } else if (motion === 'defer') {
-      const token = ++scrollGenRef.current;
-      const delay = reduce ? 0 : chrome.motion.personTab;
-      deferTimer = setTimeout(() => {
-        if (token !== scrollGenRef.current) return;
-        // Recompute after leading pill settled — siblings' x shifted as index 0 shrank.
-        const xNow = xOf.current[value];
-        if (xNow == null || rowWidth <= 0) return;
-        const metrics = scrollMetricsRef.current;
-        const tabWidthNow = personTabScrollTabWidth(
-          metrics.selectedTitleWidth,
-          metrics.labelMax,
-          metrics.hasGlyph,
-          widthOf.current[value] ?? PERSON_TAB_ICON_HIT,
-        );
-        const contentNow = contentWidthRef.current > 0 ? contentWidthRef.current : rowWidth;
-        const targetNow = personTabScrollX({
-          tabX: xNow,
-          tabWidth: tabWidthNow,
-          rowWidth,
-          contentWidth: contentNow,
-          selectedIndex: safeSelected,
-          prevIndex: safePrev,
-        });
-        if (!personTabScrollNeeded(scrollOffsetRef.current, targetNow)) return;
-        scroller.current?.scrollTo({ x: targetNow, animated: !reduce });
-      }, delay);
-    } else {
-      runScroll(!reduce);
+    if (!personTabScrollNeeded(scrollOffsetRef.current, target)) {
+      scrolledValueRef.current = value;
+      prevValueRef.current = value;
+      return;
     }
+    scroller.current?.scrollTo({ x: target, animated: !reduce });
     scrolledValueRef.current = value;
     prevValueRef.current = value;
-    return () => {
-      if (deferTimer) clearTimeout(deferTimer);
-    };
     // Deps: value + rowWidth + reduce only. contentWidth / tabs[] / title metrics
     // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
   }, [value, rowWidth, reduce]);
 
   return (
+
     <View
       style={[
         styles.wrap,
@@ -410,6 +382,9 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       <ScrollView
         ref={scroller}
         horizontal
+        // Post/Alert (content fits): disable scroll so UIScrollView does not
+        // participate; overflow rows keep ScrollView but skip scrollTo on index 0.
+        scrollEnabled={rowOverflows}
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
         removeClippedSubviews={false}
@@ -419,9 +394,21 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         onScroll={(event) => {
           scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
         }}
-        onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
+        onLayout={(event) => {
+          const w = event.nativeEvent.layout.width;
+          setRowWidth(w);
+          const contentW = contentWidthRef.current;
+          if (w > 0 && contentW > 0) {
+            const next = contentW > w + 0.5;
+            setRowOverflows((prev) => (prev === next ? prev : next));
+          }
+        }}
         onContentSizeChange={(width) => {
           contentWidthRef.current = width;
+          if (rowWidth > 0 && width > 0) {
+            const next = width > rowWidth + 0.5;
+            setRowOverflows((prev) => (prev === next ? prev : next));
+          }
         }}
       >
         {tabs.map((tab) => (

@@ -262,12 +262,12 @@ test('scroll needed skips no-op scrollTo (esp. already at 0)', () => {
   assert.equal(personTabScrollNeeded(80, 0), true);
 });
 
-test('leading-pill morph uses instant enter / deferred leave scroll — never animated-to-0', () => {
-  // Entering first tab: instant jump only (animated scrollTo(0) races width morph on iOS).
+test('leading-pill morph classifies instant/defer — PersonTabs skips scrollTo for those', () => {
+  // Entering first tab: instant — consumer must not scrollTo (races width morph).
   assert.equal(personTabScrollMotion(0, null), 'instant');
   assert.equal(personTabScrollMotion(0, 2), 'instant');
   assert.equal(personTabScrollMotion(0, 3), 'instant');
-  // Leaving first tab: defer scroll until morph ends so leading width can CM-Linear close.
+  // Leaving first tab: defer — consumer must not scrollTo either.
   assert.equal(personTabScrollMotion(1, 0), 'defer');
   assert.equal(personTabScrollMotion(2, 0), 'defer');
   // Mid-row: concurrent animated scroll is fine (2→3 / 2→4).
