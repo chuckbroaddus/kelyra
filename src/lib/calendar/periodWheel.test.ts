@@ -231,8 +231,9 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.match(leaf, /weekFooterYear/);
   assert.match(leaf, /weekBody/);
   assert.match(leaf, /monthHeaderYear/);
+  assert.match(leaf, /monthTallHeader/);
   assert.match(leaf, /Red header on week plate — start month/);
-  assert.match(leaf, /Red header on month plate — year only/);
+  assert.match(leaf, /Tall red header \(~1\/3\) on month plate — year/);
   assert.match(leaf, /Body on month plate — month name/);
   assert.match(leaf, /dayBody/);
   assert.match(leaf, /dayHeaderMonth/);

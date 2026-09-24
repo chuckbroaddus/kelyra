@@ -106,7 +106,7 @@ function dayFooterYear(dayIso: string): string {
   return String(Number(dayIso.slice(0, 4)));
 }
 
-/** Red header on month plate — year only (CEO 2026-09-24). */
+/** Tall red header (~1/3) on month plate — year (CEO 2026-09-24). */
 function monthHeaderYear(year: number): string {
   return String(year);
 }
@@ -175,8 +175,8 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.silhouetteHeader} />
-          <View style={styles.silhouetteHintRow}>
+          <View style={styles.monthTallHeader} />
+          <View style={[styles.monthTallBody, styles.silhouetteHintRow]}>
             {hintDays.map((iso) => (
               <Text
                 key={`sil-m-${iso}`}
@@ -297,14 +297,17 @@ function PeriodLeafImpl({
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.wrapHeader}>
-            <Text style={styles.wrapHeaderText} numberOfLines={1}>
+          {/* Header ~1/3 of page; body ~2/3 (CEO 2026-09-24). */}
+          <View style={styles.monthTallHeader}>
+            <Text style={styles.monthTallHeaderText} numberOfLines={1} allowFontScaling={false}>
               {header}
             </Text>
           </View>
-          <Text style={styles.plateBodyLine} numberOfLines={1} allowFontScaling={false}>
-            {body}
-          </Text>
+          <View style={styles.monthTallBody}>
+            <Text style={styles.monthTallBodyText} numberOfLines={1} allowFontScaling={false}>
+              {body}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -438,6 +441,33 @@ const styles = StyleSheet.create({
   },
   yearTextPlate: {
     fontSize: 24,
+  },
+  /** Month plate: header ~1/3 page height (flex 1), body ~2/3 (flex 2). */
+  monthTallHeader: {
+    flex: 1,
+    backgroundColor: SET_B.header,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  monthTallHeaderText: {
+    color: SET_B.body,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
+  monthTallBody: {
+    flex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  monthTallBodyText: {
+    color: SET_B.type,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   monthHeader: {
     backgroundColor: SET_B.header,
