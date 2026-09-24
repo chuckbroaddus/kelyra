@@ -252,3 +252,12 @@ test('t_da864a81: pre-confirm cannot_abandon uses abandonPartialFailed not post-
   assert.match(block, /if \(canAbandonPartial\)/);
 });
 
+test('t_da951800: status=abandoned only via abandon_ingest_batch (RPC flag)', () => {
+  const sql = read('supabase/migrations/20260923231500_ingest_batches_abandon_via_rpc_only.sql');
+  assert.match(sql, /ingest_batches_abandon_via_rpc_only/);
+  assert.match(sql, /use abandon_ingest_batch/);
+  assert.match(sql, /kelyra\.via_abandon_rpc/);
+  assert.match(sql, /set_config\('kelyra\.via_abandon_rpc',\s*'on'/);
+  assert.match(sql, /capture_id is not null/);
+});
+
