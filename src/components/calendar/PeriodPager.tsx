@@ -14,6 +14,7 @@ import {
   type ErrorInfo,
   type ReactNode,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -74,13 +75,14 @@ import {
   wheelScaleForNorm,
 } from '@/lib/calendar/periodWheel';
 import type { MultidayCount } from '@/lib/calendar/multiday';
+import { useDrumStackGestureGate } from '@/lib/calendar/drumStackGestures';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 // CAL-P6-1A: carve must stay 0 on drum face (named law pin).
 void CAL_P6_1A_FULL_BAND;
 void CAL_P6_1A_ON_DRUM_CARVE_PX;
-// CAL-P6-9A: drum LTR is period page only — never app-back.
+// CAL-P6-9A: drum LTR is period page only — never app-back (setSwipeRowStackGestures via useDrumStackGestureGate while finger on stage).
 
 
 const IS_WEB = Platform.OS === 'web';
@@ -325,6 +327,7 @@ export function PeriodPager({
 }: Props) {
   const reduceMotion = useReducedMotion();
   const { colors } = useTheme();
+  const { hold: holdStackGestures, release: releaseStackGestures } = useDrumStackGestureGate();
   const [failed, setFailed] = useState(false);
   const [showCenterExtras, setShowCenterExtras] = useState(true);
   const [flinging, setFlinging] = useState(false);
@@ -412,6 +415,11 @@ export function PeriodPager({
   );
 
   const onFail = useCallback(() => setFailed(true), []);
+
+  // Failed leaf → FallbackToolbar (no drum). Drop any held stack-gesture gate.
+  useEffect(() => {
+    if (failed) releaseStackGestures();
+  }, [failed, releaseStackGestures]);
 
   const finishShift = useCallback(
     (steps: number) => {
@@ -610,6 +618,8 @@ export function PeriodPager({
         },
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
+          // CAL-P6-9A: disable interactive pop for the drum gesture lifetime.
+          holdStackGestures();
           setShowCenterExtras(false);
           setFlinging(true);
           setFlingOriginAnchor(anchor);
@@ -638,6 +648,8 @@ export function PeriodPager({
           dragShared.value = next;
         },
         onPanResponderRelease: (_e, g) => {
+          // Finger up — restore stack pop (spring may continue; pop only races while down).
+          releaseStackGestures();
           velocityRef.current = g.vx * 1000;
           const next = grantDragBaseRef.current + g.dx;
           dragPxRef.current = next;
@@ -655,11 +667,22 @@ export function PeriodPager({
           animateSnap(targetSteps, next);
         },
         onPanResponderTerminate: () => {
+          releaseStackGestures();
           velocityRef.current = 0;
           animateSnap(0, dragPxRef.current);
         },
       }),
-    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, tapAtStageX],
+    [
+      absorbInFlightSnap,
+      animateSnap,
+      anchor,
+      dragShared,
+      failed,
+      holdStackGestures,
+      pitch,
+      releaseStackGestures,
+      tapAtStageX,
+    ],
   );
 
   if (failed) {
@@ -755,6 +778,9 @@ export function PeriodPager({
         onLayout={(e) => {
           stageWidthRef.current = e.nativeEvent.layout.width;
         }}
+        onTouchStart={holdStackGestures}
+        onTouchEnd={releaseStackGestures}
+        onTouchCancel={releaseStackGestures}
         {...pan.panHandlers}
       >
         <View style={styles.track}>
