@@ -178,27 +178,33 @@ export default function HomeScreen() {
   const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
   return (
+    {/* Office PersonTabs live in Screen.collapse so toggling scroll for Feed
+        (ScrollView ↔ FlushBody) does not remount the tab row — that remount was
+        the Feed snap on web + iPhone. maxWidth stays 640 so pane changes do not
+        reflow the row. */}
     <Screen
       keyboard
-      maxWidth={pane === 'feed' || pane === 'people' ? 640 : 480}
+      maxWidth={640}
       scroll={pane !== 'feed'}
       avoidKeyboard={pane !== 'feed'}
+      collapse={
+        officeSeat && tabs.length ? (
+          <PersonTabs
+            tabs={tabs}
+            value={pane}
+            onChange={(key) => {
+              setTab(key);
+              router.setParams({ tab: key });
+            }}
+          />
+        ) : null
+      }
     >
       {profile ? (
         <Text style={[type.meta, { color: colors.mute }]}>
           <HandleLink username={profile.username} profileId={profile.id} inline />
           {` · ${roleStatus(profile)}`}
         </Text>
-      ) : null}
-      {officeSeat && tabs.length ? (
-        <PersonTabs
-          tabs={tabs}
-          value={pane}
-          onChange={(key) => {
-            setTab(key);
-            router.setParams({ tab: key });
-          }}
-        />
       ) : null}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
 

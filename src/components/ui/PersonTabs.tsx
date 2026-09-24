@@ -22,11 +22,8 @@ import {
   PERSON_TAB_GLYPH,
   PERSON_TAB_HIT_PAD_X,
   PERSON_TAB_ROW_PAD_END,
-  PERSON_TAB_SCROLL_SETTLE_MS,
   personTabExpandEasingKind,
   personTabLabelMax,
-  personTabLeadingScrollLockMs,
-  personTabNeedsLeadingScrollLock,
   personTabRowHasGlyph,
   personTabPillWidthRange,
   personTabTitleNeedsMarquee,
@@ -93,11 +90,6 @@ type ThemeColors = {
 type PillProps = {
   tab: PersonTab;
   selected: boolean;
-  /**
-   * When selected but false, hold width expand until enter-0 scroll settles.
-   * A11y selected + icon color still follow `selected` immediately.
-   */
-  morphArmed: boolean;
   hasGlyph: boolean;
   labelMax: number;
   titleWidth: number;
@@ -111,7 +103,6 @@ type PillProps = {
 function PersonTabPill({
   tab,
   selected,
-  morphArmed,
   hasGlyph,
   labelMax,
   titleWidth,
@@ -121,12 +112,10 @@ function PersonTabPill({
   onChange,
   onLayoutX,
 }: PillProps) {
-  // Expand only when selected AND armed (enter-0 may delay arm after scroll).
-  const expandOpen = selected && morphArmed;
-  const expand = useRef(new Animated.Value(expandOpen ? 1 : 0)).current;
-  const [showLabel, setShowLabel] = useState(expandOpen);
+  const expand = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  const [showLabel, setShowLabel] = useState(selected);
   /** Marquee only after the expand settles at full width (Chuck: marquee after max). */
-  const [marqueeReady, setMarqueeReady] = useState(expandOpen);
+  const [marqueeReady, setMarqueeReady] = useState(selected);
   // Paint vs ceiling — never treat occupancy/hug slot alone as overflow.
   const needsMarquee = personTabTitleNeedsMarquee(titleWidth, labelMax);
   // Hug painted title — labelMax is marquee ceiling only (AC-CT-02 correction).
@@ -138,28 +127,28 @@ function PersonTabPill({
   );
 
   useEffect(() => {
-    if (expandOpen) {
+    if (selected) {
       setShowLabel(true);
     } else {
       setMarqueeReady(false);
     }
     if (reduce) {
-      expand.setValue(expandOpen ? 1 : 0);
-      setShowLabel(expandOpen);
-      setMarqueeReady(expandOpen);
+      expand.setValue(selected ? 1 : 0);
+      setShowLabel(selected);
+      setMarqueeReady(selected);
       return;
     }
     Animated.timing(expand, {
-      toValue: expandOpen ? 1 : 0,
+      toValue: selected ? 1 : 0,
       duration: chrome.motion.personTab,
-      easing: easingForKind(personTabExpandEasingKind(expandOpen, motionPack)),
+      easing: easingForKind(personTabExpandEasingKind(selected, motionPack)),
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (!finished) return;
-      if (!expandOpen) setShowLabel(false);
-      if (expandOpen) setMarqueeReady(true);
+      if (!selected) setShowLabel(false);
+      if (selected) setMarqueeReady(true);
     });
-  }, [expand, expandOpen, motionPack, reduce]);
+  }, [expand, motionPack, reduce, selected]);
 
   // Label clip width: grows/shrinks so first letter reveals first, and the right
   // edge covers the label on collapse (icon stays left-pinned — never clipped).
@@ -185,8 +174,6 @@ function PersonTabPill({
         style={({ pressed }) => [pressed && { opacity: 0.85 }]}
       >
         <Animated.View
-          // Keep native view identity stable while width morphs (iOS snap).
-          collapsable={false}
           style={[
             styles.hit,
             !hasGlyph && styles.labelHit,
@@ -264,12 +251,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const [rowWidth, setRowWidth] = useState(0);
   const [titleByKey, setTitleByKey] = useState<Record<string, number>>({});
   const [reduce, setReduce] = useState(false);
-  /**
-   * Arm/lock gates sync in render when `value` changes so the selected pill does
-   * not start expanding before enter-0 scroll settles (effect would be one frame late).
-   */
-  const [armGate, setArmGate] = useState<{ key: string; armed: boolean }>({ key: value, armed: true });
-  const [lockGate, setLockGate] = useState<{ key: string; locked: boolean }>({ key: value, locked: false });
   const xOf = useRef<Record<string, number>>({});
   const widthOf = useRef<Record<string, number>>({});
   const prevValueRef = useRef<string | null>(null);
@@ -278,10 +259,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const contentWidthRef = useRef(0);
   /** Live contentOffset.x — skip no-op scrollTo (iOS cancels leading width morph). */
   const scrollOffsetRef = useRef(0);
-  /** Offset frozen for the leading-morph lock window. */
-  const frozenOffsetRef = useRef(0);
-  /** Ignore onScroll while we re-assert frozen offset (no feedback loop). */
-  const assertingScrollRef = useRef(false);
   /** Bumps to cancel a deferred leave-first scroll when selection changes again. */
   const scrollGenRef = useRef(0);
   /** Last value we applied a scroll policy for (blocks layout-only re-scroll). */
@@ -316,41 +293,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     hasGlyph,
   };
 
-  // Render-phase gate: hold expand + lock scroll the same commit as selection change.
-  // Use the computed values on this render — armGate/lockGate state lags one setState.
-  let morphArmed: boolean;
-  let scrollLocked: boolean;
-  if (armGate.key === value && lockGate.key === value) {
-    morphArmed = armGate.armed;
-    scrollLocked = lockGate.locked;
-  } else {
-    const selectedIndex = Math.max(0, tabs.findIndex((tab) => tab.key === value));
-    const prevKey = prevValueRef.current;
-    const prevIndex = prevKey == null ? null : tabs.findIndex((tab) => tab.key === prevKey);
-    const safePrev = prevIndex != null && prevIndex >= 0 ? prevIndex : null;
-    const motion = personTabScrollMotion(selectedIndex, safePrev);
-    const needsLock = personTabNeedsLeadingScrollLock(selectedIndex, safePrev);
-    let armed = true;
-    const enter0ScrollNeeded =
-      motion === 'scroll-then-morph' && personTabScrollNeeded(scrollOffsetRef.current, 0);
-    if (enter0ScrollNeeded) {
-      armed = false;
-    }
-    morphArmed = armGate.key === value ? armGate.armed : armed;
-    scrollLocked = lockGate.key === value ? lockGate.locked : needsLock;
-    if (armGate.key !== value) {
-      setArmGate({ key: value, armed });
-    }
-    if (lockGate.key !== value) {
-      // Enter-0: freeze at target (0) so intentional scrollTo is not fought by the lock.
-      // Leave-0: freeze at current offset so contentSize thrash cannot drift during shrink.
-      if (needsLock) {
-        frozenOffsetRef.current = enter0ScrollNeeded ? 0 : scrollOffsetRef.current;
-      }
-      setLockGate({ key: value, locked: needsLock });
-    }
-  }
-
   useEffect(() => {
     const row = tabsRef.current;
     const x = xOf.current[value];
@@ -382,56 +324,21 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       prevIndex: safePrev,
     });
     const motion = personTabScrollMotion(safeSelected, safePrev);
-    const runScroll = (animated: boolean, toX = target) => {
-      if (!personTabScrollNeeded(scrollOffsetRef.current, toX)) return false;
-      assertingScrollRef.current = true;
-      scroller.current?.scrollTo({ x: toX, animated });
-      requestAnimationFrame(() => {
-        assertingScrollRef.current = false;
-      });
-      return true;
+    const runScroll = (animated: boolean) => {
+      if (!personTabScrollNeeded(scrollOffsetRef.current, target)) return;
+      scroller.current?.scrollTo({ x: target, animated });
     };
     // Leading-pill (index 0) width morph on iOS UIScrollView: concurrent
-    // scrollTo / contentSize thrash cancels JS width timing so the label snaps.
-    // Lock scroll + freeze offset for the morph window; enter-0 scrolls first.
+    // animated scrollTo — especially scrollTo(0) — cancels the JS width timing
+    // so the outgoing/incoming label snaps instead of CM-Linear closing/growing.
     let deferTimer: ReturnType<typeof setTimeout> | undefined;
-    let settleTimer: ReturnType<typeof setTimeout> | undefined;
-    let unlockTimer: ReturnType<typeof setTimeout> | undefined;
-    const token = ++scrollGenRef.current;
-
-    const unlockAfter = (ms: number) => {
-      if (unlockTimer) clearTimeout(unlockTimer);
-      unlockTimer = setTimeout(() => {
-        if (token !== scrollGenRef.current) return;
-        setLockGate({ key: value, locked: false });
-      }, ms);
-    };
-
-    // Arm/lock already gated in render for this value; effect only scrolls + timers.
-    if (motion === 'scroll-then-morph') {
-      // Enter index 0: scroll (if needed) BEFORE width expand — never concurrent.
-      const scrollNeeded = personTabScrollNeeded(scrollOffsetRef.current, target);
-      if (scrollNeeded) {
-        runScroll(false);
-        frozenOffsetRef.current = target;
-        scrollOffsetRef.current = target;
-        const settle = reduce ? 0 : PERSON_TAB_SCROLL_SETTLE_MS;
-        settleTimer = setTimeout(() => {
-          if (token !== scrollGenRef.current) return;
-          setArmGate({ key: value, armed: true });
-          unlockAfter(personTabLeadingScrollLockMs(reduce, chrome.motion.personTab));
-        }, settle);
-      } else {
-        frozenOffsetRef.current = scrollOffsetRef.current;
-        setArmGate({ key: value, armed: true });
-        unlockAfter(personTabLeadingScrollLockMs(reduce, chrome.motion.personTab));
-      }
+    if (motion === 'instant') {
+      runScroll(false);
     } else if (motion === 'defer') {
-      // Leave index 0: shrink now; scroll after morph; keep lock for that window.
-      const delay = personTabLeadingScrollLockMs(reduce, chrome.motion.personTab);
+      const token = ++scrollGenRef.current;
+      const delay = reduce ? 0 : chrome.motion.personTab;
       deferTimer = setTimeout(() => {
         if (token !== scrollGenRef.current) return;
-        setLockGate({ key: value, locked: false });
         // Recompute after leading pill settled — siblings' x shifted as index 0 shrank.
         const xNow = xOf.current[value];
         if (xNow == null || rowWidth <= 0) return;
@@ -461,8 +368,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     prevValueRef.current = value;
     return () => {
       if (deferTimer) clearTimeout(deferTimer);
-      if (settleTimer) clearTimeout(settleTimer);
-      if (unlockTimer) clearTimeout(unlockTimer);
     };
     // Deps: value + rowWidth + reduce only. contentWidth / tabs[] / title metrics
     // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
@@ -508,30 +413,11 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
         removeClippedSubviews={false}
-        scrollEnabled={!scrollLocked}
         contentContainerStyle={styles.row}
         style={styles.scroller}
         scrollEventThrottle={16}
         onScroll={(event) => {
-          const x = event.nativeEvent.contentOffset.x;
-          if (assertingScrollRef.current) {
-            scrollOffsetRef.current = x;
-            return;
-          }
-          if (scrollLocked) {
-            const frozen = frozenOffsetRef.current;
-            scrollOffsetRef.current = frozen;
-            // contentSize thrash / bounce can drift offset and kill width morph.
-            if (Math.abs(x - frozen) > 1) {
-              assertingScrollRef.current = true;
-              scroller.current?.scrollTo({ x: frozen, animated: false });
-              requestAnimationFrame(() => {
-                assertingScrollRef.current = false;
-              });
-            }
-            return;
-          }
-          scrollOffsetRef.current = x;
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.x;
         }}
         onLayout={(event) => setRowWidth(event.nativeEvent.layout.width)}
         onContentSizeChange={(width) => {
@@ -543,8 +429,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
             key={tab.key}
             tab={tab}
             selected={tab.key === value}
-            // Hold expand only for the selected enter-0 pill until scroll settles.
-            morphArmed={tab.key === value ? morphArmed : true}
             hasGlyph={hasGlyph}
             labelMax={labelMax}
             titleWidth={titleByKey[tab.key] ?? 0}

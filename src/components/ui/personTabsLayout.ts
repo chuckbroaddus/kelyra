@@ -152,48 +152,18 @@ export function personTabScrollNeeded(
 }
 
 /**
- * Settle delay after an instant scroll before arming leading-pill expand.
- * Enter-0 scroll + concurrent width morph still snaps on Expo Go iOS; wait
- * one frame pair (~32ms) so UIScrollView finishes the jump first.
- */
-export const PERSON_TAB_SCROLL_SETTLE_MS = 32;
-
-/**
  * Scroll policy when the leading pill (index 0) is morphing.
- * - `scroll-then-morph`: enter index 0 — instant scroll first (if needed), then
- *   arm width expand after settle. Never concurrent scroll + leading morph.
- * - `defer`: leave index 0 — wait until morph ends before scrolling away.
+ * - `instant`: jump offset (never animated scrollTo(0) — races leading width).
+ * - `defer`: wait until morph ends before scrolling away from 0.
  * - `animated`: mid-row only; concurrent scroll + width morph is fine.
  */
 export function personTabScrollMotion(
   selectedIndex: number,
   prevIndex: number | null,
-): 'scroll-then-morph' | 'defer' | 'animated' {
-  if (selectedIndex <= 0) return 'scroll-then-morph';
+): 'instant' | 'defer' | 'animated' {
+  if (selectedIndex <= 0) return 'instant';
   if (prevIndex === 0) return 'defer';
   return 'animated';
-}
-
-/**
- * True when a selection change involves the leading pill (enter or leave index 0).
- * Callers lock UIScrollView for the morph window so contentSize thrash cannot
- * cancel the JS-driven width timing on Expo Go iOS.
- */
-export function personTabNeedsLeadingScrollLock(
-  selectedIndex: number,
-  prevIndex: number | null,
-): boolean {
-  return selectedIndex <= 0 || prevIndex === 0;
-}
-
-/** Lock duration for leading-pill morph (0 when reduce-motion). */
-export function personTabLeadingScrollLockMs(
-  reduceMotion: boolean,
-  morphMs: number,
-  settleMs = 0,
-): number {
-  if (reduceMotion) return 0;
-  return Math.max(0, morphMs) + Math.max(0, settleMs);
 }
 
 /**

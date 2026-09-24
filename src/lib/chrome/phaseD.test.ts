@@ -85,6 +85,20 @@ test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab o
   assert.match(home, /const teacherSeat = chrome\.role === 'teacher'/);
 });
 
+test('office home: PersonTabs in Screen.collapse (Feed scroll swap must not remount tabs)', () => {
+  const home = read('src/app/index.tsx');
+  // Root cause: scroll={pane !== 'feed'} swaps ScrollView ↔ FlushBody; tabs in children remounted → snap.
+  assert.match(home, /scroll=\{pane !== 'feed'\}/);
+  assert.match(home, /maxWidth=\{640\}/);
+  // Office row PersonTabs must live in the collapse prop (pinned above the scroll tree swap).
+  assert.match(
+    home,
+    /collapse=\{\s*officeSeat && tabs\.length \? \(\s*<PersonTabs/,
+  );
+  // Only office collapse row + nested New-pane PersonTabs — no third remounting child row.
+  assert.equal((home.match(/<PersonTabs/g) || []).length, 2);
+});
+
 test('STU-02 / OFF-08 / D4: student tray + OFFICE_CLASS_TABS unchanged; office Home·Diary·Calendar·Ask', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
   assert.deepEqual(trayKeysForRole('superintendent'), OFFICE_KEYS);
