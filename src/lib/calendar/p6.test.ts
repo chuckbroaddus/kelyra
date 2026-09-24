@@ -12,15 +12,9 @@ import {
   saveCalendarSession,
 } from './calendarSession.ts';
 import {
-  DAY_LIST_EDGE_PAD,
-  DAY_LIST_WINDOW_DAYS,
-  dayInListWindow,
-  dayListOriginForTarget,
-  listAnchorDayFromScroll,
-  planDayListDrumShift,
-  planDayListScrollSettle,
-  scrollYForListAnchorDay,
-} from './listAnchorDay.ts';
+  CAL_DAY_LIST_COMMIT_OVERSCROLL_PX,
+  dayListCommitDir,
+} from './dayListBoundary.ts';
 import {
   CAL_P6_6B_COMMIT_OVERSCROLL_PX,
   monthListCommitDir,
@@ -72,99 +66,50 @@ test('CAL-P6-1A: full-band drum — carve 0; start-on-drum pages; no pageX left 
   assert.match(pager, /GestureDetector|manualActivation\(true\)/);
 });
 
-test('CAL-P6-5C: Day List mounts drum; listAnchorDay lockstep helpers + wiring', () => {
+test('CAL-P6-5C: Day List mounts drum; soft day-page lockstep with header', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
-  const sections = [
-    { day: '2026-09-18', y: 0 },
-    { day: '2026-09-19', y: 120 },
-    { day: '2026-09-20', y: 240 },
-  ];
-  assert.equal(listAnchorDayFromScroll(sections, 0), '2026-09-18');
-  assert.equal(listAnchorDayFromScroll(sections, 130), '2026-09-19');
-  assert.equal(listAnchorDayFromScroll(sections, 250), '2026-09-20');
-  assert.equal(scrollYForListAnchorDay(sections, '2026-09-19'), 120);
-  assert.equal(scrollYForListAnchorDay(sections, 'missing'), null);
 
   const screen = read('src/app/calendar.tsx');
-  assert.match(screen, /listAnchorDayFromScroll/);
-  assert.match(screen, /scrollDayListToAnchor|applyDayListDrumShift/);
-  assert.match(screen, /onSectionOffsetsChange/);
-  assert.match(screen, /dayListOrigin/);
-  assert.match(screen, /planDayListDrumShift|applyDayListDrumShift/);
-  assert.match(screen, /planDayListScrollSettle/);
-  assert.match(screen, /scroll === 'rebase'/);
-  assert.match(screen, /dayListOriginAround/);
-  const list = read('src/components/calendar/AgendaList.tsx');
-  assert.match(list, /onSectionOffsetsChange/);
-  assert.match(list, /CAL-P6-5C|listAnchorDay/);
+  assert.match(screen, /DayListPane/);
+  assert.match(screen, /dayListMode/);
+  assert.match(screen, /onCommitAdjacentDay/);
+  assert.match(screen, /applyDayListDrumShift/);
+  assert.match(screen, /scroll=\{!monthListMode && !dayListMode\}/);
+  assert.match(screen, /CAL-P6-5C|CAL_P6_5C_LIST_ANCHOR/);
+  // Drum + soft commit both write dayAnchor (header + PeriodPager SoT).
+  assert.match(screen, /setDayAnchor\(\(prev\) => shiftDay\(prev/);
+
+  const pane = read('src/components/calendar/DayListPane.tsx');
+  assert.match(pane, /formatCalendarDisplayDate/);
+  assert.match(pane, /dayListCommitDir/);
+  assert.match(pane, /onCommitAdjacentDay/);
+  assert.match(pane, /chrome\?\.onScroll\(event\)/);
+  assert.match(pane, /hideDayHeadings/);
 });
 
-test('CAL-P6-5C behavioral: mid-band stable; edge settle/drum rebase with pad', () => {
-  // Painted origin sits EDGE_PAD before viewport top; window must stay > 2*pad.
-  assert.ok(DAY_LIST_WINDOW_DAYS > 2 * DAY_LIST_EDGE_PAD);
-  assert.equal(DAY_LIST_WINDOW_DAYS, 42);
-  assert.equal(DAY_LIST_EDGE_PAD, 14);
-
-  const origin = '2026-09-04';
-  const mid = '2026-09-18'; // idx 14 — first safe mid-band slot
-  assert.equal(dayInListWindow(origin, mid), true);
-
-  // Drum +1 while next day still in safe mid-band → section scroll, origin stable.
-  const inWindow = planDayListDrumShift({ origin, anchor: mid, steps: 1 });
-  assert.equal(inWindow.nextAnchor, '2026-09-19');
-  assert.equal(inWindow.nextOrigin, origin);
-  assert.equal(inWindow.scroll, 'section');
-
-  const afterDrumSections = [
-    { day: '2026-09-04', y: 0 },
-    { day: '2026-09-18', y: 600 },
-    { day: '2026-09-19', y: 720 },
-    { day: '2026-09-20', y: 840 },
-  ];
-  assert.equal(scrollYForListAnchorDay(afterDrumSections, inWindow.nextAnchor), 720);
+test('CAL-P6-5C behavioral: day list soft edge commits adjacent day', () => {
   assert.equal(
-    listAnchorDayFromScroll(afterDrumSections, 720),
-    '2026-09-19',
-    'viewport top after drum scroll matches drum center',
+    dayListCommitDir({
+      overscrollPx: -CAL_DAY_LIST_COMMIT_OVERSCROLL_PX,
+      y: -60,
+      maxY: 400,
+    }),
+    -1,
   );
-
-  // Mid-band settle keeps origin.
-  const settle = planDayListScrollSettle({
-    origin,
-    currentAnchor: mid,
-    topDay: '2026-09-19',
-  });
-  assert.equal(settle.nextAnchor, '2026-09-19');
-  assert.equal(settle.nextOrigin, origin);
-  assert.equal(settle.originChanged, false);
-  assert.equal(settle.scroll, 'none');
   assert.equal(
-    dayListOriginForTarget(origin, '2026-09-19'),
-    origin,
-    'mid-band settle target must not rebase origin',
+    dayListCommitDir({
+      overscrollPx: CAL_DAY_LIST_COMMIT_OVERSCROLL_PX,
+      y: 460,
+      maxY: 400,
+    }),
+    1,
   );
-
-  // Near far edge (idx > W-1-pad = 27): rebase so top sits at EDGE_PAD.
-  const nearEnd = planDayListScrollSettle({
-    origin: '2026-09-01',
-    currentAnchor: '2026-09-28',
-    topDay: '2026-09-29', // idx 28
-  });
-  assert.equal(nearEnd.nextAnchor, '2026-09-29');
-  assert.equal(nearEnd.originChanged, true);
-  assert.equal(nearEnd.scroll, 'rebase');
-  assert.equal(nearEnd.nextOrigin, '2026-09-15'); // target - 14
-
-  // Drum past safe band rebases with pad; scroll mode rebase.
-  const pastEnd = planDayListDrumShift({
-    origin: '2026-09-01',
-    anchor: '2026-09-28',
-    steps: 1,
-  });
-  assert.equal(pastEnd.nextAnchor, '2026-09-29');
-  assert.equal(pastEnd.nextOrigin, '2026-09-15');
-  assert.equal(pastEnd.scroll, 'rebase');
+  assert.equal(
+    dayListCommitDir({ overscrollPx: 0, y: 10, maxY: 400, velocityY: 0 }),
+    0,
+  );
 });
+
 
 test('CAL-P6-4A: Single Day always mounts full hour gutter/track', () => {
   const hours = timelineHours();
@@ -228,7 +173,7 @@ test('CAL-P6-8A: drum pinned; PersonTabs collapse with tray', () => {
   const screenUi = read('src/components/ui/Screen.tsx');
   assert.match(screenUi, /pin\?:/);
   assert.match(screenUi, /CAL-P6-8A|pinBand/);
-  // Month List scroll={!monthListMode} must still feed chrome.onScroll (8A hide/show).
+  // Month List scroll={!monthListMode && !dayListMode} must still feed chrome.onScroll (8A hide/show).
   const month = read('src/components/calendar/MonthGrid.tsx');
   assert.match(month, /chrome\?\.onScroll\(event\)/);
   assert.match(month, /chrome\?\.onScrollBeginDrag\(event\)/);
@@ -257,7 +202,7 @@ test('CAL-P6-6B: Month List soft boundary commit wired + bounded scroller', () =
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /onCommitAdjacentMonth/);
   assert.match(screen, /shiftMonth\(monthRange\.fromIso, dir\)/);
-  assert.match(screen, /scroll=\{!monthListMode\}/);
+  assert.match(screen, /scroll=\{!monthListMode && !dayListMode\}/);
   assert.match(screen, /monthListHost/);
   // CAL-P6-8A: list scroller forwards into chrome hide/show while Screen scroll is off.
   assert.match(month, /useOptionalChrome|chrome\?\.onScroll/);

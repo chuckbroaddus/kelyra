@@ -132,18 +132,21 @@ test('CAL-R5-09: Calendars Done pops to Settings (stack; Settings stays open)', 
   assert.doesNotMatch(sheet, /onOpenCalendars\(\);\s*onClose\(\)/);
 });
 
-test('CAL-R5-11 + CAL-P6-5C: Day List continuous multi-day; drum ON; no date chevron', () => {
+test('CAL-R5-11 + CAL-P6-5C: Day List soft day-page; drum ON; Month Day Year header', () => {
   const screen = read('src/app/calendar.tsx');
   // CAL-P6-5C: Day List mounts PeriodPager (CAL-R5-11 / 3DW-14 no-drum dropped).
   assert.match(screen, /showsPeriodPager\(activeView, dayMode\)/);
   const pager = read('src/lib/calendar/periodPager.ts');
   assert.match(pager, /CAL-P6-5C|Day List mounts drum/);
   assert.doesNotMatch(pager, /if \(view === 'day' && dayMode === 'list'\) return false/);
-  assert.match(screen, /dayListRange\.days/);
-  assert.match(screen, /includeEmptyDays/);
-  // Painted window from dayListOrigin (SoT dayAnchor separate — lockstep fix).
-  assert.match(screen, /agendaRangeFrom\(dayListOrigin,\s*DAY_LIST_WINDOW_DAYS\)/);
-  assert.match(screen, /listAnchorDayFromScroll|onSectionOffsetsChange|applyDayListDrumShift/);
+  // CEO 2026-09-24: Month List twin — DayListPane + soft adjacent-day commit.
+  assert.match(screen, /DayListPane/);
+  assert.match(screen, /onCommitAdjacentDay|applyDayListDrumShift/);
+  assert.match(screen, /dayListMode/);
+  const pane = read('src/components/calendar/DayListPane.tsx');
+  assert.match(pane, /formatCalendarDisplayDate/);
+  assert.match(pane, /dayListCommitDir/);
+  assert.match(pane, /hideDayHeadings/);
   const list = read('src/components/calendar/AgendaList.tsx');
   assert.match(list, /includeEmptyDays/);
   assert.match(list, /No events/);

@@ -8,11 +8,10 @@ import {
   TextInput,
   View,
   type GestureResponderEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
+import { DayListPane } from '@/components/calendar/DayListPane';
 import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
 import { CalendarsSheet } from '@/components/calendar/CalendarsSheet';
 import { DayColumn } from '@/components/calendar/DayColumn';
@@ -43,16 +42,6 @@ import {
   loadCalendarSession,
   saveCalendarSession,
 } from '@/lib/calendar/calendarSession';
-import {
-  DAY_LIST_WINDOW_DAYS,
-  dayListOriginAround,
-  dayListOriginForTarget,
-  listAnchorDayFromScroll,
-  planDayListDrumShift,
-  planDayListScrollSettle,
-  scrollYForListAnchorDay,
-  type DaySectionOffset,
-} from '@/lib/calendar/listAnchorDay';
 import {
   CAL_P6_3A_HIERARCHY,
   CAL_P6_5C_LIST_ANCHOR,
@@ -167,11 +156,9 @@ export default function CalendarScreen() {
   );
   const [viewPrefsReady, setViewPrefsReady] = useState(false);
   const [dayCount, setDayCount] = useState<MultidayCount>(5);
-  // Today ISO — week Sunday via weekRangeContaining; 3 = center; 5 = Mon–Fri (CAL-R5-04).
+  // Today ISO — week Sunday via weekRangeContaining; 3 = Tue–Thu; 5 = Mon–Fri (CAL-R5-04).
   const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
-  /** CAL-P6-5C: painted Day List window origin — separate from listAnchorDay (dayAnchor). */
-  const [dayListOrigin, setDayListOrigin] = useState(() => dayListOriginAround(dayRangeContaining().day));
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
@@ -186,17 +173,8 @@ export default function CalendarScreen() {
   const [zoomStack, setZoomStack] = useState<CalendarViewId[]>([]);
   /** Apply stored view once per prefs key — never snap zoomTo(month) back to Year. */
   const viewPrefsHydratedKeyRef = useRef<string | null>(null);
-  /** CAL-P6-8A / 5C: body scroller + Day List↔drum lockstep. */
+  /** CAL-P6-8A: body scroller (Day/Month List own their scrollers). */
   const screenScrollRef = useRef<ScrollView>(null);
-  const dayListSectionsRef = useRef<DaySectionOffset[]>([]);
-  const dayListOriginYRef = useRef(0);
-  const dayListScrollYRef = useRef(0);
-  /** Screen ScrollView metrics — rebase when near content ends even if top-day pad lags. */
-  const dayListScrollMetricsRef = useRef({ contentH: 0, layoutH: 0 });
-  const dayListSyncFromDrumRef = useRef(false);
-  const dayListSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** After window rebase, scroll this day to top once sections remeasure. */
-  const pendingDayListScrollRef = useRef<string | null>(null);
   const hierarchyPinchRef = useRef({ startDist: 0, armed: false, fired: false });
 
   const [children, setChildren] = useState<Array<{ id: string; display_name: string }>>([]);
@@ -230,18 +208,11 @@ export default function CalendarScreen() {
   );
   const dayRange = useMemo(() => dayRangeContaining(dayAnchor), [dayAnchor]);
   const agendaRange = useMemo(() => agendaRangeFrom(agendaAnchor, 14), [agendaAnchor]);
-  /**
-   * CAL-R5-11 / CAL-P6-5C Day List — continuous window from dayListOrigin.
-   * dayAnchor is listAnchorDay (drum center); origin slides near either edge
-   * so list scroll stays infinite (CEO 2026-09-24).
-   */
-  const dayListRange = useMemo(
-    () => agendaRangeFrom(dayListOrigin, DAY_LIST_WINDOW_DAYS),
-    [dayListOrigin],
-  );
   const monthRange = useMemo(() => monthContaining(monthAnchor), [monthAnchor]);
   const year = yearAnchor;
   const monthListMode = activeView === 'month' && monthMode === 'list';
+  /** Day List — Month List twin: own scroller + soft day edge (CEO 2026-09-24). */
+  const dayListMode = activeView === 'day' && dayMode === 'list';
 
   // Phase E: Ask calendar_draft_event parks CR-A draft — open Review on Calendar.
   useEffect(() => {
@@ -336,7 +307,6 @@ export default function CalendarScreen() {
         );
         if (session) {
           setDayAnchor(session.dayAnchor);
-          setDayListOrigin(dayListOriginForTarget(session.dayAnchor, session.dayAnchor));
           setGridAnchor(session.gridAnchor);
           setMonthAnchor(session.monthAnchor);
           setYearAnchor(session.yearAnchor);
@@ -495,114 +465,17 @@ export default function CalendarScreen() {
     });
   }, [canClimb, isPhone, reduceMotion, zoomUp]);
 
-  const scrollDayListToAnchor = useCallback(
-    (day: string, opts?: { forceZero?: boolean }) => {
-      const sectionY = opts?.forceZero
-        ? 0
-        : scrollYForListAnchorDay(dayListSectionsRef.current, day);
-      if (sectionY == null) return;
-      const y = Math.max(0, dayListOriginYRef.current + sectionY);
-      dayListSyncFromDrumRef.current = true;
-      dayListScrollYRef.current = y;
-      screenScrollRef.current?.scrollTo({ y, animated: !reduceMotion });
-      if (dayListSettleTimerRef.current) clearTimeout(dayListSettleTimerRef.current);
-      dayListSettleTimerRef.current = setTimeout(() => {
-        dayListSyncFromDrumRef.current = false;
-      }, 320);
-    },
-    [reduceMotion],
-  );
-
-  const onDayListSectionsChange = useCallback(
-    (sections: DaySectionOffset[]) => {
-      dayListSectionsRef.current = sections;
-      const pending = pendingDayListScrollRef.current;
-      if (!pending) return;
-      if (!sections.some((s) => s.day === pending)) return;
-      pendingDayListScrollRef.current = null;
-      scrollDayListToAnchor(pending, { forceZero: pending === dayListOrigin });
-    },
-    [dayListOrigin, scrollDayListToAnchor],
-  );
-
-  const settleDayListAnchorFromScroll = useCallback(() => {
-    if (activeView !== 'day' || dayMode !== 'list') return;
-    if (dayListSyncFromDrumRef.current) return;
-    const localY = Math.max(0, dayListScrollYRef.current - dayListOriginYRef.current);
-    const day = listAnchorDayFromScroll(dayListSectionsRef.current, localY);
-    if (!day) return;
-    // Slide painted window when top day nears either edge (infinite list).
-    let plan = planDayListScrollSettle({
-      origin: dayListOrigin,
-      currentAnchor: dayAnchor,
-      topDay: day,
-    });
-    // Belt: if scroll is physically at a content end but day-index pad did not
-    // fire (short sections / tall viewport), force a rebase around the top day.
-    if (plan.scroll === 'none') {
-      const { contentH, layoutH } = dayListScrollMetricsRef.current;
-      const y = dayListScrollYRef.current;
-      const listTop = dayListOriginYRef.current;
-      const distFromEnd = contentH - (y + layoutH);
-      const nearEnd = contentH > 0 && layoutH > 0 && distFromEnd < 280;
-      const nearStart = y < listTop + 280;
-      if (nearEnd || nearStart) {
-        const nextOrigin = dayListOriginAround(day);
-        if (nextOrigin !== dayListOrigin) {
-          plan = {
-            nextAnchor: day,
-            nextOrigin,
-            originChanged: true,
-            scroll: 'rebase',
-          };
-        }
-      }
-    }
-    if (day === dayAnchor && plan.scroll === 'none') return;
-    setDayAnchor(plan.nextAnchor);
-    if (plan.scroll === 'rebase') {
-      dayListSyncFromDrumRef.current = true;
-      pendingDayListScrollRef.current = plan.nextAnchor;
-      setDayListOrigin(plan.nextOrigin);
-    }
-  }, [activeView, dayMode, dayAnchor, dayListOrigin]);
-
-  const onScreenScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      dayListScrollYRef.current = contentOffset.y;
-      dayListScrollMetricsRef.current = {
-        contentH: contentSize.height,
-        layoutH: layoutMeasurement.height,
-      };
-      if (activeView !== 'day' || dayMode !== 'list') return;
-      if (dayListSyncFromDrumRef.current) return;
-      if (dayListSettleTimerRef.current) clearTimeout(dayListSettleTimerRef.current);
-      dayListSettleTimerRef.current = setTimeout(() => {
-        settleDayListAnchorFromScroll();
-      }, 140);
-    },
-    [activeView, dayMode, settleDayListAnchorFromScroll],
-  );
-
   const applyDayListDrumShift = useCallback(
     (steps: number) => {
-      const plan = planDayListDrumShift({
-        origin: dayListOrigin,
-        anchor: dayAnchor,
-        steps,
-        windowDays: DAY_LIST_WINDOW_DAYS,
-      });
-      setDayAnchor(plan.nextAnchor);
-      if (plan.scroll === 'rebase') {
-        pendingDayListScrollRef.current = plan.nextAnchor;
-        setDayListOrigin(plan.nextOrigin);
-        return;
-      }
-      scrollDayListToAnchor(plan.nextAnchor);
+      // Soft-paged Day List: drum and header share dayAnchor (Month List twin).
+      setDayAnchor((prev) => shiftDay(prev, steps));
     },
-    [dayAnchor, dayListOrigin, scrollDayListToAnchor],
+    [],
   );
+
+  const onCommitAdjacentDay = useCallback((dir: -1 | 1) => {
+    setDayAnchor((prev) => shiftDay(prev, dir));
+  }, []);
 
   const onChangeDayCount = useCallback(
     (count: MultidayCount) => {
@@ -744,11 +617,16 @@ export default function CalendarScreen() {
         from = bounds.from;
         to = bounds.to;
       } else if (activeView === 'day') {
-        // List mode loads the continuous multi-day window (CAL-R5-11).
-        const range = dayMode === 'list' ? dayListRange : dayRange;
-        const bounds = dayRpcBounds(range.fromIso, range.toIso);
-        from = bounds.from;
-        to = bounds.to;
+        // List mode: small pad around dayAnchor so adjacent soft-commits stay warm.
+        if (dayMode === 'list') {
+          const bounds = dayRpcBounds(shiftDay(dayAnchor, -3), shiftDay(dayAnchor, 3));
+          from = bounds.from;
+          to = bounds.to;
+        } else {
+          const bounds = dayRpcBounds(dayRange.fromIso, dayRange.toIso);
+          from = bounds.from;
+          to = bounds.to;
+        }
       } else if (activeView === 'month') {
         const bounds = dayRpcBounds(monthRange.fromIso, monthRange.toIso);
         from = bounds.from;
@@ -791,8 +669,7 @@ export default function CalendarScreen() {
     multiRange.toIso,
     dayRange.fromIso,
     dayRange.toIso,
-    dayListRange.fromIso,
-    dayListRange.toIso,
+    dayAnchor,
     agendaRange.fromIso,
     agendaRange.toIso,
     monthRange.fromIso,
@@ -864,10 +741,7 @@ export default function CalendarScreen() {
       setGridAnchor(multidayTodayAnchor(today));
     } else if (activeView === 'day') {
       setDayAnchor(today);
-      if (dayMode === 'list') {
-        pendingDayListScrollRef.current = today;
-        setDayListOrigin(dayListOriginAround(today));
-      }
+
     } else if (activeView === 'agenda') {
       setAgendaAnchor(today);
     } else if (activeView === 'month') {
@@ -1090,9 +964,8 @@ export default function CalendarScreen() {
       pageChromeHosted
       collapse={collapsingChrome}
       pin={pinnedChrome}
-      scroll={!monthListMode}
+      scroll={!monthListMode && !dayListMode}
       scrollRef={screenScrollRef}
-      onScroll={onScreenScroll}
     >
       {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
 
@@ -1136,7 +1009,6 @@ export default function CalendarScreen() {
             onPressItem={openItem}
             onPressDay={(iso) => {
               setDayAnchor(iso);
-              setDayListOrigin(dayListOriginAround(iso));
               zoomTo('day');
             }}
             dayCount={stepperCount}
@@ -1145,18 +1017,13 @@ export default function CalendarScreen() {
           />
         ) : activeView === 'day' ? (
           dayMode === 'list' ? (
-            <View
-              onLayout={(event) => {
-                dayListOriginYRef.current = event.nativeEvent.layout.y;
-              }}
-            >
-              <AgendaList
-                days={dayListRange.days}
+            <View style={styles.dayListHost}>
+              <DayListPane
+                day={dayAnchor}
                 items={visibleItems}
                 showHiddenBadge={showHiddenBadge}
                 onPressItem={openItem}
-                includeEmptyDays
-                onSectionOffsetsChange={onDayListSectionsChange}
+                onCommitAdjacentDay={onCommitAdjacentDay}
               />
             </View>
           ) : (
@@ -1192,7 +1059,6 @@ export default function CalendarScreen() {
               }}
               onZoomDay={(iso) => {
                 setDayAnchor(iso);
-                setDayListOrigin(dayListOriginAround(iso));
                 setMonthSelectedDay(iso);
                 zoomTo('day');
               }}
@@ -1304,10 +1170,6 @@ export default function CalendarScreen() {
         onChangeDayMode={(mode) => {
           setDayMode(mode);
           // Entering List: paint window from current listAnchorDay (stable until drum leaves range).
-          if (mode === 'list') {
-            setDayListOrigin(dayListOriginAround(dayAnchor));
-            pendingDayListScrollRef.current = dayAnchor;
-          }
           persistViewPrefs(activeView, dayCount, monthMode, mode);
         }}
         chipIds={chipIds}
