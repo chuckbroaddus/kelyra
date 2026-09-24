@@ -21,11 +21,19 @@ test('MULTIDAY_COUNTS is only 3/5/7', () => {
   assert.equal(clampMultidayCount(9), 7);
 });
 
-test('multidayRangeContaining CAL-R5-04: 3=center, 5=Mon–Fri, 7=Sun week', () => {
-  // Wed 2026-09-16 → TUE WED THU
-  const three = multidayRangeContaining(3, '2026-09-16');
-  assert.equal(three.count, 3);
-  assert.deepEqual(three.days, ['2026-09-15', '2026-09-16', '2026-09-17']);
+test('multidayRangeContaining CAL-R5-04: 3=Tue–Thu, 5=Mon–Fri, 7=Sun week', () => {
+  // Any day in the week → same Tue–Thu (CEO 2026-09-24).
+  for (const anchor of [
+    '2026-09-13', // Sun
+    '2026-09-14', // Mon
+    '2026-09-16', // Wed
+    '2026-09-18', // Fri
+    '2026-09-19', // Sat
+  ]) {
+    const three = multidayRangeContaining(3, anchor);
+    assert.equal(three.count, 3);
+    assert.deepEqual(three.days, ['2026-09-15', '2026-09-16', '2026-09-17'], anchor);
+  }
 
   // Wed → Mon–Fri of that week
   const five = multidayRangeContaining(5, '2026-09-16');
@@ -59,23 +67,22 @@ test('stepMultidayCount and shiftMultiday', () => {
   assert.equal(stepMultidayCount(3, 1), 5);
   assert.equal(stepMultidayCount(7, 1), 7);
   assert.equal(stepMultidayCount(5, -1), 3);
-  assert.equal(shiftMultiday('2026-09-14', 3, 1), '2026-09-17');
-  // 5/7 step by one calendar week (not ±5 days).
+  // 3/5/7 all step by one calendar week.
+  assert.equal(shiftMultiday('2026-09-15', 3, 1), '2026-09-22');
   assert.equal(shiftMultiday('2026-09-14', 5, -1), '2026-09-07');
 });
 
-test('multi-day Today: Wednesday + count 3 centers on that Wednesday (not week Sunday)', () => {
-  const wednesday = '2026-09-16'; // Wed
-  const weekSunday = '2026-09-13';
-  // Regression: anchoring on Sunday centers Sun (omits Wed).
-  const omitToday = multidayRangeContaining(3, weekSunday);
-  assert.equal(omitToday.days.includes(wednesday), false);
-  // Correct Today jump / cold-start: anchor at today → TUE WED THU.
-  const anchor = multidayTodayAnchor(wednesday);
-  assert.equal(anchor, wednesday);
+test('multi-day Today: Friday still shows that week\'s Tue–Thu (not center-3)', () => {
+  const friday = '2026-09-18';
+  const wednesday = '2026-09-16';
+  const anchor = multidayTodayAnchor(friday);
+  assert.equal(anchor, friday);
   const range = multidayRangeContaining(3, anchor);
-  assert.ok(range.days.includes(wednesday));
   assert.deepEqual(range.days, ['2026-09-15', '2026-09-16', '2026-09-17']);
+  assert.ok(range.days.includes(wednesday));
+  assert.equal(range.days.includes(friday), false, 'Fri is outside fixed Tue–Thu set');
+  // Sunday anchor still lands same mid-week (not Sun-centered).
+  assert.deepEqual(multidayRangeContaining(3, '2026-09-13').days, range.days);
   const five = multidayRangeContaining(5, multidayTodayAnchor(wednesday));
   assert.ok(five.days.includes(wednesday));
   assert.deepEqual(five.days, [
