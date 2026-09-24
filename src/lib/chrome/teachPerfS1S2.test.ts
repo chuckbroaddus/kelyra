@@ -96,10 +96,21 @@ test('US-PERF-05 / TP-17: class switch clears prior-class rows before lists sett
 
 test('S1 mutations invalidate Needs chrome cache', () => {
   const inbox = read('src/app/inbox.tsx');
-  assert.match(inbox, /refreshChrome/);
-  assert.match(inbox, /attachCapture[\s\S]*refreshChrome\(\)/);
-  assert.match(inbox, /deleteCapture[\s\S]*refreshChrome\(\)/);
-  assert.match(inbox, /markNoteOnly[\s\S]*refreshChrome\(\)/);
+  assert.match(inbox, /refreshNeedsBadge/);
+  assert.match(inbox, /attachCapture[\s\S]*refreshNeedsBadge\(\)/);
+  assert.match(inbox, /deleteCapture[\s\S]*refreshNeedsBadge\(\)/);
+  assert.match(inbox, /markNoteOnly[\s\S]*refreshNeedsBadge\(\)/);
+  assert.doesNotMatch(inbox, /refreshChrome\(\)/);
+});
+
+test('t_9d9913b7 / US-PERF-06: Needs mutations use refreshNeedsBadge (no listClasses tick)', () => {
+  const chrome = read('src/lib/chrome/ChromeProvider.tsx');
+  assert.match(chrome, /refreshNeedsBadge/);
+  assert.match(chrome, /invalidateNeedsCountCache\(\);\s*void refreshBell\(\)/);
+  // Full refreshChrome still bumps tick for class census; badge path must not.
+  const badgeAt = chrome.indexOf('const refreshNeedsBadge = useCallback');
+  const badgeBlock = chrome.slice(badgeAt, badgeAt + 220);
+  assert.doesNotMatch(badgeBlock, /setTick/);
 });
 
 test('S2 Needs TTL cache: hit skip + invalidate + inflight dedup', async () => {
