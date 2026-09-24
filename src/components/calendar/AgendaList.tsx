@@ -24,6 +24,8 @@ type Props = {
    * can write `listAnchorDay` from scroll position / scroll the list from drum.
    */
   onSectionOffsetsChange?: (sections: DaySectionOffset[]) => void;
+  /** When true, omit per-day section headings (parent already shows the date). */
+  hideDayHeadings?: boolean;
 };
 
 /** Phone Agenda / Day List — own list, not FullCalendar / Wix Agenda. */
@@ -34,6 +36,7 @@ export function AgendaList({
   onPressItem,
   includeEmptyDays = false,
   onSectionOffsetsChange,
+  hideDayHeadings = false,
 }: Props) {
   const { colors } = useTheme();
   const offsetsRef = useRef<Map<string, number>>(new Map());
@@ -106,14 +109,16 @@ export function AgendaList({
             }}
             accessibilityLabel={`Day section ${day}`}
           >
-            <Text
-              style={[
-                styles.heading,
-                { color: empty ? colors.mute : colors.ink },
-              ]}
-            >
-              {formatDayHeading(day)}
-            </Text>
+            {hideDayHeadings ? null : (
+              <Text
+                style={[
+                  styles.heading,
+                  { color: empty ? colors.mute : colors.ink },
+                ]}
+              >
+                {formatDayHeading(day)}
+              </Text>
+            )}
             {empty ? (
               <Text style={[styles.emptyDay, { color: colors.mute }]}>No events</Text>
             ) : (
