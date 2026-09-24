@@ -17,18 +17,22 @@ export type ZoomDrillRequest = {
   direction: ZoomDrillDirection;
   /** Tapped parent cell / week row / day column (window coords). */
   source: ZoomSourceRect;
-  /** Short label on the flying surface (month name, week range, day). */
+  /** Short label (month name, week range, day) — diagnostics / a11y only. */
   label: string;
   /** Destination body rect in window coords (measured calendar body host). */
   dest: ZoomSourceRect;
-  /** Optional week-row or day-column index for sibling band layout. */
+  /** Host that receives the live transform (usually same as dest / body). */
+  host: ZoomSourceRect;
+  /** Optional week-row or day-column index for sibling band fade. */
   focusIndex?: number;
 };
 
-/** Cached inbound source so climb can reverse-morph back to the tapped cell. */
+/** Cached inbound geometry so climb can reverse-morph back to the tapped cell. */
 export type ZoomDrillCacheEntry = {
   kind: ZoomDrillKind;
   source: ZoomSourceRect;
+  dest: ZoomSourceRect;
+  host: ZoomSourceRect;
   label: string;
   focusIndex?: number;
 };
@@ -58,9 +62,7 @@ export function isValidZoomRect(rect: ZoomSourceRect | null | undefined): boolea
  * Child view → reverse drill kind when climbing (`zoomUp`).
  * Day→Week, Week→Month, Month→Year.
  */
-export function reverseDrillKind(
-  activeView: string,
-): ZoomDrillKind | null {
+export function reverseDrillKind(activeView: string): ZoomDrillKind | null {
   switch (activeView) {
     case 'day':
       return 'week-day';
@@ -74,11 +76,10 @@ export function reverseDrillKind(
   }
 }
 
-/** Abbreviated month-style label for year→month title crossfade (September → Sep). */
+/** Abbreviated month-style label for diagnostics (September → Sep). */
 export function abbreviateDrillLabel(label: string): string {
   const trimmed = label.trim();
   if (!trimmed) return '';
-  // "Week of 2026-09-01" / day chips — keep as-is for abbr slot.
   if (/\d/.test(trimmed) || /\s/.test(trimmed)) {
     const first = trimmed.split(/\s+/)[0] ?? trimmed;
     return first.length > 3 ? first.slice(0, 3) : first;

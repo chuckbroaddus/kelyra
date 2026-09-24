@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -8,6 +8,12 @@ import {
   Text,
   View,
 } from 'react-native';
+import Reanimated, {
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+
+import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { radius, type } from '@/constants/theme';
@@ -36,10 +42,13 @@ type Props = {
   /** CAL-R4 C-B — Compact grid or List. No Stacked/Detail stubs. */
   mode?: MonthMode;
   onSelectDay: (iso: string) => void;
-  /** Tap-zoom Month → Day (CAL-R4 L-C). */
-  onZoomDay?: (iso: string, source: ZoomSourceRect) => void;
+  /** Tap-zoom Month → Week (day cell). focusIndex = week row. */
+  onZoomDay?: (iso: string, source: ZoomSourceRect, focusIndex: number) => void;
   /** CAL-P6-3A: week-number / week-row → Week containing that week. */
-  onZoomWeek?: (iso: string, source: ZoomSourceRect) => void;
+  onZoomWeek?: (iso: string, source: ZoomSourceRect, focusIndex: number) => void;
+  /** Live Month→Week drill: fade non-focus week rows while focus stays opaque. */
+  drillProgress?: SharedValue<number> | null;
+  drillFocusWeekIndex?: number | null;
   onPressItem?: (item: CalendarItem) => void;
   /**
    * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
@@ -66,6 +75,8 @@ export function MonthGrid({
   onZoomWeek,
   onPressItem,
   onCommitAdjacentMonth,
+  drillProgress = null,
+  drillFocusWeekIndex = null,
 }: Props) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
@@ -195,18 +206,21 @@ export function MonthGrid({
         const firstInMonth = week.find((cell) => cell && cell.iso.startsWith(monthPrefix));
         const weekAnchor = firstInMonth?.iso ?? week.find(Boolean)?.iso ?? null;
         return (
-          <View
+          <DrillWeekRow
             key={`w-${wi}`}
-            ref={(node) => {
+            weekIndex={wi}
+            drillProgress={drillProgress}
+            drillFocusWeekIndex={drillFocusWeekIndex}
+            rowRef={(node) => {
               weekRowRefs.current.set(wi, node);
             }}
-            collapsable={false}
-            style={styles.week}
           >
             {onZoomWeek && weekAnchor ? (
               <Pressable
                 onPress={() =>
-                  measureNode(weekRowRefs.current.get(wi), (source) => onZoomWeek(weekAnchor, source))
+                  measureNode(weekRowRefs.current.get(wi), (source) =>
+                    onZoomWeek(weekAnchor, source, wi),
+                  )
                 }
                 accessibilityRole="button"
                 accessibilityLabel={`Week of ${weekAnchor}`}
@@ -235,7 +249,7 @@ export function MonthGrid({
                     if (onZoomDay) {
                       measureNode(
                         dayCellRefs.current.get(cell.iso),
-                        (source) => onZoomDay(cell.iso, source),
+                        (source) => onZoomDay(cell.iso, source, wi),
                       );
                     } else {
                       onSelectDay(cell.iso);
@@ -287,7 +301,7 @@ export function MonthGrid({
                 </Pressable>
               );
             })}
-          </View>
+          </DrillWeekRow>
         );
       })}
 
@@ -309,7 +323,39 @@ export function MonthGrid({
   );
 }
 
+function DrillWeekRow({
+  weekIndex,
+  drillProgress,
+  drillFocusWeekIndex,
+  rowRef,
+  children,
+}: {
+  weekIndex: number;
+  drillProgress: SharedValue<number> | null;
+  drillFocusWeekIndex: number | null;
+  rowRef: (node: View | null) => void;
+  children: ReactNode;
+}) {
+  const animated = useAnimatedStyle(() => {
+    if (drillProgress == null || drillFocusWeekIndex == null) {
+      return { opacity: 1 };
+    }
+    const isFocus = weekIndex === drillFocusWeekIndex;
+    return { opacity: siblingBandOpacity(drillProgress.value, isFocus) };
+  });
+  return (
+    <Reanimated.View
+      ref={rowRef as never}
+      collapsable={false}
+      style={[styles.week, animated]}
+    >
+      {children}
+    </Reanimated.View>
+  );
+}
+
 const styles = StyleSheet.create({
+
   wrap: { gap: 4 },
   listWrap: { flex: 1, minHeight: 0 },
   listScroller: { flex: 1, minHeight: 0 },

@@ -10,6 +10,8 @@ import {
   type GestureResponderEvent,
 } from 'react-native';
 
+import { useSharedValue } from 'react-native-reanimated';
+
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { DayListPane } from '@/components/calendar/DayListPane';
 import { CalendarConfirm } from '@/components/calendar/CalendarConfirm';
@@ -178,6 +180,8 @@ export default function CalendarScreen() {
   /** Per-kind inbound source so climb can reverse-morph to the tapped cell. */
   const lastDrillByKindRef = useRef<Partial<Record<ZoomDrillKind, ZoomDrillCacheEntry>>>({});
   const [zoomDrill, setZoomDrill] = useState<ZoomDrillRequest | null>(null);
+  /** Shared with CalendarZoomDrill + MonthGrid/TeacherWeekGrid sibling fades. */
+  const drillProgress = useSharedValue(0);
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
   const [monthMode, setMonthMode] = useState<MonthMode>('compact');
@@ -417,7 +421,9 @@ export default function CalendarScreen() {
           then();
           return;
         }
-        lastDrillByKindRef.current[kind] = { kind, source, label, focusIndex };
+        // Host = body; live transform anchors on tapped source relative to host.
+        const host = dest;
+        lastDrillByKindRef.current[kind] = { kind, source, dest, host, label, focusIndex };
         drillThenRef.current = then;
         setZoomDrill({
           kind,
@@ -425,6 +431,7 @@ export default function CalendarScreen() {
           source,
           label,
           dest,
+          host,
           focusIndex,
         });
       });
@@ -459,30 +466,22 @@ export default function CalendarScreen() {
     if (reduceMotion || zoomDrill || !kind || !cached || !isValidZoomRect(cached.source)) {
       return applyZoomUp();
     }
-
-    const node = bodyHostRef.current;
-    if (!node || typeof node.measureInWindow !== 'function') {
+    if (!isValidZoomRect(cached.host) || !isValidZoomRect(cached.dest)) {
       return applyZoomUp();
     }
 
-    node.measureInWindow((x, y, width, height) => {
-      const dest = { x, y, width, height };
-      if (!isValidZoomRect(dest)) {
-        applyZoomUp();
-        return;
-      }
-      // Play reverse morph while child still shows; swap in `then` after settle.
-      drillThenRef.current = () => {
-        applyZoomUp();
-      };
-      setZoomDrill({
-        kind,
-        direction: 'out',
-        source: cached.source,
-        label: cached.label,
-        dest,
-        focusIndex: cached.focusIndex,
-      });
+    // Apple pattern: switch to parent immediately at expanded transform, spring to identity.
+    // Real parent content (year/month/week) stays visible the whole reverse.
+    drillThenRef.current = null;
+    applyZoomUp();
+    setZoomDrill({
+      kind,
+      direction: 'out',
+      source: cached.source,
+      label: cached.label,
+      dest: cached.dest,
+      host: cached.host,
+      focusIndex: cached.focusIndex,
     });
     return true;
   }, [zoomStack, activeView, reduceMotion, zoomDrill, applyZoomUp]);
@@ -1047,55 +1046,12 @@ export default function CalendarScreen() {
   // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
   // CAL-P6-8A: nav row collapses with tray; drum stays in pin band.
   // CAL-P6-6B: Month List owns a flex-bounded scroller — disable page scroll so soft-edge can fire.
-  return (
-    <View style={styles.screenRoot}>
-    <Screen
-      pageChromeHosted
-      collapse={collapsingChrome}
-      pin={pinnedChrome}
-      scroll={!monthListMode && !dayListMode}
-      scrollRef={screenScrollRef}
-    >
-      {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
 
-      {error ? (
-        <View style={styles.stateBlock}>
-          <Text style={[styles.empty, { color: colors.danger }]}>{error}</Text>
-          <GhostButton label="Retry" onPress={() => void load()} />
-        </View>
-      ) : null}
+  const zoomDrillKind = zoomDrill?.kind ?? null;
+  const zoomDrillFocus = zoomDrill?.focusIndex ?? null;
 
-      {loaded && !error && parentChildMissing ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          Pick a child to open that calendar. Twin calendars never mix.
-        </Text>
-      ) : null}
-
-      {filteredEmpty ? (
-        <View style={styles.stateBlock}>
-          <Text style={[styles.empty, { color: colors.mute }]}>
-            Nothing matches these filters.
-          </Text>
-          <GhostButton label="Clear filters" onPress={onClearFilters} />
-        </View>
-      ) : null}
-
-      {naturallyEmpty ? (
-        <Text style={[styles.empty, { color: colors.mute }]}>
-          Nothing on the calendar in this range.
-        </Text>
-      ) : null}
-
-      {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
-      <View
-        ref={bodyHostRef}
-        collapsable={false}
-        style={[
-          styles.bodyHost,
-          zoomDrill && zoomDrill.direction === 'in' ? styles.bodyHostFrozen : null,
-        ]}
-      >
-      {(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
+  const renderCalendarBody = () =>
+(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
       !error &&
       !parentChildMissing ? (
         activeView === 'week' || activeView === 'multiday' ? (
@@ -1104,11 +1060,12 @@ export default function CalendarScreen() {
             items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
-            onPressDay={(iso, source) => {
+            onPressDay={(iso, source, focusIndex) => {
               startZoomDrill({
                 kind: 'week-day',
                 source: source ?? { x: 0, y: 0, width: 0, height: 0 },
                 label: `${weekdayShort(iso)} ${dayNumber(iso)}`,
+                focusIndex,
                 then: () => {
                   setDayAnchor(iso);
                   zoomTo('day');
@@ -1118,6 +1075,8 @@ export default function CalendarScreen() {
             dayCount={stepperCount}
             onChangeDayCount={onChangeDayCount}
             allowPinch={allowPinch}
+            drillProgress={zoomDrillKind === 'week-day' ? drillProgress : null}
+            drillFocusDayIndex={zoomDrillKind === 'week-day' ? zoomDrillFocus : null}
           />
         ) : activeView === 'day' ? (
           dayMode === 'list' ? (
@@ -1161,13 +1120,14 @@ export default function CalendarScreen() {
               onSelectDay={(iso) => {
                 setMonthSelectedDay(iso);
               }}
-              onZoomDay={(iso, source) => {
+              onZoomDay={(iso, source, focusIndex) => {
                 // Month ladder: day cell / week row → Week (Day only from Week).
                 const week = weekRangeContaining(iso);
                 startZoomDrill({
                   kind: 'month-week',
                   source,
                   label: `Week of ${week.fromIso}`,
+                  focusIndex,
                   then: () => {
                     setDayAnchor(iso);
                     setMonthSelectedDay(iso);
@@ -1176,12 +1136,13 @@ export default function CalendarScreen() {
                   },
                 });
               }}
-              onZoomWeek={(iso, source) => {
+              onZoomWeek={(iso, source, focusIndex) => {
                 const week = weekRangeContaining(iso);
                 startZoomDrill({
                   kind: 'month-week',
                   source,
                   label: `Week of ${week.fromIso}`,
+                  focusIndex,
                   then: () => {
                     setDayAnchor(iso);
                     setMonthSelectedDay(iso);
@@ -1190,6 +1151,8 @@ export default function CalendarScreen() {
                   },
                 });
               }}
+              drillProgress={zoomDrillKind === 'month-week' ? drillProgress : null}
+              drillFocusWeekIndex={zoomDrillKind === 'month-week' ? zoomDrillFocus : null}
               onCommitAdjacentMonth={(dir) => {
                 setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
                 setMonthSelectedDay(null);
@@ -1240,7 +1203,68 @@ export default function CalendarScreen() {
             onPressItem={openItem}
           />
         ) : null
+      ) : null;
+
+  return (
+    <View style={styles.screenRoot}>
+    <Screen
+      pageChromeHosted
+      collapse={collapsingChrome}
+      pin={pinnedChrome}
+      scroll={!monthListMode && !dayListMode}
+      scrollRef={screenScrollRef}
+    >
+      {!loaded || !prefsReady || !viewPrefsReady ? <WorkingLine /> : null}
+
+      {error ? (
+        <View style={styles.stateBlock}>
+          <Text style={[styles.empty, { color: colors.danger }]}>{error}</Text>
+          <GhostButton label="Retry" onPress={() => void load()} />
+        </View>
       ) : null}
+
+      {loaded && !error && parentChildMissing ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          Pick a child to open that calendar. Twin calendars never mix.
+        </Text>
+      ) : null}
+
+      {filteredEmpty ? (
+        <View style={styles.stateBlock}>
+          <Text style={[styles.empty, { color: colors.mute }]}>
+            Nothing matches these filters.
+          </Text>
+          <GhostButton label="Clear filters" onPress={onClearFilters} />
+        </View>
+      ) : null}
+
+      {naturallyEmpty ? (
+        <Text style={[styles.empty, { color: colors.mute }]}>
+          Nothing on the calendar in this range.
+        </Text>
+      ) : null}
+
+      {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
+      <View
+        ref={bodyHostRef}
+        collapsable={false}
+        style={styles.bodyHost}
+      >
+        {zoomDrill ? (
+          <CalendarZoomDrill
+            kind={zoomDrill.kind}
+            direction={zoomDrill.direction}
+            host={zoomDrill.host}
+            source={zoomDrill.source}
+            dest={zoomDrill.dest}
+            progress={drillProgress}
+            onFinished={onZoomDrillFinished}
+          >
+            {renderCalendarBody()}
+          </CalendarZoomDrill>
+        ) : (
+          renderCalendarBody()
+        )}
       </View>
 
       {seat ? (
@@ -1342,19 +1366,6 @@ export default function CalendarScreen() {
         onClose={() => setCalendarsOpen(false)}
       />
     </Screen>
-    {zoomDrill ? (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <CalendarZoomDrill
-          kind={zoomDrill.kind}
-          direction={zoomDrill.direction}
-          source={zoomDrill.source}
-          dest={zoomDrill.dest}
-          label={zoomDrill.label}
-          focusIndex={zoomDrill.focusIndex}
-          onFinished={onZoomDrillFinished}
-        />
-      </View>
-    ) : null}
     </View>
   );
 }
@@ -1365,9 +1376,6 @@ const styles = StyleSheet.create({
   },
   bodyHost: {
     flexGrow: 1,
-  },
-  bodyHostFrozen: {
-    opacity: 0,
   },
   empty: {
     ...type.body,

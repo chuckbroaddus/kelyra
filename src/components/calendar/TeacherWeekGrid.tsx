@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, type ReactNode } from 'react';
 import {
   PanResponder,
   Pressable,
@@ -8,6 +8,12 @@ import {
   View,
   type GestureResponderEvent,
 } from 'react-native';
+import Reanimated, {
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+
+import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
 
 import { radius, type } from '@/constants/theme';
 import { itemDayKey } from '@/lib/calendar/mapItem';
@@ -39,8 +45,11 @@ type Props = {
   items: CalendarItem[];
   showHiddenBadge?: boolean;
   onPressItem?: (item: CalendarItem) => void;
-  /** CAL-P6-3A: Week day column/header → Day. */
-  onPressDay?: (iso: string, source?: ZoomSourceRect) => void;
+  /** CAL-P6-3A: Week day column/header → Day. focusIndex = day column. */
+  onPressDay?: (iso: string, source?: ZoomSourceRect, focusIndex?: number) => void;
+  /** Live Week→Day drill: fade non-focus day columns. */
+  drillProgress?: SharedValue<number> | null;
+  drillFocusDayIndex?: number | null;
   /** When set with onChangeDayCount, pinch (full motion) adjusts 7↔5↔3. */
   dayCount?: MultidayCount;
   onChangeDayCount?: (count: MultidayCount) => void;
@@ -61,6 +70,8 @@ export function TeacherWeekGrid({
   dayCount,
   onChangeDayCount,
   allowPinch = false,
+  drillProgress = null,
+  drillFocusDayIndex = null,
 }: Props) {
   const { colors } = useTheme();
   const today = todayISO();
@@ -126,12 +137,17 @@ export function TeacherWeekGrid({
     >
       <View style={styles.headerRow}>
         {showTimeline ? <View style={styles.gutterSpacer} /> : null}
-        {days.map((day) => {
+        {days.map((day, di) => {
           const isToday = isSameDayIso(day, today);
           const Header = onPressDay ? Pressable : View;
           return (
-            <Header
+            <DrillDayCol
               key={`h-${day}`}
+              dayIndex={di}
+              drillProgress={drillProgress}
+              drillFocusDayIndex={drillFocusDayIndex}
+            >
+            <Header
               ref={(node: View | null) => {
                 dayHeaderRefs.current.set(day, node);
               }}
@@ -140,7 +156,7 @@ export function TeacherWeekGrid({
                 ? {
                     onPress: () => {
                       const node = dayHeaderRefs.current.get(day);
-                      const fire = (source: ZoomSourceRect) => onPressDay(day, source);
+                      const fire = (source: ZoomSourceRect) => onPressDay(day, source, di);
                       if (node && typeof node.measureInWindow === 'function') {
                         node.measureInWindow((x, y, width, height) => {
                           fire({ x, y, width, height });
@@ -173,6 +189,7 @@ export function TeacherWeekGrid({
                 {dayNumber(day)}
               </Text>
             </Header>
+            </DrillDayCol>
           );
         })}
       </View>
@@ -182,10 +199,11 @@ export function TeacherWeekGrid({
         {showTimeline ? (
           <Text style={[styles.allDayGutter, { color: colors.mute }]}>All-day</Text>
         ) : null}
-        {days.map((day) => {
+        {days.map((day, di) => {
           const { allDay } = splitDayItems(byDay.get(day) ?? [], day);
           return (
-            <View key={`ad-${day}`} style={[styles.col, styles.allDayCell]}>
+            <DrillDayCol key={`ad-${day}`} dayIndex={di} drillProgress={drillProgress} drillFocusDayIndex={drillFocusDayIndex}>
+            <View style={[styles.col, styles.allDayCell]}>
               {allDay.map((item) => {
                 const hidden = Boolean(showHiddenBadge && item.isHidden);
                 const tint = roleTintColor(item.roleTint, colors);
@@ -215,6 +233,7 @@ export function TeacherWeekGrid({
                 );
               })}
             </View>
+            </DrillDayCol>
           );
         })}
       </View>
@@ -231,12 +250,12 @@ export function TeacherWeekGrid({
                 </View>
               ))}
             </View>
-            {days.map((day) => {
+            {days.map((day, di) => {
               const { timed } = splitDayItems(byDay.get(day) ?? [], day);
               const layouts = layoutTimedBlocks(timed);
               return (
+                <DrillDayCol key={`t-${day}`} dayIndex={di} drillProgress={drillProgress} drillFocusDayIndex={drillFocusDayIndex}>
                 <View
-                  key={`t-${day}`}
                   style={[styles.col, styles.dayTrack, { borderColor: colors.line }]}
                 >
                   {hours.map((hour) => (
@@ -287,17 +306,18 @@ export function TeacherWeekGrid({
                     );
                   })}
                 </View>
+                </DrillDayCol>
               );
             })}
           </View>
         </ScrollView>
       ) : (
         <View style={styles.bodyRow}>
-          {days.map((day) => {
+          {days.map((day, di) => {
             const list = (byDay.get(day) ?? []).filter((i) => !i.allDay);
             return (
+              <DrillDayCol key={`b-${day}`} dayIndex={di} drillProgress={drillProgress} drillFocusDayIndex={drillFocusDayIndex}>
               <View
-                key={`b-${day}`}
                 style={[styles.col, styles.dayCell, { borderColor: colors.line }]}
               >
                 {list.length === 0 ? (
@@ -344,6 +364,7 @@ export function TeacherWeekGrid({
                   })
                 )}
               </View>
+              </DrillDayCol>
             );
           })}
         </View>
@@ -362,7 +383,29 @@ function touchDistance(e: GestureResponderEvent): number {
   return Math.hypot(dx, dy);
 }
 
+function DrillDayCol({
+  dayIndex,
+  drillProgress,
+  drillFocusDayIndex,
+  children,
+}: {
+  dayIndex: number;
+  drillProgress: SharedValue<number> | null;
+  drillFocusDayIndex: number | null;
+  children: ReactNode;
+}) {
+  const animated = useAnimatedStyle(() => {
+    if (drillProgress == null || drillFocusDayIndex == null) {
+      return { opacity: 1 };
+    }
+    const isFocus = dayIndex === drillFocusDayIndex;
+    return { opacity: siblingBandOpacity(drillProgress.value, isFocus) };
+  });
+  return <Reanimated.View style={[{ flex: 1, minWidth: 0 }, animated]}>{children}</Reanimated.View>;
+}
+
 const styles = StyleSheet.create({
+
   grid: { gap: 6 },
   headerRow: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },
   gutterSpacer: { width: 44 },
