@@ -147,28 +147,37 @@ test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth
   assert.match(pills, /width:\s*pillWidth/);
 });
 
-test('expo iOS first-tab snap: skip scrollTo on instant/defer + no clipped subviews', () => {
+test('expo iOS first-tab snap: View host when fits + fixed underlay on iOS scroll', () => {
   const pills = read('src/components/ui/PersonTabs.tsx');
   const layout = read('src/components/ui/personTabsLayout.ts');
   // Native cause lock: any scrollTo on index-0 enter/leave races leading width morph.
   assert.match(layout, /export function personTabScrollNeeded/);
   assert.match(layout, /export function personTabScrollMotion/);
+  assert.match(layout, /export function personTabRowMaxContentWidth/);
   assert.match(pills, /personTabScrollNeeded/);
   assert.match(pills, /personTabScrollMotion/);
+  assert.match(pills, /personTabRowMaxContentWidth/);
   assert.match(pills, /scrollOffsetRef/);
   assert.match(pills, /scrolledValueRef/);
   assert.match(pills, /removeClippedSubviews=\{false\}/);
   // Skip all programmatic scrollTo for instant (enter 0) and defer (leave 0).
   assert.match(pills, /motion === 'instant' \|\| motion === 'defer'/);
   assert.doesNotMatch(pills, /setTimeout\([\s\S]*scrollTo/);
-  assert.match(pills, /scrollEnabled=\{rowOverflows\}/);
+  // Content fits → plain View host (no UIScrollView). Overflow → ScrollView.
+  assert.match(pills, /Content fits: plain View host/);
+  assert.match(pills, /rowOverflows \? \(/);
+  assert.doesNotMatch(pills, /scrollEnabled=\{rowOverflows\}/);
+  // iOS overflow: fixed cell + underlay (no Animated layout width in UIScrollView).
+  assert.match(pills, /fixedCellUnderlay=\{iosScrollHost\}/);
+  assert.match(pills, /iosScrollHost = rowOverflows && Platform\.OS === 'ios'/);
+  assert.match(pills, /styles\.underlay/);
   // Outer host width stays viewport-constant; pill morph only clips inside.
   assert.match(pills, /Morphing pill widths must not change the office column/);
   assert.match(pills, /alignSelf: 'stretch'/);
   assert.match(pills, /overflow: 'hidden'/);
-  // Scroll effect deps are value/rowWidth/reduce only — metrics via refs.
+  // Scroll effect deps — metrics via refs.
   assert.match(pills, /tabsRef/);
   assert.match(pills, /scrollMetricsRef/);
-  assert.match(pills, /\[value, rowWidth, reduce\]/);
+  assert.match(pills, /\[value, rowWidth, reduce, rowOverflows\]/);
   assert.doesNotMatch(pills, /\[value, rowWidth, reduce, tabs,/);
 });

@@ -20,6 +20,8 @@ import {
   personTabScrollTabWidth,
   personTabScrollNeeded,
   personTabScrollMotion,
+  personTabRowContentWidth,
+  personTabRowMaxContentWidth,
   personTabRowUsesTeacherFaces,
 } from './personTabsLayout.ts';
 
@@ -274,4 +276,35 @@ test('leading-pill morph classifies instant/defer — PersonTabs skips scrollTo 
   assert.equal(personTabScrollMotion(2, 1), 'animated');
   assert.equal(personTabScrollMotion(3, 1), 'animated');
   assert.equal(personTabScrollMotion(3, 2), 'animated');
+});
+
+test('personTabRowContentWidth hugs selected + collapsed others', () => {
+  const titles = { feed: 40, classes: 60, people: 50 };
+  const labelMax = 80;
+  const keys = ['feed', 'classes', 'people'];
+  const feed = personTabPillWidthRange(40, labelMax, true);
+  const classes = personTabPillWidthRange(60, labelMax, true);
+  const people = personTabPillWidthRange(50, labelMax, true);
+  const expected =
+    feed.expanded + PERSON_TAB_ROW_GAP + classes.collapsed + PERSON_TAB_ROW_GAP + people.collapsed + PERSON_TAB_ROW_PAD_END;
+  assert.equal(personTabRowContentWidth(keys, 'feed', titles, labelMax, true), expected);
+});
+
+test('personTabRowMaxContentWidth keeps overflow host stable', () => {
+  const titles = { feed: 40, classes: 60, people: 50 };
+  const labelMax = 80;
+  const keys = ['feed', 'classes', 'people'];
+  const maxExpanded = Math.max(
+    personTabPillWidthRange(40, labelMax, true).expanded,
+    personTabPillWidthRange(60, labelMax, true).expanded,
+    personTabPillWidthRange(50, labelMax, true).expanded,
+  );
+  const expected =
+    maxExpanded + 2 * PERSON_TAB_ICON_HIT + 2 * PERSON_TAB_ROW_GAP + PERSON_TAB_ROW_PAD_END;
+  assert.equal(personTabRowMaxContentWidth(keys, titles, labelMax, true), expected);
+  // Independent of which key is selected — host choice must not flicker.
+  assert.equal(
+    personTabRowMaxContentWidth(keys, titles, labelMax, true),
+    personTabRowMaxContentWidth(keys, titles, labelMax, true),
+  );
 });
