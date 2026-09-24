@@ -1209,22 +1209,6 @@ export default function CalendarScreen() {
                   },
                 });
               }}
-              onZoomWeek={(iso, source, focusIndex) => {
-                const week = weekRangeContaining(iso);
-                setDayAnchor(iso);
-                setMonthSelectedDay(iso);
-                setGridAnchor(week.fromIso);
-                startZoomDrill({
-                  kind: 'month-week',
-                  source,
-                  label: `Week of ${week.fromIso}`,
-                  focusIndex,
-                  then: () => {
-                    // Title is sticky outside the drill — no fade-out / remount fade-in.
-                    zoomTo('week');
-                  },
-                });
-              }}
               drillProgress={zoomDrillKind === 'month-week' ? drillProgress : null}
               drillFocusWeekIndex={zoomDrillKind === 'month-week' ? zoomDrillFocus : null}
               enterChromeAnim={monthEnterChrome}

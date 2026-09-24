@@ -190,7 +190,9 @@ test('CAL-P6-3A: tap-down + pinch/`<` climb; Today on nav row', () => {
   assert.match(screen, /canClimb/);
   assert.match(screen, /label=["']<["']/);
   assert.match(screen, /label=["']Today["']/);
-  assert.match(screen, /onZoomWeek/);
+  // CEO 2026-09-24: week-number column removed; day tap still opens Week.
+  assert.doesNotMatch(screen, /onZoomWeek/);
+  assert.match(screen, /onZoomDay/);
   assert.match(screen, /onPressDay/);
   assert.doesNotMatch(screen, /showClimbControl/);
   assert.doesNotMatch(screen, /styles\.upRow|upRow:/);
@@ -296,4 +298,10 @@ test('CAL-P6-10B slotCreateDraft source is slot_create not ai_nl (t_60463b4d)', 
   assert.match(ask, /'ai_nl' \| 'slot_create'/);
   assert.match(create, /source:\s*'slot_create'/);
   assert.doesNotMatch(create, /source:\s*'ai_nl'/);
+});
+
+test('CEO 2026-09-24: Month has no week-number column; weekday headers are 3-letter', () => {
+  const month = read('src/components/calendar/MonthGrid.tsx');
+  assert.doesNotMatch(month, /weekNum|onZoomWeek/);
+  assert.match(month, /weekdayLabels\(0, undefined, 'short'\)/);
 });

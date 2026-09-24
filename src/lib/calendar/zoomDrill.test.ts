@@ -86,7 +86,7 @@ test('calendar.tsx wires live CalendarZoomDrill + startZoomDrill + reverse zoomU
   assert.match(screen, /computeDrillTransform|host:/);
   // Month day/week still land on Week (not Day).
   assert.match(screen, /onZoomDay=\{\(iso, source/);
-  assert.match(screen, /onZoomWeek=\{\(iso, source/);
+  assert.doesNotMatch(screen, /onZoomWeek/);
   assert.match(screen, /zoomTo\('week'\)/);
   // Live transform: no bodyHostFrozen opacity hide during inbound.
   assert.doesNotMatch(screen, /bodyHostFrozen/);

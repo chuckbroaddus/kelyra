@@ -320,13 +320,17 @@ export function monthLabels(locale?: string): string[] {
   });
 }
 
-export function weekdayLabels(weekStartsOn: 0 | 1 = 0, locale?: string): string[] {
+export function weekdayLabels(
+  weekStartsOn: 0 | 1 = 0,
+  locale?: string,
+  width: 'narrow' | 'short' = 'narrow',
+): string[] {
   // 2023-01-01 was Sunday.
   const labels: string[] = [];
   for (let i = 0; i < 7; i++) {
     const day = (weekStartsOn + i) % 7;
     const date = new Date(2023, 0, 1 + day);
-    labels.push(date.toLocaleDateString(locale, { weekday: 'narrow' }));
+    labels.push(date.toLocaleDateString(locale, { weekday: width }));
   }
   return labels;
 }
