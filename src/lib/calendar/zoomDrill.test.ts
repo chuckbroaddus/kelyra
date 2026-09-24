@@ -1,5 +1,5 @@
 /**
- * CEO 2026-09-24 calendar drill zoom — shared-element canvas, reverse climb, timing.
+ * CEO 2026-09-24 calendar live drill zoom — transform hosts, reverse climb, timing.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -36,8 +36,9 @@ test('ZoomDrillKind covers year-month / month-week / week-day', () => {
   for (const kind of kinds) {
     assert.match(drill, new RegExp(kind.replace('-', '\\-')));
   }
-  // Shared-element canvas — not the rejected flyer-card morph.
-  assert.match(drill, /Shared-element canvas|mapPlate|estimateSiblings/);
+  // Live host transform — not blank sibling plates.
+  assert.match(drill, /Live calendar drill|computeDrillTransform|transformOrigin/);
+  assert.doesNotMatch(drill, /SiblingPlate|estimateSiblings|mapPlate/);
   assert.doesNotMatch(drill, /flying surface|flyerStyle/);
 });
 
@@ -52,6 +53,7 @@ test('direction in|out + reverseDrillKind Day→Week→Month→Year', () => {
   const mod = read('src/lib/calendar/zoomDrill.ts');
   assert.match(mod, /ZoomDrillDirection/);
   assert.match(mod, /'in'\s*\|\s*'out'|direction: ZoomDrillDirection/);
+  assert.match(mod, /host: ZoomSourceRect/);
 
   const drill = read('src/components/calendar/CalendarZoomDrill.tsx');
   assert.match(drill, /direction\s*===\s*'out'|direction = 'in'/);
@@ -66,7 +68,7 @@ test('isValidZoomRect + abbreviateDrillLabel helpers', () => {
   assert.equal(abbreviateDrillLabel('May'), 'May');
 });
 
-test('calendar.tsx wires CalendarZoomDrill + startZoomDrill + reverse zoomUp', () => {
+test('calendar.tsx wires live CalendarZoomDrill + startZoomDrill + reverse zoomUp', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /CalendarZoomDrill/);
   assert.match(screen, /startZoomDrill/);
@@ -80,15 +82,19 @@ test('calendar.tsx wires CalendarZoomDrill + startZoomDrill + reverse zoomUp', (
   assert.match(screen, /lastDrillByKindRef/);
   assert.match(screen, /reverseDrillKind/);
   assert.match(screen, /applyZoomUp/);
+  assert.match(screen, /drillProgress/);
+  assert.match(screen, /computeDrillTransform|host:/);
   // Month day/week still land on Week (not Day).
-  assert.match(screen, /onZoomDay=\{\(iso, source\)/);
-  assert.match(screen, /onZoomWeek=\{\(iso, source\)/);
+  assert.match(screen, /onZoomDay=\{\(iso, source/);
+  assert.match(screen, /onZoomWeek=\{\(iso, source/);
   assert.match(screen, /zoomTo\('week'\)/);
-  // Inbound freezes body; outbound keeps child until then.
-  assert.match(screen, /zoomDrill\.direction === 'in'/);
+  // Live transform: no bodyHostFrozen opacity hide during inbound.
+  assert.doesNotMatch(screen, /bodyHostFrozen/);
+  // Reverse: switch to parent first (Apple pattern), not blank-plate overlay.
+  assert.match(screen, /Apple pattern|switch to parent immediately/);
 });
 
-test('YearGrid / MonthGrid / TeacherWeekGrid pass ZoomSourceRect', () => {
+test('YearGrid / MonthGrid / TeacherWeekGrid pass ZoomSourceRect + live drill fades', () => {
   const year = read('src/components/calendar/YearGrid.tsx');
   const month = read('src/components/calendar/MonthGrid.tsx');
   const week = read('src/components/calendar/TeacherWeekGrid.tsx');
@@ -96,7 +102,20 @@ test('YearGrid / MonthGrid / TeacherWeekGrid pass ZoomSourceRect', () => {
   assert.match(year, /measureInWindow/);
   assert.match(month, /ZoomSourceRect/);
   assert.match(month, /measureInWindow/);
+  assert.match(month, /drillProgress/);
+  assert.match(month, /drillFocusWeekIndex/);
+  assert.match(month, /DrillWeekRow|siblingBandOpacity/);
   assert.match(week, /ZoomSourceRect/);
   assert.match(week, /measureInWindow/);
-  assert.match(week, /onPressDay\?: \(iso: string, source\?: ZoomSourceRect\)/);
+  assert.match(week, /onPressDay\?: \(iso: string, source\?: ZoomSourceRect/);
+  assert.match(week, /drillProgress/);
+  assert.match(week, /drillFocusDayIndex/);
+});
+
+test('zoomTransform module exists for unit-tested drill math', () => {
+  const mod = read('src/lib/calendar/zoomTransform.ts');
+  assert.match(mod, /computeDrillTransform/);
+  assert.match(mod, /computeWeekDockTranslateY/);
+  assert.match(mod, /computeDayDockTranslateX/);
+  assert.match(mod, /siblingBandOpacity/);
 });

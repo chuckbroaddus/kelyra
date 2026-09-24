@@ -114,14 +114,17 @@ test('R4 Year→Month empty: MonthGrid mounts; filter-empty copy does not replac
   assert.ok(mountIdx > 0, 'mount comment missing');
   const mountBlock = screen.slice(mountIdx, mountIdx + 400);
   assert.doesNotMatch(mountBlock, /!filteredEmpty/);
+  // Gate lives in renderCalendarBody (live zoom wraps that host).
+  assert.match(screen, /renderCalendarBody/);
   assert.match(
-    mountBlock,
+    screen,
     /\(loaded \|\| activeView === 'month' \|\| activeView === 'year' \|\| activeView === 'day'\)/,
   );
   assert.match(screen, /activeView === 'month' \? \([\s\S]*?<MonthGrid/);
   // Year tap → zoomTo month still present
   assert.match(screen, /onPressMonth[\s\S]*?zoomTo\('month'\)/);
 });
+
 
 test('R4 Year card: no per-day zoom; entire card → Month only', () => {
   const year = read('src/components/calendar/YearGrid.tsx');
