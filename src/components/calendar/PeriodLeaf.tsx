@@ -88,11 +88,15 @@ function weekBodyRange(fromIso: string, toIso: string): string {
   return fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
 }
 
-function dayHeaderLine(dayIso: string): string {
-  const y = Number(dayIso.slice(0, 4));
+/** Red header on day plate — month only (CEO 2026-09-24). */
+function dayHeaderMonth(dayIso: string): string {
   const m = Number(dayIso.slice(5, 7)) - 1;
-  const mon = MONS_SHORT[m] ?? '';
-  return `${mon} ${y}`;
+  return MONS_SHORT[m] ?? '';
+}
+
+/** Footer on day plate — year (CEO 2026-09-24). */
+function dayFooterYear(dayIso: string): string {
+  return String(Number(dayIso.slice(0, 4)));
 }
 
 /** Red header on month plate — year only (CEO 2026-09-24). */
@@ -212,9 +216,12 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.silhouetteHeader} />
-          <Text style={styles.silhouetteDayNumeral} numberOfLines={1} allowFontScaling={false}>
-            {dayNum}
-          </Text>
+          <View style={styles.dayBody}>
+            <Text style={styles.silhouetteDayNumeral} numberOfLines={1} allowFontScaling={false}>
+              {dayNum}
+            </Text>
+          </View>
+          <View style={styles.silhouetteFooter} />
         </View>
       </View>
     );
@@ -316,8 +323,9 @@ function PeriodLeafImpl({
   }
 
   if (tile.kind === 'day' && tile.dayIso) {
-    const header = dayHeaderLine(tile.dayIso);
+    const header = dayHeaderMonth(tile.dayIso);
     const dayNum = String(Number(tile.dayIso.slice(8, 10)));
+    const footer = dayFooterYear(tile.dayIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -330,6 +338,11 @@ function PeriodLeafImpl({
           <View style={styles.dayBody}>
             <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
               {dayNum}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+              {footer}
             </Text>
           </View>
         </View>
@@ -446,6 +459,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
+  wrapFooter: {
+    backgroundColor: SET_B.header,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 24,
+  },
+  wrapFooterText: {
+    color: SET_B.body,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
   plateBodyLine: {
     flex: 1,
     textAlign: 'center',
@@ -465,12 +493,12 @@ const styles = StyleSheet.create({
   },
   dayNumeral: {
     textAlign: 'center',
-    fontSize: 38,
+    fontSize: 34,
     fontWeight: '700',
     color: SET_B.type,
     fontVariant: ['tabular-nums'],
     includeFontPadding: false,
-    lineHeight: 42,
+    lineHeight: 38,
   },
   wrapBodyEmpty: {
     flex: 1,
