@@ -94,6 +94,12 @@
 
 **Exit:** CEO no longer sees mid-spin text expand; web no longer jumps without coast.
 
+**P0 shipped (t_033325c3):** ContentPolicy silhouette is **opacity-dim** (no BlurView/CSS blur).
+React SlotPool hosts use **stable `slot-${index}` keys** (`stableSlotHostKey`) — period labels
+rewrite in place mid-fling. `motionCompact` freezes leaf geometry during fling. Web drag/snap
+uses the same Reanimated `dragShared` + `withSpring` path as native (no per-frame `setWebDragPx`).
+
+
 ### P1 — Redesign-friendly art (optional F1/F2)
 
 1. Chuck picks idle look: keep Set B chrome **or** fixed plate **or** segment binder.  

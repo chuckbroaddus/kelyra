@@ -413,7 +413,8 @@ test('PeriodPager freezes SlotPool only for short snaps; residual rebase when li
   assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
   assert.match(pager, /pendingSnapStepsRef/);
   assert.match(pager, /snapFreezeShared/);
-  assert.match(pager, /slotPoolFrozen/);
+  // Freeze flag is SharedValue-only (web unified onto NativeSlotMotion).
+  assert.match(pager, /snapFreezeShared\.value = freeze \? 1 : 0/);
   // Reaction must bail while snapFreezeShared === 1 (short freeze only)
   assert.match(pager, /snapFreezeShared\.value === 1/);
   const rxnIdx = pager.indexOf('useAnimatedReaction(');
@@ -426,7 +427,7 @@ test('PeriodPager freezes SlotPool only for short snaps; residual rebase when li
   const tapIdx = pager.indexOf('const tapSide');
   assert.ok(animIdx > 0 && tapIdx > animIdx);
   const animBlock = pager.slice(animIdx, tapIdx);
-  assert.match(animBlock, /setSlotPoolFrozen/);
+  assert.match(animBlock, /snapFreezeShared\.value = freeze \? 1 : 0/);
   assert.match(animBlock, /pendingSnapStepsRef\.current/);
   assert.match(animBlock, /visualShiftForSlotPool/);
   assert.match(animBlock, /frozenShift:\s*liveShift/);
@@ -464,8 +465,8 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
   assert.match(pager, /useLayoutEffect/);
-  assert.match(pager, /slotPoolKey/);
-  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
   assert.match(pager, /Math\.trunc\(-/);
   assert.doesNotMatch(pager, /Math\.round\(-drag/);
@@ -510,13 +511,15 @@ test('PeriodPager slot map never reads tile.key on undefined (guards + shared of
     /const tile = window\.slots\[slotIndex\];\s*if \(!tile\) return null;/,
   );
   assert.doesNotMatch(pager, /window\.slots\[[^\]]+\]!/);
+  // P0: no tile.key in React keys — hosts are stableSlotHostKey(slotIndex) only.
   const keyReads = [...pager.matchAll(/tile\.key/g)];
   assert.equal(
     keyReads.length,
-    1,
-    `PeriodPager should have exactly one tile.key read (after guard); got ${keyReads.length}`,
+    0,
+    `PeriodPager must not remount-key on tile.key mid-fling; got ${keyReads.length} tile.key reads`,
   );
-  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.match(pager, /slotIndexForOffset/);
   // packWindow length-guards so SlotPool never ships a short window to the slot map.
   assert.match(src, /packWindow: expected \$\{WHEEL_SLOT_OFFSETS\.length\} slots/);
@@ -568,8 +571,7 @@ test('PeriodPager grant absorbs in-flight snap (does not drop pending)', () => {
   const tapIdx = pager.indexOf('const tapSide');
   const tapBlock = pager.slice(tapIdx, tapIdx + 500);
   assert.match(tapBlock, /absorbInFlightSnap\(\)/);
-  // animateSnap stamps springGeneration for late-rest ignore.
-  assert.match(pager, /onSpringRest\(springGeneration\)/);
+  // animateSnap stamps springGeneration for late-rest ignore (native+web withSpring).
   assert.match(pager, /runOnJS\(onSpringRest\)\(springGeneration\)/);
 });
 
