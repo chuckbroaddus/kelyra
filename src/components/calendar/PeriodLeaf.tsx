@@ -95,10 +95,14 @@ function dayHeaderLine(dayIso: string): string {
   return `${mon} ${y}`;
 }
 
-function monthHeaderLabel(year: number, monthIndex0: number): string {
-  const mon = MONS_SHORT[monthIndex0] ?? '';
-  const label = `${mon} ${year}`;
-  return label.length > 12 ? `${mon}\n${year}` : label;
+/** Red header on month plate — year only (CEO 2026-09-24). */
+function monthHeaderYear(year: number): string {
+  return String(year);
+}
+
+/** Body on month plate — month name (CEO 2026-09-24). */
+function monthBodyName(monthIndex0: number): string {
+  return MONS_SHORT[monthIndex0] ?? '';
 }
 
 /**
@@ -272,17 +276,20 @@ function PeriodLeafImpl({
   if (tile.kind === 'month') {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
-    const header = monthHeaderLabel(year, monthIndex0);
+    const header = monthHeaderYear(year);
+    const body = monthBodyName(monthIndex0);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.monthHeader}>
-            <Text style={styles.monthHeaderText} numberOfLines={2}>
+          <View style={styles.wrapHeader}>
+            <Text style={styles.wrapHeaderText} numberOfLines={1}>
               {header}
             </Text>
           </View>
-          <View style={styles.monthStub} />
+          <Text style={styles.plateBodyLine} numberOfLines={1} allowFontScaling={false}>
+            {body}
+          </Text>
         </View>
       </View>
     );
