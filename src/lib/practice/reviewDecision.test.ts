@@ -85,6 +85,20 @@ test('RS-B source wall: Decision card + Accept recommendation on review screen',
   assert.match(screen, /What they turned in/);
 });
 
+test('RS-B DH-01: Decision Accept gated on canApproveKeygrade chrome seat', () => {
+  const screen = readFileSync(join(root, 'src/app/class/[id]/review/[submissionId].tsx'), 'utf8');
+  assert.match(screen, /canApproveKeygrade/);
+  assert.match(screen, /useChrome/);
+  assert.match(screen, /allowAccept/);
+  assert.match(screen, /editable && allowAccept/);
+  assert.match(screen, /!allowAccept/);
+  // Parent / non-Teach must not see Accept CTA without seat gate
+  assert.doesNotMatch(
+    screen,
+    /\{editable \? \(\s*<>\s*<PrimaryButton[\s\S]*Accept recommendation/,
+  );
+});
+
 test('RS-B CEO fold: Suggested grade above Accept and What they turned in; not gated on editingDraft', () => {
   const screen = readFileSync(join(root, 'src/app/class/[id]/review/[submissionId].tsx'), 'utf8');
   const grade = screen.indexOf('label="Suggested grade"');
