@@ -103,6 +103,41 @@ export function personTabRowUsesTeacherFaces(kinds: readonly string[]): boolean 
 }
 
 /**
+ * Stable pill width endpoints for the expand interpolate (collapsed ↔ hugged).
+ * Do **not** substitute live onLayout width into this range mid-morph — that
+ * jumps the interpolate output and snaps the label shut. First-tab (x=0) morph
+ * is especially sensitive because the leading pill reflows every sibling and
+ * used to re-trigger scrollTo(0) via contentSize setState.
+ */
+export function personTabPillWidthRange(
+  titleWidth: number,
+  labelMax: number,
+  glyph = true,
+): { collapsed: number; expanded: number; slot: number } {
+  const slot = labelMax > 0 ? personTabTitleSlot(titleWidth, labelMax) : 0;
+  const collapsed = PERSON_TAB_ICON_HIT;
+  const expanded = Math.max(collapsed, personTabSelectedMaxWidth(slot, glyph));
+  return { collapsed, expanded, slot };
+}
+
+/**
+ * Tab width for personTabScrollX at selection time. Prefer the hugged expanded
+ * size so scroll targets stay fixed for the morph duration — live onLayout
+ * widths grow/shrink every frame and must not re-drive scroll (first-index snap).
+ */
+export function personTabScrollTabWidth(
+  titleWidth: number,
+  labelMax: number,
+  glyph = true,
+  fallbackWidth = PERSON_TAB_ICON_HIT,
+): number {
+  if (titleWidth > 0 && labelMax > 0) {
+    return personTabPillWidthRange(titleWidth, labelMax, glyph).expanded;
+  }
+  return Math.max(PERSON_TAB_ICON_HIT, fallbackWidth);
+}
+
+/**
  * Scroll offset so the selected tab sits in a readable middle band — never
  * left-pinned (except tab 0) and never with the selected glyph clipped off the left.
  * 3-tab viewport feel: center selected. 4-tab: direction-aware center pair.

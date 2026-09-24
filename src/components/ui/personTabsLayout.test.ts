@@ -16,6 +16,8 @@ import {
   personTabSelectedMaxWidth,
   personTabTitleNeedsMarquee,
   personTabTitleSlot,
+  personTabPillWidthRange,
+  personTabScrollTabWidth,
   personTabRowUsesTeacherFaces,
 } from './personTabsLayout.ts';
 
@@ -199,4 +201,54 @@ test('fit painted title → no marquee; overflow → marquee (not occupancy-as-h
   // Unknown / zero paint → no marquee
   assert.equal(personTabTitleNeedsMarquee(0, ceiling), false);
   assert.equal(personTabTitleNeedsMarquee(100, 0), false);
+});
+
+test('first-index scroll stays 0 even when contentWidth / tabWidth thrash (no snap driver)', () => {
+  // Regression: mid-morph contentSize + live tabWidth used to re-scroll to 0 and
+  // snap the outgoing label. Index 0 must ignore those inputs.
+  const a = personTabScrollX({
+    tabX: 0,
+    tabWidth: 44,
+    rowWidth: 358,
+    contentWidth: 500,
+    selectedIndex: 0,
+    prevIndex: 2,
+  });
+  const b = personTabScrollX({
+    tabX: 0,
+    tabWidth: 120,
+    rowWidth: 358,
+    contentWidth: 700,
+    selectedIndex: 0,
+    prevIndex: 3,
+  });
+  assert.equal(a, 0);
+  assert.equal(b, 0);
+});
+
+test('pill width range is paint/ceiling only — live layout width must not enter range', () => {
+  const row = 358;
+  const ceiling = personTabLabelMax(row, 5, true, 'visibilityReserve');
+  const paint = 36; // Feed
+  const range = personTabPillWidthRange(paint, ceiling, true);
+  assert.equal(range.slot, paint);
+  assert.equal(range.collapsed, PERSON_TAB_ICON_HIT);
+  assert.equal(range.expanded, personTabSelectedMaxWidth(paint, true));
+  // A mid-morph onLayout width (e.g. 80) must not be used as expanded endpoint.
+  const midMorphLayout = 80;
+  assert.notEqual(range.expanded, midMorphLayout);
+  assert.equal(personTabPillWidthRange(paint, ceiling, true).expanded, range.expanded);
+});
+
+test('scroll tab width prefers hugged expanded over live collapsed onLayout', () => {
+  const row = 358;
+  const ceiling = personTabLabelMax(row, 5, true, 'visibilityReserve');
+  const paint = 72;
+  const hugged = personTabPillWidthRange(paint, ceiling, true).expanded;
+  // Live onLayout while collapsed is ICON_HIT — must not win over paint.
+  assert.equal(personTabScrollTabWidth(paint, ceiling, true, PERSON_TAB_ICON_HIT), hugged);
+  assert.ok(hugged > PERSON_TAB_ICON_HIT);
+  // Without paint yet, fall back to measured/fallback.
+  assert.equal(personTabScrollTabWidth(0, ceiling, true, 91), 91);
+  assert.equal(personTabScrollTabWidth(paint, 0, true, 91), 91);
 });
