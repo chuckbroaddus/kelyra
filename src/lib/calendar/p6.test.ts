@@ -316,3 +316,12 @@ test('CAL-P6 item 7 KEEP: two-digit dayNum single-line on Year/Month/PeriodLeaf'
   assert.match(leaf, /allowFontScaling=\{false\}/);
   assert.match(leaf, /paddingHorizontal:\s*0/);
 });
+
+
+test('CAL-P6-10B slotCreateDraft source is slot_create not ai_nl (t_60463b4d)', () => {
+  const create = read('src/lib/calendar/slotCreate.ts');
+  const ask = read('src/lib/calendar/askDraft.ts');
+  assert.match(ask, /'ai_nl' \| 'slot_create'/);
+  assert.match(create, /source:\s*'slot_create'/);
+  assert.doesNotMatch(create, /source:\s*'ai_nl'/);
+});

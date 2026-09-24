@@ -7,6 +7,8 @@ import {
   SOFT_WARN_BYTES,
   TUS_THRESHOLD_BYTES,
   evaluateFileCaps,
+  formatFileSize,
+  formatMb,
   shouldUseTus,
 } from './caps.ts';
 import { INGEST_COPY } from './copy.ts';
@@ -140,3 +142,10 @@ test('B-SIZE-01 / FL-05: generator-backed oversized file fails evaluateFileCaps 
   }
 });
 
+
+
+test('formatFileSize avoids 0.0 MB for small PDFs (t_d572c9b6)', () => {
+  assert.equal(formatFileSize(429), '429 B');
+  assert.match(formatFileSize(12 * 1024), /KB/);
+  assert.notEqual(`${formatMb(429)} MB`, formatFileSize(429));
+});

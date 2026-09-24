@@ -41,6 +41,6 @@ export function slotCreateDraft(
     endTime: hm(endH > 23 ? 23 : endH, endH > 23 ? 59 : endM),
     category: opts?.category ?? 'personal',
     body: '',
-    source: 'ai_nl',
+    source: 'slot_create',
   };
 }

@@ -56,11 +56,22 @@ type Props = {
   onRetryRemainder?: () => void | Promise<void>;
 };
 
+/** Always RFC4122 UUID — ingest_packets.id is uuid (no pkt- timestamp fallback). */
 function newPacketId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
   }
-  return `pkt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  // RFC4122 v4 polyfill when randomUUID missing (non-secure contexts).
+  const bytes = new Uint8Array(16);
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < 16; i += 1) bytes[i] = (Math.random() * 256) | 0;
+  }
+  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export function SplitReview({
@@ -84,7 +95,6 @@ export function SplitReview({
   const [rosterCount, setRosterCount] = useState(0);
   const [pagesPerStudent, setPagesPerStudent] = useState(1);
   const [focus, setFocus] = useState<SplitFocus>({ packetIndex: 0, pageIndex: 0 });
-  const [dirty, setDirty] = useState(false);
   /** I5: confirm left some packets unminted, or binder handed a partial batch. */
   const [partialBanner, setPartialBanner] = useState<string | null>(null);
   const [retryBusy, setRetryBusy] = useState(false);
@@ -132,7 +142,6 @@ export function SplitReview({
       setRosterCount(payload.rosterCount);
       setPagesPerStudent(payload.batch.pages_per_student ?? 1);
       setFocus({ packetIndex: 0, pageIndex: 0 });
-      setDirty(false);
       if (payload.batch.status === 'partial') {
         const gap = ingestGapCopy(payload.batch.error_code, payload.batch.error_message);
         setPartialBanner(
@@ -162,8 +171,7 @@ export function SplitReview({
         const nextVersion = updated.split_draft_version ?? versionRef.current + 1;
         setVersion(nextVersion);
         versionRef.current = nextVersion;
-        setDirty(false);
-        setVersionConflict(false);
+          setVersionConflict(false);
         return true;
       } catch (err) {
         if (err instanceof IngestRpcError && err.code === 'confirm_conflict') {
@@ -182,7 +190,6 @@ export function SplitReview({
   const enqueuePersist = useCallback(
     (nextPackets: SplitPacketDraft[]): Promise<boolean> => {
       pendingSaveRef.current = nextPackets;
-      setDirty(true);
       saveChainRef.current = saveChainRef.current
         .catch(() => false)
         .then(async (priorOk) => {
@@ -199,7 +206,6 @@ export function SplitReview({
 
   const scheduleSave = useCallback(
     (nextPackets: SplitPacketDraft[]) => {
-      setDirty(true);
       pendingSaveRef.current = nextPackets;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {

@@ -124,6 +124,19 @@ export function evaluateFileCaps(input: {
   };
 }
 
+/** MB string for soft-warn copy (large scans). Prefer formatFileSize for UI labels. */
 export function formatMb(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(bytes >= 100 * 1024 * 1024 ? 0 : 1);
+}
+
+/** Human size with unit — avoids 0.0 MB for sub-50KB class-stack files (t_d572c9b6). */
+export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 * 1024) {
+    const kb = bytes / 1024;
+    return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;
+  }
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
 }

@@ -661,3 +661,13 @@ test('CAL-P6-1A start-claim full-band (t_80d16cbc)', () => {
   assert.match(pager, /tapAtStageX/);
   assert.match(pager, /CAL_P6_1A_ON_DRUM_CARVE_PX/);
 });
+
+
+test('CAL-3DW mid-spring interrupt rebases from visual drag (t_72512eeb)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(pager, /grantDragBaseRef/);
+  assert.match(pager, /grantDragBaseRef\.current \+ g\.dx/);
+  const grantIdx = pager.indexOf('onPanResponderGrant');
+  const grantBlock = pager.slice(grantIdx, grantIdx + 1200);
+  assert.match(grantBlock, /grantDragBaseRef\.current =/);
+});

@@ -21,7 +21,7 @@ import {
   retryIngestRemainder,
   type IngestBatchRow,
 } from '@/lib/ingest/api';
-import { evaluateFileCaps, formatMb } from '@/lib/ingest/caps';
+import { evaluateFileCaps, formatFileSize, formatMb } from '@/lib/ingest/caps';
 import { INGEST_COPY, ingestGapCopy } from '@/lib/ingest/copy';
 import { gateStackFiles, runClassStackUpload, type StackFile } from '@/lib/ingest/runUpload';
 import type { ClassRow } from '@/lib/supabase/types';
@@ -481,7 +481,7 @@ export function ClassStackBinder({
                 {picked.map((p) => (
                   <Chip
                     key={p.key}
-                    label={`${p.name} (${formatMb(p.file.size)} MB)`}
+                    label={`${p.name} (${formatFileSize(p.file.size)})`}
                     onPress={() => {
                       if (busy) return;
                       setPicked((cur) => cur.filter((x) => x.key !== p.key));

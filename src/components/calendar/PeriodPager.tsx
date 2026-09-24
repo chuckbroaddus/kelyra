@@ -453,6 +453,8 @@ export function PeriodPager({
   const snapActiveRef = useRef(false);
   /** Mirrors latest total drag px (web state + native shared) for residual rebase on release. */
   const dragPxRef = useRef(0);
+  /** Visual drag at pan grant — move adds g.dx so mid-spring interrupt continues (t_72512eeb). */
+  const grantDragBaseRef = useRef(0);
   const settling = useRef(false);
   /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
   const velocityRef = useRef(0);
@@ -717,6 +719,9 @@ export function PeriodPager({
           setFlinging(true);
           setFlingOriginAnchor(anchor);
           velocityRef.current = 0;
+          // Capture visible drag BEFORE interrupt absorb so move can rebase (AC-M05 / t_72512eeb).
+          const visualBefore =
+            IS_WEB ? dragPxRef.current : dragShared.value;
           // Interrupt absorb: fold pending/visual into absorbedShift (do NOT drop,
           // do NOT onShift — parent anchor reset would wipe this new drag).
           const hadInFlight =
@@ -725,25 +730,31 @@ export function PeriodPager({
             snapFreezeRef.current ||
             snapActiveRef.current;
           absorbInFlightSnap();
-          if (!hadInFlight && !IS_WEB) {
-            // No snap in flight: cancel any residual spring by freezing the shared value.
-            dragShared.value = dragShared.value;
+          // After absorb, residual is 0; continue from captured visual + gesture delta.
+          grantDragBaseRef.current = hadInFlight ? visualBefore : 0;
+          if (!IS_WEB) {
+            dragShared.value = grantDragBaseRef.current;
+          } else {
+            setWebDragPx(grantDragBaseRef.current);
+            dragPxRef.current = grantDragBaseRef.current;
           }
         },
         onPanResponderMove: (_e, g) => {
           // PanResponder vx is px/ms → store px/s for withSpring.
           velocityRef.current = g.vx * 1000;
-          dragPxRef.current = g.dx;
+          const next = grantDragBaseRef.current + g.dx;
+          dragPxRef.current = next;
           if (IS_WEB) {
-            setWebDragPx(g.dx);
-            updateVisualShift(residualFromTotalDrag(g.dx, pitch).shift);
+            setWebDragPx(next);
+            updateVisualShift(residualFromTotalDrag(next, pitch).shift);
           } else {
-            dragShared.value = g.dx;
+            dragShared.value = next;
           }
         },
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx * 1000;
-          dragPxRef.current = g.dx;
+          const next = grantDragBaseRef.current + g.dx;
+          dragPxRef.current = next;
           // Micro-move after start-claim → tile tap (Pressable blocked by 1A start claim).
           if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
             setFlinging(false);
@@ -754,8 +765,8 @@ export function PeriodPager({
           }
           // CAL-P6-1A-07: period commits on snap complete only.
           // targetSteps drives coast destination; onSpringRest commits pending steps.
-          const targetSteps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
-          animateSnap(targetSteps, g.dx);
+          const targetSteps = snapPeriodPage(next, pitch, g.vx * 1000);
+          animateSnap(targetSteps, next);
         },
         onPanResponderTerminate: () => {
           velocityRef.current = 0;

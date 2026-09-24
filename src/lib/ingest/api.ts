@@ -234,8 +234,9 @@ export async function fetchIngestSplitReview(batchId: string): Promise<IngestSpl
     originals.push(asset.storage_path);
     knownThumbs.set(asset.storage_path, asset.thumb_storage_path);
   }
-  // Thumbs only — never sign the class PDF / files bucket original for the model.
-  const thumbMap = await signedThumbUrls(originals, knownThumbs, { fallbackOriginal: true });
+  // Thumbs only — never sign multi-MB photo originals when thumbs missing (t_206b5ff4).
+  // Never sign the class PDF / files bucket original for the model.
+  const thumbMap = await signedThumbUrls(originals, knownThumbs, { fallbackOriginal: false });
   for (const page of pages) {
     if (!page.asset_id) {
       page.thumbUrl = null;

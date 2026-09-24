@@ -26,7 +26,8 @@ export type PendingCalendarDraft = {
   body: string;
   classId?: string | null;
   childStudentId?: string | null;
-  source: 'ai_nl';
+  /** ai_nl = Ask park; slot_create = CAL-P6-10B empty-hour Add Event. */
+  source: 'ai_nl' | 'slot_create';
 };
 
 const PENDING_PREFIX = 'kelyra.calendar.pendingDraft.';
