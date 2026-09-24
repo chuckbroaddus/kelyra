@@ -96,6 +96,12 @@ type PillProps = {
   colors: ThemeColors;
   reduce: boolean;
   motionPack: PersonTabMotionPack;
+  /**
+   * iOS UIScrollView host only. Layout width stays collapsed; CM-Linear runs on
+   * underlay width + label clip so contentSize does not thrash. Web keeps
+   * animated layout width (siblings push). Never swap ScrollView↔View.
+   */
+  fixedCellUnderlay?: boolean;
   onChange: (key: string) => void;
   onLayoutX: (x: number, width: number) => void;
 };
@@ -109,6 +115,7 @@ function PersonTabPill({
   colors,
   reduce,
   motionPack,
+  fixedCellUnderlay = false,
   onChange,
   onLayoutX,
 }: PillProps) {
@@ -171,28 +178,43 @@ function PersonTabPill({
         onLayout={(event) => {
           onLayoutX(event.nativeEvent.layout.x, event.nativeEvent.layout.width);
         }}
+        hitSlop={
+          fixedCellUnderlay && (selected || showLabel)
+            ? { right: Math.max(0, expandedWidth - collapsedWidth) }
+            : undefined
+        }
         style={({ pressed }) => [pressed && { opacity: 0.85 }]}
       >
         <Animated.View
+          collapsable={false}
           style={[
             styles.hit,
             !hasGlyph && styles.labelHit,
-            {
-              // Width alone drives the morph. Animated maxWidth + leading-pill
-              // reflow was snapping labels shut on first-tab transitions.
-              width: pillWidth,
-              overflow: 'hidden',
-            },
+            fixedCellUnderlay
+              ? {
+                  // iOS: layout width stays collapsed so UIScrollView contentSize
+                  // does not thrash; underlay + label clip run CM-Linear morph.
+                  width: collapsedWidth,
+                  overflow: 'visible',
+                  zIndex: selected || showLabel ? 2 : 0,
+                }
+              : {
+                  // Web: width alone drives the morph (siblings push).
+                  width: pillWidth,
+                  overflow: 'hidden',
+                },
           ]}
         >
           <Animated.View
             pointerEvents="none"
+            collapsable={false}
             style={[
-              StyleSheet.absoluteFill,
+              fixedCellUnderlay ? styles.underlay : StyleSheet.absoluteFill,
               {
                 backgroundColor: colors.brandSoft,
                 borderRadius: radius.pill,
                 opacity: expand,
+                ...(fixedCellUnderlay ? { width: pillWidth } : null),
               },
             ]}
           />
@@ -382,8 +404,10 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       <ScrollView
         ref={scroller}
         horizontal
-        // Post/Alert (content fits): disable scroll so UIScrollView does not
-        // participate; overflow rows keep ScrollView but skip scrollTo on index 0.
+        // Always ScrollView (never View↔ScrollView host swap — that hid tabs).
+        // Post/Alert (content fits): scrollEnabled false; overflow rows scroll.
+        // Index-0 enter/leave: skip scrollTo (instant/defer). iOS morph is
+        // fixed-cell underlay so contentSize stays stable during CM-Linear.
         scrollEnabled={rowOverflows}
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
@@ -422,6 +446,9 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
             colors={colors}
             reduce={reduce}
             motionPack={motionPack}
+            // iOS always: fixed cell + underlay morph. Web: animated layout width.
+            // NEVER swap ScrollView↔View (prior host swap hid tabs on Expo Go).
+            fixedCellUnderlay={Platform.OS === 'ios'}
             onChange={onChange}
             onLayoutX={(x, width) => {
               xOf.current[tab.key] = x;
@@ -462,6 +489,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     overflow: 'hidden',
+  },
+  underlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
   },
   scroller: {
     flex: 1,
