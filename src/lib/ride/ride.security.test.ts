@@ -313,6 +313,8 @@ test('P-LEFT / CEO-2: parent leave RPC writes left only; never released', () => 
 test('P-LEFT Option A: trip card Leave line + ConfirmSheet primary / Keep waiting', () => {
   const ui = read('src/app/parent/ride.tsx');
   assert.match(ui, /label="Leave line"/);
+  // Option A lock: full-width Ghost inside trip card (not shrink-wrap / not sticky footer).
+  assert.match(ui, /<GhostButton[\s\S]*?label="Leave line"[\s\S]*?fullWidth[\s\S]*?\/>|<GhostButton[\s\S]*?fullWidth[\s\S]*?label="Leave line"[\s\S]*?\/>/);
   assert.match(ui, /You are \{trip\.position_xx\}/);
   assert.match(ui, /tone="primary"/);
   assert.match(ui, /confirmLabel="Leave line"/);
@@ -324,6 +326,13 @@ test('P-LEFT Option A: trip card Leave line + ConfirmSheet primary / Keep waitin
   // Hub only — vehicles has no Leave
   const vehicles = read('src/app/parent/vehicles.tsx');
   assert.doesNotMatch(vehicles, /Leave line|parentLeave|Keep waiting/);
+});
+
+test('P-LEFT Option A: GhostButton fullWidth stretches Leave to trip-card width', () => {
+  const btn = read('src/components/ui/Button.tsx');
+  assert.match(btn, /fullWidth\?: boolean/);
+  assert.match(btn, /fullWidth && styles\.fullWidth/);
+  assert.match(btn, /fullWidth:\s*\{[\s\S]*?width:\s*'100%'[\s\S]*?alignSelf:\s*'stretch'/);
 });
 
 test('P-LEFT copy: success out-of-line; confirm not pickup; fail opaque', () => {

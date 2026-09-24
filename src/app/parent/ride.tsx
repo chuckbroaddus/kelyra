@@ -204,6 +204,7 @@ export default function ParentRideScreen() {
           ) : null}
           <GhostButton
             label="Leave line"
+            fullWidth
             accessibilityLabel={leaveA11y}
             disabled={busy}
             onPress={() => setLeaveOpen(true)}
