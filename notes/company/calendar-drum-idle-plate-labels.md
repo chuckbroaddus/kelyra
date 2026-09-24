@@ -1,12 +1,12 @@
 # CAL-DRUM idle plate label hotfix (2026-09-24)
 
-CEO device screenshots: Year center showed `20…`; week plate repeated range in header and body.
+**Idle chrome**
+- Year: always 4 digits; allowFontScaling off; fontSize 24.
+- Week: header = month, body = day range, footer = year.
+- Month: header ~1/3 page (fixed 36px) = year, body = month name.
+- Day: header = month, body = centered day number, footer = year.
 
-**Fixes**
-- Year plates always render four-digit year; `allowFontScaling={false}`; fontSize 24.
-- `yearTile.sideCaption` = full year (no `'YY`).
-- Week plate: **header = month**, **body = day range**, **footer = year** (matches day chrome).
-- Month plate: **header (~1/3 height) = year**, **body (~2/3) = month name** (CEO 2026-09-24).
-- Day plate: **header = month**, **body = day number** (vertically centered), **footer = year**.
-
-**Year body Mar/Apr** looking cut off: `yearMonthBlocks` still builds full weeks; cards are clipped by the screen bottom under the drum — scroll the Year body to see remaining days. Not a missing-data bug.
+**Fling silhouette (CEO follow-up)**
+- Month/week/day silhouettes clone the same idle chrome (labels + header/footer).
+- Softened with silhouetteSoftText opacity; DimOut still wraps.
+- Week/day footers were invisible before (silhouetteFooter style missing / wrong chrome).

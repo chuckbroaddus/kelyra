@@ -9,7 +9,6 @@
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { monthGridDays } from '@/lib/calendar/month';
 import type { PeriodTileModel } from '@/lib/calendar/periodPager';
 import {
   SET_B,
@@ -133,9 +132,9 @@ function DimOut({ children }: { children: ReactNode }) {
 }
 
 /**
- * Per-kind fling silhouette — fixed chrome clone; DimOut applies opacity.
- * year: red yearPage bg + white year digits with heavy soft shadow (unreadable);
- * month: black soft day-number hints; week/day: soft label/numeral hints.
+ * Per-kind fling silhouette — clone idle chrome geometry (DimOut = opacity).
+ * Month/week/day must match header/body/footer heights of the snapped plate
+ * so flick → snap does not jump (CEO 2026-09-24).
  */
 function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
   const label = tile.centerCaption;
@@ -161,75 +160,106 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
   } else if (tile.kind === 'month') {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
-    const hintDays =
-      year > 0
-        ? monthGridDays(year, monthIndex0, 0)
-            .filter((iso) => {
-              return (
-                Number(iso.slice(0, 4)) === year && Number(iso.slice(5, 7)) - 1 === monthIndex0
-              );
-            })
-            .slice(0, 7)
-        : [];
+    const header = monthHeaderYear(year);
+    const monthName = monthBodyName(monthIndex0);
     body = (
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.monthTallHeader} />
-          <View style={[styles.monthTallBody, styles.silhouetteHintRow]}>
-            {hintDays.map((iso) => (
-              <Text
-                key={`sil-m-${iso}`}
-                style={styles.silhouetteDayHint}
-                numberOfLines={1}
-                allowFontScaling={false}
-              >
-                {Number(iso.slice(8, 10))}
-              </Text>
-            ))}
+          <View style={styles.monthTallHeader}>
+            <Text
+              style={[styles.monthTallHeaderText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {header}
+            </Text>
+          </View>
+          <View style={styles.monthTallBody}>
+            <Text
+              style={[styles.monthTallBodyText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {monthName}
+            </Text>
           </View>
         </View>
       </View>
     );
-  } else if (tile.kind === 'week' && tile.fromIso) {
-    const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  } else if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
+    const header = weekHeaderMonth(tile.fromIso);
+    const range = weekBodyRange(tile.fromIso, tile.toIso);
+    const footer = weekFooterYear(tile.fromIso);
     body = (
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.silhouetteHeader} />
-          <View style={styles.silhouetteHintRow}>
-            {labels.map((lab, i) => (
-              <Text
-                key={`sil-w-${i}`}
-                style={[
-                  styles.silhouetteLabelHint,
-                  i === 0 ? { color: SET_B.sunday } : null,
-                ]}
-                numberOfLines={1}
-                allowFontScaling={false}
-              >
-                {lab}
-              </Text>
-            ))}
+          <View style={styles.wrapHeader}>
+            <Text
+              style={[styles.wrapHeaderText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {header}
+            </Text>
           </View>
-          <View style={styles.silhouetteFooter} />
+          <View style={styles.weekBody}>
+            <Text
+              style={[styles.weekBodyText, styles.silhouetteSoftText]}
+              numberOfLines={2}
+              allowFontScaling={false}
+            >
+              {range}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text
+              style={[styles.wrapFooterText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {footer}
+            </Text>
+          </View>
         </View>
       </View>
     );
   } else if (tile.kind === 'day' && tile.dayIso) {
+    const header = dayHeaderMonth(tile.dayIso);
     const dayNum = String(Number(tile.dayIso.slice(8, 10)));
+    const footer = dayFooterYear(tile.dayIso);
     body = (
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.silhouetteHeader} />
+          <View style={styles.wrapHeader}>
+            <Text
+              style={[styles.wrapHeaderText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {header}
+            </Text>
+          </View>
           <View style={styles.dayBody}>
-            <Text style={styles.silhouetteDayNumeral} numberOfLines={1} allowFontScaling={false}>
+            <Text
+              style={[styles.dayNumeral, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
               {dayNum}
             </Text>
           </View>
-          <View style={styles.silhouetteFooter} />
+          <View style={styles.wrapFooter}>
+            <Text
+              style={[styles.wrapFooterText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {footer}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -239,7 +269,7 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.silhouetteHeader} />
+          <View style={styles.wrapHeader} />
           <Text style={styles.silhouetteCaption} numberOfLines={2} allowFontScaling={false}>
             {hint}
           </Text>
@@ -297,7 +327,7 @@ function PeriodLeafImpl({
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          {/* Header ~1/3 of page; body ~2/3 (CEO 2026-09-24). */}
+          {/* Header ≈1/3 page (36px); body fills rest — matches silhouette. */}
           <View style={styles.monthTallHeader}>
             <Text style={styles.monthTallHeaderText} numberOfLines={1} allowFontScaling={false}>
               {header}
@@ -442,9 +472,9 @@ const styles = StyleSheet.create({
   yearTextPlate: {
     fontSize: 24,
   },
-  /** Month plate: header ~1/3 page height (flex 1), body ~2/3 (flex 2). */
+  /** Month plate: header ≈1/3 of page (fixed 36 of 108); body fills rest. */
   monthTallHeader: {
-    flex: 1,
+    height: 36,
     backgroundColor: SET_B.header,
     alignItems: 'center',
     justifyContent: 'center',
@@ -452,20 +482,20 @@ const styles = StyleSheet.create({
   },
   monthTallHeaderText: {
     color: SET_B.body,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
   monthTallBody: {
-    flex: 2,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   monthTallBodyText: {
     color: SET_B.type,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -575,6 +605,15 @@ const styles = StyleSheet.create({
     // Fallback when blur unavailable: heavy opacity + letter-spacing (single layer).
     opacity: 0.55,
     letterSpacing: 2,
+  },
+  /** Soften cloned idle labels during fling (geometry stays identical). */
+  silhouetteSoftText: {
+    opacity: 0.55,
+  },
+  silhouetteFooter: {
+    backgroundColor: SET_B.header,
+    height: 24,
+    width: '100%',
   },
   silhouetteHintRow: {
     flex: 1,
