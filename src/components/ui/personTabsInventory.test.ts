@@ -147,16 +147,19 @@ test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth
   assert.match(pills, /width:\s*pillWidth/);
 });
 
-test('expo iOS first-tab snap: always ScrollView + fixed maxContentWidth inner row', () => {
+test('expo iOS first-tab snap: absolute pills + maxContentWidth strip (no Yoga sibling reflow)', () => {
   const pills = read('src/components/ui/PersonTabs.tsx');
   const layout = read('src/components/ui/personTabsLayout.ts');
   // Native cause lock: any scrollTo on index-0 enter/leave races leading width morph.
   assert.match(layout, /export function personTabScrollNeeded/);
   assert.match(layout, /export function personTabScrollMotion/);
   assert.match(layout, /export function personTabRowMaxContentWidth/);
+  assert.match(layout, /export function personTabAbsolutePillFrame/);
+  assert.match(layout, /export function personTabAbsoluteSettledLefts/);
   assert.match(pills, /personTabScrollNeeded/);
   assert.match(pills, /personTabScrollMotion/);
   assert.match(pills, /personTabRowMaxContentWidth/);
+  assert.match(pills, /personTabAbsoluteSettledLefts/);
   assert.match(pills, /scrollOffsetRef/);
   assert.match(pills, /scrolledValueRef/);
   assert.match(pills, /removeClippedSubviews=\{false\}/);
@@ -167,11 +170,15 @@ test('expo iOS first-tab snap: always ScrollView + fixed maxContentWidth inner r
   assert.match(pills, /scrollEnabled=\{rowOverflows\}/);
   assert.doesNotMatch(pills, /rowOverflows \? \(/);
   assert.doesNotMatch(pills, /Content fits: plain View host/);
-  // Fixed inner row pins UIScrollView contentSize while pills CM-Linear morph.
+  // Fixed inner strip pins contentSize; absolute pills drive left+width from expand.
   assert.match(pills, /collapsable=\{false\}/);
   assert.match(pills, /width: maxContentWidth/);
   assert.match(pills, /maxContentWidth > rowWidth/);
-  // Keep Animated layout width (sibling-push) — no iOS fixed-cell underlay.
+  assert.match(pills, /styles\.absolutePill|absolutePill/);
+  assert.match(pills, /buildAbsoluteLeftAnims/);
+  assert.match(pills, /position: 'absolute'/);
+  assert.match(pills, /position: 'relative'/);
+  // Animated width on absolute wrapper — labels stay in normal flow inside pill.
   assert.match(pills, /width:\s*pillWidth/);
   assert.doesNotMatch(pills, /fixedCellUnderlay/);
   assert.doesNotMatch(pills, /styles\.underlay/);

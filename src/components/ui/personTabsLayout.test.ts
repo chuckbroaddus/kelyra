@@ -22,6 +22,8 @@ import {
   personTabScrollMotion,
   personTabRowMaxContentWidth,
   personTabRowUsesTeacherFaces,
+  personTabAbsolutePillFrame,
+  personTabAbsoluteSettledLefts,
 } from './personTabsLayout.ts';
 
 import { isClassDeskTabsRoute } from '../../lib/chrome/classTabs.ts';
@@ -295,4 +297,49 @@ test('personTabRowMaxContentWidth keeps overflow host / contentSize stable', () 
     personTabRowMaxContentWidth(keys, titles, labelMax, true),
   );
   assert.equal(personTabRowMaxContentWidth([], titles, labelMax, true), 0);
+});
+
+test('absolute pill frames: sibling left ignores Yoga — driven by expand fractions', () => {
+  const expanded = [100, 80, 90]; // predicted hugged widths
+  const collapsed = PERSON_TAB_ICON_HIT;
+  // All collapsed: lefts are i * (HIT + GAP)
+  const allCollapsed = [0, 0, 0];
+  assert.equal(personTabAbsolutePillFrame(0, allCollapsed, expanded).left, 0);
+  assert.equal(personTabAbsolutePillFrame(0, allCollapsed, expanded).width, collapsed);
+  assert.equal(
+    personTabAbsolutePillFrame(1, allCollapsed, expanded).left,
+    collapsed + PERSON_TAB_ROW_GAP,
+  );
+  assert.equal(
+    personTabAbsolutePillFrame(2, allCollapsed, expanded).left,
+    2 * (collapsed + PERSON_TAB_ROW_GAP),
+  );
+  // Leading expanded: pill0 width=100; pill1 left shifts by (100 - collapsed), not Yoga reflow.
+  const leadExpanded = [1, 0, 0];
+  const lead = personTabAbsolutePillFrame(0, leadExpanded, expanded);
+  assert.equal(lead.width, 100);
+  assert.equal(lead.left, 0);
+  const mid = personTabAbsolutePillFrame(1, leadExpanded, expanded);
+  assert.equal(mid.left, 100 + PERSON_TAB_ROW_GAP);
+  assert.equal(mid.width, collapsed);
+  // Mid-morph leading (expand=0.5): left1 is halfway — continuous, not discrete jump.
+  const half = personTabAbsolutePillFrame(1, [0.5, 0, 0], expanded);
+  assert.equal(half.left, collapsed + (100 - collapsed) * 0.5 + PERSON_TAB_ROW_GAP);
+});
+
+test('absolute settled lefts: selected expanded, others collapsed (scroll target)', () => {
+  const expanded = [100, 80, 90];
+  const lefts0 = personTabAbsoluteSettledLefts(0, expanded);
+  assert.deepEqual(lefts0, [
+    0,
+    100 + PERSON_TAB_ROW_GAP,
+    100 + PERSON_TAB_ROW_GAP + PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP,
+  ]);
+  const lefts1 = personTabAbsoluteSettledLefts(1, expanded);
+  assert.equal(lefts1[0], 0);
+  assert.equal(lefts1[1], PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP);
+  assert.equal(
+    lefts1[2],
+    PERSON_TAB_ICON_HIT + PERSON_TAB_ROW_GAP + 80 + PERSON_TAB_ROW_GAP,
+  );
 });
