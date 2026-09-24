@@ -5,13 +5,14 @@ import { radius, type } from '@/constants/theme';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import type { CalendarItem } from '@/lib/calendar/types';
 import { yearMonthBlocks, type YearMonthCell } from '@/lib/calendar/year';
+import type { ZoomSourceRect } from '@/lib/calendar/zoomDrill';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Props = {
   year: number;
   items: CalendarItem[];
   /** Entire month card (title, weekday row, day numbers, empty cells) zooms to Month. */
-  onPressMonth: (year: number, monthIndex0: number) => void;
+  onPressMonth: (year: number, monthIndex0: number, source: ZoomSourceRect) => void;
   /**
    * Today on Year — scroll so this month’s row is in the viewport (CEO 2026-09-24).
    * `focusNonce` bumps on every Today press so a second tap still re-scrolls.
@@ -34,6 +35,7 @@ export function YearGrid({
   const { colors } = useTheme();
   const blocks = yearMonthBlocks(year, items);
   const monthYRef = useRef<Map<number, number>>(new Map());
+  const monthCardRefs = useRef<Map<number, View | null>>(new Map());
   const pendingRef = useRef<{ month: number; nonce: number } | null>(null);
 
   const rows: (typeof blocks)[] = [];
@@ -79,7 +81,21 @@ export function YearGrid({
           {pair.map((block) => (
             <Pressable
               key={`${block.year}-${block.monthIndex0}`}
-              onPress={() => onPressMonth(block.year, block.monthIndex0)}
+              ref={(node) => {
+                monthCardRefs.current.set(block.monthIndex0, node as unknown as View | null);
+              }}
+              onPress={() => {
+                const node = monthCardRefs.current.get(block.monthIndex0);
+                const fire = (source: ZoomSourceRect) =>
+                  onPressMonth(block.year, block.monthIndex0, source);
+                if (node && typeof (node as View).measureInWindow === 'function') {
+                  (node as View).measureInWindow((x, y, width, height) => {
+                    fire({ x, y, width, height });
+                  });
+                } else {
+                  fire({ x: 0, y: 0, width: 0, height: 0 });
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel={`${block.monthLabel} ${block.year}`}
               style={[styles.monthCard, { borderColor: colors.line, backgroundColor: colors.elevated }]}

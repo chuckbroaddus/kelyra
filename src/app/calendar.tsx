@@ -21,6 +21,7 @@ import { EventMenu } from '@/components/calendar/EventMenu';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
+import { CalendarZoomDrill } from '@/components/calendar/CalendarZoomDrill';
 import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -100,11 +101,18 @@ import {
 import { ViewCustomizeSheet } from '@/components/calendar/ViewCustomizeSheet';
 import { IconButton } from '@/components/ui/IconButton';
 import {
+  dayNumber,
   shiftWeek,
+  weekdayShort,
   weekRangeContaining,
   weekRpcBounds,
 } from '@/lib/calendar/week';
 import { yearContaining, yearRpcBounds } from '@/lib/calendar/year';
+import {
+  type ZoomDrillKind,
+  type ZoomDrillRequest,
+  type ZoomSourceRect,
+} from '@/lib/calendar/zoomDrill';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { listParentLinkedChildren } from '@/lib/diary/api';
 import { firstName } from '@/lib/format';
@@ -162,6 +170,9 @@ export default function CalendarScreen() {
   );
   const yearHostYRef = useRef(0);
   const yearFocusNonceRef = useRef(0);
+  const bodyHostRef = useRef<View>(null);
+  const drillThenRef = useRef<(() => void) | null>(null);
+  const [zoomDrill, setZoomDrill] = useState<ZoomDrillRequest | null>(null);
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
   const [monthMode, setMonthMode] = useState<MonthMode>('compact');
@@ -376,6 +387,48 @@ export default function CalendarScreen() {
     },
     [activeView, selectView],
   );
+
+  const startZoomDrill = useCallback(
+    (opts: {
+      kind: ZoomDrillKind;
+      source: ZoomSourceRect;
+      label: string;
+      then: () => void;
+    }) => {
+      const { kind, source, label, then } = opts;
+      const sourceBad = !(source.width > 1) || !(source.height > 1);
+      if (reduceMotion || sourceBad) {
+        then();
+        return;
+      }
+      const node = bodyHostRef.current;
+      if (!node || typeof node.measureInWindow !== 'function') {
+        then();
+        return;
+      }
+      node.measureInWindow((x, y, width, height) => {
+        if (!(width > 1) || !(height > 1)) {
+          then();
+          return;
+        }
+        drillThenRef.current = then;
+        setZoomDrill({
+          kind,
+          source,
+          label,
+          dest: { x, y, width, height },
+        });
+      });
+    },
+    [reduceMotion],
+  );
+
+  const onZoomDrillFinished = useCallback(() => {
+    const then = drillThenRef.current;
+    drillThenRef.current = null;
+    setZoomDrill(null);
+    then?.();
+  }, []);
 
   const zoomUp = useCallback(() => {
     const parent = zoomStack.length > 0 ? zoomStack[zoomStack.length - 1]! : zoomParentView(activeView);
@@ -949,6 +1002,7 @@ export default function CalendarScreen() {
   // CAL-P6-8A: nav row collapses with tray; drum stays in pin band.
   // CAL-P6-6B: Month List owns a flex-bounded scroller — disable page scroll so soft-edge can fire.
   return (
+    <View style={styles.screenRoot}>
     <Screen
       pageChromeHosted
       collapse={collapsingChrome}
@@ -987,6 +1041,11 @@ export default function CalendarScreen() {
       ) : null}
 
       {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
+      <View
+        ref={bodyHostRef}
+        collapsable={false}
+        style={[styles.bodyHost, zoomDrill ? styles.bodyHostFrozen : null]}
+      >
       {(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
       !error &&
       !parentChildMissing ? (
@@ -996,9 +1055,16 @@ export default function CalendarScreen() {
             items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
-            onPressDay={(iso) => {
-              setDayAnchor(iso);
-              zoomTo('day');
+            onPressDay={(iso, source) => {
+              startZoomDrill({
+                kind: 'week-day',
+                source: source ?? { x: 0, y: 0, width: 0, height: 0 },
+                label: `${weekdayShort(iso)} ${dayNumber(iso)}`,
+                then: () => {
+                  setDayAnchor(iso);
+                  zoomTo('day');
+                },
+              });
             }}
             dayCount={stepperCount}
             onChangeDayCount={onChangeDayCount}
@@ -1046,18 +1112,34 @@ export default function CalendarScreen() {
               onSelectDay={(iso) => {
                 setMonthSelectedDay(iso);
               }}
-              onZoomDay={(iso) => {
-                // Month ladder: tap a day/week in Month → Week (Day only from Week).
-                setDayAnchor(iso);
-                setMonthSelectedDay(iso);
-                setGridAnchor(weekRangeContaining(iso).fromIso);
-                zoomTo('week');
+              onZoomDay={(iso, source) => {
+                // Month ladder: day cell / week row → Week (Day only from Week).
+                const week = weekRangeContaining(iso);
+                startZoomDrill({
+                  kind: 'month-week',
+                  source,
+                  label: `Week of ${week.fromIso}`,
+                  then: () => {
+                    setDayAnchor(iso);
+                    setMonthSelectedDay(iso);
+                    setGridAnchor(week.fromIso);
+                    zoomTo('week');
+                  },
+                });
               }}
-              onZoomWeek={(iso) => {
-                setDayAnchor(iso);
-                setMonthSelectedDay(iso);
-                setGridAnchor(weekRangeContaining(iso).fromIso);
-                zoomTo('week');
+              onZoomWeek={(iso, source) => {
+                const week = weekRangeContaining(iso);
+                startZoomDrill({
+                  kind: 'month-week',
+                  source,
+                  label: `Week of ${week.fromIso}`,
+                  then: () => {
+                    setDayAnchor(iso);
+                    setMonthSelectedDay(iso);
+                    setGridAnchor(week.fromIso);
+                    zoomTo('week');
+                  },
+                });
               }}
               onCommitAdjacentMonth={(dir) => {
                 setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
@@ -1083,11 +1165,21 @@ export default function CalendarScreen() {
                   animated: true,
                 });
               }}
-              onPressMonth={(y, m0) => {
+              onPressMonth={(y, m0, source) => {
                 const iso = `${y}-${String(m0 + 1).padStart(2, '0')}-01`;
-                setMonthAnchor(iso);
-                setMonthSelectedDay(null);
-                zoomTo('month');
+                const label = new Date(y, m0, 1, 12, 0, 0, 0).toLocaleDateString(undefined, {
+                  month: 'long',
+                });
+                startZoomDrill({
+                  kind: 'year-month',
+                  source,
+                  label,
+                  then: () => {
+                    setMonthAnchor(iso);
+                    setMonthSelectedDay(null);
+                    zoomTo('month');
+                  },
+                });
               }}
             />
           </View>
@@ -1100,6 +1192,7 @@ export default function CalendarScreen() {
           />
         ) : null
       ) : null}
+      </View>
 
       {seat ? (
         <EventComposer
@@ -1200,10 +1293,31 @@ export default function CalendarScreen() {
         onClose={() => setCalendarsOpen(false)}
       />
     </Screen>
+    {zoomDrill ? (
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <CalendarZoomDrill
+          kind={zoomDrill.kind}
+          source={zoomDrill.source}
+          dest={zoomDrill.dest}
+          label={zoomDrill.label}
+          onFinished={onZoomDrillFinished}
+        />
+      </View>
+    ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenRoot: {
+    flex: 1,
+  },
+  bodyHost: {
+    flexGrow: 1,
+  },
+  bodyHostFrozen: {
+    opacity: 0,
+  },
   empty: {
     ...type.body,
     marginVertical: 12,
