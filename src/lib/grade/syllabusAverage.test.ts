@@ -462,3 +462,37 @@ test('FAD: unknown category never invents Counts label "other"', () => {
   assert.deepEqual(otherKey, [{ kind: 'counts', categoryLabel: 'the class' }]);
   assert.ok(!JSON.stringify(otherKey).toLowerCase().includes('"other"'));
 });
+
+test('P-M1 partitionMissingUpcoming: turned-in / in-progress / assigned are not Missing', () => {
+  const past = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+  const future = new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString();
+  const assignments = [
+    assignment({ id: 'due_miss', title: 'Past no work', category: 'homework', due_at: past }),
+    assignment({ id: 'due_assigned', title: 'Past assigned', category: 'homework', due_at: past }),
+    assignment({ id: 'due_started', title: 'Past started', category: 'homework', due_at: past }),
+    assignment({ id: 'due_turned_in', title: 'Past turned in', category: 'quiz', due_at: past }),
+    assignment({ id: 'due_graded', title: 'Past graded', category: 'quiz', due_at: past }),
+    assignment({ id: 'up_none', title: 'Future none', category: 'project', due_at: future }),
+    assignment({ id: 'up_assigned', title: 'Future assigned', category: 'project', due_at: future }),
+    assignment({ id: 'up_turned_in', title: 'Future early turn-in', category: 'project', due_at: future }),
+  ];
+  const cells: AverageCell[] = [
+    { assignmentId: 'due_assigned', approvedScore: null, status: 'assigned' },
+    { assignmentId: 'due_started', approvedScore: null, status: 'in_progress' },
+    { assignmentId: 'due_turned_in', approvedScore: null, status: 'completed' },
+    cell('due_graded', 90),
+    { assignmentId: 'up_assigned', approvedScore: null, status: 'assigned' },
+    { assignmentId: 'up_turned_in', approvedScore: null, status: 'submitted' },
+  ];
+  const { missing, upcoming } = partitionMissingUpcoming(assignments, cells);
+  assert.deepEqual(
+    missing.map((r) => r.assignmentId).sort(),
+    ['due_miss'],
+  );
+  assert.deepEqual(
+    upcoming.map((r) => r.assignmentId).sort(),
+    ['up_assigned', 'up_none'],
+  );
+  assert.ok(!missing.some((r) => ['due_assigned', 'due_started', 'due_turned_in', 'due_graded'].includes(r.assignmentId)));
+  assert.ok(!upcoming.some((r) => r.assignmentId === 'up_turned_in'));
+});

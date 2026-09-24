@@ -53,6 +53,19 @@ test('AVG migration: family RPCs strip ask_draft and require link/enrollment', (
   assert.match(sql, /approved_at is not null/);
 });
 
+test('P-M1 explain patch: work-status cells (no approved_at-only filter)', () => {
+  const sql = read('supabase/migrations/20260923223000_average_explain_work_status_cells.sql');
+  assert.match(sql, /create or replace function public\.student_class_average_explain/);
+  assert.match(sql, /create or replace function public\.parent_class_average_explain/);
+  assert.match(sql, /case when sub\.approved_at is not null then sub\.approved_score else null end/);
+  const studentFn = sql.slice(sql.indexOf('student_class_average_explain'));
+  const studentBody = studentFn.slice(0, studentFn.indexOf('create or replace function public.parent_class_average_explain'));
+  assert.doesNotMatch(studentBody, /and sub\.approved_at is not null/);
+  assert.match(read('src/lib/syllabus/api.ts'), /family_student_gradebook/);
+  assert.match(read('src/lib/grade/syllabusAverage.ts'), /cellHasTurnedInOrGradedWork/);
+  assert.match(read('src/lib/grade/syllabusAverage.ts'), /isOpenWork/);
+});
+
 test('AVG Ask tools use syllabus.manage not assignments.manage', () => {
   assert.equal(ASK_TOOL_POLICY.scan_class_syllabus?.capability, 'syllabus.manage');
   assert.equal(ASK_TOOL_POLICY.scan_class_syllabus?.teacherSeatOnly, true);

@@ -330,7 +330,11 @@ export async function loadPublishedClassSyllabus(classId: string): Promise<Publi
   return (data ?? { ok: false }) as PublishedFamilySyllabus;
 }
 
-function mapExplain(data: AverageExplainPayload, termFilter: string): {
+function mapExplain(
+  data: AverageExplainPayload,
+  termFilter: string,
+  workStatusCells: AverageCell[] = [],
+): {
   syllabus: PublishedFamilySyllabus;
   average: SyllabusAverageResult;
   ruleLines: string[];
@@ -341,7 +345,7 @@ function mapExplain(data: AverageExplainPayload, termFilter: string): {
 } {
   const syllabus = (data.syllabus ?? { ok: true, published: false }) as PublishedFamilySyllabus;
   const assignments = (data.assignments ?? []) as AverageAssignment[];
-  const cells: AverageCell[] = (data.cells ?? []).map((row) => ({
+  const approvedCells: AverageCell[] = (data.cells ?? []).map((row) => ({
     assignmentId: row.assignment_id,
     approvedScore: row.approved_score,
     scoreMark:
@@ -359,15 +363,19 @@ function mapExplain(data: AverageExplainPayload, termFilter: string): {
     rules: c.rules,
   }));
 
+  // Average stays approved-only (computeSyllabusAverage / cellApproved).
   const average = computeSyllabusAverage(
     syllabus.published
       ? { status: 'published', categories, policies: syllabus.policies_public ?? null }
       : null,
     assignments,
-    cells,
+    approvedCells,
     { termFilter },
   );
 
+  // P-M1: merge family work statuses so Assigned / In progress / Turned in are not Missing.
+  // Explain RPCs historically returned only approved_at cells; enrich from gradebook until SQL lands.
+  const cells = mergeAverageCellsForMissing(approvedCells, workStatusCells);
   const { missing, upcoming } = partitionMissingUpcoming(assignments, cells);
 
   return {
@@ -383,6 +391,60 @@ function mapExplain(data: AverageExplainPayload, termFilter: string): {
   };
 }
 
+/** Merge approved explain cells with family work-status cells (status wins from work when absent). */
+export function mergeAverageCellsForMissing(
+  approvedCells: AverageCell[],
+  workStatusCells: AverageCell[],
+): AverageCell[] {
+  const byId = new Map<string, AverageCell>();
+  for (const cell of workStatusCells) {
+    if (!cell.assignmentId) continue;
+    byId.set(cell.assignmentId, {
+      assignmentId: cell.assignmentId,
+      approvedScore: null,
+      status: cell.status ?? null,
+      approvedAt: null,
+      excused: cell.excused,
+    });
+  }
+  for (const cell of approvedCells) {
+    const prev = byId.get(cell.assignmentId);
+    byId.set(cell.assignmentId, prev ? { ...prev, ...cell } : cell);
+  }
+  return [...byId.values()];
+}
+
+type FamilyGradebookStatusRow = {
+  class_id?: string;
+  assignment_id?: string;
+  status?: string | null;
+};
+
+/** Own/child submission statuses for P-M1 (live family_student_gradebook — no new SQL). */
+async function loadWorkStatusCellsForClass(
+  classId: string,
+  studentId: string,
+): Promise<AverageCell[]> {
+  if (!classId || !studentId) return [];
+  const { data, error } = await requireSupabase().rpc('family_student_gradebook', {
+    p_student_id: studentId,
+  });
+  if (error || !Array.isArray(data)) return [];
+  const cells: AverageCell[] = [];
+  for (const row of data as FamilyGradebookStatusRow[]) {
+    if (String(row.class_id ?? '') !== classId) continue;
+    const assignmentId = String(row.assignment_id ?? '');
+    if (!assignmentId) continue;
+    cells.push({
+      assignmentId,
+      approvedScore: null,
+      status: row.status ?? null,
+      approvedAt: null,
+    });
+  }
+  return cells;
+}
+
 export async function loadStudentClassAverageExplain(
   classId: string,
   termFilter: string = 'all',
@@ -393,7 +455,11 @@ export async function loadStudentClassAverageExplain(
   if (error) throw error;
   const payload = (data ?? { ok: false }) as AverageExplainPayload;
   if (!payload.ok) throw new Error(payload.reason || 'Could not load average');
-  return mapExplain(payload, termFilter);
+  const studentId = String(payload.student_id ?? '');
+  const workStatusCells = studentId
+    ? await loadWorkStatusCellsForClass(classId, studentId).catch(() => [])
+    : [];
+  return mapExplain(payload, termFilter, workStatusCells);
 }
 
 export async function loadParentClassAverageExplain(
@@ -408,7 +474,8 @@ export async function loadParentClassAverageExplain(
   if (error) throw error;
   const payload = (data ?? { ok: false }) as AverageExplainPayload;
   if (!payload.ok) throw new Error(payload.reason || 'Could not load average');
-  return mapExplain(payload, termFilter);
+  const workStatusCells = await loadWorkStatusCellsForClass(classId, studentId).catch(() => []);
+  return mapExplain(payload, termFilter, workStatusCells);
 }
 
 export async function listParentChildClasses(
