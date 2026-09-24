@@ -61,7 +61,6 @@ import {
   WHEEL_MIN_HIT_PX,
   WHEEL_PERSPECTIVE,
   WHEEL_PERSPECTIVE_ORIGIN,
-  WHEEL_PITCH,
   WHEEL_REANIMATED_SPRING,
   WHEEL_SLOT_OFFSETS,
   WHEEL_STAGE_HEIGHT,
@@ -71,6 +70,7 @@ import {
   wheelContentModeFor,
   wheelOpacityForNorm,
   wheelRotateYDegForNorm,
+  wheelRowLayout,
   wheelScaleForNorm,
 } from '@/lib/calendar/periodWheel';
 import type { MultidayCount } from '@/lib/calendar/multiday';
@@ -85,6 +85,8 @@ void CAL_P6_1A_ON_DRUM_CARVE_PX;
 
 
 const IS_WEB = Platform.OS === 'web';
+/** Web = full SoT; native = ~66% row height (CEO 2026-09-24). */
+const ROW = wheelRowLayout(IS_WEB);
 
 type Props = {
   kind: PeriodKind;
@@ -298,12 +300,12 @@ function NativeSlotMotion({
   }, [samples, parked, pitch, reduceMotion, snapFreezeShared]);
 
   return (
-    <Reanimated.View style={[styles.tileSlot, outerStyle]}>
+    <Reanimated.View style={[styles.tileSlot, { width: ROW.heroWidth, height: ROW.heroHeight }, outerStyle]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={hit.accessibilityLabel}
         onPress={hit.onPress}
-        style={styles.hitTarget}
+        style={[styles.hitTarget, { width: ROW.heroWidth, height: ROW.heroHeight }]}
       >
         <Reanimated.View style={innerStyle} pointerEvents="none">
           {children}
@@ -367,7 +369,7 @@ export function PeriodPager({
   const settling = useRef(false);
   /** RNGH velocityX is already px/s (Reanimated spring velocity). */
   const velocityRef = useRef(0);
-  const pitch = WHEEL_PITCH;
+  const pitch = ROW.pitch;
   /** Stage width for start-claim micro-tap slot pick (CAL-P6-1A). */
   const stageWidthRef = useRef(390);
 
@@ -730,6 +732,7 @@ export function PeriodPager({
   const plateStyle = [
     styles.stage,
     {
+      height: ROW.stageHeight,
       backgroundColor: colors.elevated,
       borderColor: colors.line,
     },
@@ -757,7 +760,7 @@ export function PeriodPager({
           : accessibilityNextLabel,
       onPress: () => (isCenter ? onJumpToday() : tapSide(parked)),
     };
-    const visual = (
+    const leaf = (
       <PeriodLeaf
         tile={tile}
         role={role}
@@ -767,6 +770,31 @@ export function PeriodPager({
         width={WHEEL_HERO_WIDTH}
       />
     );
+    // Native: scale SoT leaf into the compact row box (chrome stays proportional).
+    const visual =
+      ROW.scale === 1 ? (
+        leaf
+      ) : (
+        <View
+          style={{
+            width: ROW.heroWidth,
+            height: ROW.heroHeight,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              width: WHEEL_HERO_WIDTH,
+              height: WHEEL_HERO_HEIGHT,
+              transform: [{ scale: ROW.scale }],
+            }}
+          >
+            {leaf}
+          </View>
+        </View>
+      );
     // Stable host key by slot index — rewrite tile props on recycle, never remount mid-fling.
     const hostKey = stableSlotHostKey(slotIndex);
     return (
@@ -812,7 +840,7 @@ export function PeriodPager({
           onTouchEnd={releaseStackGestures}
           onTouchCancel={releaseStackGestures}
         >
-          <View style={styles.track}>
+          <View style={[styles.track, { height: ROW.stageHeight }]}>
             {WHEEL_SLOT_OFFSETS.map((parked) => {
               const idx = slotIndexForOffset(parked);
               return renderSlot(parked, idx);

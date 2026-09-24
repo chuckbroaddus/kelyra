@@ -33,6 +33,41 @@ export const WHEEL_HERO_HEIGHT = 126;
 /** Stage height (thumb drag band). */
 export const WHEEL_STAGE_HEIGHT = 148;
 
+/**
+ * Native (iOS/Android) drum row scale vs SoT web geometry (CEO 2026-09-24).
+ * Web keeps full SoT; phone Expo Go uses ~2/3 row height to free body real estate.
+ */
+export const WHEEL_MOBILE_ROW_SCALE = 0.66;
+
+export type WheelRowLayout = {
+  scale: number;
+  stageHeight: number;
+  heroWidth: number;
+  heroHeight: number;
+  pitch: number;
+};
+
+/** Platform drum row metrics — web = SoT; native = SoT × WHEEL_MOBILE_ROW_SCALE. */
+export function wheelRowLayout(isWeb: boolean): WheelRowLayout {
+  if (isWeb) {
+    return {
+      scale: 1,
+      stageHeight: WHEEL_STAGE_HEIGHT,
+      heroWidth: WHEEL_HERO_WIDTH,
+      heroHeight: WHEEL_HERO_HEIGHT,
+      pitch: WHEEL_PITCH,
+    };
+  }
+  const s = WHEEL_MOBILE_ROW_SCALE;
+  return {
+    scale: s,
+    stageHeight: Math.round(WHEEL_STAGE_HEIGHT * s),
+    heroWidth: Math.round(WHEEL_HERO_WIDTH * s),
+    heroHeight: Math.round(WHEEL_HERO_HEIGHT * s),
+    pitch: Math.round(WHEEL_PITCH * s),
+  };
+}
+
 /** Focus band half-width in px (±59 → 118 wide). */
 export const WHEEL_FOCUS_BAND_PX = 59;
 
