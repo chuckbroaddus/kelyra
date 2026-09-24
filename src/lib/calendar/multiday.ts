@@ -16,16 +16,16 @@ export function clampMultidayCount(n: number): MultidayCount {
 
 /**
  * Today jump / cold-start anchor for 3/5 multi-day.
- * Must be today's ISO — not the Sunday of the enclosing week — so today stays
- * visible in center-3 and Mon–Fri windows (CAL-R5-04 / CAL-29 Today essential).
+ * Today's ISO (not week Sunday) so 5 = Mon–Fri containing today and 3 =
+ * Tue–Thu of today's week (CAL-R5-04 / CAL-29 Today essential).
  */
 export function multidayTodayAnchor(todayIso?: string | null, now = new Date()): string {
   return todayIso && parseISODate(todayIso) ? todayIso : todayISO(now);
 }
 
 /**
- * Inclusive local range for 3/5/7 (CAL-R5-04):
- * - 3 → center on anchor (yesterday · today · tomorrow) → TUE WED THU when today=Wed
+ * Inclusive local range for 3/5/7 (CAL-R5-04 / CEO 2026-09-24):
+ * - 3 → Tuesday–Thursday of the Sunday-start week containing anchor
  * - 5 → Mon–Fri of the week containing anchor
  * - 7 → Sunday-start full week (HOLD)
  */
@@ -53,16 +53,19 @@ export function multidayRangeContaining(
     for (let i = 0; i < 5; i += 1) days.push(addDaysISO(fromIso, i)!);
     return { fromIso, toIso: days[4]!, days, count };
   }
-  // count === 3: center on anchor
-  const fromIso = addDaysISO(anchor, -1)!;
-  const days = [fromIso, anchor, addDaysISO(anchor, 1)!];
+  // count === 3: always Tue–Wed–Thu of the Sun–Sat week containing anchor.
+  const date = parseISODate(anchor)!;
+  const dow = date.getDay(); // 0=Sun … 6=Sat
+  const toTue = 2 - dow;
+  const fromIso = addDaysISO(anchor, toTue)!;
+  const days = [fromIso, addDaysISO(fromIso, 1)!, addDaysISO(fromIso, 2)!];
   return { fromIso, toIso: days[2]!, days, count };
 }
 
-/** Step the multiday window: 3 by 3 days; 5/7 by one calendar week. */
+/** Step the multiday window by one calendar week (3/5/7 are week-scoped sets). */
 export function shiftMultiday(anchorIso: string, count: MultidayCount, dir: -1 | 1): string {
-  const step = count === 3 ? 3 : 7;
-  return addDaysISO(anchorIso, dir * step) ?? anchorIso;
+  void count;
+  return addDaysISO(anchorIso, dir * 7) ?? anchorIso;
 }
 
 /**

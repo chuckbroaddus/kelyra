@@ -583,7 +583,7 @@ export default function CalendarScreen() {
         return;
       }
       const today = multidayTodayAnchor();
-      // If the visible week/range includes today, keep today in the 3/5 window.
+      // If the visible week/range includes today, keep today as anchor (3→Tue–Thu / 5→Mon–Fri of that week).
       const visible = activeView === 'week' ? weekRange.days : multiRange.days;
       setGridAnchor(visible.includes(today) ? today : multiRange.fromIso);
       setDayCount(count);
@@ -830,7 +830,7 @@ export default function CalendarScreen() {
     if (activeView === 'week') {
       setGridAnchor(weekRangeContaining(today).fromIso);
     } else if (activeView === 'multiday') {
-      // 3 centers on today; 5 = Mon–Fri containing today — not week Sunday.
+      // 3 = Tue–Thu of today's week; 5 = Mon–Fri containing today — not week Sunday.
       setGridAnchor(multidayTodayAnchor(today));
     } else if (activeView === 'day') {
       setDayAnchor(today);

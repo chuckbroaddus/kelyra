@@ -131,15 +131,16 @@ test('buildPeriodWindow multiday: existing shiftMultiday ±3', () => {
   assert.equal(typeof w.slots[6]!.key, 'string');
 });
 
-test('periodDistance multiday: 3-day and 5-day step by their own length', () => {
+test('periodDistance multiday: 3/5/7 advance one calendar week', () => {
   assert.equal(
-    periodDistance('multiday', '2026-09-14', '2026-09-17', 3),
+    periodDistance('multiday', '2026-09-15', '2026-09-22', 3),
     1,
+    'Tue–Thu windows are week-scoped',
   );
   assert.equal(
-    periodDistance('multiday', '2026-09-14', '2026-09-19', 5),
+    periodDistance('multiday', '2026-09-14', '2026-09-21', 5),
     1,
-    '5-day window must not use step 7',
+    'Mon–Fri windows match shiftMultiday ±7',
   );
   assert.equal(
     periodDistance('multiday', '2026-09-14', '2026-09-21', 7),

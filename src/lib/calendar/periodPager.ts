@@ -319,9 +319,9 @@ export function periodDistance(
     return Math.round(isoDayDelta(a, b) / 7);
   }
   if (kind === 'multiday') {
-    // 3 / 5 / 7-day windows step by their own length (5 was wrongly treated as 7).
-    const step = dayCount > 0 ? dayCount : 3;
-    return Math.round(isoDayDelta(fromAnchor, toAnchor) / step);
+    // 3 (Tue–Thu) / 5 (Mon–Fri) / 7 all advance one calendar week (shiftMultiday).
+    void dayCount;
+    return Math.round(isoDayDelta(fromAnchor, toAnchor) / 7);
   }
   if (kind === 'day') {
     return isoDayDelta(fromAnchor, toAnchor);
