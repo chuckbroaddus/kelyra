@@ -8,3 +8,5 @@
 2. **N=7** — `WHEEL_SLOT_OFFSETS = [-3,-2,-1,0,1,2,3]`, `WHEEL_VISIBLE_SLOTS = 7`, `WHEEL_CENTER_INDEX = 3`, `WHEEL_FLING_CLEAR_RADIUS = 3`, short-snap freeze `|steps| ≤ 3`, `WHEEL_LOCAL_SAMPLE_SLOTS = 4`.
 3. **RNGH 2** — `PeriodPager` uses `Gesture.Pan()` + `GestureDetector` (RNGH 3.2.1). Reanimated `dragShared` / `withSpring` / `NativeSlotMotion` kept. `useDrumStackGestureGate` hold on begin / release on end-or-cancel (PR #194 iOS-back gate preserved). `GestureHandlerRootView` at `AppShell`.
 4. Segment atlas = out of scope (no new binder art).
+
+**Hotfix:** RNGH pinned ~2.32.0 after Expo Go redbox on 3.2.1 (see calendar-drum-rngh-expo-pin.md).
