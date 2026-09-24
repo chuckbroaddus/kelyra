@@ -31,3 +31,15 @@
 - Bible text: World English Bible (public domain).
 
 All files created by research-feedback agent for this task.
+
+---
+
+## corpus-v2 (2026-09-24, t_ac2790bc)
+
+**Comprehensive synthetic grading/admin corpus** lives in [`corpus-v2/`](corpus-v2/). See:
+- [`corpus-v2/README.md`](corpus-v2/README.md) — how to use with batch ingest / capture / KEYGRADE
+- [`corpus-v2/MANIFEST.md`](corpus-v2/MANIFEST.md) — pack index + page counts
+- [`CORPUS-INVENTORY-2026-09-24.md`](CORPUS-INVENTORY-2026-09-24.md) — what existed vs gaps filled
+
+Includes 32-student quiz stacks (math/science/history/english) with answer keys, phone JPG samples, homework packs, diagram/graph worksheets, research-paper samples, and admin forms. Regenerators under `corpus-v2/_gen/`. **DITL fixtures in `ditl/` are preserved** (not deleted or replaced).
+

@@ -111,3 +111,6 @@ notes/company/backups/
 
 # FL-05 / B-SIZE-01 oversized fixture (≥250 MiB) — generate via scripts/generate-batch-size-fixtures.mjs
 notes/qa-fixtures/batch-ingest/oversized-300mb.pdf
+
+# corpus-v2 generator venv
+notes/qa-fixtures/corpus-v2/_gen/.venv/

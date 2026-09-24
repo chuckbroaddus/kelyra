@@ -1,0 +1,10 @@
+{
+  "id": "science-diagram-assessment",
+  "license": "CC0-1.0",
+  "synthetic": true,
+  "has_diagram": true,
+  "files": [
+    "worksheet.pdf",
+    "answer-key.pdf"
+  ]
+}

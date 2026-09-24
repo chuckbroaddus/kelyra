@@ -1,0 +1,10 @@
+{
+  "id": "math-graph-assessment",
+  "license": "CC0-1.0",
+  "synthetic": true,
+  "has_graph": true,
+  "files": [
+    "worksheet.pdf",
+    "answer-key.pdf"
+  ]
+}

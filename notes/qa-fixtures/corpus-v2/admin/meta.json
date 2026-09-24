@@ -1,0 +1,16 @@
+{
+  "license": "CC0-1.0",
+  "synthetic": true,
+  "files": [
+    "class-roster-fom.pdf",
+    "curriculum-outline-homeroom.pdf",
+    "curriculum-outline-math.pdf",
+    "lesson-plan-fom.pdf",
+    "new-student-enrollment.pdf",
+    "parent-information.pdf",
+    "rubric-essay.pdf",
+    "syllabus-bible.pdf",
+    "syllabus-fom.pdf"
+  ],
+  "note": "Admin forms for ingest/OCR/QA \u2014 not live student records."
+}

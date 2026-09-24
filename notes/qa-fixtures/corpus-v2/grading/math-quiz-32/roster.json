@@ -1,0 +1,202 @@
+{
+  "license": "CC0-1.0",
+  "synthetic": true,
+  "note": "All names are synthetic fixtures for Kelyra QA. Not real students.",
+  "period": "P3",
+  "grade": "8",
+  "count": 32,
+  "students": [
+    {
+      "id": "S01",
+      "first_name": "Alex",
+      "last_name": "Rivera",
+      "display_name": "Alex Rivera"
+    },
+    {
+      "id": "S02",
+      "first_name": "Jordan",
+      "last_name": "Chen",
+      "display_name": "Jordan Chen"
+    },
+    {
+      "id": "S03",
+      "first_name": "Sam",
+      "last_name": "Patel",
+      "display_name": "Sam Patel"
+    },
+    {
+      "id": "S04",
+      "first_name": "Casey",
+      "last_name": "Nguyen",
+      "display_name": "Casey Nguyen"
+    },
+    {
+      "id": "S05",
+      "first_name": "Riley",
+      "last_name": "Brooks",
+      "display_name": "Riley Brooks"
+    },
+    {
+      "id": "S06",
+      "first_name": "Morgan",
+      "last_name": "Kim",
+      "display_name": "Morgan Kim"
+    },
+    {
+      "id": "S07",
+      "first_name": "Taylor",
+      "last_name": "Garcia",
+      "display_name": "Taylor Garcia"
+    },
+    {
+      "id": "S08",
+      "first_name": "Avery",
+      "last_name": "Walsh",
+      "display_name": "Avery Walsh"
+    },
+    {
+      "id": "S09",
+      "first_name": "Quinn",
+      "last_name": "Hassan",
+      "display_name": "Quinn Hassan"
+    },
+    {
+      "id": "S10",
+      "first_name": "Reese",
+      "last_name": "Okoro",
+      "display_name": "Reese Okoro"
+    },
+    {
+      "id": "S11",
+      "first_name": "Cameron",
+      "last_name": "Lopez",
+      "display_name": "Cameron Lopez"
+    },
+    {
+      "id": "S12",
+      "first_name": "Jamie",
+      "last_name": "Singh",
+      "display_name": "Jamie Singh"
+    },
+    {
+      "id": "S13",
+      "first_name": "Drew",
+      "last_name": "Martinez",
+      "display_name": "Drew Martinez"
+    },
+    {
+      "id": "S14",
+      "first_name": "Parker",
+      "last_name": "Andersen",
+      "display_name": "Parker Andersen"
+    },
+    {
+      "id": "S15",
+      "first_name": "Blake",
+      "last_name": "Torres",
+      "display_name": "Blake Torres"
+    },
+    {
+      "id": "S16",
+      "first_name": "Skyler",
+      "last_name": "Bennett",
+      "display_name": "Skyler Bennett"
+    },
+    {
+      "id": "S17",
+      "first_name": "Finley",
+      "last_name": "Cruz",
+      "display_name": "Finley Cruz"
+    },
+    {
+      "id": "S18",
+      "first_name": "Harper",
+      "last_name": "Diaz",
+      "display_name": "Harper Diaz"
+    },
+    {
+      "id": "S19",
+      "first_name": "Emerson",
+      "last_name": "Foster",
+      "display_name": "Emerson Foster"
+    },
+    {
+      "id": "S20",
+      "first_name": "Rowan",
+      "last_name": "Hughes",
+      "display_name": "Rowan Hughes"
+    },
+    {
+      "id": "S21",
+      "first_name": "Sawyer",
+      "last_name": "Ibrahim",
+      "display_name": "Sawyer Ibrahim"
+    },
+    {
+      "id": "S22",
+      "first_name": "Phoenix",
+      "last_name": "Jenkins",
+      "display_name": "Phoenix Jenkins"
+    },
+    {
+      "id": "S23",
+      "first_name": "Dakota",
+      "last_name": "Kowalski",
+      "display_name": "Dakota Kowalski"
+    },
+    {
+      "id": "S24",
+      "first_name": "Hayden",
+      "last_name": "Lee",
+      "display_name": "Hayden Lee"
+    },
+    {
+      "id": "S25",
+      "first_name": "Logan",
+      "last_name": "Morales",
+      "display_name": "Logan Morales"
+    },
+    {
+      "id": "S26",
+      "first_name": "Peyton",
+      "last_name": "Nakamura",
+      "display_name": "Peyton Nakamura"
+    },
+    {
+      "id": "S27",
+      "first_name": "Charlie",
+      "last_name": "Owens",
+      "display_name": "Charlie Owens"
+    },
+    {
+      "id": "S28",
+      "first_name": "Elliot",
+      "last_name": "Perez",
+      "display_name": "Elliot Perez"
+    },
+    {
+      "id": "S29",
+      "first_name": "Parker",
+      "last_name": "Quinn",
+      "display_name": "Parker Quinn"
+    },
+    {
+      "id": "S30",
+      "first_name": "Remy",
+      "last_name": "Santos",
+      "display_name": "Remy Santos"
+    },
+    {
+      "id": "S31",
+      "first_name": "Kai",
+      "last_name": "Thompson",
+      "display_name": "Kai Thompson"
+    },
+    {
+      "id": "S32",
+      "first_name": "Nova",
+      "last_name": "Vargas",
+      "display_name": "Nova Vargas"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "license": "CC0-1.0",
+  "synthetic": true,
+  "files": [
+    "typed-research-sample.pdf",
+    "handwritten-draft.pdf",
+    "handwritten-draft-phone.jpg"
+  ],
+  "handwriting": "simulated on handwritten-draft.*"
+}
