@@ -440,6 +440,12 @@ const styles = StyleSheet.create({
     marginHorizontal: -4,
     flexDirection: 'row',
     alignItems: 'center',
+    // Morphing pill widths must not change the office column layout width.
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   solo: {
     marginBottom: 8,
@@ -460,6 +466,9 @@ const styles = StyleSheet.create({
   scroller: {
     flex: 1,
     minWidth: 0,
+    maxWidth: '100%',
+    // Clip morphing pills; do not let content width grow the host.
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
@@ -467,6 +476,8 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingRight: PERSON_TAB_ROW_PAD_END,
+    // Content may be wider than the row — ScrollView scrolls; host width stays put.
+    flexGrow: 0,
   },
   hit: {
     minWidth: PERSON_TAB_ICON_HIT,

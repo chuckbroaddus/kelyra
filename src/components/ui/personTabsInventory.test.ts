@@ -162,6 +162,10 @@ test('expo iOS first-tab snap: skip scrollTo on instant/defer + no clipped subvi
   assert.match(pills, /motion === 'instant' \|\| motion === 'defer'/);
   assert.doesNotMatch(pills, /setTimeout\([\s\S]*scrollTo/);
   assert.match(pills, /scrollEnabled=\{rowOverflows\}/);
+  // Outer host width stays viewport-constant; pill morph only clips inside.
+  assert.match(pills, /Morphing pill widths must not change the office column/);
+  assert.match(pills, /alignSelf: 'stretch'/);
+  assert.match(pills, /overflow: 'hidden'/);
   // Scroll effect deps are value/rowWidth/reduce only — metrics via refs.
   assert.match(pills, /tabsRef/);
   assert.match(pills, /scrollMetricsRef/);

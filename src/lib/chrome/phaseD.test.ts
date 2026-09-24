@@ -100,6 +100,12 @@ test('office home: stable FlushBody + PersonTabs sibling (no collapse / no scrol
   // Non-feed panes scroll inside a pane ScrollView; Feed stays Fill FeedPane.
   assert.match(home, /<ScrollView/);
   assert.match(home, /FeedPane scope="school" fill/);
+  // Column lock: morph/scrollbar must not recenter the 640 frame L/R.
+  assert.match(home, /officeColumn/);
+  assert.match(home, /scrollbarGutter: 'stable'/);
+  const screen = read('src/components/ui/Screen.tsx');
+  assert.match(screen, /flushFill:[\s\S]*overflow: 'hidden'/);
+  assert.match(screen, /flush:[\s\S]*minWidth: 0/);
 });
 
 

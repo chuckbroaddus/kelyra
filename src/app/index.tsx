@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { PrimaryButton } from '@/components/ui/Button';
@@ -187,6 +187,7 @@ export default function HomeScreen() {
       scroll={false}
       avoidKeyboard={pane !== 'feed'}
     >
+      <View style={styles.officeColumn}>
       {profile ? (
         <Text style={[type.meta, { color: colors.mute }]}>
           <HandleLink username={profile.username} profileId={profile.id} inline />
@@ -209,7 +210,11 @@ export default function HomeScreen() {
         <FeedPane scope="school" fill />
       ) : (
         <ScrollView
-          style={styles.paneScroll}
+          style={[
+            styles.paneScroll,
+            // Web: reserve gutter so scrollbar presence does not recenter the 640 column.
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
           contentContainerStyle={styles.paneScrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -360,6 +365,7 @@ export default function HomeScreen() {
           ) : null}
         </ScrollView>
       )}
+      </View>
       <ConfirmSheet
         visible={Boolean(pending)}
         title={`Delete ${pending?.name ?? 'class'}?`}
@@ -425,10 +431,21 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 12,
   },
+  officeColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
   paneScroll: {
     flex: 1,
+    width: '100%',
+    minWidth: 0,
   },
   paneScrollContent: {
     flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
   },
 });
