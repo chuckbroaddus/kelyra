@@ -4,170 +4,140 @@
 **Author:** Chief of Staff / Grok Bot (Kelyra)  
 **Status:** Ready for Chuck review  
 **Revision:** R1  
-**Cards:** `t_a2d9bdc1`  
 **Research:** `notes/company/gradeable-work-types-research.md`  
-**Dated digest:** `notes/research/2026-09-24-gradeable-work-types-report.md`  
-**Stack:** Expo + Supabase. **No app/SQL from this card.**
+**Digest:** `notes/research/2026-09-24-gradeable-work-types-report.md`  
+**Cards:** `t_a2d9bdc1`  
+**Stack:** Expo + Supabase. No app/SQL from this card.
 
-**Depends on / keep:** AVG syllabus epic (`notes/company/avg-spec-syllabus-ia.md` et al.), `docs/data-model.md` assignment columns, `notes/authoring/kinds-metrics.md` (Author stays `kind=lesson`), `research/05-gradebooks-skill-plans-incentives.md`.
+**Product law:** Labels and facets first. Weighted averages stay AVG-P1. Capture → Needs → Approve remains the gate. Do not become SIS of record.
 
 ---
 
-## 0. Product law
+## 0. Decision lock (recommended)
 
-| Law | Meaning |
+| Decision | Lock |
 |---|---|
-| **Approve gate** | Nothing is a grade until the teacher Approves (draft AI score ≠ grade). |
-| **Not of record** | Kelyra is not the school SIS grade book of record in v1 (vision / MVP L2). |
-| **Hybrid types** | Canonical `work_kind` vocabulary + teacher-/school-named syllabus **categories** (not a frozen enum alone, not pure free-text alone). |
-| **Author labels ≠ players** | Quiz / test / midterm / final are category / work_kind labels — Author still emits `kind=lesson` only. |
-| **Capture stays thin** | Phone still photographs work; type hint is metadata, not a new capture binary format. |
-| **Weights belong to AVG** | This plan expands taxonomy + seeds; weighted final calc ships with ClassSyllabus (AVG), not a side engine here. |
+| Modeling | **Hybrid:** seedable canonical **work-kind** vocabulary + class **syllabus categories** (weights) + map kind→default category + per-column **score schemes** |
+| Not | Fixed global enum of every teacher label; pure free-text with no seeds |
+| v1 Spring Baptist | Expand category/work-kind seeds + score schemes + capture type hint; keep simple grade book (Approve before grade) |
+| Defer | Full weighted ClassSyllabus engine, SBG/mastery heatmaps, behavior-as-GPA, drop-lowest rules |
+| AI | Draft scores only behind Approve; never auto-publish |
+| Scope | Classroom gradebook flexibility — not district SIS / transcript SoT |
 
 ---
 
-## 1. Non-goals
+## 1. Explicit non-goals
 
 | Non-goal | Why |
 |---|---|
-| App / SQL / migrations from this card | Research + plan only |
-| Hermes AI staffing | Card constraint |
-| Replace FACTS / PowerSchool / Skyward | Vision |
-| Auto-publish AI grades | Law |
-| `kind=quiz` Author player | kinds-metrics lock |
-| Full SBG standards library | MVP L9 / later |
-| ClassDojo behavior economy | research/05 |
-| SIS/LMS category sync v1 | MVP L2/L3 |
+| App code / SQL on this card | Research epic |
+| Replacing AVG-P1 ClassSyllabus tables | This feeds AVG; does not own grade math |
+| PowerSchool / FACTS parity | Private-school trial needs flexibility, not SIS lock-in |
+| `kind=quiz` Author runtimes | Author quiz/test stay category labels (`kinds-metrics.md`) |
+| Auto-publishing AI grades | Product + FERPA posture |
+| Attendance-as-grade engine in v1 | Cell codes later; attendance product gap separate |
 
 ---
 
-## 2. Modeling decision (locked for Eng when greenlit)
+## 2. Needed vs Desired
 
-### 2.1 Three facets per grade column
+### Needed (P0) — taxonomy + labeling for trial
 
-| Facet | Storage (sketch — Architect names) | v1 behavior |
+| ID | Capability | Rationale |
 |---|---|---|
-| **`work_kind`** | Canonical key from seed vocabulary | Picker + default; filter/analytics/AI hint |
-| **`category`** | Existing text → becomes key into ClassSyllabus categories when AVG ships | Keep free text + richer seeds until syllabus table exists |
-| **`score_scheme`** | Extend beyond `numeric` \| `pass_fail` \| `either` | Add `complete_incomplete` in near-term; letter / rubric_level later |
+| N1 | Seed list of canonical work-kinds (homework, classwork, warmup, exit_ticket, quiz, test, exam, project, lab, essay, presentation, portfolio, practice, worksheet, notebook, reading_log, memorization, performance, participation, effort, behavior, citizenship, other_*) | Teachers can label “anything” without empty free-text chaos |
+| N2 | Class-level **syllabus category** names (teacher- or school-seeded) with optional weights field (even if engine not live) | Matches PowerSchool / Canvas / FACTS pattern; unlocks AVG later |
+| N3 | Default map work-kind → category at create; teacher can refile | Fast capture UX |
+| N4 | Score schemes per column: numeric, pass-fail, letter, rubric-level, complete/incomplete, narrative-only | Elementary + specials + Christian school marks |
+| N5 | Capture / KEYGRADE **type hint** from work-kind (vision prompt + UI chip) | Better AI drafts without new kinds |
+| N6 | Missing / incomplete / excused **cell codes** vocabulary (doc + UX copy) | Teacher trust; FACTS-like codes |
+| N7 | Christian / classical seeds (e.g. memorization / memory verse) as presets, not hard-coded theology | Spring Baptist / FACTS-like |
+| N8 | Keep Approve gate; AI scores never auto-post | Existing product law |
 
-**Defaulting:** `work_kind` → suggests `category` label (e.g. `exit_ticket` → “Exit tickets” or formative bucket). Teacher can refile. **No forced 1:1.**
+### Desired (P1)
 
-### 2.2 Seed vocabulary (v1 ship list)
-
-**Academic:** `homework`, `classwork`, `warmup`, `exit_ticket`, `quiz`, `test`, `exam`, `project`, `lab`, `essay`, `presentation`, `portfolio`, `practice`, `discussion`, `notebook`, `reading_log`, `memorization`, `other_academic`
-
-**Process (often out of average):** `participation`, `effort`, `behavior`, `citizenship`, `preparedness`
-
-**Christian / private preset extras (Spring Baptist template):** `memorization` (memory verse), `bible_quiz` (alias → quiz + Bible category), optional `chapel` (non-average)
-
-**Admin cell states (not work kinds — track as mark codes later):** missing, incomplete, excused, absent, late, extra_credit, retake
-
-### 2.3 Score schemes
-
-| Scheme | v1 trial | Later |
+| ID | Capability | Rationale |
 |---|---|---|
-| `numeric` | **Yes** | |
-| `pass_fail` | **Yes** (live) | |
-| `either` | **Yes** (live) | |
-| `complete_incomplete` | **Needed soon** | |
-| `letter` / ESNU | Desired | Elementary |
-| `rubric_level` | Desired | With rubrics epic |
-| `narrative` column | Desired | Report comments |
+| D1 | Full **ClassSyllabus** weighted engine (AVG-P1) | Real averages teachers expect |
+| D2 | Drop-lowest / replace / retake policy on category | Canvas-like; AVG-R1 |
+| D3 | Rubric templates linked to work-kind | Essay/project/presentation |
+| D4 | Formative vs summative facet (filter + report) | Separate from category weights |
+| D5 | Parent-safe views of category averages (no peer compare) | FERPA-aware transparency |
 
-### 2.4 Capture / AI grading map
+### Desired (P2)
 
-| Can draft via capture + AI (Approve required) | Manual-only (or later assist) |
+| ID | Capability | Rationale |
+|---|---|---|
+| E1 | Standards / SBG columns + mastery | Secondary / district later |
+| E2 | Behavior / citizenship as separate report marks (not in academic GPA by default) | Policy choice for Chuck |
+| E3 | Kindergarten checklist / ESNU scales | Early elementary |
+| E4 | SIS export mapping (FACTS / PowerSchool category codes) | Multi-school |
+| E5 | Author pack presets that stamp work-kind + default category | Author ↔ gradebook join |
+
+---
+
+## 3. Phased roadmap
+
+| Phase | Ship | Depends |
+|---|---|---|
+| **P0** | Seeds + score schemes + capture hints + cell codes (docs/UX) | None |
+| **P1** | AVG ClassSyllabus weights + drop/replace | AVG-P1 implement |
+| **P2** | SBG / checklist / SIS maps / Author stamps | Multi-school + counsel |
+
+---
+
+## 4. Schema sketch (plan only — no SQL apply)
+
+Conceptual (Architect owns real migrations later):
+
+- `work_kind` — text/enum seed on `assignments` (expand beyond `homework`)
+- `syllabus_categories` — per class: name, weight_pct, sort, include_in_average
+- `assignments.category_id` → syllabus category (plus denormalized label OK)
+- `assignments.score_scheme` — enum
+- `grade_cells` / existing grades: support code enum `M|I|EXC|ABS|…` alongside numeric
+- Optional `formative_summative` facet
+
+Do **not** invent migrations on this card.
+
+---
+
+## 5. UX surfaces
+
+| Surface | Change |
 |---|---|
-| homework, classwork, warmup, exit_ticket, quiz (paper), test (paper), essay, lab write-up, worksheet, practice | participation, effort, behavior, citizenship, live oral/PE demo, concert judge |
+| Create / edit assignment | Work-kind picker (searchable seeds) + category + score scheme |
+| Capture → Needs | Type hint from work-kind; teacher can change before Approve |
+| Gradebook column header | Kind chip + category |
+| Office | Optional school-seeded category templates for Spring Baptist |
+| Parent | Category averages only after Publish/Approve rules; no peer histogram |
 
 ---
 
-## 3. Needed vs Desired
+## 6. Open questions for Chuck
 
-### Needed P0 (taxonomy coverage for Spring Baptist trial)
-
-| ID | Item | Rationale |
-|---|---|---|
-| G0-1 | Ship expanded `work_kind` seed + teacher picker | CEO exhaustive taxonomy ask |
-| G0-2 | Map work_kind → default category string on create | Teachers support “anything” without blank labels |
-| G0-3 | Capture / Needs optional **type hint** (homework vs exit ticket vs quiz…) | Correct column labeling from phone |
-| G0-4 | Keep Approve gate; AI draft only | Law |
-| G0-5 | Christian preset pack (memorization / Bible-friendly labels) | Private school trial |
-| G0-6 | Document gaps: no weighted syllabus until AVG | Honest trial scope |
-| G0-7 | Do not invent quiz Author player | kinds-metrics |
-
-### Needed P0-adjacent (small Eng, high trust)
-
-| ID | Item |
-|---|---|
-| G0-8 | `complete_incomplete` score scheme |
-| G0-9 | `include_in_average` default **false** for participation/behavior/citizenship seeds |
-
-### Desired P1–P2
-
-| ID | Item | Pri |
-|---|---|---|
-| G1-1 | ClassSyllabus weighted categories (AVG-P1) | P1 |
-| G1-2 | Drop-lowest / retake-cap / late policy | P1 |
-| G1-3 | Mark codes M/I/Exc/Abs | P1 |
-| G1-4 | Letter + ESNU scales | P1 |
-| G1-5 | Rubric_level scoring | P2 |
-| G1-6 | SBG attempts + trends | P2 |
-| G1-7 | Conduct mark separate from academic average | P1 |
-| G1-8 | Specials / K checklist templates | P2 |
-| G1-9 | Office-locked school category catalog | P2 |
-| G1-10 | SIS/LMS category sync | P2+ |
+1. For Spring Baptist, prefer **FACTS-like teacher-built categories** or a **school-seeded locked list** office controls?  
+2. Should **participation / citizenship / behavior** ever sit inside academic average, or always separate marks?  
+3. Is **memory verse / Bible quiz** a first-class preset for Christian templates, or generic “memorization”?  
+4. Trial priority: **richer labels only** first, or accelerate **AVG weighted syllabus** before Spring Baptist?  
+5. Kindergarten / early elementary on the trial roster — need checklist/ESNU in v1 or numeric-only OK?  
+6. Should pop quizzes default to **calendar-hidden** until Publish (existing calendar law) regardless of work_kind?
 
 ---
 
-## 4. Gaps vs live product (action list)
+## 7. Acceptance for a future implement card
 
-| Gap | Action owner when greenlit |
-|---|---|
-| Thin category examples in `docs/data-model.md` | Eng + docs after seed ships |
-| No `work_kind` column | Architect sketch → migration (not this card) |
-| No ClassSyllabus table | AVG epic |
-| Capture kind only homework \| voice_note | Type hint metadata vs new capture kinds — prefer metadata |
-| Score schemes missing complete/incomplete | Small schema + UI |
-| AVG HOLD for weights | Do not fake averages |
-
----
-
-## 5. Hats — stories
-
-**Teacher:** Pick work kind when creating a column or filing a capture; rename category; choose whether it counts; Approve AI draft.  
-**Student / Parent:** See published labels + approved scores only — never drafts; no need to understand `work_kind` keys.  
-**Office:** Optional later — seed / lock school catalog; not v1 editor.  
-**Author:** Unchanged — lesson packs; category label on assign only.
+- [ ] Seed work-kinds live in create-assignment UI  
+- [ ] Score scheme selectable; complete/incomplete works end-to-end  
+- [ ] Capture hint uses work-kind  
+- [ ] Missing/incomplete codes enterable  
+- [ ] No weighted math until AVG-P1 ships (or explicitly scoped)  
+- [ ] QA: synthetic fixtures from `notes/qa-fixtures/corpus-v2/` labeled with kinds  
+- [ ] verify-before-done + no auto-publish AI grades  
 
 ---
 
-## 6. Phased delivery (recommendation)
+## 8. Pointers
 
-| Phase | Scope | Depends |
-|---|---|---|
-| **A — Labels (this epic’s Eng follow-on)** | work_kind seed, picker, defaults, capture type hint, Christian preset, complete/incomplete | Chuck greenlight |
-| **B — Syllabus math** | ClassSyllabus + weights + drop/retake | AVG epic |
-| **C — Marks & elementary** | Mark codes, ESNU/letter, checklists | Trial feedback |
-| **D — SBG / sync** | Standards attempts, LMS/SIS | Post-MVP |
-
----
-
-## 7. Open questions (block Eng until answered)
-
-1. Spring Baptist: teacher-editable categories vs office-locked list?  
-2. Participation/behavior inside academic average — never / optional / school policy?  
-3. Trial priority: Phase A labels only, or pull AVG weights forward?  
-4. Kindergarten on roster — checklist/ESNU in Phase A or defer?  
-5. Memory verse: first-class `memorization` vs generic homework + tag?
-
----
-
-## 8. Acceptance for *this* research card
-
-- [x] `notes/company/gradeable-work-types-research.md` — taxonomy + SIS patterns + hybrid recommendation  
-- [x] `notes/company/gradeable-work-types-plan.md` — this file  
-- [x] `notes/research/2026-09-24-gradeable-work-types-report.md` — Chuck digest  
-- [ ] Card `t_a2d9bdc1` completed with summary (ops)  
-- No app code, no SQL, no Hermes staffing, no force-push
+- Research: `notes/company/gradeable-work-types-research.md`  
+- Digest: `notes/research/2026-09-24-gradeable-work-types-report.md`  
+- AVG: `notes/company/avg-spec-syllabus-ia.md`  
