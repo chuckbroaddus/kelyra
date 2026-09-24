@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { radius, type } from '@/constants/theme';
@@ -11,23 +12,70 @@ type Props = {
   items: CalendarItem[];
   /** Entire month card (title, weekday row, day numbers, empty cells) zooms to Month. */
   onPressMonth: (year: number, monthIndex0: number) => void;
+  /**
+   * Today on Year — scroll so this month’s row is in the viewport (CEO 2026-09-24).
+   * `focusNonce` bumps on every Today press so a second tap still re-scrolls.
+   */
+  focusMonthIndex0?: number | null;
+  focusNonce?: number;
+  /** Y of the focused month’s row relative to this YearGrid root. */
+  onFocusMonthY?: (y: number) => void;
 };
 
 /** CAL-25 Year spine — 2-col mini-months; dots ≤4 role tints. Tap card → Month only. */
-export function YearGrid({ year, items, onPressMonth }: Props) {
+export function YearGrid({
+  year,
+  items,
+  onPressMonth,
+  focusMonthIndex0 = null,
+  focusNonce = 0,
+  onFocusMonthY,
+}: Props) {
   const { colors } = useTheme();
   const blocks = yearMonthBlocks(year, items);
+  const monthYRef = useRef<Map<number, number>>(new Map());
+  const pendingRef = useRef<{ month: number; nonce: number } | null>(null);
 
   const rows: (typeof blocks)[] = [];
   for (let i = 0; i < blocks.length; i += 2) {
     rows.push(blocks.slice(i, i + 2));
   }
 
+  const tryPublish = (monthIndex0: number) => {
+    if (!onFocusMonthY) return false;
+    const y = monthYRef.current.get(monthIndex0);
+    if (y == null) return false;
+    onFocusMonthY(y);
+    pendingRef.current = null;
+    return true;
+  };
+
+  useEffect(() => {
+    if (focusMonthIndex0 == null || focusMonthIndex0 < 0 || focusMonthIndex0 > 11) return;
+    if (!onFocusMonthY) return;
+    pendingRef.current = { month: focusMonthIndex0, nonce: focusNonce };
+    tryPublish(focusMonthIndex0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Today nonce / month / year only
+  }, [focusMonthIndex0, focusNonce, year]);
+
   // CAL-R5-02: chevron year row lives in calendar toolbar — no duplicate bold year here.
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`Year ${year}`}>
       {rows.map((pair, rowIndex) => (
-        <View key={`row-${rowIndex}`} style={styles.row}>
+        <View
+          key={`row-${rowIndex}`}
+          style={styles.row}
+          onLayout={(event) => {
+            const y = event.nativeEvent.layout.y;
+            for (const block of pair) {
+              monthYRef.current.set(block.monthIndex0, y);
+            }
+            const pending = pendingRef.current;
+            if (pending && pair.some((b) => b.monthIndex0 === pending.month)) {
+              tryPublish(pending.month);
+            }
+          }}
+        >
           {pair.map((block) => (
             <Pressable
               key={`${block.year}-${block.monthIndex0}`}

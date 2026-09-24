@@ -156,6 +156,12 @@ export default function CalendarScreen() {
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
+  /** Today→Year: scroll YearGrid to today’s month row (nonce re-fires same month). */
+  const [yearTodayFocus, setYearTodayFocus] = useState<{ monthIndex0: number; nonce: number } | null>(
+    null,
+  );
+  const yearHostYRef = useRef(0);
+  const yearFocusNonceRef = useRef(0);
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
   const [monthMode, setMonthMode] = useState<MonthMode>('compact');
@@ -746,6 +752,10 @@ export default function CalendarScreen() {
       setMonthSelectedDay(today);
     } else if (activeView === 'year') {
       setYearAnchor(yearContaining(today));
+      // Scroll Year body to today’s month (e.g. September when Jan–Apr were on screen).
+      const monthIndex0 = Math.max(0, Math.min(11, Number(today.slice(5, 7)) - 1));
+      yearFocusNonceRef.current += 1;
+      setYearTodayFocus({ monthIndex0, nonce: yearFocusNonceRef.current });
     }
   };
 
@@ -1053,16 +1063,30 @@ export default function CalendarScreen() {
             />
           </View>
         ) : activeView === 'year' ? (
-          <YearGrid
-            year={year}
-            items={visibleItems}
-            onPressMonth={(y, m0) => {
-              const iso = `${y}-${String(m0 + 1).padStart(2, '0')}-01`;
-              setMonthAnchor(iso);
-              setMonthSelectedDay(null);
-              zoomTo('month');
+          <View
+            onLayout={(event) => {
+              yearHostYRef.current = event.nativeEvent.layout.y;
             }}
-          />
+          >
+            <YearGrid
+              year={year}
+              items={visibleItems}
+              focusMonthIndex0={yearTodayFocus?.monthIndex0 ?? null}
+              focusNonce={yearTodayFocus?.nonce ?? 0}
+              onFocusMonthY={(localY) => {
+                screenScrollRef.current?.scrollTo({
+                  y: Math.max(0, yearHostYRef.current + localY - 8),
+                  animated: true,
+                });
+              }}
+              onPressMonth={(y, m0) => {
+                const iso = `${y}-${String(m0 + 1).padStart(2, '0')}-01`;
+                setMonthAnchor(iso);
+                setMonthSelectedDay(null);
+                zoomTo('month');
+              }}
+            />
+          </View>
         ) : items.length > 0 ? (
           <AgendaList
             days={agendaRange.days}
