@@ -288,16 +288,25 @@ const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'center',
   },
   flush: {
     flex: 1,
+    // Fixed fraction of parent up to maxWidth — never size to children.
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   flushFill: {
     flex: 1,
+    width: '100%',
+    minWidth: 0,
     minHeight: 0,
+    overflow: 'hidden',
   },
   centered: {
     flexGrow: 1,

@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
@@ -192,8 +192,11 @@ export default function ClassOfficeScreen() {
   const tabs = officeClassPersonTabs(feedIcon);
   const pane = tabs.some((item) => item.key === tab) ? tab : 'teacher';
 
+  // Stable FlushBody + Feed host (same as office home): no scroll/avoidKeyboard toggle,
+  // Feed host stays mounted so PersonTabs rowWidth does not jump on first-tab morph.
   return (
-    <Screen keyboard maxWidth={640} scroll={pane !== 'feed'} avoidKeyboard={pane !== 'feed'}>
+    <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={false}>
+      <View style={styles.officeColumn}>
       <Text style={[type.display, { color: colors.ink }]}>{klass.name}</Text>
       <Text style={[styles.lead, { color: colors.mute }]}>
         School office card. This is not the teacher desk — no capture, no grade book from here.
@@ -201,6 +204,25 @@ export default function ClassOfficeScreen() {
       <PersonTabs tabs={tabs} value={pane} onChange={setTab} />
       {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
 
+      <View
+        style={pane === 'feed' ? styles.feedOn : styles.feedOff}
+        pointerEvents={pane === 'feed' ? 'auto' : 'none'}
+        accessibilityElementsHidden={pane !== 'feed'}
+        importantForAccessibility={pane === 'feed' ? 'yes' : 'no-hide-descendants'}
+      >
+        <FeedPane classId={klass.id} scope="class" fill />
+      </View>
+
+      {pane !== 'feed' ? (
+        <ScrollView
+          style={[
+            styles.paneScroll,
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
+          contentContainerStyle={styles.paneScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       {pane === 'teacher' ? (
         <>
           <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />
@@ -397,7 +419,9 @@ export default function ClassOfficeScreen() {
         </>
       ) : null}
 
-      {pane === 'feed' ? <FeedPane classId={klass.id} scope="class" fill /> : null}
+        </ScrollView>
+      ) : null}
+      </View>
 
       <FormSheet
         visible={Boolean(picking)}
@@ -459,6 +483,34 @@ function CheckBox({ checked }: { checked: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  officeColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  feedOn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  feedOff: {
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
+    width: '100%',
+  },
+  paneScroll: {
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+  },
+  paneScrollContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
+  },
   lead: {
     ...type.body,
     marginTop: 8,

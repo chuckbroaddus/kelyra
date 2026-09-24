@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FeedPane } from '@/components/ui/FeedPane';
 import { ListRow } from '@/components/ui/ListRow';
@@ -86,6 +86,11 @@ export default function MessagesScreen() {
   const onMessages = pane === 'messages';
   const onAlerts = pane === 'alerts';
   const fillFeed = Boolean(activeFeed);
+  // Keep last feed mounted (height 0 when off) so Messages↔Feed does not remount PersonTabs host sibling.
+  const [openedFeed, setOpenedFeed] = useState<typeof activeFeed>(null);
+  useEffect(() => {
+    if (activeFeed) setOpenedFeed(activeFeed);
+  }, [activeFeed]);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -122,15 +127,42 @@ export default function MessagesScreen() {
     );
   }
 
+  // Stable FlushBody + Feed host: no scroll/avoidKeyboard toggle (KAV remount snaps tabs).
+  // Feed host stays mounted when a feed tab exists; Messages/Alerts use pane ScrollView.
   return (
     <View style={styles.shell}>
     <Screen
       keyboard={onMessages || fillFeed}
       maxWidth={640}
-      scroll={!fillFeed}
-      avoidKeyboard={!fillFeed}
+      scroll={false}
+      avoidKeyboard={false}
     >
+      <View style={styles.messagesColumn}>
       <PersonTabs tabs={tabs} value={pane} onChange={setPane} />
+      {openedFeed ? (
+        <View
+          style={fillFeed ? styles.feedOn : styles.feedOff}
+          pointerEvents={fillFeed ? 'auto' : 'none'}
+          accessibilityElementsHidden={!fillFeed}
+          importantForAccessibility={fillFeed ? 'yes' : 'no-hide-descendants'}
+        >
+          <FeedPane
+            classId={openedFeed.kind === 'class' ? openedFeed.id : null}
+            scope={openedFeed.kind === 'class' ? 'class' : 'school'}
+            fill
+          />
+        </View>
+      ) : null}
+      {!fillFeed ? (
+        <ScrollView
+          style={[
+            styles.paneScroll,
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
+          contentContainerStyle={styles.paneScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
       {onMessages ? (
         <>
           {favorites.length ? (
@@ -225,16 +257,10 @@ export default function MessagesScreen() {
 
         </>
       ) : null}
-
-      {activeFeed ? (
-        <FeedPane
-          classId={activeFeed.kind === 'class' ? activeFeed.id : null}
-          scope={activeFeed.kind === 'class' ? 'class' : 'school'}
-          fill
-        />
-      ) : null}
-
       {onAlerts ? <NotificationsPane /> : null}
+        </ScrollView>
+      ) : null}
+      </View>
     </Screen>
     {onMessages ? (
       <>
@@ -263,6 +289,34 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
+  },
+  messagesColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  feedOn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  feedOff: {
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
+    width: '100%',
+  },
+  paneScroll: {
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+  },
+  paneScrollContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
   },
   favRow: {
     gap: 16,

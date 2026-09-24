@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { PrimaryButton } from '@/components/ui/Button';
@@ -177,13 +177,20 @@ export default function HomeScreen() {
   ];
   const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
+  // Stable FlushBody + stable Feed host (student/class pattern):
+  // - scroll={false} always — never swap Screen ScrollView↔FlushBody (remounts tabs)
+  // - avoidKeyboard={false} always — toggling wraps/unwraps KeyboardAvoidingView and
+  //   remounts PersonTabs (Animated morph snaps). FeedPane handles its own keyboard.
+  // - Feed host View always mounted for office; height 0 when off so pane swap does
+  //   not thrash PersonTabs rowWidth. Keep CM-Linear label morph in PersonTabs.
   return (
     <Screen
       keyboard
-      maxWidth={pane === 'feed' || pane === 'people' ? 640 : 480}
-      scroll={pane !== 'feed'}
-      avoidKeyboard={pane !== 'feed'}
+      maxWidth={640}
+      scroll={false}
+      avoidKeyboard={false}
     >
+      <View style={styles.officeColumn}>
       {profile ? (
         <Text style={[type.meta, { color: colors.mute }]}>
           <HandleLink username={profile.username} profileId={profile.id} inline />
@@ -202,152 +209,175 @@ export default function HomeScreen() {
       ) : null}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
 
-      {pane === 'manage' && officeSeat ? (
-        <>
-          {profile?.role === 'superintendent' ? (
-            <SchoolIdentityFields
-              identity={schoolIdentity}
-              onChange={setSchoolIdentity}
-              onError={setStatus}
-            />
-          ) : null}
-          {schoolFeed ? (
-            <FeedIconRow
-              title="School feed icon"
-              value={schoolFeed.icon}
-              onPick={async (icon) => {
-                try {
-                  await setSchoolFeedIcon(icon);
-                  setSchoolFeed({ ...schoolFeed, icon });
-                } catch (err) {
-                  setStatus(err instanceof Error ? err.message : 'Could not save the feed icon');
-                }
-              }}
-            />
-          ) : null}
-          {isAlsoParent(profile) ? (
-            <ListRow
-              title="My children"
-              status="Progress for your own kids"
-              icon="children"
-              onPress={() => router.push('/parent')}
-            />
-          ) : null}
-          <ListRow
-            title="Dismissal curb"
-            status="Walk line, checkout, attach plate"
-            icon="ride"
-            onPress={() => router.push('/ride')}
-          />
-          <ListRow
-            title="Ride office"
-            status="Lines, restrictions, archive"
-            icon="manage"
-            onPress={() => router.push('/admin/ride')}
-          />
-          {canViewActivity ? (
-            <ListRow
-              title="Activity"
-              status="Immutable change log"
-              icon="history"
-              onPress={() => router.push('/activity')}
-            />
-          ) : null}
-          {canEditMatrix ? (
-            <ListRow
-              title="Responsibilities"
-              status="Who may do what (UI chrome; server stays the hard gate)"
-              icon="details"
-              onPress={() => router.push('/admin/matrix')}
-            />
-          ) : null}
-        </>
+      {officeSeat ? (
+        <View
+          style={pane === 'feed' ? styles.feedOn : styles.feedOff}
+          pointerEvents={pane === 'feed' ? 'auto' : 'none'}
+          accessibilityElementsHidden={pane !== 'feed'}
+          importantForAccessibility={pane === 'feed' ? 'yes' : 'no-hide-descendants'}
+        >
+          <FeedPane scope="school" fill />
+        </View>
       ) : null}
 
-      {pane === 'feed' && officeSeat ? <FeedPane scope="school" fill /> : null}
-
-      {pane === 'people' && officeSeat ? <PeopleDirectory /> : null}
-
-      {pane === 'classes' ? (
-        <>
-          {(() => {
-            const lead = empty
-              ? showCreateClass
-                ? 'Create a class on New, then assign a teacher.'
-                : 'No classes yet. The office assigns the classes you teach.'
-              : officeSeat
-                ? 'Every class in the school. Open a card for teacher and roster.'
-                : null;
-            return lead ? (
-              <Text style={[styles.lead, { color: colors.mute }]}>{lead}</Text>
-            ) : null;
-          })()}
-          {empty ? (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
-            </Text>
-          ) : null}
-          {(classes ?? []).map((item) => {
-            const lesson = lessonRollup.find((row) => row.classId === item.id);
-            return (
-            <ListRow
-              key={item.id}
-              title={item.name}
-              status={
-                lesson
-                  ? `${lesson.title} · ${lesson.done}/${lesson.total} done`
-                  : 'teacherName' in item
-                    ? item.teacherName
-                    : undefined
-              }
-              avatarName={item.name}
-              photoUrl={item.avatarUrl}
-              hasPhoto={Boolean(item.avatar_asset_id)}
-              onPress={() => openClass(item.id)}
-              trailing={
-                canDeleteClass
-                  ? [
-                      {
-                        key: 'delete',
-                        label: 'Delete',
-                        tone: 'danger',
-                        autoCommit: false,
-                        onPress: () => setPending(item),
-                      },
-                    ]
-                  : []
-              }
-            />
-            );
-          })}
-        </>
-      ) : null}
-
-      {pane === 'new' && officeSeat && canCreate ? (
-        <>
-          {newTabs.length > 1 ? (
-            <PersonTabs tabs={newTabs} value={newPane} onChange={setNewKind} />
-          ) : null}
-          {newPane === 'person' && canCreateLogin ? <CreateLoginForm /> : null}
-          {newPane === 'class' && showCreateClass ? (
+      {pane !== 'feed' || !officeSeat ? (
+        <ScrollView
+          style={[
+            styles.paneScroll,
+            // Web: reserve gutter so scrollbar presence does not recenter the 640 column.
+            Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
+          ]}
+          contentContainerStyle={styles.paneScrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {pane === 'manage' && officeSeat ? (
             <>
-              <TextField
-                placeholder="Name of Class"
-                value={name}
-                onChangeText={setName}
-                returnKeyType="done"
-                onSubmitEditing={() => void onCreate()}
+              {profile?.role === 'superintendent' ? (
+                <SchoolIdentityFields
+                  identity={schoolIdentity}
+                  onChange={setSchoolIdentity}
+                  onError={setStatus}
+                />
+              ) : null}
+              {schoolFeed ? (
+                <FeedIconRow
+                  title="School feed icon"
+                  value={schoolFeed.icon}
+                  onPick={async (icon) => {
+                    try {
+                      await setSchoolFeedIcon(icon);
+                      setSchoolFeed({ ...schoolFeed, icon });
+                    } catch (err) {
+                      setStatus(err instanceof Error ? err.message : 'Could not save the feed icon');
+                    }
+                  }}
+                />
+              ) : null}
+              {isAlsoParent(profile) ? (
+                <ListRow
+                  title="My children"
+                  status="Progress for your own kids"
+                  icon="children"
+                  onPress={() => router.push('/parent')}
+                />
+              ) : null}
+              <ListRow
+                title="Dismissal curb"
+                status="Walk line, checkout, attach plate"
+                icon="ride"
+                onPress={() => router.push('/ride')}
               />
-              <View style={styles.gap} />
-              <PrimaryButton
-                label={creating ? 'Creating…' : 'Create class'}
-                disabled={creating}
-                onPress={() => void onCreate()}
+              <ListRow
+                title="Ride office"
+                status="Lines, restrictions, archive"
+                icon="manage"
+                onPress={() => router.push('/admin/ride')}
               />
+              {canViewActivity ? (
+                <ListRow
+                  title="Activity"
+                  status="Immutable change log"
+                  icon="history"
+                  onPress={() => router.push('/activity')}
+                />
+              ) : null}
+              {canEditMatrix ? (
+                <ListRow
+                  title="Responsibilities"
+                  status="Who may do what (UI chrome; server stays the hard gate)"
+                  icon="details"
+                  onPress={() => router.push('/admin/matrix')}
+                />
+              ) : null}
             </>
           ) : null}
-        </>
+
+          {pane === 'people' && officeSeat ? <PeopleDirectory /> : null}
+
+          {pane === 'classes' ? (
+            <>
+              {(() => {
+                const lead = empty
+                  ? showCreateClass
+                    ? 'Create a class on New, then assign a teacher.'
+                    : 'No classes yet. The office assigns the classes you teach.'
+                  : officeSeat
+                    ? 'Every class in the school. Open a card for teacher and roster.'
+                    : null;
+                return lead ? (
+                  <Text style={[styles.lead, { color: colors.mute }]}>{lead}</Text>
+                ) : null;
+              })()}
+              {empty ? (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
+                </Text>
+              ) : null}
+              {(classes ?? []).map((item) => {
+                const lesson = lessonRollup.find((row) => row.classId === item.id);
+                return (
+                <ListRow
+                  key={item.id}
+                  title={item.name}
+                  status={
+                    lesson
+                      ? `${lesson.title} · ${lesson.done}/${lesson.total} done`
+                      : 'teacherName' in item
+                        ? item.teacherName
+                        : undefined
+                  }
+                  avatarName={item.name}
+                  photoUrl={item.avatarUrl}
+                  hasPhoto={Boolean(item.avatar_asset_id)}
+                  onPress={() => openClass(item.id)}
+                  trailing={
+                    canDeleteClass
+                      ? [
+                          {
+                            key: 'delete',
+                            label: 'Delete',
+                            tone: 'danger',
+                            autoCommit: false,
+                            onPress: () => setPending(item),
+                          },
+                        ]
+                      : []
+                  }
+                />
+                );
+              })}
+            </>
+          ) : null}
+
+          {pane === 'new' && officeSeat && canCreate ? (
+            <>
+              {newTabs.length > 1 ? (
+                <PersonTabs tabs={newTabs} value={newPane} onChange={setNewKind} />
+              ) : null}
+              {newPane === 'person' && canCreateLogin ? <CreateLoginForm /> : null}
+              {newPane === 'class' && showCreateClass ? (
+                <>
+                  <TextField
+                    placeholder="Name of Class"
+                    value={name}
+                    onChangeText={setName}
+                    returnKeyType="done"
+                    onSubmitEditing={() => void onCreate()}
+                  />
+                  <View style={styles.gap} />
+                  <PrimaryButton
+                    label={creating ? 'Creating…' : 'Create class'}
+                    disabled={creating}
+                    onPress={() => void onCreate()}
+                  />
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </ScrollView>
       ) : null}
+      </View>
       <ConfirmSheet
         visible={Boolean(pending)}
         title={`Delete ${pending?.name ?? 'class'}?`}
@@ -412,5 +442,33 @@ const styles = StyleSheet.create({
   error: {
     ...type.body,
     marginTop: 12,
+  },
+  officeColumn: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  feedOn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  feedOff: {
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
+    width: '100%',
+  },
+  paneScroll: {
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+  },
+  paneScrollContent: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: '100%',
   },
 });
