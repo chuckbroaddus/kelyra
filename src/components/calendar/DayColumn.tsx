@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Reanimated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { radius, type } from '@/constants/theme';
 import { formatDayHeading } from '@/lib/calendar/day';
+import { ZOOM_DAY_ENTER_MS, ZOOM_DAY_EXIT_MS } from '@/lib/calendar/zoomDrill';
 import { CAL_P6_4A_ALWAYS_HOURS, CAL_P6_10B_SLOT_CREATE } from '@/lib/calendar/p6Laws';
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import {
@@ -27,6 +34,11 @@ type Props = {
    * Existing event blocks still open/edit via onPressItem.
    */
   onPressSlot?: (day: string, hour: number) => void;
+  /** After Week→Day inbound: slide+fade hours/title in. */
+  enterAnim?: boolean;
+  /** Before Day→Week reverse: slide+fade hours out, then onExitDone. */
+  exitAnim?: boolean;
+  onExitDone?: () => void;
 };
 
 /**
@@ -35,7 +47,16 @@ type Props = {
  * CAL-P6-4A: always mount full hour gutter/track even with zero events.
  * CAL-P6-10B: empty slot tap opens composer (press highlight OK; no confirm).
  */
-export function DayColumn({ day, items, showHiddenBadge, onPressItem, onPressSlot }: Props) {
+export function DayColumn({
+  day,
+  items,
+  showHiddenBadge,
+  onPressItem,
+  onPressSlot,
+  enterAnim = false,
+  exitAnim = false,
+  onExitDone,
+}: Props) {
   const { colors } = useTheme();
   const { allDay, timed } = splitDayItems(items, day);
   const hours = timelineHours();
@@ -44,12 +65,44 @@ export function DayColumn({ day, items, showHiddenBadge, onPressItem, onPressSlo
   const empty = allDay.length === 0 && timed.length === 0;
   const [pressedHour, setPressedHour] = useState<number | null>(null);
 
+  const enterY = useSharedValue(enterAnim ? 56 : 0);
+  const enterOp = useSharedValue(enterAnim ? 0 : 1);
+
+  useEffect(() => {
+    if (!enterAnim) {
+      enterY.value = 0;
+      enterOp.value = 1;
+      return;
+    }
+    enterY.value = 56;
+    enterOp.value = 0;
+    enterY.value = withTiming(0, { duration: ZOOM_DAY_ENTER_MS });
+    enterOp.value = withTiming(1, { duration: ZOOM_DAY_ENTER_MS });
+  }, [enterAnim, enterY, enterOp, day]);
+
+  useEffect(() => {
+    if (!exitAnim) return;
+    enterY.value = withTiming(-48, { duration: ZOOM_DAY_EXIT_MS });
+    enterOp.value = withTiming(0, { duration: ZOOM_DAY_EXIT_MS }, (finished) => {
+      'worklet';
+      if (finished && onExitDone) {
+        runOnJS(onExitDone)();
+      }
+    });
+  }, [exitAnim, enterY, enterOp, onExitDone]);
+
+  const handoffStyle = useAnimatedStyle(() => ({
+    opacity: enterOp.value,
+    transform: [{ translateY: enterY.value }],
+  }));
+
   // Named law pins (static analysis / tests).
   void CAL_P6_4A_ALWAYS_HOURS;
   void CAL_P6_10B_SLOT_CREATE;
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`Day ${day}`}>
+      <Reanimated.View style={handoffStyle}>
       <Text style={[styles.heading, { color: colors.ink }]}>{formatDayHeading(day)}</Text>
 
       {allDay.length > 0 ? (
@@ -177,6 +230,7 @@ export function DayColumn({ day, items, showHiddenBadge, onPressItem, onPressSlo
           </View>
         </View>
       </ScrollView>
+      </Reanimated.View>
     </View>
   );
 }

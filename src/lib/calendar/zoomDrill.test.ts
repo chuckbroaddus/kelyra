@@ -119,3 +119,35 @@ test('zoomTransform module exists for unit-tested drill math', () => {
   assert.match(mod, /computeDayDockTranslateX/);
   assert.match(mod, /siblingBandOpacity/);
 });
+
+test('Week shows month/year title; Year→Month handoff fades; Day enter/exit anim', () => {
+  const screen = read('src/app/calendar.tsx');
+  const week = read('src/components/calendar/TeacherWeekGrid.tsx');
+  const month = read('src/components/calendar/MonthGrid.tsx');
+  const day = read('src/components/calendar/DayColumn.tsx');
+  const drill = read('src/components/calendar/CalendarZoomDrill.tsx');
+  const xform = read('src/lib/calendar/zoomTransform.ts');
+
+  // A + D: Week month/year title continuous with Month.
+  assert.match(week, /monthTitle/);
+  assert.match(week, /titleEnter/);
+  assert.match(week, /styles\.monthTitle|fontSize:\s*22/);
+  assert.match(screen, /monthTitle=\{weekMonthTitle\}|monthTitle=\{/);
+  assert.match(screen, /monthContaining\(.*\)\.label/);
+
+  // B: Year→Month end-snap killed via outgoing opacity + Month chrome fade-in.
+  assert.match(xform, /handoffOutgoingOpacity/);
+  assert.match(drill, /handoffOutgoingOpacity/);
+  assert.match(month, /enterChromeAnim/);
+  assert.match(screen, /enterChromeAnim=\{monthEnterChrome\}/);
+  assert.match(screen, /setMonthEnterChrome/);
+
+  // C: Week→Day timeslot enter + reverse exit before climb.
+  assert.match(day, /enterAnim/);
+  assert.match(day, /exitAnim/);
+  assert.match(day, /onExitDone/);
+  assert.match(screen, /enterAnim=\{dayEnterAnim\}/);
+  assert.match(screen, /exitAnim=\{dayExitAnim\}/);
+  assert.match(screen, /onDayExitDone|onExitDone=\{onDayExitDone\}/);
+  assert.match(screen, /week-day.*dayExitAnim|dayExitAnim.*week-day|pendingZoomUpRef/);
+});

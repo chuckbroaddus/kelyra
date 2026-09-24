@@ -107,3 +107,34 @@ export function siblingBandOpacity(progress: number, isFocus: boolean): number {
   if (isFocus) return 1;
   return 1 - clamp01(progress) * 0.92;
 }
+
+/** Progress where year→month / month→week title+host crossfade begins. */
+export const HANDOFF_START = 0.7;
+
+/**
+ * Outgoing host opacity during inbound drill (year host, month title).
+ * Holds 1 until HANDOFF_START, then linear → 0 at progress 1.
+ */
+export function handoffOutgoingOpacity(progress: number): number {
+  'worklet';
+  const p = clamp01(progress);
+  if (p <= HANDOFF_START) return 1;
+  return 1 - (p - HANDOFF_START) / (1 - HANDOFF_START);
+}
+
+/**
+ * Incoming chrome opacity (month body after swap, week title enter).
+ * 0 until HANDOFF_START, then linear → 1 at progress 1.
+ */
+export function handoffIncomingOpacity(progress: number): number {
+  'worklet';
+  const p = clamp01(progress);
+  if (p <= HANDOFF_START) return 0;
+  return (p - HANDOFF_START) / (1 - HANDOFF_START);
+}
+
+/** Week title fades in over the last 30% of month→week drillProgress. */
+export function titleEnterOpacity(progress: number): number {
+  'worklet';
+  return handoffIncomingOpacity(progress);
+}

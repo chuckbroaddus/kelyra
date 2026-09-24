@@ -18,6 +18,7 @@ import {
   computeDayDockTranslateX,
   computeDrillTransform,
   computeWeekDockTranslateY,
+  handoffOutgoingOpacity,
 } from '@/lib/calendar/zoomTransform';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -100,9 +101,14 @@ export function CalendarZoomDrill({
     const sourceR = { x: sx.value, y: sy.value, width: sw.value, height: sh.value };
     const destR = { x: dx.value, y: dy.value, width: dw.value, height: dh.value };
 
+    // Year→Month inbound: fade host in last ~30% so zoomTo('month') is not a hard cut.
+    const yearHandoffOpacity =
+      kind === 'year-month' && direction === 'in' ? handoffOutgoingOpacity(p) : 1;
+
     if (kind === 'year-month') {
       const t = computeDrillTransform(hostR, sourceR, destR, p);
       return {
+        opacity: yearHandoffOpacity,
         transform: [
           { translateX: t.translateX },
           { translateY: t.translateY },
