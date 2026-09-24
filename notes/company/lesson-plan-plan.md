@@ -1,279 +1,169 @@
-# LPLAN-P1: Lesson-plan strategy, UI/UX, AI, implementation approach
+# Lesson Plan Plan (LPLAN-P2 / R2)
 
-**Date:** 2026-09-03  
-**Author:** product-manager (Kelyra)  
-**Card:** `t_498dc26b` · Parent: `t_31ad2b43` / `notes/company/lesson-plan-research.md` (LPLAN-R1)  
-**Status:** Spec / plan only — **no app code**, no SQL, no migrations, no kelyra-qa-loop, no git push.  
-**Also grounded in:** `notes/company/calendar-plan.md` (CAL-P1 join, draft/publish), `notes/company/diary-ledger-stories.md` (DIARY-P1 private reflection), `notes/company/class-landing-plan.md` (link not embed), `notes/company/teacher-ux-plan.md` (desk-centric IA), Cognia ER7 / competitor cut in LPLAN-R1.
-
-**Audience:** CEO / Chief of Staff review. **Not** an implementation ticket. Do not staff `senior-developer` until Chuck says send.
+**Date:** 2026-09-24  
+**Author:** Chief of Staff / Grok Bot (Kelyra)  
+**Status:** Ready for Chuck review  
+**Revision:** R2 (upgrades LPLAN-P1 2026-09-03)  
+**Research:** `notes/company/lesson-plan-research.md`  
+**Keep:** `lesson-plan-architecture.md`, `lesson-plan-security.md`, `lesson-plan-acceptance.md` (still fit — update cross-links only).  
+**Stack:** Expo + Supabase + Edge AI. No app/SQL from this card.
 
 ---
 
-## 0. One-line product law
+## 0. Product law
 
-| Surface | Job | What it is not |
+| Surface | Job | Not |
 |---|---|---|
-| **Lesson plan** | Teacher-owned **accreditation working record** + day-of **run-of-show** (objectives, materials, procedures+timing, assessment, differentiation) | Not student-facing HTML packs (Author); not Diary prose; not Feed |
-| **Calendar join** | A **published** plan occupies a dated/period **span** via link/reference on CAL-P1 | Not a duplicated event body; not auto-firehose of drafts |
-| **Diary join** | Optional link from plan → private “what worked” entry (DIARY-P1) | Not embedding diary into the plan; diary stays owner-only |
-| **AI draft** | Draft from unit/topic/standards → teacher edit → explicit Publish | Not auto-publish; not Ask-as-superuser; no student PII in prompts |
-| **Parent share** | Optional **high-level summary** only when teacher explicitly shares | Not full procedures, differentiation notes, or internal reflection |
+| **Lesson plan** | Teacher-owned accreditation working record + day-of run-of-show | Not Author HTML packs; not Diary; not Feed; not gradebook |
+| **Calendar join** | Published plan occupies a dated/period **span by reference** | Not duplicated event body; drafts invisible to families |
+| **Diary join** | Optional link to private “what worked” | Not embedding diary; diary not accreditation evidence |
+| **AI draft** | Draft from topic/unit/standards → edit → explicit Publish | Not auto-publish; not Ask-as-superuser; no roster PII in prompts |
+| **Parent share** | Optional high-level summary only | Not full procedures / differentiation / keys |
 
-**CEO bar (LPLAN-R1):** Teacher writes; AI drafts only; join calendar not duplicate; office none unless required; fail-closed parents; diary separate.
-
----
-
-## 1. Problem statement
-
-Kelyra already has **assignments / lessons** (student work + due dates) and is adding **Calendar** (CAL-P1) and **Diary** (DIARY-P1). There is **no first-class accreditation lesson-plan record**: no standards-aligned working script, no materials+timing run-of-show, no draft→publish plan lifecycle separate from “assign work.”
-
-Teachers still keep Planbook / Common Curriculum / Docs binders in parallel. Cognia ER7 (2026) expects a **documented instructional design + student-learning assessment plan** — continuous evidence, not a once-a-year binder dump. Competitors win on templates, copy-forward, AI draft under 60s, and calendar spans — always with teacher approve, never silent publish (LPLAN-R1).
-
-Kelyra’s cut: one **teacher-owned plan** surface that **joins** Calendar and optionally Diary, stays behind hat walls, and never becomes student HTML or a parent full dump.
+Teachers write for **taught classes only**. Teachers do not create classes.
 
 ---
 
-## 2. Explicit non-goals
+## 1. Explicit non-goals
 
 | Non-goal | Why |
 |---|---|
-| Class create from plan or Ask | Teachers do not create classes; office/directory owns roster |
-| Auto-publish AI drafts | Teacher Confirm / Publish only (same bar as LAND/CAL) |
-| Parent / student full plan body in v1 | FERPA + fail-closed; summary share is explicit and optional |
-| Diary text stored on the plan row | DIARY-P1 owner-only; accreditation uses plan + ledger, not private journal |
-| Duplicate calendar event blobs | CAL-P1 join/reference by plan id + span |
-| Rebuild Author packs / student HTML lessons | Separate product; plan may **link** a pack later, not own it |
-| Office authoring or school-wide rewrite in v1 | Teacher writes; office view/comment only if Chuck later requires |
-| `is_staff` widen / twin merge | Hard product law |
-| Grade Approve or score write from plan | Desk capture → match → Approve stays TEACH-UX |
+| Class create from plan/Ask | Office owns directory |
+| Auto-publish AI | Confirm / Publish only |
+| Parent/student full body v1 | FERPA fail-closed |
+| Diary text on plan row | Diary epic |
+| Duplicate calendar blobs | CAL join |
+| Rebuild Author / `publish_lesson_pack` | Separate; link only |
+| Office authoring v1 | Teacher writes |
+| Widen `is_staff` / twin merge | Hard law |
+| Grade Approve from plan | Desk loop stays |
 | Public unauthenticated plan URL | Signed-in only |
-| Fake E2E “only you ever see this” claims | Honest RLS + visibility matrix |
-| kelyra-qa-loop / SQL / git push from this card | Spec only |
-
-## 3. Hats — user stories (v1)
-
-### Teacher (taught class only)
-
-- **Create** a lesson plan for a class I teach: blank, from template, copy-forward last year/unit, or AI draft from topic/unit/standards.
-- **Edit** draft fields (objectives, standards, materials, procedures+timing, assessment, differentiation). Save keeps draft.
-- **Publish** makes the plan the working record and eligible for calendar span + sub view. Never auto from AI.
-- **Schedule on calendar (or not):** attach a start/end or period span → CAL-P1 shows a **join** when published; I can keep a plan unscheduled (library/unit bank).
-- **Day-of run-of-show:** open plan on web or phone; timing + materials at a glance; no grade Approve from here.
-- **Execution reflection:** after class, open DIARY (or “Reflect” deep-link) — private; optional `related_plan_id`. Plan may hold a short **public-to-me notes** field that is still teacher-only, not Diary.
-- **Optional parent summary:** explicit Share summary (objectives + high-level overview only). Default off.
-- **Link work:** optionally link existing published assignments / Author packs by id — no duplicate bodies.
-- Cannot create classes. Cannot see other teachers’ private drafts unless co-teacher policy later (v1: owner + explicit share-to-colleague **parked**).
-
-### Substitute
-
-- See **published** plans + materials for classes I am covering (office assigns cover scope — mechanism may reuse existing cover/sub flags; if none, export/print PDF is v1.1).
-- No edit of canonical plan in v1 (optional “sub notes” later). No grades. No parent share.
-
-### Office / superintendent
-
-- **v1 default: none** as author. No class-create. No bulk rewrite.
-- **Parked / later if accreditation requires:** read-only school list of **published** plans + comment/feedback (Common Curriculum admin pattern). Still no diary access.
-
-### Parent / guardian
-
-- **Fail-closed.** No full plan. No procedures, differentiation, or teacher notes.
-- Only if teacher **shared summary** for that class **and** linked child is enrolled: objectives + overview.
-- Twin wall: per-child context only (Saydee ≠ Sydnee).
-
-### Student
-
-- **v1: no plan body.** Sees assigned work and calendar items via existing surfaces. Optional later: student-facing “today’s focus” blurb via class landing join — not this card’s full plan.
-
-### Co-teacher / specialist
-
-- Parked: same-class co-own or comment. v1 single owner teacher of record.
+| SQL/app from this card | Research epic |
 
 ---
 
-## 4. Required fields (v1)
+## 2. Needed vs Desired
 
-| Field | Required? | Notes |
+### Needed (P0)
+
+| ID | Capability | Rationale |
 |---|---|---|
-| Title | Yes | Human label (“Linear equations day 2”) |
-| Class id | Yes | Taught class only; never invented by AI |
-| Status | Yes | `draft` \| `published` \| `archived` |
-| Objectives / learning goals | Yes | Plain text |
-| Standards alignment | Yes (soft) | Codes + labels (TEKS/CCSS/etc.); empty allowed with warning, not hard-block in pilot |
-| Materials / resources | Yes | List; attachments later |
-| Procedures / activities + timing | Yes | Ordered steps with duration hints |
-| Assessment / checks for understanding | Yes | Formative/summative plan — not a grade score |
-| Differentiation / accommodations | Yes | ELL/IEP/tier notes — **teacher-only** visibility |
-| Span (start/end or period) | Optional | When set + published → calendar join |
-| Teacher notes (on-plan) | Optional | Still teacher-only; not Diary |
-| Parent summary | Optional | Only surface parents may ever see; empty = no share |
-| Links | Optional | Assignment ids, Author pack ids, file ids — references only |
-| Reflection | **Not on plan** | DIARY-P1 private journal; optional related_plan_id |
+| N1 | Entity with core fields (title, class, objectives, standards/integration tags, materials, procedures+timing, assessment, differentiation, status) | Cognia ER7 / ACSI Std 8 |
+| N2 | draft → published → archived | Publish gate |
+| N3 | Templates + copy-forward / bump | Planbook / Common Planner speed |
+| N4 | AI draft + teacher confirm before publish | CEO easy-create |
+| N5 | Calendar span join when published | CEO Q1 |
+| N6 | Diary optional link | CEO Q2; not merge |
+| N7 | Day-of run-of-show UI | CEO Q3 |
+| N8 | Parent summary share optional, default off | CEO Q4 |
+| N9 | Taught-class teacher author only; RLS fail-closed | Hats |
+| N10 | Explicit separation from Author packs (link optional) | Anti-conflation |
 
-**Needed vs desired:** Core five instructional fields + draft/publish + calendar join = **needed**. Full evidence export packs, auto sub PDF, office analytics, advanced remix AI = **later**.
+### Desired (P1–P2)
 
-## 5. AI (draft + teacher confirm)
-
-**Scope (v1):**
-1. Teacher invokes “Draft plan” with **topic / unit / standards / grade / class** (and optional syllabus excerpt the teacher pastes — no silent roster scrape).
-2. Model returns structured draft into the fields in §4 (not free HTML).
-3. UI shows editable draft. Teacher edits freely.
-4. **Publish is a separate human action.** AI never sets `published`.
-5. Optional assists: standards tag suggestions, timing split suggestions, materials list expansion — still draft-only until Save/Publish.
-6. NL from Ask: “Draft a 45-min plan on fractions for Fundamentals of Math TEKS 3.3” → same draft flow + confirm class binding. Unassigned class → picker. Never invent class.
-
-**Hard refuses:**
-- Auto-publish or silent calendar schedule
-- Class create, student create, grade Approve
-- Twin merge / other-class write
-- Prompts that include roster names, grades, IEP full text, sibling names, doctor notes
-- Parent/student invoking plan AI
-- “Ask as superuser”
-
-**Audit:** draft saves tagged `source=ai_draft` (or similar metadata) for support — not Office Activity spam. Publish logs who/when.
-
-**Models:** server-side keys only (Edge / Grok CLI OAuth in dev). No `EXPO_PUBLIC_*` model tokens.
+| ID | Capability | Pri |
+|---|---|---|
+| D1 | Office read/comment on published | P1 if accreditation needs |
+| D2 | Sub cover scope + print/PDF packet | P1 |
+| D3 | Unit containers + standards coverage report | P1 |
+| D4 | Evidence export for Cognia visit | P2 |
+| D5 | Co-teacher edit | P2 |
+| D6 | Landing “daily focus” pull from shared summary | P1 join |
+| D7 | School-wide template library | P1 |
+| D8 | Biblical-integration helper library | P1 if ACSI |
 
 ---
 
-## 6. Calendar + diary joins (do not rebuild those products)
+## 3. Hats — stories (v1)
 
-### Calendar (CAL-P1)
-
-| Rule | Detail |
-|---|---|
-| Join, don’t copy | Calendar row (or projection) holds `lesson_plan_id` + span; plan body stays on plan table |
-| Draft plans | **No** student/parent calendar visibility |
-| Published + span set | Teacher calendar shows item; category e.g. `lesson` layer |
-| Published, no span | Plan exists in library; calendar silent |
-| Unpublish / archive | Calendar join hides for non-teachers (teacher may still see archived) |
-| Assignment due dates | Remain assignment projections; plan may **link** assignments, not replace `due_at` |
-| Pop quiz | Still CAL-P1 hidden-until-publish; plan does not force calendar firehose |
-
-Landing (LAND-P1) may show a **link** to today’s published plan — not an embed of full procedures.
-
-### Diary (DIARY-P1)
-
-| Rule | Detail |
-|---|---|
-| Separate store | Reflection / “what worked” lives in Diary, owner-only |
-| Optional link | Diary entry may set `related_plan_id`; plan UI offers “Reflect in Diary” deep link |
-| No auto-file | Teaching a plan does not auto-write Diary or student Log |
-| Accreditation | Evidence = published plans + (later) coverage reports — **not** private diary contents |
-| Ledger | Assign/publish plan actions may appear on **My Ledger** as owner actions; not Office Activity dump |
+**Teacher:** Create (blank/template/copy/AI); edit draft; Publish; attach calendar span or leave in library; day-of run-of-show; Reflect → Diary link; optional Share summary; optional link assignment/pack by id.  
+**Substitute:** Read published + materials when cover scope exists (else PDF P1).  
+**Office:** No author v1; parked read/comment.  
+**Parent:** Fail-closed; summary only if shared + child enrolled; twin wall.  
+**Student:** No plan body v1.
 
 ---
 
-## 7. Visibility matrix + RLS posture (fail closed)
+## 4. Field set (v1)
 
-| Viewer | Draft plan | Published full plan | Parent summary (if shared) | Diary reflection |
-|---|---|---|---|---|
-| Owner teacher (taught class) | Yes | Yes | Yes (edit) | Own diary only |
-| Other teacher (not owner) | No | No (v1) | No | No |
-| Substitute (cover scope) | No | Yes (read) | No | No |
-| Office | No | No v1 (later read-only if required) | No | No |
-| Student | No | No | No | No |
-| Parent (linked child in class) | No | No | **Yes only if shared** | No |
-| Other class / other grade | No | No | No | No |
-| Twins | — | — | Per-child only | Per seat |
-| Anonymous | No | No | No | No |
-
-**RLS principles (no SQL here):**
-- Write: `taught_by` / membership for that `class_id` + owner teacher.
-- Read full body: owner (+ later sub cover list).
-- Parent summary: separate column or row flag `summary_shared_at`; guardians only via linked child enrollment.
-- No `is_staff` shortcut into teacher drafts or diary.
-- Teachers never create classes from this surface.
-
-## 8. Implementation approach (no SQL in this ticket)
-
-### 8.1 Data model vs Author packs
-
-| Concern | Approach |
-|---|---|
-| Canonical store | New **lesson_plans** (name TBD) rows scoped by `class_id` + `owner_profile_id` — **not** overloaded `assignments` |
-| Author / student HTML packs | Separate product (`kelyra-author`). Plan holds optional **link** to pack id; never stores pack HTML |
-| Assignments | Optional many-to-many or link array by assignment id; due dates stay on assignments |
-| Calendar | Foreign key / join id on calendar projection; body not copied (CAL-P1) |
-| Diary | Optional `related_plan_id` on diary entries only |
-| Templates | School or personal template rows (or JSON starter); copy-on-write into new draft |
-| Copy-forward | Clone prior plan → new draft; clear publish timestamps; re-bind class/year |
-
-### 8.2 UI/UX — desktop vs mobile
-
-**Web (primary authoring):**
-- Entry from class desk: **Plans** (or under Teaching cluster per TEACH-UX — not an 11th noisy tab; prefer one Teaching home with Plans segment).
-- List: drafts / this week published / library; filters by unit/span.
-- Editor: two-pane or long form — left fields (§4), right live preview run-of-show.
-- States: Draft chip · Publish · Unpublish · Archive · Share parent summary (separate confirm).
-- AI: “Draft with AI” panel → fills fields → teacher edits → Publish still manual.
-- Calendar: “Add span” date/period picker; shows join status (linked / not on calendar).
-
-**Phone (day-of + light edit):**
-- Run-of-show view first (timing, materials, next step).
-- Edit core fields OK; heavy AI draft prefers web but allowed with sheet confirm.
-- Reflect → opens Diary, not an inline journal on the plan.
-- No public URL; signed-in shell only.
-
-**Print / sub (v1.1 preferred):** PDF/export of published plan + materials; v1 can be browser print of run-of-show.
-
-### 8.3 Lifecycle
-
-```
-blank | template | copy-forward | AI draft
-        → Save (draft)
-        → optional span attach (still draft = teacher-only calendar)
-        → Publish (working record + calendar join if span)
-        → optional Share parent summary
-        → Reflect (Diary link)
-        → Archive
-```
-
-### 8.4 v1 vs later
-
-| v1 | Later |
-|---|---|
-| Core fields + draft/publish | Office compliance dashboard |
-| Templates + copy-forward + AI structured draft | Advanced remix library with credit |
-| Calendar join when span set | Recurring multi-week unit wizard |
-| Fail-closed parents; optional summary field | Rich parent newsletter from plans |
-| Diary deep-link only | Taught-vs-planned evidence export for Cognia |
-| Sub read of published (if cover exists) | Sub-optimized one-tap packet |
-| Single owner teacher | Co-teacher edit + specialist share |
-| Standards soft-required | Hard district template lock + coverage % |
-
-### 8.5 Team questions — resolved or parked
-
-| Question | Decision |
-|---|---|
-| Plan vs assignment | **Separate** entity; assignments link optional |
-| Calendar duplicate body? | **No** — join only |
-| Diary on plan row? | **No** — DIARY-P1 |
-| Office author v1? | **No** |
-| Parent full plan? | **No** — summary only if shared |
-| Student sees full plan v1? | **No** |
-| AI auto-publish? | **Never** |
-| Class create? | **Never** |
-| Co-teacher shared edit | **Parked** |
-| Exact TEA district field mandates | **Parked** — soft standards + school templates later |
-| Sub cover data source | **Parked** — depends on roster/cover flags; export fallback |
-| Route name / TEACH-UX slot | **Parked** for UX pass — must not explode tray tabs |
+| Field | Req | Notes |
+|---|---|---|
+| title | Y | |
+| class_id | Y | Taught only; AI never invents |
+| status | Y | draft \| published \| archived |
+| objectives | Y | |
+| standards_tags | Y | Flexible (TEKS / school / biblical) |
+| materials | Y | |
+| procedures_timed | Y | Steps + minutes |
+| assessment_plan | Y | Formative/summative / CFU |
+| differentiation | Y | |
+| span_start / span_end / period | N | Required only for calendar join |
+| teacher_notes | N | Teacher-only short notes (≠ Diary) |
+| parent_summary | N | Used only when Share |
+| linked_assignment_ids | N | References |
+| linked_pack_ref | N | deck_id+version; no HTML |
+| related_diary_id | N | Soft link |
 
 ---
 
-## 9. Acceptance for this card
+## 5. UI/UX
 
-- This file (`notes/company/lesson-plan-plan.md`) is complete for **CEO/CoS review**.
-- Covers: needed vs desired, hat stories, UI/UX + AI confirm, calendar/diary joins, parent-share rules, visibility matrix, implementation approach, v1 vs later, resolved/parked questions.
-- **No** application code, **no** SQL, **no** git push, **no** kelyra-qa-loop from this card.
-- **Next:** Chuck reviews. **Do not** staff `senior-developer` until he says send.
+### Web (prep)
+- Plan library by class/unit; editor form with sections; AI draft panel → diff → Apply to draft; Publish bar; “Add to calendar” span picker; Share summary modal.
+
+### Mobile (day-of)
+- Today’s plans list; Run-of-show: big timing, materials check, step cards; overflow → full editor; Reflect opens Diary.
+
+### Parent
+- If shared: card on class landing / messages — objectives + overview only.
 
 ---
 
-## 10. Open issues (not blockers for this spec)
+## 6. AI usage
 
-- TEACH-UX placement: Plans segment vs drawer item (avoid tab sprawl).
-- Whether parent summary is a column on the plan or a separate `plan_shares` row (impl choice).
-- Standards catalog source (manual codes vs imported TEKS set) — pilot can be free-text + tags.
-- Specials (PE/art) flexible timing templates — same schema, different default template.
-- Whether unpublish removes calendar join immediately (recommend **yes**).
+| Move | Allowed | Forbidden |
+|---|---|---|
+| Draft plan from topic/unit/standards/syllabus text | Y | Auto-publish |
+| Suggest timing / materials / tags | Y | Roster PII in prompt |
+| NL “schedule on Thursday P2” | Draft calendar join | Silent schedule |
+| Rewrite parent_summary | Y with confirm | Invent full plan share |
+
+Confirm-before-publish everywhere. No superuser Ask.
+
+---
+
+## 7. Implementation approach (pointer only)
+
+Per `lesson-plan-architecture.md` / `lesson-plan-security.md`:
+
+1. New `lesson_plans` (+ optional links table) — **not** overload `assignments` or `lesson_packs`.  
+2. RLS: owner teacher via `class_teacher_of` (not office `teaches_class` bypass for family reads).  
+3. Calendar: on publish+span, upsert calendar projection row with `source_type=lesson_plan` — body stays on plan.  
+4. Diary: nullable FK / soft id; no diary RLS widen.  
+5. Ask tools: `lesson_plan_draft` / `lesson_plan_schedule` under new caps — not `assignments.manage`.  
+6. Author packs: store link fields only; never call `publish_lesson_pack` from plan publish.  
+7. Expo screens: library, editor, run-of-show; Edge AI for draft.  
+8. Phases: fields+CRUD+templates → AI draft → calendar join → parent summary → diary link → (later) office/sub/export.
+
+**Gate:** Chuck send required before Eng. Acceptance plan already written — still PLAN ONLY.
+
+---
+
+## 8. Cross-links
+
+- Research R2, architecture, security, acceptance (keep)  
+- `calendar-plan.md` P1-2 join  
+- `class-landing-plan.md` daily focus from summary  
+- Diary epic: link only  
+
+---
+
+## 9. Open questions for Chuck
+
+1. Accreditor (Cognia / ACSI / both)?  
+2. Bible integration required field?  
+3. Office read in v1?  
+4. Confirm packs stay separate.  
+5. Build sequence vs Calendar NL P0?
+
+**RECOMMENDED NEXT ACTION:** Chuck review; staff Eng only after send on a future build epic.

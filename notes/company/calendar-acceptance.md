@@ -24,6 +24,8 @@
 
 ---
 
+> **R2 research/plan refresh 2026-09-24:** Product research/plan SoT updated in `notes/company/calendar-research.md` + `notes/company/calendar-plan.md` (and dated digest under `notes/research/`). This acceptance file remains the future loop contract; not a Build send.
+
 ## 0. Scope — what “good” means later
 
 When Chuck authorizes implementation, a **future** build loop is accepted only if:
