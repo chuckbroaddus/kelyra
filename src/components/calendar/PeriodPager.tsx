@@ -3,10 +3,11 @@
  * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
  * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤4) freezes SlotPool; long coast recycles for silhouettes.
  * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
- * SoT geometry: perspective 920 · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
- * Composite: translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
- * RM: drop rotateY; keep scale, opacity, snap, taps, hierarchy.
- * CAL-P6-1A: full-band stage claim (LTR+RTL); commit on snap only.
+ * SoT geometry: perspective 920 · origin 50% 45% on host · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
+ * Composite: host perspective · translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
+ * RM: drop rotateY/perspective; keep 1:1 drag, scale, opacity, short snap, taps, hierarchy.
+ * CAL-P6-1A: full-band stage claim on start (LTR+RTL, beats iOS left-edge pop); commit on snap only.
+ * CAL-3DW-08: side hits live outside scale so screen hit ≥56×56 at |d|=2.
  */
 import {
   Component,
@@ -58,7 +59,9 @@ import {
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
   WHEEL_LOCAL_SAMPLE_SLOTS,
+  WHEEL_MIN_HIT_PX,
   WHEEL_PERSPECTIVE,
+  WHEEL_PERSPECTIVE_ORIGIN,
   WHEEL_PITCH,
   WHEEL_REANIMATED_SPRING,
   WHEEL_SLOT_OFFSETS,
@@ -78,6 +81,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 // CAL-P6-1A: carve must stay 0 on drum face (named law pin).
 void CAL_P6_1A_FULL_BAND;
 void CAL_P6_1A_ON_DRUM_CARVE_PX;
+// CAL-P6-9A: drum LTR is period page only — never app-back.
+
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -210,6 +215,11 @@ function lerpSamples(samples: ReturnType<typeof makeNormSamples>, dragPx: number
   };
 }
 
+type SlotHitProps = {
+  accessibilityLabel: string;
+  onPress: () => void;
+};
+
 type SlotMotionProps = {
   parked: number;
   pitch: number;
@@ -217,26 +227,27 @@ type SlotMotionProps = {
   /** 1 while programmed snap/coast runs — absolute drag, no residual wrap. */
   snapFreezeShared: SharedValue<number>;
   reduceMotion: boolean;
+  hit: SlotHitProps;
   children: ReactNode;
 };
 
-/** Native: reanimated worklet TransformDriver (rotateY/scale/translateX — no translateZ). */
+/** Shared sample eval for native slot motion (worklet-safe helpers inlined below). */
 function NativeSlotMotion({
   parked,
   pitch,
   dragShared,
   snapFreezeShared,
   reduceMotion,
+  hit,
   children,
 }: SlotMotionProps) {
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
-  const style = useAnimatedStyle(() => {
+  // Outer: translateX + opacity only — hit targets stay unscaled (CAL-3DW-08).
+  const outerStyle = useAnimatedStyle(() => {
     'worklet';
     const totalDrag = dragShared.value;
     const P = pitch > 0 ? pitch : 1;
     const freeze = snapFreezeShared.value === 1;
-    // Live / long-coast: trunc residual keeps N=9 near focus + silhouettes.
-    // Short snap freeze: absolute drag (already residual after rebase, or 0→−steps·P).
     let dragPx: number;
     if (freeze) {
       dragPx = totalDrag;
@@ -244,71 +255,97 @@ function NativeSlotMotion({
       const shift = Math.trunc(-totalDrag / P);
       dragPx = totalDrag + shift * P;
     }
-    // When frozen and |drag| exceeds local sample span, evaluate curves directly.
+    let opacity: number;
+    let translateX: number;
     if (freeze && Math.abs(dragPx) > P * 5) {
       const d = parked + dragPx / P;
       const a = Math.abs(d);
-      const scale = Math.min(1, Math.max(0.46, 1 - 0.22 * a - 0.02 * d * d));
-      const opacity = Math.min(1, Math.max(0.22, 1 - 0.24 * a - 0.03 * d * d));
-      const c = d < -3 ? -3 : d > 3 ? 3 : d;
-      const rotateYDeg = c === 0 ? 0 : c * -14;
-      const translateX = d * P;
-      if (reduceMotion) {
-        return {
-          opacity,
-          zIndex: 100 - Math.abs(parked) * 10,
-          transform: [{ scale }],
-        };
+      opacity = Math.min(1, Math.max(0.22, 1 - 0.24 * a - 0.03 * d * d));
+      translateX = d * P;
+    } else {
+      const input = samples.input;
+      const last = input.length - 1;
+      let i = 0;
+      if (dragPx <= input[0]!) i = 0;
+      else if (dragPx >= input[last]!) i = last - 1;
+      else {
+        while (i < last && input[i + 1]! < dragPx) i += 1;
       }
-      return {
-        opacity,
-        zIndex: 100 - Math.abs(parked) * 10,
-        transform: [
-          { perspective: WHEEL_PERSPECTIVE },
-          { translateX },
-          { rotateY: `${rotateYDeg}deg` },
-          { scale },
-        ],
-      };
-    }
-    // Inline lerp (worklet-safe; no JS helpers).
-    const input = samples.input;
-    const last = input.length - 1;
-    let i = 0;
-    if (dragPx <= input[0]!) i = 0;
-    else if (dragPx >= input[last]!) i = last - 1;
-    else {
-      while (i < last && input[i + 1]! < dragPx) i += 1;
-    }
-    const a = input[i]!;
-    const b = input[Math.min(i + 1, last)]!;
-    const t = b === a ? 0 : Math.min(1, Math.max(0, (dragPx - a) / (b - a)));
-    const mix = (lo: number, hi: number) => lo + (hi - lo) * t;
-    const j = Math.min(i + 1, last);
-    const scale = mix(samples.scales[i]!, samples.scales[j]!);
-    const opacity = mix(samples.opacities[i]!, samples.opacities[j]!);
-    const rotateYDeg = mix(samples.rotateYs[i]!, samples.rotateYs[j]!);
-    const translateX = mix(samples.xs[i]!, samples.xs[j]!);
-    if (reduceMotion) {
-      return {
-        opacity,
-        zIndex: 100 - Math.abs(parked) * 10,
-        transform: [{ scale }],
-      };
+      const a = input[i]!;
+      const b = input[Math.min(i + 1, last)]!;
+      const t = b === a ? 0 : Math.min(1, Math.max(0, (dragPx - a) / (b - a)));
+      const mix = (lo: number, hi: number) => lo + (hi - lo) * t;
+      const j = Math.min(i + 1, last);
+      opacity = mix(samples.opacities[i]!, samples.opacities[j]!);
+      translateX = mix(samples.xs[i]!, samples.xs[j]!);
     }
     return {
       opacity,
       zIndex: 100 - Math.abs(parked) * 10,
-      transform: [
-        { perspective: WHEEL_PERSPECTIVE },
-        { translateX },
-        { rotateY: `${rotateYDeg}deg` },
-        { scale },
-      ],
+      transform: [{ translateX }],
+    };
+  }, [samples, parked, pitch, snapFreezeShared]);
+
+  // Inner visual: scale (+ rotateY unless RM). Perspective lives on host (CAL-3DW perspective-origin).
+  const innerStyle = useAnimatedStyle(() => {
+    'worklet';
+    const totalDrag = dragShared.value;
+    const P = pitch > 0 ? pitch : 1;
+    const freeze = snapFreezeShared.value === 1;
+    let dragPx: number;
+    if (freeze) {
+      dragPx = totalDrag;
+    } else {
+      const shift = Math.trunc(-totalDrag / P);
+      dragPx = totalDrag + shift * P;
+    }
+    let scale: number;
+    let rotateYDeg: number;
+    if (freeze && Math.abs(dragPx) > P * 5) {
+      const d = parked + dragPx / P;
+      const a = Math.abs(d);
+      scale = Math.min(1, Math.max(0.46, 1 - 0.22 * a - 0.02 * d * d));
+      const c = d < -3 ? -3 : d > 3 ? 3 : d;
+      rotateYDeg = c === 0 ? 0 : c * -14;
+    } else {
+      const input = samples.input;
+      const last = input.length - 1;
+      let i = 0;
+      if (dragPx <= input[0]!) i = 0;
+      else if (dragPx >= input[last]!) i = last - 1;
+      else {
+        while (i < last && input[i + 1]! < dragPx) i += 1;
+      }
+      const a = input[i]!;
+      const b = input[Math.min(i + 1, last)]!;
+      const t = b === a ? 0 : Math.min(1, Math.max(0, (dragPx - a) / (b - a)));
+      const mix = (lo: number, hi: number) => lo + (hi - lo) * t;
+      const j = Math.min(i + 1, last);
+      scale = mix(samples.scales[i]!, samples.scales[j]!);
+      rotateYDeg = mix(samples.rotateYs[i]!, samples.rotateYs[j]!);
+    }
+    if (reduceMotion) {
+      return { transform: [{ scale }] };
+    }
+    return {
+      transform: [{ rotateY: `${rotateYDeg}deg` }, { scale }],
     };
   }, [samples, parked, pitch, reduceMotion, snapFreezeShared]);
 
-  return <Reanimated.View style={[styles.tileSlot, style]}>{children}</Reanimated.View>;
+  return (
+    <Reanimated.View style={[styles.tileSlot, outerStyle]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={hit.accessibilityLabel}
+        onPress={hit.onPress}
+        style={styles.hitTarget}
+      >
+        <Reanimated.View style={innerStyle} pointerEvents="none">
+          {children}
+        </Reanimated.View>
+      </Pressable>
+    </Reanimated.View>
+  );
 }
 
 /** Web: CSS transform + will-change (not RN Animated / not JS Animated during fling). */
@@ -318,6 +355,7 @@ function WebSlotMotion({
   dragPx,
   freezeSlotPool,
   reduceMotion,
+  hit,
   children,
 }: {
   parked: number;
@@ -325,6 +363,7 @@ function WebSlotMotion({
   dragPx: number;
   freezeSlotPool: boolean;
   reduceMotion: boolean;
+  hit: SlotHitProps;
   children: ReactNode;
 }) {
   const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
@@ -334,22 +373,33 @@ function WebSlotMotion({
     freezeSlotPool,
   });
   const sample = lerpSamples(samples, localDrag);
-  const transform = reduceMotion
-    ? [{ scale: sample.scale }]
-    : [
-        { perspective: WHEEL_PERSPECTIVE },
-        { translateX: sample.translateX },
-        { rotateY: `${sample.rotateYDeg}deg` },
-        { scale: sample.scale },
-      ];
-  const style = {
+  // Outer translate only — hits stay ≥56×56 screen px (CAL-3DW-08).
+  const outerStyle = {
     opacity: sample.opacity,
     zIndex: 100 - Math.abs(parked) * 10,
-    transform,
-    // Web CSS compositor hint — not applied as RN className.
+    transform: [{ translateX: sample.translateX }],
     ...(IS_WEB ? ({ willChange: 'transform' } as ViewStyle) : null),
   } as ViewStyle;
-  return <View style={[styles.tileSlot, style]}>{children}</View>;
+  // Inner visual: scale (+ rotateY unless RM). Host owns perspective + origin.
+  const innerStyle = {
+    transform: reduceMotion
+      ? [{ scale: sample.scale }]
+      : [{ rotateY: `${sample.rotateYDeg}deg` }, { scale: sample.scale }],
+  } as ViewStyle;
+  return (
+    <View style={[styles.tileSlot, outerStyle]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={hit.accessibilityLabel}
+        onPress={hit.onPress}
+        style={styles.hitTarget}
+      >
+        <View style={innerStyle} pointerEvents="none">
+          {children}
+        </View>
+      </Pressable>
+    </View>
+  );
 }
 
 export function PeriodPager({
@@ -407,6 +457,8 @@ export function PeriodPager({
   /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
   const velocityRef = useRef(0);
   const pitch = WHEEL_PITCH;
+  /** Stage width for start-claim micro-tap slot pick (CAL-P6-1A). */
+  const stageWidthRef = useRef(390);
 
   const window = useMemo(
     () =>
@@ -582,7 +634,8 @@ export function PeriodPager({
       snapGenerationRef.current += 1;
       const springGeneration = snapGenerationRef.current;
       snapActiveRef.current = true;
-      if (IS_WEB || reduceMotion) {
+      // Web: no reanimated spring. Native RM still springs (scale-only; no rotateY).
+      if (IS_WEB) {
         setWebDragPx(toValue);
         dragPxRef.current = toValue;
         Promise.resolve().then(() => onSpringRest(springGeneration));
@@ -604,17 +657,14 @@ export function PeriodPager({
         },
       );
     },
-    [dragShared, onSpringRest, pitch, reduceMotion, snapFreezeShared, updateVisualShift],
+    [dragShared, onSpringRest, pitch, snapFreezeShared, updateVisualShift],
   );
 
   const tapSide = useCallback(
     (steps: number) => {
       if (settling.current || steps === 0) return;
-      if (reduceMotion) {
-        onShift(steps);
-        return;
-      }
       // Absorb any in-flight snap before programming a new one (no mid-gesture onShift).
+      // RM keeps short snap (drop rotateY only) — still 1:1 path via animateSnap.
       absorbInFlightSnap();
       setFlinging(true);
       setFlingOriginAnchor(anchor);
@@ -623,20 +673,42 @@ export function PeriodPager({
       velocityRef.current = steps > 0 ? -1400 : 1400;
       animateSnap(steps);
     },
-    [absorbInFlightSnap, anchor, animateSnap, onShift, reduceMotion],
+    [absorbInFlightSnap, anchor, animateSnap],
   );
 
-  const pan = useMemo(
+  const tapAtStageX = useCallback(
+    (locationX: number) => {
+      const width = stageWidthRef.current || 390;
+      const x = locationX - width / 2;
+      let nearest = 0;
+      let best = Math.abs(x);
+      for (const offset of WHEEL_SLOT_OFFSETS) {
+        const dist = Math.abs(x - offset * pitch);
+        if (dist < best) {
+          best = dist;
+          nearest = offset;
+        }
+      }
+      if (nearest === 0) onJumpToday();
+      else tapSide(nearest);
+    },
+    [onJumpToday, pitch, tapSide],
+  );
+
+    const pan = useMemo(
     () =>
       PanResponder.create({
-        // CAL-P6-1A-01: contact begun inside stage band → horizontal pan pages period.
-        onStartShouldSetPanResponder: () => false,
+        // CAL-P6-1A-01: full-band start claim (LTR+RTL) so leftmost drum pixels page, not iOS pop.
+        // Move-claim alone loses the left-edge race (t_80d16cbc).
+        onStartShouldSetPanResponder: () => !settling.current && !failed,
+        onStartShouldSetPanResponderCapture: () => !settling.current && !failed,
         onMoveShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
-          if (reduceMotion || settling.current || failed) return false;
+          // RM keeps 1:1 drag (t_b9051be5) — only settle/fail gate.
+          if (settling.current || failed) return false;
           return Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
         onMoveShouldSetPanResponderCapture: (_e, g) => {
-          if (reduceMotion || settling.current || failed) return false;
+          if (settling.current || failed) return false;
           return Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
         },
         onPanResponderTerminationRequest: () => false,
@@ -672,6 +744,14 @@ export function PeriodPager({
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx * 1000;
           dragPxRef.current = g.dx;
+          // Micro-move after start-claim → tile tap (Pressable blocked by 1A start claim).
+          if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
+            setFlinging(false);
+            setShowCenterExtras(true);
+            setFlingOriginAnchor(null);
+            tapAtStageX(_e.nativeEvent.locationX);
+            return;
+          }
           // CAL-P6-1A-07: period commits on snap complete only.
           // targetSteps drives coast destination; onSpringRest commits pending steps.
           const targetSteps = snapPeriodPage(g.dx, pitch, g.vx * 1000);
@@ -682,7 +762,7 @@ export function PeriodPager({
           animateSnap(0, dragPxRef.current);
         },
       }),
-    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, reduceMotion, updateVisualShift],
+    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, tapAtStageX, updateVisualShift],
   );
 
   if (failed) {
@@ -720,61 +800,24 @@ export function PeriodPager({
       flinging,
       distanceFromOrigin,
     });
-    const leaf = (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={
-          isCenter
-            ? 'Go to today'
-            : parked < 0
-              ? accessibilityPrevLabel
-              : accessibilityNextLabel
-        }
-        onPress={() => (isCenter ? onJumpToday() : tapSide(parked))}
-        style={styles.hitTarget}
-      >
-        <PeriodLeaf
-          tile={tile}
-          role={role}
-          showCenterExtras={isCenter && showCenterExtras}
-          contentMode={contentMode}
-          width={WHEEL_HERO_WIDTH}
-        />
-      </Pressable>
+    const hit = {
+      accessibilityLabel: isCenter
+        ? 'Go to today'
+        : parked < 0
+          ? accessibilityPrevLabel
+          : accessibilityNextLabel,
+      onPress: () => (isCenter ? onJumpToday() : tapSide(parked)),
+    };
+    const visual = (
+      <PeriodLeaf
+        tile={tile}
+        role={role}
+        showCenterExtras={isCenter && showCenterExtras}
+        contentMode={contentMode}
+        width={WHEEL_HERO_WIDTH}
+      />
     );
     const poolKey = slotPoolKey(tile.key, slotIndex);
-    if (reduceMotion) {
-      return (
-        <Pressable
-          key={poolKey}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isCenter
-              ? 'Go to today'
-              : parked < 0
-                ? accessibilityPrevLabel
-                : accessibilityNextLabel
-          }
-          onPress={() => (isCenter ? onJumpToday() : tapSide(parked))}
-          style={[
-            styles.rmHit,
-            {
-              opacity: wheelOpacityForNorm(parked),
-              transform: [{ scale: wheelScaleForNorm(parked) }],
-              zIndex: 10 - Math.abs(parked),
-            },
-          ]}
-        >
-          <PeriodLeaf
-            tile={tile}
-            role={role}
-            showCenterExtras={isCenter}
-            contentMode={wheelContentModeFor({ parkedOffset: parked, flinging: false })}
-            width={WHEEL_HERO_WIDTH}
-          />
-        </Pressable>
-      );
-    }
     if (IS_WEB) {
       return (
         <WebSlotMotion
@@ -783,9 +826,10 @@ export function PeriodPager({
           pitch={pitch}
           dragPx={webDragPx}
           freezeSlotPool={slotPoolFrozen}
-          reduceMotion={false}
+          reduceMotion={reduceMotion}
+          hit={hit}
         >
-          {leaf}
+          {visual}
         </WebSlotMotion>
       );
     }
@@ -796,33 +840,36 @@ export function PeriodPager({
         pitch={pitch}
         dragShared={dragShared}
         snapFreezeShared={snapFreezeShared}
-        reduceMotion={false}
+        reduceMotion={reduceMotion}
+        hit={hit}
       >
-        {leaf}
+        {visual}
       </NativeSlotMotion>
     );
   };
 
-  if (reduceMotion) {
-    return (
-      <PeriodLeafBoundary onFail={onFail}>
-        <View style={plateStyle}>
-          <View style={styles.rmRow}>
-            {WHEEL_SLOT_OFFSETS.map((offset) => {
-              const idx = slotIndexForOffset(offset);
-              return renderSlot(offset, idx);
-            })}
-          </View>
-        </View>
-      </PeriodLeafBoundary>
-    );
-  }
+  // Host owns perspective + 50% 45% origin (CAL-3DW Spec §2.1 / t_15feb999).
+  const hostPerspectiveStyle = (
+    IS_WEB
+      ? ({
+          perspective: WHEEL_PERSPECTIVE,
+          // RN Web CSS perspective-origin / transform-origin.
+          perspectiveOrigin: WHEEL_PERSPECTIVE_ORIGIN,
+          transformOrigin: WHEEL_PERSPECTIVE_ORIGIN,
+        } as unknown as ViewStyle)
+      : ({
+          transformOrigin: WHEEL_PERSPECTIVE_ORIGIN,
+        } as ViewStyle)
+  );
 
   return (
     <PeriodLeafBoundary onFail={onFail}>
       <View
-        style={plateStyle}
+        style={[plateStyle, hostPerspectiveStyle]}
         accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
+        onLayout={(e) => {
+          stageWidthRef.current = e.nativeEvent.layout.width;
+        }}
         {...pan.panHandlers}
       >
         <View style={styles.track}>
@@ -860,8 +907,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hitTarget: {
-    minWidth: 56,
-    minHeight: 56,
+    // Unscaled screen space (outside rotateY/scale) — CAL-3DW-08 / t_1a0f176c.
+    minWidth: WHEEL_MIN_HIT_PX,
+    minHeight: WHEEL_MIN_HIT_PX,
+    width: WHEEL_HERO_WIDTH,
+    height: WHEEL_HERO_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -881,19 +931,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  rmRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: WHEEL_STAGE_HEIGHT,
-    gap: 0,
-  },
-  rmHit: {
-    minWidth: 56,
-    minHeight: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: -8,
   },
 });

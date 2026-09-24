@@ -17,6 +17,12 @@ export { snapPeriodPage, PERIOD_PAGER_EDGE_GUARD_PX } from './periodPager.ts';
 /** Perspective (px) on the wheel host. Spec §2.1. */
 export const WHEEL_PERSPECTIVE = 920;
 
+/** Perspective / transform origin on wheel host (Spec §2.1). */
+export const WHEEL_PERSPECTIVE_ORIGIN = '50% 45%';
+
+/** Min side-tile hit in unscaled screen px (CAL-3DW-08 / AC-M06). */
+export const WHEEL_MIN_HIT_PX = 56;
+
 /** Slot pitch P (px) on 390 stage — center-to-center. */
 export const WHEEL_PITCH = 78;
 
