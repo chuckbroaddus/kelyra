@@ -211,7 +211,7 @@ export default function CaptureScreen() {
   const chromeClassId = chrome.classId;
   const chromeRole = chrome.role;
   const router = useRouter();
-  const { teacher } = useAuth();
+  const { teacher, loading: authLoading } = useAuth();
   const office = chromeRole !== 'none' && isOfficeRole(chromeRole);
   const teachSeat = chromeRole === 'teacher';
 
@@ -383,6 +383,14 @@ export default function CaptureScreen() {
     }, []),
   );
 
+  // Avoid OAuth-return flash: session may still be hydrating after redirect (t_9bb57c2c).
+  if (authLoading) {
+    return (
+      <Screen>
+        <Text style={[styles.lead, { color: colors.mute }]}>Finishing sign-in…</Text>
+      </Screen>
+    );
+  }
   if (!teacher) {
     return (
       <Screen>

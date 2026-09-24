@@ -9,6 +9,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { SplitReview } from '@/components/ingest/SplitReview';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { WorkingMark } from '@/components/ui/WorkingMark';
 import { Chip } from '@/components/ui/Chip';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
@@ -521,7 +522,10 @@ export function ClassStackBinder({
 
         {showWaiting ? (
           <View style={styles.gaps}>
-            <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.received}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <WorkingMark size={28} />
+              <Text style={[type.body, { color: colors.ink, flex: 1 }]}>{INGEST_COPY.received}</Text>
+            </View>
             <Text style={[type.meta, { color: colors.mute }]} accessibilityLiveRegion="polite">
               {pageCount != null
                 ? INGEST_COPY.progressPages(pagesDone, pageCount)

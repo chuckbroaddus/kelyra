@@ -9,6 +9,8 @@ import {
 } from '../date/iso.ts';
 
 export const DIARY_EMPTY_DAY_COPY = 'No entries yet on this day.';
+/** Soft filters active but selected day has no matching rows — not true-empty EM-PRIMARY. */
+export const DIARY_FILTER_MISS_COPY = 'No entries match these filters on this day.';
 export const DIARY_PRESENCE_HONESTY =
   'Your journal only. Presence marks never show other people.';
 export const DIARY_TWIN_FAIL_CLOSED =

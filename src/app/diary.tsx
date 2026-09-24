@@ -40,6 +40,7 @@ import {
   buildLedgerAgendaGroups,
   dayChromeLayout,
   DIARY_EMPTY_DAY_COPY,
+  DIARY_FILTER_MISS_COPY,
   DIARY_LEDGER_EMPTY_DAY_COPY,
   DIARY_PRESENCE_HONESTY,
   DIARY_TWIN_FAIL_CLOSED,
@@ -744,9 +745,13 @@ export default function DiaryScreen() {
                     ]}
                   >
                     <Text style={[type.body, { color: colors.mute, textAlign: 'center' }]}>
-                      {DIARY_EMPTY_DAY_COPY}
+                      {journalTag.trim() || journalClassId || journalStudentId
+                        ? DIARY_FILTER_MISS_COPY
+                        : DIARY_EMPTY_DAY_COPY}
                     </Text>
-                    <PrimaryButton label="New entry" onPress={() => openNew()} />
+                    {journalTag.trim() || journalClassId || journalStudentId ? null : (
+                      <PrimaryButton label="New entry" onPress={() => openNew()} />
+                    )}
                   </View>
                 ) : (
                   group.rows.map((row) => {

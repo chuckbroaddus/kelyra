@@ -9,6 +9,7 @@ import {
   dayChromeLayout,
   DAYCHROME_WEB_SPLIT_MIN,
   DIARY_EMPTY_DAY_COPY,
+  DIARY_FILTER_MISS_COPY,
   DIARY_LEDGER_EMPTY_DAY_COPY,
   DIARY_PRESENCE_COUNT_CAP,
   DIARY_PRESENCE_HONESTY,
@@ -100,6 +101,7 @@ test('month nav clamps day-of-month; journalMonthContaining window', () => {
 
 test('locked empty / twin / presence copy constants', () => {
   assert.equal(DIARY_EMPTY_DAY_COPY, 'No entries yet on this day.');
+  assert.equal(DIARY_FILTER_MISS_COPY, 'No entries match these filters on this day.');
   assert.match(DIARY_TWIN_FAIL_CLOSED, /Twin streams never mix/);
   assert.match(DIARY_PRESENCE_HONESTY, /Presence marks never show other people/);
 });
