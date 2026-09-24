@@ -1,18 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import Reanimated, {
+  cancelAnimation,
   Easing,
   runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
 import { type } from '@/constants/theme';
 import {
+  PERIOD_TITLE_MARQUEE_PAUSE_MS,
   PERIOD_TITLE_MORPH_IN_MS,
   PERIOD_TITLE_MORPH_OUT_MS,
+  periodTitleMarqueeMs,
+  periodTitleNeedsMarquee,
   dayPeriodTitleSegments,
   joinDayPeriodTitle,
   morphDayInsertProgress,
@@ -72,17 +79,62 @@ export function CalendarPeriodTitle({
   const [dayWidth, setDayWidth] = useState(0);
   const dayW = useSharedValue(0);
 
+  // Marquee waits until the Week↔Day morph settles so the two motions never fight.
+  const [settled, setSettled] = useState(true);
   useEffect(() => {
     if (reduceMotion) {
       progress.value = target;
       setLetters(target === 1 ? weekday.length : 0);
+      setSettled(true);
       return;
     }
-    progress.value = withTiming(target, {
-      duration: target === 1 ? PERIOD_TITLE_MORPH_IN_MS : PERIOD_TITLE_MORPH_OUT_MS,
-      easing: Easing.inOut(Easing.cubic),
-    });
+    setSettled(false);
+    progress.value = withTiming(
+      target,
+      {
+        duration: target === 1 ? PERIOD_TITLE_MORPH_IN_MS : PERIOD_TITLE_MORPH_OUT_MS,
+        easing: Easing.inOut(Easing.cubic),
+      },
+      (finished) => {
+        'worklet';
+        if (finished) runOnJS(setSettled)(true);
+      },
+    );
   }, [target, reduceMotion, progress, weekday.length]);
+
+  // Marquee: when the title is wider than its box, scroll to the end and back
+  // (pause at each end). Reduce Motion → no marquee (title just clips).
+  const [boxW, setBoxW] = useState(0);
+  const [contentW, setContentW] = useState(0);
+  const marqueeX = useSharedValue(0);
+  useEffect(() => {
+    const overflow = contentW - boxW;
+    if (reduceMotion || !settled || !periodTitleNeedsMarquee(contentW, boxW)) {
+      cancelAnimation(marqueeX);
+      marqueeX.value = reduceMotion ? 0 : withTiming(0, { duration: 200 });
+      return;
+    }
+    const ms = periodTitleMarqueeMs(overflow);
+    marqueeX.value = 0;
+    marqueeX.value = withRepeat(
+      withSequence(
+        withDelay(
+          PERIOD_TITLE_MARQUEE_PAUSE_MS,
+          withTiming(-overflow, { duration: ms, easing: Easing.linear }),
+        ),
+        withDelay(
+          PERIOD_TITLE_MARQUEE_PAUSE_MS,
+          withTiming(0, { duration: ms, easing: Easing.linear }),
+        ),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(marqueeX);
+  }, [contentW, boxW, settled, reduceMotion, marqueeX]);
+  const marqueeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: marqueeX.value }],
+  }));
 
   const weekdayLen = weekday.length;
   useAnimatedReaction(
@@ -140,7 +192,19 @@ export function CalendarPeriodTitle({
           {`${dayPart}${NBSP}`}
         </Text>
       ) : null}
-      <View style={styles.row}>
+      {/* Clip box: horizontal non-scrolling ScrollView lets the row keep its natural
+          width (so we can measure overflow) while the marquee translates it. */}
+      <ScrollView
+        horizontal
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        style={styles.clip}
+        onLayout={(event) => setBoxW(Math.floor(event.nativeEvent.layout.width))}
+      >
+      <Reanimated.View
+        style={[styles.row, marqueeStyle]}
+        onLayout={(event) => setContentW(Math.ceil(event.nativeEvent.layout.width))}
+      >
         <Text style={textStyle} numberOfLines={1}>
           {`${displayMonth}${NBSP}`}
         </Text>
@@ -153,11 +217,12 @@ export function CalendarPeriodTitle({
           {displayYear}
         </Text>
         {letters > 0 ? (
-          <Text style={[textStyle, styles.weekday]} numberOfLines={1} ellipsizeMode="clip">
+          <Text style={textStyle} numberOfLines={1}>
             {`,${NBSP}${shownWeekday}`}
           </Text>
         ) : null}
-      </View>
+      </Reanimated.View>
+      </ScrollView>
     </Reanimated.View>
   );
 }
@@ -167,6 +232,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'flex-start' },
   title: { ...type.title, fontSize: 22 },
   daySlot: { overflow: 'hidden' },
-  weekday: { flexShrink: 1 },
+  clip: { flexGrow: 0 },
   measure: { position: 'absolute', opacity: 0, left: 0, top: 0 },
 });

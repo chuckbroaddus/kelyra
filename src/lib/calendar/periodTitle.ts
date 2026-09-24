@@ -142,3 +142,19 @@ export function formatMorphTitleAtProgress(
   return `${core}, ${seg.weekday.slice(0, letters)}`;
 }
 
+/** Header marquee: pause at each end before scrolling (ms). */
+export const PERIOD_TITLE_MARQUEE_PAUSE_MS = 1400;
+/** Header marquee speed (px per second) — slow enough to read. */
+export const PERIOD_TITLE_MARQUEE_PX_PER_S = 36;
+
+/** Marquee only when content overflows the header box by more than a hairline. */
+export function periodTitleNeedsMarquee(contentW: number, containerW: number): boolean {
+  return containerW > 0 && contentW - containerW > 1;
+}
+
+/** One-way scroll duration for a given overflow (min 600ms so short overflows aren't jumpy). */
+export function periodTitleMarqueeMs(overflowPx: number): number {
+  if (overflowPx <= 0) return 0;
+  return Math.max(600, Math.round((overflowPx / PERIOD_TITLE_MARQUEE_PX_PER_S) * 1000));
+}
+
