@@ -71,13 +71,13 @@ function MetalTabs() {
   );
 }
 
-/** Red header on week plate — start month (CEO 2026-09-24). */
+/** Red header on week/multiday plate — start month (CEO 2026-09-24). */
 function weekHeaderMonth(fromIso: string): string {
   const m = Number(fromIso.slice(5, 7)) - 1;
   return MONS_SHORT[m] ?? '';
 }
 
-/** Body on week plate — day range; include months only when the week crosses months. */
+/** Body on week/multiday plate — day range; include months only when range crosses months. */
 function weekBodyRange(fromIso: string, toIso: string): string {
   const fm = Number(fromIso.slice(5, 7)) - 1;
   const fd = Number(fromIso.slice(8, 10));
@@ -89,7 +89,7 @@ function weekBodyRange(fromIso: string, toIso: string): string {
   return fm === tm ? `${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
 }
 
-/** Footer on week plate — year from week start (CEO 2026-09-24). */
+/** Footer on week/multiday plate — year from range start (CEO 2026-09-24). */
 function weekFooterYear(fromIso: string): string {
   return String(Number(fromIso.slice(0, 4)));
 }
@@ -187,7 +187,11 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         </View>
       </View>
     );
-  } else if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
+  } else if (
+    (tile.kind === 'week' || tile.kind === 'multiday') &&
+    tile.fromIso &&
+    tile.toIso
+  ) {
     const header = weekHeaderMonth(tile.fromIso);
     const range = weekBodyRange(tile.fromIso, tile.toIso);
     const footer = weekFooterYear(tile.fromIso);
@@ -343,7 +347,8 @@ function PeriodLeafImpl({
     );
   }
 
-  if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
+  // week + 3/5-day multiday share the same plate chrome (CEO 2026-09-24).
+  if ((tile.kind === 'week' || tile.kind === 'multiday') && tile.fromIso && tile.toIso) {
     const header = weekHeaderMonth(tile.fromIso);
     const body = weekBodyRange(tile.fromIso, tile.toIso);
     const footer = weekFooterYear(tile.fromIso);
@@ -399,7 +404,7 @@ function PeriodLeafImpl({
     );
   }
 
-  // multiday / agenda — hanging ledger shell (no generic body noun captions)
+  // agenda — hanging ledger shell (no generic body noun captions)
   const wrapLine = tile.sideCaption || tile.centerCaption;
   return (
     <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
