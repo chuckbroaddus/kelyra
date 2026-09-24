@@ -3158,6 +3158,7 @@ We implement Music’s **sweep-and-reset**: hold at the start, crawl until the l
 | `HamburgerDrawer` **teacher** identity | display name or email next to 36 photo | start |
 | `ClassmateSheet` name | first name under 72 | center |
 | `PersonTabs` selected label | selected tab name (next to the 22 glyph when the row has icons) | start |
+| Calendar sticky period title (`CalendarPeriodTitle`) | `February 2026` / `February 4, 2026, Wednesday`; only after the Week↔Day morph settles (clipped, static during the morph); `fadeColor` `colors.bg` | start |
 
 **Do not marquee**
 
