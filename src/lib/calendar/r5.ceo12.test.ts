@@ -162,3 +162,16 @@ test('CAL-R5-12: header→tabs gap tight (pageChromeHosted + calendar contextRes
   assert.match(chrome, /pathname === '\/calendar'/);
   assert.match(chrome, /CAL-R5-12/);
 });
+
+test('CAL-R5 Year Today scrolls YearGrid to today’s month row', () => {
+  const screen = read('src/app/calendar.tsx');
+  assert.match(screen, /yearTodayFocus/);
+  assert.match(screen, /setYearTodayFocus/);
+  assert.match(screen, /onFocusMonthY/);
+  assert.match(screen, /focusMonthIndex0/);
+  assert.match(screen, /screenScrollRef\.current\?\.scrollTo/);
+  const year = read('src/components/calendar/YearGrid.tsx');
+  assert.match(year, /focusMonthIndex0/);
+  assert.match(year, /onFocusMonthY/);
+  assert.match(year, /focusNonce/);
+});
