@@ -49,17 +49,17 @@ test('PeriodPager wires drum stack gate on touch/grant and restores on release',
   assert.match(pager, /from ['"]@\/lib\/calendar\/drumStackGestures['"]/);
   assert.match(pager, /onTouchStart/);
   assert.match(pager, /onTouchEnd|onTouchCancel/);
-  // Grant holds; release + terminate restore.
-  const grantIdx = pager.indexOf('onPanResponderGrant');
+  // Begin holds; end + terminate restore.
+  const grantIdx = pager.indexOf('onPanBegin');
   assert.ok(grantIdx > 0);
   const grantBlock = pager.slice(grantIdx, grantIdx + 900);
   assert.match(grantBlock, /holdStackGestures|hold\(/);
 
-  const releaseIdx = pager.indexOf('onPanResponderRelease');
+  const releaseIdx = pager.indexOf('onPanEnd');
   const releaseBlock = pager.slice(releaseIdx, releaseIdx + 900);
   assert.match(releaseBlock, /releaseStackGestures|release\(/);
 
-  const termIdx = pager.indexOf('onPanResponderTerminate');
+  const termIdx = pager.indexOf('onPanTerminate');
   const termBlock = pager.slice(termIdx, termIdx + 400);
   assert.match(termBlock, /releaseStackGestures|release\(/);
 

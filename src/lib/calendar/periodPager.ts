@@ -49,11 +49,10 @@ export type PeriodTileModel = {
   dayIso?: string;
 };
 
-/** Nine-slot SlotPool window: center ±4 (matches WHEEL_SLOT_OFFSETS). */
+/** Seven-slot SlotPool window: center ±3 (matches WHEEL_SLOT_OFFSETS). */
 export type PeriodWindow = {
   /** Slots aligned 1:1 with WHEEL_SLOT_OFFSETS. Center at index of 0. */
   slots: PeriodTileModel[];
-  prev4: PeriodTileModel;
   prev3: PeriodTileModel;
   prev2: PeriodTileModel;
   prev: PeriodTileModel;
@@ -61,7 +60,6 @@ export type PeriodWindow = {
   next: PeriodTileModel;
   next2: PeriodTileModel;
   next3: PeriodTileModel;
-  next4: PeriodTileModel;
 };
 
 /**
@@ -215,7 +213,6 @@ function packWindow(slots: PeriodTileModel[]): PeriodWindow {
   const centerIdx = WHEEL_SLOT_OFFSETS.indexOf(0);
   return {
     slots,
-    prev4: slots[centerIdx - 4]!,
     prev3: slots[centerIdx - 3]!,
     prev2: slots[centerIdx - 2]!,
     prev: slots[centerIdx - 1]!,
@@ -223,7 +220,6 @@ function packWindow(slots: PeriodTileModel[]): PeriodWindow {
     next: slots[centerIdx + 1]!,
     next2: slots[centerIdx + 2]!,
     next3: slots[centerIdx + 3]!,
-    next4: slots[centerIdx + 4]!,
   };
 }
 
@@ -237,7 +233,7 @@ function shiftMultidayBy(anchor: string, count: MultidayCount, steps: number): s
   return a;
 }
 
-/** Build tiles for every WHEEL_SLOT_OFFSETS entry (center ±4 → N=9). */
+/** Build tiles for every WHEEL_SLOT_OFFSETS entry (center ±3 → N=7). */
 export function buildPeriodWindow(args: BuildPeriodWindowArgs): PeriodWindow {
   const { kind, anchor, dayCount = 3 } = args;
   const offsets = WHEEL_SLOT_OFFSETS;
@@ -301,7 +297,7 @@ function isoDayDelta(fromIso: string, toIso: string): number {
 
 /**
  * Signed kind-aware period steps from `fromAnchor` to `toAnchor`.
- * Used for fling ±4 clear-window policy (distance from fling-origin).
+ * Used for fling ±3 clear-window policy (distance from fling-origin).
  */
 export function periodDistance(
   kind: PeriodKind,
@@ -350,7 +346,7 @@ export function dragToSlotShift(dragPx: number, pitch: number = SLOT_PITCH): num
   return shift === 0 ? 0 : shift;
 }
 
-/** Map total finger drag → SlotPool shift + residual local drag (keeps N=9 near focus). */
+/** Map total finger drag → SlotPool shift + residual local drag (keeps N=7 near focus). */
 export function residualFromTotalDrag(
   dragPx: number,
   pitch: number = SLOT_PITCH,
@@ -450,13 +446,14 @@ export function shouldIgnoreSpringRest(args: {
 /**
  * Short programmed snaps (|steps| ≤ this) are where SlotPool recycle mid-spring
  * is most visible (one/two-step tap flicker). Freeze ONLY this critical band —
- * long coasts (|steps| > 4) must keep recycling so silhouettes beyond ±4 can mount.
+ * half-window for N=7 (|steps| ≤ 3). Long coasts (|steps| > 3) must keep recycling
+ * so silhouettes beyond ±3 can mount.
  */
-export const SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS = 4;
+export const SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS = 3;
 
 /**
  * While a short programmed snap (withSpring settle) is in flight, SlotPool content
- * stays frozen. Freeze only when programmed AND |targetSteps| ≤ CRITICAL (4).
+ * stays frozen. Freeze only when programmed AND |targetSteps| ≤ CRITICAL (3).
  * Long coasts must NOT freeze so recycle continues and far-slot silhouettes appear.
  * Live finger-drag never freezes.
  */
@@ -488,7 +485,7 @@ export function visualShiftForSlotPool(args: {
 
 /**
  * Drag px fed into slot transforms.
- * - Live drag / long coast (freeze off): trunc residual (localDrag in (-P, P]) so N=9 stays near focus.
+ * - Live drag / long coast (freeze off): trunc residual (localDrag in (-P, P]) so N=7 stays near focus.
  * - Short programmed snap (freeze on): absolute total drag after animateSnap rebase
  *   (residual→0 when frozen at liveShift, or 0→−steps·P when frozen at origin).
  */

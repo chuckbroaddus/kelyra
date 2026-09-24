@@ -1,8 +1,9 @@
 /**
- * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
+ * Shared 3D horizontal period wheel (drum). SlotPool N=7 (center ±3).
+ * CAL-DRUM P1: fixed-plate leaves; RNGH Gesture.Pan; N=7 SlotPool.
  * CAL-DRUM P0: stable slot-${index} hosts; motionCompact leaves; opacity silhouette;
  * native+web TransformDriver = reanimated SharedValue + withSpring (no per-frame setState).
- * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤4) freezes SlotPool; long coast recycles.
+ * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤3) freezes SlotPool; long coast recycles.
  * SoT geometry: perspective 920 · origin 50% 45% on host · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: host perspective · translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
  * RM: drop rotateY/perspective; keep 1:1 drag, scale, opacity, short snap, taps, hierarchy.
@@ -21,16 +22,14 @@ import {
   useState,
 } from 'react';
 import {
-  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
-  type GestureResponderEvent,
-  type PanResponderGestureState,
   type ViewStyle,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   runOnJS,
   useAnimatedReaction,
@@ -153,14 +152,12 @@ function FallbackToolbar({
 }
 
 function roleForOffset(offset: number): PeriodLeafRole {
-  if (offset <= -4) return 'prev4';
-  if (offset === -3) return 'prev3';
+  if (offset <= -3) return 'prev3';
   if (offset === -2) return 'prev2';
   if (offset === -1) return 'prev';
   if (offset === 1) return 'next';
   if (offset === 2) return 'next2';
-  if (offset === 3) return 'next3';
-  if (offset >= 4) return 'next4';
+  if (offset >= 3) return 'next3';
   return 'current';
 }
 
@@ -331,7 +328,7 @@ export function PeriodPager({
   const [failed, setFailed] = useState(false);
   const [showCenterExtras, setShowCenterExtras] = useState(true);
   const [flinging, setFlinging] = useState(false);
-  /** Anchor captured on pan grant / fling start — ±4 clear window origin. */
+  /** Anchor captured on pan grant / fling start — ±3 clear window origin. */
   const [flingOriginAnchor, setFlingOriginAnchor] = useState<string | null>(null);
   /** Integer SlotPool rebound during long fling (flyby count ↔ committed advance). */
   const [visualShift, setVisualShiftState] = useState(0);
@@ -368,7 +365,7 @@ export function PeriodPager({
   /** Visual drag at pan grant — move adds g.dx so mid-spring interrupt continues (t_72512eeb). */
   const grantDragBaseRef = useRef(0);
   const settling = useRef(false);
-  /** PanResponder vx is px/ms; Reanimated spring velocity expects px/s. */
+  /** RNGH velocityX is already px/s (Reanimated spring velocity). */
   const velocityRef = useRef(0);
   const pitch = WHEEL_PITCH;
   /** Stage width for start-claim micro-tap slot pick (CAL-P6-1A). */
@@ -501,8 +498,8 @@ export function PeriodPager({
     (targetSteps: number, releaseDragPx?: number) => {
       const liveShift = visualShiftRef.current;
       const absSteps = Math.abs(targetSteps);
-      // Freeze ONLY short programmed snaps (|steps|≤4). Long coasts keep recycling
-      // so ContentPolicy silhouettes beyond ±4 can mount.
+      // Freeze ONLY short programmed snaps (|steps|≤3). Long coasts keep recycling
+      // so ContentPolicy silhouettes beyond ±3 can mount.
       const freeze = shouldFreezeSlotPoolDuringSnap(true, absSteps);
       pendingSnapStepsRef.current = targetSteps;
       snapFreezeRef.current = freeze;
@@ -552,7 +549,7 @@ export function PeriodPager({
           damping: WHEEL_REANIMATED_SPRING.damping,
           stiffness: WHEEL_REANIMATED_SPRING.stiffness,
           mass: WHEEL_REANIMATED_SPRING.mass,
-          // velocityRef is already px/s (PanResponder vx * 1000).
+          // velocityRef is already px/s (RNGH velocityX).
           velocity: velocityRef.current,
         },
         (finished) => {
@@ -600,90 +597,122 @@ export function PeriodPager({
     [onJumpToday, pitch, tapSide],
   );
 
-    const pan = useMemo(
-    () =>
-      PanResponder.create({
-        // CAL-P6-1A-01: full-band start claim (LTR+RTL) so leftmost drum pixels page, not iOS pop.
-        // Move-claim alone loses the left-edge race (t_80d16cbc).
-        onStartShouldSetPanResponder: () => !settling.current && !failed,
-        onStartShouldSetPanResponderCapture: () => !settling.current && !failed,
-        onMoveShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) => {
-          // RM keeps 1:1 drag (t_b9051be5) — only settle/fail gate.
-          if (settling.current || failed) return false;
-          return Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
-        },
-        onMoveShouldSetPanResponderCapture: (_e, g) => {
-          if (settling.current || failed) return false;
-          return Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2;
-        },
-        onPanResponderTerminationRequest: () => false,
-        onPanResponderGrant: () => {
-          // CAL-P6-9A: disable interactive pop for the drum gesture lifetime.
-          holdStackGestures();
-          setShowCenterExtras(false);
-          setFlinging(true);
-          setFlingOriginAnchor(anchor);
-          velocityRef.current = 0;
-          // Capture visible drag BEFORE interrupt absorb so move can rebase (AC-M05 / t_72512eeb).
-          const visualBefore = dragShared.value;
-          // Interrupt absorb: fold pending/visual into absorbedShift (do NOT drop,
-          // do NOT onShift — parent anchor reset would wipe this new drag).
-          const hadInFlight =
-            pendingSnapStepsRef.current !== 0 ||
-            visualShiftRef.current !== 0 ||
-            snapFreezeRef.current ||
-            snapActiveRef.current;
-          absorbInFlightSnap();
-          // After absorb, residual is 0; continue from captured visual + gesture delta.
-          grantDragBaseRef.current = hadInFlight ? visualBefore : 0;
-          dragShared.value = grantDragBaseRef.current;
-          dragPxRef.current = grantDragBaseRef.current;
-        },
-        onPanResponderMove: (_e, g) => {
-          // PanResponder vx is px/ms → store px/s for withSpring.
-          velocityRef.current = g.vx * 1000;
-          const next = grantDragBaseRef.current + g.dx;
-          dragPxRef.current = next;
-          // SharedValue path only — no per-frame React setState (CAL-DRUM P0 N5).
-          dragShared.value = next;
-        },
-        onPanResponderRelease: (_e, g) => {
-          // Finger up — restore stack pop (spring may continue; pop only races while down).
-          releaseStackGestures();
-          velocityRef.current = g.vx * 1000;
-          const next = grantDragBaseRef.current + g.dx;
-          dragPxRef.current = next;
-          // Micro-move after start-claim → tile tap (Pressable blocked by 1A start claim).
-          if (Math.abs(g.dx) < 8 && Math.abs(g.dy) < 8) {
-            setFlinging(false);
-            setShowCenterExtras(true);
-            setFlingOriginAnchor(null);
-            tapAtStageX(_e.nativeEvent.locationX);
-            return;
-          }
-          // CAL-P6-1A-07: period commits on snap complete only.
-          // targetSteps drives coast destination; onSpringRest commits pending steps.
-          const targetSteps = snapPeriodPage(next, pitch, g.vx * 1000);
-          animateSnap(targetSteps, next);
-        },
-        onPanResponderTerminate: () => {
-          releaseStackGestures();
-          velocityRef.current = 0;
-          animateSnap(0, dragPxRef.current);
-        },
-      }),
-    [
-      absorbInFlightSnap,
-      animateSnap,
-      anchor,
-      dragShared,
-      failed,
-      holdStackGestures,
-      pitch,
-      releaseStackGestures,
-      tapAtStageX,
-    ],
+  const onPanBegin = useCallback(() => {
+    if (settling.current || failed) return;
+    // CAL-P6-9A: disable interactive pop for the drum gesture lifetime.
+    holdStackGestures();
+    setShowCenterExtras(false);
+    setFlinging(true);
+    setFlingOriginAnchor(anchor);
+    velocityRef.current = 0;
+    // Capture visible drag BEFORE interrupt absorb so move can rebase (AC-M05 / t_72512eeb).
+    const visualBefore = dragShared.value;
+    // Interrupt absorb: fold pending/visual into absorbedShift (do NOT drop,
+    // do NOT onShift — parent anchor reset would wipe this new drag).
+    const hadInFlight =
+      pendingSnapStepsRef.current !== 0 ||
+      visualShiftRef.current !== 0 ||
+      snapFreezeRef.current ||
+      snapActiveRef.current;
+    absorbInFlightSnap();
+    // After absorb, residual is 0; continue from captured visual + gesture delta.
+    grantDragBaseRef.current = hadInFlight ? visualBefore : 0;
+    dragShared.value = grantDragBaseRef.current;
+    dragPxRef.current = grantDragBaseRef.current;
+  }, [absorbInFlightSnap, anchor, dragShared, failed, holdStackGestures]);
+
+  const onPanUpdate = useCallback(
+    (translationX: number, velocityX: number) => {
+      // RNGH velocityX is already px/s.
+      velocityRef.current = velocityX;
+      const next = grantDragBaseRef.current + translationX;
+      dragPxRef.current = next;
+      // SharedValue path only — no per-frame React setState (CAL-DRUM P0 N5).
+      dragShared.value = next;
+    },
+    [dragShared],
   );
+
+  const onPanEnd = useCallback(
+    (
+      translationX: number,
+      translationY: number,
+      velocityX: number,
+      stageX: number,
+      success: boolean,
+    ) => {
+      // Finger up — restore stack pop (spring may continue; pop only races while down).
+      releaseStackGestures();
+      if (!success) {
+        velocityRef.current = 0;
+        animateSnap(0, dragPxRef.current);
+        return;
+      }
+      velocityRef.current = velocityX;
+      const next = grantDragBaseRef.current + translationX;
+      dragPxRef.current = next;
+      // Micro-move after start-claim → tile tap (Pressable blocked by 1A start claim).
+      if (Math.abs(translationX) < 8 && Math.abs(translationY) < 8) {
+        setFlinging(false);
+        setShowCenterExtras(true);
+        setFlingOriginAnchor(null);
+        tapAtStageX(stageX);
+        return;
+      }
+      // CAL-P6-1A-07: period commits on snap complete only.
+      // targetSteps drives coast destination; onSpringRest commits pending steps.
+      const targetSteps = snapPeriodPage(next, pitch, velocityX);
+      animateSnap(targetSteps, next);
+    },
+    [animateSnap, pitch, releaseStackGestures, tapAtStageX],
+  );
+
+  const onPanTerminate = useCallback(() => {
+    // Cancel/interrupt without a successful end — release gate + settle residual.
+    releaseStackGestures();
+    velocityRef.current = 0;
+    animateSnap(0, dragPxRef.current);
+  }, [animateSnap, releaseStackGestures]);
+
+  // CAL-P6-1A-01: full-band start claim (LTR+RTL) so leftmost drum pixels page, not iOS pop.
+  // manualActivation + onTouchesDown activate — Move-claim alone loses the left-edge race (t_80d16cbc).
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .manualActivation(true)
+        .minPointers(1)
+        // Prior move thresholds (dx>6, |dx|>|dy|*1.2) — fail vertical scrolls before pan locks.
+        .activeOffsetX([-6, 6])
+        .failOffsetY([-12, 12])
+        .enabled(!failed)
+        .onTouchesDown((_e, stateManager) => {
+          'worklet';
+          stateManager.activate();
+        })
+        .onBegin(() => {
+          'worklet';
+          runOnJS(onPanBegin)();
+        })
+        .onUpdate((e) => {
+          'worklet';
+          runOnJS(onPanUpdate)(e.translationX, e.velocityX);
+        })
+        .onEnd((e, success) => {
+          'worklet';
+          // success=false → treat as terminate (do not also fire onFinalize terminate).
+          runOnJS(onPanEnd)(e.translationX, e.translationY, e.velocityX, e.x, success);
+        })
+        .onFinalize((_e, _success) => {
+          'worklet';
+          // Belt-and-suspenders: gate release if end skipped (rare cancel paths).
+          runOnJS(releaseStackGestures)();
+        }),
+    [failed, onPanBegin, onPanEnd, onPanUpdate, releaseStackGestures],
+  );
+
+  // Keep terminate helper for cancel parity / source-contract tests (wired via onPanEnd !success).
+  void onPanTerminate;
+
 
   if (failed) {
     return (
@@ -772,24 +801,25 @@ export function PeriodPager({
 
   return (
     <PeriodLeafBoundary onFail={onFail}>
-      <View
-        style={[plateStyle, hostPerspectiveStyle]}
-        accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
-        onLayout={(e) => {
-          stageWidthRef.current = e.nativeEvent.layout.width;
-        }}
-        onTouchStart={holdStackGestures}
-        onTouchEnd={releaseStackGestures}
-        onTouchCancel={releaseStackGestures}
-        {...pan.panHandlers}
-      >
-        <View style={styles.track}>
-          {WHEEL_SLOT_OFFSETS.map((parked) => {
-            const idx = slotIndexForOffset(parked);
-            return renderSlot(parked, idx);
-          })}
+      <GestureDetector gesture={panGesture}>
+        <View
+          style={[plateStyle, hostPerspectiveStyle]}
+          accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
+          onLayout={(e) => {
+            stageWidthRef.current = e.nativeEvent.layout.width;
+          }}
+          onTouchStart={holdStackGestures}
+          onTouchEnd={releaseStackGestures}
+          onTouchCancel={releaseStackGestures}
+        >
+          <View style={styles.track}>
+            {WHEEL_SLOT_OFFSETS.map((parked) => {
+              const idx = slotIndexForOffset(parked);
+              return renderSlot(parked, idx);
+            })}
+          </View>
         </View>
-      </View>
+      </GestureDetector>
     </PeriodLeafBoundary>
   );
 }

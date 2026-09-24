@@ -1,11 +1,12 @@
 /**
- * Set B hanging-ledger period tiles (View/Text — no PNG atlas / build-icons).
+ * Fixed-plate period tiles (View/Text — no PNG atlas / build-icons).
  * Leaf hex fixed across themes (CAL-3DW-10). Chrome plate themes elsewhere.
- * P0 ContentPolicy (CAL-DRUM): fling ±4 clear; beyond → opacity-dim silhouette
- * (no BlurView / CSS blur); full post-snap. MonthHangingGrid only idle center.
- * motionCompact: fixed header geometry mid-spin (no line-count / fontSize cheese).
+ * CAL-DRUM P1: fixed plate idle — red header + single body line/numeral/range.
+ * Never mounts month hanging grids or week day strips on the drum (grids stay in calendar body).
+ * P0 ContentPolicy: fling ±3 clear; beyond → opacity-dim silhouette (no BlurView / CSS blur).
+ * Plate geometry is always compact (showCenterExtras / motionCompact kept for API compat).
  */
-import { memo, useMemo, type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { monthGridDays } from '@/lib/calendar/month';
@@ -16,28 +17,25 @@ import {
   WHEEL_HERO_WIDTH,
   type WheelContentMode,
 } from '@/lib/calendar/periodWheel';
-import { addDaysISO } from '@/lib/date/iso';
 
 export type PeriodLeafRole =
-  | 'prev4'
   | 'prev3'
   | 'prev2'
   | 'prev'
   | 'current'
   | 'next'
   | 'next2'
-  | 'next3'
-  | 'next4';
+  | 'next3';
 
 type Props = {
   tile: PeriodTileModel;
   /** Side tiles stay abbreviated; center shows full caption after snap. */
   role: PeriodLeafRole;
-  /** Extra center caption / hanging grid after finger-up snap. */
+  /** Kept for API compat — plate never mounts drum-grid extras. */
   showCenterExtras: boolean;
   /**
-   * True while flinging or center extras dismantled — fixed geometry only:
-   * no MonthHangingGrid, no expanding week/day headers, no year fontSize swap.
+   * Kept for API compat — plate geometry is always fixed/compact
+   * (no hanging month grid, no expanding week/day headers, no year fontSize swap).
    */
   motionCompact?: boolean;
   /** P0 ContentPolicy: silhouette during fling; full ledger after snap. */
@@ -61,21 +59,6 @@ const MONS_SHORT = [
   'DEC',
 ] as const;
 
-const MONS_FULL = [
-  'JANUARY',
-  'FEBRUARY',
-  'MARCH',
-  'APRIL',
-  'MAY',
-  'JUNE',
-  'JULY',
-  'AUGUST',
-  'SEPTEMBER',
-  'OCTOBER',
-  'NOVEMBER',
-  'DECEMBER',
-] as const;
-
 function MetalTabs() {
   return (
     <View style={styles.tabsRow} accessibilityElementsHidden>
@@ -89,103 +72,26 @@ function MetalTabs() {
   );
 }
 
-function MonthHangingGridImpl({
-  year,
-  monthIndex0,
-}: {
-  year: number;
-  monthIndex0: number;
-}) {
-  const days = useMemo(() => monthGridDays(year, monthIndex0, 0), [year, monthIndex0]);
-  const cells = days.slice(0, 35); // 5 rows — matches mockup density
-  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  return (
-    <View style={styles.hangGrid} accessibilityElementsHidden>
-      {labels.map((lab, i) => (
-        <Text
-          key={`dow-${i}`}
-          style={[styles.hangDow, { color: i === 0 ? SET_B.sunday : SET_B.type }]}
-        >
-          {lab}
-        </Text>
-      ))}
-      {cells.map((iso, i) => {
-        const dow = i % 7;
-        const dayNum = Number(iso.slice(8, 10));
-        const inMonth =
-          Number(iso.slice(0, 4)) === year && Number(iso.slice(5, 7)) - 1 === monthIndex0;
-        const color = !inMonth ? SET_B.grid : dow === 0 ? SET_B.sunday : SET_B.type;
-        return (
-          <Text
-            key={`${iso}-${i}`}
-            numberOfLines={1}
-            allowFontScaling={false}
-            style={[styles.hangDay, { color }]}
-          >
-            {inMonth ? dayNum : ''}
-          </Text>
-        );
-      })}
-    </View>
-  );
-}
-
-const MonthHangingGrid = memo(MonthHangingGridImpl);
-
-function WeekDayStrip({ fromIso }: { fromIso: string }) {
-  const days = useMemo(() => {
-    const out: { n: number; sunday: boolean; iso: string }[] = [];
-    for (let i = 0; i < 7; i += 1) {
-      const iso = addDaysISO(fromIso, i) ?? fromIso;
-      out.push({ n: Number(iso.slice(8, 10)), sunday: i === 0, iso });
-    }
-    return out;
-  }, [fromIso]);
-
-  return (
-    <View style={styles.weekStrip} accessibilityElementsHidden>
-      {days.map((d) => (
-        <View
-          key={d.iso}
-          style={[
-            styles.weekCell,
-            { borderColor: d.sunday ? SET_B.sunday : SET_B.type },
-          ]}
-        >
-          <Text
-            style={[
-              styles.weekCellText,
-              { color: d.sunday ? SET_B.sunday : SET_B.type },
-            ]}
-          >
-            {d.n}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function weekHeaderLines(fromIso: string, toIso: string, isCenter: boolean): string[] {
-  const fy = Number(fromIso.slice(0, 4));
+function weekHeaderLine(fromIso: string, toIso: string): string {
   const fm = Number(fromIso.slice(5, 7)) - 1;
   const fd = Number(fromIso.slice(8, 10));
   const tm = Number(toIso.slice(5, 7)) - 1;
   const td = Number(toIso.slice(8, 10));
   const fromMon = MONS_SHORT[fm] ?? '';
   const toMon = MONS_SHORT[tm] ?? '';
-  const range =
-    fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
-  if (isCenter) return [range, String(fy)];
-  return [range];
+  return fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
 }
 
-function dayHeaderLines(dayIso: string, isCenter: boolean): string[] {
+function weekBodyRange(fromIso: string, toIso: string): string {
+  const fy = Number(fromIso.slice(0, 4));
+  return `${weekHeaderLine(fromIso, toIso)} · ${fy}`;
+}
+
+function dayHeaderLine(dayIso: string): string {
   const y = Number(dayIso.slice(0, 4));
   const m = Number(dayIso.slice(5, 7)) - 1;
-  const mon = MONS_FULL[m] ?? '';
-  if (isCenter) return [mon, String(y)];
-  return [MONS_SHORT[m] ?? mon];
+  const mon = MONS_SHORT[m] ?? '';
+  return `${mon} ${y}`;
 }
 
 function monthHeaderLabel(year: number, monthIndex0: number): string {
@@ -227,7 +133,7 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
           <Text
-            style={[styles.yearText, styles.yearTextCenter, styles.silhouetteYearText]}
+            style={[styles.yearText, styles.yearTextPlate, styles.silhouetteYearText]}
             numberOfLines={1}
             allowFontScaling={false}
           >
@@ -280,7 +186,10 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
             {labels.map((lab, i) => (
               <Text
                 key={`sil-w-${i}`}
-                style={styles.silhouetteLabelHint}
+                style={[
+                  styles.silhouetteLabelHint,
+                  i === 0 ? { color: SET_B.sunday } : null,
+                ]}
                 numberOfLines={1}
                 allowFontScaling={false}
               >
@@ -325,14 +234,14 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
 function PeriodLeafImpl({
   tile,
   role,
-  showCenterExtras,
-  motionCompact = false,
+  showCenterExtras: _showCenterExtras,
+  motionCompact: _motionCompact = false,
   contentMode,
 }: Props) {
+  // Fixed plate always — drum never mounts hanging month grids / week day strips.
+  void _showCenterExtras;
+  void _motionCompact;
   const isCenter = role === 'current';
-  // Idle center extras only — never mid-spin (motionCompact / flinging).
-  const showExtras = isCenter && showCenterExtras && !motionCompact;
-  const compact = motionCompact || !showExtras;
 
   if (contentMode === 'silhouette') {
     return <SilhouetteLeaf tile={tile} />;
@@ -340,17 +249,11 @@ function PeriodLeafImpl({
 
   if (tile.kind === 'year') {
     const label = isCenter ? String(tile.year ?? tile.centerCaption) : tile.sideCaption;
-    // Fixed year text style during motionCompact — no center/side fontSize swap mid-fling.
-    const yearStyle = compact
-      ? styles.yearTextSide
-      : isCenter
-        ? styles.yearTextCenter
-        : styles.yearTextSide;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text style={[styles.yearText, yearStyle]} numberOfLines={1}>
+          <Text style={[styles.yearText, styles.yearTextPlate]} numberOfLines={1}>
             {label}
           </Text>
         </View>
@@ -362,8 +265,6 @@ function PeriodLeafImpl({
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
     const header = monthHeaderLabel(year, monthIndex0);
-    // Month heavy 35-cell grid only idle center — never while motionCompact.
-    const mountGrid = showExtras && year > 0;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -373,56 +274,45 @@ function PeriodLeafImpl({
               {header}
             </Text>
           </View>
-          {mountGrid ? (
-            <MonthHangingGrid year={year} monthIndex0={monthIndex0} />
-          ) : (
-            <View style={styles.monthStub} />
-          )}
+          <View style={styles.monthStub} />
         </View>
       </View>
     );
   }
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
-    // Single-line header while compact; strip density must not grow mid-spin on center.
-    const lines = weekHeaderLines(tile.fromIso, tile.toIso, showExtras);
-    const mountStrip = isCenter ? showExtras : true;
+    const header = weekHeaderLine(tile.fromIso, tile.toIso);
+    const body = weekBodyRange(tile.fromIso, tile.toIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
-            {lines.map((line) => (
-              <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
-                {line}
-              </Text>
-            ))}
+          <View style={styles.wrapHeader}>
+            <Text style={styles.wrapHeaderText} numberOfLines={1}>
+              {header}
+            </Text>
           </View>
-          {mountStrip ? <WeekDayStrip fromIso={tile.fromIso} /> : <View style={styles.wrapBodyEmpty} />}
+          <Text style={styles.plateBodyLine} numberOfLines={2} allowFontScaling={false}>
+            {body}
+          </Text>
         </View>
       </View>
     );
   }
 
   if (tile.kind === 'day' && tile.dayIso) {
-    const lines = dayHeaderLines(tile.dayIso, showExtras);
+    const header = dayHeaderLine(tile.dayIso);
     const dayNum = String(Number(tile.dayIso.slice(8, 10)));
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
-            {lines.map((line) => (
-              <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
-                {line}
-              </Text>
-            ))}
+          <View style={styles.wrapHeader}>
+            <Text style={styles.wrapHeaderText} numberOfLines={1}>
+              {header}
+            </Text>
           </View>
-          <Text
-            style={styles.dayNumeral}
-            numberOfLines={1}
-            allowFontScaling={false}
-          >
+          <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
             {dayNum}
           </Text>
         </View>
@@ -431,21 +321,15 @@ function PeriodLeafImpl({
   }
 
   // multiday / agenda — hanging ledger shell (no generic body noun captions)
-  const wrapLines = showExtras
-    ? tile.centerCaption.split(/[–-]/).length > 1
-      ? [tile.sideCaption]
-      : [tile.centerCaption]
-    : [tile.sideCaption];
+  const wrapLine = tile.sideCaption || tile.centerCaption;
   return (
     <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
       <MetalTabs />
       <View style={styles.page}>
-        <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
-          {wrapLines.map((line) => (
-            <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={2}>
-              {line}
-            </Text>
-          ))}
+        <View style={styles.wrapHeader}>
+          <Text style={styles.wrapHeaderText} numberOfLines={2}>
+            {wrapLine}
+          </Text>
         </View>
         <View style={styles.wrapBodyEmpty} />
       </View>
@@ -506,10 +390,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
-  yearTextCenter: {
-    fontSize: 26,
-  },
-  yearTextSide: {
+  yearTextPlate: {
     fontSize: 28,
   },
   monthHeader: {
@@ -534,41 +415,12 @@ const styles = StyleSheet.create({
   monthStub: {
     flex: 1,
   },
-  hangGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 4,
-    paddingBottom: 4,
-    paddingTop: 2,
-    flex: 1,
-  },
-  hangDow: {
-    width: '14.28%',
-    textAlign: 'center',
-    fontSize: 7,
-    lineHeight: 10,
-    fontWeight: '600',
-  },
-  hangDay: {
-    width: '14.28%',
-    textAlign: 'center',
-    fontSize: 7.5,
-    lineHeight: 11,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-    paddingHorizontal: 0,
-  },
   wrapHeader: {
     backgroundColor: SET_B.header,
     paddingHorizontal: 4,
     paddingVertical: 4,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  wrapHeaderTall: {
-    minHeight: 40,
-  },
-  wrapHeaderCompact: {
     minHeight: 24,
   },
   wrapHeaderText: {
@@ -577,26 +429,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  weekStrip: {
+  plateBodyLine: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-  },
-  weekCell: {
-    width: 10,
-    height: 36,
-    borderRadius: 2.5,
-    borderWidth: 1,
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  weekCellText: {
-    fontSize: 7,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: SET_B.type,
+    paddingHorizontal: 6,
+    paddingTop: 10,
   },
   dayNumeral: {
     flex: 1,

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppHeader } from '@/components/ui/AppHeader';
 import { ContextMenuRow } from '@/components/ui/ContextMenuRow';
@@ -15,13 +16,15 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <ChromeProvider>
-      <MarqueeScrollProvider>
-        <SwipeRowOpenProvider>
-          <ShellFrame>{children}</ShellFrame>
-        </SwipeRowOpenProvider>
-      </MarqueeScrollProvider>
-    </ChromeProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <ChromeProvider>
+        <MarqueeScrollProvider>
+          <SwipeRowOpenProvider>
+            <ShellFrame>{children}</ShellFrame>
+          </SwipeRowOpenProvider>
+        </MarqueeScrollProvider>
+      </ChromeProvider>
+    </GestureHandlerRootView>
   );
 }
 
