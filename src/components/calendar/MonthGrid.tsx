@@ -47,8 +47,6 @@ type Props = {
   onSelectDay: (iso: string) => void;
   /** Tap-zoom Month → Week (day cell). focusIndex = week row. */
   onZoomDay?: (iso: string, source: ZoomSourceRect, focusIndex: number) => void;
-  /** CAL-P6-3A: week-number / week-row → Week containing that week. */
-  onZoomWeek?: (iso: string, source: ZoomSourceRect, focusIndex: number) => void;
   /** Live Month→Week drill: fade non-focus week rows while focus stays opaque. */
   drillProgress?: SharedValue<number> | null;
   drillFocusWeekIndex?: number | null;
@@ -82,7 +80,6 @@ export function MonthGrid({
   mode = 'compact',
   onSelectDay,
   onZoomDay,
-  onZoomWeek,
   onPressItem,
   onCommitAdjacentMonth,
   drillProgress = null,
@@ -117,7 +114,8 @@ export function MonthGrid({
   };
 
   const weeks = buildMonthGrid(year, monthIndex0, 0);
-  const weekdays = weekdayLabels(0);
+  // CEO 2026-09-24: three-letter column headers (Sun, Mon, …); no week-number column.
+  const weekdays = weekdayLabels(0, undefined, 'short');
   const fromIso = `${year}-${String(monthIndex0 + 1).padStart(2, '0')}-01`;
   const monthPrefix = fromIso.slice(0, 7);
   const overscrollRef = useRef(0);
@@ -221,11 +219,6 @@ export function MonthGrid({
         </Reanimated.Text>
       )}
       <Reanimated.View style={[styles.weekdays, chromeAnimStyle]}>
-        {onZoomWeek ? (
-          <Text style={[styles.weekNumHdr, { color: colors.mute }]} accessibilityElementsHidden>
-            W
-          </Text>
-        ) : null}
         {weekdays.map((d, i) => (
           <Text key={`${d}-${i}`} style={[styles.wd, { color: colors.mute }]}>
             {d}
@@ -233,8 +226,6 @@ export function MonthGrid({
         ))}
       </Reanimated.View>
       {weeks.map((week, wi) => {
-        const firstInMonth = week.find((cell) => cell && cell.iso.startsWith(monthPrefix));
-        const weekAnchor = firstInMonth?.iso ?? week.find(Boolean)?.iso ?? null;
         return (
           <DrillWeekRow
             key={`w-${wi}`}
@@ -245,24 +236,6 @@ export function MonthGrid({
               weekRowRefs.current.set(wi, node);
             }}
           >
-            {onZoomWeek && weekAnchor ? (
-              <Reanimated.View style={chromeAnimStyle}>
-                <Pressable
-                  onPress={() =>
-                    measureNode(weekRowRefs.current.get(wi), (source) =>
-                      onZoomWeek(weekAnchor, source, wi),
-                    )
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Week of ${weekAnchor}`}
-                  style={styles.weekNumHit}
-                >
-                  <Text style={[styles.weekNum, { color: colors.mute }]}>{wi + 1}</Text>
-                </Pressable>
-              </Reanimated.View>
-            ) : onZoomWeek ? (
-              <Reanimated.View style={[styles.weekNumHit, chromeAnimStyle]} />
-            ) : null}
             {week.map((cell, ci) => {
               if (!cell) {
                 return <View key={`e-${ci}`} style={styles.dayCell} />;
@@ -393,21 +366,8 @@ const styles = StyleSheet.create({
   listScroller: { flex: 1, minHeight: 0 },
   monthTitle: { ...type.title, fontSize: 22, marginBottom: 8 },
   weekdays: { flexDirection: 'row', marginBottom: 4, alignItems: 'center' },
-  weekNumHdr: {
-    width: 28,
-    textAlign: 'center',
-    ...type.meta,
-    fontSize: 11,
-  },
   wd: { flex: 1, textAlign: 'center', ...type.meta, fontSize: 12 },
   week: { flexDirection: 'row', alignItems: 'center' },
-  weekNumHit: {
-    width: 28,
-    minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekNum: { ...type.meta, fontSize: 11, fontVariant: ['tabular-nums'] },
   dayCell: {
     flex: 1,
     alignItems: 'center',
