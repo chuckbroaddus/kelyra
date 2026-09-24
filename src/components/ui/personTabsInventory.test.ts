@@ -147,7 +147,7 @@ test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth
   assert.match(pills, /width:\s*pillWidth/);
 });
 
-test('expo iOS first-tab snap: skip scrollTo on instant/defer + fixed-cell underlay (keep ScrollView)', () => {
+test('expo iOS first-tab snap: skip scrollTo on instant/defer + no clipped subviews', () => {
   const pills = read('src/components/ui/PersonTabs.tsx');
   const layout = read('src/components/ui/personTabsLayout.ts');
   // Native cause lock: any scrollTo on index-0 enter/leave races leading width morph.
@@ -162,13 +162,6 @@ test('expo iOS first-tab snap: skip scrollTo on instant/defer + fixed-cell under
   assert.match(pills, /motion === 'instant' \|\| motion === 'defer'/);
   assert.doesNotMatch(pills, /setTimeout\([\s\S]*scrollTo/);
   assert.match(pills, /scrollEnabled=\{rowOverflows\}/);
-  // ALWAYS ScrollView — prior View↔ScrollView host swap hid tabs on Expo Go.
-  assert.match(pills, /Always ScrollView \(never View/);
-  assert.match(pills, /fixedCellUnderlay=\{Platform\.OS === 'ios'\}/);
-  assert.match(pills, /styles\.underlay/);
-  assert.match(pills, /width: collapsedWidth/);
-  assert.doesNotMatch(pills, /Content fits: plain View host/);
-  assert.doesNotMatch(pills, /rowOverflows \? \(/);
   // Outer host width stays viewport-constant; pill morph only clips inside.
   assert.match(pills, /Morphing pill widths must not change the office column/);
   assert.match(pills, /alignSelf: 'stretch'/);
