@@ -139,53 +139,6 @@ export function personTabScrollTabWidth(
 
 
 /**
- * Predicted row content width for the current selection (collapsed hits + one
- * hugged expanded pill + gaps + end pad). Used for scroll targets.
- */
-export function personTabRowContentWidth(
-  tabKeys: readonly string[],
-  selectedKey: string,
-  titleByKey: Readonly<Record<string, number>>,
-  labelMax: number,
-  glyph = true,
-): number {
-  if (tabKeys.length === 0) return 0;
-  let width = PERSON_TAB_ROW_PAD_END;
-  tabKeys.forEach((key, index) => {
-    if (index > 0) width += PERSON_TAB_ROW_GAP;
-    const { collapsed, expanded } = personTabPillWidthRange(titleByKey[key] ?? 0, labelMax, glyph);
-    width += key === selectedKey ? expanded : collapsed;
-  });
-  return width;
-}
-
-/**
- * Worst-case content width (longest expanded label + remaining collapsed hits).
- * Overflow host choice must use this — selection-dependent width flickers the
- * View↔ScrollView host and remounts pills mid-gesture.
- */
-export function personTabRowMaxContentWidth(
-  tabKeys: readonly string[],
-  titleByKey: Readonly<Record<string, number>>,
-  labelMax: number,
-  glyph = true,
-): number {
-  if (tabKeys.length === 0) return 0;
-  let maxExpanded = PERSON_TAB_ICON_HIT;
-  for (const key of tabKeys) {
-    const { expanded } = personTabPillWidthRange(titleByKey[key] ?? 0, labelMax, glyph);
-    if (expanded > maxExpanded) maxExpanded = expanded;
-  }
-  const others = Math.max(0, tabKeys.length - 1);
-  return (
-    maxExpanded +
-    others * PERSON_TAB_ICON_HIT +
-    others * PERSON_TAB_ROW_GAP +
-    PERSON_TAB_ROW_PAD_END
-  );
-}
-
-/**
  * Whether a programmatic scroll is worth issuing. No-op scrollTo (especially
  * scrollTo(0) while already at 0) still ticks UIScrollView on iOS and cancels
  * in-flight JS-driven width morphs on the leading pill.
