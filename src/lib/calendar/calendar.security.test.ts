@@ -732,3 +732,14 @@ test('filters ≠ security: p_calendar_ids / p_categories remain intersection UX
   assert.match(items, /calendar_seat_occupied\(p_seat\)/);
 });
 
+test('t_45710b0c: calendar_school_id_for_class never falls back to oldest school', () => {
+  const patch = 'supabase/migrations/20260923224500_calendar_school_id_failclosed.sql';
+  const sql = read(patch);
+  const fn = extractFn(sql, 'calendar_school_id_for_class');
+  assert.doesNotMatch(stripSqlComments(fn), /order by s\.created_at asc limit 1/);
+  assert.doesNotMatch(stripSqlComments(fn), /from public\.schools s/);
+  assert.match(fn, /my_school_id\(\)/);
+  const addTeacher = extractFn(sql, 'add_teacher_to_class');
+  assert.match(addTeacher, /provision_class_calendars\(p_class_id\)/);
+});
+
