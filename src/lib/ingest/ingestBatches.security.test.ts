@@ -232,3 +232,12 @@ test('FL-19 register_ingest_file refuses path outside {uid}/ingest/{batch_id}/',
   assert.match(body, /unsupported_type/);
   assert.match(body, /sha256 = p_sha256/);
 });
+
+test('t_06dd401c: ingest_files.storage_path frozen after insert', () => {
+  const sql = read('supabase/migrations/20260923230000_ingest_files_freeze_storage_path.sql');
+  assert.match(sql, /create or replace function public\.ingest_files_freeze_storage_path/);
+  assert.match(sql, /storage_path_frozen/);
+  assert.match(sql, /before update on public\.ingest_files/);
+  assert.match(sql, /new\.storage_path is distinct from old\.storage_path/);
+});
+
