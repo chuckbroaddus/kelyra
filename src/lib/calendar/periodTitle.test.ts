@@ -4,8 +4,6 @@ import test from 'node:test';
 
 import {
   MORPH_DAY_INSERT_END,
-  periodTitleMarqueeMs,
-  periodTitleNeedsMarquee,
   dayPeriodTitleSegments,
   formatDayPeriodTitle,
   formatMonthYearTitle,
@@ -96,20 +94,12 @@ test('periodTitle: worklet helper clamp01 is declared before its worklet callers
   assert.ok(decl >= 0 && firstUse >= 0 && decl < firstUse);
 });
 
-test('periodTitle marquee: only on real overflow; slow readable duration', () => {
-  assert.equal(periodTitleNeedsMarquee(300, 320), false);
-  assert.equal(periodTitleNeedsMarquee(321, 320), false);
-  assert.equal(periodTitleNeedsMarquee(360, 320), true);
-  assert.equal(periodTitleNeedsMarquee(360, 0), false);
-  assert.equal(periodTitleMarqueeMs(0), 0);
-  assert.equal(periodTitleMarqueeMs(5), 600);
-  assert.ok(periodTitleMarqueeMs(72) >= 1900);
-});
-
-test('CalendarPeriodTitle: marquee after morph settles; off under Reduce Motion', () => {
+test('CalendarPeriodTitle: uses the app-standard MarqueeText (§30), not a bespoke loop', () => {
   const comp = read('src/components/calendar/CalendarPeriodTitle.tsx');
-  assert.match(comp, /withRepeat/);
-  assert.match(comp, /periodTitleNeedsMarquee/);
-  assert.match(comp, /reduceMotion \|\| !settled/);
-  assert.match(comp, /cancelAnimation\(marqueeX\)/);
+  assert.match(comp, /from '@\/components\/ui\/MarqueeText'/);
+  assert.match(comp, /<MarqueeText[^>]*fadeColor=\{colors\.bg\}/);
+  assert.match(comp, /settled \?/);
+  assert.doesNotMatch(comp, /withRepeat|marqueeX|PERIOD_TITLE_MARQUEE/);
+  const lib = read('src/lib/calendar/periodTitle.ts');
+  assert.doesNotMatch(lib, /PERIOD_TITLE_MARQUEE|periodTitleNeedsMarquee|periodTitleMarqueeMs/);
 });

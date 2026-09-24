@@ -1,25 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Reanimated, {
-  cancelAnimation,
   Easing,
   runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
+import { MarqueeText } from '@/components/ui/MarqueeText';
 import { type } from '@/constants/theme';
 import {
-  PERIOD_TITLE_MARQUEE_PAUSE_MS,
   PERIOD_TITLE_MORPH_IN_MS,
   PERIOD_TITLE_MORPH_OUT_MS,
-  periodTitleMarqueeMs,
-  periodTitleNeedsMarquee,
   dayPeriodTitleSegments,
   joinDayPeriodTitle,
   morphDayInsertProgress,
@@ -79,7 +73,7 @@ export function CalendarPeriodTitle({
   const [dayWidth, setDayWidth] = useState(0);
   const dayW = useSharedValue(0);
 
-  // Marquee waits until the Week↔Day morph settles so the two motions never fight.
+  // Standard MarqueeText takes over only after the Week↔Day morph settles.
   const [settled, setSettled] = useState(true);
   useEffect(() => {
     if (reduceMotion) {
@@ -101,40 +95,6 @@ export function CalendarPeriodTitle({
       },
     );
   }, [target, reduceMotion, progress, weekday.length]);
-
-  // Marquee: when the title is wider than its box, scroll to the end and back
-  // (pause at each end). Reduce Motion → no marquee (title just clips).
-  const [boxW, setBoxW] = useState(0);
-  const [contentW, setContentW] = useState(0);
-  const marqueeX = useSharedValue(0);
-  useEffect(() => {
-    const overflow = contentW - boxW;
-    if (reduceMotion || !settled || !periodTitleNeedsMarquee(contentW, boxW)) {
-      cancelAnimation(marqueeX);
-      marqueeX.value = reduceMotion ? 0 : withTiming(0, { duration: 200 });
-      return;
-    }
-    const ms = periodTitleMarqueeMs(overflow);
-    marqueeX.value = 0;
-    marqueeX.value = withRepeat(
-      withSequence(
-        withDelay(
-          PERIOD_TITLE_MARQUEE_PAUSE_MS,
-          withTiming(-overflow, { duration: ms, easing: Easing.linear }),
-        ),
-        withDelay(
-          PERIOD_TITLE_MARQUEE_PAUSE_MS,
-          withTiming(0, { duration: ms, easing: Easing.linear }),
-        ),
-      ),
-      -1,
-      false,
-    );
-    return () => cancelAnimation(marqueeX);
-  }, [contentW, boxW, settled, reduceMotion, marqueeX]);
-  const marqueeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: marqueeX.value }],
-  }));
 
   const weekdayLen = weekday.length;
   useAnimatedReaction(
@@ -192,19 +152,20 @@ export function CalendarPeriodTitle({
           {`${dayPart}${NBSP}`}
         </Text>
       ) : null}
-      {/* Clip box: horizontal non-scrolling ScrollView lets the row keep its natural
-          width (so we can measure overflow) while the marquee translates it. */}
+      {/* At rest: the app-standard MarqueeText (ui-design §30 — 30 pt/s, 1200 ms start
+          hold, 800 ms end hold, fade-out / snap / fade-in, edge fades, pauses on scroll,
+          Reduce Motion, VoiceOver, background). During the Week↔Day morph: the morph row,
+          clipped, no crawl, so the two motions never fight. */}
+      {settled ? (
+        <MarqueeText text={a11yLabel} style={textStyle} fadeColor={colors.bg} />
+      ) : (
       <ScrollView
         horizontal
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         style={styles.clip}
-        onLayout={(event) => setBoxW(Math.floor(event.nativeEvent.layout.width))}
       >
-      <Reanimated.View
-        style={[styles.row, marqueeStyle]}
-        onLayout={(event) => setContentW(Math.ceil(event.nativeEvent.layout.width))}
-      >
+      <View style={styles.row}>
         <Text style={textStyle} numberOfLines={1}>
           {`${displayMonth}${NBSP}`}
         </Text>
@@ -221,8 +182,9 @@ export function CalendarPeriodTitle({
             {`,${NBSP}${shownWeekday}`}
           </Text>
         ) : null}
-      </Reanimated.View>
+      </View>
       </ScrollView>
+      )}
     </Reanimated.View>
   );
 }
