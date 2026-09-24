@@ -98,7 +98,7 @@ test('PersonTabs default CM-Linear; ClassTabs mapping-only; current is opt-out o
   const docs = read('docs/ui-design.md');
   // PersonTabs owns timing; default motionPack = cm-linear (linear both ways)
   assert.match(pills, /motionPack = 'cm-linear'/);
-  assert.match(pills, /personTabExpandEasingKind\(selected, motionPack\)/);
+  assert.match(pills, /personTabExpandEasingKind\((?:selected|expandOpen), motionPack\)/);
   assert.match(pills, /chrome\.motion\.personTab/);
   assert.match(layout, /PersonTabMotionPack = 'current' \| 'cm-linear'/);
   assert.match(layout, /motionPack: PersonTabMotionPack = 'cm-linear'/);
@@ -153,8 +153,12 @@ test('expo iOS first-tab snap: leading scroll motion + no-op skip + no clipped s
   // Native cause lock: animated scrollTo(0) / leave-first scroll races leading width morph.
   assert.match(layout, /export function personTabScrollNeeded/);
   assert.match(layout, /export function personTabScrollMotion/);
+  assert.match(layout, /scroll-then-morph/);
+  assert.match(layout, /export function personTabNeedsLeadingScrollLock/);
+  assert.match(layout, /PERSON_TAB_SCROLL_SETTLE_MS/);
   assert.match(pills, /personTabScrollNeeded/);
   assert.match(pills, /personTabScrollMotion/);
+  assert.match(pills, /personTabNeedsLeadingScrollLock/);
   assert.match(pills, /scrollOffsetRef/);
   assert.match(pills, /scrolledValueRef/);
   assert.match(pills, /removeClippedSubviews=\{false\}/);
@@ -163,4 +167,23 @@ test('expo iOS first-tab snap: leading scroll motion + no-op skip + no clipped s
   assert.match(pills, /scrollMetricsRef/);
   assert.match(pills, /\[value, rowWidth, reduce\]/);
   assert.doesNotMatch(pills, /\[value, rowWidth, reduce, tabs,/);
+});
+
+test('expo iOS leading morph: scroll lock + scroll-then-morph holdExpand + collapsable', () => {
+  const pills = read('src/components/ui/PersonTabs.tsx');
+  // Scroll lock during enter/leave index 0 morph.
+  assert.match(pills, /scrollEnabled=\{!scrollLocked\}/);
+  assert.match(pills, /frozenOffsetRef/);
+  assert.match(pills, /assertingScrollRef/);
+  assert.match(pills, /lockGate/);
+  // Enter-0: hold width expand until after scroll settles (morphArmed / holdExpand).
+  assert.match(pills, /morphArmed/);
+  assert.match(pills, /armGate/);
+  assert.match(pills, /scroll-then-morph/);
+  assert.match(pills, /PERSON_TAB_SCROLL_SETTLE_MS/);
+  assert.match(pills, /expandOpen/);
+  // Hardening: stable native view while width morphs.
+  assert.match(pills, /collapsable=\{false\}/);
+  // Still no contentWidth setState.
+  assert.doesNotMatch(pills, /setContentWidth/);
 });

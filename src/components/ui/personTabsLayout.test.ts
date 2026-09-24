@@ -20,6 +20,9 @@ import {
   personTabScrollTabWidth,
   personTabScrollNeeded,
   personTabScrollMotion,
+  personTabNeedsLeadingScrollLock,
+  personTabLeadingScrollLockMs,
+  PERSON_TAB_SCROLL_SETTLE_MS,
   personTabRowUsesTeacherFaces,
 } from './personTabsLayout.ts';
 
@@ -262,11 +265,11 @@ test('scroll needed skips no-op scrollTo (esp. already at 0)', () => {
   assert.equal(personTabScrollNeeded(80, 0), true);
 });
 
-test('leading-pill morph uses instant enter / deferred leave scroll — never animated-to-0', () => {
-  // Entering first tab: instant jump only (animated scrollTo(0) races width morph on iOS).
-  assert.equal(personTabScrollMotion(0, null), 'instant');
-  assert.equal(personTabScrollMotion(0, 2), 'instant');
-  assert.equal(personTabScrollMotion(0, 3), 'instant');
+test('leading-pill morph uses scroll-then-morph enter / deferred leave — never animated-to-0', () => {
+  // Entering first tab: scroll first (if needed), then arm width expand after settle.
+  assert.equal(personTabScrollMotion(0, null), 'scroll-then-morph');
+  assert.equal(personTabScrollMotion(0, 2), 'scroll-then-morph');
+  assert.equal(personTabScrollMotion(0, 3), 'scroll-then-morph');
   // Leaving first tab: defer scroll until morph ends so leading width can CM-Linear close.
   assert.equal(personTabScrollMotion(1, 0), 'defer');
   assert.equal(personTabScrollMotion(2, 0), 'defer');
@@ -274,4 +277,17 @@ test('leading-pill morph uses instant enter / deferred leave scroll — never an
   assert.equal(personTabScrollMotion(2, 1), 'animated');
   assert.equal(personTabScrollMotion(3, 1), 'animated');
   assert.equal(personTabScrollMotion(3, 2), 'animated');
+});
+
+test('leading-pill selection locks scroll for morph window (enter or leave index 0)', () => {
+  assert.equal(personTabNeedsLeadingScrollLock(0, null), true);
+  assert.equal(personTabNeedsLeadingScrollLock(0, 2), true);
+  assert.equal(personTabNeedsLeadingScrollLock(2, 0), true);
+  assert.equal(personTabNeedsLeadingScrollLock(1, 0), true);
+  assert.equal(personTabNeedsLeadingScrollLock(2, 1), false);
+  assert.equal(personTabNeedsLeadingScrollLock(3, 2), false);
+  assert.equal(PERSON_TAB_SCROLL_SETTLE_MS, 32);
+  assert.equal(personTabLeadingScrollLockMs(true, 975), 0);
+  assert.equal(personTabLeadingScrollLockMs(false, 975), 975);
+  assert.equal(personTabLeadingScrollLockMs(false, 975, 32), 1007);
 });
