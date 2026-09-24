@@ -327,9 +327,11 @@ function PeriodLeafImpl({
               {header}
             </Text>
           </View>
-          <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
-            {dayNum}
-          </Text>
+          <View style={styles.dayBody}>
+            <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
+              {dayNum}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -454,16 +456,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingTop: 10,
   },
-  dayNumeral: {
+  /** Centers the day numeral vertically in the body under the red header. */
+  dayBody: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+  },
+  dayNumeral: {
     textAlign: 'center',
-    textAlignVertical: 'center',
     fontSize: 38,
     fontWeight: '700',
     color: SET_B.type,
     fontVariant: ['tabular-nums'],
-    marginTop: 4,
-    paddingHorizontal: 0,
+    includeFontPadding: false,
+    lineHeight: 42,
   },
   wrapBodyEmpty: {
     flex: 1,
