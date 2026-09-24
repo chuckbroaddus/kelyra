@@ -26,6 +26,7 @@ import {
   personTabLabelMax,
   personTabRowHasGlyph,
   personTabPillWidthRange,
+  personTabRowMaxContentWidth,
   personTabTitleNeedsMarquee,
   personTabScrollTabWidth,
   personTabScrollX,
@@ -249,8 +250,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
-  /** Content wider than row — enables horizontal scroll (Post/Alert usually false). */
-  const [rowOverflows, setRowOverflows] = useState(false);
   const [titleByKey, setTitleByKey] = useState<Record<string, number>>({});
   const [reduce, setReduce] = useState(false);
   const xOf = useRef<Record<string, number>>({});
@@ -265,6 +264,13 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   const scrolledValueRef = useRef<string | null>(null);
   const hasGlyph = personTabRowHasGlyph(tabs);
   const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
+  const tabKeys = tabs.map((tab) => tab.key);
+  /** Worst-case strip width — pins UIScrollView contentSize while pills morph. */
+  const maxContentWidth =
+    labelMax > 0 ? personTabRowMaxContentWidth(tabKeys, titleByKey, labelMax, hasGlyph) : 0;
+  /** Stable overflow (prefer maxContentWidth vs rowWidth — not live onContentSizeChange). */
+  const rowOverflows = rowWidth > 0 && maxContentWidth > rowWidth + 0.5;
+  if (maxContentWidth > 0) contentWidthRef.current = maxContentWidth;
 
   useEffect(() => {
     let live = true;
@@ -382,13 +388,14 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       <ScrollView
         ref={scroller}
         horizontal
-        // Post/Alert (content fits): disable scroll so UIScrollView does not
-        // participate; overflow rows keep ScrollView but skip scrollTo on index 0.
+        // Always ScrollView (never View↔ScrollView host swap — that hid tabs).
+        // Post/Alert (content fits): scrollEnabled false; overflow rows scroll.
+        // Index-0 enter/leave: skip scrollTo (instant/defer).
         scrollEnabled={rowOverflows}
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
         removeClippedSubviews={false}
-        contentContainerStyle={styles.row}
+        contentContainerStyle={styles.scrollContent}
         style={styles.scroller}
         scrollEventThrottle={16}
         onScroll={(event) => {
@@ -396,39 +403,33 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         }}
         onLayout={(event) => {
           const w = event.nativeEvent.layout.width;
-          setRowWidth(w);
-          const contentW = contentWidthRef.current;
-          if (w > 0 && contentW > 0) {
-            const next = contentW > w + 0.5;
-            setRowOverflows((prev) => (prev === next ? prev : next));
-          }
-        }}
-        onContentSizeChange={(width) => {
-          contentWidthRef.current = width;
-          if (rowWidth > 0 && width > 0) {
-            const next = width > rowWidth + 0.5;
-            setRowOverflows((prev) => (prev === next ? prev : next));
-          }
+          setRowWidth((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
         }}
       >
-        {tabs.map((tab) => (
-          <PersonTabPill
-            key={tab.key}
-            tab={tab}
-            selected={tab.key === value}
-            hasGlyph={hasGlyph}
-            labelMax={labelMax}
-            titleWidth={titleByKey[tab.key] ?? 0}
-            colors={colors}
-            reduce={reduce}
-            motionPack={motionPack}
-            onChange={onChange}
-            onLayoutX={(x, width) => {
-              xOf.current[tab.key] = x;
-              widthOf.current[tab.key] = width;
-            }}
-          />
-        ))}
+        {/* Fixed max width so UIScrollView contentSize stays put while pills morph. */}
+        <View
+          collapsable={false}
+          style={[styles.row, maxContentWidth > 0 ? { width: maxContentWidth } : null]}
+        >
+          {tabs.map((tab) => (
+            <PersonTabPill
+              key={tab.key}
+              tab={tab}
+              selected={tab.key === value}
+              hasGlyph={hasGlyph}
+              labelMax={labelMax}
+              titleWidth={titleByKey[tab.key] ?? 0}
+              colors={colors}
+              reduce={reduce}
+              motionPack={motionPack}
+              onChange={onChange}
+              onLayoutX={(x, width) => {
+                xOf.current[tab.key] = x;
+                widthOf.current[tab.key] = width;
+              }}
+            />
+          ))}
+        </View>
       </ScrollView>
       {trailing}
     </View>
@@ -469,6 +470,9 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     // Clip morphing pills; do not let content width grow the host.
     overflow: 'hidden',
+  },
+  scrollContent: {
+    flexGrow: 0,
   },
   row: {
     flexDirection: 'row',

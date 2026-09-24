@@ -139,6 +139,34 @@ export function personTabScrollTabWidth(
 
 
 /**
+ * Worst-case horizontal content width for the tab strip: one pill at its hugged
+ * expanded size + every other pill collapsed + row gaps + end pad.
+ * Used to pin an inner row width so UIScrollView contentSize stays stable while
+ * individual pill widths animate (Expo Go iOS first-tab snap). Independent of
+ * which tab is selected — must not flicker mid-morph.
+ */
+export function personTabRowMaxContentWidth(
+  tabKeys: readonly string[],
+  titleByKey: Readonly<Record<string, number>>,
+  labelMax: number,
+  glyph = true,
+): number {
+  if (tabKeys.length === 0) return 0;
+  let maxExpanded = PERSON_TAB_ICON_HIT;
+  for (const key of tabKeys) {
+    const { expanded } = personTabPillWidthRange(titleByKey[key] ?? 0, labelMax, glyph);
+    if (expanded > maxExpanded) maxExpanded = expanded;
+  }
+  const others = Math.max(0, tabKeys.length - 1);
+  return (
+    maxExpanded +
+    others * PERSON_TAB_ICON_HIT +
+    others * PERSON_TAB_ROW_GAP +
+    PERSON_TAB_ROW_PAD_END
+  );
+}
+
+/**
  * Whether a programmatic scroll is worth issuing. No-op scrollTo (especially
  * scrollTo(0) while already at 0) still ticks UIScrollView on iOS and cancels
  * in-flight JS-driven width morphs on the leading pill.
