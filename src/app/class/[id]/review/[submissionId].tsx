@@ -12,7 +12,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
-import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { firstName, formatWhen } from '@/lib/format';
 import { formatScoreMark } from '@/lib/grade/marks';
 import { isAwaitingGrade, isGraded } from '@/lib/assignments/status';
@@ -26,6 +26,7 @@ import {
   withPendingGap,
   type SubmissionReviewDraft,
 } from '@/lib/practice/review';
+import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
 import { buildReviewDecision } from '@/lib/practice/reviewDecision';
 import {
   analyzeTurnedInReview,
@@ -38,6 +39,8 @@ import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function SubmissionReviewScreen() {
   const { colors } = useTheme();
+  const { role: chromeRole } = useChrome();
+  const allowAccept = canApproveKeygrade(chromeRole);
   const router = useRouter();
   const { id, submissionId } = useLocalSearchParams<{ id: string; submissionId: string }>();
   const [review, setReview] = useState<TurnedInReview | null>(null);
@@ -221,7 +224,7 @@ export default function SubmissionReviewScreen() {
   };
 
   const onApprove = async () => {
-    if (!review || !liveDraft || saving) return;
+    if (!review || !liveDraft || saving || !allowAccept) return;
     setSaving(true);
     setError(null);
     setStatus('Approving…');
@@ -332,10 +335,12 @@ export default function SubmissionReviewScreen() {
   );
 
   // Suggested grade stays above Accept / work fold — not gated on editingDraft.
+  // Non-Teach seats: read-only (DH-01 — no draft-as-grade framing).
+  const canEditDecision = editable && allowAccept;
   const suggestedGrade = (
     <>
       <SectionHeader label="Suggested grade" />
-      {editable ? (
+      {canEditDecision ? (
         <TextField
           label="Draft score"
           value={score}
@@ -345,10 +350,12 @@ export default function SubmissionReviewScreen() {
         />
       ) : (
         <Text style={[type.body, { color: colors.ink }]}>
-          {formatScoreMark(review.submission.score_mark, review.submission.approved_score) || 'Approved'}
+          {editable
+            ? (score.trim() || decision.recommendedDraftText)
+            : formatScoreMark(review.submission.score_mark, review.submission.approved_score) || 'Approved'}
         </Text>
       )}
-      {editable ? (
+      {canEditDecision ? (
         <TextField
           label="Note"
           multiline
@@ -494,7 +501,7 @@ export default function SubmissionReviewScreen() {
       maxWidth={640}
       keyboard
       sticky={
-        editable && hasGap ? (
+        editable && allowAccept && hasGap ? (
           <View style={styles.sticky}>
             <SecondaryButton
               disabled={saving || asking}
@@ -522,7 +529,7 @@ export default function SubmissionReviewScreen() {
       </View>
       <Text style={[type.rowTitle, { color: colors.ink }]}>{practiceTitle(review.title)}</Text>
 
-      {editable ? (
+      {editable && allowAccept ? (
         <Card>
           <Text
             style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}
@@ -548,14 +555,16 @@ export default function SubmissionReviewScreen() {
             Decision card
           </Text>
           <Text style={[type.body, { color: colors.ink }]}>
-            {formatScoreMark(review.submission.score_mark, review.submission.approved_score) || 'Approved'}
+            {editable
+              ? 'Awaiting Teach seat to Accept.'
+              : formatScoreMark(review.submission.score_mark, review.submission.approved_score) || 'Approved'}
           </Text>
         </Card>
       )}
 
       {suggestedGrade}
 
-      {editable ? (
+      {editable && allowAccept ? (
         <>
           <PrimaryButton
             disabled={saving || asking || !decision.canAccept}
