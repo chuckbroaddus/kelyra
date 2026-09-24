@@ -177,11 +177,11 @@ export default function HomeScreen() {
   ];
   const newPane = newTabs.some((item) => item.key === newKind) ? newKind : (newTabs[0]?.key ?? 'class');
 
+  // Office PersonTabs live in Screen.collapse so toggling scroll for Feed
+  // (ScrollView / FlushBody swap) does not remount the tab row — that remount was
+  // the Feed snap on web + iPhone. maxWidth stays 640 so pane changes do not
+  // reflow the row.
   return (
-    {/* Office PersonTabs live in Screen.collapse so toggling scroll for Feed
-        (ScrollView ↔ FlushBody) does not remount the tab row — that remount was
-        the Feed snap on web + iPhone. maxWidth stays 640 so pane changes do not
-        reflow the row. */}
     <Screen
       keyboard
       maxWidth={640}
