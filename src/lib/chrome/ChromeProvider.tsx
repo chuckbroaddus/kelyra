@@ -46,6 +46,7 @@ import { countNeedsYou } from '@/lib/captures/api';
 import {
   invalidateNeedsCountCache,
   needsCountCacheHit,
+  needsCountEpoch,
   peekNeedsCountCache,
   readNeedsCountCached,
 } from '@/lib/chrome/needsCountCache';
@@ -684,11 +685,12 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
           classIdRef.current = klass.id;
           setClassName(klass.name);
           // Needs badge follows chrome seat, not profile hats (dual-hat Teach seat).
+          const pathEpoch = needsCountEpoch();
           const work =
             role === 'teacher'
               ? await readNeedsCountCached(klass.id, (id) => countNeedsYou(id).catch(() => 0))
               : 0;
-          if (!cancelled) {
+          if (!cancelled && pathEpoch === needsCountEpoch()) {
             setNeedsCount(work);
             setBadgeCount(alerts + work);
           }
@@ -762,7 +764,10 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     }
     if (role === 'teacher' && teacher && classId) {
       // PERF-14/15: share TTL + inflight with pathname effect (no double full count same tick).
+      // Discard if Needs cache was invalidated while we awaited (t_21501990).
+      const bellEpoch = needsCountEpoch();
       const work = await readNeedsCountCached(classId, (id) => countNeedsYou(id).catch(() => 0));
+      if (bellEpoch !== needsCountEpoch()) return;
       setNeedsCount(work);
       setBadgeCount(alerts + work);
       return;
