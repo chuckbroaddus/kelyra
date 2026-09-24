@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   PanResponder,
   Pressable,
@@ -11,9 +11,15 @@ import {
 import Reanimated, {
   type SharedValue,
   useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
-import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
+import { ZOOM_HANDOFF_IN_MS } from '@/lib/calendar/zoomDrill';
+import {
+  siblingBandOpacity,
+  titleEnterOpacity,
+} from '@/lib/calendar/zoomTransform';
 
 import { radius, type } from '@/constants/theme';
 import { itemDayKey } from '@/lib/calendar/mapItem';
@@ -50,6 +56,14 @@ type Props = {
   /** Live Week→Day drill: fade non-focus day columns. */
   drillProgress?: SharedValue<number> | null;
   drillFocusDayIndex?: number | null;
+  /** Month/year title matching MonthGrid (e.g. "January 2026"). */
+  monthTitle?: string;
+  /**
+   * Title enter: `'mount'` fades in on mount (after Month→Week swap);
+   * `'drill'` fades in over last 30% of drillProgress (month-week continuity);
+   * omit for instant.
+   */
+  titleEnter?: 'mount' | 'drill' | null;
   /** When set with onChangeDayCount, pinch (full motion) adjusts 7↔5↔3. */
   dayCount?: MultidayCount;
   onChangeDayCount?: (count: MultidayCount) => void;
@@ -72,8 +86,25 @@ export function TeacherWeekGrid({
   allowPinch = false,
   drillProgress = null,
   drillFocusDayIndex = null,
+  monthTitle,
+  titleEnter = null,
 }: Props) {
   const { colors } = useTheme();
+  const titleMountOpacity = useSharedValue(titleEnter === 'mount' ? 0 : 1);
+  useEffect(() => {
+    if (titleEnter !== 'mount') {
+      titleMountOpacity.value = 1;
+      return;
+    }
+    titleMountOpacity.value = 0;
+    titleMountOpacity.value = withTiming(1, { duration: ZOOM_HANDOFF_IN_MS });
+  }, [titleEnter, titleMountOpacity, monthTitle]);
+  const titleStyle = useAnimatedStyle(() => {
+    if (titleEnter === 'drill' && drillProgress != null) {
+      return { opacity: titleEnterOpacity(drillProgress.value) };
+    }
+    return { opacity: titleMountOpacity.value };
+  });
   const today = todayISO();
   const showTimeline = hasTimedInRange(items, days);
   const hours = timelineHours();
@@ -135,6 +166,14 @@ export function TeacherWeekGrid({
       accessibilityLabel={accessibilityLabel}
       {...(pinchResponder ? pinchResponder.panHandlers : null)}
     >
+      {monthTitle ? (
+        <Reanimated.Text
+          style={[styles.monthTitle, { color: colors.ink }, titleStyle]}
+          accessibilityRole="header"
+        >
+          {monthTitle}
+        </Reanimated.Text>
+      ) : null}
       <View style={styles.headerRow}>
         {showTimeline ? <View style={styles.gutterSpacer} /> : null}
         {days.map((day, di) => {
@@ -407,6 +446,7 @@ function DrillDayCol({
 const styles = StyleSheet.create({
 
   grid: { gap: 6 },
+  monthTitle: { ...type.title, fontSize: 22, marginBottom: 8 },
   headerRow: { flexDirection: 'row', gap: 2, alignItems: 'flex-end' },
   gutterSpacer: { width: 44 },
   allDayRow: {

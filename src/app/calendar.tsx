@@ -183,6 +183,14 @@ export default function CalendarScreen() {
   /** Shared with CalendarZoomDrill + MonthGrid/TeacherWeekGrid sibling fades. */
   const drillProgress = useSharedValue(0);
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
+  /** Year→Month: MonthGrid chrome fade-in after swap (kills end snap). */
+  const [monthEnterChrome, setMonthEnterChrome] = useState(false);
+  /** Month→Week: Week title fade-in on mount (same "January 2026" string). */
+  const [weekTitleEnter, setWeekTitleEnter] = useState<'mount' | null>(null);
+  /** Week→Day: DayColumn timeslot enter / reverse exit. */
+  const [dayEnterAnim, setDayEnterAnim] = useState(false);
+  const [dayExitAnim, setDayExitAnim] = useState(false);
+  const pendingZoomUpRef = useRef<(() => void) | null>(null);
 
   const [monthMode, setMonthMode] = useState<MonthMode>('compact');
   const [dayMode, setDayMode] = useState<DayMode>('single');
@@ -222,6 +230,7 @@ export default function CalendarScreen() {
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   const weekRange = useMemo(() => weekRangeContaining(gridAnchor), [gridAnchor]);
+  const weekMonthTitle = useMemo(() => monthContaining(gridAnchor).label, [gridAnchor]);
   const multiRange = useMemo(
     () => multidayRangeContaining(dayCount === 7 ? 5 : dayCount, gridAnchor),
     [dayCount, gridAnchor],
@@ -457,6 +466,33 @@ export default function CalendarScreen() {
     return true;
   }, [zoomStack, activeView, dayCount, persistViewPrefs]);
 
+  const continueZoomUpOut = useCallback(
+    (kind: NonNullable<ReturnType<typeof reverseDrillKind>>, cached: NonNullable<
+      (typeof lastDrillByKindRef.current)[ZoomDrillKind]
+    >) => {
+      // Apple pattern: switch to parent immediately at expanded transform, spring to identity.
+      drillThenRef.current = null;
+      applyZoomUp();
+      setZoomDrill({
+        kind,
+        direction: 'out',
+        source: cached.source,
+        label: cached.label,
+        dest: cached.dest,
+        host: cached.host,
+        focusIndex: cached.focusIndex,
+      });
+    },
+    [applyZoomUp],
+  );
+
+  const onDayExitDone = useCallback(() => {
+    setDayExitAnim(false);
+    const cont = pendingZoomUpRef.current;
+    pendingZoomUpRef.current = null;
+    cont?.();
+  }, []);
+
   const zoomUp = useCallback(() => {
     const parent = zoomStack.length > 0 ? zoomStack[zoomStack.length - 1]! : zoomParentView(activeView);
     if (!parent) return false;
@@ -470,23 +506,37 @@ export default function CalendarScreen() {
       return applyZoomUp();
     }
 
-    // Apple pattern: switch to parent immediately at expanded transform, spring to identity.
-    // Real parent content (year/month/week) stays visible the whole reverse.
-    drillThenRef.current = null;
-    applyZoomUp();
-    setZoomDrill({
-      kind,
-      direction: 'out',
-      source: cached.source,
-      label: cached.label,
-      dest: cached.dest,
-      host: cached.host,
-      focusIndex: cached.focusIndex,
-    });
+    // Week←Day: fade timeslots out before reverse transform so hours don't snap away.
+    if (kind === 'week-day' && activeView === 'day' && !dayExitAnim) {
+      pendingZoomUpRef.current = () => continueZoomUpOut(kind, cached);
+      setDayExitAnim(true);
+      setDayEnterAnim(false);
+      return true;
+    }
+
+    continueZoomUpOut(kind, cached);
     return true;
-  }, [zoomStack, activeView, reduceMotion, zoomDrill, applyZoomUp]);
+  }, [
+    zoomStack,
+    activeView,
+    reduceMotion,
+    zoomDrill,
+    applyZoomUp,
+    continueZoomUpOut,
+    dayExitAnim,
+  ]);
 
   const canClimb = canZoomUp(activeView) || zoomStack.length > 0;
+
+  // Clear one-shot enter flags once the destination view is left.
+  useEffect(() => {
+    if (activeView !== 'month') setMonthEnterChrome(false);
+    if (activeView !== 'week' && activeView !== 'multiday') setWeekTitleEnter(null);
+    if (activeView !== 'day') {
+      setDayEnterAnim(false);
+      if (!dayExitAnim) setDayExitAnim(false);
+    }
+  }, [activeView, dayExitAnim]);
 
   // CAL-P6-9A: persist surface anchors for stack-honest forward restore.
   useEffect(() => {
@@ -1060,6 +1110,8 @@ export default function CalendarScreen() {
             items={visibleItems}
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
+            monthTitle={weekMonthTitle}
+            titleEnter={weekTitleEnter}
             onPressDay={(iso, source, focusIndex) => {
               startZoomDrill({
                 kind: 'week-day',
@@ -1068,6 +1120,8 @@ export default function CalendarScreen() {
                 focusIndex,
                 then: () => {
                   setDayAnchor(iso);
+                  setDayEnterAnim(!reduceMotion);
+                  setDayExitAnim(false);
                   zoomTo('day');
                 },
               });
@@ -1095,6 +1149,9 @@ export default function CalendarScreen() {
               items={visibleItems}
               showHiddenBadge={showHiddenBadge}
               onPressItem={openItem}
+              enterAnim={dayEnterAnim}
+              exitAnim={dayExitAnim}
+              onExitDone={onDayExitDone}
               onPressSlot={
                 canCreate
                   ? (day, hour) => {
@@ -1123,36 +1180,40 @@ export default function CalendarScreen() {
               onZoomDay={(iso, source, focusIndex) => {
                 // Month ladder: day cell / week row → Week (Day only from Week).
                 const week = weekRangeContaining(iso);
+                // Pre-set week anchor so Week title string is ready at handoff.
+                setDayAnchor(iso);
+                setMonthSelectedDay(iso);
+                setGridAnchor(week.fromIso);
                 startZoomDrill({
                   kind: 'month-week',
                   source,
                   label: `Week of ${week.fromIso}`,
                   focusIndex,
                   then: () => {
-                    setDayAnchor(iso);
-                    setMonthSelectedDay(iso);
-                    setGridAnchor(week.fromIso);
+                    setWeekTitleEnter(reduceMotion ? null : 'mount');
                     zoomTo('week');
                   },
                 });
               }}
               onZoomWeek={(iso, source, focusIndex) => {
                 const week = weekRangeContaining(iso);
+                setDayAnchor(iso);
+                setMonthSelectedDay(iso);
+                setGridAnchor(week.fromIso);
                 startZoomDrill({
                   kind: 'month-week',
                   source,
                   label: `Week of ${week.fromIso}`,
                   focusIndex,
                   then: () => {
-                    setDayAnchor(iso);
-                    setMonthSelectedDay(iso);
-                    setGridAnchor(week.fromIso);
+                    setWeekTitleEnter(reduceMotion ? null : 'mount');
                     zoomTo('week');
                   },
                 });
               }}
               drillProgress={zoomDrillKind === 'month-week' ? drillProgress : null}
               drillFocusWeekIndex={zoomDrillKind === 'month-week' ? zoomDrillFocus : null}
+              enterChromeAnim={monthEnterChrome}
               onCommitAdjacentMonth={(dir) => {
                 setMonthAnchor(shiftMonth(monthRange.fromIso, dir));
                 setMonthSelectedDay(null);
@@ -1182,13 +1243,15 @@ export default function CalendarScreen() {
                 const label = new Date(y, m0, 1, 12, 0, 0, 0).toLocaleDateString(undefined, {
                   month: 'long',
                 });
+                // Pre-set month anchors so Month can mount ready; fade kills end snap.
+                setMonthAnchor(iso);
+                setMonthSelectedDay(null);
                 startZoomDrill({
                   kind: 'year-month',
                   source,
                   label,
                   then: () => {
-                    setMonthAnchor(iso);
-                    setMonthSelectedDay(null);
+                    setMonthEnterChrome(!reduceMotion);
                     zoomTo('month');
                   },
                 });

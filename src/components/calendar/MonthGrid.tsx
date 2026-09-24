@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -11,9 +11,15 @@ import {
 import Reanimated, {
   type SharedValue,
   useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
-import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
+import { ZOOM_HANDOFF_IN_MS } from '@/lib/calendar/zoomDrill';
+import {
+  handoffOutgoingOpacity,
+  siblingBandOpacity,
+} from '@/lib/calendar/zoomTransform';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { radius, type } from '@/constants/theme';
@@ -49,6 +55,8 @@ type Props = {
   /** Live Month→Week drill: fade non-focus week rows while focus stays opaque. */
   drillProgress?: SharedValue<number> | null;
   drillFocusWeekIndex?: number | null;
+  /** After Year→Month handoff: fade title + week-number chrome in (no pop). */
+  enterChromeAnim?: boolean;
   onPressItem?: (item: CalendarItem) => void;
   /**
    * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
@@ -77,8 +85,23 @@ export function MonthGrid({
   onCommitAdjacentMonth,
   drillProgress = null,
   drillFocusWeekIndex = null,
+  enterChromeAnim = false,
 }: Props) {
   const { colors } = useTheme();
+  const chromeOpacity = useSharedValue(enterChromeAnim ? 0 : 1);
+  useEffect(() => {
+    if (!enterChromeAnim) {
+      chromeOpacity.value = 1;
+      return;
+    }
+    chromeOpacity.value = 0;
+    chromeOpacity.value = withTiming(1, { duration: ZOOM_HANDOFF_IN_MS });
+  }, [enterChromeAnim, chromeOpacity]);
+  const chromeAnimStyle = useAnimatedStyle(() => ({ opacity: chromeOpacity.value }));
+  const titleDrillStyle = useAnimatedStyle(() => {
+    if (drillProgress == null) return { opacity: 1 };
+    return { opacity: handoffOutgoingOpacity(drillProgress.value) };
+  });
   const chrome = useOptionalChrome();
   const today = todayISO();
   const weekRowRefs = useRef<Map<number, View | null>>(new Map());
@@ -158,7 +181,9 @@ export function MonthGrid({
         accessibilityRole="summary"
         accessibilityLabel={`${label}, list`}
       >
-        <Text style={[styles.monthTitle, { color: colors.ink }]}>{label}</Text>
+        <Reanimated.Text style={[styles.monthTitle, { color: colors.ink }, chromeAnimStyle]}>
+          {label}
+        </Reanimated.Text>
         <ScrollView
           key={listKey}
           style={styles.listScroller}
@@ -189,8 +214,12 @@ export function MonthGrid({
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={label}>
-      <Text style={[styles.monthTitle, { color: colors.ink }]}>{label}</Text>
-      <View style={styles.weekdays}>
+      <Reanimated.Text
+        style={[styles.monthTitle, { color: colors.ink }, titleDrillStyle, chromeAnimStyle]}
+      >
+        {label}
+      </Reanimated.Text>
+      <Reanimated.View style={[styles.weekdays, chromeAnimStyle]}>
         {onZoomWeek ? (
           <Text style={[styles.weekNumHdr, { color: colors.mute }]} accessibilityElementsHidden>
             W
@@ -201,7 +230,7 @@ export function MonthGrid({
             {d}
           </Text>
         ))}
-      </View>
+      </Reanimated.View>
       {weeks.map((week, wi) => {
         const firstInMonth = week.find((cell) => cell && cell.iso.startsWith(monthPrefix));
         const weekAnchor = firstInMonth?.iso ?? week.find(Boolean)?.iso ?? null;
@@ -216,20 +245,22 @@ export function MonthGrid({
             }}
           >
             {onZoomWeek && weekAnchor ? (
-              <Pressable
-                onPress={() =>
-                  measureNode(weekRowRefs.current.get(wi), (source) =>
-                    onZoomWeek(weekAnchor, source, wi),
-                  )
-                }
-                accessibilityRole="button"
-                accessibilityLabel={`Week of ${weekAnchor}`}
-                style={styles.weekNumHit}
-              >
-                <Text style={[styles.weekNum, { color: colors.mute }]}>{wi + 1}</Text>
-              </Pressable>
+              <Reanimated.View style={chromeAnimStyle}>
+                <Pressable
+                  onPress={() =>
+                    measureNode(weekRowRefs.current.get(wi), (source) =>
+                      onZoomWeek(weekAnchor, source, wi),
+                    )
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Week of ${weekAnchor}`}
+                  style={styles.weekNumHit}
+                >
+                  <Text style={[styles.weekNum, { color: colors.mute }]}>{wi + 1}</Text>
+                </Pressable>
+              </Reanimated.View>
             ) : onZoomWeek ? (
-              <View style={styles.weekNumHit} />
+              <Reanimated.View style={[styles.weekNumHit, chromeAnimStyle]} />
             ) : null}
             {week.map((cell, ci) => {
               if (!cell) {

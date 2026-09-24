@@ -8,7 +8,11 @@ import {
   computeDayDockTranslateX,
   computeDrillTransform,
   computeWeekDockTranslateY,
+  handoffIncomingOpacity,
+  handoffOutgoingOpacity,
   siblingBandOpacity,
+  titleEnterOpacity,
+  HANDOFF_START,
   type ZoomRect,
 } from './zoomTransform.ts';
 
@@ -82,4 +86,20 @@ test('siblingBandOpacity focus stays 1; neighbor fades', () => {
   assert.equal(siblingBandOpacity(0.5, true), 1);
   assert.equal(siblingBandOpacity(0, false), 1);
   assert.ok(Math.abs(siblingBandOpacity(1, false) - 0.08) < 1e-9);
+});
+
+test('handoffOutgoingOpacity holds 1 until HANDOFF_START then fades to 0', () => {
+  assert.equal(handoffOutgoingOpacity(0), 1);
+  assert.equal(handoffOutgoingOpacity(HANDOFF_START), 1);
+  assert.equal(handoffOutgoingOpacity(1), 0);
+  const mid = handoffOutgoingOpacity((HANDOFF_START + 1) / 2);
+  assert.ok(mid > 0 && mid < 1);
+});
+
+test('handoffIncomingOpacity / titleEnterOpacity rise over last 30%', () => {
+  assert.equal(handoffIncomingOpacity(0), 0);
+  assert.equal(handoffIncomingOpacity(HANDOFF_START), 0);
+  assert.equal(handoffIncomingOpacity(1), 1);
+  assert.equal(titleEnterOpacity(1), 1);
+  assert.equal(titleEnterOpacity(0), 0);
 });

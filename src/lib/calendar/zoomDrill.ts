@@ -86,3 +86,15 @@ export function abbreviateDrillLabel(label: string): string {
   }
   return trimmed.length > 3 ? trimmed.slice(0, 3) : trimmed;
 }
+
+/** Year opacity → 0 before zoomTo('month') (ms). */
+export const ZOOM_HANDOFF_OUT_MS = 100;
+
+/** Month / week / day chrome fade-in after view swap (ms). */
+export const ZOOM_HANDOFF_IN_MS = 150;
+
+/** Day timeslot enter slide (ms). */
+export const ZOOM_DAY_ENTER_MS = 350;
+
+/** Day timeslot exit before week-day reverse (ms). */
+export const ZOOM_DAY_EXIT_MS = 200;

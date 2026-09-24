@@ -172,3 +172,14 @@ test('R4 Year iPhone: two-digit dayNum does not wrap (numberOfLines=1)', () => {
   // Still one card Pressable — no nested day buttons.
   assert.equal((year.match(/<Pressable/g) || []).length, 1);
 });
+
+test('R4 Week grid exposes month/year title matching MonthGrid style', () => {
+  const week = read('src/components/calendar/TeacherWeekGrid.tsx');
+  const month = read('src/components/calendar/MonthGrid.tsx');
+  const screen = read('src/app/calendar.tsx');
+  assert.match(week, /monthTitle/);
+  assert.match(week, /fontSize:\s*22/);
+  assert.match(month, /monthTitle:[\s\S]*?fontSize:\s*22/);
+  assert.match(screen, /monthTitle=\{/);
+  assert.match(screen, /monthContaining\(.*\)\.label/);
+});
