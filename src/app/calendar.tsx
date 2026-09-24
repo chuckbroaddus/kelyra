@@ -1047,11 +1047,15 @@ export default function CalendarScreen() {
                 setMonthSelectedDay(iso);
               }}
               onZoomDay={(iso) => {
+                // Month ladder: tap a day/week in Month → Week (Day only from Week).
                 setDayAnchor(iso);
                 setMonthSelectedDay(iso);
-                zoomTo('day');
+                setGridAnchor(weekRangeContaining(iso).fromIso);
+                zoomTo('week');
               }}
               onZoomWeek={(iso) => {
+                setDayAnchor(iso);
+                setMonthSelectedDay(iso);
                 setGridAnchor(weekRangeContaining(iso).fromIso);
                 zoomTo('week');
               }}
