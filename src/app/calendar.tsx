@@ -20,7 +20,6 @@ import { takePendingCalendarDraft, type PendingCalendarDraft } from '@/lib/calen
 import { EventMenu } from '@/components/calendar/EventMenu';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
-import { MultiDayStepper } from '@/components/calendar/MultiDayStepper';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
@@ -889,10 +888,6 @@ export default function CalendarScreen() {
         </Text>
       ) : null}
 
-      {activeView === 'week' || activeView === 'multiday' ? (
-        <MultiDayStepper value={stepperCount} onChange={onChangeDayCount} />
-      ) : null}
-
       {/* CAL-P6-8A: period drum pinned while PersonTabs hide with tray. */}
       {showsPeriodPager(activeView, dayMode) && periodKindForView(activeView) ? (
         <PeriodPager
@@ -1163,15 +1158,16 @@ export default function CalendarScreen() {
         visible={customizeOpen && !calendarsOpen}
         monthMode={monthMode}
         dayMode={dayMode}
+        dayCount={stepperCount}
         onChangeMonthMode={(mode) => {
           setMonthMode(mode);
           persistViewPrefs(activeView, dayCount, mode, dayMode);
         }}
         onChangeDayMode={(mode) => {
           setDayMode(mode);
-          // Entering List: paint window from current listAnchorDay (stable until drum leaves range).
           persistViewPrefs(activeView, dayCount, monthMode, mode);
         }}
+        onChangeDayCount={onChangeDayCount}
         chipIds={chipIds}
         onToggleChip={onToggleChip}
         onClearFilters={onClearFilters}

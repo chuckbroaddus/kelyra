@@ -73,9 +73,13 @@ test('R4 chrome: CR-CalTabs cluster + · search · gear (LTR) on PersonTabs row'
   assert.match(screen, /seat-visible/);
 });
 
-test('R4 C-B: Month Compact|List only; Day Single|List in gear (Agenda not tab)', () => {
+test('R4 C-B: Month Compact|List; Week 3|5|7; Day Single|List in gear (Agenda not tab)', () => {
   const sheet = read('src/components/calendar/ViewCustomizeSheet.tsx');
   assert.match(sheet, /Compact/);
+  assert.match(sheet, />Week</);
+  assert.match(sheet, /MULTIDAY_COUNTS/);
+  assert.match(sheet, /\$\{n\} days/);
+  assert.match(sheet, /onChangeDayCount/);
   assert.match(sheet, /Single Day/);
   assert.doesNotMatch(sheet, /label=["']Stacked["']|label=["']Details["']/);
   // CAL-R5-10: helper footer copy dropped — modes remain labeled without essay.

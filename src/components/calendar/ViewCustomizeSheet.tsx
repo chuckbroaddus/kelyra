@@ -8,6 +8,7 @@ import { ChipRow } from '@/components/ui/ChipRow';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { type } from '@/constants/theme';
 import { CATEGORY_CHIPS } from '@/lib/calendar/filters';
+import { MULTIDAY_COUNTS, type MultidayCount } from '@/lib/calendar/multiday';
 import type { DayMode, MonthMode } from '@/lib/calendar/viewPrefs';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
@@ -16,8 +17,11 @@ type Props = {
   visible: boolean;
   monthMode: MonthMode;
   dayMode: DayMode;
+  /** Week / multiday column count (3 / 5 / 7) — gear SoT (CEO 2026-09-24). */
+  dayCount: MultidayCount;
   onChangeMonthMode: (mode: MonthMode) => void;
   onChangeDayMode: (mode: DayMode) => void;
+  onChangeDayCount: (count: MultidayCount) => void;
   /** LF-A Show chips (under gear — CAL-51 / CAL-45 placement). */
   chipIds: string[];
   onToggleChip: (chipId: string) => void;
@@ -28,15 +32,17 @@ type Props = {
 };
 
 /**
- * CR-CalTabs + CAL-R5 gear sheet — Month Compact|List, Day Single|List, Show filters,
- * Calendars, Clear filters. No JUMP / academic preset row / helper footer.
+ * CR-CalTabs + CAL-R5 gear sheet — Month Compact|List, Week 3|5|7, Day Single|List,
+ * Show filters, Calendars, Clear filters. No JUMP / academic preset row / helper footer.
  */
 export function ViewCustomizeSheet({
   visible,
   monthMode,
   dayMode,
+  dayCount,
   onChangeMonthMode,
   onChangeDayMode,
+  onChangeDayCount,
   chipIds,
   onToggleChip,
   onClearFilters,
@@ -88,6 +94,17 @@ export function ViewCustomizeSheet({
             selected={monthMode === 'list'}
             onPress={() => onChangeMonthMode('list')}
           />
+        </ChipRow>
+        <Text style={[styles.section, { color: colors.mute }]}>Week</Text>
+        <ChipRow>
+          {MULTIDAY_COUNTS.map((n) => (
+            <Chip
+              key={n}
+              label={`${n} days`}
+              selected={dayCount === n}
+              onPress={() => onChangeDayCount(n)}
+            />
+          ))}
         </ChipRow>
         <Text style={[styles.section, { color: colors.mute }]}>Day</Text>
         <ChipRow>

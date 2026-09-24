@@ -7,13 +7,15 @@ function read(rel: string): string {
   return readFileSync(new URL(rel, root), 'utf8');
 }
 
-test('CAL-R3 screen wires VW-R3-C views + phone week + multiday stepper', () => {
+test('CAL-R3 screen wires VW-R3-C views + phone week; 3/5/7 live in gear', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /YearGrid/);
   assert.match(screen, /MonthGrid/);
   assert.match(screen, /DayColumn/);
   assert.match(screen, /TeacherWeekGrid/);
-  assert.match(screen, /MultiDayStepper/);
+  assert.doesNotMatch(screen, /MultiDayStepper/);
+  assert.match(screen, /dayCount=\{stepperCount\}/);
+  assert.match(screen, /onChangeDayCount=\{onChangeDayCount\}/);
   assert.match(screen, /AgendaList/);
   assert.match(screen, /activeView/);
   assert.match(screen, /'year'/);
@@ -39,16 +41,16 @@ test('CAL-27 DayColumn is hour-gutter timeline not card-only list', () => {
   assert.doesNotMatch(day, /card list only/);
 });
 
-test('CAL-28/29 Week denser + pinch gated by allowPinch; stepper essential', () => {
+test('CAL-28/29 Week denser + pinch gated by allowPinch; 3/5/7 in gear', () => {
   const week = read('src/components/calendar/TeacherWeekGrid.tsx');
   assert.match(week, /allDayRow|All-day/);
   assert.match(week, /allowPinch/);
   assert.match(week, /nextCountFromPinch/);
-  const stepper = read('src/components/calendar/MultiDayStepper.tsx');
-  assert.match(stepper, /MULTIDAY_COUNTS/);
-  assert.match(stepper, /3/);
-  assert.match(stepper, /5/);
-  assert.match(stepper, /7/);
+  const sheet = read('src/components/calendar/ViewCustomizeSheet.tsx');
+  assert.match(sheet, />Week</);
+  assert.match(sheet, /MULTIDAY_COUNTS/);
+  assert.match(sheet, /\$\{n\} days/);
+  assert.match(sheet, /onChangeDayCount/);
 });
 
 test('CAL-30 lean composer: no Reminder/Travel/URL/Attachments/Invitees/Alert/Repeat UI', () => {
