@@ -25,6 +25,7 @@ import {
   timelineHours,
 } from '@/lib/calendar/timeline';
 import type { CalendarItem } from '@/lib/calendar/types';
+import type { ZoomSourceRect } from '@/lib/calendar/zoomDrill';
 import {
   dayNumber,
   isSameDayIso,
@@ -39,7 +40,7 @@ type Props = {
   showHiddenBadge?: boolean;
   onPressItem?: (item: CalendarItem) => void;
   /** CAL-P6-3A: Week day column/header → Day. */
-  onPressDay?: (iso: string) => void;
+  onPressDay?: (iso: string, source?: ZoomSourceRect) => void;
   /** When set with onChangeDayCount, pinch (full motion) adjusts 7↔5↔3. */
   dayCount?: MultidayCount;
   onChangeDayCount?: (count: MultidayCount) => void;
@@ -81,6 +82,7 @@ export function TeacherWeekGrid({
   const pinchRef = useRef({ startDist: 0, armed: false });
   const countRef = useRef(dayCount ?? 7);
   countRef.current = dayCount ?? 7;
+  const dayHeaderRefs = useRef<Map<string, View | null>>(new Map());
 
   const pinchResponder = useMemo(() => {
     if (!allowPinch || !onChangeDayCount) return null;
@@ -130,10 +132,23 @@ export function TeacherWeekGrid({
           return (
             <Header
               key={`h-${day}`}
+              ref={(node: View | null) => {
+                dayHeaderRefs.current.set(day, node);
+              }}
               style={styles.col}
               {...(onPressDay
                 ? {
-                    onPress: () => onPressDay(day),
+                    onPress: () => {
+                      const node = dayHeaderRefs.current.get(day);
+                      const fire = (source: ZoomSourceRect) => onPressDay(day, source);
+                      if (node && typeof node.measureInWindow === 'function') {
+                        node.measureInWindow((x, y, width, height) => {
+                          fire({ x, y, width, height });
+                        });
+                      } else {
+                        fire({ x: 0, y: 0, width: 0, height: 0 });
+                      }
+                    },
                     accessibilityRole: 'button' as const,
                     accessibilityLabel: `Open day ${day}`,
                   }

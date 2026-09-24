@@ -21,6 +21,7 @@ import {
 import { roleTintColor } from '@/lib/calendar/roleTint';
 import { dayRoleTints } from '@/lib/calendar/timeline';
 import type { CalendarItem } from '@/lib/calendar/types';
+import type { ZoomSourceRect } from '@/lib/calendar/zoomDrill';
 import type { MonthMode } from '@/lib/calendar/viewPrefs';
 import { todayISO } from '@/lib/calendar/week';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -36,9 +37,9 @@ type Props = {
   mode?: MonthMode;
   onSelectDay: (iso: string) => void;
   /** Tap-zoom Month → Day (CAL-R4 L-C). */
-  onZoomDay?: (iso: string) => void;
+  onZoomDay?: (iso: string, source: ZoomSourceRect) => void;
   /** CAL-P6-3A: week-number / week-row → Week containing that week. */
-  onZoomWeek?: (iso: string) => void;
+  onZoomWeek?: (iso: string, source: ZoomSourceRect) => void;
   onPressItem?: (item: CalendarItem) => void;
   /**
    * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
@@ -69,6 +70,19 @@ export function MonthGrid({
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
   const today = todayISO();
+  const weekRowRefs = useRef<Map<number, View | null>>(new Map());
+  const dayCellRefs = useRef<Map<string, View | null>>(new Map());
+  const measureNode = (
+    node: View | null | undefined,
+    fire: (source: ZoomSourceRect) => void,
+  ) => {
+    if (node && typeof node.measureInWindow === 'function') {
+      node.measureInWindow((x, y, width, height) => fire({ x, y, width, height }));
+    } else {
+      fire({ x: 0, y: 0, width: 0, height: 0 });
+    }
+  };
+
   const weeks = buildMonthGrid(year, monthIndex0, 0);
   const weekdays = weekdayLabels(0);
   const fromIso = `${year}-${String(monthIndex0 + 1).padStart(2, '0')}-01`;
@@ -181,10 +195,19 @@ export function MonthGrid({
         const firstInMonth = week.find((cell) => cell && cell.iso.startsWith(monthPrefix));
         const weekAnchor = firstInMonth?.iso ?? week.find(Boolean)?.iso ?? null;
         return (
-          <View key={`w-${wi}`} style={styles.week}>
+          <View
+            key={`w-${wi}`}
+            ref={(node) => {
+              weekRowRefs.current.set(wi, node);
+            }}
+            collapsable={false}
+            style={styles.week}
+          >
             {onZoomWeek && weekAnchor ? (
               <Pressable
-                onPress={() => onZoomWeek(weekAnchor)}
+                onPress={() =>
+                  measureNode(weekRowRefs.current.get(wi), (source) => onZoomWeek(weekAnchor, source))
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Week of ${weekAnchor}`}
                 style={styles.weekNumHit}
@@ -205,7 +228,19 @@ export function MonthGrid({
               return (
                 <Pressable
                   key={cell.iso}
-                  onPress={() => (onZoomDay ? onZoomDay(cell.iso) : onSelectDay(cell.iso))}
+                  ref={(node) => {
+                    dayCellRefs.current.set(cell.iso, node as unknown as View | null);
+                  }}
+                  onPress={() => {
+                    if (onZoomDay) {
+                      measureNode(
+                        dayCellRefs.current.get(cell.iso),
+                        (source) => onZoomDay(cell.iso, source),
+                      );
+                    } else {
+                      onSelectDay(cell.iso);
+                    }
+                  }}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={cell.iso}
