@@ -366,7 +366,7 @@ export function SplitReview({
           <Text
             style={[
               type.meta,
-              { color: checkOff.match ? colors.mute : colors.danger },
+              { color: checkOff.match ? colors.mute : colors.warn },
             ]}
             accessibilityLiveRegion="polite"
           >
