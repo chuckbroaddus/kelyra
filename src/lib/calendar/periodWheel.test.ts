@@ -208,11 +208,11 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   const leaf = read('src/components/calendar/PeriodLeaf.tsx');
   assert.doesNotMatch(leaf, /function MonthHangingGrid|const MonthHangingGrid|<MonthHangingGrid|function WeekDayStrip|<WeekDayStrip|styles\.hangGrid|styles\.weekStrip|weekStrip:\s*\{/);
   assert.match(leaf, /contentMode/);
-  assert.match(leaf, /SilhouetteLeaf|silhouetteHeader/);
+  assert.match(leaf, /SilhouetteLeaf|clone idle chrome/);
   assert.match(leaf, /silhouetteYearText|styles\.yearPage|yearPage/);
   assert.match(leaf, /tile\.kind === 'year'|kind === 'year'/);
-  assert.match(leaf, /silhouetteDayHint|silhouetteHintRow/);
-  assert.match(leaf, /silhouetteLabelHint|silhouetteDayNumeral|silhouetteCaption/);
+  assert.match(leaf, /monthTallHeader|monthTallBody/);
+  assert.match(leaf, /silhouetteSoftText|wrapFooter|dayNumeral/);
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /fixed plate|monthStub|plateBodyLine|dayNumeral/);
   assert.match(leaf, /showCenterExtras|motionCompact/);
@@ -239,5 +239,8 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.match(leaf, /dayHeaderMonth/);
   assert.match(leaf, /dayFooterYear/);
   assert.match(leaf, /wrapFooter/);
+  assert.match(leaf, /silhouetteSoftText/);
+  assert.match(leaf, /clone idle chrome/);
+
 
 });

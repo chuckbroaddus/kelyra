@@ -584,7 +584,8 @@ test('Y/M/W/D leaf identity source contracts (CAL-3DW-16) — fixed plate', () =
   assert.match(leaf, /SET_B\.header|#C62828/);
   assert.match(leaf, /MetalTabs/);
   assert.match(leaf, /monthHeader/);
-  assert.match(leaf, /SET_B\.sunday|#E53935/);
+  assert.match(leaf, /silhouetteSoftText|clone idle chrome/);
+  assert.match(leaf, /wrapFooter/);
   assert.doesNotMatch(leaf, /function MonthHangingGrid|const MonthHangingGrid|<MonthHangingGrid|function WeekDayStrip|<WeekDayStrip|styles\.hangGrid|styles\.weekStrip|weekStrip:\s*\{/);
   assert.match(leaf, /plateBodyLine|monthStub/);
   assert.doesNotMatch(leaf, /wrapBodyText/);
