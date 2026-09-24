@@ -130,7 +130,9 @@ test('Week shows month/year title; Year→Month handoff fades; Day enter/exit an
 
   // A + D: Week month/year title continuous with Month.
   assert.match(week, /monthTitle/);
-  assert.match(week, /titleEnter/);
+  assert.match(week, /hideTitle/);
+  // Chuck 2026-09-24: no Week title remount fade (drawing effect) — title is sticky.
+  assert.doesNotMatch(week, /titleEnter/);
   assert.match(week, /styles\.monthTitle|fontSize:\s*22/);
   assert.match(screen, /monthTitle=\{weekMonthTitle\}|monthTitle=\{/);
   assert.match(screen, /monthContaining\(.*\)\.label/);
@@ -150,4 +152,38 @@ test('Week shows month/year title; Year→Month handoff fades; Day enter/exit an
   assert.match(screen, /exitAnim=\{dayExitAnim\}/);
   assert.match(screen, /onDayExitDone|onExitDone=\{onDayExitDone\}/);
   assert.match(screen, /week-day.*dayExitAnim|dayExitAnim.*week-day|pendingZoomUpRef/);
+});
+
+test('Sticky CalendarPeriodTitle lives OUTSIDE CalendarZoomDrill; no Month→Week title fade', () => {
+  const screen = read('src/app/calendar.tsx');
+  const month = read('src/components/calendar/MonthGrid.tsx');
+  const week = read('src/components/calendar/TeacherWeekGrid.tsx');
+  const day = read('src/components/calendar/DayColumn.tsx');
+
+  assert.match(screen, /<CalendarPeriodTitle/);
+  const titleIdx = screen.indexOf('{renderStickyTitle()}');
+  const hostIdx = screen.indexOf('ref={bodyHostRef}');
+  const drillIdx = screen.indexOf('<CalendarZoomDrill');
+  assert.ok(titleIdx > 0 && hostIdx > titleIdx && drillIdx > hostIdx, 'title must sit above bodyHost/ZoomDrill');
+
+  // Grids do not draw a duplicate header.
+  assert.equal((screen.match(/\bhideTitle\b/g) || []).length >= 3, true);
+  assert.match(month, /hideTitle/);
+  assert.match(week, /hideTitle/);
+  assert.match(day, /hideTitle/);
+
+  // Month title never fades on Month→Week drill; Week title never remount-fades.
+  assert.doesNotMatch(month, /handoffOutgoingOpacity/);
+  assert.doesNotMatch(month, /titleDrillStyle/);
+  assert.doesNotMatch(screen, /setWeekTitleEnter|weekTitleEnter/);
+
+  // Week→Day morph: inbound drill expands, Day exit collapses before climb.
+  assert.match(screen, /setMorphDayIso\(iso\)/);
+  assert.match(screen, /zoomDrill\?\.kind === 'week-day' && zoomDrill\.direction === 'in'/);
+  assert.match(screen, /activeView === 'day' && !dayExitAnim/);
+
+  // Day hour enter/exit animates the body only (heading outside handoffStyle).
+  const bodyIdx = day.indexOf('styles.body, handoffStyle');
+  const headingIdx = day.indexOf('formatDayHeading(day)');
+  assert.ok(bodyIdx > 0 && headingIdx > 0 && headingIdx < bodyIdx);
 });

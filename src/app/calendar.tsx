@@ -24,6 +24,7 @@ import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { CalendarZoomDrill } from '@/components/calendar/CalendarZoomDrill';
+import { CalendarPeriodTitle } from '@/components/calendar/CalendarPeriodTitle';
 import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -74,6 +75,7 @@ import {
   shiftDay,
 } from '@/lib/calendar/day';
 import { monthContaining, shiftMonth } from '@/lib/calendar/month';
+import { monthYearTitleParts } from '@/lib/calendar/periodTitle';
 import {
   multidayRangeContaining,
   multidayTodayAnchor,
@@ -185,8 +187,12 @@ export default function CalendarScreen() {
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
   /** Year→Month: MonthGrid chrome fade-in after swap (kills end snap). */
   const [monthEnterChrome, setMonthEnterChrome] = useState(false);
-  /** Month→Week: Week title fade-in on mount (same "January 2026" string). */
-  const [weekTitleEnter, setWeekTitleEnter] = useState<'mount' | null>(null);
+  /**
+   * Week→Day: tapped day for the sticky title morph while the drill runs
+   * ("February 2026" → "February 4, 2026, Wednesday"). Month→Week has no title
+   * fade/remount — the sticky CalendarPeriodTitle string is continuous.
+   */
+  const [morphDayIso, setMorphDayIso] = useState<string | null>(null);
   /** Week→Day: DayColumn timeslot enter / reverse exit. */
   const [dayEnterAnim, setDayEnterAnim] = useState(false);
   const [dayExitAnim, setDayExitAnim] = useState(false);
@@ -230,6 +236,7 @@ export default function CalendarScreen() {
   const [deleteBusy, setDeleteBusy] = useState(false);
 
   const weekRange = useMemo(() => weekRangeContaining(gridAnchor), [gridAnchor]);
+  const weekMonth = useMemo(() => monthContaining(gridAnchor), [gridAnchor]);
   const weekMonthTitle = useMemo(() => monthContaining(gridAnchor).label, [gridAnchor]);
   const multiRange = useMemo(
     () => multidayRangeContaining(dayCount === 7 ? 5 : dayCount, gridAnchor),
@@ -531,7 +538,6 @@ export default function CalendarScreen() {
   // Clear one-shot enter flags once the destination view is left.
   useEffect(() => {
     if (activeView !== 'month') setMonthEnterChrome(false);
-    if (activeView !== 'week' && activeView !== 'multiday') setWeekTitleEnter(null);
     if (activeView !== 'day') {
       setDayEnterAnim(false);
       if (!dayExitAnim) setDayExitAnim(false);
@@ -1111,8 +1117,10 @@ export default function CalendarScreen() {
             showHiddenBadge={showHiddenBadge}
             onPressItem={openItem}
             monthTitle={weekMonthTitle}
-            titleEnter={weekTitleEnter}
+            hideTitle
             onPressDay={(iso, source, focusIndex) => {
+              // Sticky title morphs to the tapped day alongside the drill.
+              setMorphDayIso(iso);
               startZoomDrill({
                 kind: 'week-day',
                 source: source ?? { x: 0, y: 0, width: 0, height: 0 },
@@ -1152,6 +1160,7 @@ export default function CalendarScreen() {
               enterAnim={dayEnterAnim}
               exitAnim={dayExitAnim}
               onExitDone={onDayExitDone}
+              hideTitle
               onPressSlot={
                 canCreate
                   ? (day, hour) => {
@@ -1170,6 +1179,7 @@ export default function CalendarScreen() {
               year={monthRange.year}
               monthIndex0={monthRange.monthIndex0}
               label={monthRange.label}
+              hideTitle
               items={visibleItems}
               selectedDay={monthSelectedDay}
               showHiddenBadge={showHiddenBadge}
@@ -1190,7 +1200,7 @@ export default function CalendarScreen() {
                   label: `Week of ${week.fromIso}`,
                   focusIndex,
                   then: () => {
-                    setWeekTitleEnter(reduceMotion ? null : 'mount');
+                    // Title is sticky outside the drill — no fade-out / remount fade-in.
                     zoomTo('week');
                   },
                 });
@@ -1206,7 +1216,7 @@ export default function CalendarScreen() {
                   label: `Week of ${week.fromIso}`,
                   focusIndex,
                   then: () => {
-                    setWeekTitleEnter(reduceMotion ? null : 'mount');
+                    // Title is sticky outside the drill — no fade-out / remount fade-in.
                     zoomTo('week');
                   },
                 });
@@ -1268,6 +1278,42 @@ export default function CalendarScreen() {
         ) : null
       ) : null;
 
+  const stickyTitleView =
+    activeView === 'month' ||
+    activeView === 'week' ||
+    activeView === 'multiday' ||
+    (activeView === 'day' && dayMode !== 'list');
+  /** Expanded = Day title; inbound Week→Day drill starts the morph immediately. */
+  const titleInboundDay =
+    zoomDrill?.kind === 'week-day' && zoomDrill.direction === 'in' && morphDayIso != null;
+  const titleExpanded = (activeView === 'day' && !dayExitAnim) || titleInboundDay;
+  const titleDayIso =
+    activeView === 'day' ? dayRange.day : titleInboundDay ? morphDayIso : null;
+
+  const renderStickyTitle = () => {
+    if (!stickyTitleView || error || parentChildMissing) return null;
+    const collapsed =
+      activeView === 'month'
+        ? monthYearTitleParts(monthRange.year, monthRange.monthIndex0)
+        : activeView === 'day'
+          ? (() => {
+              // Day→Week reverse: collapse to the day's month/year, then Week keeps it.
+              const m = monthContaining(dayRange.day);
+              return monthYearTitleParts(m.year, m.monthIndex0);
+            })()
+          : monthYearTitleParts(weekMonth.year, weekMonth.monthIndex0);
+    return (
+      <CalendarPeriodTitle
+        month={collapsed.month}
+        year={collapsed.year}
+        dayIso={titleDayIso}
+        expanded={titleExpanded}
+        reduceMotion={reduceMotion}
+        enterFade={activeView === 'month' && monthEnterChrome}
+      />
+    );
+  };
+
   return (
     <View style={styles.screenRoot}>
     <Screen
@@ -1306,6 +1352,12 @@ export default function CalendarScreen() {
           Nothing on the calendar in this range.
         </Text>
       ) : null}
+
+      {/*
+        Sticky period title — OUTSIDE CalendarZoomDrill so drill transforms never move/fade it.
+        Month→Week keeps the same string; Week↔Day morphs text at the same 22pt size.
+      */}
+      {renderStickyTitle()}
 
       {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
       <View

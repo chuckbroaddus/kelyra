@@ -183,3 +183,16 @@ test('R4 Week grid exposes month/year title matching MonthGrid style', () => {
   assert.match(screen, /monthTitle=\{/);
   assert.match(screen, /monthContaining\(.*\)\.label/);
 });
+
+test('R4 Year month names use period-header ink (not brand); header 22pt on Month/Week/Day', () => {
+  const year = read('src/components/calendar/YearGrid.tsx');
+  assert.match(year, /styles\.monthLabel, \{ color: colors\.ink \}/);
+  assert.doesNotMatch(year, /styles\.monthLabel, \{ color: colors\.brand \}/);
+  // Year card label keeps its smaller year-card size.
+  assert.match(year, /monthLabel:[\s\S]*?fontSize:\s*13/);
+  const title = read('src/components/calendar/CalendarPeriodTitle.tsx');
+  assert.match(title, /title:\s*\{\s*\.\.\.type\.title,\s*fontSize:\s*22\s*\}/);
+  assert.match(title, /colors\.ink/);
+  const screen = read('src/app/calendar.tsx');
+  assert.match(screen, /activeView === 'month' \|\|\s*activeView === 'week' \|\|\s*activeView === 'multiday' \|\|\s*\(activeView === 'day' && dayMode !== 'list'\)/);
+});

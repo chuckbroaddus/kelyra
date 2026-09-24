@@ -104,7 +104,8 @@ export function YearGrid({
               accessibilityLabel={`${block.monthLabel} ${block.year}`}
               style={[styles.monthCard, { borderColor: colors.line, backgroundColor: colors.elevated }]}
             >
-              <Text style={[styles.monthLabel, { color: colors.brand }]}>{block.monthLabel}</Text>
+              {/* Same ink as the Month/Week/Day period header (not brand orange). */}
+              <Text style={[styles.monthLabel, { color: colors.ink }]}>{block.monthLabel}</Text>
               <View style={styles.weekdays}>
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
                   <Text key={`${d}-${i}`} style={[styles.wd, { color: colors.mute }]}>
