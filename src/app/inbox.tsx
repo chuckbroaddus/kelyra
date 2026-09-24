@@ -36,7 +36,7 @@ export default function InboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const chrome = useChrome();
-  const { contextTab, classId: chromeClassId, refreshChrome } = chrome;
+  const { contextTab, classId: chromeClassId, refreshNeedsBadge } = chrome;
   const teachSeat = chrome.role === 'teacher';
   const { teacher, refreshTeacher, setActiveClassId } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -160,7 +160,7 @@ export default function InboxScreen() {
     try {
       const result = await processQueuedDrafts();
       setStatus(result.processed ? `Drafted ${result.processed} queued page${result.processed === 1 ? '' : 's'}.` : 'Nothing queued.');
-      refreshChrome();
+      refreshNeedsBadge();
       await load();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not draft queued pages');
@@ -186,7 +186,7 @@ export default function InboxScreen() {
     try {
       await attachCapture(captureId, studentId);
       setPicking(null);
-      refreshChrome();
+      refreshNeedsBadge();
       if (classId) router.push(`/class/${classId}/student/${studentId}`);
       else await load();
     } catch (err) {
@@ -387,7 +387,7 @@ export default function InboxScreen() {
           void markNoteOnly(notePending.id)
             .then(() => {
               setNotePending(null);
-              refreshChrome();
+              refreshNeedsBadge();
               return load();
             })
             .catch((err) => {
@@ -410,7 +410,7 @@ export default function InboxScreen() {
           void deleteCapture(pending.id)
             .then(() => {
               setPending(null);
-              refreshChrome();
+              refreshNeedsBadge();
               return load();
             })
             .catch((err) => {

@@ -142,6 +142,8 @@ type ChromeValue = {
   /** Signed face for the signed-in person (teacher, student, or parent). */
   teacherPhotoUrl: string | null;
   refreshChrome: () => void;
+  /** Invalidate Needs TTL + recount badge only — no listClasses / avatar hydrate (US-PERF-06). */
+  refreshNeedsBadge: () => void;
   /** Drop this alert from the bell without removing it from the inbox. */
   acknowledgeAlert: (postId: string) => void;
   openHeaderCamera: () => void;
@@ -781,6 +783,11 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     setBadgeCount(alerts);
   }, [role, studentSession, teacher, classId, parentTokens]);
 
+  const refreshNeedsBadge = useCallback(() => {
+    invalidateNeedsCountCache();
+    void refreshBell();
+  }, [refreshBell]);
+
   const acknowledgeAlert = useCallback((postId: string) => {
     void markAlertRead(postId).then((fresh) => {
       if (!fresh) return;
@@ -1003,6 +1010,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       parentTokens,
       teacherPhotoUrl,
       refreshChrome,
+      refreshNeedsBadge,
       acknowledgeAlert,
       openHeaderCamera,
       headerCameraOpen,
@@ -1061,6 +1069,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       parentTokens,
       teacherPhotoUrl,
       refreshChrome,
+      refreshNeedsBadge,
       acknowledgeAlert,
       openHeaderCamera,
       headerCameraOpen,
