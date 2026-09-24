@@ -325,34 +325,42 @@ export function HamburgerDrawer() {
                 onPress={() => go('/profile')}
               />
               ) : null}
-              {officeSeat && profile?.role === 'superintendent' ? (
+              {officeSeat ? (
                 <>
-                  {matches('Feed', q) ? (
-                    <DrawerRow label="Feed" onPress={() => go('/?tab=feed')} />
-                  ) : null}
-                  {matches('Classes', q) ? (
-                    <DrawerRow label="Classes" onPress={() => go('/?tab=classes')} />
-                  ) : null}
-                  {matches('People', q) ? (
-                    <DrawerRow label="People" onPress={() => go('/?tab=people')} />
-                  ) : null}
-                  {matches('Manage', q) || matches('School', q) ? (
-                    <DrawerRow label="Manage" onPress={() => go('/?tab=manage')} />
-                  ) : null}
-                  {matches('Ask', q) || matches('Kelyra', q) ? (
+                  {/* Office hamburger — Home / Diary / Calendar / Ask Kelyra (both office roles). */}
+                  {matches('Home', q) ? (
                     <DrawerRow
-                      label="Ask"
+                      label="Home"
+                      onPress={() => go('/')}
+                      leading={<Icon name="today" color={colors.ink} size={22} />}
+                    />
+                  ) : null}
+                  {matches('Diary', q) ? (
+                    <DrawerRow
+                      label="Diary"
+                      onPress={() => go('/diary')}
+                      leading={<Icon name="diary" color={colors.ink} size={22} />}
+                    />
+                  ) : null}
+                  {matches('Calendar', q) ? (
+                    <DrawerRow
+                      label="Calendar"
+                      onPress={() => go('/calendar')}
+                      leading={<Icon name="calendar" color={colors.ink} size={22} />}
+                    />
+                  ) : null}
+                  {matches('Ask Kelyra', q) || matches('Ask', q) || matches('Kelyra', q) ? (
+                    <DrawerRow
+                      label="Ask Kelyra"
                       onPress={() => go('/ask')}
                       leading={<KelyraMark size={22} />}
                     />
                   ) : null}
-                  {/* ST-A: office hamburger Diary — superintendent branch (admin uses officeSeat block below). */}
-                  {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
-                </>
-              ) : (
-                <>
-                  {!teacherSeat
-                    ? chromeState.classes.filter((klass) => matches(klass.name, q)).map((klass) => (
+                  {/* Administrator keeps class list + Activity / Messages / Responsibilities. */}
+                  {chromeState.role === 'administrator' ? (
+                    <>
+                      <Hairline />
+                      {chromeState.classes.filter((klass) => matches(klass.name, q)).map((klass) => (
                         <ListRow
                           key={klass.id}
                           title={klass.name}
@@ -385,19 +393,10 @@ export function HamburgerDrawer() {
                               : []
                           }
                         />
-                      ))
-                    : null}
-                  {teacherSeat && matches('Classes', q) ? (
-                    <DrawerRow label="Classes" onPress={() => go('/?switch=1')} />
-                  ) : null}
-                  <Hairline />
-                  {/* Admin extras: §31.1 People/Activity/Messages/Responsibilities.
-                      Feed is superintendent §36.2 only; do not invent Manage. */}
-                  {officeSeat ? (
-                    <>
-                      {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/?tab=people')} /> : null}
-                      {matches('Activity', q) && can(profile, 'audit.view', 'school', grants) ? <DrawerRow label="Activity" onPress={() => go('/activity')} /> : null}
-                      {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
+                      ))}
+                      {matches('Activity', q) && can(profile, 'audit.view', 'school', grants) ? (
+                        <DrawerRow label="Activity" onPress={() => go('/activity')} />
+                      ) : null}
                       {matches('Messages', q) ? <DrawerRow label="Messages" onPress={() => go('/messages')} /> : null}
                       {matches('Responsibilities', q) && can(profile, 'school.matrix', 'all', grants) ? (
                         <DrawerRow label="Responsibilities" onPress={() => go('/admin/matrix')} />
@@ -405,6 +404,13 @@ export function HamburgerDrawer() {
                       <Hairline />
                     </>
                   ) : null}
+                </>
+              ) : (
+                <>
+                  {teacherSeat && matches('Classes', q) ? (
+                    <DrawerRow label="Classes" onPress={() => go('/?switch=1')} />
+                  ) : null}
+                  {teacherSeat ? <Hairline /> : null}
                   {chromeState.classId && teacherSeat ? (
                     <>
                       {/* TC-A: structure home after Class tray drop — always-on when classId. */}

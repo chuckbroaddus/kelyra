@@ -11,7 +11,7 @@ function read(rel: string): string {
 }
 
 const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const OFFICE_KEYS = ['home', 'diary', 'calendar', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'calendar', 'ask'];
 const PARENT_KEYS = ['home', 'ride', 'calendar', 'ask'];
 
@@ -25,24 +25,54 @@ test('A1 pure teacher tray: four keys, no office People/Manage', () => {
   assert.ok(!keys.includes('profile'));
 });
 
-test('A1 office seat tray unchanged for superintendent and administrator', () => {
+test('A1 office seat tray Home·Diary·Calendar·KelyraAsk for superintendent and administrator', () => {
   assert.deepEqual(trayKeysForRole('superintendent'), OFFICE_KEYS);
   assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
-  assert.equal(trayKeysForRole('superintendent').length, 6);
+  assert.equal(trayKeysForRole('superintendent').length, 4);
+  for (const role of ['superintendent', 'administrator'] as const) {
+    const tabs = tabsFor(role, '/', null, 0);
+    assert.deepEqual(
+      tabs.map((tab) => tab.label),
+      ['Home', 'Diary', 'Calendar', 'KelyraAsk'],
+      role,
+    );
+    assert.deepEqual(
+      tabs.map((tab) => tab.href),
+      ['/', '/diary', '/calendar', '/ask'],
+      role,
+    );
+    assert.deepEqual(
+      tabs.map((tab) => tab.icon),
+      ['today', 'diary', 'calendar', 'ask'],
+      role,
+    );
+    assert.ok(!tabs.some((tab) => tab.href.includes('?tab=')), role);
+  }
 });
 
 test('A1 dual-hat seats never merge tray key sets', () => {
-  const teacher = new Set(trayKeysForRole('teacher'));
-  const office = new Set(trayKeysForRole('administrator'));
-  const union = new Set([...teacher, ...office]);
-  assert.notDeepEqual([...union].sort(), TEACHER_KEYS.slice().sort());
-  assert.notDeepEqual([...union].sort(), OFFICE_KEYS.slice().sort());
-  assert.deepEqual(trayKeysForRole('teacher'), TEACHER_KEYS);
-  assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
-  assert.ok(!teacher.has('capture'));
-  assert.ok(!office.has('capture'));
-  assert.ok(office.has('people'));
-  assert.ok(!teacher.has('people'));
+  const teacher = trayKeysForRole('teacher');
+  const office = trayKeysForRole('administrator');
+  assert.deepEqual(teacher, TEACHER_KEYS);
+  assert.deepEqual(office, OFFICE_KEYS);
+  // Seats stay distinct builders — never concat. Office drops Needs; teacher keeps inbox.
+  assert.notDeepEqual(teacher, office);
+  assert.ok(teacher.includes('inbox'));
+  assert.ok(!office.includes('inbox'));
+  assert.ok(office.includes('diary'));
+  assert.ok(office.includes('home'));
+  assert.ok(!office.includes('people'));
+  assert.ok(!office.includes('manage'));
+  assert.ok(!office.includes('feed'));
+  assert.ok(!office.includes('classes'));
+  assert.ok(!teacher.includes('people'));
+  assert.ok(!teacher.includes('capture'));
+  assert.ok(!office.includes('capture'));
+  // Labels also diverge on shared keys (Desk vs Home; Kelyra vs KelyraAsk).
+  assert.equal(tabsFor('teacher', '/', 'c1', 0).find((t) => t.key === 'home')?.label, 'Desk');
+  assert.equal(tabsFor('administrator', '/', null, 0).find((t) => t.key === 'home')?.label, 'Home');
+  assert.equal(tabsFor('teacher', '/ask', 'c1', 0).find((t) => t.key === 'ask')?.label, 'Kelyra');
+  assert.equal(tabsFor('administrator', '/ask', null, 0).find((t) => t.key === 'ask')?.label, 'KelyraAsk');
 });
 
 test('A1 student tray golden path unchanged', () => {
@@ -71,7 +101,8 @@ test('TR-07 / SEC-05: student Class tray unchanged; no sixth teacher key', () =>
   assert.equal(studentClass?.href, '/student/class');
   assert.ok(!trayKeysForRole('teacher').includes('class'));
   assert.ok(!trayKeysForRole('parent').includes('diary'));
-  assert.ok(!trayKeysForRole('administrator').includes('diary'));
+  assert.ok(trayKeysForRole('administrator').includes('diary'));
+  assert.ok(trayKeysForRole('superintendent').includes('diary'));
 });
 
 test('TR-06: teacher Needs Attention label; route stays /inbox', () => {
@@ -98,11 +129,16 @@ test('A1 parent tray includes Ride; dual-hat seats never merge with teacher/offi
   assert.ok(!parent.has('capture'));
 });
 
-test('P-05 / KL-A: teacher Ask slot labels Kelyra; other seats keep Ask; key/href ask', () => {
+test('P-05 / KL-A: teacher Ask labels Kelyra; office KelyraAsk; student/parent Ask; key/href ask', () => {
   const teacherAsk = tabsFor('teacher', '/ask', 'c1', 0).find((tab) => tab.key === 'ask');
   assert.equal(teacherAsk?.label, 'Kelyra');
   assert.equal(teacherAsk?.href, '/ask');
-  for (const role of ['superintendent', 'administrator', 'student', 'parent']) {
+  for (const role of ['superintendent', 'administrator']) {
+    const ask = tabsFor(role, '/ask', null, 0).find((tab) => tab.key === 'ask');
+    assert.equal(ask?.label, 'KelyraAsk', role);
+    assert.equal(ask?.href, '/ask', role);
+  }
+  for (const role of ['student', 'parent']) {
     const ask = tabsFor(role, '/ask', null, 0).find((tab) => tab.key === 'ask');
     assert.equal(ask?.label, 'Ask', role);
     assert.equal(ask?.href, '/ask', role);
@@ -162,10 +198,12 @@ test('CT-A: calendar before ask on every seat; ask last', () => {
   assert.equal(cal?.href, '/calendar');
   assert.equal(cal?.active, true);
   assert.equal(tabsFor('administrator', '/calendar', null, 0).find((tab) => tab.key === 'calendar')?.active, true);
-  assert.equal(tabsFor('administrator', '/calendar', null, 0).find((tab) => tab.key === 'manage')?.active, false);
+  assert.equal(tabsFor('administrator', '/calendar', null, 0).find((tab) => tab.key === 'home')?.active, false);
+  assert.equal(tabsFor('administrator', '/', null, 0).find((tab) => tab.key === 'home')?.active, true);
+  assert.equal(tabsFor('administrator', '/diary', null, 0).find((tab) => tab.key === 'diary')?.active, true);
 });
 
-test('CT-A: G1 calendar icon wired; hamburger Calendar rows dropped; class muted link kept', () => {
+test('CT-A: G1 calendar icon wired; office hamburger Calendar with tray glyph; class muted link kept', () => {
   const icons = read('scripts/build-icons.mjs');
   assert.match(icons, /calendar:\s*\(p\)\s*=>/);
   assert.match(icons, /NEVER reuse today/);
@@ -173,8 +211,14 @@ test('CT-A: G1 calendar icon wired; hamburger Calendar rows dropped; class muted
   const names = read('src/components/ui/Icon.tsx');
   assert.match(names, /\| 'calendar'/);
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
-  assert.equal(drawer.includes("matches('Calendar'"), false);
-  assert.equal(/label="Calendar"/.test(drawer), false);
+  assert.match(drawer, /matches\('Calendar', q\)/);
+  assert.match(drawer, /label="Calendar"/);
+  assert.match(drawer, /name="calendar"/);
+  assert.equal(drawer.includes("label=\"Feed\""), false);
+  assert.equal(drawer.includes('go(\'/?tab=feed\')'), false);
+  assert.equal(drawer.includes('go(\'/?tab=classes\')'), false);
+  assert.equal(drawer.includes('go(\'/?tab=people\')'), false);
+  assert.equal(drawer.includes('go(\'/?tab=manage\')'), false);
   const classPage = read('src/app/class/[id]/index.tsx');
   assert.match(classPage, /Open Calendar/);
   assert.match(classPage, /calendarLinkText/);

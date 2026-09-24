@@ -64,7 +64,7 @@ test('ASK-01/02/05: class name chip on teacher Ask; one /ask; office Ask unchang
   assert.equal(teacherAsk?.href, '/ask');
   const officeAsk = tabsFor('administrator', '/ask', null, 0).find((tab) => tab.key === 'ask');
   assert.equal(officeAsk?.href, '/ask');
-  assert.equal(officeAsk?.label, 'Ask');
+  assert.equal(officeAsk?.label, 'KelyraAsk');
 });
 
 test('ASK-03/04 / SEC-04: no new Ask tools; policy maps keep officeOnly / teacherSeatOnly', () => {

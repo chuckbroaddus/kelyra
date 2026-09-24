@@ -23,39 +23,25 @@ export function tabsFor(
   pathname: string,
   classId: string | null,
   badgeCount: number,
-  homeTab?: string,
+  _homeTab?: string,
   schoolFeedIcon = 'feedSchool',
 ): TrayTab[] {
   if (role === 'superintendent' || role === 'administrator') {
-    const office = officeTrayKey(pathname, homeTab);
+    const office = officeTrayKey(pathname);
     return [
       {
-        key: 'feed',
-        icon: schoolFeedIcon,
-        label: 'Feed',
-        href: '/?tab=feed',
-        active: office === 'feed',
+        key: 'home',
+        icon: 'today',
+        label: 'Home',
+        href: '/',
+        active: office === 'home',
       },
       {
-        key: 'classes',
-        icon: 'classes',
-        label: 'Classes',
-        href: '/?tab=classes',
-        active: office === 'classes',
-      },
-      {
-        key: 'people',
-        icon: 'person',
-        label: 'People',
-        href: '/?tab=people',
-        active: office === 'people',
-      },
-      {
-        key: 'manage',
-        icon: 'manage',
-        label: 'Manage',
-        href: '/?tab=manage',
-        active: office === 'manage',
+        key: 'diary',
+        icon: 'diary',
+        label: 'Diary',
+        href: '/diary',
+        active: office === 'diary',
       },
       {
         key: 'calendar',
@@ -64,7 +50,8 @@ export function tabsFor(
         href: '/calendar',
         active: office === 'calendar',
       },
-      { key: 'ask', icon: 'ask', label: 'Ask', href: '/ask', active: pathname === '/ask' },
+      // Office tray label is KelyraAsk; key/href stay ask /ask.
+      { key: 'ask', icon: 'ask', label: 'KelyraAsk', href: '/ask', active: pathname === '/ask' },
     ];
   }
   if (role === 'student') {
@@ -165,19 +152,10 @@ export function tabsFor(
 
 function officeTrayKey(
   pathname: string,
-  homeTab?: string,
-): 'feed' | 'classes' | 'people' | 'manage' | 'calendar' | 'ask' | null {
+): 'home' | 'diary' | 'calendar' | 'ask' | null {
   if (pathname === '/calendar' || pathname.startsWith('/calendar/')) return 'calendar';
   if (pathname === '/ask') return 'ask';
-  if (pathname === '/activity' || pathname === '/admin/matrix' || pathname.startsWith('/admin/ride') || pathname.startsWith('/ride')) return 'manage';
-  if (pathname.startsWith('/admin/people') || pathname === '/admin') return 'people';
-  if (pathname.startsWith('/admin/class')) return 'classes';
-  if (pathname === '/' || pathname === '') {
-    if (homeTab === 'feed') return 'feed';
-    if (homeTab === 'people') return 'people';
-    if (homeTab === 'manage' || homeTab === 'school') return 'manage';
-    if (homeTab === 'new') return null;
-    return 'classes';
-  }
+  if (pathname === '/diary' || pathname.startsWith('/diary/')) return 'diary';
+  if (pathname === '/' || pathname === '') return 'home';
   return null;
 }

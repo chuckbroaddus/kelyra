@@ -147,7 +147,7 @@ function tabTip(tab: Tab): string {
   if (tab.key === 'people') return tab.href.startsWith('/student') ? 'Classmates, teachers, and parents' : 'Staff, parents, and students';
   if (tab.key === 'manage' || tab.key === 'system') return 'Feed icon, activity, and responsibilities';
   if (tab.key === 'activity') return 'Immutable change log';
-  // KL-A: teacher tray label is Kelyra; other seats keep Ask.
+  // KL-A: teacher tray label is Kelyra; office is KelyraAsk; student/parent keep Ask.
   if (tab.key === 'ask') return tab.label;
   if (tab.key === 'inbox') return 'Needs Attention';
   if (tab.key === 'diary') return 'Diary';

@@ -26,13 +26,13 @@ test('ST-A tray: Desk · Needs Attention · Diary · Kelyra; Class gone; no Capt
   assert.equal(tabs.at(-1)?.href, '/ask');
 });
 
-test('ST-A other seats: no Diary tray slot', () => {
+test('ST-A parent/student: no Diary tray; office owns Diary tray', () => {
   assert.ok(!trayKeysForRole('parent').includes('diary'));
-  assert.ok(!trayKeysForRole('administrator').includes('diary'));
-  assert.ok(!trayKeysForRole('superintendent').includes('diary'));
+  assert.ok(trayKeysForRole('administrator').includes('diary'));
+  assert.ok(trayKeysForRole('superintendent').includes('diary'));
   assert.ok(!trayKeysForRole('student').includes('diary'));
   assert.equal(trayKeysForRole('parent').length, 4);
-  assert.equal(trayKeysForRole('administrator').length, 6);
+  assert.equal(trayKeysForRole('administrator').length, 4);
   assert.equal(trayKeysForRole('student').length, 7);
 });
 
@@ -60,20 +60,24 @@ test('ST-20 / GAP-S1 hamburger Diary ownership', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.doesNotMatch(drawer, /!officeSeat && matches\('Diary'/);
   assert.doesNotMatch(drawer, /teacherSeat && matches\('Diary'/);
-  assert.match(drawer, /matches\('Diary', q\) \? <DrawerRow label="Diary"/);
-  // Office: superintendent dedicated branch + administrator officeSeat block both own Diary.
-  const superAt = drawer.indexOf("officeSeat && profile?.role === 'superintendent'");
-  assert.ok(superAt > 0);
-  const elseAt = drawer.indexOf(') : (', superAt);
-  const superBlock = drawer.slice(superAt, elseAt);
-  assert.match(superBlock, /label="Diary"/);
-  assert.match(superBlock, /go\('\/diary'\)/);
-  const officeExtrasAt = drawer.indexOf('{officeSeat ? (', elseAt);
-  assert.ok(officeExtrasAt > elseAt);
-  const officeExtrasEnd = drawer.indexOf('{chromeState.classId && teacherSeat', officeExtrasAt);
-  const adminOfficeBlock = drawer.slice(officeExtrasAt, officeExtrasEnd);
-  assert.match(adminOfficeBlock, /label="Diary"/);
-  assert.match(adminOfficeBlock, /go\('\/diary'\)/);
+  // Office shared block owns Home/Diary/Calendar/Ask Kelyra for both office roles.
+  const officeAt = drawer.indexOf('{officeSeat ? (');
+  assert.ok(officeAt > 0);
+  const elseAt = drawer.indexOf(') : (', officeAt);
+  const officeBlock = drawer.slice(officeAt, elseAt);
+  assert.match(officeBlock, /label="Home"/);
+  assert.match(officeBlock, /label="Diary"/);
+  assert.match(officeBlock, /label="Calendar"/);
+  assert.match(officeBlock, /label="Ask Kelyra"/);
+  assert.match(officeBlock, /go\('\/diary'\)/);
+  assert.match(officeBlock, /name="today"/);
+  assert.match(officeBlock, /name="diary"/);
+  assert.match(officeBlock, /name="calendar"/);
+  assert.match(officeBlock, /KelyraMark/);
+  assert.doesNotMatch(officeBlock, /label="Feed"/);
+  assert.doesNotMatch(officeBlock, /\/\?tab=feed/);
+  assert.doesNotMatch(officeBlock, /\/\?tab=people/);
+  assert.doesNotMatch(officeBlock, /\/\?tab=manage/);
   const studentAt = drawer.indexOf("chromeState.role === 'student'");
   assert.ok(studentAt > 0);
   const parentAt = drawer.indexOf("chromeState.role === 'parent'", studentAt);

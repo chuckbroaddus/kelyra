@@ -68,7 +68,15 @@ test('P-05 / KL-A: teacher Ask slot labels Kelyra; other seats Ask; Ask remains 
   const teacherAsk = tabsFor('teacher', '/', 'c1', 0).find((tab) => tab.key === 'ask');
   assert.equal(teacherAsk?.label, 'Kelyra');
   assert.equal(teacherAsk?.href, '/ask');
-  for (const role of ['superintendent', 'administrator', 'student', 'parent'] as const) {
+  for (const role of ['superintendent', 'administrator'] as const) {
+    const tabs = tabsFor(role, '/', null, 0);
+    const ask = tabs.find((tab) => tab.key === 'ask');
+    assert.ok(ask, role);
+    assert.equal(ask.label, 'KelyraAsk', role);
+    assert.equal(tabs[tabs.length - 1]?.key, 'ask', role);
+    assert.equal(trayKeysForRole(role).at(-1), 'ask', role);
+  }
+  for (const role of ['student', 'parent'] as const) {
     const tabs = tabsFor(role, '/', null, 0);
     const ask = tabs.find((tab) => tab.key === 'ask');
     assert.ok(ask, role);
@@ -84,19 +92,23 @@ test('P-05 / KL-A: teacher Ask slot labels Kelyra; other seats Ask; Ask remains 
 });
 
 /** P-04 — §3.3 / §36.2 drawer order conformance. */
-test('P-04: superintendent drawer Feed · Classes · People · Manage · Ask then My children / Sign out', () => {
+test('P-04: office drawer Home · Diary · Calendar · Ask Kelyra then My children / Sign out', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
-  const superAt = drawer.indexOf("officeSeat && profile?.role === 'superintendent'");
-  assert.ok(superAt > 0);
-  const elseAt = drawer.indexOf(') : (', superAt);
-  const superBlock = drawer.slice(superAt, elseAt);
-  const feed = superBlock.indexOf('label="Feed"');
-  const classes = superBlock.indexOf('label="Classes"');
-  const people = superBlock.indexOf('label="People"');
-  const manage = superBlock.indexOf('label="Manage"');
-  const ask = superBlock.indexOf('label="Ask"');
-  assert.ok(feed > 0 && classes > feed && people > classes && manage > people && ask > manage);
-  assert.doesNotMatch(superBlock, /label="Kelyra"/);
+  const officeAt = drawer.indexOf('{officeSeat ? (');
+  assert.ok(officeAt > 0);
+  const elseAt = drawer.indexOf(') : (', officeAt);
+  const officeBlock = drawer.slice(officeAt, elseAt);
+  const home = officeBlock.indexOf('label="Home"');
+  const diary = officeBlock.indexOf('label="Diary"');
+  const calendar = officeBlock.indexOf('label="Calendar"');
+  const ask = officeBlock.indexOf('label="Ask Kelyra"');
+  assert.ok(home >= 0 && diary > home && calendar > diary && ask > calendar);
+  assert.doesNotMatch(officeBlock, /label="Feed"/);
+  assert.doesNotMatch(officeBlock, /label="Manage"/);
+  assert.match(officeBlock, /name="today"/);
+  assert.match(officeBlock, /name="diary"/);
+  assert.match(officeBlock, /name="calendar"/);
+  assert.match(officeBlock, /KelyraMark/);
 
   const myChildren = drawer.indexOf('label="My children"');
   const signOut = drawer.indexOf('label="Sign out"');
@@ -137,17 +149,20 @@ test('P-04: parent drawer cannot delete children; Sign out danger; seat switch d
   assert.match(drawer, /setChromeSeat\('office'\)/);
 });
 
-test('P-04: administrator extras follow §31.1 (People/Activity/Messages/Responsibilities; no Feed/Manage)', () => {
+test('P-04: administrator extras keep class list + Activity/Messages/Responsibilities; no Feed/Manage/People', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
-  assert.match(drawer, /Admin extras: §31\.1/);
+  assert.match(drawer, /Administrator keeps class list/);
   assert.doesNotMatch(drawer, /OPEN ISSUE/);
-  // Administrator keeps class list + People / Activity / Messages / Responsibilities — no Feed or invented Manage on that branch.
-  const adminExtras = drawer.indexOf('Admin extras:');
-  const adminBlock = drawer.slice(adminExtras, adminExtras + 1600);
-  assert.match(adminBlock, /label="People"/);
+  const adminExtras = drawer.indexOf("{chromeState.role === 'administrator' ? (");
+  assert.ok(adminExtras > 0);
+  // Slice through admin extras only (before teacher-seat else branch).
+  const teacherElse = drawer.indexOf(') : (', adminExtras);
+  const adminBlock = drawer.slice(adminExtras, teacherElse > adminExtras ? teacherElse : adminExtras + 5000);
+  assert.match(adminBlock, /chromeState\.classes\.filter/);
   assert.match(adminBlock, /label="Activity"/);
   assert.match(adminBlock, /label="Messages"/);
   assert.match(adminBlock, /label="Responsibilities"/);
   assert.doesNotMatch(adminBlock, /label="Feed"/);
   assert.doesNotMatch(adminBlock, /label="Manage"/);
+  assert.doesNotMatch(adminBlock, /label="People"/);
 });
