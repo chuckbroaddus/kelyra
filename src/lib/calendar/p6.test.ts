@@ -155,23 +155,25 @@ test('CAL-P6-10B: empty hour slot → Add Event prefill; no confirm sheet', () =
   );
 });
 
-test('CAL-P6-8A: drum pinned; nav row collapses with tray', () => {
+test('CAL-P6-8A + CEO 2026-09-24: nav row AND drum pinned (body scroll never hides `<` Today + search gear)', () => {
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /collapse=\{collapsingChrome\}/);
   assert.match(screen, /pin=\{pinnedChrome\}/);
   assert.match(screen, /styles\.navRow/);
   assert.match(screen, /PeriodPager/);
-  // Nav row lives in collapse band; PeriodPager in pin band.
+  // Nav row + PeriodPager both live in pin band; collapse band only holds child chips.
   const collapseIdx = screen.indexOf('const collapsingChrome');
   const pinIdx = screen.indexOf('const pinnedChrome');
   assert.ok(collapseIdx > 0 && pinIdx > collapseIdx);
   const collapseBlock = screen.slice(collapseIdx, pinIdx);
   const pinBlock = screen.slice(pinIdx, screen.indexOf('return (', pinIdx));
-  assert.match(collapseBlock, /styles\.navRow/);
-  assert.match(collapseBlock, /label=["']Today["']/);
+  assert.doesNotMatch(collapseBlock, /styles\.navRow/);
   assert.doesNotMatch(collapseBlock, /<PeriodPager/);
+  assert.match(pinBlock, /styles\.navRow/);
+  assert.match(pinBlock, /label=["']Today["']/);
+  assert.match(pinBlock, /name=["']search["']/);
+  assert.match(pinBlock, /name=["']settings["']/);
   assert.match(pinBlock, /<PeriodPager/);
-  assert.doesNotMatch(pinBlock, /styles\.navRow/);
 
   const screenUi = read('src/components/ui/Screen.tsx');
   assert.match(screenUi, /pin\?:/);

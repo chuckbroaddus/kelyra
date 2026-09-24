@@ -971,6 +971,13 @@ export default function CalendarScreen() {
         </View>
       ) : null}
 
+    </>
+  );
+
+  // CEO 2026-09-24: nav row (`<` Today · + search gear) is PINNED — never scrolls or
+  // collapses with the body; only sub-menus (composer / customize sheet) cover it.
+  const pinnedChrome = (
+    <>
       {/* `<` + Today ····· + · search · gear (CEO 2026-09-24 — no Y/M/W/D tabs). */}
       <View style={styles.navRow}>
         <View style={styles.navLeading}>
@@ -1025,10 +1032,6 @@ export default function CalendarScreen() {
           clearButtonMode="while-editing"
         />
       ) : null}
-    </>
-  );
-
-  const pinnedChrome = (
     <View {...(hierarchyPinch?.panHandlers ?? {})}>
       {canCreate && seat === 'parent' && parentChildMissing ? (
         <Text style={[styles.hint, { color: colors.mute, marginTop: 8 }]}>
@@ -1097,6 +1100,7 @@ export default function CalendarScreen() {
         />
       ) : null}
     </View>
+    </>
   );
 
   // CAL-R5-12: pageChromeHosted drops Screen pad+contextReserve band so Y/M/W/D sit tight under header.
