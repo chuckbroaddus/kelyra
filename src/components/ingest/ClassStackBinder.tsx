@@ -268,8 +268,14 @@ export function ClassStackBinder({
       onClose();
     } catch (err) {
       if (err instanceof IngestRpcError && err.code === 'cannot_abandon_after_confirm') {
+        // t_da864a81: only use post-confirm Inbox copy when UI already knows confirm minted.
+        // Pre-confirm partial rejects (e.g. unapplied I5 SQL) must not claim Needs Attention.
+        if (canAbandonPartial) {
+          setError(INGEST_COPY.abandonPartialFailed);
+        } else {
+          setError(INGEST_COPY.abandonAfterConfirm);
+        }
         setCanAbandonPartial(false);
-        setError(INGEST_COPY.abandonAfterConfirm);
       } else {
         setError(err instanceof Error ? err.message : INGEST_COPY.abandonPartialFailed);
       }

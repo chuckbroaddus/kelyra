@@ -237,3 +237,18 @@ test('I5-SEC abandon allows pre-confirm partial; binder Abandon + resume open st
   const abandonAt = partialBlock.indexOf('abandonPartial');
   assert.ok(retryAt >= 0 && abandonAt > retryAt, 'Retry primary before Abandon');
 });
+
+test('t_da864a81: pre-confirm cannot_abandon uses abandonPartialFailed not post-confirm copy', () => {
+  const binder = read('src/components/ingest/ClassStackBinder.tsx');
+  const onAbandon = binder.slice(binder.indexOf('const onAbandonPartial'));
+  const block = onAbandon.slice(0, onAbandon.indexOf('};', onAbandon.indexOf('setAbandonBusy(false)')) + 2);
+  assert.match(block, /canAbandonPartial/);
+  assert.match(block, /abandonPartialFailed/);
+  assert.match(block, /abandonAfterConfirm/);
+  // Post-confirm copy only on the !canAbandonPartial branch.
+  const failedAt = block.indexOf('abandonPartialFailed');
+  const afterAt = block.lastIndexOf('abandonAfterConfirm');
+  assert.ok(failedAt >= 0 && afterAt >= 0, 'both copies present');
+  assert.match(block, /if \(canAbandonPartial\)/);
+});
+
