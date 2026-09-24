@@ -82,6 +82,18 @@ export function joinMonthYearTitle(seg: Pick<PeriodTitleMorphSegments, 'month' |
   return `${seg.month} ${seg.year}`;
 }
 
+/**
+ * Defined before its worklet callers: the Reanimated plugin turns worklet
+ * function declarations into non-hoisted consts, so a later clamp01 is
+ * undefined when morph* run (device crash, #215).
+ */
+function clamp01(p: number): number {
+  'worklet';
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  return p;
+}
+
 /** Week→Day morph duration (runs alongside the week-day drill spring). */
 export const PERIOD_TITLE_MORPH_IN_MS = 480;
 
@@ -130,9 +142,3 @@ export function formatMorphTitleAtProgress(
   return `${core}, ${seg.weekday.slice(0, letters)}`;
 }
 
-function clamp01(p: number): number {
-  'worklet';
-  if (p <= 0) return 0;
-  if (p >= 1) return 1;
-  return p;
-}
