@@ -4,6 +4,8 @@ import test from 'node:test';
 
 import {
   MORPH_DAY_INSERT_END,
+  periodTitleMarqueeMs,
+  periodTitleNeedsMarquee,
   dayPeriodTitleSegments,
   formatDayPeriodTitle,
   formatMonthYearTitle,
@@ -92,4 +94,22 @@ test('periodTitle: worklet helper clamp01 is declared before its worklet callers
   const decl = src.indexOf('function clamp01(');
   const firstUse = src.indexOf('clamp01(progress)');
   assert.ok(decl >= 0 && firstUse >= 0 && decl < firstUse);
+});
+
+test('periodTitle marquee: only on real overflow; slow readable duration', () => {
+  assert.equal(periodTitleNeedsMarquee(300, 320), false);
+  assert.equal(periodTitleNeedsMarquee(321, 320), false);
+  assert.equal(periodTitleNeedsMarquee(360, 320), true);
+  assert.equal(periodTitleNeedsMarquee(360, 0), false);
+  assert.equal(periodTitleMarqueeMs(0), 0);
+  assert.equal(periodTitleMarqueeMs(5), 600);
+  assert.ok(periodTitleMarqueeMs(72) >= 1900);
+});
+
+test('CalendarPeriodTitle: marquee after morph settles; off under Reduce Motion', () => {
+  const comp = read('src/components/calendar/CalendarPeriodTitle.tsx');
+  assert.match(comp, /withRepeat/);
+  assert.match(comp, /periodTitleNeedsMarquee/);
+  assert.match(comp, /reduceMotion \|\| !settled/);
+  assert.match(comp, /cancelAnimation\(marqueeX\)/);
 });
