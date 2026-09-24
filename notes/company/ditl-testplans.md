@@ -356,3 +356,5 @@ PARTIAL call-outs stay inside plan non-goals / beat Support column.
 - Parent card stays sticky blocked until Chuck stamps.
 
 **DITL-UPDATE addendum (t_21f95d30):** T-01 / T-02 / DH-01 plans updated for KEYGRADE Pack B phone Approve. Index catalog + Approve rerun matrix refreshed. No Eng / no parent-epic unblock.
+
+**DITL-UPDATE 2026-09-24 (8 cards):** CT-A ClassTabs; Students single-row; Soft v8b; SWITCH-G; DRIVE-NEEDS; REVIEW-SUM RS-B; Journal daychrome B; Calendar R4/CR/R5/3DW/P6 — plans/cases under `ditl-plans/` + `ditl-cases/` synced. No EXEC.

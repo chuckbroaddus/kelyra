@@ -1,4 +1,7 @@
 # DITL-T-04 Cases (Teacher academic day)
+<!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar R4/R5/3DW/P6 navigation case -->
+<!-- DITL-UPDATE t_2c13f9ac 2026-09-24: Journal daychrome B + month-survives-Ledger case -->
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-T-04](../ditl-plans/DITL-T-04.md)
 **Preconditions (all cases):** F-TEACHER-A=`ditl-teacher-a`, S1-S5, F-ART-HW-HIST-HW=`ditl-pen-hist-homework-T-04.jpg`, F-ART-KEY-MATH-MIXED=`ditl-mixed-math-key-T-04.jpg`, F-ART-KEY-ENG-TYPED=`ditl-typed-eng-key-T-04.jpg`, F-ART-SYL-SCI-TYPED=`ditl-typed-sci-syllabus-T-04.jpg`, assignments, passwords `DITL-teacher-test`.
@@ -77,3 +80,35 @@
 - Expected: Dual path.
 - Teardown: sign out.
 - PARTIAL/GAP: none
+
+**DITL-T-04-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+
+
+- **2026-09-24 (t_0a62f427):** Calendar R4/R5/3DW/P6 navigation case
+- **2026-09-24 (t_2c13f9ac):** Journal daychrome B + month-survives-Ledger case
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat
+
+**DITL-T-04-UI-JOURNAL-B** | tags: diary, journal, daychrome
+- Pre: F-TEACHER-A; tray Diary (ST-A) available
+- Steps (UI):
+  1. Sign in teacher → tray **Diary** → `/diary` Journal.
+  2. Confirm daychrome **layout B**; pick a day; scroll multi-day entries.
+  3. Switch Journal → **Ledger** → confirm **month chrome survives** (not torn down); Ledger remains list+range (DB-LEDGER-01 / RR-L).
+  4. Return Journal; Today; empty day → New entry opens Diary composer (not Calendar).
+  5. Confirm Diary ≠ Calendar surface.
+- Expected: follow-active-tab; month survives Ledger; no Calendar event chrome on Diary.
+- PARTIAL/GAP: day-browse Ask GAP (hold)
+
+**DITL-T-04-UI-CAL-R5** | tags: calendar, chrome
+- Pre: teacher login; Calendar reachable
+- Steps (UI): 1. Open Calendar. 2. Confirm phone Year-first (or web Month default per seat). 3. Tap-zoom Year→Month→Day; Up/back hierarchical. 4. PersonTabs Y/M/W/D + gear; Clear Filters → none. 5. PeriodPager 3D wheel (or << label >> fail). 6. Leave to Diary and back — first-tap titles correct; Diary≠Calendar; Desk≠Year.
+- Expected: R4/R5/CR/3DW/P6 laws above; seat-scoped.
+- PARTIAL/GAP: none for chrome navigation
+

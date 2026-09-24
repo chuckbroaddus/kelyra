@@ -1,4 +1,5 @@
 # DITL-P-03 Cases (Parent Ride multi-child multi-car)
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-P-03](../ditl-plans/DITL-P-03.md)
 **Preconditions (all cases):** F-SCHOOL=`ditl-Sandbox Academy`, F-PARENT-1=`ditl-parent-1` (P1, linked S1+S2), S1=`Jordan Lee`, S2=`Jamie Lee`, V1=`DITL-AAA1`, V2=`DITL-BBB2`, Line A/B, passwords `DITL-parent-test`. No prior Ride events for this parent today.
@@ -51,3 +52,12 @@
 - Teardown: sign out.
 - PARTIAL/GAP: Vehicles/Line check-in/leave = PARTIAL/GAP (no Ask tools; PHYSICAL-ONLY for camera)
 
+**DITL-P-03-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat

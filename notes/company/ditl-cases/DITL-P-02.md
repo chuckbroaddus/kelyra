@@ -1,4 +1,5 @@
 # DITL-P-02 Cases (Parent PM homework Ask + message)
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-P-02](../ditl-plans/DITL-P-02.md)
 **Pre:** F-PARENT-1, S1, published assignments/grades, Ask available.
@@ -26,3 +27,12 @@
 - Teardown: sign out.
 - PARTIAL/GAP: none
 
+**DITL-P-02-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat

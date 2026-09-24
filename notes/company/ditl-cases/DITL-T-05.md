@@ -1,4 +1,5 @@
 # DITL-T-05 Cases (Handwritten student data card → existing student)
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-T-05](../ditl-plans/DITL-T-05.md)
 **Preconditions (all cases):** F-TEACHER-A=`ditl-teacher-a`, S1=`Jordan Lee` baseline (existing row only, never create new), F-ART-CARD-STUDENT-HW=`notes/qa-fixtures/ditl/ditl-pen-student-card-S-01.jpg`, metadata keys per seed, passwords `DITL-teacher-test`.
@@ -35,3 +36,13 @@
 - Expected: Updates only; clear works.
 - Teardown: sign out.
 - PARTIAL/GAP: none
+
+**DITL-T-05-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat

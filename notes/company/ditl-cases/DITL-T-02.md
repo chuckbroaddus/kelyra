@@ -1,4 +1,5 @@
 # DITL-T-02 Cases (Teacher Grade and Assign web)
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-T-02](../ditl-plans/DITL-T-02.md)
 **KEYGRADE note (Pack B / CEO #4):** This file covers the **web** Approve / bulk / multi-class desk path. Phone Pack B confirm+Approve on Capture review is in-scope on **DITL-T-01** and is a valid v1 path — **do not** treat phone Approve as forbidden or out-of-product. Web Approve coexists with the T-01 phone path; neither is exclusive.
@@ -67,3 +68,13 @@
 - Expected: GAP noted if full grade tools missing; Ask Approve must fail closed.
 - Teardown: sign out.
 - PARTIAL/GAP: full grade tools = PARTIAL/GAP on Ask; Ask Approve = non-goal
+
+**DITL-T-02-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat

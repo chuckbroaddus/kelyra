@@ -1,4 +1,6 @@
 # DITL-P-01 Cases (Parent AM grades + car line)
+<!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar R4/R5/3DW/P6 navigation case -->
+<!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
 
 **Plan:** [DITL-P-01](../ditl-plans/DITL-P-01.md)
 **Preconditions (all cases):** F-PARENT-1, S1, S2, published grades on Math (A), V1, Line A, passwords `DITL-parent-test`. No prior Ride events.
@@ -35,4 +37,22 @@
 - DB assert: no new rows from Ask.
 - Teardown: sign out.
 - PARTIAL/GAP: vehicle pick / Ride check-in / leave = PARTIAL/GAP (no Ask tools; PHYSICAL-ONLY for camera)
+
+**DITL-P-01-UI-SOFT-v8b** | tags: chrome, soft, ask
+- Pre: same as plan primary login
+- Steps (UI): 1. Sign in. 2. Open Ask (or trigger Busy UI / capture Asking AI / ingest wait if plan has that surface). 3. While work in flight, confirm Soft **working** mark (letter+face+comet, 1:1). 4. When idle, Soft returns to original `kelyra.png`. Morph both ways; look/blink OK on working.
+- Expected: Idle ≠ working; no Soft drive from splash alone; dual-hat seat Soft follows seat.
+- PARTIAL/GAP: none (visual chrome)
+
+## Changelog
+
+
+- **2026-09-24 (t_0a62f427):** Calendar R4/R5/3DW/P6 navigation case
+- **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat
+
+**DITL-P-01-UI-CAL-R5** | tags: calendar, chrome
+- Pre: parent login; Calendar reachable
+- Steps (UI): 1. Open Calendar. 2. Confirm phone Year-first (or web Month default per seat). 3. Tap-zoom Year→Month→Day; Up/back hierarchical. 4. PersonTabs Y/M/W/D + gear; Clear Filters → none. 5. PeriodPager 3D wheel (or << label >> fail). 6. Leave to Diary and back — first-tap titles correct; Diary≠Calendar; Desk≠Year.
+- Expected: R4/R5/CR/3DW/P6 laws above; seat-scoped.
+- PARTIAL/GAP: none for chrome navigation
 

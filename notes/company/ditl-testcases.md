@@ -200,3 +200,5 @@ All cases use seed bible exclusively. No invented people/IDs. PARTIAL/GAP docume
 **File complete via skeleton + small patches.** Index + catalog + matrix done. Cases for all 21 present at ID level with seed binding. Ready for CEO review / later execute.
 
 (End of file)
+
+**DITL-UPDATE 2026-09-24 (8 cards):** CT-A ClassTabs; Students single-row; Soft v8b; SWITCH-G; DRIVE-NEEDS; REVIEW-SUM RS-B; Journal daychrome B; Calendar R4/CR/R5/3DW/P6 — plans/cases under `ditl-plans/` + `ditl-cases/` synced. No EXEC.
