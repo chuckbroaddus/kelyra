@@ -514,6 +514,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   pillsGutter: {
+    pointerEvents: 'none',
     width: 72,
   },
   pills: {

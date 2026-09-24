@@ -147,7 +147,6 @@ export default function DiaryScreen() {
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const liveRef = useRef<LiveRecording | null>(null);
-  const multiChild = seat === 'parent' && children.length >= 2;
   const failClosedEmpty = parentTwinsFailClosed(children.length, focusedChildId) && seat === 'parent';
   const journalMonth = useMemo(() => journalMonthContaining(selectedDay), [selectedDay]);
   /** Layout B: phone <720 month-above-tabs; web ≥720 tabs then month|stream for both segments. */
