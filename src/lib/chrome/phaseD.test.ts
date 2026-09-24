@@ -14,7 +14,7 @@ function read(rel: string): string {
 }
 
 const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const OFFICE_KEYS = ['home', 'diary', 'calendar', 'ask'];
 const STUDENT_KEYS = ['home', 'feed', 'class', 'grades', 'people', 'calendar', 'ask'];
 const TEACHER_LABELS = ['Desk', 'Needs Attention', 'Diary', 'Calendar', 'Kelyra'];
 
@@ -74,7 +74,8 @@ test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab o
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /teacherSeat && matches\('Classes'/);
   assert.match(drawer, /label="Classes" onPress=\{\(\) => go\('\/\?switch=1'\)\}/);
-  assert.match(drawer, /!teacherSeat\s*\?\s*chromeState\.classes\.filter/);
+  assert.match(drawer, /chromeState\.role === 'administrator'/);
+  assert.match(drawer, /chromeState\.classes\.filter/);
   assert.doesNotMatch(drawer, /Another class/);
   const desk = tabsFor('teacher', '/', 'c1', 0).find((tab) => tab.key === 'home');
   assert.equal(desk?.href, '/?switch=1');
@@ -84,7 +85,7 @@ test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab o
   assert.match(home, /const teacherSeat = chrome\.role === 'teacher'/);
 });
 
-test('STU-02 / OFF-08 / D4: student + office trays and OFFICE_CLASS_TABS unchanged', () => {
+test('STU-02 / OFF-08 / D4: student tray + OFFICE_CLASS_TABS unchanged; office Home·Diary·Calendar·Ask', () => {
   assert.deepEqual(trayKeysForRole('student'), STUDENT_KEYS);
   assert.deepEqual(trayKeysForRole('superintendent'), OFFICE_KEYS);
   assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
@@ -95,7 +96,7 @@ test('STU-02 / OFF-08 / D4: student + office trays and OFFICE_CLASS_TABS unchang
   const studentAsk = tabsFor('student', '/ask', null, 0).find((tab) => tab.key === 'ask');
   assert.equal(studentAsk?.label, 'Ask');
   const officeAsk = tabsFor('administrator', '/ask', null, 0).find((tab) => tab.key === 'ask');
-  assert.equal(officeAsk?.label, 'Ask');
+  assert.equal(officeAsk?.label, 'KelyraAsk');
 });
 
 test('D4 Phase A dual-hat seat still works', () => {

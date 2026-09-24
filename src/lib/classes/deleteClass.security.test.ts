@@ -45,10 +45,11 @@ test('hamburger: class Delete swipe gated to office + classes.delete; never teac
     src,
     /officeSeat\s*&&\s*can\(profile,\s*'classes\.delete',\s*'school',\s*grants\)/,
   );
+  // Administrator-only class list (office hamburger); teacher seat never maps school classes here.
+  assert.match(src, /chromeState\.role === 'administrator'/);
   const mapStart = src.indexOf('chromeState.classes.filter');
   assert.ok(mapStart > 0);
-  assert.match(src, /!teacherSeat\s*\?\s*chromeState\.classes\.filter/);
-  const map = src.slice(mapStart, src.indexOf('teacherSeat && matches(\'Classes\'', mapStart));
+  const map = src.slice(mapStart, mapStart + 1200);
   assert.match(map, /officeSeat\s*&&\s*can\(profile,\s*'classes\.delete'/);
   assert.doesNotMatch(map, /trailing=\{\[/);
 });

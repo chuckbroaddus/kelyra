@@ -21,7 +21,7 @@ function read(rel: string): string {
 }
 
 const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const OFFICE_KEYS = ['home', 'diary', 'calendar', 'ask'];
 
 test('P-06 Option A: drawer other-seat rows + a11y; My children unchanged; no header chip', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
@@ -94,11 +94,11 @@ test('P-06: never merge trays; remount key is role; no sixth tab', () => {
   assert.equal(trayRemountKey('administrator'), 'administrator');
   const teacher = trayKeysForRole('teacher');
   const office = trayKeysForRole('administrator');
-  const merged = new Set([...teacher, ...office]);
-  assert.ok(merged.size > teacher.length);
-  assert.ok(merged.size > office.length);
+  assert.notDeepEqual(teacher, office);
+  assert.ok(teacher.includes('inbox'));
+  assert.ok(!office.includes('inbox'));
   assert.equal(teacher.length, 5);
-  assert.equal(office.length, 6);
+  assert.equal(office.length, 4);
   // tabsFor is single-role only — never concat in the builder.
   assert.deepEqual(
     tabsFor('teacher', '/', 'c1', 0).map((t) => t.key),

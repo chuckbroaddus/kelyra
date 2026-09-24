@@ -20,7 +20,7 @@ function read(rel: string): string {
 
 const PARENT_KEYS = ['home', 'ride', 'calendar', 'ask'];
 const TEACHER_KEYS = ['home', 'inbox', 'diary', 'calendar', 'ask'];
-const OFFICE_KEYS = ['feed', 'classes', 'people', 'manage', 'calendar', 'ask'];
+const OFFICE_KEYS = ['home', 'diary', 'calendar', 'ask'];
 
 test('DH-01 / DH-05: Parent drawer row + land /parent + parent tray Home·Ride·Ask', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');

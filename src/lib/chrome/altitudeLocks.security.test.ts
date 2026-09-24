@@ -30,9 +30,10 @@ test('SEC-01 dual-hat: office seat tray === office; teacher seat === pure teache
   assert.equal(teacherRole, 'teacher');
   assert.deepEqual(trayKeysForRole(officeRole!), trayKeysForRole('administrator'));
   assert.deepEqual(trayKeysForRole(teacherRole!), trayKeysForRole('teacher'));
-  const merged = new Set([...trayKeysForRole(officeRole!), ...trayKeysForRole(teacherRole!)]);
-  assert.notEqual(merged.size, trayKeysForRole(officeRole!).length);
-  assert.notEqual(merged.size, trayKeysForRole(teacherRole!).length);
+  // Office keys are a subset of teacher key names now; seats stay distinct builders.
+  assert.notDeepEqual(trayKeysForRole(officeRole!), trayKeysForRole(teacherRole!));
+  assert.ok(trayKeysForRole(teacherRole!).includes('inbox'));
+  assert.ok(!trayKeysForRole(officeRole!).includes('inbox'));
 });
 
 test('SEC-01 also_parent: parent seat tray === parent (incl Ride); never merge onto teacher', () => {
@@ -72,10 +73,17 @@ test('SEC-02: drawer office nouns gated on officeSeat, not isAdminRole', () => {
   assert.doesNotMatch(src, /isTeacherRole\(profile\)/);
   const inject = src.indexOf('{officeSeat ? (');
   assert.ok(inject > 0);
-  const people = src.indexOf('label="People"', inject);
-  const activity = src.indexOf('label="Activity"', inject);
-  const responsibilities = src.indexOf('label="Responsibilities"', inject);
-  assert.ok(people > inject && activity > inject && responsibilities > inject);
+  const officeNav = src.slice(inject, src.indexOf(') : (', inject));
+  assert.match(officeNav, /label="Home"/);
+  assert.match(officeNav, /label="Diary"/);
+  assert.match(officeNav, /label="Calendar"/);
+  assert.match(officeNav, /label="Ask Kelyra"/);
+  const adminExtras = src.indexOf("chromeState.role === 'administrator'", inject);
+  assert.ok(adminExtras > inject);
+  const activity = src.indexOf('label="Activity"', adminExtras);
+  const messages = src.indexOf('label="Messages"', adminExtras);
+  const responsibilities = src.indexOf('label="Responsibilities"', adminExtras);
+  assert.ok(activity > adminExtras && messages > adminExtras && responsibilities > adminExtras);
 });
 
 test('SEC-02 / A3: teacher seat home has no office PersonTabs or class-create UI', () => {
