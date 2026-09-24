@@ -51,6 +51,25 @@ export function CalendarZoomDrill({
 }: Props) {
   const { colors } = useTheme();
   const progress = useSharedValue(direction === 'out' ? 1 : 0);
+  // Copy rects onto shared values so UI-thread styles never touch JS objects.
+  const sx = useSharedValue(source.x);
+  const sy = useSharedValue(source.y);
+  const sw = useSharedValue(source.width);
+  const sh = useSharedValue(source.height);
+  const dx = useSharedValue(dest.x);
+  const dy = useSharedValue(dest.y);
+  const dw = useSharedValue(dest.width);
+  const dh = useSharedValue(dest.height);
+  useEffect(() => {
+    sx.value = source.x;
+    sy.value = source.y;
+    sw.value = source.width;
+    sh.value = source.height;
+    dx.value = dest.x;
+    dy.value = dest.y;
+    dw.value = dest.width;
+    dh.value = dest.height;
+  }, [source, dest, sx, sy, sw, sh, dx, dy, dw, dh]);
   const abbr = useMemo(() => abbreviateDrillLabel(label), [label]);
   const focusDest = useMemo(() => focusDestination(kind, dest), [kind, dest]);
   const siblings = useMemo(
@@ -62,14 +81,19 @@ export function CalendarZoomDrill({
     const target = direction === 'out' ? 0 : 1;
     progress.value = direction === 'out' ? 1 : 0;
     progress.value = withSpring(target, ZOOM_DRILL_SPRING, (finished) => {
-      if (finished) runOnJS(onFinished)();
+      'worklet';
+      if (finished) {
+        runOnJS(onFinished)();
+      }
     });
   }, [progress, onFinished, direction]);
 
   const focusStyle = useAnimatedStyle(() => {
     const p = progress.value;
     if (kind === 'year-month') {
-      return plateStyle(mapPlate(source, source, dest, p));
+      const src = { x: sx.value, y: sy.value, width: sw.value, height: sh.value };
+      const dst = { x: dx.value, y: dy.value, width: dw.value, height: dh.value };
+      return plateStyle(mapPlate(src, src, dst, p));
     }
     // month-week / week-day: shared element docks to top/leading strip.
     return plateStyle(lerpPlate(source, focusDest, p));
@@ -187,8 +211,14 @@ export function CalendarZoomDrill({
           key={`sib-${i}`}
           kind={kind}
           plate={sib}
-          source={source}
-          dest={dest}
+          sx={sx}
+          sy={sy}
+          sw={sw}
+          sh={sh}
+          dx={dx}
+          dy={dy}
+          dw={dw}
+          dh={dh}
           progress={progress}
           elevated={colors.elevated}
           line={colors.line}
@@ -261,32 +291,58 @@ export function CalendarZoomDrill({
 function SiblingPlate({
   kind,
   plate,
-  source,
-  dest,
+  sx,
+  sy,
+  sw,
+  sh,
+  dx,
+  dy,
+  dw,
+  dh,
   progress,
   elevated,
   line,
 }: {
   kind: ZoomDrillKind;
   plate: Plate;
-  source: ZoomSourceRect;
-  dest: ZoomSourceRect;
+  sx: SharedValue<number>;
+  sy: SharedValue<number>;
+  sw: SharedValue<number>;
+  sh: SharedValue<number>;
+  dx: SharedValue<number>;
+  dy: SharedValue<number>;
+  dw: SharedValue<number>;
+  dh: SharedValue<number>;
   progress: SharedValue<number>;
   elevated: string;
   line: string;
 }) {
+  const px = useSharedValue(plate.x);
+  const py = useSharedValue(plate.y);
+  const pw = useSharedValue(plate.width);
+  const ph = useSharedValue(plate.height);
+  useEffect(() => {
+    px.value = plate.x;
+    py.value = plate.y;
+    pw.value = plate.width;
+    ph.value = plate.height;
+  }, [plate, px, py, pw, ph]);
+
   const style = useAnimatedStyle(() => {
     const p = progress.value;
+    const plateNow = { x: px.value, y: py.value, width: pw.value, height: ph.value };
+    const source = { x: sx.value, y: sy.value, width: sw.value, height: sh.value };
+    const dest = { x: dx.value, y: dy.value, width: dw.value, height: dh.value };
     if (kind === 'year-month') {
       return {
-        ...plateStyle(mapPlate(plate, source, dest, p)),
+        ...plateStyle(mapPlate(plateNow, source, dest, p)),
         opacity: 1 - p * 0.15,
       };
     }
-    const away = plate.x + plate.width / 2 < source.x + source.width / 2 ? -1 : 1;
-    const x = plate.x + away * p * (dest.width * 0.55 + plate.width);
+    const away = plateNow.x + plateNow.width / 2 < source.x + source.width / 2 ? -1 : 1;
+    const x = plateNow.x + away * p * (dest.width * 0.55 + plateNow.width);
     return {
-      ...plateStyle({ ...plate, x }),
+      ...plateStyle({ ...plateNow, x }),
       opacity: 1 - p * 0.9,
     };
   });
@@ -333,6 +389,7 @@ function mapPlate(
   dest: ZoomSourceRect,
   p: number,
 ): Plate {
+  'worklet';
   const scaleX = source.width > 0 ? dest.width / source.width : 1;
   const scaleY = source.height > 0 ? dest.height / source.height : 1;
   const sx = 1 + (scaleX - 1) * p;
@@ -348,6 +405,7 @@ function mapPlate(
 }
 
 function lerpPlate(a: Plate, b: Plate, p: number): Plate {
+  'worklet';
   return {
     x: a.x + (b.x - a.x) * p,
     y: a.y + (b.y - a.y) * p,
@@ -357,6 +415,7 @@ function lerpPlate(a: Plate, b: Plate, p: number): Plate {
 }
 
 function plateStyle(plate: Plate) {
+  'worklet';
   return {
     position: 'absolute' as const,
     left: plate.x,
@@ -367,12 +426,14 @@ function plateStyle(plate: Plate) {
 }
 
 function monthAboveBand(source: ZoomSourceRect, dest: ZoomSourceRect): Plate | null {
+  'worklet';
   const height = source.y - dest.y;
   if (!(height > 8)) return null;
   return { x: dest.x, y: dest.y, width: dest.width, height };
 }
 
 function monthBelowBand(source: ZoomSourceRect, dest: ZoomSourceRect): Plate | null {
+  'worklet';
   const top = source.y + source.height;
   const bottom = dest.y + dest.height;
   const height = bottom - top;

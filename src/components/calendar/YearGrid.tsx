@@ -79,17 +79,21 @@ export function YearGrid({
           }}
         >
           {pair.map((block) => (
-            <Pressable
+            <View
               key={`${block.year}-${block.monthIndex0}`}
               ref={(node) => {
-                monthCardRefs.current.set(block.monthIndex0, node as unknown as View | null);
+                monthCardRefs.current.set(block.monthIndex0, node);
               }}
+              collapsable={false}
+              style={styles.monthCardMeasure}
+            >
+            <Pressable
               onPress={() => {
                 const node = monthCardRefs.current.get(block.monthIndex0);
                 const fire = (source: ZoomSourceRect) =>
                   onPressMonth(block.year, block.monthIndex0, source);
-                if (node && typeof (node as View).measureInWindow === 'function') {
-                  (node as View).measureInWindow((x, y, width, height) => {
+                if (node && typeof node.measureInWindow === 'function') {
+                  node.measureInWindow((x, y, width, height) => {
                     fire({ x, y, width, height });
                   });
                 } else {
@@ -165,6 +169,7 @@ export function YearGrid({
                 );
               })}
             </Pressable>
+            </View>
           ))}
           {pair.length === 1 ? <View style={styles.monthCard} /> : null}
         </View>
@@ -176,6 +181,9 @@ export function YearGrid({
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
   row: { flexDirection: 'row', gap: 10 },
+  monthCardMeasure: {
+    flex: 1,
+  },
   monthCard: {
     flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
