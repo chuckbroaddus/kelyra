@@ -57,6 +57,8 @@ type Props = {
    * Title never fades on Month→Week drill either way (sibling week rows still fade).
    */
   hideTitle?: boolean;
+  /** Sticky CalendarWeekdayRow (outside CalendarZoomDrill) owns Sun…Sat — skip ours. */
+  hideWeekdays?: boolean;
   onPressItem?: (item: CalendarItem) => void;
   /**
    * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
@@ -86,6 +88,7 @@ export function MonthGrid({
   drillFocusWeekIndex = null,
   enterChromeAnim = false,
   hideTitle = false,
+  hideWeekdays = false,
 }: Props) {
   const { colors } = useTheme();
   const chromeOpacity = useSharedValue(enterChromeAnim ? 0 : 1);
@@ -218,13 +221,15 @@ export function MonthGrid({
           {label}
         </Reanimated.Text>
       )}
-      <Reanimated.View style={[styles.weekdays, chromeAnimStyle]}>
-        {weekdays.map((d, i) => (
-          <Text key={`${d}-${i}`} style={[styles.wd, { color: colors.mute }]}>
-            {d}
-          </Text>
-        ))}
-      </Reanimated.View>
+      {hideWeekdays ? null : (
+        <Reanimated.View style={[styles.weekdays, chromeAnimStyle]}>
+          {weekdays.map((d, i) => (
+            <Text key={`${d}-${i}`} style={[styles.wd, { color: colors.mute }]}>
+              {d}
+            </Text>
+          ))}
+        </Reanimated.View>
+      )}
       {weeks.map((week, wi) => {
         return (
           <DrillWeekRow

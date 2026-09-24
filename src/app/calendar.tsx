@@ -25,6 +25,8 @@ import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { TeacherWeekGrid } from '@/components/calendar/TeacherWeekGrid';
 import { CalendarZoomDrill } from '@/components/calendar/CalendarZoomDrill';
 import { CalendarPeriodTitle } from '@/components/calendar/CalendarPeriodTitle';
+import { CalendarWeekdayRow } from '@/components/calendar/CalendarWeekdayRow';
+import { hasTimedInRange } from '@/lib/calendar/timeline';
 import { YearGrid } from '@/components/calendar/YearGrid';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -1122,6 +1124,7 @@ export default function CalendarScreen() {
             onPressItem={openItem}
             monthTitle={weekMonthTitle}
             hideTitle
+            hideWeekdayLabels={activeView === 'week'}
             onPressDay={(iso, source, focusIndex) => {
               // Sticky title morphs to the tapped day alongside the drill.
               setMorphDayIso(iso);
@@ -1184,6 +1187,7 @@ export default function CalendarScreen() {
               monthIndex0={monthRange.monthIndex0}
               label={monthRange.label}
               hideTitle
+              hideWeekdays
               items={visibleItems}
               selectedDay={monthSelectedDay}
               showHiddenBadge={showHiddenBadge}
@@ -1302,6 +1306,24 @@ export default function CalendarScreen() {
     );
   };
 
+  /** Sun…Sat header row stays put across Month↔Week (7-day Week only; not Month List). */
+  const stickyWeekdayView = (activeView === 'month' && !monthListMode) || activeView === 'week';
+  const renderStickyWeekdays = () => {
+    if (!stickyWeekdayView || error || parentChildMissing) return null;
+    const isWeek = activeView === 'week';
+    const todayIdx = isWeek ? gridDays.indexOf(dayRangeContaining().day) : -1;
+    return (
+      <CalendarWeekdayRow
+        gutter={isWeek && hasTimedInRange(visibleItems, gridDays) ? 44 : 0}
+        gap={isWeek ? 2 : 0}
+        todayIndex={todayIdx >= 0 ? todayIdx : null}
+        reduceMotion={reduceMotion}
+        enterFade={activeView === 'month' && monthEnterChrome}
+        fadeProgress={zoomDrillKind === 'week-day' ? drillProgress : null}
+      />
+    );
+  };
+
   return (
     <View style={styles.screenRoot}>
     <Screen
@@ -1346,6 +1368,8 @@ export default function CalendarScreen() {
         Month→Week keeps the same string; Week↔Day morphs text at the same 22pt size.
       */}
       {renderStickyTitle()}
+      {/* Sticky Sun…Sat row — also OUTSIDE CalendarZoomDrill (Month→Week keeps it in place). */}
+      {renderStickyWeekdays()}
 
       {/* Month/Year/Day mount even when !loaded / filteredEmpty so empty month keeps MonthGrid. */}
       <View

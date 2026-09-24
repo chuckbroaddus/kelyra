@@ -103,3 +103,18 @@ test('CalendarPeriodTitle: uses the app-standard MarqueeText (§30), not a bespo
   const lib = read('src/lib/calendar/periodTitle.ts');
   assert.doesNotMatch(lib, /PERIOD_TITLE_MARQUEE|periodTitleNeedsMarquee|periodTitleMarqueeMs/);
 });
+
+test('Sticky weekday row: Month↔Week share one Sun…Sat row outside CalendarZoomDrill', () => {
+  const row = read('src/components/calendar/CalendarWeekdayRow.tsx');
+  assert.match(row, /weekdayLabels\(0, undefined, 'short'\)/);
+  assert.match(row, /fadeProgress/);
+  const cal = read('src/app/calendar.tsx');
+  const title = cal.indexOf('{renderStickyTitle()}');
+  const wd = cal.indexOf('{renderStickyWeekdays()}');
+  const drill = cal.indexOf('<CalendarZoomDrill');
+  assert.ok(title >= 0 && wd > title && drill > wd, 'weekday row sits under the title, outside the drill');
+  assert.match(cal, /hideWeekdays\n/);
+  assert.match(cal, /hideWeekdayLabels=\{activeView === 'week'\}/);
+  assert.match(read('src/components/calendar/MonthGrid.tsx'), /hideWeekdays \? null/);
+  assert.match(read('src/components/calendar/TeacherWeekGrid.tsx'), /hideWeekdayLabels \? null/);
+});
