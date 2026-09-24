@@ -490,7 +490,9 @@ test('CAL-R3 VW-R3-C views + DP-A teacher badge; family never hidden titles (S2-
   assert.match(screen, /YearGrid/);
   assert.match(screen, /MonthGrid/);
   assert.match(screen, /TeacherWeekGrid/);
-  assert.match(screen, /MultiDayStepper/);
+  assert.doesNotMatch(screen, /MultiDayStepper/);
+  assert.match(screen, /dayCount=\{stepperCount\}/);
+  assert.match(screen, /onChangeDayCount=\{onChangeDayCount\}/);
   assert.match(screen, /activeView/);
   assert.match(screen, /showHiddenBadge = seat === 'teacher'/);
   assert.doesNotMatch(screen, /label=["']Inbox["']|accessibilityLabel=["']Inbox["']/);
