@@ -34,11 +34,13 @@ type Props = {
    * Existing event blocks still open/edit via onPressItem.
    */
   onPressSlot?: (day: string, hour: number) => void;
-  /** After Week→Day inbound: slide+fade hours/title in. */
+  /** After Week→Day inbound: slide+fade hours in (body only — never the sticky title). */
   enterAnim?: boolean;
   /** Before Day→Week reverse: slide+fade hours out, then onExitDone. */
   exitAnim?: boolean;
   onExitDone?: () => void;
+  /** Sticky CalendarPeriodTitle owns the header (Week↔Day morph) — skip ours. */
+  hideTitle?: boolean;
 };
 
 /**
@@ -56,6 +58,7 @@ export function DayColumn({
   enterAnim = false,
   exitAnim = false,
   onExitDone,
+  hideTitle = false,
 }: Props) {
   const { colors } = useTheme();
   const { allDay, timed } = splitDayItems(items, day);
@@ -102,8 +105,10 @@ export function DayColumn({
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={`Day ${day}`}>
-      <Reanimated.View style={handoffStyle}>
-      <Text style={[styles.heading, { color: colors.ink }]}>{formatDayHeading(day)}</Text>
+      {hideTitle ? null : (
+        <Text style={[styles.heading, { color: colors.ink }]}>{formatDayHeading(day)}</Text>
+      )}
+      <Reanimated.View style={[styles.body, handoffStyle]}>
 
       {allDay.length > 0 ? (
         <View
@@ -238,6 +243,7 @@ export function DayColumn({
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
   heading: { ...type.section },
+  body: { gap: 10 },
   allDayStrip: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radius.md,

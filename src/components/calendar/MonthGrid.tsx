@@ -16,10 +16,7 @@ import Reanimated, {
 } from 'react-native-reanimated';
 
 import { ZOOM_HANDOFF_IN_MS } from '@/lib/calendar/zoomDrill';
-import {
-  handoffOutgoingOpacity,
-  siblingBandOpacity,
-} from '@/lib/calendar/zoomTransform';
+import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
 import { radius, type } from '@/constants/theme';
@@ -57,6 +54,11 @@ type Props = {
   drillFocusWeekIndex?: number | null;
   /** After Year→Month handoff: fade title + week-number chrome in (no pop). */
   enterChromeAnim?: boolean;
+  /**
+   * Sticky CalendarPeriodTitle (outside CalendarZoomDrill) owns the header — skip ours.
+   * Title never fades on Month→Week drill either way (sibling week rows still fade).
+   */
+  hideTitle?: boolean;
   onPressItem?: (item: CalendarItem) => void;
   /**
    * CAL-P6-6B: soft rubber at month edge then commit adjacent month.
@@ -86,6 +88,7 @@ export function MonthGrid({
   drillProgress = null,
   drillFocusWeekIndex = null,
   enterChromeAnim = false,
+  hideTitle = false,
 }: Props) {
   const { colors } = useTheme();
   const chromeOpacity = useSharedValue(enterChromeAnim ? 0 : 1);
@@ -98,10 +101,6 @@ export function MonthGrid({
     chromeOpacity.value = withTiming(1, { duration: ZOOM_HANDOFF_IN_MS });
   }, [enterChromeAnim, chromeOpacity]);
   const chromeAnimStyle = useAnimatedStyle(() => ({ opacity: chromeOpacity.value }));
-  const titleDrillStyle = useAnimatedStyle(() => {
-    if (drillProgress == null) return { opacity: 1 };
-    return { opacity: handoffOutgoingOpacity(drillProgress.value) };
-  });
   const chrome = useOptionalChrome();
   const today = todayISO();
   const weekRowRefs = useRef<Map<number, View | null>>(new Map());
@@ -181,9 +180,11 @@ export function MonthGrid({
         accessibilityRole="summary"
         accessibilityLabel={`${label}, list`}
       >
-        <Reanimated.Text style={[styles.monthTitle, { color: colors.ink }, chromeAnimStyle]}>
-          {label}
-        </Reanimated.Text>
+        {hideTitle ? null : (
+          <Reanimated.Text style={[styles.monthTitle, { color: colors.ink }, chromeAnimStyle]}>
+            {label}
+          </Reanimated.Text>
+        )}
         <ScrollView
           key={listKey}
           style={styles.listScroller}
@@ -214,11 +215,11 @@ export function MonthGrid({
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel={label}>
-      <Reanimated.Text
-        style={[styles.monthTitle, { color: colors.ink }, titleDrillStyle, chromeAnimStyle]}
-      >
-        {label}
-      </Reanimated.Text>
+      {hideTitle ? null : (
+        <Reanimated.Text style={[styles.monthTitle, { color: colors.ink }, chromeAnimStyle]}>
+          {label}
+        </Reanimated.Text>
+      )}
       <Reanimated.View style={[styles.weekdays, chromeAnimStyle]}>
         {onZoomWeek ? (
           <Text style={[styles.weekNumHdr, { color: colors.mute }]} accessibilityElementsHidden>
