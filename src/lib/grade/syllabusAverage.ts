@@ -4,6 +4,7 @@
  * include_in_average = counts in its type average, not a slice of the final.
  */
 
+import { isAwaitingGrade, isOpenWork } from '../assignments/status.ts';
 import {
   GRADE_TERM_ROLLUP,
   matchesGradeTermFilter,
@@ -178,7 +179,19 @@ export type MissingUpcomingItem = {
   categoryKey: string;
 };
 
-/** P-M1 / F-05: split due-missing vs not-due. Not-due never counts as Missing. */
+/**
+ * P-M1 / F-05: split due-missing vs not-due.
+ * Missing = due + no work only (not excused).
+ * Turned in / graded leave both lists. Assigned / In progress leave Missing when due
+ * but still appear in Upcoming when not due yet. Not-due never counts as Missing.
+ */
+export function cellHasTurnedInOrGradedWork(cell: AverageCell | undefined): boolean {
+  if (!cell) return false;
+  if (cellApproved(cell)) return true;
+  if (isAwaitingGrade(cell.status)) return true;
+  return false;
+}
+
 export function partitionMissingUpcoming(
   assignments: AverageAssignment[],
   cells: AverageCell[],
@@ -192,7 +205,8 @@ export function partitionMissingUpcoming(
   for (const assignment of assignments) {
     const cell = cellByAssignment.get(assignment.id);
     if (cell?.excused) continue;
-    if (cellApproved(cell)) continue;
+    // Turned in (awaiting grade) or graded: neither Missing nor Upcoming.
+    if (cellHasTurnedInOrGradedWork(cell)) continue;
 
     const item: MissingUpcomingItem = {
       assignmentId: assignment.id,
@@ -205,7 +219,9 @@ export function partitionMissingUpcoming(
       upcoming.push(item);
       continue;
     }
-    // Due (or no due date): Missing when no approved score and not excused.
+    // Due (or no due date): Assigned / In progress is not Missing (family §4.2).
+    if (isOpenWork(cell?.status)) continue;
+    // Due + no work (no cell / unknown): Missing.
     missing.push(item);
   }
 
