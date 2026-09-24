@@ -28,6 +28,8 @@ import {
   WHEEL_LOCAL_SAMPLE_SLOTS,
   WHEEL_SLOT_OFFSETS,
   WHEEL_STAGE_HEIGHT,
+  WHEEL_MOBILE_ROW_SCALE,
+  wheelRowLayout,
   WHEEL_VISIBLE_SLOTS,
   WHEEL_Z_CENTER,
   slotIndexForOffset,
@@ -66,6 +68,23 @@ test('SoT geometry constants: perspective 920, pitch 78, hero 108×126, stage 14
   assert.equal(WHEEL_MAX_ROTATE_Y_DEG, 42);
   assert.equal(WHEEL_Z_CENTER, 36);
 });
+
+
+test('wheelRowLayout: web SoT; native ≈66% stage/hero/pitch (CEO mobile row)', () => {
+  assert.equal(WHEEL_MOBILE_ROW_SCALE, 0.66);
+  const web = wheelRowLayout(true);
+  assert.equal(web.scale, 1);
+  assert.equal(web.stageHeight, WHEEL_STAGE_HEIGHT);
+  assert.equal(web.heroHeight, WHEEL_HERO_HEIGHT);
+  assert.equal(web.pitch, WHEEL_PITCH);
+  const native = wheelRowLayout(false);
+  assert.equal(native.scale, 0.66);
+  assert.equal(native.stageHeight, Math.round(WHEEL_STAGE_HEIGHT * 0.66));
+  assert.equal(native.heroHeight, Math.round(WHEEL_HERO_HEIGHT * 0.66));
+  assert.equal(native.heroWidth, Math.round(WHEEL_HERO_WIDTH * 0.66));
+  assert.equal(native.pitch, Math.round(WHEEL_PITCH * 0.66));
+});
+
 
 test('wheel scale SoT: clamp(1 - 0.22*|d| - 0.02*d², 0.46, 1)', () => {
   assert.equal(wheelScaleForNorm(0), WHEEL_CENTER_SCALE);
@@ -151,7 +170,9 @@ test('SlotPool keys + content policy', () => {
 test('PeriodPager is 7-slot SlotPool: reanimated native+web; no translateZ; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
-  assert.match(pager, /WHEEL_PITCH/);
+  assert.match(pager, /wheelRowLayout/);
+  assert.match(pager, /ROW\.pitch/);
+  assert.match(pager, /66%|WHEEL_MOBILE_ROW_SCALE/);
   // P0: stable slot-${index} hosts — do NOT remount-key on tile.key mid-fling.
   assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
   assert.match(pager, /stableSlotHostKey/);

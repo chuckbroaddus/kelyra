@@ -457,7 +457,8 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /snapPeriodPage/);
   assert.match(pager, /rotateY/);
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
-  assert.match(pager, /WHEEL_PITCH/);
+  assert.match(pager, /wheelRowLayout/);
+  assert.match(pager, /ROW\.pitch/);
   assert.match(pager, /useLayoutEffect/);
   assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
@@ -642,7 +643,8 @@ test('CAL-3DW side hits outside scale ≥56 (t_1a0f176c)', () => {
   assert.match(wheel, /WHEEL_MIN_HIT_PX\s*=\s*56/);
   assert.match(pager, /WHEEL_MIN_HIT_PX/);
   // Hit Pressable wraps inner scaled visual with pointerEvents none.
-  assert.match(pager, /style=\{styles\.hitTarget\}/);
+  assert.match(pager, /styles\.hitTarget/);
+  assert.match(pager, /ROW\.heroWidth|ROW\.heroHeight/);
   assert.match(pager, /pointerEvents="none"/);
   assert.match(pager, /minWidth:\s*WHEEL_MIN_HIT_PX/);
 });
