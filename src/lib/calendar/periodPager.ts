@@ -88,16 +88,13 @@ export function periodKindForView(view: CalendarViewId): PeriodKind | null {
   return null;
 }
 
-function yearAbbrev(year: number): string {
-  return `'${String(year).slice(-2)}`;
-}
 
 function yearTile(year: number): PeriodTileModel {
   return {
     key: `year:${year}`,
     kind: 'year',
     anchor: String(year),
-    sideCaption: yearAbbrev(year),
+    sideCaption: String(year),
     centerCaption: String(year),
     fallbackLabel: String(year),
     year,

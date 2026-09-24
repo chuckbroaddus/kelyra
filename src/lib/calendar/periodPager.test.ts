@@ -55,7 +55,7 @@ test('periodKindForView maps CalendarViewId', () => {
   assert.equal(periodKindForView('agenda'), 'agenda');
 });
 
-test('buildPeriodWindow: 7-slot SlotPool (center ±3); year sides YY; center full year', () => {
+test('buildPeriodWindow: 7-slot SlotPool (center ±3); year sides + center full four-digit year', () => {
   const w = buildPeriodWindow({ kind: 'year', anchor: '2026' });
   assert.equal(w.slots.length, WHEEL_SLOT_OFFSETS.length);
   assert.equal(w.slots.length, 7);
@@ -67,9 +67,9 @@ test('buildPeriodWindow: 7-slot SlotPool (center ±3); year sides YY; center ful
   assert.equal(w.next2.year, 2028);
   assert.equal(w.next3.year, 2029);
   assert.equal(w.current.centerCaption, '2026');
-  assert.equal(w.current.sideCaption, "'26");
-  assert.equal(w.prev.sideCaption, "'25");
-  assert.equal(w.next.sideCaption, "'27");
+  assert.equal(w.current.sideCaption, '2026');
+  assert.equal(w.prev.sideCaption, '2025');
+  assert.equal(w.next.sideCaption, '2027');
   assert.equal(w.slots[3], w.current);
   WHEEL_SLOT_OFFSETS.forEach((offset, idx) => {
     const tile = w.slots[idx];

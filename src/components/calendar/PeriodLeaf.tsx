@@ -72,32 +72,48 @@ function MetalTabs() {
   );
 }
 
-function weekHeaderLine(fromIso: string, toIso: string): string {
+/** Red header on week plate — start month (CEO 2026-09-24). */
+function weekHeaderMonth(fromIso: string): string {
+  const m = Number(fromIso.slice(5, 7)) - 1;
+  return MONS_SHORT[m] ?? '';
+}
+
+/** Body on week plate — day range; include months only when the week crosses months. */
+function weekBodyRange(fromIso: string, toIso: string): string {
   const fm = Number(fromIso.slice(5, 7)) - 1;
   const fd = Number(fromIso.slice(8, 10));
   const tm = Number(toIso.slice(5, 7)) - 1;
   const td = Number(toIso.slice(8, 10));
   const fromMon = MONS_SHORT[fm] ?? '';
   const toMon = MONS_SHORT[tm] ?? '';
-  return fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
+  // Header already shows the start month — same-month weeks use day numbers only.
+  return fm === tm ? `${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
 }
 
-function weekBodyRange(fromIso: string, toIso: string): string {
-  const fy = Number(fromIso.slice(0, 4));
-  return `${weekHeaderLine(fromIso, toIso)} · ${fy}`;
+/** Footer on week plate — year from week start (CEO 2026-09-24). */
+function weekFooterYear(fromIso: string): string {
+  return String(Number(fromIso.slice(0, 4)));
 }
 
-function dayHeaderLine(dayIso: string): string {
-  const y = Number(dayIso.slice(0, 4));
+/** Red header on day plate — month only (CEO 2026-09-24). */
+function dayHeaderMonth(dayIso: string): string {
   const m = Number(dayIso.slice(5, 7)) - 1;
-  const mon = MONS_SHORT[m] ?? '';
-  return `${mon} ${y}`;
+  return MONS_SHORT[m] ?? '';
 }
 
-function monthHeaderLabel(year: number, monthIndex0: number): string {
-  const mon = MONS_SHORT[monthIndex0] ?? '';
-  const label = `${mon} ${year}`;
-  return label.length > 12 ? `${mon}\n${year}` : label;
+/** Footer on day plate — year (CEO 2026-09-24). */
+function dayFooterYear(dayIso: string): string {
+  return String(Number(dayIso.slice(0, 4)));
+}
+
+/** Tall red header (~1/3) on month plate — year (CEO 2026-09-24). */
+function monthHeaderYear(year: number): string {
+  return String(year);
+}
+
+/** Body on month plate — month name (CEO 2026-09-24). */
+function monthBodyName(monthIndex0: number): string {
+  return MONS_SHORT[monthIndex0] ?? '';
 }
 
 /**
@@ -159,8 +175,8 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.silhouetteHeader} />
-          <View style={styles.silhouetteHintRow}>
+          <View style={styles.monthTallHeader} />
+          <View style={[styles.monthTallBody, styles.silhouetteHintRow]}>
             {hintDays.map((iso) => (
               <Text
                 key={`sil-m-${iso}`}
@@ -197,6 +213,7 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
               </Text>
             ))}
           </View>
+          <View style={styles.silhouetteFooter} />
         </View>
       </View>
     );
@@ -207,9 +224,12 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.silhouetteHeader} />
-          <Text style={styles.silhouetteDayNumeral} numberOfLines={1} allowFontScaling={false}>
-            {dayNum}
-          </Text>
+          <View style={styles.dayBody}>
+            <Text style={styles.silhouetteDayNumeral} numberOfLines={1} allowFontScaling={false}>
+              {dayNum}
+            </Text>
+          </View>
+          <View style={styles.silhouetteFooter} />
         </View>
       </View>
     );
@@ -248,12 +268,19 @@ function PeriodLeafImpl({
   }
 
   if (tile.kind === 'year') {
-    const label = isCenter ? String(tile.year ?? tile.centerCaption) : tile.sideCaption;
+    // Always 4-digit year on every plate (sides used to show 'YY; center ellipsized with Dynamic Type).
+    void isCenter;
+    const label = String(tile.year ?? tile.centerCaption);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text style={[styles.yearText, styles.yearTextPlate]} numberOfLines={1}>
+          <Text
+            style={[styles.yearText, styles.yearTextPlate]}
+            numberOfLines={1}
+            allowFontScaling={false}
+            ellipsizeMode="clip"
+          >
             {label}
           </Text>
         </View>
@@ -264,25 +291,32 @@ function PeriodLeafImpl({
   if (tile.kind === 'month') {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
-    const header = monthHeaderLabel(year, monthIndex0);
+    const header = monthHeaderYear(year);
+    const body = monthBodyName(monthIndex0);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.monthHeader}>
-            <Text style={styles.monthHeaderText} numberOfLines={2}>
+          {/* Header ~1/3 of page; body ~2/3 (CEO 2026-09-24). */}
+          <View style={styles.monthTallHeader}>
+            <Text style={styles.monthTallHeaderText} numberOfLines={1} allowFontScaling={false}>
               {header}
             </Text>
           </View>
-          <View style={styles.monthStub} />
+          <View style={styles.monthTallBody}>
+            <Text style={styles.monthTallBodyText} numberOfLines={1} allowFontScaling={false}>
+              {body}
+            </Text>
+          </View>
         </View>
       </View>
     );
   }
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
-    const header = weekHeaderLine(tile.fromIso, tile.toIso);
+    const header = weekHeaderMonth(tile.fromIso);
     const body = weekBodyRange(tile.fromIso, tile.toIso);
+    const footer = weekFooterYear(tile.fromIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -292,17 +326,25 @@ function PeriodLeafImpl({
               {header}
             </Text>
           </View>
-          <Text style={styles.plateBodyLine} numberOfLines={2} allowFontScaling={false}>
-            {body}
-          </Text>
+          <View style={styles.weekBody}>
+            <Text style={styles.weekBodyText} numberOfLines={2} allowFontScaling={false}>
+              {body}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+              {footer}
+            </Text>
+          </View>
         </View>
       </View>
     );
   }
 
   if (tile.kind === 'day' && tile.dayIso) {
-    const header = dayHeaderLine(tile.dayIso);
+    const header = dayHeaderMonth(tile.dayIso);
     const dayNum = String(Number(tile.dayIso.slice(8, 10)));
+    const footer = dayFooterYear(tile.dayIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -312,9 +354,16 @@ function PeriodLeafImpl({
               {header}
             </Text>
           </View>
-          <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
-            {dayNum}
-          </Text>
+          <View style={styles.dayBody}>
+            <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
+              {dayNum}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+              {footer}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -391,7 +440,34 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   yearTextPlate: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  /** Month plate: header ~1/3 page height (flex 1), body ~2/3 (flex 2). */
+  monthTallHeader: {
+    flex: 1,
+    backgroundColor: SET_B.header,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  monthTallHeaderText: {
+    color: SET_B.body,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
+  monthTallBody: {
+    flex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  monthTallBodyText: {
+    color: SET_B.type,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   monthHeader: {
     backgroundColor: SET_B.header,
@@ -429,6 +505,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
+  wrapFooter: {
+    backgroundColor: SET_B.header,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 24,
+  },
+  wrapFooterText: {
+    color: SET_B.body,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
   plateBodyLine: {
     flex: 1,
     textAlign: 'center',
@@ -439,16 +530,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingTop: 10,
   },
-  dayNumeral: {
+  weekBody: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  weekBodyText: {
     textAlign: 'center',
-    textAlignVertical: 'center',
-    fontSize: 38,
+    fontSize: 12,
+    fontWeight: '600',
+    color: SET_B.type,
+  },
+  /** Centers the day numeral vertically between header and footer. */
+  dayBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+  },
+  dayNumeral: {
+    textAlign: 'center',
+    fontSize: 34,
     fontWeight: '700',
     color: SET_B.type,
     fontVariant: ['tabular-nums'],
-    marginTop: 4,
-    paddingHorizontal: 0,
+    includeFontPadding: false,
+    lineHeight: 38,
   },
   wrapBodyEmpty: {
     flex: 1,
