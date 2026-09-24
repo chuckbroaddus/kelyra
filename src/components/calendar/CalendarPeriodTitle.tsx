@@ -17,7 +17,10 @@ import {
   dayPeriodTitleSegments,
   joinDayPeriodTitle,
   morphDayInsertProgress,
+  morphMonthLetterCount,
+  morphMonthText,
   morphWeekdayLetterCount,
+  spokenDayPeriodTitle,
   type PeriodTitleMorphSegments,
 } from '@/lib/calendar/periodTitle';
 import { ZOOM_HANDOFF_IN_MS } from '@/lib/calendar/zoomDrill';
@@ -70,6 +73,11 @@ export function CalendarPeriodTitle({
 
   const progress = useSharedValue(target);
   const [letters, setLetters] = useState(() => (target === 1 ? weekday.length : 0));
+  const monthLongLen = seg?.month.length ?? 0;
+  const monthShortLen = seg?.monthShort.length ?? 0;
+  const [monthLetters, setMonthLetters] = useState(() =>
+    target === 1 ? monthShortLen : monthLongLen,
+  );
   const [dayWidth, setDayWidth] = useState(0);
   const dayW = useSharedValue(0);
 
@@ -79,6 +87,7 @@ export function CalendarPeriodTitle({
     if (reduceMotion) {
       progress.value = target;
       setLetters(target === 1 ? weekday.length : 0);
+      setMonthLetters(target === 1 ? monthShortLen : monthLongLen);
       setSettled(true);
       return;
     }
@@ -94,7 +103,16 @@ export function CalendarPeriodTitle({
         if (finished) runOnJS(setSettled)(true);
       },
     );
-  }, [target, reduceMotion, progress, weekday.length]);
+  }, [target, reduceMotion, progress, weekday.length, monthShortLen, monthLongLen]);
+
+  // Month word trims `February`→`Feb` letter by letter before `4,` slides in.
+  useAnimatedReaction(
+    () => morphMonthLetterCount(progress.value, monthLongLen, monthShortLen),
+    (next, prev) => {
+      if (next !== prev) runOnJS(setMonthLetters)(next);
+    },
+    [monthLongLen, monthShortLen],
+  );
 
   const weekdayLen = weekday.length;
   useAnimatedReaction(
@@ -121,9 +139,11 @@ export function CalendarPeriodTitle({
   }, [enterFade, reduceMotion, enterOpacity]);
   const enterStyle = useAnimatedStyle(() => ({ opacity: enterOpacity.value }));
 
-  const a11yLabel =
-    expanded && seg ? joinDayPeriodTitle(seg) : `${month} ${year}`;
-  const displayMonth = expanded && seg ? seg.month : month;
+  // Visible: `February 2026` / `Feb 4, 2026, Wed`. Spoken: full words.
+  const visibleTitle = expanded && seg ? joinDayPeriodTitle(seg) : `${month} ${year}`;
+  const a11yLabel = expanded && seg ? spokenDayPeriodTitle(seg) : `${month} ${year}`;
+  const morphingMonth = seg != null && (expanded || monthLetters < seg.month.length);
+  const displayMonth = morphingMonth && seg ? morphMonthText(seg, monthLetters) : month;
   const displayYear = expanded && seg ? seg.year : year;
   const shownWeekday = weekday.slice(0, letters);
 
@@ -157,7 +177,7 @@ export function CalendarPeriodTitle({
           Reduce Motion, VoiceOver, background). During the Week↔Day morph: the morph row,
           clipped, no crawl, so the two motions never fight. */}
       {settled ? (
-        <MarqueeText text={a11yLabel} style={textStyle} fadeColor={colors.bg} />
+        <MarqueeText text={visibleTitle} style={textStyle} fadeColor={colors.bg} />
       ) : (
       <ScrollView
         horizontal
