@@ -109,6 +109,9 @@ import {
 } from '@/lib/calendar/week';
 import { yearContaining, yearRpcBounds } from '@/lib/calendar/year';
 import {
+  isValidZoomRect,
+  reverseDrillKind,
+  type ZoomDrillCacheEntry,
   type ZoomDrillKind,
   type ZoomDrillRequest,
   type ZoomSourceRect,
@@ -172,6 +175,8 @@ export default function CalendarScreen() {
   const yearFocusNonceRef = useRef(0);
   const bodyHostRef = useRef<View>(null);
   const drillThenRef = useRef<(() => void) | null>(null);
+  /** Per-kind inbound source so climb can reverse-morph to the tapped cell. */
+  const lastDrillByKindRef = useRef<Partial<Record<ZoomDrillKind, ZoomDrillCacheEntry>>>({});
   const [zoomDrill, setZoomDrill] = useState<ZoomDrillRequest | null>(null);
   const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
@@ -394,10 +399,10 @@ export default function CalendarScreen() {
       source: ZoomSourceRect;
       label: string;
       then: () => void;
+      focusIndex?: number;
     }) => {
-      const { kind, source, label, then } = opts;
-      const sourceBad = !(source.width > 1) || !(source.height > 1);
-      if (reduceMotion || sourceBad) {
+      const { kind, source, label, then, focusIndex } = opts;
+      if (reduceMotion || !isValidZoomRect(source)) {
         then();
         return;
       }
@@ -407,16 +412,20 @@ export default function CalendarScreen() {
         return;
       }
       node.measureInWindow((x, y, width, height) => {
-        if (!(width > 1) || !(height > 1)) {
+        const dest = { x, y, width, height };
+        if (!isValidZoomRect(dest)) {
           then();
           return;
         }
+        lastDrillByKindRef.current[kind] = { kind, source, label, focusIndex };
         drillThenRef.current = then;
         setZoomDrill({
           kind,
+          direction: 'in',
           source,
           label,
-          dest: { x, y, width, height },
+          dest,
+          focusIndex,
         });
       });
     },
@@ -430,7 +439,7 @@ export default function CalendarScreen() {
     then?.();
   }, []);
 
-  const zoomUp = useCallback(() => {
+  const applyZoomUp = useCallback(() => {
     const parent = zoomStack.length > 0 ? zoomStack[zoomStack.length - 1]! : zoomParentView(activeView);
     if (!parent) return false;
     setZoomStack((stack) => (stack.length ? stack.slice(0, -1) : []));
@@ -440,6 +449,43 @@ export default function CalendarScreen() {
     persistViewPrefs(parent, nextDays);
     return true;
   }, [zoomStack, activeView, dayCount, persistViewPrefs]);
+
+  const zoomUp = useCallback(() => {
+    const parent = zoomStack.length > 0 ? zoomStack[zoomStack.length - 1]! : zoomParentView(activeView);
+    if (!parent) return false;
+
+    const kind = reverseDrillKind(activeView);
+    const cached = kind ? lastDrillByKindRef.current[kind] : undefined;
+    if (reduceMotion || zoomDrill || !kind || !cached || !isValidZoomRect(cached.source)) {
+      return applyZoomUp();
+    }
+
+    const node = bodyHostRef.current;
+    if (!node || typeof node.measureInWindow !== 'function') {
+      return applyZoomUp();
+    }
+
+    node.measureInWindow((x, y, width, height) => {
+      const dest = { x, y, width, height };
+      if (!isValidZoomRect(dest)) {
+        applyZoomUp();
+        return;
+      }
+      // Play reverse morph while child still shows; swap in `then` after settle.
+      drillThenRef.current = () => {
+        applyZoomUp();
+      };
+      setZoomDrill({
+        kind,
+        direction: 'out',
+        source: cached.source,
+        label: cached.label,
+        dest,
+        focusIndex: cached.focusIndex,
+      });
+    });
+    return true;
+  }, [zoomStack, activeView, reduceMotion, zoomDrill, applyZoomUp]);
 
   const canClimb = canZoomUp(activeView) || zoomStack.length > 0;
 
@@ -1044,7 +1090,10 @@ export default function CalendarScreen() {
       <View
         ref={bodyHostRef}
         collapsable={false}
-        style={[styles.bodyHost, zoomDrill ? styles.bodyHostFrozen : null]}
+        style={[
+          styles.bodyHost,
+          zoomDrill && zoomDrill.direction === 'in' ? styles.bodyHostFrozen : null,
+        ]}
       >
       {(loaded || activeView === 'month' || activeView === 'year' || activeView === 'day') &&
       !error &&
@@ -1297,9 +1346,11 @@ export default function CalendarScreen() {
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <CalendarZoomDrill
           kind={zoomDrill.kind}
+          direction={zoomDrill.direction}
           source={zoomDrill.source}
           dest={zoomDrill.dest}
           label={zoomDrill.label}
+          focusIndex={zoomDrill.focusIndex}
           onFinished={onZoomDrillFinished}
         />
       </View>
