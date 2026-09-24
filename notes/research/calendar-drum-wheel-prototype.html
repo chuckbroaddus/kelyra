@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kelyra Calendar Drum — Fixed-Geometry Prototype</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --elev: #171b22;
+    --line: #2a3140;
+    --text: #e8ecf4;
+    --muted: #8b95a8;
+    --accent: #c62828;
+    --accent-soft: #e53935;
+    --tile: #f4f1ea;
+    --tile-ink: #1a1a1a;
+    --ok: #3dd68c;
+    --warn: #f5a524;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    -webkit-user-select: none; user-select: none;
+    touch-action: none;
+  }
+  body { display: flex; flex-direction: column; min-height: 100%; }
+  header {
+    padding: 16px 18px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0 0 4px; font-size: 16px; font-weight: 700; letter-spacing: 0.02em;
+  }
+  header p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.45; max-width: 52rem; }
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 12px 18px; border-bottom: 1px solid var(--line);
+  }
+  .seg {
+    display: inline-flex; background: var(--elev); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden;
+  }
+  .seg button {
+    appearance: none; border: 0; background: transparent; color: var(--muted);
+    padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .seg button.active { background: #243044; color: var(--text); }
+  .check {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted); margin-left: auto;
+  }
+  .check input { accent-color: var(--warn); }
+  .hud {
+    font-variant-numeric: tabular-nums; font-size: 12px; color: var(--ok);
+    background: var(--elev); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 10px;
+  }
+  .hud.low { color: var(--warn); }
+  main {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 24px 12px 40px; gap: 18px;
+  }
+  .phone {
+    width: min(390px, 100%);
+    background: var(--elev);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 0 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+  }
+  .phone-label {
+    text-align: center; font-size: 11px; color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .stage {
+    position: relative;
+    height: 148px;
+    margin: 0 10px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #12161d;
+    overflow: hidden;
+    cursor: grab;
+    perspective: 920px;
+    perspective-origin: 50% 45%;
+    touch-action: none;
+  }
+  .stage:active { cursor: grabbing; }
+  .track {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+  }
+  .slot {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 108px; height: 126px;
+    margin-left: -54px; margin-top: -63px;
+    transform-origin: 50% 45%;
+    will-change: transform, opacity;
+    pointer-events: none;
+  }
+  .tile {
+    width: 108px; height: 126px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .tabs {
+    display: flex; justify-content: space-evenly; width: 100%;
+    padding: 0 18px; height: 16px; margin-bottom: -6px; z-index: 2;
+  }
+  .tab {
+    width: 14px; height: 16px; border-radius: 3.5px;
+    background: linear-gradient(180deg, #eceff1, #90a4ae);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  }
+  .page {
+    width: 92px; height: 108px; margin-top: 2px;
+    border-radius: 8px; overflow: hidden;
+    background: var(--tile);
+    border: 1px solid rgba(0,0,0,0.18);
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.28);
+  }
+  .page.year { background: var(--accent); justify-content: center; align-items: center; }
+  .hdr {
+    background: var(--accent); color: #fff;
+    font-size: 11px; font-weight: 700; text-align: center;
+    padding: 6px 4px; min-height: 28px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    line-height: 1.15; letter-spacing: 0.02em;
+  }
+  /* FIXED geometry: header always same height — recommendation */
+  .hdr.fixed { min-height: 28px; height: 28px; overflow: hidden; }
+  .hdr.cheese-tall { min-height: 44px; height: auto; padding: 8px 4px; }
+  .body {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: var(--tile-ink); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .body .big { font-size: 38px; line-height: 1; }
+  .body .mid { font-size: 18px; text-align: center; padding: 0 4px; }
+  .body .year-num { font-size: 26px; color: #fff; }
+  .grid {
+    display: none; flex-wrap: wrap; padding: 2px 4px 4px; flex: 1;
+    align-content: flex-start;
+  }
+  .grid.show { display: flex; }
+  .grid span {
+    width: 14.28%; text-align: center; font-size: 7.5px; line-height: 11px;
+    color: var(--tile-ink); font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .grid span.sun { color: var(--accent-soft); }
+  .grid span.muted { color: #c5c5c5; }
+  .caption {
+    text-align: center; margin-top: 12px; font-size: 13px; color: var(--muted);
+  }
+  .caption strong { color: var(--text); font-weight: 600; }
+  .legend {
+    max-width: 390px; font-size: 12px; color: var(--muted); line-height: 1.5;
+    padding: 0 8px;
+  }
+  .legend code {
+    font-size: 11px; background: var(--elev); border: 1px solid var(--line);
+    border-radius: 4px; padding: 1px 5px; color: #c9d4ea;
+  }
+  footer {
+    padding: 10px 18px 18px; font-size: 11px; color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Calendar drum prototype — fixed-geometry + GPU transforms</h1>
+  <p>
+    Offline demo for card <code>t_78363b5e</code> (2026-09-24). Recommended path:
+    recycle ~9 slots, transform-only during fling, never reflow center text mid-spin.
+    Toggle <strong>Legacy cheese mode</strong> to feel the live bug (center expands mid-drag).
+  </p>
+</header>
+
+<div class="toolbar">
+  <div class="seg" id="grainSeg" role="tablist" aria-label="Period grain">
+    <button type="button" data-grain="year" class="active">Y</button>
+    <button type="button" data-grain="month">M</button>
+    <button type="button" data-grain="week">W</button>
+    <button type="button" data-grain="day">D</button>
+  </div>
+  <label class="check">
+    <input type="checkbox" id="cheese" />
+    Legacy cheese mode (expand center mid-drag)
+  </label>
+  <div class="hud" id="fpsHud" title="Frames per second">FPS —</div>
+</div>
+
+<main>
+  <div class="phone">
+    <div class="phone-label">390 · period drum stage</div>
+    <div class="stage" id="stage" aria-label="Period wheel">
+      <div class="track" id="track"></div>
+    </div>
+    <div class="caption">Selected: <strong id="selLabel">—</strong></div>
+  </div>
+  <div class="legend">
+    Flick horizontally. Momentum coasts then snaps. Recommended mode keeps
+    fixed 108×126 tiles (scale/opacity/rotateY only). Cheese mode mounts a
+    tall header + month grid on the center tile while dragging — that is the
+    glitchy live behavior to remove in P0.
+    Open offline; network unused.
+  </div>
+</main>
+
+<footer>
+  Kelyra CoS · CAL-DRUM R1 · Stack Expo+RN Web research companion ·
+  SoT: <code>notes/company/calendar-drum-wheel-research.md</code>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const PITCH = 78;
+  const N = 9; // center ±4
+  const OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+  const DECEL = 2000; // px/s²
+  const MAX_FLING = 48;
+  const SPRING_MS = 320;
+
+  const stage = document.getElementById('stage');
+  const track = document.getElementById('track');
+  const selLabel = document.getElementById('selLabel');
+  const cheeseEl = document.getElementById('cheese');
+  const fpsHud = document.getElementById('fpsHud');
+  const grainSeg = document.getElementById('grainSeg');
+
+  let grain = 'year';
+  let anchor = new Date(); // local
+  let dragPx = 0;          // visual drag (content follows finger)
+  let visualShift = 0;     // integer recycle
+  let flinging = false;
+  let animating = false;
+  let rafId = 0;
+  let cheese = false;
+
+  // Pointer tracking
+  let pointerId = null;
+  let startX = 0;
+  let grantDrag = 0;
+  let lastX = 0;
+  let lastT = 0;
+  let velocity = 0; // px/s
+
+  const slots = [];
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function cloneDate(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function addDays(d, n) {
+    const x = cloneDate(d); x.setDate(x.getDate() + n); return x;
+  }
+  function startOfWeek(d) {
+    const x = cloneDate(d);
+    const day = x.getDay(); // Sun=0
+    x.setDate(x.getDate() - day);
+    return x;
+  }
+  function shiftAnchor(base, steps) {
+    const d = cloneDate(base);
+    if (grain === 'year') { d.setFullYear(d.getFullYear() + steps); return d; }
+    if (grain === 'month') { d.setMonth(d.getMonth() + steps); return d; }
+    if (grain === 'week') return addDays(startOfWeek(d), steps * 7);
+    return addDays(d, steps);
+  }
+  function periodAt(stepsFromAnchor) {
+    return shiftAnchor(anchor, visualShift + stepsFromAnchor);
+  }
+
+  const MONS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const MONS_FULL = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+  function labelFor(d, role) {
+    if (grain === 'year') {
+      const y = d.getFullYear();
+      return { top: '', mid: String(y), yearPage: true, side: "'" + String(y).slice(-2) };
+    }
+    if (grain === 'month') {
+      return { top: MONS[d.getMonth()] + ' ' + d.getFullYear(), mid: '', yearPage: false, grid: true };
+    }
+    if (grain === 'week') {
+      const from = startOfWeek(d);
+      const to = addDays(from, 6);
+      const range = MONS[from.getMonth()] + ' ' + from.getDate() + '–' +
+        (from.getMonth() === to.getMonth() ? to.getDate() : (MONS[to.getMonth()] + ' ' + to.getDate()));
+      return { top: range, mid: '', yearPage: false, yearLine: String(from.getFullYear()) };
+    }
+    // day
+    return {
+      top: MONS_FULL[d.getMonth()],
+      mid: String(d.getDate()),
+      yearPage: false,
+      yearLine: String(d.getFullYear()),
+      big: true
+    };
+  }
+
+  function displayLabel(d) {
+    if (grain === 'year') return String(d.getFullYear());
+    if (grain === 'month') return MONS_FULL[d.getMonth()] + ' ' + d.getFullYear();
+    if (grain === 'week') {
+      const from = startOfWeek(d); const to = addDays(from, 6);
+      return MONS[from.getMonth()] + ' ' + from.getDate() + ' – ' +
+        MONS[to.getMonth()] + ' ' + to.getDate() + ', ' + from.getFullYear();
+    }
+    return MONS_FULL[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  function monthGridDays(year, monthIndex0) {
+    const first = new Date(year, monthIndex0, 1);
+    const start = addDays(first, -first.getDay());
+    const out = [];
+    for (let i = 0; i < 35; i++) out.push(addDays(start, i));
+    return out;
+  }
+
+  function buildSlots() {
+    track.innerHTML = '';
+    slots.length = 0;
+    for (let i = 0; i < N; i++) {
+      const el = document.createElement('div');
+      el.className = 'slot';
+      el.dataset.parked = String(OFFSETS[i]);
+      el.innerHTML =
+        '<div class="tile">' +
+          '<div class="tabs"><div class="tab"></div><div class="tab"></div></div>' +
+          '<div class="page">' +
+            '<div class="hdr fixed"></div>' +
+            '<div class="body"><span class="mid"></span></div>' +
+            '<div class="grid"></div>' +
+          '</div>' +
+        '</div>';
+      track.appendChild(el);
+      slots.push({
+        el,
+        parked: OFFSETS[i],
+        page: el.querySelector('.page'),
+        hdr: el.querySelector('.hdr'),
+        body: el.querySelector('.body'),
+        grid: el.querySelector('.grid'),
+      });
+    }
+    rewriteContent();
+    paintTransforms();
+    updateSel();
+  }
+
+  function rewriteContent() {
+    for (const s of slots) {
+      const d = periodAt(s.parked);
+      const lab = labelFor(d, s.parked === 0 ? 'center' : 'side');
+      const isCenter = s.parked === 0;
+      const showCheese = cheese && flinging && isCenter;
+
+      s.page.classList.toggle('year', !!lab.yearPage);
+      s.hdr.className = 'hdr ' + (showCheese ? 'cheese-tall' : 'fixed');
+
+      if (lab.yearPage) {
+        s.hdr.textContent = '';
+        s.hdr.style.display = 'none';
+        s.body.innerHTML = '<span class="year-num">' + (isCenter ? lab.mid : lab.side) + '</span>';
+        s.grid.classList.remove('show');
+        s.grid.innerHTML = '';
+      } else {
+        s.hdr.style.display = 'flex';
+        if (showCheese && lab.yearLine) {
+          s.hdr.innerHTML = '<span>' + lab.top + '</span><span>' + lab.yearLine + '</span>';
+        } else {
+          s.hdr.textContent = lab.top;
+        }
+        if (lab.big) {
+          s.body.innerHTML = '<span class="big">' + lab.mid + '</span>';
+        } else if (lab.mid) {
+          s.body.innerHTML = '<span class="mid">' + lab.mid + '</span>';
+        } else {
+          s.body.innerHTML = '';
+        }
+        // Cheese: mount 35-cell grid on center mid-drag (live MonthHangingGrid analog)
+        if (showCheese && lab.grid) {
+          const days = monthGridDays(d.getFullYear(), d.getMonth());
+          s.grid.innerHTML = '';
+          ['S','M','T','W','T','F','S'].forEach((labDay, i) => {
+            const sp = document.createElement('span');
+            sp.textContent = labDay;
+            if (i === 0) sp.className = 'sun';
+            s.grid.appendChild(sp);
+          });
+          days.forEach((iso, i) => {
+            const sp = document.createElement('span');
+            const inMonth = iso.getMonth() === d.getMonth();
+            sp.textContent = inMonth ? String(iso.getDate()) : '';
+            if (!inMonth) sp.className = 'muted';
+            else if (i % 7 === 0) sp.className = 'sun';
+            s.grid.appendChild(sp);
+          });
+          s.grid.classList.add('show');
+          s.body.style.display = 'none';
+        } else {
+          s.grid.classList.remove('show');
+          s.grid.innerHTML = '';
+          s.body.style.display = 'flex';
+        }
+      }
+    }
+  }
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function scaleFor(d) { return clamp(1 - 0.22 * Math.abs(d) - 0.02 * d * d, 0.46, 1); }
+  function opacityFor(d) { return clamp(1 - 0.24 * Math.abs(d) - 0.03 * d * d, 0.22, 1); }
+  function rotateYFor(d) { return clamp(d, -3, 3) * -14; }
+
+  function localDrag() {
+    // residual in (-P, P] using trunc — mirrors periodPager residualFromTotalDrag
+    const shift = Math.trunc(-dragPx / PITCH) || 0;
+    return { shift, local: dragPx + shift * PITCH };
+  }
+
+  function paintTransforms() {
+    const { shift, local } = localDrag();
+    if (!animating && shift !== visualShift) {
+      visualShift = shift;
+      rewriteContent();
+    }
+    for (const s of slots) {
+      const d = s.parked + local / PITCH;
+      const x = d * PITCH;
+      const sc = scaleFor(d);
+      const op = opacityFor(d);
+      const ry = rotateYFor(d);
+      s.el.style.opacity = String(op);
+      s.el.style.zIndex = String(100 - Math.abs(Math.round(d)) * 10);
+      s.el.style.transform =
+        'translateX(' + x + 'px) rotateY(' + ry + 'deg) scale(' + sc + ')';
+    }
+  }
+
+  function updateSel() {
+    const d = periodAt(0);
+    // residual near 0 → show current period at focus
+    const { local } = localDrag();
+    const snapped = Math.abs(local) < 1 ? d : shiftAnchor(d, local < 0 ? 1 : -1);
+    // Better: selected = anchor + visualShift when settled
+    selLabel.textContent = displayLabel(periodAt(0));
+  }
+
+  function commitShift(steps) {
+    if (!steps) {
+      dragPx = 0;
+      visualShift = 0;
+      flinging = false;
+      rewriteContent();
+      paintTransforms();
+      updateSel();
+      return;
+    }
+    anchor = shiftAnchor(anchor, steps);
+    dragPx = 0;
+    visualShift = 0;
+    flinging = false;
+    rewriteContent();
+    paintTransforms();
+    updateSel();
+  }
+
+  function snapPeriodPage(translationX, velocityX) {
+    const distanceSlots = -translationX / PITCH;
+    const speed = Math.abs(velocityX);
+    let slotsN;
+    if (speed < 600) {
+      if (Math.abs(distanceSlots) < 0.28) slotsN = 0;
+      else {
+        const rounded = Math.round(distanceSlots);
+        slotsN = rounded === 0 ? (distanceSlots > 0 ? 1 : -1) : rounded;
+      }
+    } else {
+      const coastPx = (-velocityX * speed) / (2 * DECEL);
+      slotsN = Math.round((-translationX + coastPx) / PITCH);
+      if (slotsN === 0) slotsN = velocityX < 0 ? 1 : -1;
+    }
+    return clamp(slotsN, -MAX_FLING, MAX_FLING);
+  }
+
+  function animateTo(targetSteps, fromDrag) {
+    animating = true;
+    flinging = true;
+    const startDrag = fromDrag;
+    // Keep visualShift frozen for short snaps; long coasts recycle
+    const freeze = Math.abs(targetSteps) <= 4;
+    const liveShift = visualShift;
+    let toValue;
+    if (freeze) {
+      if (liveShift === 0) toValue = targetSteps === 0 ? 0 : -targetSteps * PITCH;
+      else {
+        // residual → 0
+        const { local } = (function () {
+          const shift = Math.trunc(-startDrag / PITCH) || 0;
+          return { local: startDrag + shift * PITCH };
+        })();
+        dragPx = local;
+        toValue = 0;
+        // commit steps = liveShift + residual direction already in pending
+      }
+    } else {
+      toValue = targetSteps === 0 ? 0 : -targetSteps * PITCH;
+    }
+
+    const pending = freeze
+      ? (liveShift === 0 ? targetSteps : liveShift)
+      : targetSteps;
+
+    const t0 = performance.now();
+    const from = dragPx;
+    const vel0 = velocity; // px/s
+
+    function frame(now) {
+      const t = Math.min(1, (now - t0) / SPRING_MS);
+      // critically-damped-ish ease with velocity hint
+      const ease = 1 - Math.pow(1 - t, 3);
+      const coastBoost = (vel0 / 1000) * (1 - t) * 8;
+      dragPx = from + (toValue - from) * ease + coastBoost * (1 - ease);
+
+      if (!freeze) {
+        const sh = Math.trunc(-dragPx / PITCH) || 0;
+        if (sh !== visualShift) {
+          visualShift = sh;
+          rewriteContent();
+        }
+      }
+
+      // Cheese rewrite while animating if enabled
+      if (cheese) rewriteContent();
+
+      paintTransforms();
+
+      if (t < 1) {
+        rafId = requestAnimationFrame(frame);
+      } else {
+        animating = false;
+        dragPx = toValue;
+        // Finalize commit
+        let commit = pending;
+        if (!freeze) commit = Math.trunc(-toValue / PITCH) || targetSteps;
+        commitShift(commit);
+      }
+    }
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(frame);
+  }
+
+  // Pointer events
+  stage.addEventListener('pointerdown', (e) => {
+    if (pointerId != null) return;
+    pointerId = e.pointerId;
+    stage.setPointerCapture(pointerId);
+    startX = e.clientX;
+    lastX = e.clientX;
+    lastT = performance.now();
+    velocity = 0;
+    grantDrag = dragPx;
+    flinging = true;
+    animating = false;
+    cancelAnimationFrame(rafId);
+    if (cheese) rewriteContent();
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== pointerId) return;
+    const now = performance.now();
+    const dx = e.clientX - lastX;
+    const dt = Math.max(1, now - lastT);
+    velocity = (dx / dt) * 1000; // px/s of finger; content follows → use g.dx style
+    // PanResponder-style: content follows finger → drag += dx (store total from grant)
+    dragPx = grantDrag + (e.clientX - startX);
+    // Finger right → content right → positive drag; snap uses -translation for next
+    lastX = e.clientX;
+    lastT = now;
+
+    const sh = Math.trunc(-dragPx / PITCH) || 0;
+    if (sh !== visualShift) {
+      visualShift = sh;
+      rewriteContent();
+    } else if (cheese) {
+      rewriteContent();
+    }
+    paintTransforms();
+  });
+
+  function endPointer(e) {
+    if (e.pointerId !== pointerId) return;
+    pointerId = null;
+    const total = grantDrag + (e.clientX - startX);
+    dragPx = total;
+    // velocity already finger px/s; content direction matches translation
+    const target = snapPeriodPage(total, velocity);
+    animateTo(target, total);
+  }
+  stage.addEventListener('pointerup', endPointer);
+  stage.addEventListener('pointercancel', endPointer);
+
+  // Grain toggle
+  grainSeg.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-grain]');
+    if (!btn) return;
+    grainSeg.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    grain = btn.dataset.grain;
+    dragPx = 0; visualShift = 0; flinging = false;
+    rewriteContent(); paintTransforms(); updateSel();
+  });
+
+  cheeseEl.addEventListener('change', () => {
+    cheese = cheeseEl.checked;
+    rewriteContent();
+  });
+
+  // FPS HUD
+  let frames = 0;
+  let fpsT0 = performance.now();
+  function fpsLoop(now) {
+    frames++;
+    if (now - fpsT0 >= 500) {
+      const fps = Math.round((frames * 1000) / (now - fpsT0));
+      fpsHud.textContent = 'FPS ' + fps;
+      fpsHud.classList.toggle('low', fps < 50);
+      frames = 0; fpsT0 = now;
+    }
+    requestAnimationFrame(fpsLoop);
+  }
+  requestAnimationFrame(fpsLoop);
+
+  buildSlots();
+})();
+</script>
+</body>
+</html>
