@@ -10,6 +10,8 @@ type Props = {
   onPress: () => void;
   disabled?: boolean;
   align?: 'center' | 'left';
+  /** Stretch Ghost to parent width (Option A trip-card Leave). Primary already full-width. */
+  fullWidth?: boolean;
   showDot?: boolean;
   tone?: 'danger';
   accessibilityLabel?: string;
@@ -23,6 +25,7 @@ function Base({
   style,
   textStyle,
   align = 'center',
+  fullWidth,
   showDot,
   tone,
   ghost,
@@ -36,7 +39,7 @@ function Base({
 }) {
   const { colors } = useTheme();
   return (
-    <HoverTip label={tipIfNew(label, tooltip)} fill={align !== 'left' && !ghost}>
+    <HoverTip label={tipIfNew(label, tooltip)} fill={align !== 'left' && (!ghost || Boolean(fullWidth))}>
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
@@ -46,6 +49,7 @@ function Base({
         styles.base,
         style,
         align === 'left' && styles.left,
+        fullWidth && styles.fullWidth,
         disabled && styles.disabled,
         pressed && { opacity: ghost ? 0.7 : 0.88 },
       ]}
@@ -137,6 +141,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     backgroundColor: 'transparent',
     alignSelf: 'center',
+  },
+  fullWidth: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   danger: {},
   label: {
