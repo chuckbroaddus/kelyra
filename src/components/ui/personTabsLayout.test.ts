@@ -18,6 +18,8 @@ import {
   personTabTitleSlot,
   personTabPillWidthRange,
   personTabScrollTabWidth,
+  personTabScrollNeeded,
+  personTabScrollMotion,
   personTabRowUsesTeacherFaces,
 } from './personTabsLayout.ts';
 
@@ -251,4 +253,25 @@ test('scroll tab width prefers hugged expanded over live collapsed onLayout', ()
   // Without paint yet, fall back to measured/fallback.
   assert.equal(personTabScrollTabWidth(0, ceiling, true, 91), 91);
   assert.equal(personTabScrollTabWidth(paint, 0, true, 91), 91);
+});
+
+test('scroll needed skips no-op scrollTo (esp. already at 0)', () => {
+  assert.equal(personTabScrollNeeded(0, 0), false);
+  assert.equal(personTabScrollNeeded(0.4, 0), false);
+  assert.equal(personTabScrollNeeded(0, 12), true);
+  assert.equal(personTabScrollNeeded(80, 0), true);
+});
+
+test('leading-pill morph uses instant enter / deferred leave scroll — never animated-to-0', () => {
+  // Entering first tab: instant jump only (animated scrollTo(0) races width morph on iOS).
+  assert.equal(personTabScrollMotion(0, null), 'instant');
+  assert.equal(personTabScrollMotion(0, 2), 'instant');
+  assert.equal(personTabScrollMotion(0, 3), 'instant');
+  // Leaving first tab: defer scroll until morph ends so leading width can CM-Linear close.
+  assert.equal(personTabScrollMotion(1, 0), 'defer');
+  assert.equal(personTabScrollMotion(2, 0), 'defer');
+  // Mid-row: concurrent animated scroll is fine (2→3 / 2→4).
+  assert.equal(personTabScrollMotion(2, 1), 'animated');
+  assert.equal(personTabScrollMotion(3, 1), 'animated');
+  assert.equal(personTabScrollMotion(3, 2), 'animated');
 });

@@ -137,6 +137,35 @@ export function personTabScrollTabWidth(
   return Math.max(PERSON_TAB_ICON_HIT, fallbackWidth);
 }
 
+
+/**
+ * Whether a programmatic scroll is worth issuing. No-op scrollTo (especially
+ * scrollTo(0) while already at 0) still ticks UIScrollView on iOS and cancels
+ * in-flight JS-driven width morphs on the leading pill.
+ */
+export function personTabScrollNeeded(
+  currentX: number,
+  targetX: number,
+  epsilon = 1,
+): boolean {
+  return Math.abs(currentX - targetX) > epsilon;
+}
+
+/**
+ * Scroll policy when the leading pill (index 0) is morphing.
+ * - `instant`: jump offset (never animated scrollTo(0) — races leading width).
+ * - `defer`: wait until morph ends before scrolling away from 0.
+ * - `animated`: mid-row only; concurrent scroll + width morph is fine.
+ */
+export function personTabScrollMotion(
+  selectedIndex: number,
+  prevIndex: number | null,
+): 'instant' | 'defer' | 'animated' {
+  if (selectedIndex <= 0) return 'instant';
+  if (prevIndex === 0) return 'defer';
+  return 'animated';
+}
+
 /**
  * Scroll offset so the selected tab sits in a readable middle band — never
  * left-pinned (except tab 0) and never with the selected glyph clipped off the left.
