@@ -3,8 +3,9 @@
  * List scroll and drum pan both write; the other view is a pure projection.
  * Center drum leaf = day at top of list viewport.
  *
- * Painted window origin is separate from listAnchorDay so settling/snapping
- * never rebuilds the range under the viewport without a matching scroll reset.
+ * Painted window slides when the top day nears either edge so Day List can
+ * scroll infinitely (CEO 2026-09-24). Rebase always pairs with a scroll reset
+ * onto the same top day so the viewport does not jump.
  */
 import { agendaRangeFrom, shiftDay } from './day.ts';
 import { CAL_P6_5C_LIST_ANCHOR } from './p6Laws.ts';
@@ -12,7 +13,13 @@ import { CAL_P6_5C_LIST_ANCHOR } from './p6Laws.ts';
 export { CAL_P6_5C_LIST_ANCHOR };
 
 /** Continuous Day List painted length (CAL-R5-11 density A spirit). */
-export const DAY_LIST_WINDOW_DAYS = 14;
+export const DAY_LIST_WINDOW_DAYS = 21;
+
+/**
+ * Rebase when the top day is within this many slots of either painted edge.
+ * Leaves runway above/below so the user can keep scrolling.
+ */
+export const DAY_LIST_EDGE_PAD = 5;
 
 export type DaySectionOffset = { day: string; y: number };
 
@@ -61,23 +68,53 @@ export function dayInListWindow(
 }
 
 /**
- * Keep painted origin stable while `target` stays inside the window.
- * If target falls outside, rebase origin onto target (scroll must reset to that header).
+ * Place `target` at EDGE_PAD inside the painted window so both directions
+ * have runway after a rebase.
+ */
+export function dayListOriginAround(
+  target: string,
+  windowDays: number = DAY_LIST_WINDOW_DAYS,
+  edgePad: number = DAY_LIST_EDGE_PAD,
+): string {
+  const pad = Math.max(0, Math.min(edgePad, Math.max(0, windowDays - 1)));
+  return shiftDay(target, -pad);
+}
+
+function dayNeedsWindowRebase(
+  origin: string,
+  day: string,
+  windowDays: number,
+  edgePad: number,
+): boolean {
+  const days = dayListWindowDays(origin, windowDays);
+  const idx = days.indexOf(day);
+  if (idx < 0) return true;
+  const pad = Math.max(0, Math.min(edgePad, Math.max(0, days.length - 1)));
+  return idx < pad || idx > days.length - 1 - pad;
+}
+
+/**
+ * Keep painted origin stable while `target` stays in the safe middle band.
+ * Near either edge (or outside), rebase so target sits at EDGE_PAD.
  */
 export function dayListOriginForTarget(
   origin: string,
   target: string,
   windowDays: number = DAY_LIST_WINDOW_DAYS,
+  edgePad: number = DAY_LIST_EDGE_PAD,
 ): string {
-  if (dayInListWindow(origin, target, windowDays)) return origin;
-  return target;
+  if (!dayNeedsWindowRebase(origin, target, windowDays, edgePad)) return origin;
+  return dayListOriginAround(target, windowDays, edgePad);
 }
 
 export type DayListDrumShiftPlan = {
   nextAnchor: string;
   nextOrigin: string;
-  /** `section` = scroll using current layout; `zero` = window rebased, scroll to new origin header. */
-  scroll: 'section' | 'zero';
+  /**
+   * `section` = scroll using current layout;
+   * `rebase` = window moved — wait for section layout then scroll to nextAnchor.
+   */
+  scroll: 'section' | 'rebase';
 };
 
 /**
@@ -89,29 +126,46 @@ export function planDayListDrumShift(args: {
   anchor: string;
   steps: number;
   windowDays?: number;
+  edgePad?: number;
 }): DayListDrumShiftPlan {
   const windowDays = args.windowDays ?? DAY_LIST_WINDOW_DAYS;
+  const edgePad = args.edgePad ?? DAY_LIST_EDGE_PAD;
   const nextAnchor = shiftDay(args.anchor, args.steps);
-  const nextOrigin = dayListOriginForTarget(args.origin, nextAnchor, windowDays);
+  const nextOrigin = dayListOriginForTarget(args.origin, nextAnchor, windowDays, edgePad);
   return {
     nextAnchor,
     nextOrigin,
-    scroll: nextOrigin === args.origin ? 'section' : 'zero',
+    scroll: nextOrigin === args.origin ? 'section' : 'rebase',
   };
 }
 
+export type DayListScrollSettlePlan = {
+  nextAnchor: string;
+  nextOrigin: string;
+  originChanged: boolean;
+  /** When origin changes, caller must pending-scroll to nextAnchor after layout. */
+  scroll: 'none' | 'rebase';
+};
+
 /**
- * List settle writes SoT only — painted origin must not move (CAL-P6-5C-03).
- * Returning the same origin documents the contract for callers/tests.
+ * List settle writes SoT and slides the painted window when the top day nears
+ * either edge so scroll stays infinite (CEO 2026-09-24).
  */
 export function planDayListScrollSettle(args: {
   origin: string;
   currentAnchor: string;
   topDay: string;
-}): { nextAnchor: string; nextOrigin: string; originChanged: boolean } {
+  windowDays?: number;
+  edgePad?: number;
+}): DayListScrollSettlePlan {
+  const windowDays = args.windowDays ?? DAY_LIST_WINDOW_DAYS;
+  const edgePad = args.edgePad ?? DAY_LIST_EDGE_PAD;
+  const nextOrigin = dayListOriginForTarget(args.origin, args.topDay, windowDays, edgePad);
+  const originChanged = nextOrigin !== args.origin;
   return {
     nextAnchor: args.topDay,
-    nextOrigin: args.origin,
-    originChanged: false,
+    nextOrigin,
+    originChanged,
+    scroll: originChanged ? 'rebase' : 'none',
   };
 }
