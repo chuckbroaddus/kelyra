@@ -72,12 +72,13 @@ function MetalTabs() {
   );
 }
 
-/** Red header on week plate — year only (CEO 2026-09-24). */
-function weekHeaderYear(fromIso: string): string {
-  return String(Number(fromIso.slice(0, 4)));
+/** Red header on week plate — start month (CEO 2026-09-24). */
+function weekHeaderMonth(fromIso: string): string {
+  const m = Number(fromIso.slice(5, 7)) - 1;
+  return MONS_SHORT[m] ?? '';
 }
 
-/** Body on week plate — date range (CEO 2026-09-24). */
+/** Body on week plate — day range; include months only when the week crosses months. */
 function weekBodyRange(fromIso: string, toIso: string): string {
   const fm = Number(fromIso.slice(5, 7)) - 1;
   const fd = Number(fromIso.slice(8, 10));
@@ -85,7 +86,13 @@ function weekBodyRange(fromIso: string, toIso: string): string {
   const td = Number(toIso.slice(8, 10));
   const fromMon = MONS_SHORT[fm] ?? '';
   const toMon = MONS_SHORT[tm] ?? '';
-  return fm === tm ? `${fromMon} ${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
+  // Header already shows the start month — same-month weeks use day numbers only.
+  return fm === tm ? `${fd}–${td}` : `${fromMon} ${fd}–${toMon} ${td}`;
+}
+
+/** Footer on week plate — year from week start (CEO 2026-09-24). */
+function weekFooterYear(fromIso: string): string {
+  return String(Number(fromIso.slice(0, 4)));
 }
 
 /** Red header on day plate — month only (CEO 2026-09-24). */
@@ -206,6 +213,7 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
               </Text>
             ))}
           </View>
+          <View style={styles.silhouetteFooter} />
         </View>
       </View>
     );
@@ -303,8 +311,9 @@ function PeriodLeafImpl({
   }
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
-    const header = weekHeaderYear(tile.fromIso);
+    const header = weekHeaderMonth(tile.fromIso);
     const body = weekBodyRange(tile.fromIso, tile.toIso);
+    const footer = weekFooterYear(tile.fromIso);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -314,9 +323,16 @@ function PeriodLeafImpl({
               {header}
             </Text>
           </View>
-          <Text style={styles.plateBodyLine} numberOfLines={2} allowFontScaling={false}>
-            {body}
-          </Text>
+          <View style={styles.weekBody}>
+            <Text style={styles.weekBodyText} numberOfLines={2} allowFontScaling={false}>
+              {body}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+              {footer}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -484,7 +500,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingTop: 10,
   },
-  /** Centers the day numeral vertically in the body under the red header. */
+  weekBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  weekBodyText: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: SET_B.type,
+  },
+  /** Centers the day numeral vertically between header and footer. */
   dayBody: {
     flex: 1,
     alignItems: 'center',

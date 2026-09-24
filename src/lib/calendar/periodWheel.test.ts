@@ -225,12 +225,13 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.doesNotMatch(leaf, /blur\(6px\)/);
   assert.match(leaf, /yearPage/);
   assert.match(leaf, /SET_B\.header|#C62828/);
-  // Idle plate labels: year never Dynamic-Type ellipsis; week/month header=year.
+  // Idle plate labels: year never Dynamic-Type ellipsis; day/week header+footer chrome.
   assert.match(leaf, /allowFontScaling=\{false\}/);
-  assert.match(leaf, /weekHeaderYear/);
+  assert.match(leaf, /weekHeaderMonth/);
+  assert.match(leaf, /weekFooterYear/);
+  assert.match(leaf, /weekBody/);
   assert.match(leaf, /monthHeaderYear/);
-  assert.match(leaf, /Red header on week plate — year only/);
-  assert.match(leaf, /Body on week plate — date range/);
+  assert.match(leaf, /Red header on week plate — start month/);
   assert.match(leaf, /Red header on month plate — year only/);
   assert.match(leaf, /Body on month plate — month name/);
   assert.match(leaf, /dayBody/);
