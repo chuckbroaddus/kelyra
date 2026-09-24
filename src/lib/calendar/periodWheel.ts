@@ -79,8 +79,9 @@ export const WHEEL_LOCAL_SAMPLE_SLOTS = 5;
 
 /**
  * SlotPool N=9 circular buffer — offsets -4..+4.
- * Stable React keys: slotPoolKey(periodKey, slotIndex).
- * Rebound period props on the same slot instance during long flings.
+ * React mount keys are stableSlotHostKey(slotIndex) = `slot-${index}` (P0 CAL-DRUM).
+ * Rebound period props on the same slot host during long flings — never remount on periodKey.
+ * slotPoolKey(periodKey, slotIndex) remains for tests/compat identity only.
  */
 export const WHEEL_VISIBLE_SLOTS = 9;
 export const WHEEL_SLOT_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4] as const;
@@ -117,9 +118,17 @@ export const SET_B = {
 
 export type WheelSlotOffset = (typeof WHEEL_SLOT_OFFSETS)[number];
 
-/** Stable SlotPool key — remount only when periodKey or slotIndex changes. */
+/**
+ * Compat identity key (periodKey:slotIndex). Not used as React mount key (P0).
+ * Prefer stableSlotHostKey for PeriodPager hosts.
+ */
 export function slotPoolKey(periodKey: string, slotIndex: number): string {
   return `${periodKey}:${slotIndex}`;
+}
+
+/** Stable React host key by slot index only — survives mid-fling periodKey recycle. */
+export function stableSlotHostKey(slotIndex: number): string {
+  return `slot-${slotIndex}`;
 }
 
 /** Index into buildPeriodWindow.slots for a parked WHEEL_SLOT_OFFSETS entry. */
@@ -185,7 +194,7 @@ export function wheelInFocusBand(d: number, band = WHEEL_FOCUS_BAND): boolean {
 /**
  * ContentPolicy (P0 fling/snap):
  * - fling → full (sharp) when |distanceFromOrigin| ≤ clearRadius (default 4);
- *   silhouette (blur-out) beyond that. Origin = anchor captured at pan grant.
+ *   silhouette (opacity-dim, no BlurView) beyond that. Origin = anchor at pan grant.
  * - snap / not flinging → full Set B for center+neighbors; far slots silhouette
  */
 export type WheelContentMode = 'silhouette' | 'full';

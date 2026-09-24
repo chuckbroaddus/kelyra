@@ -1,8 +1,8 @@
 /**
  * Shared 3D horizontal period wheel (drum). SlotPool N=9 (center ±4).
- * P0: fling ±4 from origin stay full; beyond → silhouette blur-out until onSpringRest.
- * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤4) freezes SlotPool; long coast recycles for silhouettes.
- * Native TransformDriver = reanimated 4.5.1 worklets; Web = CSS + will-change.
+ * CAL-DRUM P0: stable slot-${index} hosts; motionCompact leaves; opacity silhouette;
+ * native+web TransformDriver = reanimated SharedValue + withSpring (no per-frame setState).
+ * Soft MAX_FLING~48; inertial coast; short snap (|steps|≤4) freezes SlotPool; long coast recycles.
  * SoT geometry: perspective 920 · origin 50% 45% on host · pitch 78 · hero 108×126 · rotateY = clamp(d,-3,3)*-14.
  * Composite: host perspective · translateX(d*P) · rotateY(ry) · scale(s) (+ opacity). No translateZ.
  * RM: drop rotateY/perspective; keep 1:1 drag, scale, opacity, short snap, taps, hierarchy.
@@ -50,7 +50,6 @@ import {
   shiftPeriodAnchor,
   shouldFreezeSlotPoolDuringSnap,
   shouldIgnoreSpringRest,
-  transformDragForSlotMotion,
   visualShiftForSlotPool,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
@@ -67,7 +66,7 @@ import {
   WHEEL_SLOT_OFFSETS,
   WHEEL_STAGE_HEIGHT,
   slotIndexForOffset,
-  slotPoolKey,
+  stableSlotHostKey,
   snapPeriodPage,
   wheelContentModeFor,
   wheelOpacityForNorm,
@@ -180,39 +179,6 @@ function makeNormSamples(parked: number, pitch: number) {
     xs.push(d * pitch);
   }
   return { input, scales, opacities, rotateYs, xs };
-}
-
-function lerpSamples(samples: ReturnType<typeof makeNormSamples>, dragPx: number) {
-  const { input, scales, opacities, rotateYs, xs } = samples;
-  if (dragPx <= input[0]!) {
-    return {
-      scale: scales[0]!,
-      opacity: opacities[0]!,
-      rotateYDeg: rotateYs[0]!,
-      translateX: xs[0]!,
-    };
-  }
-  const last = input.length - 1;
-  if (dragPx >= input[last]!) {
-    return {
-      scale: scales[last]!,
-      opacity: opacities[last]!,
-      rotateYDeg: rotateYs[last]!,
-      translateX: xs[last]!,
-    };
-  }
-  let i = 0;
-  while (i < last && input[i + 1]! < dragPx) i += 1;
-  const a = input[i]!;
-  const b = input[i + 1]!;
-  const t = b === a ? 0 : (dragPx - a) / (b - a);
-  const mix = (lo: number, hi: number) => lo + (hi - lo) * t;
-  return {
-    scale: mix(scales[i]!, scales[i + 1]!),
-    opacity: mix(opacities[i]!, opacities[i + 1]!),
-    rotateYDeg: mix(rotateYs[i]!, rotateYs[i + 1]!),
-    translateX: mix(xs[i]!, xs[i + 1]!),
-  };
 }
 
 type SlotHitProps = {
@@ -348,60 +314,6 @@ function NativeSlotMotion({
   );
 }
 
-/** Web: CSS transform + will-change (not RN Animated / not JS Animated during fling). */
-function WebSlotMotion({
-  parked,
-  pitch,
-  dragPx,
-  freezeSlotPool,
-  reduceMotion,
-  hit,
-  children,
-}: {
-  parked: number;
-  pitch: number;
-  dragPx: number;
-  freezeSlotPool: boolean;
-  reduceMotion: boolean;
-  hit: SlotHitProps;
-  children: ReactNode;
-}) {
-  const samples = useMemo(() => makeNormSamples(parked, pitch), [parked, pitch]);
-  const localDrag = transformDragForSlotMotion({
-    totalDrag: dragPx,
-    pitch,
-    freezeSlotPool,
-  });
-  const sample = lerpSamples(samples, localDrag);
-  // Outer translate only — hits stay ≥56×56 screen px (CAL-3DW-08).
-  const outerStyle = {
-    opacity: sample.opacity,
-    zIndex: 100 - Math.abs(parked) * 10,
-    transform: [{ translateX: sample.translateX }],
-    ...(IS_WEB ? ({ willChange: 'transform' } as ViewStyle) : null),
-  } as ViewStyle;
-  // Inner visual: scale (+ rotateY unless RM). Host owns perspective + origin.
-  const innerStyle = {
-    transform: reduceMotion
-      ? [{ scale: sample.scale }]
-      : [{ rotateY: `${sample.rotateYDeg}deg` }, { scale: sample.scale }],
-  } as ViewStyle;
-  return (
-    <View style={[styles.tileSlot, outerStyle]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={hit.accessibilityLabel}
-        onPress={hit.onPress}
-        style={styles.hitTarget}
-      >
-        <View style={innerStyle} pointerEvents="none">
-          {children}
-        </View>
-      </Pressable>
-    </View>
-  );
-}
-
 export function PeriodPager({
   kind,
   anchor,
@@ -426,14 +338,11 @@ export function PeriodPager({
     visualShiftRef.current = shift;
     setVisualShiftState(shift);
   }, []);
-  /** Web drag px (CSS path). Native uses dragShared. */
-  const [webDragPx, setWebDragPx] = useState(0);
+  /** Drag px SharedValue — native + web Reanimated (CAL-DRUM P0 N5/N6). */
   const dragShared = useSharedValue(0);
   /** 1 during programmed snap/coast — freezes SlotPool + absolute transforms. */
   const snapFreezeShared = useSharedValue(0);
   const snapFreezeRef = useRef(false);
-  /** React mirror of snap freeze for WebSlotMotion (refs alone do not re-render). */
-  const [slotPoolFrozen, setSlotPoolFrozen] = useState(false);
   /** Absolute steps the in-flight snap will commit on rest (intended targetSteps). */
   const pendingSnapStepsRef = useRef(0);
   /**
@@ -478,11 +387,9 @@ export function PeriodPager({
     dragPxRef.current = 0;
     snapFreezeShared.value = 0;
     snapFreezeRef.current = false;
-    setSlotPoolFrozen(false);
     pendingSnapStepsRef.current = 0;
     updateAbsorbedShift(0);
     snapActiveRef.current = false;
-    setWebDragPx(0);
     updateVisualShift(0);
     setShowCenterExtras(true);
     setFlinging(false);
@@ -539,10 +446,8 @@ export function PeriodPager({
     updateVisualShift(0);
     snapFreezeShared.value = 0;
     snapFreezeRef.current = false;
-    setSlotPoolFrozen(false);
     dragPxRef.current = 0;
     dragShared.value = 0;
-    setWebDragPx(0);
   }, [dragShared, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
 
   const onSpringRest = useCallback((callbackGeneration: number) => {
@@ -564,7 +469,6 @@ export function PeriodPager({
     setFlingOriginAnchor(null);
     snapFreezeShared.value = 0;
     snapFreezeRef.current = false;
-    setSlotPoolFrozen(false);
     const pending = pendingSnapStepsRef.current;
     const absorbed = absorbedShiftRef.current;
     pendingSnapStepsRef.current = 0;
@@ -573,12 +477,12 @@ export function PeriodPager({
     // Snap drag to integer pitch matching the steps we commit.
     const snapped = -commit * pitch;
     dragShared.value = snapped;
-    setWebDragPx(snapped);
+    dragPxRef.current = snapped;
     if (commit === 0) {
       settling.current = false;
       updateVisualShift(0);
       dragShared.value = 0;
-      setWebDragPx(0);
+      dragPxRef.current = 0;
       return;
     }
     // visualShift / absorbedShift reset in layout effect when parent anchor updates.
@@ -595,7 +499,6 @@ export function PeriodPager({
       pendingSnapStepsRef.current = targetSteps;
       snapFreezeRef.current = freeze;
       snapFreezeShared.value = freeze ? 1 : 0;
-      setSlotPoolFrozen(freeze);
 
       const currentDrag =
         typeof releaseDragPx === 'number' ? releaseDragPx : dragPxRef.current;
@@ -615,15 +518,13 @@ export function PeriodPager({
           // Pure tap from rest: absolute spring 0 → −steps·P with freeze-at-0.
           toValue = targetSteps === 0 ? 0 : -targetSteps * pitch;
           dragPxRef.current = 0;
-          if (!IS_WEB) dragShared.value = 0;
-          else setWebDragPx(0);
+          dragShared.value = 0;
         } else {
           // Rebase into residual (−P,P], spring residual → 0 (window stays at liveShift).
           const { localDrag } = residualFromTotalDrag(currentDrag, pitch);
           toValue = 0;
           dragPxRef.current = localDrag;
-          if (!IS_WEB) dragShared.value = localDrag;
-          else setWebDragPx(localDrag);
+          dragShared.value = localDrag;
         }
       } else {
         // Long coast: absolute spring to −targetSteps·P; reaction keeps updating
@@ -636,13 +537,7 @@ export function PeriodPager({
       snapGenerationRef.current += 1;
       const springGeneration = snapGenerationRef.current;
       snapActiveRef.current = true;
-      // Web: no reanimated spring. Native RM still springs (scale-only; no rotateY).
-      if (IS_WEB) {
-        setWebDragPx(toValue);
-        dragPxRef.current = toValue;
-        Promise.resolve().then(() => onSpringRest(springGeneration));
-        return;
-      }
+      // Native + web: Reanimated withSpring (CAL-DRUM P0 N5/N6 — no microtask jump).
       dragShared.value = withSpring(
         toValue,
         {
@@ -720,8 +615,7 @@ export function PeriodPager({
           setFlingOriginAnchor(anchor);
           velocityRef.current = 0;
           // Capture visible drag BEFORE interrupt absorb so move can rebase (AC-M05 / t_72512eeb).
-          const visualBefore =
-            IS_WEB ? dragPxRef.current : dragShared.value;
+          const visualBefore = dragShared.value;
           // Interrupt absorb: fold pending/visual into absorbedShift (do NOT drop,
           // do NOT onShift — parent anchor reset would wipe this new drag).
           const hadInFlight =
@@ -732,24 +626,16 @@ export function PeriodPager({
           absorbInFlightSnap();
           // After absorb, residual is 0; continue from captured visual + gesture delta.
           grantDragBaseRef.current = hadInFlight ? visualBefore : 0;
-          if (!IS_WEB) {
-            dragShared.value = grantDragBaseRef.current;
-          } else {
-            setWebDragPx(grantDragBaseRef.current);
-            dragPxRef.current = grantDragBaseRef.current;
-          }
+          dragShared.value = grantDragBaseRef.current;
+          dragPxRef.current = grantDragBaseRef.current;
         },
         onPanResponderMove: (_e, g) => {
           // PanResponder vx is px/ms → store px/s for withSpring.
           velocityRef.current = g.vx * 1000;
           const next = grantDragBaseRef.current + g.dx;
           dragPxRef.current = next;
-          if (IS_WEB) {
-            setWebDragPx(next);
-            updateVisualShift(residualFromTotalDrag(next, pitch).shift);
-          } else {
-            dragShared.value = next;
-          }
+          // SharedValue path only — no per-frame React setState (CAL-DRUM P0 N5).
+          dragShared.value = next;
         },
         onPanResponderRelease: (_e, g) => {
           velocityRef.current = g.vx * 1000;
@@ -773,7 +659,7 @@ export function PeriodPager({
           animateSnap(0, dragPxRef.current);
         },
       }),
-    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, tapAtStageX, updateVisualShift],
+    [absorbInFlightSnap, animateSnap, anchor, dragShared, failed, pitch, tapAtStageX],
   );
 
   if (failed) {
@@ -824,29 +710,16 @@ export function PeriodPager({
         tile={tile}
         role={role}
         showCenterExtras={isCenter && showCenterExtras}
+        motionCompact={flinging || !showCenterExtras}
         contentMode={contentMode}
         width={WHEEL_HERO_WIDTH}
       />
     );
-    const poolKey = slotPoolKey(tile.key, slotIndex);
-    if (IS_WEB) {
-      return (
-        <WebSlotMotion
-          key={poolKey}
-          parked={parked}
-          pitch={pitch}
-          dragPx={webDragPx}
-          freezeSlotPool={slotPoolFrozen}
-          reduceMotion={reduceMotion}
-          hit={hit}
-        >
-          {visual}
-        </WebSlotMotion>
-      );
-    }
+    // Stable host key by slot index — rewrite tile props on recycle, never remount mid-fling.
+    const hostKey = stableSlotHostKey(slotIndex);
     return (
       <NativeSlotMotion
-        key={poolKey}
+        key={hostKey}
         parked={parked}
         pitch={pitch}
         dragShared={dragShared}
@@ -867,6 +740,7 @@ export function PeriodPager({
           // RN Web CSS perspective-origin / transform-origin.
           perspectiveOrigin: WHEEL_PERSPECTIVE_ORIGIN,
           transformOrigin: WHEEL_PERSPECTIVE_ORIGIN,
+          willChange: 'transform',
         } as unknown as ViewStyle)
       : ({
           transformOrigin: WHEEL_PERSPECTIVE_ORIGIN,

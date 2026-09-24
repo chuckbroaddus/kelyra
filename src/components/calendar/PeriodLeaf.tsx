@@ -1,12 +1,12 @@
 /**
  * Set B hanging-ledger period tiles (View/Text — no PNG atlas / build-icons).
  * Leaf hex fixed across themes (CAL-3DW-10). Chrome plate themes elsewhere.
- * P0 ContentPolicy: fling ±4 clear; beyond → blur-out silhouette; full post-snap;
- * MonthHangingGrid only post-snap on center. P1: memo grid + stable keys.
+ * P0 ContentPolicy (CAL-DRUM): fling ±4 clear; beyond → opacity-dim silhouette
+ * (no BlurView / CSS blur); full post-snap. MonthHangingGrid only idle center.
+ * motionCompact: fixed header geometry mid-spin (no line-count / fontSize cheese).
  */
 import { memo, useMemo, type ReactNode } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { monthGridDays } from '@/lib/calendar/month';
 import type { PeriodTileModel } from '@/lib/calendar/periodPager';
@@ -35,6 +35,11 @@ type Props = {
   role: PeriodLeafRole;
   /** Extra center caption / hanging grid after finger-up snap. */
   showCenterExtras: boolean;
+  /**
+   * True while flinging or center extras dismantled — fixed geometry only:
+   * no MonthHangingGrid, no expanding week/day headers, no year fontSize swap.
+   */
+  motionCompact?: boolean;
   /** P0 ContentPolicy: silhouette during fling; full ledger after snap. */
   contentMode: WheelContentMode;
   /** Ignored for layout — hero box is SoT 108×126. Kept for call-site compat. */
@@ -190,40 +195,23 @@ function monthHeaderLabel(year: number, monthIndex0: number): string {
 }
 
 /**
- * Blur-out wrapper for silhouette mode — real leaf chrome underneath, blurred.
- * Native: expo-blur BlurView overlay. Web: CSS filter blur(6px).
- * Fallback (no blur): single-layer heavy opacity + letter-spacing (no ghost Text).
+ * Opacity-dim silhouette wrapper (CAL-DRUM P0 N4).
+ * No BlurView / CSS filter blur — fill-rate safe during fling.
  */
-function BlurOut({ children }: { children: ReactNode }) {
-  if (Platform.OS === 'web') {
-    return (
-      <View
-        pointerEvents="none"
-        style={[
-          styles.blurOutRoot,
-          // RN-web CSS filters
-          { filter: 'blur(6px)', backdropFilter: 'blur(6px)' } as object,
-        ]}
-      >
-        {children}
-      </View>
-    );
-  }
+function DimOut({ children }: { children: ReactNode }) {
   return (
-    <View style={styles.blurOutRoot} pointerEvents="none">
+    <View
+      pointerEvents="none"
+      style={[styles.dimOutRoot, styles.dimOutOpacity]}
+      accessibilityElementsHidden
+    >
       {children}
-      <BlurView
-        intensity={48}
-        tint="light"
-        blurMethod="dimezisBlurViewSdk31Plus"
-        style={StyleSheet.absoluteFillObject}
-      />
     </View>
   );
 }
 
 /**
- * Per-kind fling silhouettette — stacked soft type (textShadow), no blur deps.
+ * Per-kind fling silhouette — fixed chrome clone; DimOut applies opacity.
  * year: red yearPage bg + white year digits with heavy soft shadow (unreadable);
  * month: black soft day-number hints; week/day: soft label/numeral hints.
  */
@@ -331,12 +319,20 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
     );
   }
 
-  return <BlurOut>{body}</BlurOut>;
+  return <DimOut>{body}</DimOut>;
 }
 
-function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
+function PeriodLeafImpl({
+  tile,
+  role,
+  showCenterExtras,
+  motionCompact = false,
+  contentMode,
+}: Props) {
   const isCenter = role === 'current';
-  const showExtras = isCenter && showCenterExtras;
+  // Idle center extras only — never mid-spin (motionCompact / flinging).
+  const showExtras = isCenter && showCenterExtras && !motionCompact;
+  const compact = motionCompact || !showExtras;
 
   if (contentMode === 'silhouette') {
     return <SilhouetteLeaf tile={tile} />;
@@ -344,17 +340,17 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
 
   if (tile.kind === 'year') {
     const label = isCenter ? String(tile.year ?? tile.centerCaption) : tile.sideCaption;
+    // Fixed year text style during motionCompact — no center/side fontSize swap mid-fling.
+    const yearStyle = compact
+      ? styles.yearTextSide
+      : isCenter
+        ? styles.yearTextCenter
+        : styles.yearTextSide;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text
-            style={[
-              styles.yearText,
-              isCenter ? styles.yearTextCenter : styles.yearTextSide,
-            ]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.yearText, yearStyle]} numberOfLines={1}>
             {label}
           </Text>
         </View>
@@ -366,8 +362,8 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
     const header = monthHeaderLabel(year, monthIndex0);
-    // Month heavy 35-cell grid only post-snap on center (showCenterExtras).
-    const mountGrid = isCenter && showExtras && year > 0;
+    // Month heavy 35-cell grid only idle center — never while motionCompact.
+    const mountGrid = showExtras && year > 0;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
@@ -388,14 +384,14 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
   }
 
   if (tile.kind === 'week' && tile.fromIso && tile.toIso) {
+    // Single-line header while compact; strip density must not grow mid-spin on center.
     const lines = weekHeaderLines(tile.fromIso, tile.toIso, showExtras);
-    // Heavy week strip only for center+neighbors full mode; center extras gate strip density.
     const mountStrip = isCenter ? showExtras : true;
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
+          <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
             {lines.map((line) => (
               <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
                 {line}
@@ -415,7 +411,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
+          <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
             {lines.map((line) => (
               <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={1}>
                 {line}
@@ -444,7 +440,7 @@ function PeriodLeafImpl({ tile, role, showCenterExtras, contentMode }: Props) {
     <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
       <MetalTabs />
       <View style={styles.page}>
-        <View style={[styles.wrapHeader, styles.wrapHeaderTall]}>
+        <View style={[styles.wrapHeader, showExtras ? styles.wrapHeaderTall : styles.wrapHeaderCompact]}>
           {wrapLines.map((line) => (
             <Text key={`${tile.key}:${line}`} style={styles.wrapHeaderText} numberOfLines={2}>
               {line}
@@ -572,6 +568,9 @@ const styles = StyleSheet.create({
   wrapHeaderTall: {
     minHeight: 40,
   },
+  wrapHeaderCompact: {
+    minHeight: 24,
+  },
   wrapHeaderText: {
     color: SET_B.body,
     fontSize: 10,
@@ -613,11 +612,14 @@ const styles = StyleSheet.create({
   wrapBodyEmpty: {
     flex: 1,
   },
-  // Blur-out (expo-blur / CSS filter) — sharp chrome underneath, no ghost Text.
-  blurOutRoot: {
+  // Opacity-dim silhouette (no BlurView / CSS blur) — CAL-DRUM P0 N4.
+  dimOutRoot: {
     width: WHEEL_HERO_WIDTH,
     height: WHEEL_HERO_HEIGHT,
     overflow: 'hidden',
+  },
+  dimOutOpacity: {
+    opacity: 0.4,
   },
   silhouetteYearText: {
     fontSize: 26,

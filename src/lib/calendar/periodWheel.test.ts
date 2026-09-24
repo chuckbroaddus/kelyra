@@ -32,6 +32,7 @@ import {
   WHEEL_Z_CENTER,
   slotIndexForOffset,
   slotPoolKey,
+  stableSlotHostKey,
   wheelContentModeFor,
   wheelInFocusBand,
   wheelNormFromOffset,
@@ -127,6 +128,10 @@ test('SlotPool keys + content policy', () => {
   assert.equal(slotPoolKey('month', 4), 'month:4');
   assert.equal(slotPoolKey('year:2026', 0), 'year:2026:0');
   assert.equal(slotPoolKey('month:2026-09', 4), 'month:2026-09:4');
+  // P0: React hosts are slot-index only (no periodKey remount mid-fling).
+  assert.equal(stableSlotHostKey(0), 'slot-0');
+  assert.equal(stableSlotHostKey(4), 'slot-4');
+  assert.equal(stableSlotHostKey(8), 'slot-8');
   assert.equal(slotIndexForOffset(0), WHEEL_CENTER_INDEX);
   assert.equal(slotIndexForOffset(-4), 0);
   assert.equal(slotIndexForOffset(4), 8);
@@ -143,17 +148,23 @@ test('SlotPool keys + content policy', () => {
   assert.equal(wheelContentModeFor({ parkedOffset: -4, flinging: false }), 'silhouette');
 });
 
-test('PeriodPager is 9-slot SlotPool: reanimated native / CSS web; no translateZ; RM no tilt; no className', () => {
+test('PeriodPager is 9-slot SlotPool: reanimated native+web; no translateZ; RM no tilt; no className', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
   assert.match(pager, /WHEEL_SLOT_OFFSETS/);
   assert.match(pager, /WHEEL_PITCH/);
-  assert.match(pager, /slotPoolKey/);
-  assert.match(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
+  // P0: stable slot-${index} hosts — do NOT remount-key on tile.key mid-fling.
+  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey/);
+  assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
   assert.match(pager, /Math\.trunc\(-/);
   assert.doesNotMatch(pager, /Math\.round\(-dragShared/);
   assert.match(pager, /react-native-reanimated/);
   assert.match(pager, /willChange/);
+  // Web uses SharedValue + withSpring — no per-frame setWebDragPx.
+  assert.doesNotMatch(pager, /setWebDragPx/);
+  assert.doesNotMatch(pager, /WebSlotMotion/);
+  assert.match(pager, /withSpring/);
   assert.match(pager, /wheelContentModeFor|contentMode/);
   assert.match(pager, /if \(!tile\) return null/);
   assert.doesNotMatch(pager, /className\s*:/);
@@ -205,11 +216,14 @@ test('PeriodLeaf P1: memo MonthHangingGrid + contentMode + per-kind silhouettes'
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /key=\{`\$\{tile\.key\}:\$\{line\}`\}|key=\{`\$\{iso\}-\$\{i\}`\}/);
   assert.match(leaf, /mountGrid|showExtras/);
-  // Blur-out: expo-blur BlurView / web CSS filter; no SoftBlurText ghost.
-  assert.match(leaf, /BlurOut/);
-  assert.match(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  assert.match(leaf, /motionCompact/);
+  // CAL-DRUM P0 N4: opacity-dim silhouette — no BlurView / CSS blur on hot path.
+  assert.match(leaf, /DimOut/);
+  assert.match(leaf, /dimOutOpacity|opacity:\s*0\.4/);
+  assert.doesNotMatch(leaf, /from ['\"]expo-blur['\"]|<BlurView/);
+  assert.doesNotMatch(leaf, /BlurOut/);
   assert.doesNotMatch(leaf, /SoftBlurText/);
-  assert.match(leaf, /blur\(6px\)/);
+  assert.doesNotMatch(leaf, /blur\(6px\)/);
   assert.match(leaf, /yearPage/);
   assert.match(leaf, /SET_B\.header|#C62828/);
 });
