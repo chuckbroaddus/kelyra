@@ -81,8 +81,17 @@ test('SoftMark SoftMode static|working + ORBIT_PAD + absolute -pad host (no cent
   assert.match(shared, /resizeMode\s*=\s*['"]contain['"]/);
   assert.match(shared, /width:\s*size,[\s\S]*height:\s*size/);
   assert.ok(SOFT_INTRO.faceMs >= 200);
+  assert.ok(SOFT_INTRO.blinkMs >= 60);
   assert.ok(SOFT_INTRO.cometMs >= 300);
   assert.ok(SOFT_INTRO.outroMs >= 150);
+  // t_7dc9b8f1: SoftMarkShared must wire intro morph (not void-discard timings)
+  assert.match(shared, /SOFT_INTRO\.faceMs/);
+  assert.match(shared, /SOFT_INTRO\.blinkMs/);
+  assert.match(shared, /SOFT_INTRO\.cometMs/);
+  assert.match(shared, /SOFT_INTRO\.outroMs/);
+  assert.doesNotMatch(shared, /void SOFT_INTRO/);
+  assert.match(shared, /Animated\.timing\(faceGrow/);
+  assert.match(shared, /Animated\.timing\(cometIn/);
 });
 
 test('SoftMark has zero RN className on View props', () => {

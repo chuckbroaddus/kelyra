@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Image,
   Platform,
   StyleSheet,
@@ -24,6 +26,7 @@ import {
   SOFT_INTRO,
   SOFT_MOTION,
 } from '@/components/ui/softLetterScale';
+import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 export type SoftMode = 'static' | 'working';
 
@@ -182,16 +185,111 @@ export function SoftMark({
   accessibilityLabel?: string;
   accessible?: boolean;
 }) {
+  const reduce = useReducedMotion();
   const working = mode === 'working';
   const pad = Math.ceil(size * ORBIT_PAD_FRAC);
   const hostSize = size + pad * 2;
   const [frame, setFrame] = useState<SoftCometFrame>(() => softCometFrame(0, size));
   const [faceMotion, setFaceMotion] = useState<SoftFaceMotion>(IDLE_FACE);
+  /** Keep comet mounted through outro so SOFT_INTRO.cometMs / outroMs morph can run. */
+  const [cometMounted, setCometMounted] = useState(working);
 
-  // Outro: KelyraMark sets mode=static then waits SOFT_INTRO.outroMs before unmount.
-  void SOFT_INTRO.outroMs;
+  // t_7dc9b8f1: SoftMark owns intro — face grow, lids blink-open, comet zoom — then full orbit.
+  const faceGrow = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const faceOpacity = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const blinkOpen = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+  const cometIn = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
+
   void COMET_ORBIT.facingMode;
   void LETTER_INK.canvas;
+
+  useEffect(() => {
+    if (reduce) {
+      faceGrow.setValue(working ? 1 : 0);
+      faceOpacity.setValue(working ? 1 : 0);
+      blinkOpen.setValue(working ? 1 : 0);
+      cometIn.setValue(working ? 1 : 0);
+      setCometMounted(working);
+      return;
+    }
+    if (working) {
+      setCometMounted(true);
+      faceGrow.setValue(0);
+      faceOpacity.setValue(0);
+      blinkOpen.setValue(0);
+      cometIn.setValue(0);
+      const grow = Animated.timing(faceGrow, {
+        toValue: 1,
+        duration: SOFT_INTRO.faceMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      const show = Animated.timing(faceOpacity, {
+        toValue: 1,
+        duration: SOFT_INTRO.faceMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      // Lids: closed → open blink (then looping glance/blink takes over via faceMotion).
+      const lids = Animated.sequence([
+        Animated.timing(blinkOpen, {
+          toValue: 1,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blinkOpen, {
+          toValue: 0.15,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blinkOpen, {
+          toValue: 1,
+          duration: SOFT_INTRO.blinkMs,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]);
+      const cometZoom = Animated.timing(cometIn, {
+        toValue: 1,
+        duration: SOFT_INTRO.cometMs,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      const intro = Animated.parallel([grow, show, lids, cometZoom]);
+      intro.start();
+      return () => {
+        intro.stop();
+      };
+    }
+    const outro = Animated.parallel([
+      Animated.timing(faceGrow, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(faceOpacity, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cometIn, {
+        toValue: 0,
+        duration: SOFT_INTRO.outroMs,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]);
+    outro.start(({ finished }) => {
+      if (finished) setCometMounted(false);
+    });
+    return () => {
+      outro.stop();
+    };
+  }, [working, reduce, faceGrow, faceOpacity, blinkOpen, cometIn]);
 
   useEffect(() => {
     if (!working) {
@@ -220,17 +318,59 @@ export function SoftMark({
     };
   }, [working, size]);
 
+
+  // Drive lids closed→open during SOFT_INTRO.blinkMs so eyes don't pop fully open.
+  const [lidOverride, setLidOverride] = useState<number | null>(working && !reduce ? 1 : null);
+  useEffect(() => {
+    if (reduce) {
+      setLidOverride(null);
+      return;
+    }
+    if (!working) {
+      setLidOverride(null);
+      return;
+    }
+    setLidOverride(1); // closed
+    const id = blinkOpen.addListener(({ value }) => {
+      // blinkOpen 0→1 maps to lidScaleY 1→0.06 (closed→SoT open)
+      const open = Math.max(0, Math.min(1, value));
+      setLidOverride(1 - open * (1 - 0.06));
+    });
+    const clearTimer = setTimeout(() => {
+      setLidOverride(null); // hand off to looping faceMotion blink
+    }, SOFT_INTRO.blinkMs * 3 + SOFT_INTRO.faceMs);
+    return () => {
+      blinkOpen.removeListener(id);
+      clearTimeout(clearTimer);
+    };
+  }, [working, reduce, blinkOpen]);
+
+  const faceMotionForRender: SoftFaceMotion =
+    lidOverride == null
+      ? faceMotion
+      : { ...faceMotion, lidScaleY: lidOverride, lid2ScaleY: lidOverride };
+
   const comet = useMemo(() => {
-    if (!working) return null;
+    if (!cometMounted) return null;
     return (
-      <CometLayer
-        frame={frame}
-        hostSize={hostSize}
-        pad={pad}
-        zIndex={frame.front ? Z_FRONT : Z_BEHIND}
-      />
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          opacity: cometIn,
+          transform: [{ scale: cometIn.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }) }],
+          zIndex: frame.front ? Z_FRONT : Z_BEHIND,
+        }}
+      >
+        <CometLayer
+          frame={frame}
+          hostSize={hostSize}
+          pad={pad}
+          zIndex={0}
+        />
+      </Animated.View>
     );
-  }, [working, frame, hostSize, pad]);
+  }, [cometMounted, frame, hostSize, pad, cometIn]);
 
   return (
     <View
@@ -255,7 +395,7 @@ export function SoftMark({
           overflow: 'visible',
         }}
       >
-        {working && !frame.front ? comet : null}
+        {cometMounted && !frame.front ? comet : null}
         <View
           collapsable={false}
           style={[
@@ -275,10 +415,27 @@ export function SoftMark({
             resizeMode="contain"
             style={{ width: size, height: size }}
           />
-          {/* Sibling after letter Image — zIndex/elevation so face is not under PNG */}
-          <SoftFaceEyesGlasses size={size} motion={faceMotion} />
+          {/* Sibling after letter Image — zIndex/elevation so face is not under PNG.
+              Intro: SOFT_INTRO.faceMs grow + blinkMs lids (via blinkOpen) then full glance/blink. */}
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              opacity: faceOpacity,
+              transform: [
+                {
+                  scale: faceGrow.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.2, 1],
+                  }),
+                },
+              ],
+            }}
+          >
+            <SoftFaceEyesGlasses size={size} motion={faceMotionForRender} />
+          </Animated.View>
         </View>
-        {working && frame.front ? comet : null}
+        {cometMounted && frame.front ? comet : null}
       </View>
     </View>
   );
