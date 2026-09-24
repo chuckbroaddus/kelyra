@@ -45,6 +45,7 @@ import {
 } from '@/lib/calendar/calendarSession';
 import {
   DAY_LIST_WINDOW_DAYS,
+  dayListOriginAround,
   dayListOriginForTarget,
   listAnchorDayFromScroll,
   planDayListDrumShift,
@@ -170,7 +171,7 @@ export default function CalendarScreen() {
   const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
   /** CAL-P6-5C: painted Day List window origin — separate from listAnchorDay (dayAnchor). */
-  const [dayListOrigin, setDayListOrigin] = useState(() => dayRangeContaining().day);
+  const [dayListOrigin, setDayListOrigin] = useState(() => dayListOriginAround(dayRangeContaining().day));
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
@@ -229,7 +230,8 @@ export default function CalendarScreen() {
   const agendaRange = useMemo(() => agendaRangeFrom(agendaAnchor, 14), [agendaAnchor]);
   /**
    * CAL-R5-11 / CAL-P6-5C Day List — continuous window from dayListOrigin.
-   * dayAnchor is listAnchorDay (drum center); origin stays stable on settle.
+   * dayAnchor is listAnchorDay (drum center); origin slides near either edge
+   * so list scroll stays infinite (CEO 2026-09-24).
    */
   const dayListRange = useMemo(
     () => agendaRangeFrom(dayListOrigin, DAY_LIST_WINDOW_DAYS),
@@ -527,13 +529,17 @@ export default function CalendarScreen() {
     const localY = Math.max(0, dayListScrollYRef.current - dayListOriginYRef.current);
     const day = listAnchorDayFromScroll(dayListSectionsRef.current, localY);
     if (!day || day === dayAnchor) return;
-    // CAL-P6-5C-03: settle writes SoT only — do not rebase painted window.
+    // Slide painted window when top day nears either edge (infinite list).
     const plan = planDayListScrollSettle({
       origin: dayListOrigin,
       currentAnchor: dayAnchor,
       topDay: day,
     });
     setDayAnchor(plan.nextAnchor);
+    if (plan.scroll === 'rebase') {
+      pendingDayListScrollRef.current = plan.nextAnchor;
+      setDayListOrigin(plan.nextOrigin);
+    }
   }, [activeView, dayMode, dayAnchor, dayListOrigin]);
 
   const onScreenScroll = useCallback(
@@ -558,7 +564,7 @@ export default function CalendarScreen() {
         windowDays: DAY_LIST_WINDOW_DAYS,
       });
       setDayAnchor(plan.nextAnchor);
-      if (plan.scroll === 'zero') {
+      if (plan.scroll === 'rebase') {
         pendingDayListScrollRef.current = plan.nextAnchor;
         setDayListOrigin(plan.nextOrigin);
         return;
@@ -830,7 +836,7 @@ export default function CalendarScreen() {
       setDayAnchor(today);
       if (dayMode === 'list') {
         pendingDayListScrollRef.current = today;
-        setDayListOrigin(today);
+        setDayListOrigin(dayListOriginAround(today));
       }
     } else if (activeView === 'agenda') {
       setAgendaAnchor(today);
@@ -1100,7 +1106,7 @@ export default function CalendarScreen() {
             onPressItem={openItem}
             onPressDay={(iso) => {
               setDayAnchor(iso);
-              setDayListOrigin(iso);
+              setDayListOrigin(dayListOriginAround(iso));
               zoomTo('day');
             }}
             dayCount={stepperCount}
@@ -1156,7 +1162,7 @@ export default function CalendarScreen() {
               }}
               onZoomDay={(iso) => {
                 setDayAnchor(iso);
-                setDayListOrigin(iso);
+                setDayListOrigin(dayListOriginAround(iso));
                 setMonthSelectedDay(iso);
                 zoomTo('day');
               }}
@@ -1269,7 +1275,7 @@ export default function CalendarScreen() {
           setDayMode(mode);
           // Entering List: paint window from current listAnchorDay (stable until drum leaves range).
           if (mode === 'list') {
-            setDayListOrigin(dayAnchor);
+            setDayListOrigin(dayListOriginAround(dayAnchor));
             pendingDayListScrollRef.current = dayAnchor;
           }
           persistViewPrefs(activeView, dayCount, monthMode, mode);
