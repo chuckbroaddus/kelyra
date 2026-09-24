@@ -24,6 +24,7 @@ import {
   uploadRidePhoto,
   type DismissalLine,
 } from '@/lib/ride/api';
+import { applyWalkAttachForm } from '@/lib/ride/attachForm';
 import { nudgeCopy } from '@/lib/ride/copy';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -81,10 +82,13 @@ export default function StaffRideScreen() {
       if (!photo) return;
       const path = await uploadRidePhoto(session.user.id, photo.uri, photo.mimeType);
       const lpr = await invokeRideLpr(path);
-      const plate = lpr.plate ?? attachPlate.trim() ?? null;
-      if (lpr.make) setAttachMake(lpr.make);
-      if (lpr.model) setAttachModel(lpr.model);
-      if (lpr.plate) setAttachPlate(lpr.plate);
+      // Plate for this walk: LPR first, else whatever staff typed before the shot (not prior-car make/model).
+      const plate = (lpr.plate ?? attachPlate.trim()) || null;
+      // Always write plate/make/model ('' when null) so prior car never sticks; registry may refine next.
+      const preliminary = applyWalkAttachForm(lpr);
+      setAttachPlate(preliminary.plate || (plate ?? ''));
+      setAttachMake(preliminary.make);
+      setAttachModel(preliminary.model);
       const result = await staffWalkPhoto({
         lineId,
         storagePath: path,
@@ -94,6 +98,12 @@ export default function StaffRideScreen() {
         plateSource: lpr.plate ? 'lpr' : plate ? 'typed' : 'unknown',
         unknownFlag: !plate,
       });
+      // Registry wins for make/model/parent_id when plate lookup hits.
+      const applied = applyWalkAttachForm(lpr, result);
+      setAttachPlate(applied.plate || (plate ?? ''));
+      setAttachMake(applied.make);
+      setAttachModel(applied.model);
+      if (applied.parentId) setAttachParent(applied.parentId);
       if (typeof result.walk_id === 'string') setWalkId(result.walk_id);
       setSeq((n) => n + 1);
       await refresh(lineId);
