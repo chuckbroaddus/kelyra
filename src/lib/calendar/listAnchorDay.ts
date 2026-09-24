@@ -12,14 +12,15 @@ import { CAL_P6_5C_LIST_ANCHOR } from './p6Laws.ts';
 
 export { CAL_P6_5C_LIST_ANCHOR };
 
-/** Continuous Day List painted length (CAL-R5-11 density A spirit). */
-export const DAY_LIST_WINDOW_DAYS = 21;
+/** Continuous Day List painted length (CAL-R5-11); must stay > 2 * EDGE_PAD. */
+export const DAY_LIST_WINDOW_DAYS = 42;
 
 /**
  * Rebase when the top day is within this many slots of either painted edge.
- * Leaves runway above/below so the user can keep scrolling.
+ * Must be ≥ typical on-screen day count (~8–14); otherwise max-scroll leaves the
+ * top day in the "safe" mid-band and the window never slides (CEO 2026-09-24).
  */
-export const DAY_LIST_EDGE_PAD = 5;
+export const DAY_LIST_EDGE_PAD = 14;
 
 export type DaySectionOffset = { day: string; y: number };
 

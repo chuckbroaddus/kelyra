@@ -191,6 +191,8 @@ export default function CalendarScreen() {
   const dayListSectionsRef = useRef<DaySectionOffset[]>([]);
   const dayListOriginYRef = useRef(0);
   const dayListScrollYRef = useRef(0);
+  /** Screen ScrollView metrics — rebase when near content ends even if top-day pad lags. */
+  const dayListScrollMetricsRef = useRef({ contentH: 0, layoutH: 0 });
   const dayListSyncFromDrumRef = useRef(false);
   const dayListSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** After window rebase, scroll this day to top once sections remeasure. */
@@ -528,15 +530,38 @@ export default function CalendarScreen() {
     if (dayListSyncFromDrumRef.current) return;
     const localY = Math.max(0, dayListScrollYRef.current - dayListOriginYRef.current);
     const day = listAnchorDayFromScroll(dayListSectionsRef.current, localY);
-    if (!day || day === dayAnchor) return;
+    if (!day) return;
     // Slide painted window when top day nears either edge (infinite list).
-    const plan = planDayListScrollSettle({
+    let plan = planDayListScrollSettle({
       origin: dayListOrigin,
       currentAnchor: dayAnchor,
       topDay: day,
     });
+    // Belt: if scroll is physically at a content end but day-index pad did not
+    // fire (short sections / tall viewport), force a rebase around the top day.
+    if (plan.scroll === 'none') {
+      const { contentH, layoutH } = dayListScrollMetricsRef.current;
+      const y = dayListScrollYRef.current;
+      const listTop = dayListOriginYRef.current;
+      const distFromEnd = contentH - (y + layoutH);
+      const nearEnd = contentH > 0 && layoutH > 0 && distFromEnd < 280;
+      const nearStart = y < listTop + 280;
+      if (nearEnd || nearStart) {
+        const nextOrigin = dayListOriginAround(day);
+        if (nextOrigin !== dayListOrigin) {
+          plan = {
+            nextAnchor: day,
+            nextOrigin,
+            originChanged: true,
+            scroll: 'rebase',
+          };
+        }
+      }
+    }
+    if (day === dayAnchor && plan.scroll === 'none') return;
     setDayAnchor(plan.nextAnchor);
     if (plan.scroll === 'rebase') {
+      dayListSyncFromDrumRef.current = true;
       pendingDayListScrollRef.current = plan.nextAnchor;
       setDayListOrigin(plan.nextOrigin);
     }
@@ -544,7 +569,12 @@ export default function CalendarScreen() {
 
   const onScreenScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      dayListScrollYRef.current = event.nativeEvent.contentOffset.y;
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      dayListScrollYRef.current = contentOffset.y;
+      dayListScrollMetricsRef.current = {
+        contentH: contentSize.height,
+        layoutH: layoutMeasurement.height,
+      };
       if (activeView !== 'day' || dayMode !== 'list') return;
       if (dayListSyncFromDrumRef.current) return;
       if (dayListSettleTimerRef.current) clearTimeout(dayListSettleTimerRef.current);

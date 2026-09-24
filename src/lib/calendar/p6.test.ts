@@ -12,6 +12,7 @@ import {
   saveCalendarSession,
 } from './calendarSession.ts';
 import {
+  DAY_LIST_EDGE_PAD,
   DAY_LIST_WINDOW_DAYS,
   dayInListWindow,
   dayListOriginForTarget,
@@ -99,10 +100,13 @@ test('CAL-P6-5C: Day List mounts drum; listAnchorDay lockstep helpers + wiring',
 });
 
 test('CAL-P6-5C behavioral: mid-band stable; edge settle/drum rebase with pad', () => {
-  // Painted origin sits EDGE_PAD before the viewport top so both directions have runway.
-  const origin = '2026-09-13';
-  const mid = '2026-09-18';  // idx 5 — first safe mid-band slot
-  assert.equal(DAY_LIST_WINDOW_DAYS, 21);
+  // Painted origin sits EDGE_PAD before viewport top; window must stay > 2*pad.
+  assert.ok(DAY_LIST_WINDOW_DAYS > 2 * DAY_LIST_EDGE_PAD);
+  assert.equal(DAY_LIST_WINDOW_DAYS, 42);
+  assert.equal(DAY_LIST_EDGE_PAD, 14);
+
+  const origin = '2026-09-04';
+  const mid = '2026-09-18'; // idx 14 — first safe mid-band slot
   assert.equal(dayInListWindow(origin, mid), true);
 
   // Drum +1 while next day still in safe mid-band → section scroll, origin stable.
@@ -112,7 +116,7 @@ test('CAL-P6-5C behavioral: mid-band stable; edge settle/drum rebase with pad', 
   assert.equal(inWindow.scroll, 'section');
 
   const afterDrumSections = [
-    { day: '2026-09-13', y: 0 },
+    { day: '2026-09-04', y: 0 },
     { day: '2026-09-18', y: 600 },
     { day: '2026-09-19', y: 720 },
     { day: '2026-09-20', y: 840 },
@@ -140,25 +144,25 @@ test('CAL-P6-5C behavioral: mid-band stable; edge settle/drum rebase with pad', 
     'mid-band settle target must not rebase origin',
   );
 
-  // Near far edge: settle rebases so top day sits at EDGE_PAD.
+  // Near far edge (idx > W-1-pad = 27): rebase so top sits at EDGE_PAD.
   const nearEnd = planDayListScrollSettle({
     origin: '2026-09-01',
-    currentAnchor: '2026-09-15',
-    topDay: '2026-09-17', // idx 16 of 21 → past pad from end (pad=5 → rebase when idx>15)
+    currentAnchor: '2026-09-28',
+    topDay: '2026-09-29', // idx 28
   });
-  assert.equal(nearEnd.nextAnchor, '2026-09-17');
+  assert.equal(nearEnd.nextAnchor, '2026-09-29');
   assert.equal(nearEnd.originChanged, true);
   assert.equal(nearEnd.scroll, 'rebase');
-  assert.equal(nearEnd.nextOrigin, '2026-09-12'); // target - EDGE_PAD(5)
+  assert.equal(nearEnd.nextOrigin, '2026-09-15'); // target - 14
 
   // Drum past safe band rebases with pad; scroll mode rebase.
   const pastEnd = planDayListDrumShift({
     origin: '2026-09-01',
-    anchor: '2026-09-16',
+    anchor: '2026-09-28',
     steps: 1,
   });
-  assert.equal(pastEnd.nextAnchor, '2026-09-17');
-  assert.equal(pastEnd.nextOrigin, '2026-09-12');
+  assert.equal(pastEnd.nextAnchor, '2026-09-29');
+  assert.equal(pastEnd.nextOrigin, '2026-09-15');
   assert.equal(pastEnd.scroll, 'rebase');
 });
 

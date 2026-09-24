@@ -74,6 +74,11 @@ export function AgendaList({
   };
 
   useEffect(() => {
+    // Drop Ys for days that left the painted window so rebase scroll math stays clean.
+    const keep = new Set(visibleDays);
+    for (const key of [...offsetsRef.current.keys()]) {
+      if (!keep.has(key)) offsetsRef.current.delete(key);
+    }
     publishOffsets();
     // Re-publish when the visible day set changes (drum re-anchor / range shift).
     // eslint-disable-next-line react-hooks/exhaustive-deps -- publish from latest offsets map
