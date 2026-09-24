@@ -61,6 +61,11 @@ import {
   toggleLayerEnabled,
 } from '@/lib/calendar/filters';
 import {
+  DAY_LIST_WINDOW_DAYS,
+  dayListOriginAround,
+  dayListWindowDays,
+} from '@/lib/calendar/listAnchorDay';
+import {
   agendaRangeFrom,
   dayRangeContaining,
   dayRpcBounds,
@@ -473,7 +478,8 @@ export default function CalendarScreen() {
   );
 
   const onCommitAdjacentDay = useCallback((dir: -1 | 1) => {
-    setDayAnchor((prev) => shiftDay(prev, dir));
+    // Multi-day Day List window: edge rubber slides a week (Month List slides a month).
+    setDayAnchor((prev) => shiftDay(prev, dir * 7));
   }, []);
 
   const onChangeDayCount = useCallback(
@@ -618,7 +624,9 @@ export default function CalendarScreen() {
       } else if (activeView === 'day') {
         // List mode: small pad around dayAnchor so adjacent soft-commits stay warm.
         if (dayMode === 'list') {
-          const bounds = dayRpcBounds(shiftDay(dayAnchor, -3), shiftDay(dayAnchor, 3));
+          const origin = dayListOriginAround(dayAnchor);
+          const windowDays = dayListWindowDays(origin, DAY_LIST_WINDOW_DAYS);
+          const bounds = dayRpcBounds(windowDays[0]!, windowDays[windowDays.length - 1]!);
           from = bounds.from;
           to = bounds.to;
         } else {
@@ -1229,6 +1237,10 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   monthListHost: {
+    flex: 1,
+    minHeight: 0,
+  },
+  dayListHost: {
     flex: 1,
     minHeight: 0,
   },

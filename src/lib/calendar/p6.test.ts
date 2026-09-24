@@ -66,7 +66,7 @@ test('CAL-P6-1A: full-band drum — carve 0; start-on-drum pages; no pageX left 
   assert.match(pager, /GestureDetector|manualActivation\(true\)/);
 });
 
-test('CAL-P6-5C: Day List mounts drum; soft day-page lockstep with header', () => {
+test('CAL-P6-5C: Day List mounts drum; multi-day window with empty stubs', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
 
   const screen = read('src/app/calendar.tsx');
@@ -75,16 +75,18 @@ test('CAL-P6-5C: Day List mounts drum; soft day-page lockstep with header', () =
   assert.match(screen, /onCommitAdjacentDay/);
   assert.match(screen, /applyDayListDrumShift/);
   assert.match(screen, /scroll=\{!monthListMode && !dayListMode\}/);
+  assert.match(screen, /dayListHost/);
   assert.match(screen, /CAL-P6-5C|CAL_P6_5C_LIST_ANCHOR/);
-  // Drum + soft commit both write dayAnchor (header + PeriodPager SoT).
-  assert.match(screen, /setDayAnchor\(\(prev\) => shiftDay\(prev/);
+  // Soft edge slides a week; drum still shifts dayAnchor one step.
+  assert.match(screen, /shiftDay\(prev, dir \* 7\)/);
 
   const pane = read('src/components/calendar/DayListPane.tsx');
-  assert.match(pane, /formatCalendarDisplayDate/);
+  assert.match(pane, /dayListWindowDays/);
+  assert.match(pane, /includeEmptyDays/);
   assert.match(pane, /dayListCommitDir/);
   assert.match(pane, /onCommitAdjacentDay/);
   assert.match(pane, /chrome\?\.onScroll\(event\)/);
-  assert.match(pane, /hideDayHeadings/);
+  assert.doesNotMatch(pane, /hideDayHeadings/);
 });
 
 test('CAL-P6-5C behavioral: day list soft edge commits adjacent day', () => {
