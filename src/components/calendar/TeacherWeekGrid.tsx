@@ -51,6 +51,8 @@ type Props = {
   monthTitle?: string;
   /** Sticky CalendarPeriodTitle (outside CalendarZoomDrill) owns the header — skip ours. */
   hideTitle?: boolean;
+  /** Sticky CalendarWeekdayRow owns Sun…Sat (7-day Week) — headers show day numbers only. */
+  hideWeekdayLabels?: boolean;
   /** When set with onChangeDayCount, pinch (full motion) adjusts 7↔5↔3. */
   dayCount?: MultidayCount;
   onChangeDayCount?: (count: MultidayCount) => void;
@@ -75,6 +77,7 @@ export function TeacherWeekGrid({
   drillFocusDayIndex = null,
   monthTitle,
   hideTitle = false,
+  hideWeekdayLabels = false,
 }: Props) {
   const { colors } = useTheme();
   const today = todayISO();
@@ -178,11 +181,13 @@ export function TeacherWeekGrid({
                   }
                 : null)}
             >
-              <Text
-                style={[styles.weekday, { color: isToday ? colors.brand : colors.mute }]}
-              >
-                {weekdayShort(day).toUpperCase()}
-              </Text>
+              {hideWeekdayLabels ? null : (
+                <Text
+                  style={[styles.weekday, { color: isToday ? colors.brand : colors.mute }]}
+                >
+                  {weekdayShort(day).toUpperCase()}
+                </Text>
+              )}
               <Text
                 numberOfLines={1}
                 allowFontScaling={false}
