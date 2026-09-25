@@ -77,7 +77,10 @@ async function resizeWithManipulator(
           },
         ]
       : [];
-  const result = await ImageManipulator.manipulateAsync(info.uri, actions, {
+  // PNG-ALPHA: the no-op measure call above re-encodes as JPEG (the default format), which
+  // flattens a transparent cutout onto white. Feed PNGs from the original file instead.
+  const source = png ? uri : info.uri;
+  const result = await ImageManipulator.manipulateAsync(source, actions, {
     compress: quality,
     format: png ? ImageManipulator.SaveFormat.PNG : ImageManipulator.SaveFormat.JPEG,
   });
