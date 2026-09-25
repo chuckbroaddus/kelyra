@@ -85,6 +85,13 @@ type Props<T> = {
    * fixed-offset for getItemLayout, so this must be deterministic. Keep it memoized.
    */
   itemHeight?: (item: T) => number;
+  /**
+   * JOURNAL-REVEAL: bump to scroll `revealDay`'s header to the top once the next
+   * refresh lands (a just-saved entry shows first instead of above the viewport —
+   * native maintainVisibleContentPosition otherwise keeps the old top row in place).
+   */
+  revealNonce?: number;
+  revealDay?: string;
   /** Label under an empty day (default "No events"). */
   emptyLabel?: string;
   /**
@@ -157,6 +164,8 @@ export function DayListPane<T = CalendarItem>({
   matchesQuery,
   renderItem,
   itemHeight,
+  revealNonce = 0,
+  revealDay,
   emptyLabel = 'No events',
   collapseChrome = true,
 }: Props<T>) {
@@ -390,6 +399,34 @@ export function DayListPane<T = CalendarItem>({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- jumpNonce is the trigger
   }, [jumpNonce]);
+
+  // JOURNAL-REVEAL: arm on nonce, fire on the first layout after the refresh lands.
+  const pendingRevealRef = useRef<string | null>(null);
+  const revealItemsRef = useRef(itemsByDay);
+  useEffect(() => {
+    if (!revealNonce || !revealDay) return;
+    pendingRevealRef.current = revealDay;
+    revealItemsRef.current = itemsByDay;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revealNonce is the trigger
+  }, [revealNonce]);
+  useLayoutEffect(() => {
+    const target = pendingRevealRef.current;
+    if (!target || itemsByDay === revealItemsRef.current) return;
+    pendingRevealRef.current = null;
+    const idx = layout.days.indexOf(target);
+    if (idx < 0) {
+      seed(target);
+      return;
+    }
+    const offset = layout.headerOffsets[idx]!;
+    reportTop(target);
+    setFollow(dayListDayNumber(target));
+    // After maintainVisibleContentPosition has applied its own shift for the insert.
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToOffset({ offset, animated: true });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout, itemsByDay]);
 
   /** CAL-LIST-FOLLOW: true while the drum drives the list (hold chrome + top-day reports). */
   const drivingRef = useRef(false);

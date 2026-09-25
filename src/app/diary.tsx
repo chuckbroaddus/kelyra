@@ -150,6 +150,7 @@ export default function DiaryScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** Day List: jump nonce (drum / Today) + reload key (filters, save, delete). */
   const [listJump, setListJump] = useState(0);
+  const [listReveal, setListReveal] = useState<{ day: string; nonce: number }>({ day: '', nonce: 0 });
   const [listReload, setListReload] = useState(0);
   const listFollow = useSharedValue(0);
   const listDrive = useSharedValue(Number.NaN);
@@ -618,6 +619,8 @@ export default function DiaryScreen() {
         }
       }
       setDraft(null);
+      // JOURNAL-REVEAL: a new entry lands at the top of the list, not above the viewport.
+      if (!editing) setListReveal((r) => ({ day: entryDate, nonce: r.nonce + 1 }));
       setListReload((k) => k + 1);
       await refresh();
       if (failed.length) {
@@ -1024,6 +1027,8 @@ export default function DiaryScreen() {
             jumpNonce={listJump}
             fetchRange={fetchJournalRange}
             reloadKey={listReload}
+            revealNonce={listReveal.nonce}
+            revealDay={listReveal.day}
             query={searchQuery}
             onTopDayChange={setSelectedDay}
             followPosition={listFollow}
