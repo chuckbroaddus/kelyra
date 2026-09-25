@@ -122,9 +122,20 @@ export async function provisionParentLogin(parentId: string): Promise<Provisione
   };
 }
 
-export async function listDirectory(): Promise<DirectoryPerson[]> {
+export async function setPersonActive(profileId: string, active: boolean): Promise<void> {
+  const { error } = await requireSupabase().rpc('admin_set_person_active', {
+    p_profile_id: profileId,
+    p_active: active,
+  });
+  if (error) throw new Error(error.message || error.details || (active ? 'Could not restore' : 'Could not delete'));
+}
+
+/** PEOPLE-DEACTIVATE: deactivated people are hidden unless the caller asks for them (office People). */
+export async function listDirectory(options?: { includeDeactivated?: boolean }): Promise<DirectoryPerson[]> {
   const { photoUrlsForProfiles } = await import('@/lib/people/photos');
-  const people = await listProfiles();
+  const people = (await listProfiles()).filter(
+    (row) => options?.includeDeactivated || !row.deactivated_at,
+  );
   const studentIds = [...new Set(people.map((row) => row.student_id).filter((id): id is string => Boolean(id)))];
   const parentIds = [...new Set(people.map((row) => row.parent_id).filter((id): id is string => Boolean(id)))];
   const supabase = requireSupabase();
