@@ -8,6 +8,7 @@ import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { DiaryFileChip, DiaryLinkCard, DiaryRowMedia } from '@/components/diary/DiaryEntryMedia';
 import { DiarySettingsSheet } from '@/components/diary/DiarySettingsSheet';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
+import { AttachMenu, PlusGlyph, type AttachChoice } from '@/components/ui/AttachMenu';
 import { Avatar } from '@/components/ui/Avatar';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { FormSheet } from '@/components/ui/FormSheet';
@@ -16,7 +17,6 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { PersonTabs } from '@/components/ui/PersonTabs';
-import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { Screen } from '@/components/ui/Screen';
 import { SwipeActionCard } from '@/components/ui/SwipeActionCard';
@@ -61,9 +61,9 @@ import type { DiaryDraft, DiaryEntryRow, DiaryMediaRow, LedgerEventRow } from '@
 import { pickMessageDocument } from '@/lib/messages/attachments';
 import { firstName, formatWhen } from '@/lib/format';
 import { listTaughtClasses } from '@/lib/lessons/api';
-import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
+import { startDictation, type Dictation } from '@/lib/media/dictation';
+import { joinDictation } from '@/lib/media/dictationText';
 import { pickRawPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
 import { listRoster } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { useReducedMotion } from '@/lib/ui/reducedMotion';
@@ -93,6 +93,8 @@ type DictateTarget = 'title' | 'body';
 const NO_CLASS_TAB = 'none';
 /** Mic glyph on the solid red recording circle. */
 const MIC_ON_INK = '#FFFFFF';
+/** Body "+" arm length: two bars (Ask composer technique) sized to read like the 20 px mic glyph. */
+const PLUS_GLYPH = 14;
 
 export default function DiaryScreen() {
   const { colors } = useTheme();
@@ -163,9 +165,13 @@ export default function DiaryScreen() {
   const [titleH, setTitleH] = useState(TITLE_MIN_H);
   const [bodyH, setBodyH] = useState(BODY_MIN_H);
   const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
-  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
+  /** Ask-style inline attach menu under the Body box (Photo · Camera · File · Link). */
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkDraft, setLinkDraft] = useState('');
   const [cameraOpen, setCameraOpen] = useState(false);
-  const liveRef = useRef<LiveRecording | null>(null);
+  /** The live dictation session (device speech first, AI fallback) and the field text it started from. */
+  const dictationRef = useRef<{ target: DictateTarget; session: Dictation | null; base: string } | null>(null);
   const failClosedEmpty = parentTwinsFailClosed(children.length, focusedChildId) && seat === 'parent';
   /** Fetchers read filters through a ref so the Day List only refetches on reloadKey (Done). */
   const filtersRef = useRef({
@@ -560,6 +566,8 @@ export default function DiaryScreen() {
       }
       setStaged([]);
       setComposerOpen(false);
+      setAttachMenuOpen(false);
+      setLinkOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save');
     } finally {
@@ -573,7 +581,7 @@ export default function DiaryScreen() {
   }
 
   async function attachFileFromPicker() {
-    setPhotoSheetOpen(false);
+    setAttachMenuOpen(false);
     setError(null);
     try {
       if (Platform.OS !== 'web') await waitForModalDismiss();
@@ -588,7 +596,7 @@ export default function DiaryScreen() {
 
   async function attachPhotoFromSource(fromCamera: boolean) {
     if (!profile?.id || !seat) return;
-    setPhotoSheetOpen(false);
+    setAttachMenuOpen(false);
     setError(null);
     setNotice(null);
     if (fromCamera && webCameraNeeded(true)) {
@@ -606,6 +614,31 @@ export default function DiaryScreen() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function onAttachChoice(choice: AttachChoice) {
+    setAttachMenuOpen(false);
+    if (choice === 'link') {
+      setLinkDraft('');
+      setLinkOpen(true);
+      return;
+    }
+    setLinkOpen(false);
+    if (choice === 'file') void attachFileFromPicker();
+    else void attachPhotoFromSource(choice === 'camera');
+  }
+
+  /** Link choice: the address goes into the Body, which renders it as a card. */
+  function addLinkToBody() {
+    const url = diaryBodyUrls(linkDraft)[0];
+    if (!url) {
+      setError('Enter a web address, like https://example.com');
+      return;
+    }
+    setError(null);
+    setBody((current) => (current.trim() ? `${current.trimEnd()}\n${url}` : url));
+    setLinkDraft('');
+    setLinkOpen(false);
   }
 
   async function finishAttachPhoto(uri: string, mimeType: string) {
@@ -639,36 +672,52 @@ export default function DiaryScreen() {
   }
 
   async function startDictate(target: DictateTarget) {
-    if (liveRef.current) return;
+    if (dictationRef.current) return;
     setError(null);
     setNotice(null);
+    const base = target === 'title' ? title : body;
+    const setField = target === 'title' ? setTitle : setBody;
+    const slot: { target: DictateTarget; session: Dictation | null; base: string } = { target, session: null, base };
+    dictationRef.current = slot;
     try {
-      const live = await startLiveRecording();
-      liveRef.current = live;
+      // DEVICE-STT: the device's own speech recognition when available (live words); AI only otherwise.
+      const session = await startDictation({
+        onPartial: (text) => {
+          if (dictationRef.current === slot) setField(joinDictation(base, text));
+        },
+        onEnded: () => {
+          if (dictationRef.current === slot) void stopDictate();
+        },
+        onTranscribing: () => setTranscribing(true),
+      });
+      if (dictationRef.current !== slot) {
+        session.cancel();
+        return;
+      }
+      slot.session = session;
       setDictateTarget(target);
     } catch (err) {
-      liveRef.current = null;
+      if (dictationRef.current === slot) dictationRef.current = null;
       setDictateTarget(null);
       setError(err instanceof Error ? err.message : 'Could not start mic');
     }
   }
 
   async function stopDictate() {
-    const live = liveRef.current;
-    const target = dictateTarget;
-    liveRef.current = null;
-    if (!live || !target) {
+    const slot = dictationRef.current;
+    dictationRef.current = null;
+    if (!slot?.session) {
       setDictateTarget(null);
       return;
     }
+    const { session, target, base } = slot;
+    const setField = target === 'title' ? setTitle : setBody;
     setBusy(true);
-    setTranscribing(true);
     try {
-      const audio = await live.stop();
-      const text = await transcribeAudioDirect({ uri: audio.uri, mimeType: audio.mimeType });
-      const setField = target === 'title' ? setTitle : setBody;
-      if (text) setField((current) => (current.trim() ? `${current.trim()} ${text}` : text));
-      setNotice(`Transcript added to ${target === 'title' ? 'Title' : 'Body'} — edit before Done.`);
+      const text = await session.stop();
+      if (session.mode === 'device') setField(joinDictation(base, text));
+      else if (text) setField((current) => joinDictation(current, text));
+      if (text) setNotice(`Transcript added to ${target === 'title' ? 'Title' : 'Body'} — edit before Done.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not transcribe');
     } finally {
@@ -939,6 +988,8 @@ export default function DiaryScreen() {
         title={editing ? 'Edit entry' : 'New entry'}
         onClose={() => {
           setComposerOpen(false);
+          setAttachMenuOpen(false);
+          setLinkOpen(false);
           setDraft(null);
           setComposerPhotos([]);
           setStaged([]);
@@ -981,16 +1032,36 @@ export default function DiaryScreen() {
           topAccessory={
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Attach photo, camera shot, or file"
+              accessibilityLabel="Add attachment"
+              accessibilityState={{ expanded: attachMenuOpen, disabled: busy || recording }}
               disabled={busy || recording}
               hitSlop={6}
-              onPress={() => setPhotoSheetOpen(true)}
+              onPress={() => setAttachMenuOpen((open) => !open)}
               style={[styles.micButton, (busy || recording) && { opacity: 0.4 }]}
             >
-              <Icon name="plus" size={20} color={colors.mute} />
+              <PlusGlyph color={colors.mute} size={PLUS_GLYPH} />
             </Pressable>
           }
         />
+        {attachMenuOpen ? <AttachMenu onPick={onAttachChoice} /> : null}
+        {linkOpen ? (
+          <View style={styles.linkRow}>
+            <View style={styles.linkField}>
+              <TextField
+                placeholder="Paste a link"
+                value={linkDraft}
+                onChangeText={setLinkDraft}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                autoFocus
+                onSubmitEditing={addLinkToBody}
+              />
+            </View>
+            <GhostButton label="Add" onPress={addLinkToBody} />
+            <IconButton name="close" label="Cancel link" tone="ghost" onPress={() => setLinkOpen(false)} />
+          </View>
+        ) : null}
         {staged.length || composerFiles.length || diaryBodyUrls(body).length ? (
           <View style={styles.attachStack}>
             {staged.filter((item) => item.kind === 'photo').length ? (
@@ -1168,14 +1239,6 @@ export default function DiaryScreen() {
         <PrimaryButton label={busy ? 'Saving…' : 'Done'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
 
-      <PhotoSheet
-        visible={photoSheetOpen}
-        title="Attach to entry"
-        onTake={() => void attachPhotoFromSource(true)}
-        onLibrary={() => void attachPhotoFromSource(false)}
-        onFile={() => void attachFileFromPicker()}
-        onCancel={() => setPhotoSheetOpen(false)}
-      />
 
       <Modal visible={cameraOpen} animationType="slide" onRequestClose={() => setCameraOpen(false)}>
         <WebCameraCapture
@@ -1349,6 +1412,8 @@ const styles = StyleSheet.create({
   titleBox: { minHeight: TITLE_MIN_H, maxHeight: TITLE_MAX_H },
   bodyBox: { minHeight: BODY_MIN_H, maxHeight: BODY_MAX_H },
   attachStack: { gap: 8 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  linkField: { flex: 1, minWidth: 0 },
   stagedPhotos: { gap: 8 },
   stagedRemove: {
     position: 'absolute',

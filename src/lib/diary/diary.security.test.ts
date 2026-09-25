@@ -202,11 +202,10 @@ test('t_05f7f139 / DB-B: journal month window + tag/studentId into listDiaryEntr
   assert.match(screen, /Tag to a Student - Kept private only in your Journal/);
 });
 
-test('t_369b456a: diary attach offers camera or library via PhotoSheet + pickRawPhoto', () => {
+test('t_369b456a: diary attach offers camera or library via AttachMenu + pickRawPhoto', () => {
   const screen = read('src/app/diary.tsx');
-  assert.match(screen, /PhotoSheet/);
-  assert.match(screen, /attachPhotoFromSource\(true\)/);
-  assert.match(screen, /attachPhotoFromSource\(false\)/);
+  assert.match(screen, /<AttachMenu/);
+  assert.match(screen, /attachPhotoFromSource\(choice === 'camera'\)/);
   assert.match(screen, /pickRawPhoto\(fromCamera\)/);
   assert.match(screen, /webCameraNeeded/);
   assert.match(screen, /WebCameraCapture/);
@@ -278,8 +277,11 @@ test('JOURNAL-ATTACH (CEO 2026-09-24): Title 1-3 / Body 3-7 rows, + attaches pho
   assert.match(screen, /const BODY_MAX_H = FIELD_LINE \* 7 \+ FIELD_CHROME;/);
   assert.match(composer, /topAccessory=\{/);
   assert.doesNotMatch(composer, /label="Attach photo"/);
-  assert.match(screen, /title="Attach to entry"/);
-  assert.match(screen, /onFile=\{/);
+  // Ask-style inline menu (Photo · Camera · File · Link), not a stacked modal sheet.
+  assert.match(composer, /<AttachMenu onPick=\{onAttachChoice\} \/>/);
+  assert.match(composer, /<PlusGlyph color=\{colors\.mute\} size=\{PLUS_GLYPH\} \/>/);
+  assert.doesNotMatch(screen, /<PhotoSheet/);
+  assert.match(read('src/components/ui/MessageComposer.tsx'), /<AttachMenu/);
   assert.match(screen, /<DiaryRowMedia/);
   assert.match(screen, /diaryBodyUrls\(body\)/);
   const api = read('src/lib/diary/api.ts');
