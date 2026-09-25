@@ -46,3 +46,13 @@ test('purge swipe label fits the tile as two short lines', () => {
   const admin = readFileSync(new URL('../../components/ui/PeopleAdmin.tsx', import.meta.url), 'utf8');
   assert.match(admin, /key: 'purge',[\s\S]{0,120}label: 'Perm\.\\nDelete',/);
 });
+
+test('purge fix: every cleanup delete is guarded so a missing table cannot abort the purge', () => {
+  const sql = read('../../../supabase/migrations/20260925160000_purge_person_fix.sql');
+  const body = sql.slice(sql.indexOf('create or replace function public.admin_purge_person'));
+  assert.doesNotMatch(body, /^\s*delete from public\./m);
+  assert.match(body, /purge_delete_rows\('post_dismissals', 'profile_id', target\.id\)/);
+  assert.match(sql, /to_regclass\(format\('public\.%I', p_table\)\) is null/);
+  assert.match(sql, /revoke all on function public\.purge_delete_rows\(text, text, uuid\) from public, anon, authenticated;/);
+  assert.match(body, /delete from auth\.users where id = target\.id;/);
+});
