@@ -13,3 +13,9 @@ test('office class card keeps its person tabs and feed pane', () => {
   assert.match(src, /<PersonTabs tabs=\{tabs\} value=\{pane\} onChange=\{setTab\} \/>/);
   assert.match(src, /<FeedPane classId=\{klass\.id\} scope="class" fill \/>/);
 });
+
+test('Students tab has no "New names on the school roster" helper (Chuck 2026-09-25)', () => {
+  assert.doesNotMatch(src, /New names on the school roster|Teachers enroll existing students/);
+  assert.match(src, /placeholder="First and last name"/);
+  assert.match(src, /onPress=\{\(\) => void addNewStudent\(\)\}/);
+});

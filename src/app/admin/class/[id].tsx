@@ -351,9 +351,6 @@ export default function ClassOfficeScreen() {
         <>
           <SectionHeader label="Students" first />
           <View style={styles.mint}>
-            <Text style={[type.meta, { color: colors.mute }]}>
-              New names on the school roster. Teachers enroll existing students into a class they teach.
-            </Text>
             <TextField
               placeholder="First and last name"
               value={newStudentName}
