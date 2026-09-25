@@ -72,6 +72,8 @@ type RosterChip = { id: string; display_name: string; photoUrl?: string | null }
 type DictateTarget = 'title' | 'body';
 /** Tab key for the entry's "No class" tab (last in the row). */
 const NO_CLASS_TAB = 'none';
+/** Mic glyph on the solid red recording circle. */
+const MIC_ON_INK = '#FFFFFF';
 
 export default function DiaryScreen() {
   const { colors } = useTheme();
@@ -614,11 +616,11 @@ export default function DiaryScreen() {
         onPress={() => void toggleDictate(target)}
         style={[
           styles.micButton,
-          active && { backgroundColor: colors.dangerSoft },
+          active && { backgroundColor: colors.danger },
           busy && !active && { opacity: 0.4 },
         ]}
       >
-        <Icon name="mic" size={20} color={active ? colors.danger : colors.mute} />
+        <Icon name="mic" size={20} color={active ? MIC_ON_INK : colors.mute} />
       </Pressable>
     );
   }
@@ -864,11 +866,7 @@ export default function DiaryScreen() {
           accessory={renderMic('body')}
           accessoryPlacement="bottom"
         />
-        {recording ? (
-          <Text style={[type.meta, { color: colors.danger }]}>
-            Recording {dictateTarget === 'title' ? 'Title' : 'Body'}… tap the mic again to stop.
-          </Text>
-        ) : transcribing ? (
+        {transcribing ? (
           <Text style={[type.meta, { color: colors.mute }]}>Transcribing…</Text>
         ) : null}
         <TextField

@@ -258,6 +258,9 @@ test('JOURNAL-ENTRY (CEO 2026-09-24): Done, Body before Date, class tabs + No cl
   assert.match(composer, /\.\.\.taughtClasses\.map[\s\S]*\{ key: NO_CLASS_TAB, label: 'No class', icon: 'none' as const \}/);
   assert.match(composer, /<Avatar/);
   assert.match(composer, /accessoryPlacement="bottom"/);
+  // Recording state = solid highlight circle behind the mic; no "Recording…" text line.
+  assert.match(screen, /active && \{ backgroundColor: colors\.danger \}/);
+  assert.doesNotMatch(composer, /Recording \{dictateTarget/);
   assert.match(read('scripts/build-icons.mjs'), /none: \(p\) =>/);
   assert.match(read('src/components/ui/Icon.tsx'), /\| 'none'/);
   assert.match(read('src/components/ui/TextField.tsx'), /accessory\?: ReactNode/);
