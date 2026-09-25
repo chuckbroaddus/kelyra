@@ -176,3 +176,11 @@ test('CAL-LIST-FOLLOW wiring: drum drive scrolls list live; reports held while d
   assert.match(pane, /if \(drivingRef\.current\) \{/);
   assert.match(screen, /drivePosition=\{dayListMode \? dayListDrive : null\}/);
 });
+
+test('CAL-LIST-PLUS + in Day List prefills start date with the sticky header day', () => {
+  const screen = readFileSync('src/app/calendar.tsx', 'utf8');
+  const composer = readFileSync('src/components/calendar/EventComposer.tsx', 'utf8');
+  assert.match(screen, /initialDate: dayListMode \? dayAnchor : null/);
+  assert.match(screen, /initialDate=\{composer\?\.initialDate \?\? null\}/);
+  assert.match(composer, /startDate: initialDate\.slice\(0, 10\)/);
+});

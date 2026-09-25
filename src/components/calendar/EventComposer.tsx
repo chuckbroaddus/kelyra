@@ -60,6 +60,8 @@ type Props = {
   layers?: CalendarLayer[];
   /** Phase E Ask parked draft — CR-A Review, not saved until Save. */
   initialDraft?: PendingCalendarDraft | null;
+  /** CAL-LIST-PLUS: prefill start date (e.g. Day List sticky header day) for a blank create. */
+  initialDate?: string | null;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -112,6 +114,7 @@ export function EventComposer({
   childStudentId,
   layers,
   initialDraft,
+  initialDate,
   onClose,
   onSaved,
 }: Props) {
@@ -212,7 +215,8 @@ export function EventComposer({
         setCaption(visibilityCaption(scopeForKind(next.kind), next.category));
         return;
       }
-      const next = emptyDraft(seat, classId, childStudentId);
+      const blank = emptyDraft(seat, classId, childStudentId);
+      const next: Draft = initialDate ? { ...blank, startDate: initialDate.slice(0, 10) } : blank;
       setDraft(next);
       setBaseline(next);
       setReadOnly(false);
@@ -268,7 +272,7 @@ export function EventComposer({
     return () => {
       cancelled = true;
     };
-  }, [visible, mode, eventId, seat, classId, childStudentId, initialDraft]);
+  }, [visible, mode, eventId, seat, classId, childStudentId, initialDraft, initialDate]);
 
   const heading = useMemo(() => {
     if (mode === 'create' && fromAsk) return REVIEW_DRAFT_BANNER;
