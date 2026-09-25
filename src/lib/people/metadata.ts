@@ -4,8 +4,8 @@ import {
   coerceBirthdayISO,
   formatBirthdayMd,
   parseLooseDate as parseBirthdayInput,
-} from '@/lib/date/iso';
-import type { ParentMetadataKey, StudentMetadataKey } from '@/lib/supabase/types';
+} from '../date/iso.ts';
+import type { ParentMetadataKey, StudentMetadataKey } from '../supabase/types.ts';
 
 export {
   birthdayForSave,
