@@ -282,6 +282,8 @@ test('JOURNAL-ATTACH (CEO 2026-09-24): Title 1-3 / Body 3-7 rows, + attaches pho
   assert.match(read('src/components/ui/TextField.tsx'), /topPopover\?: ReactNode/);
   assert.match(composer, /<PlusGlyph color=\{colors\.mute\} size=\{PLUS_GLYPH\} \/>/);
   assert.doesNotMatch(screen, /<PhotoSheet/);
+  // Body box has no placeholder text (CEO 2026-09-24).
+  assert.doesNotMatch(composer, /placeholder="Personal reflection/);
   assert.match(read('src/components/ui/MessageComposer.tsx'), /<AttachMenu/);
   assert.match(screen, /<DiaryRowMedia/);
   assert.match(screen, /diaryBodyUrls\(body\)/);
