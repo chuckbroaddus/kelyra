@@ -12,6 +12,8 @@ import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import {
   canDeactivatePerson,
   deactivateConfirmCopy,
+  purgeConfirmCopy,
+  purgedStatus,
   deactivatedStatus,
   isDeactivated,
   restoredStatus,
@@ -29,6 +31,7 @@ import {
   getProfile,
   listDirectory,
   setPersonActive,
+  purgePerson,
   listProfiles,
   resetLoginPassword,
   setAlsoHat,
@@ -84,6 +87,9 @@ export function PeopleDirectory() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; handle: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
+  // PEOPLE-PURGE: deleted rows also get "Permanently delete" (typed-name confirm).
+  const [purgeTarget, setPurgeTarget] = useState<{ id: string; name: string } | null>(null);
+  const [purging, setPurging] = useState(false);
 
   const load = useCallback(async () => {
     setRows(await listDirectory({ includeDeactivated: true }));
@@ -129,6 +135,12 @@ export function PeopleDirectory() {
               onPress: () => {
                 void apply(() => setPersonActive(row.id, true), restoredStatus(formatHandle(row.username)));
               },
+            });
+            trailing.push({
+              key: 'purge',
+              label: 'Permanently delete',
+              tone: 'danger',
+              onPress: () => setPurgeTarget({ id: row.id, name }),
             });
           }
         }
@@ -231,6 +243,7 @@ export function PeopleDirectory() {
   const parents = active.filter((row) => listedAsParent(row, rows ?? []));
   const deletedHere = rows?.filter((row) => isDeactivated(row) && inTab(row)) ?? [];
   const confirmCopy = deactivateConfirmCopy(deleteTarget?.name ?? 'this person');
+  const purgeCopy = purgeConfirmCopy(purgeTarget?.name ?? 'this person');
 
   return (
     <>
@@ -280,6 +293,34 @@ export function PeopleDirectory() {
               setError(err instanceof Error ? err.message : 'Could not delete');
             })
             .finally(() => setDeleting(false));
+        }}
+      />
+      <ConfirmSheet
+        visible={Boolean(purgeTarget)}
+        title={purgeCopy.title}
+        body={purgeCopy.body}
+        confirmLabel={purgeCopy.confirmLabel}
+        tone="danger"
+        typeName={purgeTarget?.name ?? null}
+        busy={purging}
+        onCancel={() => setPurgeTarget(null)}
+        onConfirm={() => {
+          const target = purgeTarget;
+          if (!target) return;
+          setPurging(true);
+          setError(null);
+          setStatus(null);
+          void purgePerson(target.id)
+            .then(async () => {
+              setStatus(purgedStatus(target.name));
+              setPurgeTarget(null);
+              await load();
+            })
+            .catch((err) => {
+              setPurgeTarget(null);
+              setError(err instanceof Error ? err.message : 'Could not permanently delete');
+            })
+            .finally(() => setPurging(false));
         }}
       />
       <ResetPasswordSheet

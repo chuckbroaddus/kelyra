@@ -130,11 +130,18 @@ export async function setPersonActive(profileId: string, active: boolean): Promi
   if (error) throw new Error(error.message || error.details || (active ? 'Could not restore' : 'Could not delete'));
 }
 
-/** PEOPLE-DEACTIVATE: deactivated people are hidden unless the caller asks for them (office People). */
+/** PEOPLE-PURGE: permanently delete an already-deleted person (login + links gone, name kept on content). */
+export async function purgePerson(profileId: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('admin_purge_person', { p_profile_id: profileId });
+  if (error) throw new Error(error.message || error.details || 'Could not permanently delete');
+}
+
+/** PEOPLE-DEACTIVATE: deactivated people are hidden unless the caller asks for them (office People).
+ *  PEOPLE-PURGE: permanently deleted people are never listed. */
 export async function listDirectory(options?: { includeDeactivated?: boolean }): Promise<DirectoryPerson[]> {
   const { photoUrlsForProfiles } = await import('@/lib/people/photos');
   const people = (await listProfiles()).filter(
-    (row) => options?.includeDeactivated || !row.deactivated_at,
+    (row) => !row.purged_at && (options?.includeDeactivated || !row.deactivated_at),
   );
   const studentIds = [...new Set(people.map((row) => row.student_id).filter((id): id is string => Boolean(id)))];
   const parentIds = [...new Set(people.map((row) => row.parent_id).filter((id): id is string => Boolean(id)))];
