@@ -13,9 +13,9 @@ import {
 } from './studentTabs.ts';
 
 const TEACHER_ORDER = ['focus', 'history', 'work', 'practice', 'parents', 'details'] as const;
-const OFFICE_ORDER = ['details', 'parents', 'classes'] as const;
+const OFFICE_ORDER = ['classes', 'parents', 'details'] as const;
 
-test('superintendent/office student tabs are exactly details, parents, classes', () => {
+test('superintendent/office student tabs are exactly classes, parents, details', () => {
   assert.deepEqual(
     OFFICE_STUDENT_TABS.map((t) => t.key),
     [...OFFICE_ORDER],
@@ -27,7 +27,10 @@ test('superintendent/office student tabs are exactly details, parents, classes',
     );
     assert.equal(studentTabsShowAssignPlus(role), false);
     assert.equal(studentTabsLoadTeacherData(role), false);
+    // Default pane stays Details even though Classes is index 0.
     assert.equal(studentTabFromParam(role, undefined), 'details');
+    assert.equal(studentTabFromParam(role, null), 'details');
+    assert.equal(studentTabFromParam(role, 'details'), 'details');
     assert.equal(studentTabFromParam(role, 'parents'), 'parents');
     assert.equal(studentTabFromParam(role, 'classes'), 'classes');
     // Hidden teacher tab deep-link falls back to details.
