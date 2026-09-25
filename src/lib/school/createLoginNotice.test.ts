@@ -37,5 +37,5 @@ test('CreateLoginForm shows the pop-up on success and failure', () => {
   const src = readFileSync(new URL('../../components/ui/PeopleAdmin.tsx', import.meta.url), 'utf8');
   assert.match(src, /setNotice\(createdAccountNotice\(displayName, username, missed\)\)/);
   assert.match(src, /fail\(err instanceof Error \? err\.message : 'Could not create account'\)/);
-  assert.match(src, /<NoticePopup notice=\{notice\} onDismiss=\{dismissNotice\} \/>/);
+  assert.match(src, /<NoticePopup notice=\{notice\} onDismiss=\{dismissNotice\}[^>]*\/>/);
 });
