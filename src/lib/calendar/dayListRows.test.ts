@@ -15,6 +15,7 @@ import {
   dayListDayNumber,
   dayListDaysBetween,
   dayListExtendNeeds,
+  dayListFollowAt,
   dayListFollowPosition,
   dayListSeedRange,
   dayListTopIndexAt,
@@ -122,7 +123,26 @@ test('CAL-DRUM-FOLLOW wiring: list feeds follow, pager follows unless drum owns 
   assert.match(pager, /followPosition\?: SharedValue<number> \| null/);
   assert.match(pager, /dragShared\.value = -clamped \* pitch/);
   assert.match(pager, /followBlockShared\.value = 2/);
-  assert.match(pane, /dayListFollowPosition\(lay, y\)/);
+  assert.match(pane, /useAnimatedScrollHandler/);
+  assert.match(pane, /<Reanimated\.FlatList/);
+  assert.match(pane, /onScroll=\{scrollHandler\}/);
+  assert.match(pane, /followPosition\.value = pos/);
+  assert.match(pager, /fullRadius: followPosition \? 2 : undefined/);
   assert.match(pane, /setFollow\(dayListDayNumber\(target\)\)/);
   assert.match(screen, /followPosition=\{dayListMode && !reduceMotion \? dayListFollow : null\}/);
+});
+
+test('CAL-DRUM-FOLLOW dayListFollowAt is a self-contained worklet matching the layout helper', () => {
+  const src = readFileSync('src/lib/calendar/dayListRows.ts', 'utf8');
+  const body = src.slice(src.indexOf('export function dayListFollowAt'), src.indexOf('export function dayListFollowPosition'));
+  assert.match(body, /'worklet';/);
+  assert.doesNotMatch(body.replace('export function dayListFollowAt', ''), /dayList\w+\(/);
+  const offsets = [0, 84, 204, 288];
+  const nums = [100, 101, 102, 103];
+  assert.equal(dayListFollowAt(offsets, nums, 400, 0), 100);
+  assert.equal(dayListFollowAt(offsets, nums, 400, 42), 100.5);
+  assert.equal(dayListFollowAt(offsets, nums, 400, 84), 101);
+  assert.equal(dayListFollowAt(offsets, nums, 400, -20), 100);
+  assert.equal(dayListFollowAt(offsets, nums, 400, 344), 103.5);
+  assert.ok(Number.isNaN(dayListFollowAt([], [], 0, 5)));
 });

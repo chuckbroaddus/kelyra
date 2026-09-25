@@ -794,6 +794,9 @@ export function PeriodPager({
       parkedOffset: parked,
       flinging,
       distanceFromOrigin,
+      // CAL-DRUM-FOLLOW: list can park the drum mid-turn, pulling ±2 beside
+      // center — keep it full (not the gray silhouette).
+      fullRadius: followPosition ? 2 : undefined,
     });
     const hit = {
       accessibilityLabel: isCenter

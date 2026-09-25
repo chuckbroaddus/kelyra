@@ -9,7 +9,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import type { SharedValue } from 'react-native-reanimated';
+import Reanimated, {
+  runOnJS,
+  useAnimatedScrollHandler,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import { radius, type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
@@ -26,7 +31,7 @@ import {
   dayListDayNumber,
   dayListDaysBetween,
   dayListExtendNeeds,
-  dayListFollowPosition,
+  dayListFollowAt,
   dayListSeedRange,
   dayListTopIndexAt,
   type DayListLayout,
@@ -118,6 +123,15 @@ export function DayListPane({
   const reportedTopRef = useRef<string | null>(null);
   /** Programmatic jump in flight: hold drum reports until the list lands on it. */
   const jumpTargetRef = useRef<string | null>(null);
+  /** UI-thread mirror of jumpTargetRef: 1 holds drum follow during a jump. */
+  const jumpingShared = useSharedValue(0);
+  const setJumpTarget = useCallback(
+    (target: string | null) => {
+      jumpTargetRef.current = target;
+      jumpingShared.value = target ? 1 : 0;
+    },
+    [jumpingShared],
+  );
   const fetchRef = useRef(fetchRange);
   fetchRef.current = fetchRange;
   const onTopRef = useRef(onTopDayChange);
@@ -223,6 +237,17 @@ export function DayListPane({
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
 
+  // CAL-DRUM-FOLLOW: header geometry on the UI thread so the drum turns in the
+  // same frame as the scroll (no JS-thread hop, no jank when JS is busy).
+  const headerOffsetsShared = useSharedValue<number[]>([]);
+  const dayNumbersShared = useSharedValue<number[]>([]);
+  const totalHeightShared = useSharedValue(0);
+  useLayoutEffect(() => {
+    headerOffsetsShared.value = layout.headerOffsets.slice();
+    dayNumbersShared.value = layout.days.map(dayListDayNumber);
+    totalHeightShared.value = layout.totalHeight;
+  }, [layout, headerOffsetsShared, dayNumbersShared, totalHeightShared]);
+
   // Web keeps the same content under the top edge when rows change above it
   // (prepend, refresh, search). Native does this via maintainVisibleContentPosition.
   const laidOutSeedRef = useRef(-1);
@@ -288,9 +313,9 @@ export function DayListPane({
     reportTop(target);
     // Drum already snapped to target; park follow there until the list lands.
     setFollow(dayListDayNumber(target));
-    jumpTargetRef.current = target;
+    setJumpTarget(target);
     setTimeout(() => {
-      if (jumpTargetRef.current === target) jumpTargetRef.current = null;
+      if (jumpTargetRef.current === target) setJumpTarget(null);
     }, 1200);
     listRef.current?.scrollToOffset({
       offset,
@@ -308,16 +333,55 @@ export function DayListPane({
     const topDay = lay.days[idx]!;
     scrollRef.current = { y, topDay, intra: Math.max(0, y - lay.headerOffsets[idx]!) };
     if (jumpTargetRef.current) {
-      if (topDay === jumpTargetRef.current) jumpTargetRef.current = null;
+      if (topDay === jumpTargetRef.current) setJumpTarget(null);
     } else {
       reportTop(topDay);
-      const pos = dayListFollowPosition(lay, y);
-      if (pos != null) setFollow(pos);
     }
     const needs = dayListExtendNeeds(idx, lay.days.length);
     if (needs.before) extend(-1);
     if (needs.after) extend(1);
   };
+
+  const onScrollRef = useRef(onScroll);
+  onScrollRef.current = onScroll;
+  const onScrollJs = useCallback(
+    (y: number, contentH: number, layoutH: number, vy: number) => {
+      const event = {
+        nativeEvent: {
+          contentOffset: { x: 0, y },
+          contentSize: { width: 0, height: contentH },
+          layoutMeasurement: { width: 0, height: layoutH },
+          velocity: { x: 0, y: vy },
+        },
+      } as unknown as NativeSyntheticEvent<NativeScrollEvent>;
+      onScrollRef.current(event);
+    },
+    [],
+  );
+  const scrollHandler = useAnimatedScrollHandler(
+    {
+      onScroll: (e) => {
+        'worklet';
+        const y = e.contentOffset.y;
+        if (followPosition && jumpingShared.value === 0) {
+          const pos = dayListFollowAt(
+            headerOffsetsShared.value,
+            dayNumbersShared.value,
+            totalHeightShared.value,
+            y,
+          );
+          if (!Number.isNaN(pos)) followPosition.value = pos;
+        }
+        runOnJS(onScrollJs)(
+          y,
+          e.contentSize.height,
+          e.layoutMeasurement.height,
+          e.velocity?.y ?? 0,
+        );
+      },
+    },
+    [followPosition, onScrollJs],
+  );
 
   const renderRow = ({ item: row }: { item: DayListRow<CalendarItem> }) => {
     if (row.kind === 'header') {
@@ -397,7 +461,7 @@ export function DayListPane({
 
   return (
     <View style={styles.wrap} accessibilityRole="summary" accessibilityLabel="Day list">
-      <FlatList
+      <Reanimated.FlatList
         key={seedId}
         ref={listRef}
         style={styles.scroller}
@@ -420,9 +484,9 @@ export function DayListPane({
         }
         nestedScrollEnabled
         scrollEventThrottle={16}
-        onScroll={onScroll}
+        onScroll={scrollHandler}
         onScrollBeginDrag={(event) => {
-          jumpTargetRef.current = null;
+          setJumpTarget(null);
           chrome?.onScrollBeginDrag(event);
         }}
         contentContainerStyle={styles.scrollContent}

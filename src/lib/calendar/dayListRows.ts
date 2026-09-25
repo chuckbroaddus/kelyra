@@ -105,6 +105,42 @@ export function dayListDayNumber(iso: string): number {
 }
 
 /**
+ * CAL-DRUM-FOLLOW worklet (UI-thread scroll handler): same math as
+ * `dayListFollowPosition` on plain arrays. NaN before layout.
+ * Self-contained — calls no other function (Reanimated worklet rule).
+ */
+export function dayListFollowAt(
+  headerOffsets: readonly number[],
+  dayNumbers: readonly number[],
+  totalHeight: number,
+  y: number,
+): number {
+  'worklet';
+  const n = headerOffsets.length;
+  if (n === 0 || dayNumbers.length !== n) return NaN;
+  let lo = 0;
+  let hi = n - 1;
+  let idx = 0;
+  // Same pin rule as dayListTopIndexAt (half-pixel slack).
+  const target = (y < 0 ? 0 : y) + 0.5;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (headerOffsets[mid]! <= target) {
+      idx = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  const start = headerOffsets[idx]!;
+  const end = idx + 1 < n ? headerOffsets[idx + 1]! : totalHeight;
+  const span = end - start;
+  const raw = span > 0 ? (y - start) / span : 0;
+  const frac = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+  return dayNumbers[idx]! + frac;
+}
+
+/**
  * CAL-DRUM-FOLLOW: continuous day position at scroll offset `y` — the pinned
  * day's number plus how far the top edge is through that day's section (0 when
  * its header pins, 1 when the next header pins). Null before layout.
@@ -113,13 +149,13 @@ export function dayListFollowPosition(
   layout: Pick<DayListLayout<unknown>, 'headerOffsets' | 'days' | 'totalHeight'>,
   y: number,
 ): number | null {
-  const idx = dayListTopIndexAt(layout.headerOffsets, y);
-  if (idx < 0) return null;
-  const start = layout.headerOffsets[idx]!;
-  const end = layout.headerOffsets[idx + 1] ?? layout.totalHeight;
-  const span = end - start;
-  const frac = span > 0 ? Math.min(1, Math.max(0, (y - start) / span)) : 0;
-  return dayListDayNumber(layout.days[idx]!) + frac;
+  const pos = dayListFollowAt(
+    layout.headerOffsets,
+    layout.days.map(dayListDayNumber),
+    layout.totalHeight,
+    y,
+  );
+  return Number.isNaN(pos) ? null : pos;
 }
 
 /**
