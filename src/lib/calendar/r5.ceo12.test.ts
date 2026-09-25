@@ -141,13 +141,13 @@ test('CAL-R5-11 + CAL-P6-5C: Day List multi-day window; drum ON; empty days list
   assert.doesNotMatch(pager, /if \(view === 'day' && dayMode === 'list'\) return false/);
   // CEO 2026-09-24: list every day in the painted window (empty → "No events").
   assert.match(screen, /DayListPane/);
-  assert.match(screen, /onCommitAdjacentDay|applyDayListDrumShift/);
+  assert.match(screen, /applyDayListDrumShift/);
   assert.match(screen, /dayListMode/);
   assert.match(screen, /dayListHost/);
   const pane = read('src/components/calendar/DayListPane.tsx');
-  assert.match(pane, /dayListWindowDays/);
-  assert.match(pane, /includeEmptyDays/);
-  assert.match(pane, /dayListCommitDir/);
+  // Every day gets a header; empty days show "No events" (CEO 2026-09-24 v2).
+  assert.match(pane, /buildDayListLayout/);
+  assert.match(pane, /No events/);
   assert.doesNotMatch(pane, /hideDayHeadings/);
   const list = read('src/components/calendar/AgendaList.tsx');
   assert.match(list, /includeEmptyDays/);
