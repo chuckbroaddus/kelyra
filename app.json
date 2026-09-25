@@ -82,7 +82,14 @@
         }
       ],
       "expo-video",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Kelyra uses the microphone for dictation and to record the student name.",
+          "speechRecognitionPermission": "Kelyra uses speech recognition to turn your dictation into text."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

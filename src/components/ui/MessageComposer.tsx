@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { AttachMenu, PlusGlyph } from '@/components/ui/AttachMenu';
 import { AttachPreview } from '@/components/ui/MessageAttach';
 import { PrimaryButton } from '@/components/ui/Button';
 import { FormSheet } from '@/components/ui/FormSheet';
@@ -24,8 +25,6 @@ import { pinComposerToEnd } from '@/components/ui/messageComposerPin';
 
 const COMPOSER_PAD = 24;
 const COMPOSER_LINE = type.body.lineHeight ?? 24;
-const ATTACH_ROW = 48;
-const ATTACH_VISIBLE = 3;
 
 type Props = {
   placeholder?: string;
@@ -201,52 +200,21 @@ export function MessageComposer({
   };
 
   const menu = attachOpen ? (
-    <ScrollView
-      style={[
-        styles.attachMenu,
-        layout === 'feed' ? styles.attachMenuBelow : styles.attachMenuAbove,
-        { borderColor: colors.line, backgroundColor: colors.elevated },
-      ]}
-      keyboardShouldPersistTaps="handled"
-      bounces={false}
-      alwaysBounceVertical={false}
-      overScrollMode="never"
-      snapToInterval={ATTACH_ROW}
-      disableIntervalMomentum
-      decelerationRate="fast"
-      showsVerticalScrollIndicator={false}
-    >
-      {(
-        [
-          { key: 'photo', label: 'Photo', icon: 'photo' as const },
-          { key: 'camera', label: 'Camera', icon: 'capture' as const },
-          { key: 'file', label: 'File', icon: 'file' as const },
-          { key: 'link', label: 'Link', icon: 'link' as const },
-        ] as const
-      ).map((item) => (
-        <Pressable
-          key={item.key}
-          accessibilityRole="button"
-          accessibilityLabel={item.label}
-          onPress={() => {
-            setAttachOpen(false);
-            if (item.key === 'link') {
-              setLinkOpen(true);
-              return;
-            }
-            if (item.key === 'file') {
-              void pickMessageDocument().then((picked) => takeFile(picked, 'file'));
-              return;
-            }
-            void pickMessagePhoto(item.key === 'camera').then((picked) => takeFile(picked, 'photo'));
-          }}
-          style={({ pressed }) => [styles.attachRow, pressed && { opacity: 0.88 }]}
-        >
-          <Icon name={item.icon} color={colors.ink} size={18} />
-          <Text style={[type.body, { color: colors.ink }]}>{item.label}</Text>
-        </Pressable>
-      ))}
-    </ScrollView>
+    <AttachMenu
+      style={layout === 'feed' ? styles.attachMenuBelow : styles.attachMenuAbove}
+      onPick={(choice) => {
+        setAttachOpen(false);
+        if (choice === 'link') {
+          setLinkOpen(true);
+          return;
+        }
+        if (choice === 'file') {
+          void pickMessageDocument().then((picked) => takeFile(picked, 'file'));
+          return;
+        }
+        void pickMessagePhoto(choice === 'camera').then((picked) => takeFile(picked, 'photo'));
+      }}
+    />
   ) : null;
 
   const preview = (
@@ -269,8 +237,7 @@ export function MessageComposer({
               { backgroundColor: colors.wash, borderColor: colors.line, opacity: locked ? 0.4 : pressed ? 0.88 : 1 },
             ]}
           >
-            <View style={[styles.addBar, styles.addH, { backgroundColor: colors.ink }]} />
-            <View style={[styles.addBar, styles.addV, { backgroundColor: colors.ink }]} />
+            <PlusGlyph color={colors.ink} size={16} />
           </Pressable>
         </HoverTip>
         <View style={styles.field}>
@@ -392,37 +359,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  addBar: {
-    position: 'absolute',
-    borderRadius: 1,
-  },
-  addH: {
-    width: 16,
-    height: 2,
-  },
-  addV: {
-    width: 2,
-    height: 16,
-  },
-  attachMenu: {
-    height: ATTACH_ROW * ATTACH_VISIBLE,
-    borderWidth: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
   attachMenuAbove: {
     marginBottom: 8,
   },
   attachMenuBelow: {
     marginTop: 8,
     marginBottom: 8,
-  },
-  attachRow: {
-    height: ATTACH_ROW,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
   },
   send: {
     width: 44,
