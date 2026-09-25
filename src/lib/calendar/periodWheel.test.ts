@@ -232,7 +232,7 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.match(leaf, /SilhouetteLeaf|clone idle chrome/);
   assert.match(leaf, /silhouetteYearText|styles\.yearPage|yearPage/);
   assert.match(leaf, /tile\.kind === 'year'|kind === 'year'/);
-  assert.match(leaf, /monthTallHeader|monthTallBody/);
+  assert.match(leaf, /monthBody/);
   assert.match(leaf, /silhouetteSoftText|wrapFooter|dayNumeral/);
   assert.match(leaf, /SilhouetteLeaf tile=\{tile\}|<SilhouetteLeaf tile/);
   assert.match(leaf, /fixed plate|monthStub|plateBodyLine|dayNumeral/);
@@ -251,10 +251,10 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.match(leaf, /weekHeaderMonth/);
   assert.match(leaf, /weekFooterYear/);
   assert.match(leaf, /weekBody/);
-  assert.match(leaf, /monthHeaderYear/);
-  assert.match(leaf, /monthTallHeader/);
+  assert.match(leaf, /monthFooterYear/);
+  assert.doesNotMatch(leaf, /monthTallHeader|monthHeaderYear/);
   assert.match(leaf, /Red header on week plate — start month/);
-  assert.match(leaf, /Tall red header \(~1\/3\) on month plate — year/);
+  assert.match(leaf, /Footer on month plate — year/);
   assert.match(leaf, /Body on month plate — month name/);
   assert.match(leaf, /dayBody/);
   assert.match(leaf, /dayHeaderMonth/);
