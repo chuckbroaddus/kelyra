@@ -22,6 +22,7 @@ import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { AttachMenu, PlusGlyph, type AttachChoice } from '@/components/ui/AttachMenu';
 import { Avatar } from '@/components/ui/Avatar';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { DateInput } from '@/components/ui/DateInput';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -1218,11 +1219,14 @@ export default function DiaryScreen() {
         {transcribing ? (
           <Text style={[type.meta, { color: colors.mute }]}>Transcribing…</Text>
         ) : null}
-        <TextField
-          label="Date (YYYY-MM-DD)"
+        <DateInput
+          label="Date"
           value={entryDate}
-          onChangeText={setEntryDate}
-          autoCapitalize="none"
+          required
+          clearable={false}
+          onChange={(iso) => {
+            if (iso) setEntryDate(iso);
+          }}
         />
         {editing ? (
           <DiaryPhotoStrip
