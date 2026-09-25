@@ -32,7 +32,13 @@ import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { listProfiles, setStudentLink } from '@/lib/school/api';
 import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
-import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import {
+  studentTabFromParam,
+  studentTabsForChromeRole,
+  studentTabsLoadTeacherData,
+  studentTabsShowAssignPlus,
+} from '@/lib/students/studentTabs';
 import { deleteCapture } from '@/lib/captures/delete';
 import { returnCaptureToInbox } from '@/lib/captures/api';
 import { formatUsd } from '@/lib/ai/policy';
@@ -112,19 +118,14 @@ type ConfirmKind =
   | { kind: 'remove-photo' }
   | { kind: 'clear'; key: string; label: string };
 
-const STUDENT_TABS = [
-  { key: 'focus', label: 'Focus', icon: 'focus' as const },
-  { key: 'history', label: 'Skill history', icon: 'history' as const },
-  { key: 'work', label: 'Work', icon: 'work' as const },
-  { key: 'practice', label: 'Practice', icon: 'practice' as const },
-  { key: 'parents', label: 'Parents', icon: 'parents' as const },
-  { key: 'details', label: 'Details', icon: 'details' as const },
-];
-
 export default function StudentScreen() {
   const { colors, scheme } = useTheme();
   const router = useRouter();
   const { teacher, profile } = useAuth();
+  const chrome = useChrome();
+  const studentTabs = studentTabsForChromeRole(chrome.role);
+  const showAssignPlus = studentTabsShowAssignPlus(chrome.role);
+  const loadTeacherData = studentTabsLoadTeacherData(chrome.role);
   const canLinkParents = isOfficeRole(profile);
   const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { isSplit } = useScreenPad();
@@ -167,23 +168,17 @@ export default function StudentScreen() {
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
-  const [tab, setTab] = useState('focus');
+  const [tab, setTab] = useState(() => studentTabFromParam(chrome.role, tabParam));
 
   useEffect(() => {
-    const raw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
-    const pane = typeof raw === 'string' && STUDENT_TABS.some((item) => item.key === raw) ? raw : 'focus';
-    setTab(pane);
-  }, [studentId, tabParam]);
+    setTab(studentTabFromParam(chrome.role, tabParam));
+  }, [studentId, tabParam, chrome.role]);
 
   const load = useCallback(async () => {
     if (!studentId) return;
     const nextStudent = await getStudent(studentId);
-    const nextCaptures = await listStudentCaptures(studentId);
-    const nextGaps = await listStudentGaps(studentId);
     setStudent(nextStudent);
     setPhotoUrl(await signedProfileUrlForAssetId(nextStudent.photo_asset_id));
-    setCaptures(nextCaptures);
-    setGaps(nextGaps);
     setParents(await listParentsForStudent(studentId));
     setEnrollments(await listStudentEnrollments(studentId));
     try {
@@ -194,6 +189,20 @@ export default function StudentScreen() {
       setLogin(null);
       setLoginChoices([]);
     }
+    if (!loadTeacherData) {
+      setCaptures([]);
+      setGaps([]);
+      setPractice([]);
+      setItemDrafts({});
+      setDraftLabels({});
+      setStoredFocusLabel(null);
+      setScore('');
+      return;
+    }
+    const nextCaptures = await listStudentCaptures(studentId);
+    const nextGaps = await listStudentGaps(studentId);
+    setCaptures(nextCaptures);
+    setGaps(nextGaps);
     const nextPractice = await listStudentPractice(studentId);
     setPractice(nextPractice);
     const drafts: Record<string, PracticeItem[]> = {};
@@ -217,7 +226,7 @@ export default function StudentScreen() {
           ? String(nextLatest.draft_score)
           : '',
     );
-  }, [studentId, captureParam]);
+  }, [studentId, captureParam, loadTeacherData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -685,11 +694,11 @@ export default function StudentScreen() {
         </Pressable>
       ) : null}
       <PersonTabs
-        tabs={STUDENT_TABS}
+        tabs={studentTabs}
         value={tab}
         onChange={setTab}
         trailing={
-          classId && studentId ? (
+          showAssignPlus && classId && studentId ? (
             <IconButton
               name="plus"
               label="Assign"
