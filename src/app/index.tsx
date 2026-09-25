@@ -37,6 +37,12 @@ export default function HomeScreen() {
   const { configured, loading, teacher, profile, grants, error } = useAuth();
   const chrome = useChrome();
   const officeSeat = isOfficeChromeRole(chrome.role);
+  // OFFICE-PANE-KEYBOARD-REACH: iOS sets the pane scroller's keyboard inset from its frame at
+  // keyboard-show time; Screen then drops the tray reserve (paddingBottom) and the scroller grows
+  // by that amount, so the inset comes up short and Create account stays under the keyboard when
+  // a top field (Display name) is focused. Pad the content by the lost reserve while it is up.
+  const paneKeyboardSpacer =
+    Platform.OS === 'ios' && chrome.keyboardVisible ? Math.max(0, chrome.trayPadding - 12) : 0;
   const teacherSeat = chrome.role === 'teacher';
   const [classes, setClasses] = useState<Array<ClassRow | SchoolClass> | null>(null);
   const [name, setName] = useState('');
@@ -379,6 +385,7 @@ export default function HomeScreen() {
               ) : null}
             </>
           ) : null}
+          {paneKeyboardSpacer ? <View style={{ height: paneKeyboardSpacer }} /> : null}
         </ScrollView>
       ) : null}
       </View>
