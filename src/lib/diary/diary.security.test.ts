@@ -221,7 +221,7 @@ test('t_b7594650: Journal + Ledger newest/oldest sort; default newest', () => {
   assert.match(screen, /useState\(false\)/);
   assert.match(sheet, /label=\"Newest\"/);
   assert.match(sheet, /label=\"Oldest\"/);
-  assert.match(screen, /sortDiaryEntries\(rows,\s*sortOldest\)/);
+  assert.match(screen, /sortDiaryEntries\((rows|withMedia),\s*sortOldest\)/);
   assert.match(screen, /ascending:\s*sortOldest/);
 });
 
@@ -267,4 +267,27 @@ test('JOURNAL-ENTRY (CEO 2026-09-24): Done, Body before Date, class tabs + No cl
   assert.match(read('scripts/build-icons.mjs'), /none: \(p\) =>/);
   assert.match(read('src/components/ui/Icon.tsx'), /\| 'none'/);
   assert.match(read('src/components/ui/TextField.tsx'), /accessory\?: ReactNode/);
+});
+
+test('JOURNAL-ATTACH (CEO 2026-09-24): Title 1-3 / Body 3-7 rows, + attaches photo/camera/file, list shows media', () => {
+  const screen = read('src/app/diary.tsx');
+  const composer = screen.slice(screen.indexOf('<FormSheet'), screen.indexOf('</FormSheet>'));
+  assert.match(screen, /const TITLE_MIN_H = FIELD_LINE \+ FIELD_CHROME;/);
+  assert.match(screen, /const TITLE_MAX_H = FIELD_LINE \* 3 \+ FIELD_CHROME;/);
+  assert.match(screen, /const BODY_MIN_H = FIELD_LINE \* 3 \+ FIELD_CHROME;/);
+  assert.match(screen, /const BODY_MAX_H = FIELD_LINE \* 7 \+ FIELD_CHROME;/);
+  assert.match(composer, /topAccessory=\{/);
+  assert.doesNotMatch(composer, /label="Attach photo"/);
+  assert.match(screen, /title="Attach to entry"/);
+  assert.match(screen, /onFile=\{/);
+  assert.match(screen, /<DiaryRowMedia/);
+  assert.match(screen, /diaryBodyUrls\(body\)/);
+  const api = read('src/lib/diary/api.ts');
+  assert.match(api, /export async function attachDiaryFile/);
+  assert.match(api, /export async function listDiaryMediaFor/);
+  const sql = read('supabase/migrations/20260924213000_diary_media_files.sql');
+  assert.match(sql, /kind in \('photo', 'file'\)/);
+  assert.match(sql, /add column if not exists file_name text/);
+  assert.match(read('src/components/ui/TextField.tsx'), /topAccessory\?: ReactNode/);
+  assert.match(read('src/components/ui/PhotoSheet.tsx'), /onFile\?:/);
 });

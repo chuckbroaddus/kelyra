@@ -1,10 +1,11 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { DayListPane } from '@/components/calendar/DayListPane';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
+import { DiaryFileChip, DiaryLinkCard, DiaryRowMedia } from '@/components/diary/DiaryEntryMedia';
 import { DiarySettingsSheet } from '@/components/diary/DiarySettingsSheet';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { Avatar } from '@/components/ui/Avatar';
@@ -27,6 +28,7 @@ import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { todayISO } from '@/lib/date/iso';
 import {
   ackDiaryPrivacy,
+  attachDiaryFile,
   attachDiaryPhoto,
   createDiaryEntry,
   deleteDiaryEntry,
@@ -34,6 +36,7 @@ import {
   hasAckedDiaryPrivacy,
   listDiaryEntries,
   listDiaryMedia,
+  listDiaryMediaFor,
   listLedgerEvents,
   listParentLinkedChildren,
   takePendingDiaryDraft,
@@ -53,7 +56,9 @@ import {
   DIARY_PRIVACY_TITLE,
 } from '@/lib/diary/privacy';
 import { canOpenDiary, diarySeatForChrome } from '@/lib/diary/seat';
-import type { DiaryDraft, DiaryEntryRow, LedgerEventRow } from '@/lib/diary/types';
+import { diaryBodyUrls, diaryBodyWithoutUrls } from '@/lib/diary/links';
+import type { DiaryDraft, DiaryEntryRow, DiaryMediaRow, LedgerEventRow } from '@/lib/diary/types';
+import { pickMessageDocument } from '@/lib/messages/attachments';
 import { firstName, formatWhen } from '@/lib/format';
 import { listTaughtClasses } from '@/lib/lessons/api';
 import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
@@ -65,6 +70,20 @@ import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 type Segment = 'journal' | 'ledger';
 type DiaryPhotoView = { id: string; url: string };
+/** Journal row plus its attachments (batched per Day List window). */
+type JournalRow = DiaryEntryRow & { media?: DiaryMediaRow[] };
+/** Picked in the composer; uploaded on Done (works before the entry exists). */
+type StagedAttach = { key: string; kind: 'photo' | 'file'; uri: string; mimeType: string; name: string };
+/** Title grows 1 to 3 rows, Body 3 to 7; past that the box scrolls. 24 px padding + 2 px border. */
+const FIELD_LINE = type.body.lineHeight ?? 24;
+const FIELD_CHROME = 26;
+const TITLE_MIN_H = FIELD_LINE + FIELD_CHROME;
+const TITLE_MAX_H = FIELD_LINE * 3 + FIELD_CHROME;
+const BODY_MIN_H = FIELD_LINE * 3 + FIELD_CHROME;
+const BODY_MAX_H = FIELD_LINE * 7 + FIELD_CHROME;
+function clampFieldHeight(contentH: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, Math.ceil(contentH) + FIELD_CHROME));
+}
 
 type TaughtClass = { id: string; name: string; avatarUrl?: string | null };
 type RosterChip = { id: string; display_name: string; photoUrl?: string | null };
@@ -138,6 +157,11 @@ export default function DiaryScreen() {
   const recording = dictateTarget != null;
   const [transcribing, setTranscribing] = useState(false);
   const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
+  const [composerFiles, setComposerFiles] = useState<DiaryMediaRow[]>([]);
+  const [staged, setStaged] = useState<StagedAttach[]>([]);
+  /** Web only: textarea height from content (native multiline grows on its own). */
+  const [titleH, setTitleH] = useState(TITLE_MIN_H);
+  const [bodyH, setBodyH] = useState(BODY_MIN_H);
   const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -324,7 +348,17 @@ export default function DiaryScreen() {
         tag,
         studentId: studentFilter,
       });
-      return sortDiaryEntries(rows, sortOldest);
+      // JOURNAL-ATTACH: one media query per window, grouped onto rows (Feed-style list attachments).
+      let media: DiaryMediaRow[] = [];
+      try {
+        media = await listDiaryMediaFor(rows.map((row) => row.id));
+      } catch {
+        media = [];
+      }
+      const byEntry = new Map<string, DiaryMediaRow[]>();
+      for (const m of media) byEntry.set(m.entry_id, [...(byEntry.get(m.entry_id) ?? []), m]);
+      const withMedia: JournalRow[] = rows.map((row) => ({ ...row, media: byEntry.get(row.id) ?? [] }));
+      return sortDiaryEntries(withMedia, sortOldest);
     },
     [seat, teacherLike],
   );
@@ -368,12 +402,20 @@ export default function DiaryScreen() {
   useEffect(() => {
     if (!composerOpen || !editing?.id) {
       setComposerPhotos([]);
+      setComposerFiles([]);
       return;
     }
     let cancelled = false;
     void loadDiaryPhotoViews(editing.id).then((views) => {
       if (!cancelled) setComposerPhotos(views);
     });
+    void listDiaryMedia(editing.id)
+      .then((rows) => {
+        if (!cancelled) setComposerFiles(rows.filter((row) => row.kind === 'file'));
+      })
+      .catch(() => {
+        if (!cancelled) setComposerFiles([]);
+      });
     return () => {
       cancelled = true;
     };
@@ -390,6 +432,9 @@ export default function DiaryScreen() {
     setStudentPointer(null);
     setPointerClassId(null);
     setComposerPhotos([]);
+    setStaged([]);
+    setTitleH(TITLE_MIN_H);
+    setBodyH(BODY_MIN_H);
     setComposerOpen(true);
   }
 
@@ -438,6 +483,9 @@ export default function DiaryScreen() {
     setStudentPointer(row.student_id);
     setPointerClassId(null);
     setComposerPhotos([]);
+    setStaged([]);
+    setTitleH(TITLE_MIN_H);
+    setBodyH(BODY_MIN_H);
     setComposerOpen(true);
   }
 
@@ -454,7 +502,9 @@ export default function DiaryScreen() {
       if (seat === 'parent' && children.length >= 2 && !childId) {
         throw new Error('Pick a child before saving.');
       }
+      let entryId: string;
       if (editing) {
+        entryId = editing.id;
         await updateDiaryEntry(editing.id, {
           body,
           title,
@@ -474,14 +524,42 @@ export default function DiaryScreen() {
           studentId: studentPointer,
           childStudentId: childId,
         });
+        entryId = created.id;
         setEditing(created);
-        setDraft(null);
-        await refresh();
-        return; // keep composer open so photo attach works on the new entry
       }
-      setComposerOpen(false);
+      // JOURNAL-ATTACH: "+" picks are staged, then uploaded here on Done.
+      const failed: StagedAttach[] = [];
+      let fileError: string | null = null;
+      for (const item of staged) {
+        try {
+          if (item.kind === 'photo') {
+            await attachDiaryPhoto({ ownerProfileId: profile.id, seat, entryId, uri: item.uri, mimeType: item.mimeType });
+          } else {
+            await attachDiaryFile({
+              ownerProfileId: profile.id,
+              seat,
+              entryId,
+              uri: item.uri,
+              mimeType: item.mimeType,
+              name: item.name,
+            });
+          }
+        } catch (err) {
+          failed.push(item);
+          fileError = err instanceof Error ? err.message : 'Could not attach';
+        }
+      }
       setDraft(null);
+      setListReload((k) => k + 1);
       await refresh();
+      if (failed.length) {
+        // Entry saved; keep the sheet open with only the attachments that did not upload.
+        setStaged(failed);
+        setError(fileError);
+        return;
+      }
+      setStaged([]);
+      setComposerOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save');
     } finally {
@@ -489,8 +567,27 @@ export default function DiaryScreen() {
     }
   }
 
+  function stageAttach(kind: StagedAttach['kind'], uri: string, mimeType: string, name: string) {
+    const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setStaged((prev) => [...prev, { key, kind, uri, mimeType, name }]);
+  }
+
+  async function attachFileFromPicker() {
+    setPhotoSheetOpen(false);
+    setError(null);
+    try {
+      if (Platform.OS !== 'web') await waitForModalDismiss();
+      const file = await pickMessageDocument();
+      if (!file) return;
+      if (file.mimeType.startsWith('image/')) stageAttach('photo', file.uri, file.mimeType, file.name);
+      else stageAttach('file', file.uri, file.mimeType, file.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not attach file');
+    }
+  }
+
   async function attachPhotoFromSource(fromCamera: boolean) {
-    if (!profile?.id || !seat || !editing) return;
+    if (!profile?.id || !seat) return;
     setPhotoSheetOpen(false);
     setError(null);
     setNotice(null);
@@ -512,23 +609,12 @@ export default function DiaryScreen() {
   }
 
   async function finishAttachPhoto(uri: string, mimeType: string) {
-    if (!profile?.id || !seat || !editing) return;
-    const entryId = editing.id;
-    await attachDiaryPhoto({
-      ownerProfileId: profile.id,
-      seat,
-      entryId,
-      uri,
-      mimeType,
-    });
-    const views = await loadDiaryPhotoViews(entryId);
-    setComposerPhotos(views);
-    await refresh();
+    stageAttach('photo', uri, mimeType || 'image/jpeg', 'Photo');
   }
 
   async function onWebDiaryCapture(uri: string, mimeType: string) {
     setCameraOpen(false);
-    if (!profile?.id || !seat || !editing) return;
+    if (!profile?.id || !seat) return;
     setBusy(true);
     setError(null);
     try {
@@ -670,9 +756,12 @@ export default function DiaryScreen() {
     );
   }
 
-  const renderJournalItem = (row: DiaryEntryRow) => {
-    const headline = row.title?.trim() || row.body.trim() || 'Untitled';
-    const detail = [row.title?.trim() ? row.body.trim() : '', (row.tags ?? []).join(' · ')]
+  const renderJournalItem = (entry: DiaryEntryRow) => {
+    const row = entry as JournalRow;
+    const urls = diaryBodyUrls(row.body);
+    const bodyText = urls.length ? diaryBodyWithoutUrls(row.body) : row.body.trim();
+    const headline = row.title?.trim() || bodyText || (urls.length ? 'Link' : 'Untitled');
+    const detail = [row.title?.trim() ? bodyText : '', (row.tags ?? []).join(' · ')]
       .filter(Boolean)
       .join(' · ');
     return (
@@ -693,6 +782,11 @@ export default function DiaryScreen() {
           <Text style={[styles.rowMeta, { color: colors.mute }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
             {detail || (row.updated_at !== row.created_at ? `Edited ${formatWhen(row.updated_at)}` : formatWhen(row.created_at))}
           </Text>
+          <DiaryRowMedia
+            media={row.media ?? []}
+            urls={urls}
+            onOpenPhotos={(uris, index) => setViewer({ uris, index })}
+          />
         </View>
       </SwipeActionCard>
     );
@@ -847,6 +941,7 @@ export default function DiaryScreen() {
           setComposerOpen(false);
           setDraft(null);
           setComposerPhotos([]);
+          setStaged([]);
           if (recording) void stopDictate();
         }}
       >
@@ -854,6 +949,18 @@ export default function DiaryScreen() {
           label="Title (optional)"
           value={title}
           onChangeText={setTitle}
+          multiline
+          submitBehavior="blurAndSubmit"
+          scrollEnabled
+          onContentSizeChange={
+            Platform.OS === 'web'
+              ? (e) => setTitleH(clampFieldHeight(e.nativeEvent.contentSize.height, TITLE_MIN_H, TITLE_MAX_H))
+              : undefined
+          }
+          style={[
+            styles.titleBox,
+            Platform.OS === 'web' ? { height: titleH } : null,
+          ]}
           accessory={renderMic('title')}
         />
         <TextField
@@ -861,11 +968,76 @@ export default function DiaryScreen() {
           value={body}
           onChangeText={setBody}
           multiline
-          numberOfLines={6}
+          scrollEnabled
+          onContentSizeChange={
+            Platform.OS === 'web'
+              ? (e) => setBodyH(clampFieldHeight(e.nativeEvent.contentSize.height, BODY_MIN_H, BODY_MAX_H))
+              : undefined
+          }
+          style={[styles.bodyBox, Platform.OS === 'web' ? { height: bodyH } : null]}
           placeholder="Personal reflection — not the official student file."
           accessory={renderMic('body')}
           accessoryPlacement="bottom"
+          topAccessory={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Attach photo, camera shot, or file"
+              disabled={busy || recording}
+              hitSlop={6}
+              onPress={() => setPhotoSheetOpen(true)}
+              style={[styles.micButton, (busy || recording) && { opacity: 0.4 }]}
+            >
+              <Icon name="plus" size={20} color={colors.mute} />
+            </Pressable>
+          }
         />
+        {staged.length || composerFiles.length || diaryBodyUrls(body).length ? (
+          <View style={styles.attachStack}>
+            {staged.filter((item) => item.kind === 'photo').length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stagedPhotos}>
+                {staged
+                  .filter((item) => item.kind === 'photo')
+                  .map((item) => (
+                    <View key={item.key} style={[styles.photoComposerWrap, { borderColor: colors.line }]}>
+                      <RemoteImage uri={item.uri} style={styles.photoComposer} contentFit="cover" />
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Remove photo"
+                        hitSlop={8}
+                        onPress={() => setStaged((prev) => prev.filter((p) => p.key !== item.key))}
+                        style={styles.stagedRemove}
+                      >
+                        <Icon name="close" size={12} color="#FFFFFF" />
+                      </Pressable>
+                    </View>
+                  ))}
+              </ScrollView>
+            ) : null}
+            {composerFiles.map((file) => (
+              <DiaryFileChip
+                key={file.id}
+                name={file.file_name || 'File'}
+                onPress={() =>
+                  void diaryMediaSignedUrl(file.storage_path).then((url) => {
+                    if (url) void Linking.openURL(url);
+                  })
+                }
+              />
+            ))}
+            {staged
+              .filter((item) => item.kind === 'file')
+              .map((item) => (
+                <DiaryFileChip
+                  key={item.key}
+                  name={item.name}
+                  onRemove={() => setStaged((prev) => prev.filter((p) => p.key !== item.key))}
+                />
+              ))}
+            {diaryBodyUrls(body).map((url) => (
+              <DiaryLinkCard key={url} url={url} />
+            ))}
+          </View>
+        ) : null}
         {transcribing ? (
           <Text style={[type.meta, { color: colors.mute }]}>Transcribing…</Text>
         ) : null}
@@ -993,21 +1165,15 @@ export default function DiaryScreen() {
           autoCapitalize="none"
         />
 
-        {editing ? (
-          <GhostButton
-            label="Attach photo"
-            onPress={() => setPhotoSheetOpen(true)}
-            disabled={busy || recording}
-          />
-        ) : null}
         <PrimaryButton label={busy ? 'Saving…' : 'Done'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
 
       <PhotoSheet
         visible={photoSheetOpen}
-        title="Attach diary photo"
+        title="Attach to entry"
         onTake={() => void attachPhotoFromSource(true)}
         onLibrary={() => void attachPhotoFromSource(false)}
+        onFile={() => void attachFileFromPicker()}
         onCancel={() => setPhotoSheetOpen(false)}
       />
 
@@ -1109,6 +1275,7 @@ async function loadDiaryPhotoViews(entryId: string): Promise<DiaryPhotoView[]> {
     const rows = await listDiaryMedia(entryId);
     const views: DiaryPhotoView[] = [];
     for (const row of rows) {
+      if (row.kind !== 'photo') continue;
       try {
         const url = await diaryMediaSignedUrl(row.storage_path);
         if (url) views.push({ id: row.id, url });
@@ -1176,6 +1343,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleBox: { minHeight: TITLE_MIN_H, maxHeight: TITLE_MAX_H },
+  bodyBox: { minHeight: BODY_MIN_H, maxHeight: BODY_MAX_H },
+  attachStack: { gap: 8 },
+  stagedPhotos: { gap: 8 },
+  stagedRemove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },

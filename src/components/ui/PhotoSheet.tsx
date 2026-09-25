@@ -23,6 +23,8 @@ type Props = {
   onLibrary: () => void;
   onUseHomework?: () => void;
   onRemove?: () => void;
+  /** Optional third source (Journal attach): any file. */
+  onFile?: () => void;
   onCancel: () => void;
 };
 
@@ -45,6 +47,7 @@ export function PhotoSheet({
   onLibrary,
   onUseHomework,
   onRemove,
+  onFile,
   onCancel,
 }: Props) {
   const { colors, scheme } = useTheme();
@@ -88,6 +91,9 @@ export function PhotoSheet({
           <Text style={[styles.title, { color: colors.ink }]}>{title}</Text>
           <Row icon="capture" label="Take photo" onPress={() => run(onTake, true)} color={colors.ink} />
           <Row label="Choose from library" onPress={() => run(onLibrary, true)} color={colors.ink} />
+          {onFile ? (
+            <Row icon="file" label="Choose a file" onPress={() => run(onFile, true)} color={colors.ink} />
+          ) : null}
           {showUseHomework ? (
             <Row
               label="Use this homework as profile"
