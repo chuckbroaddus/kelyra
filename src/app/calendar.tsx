@@ -66,11 +66,6 @@ import {
   toggleLayerEnabled,
 } from '@/lib/calendar/filters';
 import {
-  DAY_LIST_WINDOW_DAYS,
-  dayListOriginAround,
-  dayListWindowDays,
-} from '@/lib/calendar/listAnchorDay';
-import {
   agendaRangeFrom,
   dayRangeContaining,
   dayRpcBounds,
@@ -170,6 +165,10 @@ export default function CalendarScreen() {
   // Today ISO — week Sunday via weekRangeContaining; 3 = Tue–Thu; 5 = Mon–Fri (CAL-R5-04).
   const [gridAnchor, setGridAnchor] = useState(() => multidayTodayAnchor());
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
+  /** Day List: bump to scroll the list to dayAnchor (drum snap / Today). */
+  const [dayListJump, setDayListJump] = useState(0);
+  /** Day List: bump when load() runs so the list refetches its rolling range. */
+  const [dayListReloadKey, setDayListReloadKey] = useState(0);
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
   const [monthAnchor, setMonthAnchor] = useState(() => dayRangeContaining().day);
   const [yearAnchor, setYearAnchor] = useState(() => yearContaining());
@@ -251,6 +250,11 @@ export default function CalendarScreen() {
   const monthListMode = activeView === 'month' && monthMode === 'list';
   /** Day List — Month List twin: own scroller + soft day edge (CEO 2026-09-24). */
   const dayListMode = activeView === 'day' && dayMode === 'list';
+  /**
+   * Day List keeps dayAnchor = pinned header day (drum center) on every scroll, so the
+   * screen fetch must not key on it there; the list fetches its own rolling range.
+   */
+  const dayFetchKey = dayListMode ? 'day-list' : `${dayRange.fromIso}|${dayRange.toIso}`;
 
   // Phase E: Ask calendar_draft_event parks CR-A draft — open Review on Calendar.
   useEffect(() => {
@@ -623,15 +627,16 @@ export default function CalendarScreen() {
 
   const applyDayListDrumShift = useCallback(
     (steps: number) => {
-      // Soft-paged Day List: drum and header share dayAnchor (Month List twin).
+      // CAL-P6-5C: drum snap moves dayAnchor; the list scrolls to that day's header.
       setDayAnchor((prev) => shiftDay(prev, steps));
+      setDayListJump((n) => n + 1);
     },
     [],
   );
 
-  const onCommitAdjacentDay = useCallback((dir: -1 | 1) => {
-    // Multi-day Day List window: edge rubber slides a week (Month List slides a month).
-    setDayAnchor((prev) => shiftDay(prev, dir * 7));
+  /** Pinned sticky header day while scrolling the list → drum center (CEO 2026-09-24 v2). */
+  const onDayListTopDay = useCallback((day: string) => {
+    setDayAnchor(day);
   }, []);
 
   const onChangeDayCount = useCallback(
@@ -760,6 +765,13 @@ export default function CalendarScreen() {
       // Keep prior paint — clearing loaded here blanks MonthGrid after Year→Month zoom.
       return;
     }
+    if (activeView === 'day' && dayMode === 'list') {
+      // Day List fetches its own rolling range (fetchDayListRange); signal a refresh.
+      setError(null);
+      setDayListReloadKey((k) => k + 1);
+      setLoaded(true);
+      return;
+    }
 
     setError(null);
     try {
@@ -774,18 +786,9 @@ export default function CalendarScreen() {
         from = bounds.from;
         to = bounds.to;
       } else if (activeView === 'day') {
-        // List mode: small pad around dayAnchor so adjacent soft-commits stay warm.
-        if (dayMode === 'list') {
-          const origin = dayListOriginAround(dayAnchor);
-          const windowDays = dayListWindowDays(origin, DAY_LIST_WINDOW_DAYS);
-          const bounds = dayRpcBounds(windowDays[0]!, windowDays[windowDays.length - 1]!);
-          from = bounds.from;
-          to = bounds.to;
-        } else {
-          const bounds = dayRpcBounds(dayRange.fromIso, dayRange.toIso);
-          from = bounds.from;
-          to = bounds.to;
-        }
+        const bounds = dayRpcBounds(dayRange.fromIso, dayRange.toIso);
+        from = bounds.from;
+        to = bounds.to;
       } else if (activeView === 'month') {
         const bounds = dayRpcBounds(monthRange.fromIso, monthRange.toIso);
         from = bounds.from;
@@ -826,9 +829,8 @@ export default function CalendarScreen() {
     weekRange.toIso,
     multiRange.fromIso,
     multiRange.toIso,
-    dayRange.fromIso,
-    dayRange.toIso,
-    dayAnchor,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dayRange via dayFetchKey (not in Day List)
+    dayFetchKey,
     agendaRange.fromIso,
     agendaRange.toIso,
     monthRange.fromIso,
@@ -848,6 +850,24 @@ export default function CalendarScreen() {
     useCallback(() => {
       void load();
     }, [load]),
+  );
+
+  /** Day List rolling fetch — same seat walls + UX filters as load(). */
+  const fetchDayListRange = useCallback(
+    async (fromIso: string, toIso: string): Promise<CalendarItem[]> => {
+      if (!seat) return [];
+      const bounds = dayRpcBounds(fromIso, toIso);
+      return listCalendarItems({
+        from: bounds.from,
+        to: bounds.to,
+        seat,
+        classId: seat === 'teacher' ? chrome.classId : null,
+        childStudentId: seat === 'parent' ? parentChildId : null,
+        categories: categoryFilter,
+        calendarIds: enabledIds.length ? enabledIds : null,
+      });
+    },
+    [seat, chrome.classId, parentChildId, categoryFilter, enabledIds],
   );
 
   const openItem = (item: CalendarItem) => {
@@ -900,6 +920,7 @@ export default function CalendarScreen() {
       setGridAnchor(multidayTodayAnchor(today));
     } else if (activeView === 'day') {
       setDayAnchor(today);
+      if (dayMode === 'list') setDayListJump((n) => n + 1);
 
     } else if (activeView === 'agenda') {
       setAgendaAnchor(today);
@@ -1152,10 +1173,13 @@ export default function CalendarScreen() {
             <View style={styles.dayListHost}>
               <DayListPane
                 day={dayAnchor}
-                items={visibleItems}
+                jumpNonce={dayListJump}
+                fetchRange={fetchDayListRange}
+                reloadKey={dayListReloadKey}
+                query={searchQuery}
                 showHiddenBadge={showHiddenBadge}
                 onPressItem={openItem}
-                onCommitAdjacentDay={onCommitAdjacentDay}
+                onTopDayChange={onDayListTopDay}
               />
             </View>
           ) : (

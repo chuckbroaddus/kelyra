@@ -66,27 +66,36 @@ test('CAL-P6-1A: full-band drum — carve 0; start-on-drum pages; no pageX left 
   assert.match(pager, /GestureDetector|manualActivation\(true\)/);
 });
 
-test('CAL-P6-5C: Day List mounts drum; multi-day window with empty stubs', () => {
+test('CAL-P6-5C: Day List mounts drum; continuous sticky-header list (CEO 2026-09-24 v2)', () => {
   assert.equal(showsPeriodPager('day', 'list'), true);
 
   const screen = read('src/app/calendar.tsx');
   assert.match(screen, /DayListPane/);
   assert.match(screen, /dayListMode/);
-  assert.match(screen, /onCommitAdjacentDay/);
   assert.match(screen, /applyDayListDrumShift/);
+  assert.match(screen, /onDayListTopDay/);
+  assert.match(screen, /fetchDayListRange/);
+  assert.match(screen, /jumpNonce=\{dayListJump\}/);
+  assert.match(screen, /dayFetchKey/);
   assert.match(screen, /scroll=\{!monthListMode && !dayListMode\}/);
   assert.match(screen, /dayListHost/);
   assert.match(screen, /CAL-P6-5C|CAL_P6_5C_LIST_ANCHOR/);
-  // Soft edge slides a week; drum still shifts dayAnchor one step.
-  assert.match(screen, /shiftDay\(prev, dir \* 7\)/);
+  // Old soft-edge week slide is gone: the list never stops at an edge.
+  assert.doesNotMatch(screen, /onCommitAdjacentDay/);
 
   const pane = read('src/components/calendar/DayListPane.tsx');
-  assert.match(pane, /dayListWindowDays/);
-  assert.match(pane, /includeEmptyDays/);
-  assert.match(pane, /dayListCommitDir/);
-  assert.match(pane, /onCommitAdjacentDay/);
+  assert.match(pane, /stickyHeaderIndices=\{layout\.headerIndices\}/);
+  assert.match(pane, /getItemLayout/);
+  assert.match(pane, /maintainVisibleContentPosition/);
+  assert.match(pane, /dayListExtendNeeds/);
+  assert.match(pane, /formatDayPeriodTitle/);
+  assert.match(pane, /fontSize: 22/);
+  assert.match(pane, /paddingLeft: DAY_LIST_INDENT/);
+  assert.match(pane, /No events/);
+  assert.match(pane, /backgroundColor: colors\.bg/);
   assert.match(pane, /chrome\?\.onScroll\(event\)/);
-  assert.doesNotMatch(pane, /hideDayHeadings/);
+  assert.match(pane, /onTopDayChange/);
+  assert.doesNotMatch(pane, /hideDayHeadings|onCommitAdjacentDay|key=\{origin\}/);
 });
 
 test('CAL-P6-5C behavioral: day list soft edge commits adjacent day', () => {
