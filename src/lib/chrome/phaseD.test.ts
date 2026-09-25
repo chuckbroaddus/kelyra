@@ -73,7 +73,7 @@ test('D3: teacher switch-class via /?switch=1 or drawer; no office classes tab o
   assert.ok(!trayKeysForRole('teacher').includes('classes'));
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /teacherSeat && matches\('Classes'/);
-  assert.match(drawer, /label="Classes" onPress=\{\(\) => go\('\/\?switch=1'\)\}/);
+  assert.match(drawer, /label="Classes"[\s\S]{0,120}onPress=\{\(\) => go\('\/\?switch=1'\)\}/);
   assert.match(drawer, /chromeState\.role === 'administrator'/);
   assert.match(drawer, /chromeState\.classes\.filter/);
   assert.doesNotMatch(drawer, /Another class/);

@@ -395,11 +395,25 @@ export function HamburgerDrawer() {
                         />
                       ))}
                       {matches('Activity', q) && can(profile, 'audit.view', 'school', grants) ? (
-                        <DrawerRow label="Activity" onPress={() => go('/activity')} />
+                        <DrawerRow
+                          label="Activity"
+                          onPress={() => go('/activity')}
+                          leading={<Icon name="history" color={colors.ink} size={22} />}
+                        />
                       ) : null}
-                      {matches('Messages', q) ? <DrawerRow label="Messages" onPress={() => go('/messages')} /> : null}
+                      {matches('Messages', q) ? (
+                        <DrawerRow
+                          label="Messages"
+                          onPress={() => go('/messages')}
+                          leading={<Icon name="chat" color={colors.ink} size={22} />}
+                        />
+                      ) : null}
                       {matches('Responsibilities', q) && can(profile, 'school.matrix', 'all', grants) ? (
-                        <DrawerRow label="Responsibilities" onPress={() => go('/admin/matrix')} />
+                        <DrawerRow
+                          label="Responsibilities"
+                          onPress={() => go('/admin/matrix')}
+                          leading={<Icon name="details" color={colors.ink} size={22} />}
+                        />
                       ) : null}
                       <Hairline />
                     </>
@@ -408,7 +422,11 @@ export function HamburgerDrawer() {
               ) : (
                 <>
                   {teacherSeat && matches('Classes', q) ? (
-                    <DrawerRow label="Classes" onPress={() => go('/?switch=1')} />
+                    <DrawerRow
+                      label="Classes"
+                      onPress={() => go('/?switch=1')}
+                      leading={<Icon name="classes" color={colors.ink} size={22} />}
+                    />
                   ) : null}
                   {teacherSeat ? <Hairline /> : null}
                   {chromeState.classId && teacherSeat ? (
@@ -428,6 +446,7 @@ export function HamburgerDrawer() {
                         <DrawerRow
                           label="Students"
                           onPress={() => go(`/class/${chromeState.classId}/setup`)}
+                          leading={<Icon name="person" color={colors.ink} size={22} />}
                         />
                       ) : null}
                       {matches('Grade book', q) ? (
@@ -437,18 +456,28 @@ export function HamburgerDrawer() {
                             chromeState.setContextTab('book', `/class/${chromeState.classId}/gradebook`);
                             go(`/class/${chromeState.classId}/gradebook`);
                           }}
+                          leading={<Icon name="grades" color={colors.ink} size={22} />}
                         />
                       ) : null}
                       {matches('Parents', q) ? (
-                        <DrawerRow label="Parents" onPress={() => go(`/class/${chromeState.classId}/parents`)} />
+                        <DrawerRow
+                          label="Parents"
+                          onPress={() => go(`/class/${chromeState.classId}/parents`)}
+                          leading={<Icon name="parents" color={colors.ink} size={22} />}
+                        />
                       ) : null}
                       {matches('Family update', q) ? (
-                        <DrawerRow label="Family update" onPress={() => go(`/class/${chromeState.classId}/family`)} />
+                        <DrawerRow
+                          label="Family update"
+                          onPress={() => go(`/class/${chromeState.classId}/family`)}
+                          leading={<Icon name="family" color={colors.ink} size={22} />}
+                        />
                       ) : null}
                       {matches('Class settings', q) ? (
                         <DrawerRow
                           label="Class settings"
                           onPress={() => go(`/class/${chromeState.classId}/settings`)}
+                          leading={<Icon name="settings" color={colors.ink} size={22} />}
                         />
                       ) : null}
                       <Hairline />
@@ -458,7 +487,11 @@ export function HamburgerDrawer() {
               )}
               {/* §36.2 / §31.4b: parent hat → My children without merging trays */}
               {isAlsoParent(profile) && matches('My children', q) ? (
-                <DrawerRow label="My children" onPress={() => go('/parent')} />
+                <DrawerRow
+                  label="My children"
+                  onPress={() => go('/parent')}
+                  leading={<Icon name="children" color={colors.ink} size={22} />}
+                />
               ) : null}
               {chromeState.canChooseSeat ? (
                 <>
@@ -479,6 +512,13 @@ export function HamburgerDrawer() {
                           chromeState.setChromeSeat(switchRow.seat);
                           go(chromeSeatRootHref(switchRow.seat), true);
                         }}
+                        leading={
+                          <Icon
+                            name={switchRow.label === 'Teach' ? 'classes' : 'manage'}
+                            color={colors.ink}
+                            size={22}
+                          />
+                        }
                       />
                     );
                   })()}
@@ -490,6 +530,7 @@ export function HamburgerDrawer() {
                         chromeState.setChromeSeat('parent');
                         go(chromeSeatRootHref('parent'), true);
                       }}
+                      leading={<Icon name="parents" color={colors.ink} size={22} />}
                     />
                   ) : null}
                 </>
@@ -504,6 +545,7 @@ export function HamburgerDrawer() {
                   close();
                   void signOut().then(() => router.replace('/'));
                 }}
+                leading={<Icon name="login" color={colors.danger} size={22} />}
               />
               ) : null}
             </>
@@ -530,12 +572,40 @@ export function HamburgerDrawer() {
                 </Text>
               )}
               {matches('Assignments', q) ? (
-                <DrawerRow label="Assignments" onPress={() => go('/todo')} />
+                <DrawerRow
+                  label="Assignments"
+                  onPress={() => go('/todo')}
+                  leading={<Icon name="work" color={colors.ink} size={22} />}
+                />
               ) : null}
-              {matches('Feeds', q) ? <DrawerRow label="Feeds" onPress={() => go('/student/feed')} /> : null}
-              {matches('Classes', q) ? <DrawerRow label="Classes" onPress={() => go('/student/class')} /> : null}
-              {matches('Grades', q) ? <DrawerRow label="Grades" onPress={() => go('/student/grades')} /> : null}
-              {matches('People', q) ? <DrawerRow label="People" onPress={() => go('/student/people')} /> : null}
+              {matches('Feeds', q) ? (
+                <DrawerRow
+                  label="Feeds"
+                  onPress={() => go('/student/feed')}
+                  leading={<Icon name="post" color={colors.ink} size={22} />}
+                />
+              ) : null}
+              {matches('Classes', q) ? (
+                <DrawerRow
+                  label="Classes"
+                  onPress={() => go('/student/class')}
+                  leading={<Icon name="classes" color={colors.ink} size={22} />}
+                />
+              ) : null}
+              {matches('Grades', q) ? (
+                <DrawerRow
+                  label="Grades"
+                  onPress={() => go('/student/grades')}
+                  leading={<Icon name="grades" color={colors.ink} size={22} />}
+                />
+              ) : null}
+              {matches('People', q) ? (
+                <DrawerRow
+                  label="People"
+                  onPress={() => go('/student/people')}
+                  leading={<Icon name="person" color={colors.ink} size={22} />}
+                />
+              ) : null}
               <Hairline />
               {matches('Sign out', q) ? (
                 <DrawerRow
@@ -545,6 +615,7 @@ export function HamburgerDrawer() {
                     close();
                     void signOut().then(() => router.replace('/'));
                   }}
+                  leading={<Icon name="login" color={colors.danger} size={22} />}
                 />
               ) : null}
             </>
@@ -566,10 +637,18 @@ export function HamburgerDrawer() {
                 <Text style={[styles.meta, { color: colors.mute }]}>Parent</Text>
               )}
               {matches('My children', q) ? (
-                <DrawerRow label="My children" onPress={() => go('/parent')} />
+                <DrawerRow
+                  label="My children"
+                  onPress={() => go('/parent')}
+                  leading={<Icon name="children" color={colors.ink} size={22} />}
+                />
               ) : null}
               {matches('Grades', q) ? (
-                <DrawerRow label="Grades" onPress={() => go('/parent/grades')} />
+                <DrawerRow
+                  label="Grades"
+                  onPress={() => go('/parent/grades')}
+                  leading={<Icon name="grades" color={colors.ink} size={22} />}
+                />
               ) : null}
               {chromeState.canChooseSeat ? (
                 <>
@@ -581,6 +660,7 @@ export function HamburgerDrawer() {
                         chromeState.setChromeSeat('office');
                         go(chromeSeatRootHref('office'), true);
                       }}
+                      leading={<Icon name="manage" color={colors.ink} size={22} />}
                     />
                   ) : null}
                   {seats.includes('teacher') && matches('Teach', q) ? (
@@ -591,11 +671,18 @@ export function HamburgerDrawer() {
                         chromeState.setChromeSeat('teacher');
                         go(chromeSeatRootHref('teacher'), true);
                       }}
+                      leading={<Icon name="classes" color={colors.ink} size={22} />}
                     />
                   ) : null}
                 </>
               ) : null}
-              {matches('Diary', q) ? <DrawerRow label="Diary" onPress={() => go('/diary')} /> : null}
+              {matches('Diary', q) ? (
+                <DrawerRow
+                  label="Diary"
+                  onPress={() => go('/diary')}
+                  leading={<Icon name="diary" color={colors.ink} size={22} />}
+                />
+              ) : null}
               <Hairline />
               {matches('Sign out', q) ? (
                 <DrawerRow
@@ -605,6 +692,7 @@ export function HamburgerDrawer() {
                     close();
                     void signOut().then(() => router.replace('/'));
                   }}
+                  leading={<Icon name="login" color={colors.danger} size={22} />}
                 />
               ) : null}
             </>
