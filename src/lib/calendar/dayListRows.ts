@@ -141,6 +141,36 @@ export function dayListFollowAt(
 }
 
 /**
+ * CAL-LIST-FOLLOW worklet: inverse of `dayListFollowAt` — scroll offset that puts
+ * continuous day position `pos` at the top edge (drum drag drives the list).
+ * Days are consecutive, so the section index is `floor(pos) - dayNumbers[0]`;
+ * clamps to the loaded range. NaN before layout. Self-contained (worklet rule).
+ */
+export function dayListOffsetAt(
+  headerOffsets: readonly number[],
+  dayNumbers: readonly number[],
+  totalHeight: number,
+  pos: number,
+): number {
+  'worklet';
+  const n = headerOffsets.length;
+  if (n === 0 || dayNumbers.length !== n || Number.isNaN(pos)) return NaN;
+  const day = Math.floor(pos);
+  let idx = day - dayNumbers[0]!;
+  let frac = pos - day;
+  if (idx < 0) {
+    idx = 0;
+    frac = 0;
+  } else if (idx > n - 1) {
+    idx = n - 1;
+    frac = 1;
+  }
+  const start = headerOffsets[idx]!;
+  const end = idx + 1 < n ? headerOffsets[idx + 1]! : totalHeight;
+  return start + frac * (end - start);
+}
+
+/**
  * CAL-DRUM-FOLLOW: continuous day position at scroll offset `y` — the pinned
  * day's number plus how far the top edge is through that day's section (0 when
  * its header pins, 1 when the next header pins). Null before layout.

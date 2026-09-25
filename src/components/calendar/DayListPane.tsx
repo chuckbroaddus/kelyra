@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import Reanimated, {
   runOnJS,
+  scrollTo,
+  useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useSharedValue,
   type SharedValue,
@@ -32,6 +35,7 @@ import {
   dayListDaysBetween,
   dayListExtendNeeds,
   dayListFollowAt,
+  dayListOffsetAt,
   dayListSeedRange,
   dayListTopIndexAt,
   type DayListLayout,
@@ -66,6 +70,11 @@ type Props = {
    * the pinned section, so the drum turns with the list both ways.
    */
   followPosition?: SharedValue<number> | null;
+  /**
+   * CAL-LIST-FOLLOW: drum position while the drum is dragged / coasting (NaN when
+   * idle). The list scrolls to it live instead of waiting for finger-up.
+   */
+  drivePosition?: SharedValue<number> | null;
 };
 
 type Range = { start: string; end: string };
@@ -102,10 +111,11 @@ export function DayListPane({
   onPressItem,
   onTopDayChange,
   followPosition = null,
+  drivePosition = null,
 }: Props) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
-  const listRef = useRef<FlatList<DayListRow<CalendarItem>>>(null);
+  const listRef = useAnimatedRef<FlatList<DayListRow<CalendarItem>>>();
 
   const [range, setRange] = useState<Range | null>(null);
   const [itemsByDay, setItemsByDay] = useState<Map<string, CalendarItem[]>>(() => new Map());
@@ -324,15 +334,19 @@ export function DayListPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- jumpNonce is the trigger
   }, [jumpNonce]);
 
+  /** CAL-LIST-FOLLOW: true while the drum drives the list (hold chrome + top-day reports). */
+  const drivingRef = useRef(false);
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    chrome?.onScroll(event);
+    if (!drivingRef.current) chrome?.onScroll(event);
     const lay = layoutRef.current;
     const y = event.nativeEvent.contentOffset.y;
     const idx = dayListTopIndexAt(lay.headerOffsets, y);
     if (idx < 0) return;
     const topDay = lay.days[idx]!;
     scrollRef.current = { y, topDay, intra: Math.max(0, y - lay.headerOffsets[idx]!) };
-    if (jumpTargetRef.current) {
+    if (drivingRef.current) {
+      // Drum owns the day; reporting now would re-anchor it mid-drag.
+    } else if (jumpTargetRef.current) {
       if (topDay === jumpTargetRef.current) setJumpTarget(null);
     } else {
       reportTop(topDay);
@@ -345,7 +359,8 @@ export function DayListPane({
   const onScrollRef = useRef(onScroll);
   onScrollRef.current = onScroll;
   const onScrollJs = useCallback(
-    (y: number, contentH: number, layoutH: number, vy: number) => {
+    (y: number, contentH: number, layoutH: number, vy: number, driving: boolean) => {
+      drivingRef.current = driving;
       const event = {
         nativeEvent: {
           contentOffset: { x: 0, y },
@@ -363,7 +378,8 @@ export function DayListPane({
       onScroll: (e) => {
         'worklet';
         const y = e.contentOffset.y;
-        if (followPosition && jumpingShared.value === 0) {
+        const driving = drivePosition ? !Number.isNaN(drivePosition.value) : false;
+        if (followPosition && jumpingShared.value === 0 && !driving) {
           const pos = dayListFollowAt(
             headerOffsetsShared.value,
             dayNumbersShared.value,
@@ -377,10 +393,39 @@ export function DayListPane({
           e.contentSize.height,
           e.layoutMeasurement.height,
           e.velocity?.y ?? 0,
+          driving,
         );
       },
     },
-    [followPosition, onScrollJs],
+    [followPosition, drivePosition, onScrollJs],
+  );
+
+  // CAL-LIST-FOLLOW: drum drag / coast scrolls the list live (not on finger-up).
+  // Native: UI-thread scrollTo. Web: same thread anyway — scrollToOffset via JS.
+  const scrollToJs = useCallback(
+    (offset: number) => {
+      listRef.current?.scrollToOffset({ offset, animated: false });
+    },
+    [listRef],
+  );
+  const isWeb = Platform.OS === 'web';
+  useAnimatedReaction(
+    () => (drivePosition ? drivePosition.value : NaN),
+    (pos, prev) => {
+      'worklet';
+      if (Number.isNaN(pos)) return;
+      if (pos === prev) return;
+      const y = dayListOffsetAt(
+        headerOffsetsShared.value,
+        dayNumbersShared.value,
+        totalHeightShared.value,
+        pos,
+      );
+      if (Number.isNaN(y)) return;
+      if (isWeb) runOnJS(scrollToJs)(y);
+      else scrollTo(listRef, 0, y, false);
+    },
+    [drivePosition, isWeb, scrollToJs],
   );
 
   const renderRow = ({ item: row }: { item: DayListRow<CalendarItem> }) => {
