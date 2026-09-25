@@ -103,6 +103,12 @@ type Props = {
    * the drum turns with the list both ways; drum pan/snap always wins.
    */
   followPosition?: SharedValue<number> | null;
+  /**
+   * CAL-LIST-FOLLOW: while the drum owns the motion (drag, coast, tap snap) the
+   * pager writes its continuous day position here every frame so the list can
+   * scroll live; NaN when idle.
+   */
+  drivePosition?: SharedValue<number> | null;
   accessibilityPrevLabel?: string;
   accessibilityNextLabel?: string;
 };
@@ -329,6 +335,7 @@ export function PeriodPager({
   onShift,
   onJumpToday,
   followPosition = null,
+  drivePosition = null,
   accessibilityPrevLabel = 'Previous',
   accessibilityNextLabel = 'Next',
 }: Props) {
@@ -448,6 +455,31 @@ export function PeriodPager({
       dragShared.value = -clamped * pitch;
     },
     [followPosition, pitch],
+  );
+
+  // CAL-LIST-FOLLOW: never leave the list thinking the drum still drives.
+  useEffect(
+    () => () => {
+      if (drivePosition) drivePosition.value = Number.NaN;
+    },
+    [drivePosition],
+  );
+
+  // CAL-LIST-FOLLOW: publish drum position while the drum drives (block 2).
+  useAnimatedReaction(
+    () => {
+      if (!drivePosition) return null;
+      return followBlockShared.value === 2
+        ? anchorPosShared.value - dragShared.value / pitch
+        : NaN;
+    },
+    (pos) => {
+      'worklet';
+      if (pos == null || !drivePosition) return;
+      if (Number.isNaN(pos) && Number.isNaN(drivePosition.value)) return;
+      drivePosition.value = pos;
+    },
+    [drivePosition, pitch],
   );
 
   const onFail = useCallback(() => setFailed(true), []);
@@ -659,10 +691,11 @@ export function PeriodPager({
       snapActiveRef.current;
     absorbInFlightSnap();
     // After absorb, residual is 0; continue from captured visual + gesture delta.
-    grantDragBaseRef.current = hadInFlight ? visualBefore : 0;
+    // CAL-DRUM-FOLLOW: list may have parked the drum mid-turn — grab it there.
+    grantDragBaseRef.current = hadInFlight || followPosition ? visualBefore : 0;
     dragShared.value = grantDragBaseRef.current;
     dragPxRef.current = grantDragBaseRef.current;
-  }, [absorbInFlightSnap, anchor, dragShared, failed, holdStackGestures]);
+  }, [absorbInFlightSnap, anchor, dragShared, failed, followPosition, holdStackGestures]);
 
   const onPanUpdate = useCallback(
     (translationX: number, velocityX: number) => {

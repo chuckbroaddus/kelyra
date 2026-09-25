@@ -17,6 +17,7 @@ import {
   dayListExtendNeeds,
   dayListFollowAt,
   dayListFollowPosition,
+  dayListOffsetAt,
   dayListSeedRange,
   dayListTopIndexAt,
 } from './dayListRows.ts';
@@ -134,7 +135,7 @@ test('CAL-DRUM-FOLLOW wiring: list feeds follow, pager follows unless drum owns 
 
 test('CAL-DRUM-FOLLOW dayListFollowAt is a self-contained worklet matching the layout helper', () => {
   const src = readFileSync('src/lib/calendar/dayListRows.ts', 'utf8');
-  const body = src.slice(src.indexOf('export function dayListFollowAt'), src.indexOf('export function dayListFollowPosition'));
+  const body = src.slice(src.indexOf('export function dayListFollowAt'), src.indexOf('/**\n * CAL-LIST-FOLLOW worklet'));
   assert.match(body, /'worklet';/);
   assert.doesNotMatch(body.replace('export function dayListFollowAt', ''), /dayList\w+\(/);
   const offsets = [0, 84, 204, 288];
@@ -145,4 +146,33 @@ test('CAL-DRUM-FOLLOW dayListFollowAt is a self-contained worklet matching the l
   assert.equal(dayListFollowAt(offsets, nums, 400, -20), 100);
   assert.equal(dayListFollowAt(offsets, nums, 400, 344), 103.5);
   assert.ok(Number.isNaN(dayListFollowAt([], [], 0, 5)));
+});
+
+test('CAL-LIST-FOLLOW dayListOffsetAt inverts dayListFollowAt and clamps to loaded days', () => {
+  const offsets = [0, 84, 204, 288];
+  const nums = [100, 101, 102, 103];
+  for (const y of [0, 30, 84, 150, 204, 250, 300]) {
+    const pos = dayListFollowAt(offsets, nums, 400, y);
+    assert.ok(Math.abs(dayListOffsetAt(offsets, nums, 400, pos) - y) < 1e-9, `y=${y}`);
+  }
+  assert.equal(dayListOffsetAt(offsets, nums, 400, 90.5), 0);
+  assert.equal(dayListOffsetAt(offsets, nums, 400, 120), 400);
+  assert.ok(Number.isNaN(dayListOffsetAt([], [], 0, 100)));
+  assert.ok(Number.isNaN(dayListOffsetAt(offsets, nums, 400, Number.NaN)));
+  const src = readFileSync('src/lib/calendar/dayListRows.ts', 'utf8');
+  const body = src.slice(src.indexOf('export function dayListOffsetAt'), src.indexOf('/**\n * CAL-DRUM-FOLLOW: continuous day position'));
+  assert.match(body, /'worklet';/);
+  assert.doesNotMatch(body.replace('export function dayListOffsetAt', ''), /dayList\w+\(/);
+});
+
+test('CAL-LIST-FOLLOW wiring: drum drive scrolls list live; reports held while driving', () => {
+  const pager = readFileSync('src/components/calendar/PeriodPager.tsx', 'utf8');
+  const pane = readFileSync('src/components/calendar/DayListPane.tsx', 'utf8');
+  const screen = readFileSync('src/app/calendar.tsx', 'utf8');
+  assert.match(pager, /drivePosition\?: SharedValue<number> \| null/);
+  assert.match(pager, /anchorPosShared\.value - dragShared\.value \/ pitch/);
+  assert.match(pager, /hadInFlight \|\| followPosition \? visualBefore : 0/);
+  assert.match(pane, /scrollTo\(listRef, 0, y, false\)/);
+  assert.match(pane, /if \(drivingRef\.current\) \{/);
+  assert.match(screen, /drivePosition=\{dayListMode \? dayListDrive : null\}/);
 });
