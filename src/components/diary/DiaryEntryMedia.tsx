@@ -8,6 +8,7 @@ import { radius, type } from '@/constants/theme';
 import {
   ROW_CHIP_H,
   ROW_GAP,
+  ROW_LINK_H,
   ROW_META_H,
   ROW_PAD_V,
   ROW_PHOTO_H,
@@ -50,6 +51,50 @@ export function DiaryLinkCard({ url }: { url: string }) {
     <View style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}>
       <MessagePayloadView payload={link} body="" onOpenWork={() => {}} />
     </View>
+  );
+}
+
+/**
+ * JOURNAL-LINK: list-row link card — preview image, page title, site — at a fixed
+ * ROW_LINK_H so the Day List's row heights stay exact. Tap opens the page.
+ */
+export function DiaryLinkRowCard({ url }: { url: string }) {
+  const { colors } = useTheme();
+  const [link, setLink] = useState<MessageLink>({ type: 'link', url, title: linkHost(url) });
+  useEffect(() => {
+    let live = true;
+    setLink({ type: 'link', url, title: linkHost(url) });
+    void unfurlOnce(url).then((next) => {
+      if (live) setLink(next);
+    });
+    return () => {
+      live = false;
+    };
+  }, [url]);
+  const host = linkHost(url);
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`Open ${link.title || host}`}
+      onPress={() => void Linking.openURL(url)}
+      style={[styles.linkRowCard, { borderColor: colors.line, backgroundColor: colors.elevated }]}
+    >
+      <View style={[styles.linkRowThumb, { backgroundColor: colors.wash }]}>
+        {link.image_url ? (
+          <RemoteImage uri={link.image_url} style={styles.linkRowThumb} contentFit="cover" />
+        ) : (
+          <Icon name="link" size={20} color={colors.mute} />
+        )}
+      </View>
+      <View style={styles.linkRowText}>
+        <Text numberOfLines={2} maxFontSizeMultiplier={1} style={[styles.linkRowTitle, { color: colors.ink }]}>
+          {link.title || host}
+        </Text>
+        <Text numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.linkRowHost, { color: colors.mute }]}>
+          {host}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -291,20 +336,7 @@ export function DiaryRowContent({
             );
           }
           case 'link':
-            return (
-              <Pressable
-                key={`l${i}`}
-                accessibilityRole="link"
-                accessibilityLabel={`Open ${linkHost(block.url)}`}
-                onPress={() => void Linking.openURL(block.url)}
-                style={[styles.fileChip, styles.rowChipSlot, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-              >
-                <Icon name="link" size={16} color={colors.mute} />
-                <Text numberOfLines={1} maxFontSizeMultiplier={1} style={[type.meta, styles.fileName, { color: colors.ink }]}>
-                  {linkHost(block.url)}
-                </Text>
-              </Pressable>
-            );
+            return <DiaryLinkRowCard key={`l${i}`} url={block.url} />;
           case 'meta':
             return (
               <Text key={`m${i}`} numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.rowMeta, { color: colors.mute }]}>
@@ -325,6 +357,21 @@ const styles = StyleSheet.create({
   rowPhoto: { width: '100%', maxWidth: 320, height: ROW_PHOTO_H, borderRadius: 8, overflow: 'hidden' },
   rowPhotoImg: { width: '100%', height: ROW_PHOTO_H },
   rowChipSlot: { height: ROW_CHIP_H, justifyContent: 'center' },
+  linkRowCard: {
+    height: ROW_LINK_H,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.sm,
+    maxWidth: 360,
+    overflow: 'hidden',
+  },
+  linkRowThumb: { width: 56, height: 56, borderRadius: 6, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  linkRowText: { flex: 1, minWidth: 0, gap: 2 },
+  linkRowTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600' },
+  linkRowHost: { fontSize: 12, lineHeight: 16 },
   stack: { gap: 8, marginTop: 8 },
   card: { borderWidth: 1, borderRadius: radius.sm, padding: 8, alignSelf: 'flex-start', maxWidth: '100%' },
   photo: { width: 220, height: 160, borderRadius: 8 },
