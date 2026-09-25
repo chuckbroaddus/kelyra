@@ -24,6 +24,7 @@ import { can } from '@/lib/school/matrix';
 import { peopleTabForCreatedRole, type CreateLoginNotice } from '@/lib/school/createLoginNotice';
 import { isAlsoParent, isOfficeRole, roleStatus } from '@/lib/school/roles';
 import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
+import { classListRowNavTarget } from '@/lib/classes/classListNav';
 import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api';
 import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
 import { getSchoolIdentity, type SchoolIdentity } from '@/lib/school/identity';
@@ -177,8 +178,8 @@ export default function HomeScreen() {
   const canEditMatrix = can(profile, 'school.matrix', 'all', grants);
   const canCreate = showCreateClass || canCreateLogin;
   const openClass = (id: string) => {
-    if (teacherSeat) router.push(`/class/${id}`);
-    else router.push(`/admin/class/${id}`);
+    const href = classListRowNavTarget('main-classes', chrome.role, id);
+    if (href) router.push(href as never);
   };
   const feedIcon = (schoolFeed?.icon ?? 'feedSchool') as IconName;
   const tabs = officeSeat

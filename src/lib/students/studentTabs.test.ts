@@ -13,9 +13,9 @@ import {
 } from './studentTabs.ts';
 
 const TEACHER_ORDER = ['focus', 'history', 'work', 'practice', 'parents', 'details'] as const;
-const OFFICE_ORDER = ['details', 'parents'] as const;
+const OFFICE_ORDER = ['details', 'parents', 'classes'] as const;
 
-test('superintendent/office student tabs are exactly details then parents', () => {
+test('superintendent/office student tabs are exactly details, parents, classes', () => {
   assert.deepEqual(
     OFFICE_STUDENT_TABS.map((t) => t.key),
     [...OFFICE_ORDER],
@@ -29,6 +29,7 @@ test('superintendent/office student tabs are exactly details then parents', () =
     assert.equal(studentTabsLoadTeacherData(role), false);
     assert.equal(studentTabFromParam(role, undefined), 'details');
     assert.equal(studentTabFromParam(role, 'parents'), 'parents');
+    assert.equal(studentTabFromParam(role, 'classes'), 'classes');
     // Hidden teacher tab deep-link falls back to details.
     assert.equal(studentTabFromParam(role, 'focus'), 'details');
     assert.equal(studentTabFromParam(role, 'work'), 'details');
