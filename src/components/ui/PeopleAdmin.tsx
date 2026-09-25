@@ -1,7 +1,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Avatar } from '@/components/ui/Avatar';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { PrimaryButton } from '@/components/ui/Button';
@@ -9,6 +10,7 @@ import { HandleLink } from '@/components/ui/HandleLink';
 import { NoticePopup } from '@/components/ui/NoticePopup';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
+import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { ResetPasswordSheet } from '@/components/ui/ResetPasswordSheet';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
@@ -16,12 +18,24 @@ import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import {
   createLogin,
+  getProfile,
   listDirectory,
+  listProfiles,
   resetLoginPassword,
   setAlsoHat,
   setAlsoParent as saveAlsoParent,
+  updateProfileDetails,
   type DirectoryPerson,
 } from '@/lib/school/api';
+import {
+  fieldForServerError,
+  firstCreateLoginError,
+  validateCreateLogin,
+  type CreateLoginErrors,
+  type CreateLoginField,
+} from '@/lib/school/createLoginValidation';
+import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
+import { uploadProfilePhoto } from '@/lib/people/photos';
 import {
   createAccountErrorNotice,
   createdAccountNotice,
@@ -208,10 +222,18 @@ export function CreateLoginForm({
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<SchoolRole>('teacher');
+  // NEW-PERSON-VALIDATION: no chip preselected; picking a role is required.
+  const [role, setRole] = useState<SchoolRole | null>(null);
   const [alsoParent, setAlsoParent] = useState(false);
   const [alsoAdministrator, setAlsoAdministrator] = useState(false);
   const [alsoTeacher, setAlsoTeacher] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  // NEW-PERSON-AVATAR: picked locally, uploaded after the login exists.
+  const [photo, setPhoto] = useState<{ uri: string; mimeType: string } | null>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<CreateLoginErrors>({});
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -222,28 +244,39 @@ export function CreateLoginForm({
     setError(reason);
     setNotice(createAccountErrorNotice(reason));
   };
+  const clearField = (field: CreateLoginField) =>
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  const avatarAllowed = role !== 'student';
+
+  const pickPhoto = async (fromCamera: boolean) => {
+    try {
+      await waitForModalDismiss();
+      const picked = await pickNormalizedPhoto(fromCamera && !webCameraNeeded(fromCamera));
+      if (picked) setPhoto(picked);
+    } catch (err) {
+      fail(err instanceof Error ? err.message : 'Could not open photos');
+    }
+  };
 
   const create = async () => {
     setError(null);
     setStatus(null);
-    if (!displayName.trim() && !username.trim()) {
-      fail('Need a display name or @username.');
-      return;
+    let existing: Awaited<ReturnType<typeof listProfiles>> = [];
+    try {
+      existing = await listProfiles();
+    } catch {
+      // Server still rejects a duplicate email; the rest re-checks there too.
     }
-    if (!email.includes('@') || !email.includes('.')) {
-      fail('Need a real email.');
-      return;
-    }
-    if (password.length < 6) {
-      fail('Temporary password must be at least 6 characters.');
-      return;
-    }
+    const draft = { displayName, username, email, password, role };
+    const errors = validateCreateLogin(draft, existing);
+    setFieldErrors(errors);
+    if (firstCreateLoginError(errors) || !role) return;
     setBusy(true);
     try {
-      await createLogin({
+      const newId = await createLogin({
         email,
         password,
-        username: username.trim() || displayName,
+        username,
         role,
         displayName,
         mustChange: true,
@@ -251,14 +284,54 @@ export function CreateLoginForm({
         alsoAdministrator: canAlsoBeAdministrator(role) && alsoAdministrator,
         alsoTeacher: canAlsoBeTeacher(role) && alsoTeacher,
       });
-      setNotice(createdAccountNotice(displayName, username));
+      const missed: string[] = [];
+      if (phone.trim() || address.trim() || notes.trim()) {
+        try {
+          const saved = await getProfile(newId);
+          await updateProfileDetails({
+            profileId: newId,
+            displayName: saved.display_name ?? displayName,
+            username: saved.username,
+            email: saved.email ?? email,
+            phone,
+            address,
+            notes,
+          });
+        } catch {
+          missed.push('phone, address, and notes');
+        }
+      }
+      if (photo && avatarAllowed && profile) {
+        try {
+          const saved = await getProfile(newId);
+          const staff = isStaffRole(role) || (canAlsoBeTeacher(role) && alsoTeacher);
+          const personId = staff ? newId : saved.parent_id;
+          if (!personId) throw new Error('No record for the photo');
+          await uploadProfilePhoto({
+            teacherId: profile.id,
+            kind: staff ? 'teacher' : 'parent',
+            personId,
+            uri: photo.uri,
+            mimeType: photo.mimeType,
+          });
+        } catch {
+          missed.push('the photo');
+        }
+      }
+      setNotice(createdAccountNotice(displayName, username, missed));
       setEmail('');
       setUsername('');
       setDisplayName('');
       setPassword('');
+      setRole(null);
       setAlsoParent(false);
       setAlsoAdministrator(false);
       setAlsoTeacher(false);
+      setPhone('');
+      setAddress('');
+      setNotes('');
+      setPhoto(null);
+      setFieldErrors({});
       setStatus(
         role === 'student'
           ? 'Account created. Add them to a class roster to attach the record, or open an existing student and assign this login. They must change the password on first sign-in.'
@@ -268,30 +341,97 @@ export function CreateLoginForm({
       );
       onCreated?.(role);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not create account';
+      const field = fieldForServerError(message);
+      if (field) setFieldErrors((prev) => ({ ...prev, [field]: message.replace(/^Could not create login:\s*/i, '') }));
       fail(err instanceof Error ? err.message : 'Could not create account');
     } finally {
       setBusy(false);
     }
   };
 
+  const label = (text: string, required: boolean) => (
+    <Text style={[styles.fieldLabel, { color: colors.mute }]}>
+      {text}
+      {required ? <Text style={{ color: colors.danger }}> *</Text> : null}
+    </Text>
+  );
+  const fieldError = (field: CreateLoginField) =>
+    fieldErrors[field] ? (
+      <Text style={[styles.fieldError, { color: colors.danger }]}>{fieldErrors[field]}</Text>
+    ) : null;
+
   return (
     <>
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       {status ? <Text style={[type.meta, { color: colors.mute }]}>{status}</Text> : null}
-      <TextField placeholder="Display name" value={displayName} onChangeText={setDisplayName} />
+      {avatarAllowed ? (
+        <View style={styles.avatarRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={photo ? 'Change photo' : 'Add photo'}
+            onPress={() => setPhotoOpen(true)}
+            style={styles.avatarPress}
+          >
+            <Avatar name={displayName.trim()} photoUrl={photo?.uri} unknown={!displayName.trim()} size={88} />
+            <Text style={[type.meta, styles.avatarHint, { color: colors.brand }]}>
+              {photo ? 'Change photo' : 'Add photo'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {label('Display name', true)}
+      <TextField
+        placeholder="Display name"
+        value={displayName}
+        onChangeText={(value) => {
+          setDisplayName(value);
+          clearField('displayName');
+        }}
+      />
+      {fieldError('displayName')}
       <View style={styles.gap} />
-      <TextField autoCapitalize="none" placeholder="@username" value={username} onChangeText={setUsername} />
-      <View style={styles.gap} />
+      {label('Username', true)}
       <TextField
         autoCapitalize="none"
+        autoCorrect={false}
+        placeholder="@username"
+        value={username}
+        onChangeText={(value) => {
+          setUsername(value);
+          clearField('username');
+        }}
+      />
+      {fieldError('username')}
+      <View style={styles.gap} />
+      {label('Email', true)}
+      <TextField
+        autoCapitalize="none"
+        autoCorrect={false}
         keyboardType="email-address"
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(value) => {
+          setEmail(value);
+          clearField('email');
+        }}
       />
+      {fieldError('email')}
       <View style={styles.gap} />
-      <TextField placeholder="Temporary password" value={password} onChangeText={setPassword} />
+      {label('Temporary password', true)}
+      <TextField
+        autoCapitalize="none"
+        autoCorrect={false}
+        placeholder="Temporary password"
+        value={password}
+        onChangeText={(value) => {
+          setPassword(value);
+          clearField('password');
+        }}
+      />
+      {fieldError('password')}
       <View style={styles.gap} />
+      {label('Role', true)}
       <ChipRow>
         {SCHOOL_ROLES.filter((item) => item !== 'superintendent' || profile?.role === 'superintendent').map((item) => (
           <Chip
@@ -300,14 +440,17 @@ export function CreateLoginForm({
             selected={role === item}
             onPress={() => {
               setRole(item);
+              clearField('role');
               if (!isStaffRole(item)) setAlsoParent(false);
               if (!canAlsoBeAdministrator(item)) setAlsoAdministrator(false);
               if (!canAlsoBeTeacher(item)) setAlsoTeacher(false);
+              if (item === 'student') setPhoto(null);
             }}
           />
         ))}
       </ChipRow>
-      {isStaffRole(role) ? (
+      {fieldError('role')}
+      {role && isStaffRole(role) ? (
         <ChipRow>
           {canAlsoBeAdministrator(role) ? (
             <Chip
@@ -334,7 +477,28 @@ export function CreateLoginForm({
         </ChipRow>
       ) : null}
       <View style={styles.gap} />
+      <Text style={[type.meta, styles.optionalHead, { color: colors.mute }]}>Optional</Text>
+      {label('Phone', false)}
+      <TextField keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
+      <View style={styles.gap} />
+      {label('Address', false)}
+      <TextField placeholder="Address" value={address} onChangeText={setAddress} />
+      <View style={styles.gap} />
+      {label('Notes', false)}
+      <TextField multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
+      <View style={styles.gap} />
       <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy} onPress={() => void create()} />
+      <PhotoSheet
+        visible={photoOpen}
+        hasPhoto={Boolean(photo)}
+        onTake={() => void pickPhoto(true)}
+        onLibrary={() => void pickPhoto(false)}
+        onRemove={() => {
+          setPhotoOpen(false);
+          setPhoto(null);
+        }}
+        onCancel={() => setPhotoOpen(false)}
+      />
       <NoticePopup notice={notice} onDismiss={dismissNotice} />
     </>
   );
@@ -362,4 +526,10 @@ function listedAsParent(row: DirectoryPerson, everyone: DirectoryPerson[] | null
 const styles = StyleSheet.create({
   gap: { height: 10 },
   error: { ...type.body, marginTop: 8 },
+  fieldLabel: { ...type.meta, marginBottom: 6 },
+  fieldError: { ...type.meta, marginTop: 4 },
+  optionalHead: { marginTop: 6, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 },
+  avatarRow: { alignItems: 'center', marginBottom: 14 },
+  avatarPress: { alignItems: 'center' },
+  avatarHint: { marginTop: 6 },
 });
