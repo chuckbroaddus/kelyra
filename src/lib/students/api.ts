@@ -4,7 +4,7 @@ import { setMetaKey } from '@/lib/people/metadata';
 import { hydratePhotoUrls } from '@/lib/people/photos';
 import { provisionStudentLogin, writeAudit, type ProvisionedLogin } from '@/lib/school/api';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { RosterImportRow, StudentRow } from '@/lib/supabase/types';
+import type { RosterImportRow, StudentCreatedVia, StudentRow } from '@/lib/supabase/types';
 
 export type SuggestedRosterName = {
   key: string;
@@ -299,6 +299,38 @@ async function assertOfficeMayMintStudent(): Promise<void> {
   const { data, error } = await requireSupabase().rpc('is_school_admin');
   if (error) throw new Error(error.message || 'Could not check office access');
   if (!data) throw new Error('Only the office may add a new student.');
+}
+
+/** Office People create-account: mint a student card (no class yet) and optionally seed metadata. */
+export async function mintOfficeStudent(input: {
+  displayName: string;
+  teacherId: string;
+  metadata?: Record<string, unknown>;
+  createdVia?: StudentCreatedVia;
+}): Promise<StudentRow> {
+  await assertOfficeMayMintStudent();
+  const name = input.displayName.replace(/\s+/g, ' ').trim();
+  if (!name) throw new Error('Student name is required');
+  const { data, error } = await requireSupabase()
+    .from('students')
+    .insert({
+      teacher_id: input.teacherId,
+      display_name: name,
+      sort_name: name,
+      created_via: input.createdVia ?? 'typed',
+      metadata: input.metadata ?? {},
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  await writeAudit({
+    action: 'mint_student',
+    entityType: 'student',
+    entityId: data.id,
+    studentId: data.id,
+    after: { display_name: data.display_name },
+  }).catch(() => undefined);
+  return data;
 }
 
 async function insertStudent(input: {

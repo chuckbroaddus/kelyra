@@ -13,6 +13,7 @@ export type StudentMetadataKey =
   | 'emergency_name'
   | 'emergency_phone'
   | 'allergies'
+  | 'health_conditions'
   | 'notes'
   | 'focusLog';
 export type ParentMetadataKey =
