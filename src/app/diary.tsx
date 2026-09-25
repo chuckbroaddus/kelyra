@@ -1,17 +1,17 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { DayListPane } from '@/components/calendar/DayListPane';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
 import { DiarySettingsSheet } from '@/components/diary/DiarySettingsSheet';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
+import { Avatar } from '@/components/ui/Avatar';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { PersonTabs } from '@/components/ui/PersonTabs';
@@ -66,8 +66,12 @@ import { useReducedMotion } from '@/lib/ui/reducedMotion';
 type Segment = 'journal' | 'ledger';
 type DiaryPhotoView = { id: string; url: string };
 
-type TaughtClass = { id: string; name: string };
-type RosterChip = { id: string; display_name: string };
+type TaughtClass = { id: string; name: string; avatarUrl?: string | null };
+type RosterChip = { id: string; display_name: string; photoUrl?: string | null };
+/** Which field a mic is dictating into. Only one at a time. */
+type DictateTarget = 'title' | 'body';
+/** Tab key for the entry's "No class" tab (last in the row). */
+const NO_CLASS_TAB = 'none';
 
 export default function DiaryScreen() {
   const { colors } = useTheme();
@@ -127,7 +131,10 @@ export default function DiaryScreen() {
   const [pointerRoster, setPointerRoster] = useState<RosterChip[]>([]);
   const [ledgerRoster, setLedgerRoster] = useState<RosterChip[]>([]);
   const [busy, setBusy] = useState(false);
-  const [recording, setRecording] = useState(false);
+  /** The one active mic (Title or Body); null = none recording. */
+  const [dictateTarget, setDictateTarget] = useState<DictateTarget | null>(null);
+  const recording = dictateTarget != null;
+  const [transcribing, setTranscribing] = useState(false);
   const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
   const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
@@ -174,7 +181,9 @@ export default function DiaryScreen() {
     let cancelled = false;
     void listTaughtClasses()
       .then((rows) => {
-        if (!cancelled) setTaughtClasses(rows.map((row) => ({ id: row.id, name: row.name })));
+        if (!cancelled) {
+          setTaughtClasses(rows.map((row) => ({ id: row.id, name: row.name, avatarUrl: row.avatarUrl ?? null })));
+        }
       })
       .catch(() => {
         if (!cancelled) setTaughtClasses([]);
@@ -193,7 +202,9 @@ export default function DiaryScreen() {
     void listRoster(pointerClassId)
       .then((rows) => {
         if (!cancelled) {
-          setPointerRoster(rows.map((row) => ({ id: row.id, display_name: row.display_name })));
+          setPointerRoster(
+            rows.map((row) => ({ id: row.id, display_name: row.display_name, photoUrl: row.photoUrl ?? null })),
+          );
         }
       })
       .catch(() => {
@@ -539,40 +550,77 @@ export default function DiaryScreen() {
     }
   }
 
-  async function startDictate() {
-    if (recording || liveRef.current) return;
+  async function startDictate(target: DictateTarget) {
+    if (liveRef.current) return;
     setError(null);
     setNotice(null);
     try {
       const live = await startLiveRecording();
       liveRef.current = live;
-      setRecording(true);
+      setDictateTarget(target);
     } catch (err) {
       liveRef.current = null;
-      setRecording(false);
+      setDictateTarget(null);
       setError(err instanceof Error ? err.message : 'Could not start mic');
     }
   }
 
   async function stopDictate() {
     const live = liveRef.current;
+    const target = dictateTarget;
     liveRef.current = null;
-    if (!live) {
-      setRecording(false);
+    if (!live || !target) {
+      setDictateTarget(null);
       return;
     }
     setBusy(true);
+    setTranscribing(true);
     try {
       const audio = await live.stop();
       const text = await transcribeAudioDirect({ uri: audio.uri, mimeType: audio.mimeType });
-      if (text) setBody((current) => (current.trim() ? `${current.trim()} ${text}` : text));
-      setNotice('Transcript added — edit before Save.');
+      const setField = target === 'title' ? setTitle : setBody;
+      if (text) setField((current) => (current.trim() ? `${current.trim()} ${text}` : text));
+      setNotice(`Transcript added to ${target === 'title' ? 'Title' : 'Body'} — edit before Done.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not transcribe');
     } finally {
-      setRecording(false);
+      setDictateTarget(null);
+      setTranscribing(false);
       setBusy(false);
     }
+  }
+
+  /** Mic tap: same mic stops; the other mic stops first (its text lands), then this one starts. */
+  async function toggleDictate(target: DictateTarget) {
+    if (busy) return;
+    if (dictateTarget === target) {
+      await stopDictate();
+      return;
+    }
+    if (dictateTarget) await stopDictate();
+    await startDictate(target);
+  }
+
+  function renderMic(target: DictateTarget) {
+    const active = dictateTarget === target;
+    const label = target === 'title' ? 'Title' : 'Body';
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={active ? `Stop recording ${label}` : `Record ${label}`}
+        accessibilityState={{ selected: active, disabled: busy }}
+        disabled={busy}
+        hitSlop={6}
+        onPress={() => void toggleDictate(target)}
+        style={[
+          styles.micButton,
+          active && { backgroundColor: colors.dangerSoft },
+          busy && !active && { opacity: 0.4 },
+        ]}
+      >
+        <Icon name="mic" size={20} color={active ? colors.danger : colors.mute} />
+      </Pressable>
+    );
   }
 
   function loadedLedgerRows(): LedgerEventRow[] {
@@ -800,12 +848,11 @@ export default function DiaryScreen() {
           if (recording) void stopDictate();
         }}
       >
-        <TextField label="Title (optional)" value={title} onChangeText={setTitle} />
         <TextField
-          label="Date (YYYY-MM-DD)"
-          value={entryDate}
-          onChangeText={setEntryDate}
-          autoCapitalize="none"
+          label="Title (optional)"
+          value={title}
+          onChangeText={setTitle}
+          accessory={renderMic('title')}
         />
         <TextField
           label="Body"
@@ -814,6 +861,21 @@ export default function DiaryScreen() {
           multiline
           numberOfLines={6}
           placeholder="Personal reflection — not the official student file."
+          accessory={renderMic('body')}
+          accessoryPlacement="bottom"
+        />
+        {recording ? (
+          <Text style={[type.meta, { color: colors.danger }]}>
+            Recording {dictateTarget === 'title' ? 'Title' : 'Body'}… tap the mic again to stop.
+          </Text>
+        ) : transcribing ? (
+          <Text style={[type.meta, { color: colors.mute }]}>Transcribing…</Text>
+        ) : null}
+        <TextField
+          label="Date (YYYY-MM-DD)"
+          value={entryDate}
+          onChangeText={setEntryDate}
+          autoCapitalize="none"
         />
         {editing ? (
           <DiaryPhotoStrip
@@ -830,57 +892,94 @@ export default function DiaryScreen() {
         />
         {teacherLike ? (
           <>
+            {/* Soft student pointer: private search only — not an ACL. */}
             <Text style={[styles.filterLabel, { color: colors.mute }]}>
-              Soft student pointer (private search only — not an ACL)
+              Tag to a Student - Kept private only in your Journal
             </Text>
             {taughtClasses.length ? (
               <>
-                <ChipRow>
-                  <Chip
-                    label="No class"
-                    selected={pointerClassId == null && studentPointer == null}
-                    onPress={() => {
+                <PersonTabs
+                  compact
+                  tabs={[
+                    ...taughtClasses.map((klass) => ({
+                      key: klass.id,
+                      label: klass.name,
+                      photoName: klass.name,
+                      photoUrl: klass.avatarUrl ?? null,
+                    })),
+                    { key: NO_CLASS_TAB, label: 'No class', icon: 'none' as const },
+                  ]}
+                  value={pointerClassId ?? NO_CLASS_TAB}
+                  onChange={(key) => {
+                    if (key === NO_CLASS_TAB) {
                       setPointerClassId(null);
                       setStudentPointer(null);
-                    }}
-                  />
-                  {taughtClasses.map((klass) => (
-                    <Chip
-                      key={klass.id}
-                      label={klass.name}
-                      selected={pointerClassId === klass.id}
-                      onPress={() => {
-                        setPointerClassId(klass.id);
-                        setStudentPointer(null);
-                      }}
-                    />
-                  ))}
-                </ChipRow>
+                    } else {
+                      setPointerClassId(key);
+                      setStudentPointer(null);
+                    }
+                  }}
+                />
                 {pointerClassId ? (
-                  <ChipRow>
-                    {pointerRoster.map((student) => (
-                      <Chip
-                        key={student.id}
-                        label={firstName(student.display_name)}
-                        selected={studentPointer === student.id}
-                        onPress={() =>
-                          setStudentPointer((current) => (current === student.id ? null : student.id))
-                        }
-                      />
-                    ))}
-                  </ChipRow>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.studentRow}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {pointerRoster.map((student) => {
+                      const selected = studentPointer === student.id;
+                      const name = firstName(student.display_name);
+                      return (
+                        <Pressable
+                          key={student.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Tag ${student.display_name}`}
+                          accessibilityState={{ selected }}
+                          onPress={() => setStudentPointer((current) => (current === student.id ? null : student.id))}
+                          style={styles.studentPick}
+                        >
+                          <View
+                            style={[
+                              styles.studentRing,
+                              { borderColor: selected ? colors.brand : 'transparent' },
+                            ]}
+                          >
+                            <Avatar
+                              name={student.display_name}
+                              photoUrl={student.photoUrl}
+                              hasPhoto={Boolean(student.photoUrl)}
+                              size={44}
+                              recyclingKey={student.id}
+                            />
+                          </View>
+                          <Text
+                            numberOfLines={1}
+                            style={[
+                              type.meta,
+                              styles.studentName,
+                              { color: selected ? colors.brand : colors.ink },
+                              selected && styles.studentNameSelected,
+                            ]}
+                          >
+                            {name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
                 ) : studentPointer ? (
                   <Text style={[type.meta, { color: colors.mute }]}>
-                    Pointer set — pick a taught class to change it, or Clear.
+                    Student tagged — pick a class to change it, or Clear.
                   </Text>
                 ) : (
                   <Text style={[type.meta, { color: colors.mute }]}>
-                    Optional: pick a taught class, then a roster student for your search only.
+                    Optional: pick a class, then the student to tag.
                   </Text>
                 )}
                 {studentPointer ? (
                   <GhostButton
-                    label="Clear student pointer"
+                    label="Clear student tag"
                     onPress={() => {
                       setStudentPointer(null);
                       setPointerClassId(null);
@@ -890,27 +989,12 @@ export default function DiaryScreen() {
               </>
             ) : (
               <Text style={[type.meta, { color: colors.mute }]}>
-                Soft student pointer needs a taught class roster. Teachers do not create classes from Diary.
+                Tagging a student needs a class you teach. Teachers do not create classes from Diary.
               </Text>
             )}
           </>
         ) : null}
 
-        {recording ? (
-          <>
-            <Text style={[type.meta, { color: colors.danger, marginTop: 8 }]}>
-              Recording… tap Stop when finished. Transcript lands in the body for edit before Save.
-            </Text>
-            <GhostButton
-              label={busy ? 'Transcribing…' : 'Stop recording'}
-              tone="danger"
-              onPress={() => void stopDictate()}
-              disabled={busy}
-            />
-          </>
-        ) : (
-          <GhostButton label="Start recording" onPress={() => void startDictate()} disabled={busy} />
-        )}
         {editing ? (
           <GhostButton
             label="Attach photo"
@@ -918,7 +1002,7 @@ export default function DiaryScreen() {
             disabled={busy || recording}
           />
         ) : null}
-        <PrimaryButton label={busy ? 'Saving…' : 'Save'} onPress={() => void saveEntry()} disabled={busy || recording} />
+        <PrimaryButton label={busy ? 'Saving…' : 'Done'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
 
       <PhotoSheet
@@ -1090,6 +1174,18 @@ function kidsNeedFocus(
 
 const styles = StyleSheet.create({
   screenRoot: { flex: 1 },
+  micButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  studentRow: { gap: 12, paddingVertical: 4, paddingRight: 8 },
+  studentPick: { alignItems: 'center', width: 60, gap: 4 },
+  studentRing: { borderWidth: 2, borderRadius: 26, padding: 2 },
+  studentName: { maxWidth: 60, textAlign: 'center' },
+  studentNameSelected: { fontWeight: '600' },
   listHost: { flex: 1, minHeight: 0 },
   navRow: {
     flexDirection: 'row',

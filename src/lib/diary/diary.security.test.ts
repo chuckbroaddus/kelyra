@@ -140,15 +140,19 @@ test('DIARY polish leftovers: export, chip pickers, STT labels, short diary TTL'
   assert.match(screen, /onExportCsv=\{/);
   assert.match(screen, /onCopyCsv=\{/);
   assert.doesNotMatch(screen + sheet, /Exports only your currently filtered ledger rows/);
-  assert.match(screen, /Start recording/);
-  assert.match(screen, /Stop recording/);
+  // Entry mics: one per field (Title, Body), only one active at a time.
+  assert.doesNotMatch(screen, /label="Start recording"/);
+  assert.match(screen, /renderMic\('title'\)/);
+  assert.match(screen, /renderMic\('body'\)/);
+  assert.match(screen, /Stop recording \$\{label\}/);
+  assert.match(screen, /if \(dictateTarget\) await stopDictate\(\);/);
   assert.doesNotMatch(screen, /Dictate \(mic\)/);
   assert.doesNotMatch(screen, /Class id filter/);
   assert.doesNotMatch(screen, /Student id filter/);
   assert.doesNotMatch(screen, /UUID for your search only/);
   assert.match(screen, /listTaughtClasses/);
   assert.match(screen, /listRoster/);
-  assert.match(screen, /Soft student pointer/);
+  assert.match(screen, /Tag to a Student - Kept private only in your Journal/);
   const api = read('src/lib/diary/api.ts');
   assert.match(api, /signedDiaryUrl/);
   assert.doesNotMatch(api, /signedUrl\('diary'/);
@@ -194,7 +198,8 @@ test('t_05f7f139 / DB-B: journal month window + tag/studentId into listDiaryEntr
   assert.match(screen, /listDiaryEntries\(\{/);
   assert.match(sheet, /Student pointer \(private search only\)/);
   // Soft pointer never treated as ACL copy
-  assert.match(screen, /Soft student pointer \(private search only — not an ACL\)/);
+  assert.match(screen, /Soft student pointer: private search only — not an ACL/);
+  assert.match(screen, /Tag to a Student - Kept private only in your Journal/);
 });
 
 test('t_369b456a: diary attach offers camera or library via PhotoSheet + pickRawPhoto', () => {
@@ -238,4 +243,22 @@ test('t_d33aab64 / t_9a9009fd: stillPermitted re-binds entity probes to ledger c
   assert.match(link, /enrollments/);
   assert.match(link, /assignment_id/);
   assert.match(link, /re-bind/);
+});
+
+test('JOURNAL-ENTRY (CEO 2026-09-24): Done, Body before Date, class tabs + No class last, avatars', () => {
+  const screen = read('src/app/diary.tsx');
+  const composer = screen.slice(screen.indexOf('<FormSheet'), screen.indexOf('</FormSheet>'));
+  assert.match(composer, /label=\{busy \? 'Saving…' : 'Done'\}/);
+  assert.doesNotMatch(composer, /: 'Save'\}/);
+  assert.ok(composer.indexOf('label="Body"') < composer.indexOf('label="Date (YYYY-MM-DD)"'));
+  assert.ok(composer.indexOf('label="Title (optional)"') < composer.indexOf('label="Body"'));
+  assert.match(composer, /<PersonTabs/);
+  assert.doesNotMatch(composer, /<Chip\b/);
+  // No class is the last tab and uses the circle-slash glyph.
+  assert.match(composer, /\.\.\.taughtClasses\.map[\s\S]*\{ key: NO_CLASS_TAB, label: 'No class', icon: 'none' as const \}/);
+  assert.match(composer, /<Avatar/);
+  assert.match(composer, /accessoryPlacement="bottom"/);
+  assert.match(read('scripts/build-icons.mjs'), /none: \(p\) =>/);
+  assert.match(read('src/components/ui/Icon.tsx'), /\| 'none'/);
+  assert.match(read('src/components/ui/TextField.tsx'), /accessory\?: ReactNode/);
 });
