@@ -18,10 +18,12 @@ type Props = TextInputProps & {
   accessoryPlacement?: 'center' | 'bottom';
   /** Second control in the field's top-right corner (e.g. attach "+"). */
   topAccessory?: ReactNode;
+  /** Pop-up hung under the top-right control, opening leftward over the field (e.g. the attach menu). */
+  topPopover?: ReactNode;
 };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', topAccessory, ...rest },
+  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', topAccessory, topPopover, ...rest },
   ref,
 ) {
   const { colors, scheme } = useTheme();
@@ -29,7 +31,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
   return (
     <View style={styles.wrap}>
       {label ? <Text style={[styles.label, { color: colors.mute }]}>{label}</Text> : null}
-      <View style={styles.inputWrap}>
+      <View style={[styles.inputWrap, topPopover ? styles.inputWrapRaised : null]}>
         <TextInput
           ref={ref}
           placeholderTextColor={colors.mute}
@@ -75,6 +77,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
             {topAccessory}
           </View>
         ) : null}
+        {topPopover ? <View style={styles.popover}>{topPopover}</View> : null}
       </View>
     </View>
   );
@@ -105,6 +108,17 @@ const styles = StyleSheet.create({
   inputWrap: {
     position: 'relative',
     width: '100%',
+  },
+  inputWrapRaised: {
+    zIndex: 30,
+  },
+  /** Just under the 36 px top-right control (4 + 36 + 4), right edges aligned. */
+  popover: {
+    position: 'absolute',
+    top: 44,
+    right: 4,
+    zIndex: 30,
+    elevation: 12,
   },
   withAccessory: {
     paddingRight: 48,

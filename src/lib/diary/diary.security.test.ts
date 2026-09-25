@@ -278,7 +278,8 @@ test('JOURNAL-ATTACH (CEO 2026-09-24): Title 1-3 / Body 3-7 rows, + attaches pho
   assert.match(composer, /topAccessory=\{/);
   assert.doesNotMatch(composer, /label="Attach photo"/);
   // Ask-style inline menu (Photo · Camera · File · Link), not a stacked modal sheet.
-  assert.match(composer, /<AttachMenu onPick=\{onAttachChoice\} \/>/);
+  assert.match(composer, /topPopover=\{[\s\S]*<AttachMenu onPick=\{onAttachChoice\} \/>/);
+  assert.match(read('src/components/ui/TextField.tsx'), /topPopover\?: ReactNode/);
   assert.match(composer, /<PlusGlyph color=\{colors\.mute\} size=\{PLUS_GLYPH\} \/>/);
   assert.doesNotMatch(screen, /<PhotoSheet/);
   assert.match(read('src/components/ui/MessageComposer.tsx'), /<AttachMenu/);
