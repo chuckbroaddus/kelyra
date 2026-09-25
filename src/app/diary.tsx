@@ -1028,7 +1028,6 @@ export default function DiaryScreen() {
               : undefined
           }
           style={[styles.bodyBox, Platform.OS === 'web' ? { height: bodyH } : null]}
-          placeholder="Personal reflection — not the official student file."
           accessory={renderMic('body')}
           accessoryPlacement="bottom"
           topAccessory={
