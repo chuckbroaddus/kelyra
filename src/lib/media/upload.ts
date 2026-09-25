@@ -91,12 +91,16 @@ export async function uploadPhotoPair(input: {
   let thumbPath: string | null = null;
   if (!input.skipThumb) {
     try {
-      const thumb = await makePhotoThumb(prepared.uri, 'image/jpeg');
+      // PNG-THUMB: cutout avatars are transparent PNGs and avatars only ever show the thumb.
+      // A JPEG thumb flattened them onto white. Keep PNG bytes for PNG sources; the path stays
+      // `_thumb.jpg` because server access checks derive it (photo_thumb_path).
+      const thumbMime = prepared.mimeType.includes('png') ? 'image/png' : 'image/jpeg';
+      const thumb = await makePhotoThumb(prepared.uri, thumbMime);
       const thumbBytes = new Uint8Array(await readUriAsBytes(thumb.uri));
       if (thumbBytes.byteLength) {
         thumbPath = thumbStoragePath(storagePath);
         if (thumbPath !== storagePath) {
-          await uploadObject('photos', thumbPath, thumbBytes, 'image/jpeg');
+          await uploadObject('photos', thumbPath, thumbBytes, thumb.mimeType.includes('png') ? 'image/png' : 'image/jpeg');
         } else {
           thumbPath = null;
         }
