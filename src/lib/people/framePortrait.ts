@@ -35,12 +35,17 @@ export async function framePortraitFile(
   return cropPortraitFallback(uri, imageUrl);
 }
 
-export async function uploadFramedProfilePhoto(input: {
+/**
+ * AVATAR-PREVIEW: run the standard avatar processing (background cutout + face-centered square)
+ * and return the local framed file, without saving it to anyone. The create form shows this in
+ * the avatar circle so the office can retake before the account exists.
+ */
+export async function prepareFramedPortrait(input: {
   teacherId: string;
   uri: string;
   mimeType: string;
   imageUrl?: string | null;
-}): Promise<{ id: string }> {
+}): Promise<{ uri: string; mimeType: string }> {
   let url = input.imageUrl && input.imageUrl.startsWith('http') ? input.imageUrl : null;
   let tempAssetId: string | null = null;
   if (!url) {
@@ -54,22 +59,40 @@ export async function uploadFramedProfilePhoto(input: {
     tempAssetId = uploaded.id;
     url = await signedUrlForAsset('photo', uploaded.storage_path);
   }
-  const framed = await framePortraitFile(input.uri, url);
+  try {
+    return await framePortraitFile(input.uri, url);
+  } finally {
+    if (tempAssetId) await dropProbeAsset(tempAssetId);
+  }
+}
+
+export async function uploadFramedProfilePhoto(input: {
+  teacherId: string;
+  uri: string;
+  mimeType: string;
+  imageUrl?: string | null;
+  /** AVATAR-PREVIEW: file already came from prepareFramedPortrait; upload as-is. */
+  preframed?: boolean;
+}): Promise<{ id: string }> {
+  const framed = input.preframed
+    ? { uri: input.uri, mimeType: input.mimeType }
+    : await prepareFramedPortrait(input);
   const asset = await uploadTeacherAsset({
     teacherId: input.teacherId,
     kind: 'photo',
     uri: framed.uri,
     mimeType: framed.mimeType,
   });
-  if (tempAssetId && tempAssetId !== asset.id) {
-    try {
-      const { requireSupabase } = await import('@/lib/supabase/client');
-      await requireSupabase().rpc('teacher_unref_asset', { p_asset_id: tempAssetId });
-    } catch {
-      // Keep the framed asset even if we cannot drop the probe upload.
-    }
-  }
   return { id: asset.id };
+}
+
+async function dropProbeAsset(assetId: string): Promise<void> {
+  try {
+    const { requireSupabase } = await import('@/lib/supabase/client');
+    await requireSupabase().rpc('teacher_unref_asset', { p_asset_id: assetId });
+  } catch {
+    // Keep going even if we cannot drop the probe upload.
+  }
 }
 
 async function cropPortraitFallback(
