@@ -105,8 +105,11 @@ function dayFooterYear(dayIso: string): string {
   return String(Number(dayIso.slice(0, 4)));
 }
 
-/** Tall red header (~1/3) on month plate — year (CEO 2026-09-24). */
-function monthHeaderYear(year: number): string {
+/**
+ * Footer on month plate — year (CEO 2026-09-24 v2). Month plate now uses the same
+ * red header + footer bands as week/day (wrapHeader / wrapFooter); header is a plain band.
+ */
+function monthFooterYear(year: number): string {
   return String(year);
 }
 
@@ -160,28 +163,29 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
   } else if (tile.kind === 'month') {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
-    const header = monthHeaderYear(year);
+    const footer = monthFooterYear(year);
     const monthName = monthBodyName(monthIndex0);
     body = (
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={styles.page}>
-          <View style={styles.monthTallHeader}>
+          <View style={styles.wrapHeader} />
+          <View style={styles.monthBody}>
             <Text
-              style={[styles.monthTallHeaderText, styles.silhouetteSoftText]}
-              numberOfLines={1}
-              allowFontScaling={false}
-            >
-              {header}
-            </Text>
-          </View>
-          <View style={styles.monthTallBody}>
-            <Text
-              style={[styles.monthTallBodyText, styles.silhouetteSoftText]}
+              style={[styles.monthBodyText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {monthName}
+            </Text>
+          </View>
+          <View style={styles.wrapFooter}>
+            <Text
+              style={[styles.wrapFooterText, styles.silhouetteSoftText]}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
+              {footer}
             </Text>
           </View>
         </View>
@@ -325,21 +329,22 @@ function PeriodLeafImpl({
   if (tile.kind === 'month') {
     const year = tile.monthYear ?? 0;
     const monthIndex0 = tile.monthIndex0 ?? 0;
-    const header = monthHeaderYear(year);
+    const footer = monthFooterYear(year);
     const body = monthBodyName(monthIndex0);
     return (
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={styles.page}>
-          {/* Header ≈1/3 page (36px); body fills rest — matches silhouette. */}
-          <View style={styles.monthTallHeader}>
-            <Text style={styles.monthTallHeaderText} numberOfLines={1} allowFontScaling={false}>
-              {header}
+          {/* Same header/footer bands as week/day; month name centered; year in footer. */}
+          <View style={styles.wrapHeader} />
+          <View style={styles.monthBody}>
+            <Text style={styles.monthBodyText} numberOfLines={1} allowFontScaling={false}>
+              {body}
             </Text>
           </View>
-          <View style={styles.monthTallBody}>
-            <Text style={styles.monthTallBodyText} numberOfLines={1} allowFontScaling={false}>
-              {body}
+          <View style={styles.wrapFooter}>
+            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+              {footer}
             </Text>
           </View>
         </View>
@@ -477,28 +482,14 @@ const styles = StyleSheet.create({
   yearTextPlate: {
     fontSize: 24,
   },
-  /** Month plate: header ≈1/3 of page (fixed 36 of 108); body fills rest. */
-  monthTallHeader: {
-    height: 36,
-    backgroundColor: SET_B.header,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  monthTallHeaderText: {
-    color: SET_B.body,
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-  monthTallBody: {
+  /** Month plate body — between wrapHeader and wrapFooter (same bands as week/day). */
+  monthBody: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  monthTallBodyText: {
+  monthBodyText: {
     color: SET_B.type,
     fontSize: 22,
     fontWeight: '700',
