@@ -33,6 +33,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { listProfiles, setStudentLink } from '@/lib/school/api';
 import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { classListRowNavTarget } from '@/lib/classes/classListNav';
 import {
   studentTabFromParam,
   studentTabsForChromeRole,
@@ -955,6 +956,24 @@ export default function StudentScreen() {
         )
       ) : null}
       </>
+      ) : null}
+
+      {tab === 'classes' ? (
+        <>
+          {enrollments.length === 0 ? (
+            <Text style={[type.meta, { color: colors.mute }]}>No classes yet.</Text>
+          ) : null}
+          {enrollments.map((row) => {
+            const href = classListRowNavTarget('student-classes-tab', chrome.role, row.class_id);
+            return (
+              <ListRow
+                key={row.class_id}
+                title={row.class_name}
+                onPress={href ? () => router.push(href as never) : undefined}
+              />
+            );
+          })}
+        </>
       ) : null}
 
       {tab === 'parents' ? (

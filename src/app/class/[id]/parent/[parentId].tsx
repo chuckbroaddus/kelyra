@@ -23,7 +23,8 @@ import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { listClassesForChildren } from '@/lib/classes/api';
-import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
+import { classListRowNavTarget } from '@/lib/classes/classListNav';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { firstName } from '@/lib/format';
 
 import {
@@ -70,6 +71,7 @@ export default function ParentPage() {
   const { colors } = useTheme();
   const router = useRouter();
   const { teacher, profile } = useAuth();
+  const chrome = useChrome();
   const canLinkChildren = isOfficeRole(profile);
   const canAssignLogin = isAdminRole(profile) || Boolean(teacher);
   const { id: classId, parentId } = useLocalSearchParams<{ id: string; parentId: string }>();
@@ -356,14 +358,17 @@ export default function ParentPage() {
               {isAdminRole(profile) ? 'No classes yet.' : 'No classes yet. Classes show up when a linked child is on a roster.'}
             </Text>
           ) : null}
-          {childClasses.map((klass) => (
-            <ListRow
-              key={klass.id}
-              title={klass.name}
-              status={klass.childNames.join(' · ') || undefined}
-              onPress={() => router.push(`/class/${klass.id}`)}
-            />
-          ))}
+          {childClasses.map((klass) => {
+            const href = classListRowNavTarget('parent-classes-tab', chrome.role, klass.id);
+            return (
+              <ListRow
+                key={klass.id}
+                title={klass.name}
+                status={klass.childNames.join(' · ') || undefined}
+                onPress={href ? () => router.push(href as never) : undefined}
+              />
+            );
+          })}
         </>
       ) : null}
 
