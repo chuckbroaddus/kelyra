@@ -1,6 +1,6 @@
 import { setAudioModeAsync } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useIsFocused, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -83,6 +83,8 @@ function fadeIn(value: Animated.Value) {
 export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  // SPLASH-FOCUS-PLAY: only the focused copy autoplays (hidden stacked copy after sign-out stays silent).
+  const isFocused = useIsFocused();
   const { refresh, session } = useAuth();
   const { width, height } = useWindowDimensions();
   // Native phones stay portrait-locked pre-auth — always 9×16 splash assets.
@@ -479,9 +481,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
               ref={videoRef}
               source={videoSource}
               style={styles.video}
-              // SPLASH-FOCUS-PLAY: native plays only from the focus effect (after audio mode);
-              // hidden stacked copies stay silent. Web keeps muted autoplay.
-              shouldPlay={Platform.OS === 'web'}
+              // SPLASH-FOCUS-PLAY: native autoplays at player creation (known-good audio path)
+              // but only on the focused screen; hidden stacked copies stay silent.
+              shouldPlay={Platform.OS === 'web' || isFocused}
               isLooping={false}
               // Mute prop tracks awaitingGesture so web muted-autoplay survives re-render.
               isMuted={awaitingGesture}

@@ -229,6 +229,10 @@ export default function HomeScreen() {
           ]}
           contentContainerStyle={styles.paneScrollContent}
           keyboardShouldPersistTaps="handled"
+          // OFFICE-PANE-KEYBOARD: Screen is avoidKeyboard={false} here, so this scroller owns
+          // the iOS keyboard inset — New person / Manage fields scroll above the keyboard.
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {pane === 'manage' && officeSeat ? (
