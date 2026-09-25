@@ -249,7 +249,8 @@ test('JOURNAL-ENTRY (CEO 2026-09-24): Done, Body before Date, class tabs + No cl
   const composer = screen.slice(screen.indexOf('<FormSheet'), screen.indexOf('</FormSheet>'));
   assert.match(composer, /label=\{busy \? 'Saving…' : 'Done'\}/);
   assert.doesNotMatch(composer, /: 'Save'\}/);
-  assert.ok(composer.indexOf('label="Body"') < composer.indexOf('label="Date (YYYY-MM-DD)"'));
+  assert.ok(composer.indexOf('label="Body"') < composer.indexOf('label="Date"'));
+  assert.match(composer, /<DateInput[\s\S]*?label="Date"/);
   assert.ok(composer.indexOf('label="Title (optional)"') < composer.indexOf('label="Body"'));
   assert.match(composer, /<PersonTabs/);
   assert.doesNotMatch(composer, /<Chip\b/);
