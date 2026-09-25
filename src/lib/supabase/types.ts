@@ -54,6 +54,9 @@ export type ProfileRow = {
   notes: string | null;
   created_at: string;
   created_by: string | null;
+  /** PEOPLE-DEACTIVATE: set when office "Delete" deactivated this person. */
+  deactivated_at?: string | null;
+  deactivated_by?: string | null;
 };
 
 export type AuditEventRow = {
@@ -1144,6 +1147,10 @@ export type Database = {
       };
       admin_reset_login_password: {
         Args: { p_profile_id: string; p_password: string };
+        Returns: undefined;
+      };
+      admin_set_person_active: {
+        Args: { p_profile_id: string; p_active: boolean };
         Returns: undefined;
       };
       set_capability_grant: {

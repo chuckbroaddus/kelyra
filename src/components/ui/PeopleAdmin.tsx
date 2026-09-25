@@ -8,6 +8,14 @@ import { ChipRow } from '@/components/ui/ChipRow';
 import { PrimaryButton } from '@/components/ui/Button';
 import { HandleLink } from '@/components/ui/HandleLink';
 import { NoticePopup } from '@/components/ui/NoticePopup';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import {
+  canDeactivatePerson,
+  deactivateConfirmCopy,
+  deactivatedStatus,
+  isDeactivated,
+  restoredStatus,
+} from '@/lib/school/deactivate';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
@@ -20,6 +28,7 @@ import {
   createLogin,
   getProfile,
   listDirectory,
+  setPersonActive,
   listProfiles,
   resetLoginPassword,
   setAlsoHat,
@@ -71,9 +80,13 @@ export function PeopleDirectory() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState('staff');
   const [resetTarget, setResetTarget] = useState<{ id: string; username: string } | null>(null);
+  // PEOPLE-DEACTIVATE: swipe "Delete" deactivates; deleted people sit behind a toggle with Restore.
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; handle: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const load = useCallback(async () => {
-    setRows(await listDirectory());
+    setRows(await listDirectory({ includeDeactivated: true }));
   }, []);
 
   useFocusEffect(
@@ -86,14 +99,15 @@ export function PeopleDirectory() {
     router.push(peopleDirectoryPersonHref(row.id) as never);
   };
 
-  const renderGroup = (group: DirectoryPerson[]) => (
+  const renderGroup = (group: DirectoryPerson[], deleted = false) => (
     <>
-      {group.length === 0 ? (
+      {group.length === 0 && !deleted ? (
         <Text style={[type.meta, { color: colors.mute }]}>None yet.</Text>
       ) : null}
       {group.map((row) => {
         const parent = isAlsoParent(row);
         const trailing: ListSwipeAction[] = [];
+        const name = row.display_name || formatHandle(row.username);
         const apply = async (work: () => Promise<void>, ok: string) => {
           setError(null);
           setStatus(null);
@@ -106,7 +120,19 @@ export function PeopleDirectory() {
             setError(err instanceof Error ? err.message : 'Could not update hats');
           }
         };
-        if (canAlsoBeAdministrator(row.role)) {
+        if (deleted) {
+          if (canDeactivatePerson(profile, row)) {
+            trailing.push({
+              key: 'restore',
+              label: 'Restore',
+              tone: 'brand',
+              onPress: () => {
+                void apply(() => setPersonActive(row.id, true), restoredStatus(formatHandle(row.username)));
+              },
+            });
+          }
+        }
+        if (!deleted && canAlsoBeAdministrator(row.role)) {
           trailing.push({
             key: 'admin',
             label: row.also_administrator ? 'Not an administrator' : 'Also an administrator',
@@ -121,7 +147,7 @@ export function PeopleDirectory() {
             },
           });
         }
-        if (canAlsoBeTeacher(row.role)) {
+        if (!deleted && canAlsoBeTeacher(row.role)) {
           trailing.push({
             key: 'teacher',
             label: row.also_teacher ? 'Not a teacher' : 'Also a teacher',
@@ -136,7 +162,7 @@ export function PeopleDirectory() {
             },
           });
         }
-        if (isStaffRole(row)) {
+        if (!deleted && isStaffRole(row)) {
           trailing.push({
             key: 'parent',
             label: parent ? 'Not a parent' : 'Also a parent',
@@ -151,7 +177,7 @@ export function PeopleDirectory() {
             },
           });
         }
-        if (canShowOfficeReset(profile, row)) {
+        if (!deleted && canShowOfficeReset(profile, row)) {
           trailing.push({
             key: 'reset',
             label: RESET_PASSWORD_COPY.action,
@@ -163,11 +189,23 @@ export function PeopleDirectory() {
             },
           });
         }
+        if (!deleted && canDeactivatePerson(profile, row)) {
+          trailing.push({
+            key: 'delete',
+            label: 'Delete',
+            tone: 'danger',
+            onPress: () => {
+              setError(null);
+              setStatus(null);
+              setDeleteTarget({ id: row.id, name, handle: formatHandle(row.username) });
+            },
+          });
+        }
         const extra = [roleStatus(row), row.className].filter(Boolean).join(' · ');
         return (
           <ListRow
             key={row.id}
-            title={row.display_name || formatHandle(row.username)}
+            title={name}
             status={`${formatHandle(row.username)} · ${extra}`}
             statusNode={
               <Text style={[type.meta, { color: colors.mute }]}>
@@ -185,9 +223,14 @@ export function PeopleDirectory() {
     </>
   );
 
-  const staff = rows?.filter((row) => isStaffRole(row)) ?? [];
-  const students = rows?.filter((row) => row.role === 'student') ?? [];
-  const parents = rows?.filter((row) => listedAsParent(row, rows)) ?? [];
+  const inTab = (row: DirectoryPerson) =>
+    tab === 'staff' ? isStaffRole(row) : tab === 'students' ? row.role === 'student' : listedAsParent(row, rows ?? []);
+  const active = rows?.filter((row) => !isDeactivated(row)) ?? [];
+  const staff = active.filter((row) => isStaffRole(row));
+  const students = active.filter((row) => row.role === 'student');
+  const parents = active.filter((row) => listedAsParent(row, rows ?? []));
+  const deletedHere = rows?.filter((row) => isDeactivated(row) && inTab(row)) ?? [];
+  const confirmCopy = deactivateConfirmCopy(deleteTarget?.name ?? 'this person');
 
   return (
     <>
@@ -198,6 +241,47 @@ export function PeopleDirectory() {
       {tab === 'staff' && rows ? renderGroup(staff) : null}
       {tab === 'students' && rows ? renderGroup(students) : null}
       {tab === 'parents' && rows ? renderGroup(parents) : null}
+      {rows && deletedHere.length ? (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowDeleted((open) => !open)}
+            style={styles.deletedToggle}
+          >
+            <Text style={[type.meta, { color: colors.brand }]}>
+              {showDeleted ? 'Hide deleted people' : `Show deleted people (${deletedHere.length})`}
+            </Text>
+          </Pressable>
+          {showDeleted ? renderGroup(deletedHere, true) : null}
+        </>
+      ) : null}
+      <ConfirmSheet
+        visible={Boolean(deleteTarget)}
+        title={confirmCopy.title}
+        body={confirmCopy.body}
+        confirmLabel={confirmCopy.confirmLabel}
+        tone="primary"
+        busy={deleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          const target = deleteTarget;
+          if (!target) return;
+          setDeleting(true);
+          setError(null);
+          setStatus(null);
+          void setPersonActive(target.id, false)
+            .then(async () => {
+              setStatus(deactivatedStatus(target.handle));
+              setDeleteTarget(null);
+              await load();
+            })
+            .catch((err) => {
+              setDeleteTarget(null);
+              setError(err instanceof Error ? err.message : 'Could not delete');
+            })
+            .finally(() => setDeleting(false));
+        }}
+      />
       <ResetPasswordSheet
         visible={Boolean(resetTarget)}
         username={resetTarget?.username}
@@ -528,6 +612,9 @@ function listedAsParent(row: DirectoryPerson, everyone: DirectoryPerson[] | null
 }
 
 const styles = StyleSheet.create({
+  deletedToggle: {
+    paddingVertical: 12,
+  },
   gap: { height: 10 },
   error: { ...type.body, marginTop: 8 },
   fieldLabel: { ...type.meta, marginBottom: 6 },
