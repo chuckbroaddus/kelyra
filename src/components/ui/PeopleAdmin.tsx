@@ -154,7 +154,8 @@ export function PeopleDirectory({
             });
             trailing.push({
               key: 'purge',
-              label: 'Permanently delete',
+              // Two short lines so it fits the 80pt swipe tile.
+              label: 'Perm.\nDelete',
               tone: 'danger',
               onPress: () => setPurgeTarget({ id: row.id, name }),
             });

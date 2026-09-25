@@ -16,7 +16,7 @@ test('purge flag + confirm copy keep their name on what they made', () => {
 
 test('deleted rows get a danger Permanently delete swipe with typed-name confirm', () => {
   const ui = read('../../components/ui/PeopleAdmin.tsx');
-  assert.match(ui, /key: 'purge',\s*label: 'Permanently delete',\s*tone: 'danger'/);
+  assert.match(ui, /key: 'purge',\s*\/\/[^\n]*\n\s*label: 'Perm\.\\nDelete',\s*tone: 'danger'/);
   assert.match(ui, /typeName=\{purgeTarget\?\.name \?\? null\}/);
   assert.match(ui, /purgePerson\(target\.id\)/);
   const api = read('./api.ts');
@@ -40,4 +40,9 @@ test('migration keeps content: drops auth.users FKs, keeps a name-only profile, 
   assert.doesNotMatch(sql, /delete from public\.teachers/);
   // Audit goes in before anything is removed.
   assert.ok(sql.indexOf("'purge_person'") < sql.indexOf('delete from public.message_thread_members'));
+});
+
+test('purge swipe label fits the tile as two short lines', () => {
+  const admin = readFileSync(new URL('../../components/ui/PeopleAdmin.tsx', import.meta.url), 'utf8');
+  assert.match(admin, /key: 'purge',[\s\S]{0,120}label: 'Perm\.\\nDelete',/);
 });
