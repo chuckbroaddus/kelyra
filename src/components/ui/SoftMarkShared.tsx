@@ -40,6 +40,10 @@ const Z_FRONT = 3;
 /** Face Svg paints above letter Image (RN Image often stacks over later siblings). */
 const Z_FACE = 20;
 
+/** RN 0.86 dropped the StyleSheet fill-object helper; spreading it gave an in-flow layer,
+ * which pushed the face one mark-height below the K. Use our own absolute fill. */
+const FILL = { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 } as const;
+
 const CYAN = '#9AF7FF';
 const PURPLE = '#B46BFF';
 
@@ -285,7 +289,7 @@ export function SoftMark({
       <Animated.View
         pointerEvents="none"
         style={{
-          ...StyleSheet.absoluteFillObject,
+          ...FILL,
           opacity: cometIn,
           transform: [{ scale: cometIn.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1] }) }],
           zIndex: frame.front ? Z_FRONT : Z_BEHIND,
@@ -350,7 +354,7 @@ export function SoftMark({
             pointerEvents="none"
             collapsable={false}
             style={{
-              ...StyleSheet.absoluteFillObject,
+              ...FILL,
               zIndex: Z_FACE,
               elevation: Platform.OS === 'android' ? Z_FACE : undefined,
               opacity: face.opacity,
@@ -385,7 +389,7 @@ function CometLayer({
     <View
       pointerEvents="none"
       collapsable={false}
-      style={[StyleSheet.absoluteFillObject, { zIndex, overflow: 'visible' }]}
+      style={[FILL, { zIndex, overflow: 'visible' }]}
     >
       {frame.beads.map((b, i) => (
         <View
@@ -468,7 +472,7 @@ function SoftCometBall({
         locations={[0, 0.42, 1]}
         start={{ x: 0.3, y: 0.25 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={FILL}
       />
     </View>
   );

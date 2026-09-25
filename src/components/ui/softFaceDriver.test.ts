@@ -36,3 +36,8 @@ test('softFaceIntro grows in, blinks open, then hands lids to the loop', () => {
   assert.equal(after.lid, null);
   assert.equal(after.opacity, 1);
 });
+
+test('SoftMark never uses StyleSheet.absoluteFillObject (removed in RN 0.86; face fell below the K)', () => {
+  assert.doesNotMatch(src, /absoluteFillObject/);
+  assert.match(src, /\.\.\.FILL,\s*zIndex: Z_FACE/);
+});
