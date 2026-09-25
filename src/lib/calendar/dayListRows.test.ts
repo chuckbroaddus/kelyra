@@ -184,3 +184,13 @@ test('CAL-LIST-PLUS + in Day List prefills start date with the sticky header day
   assert.match(screen, /initialDate=\{composer\?\.initialDate \?\? null\}/);
   assert.match(composer, /startDate: initialDate\.slice\(0, 10\)/);
 });
+
+test('JOURNAL-INLINE: itemHeight sizes item rows and shifts later offsets', () => {
+  const days = ['2026-09-24', '2026-09-25'];
+  const items = new Map([['2026-09-24', [{ id: 'a', h: 200 }]], ['2026-09-25', [{ id: 'b', h: 60 }]]]);
+  const layout = buildDayListLayout(days, items, (i) => i.id, (i) => i.h);
+  assert.deepEqual(layout.lengths, [DAY_LIST_HEADER_H, 200, DAY_LIST_HEADER_H, 60]);
+  assert.equal(layout.headerOffsets[1], DAY_LIST_HEADER_H + 200);
+  const plain = buildDayListLayout(days, items, (i) => i.id);
+  assert.equal(plain.lengths[1], DAY_LIST_ITEM_H);
+});

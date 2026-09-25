@@ -285,7 +285,12 @@ test('JOURNAL-ATTACH (CEO 2026-09-24): Title 1-3 / Body 3-7 rows, + attaches pho
   // Body box has no placeholder text (CEO 2026-09-24).
   assert.doesNotMatch(composer, /placeholder="Personal reflection/);
   assert.match(read('src/components/ui/MessageComposer.tsx'), /<AttachMenu/);
-  assert.match(screen, /<DiaryRowMedia/);
+  assert.match(screen, /<DiaryRowContent/);
+  // JOURNAL-INLINE: rows size to content (no clipped 60px slot) and markers go in at the cursor.
+  assert.match(screen, /itemHeight=\{journalItemHeight\}/);
+  assert.match(screen, /insertTokenAt\(current, bodySelRef\.current, token\)/);
+  assert.match(screen, /onSelectionChange=/);
+  assert.match(screen, /renumberStagedPhotoTokens\(/);
   assert.match(screen, /diaryBodyUrls\(body\)/);
   const api = read('src/lib/diary/api.ts');
   assert.match(api, /export async function attachDiaryFile/);

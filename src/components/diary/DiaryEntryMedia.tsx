@@ -5,6 +5,16 @@ import { Icon } from '@/components/ui/Icon';
 import { MessagePayloadView } from '@/components/ui/MessageAttach';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { radius, type } from '@/constants/theme';
+import {
+  ROW_CHIP_H,
+  ROW_GAP,
+  ROW_META_H,
+  ROW_PAD_V,
+  ROW_PHOTO_H,
+  ROW_TEXT_LINE,
+  ROW_TITLE_H,
+  type RowBlock,
+} from '@/lib/diary/rowPlan';
 import type { DiaryMediaRow } from '@/lib/diary/types';
 import { signedDiaryUrls } from '@/lib/media/signedUrl';
 import { linkHost, unfurlLink } from '@/lib/messages/attachments';
@@ -161,7 +171,160 @@ export function DiaryRowMedia({
   );
 }
 
+/** Short-TTL signed URLs for a row's media, re-signed when the set of paths changes. */
+function useSignedMedia(media: DiaryMediaRow[]): Map<string, string> {
+  const [signed, setSigned] = useState<Map<string, string>>(new Map());
+  const pathsKey = media.map((m) => m.storage_path).join('|');
+  useEffect(() => {
+    let live = true;
+    if (!media.length) {
+      setSigned(new Map());
+      return;
+    }
+    void signedDiaryUrls(media.map((m) => m.storage_path))
+      .then((map) => {
+        if (live) setSigned(map);
+      })
+      .catch(() => {
+        if (live) setSigned(new Map());
+      });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathsKey]);
+  return signed;
+}
+
+/**
+ * JOURNAL-INLINE: a Journal list row laid out from `planDiaryRow` — title, then body
+ * text with each `[Photo N]` / `[File: name]` marker swapped for the real thumbnail or
+ * file chip in place, then leftover media and link chips, then the meta line. Every
+ * block has a fixed height (the Day List needs exact row heights), so text is capped
+ * with numberOfLines and font scaling is pinned. Taps on a photo open the viewer; taps
+ * anywhere else fall through to the card (open the entry).
+ */
+export function DiaryRowContent({
+  blocks,
+  media,
+  onOpenPhotos,
+}: {
+  blocks: RowBlock[];
+  media: DiaryMediaRow[];
+  onOpenPhotos: (uris: string[], index: number) => void;
+}) {
+  const { colors } = useTheme();
+  const signed = useSignedMedia(media);
+  const photos = media.filter((m) => m.kind === 'photo');
+  const photoUris = photos.map((p) => signed.get(p.storage_path) ?? '');
+  const openPhoto = (index: number) => {
+    const uris = photoUris.filter(Boolean);
+    const at = uris.indexOf(photoUris[index] ?? '');
+    if (at >= 0) onOpenPhotos(uris, at);
+  };
+  return (
+    <View style={styles.rowStack}>
+      {blocks.map((block, i) => {
+        switch (block.kind) {
+          case 'title':
+            return (
+              <Text key={`t${i}`} numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.rowTitle, { color: colors.ink }]}>
+                {block.text}
+              </Text>
+            );
+          case 'text':
+            return (
+              <Text
+                key={`x${i}`}
+                numberOfLines={block.lines}
+                maxFontSizeMultiplier={1}
+                style={[styles.rowBody, { color: colors.ink, height: block.lines * ROW_TEXT_LINE }]}
+              >
+                {block.text}
+              </Text>
+            );
+          case 'photo': {
+            const uri = photoUris[block.index];
+            return (
+              <Pressable
+                key={`p${i}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Journal photo ${block.index + 1}`}
+                onPress={() => openPhoto(block.index)}
+                style={[styles.rowPhoto, { backgroundColor: colors.wash }]}
+              >
+                {uri ? <RemoteImage uri={uri} style={styles.rowPhotoImg} contentFit="cover" /> : null}
+              </Pressable>
+            );
+          }
+          case 'grid':
+            return (
+              <View key={`g${i}`} style={styles.photoGrid}>
+                {block.indices.slice(0, 4).map((index, k) => {
+                  const uri = photoUris[index];
+                  return (
+                    <Pressable
+                      key={index}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Journal photo ${index + 1}`}
+                      onPress={() => openPhoto(index)}
+                      style={[styles.tileWrap, { backgroundColor: colors.wash }]}
+                    >
+                      {uri ? <RemoteImage uri={uri} style={styles.tile} contentFit="cover" /> : null}
+                      {k === 3 && block.indices.length > 4 ? (
+                        <View style={styles.more}>
+                          <Text style={[type.body, styles.moreText]}>+{block.indices.length - 4}</Text>
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            );
+          case 'file': {
+            const row = media.find((m) => m.id === block.mediaId);
+            const url = row ? signed.get(row.storage_path) : undefined;
+            return (
+              <View key={`f${i}`} style={styles.rowChipSlot}>
+                <DiaryFileChip name={block.name} onPress={url ? () => void Linking.openURL(url) : undefined} />
+              </View>
+            );
+          }
+          case 'link':
+            return (
+              <Pressable
+                key={`l${i}`}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${linkHost(block.url)}`}
+                onPress={() => void Linking.openURL(block.url)}
+                style={[styles.fileChip, styles.rowChipSlot, { borderColor: colors.line, backgroundColor: colors.elevated }]}
+              >
+                <Icon name="link" size={16} color={colors.mute} />
+                <Text numberOfLines={1} maxFontSizeMultiplier={1} style={[type.meta, styles.fileName, { color: colors.ink }]}>
+                  {linkHost(block.url)}
+                </Text>
+              </Pressable>
+            );
+          case 'meta':
+            return (
+              <Text key={`m${i}`} numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.rowMeta, { color: colors.mute }]}>
+                {block.text}
+              </Text>
+            );
+        }
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  rowStack: { flex: 1, minWidth: 0, gap: ROW_GAP, paddingVertical: ROW_PAD_V, alignSelf: 'stretch' },
+  rowTitle: { fontSize: 16, lineHeight: ROW_TITLE_H, fontWeight: '600' },
+  rowBody: { fontSize: 15, lineHeight: ROW_TEXT_LINE },
+  rowMeta: { fontSize: 13, lineHeight: ROW_META_H },
+  rowPhoto: { width: '100%', maxWidth: 320, height: ROW_PHOTO_H, borderRadius: 8, overflow: 'hidden' },
+  rowPhotoImg: { width: '100%', height: ROW_PHOTO_H },
+  rowChipSlot: { height: ROW_CHIP_H, justifyContent: 'center' },
   stack: { gap: 8, marginTop: 8 },
   card: { borderWidth: 1, borderRadius: radius.sm, padding: 8, alignSelf: 'flex-start', maxWidth: '100%' },
   photo: { width: 220, height: 160, borderRadius: 8 },
