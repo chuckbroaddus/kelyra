@@ -99,20 +99,23 @@ test('P3 HB: Grade book DrawerRow indent matches Parents/Family update', () => {
   assert.ok(blockStart > 0);
   const familyAt = drawer.indexOf('label="Family update"', blockStart);
   assert.ok(familyAt > blockStart);
-  const block = drawer.slice(blockStart, familyAt + 120);
+  const block = drawer.slice(blockStart, familyAt + 180);
   const lines = block.split('\n');
-  const gradeLabelIdx = lines.findIndex((line) => line.includes('label="Grade book"'));
-  assert.ok(gradeLabelIdx > 0, 'Grade book DrawerRow present');
-  const gradeRow = lines[gradeLabelIdx - 1]?.match(/<DrawerRow\s*$/)
-    ? lines[gradeLabelIdx - 1]
-    : lines[gradeLabelIdx];
-  const parentsRow = lines.find((line) => /<DrawerRow label="Parents"/.test(line));
-  const familyRow = lines.find((line) => /<DrawerRow label="Family update"/.test(line));
-  assert.ok(parentsRow, 'Parents DrawerRow present');
-  assert.ok(familyRow, 'Family update DrawerRow present');
+  const openFor = (label: string): string => {
+    const labelIdx = lines.findIndex((line) => line.includes(`label="${label}"`));
+    assert.ok(labelIdx > 0, `${label} DrawerRow present`);
+    const open = lines[labelIdx - 1]?.match(/<DrawerRow\s*$/)
+      ? lines[labelIdx - 1]
+      : lines[labelIdx];
+    assert.ok(open, `${label} open tag`);
+    return open!;
+  };
+  const gradeRow = openFor('Grade book');
+  const parentsRow = openFor('Parents');
+  const familyRow = openFor('Family update');
   const lead = (line: string) => (line.match(/^[ \t]*/)?.[0] ?? '').length;
-  assert.equal(lead(gradeRow!), lead(parentsRow!));
-  assert.equal(lead(gradeRow!), lead(familyRow!));
+  assert.equal(lead(gradeRow), lead(parentsRow));
+  assert.equal(lead(gradeRow), lead(familyRow));
 });
 
 test('Phase A+B intact: four tray keys; Class setup; CLASS_TABS ≤8; no fifth', () => {

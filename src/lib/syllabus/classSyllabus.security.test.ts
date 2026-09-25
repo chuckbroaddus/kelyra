@@ -282,9 +282,11 @@ test('P-G1 family_student_gradebook strips answers; parent_students gate; no cla
 test('Parent drawer exposes Grades → /parent/grades', () => {
   const drawer = read('src/components/ui/HamburgerDrawer.tsx');
   assert.match(drawer, /go\('\/parent\/grades'\)/);
-  const gradesRow = drawer.slice(drawer.indexOf("go('/parent/grades')") - 120, drawer.indexOf("go('/parent/grades')") + 40);
+  const gradesAt = drawer.indexOf("go('/parent/grades')");
+  const gradesRow = drawer.slice(Math.max(0, gradesAt - 180), gradesAt + 40);
   assert.match(gradesRow, /matches\('Grades'/);
-  assert.match(gradesRow, /DrawerRow label="Grades"/);
+  assert.match(gradesRow, /label="Grades"/);
+  assert.match(gradesRow, /<DrawerRow\b/);
 });
 
 test('SEC: syllabus RPCs never delete client-supplied asset ids; require ownership + _unref_delete_asset', () => {
