@@ -882,16 +882,10 @@ export default function DiaryScreen() {
             onOpen={(uris, index) => setViewer({ uris, index })}
           />
         ) : null}
-        <TextField
-          label="Tags (comma-separated)"
-          value={tagsText}
-          onChangeText={setTagsText}
-          autoCapitalize="none"
-        />
         {teacherLike ? (
           <>
             {/* Soft student pointer: private search only — not an ACL. */}
-            <Text style={[styles.filterLabel, { color: colors.mute }]}>
+            <Text style={[styles.fieldLabel, { color: colors.mute }]}>
               Tag to a Student - Kept private only in your Journal
             </Text>
             {taughtClasses.length ? (
@@ -992,6 +986,12 @@ export default function DiaryScreen() {
             )}
           </>
         ) : null}
+        <TextField
+          label="Tags (comma-separated)"
+          value={tagsText}
+          onChangeText={setTagsText}
+          autoCapitalize="none"
+        />
 
         {editing ? (
           <GhostButton
@@ -1218,11 +1218,10 @@ const styles = StyleSheet.create({
     ...type.body,
     marginTop: 12,
   },
-  filterLabel: {
-    ...type.section,
-    textTransform: 'uppercase',
-    marginTop: 12,
-    marginBottom: 6,
+  /** Same look as TextField labels (sentence case, no caps). */
+  fieldLabel: {
+    ...type.meta,
+    marginBottom: 8,
   },
   card: {
     borderWidth: 1,
