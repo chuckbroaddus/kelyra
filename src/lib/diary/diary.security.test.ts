@@ -133,8 +133,13 @@ test('UI: /diary Journal|Ledger; drawer Diary; student has no Diary link', () =>
 
 test('DIARY polish leftovers: export, chip pickers, STT labels, short diary TTL', () => {
   const screen = read('src/app/diary.tsx');
-  assert.match(screen, /Export CSV/);
-  assert.match(screen, /Copy CSV/);
+  const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
+  // DIARY-GEAR: CSV lives in Settings → Ledger section.
+  assert.match(sheet, /Export CSV/);
+  assert.match(sheet, /Copy CSV/);
+  assert.match(screen, /onExportCsv=\{/);
+  assert.match(screen, /onCopyCsv=\{/);
+  assert.doesNotMatch(screen + sheet, /Exports only your currently filtered ledger rows/);
   assert.match(screen, /Start recording/);
   assert.match(screen, /Stop recording/);
   assert.doesNotMatch(screen, /Dictate \(mic\)/);
@@ -176,16 +181,18 @@ test('TD-05 / t_5f2574b1: diary UI lists media and signs private diary URLs for 
 
 test('t_05f7f139 / DB-B: journal month window + tag/studentId into listDiaryEntries (RG-DROP)', () => {
   const screen = read('src/app/diary.tsx');
-  // Primary From/To text dropped; month window auto-applies with selected day.
+  const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
+  // Primary From/To text dropped; Day List window (drum-tied) feeds from/to.
   assert.doesNotMatch(screen, /diaryFilterDate\(journalFrom\)/);
   assert.doesNotMatch(screen, /journalFrom|setJournalFrom/);
-  assert.match(screen, /journalMonthContaining\(selectedDay\)/);
-  assert.match(screen, /from:\s*month\.fromIso/);
-  assert.match(screen, /to:\s*month\.toIso/);
+  assert.match(screen, /fetchJournalRange/);
+  assert.match(screen, /from:\s*fromIso/);
+  assert.match(screen, /to:\s*toIso/);
   assert.match(screen, /journalTag/);
   assert.match(screen, /studentId:\s*studentFilter/);
+  assert.match(screen, /teacherLike \? pointer : null/);
   assert.match(screen, /listDiaryEntries\(\{/);
-  assert.match(screen, /Student pointer \(private search only\)/);
+  assert.match(sheet, /Student pointer \(private search only\)/);
   // Soft pointer never treated as ACL copy
   assert.match(screen, /Soft student pointer \(private search only — not an ACL\)/);
 });
@@ -204,10 +211,11 @@ test('t_369b456a: diary attach offers camera or library via PhotoSheet + pickRaw
 
 test('t_b7594650: Journal + Ledger newest/oldest sort; default newest', () => {
   const screen = read('src/app/diary.tsx');
+  const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
   assert.match(screen, /sortOldest/);
   assert.match(screen, /useState\(false\)/);
-  assert.match(screen, /label=\"Newest\"/);
-  assert.match(screen, /label=\"Oldest\"/);
+  assert.match(sheet, /label=\"Newest\"/);
+  assert.match(sheet, /label=\"Oldest\"/);
   assert.match(screen, /sortDiaryEntries\(rows,\s*sortOldest\)/);
   assert.match(screen, /ascending:\s*sortOldest/);
 });

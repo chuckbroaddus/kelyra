@@ -1,24 +1,28 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 
-import { JournalMonthGrid } from '@/components/diary/JournalMonthGrid';
+import { DayListPane } from '@/components/calendar/DayListPane';
+import { PeriodPager } from '@/components/calendar/PeriodPager';
+import { DiarySettingsSheet } from '@/components/diary/DiarySettingsSheet';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { FormSheet } from '@/components/ui/FormSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { ImageViewer } from '@/components/ui/ImageViewer';
 import { PersonTabs } from '@/components/ui/PersonTabs';
 import { PhotoSheet } from '@/components/ui/PhotoSheet';
 import { RemoteImage } from '@/components/ui/RemoteImage';
 import { Screen } from '@/components/ui/Screen';
-import { SectionHeader } from '@/components/ui/SectionHeader';
+import { SwipeActionCard } from '@/components/ui/SwipeActionCard';
 import { TextField } from '@/components/ui/TextField';
-import { WorkingLine } from '@/components/ui/WorkingMark';
-import { type } from '@/constants/theme';
+import { radius, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { shiftDay } from '@/lib/calendar/day';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { todayISO } from '@/lib/date/iso';
 import {
@@ -35,22 +39,7 @@ import {
   takePendingDiaryDraft,
   updateDiaryEntry,
 } from '@/lib/diary/api';
-import {
-  buildJournalAgendaGroups,
-  buildLedgerAgendaGroups,
-  dayChromeLayout,
-  DIARY_EMPTY_DAY_COPY,
-  DIARY_FILTER_MISS_COPY,
-  DIARY_LEDGER_EMPTY_DAY_COPY,
-  DIARY_PRESENCE_HONESTY,
-  DIARY_TWIN_FAIL_CLOSED,
-  formatJournalDayHeader,
-  journalMonthContaining,
-  ledgerPresenceCountByDay,
-  parentTwinsFailClosed,
-  presenceCountByDay,
-  shiftJournalSelectedDay,
-} from '@/lib/diary/dayBrowse';
+import { DIARY_TWIN_FAIL_CLOSED, parentTwinsFailClosed } from '@/lib/diary/dayBrowse';
 import { copyLedgerCsv, exportLedgerCsv } from '@/lib/diary/export';
 import {
   diaryFilterDate,
@@ -71,28 +60,18 @@ import { startLiveRecording, type LiveRecording } from '@/lib/media/recorder';
 import { pickRawPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { transcribeAudioDirect } from '@/lib/matching/captureSpeech';
 import { listRoster } from '@/lib/students/api';
-import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 type Segment = 'journal' | 'ledger';
 type DiaryPhotoView = { id: string; url: string };
-
-const LEDGER_FAMILIES: Array<{ key: string | null; label: string }> = [
-  { key: null, label: 'All' },
-  { key: 'assign', label: 'Assign' },
-  { key: 'grade', label: 'Grade' },
-  { key: 'syllabus', label: 'Syllabus' },
-  { key: 'capture', label: 'Capture' },
-  { key: 'office', label: 'Office' },
-  { key: 'other', label: 'Other' },
-];
 
 type TaughtClass = { id: string; name: string };
 type RosterChip = { id: string; display_name: string };
 
 export default function DiaryScreen() {
   const { colors } = useTheme();
-  const layout = useLayout();
+  const reduceMotion = useReducedMotion();
   const { profile } = useAuth();
   const chrome = useChrome();
   const router = useRouter();
@@ -106,11 +85,18 @@ export default function DiaryScreen() {
   const teacherLike = seat === 'teacher' || seat === 'staff';
 
   const [segment, setSegment] = useState<Segment>('journal');
-  const [entries, setEntries] = useState<DiaryEntryRow[] | null>(null);
-  const [ledger, setLedger] = useState<LedgerEventRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
+  /** DIARY-CAL: search lives behind the magnifier (local match, like Calendar). */
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  /** DIARY-GEAR: Sort / Tag / pointer / Ledger filters / CSV; Done applies. */
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  /** Day List: jump nonce (drum / Today) + reload key (filters, save, delete). */
+  const [listJump, setListJump] = useState(0);
+  const [listReload, setListReload] = useState(0);
+  const listFollow = useSharedValue(0);
+  const listDrive = useSharedValue(Number.NaN);
   const [family, setFamily] = useState<string | null>(null);
   const [ledgerFrom, setLedgerFrom] = useState('');
   const [ledgerTo, setLedgerTo] = useState('');
@@ -143,25 +129,40 @@ export default function DiaryScreen() {
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
   const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
-  const [entryPhotos, setEntryPhotos] = useState<Record<string, DiaryPhotoView[]>>({});
   const [viewer, setViewer] = useState<{ uris: string[]; index: number } | null>(null);
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const liveRef = useRef<LiveRecording | null>(null);
   const failClosedEmpty = parentTwinsFailClosed(children.length, focusedChildId) && seat === 'parent';
-  const journalMonth = useMemo(() => journalMonthContaining(selectedDay), [selectedDay]);
-  /** Layout B: phone <720 month-above-tabs; web ≥720 tabs then month|stream for both segments. */
-  const chromeLayout = dayChromeLayout(layout.width);
-  const dayChromeSplit = chromeLayout === 'web-split';
+  /** Fetchers read filters through a ref so the Day List only refetches on reloadKey (Done). */
+  const filtersRef = useRef({
+    focus: focusedChildId,
+    kids: children,
+    journalTag,
+    journalStudentId,
+    family,
+    ledgerFrom,
+    ledgerTo,
+    ledgerClassId,
+    ledgerStudentId,
+    sortOldest,
+  });
+  filtersRef.current = {
+    focus: focusedChildId,
+    kids: children,
+    journalTag,
+    journalStudentId,
+    family,
+    ledgerFrom,
+    ledgerTo,
+    ledgerClassId,
+    ledgerStudentId,
+    sortOldest,
+  };
+  /** Ledger rows the list has loaded (CSV export source). */
+  const ledgerLoadedRef = useRef(new Map<string, LedgerEventRow>());
 
-  const dropBrokenPhoto = useCallback((entryId: string | null, photoId: string) => {
-    if (entryId) {
-      setEntryPhotos((prev) => {
-        const current = prev[entryId];
-        if (!current?.length) return prev;
-        return { ...prev, [entryId]: current.filter((photo) => photo.id !== photoId) };
-      });
-    }
+  const dropBrokenPhoto = useCallback((_entryId: string | null, photoId: string) => {
     setComposerPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
   }, []);
 
@@ -244,25 +245,20 @@ export default function DiaryScreen() {
   }, [journalClassId]);
 
   const refresh = useCallback(async () => {
-    if (!allowed || !seat || !profile?.id) {
-      setEntries([]);
-      setLedger([]);
-      return;
-    }
+    if (!allowed || !seat || !profile?.id) return;
     setError(null);
     try {
-      let kids: Array<{ id: string; display_name: string }> = [];
-      let focus = focusedChildId;
       if (seat === 'parent') {
-        kids = await listParentLinkedChildren();
+        const kids = await listParentLinkedChildren();
+        let focus = focusedChildId;
         setChildren(kids);
         if (focus && !kids.some((k) => k.id === focus)) focus = null;
         if (!focus && kids.length === 1) focus = kids[0]!.id;
+        filtersRef.current = { ...filtersRef.current, kids, focus };
         if (focus !== focusedChildId) setFocusedChildId(focus);
       } else {
         setChildren([]);
         if (focusedChildId) setFocusedChildId(null);
-        focus = null;
       }
 
       const ack = await hasAckedDiaryPrivacy(profile.id);
@@ -280,76 +276,12 @@ export default function DiaryScreen() {
         setPointerClassId(null);
         setComposerOpen(true);
       }
-
-      if (segment === 'journal') {
-        if (seat === 'parent' && kidsNeedFocus(kids, focus)) {
-          setEntries([]);
-        } else {
-          // DB-B: month window auto-applies with selected day (RG-DROP — no From/To primary).
-          const month = journalMonthContaining(selectedDay);
-          const tag = journalTag.trim() || null;
-          // Soft pointer filter — teacher/staff only; never ACL.
-          const studentFilter = teacherLike ? journalStudentId : null;
-          const rows = await listDiaryEntries({
-            seat,
-            childStudentId: seat === 'parent' ? focus : null,
-            query: query.trim() || null,
-            from: month.fromIso,
-            to: month.toIso,
-            tag,
-            studentId: studentFilter,
-          });
-          setEntries(sortDiaryEntries(rows, sortOldest));
-        }
-        setLedger(null);
-      } else if (seat === 'parent') {
-        setLedger([]);
-        setEntries(null);
-      } else {
-        // Layout B: selected-day month is primary; From/To remain secondary.
-        const month = journalMonthContaining(selectedDay);
-        const fromDate = diaryFilterDate(ledgerFrom);
-        const toDate = diaryFilterDate(ledgerTo);
-        const rows = await listLedgerEvents({
-          seat,
-          actionFamily: family,
-          query: query.trim() || null,
-          fromIso: fromDate
-            ? `${fromDate}T00:00:00.000Z`
-            : `${month.fromIso}T00:00:00.000Z`,
-          toIso: toDate
-            ? `${toDate}T23:59:59.999Z`
-            : `${month.toIso}T23:59:59.999Z`,
-          classId: ledgerClassId,
-          studentId: ledgerStudentId,
-          ascending: sortOldest,
-        });
-        setLedger(rows);
-        setEntries(null);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load Diary');
-      setEntries([]);
-      setLedger([]);
+    } finally {
+      setListReload((k) => k + 1);
     }
-  }, [
-    allowed,
-    family,
-    focusedChildId,
-    journalStudentId,
-    journalTag,
-    ledgerClassId,
-    ledgerFrom,
-    ledgerStudentId,
-    ledgerTo,
-    profile?.id,
-    query,
-    seat,
-    segment,
-    selectedDay,
-    sortOldest,
-    teacherLike,
-  ]);
+  }, [allowed, focusedChildId, profile?.id, seat]);
   useFocusEffect(
     useCallback(() => {
       void refresh();
@@ -357,25 +289,68 @@ export default function DiaryScreen() {
   );
 
   useEffect(() => {
-    if (!entries?.length) {
-      setEntryPhotos({});
-      return;
-    }
-    let cancelled = false;
-    const ids = entries.map((row) => row.id);
-    void (async () => {
-      const next: Record<string, DiaryPhotoView[]> = {};
-      await Promise.all(
-        ids.map(async (entryId) => {
-          next[entryId] = await loadDiaryPhotoViews(entryId);
-        }),
-      );
-      if (!cancelled) setEntryPhotos(next);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [entries]);
+    ledgerLoadedRef.current = new Map();
+  }, [listReload, segment]);
+
+  /** DIARY-CAL Journal Day List window: tag + soft pointer filters; no primary From/To (RG-DROP). */
+  const fetchJournalRange = useCallback(
+    async (fromIso: string, toIso: string): Promise<DiaryEntryRow[]> => {
+      if (!seat) return [];
+      const { focus, kids, journalTag: tagText, journalStudentId: pointer, sortOldest } =
+        filtersRef.current;
+      if (seat === 'parent' && kidsNeedFocus(kids, focus)) return [];
+      const tag = tagText.trim() || null;
+      // Soft pointer filter — teacher/staff only; never ACL.
+      const studentFilter = teacherLike ? pointer : null;
+      const rows = await listDiaryEntries({
+        seat,
+        childStudentId: seat === 'parent' ? focus : null,
+        query: null,
+        from: fromIso,
+        to: toIso,
+        tag,
+        studentId: studentFilter,
+      });
+      return sortDiaryEntries(rows, sortOldest);
+    },
+    [seat, teacherLike],
+  );
+
+  /** DIARY-CAL Ledger Day List window, clamped to the Settings From/To range. */
+  const fetchLedgerRange = useCallback(
+    async (fromIso: string, toIso: string): Promise<LedgerEventRow[]> => {
+      if (!seat || seat === 'parent') return [];
+      const f = filtersRef.current;
+      const fromDate = diaryFilterDate(f.ledgerFrom);
+      const toDate = diaryFilterDate(f.ledgerTo);
+      const lo = fromDate && fromDate > fromIso ? fromDate : fromIso;
+      const hi = toDate && toDate < toIso ? toDate : toIso;
+      if (lo > hi) return [];
+      const sortOldest = f.sortOldest;
+      const rows = await listLedgerEvents({
+        seat,
+        actionFamily: f.family,
+        query: null,
+        fromIso: `${lo}T00:00:00.000Z`,
+        toIso: `${hi}T23:59:59.999Z`,
+        classId: f.ledgerClassId,
+        studentId: f.ledgerStudentId,
+        ascending: sortOldest,
+      });
+      for (const row of rows) ledgerLoadedRef.current.set(row.id, row);
+      return rows;
+    },
+    [seat],
+  );
+
+  const compareJournal = useCallback((a: DiaryEntryRow, b: DiaryEntryRow) => {
+    const d = a.created_at.localeCompare(b.created_at);
+    return filtersRef.current.sortOldest ? d : -d;
+  }, []);
+  const compareLedger = useCallback((a: LedgerEventRow, b: LedgerEventRow) => {
+    const d = a.created_at.localeCompare(b.created_at);
+    return filtersRef.current.sortOldest ? d : -d;
+  }, []);
 
   useEffect(() => {
     if (!composerOpen || !editing?.id) {
@@ -391,26 +366,6 @@ export default function DiaryScreen() {
     };
   }, [composerOpen, editing?.id]);
 
-  const agendaGroups = useMemo(
-    () => buildJournalAgendaGroups(entries ?? [], selectedDay, sortOldest),
-    [entries, selectedDay, sortOldest],
-  );
-  const journalPresenceByDay = useMemo(
-    () => (failClosedEmpty ? new Map<string, number>() : presenceCountByDay(entries ?? [])),
-    [entries, failClosedEmpty],
-  );
-  const ledgerPresenceByDay = useMemo(
-    () => ledgerPresenceCountByDay(ledger ?? []),
-    [ledger],
-  );
-  /** Follow-active-tab: Journal PR-BOTH entry_date; Ledger mute tick on created_at day. */
-  const presenceByDay = segment === 'journal' ? journalPresenceByDay : ledgerPresenceByDay;
-  const presenceMode = segment === 'journal' ? 'journal' : 'ledger';
-  const ledgerAgendaGroups = useMemo(
-    () => buildLedgerAgendaGroups(ledger ?? [], selectedDay, sortOldest),
-    [ledger, selectedDay, sortOldest],
-  );
-
   function openNew(prefill?: DiaryDraft | null) {
     setEditing(null);
     setDraft(prefill ?? null);
@@ -425,12 +380,14 @@ export default function DiaryScreen() {
     setComposerOpen(true);
   }
 
-  function jumpJournalToday() {
+  function jumpToday() {
     setSelectedDay(todayISO());
+    setListJump((n) => n + 1);
   }
 
-  function shiftJournalMonth(delta: number) {
-    setSelectedDay((current) => shiftJournalSelectedDay(current, delta));
+  function applySettings() {
+    setSettingsOpen(false);
+    setListReload((k) => k + 1);
   }
 
   function openEdit(row: DiaryEntryRow) {
@@ -441,7 +398,7 @@ export default function DiaryScreen() {
     setTagsText((row.tags ?? []).join(', '));
     setStudentPointer(row.student_id);
     setPointerClassId(null);
-    setComposerPhotos(entryPhotos[row.id] ?? []);
+    setComposerPhotos([]);
     setComposerOpen(true);
   }
 
@@ -527,7 +484,6 @@ export default function DiaryScreen() {
     });
     const views = await loadDiaryPhotoViews(entryId);
     setComposerPhotos(views);
-    setEntryPhotos((prev) => ({ ...prev, [entryId]: views }));
     await refresh();
   }
 
@@ -593,11 +549,21 @@ export default function DiaryScreen() {
     }
   }
 
+  function loadedLedgerRows(): LedgerEventRow[] {
+    const rows = [...ledgerLoadedRef.current.values()];
+    rows.sort(compareLedger);
+    return rows;
+  }
+
   async function onExportLedger() {
-    if (!ledger?.length) return;
+    const rows = loadedLedgerRows();
+    if (!rows.length) {
+      setNotice('No ledger rows loaded to export.');
+      return;
+    }
     setNotice(null);
     try {
-      const result = await exportLedgerCsv(ledger);
+      const result = await exportLedgerCsv(rows);
       setNotice(result === 'downloaded' ? 'Ledger CSV downloaded.' : 'Ledger CSV shared.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not export ledger');
@@ -605,9 +571,13 @@ export default function DiaryScreen() {
   }
 
   async function onCopyLedger() {
-    if (!ledger?.length) return;
+    const rows = loadedLedgerRows();
+    if (!rows.length) {
+      setNotice('No ledger rows loaded to copy.');
+      return;
+    }
     setNotice(null);
-    const result = await copyLedgerCsv(ledger);
+    const result = await copyLedgerCsv(rows);
     if (result === 'copied') setNotice('Ledger CSV copied to clipboard.');
     else if (result === 'shared') setNotice('Ledger CSV shared.');
     else setError('Could not copy ledger CSV.');
@@ -624,366 +594,58 @@ export default function DiaryScreen() {
     );
   }
 
-  const monthChrome = (
-    <View
-      style={dayChromeSplit ? styles.journalMonthPane : undefined}
-      testID="journal-daychrome-month"
-    >
-      <JournalMonthGrid
-        month={journalMonth}
-        selectedDay={selectedDay}
-        presenceByDay={presenceByDay}
-        presenceMode={presenceMode}
-        onSelectDay={setSelectedDay}
-        onPrevMonth={() => shiftJournalMonth(-1)}
-        onNextMonth={() => shiftJournalMonth(1)}
-        onToday={jumpJournalToday}
-      />
-      {segment === 'journal' ? (
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-          {DIARY_PRESENCE_HONESTY}
-        </Text>
-      ) : null}
-    </View>
-  );
+  const renderJournalItem = (row: DiaryEntryRow) => {
+    const headline = row.title?.trim() || row.body.trim() || 'Untitled';
+    const detail = [row.title?.trim() ? row.body.trim() : '', (row.tags ?? []).join(' · ')]
+      .filter(Boolean)
+      .join(' · ');
+    return (
+      <SwipeActionCard
+        onPress={() => openEdit(row)}
+        accessibilityLabel={headline}
+        backgroundColor={colors.wash}
+        borderColor={colors.line}
+        trailing={[
+          // DIARY-SWIPE: right-to-left swipe reveals Delete (no Delete button).
+          { key: 'delete', label: 'Delete', tone: 'danger', onPress: () => setPendingDelete(row) },
+        ]}
+      >
+        <View style={styles.rowText}>
+          <Text style={[styles.rowTitle, { color: colors.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {headline}
+          </Text>
+          <Text style={[styles.rowMeta, { color: colors.mute }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {detail || (row.updated_at !== row.created_at ? `Edited ${formatWhen(row.updated_at)}` : formatWhen(row.created_at))}
+          </Text>
+        </View>
+      </SwipeActionCard>
+    );
+  };
 
-  const journalStream = (
-    <View style={dayChromeSplit ? styles.journalStreamPane : undefined} testID="journal-daychrome-stream">
-      {failClosedEmpty ? (
-        <Text style={[styles.lead, { color: colors.mute }]}>{DIARY_TWIN_FAIL_CLOSED}</Text>
-      ) : (
-        <>
-          <TextField
-            label="Search"
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search journal"
-            autoCapitalize="none"
-          />
+  const renderLedgerItem = (row: LedgerEventRow) => {
+    const linkable = Boolean(ledgerDeepLinkHref(row));
+    return (
+      <Pressable
+        accessibilityRole={linkable ? 'button' : 'text'}
+        accessibilityLabel={row.summary}
+        onPress={() => void onLedgerRowPress(row)}
+        style={[styles.rowCard, { borderColor: colors.line, backgroundColor: colors.wash }]}
+      >
+        <View style={styles.rowText}>
+          <Text style={[styles.rowTitle, { color: colors.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {row.summary}
+          </Text>
+          <Text style={[styles.rowMeta, { color: colors.mute }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {formatWhen(row.created_at)} · {row.action_family}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
 
-          <Text style={[styles.filterLabel, { color: colors.mute }]}>Sort</Text>
-          <ChipRow>
-            <Chip label="Newest" selected={!sortOldest} onPress={() => setSortOldest(false)} />
-            <Chip label="Oldest" selected={sortOldest} onPress={() => setSortOldest(true)} />
-          </ChipRow>
-
-          <TextField
-            label="Tag"
-            value={journalTag}
-            onChangeText={setJournalTag}
-            placeholder="Exact tag"
-            autoCapitalize="none"
-          />
-          {teacherLike ? (
-            <>
-              <Text style={[styles.filterLabel, { color: colors.mute }]}>
-                Student pointer (private search only)
-              </Text>
-              {taughtClasses.length ? (
-                <ChipRow>
-                  <Chip
-                    label="All students"
-                    selected={journalClassId == null && journalStudentId == null}
-                    onPress={() => {
-                      setJournalClassId(null);
-                      setJournalStudentId(null);
-                    }}
-                  />
-                  {taughtClasses.map((klass) => (
-                    <Chip
-                      key={klass.id}
-                      label={klass.name}
-                      selected={journalClassId === klass.id}
-                      onPress={() => {
-                        setJournalClassId(klass.id);
-                        setJournalStudentId(null);
-                      }}
-                    />
-                  ))}
-                </ChipRow>
-              ) : (
-                <Text style={[type.meta, { color: colors.mute }]}>
-                  Soft student filter needs a taught class roster.
-                </Text>
-              )}
-              {journalClassId ? (
-                <ChipRow>
-                  {journalRoster.map((student) => (
-                    <Chip
-                      key={student.id}
-                      label={firstName(student.display_name)}
-                      selected={journalStudentId === student.id}
-                      onPress={() =>
-                        setJournalStudentId((current) => (current === student.id ? null : student.id))
-                      }
-                    />
-                  ))}
-                </ChipRow>
-              ) : null}
-            </>
-          ) : null}
-
-          {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
-          {notice ? <Text style={[type.meta, { color: colors.mute }]}>{notice}</Text> : null}
-
-          <PrimaryButton label="New entry" onPress={() => openNew(draft)} />
-
-          {entries == null ? (
-            <WorkingLine />
-          ) : (
-            agendaGroups.map((group) => (
-              <View key={group.day}>
-                <SectionHeader
-                  label={formatJournalDayHeader(group.day, group.isSelected)}
-                  first={group === agendaGroups[0]}
-                />
-                {group.empty ? (
-                  <View
-                    style={[
-                      styles.emptyDay,
-                      { borderColor: colors.line, backgroundColor: colors.elevated },
-                    ]}
-                  >
-                    <Text style={[type.body, { color: colors.mute, textAlign: 'center' }]}>
-                      {journalTag.trim() || journalClassId || journalStudentId
-                        ? DIARY_FILTER_MISS_COPY
-                        : DIARY_EMPTY_DAY_COPY}
-                    </Text>
-                    {journalTag.trim() || journalClassId || journalStudentId ? null : (
-                      <PrimaryButton label="New entry" onPress={() => openNew()} />
-                    )}
-                  </View>
-                ) : (
-                  group.rows.map((row) => {
-                    const photos = entryPhotos[row.id] ?? [];
-                    return (
-                      <View
-                        key={row.id}
-                        style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-                      >
-                        <Pressable onPress={() => openEdit(row)}>
-                          <Text style={[type.meta, { color: colors.mute }]}>
-                            {formatWhen(row.updated_at)}
-                            {row.updated_at !== row.created_at ? ' · edited' : ''}
-                          </Text>
-                          {row.title ? (
-                            <Text style={[type.title, { color: colors.ink }]} numberOfLines={2}>
-                              {row.title}
-                            </Text>
-                          ) : null}
-                          <Text style={[type.body, { color: colors.ink }]} numberOfLines={4}>
-                            {row.body}
-                          </Text>
-                        </Pressable>
-                        <DiaryPhotoStrip
-                          photos={photos}
-                          compact
-                          onBroken={(photoId) => dropBrokenPhoto(row.id, photoId)}
-                          onOpen={(uris, index) => setViewer({ uris, index })}
-                        />
-                        {(row.tags ?? []).length ? (
-                          <Text style={[type.meta, { color: colors.mute }]}>
-                            {(row.tags ?? []).join(' · ')}
-                          </Text>
-                        ) : null}
-                        <GhostButton label="Delete" onPress={() => setPendingDelete(row)} />
-                      </View>
-                    );
-                  })
-                )}
-              </View>
-            ))
-          )}
-        </>
-      )}
-    </View>
-  );
-
-  const ledgerStream = (
-    <View style={dayChromeSplit ? styles.journalStreamPane : undefined} testID="ledger-daychrome-stream">
-      <TextField
-        label="Search"
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search ledger summary"
-        autoCapitalize="none"
-      />
-
-      <Text style={[styles.filterLabel, { color: colors.mute }]}>Sort</Text>
-      <ChipRow>
-        <Chip label="Newest" selected={!sortOldest} onPress={() => setSortOldest(false)} />
-        <Chip label="Oldest" selected={sortOldest} onPress={() => setSortOldest(true)} />
-      </ChipRow>
-
-      {seat !== 'parent' ? (
-        <>
-          <Text style={[styles.filterLabel, { color: colors.mute }]}>Action</Text>
-          <ChipRow>
-            {LEDGER_FAMILIES.map((item) => (
-              <Chip
-                key={item.label}
-                label={item.label}
-                selected={family === item.key}
-                onPress={() => setFamily(item.key)}
-              />
-            ))}
-          </ChipRow>
-          <TextField
-            label="From date (YYYY-MM-DD)"
-            value={ledgerFrom}
-            onChangeText={setLedgerFrom}
-            autoCapitalize="none"
-          />
-          <TextField
-            label="To date (YYYY-MM-DD)"
-            value={ledgerTo}
-            onChangeText={setLedgerTo}
-            autoCapitalize="none"
-          />
-
-          <Text style={[styles.filterLabel, { color: colors.mute }]}>Class (taught)</Text>
-          {taughtClasses.length ? (
-            <ChipRow>
-              <Chip
-                label="All classes"
-                selected={ledgerClassId == null}
-                onPress={() => {
-                  setLedgerClassId(null);
-                  setLedgerStudentId(null);
-                }}
-              />
-              {taughtClasses.map((klass) => (
-                <Chip
-                  key={klass.id}
-                  label={klass.name}
-                  selected={ledgerClassId === klass.id}
-                  onPress={() => {
-                    setLedgerClassId(klass.id);
-                    setLedgerStudentId(null);
-                  }}
-                />
-              ))}
-            </ChipRow>
-          ) : (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              No taught classes on this seat — class filter unavailable.
-            </Text>
-          )}
-
-          {ledgerClassId ? (
-            <>
-              <Text style={[styles.filterLabel, { color: colors.mute }]}>Student (roster)</Text>
-              <ChipRow>
-                <Chip
-                  label="All students"
-                  selected={ledgerStudentId == null}
-                  onPress={() => setLedgerStudentId(null)}
-                />
-                {ledgerRoster.map((student) => (
-                  <Chip
-                    key={student.id}
-                    label={firstName(student.display_name)}
-                    selected={ledgerStudentId === student.id}
-                    onPress={() => setLedgerStudentId(student.id)}
-                  />
-                ))}
-              </ChipRow>
-            </>
-          ) : null}
-
-          <GhostButton label="Apply filters" onPress={() => void refresh()} />
-        </>
-      ) : null}
-
-      {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
-      {notice ? <Text style={[type.meta, { color: colors.mute }]}>{notice}</Text> : null}
-
-      {seat === 'parent' ? (
-        <Text style={[styles.lead, { color: colors.mute }]}>
-          Parent My Ledger is deferred in v1. Journal is available above.
-        </Text>
-      ) : ledger == null ? (
-        <WorkingLine />
-      ) : (
-        <>
-          {ledger.length ? (
-            <View style={styles.exportRow}>
-              <GhostButton label="Export CSV" onPress={() => void onExportLedger()} />
-              <GhostButton label="Copy CSV" onPress={() => void onCopyLedger()} />
-            </View>
-          ) : null}
-          {ledger.length ? (
-            <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-              Exports only your currently filtered ledger rows — not other teachers, not Office Activity.
-            </Text>
-          ) : null}
-          {ledgerAgendaGroups.map((group) => (
-            <View key={group.day}>
-              <SectionHeader
-                label={formatJournalDayHeader(group.day, group.isSelected)}
-                first={group === ledgerAgendaGroups[0]}
-              />
-              {group.empty ? (
-                <View
-                  style={[
-                    styles.emptyDay,
-                    { borderColor: colors.line, backgroundColor: colors.elevated },
-                  ]}
-                >
-                  <Text style={[type.body, { color: colors.mute, textAlign: 'center' }]}>
-                    {ledger.length === 0
-                      ? `My Ledger lists your own Kelyra actions (assign, grade, file capture${
-                          seat === 'staff' ? ', office changes' : ''
-                        }). It is not Office Activity and not your journal.`
-                      : DIARY_LEDGER_EMPTY_DAY_COPY}
-                  </Text>
-                </View>
-              ) : (
-                group.rows.map((row) => {
-                  const linkable = Boolean(ledgerDeepLinkHref(row));
-                  return (
-                    <Pressable
-                      key={row.id}
-                      accessibilityRole={linkable ? 'button' : 'text'}
-                      onPress={() => void onLedgerRowPress(row)}
-                      style={[styles.card, { borderColor: colors.line, backgroundColor: colors.elevated }]}
-                    >
-                      <Text style={[type.meta, { color: colors.mute }]}>
-                        {formatWhen(row.created_at)} · {row.action_family}
-                      </Text>
-                      <Text style={[type.body, { color: colors.ink }]}>{row.summary}</Text>
-                    </Pressable>
-                  );
-                })
-              )}
-            </View>
-          ))}
-        </>
-      )}
-    </View>
-  );
-
-  return (
-    <Screen maxWidth={720} keyboard>
-      {seat === 'parent' && children.length >= 2 ? (
-        <>
-          <Text style={[styles.filterLabel, { color: colors.mute }]}>Child</Text>
-          <ChipRow>
-            {children.map((child) => (
-              <Chip
-                key={child.id}
-                label={firstName(child.display_name)}
-                selected={focusedChildId === child.id}
-                onPress={() => setFocusedChildId(child.id)}
-              />
-            ))}
-          </ChipRow>
-        </>
-      ) : null}
-
-      {/* Layout B phone: month above PersonTabs */}
-      {!dayChromeSplit ? monthChrome : null}
-
+  // DIARY-CAL (CEO 2026-09-24): tabs, then Calendar's nav row (Today · + search gear), then the Day drum.
+  const pinnedChrome = (
+    <>
       <PersonTabs
         tabs={[
           { key: 'journal', label: 'Journal', icon: 'compose' },
@@ -992,18 +654,112 @@ export default function DiaryScreen() {
         value={segment}
         onChange={(key) => setSegment(key as Segment)}
       />
-
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>{DIARY_FERPA_NOTE}</Text>
-
-      {dayChromeSplit ? (
-        <View style={styles.journalSplit} testID="journal-daychrome-web-split">
-          {monthChrome}
-          {segment === 'journal' ? journalStream : ledgerStream}
+      <View style={styles.navRow}>
+        <View style={styles.navLeading}>
+          <GhostButton label="Today" accessibilityLabel="Jump to today" onPress={jumpToday} />
         </View>
+        <View style={styles.chromeCluster}>
+          {segment === 'journal' && !failClosedEmpty ? (
+            // "+" opens the composer on the sticky Day List day (replaces New entry).
+            <IconButton name="plus" label="New entry" onPress={() => openNew(draft)} />
+          ) : null}
+          <IconButton
+            name="search"
+            label={searchOpen ? 'Close search' : segment === 'journal' ? 'Search journal' : 'Search ledger'}
+            onPress={() => {
+              setSearchOpen((v) => !v);
+              if (searchOpen) setSearchQuery('');
+            }}
+          />
+          <IconButton name="settings" label="Diary settings" onPress={() => setSettingsOpen(true)} />
+        </View>
+      </View>
+      {searchOpen ? (
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={segment === 'journal' ? 'Search journal' : 'Search ledger summary'}
+          placeholderTextColor={colors.mute}
+          style={[
+            styles.searchInput,
+            { color: colors.ink, borderColor: colors.line, backgroundColor: colors.elevated },
+          ]}
+          accessibilityLabel={segment === 'journal' ? 'Search journal' : 'Search ledger summary'}
+          autoCorrect={false}
+          autoCapitalize="none"
+          clearButtonMode="while-editing"
+        />
+      ) : null}
+      <PeriodPager
+        kind="day"
+        anchor={selectedDay}
+        onShift={(steps) => {
+          setSelectedDay((current) => shiftDay(current, steps));
+          setListJump((n) => n + 1);
+        }}
+        onJumpToday={jumpToday}
+        followPosition={reduceMotion ? null : listFollow}
+        drivePosition={listDrive}
+      />
+    </>
+  );
+
+  return (
+    <View style={styles.screenRoot}>
+    <Screen maxWidth={720} scroll={false} pin={pinnedChrome}>
+      {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
+      {notice ? <Text style={[type.meta, { color: colors.mute }]}>{notice}</Text> : null}
+
+      {failClosedEmpty ? (
+        <Text style={[styles.lead, { color: colors.mute }]}>
+          {DIARY_TWIN_FAIL_CLOSED} Pick a child in Settings (gear).
+        </Text>
+      ) : segment === 'ledger' && seat === 'parent' ? (
+        <Text style={[styles.lead, { color: colors.mute }]}>
+          Parent My Ledger is deferred in v1. Journal is available on the Journal tab.
+        </Text>
       ) : segment === 'journal' ? (
-        journalStream
+        <View style={styles.listHost}>
+          <DayListPane<DiaryEntryRow>
+            key="journal"
+            day={selectedDay}
+            jumpNonce={listJump}
+            fetchRange={fetchJournalRange}
+            reloadKey={listReload}
+            query={searchQuery}
+            onTopDayChange={setSelectedDay}
+            followPosition={listFollow}
+            drivePosition={listDrive}
+            itemKey={(row) => row.id}
+            itemDay={(row) => row.entry_date}
+            compareItems={compareJournal}
+            matchesQuery={(row, q) =>
+              [row.title ?? '', row.body, ...(row.tags ?? [])].some((t) => t.toLowerCase().includes(q))
+            }
+            renderItem={renderJournalItem}
+            emptyLabel="No entries"
+          />
+        </View>
       ) : (
-        ledgerStream
+        <View style={styles.listHost}>
+          <DayListPane<LedgerEventRow>
+            key="ledger"
+            day={selectedDay}
+            jumpNonce={listJump}
+            fetchRange={fetchLedgerRange}
+            reloadKey={listReload}
+            query={searchQuery}
+            onTopDayChange={setSelectedDay}
+            followPosition={listFollow}
+            drivePosition={listDrive}
+            itemKey={(row) => row.id}
+            itemDay={(row) => row.created_at.slice(0, 10)}
+            compareItems={compareLedger}
+            matchesQuery={(row, q) => row.summary.toLowerCase().includes(q)}
+            renderItem={renderLedgerItem}
+            emptyLabel="No activity"
+          />
+        </View>
       )}
 
       <FormSheet
@@ -1175,15 +931,7 @@ export default function DiaryScreen() {
           setPendingDelete(null);
           if (!row) return;
           void deleteDiaryEntry(row.id)
-            .then(() => {
-              setEntryPhotos((prev) => {
-                if (!prev[row.id]) return prev;
-                const next = { ...prev };
-                delete next[row.id];
-                return next;
-              });
-              return refresh();
-            })
+            .then(() => refresh())
             .catch((err) => setError(err instanceof Error ? err.message : 'Could not delete'));
         }}
       />
@@ -1194,7 +942,51 @@ export default function DiaryScreen() {
         index={viewer?.index ?? 0}
         onClose={() => setViewer(null)}
       />
+
+      <DiarySettingsSheet
+        visible={settingsOpen}
+        onDone={applySettings}
+        sortOldest={sortOldest}
+        onChangeSortOldest={setSortOldest}
+        childOptions={
+          seat === 'parent' && children.length >= 2
+            ? children.map((child) => ({ id: child.id, name: child.display_name }))
+            : []
+        }
+        focusedChildId={focusedChildId}
+        onChangeChild={setFocusedChildId}
+        journalTag={journalTag}
+        onChangeJournalTag={setJournalTag}
+        showStudentPointer={teacherLike}
+        taughtClasses={taughtClasses}
+        journalClassId={journalClassId}
+        journalStudentId={journalStudentId}
+        journalRoster={journalRoster.map((s) => ({ id: s.id, name: s.display_name }))}
+        onChangeJournalClass={(id) => {
+          setJournalClassId(id);
+          setJournalStudentId(null);
+        }}
+        onChangeJournalStudent={setJournalStudentId}
+        showLedger={seat !== 'parent'}
+        family={family}
+        onChangeFamily={setFamily}
+        ledgerFrom={ledgerFrom}
+        ledgerTo={ledgerTo}
+        onChangeLedgerFrom={setLedgerFrom}
+        onChangeLedgerTo={setLedgerTo}
+        ledgerClassId={ledgerClassId}
+        ledgerStudentId={ledgerStudentId}
+        ledgerRoster={ledgerRoster.map((s) => ({ id: s.id, name: s.display_name }))}
+        onChangeLedgerClass={(id) => {
+          setLedgerClassId(id);
+          setLedgerStudentId(null);
+        }}
+        onChangeLedgerStudent={setLedgerStudentId}
+        onExportCsv={() => void onExportLedger()}
+        onCopyCsv={() => void onCopyLedger()}
+      />
     </Screen>
+    </View>
   );
 }
 
@@ -1268,6 +1060,37 @@ function kidsNeedFocus(
 
 
 const styles = StyleSheet.create({
+  screenRoot: { flex: 1 },
+  listHost: { flex: 1, minHeight: 0 },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    minHeight: 44,
+  },
+  navLeading: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
+  chromeCluster: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 2 },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    ...type.body,
+  },
+  rowCard: {
+    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  rowText: { flex: 1, gap: 2, minWidth: 0 },
+  rowTitle: { ...type.body, fontWeight: '600' },
+  rowMeta: { ...type.meta },
   lead: {
     ...type.body,
     marginTop: 12,
@@ -1278,41 +1101,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 6,
   },
-  journalSplit: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-  },
-  journalMonthPane: {
-    width: 280,
-    flexShrink: 0,
-  },
-  journalStreamPane: {
-    flex: 1,
-    minWidth: 0,
-  },
-  emptyDay: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 22,
-    gap: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
   card: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
     gap: 6,
     marginBottom: 10,
-  },
-  exportRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-    marginBottom: 4,
   },
   photoRow: {
     flexDirection: 'row',

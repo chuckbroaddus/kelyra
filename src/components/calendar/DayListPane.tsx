@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   FlatList,
   NativeScrollEvent,
@@ -50,19 +58,30 @@ import {
 import type { CalendarItem } from '@/lib/calendar/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-type Props = {
+type Props<T> = {
   /** Day to open on, and the target of each jump (drum snap / Today). */
   day: string;
   /** Bumps when the parent asks for a jump to `day` (even if `day` is unchanged). */
   jumpNonce: number;
   /** Fetch seat-visible items for an inclusive ISO day range (parent owns filters). */
-  fetchRange: (fromIso: string, toIso: string) => Promise<CalendarItem[]>;
+  fetchRange: (fromIso: string, toIso: string) => Promise<T[]>;
   /** Bumps when the parent reloads (focus, filters, create/edit/delete). */
   reloadKey: number;
-  /** Search text; filters loaded items by title. */
+  /** Search text; filters loaded items by title (or `matchesQuery`). */
   query?: string;
   showHiddenBadge?: boolean;
-  onPressItem?: (item: CalendarItem) => void;
+  onPressItem?: (item: T) => void;
+  /**
+   * DIARY-LIST: reuse the Day List for non-calendar rows (Journal / Ledger).
+   * Omit all of these for CalendarItem rows. Rows keep the fixed DAY_LIST_ITEM_H.
+   */
+  itemKey?: (item: T) => string;
+  itemDay?: (item: T) => string;
+  compareItems?: (a: T, b: T) => number;
+  matchesQuery?: (item: T, lowerQuery: string) => boolean;
+  renderItem?: (item: T) => ReactElement;
+  /** Label under an empty day (default "No events"). */
+  emptyLabel?: string;
   /** Day whose sticky header is pinned at the top; drives the drum center card. */
   onTopDayChange?: (day: string) => void;
   /**
@@ -79,17 +98,26 @@ type Props = {
 
 type Range = { start: string; end: string };
 
-const itemKey = (item: CalendarItem) => `${item.source}:${item.id}`;
+const calendarItemKey = (item: CalendarItem) => `${item.source}:${item.id}`;
+const calendarCompare = (a: CalendarItem, b: CalendarItem) => a.startsAt.localeCompare(b.startsAt);
+const calendarMatches = (item: CalendarItem, q: string) => item.title.toLowerCase().includes(q);
 
-function bucketByDay(rows: CalendarItem[], into?: Map<string, CalendarItem[]>) {
-  const map = into ?? new Map<string, CalendarItem[]>();
+type RowFns<T> = {
+  key: (item: T) => string;
+  day: (item: T) => string;
+  compare: (a: T, b: T) => number;
+  matches: (item: T, q: string) => boolean;
+};
+
+function bucketByDay<T>(rows: T[], fns: RowFns<T>, into?: Map<string, T[]>) {
+  const map = into ?? new Map<string, T[]>();
   for (const item of rows) {
-    const key = itemDayKey(item);
+    const key = fns.day(item);
     const list = map.get(key);
     if (list) list.push(item);
     else map.set(key, [item]);
   }
-  for (const list of map.values()) list.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  for (const list of map.values()) list.sort(fns.compare);
   return map;
 }
 
@@ -101,7 +129,7 @@ function bucketByDay(rows: CalendarItem[], into?: Map<string, CalendarItem[]>) {
  * takes over. Days load in chunks ahead of the viewport both ways, so the list never
  * stops at an edge; the pinned day drives the drum center card.
  */
-export function DayListPane({
+export function DayListPane<T = CalendarItem>({
   day,
   jumpNonce,
   fetchRange,
@@ -112,13 +140,27 @@ export function DayListPane({
   onTopDayChange,
   followPosition = null,
   drivePosition = null,
-}: Props) {
+  itemKey,
+  itemDay,
+  compareItems,
+  matchesQuery,
+  renderItem,
+  emptyLabel = 'No events',
+}: Props<T>) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
-  const listRef = useAnimatedRef<FlatList<DayListRow<CalendarItem>>>();
+  const listRef = useAnimatedRef<FlatList<DayListRow<T>>>();
+  // Calendar rows use the CalendarItem defaults; Diary passes its own.
+  const fnsRef = useRef<RowFns<T>>(null as unknown as RowFns<T>);
+  fnsRef.current = {
+    key: itemKey ?? (calendarItemKey as unknown as (item: T) => string),
+    day: itemDay ?? (itemDayKey as unknown as (item: T) => string),
+    compare: compareItems ?? (calendarCompare as unknown as (a: T, b: T) => number),
+    matches: matchesQuery ?? (calendarMatches as unknown as (item: T, q: string) => boolean),
+  };
 
   const [range, setRange] = useState<Range | null>(null);
-  const [itemsByDay, setItemsByDay] = useState<Map<string, CalendarItem[]>>(() => new Map());
+  const [itemsByDay, setItemsByDay] = useState<Map<string, T[]>>(() => new Map());
   const [seedId, setSeedId] = useState(0);
   const [seedTarget, setSeedTarget] = useState(day);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +215,7 @@ export function DayListPane({
           scrollRef.current = { y: 0, topDay: target, intra: 0 };
           setFollow(dayListDayNumber(target));
           setError(null);
-          setItemsByDay(bucketByDay(rows));
+          setItemsByDay(bucketByDay(rows, fnsRef.current));
           setRange(r);
           setSeedTarget(target);
           setSeedId((n) => n + 1);
@@ -205,7 +247,7 @@ export function DayListPane({
         setItemsByDay((prev) => {
           const next = new Map(prev);
           for (const d of dayListDaysBetween(chunk.start, chunk.end)) next.delete(d);
-          return bucketByDay(rows, next);
+          return bucketByDay(rows, fnsRef.current, next);
         });
         const cur = rangeRef.current!;
         const nextRange =
@@ -232,17 +274,18 @@ export function DayListPane({
     [range],
   );
 
-  const layout: DayListLayout<CalendarItem> = useMemo(() => {
+  const layout: DayListLayout<T> = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const fns = fnsRef.current;
     let source = itemsByDay;
     if (q) {
       source = new Map();
       for (const [d, list] of itemsByDay) {
-        const hits = list.filter((item) => item.title.toLowerCase().includes(q));
+        const hits = list.filter((item) => fns.matches(item, q));
         if (hits.length) source.set(d, hits);
       }
     }
-    return buildDayListLayout(days, source, itemKey);
+    return buildDayListLayout(days, source, fns.key);
   }, [days, itemsByDay, query]);
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
@@ -296,7 +339,7 @@ export function DayListPane({
         const cur = rangeRef.current;
         if (!cur || cur.start !== r.start || cur.end !== r.end) return;
         setError(null);
-        setItemsByDay(bucketByDay(rows));
+        setItemsByDay(bucketByDay(rows, fnsRef.current));
       })
       .catch((err: unknown) => {
         if (gen !== genRef.current) return;
@@ -428,7 +471,7 @@ export function DayListPane({
     [drivePosition, isWeb, scrollToJs],
   );
 
-  const renderRow = ({ item: row }: { item: DayListRow<CalendarItem> }) => {
+  const renderRow = ({ item: row }: { item: DayListRow<T> }) => {
     if (row.kind === 'header') {
       const seg = dayPeriodTitleSegments(row.day);
       return (
@@ -449,17 +492,20 @@ export function DayListPane({
       return (
         <View style={styles.emptyRow}>
           <Text style={[styles.emptyText, { color: colors.mute }]} maxFontSizeMultiplier={1.2}>
-            No events
+            {emptyLabel}
           </Text>
         </View>
       );
     }
-    const item = row.item;
+    if (renderItem) {
+      return <View style={styles.itemRow}>{renderItem(row.item)}</View>;
+    }
+    const item = row.item as unknown as CalendarItem;
     const hidden = Boolean(showHiddenBadge && item.isHidden);
     return (
       <View style={styles.itemRow}>
         <Pressable
-          onPress={() => onPressItem?.(item)}
+          onPress={() => onPressItem?.(row.item)}
           accessibilityRole="button"
           accessibilityLabel={hidden ? `${item.title}, Hidden` : item.title}
           style={[
