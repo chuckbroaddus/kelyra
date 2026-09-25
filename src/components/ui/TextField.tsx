@@ -53,9 +53,14 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
   const uncontrolled = Boolean(dictationSafe) && Platform.OS === 'ios' && value !== undefined;
   // Text the native input is showing (as far as JS knows). An outside `value` change remounts.
   const [shown, setShown] = useState(value ?? '');
+  // Text the current native input was mounted with. Frozen until the next remount: RN's
+  // TextInput sends `value ?? defaultValue` to native as `text`, so feeding every keystroke
+  // into defaultValue re-sets native text and still doubles dictation.
+  const [seed, setSeed] = useState(value ?? '');
   const [epoch, setEpoch] = useState(0);
   if (uncontrolled && (value ?? '') !== shown) {
     setShown(value ?? '');
+    setSeed(value ?? '');
     setEpoch((n) => n + 1);
   }
   return (
@@ -69,7 +74,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
           keyboardAppearance={scheme}
           {...rest}
           value={uncontrolled ? undefined : value}
-          defaultValue={uncontrolled ? shown : defaultValue}
+          defaultValue={uncontrolled ? seed : defaultValue}
           onChangeText={(text) => {
             if (uncontrolled) setShown(text);
             onChangeText?.(text);
