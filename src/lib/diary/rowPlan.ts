@@ -32,6 +32,8 @@ export const ROW_TEXT_LINE = 20;
 export const ROW_META_H = 18;
 export const ROW_PHOTO_H = 160;
 export const ROW_CHIP_H = 36;
+/** Link preview card in a list row: 56px image + 8px padding each side. */
+export const ROW_LINK_H = 72;
 export const ROW_TILE = 108;
 export const ROW_TILE_GAP = 4;
 const SEGMENT_MAX_LINES = 4;
@@ -56,8 +58,9 @@ export function rowBlockHeight(block: RowBlock): number {
       return rows * ROW_TILE + (rows - 1) * ROW_TILE_GAP;
     }
     case 'file':
-    case 'link':
       return ROW_CHIP_H;
+    case 'link':
+      return ROW_LINK_H;
     case 'meta':
       return ROW_META_H;
   }
