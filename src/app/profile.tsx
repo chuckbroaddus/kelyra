@@ -33,6 +33,7 @@ import {
 import { listStudentEnrollments } from '@/lib/students/delete';
 import { listChildrenForParent, loadParentProgress } from '@/lib/parents/api';
 import { listClasses, listSchoolClasses } from '@/lib/classes/api';
+import { classListRowNavTarget } from '@/lib/classes/classListNav';
 import {
   clearProfilePhoto,
   photoUrlsForProfiles,
@@ -342,17 +343,20 @@ export default function ProfileScreen() {
           {classes.length === 0 ? (
             <Text style={[styles.meta, { color: colors.mute }]}>No classes yet.</Text>
           ) : null}
-          {classes.map((klass) => (
-            <ListRow
-              key={klass.id}
-              title={klass.name}
-              status={chrome.classId === klass.id ? 'Active class' : undefined}
-              avatarName={klass.name}
-              photoUrl={klass.avatarUrl}
-              hasPhoto={Boolean(klass.avatar_asset_id)}
-              onPress={() => router.push(`/class/${klass.id}`)}
-            />
-          ))}
+          {classes.map((klass) => {
+            const href = classListRowNavTarget('staff-classes-tab', chrome.role, klass.id);
+            return (
+              <ListRow
+                key={klass.id}
+                title={klass.name}
+                status={chrome.classId === klass.id ? 'Active class' : undefined}
+                avatarName={klass.name}
+                photoUrl={klass.avatarUrl}
+                hasPhoto={Boolean(klass.avatar_asset_id)}
+                onPress={href ? () => router.push(href as never) : undefined}
+              />
+            );
+          })}
         </>
       ) : null}
       {shown && staffPerson && tab === 'children' ? (

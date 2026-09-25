@@ -42,17 +42,32 @@ test('student Classes tab: office rows not pressable, no nav target', () => {
   assert.equal(classListRowNavTarget('student-classes-tab', TEACHER, 'c9'), '/class/c9');
 });
 
+test('staff Classes tab: office rows not pressable, no nav target; teacher pressable', () => {
+  for (const role of OFFICE) {
+    assert.equal(classListRowPressable('staff-classes-tab', role), false);
+    assert.equal(classListRowNavTarget('staff-classes-tab', role, 'c1'), null);
+  }
+  assert.equal(classListRowPressable('staff-classes-tab', TEACHER), true);
+  assert.equal(classListRowNavTarget('staff-classes-tab', TEACHER, 'c1'), '/class/c1');
+});
+
 test('empty class id never yields a target', () => {
-  const points: ClassListEntryPoint[] = ['main-classes', 'parent-classes-tab', 'student-classes-tab'];
+  const points: ClassListEntryPoint[] = [
+    'main-classes',
+    'parent-classes-tab',
+    'student-classes-tab',
+    'staff-classes-tab',
+  ];
   for (const point of points) {
     assert.equal(classListRowNavTarget(point, TEACHER, ''), null);
   }
 });
 
-test('source wiring: parent + student + home use classListNav helpers', () => {
+test('source wiring: parent + student + staff + home use classListNav helpers', () => {
   const root = process.cwd();
   const parent = readFileSync(join(root, 'src/app/class/[id]/parent/[parentId].tsx'), 'utf8');
   const student = readFileSync(join(root, 'src/app/class/[id]/student/[studentId].tsx'), 'utf8');
+  const profile = readFileSync(join(root, 'src/app/profile.tsx'), 'utf8');
   const home = readFileSync(join(root, 'src/app/index.tsx'), 'utf8');
 
   assert.match(parent, /classListRowNavTarget/);
@@ -63,6 +78,11 @@ test('source wiring: parent + student + home use classListNav helpers', () => {
   assert.match(student, /classListRowNavTarget|classListRowPressable/);
   assert.match(student, /student-classes-tab/);
   assert.match(student, /tab === 'classes'/);
+
+  assert.match(profile, /classListRowNavTarget/);
+  assert.match(profile, /staff-classes-tab/);
+  assert.match(profile, /chrome\.role/);
+  assert.doesNotMatch(profile, /onPress=\{\(\) => router\.push\(`\/class\/\$\{klass\.id\}`\)\}/);
 
   assert.match(home, /classListRowNavTarget/);
   assert.match(home, /main-classes/);
