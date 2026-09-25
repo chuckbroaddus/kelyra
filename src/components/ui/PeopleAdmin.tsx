@@ -43,7 +43,7 @@ import {
 } from '@/lib/school/api';
 import {
   applyStudentOptionalDraft,
-  STUDENT_OFFICE_OPTIONAL_FIELDS,
+  createAccountOptionalFields,
 } from '@/lib/people/metadata';
 import { mintOfficeStudent } from '@/lib/students/api';
 import { coerceBirthdayISO } from '@/lib/date/iso';
@@ -681,9 +681,8 @@ export function CreateLoginForm({
       ) : null}
       <View style={styles.gap} />
       <Text style={[type.meta, styles.optionalHead, { color: colors.mute }]}>Optional</Text>
-      {role === 'student' ? (
-        <>
-          {STUDENT_OFFICE_OPTIONAL_FIELDS.map((field) =>
+      {role === 'student'
+        ? createAccountOptionalFields('student').map((field) =>
             field.key === 'birthday' ? (
               <View key={field.key}>
                 <DateInput
@@ -713,9 +712,8 @@ export function CreateLoginForm({
                 <View style={styles.gap} />
               </View>
             ),
-          )}
-        </>
-      ) : (
+          )
+        : (
         <>
           {label('Phone', false)}
           <TextField dictationSafe keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
