@@ -20,23 +20,60 @@ type Props = TextInputProps & {
   topAccessory?: ReactNode;
   /** Pop-up hung under the top-right control, opening leftward over the field (e.g. the attach menu). */
   topPopover?: ReactNode;
+  /**
+   * DICTATION-DOUBLE: iOS keyboard-mic dictation can land twice in a controlled input
+   * (spoken name shows, then shows again on the second mic tap). On iOS this keeps the
+   * native text uncontrolled and only pushes `value` when it changes from outside
+   * (form reset, programmatic set) by remounting the input. Do not use on fields that
+   * stream in-app dictation into `value` while focused (Journal composer).
+   */
+  dictationSafe?: boolean;
 };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', topAccessory, topPopover, ...rest },
+  {
+    label,
+    style,
+    onFocus,
+    onBlur,
+    accessory,
+    accessoryPlacement = 'center',
+    topAccessory,
+    topPopover,
+    dictationSafe,
+    value,
+    defaultValue,
+    onChangeText,
+    ...rest
+  },
   ref,
 ) {
   const { colors, scheme } = useTheme();
   const [focused, setFocused] = useState(false);
+  const uncontrolled = Boolean(dictationSafe) && Platform.OS === 'ios' && value !== undefined;
+  // Text the native input is showing (as far as JS knows). An outside `value` change remounts.
+  const [shown, setShown] = useState(value ?? '');
+  const [epoch, setEpoch] = useState(0);
+  if (uncontrolled && (value ?? '') !== shown) {
+    setShown(value ?? '');
+    setEpoch((n) => n + 1);
+  }
   return (
     <View style={styles.wrap}>
       {label ? <Text style={[styles.label, { color: colors.mute }]}>{label}</Text> : null}
       <View style={[styles.inputWrap, topPopover ? styles.inputWrapRaised : null]}>
         <TextInput
+          key={uncontrolled ? `dictation-safe-${epoch}` : 'controlled'}
           ref={ref}
           placeholderTextColor={colors.mute}
           keyboardAppearance={scheme}
           {...rest}
+          value={uncontrolled ? undefined : value}
+          defaultValue={uncontrolled ? shown : defaultValue}
+          onChangeText={(text) => {
+            if (uncontrolled) setShown(text);
+            onChangeText?.(text);
+          }}
           onFocus={(event) => {
             setFocused(true);
             onFocus?.(event);
