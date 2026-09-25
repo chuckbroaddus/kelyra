@@ -98,6 +98,30 @@ export function buildDayListLayout<T>(
   return { rows, offsets, lengths, headerIndices, headerOffsets, days, totalHeight: y };
 }
 
+/** Whole days since 1970-01-01 for an ISO day (UTC math; DST-safe). */
+export function dayListDayNumber(iso: string): number {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return Math.round(Date.UTC(y!, (m ?? 1) - 1, d ?? 1) / 86_400_000);
+}
+
+/**
+ * CAL-DRUM-FOLLOW: continuous day position at scroll offset `y` — the pinned
+ * day's number plus how far the top edge is through that day's section (0 when
+ * its header pins, 1 when the next header pins). Null before layout.
+ */
+export function dayListFollowPosition(
+  layout: Pick<DayListLayout<unknown>, 'headerOffsets' | 'days' | 'totalHeight'>,
+  y: number,
+): number | null {
+  const idx = dayListTopIndexAt(layout.headerOffsets, y);
+  if (idx < 0) return null;
+  const start = layout.headerOffsets[idx]!;
+  const end = layout.headerOffsets[idx + 1] ?? layout.totalHeight;
+  const span = end - start;
+  const frac = span > 0 ? Math.min(1, Math.max(0, (y - start) / span)) : 0;
+  return dayListDayNumber(layout.days[idx]!) + frac;
+}
+
 /**
  * Index into `days` of the day whose header is pinned at scroll offset `y`
  * (last header at or above the top edge).

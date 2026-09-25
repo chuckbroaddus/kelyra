@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import { radius, type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
@@ -22,8 +23,10 @@ import {
   dayListChunkAfter,
   dayListChunkBefore,
   dayListCompensatedOffset,
+  dayListDayNumber,
   dayListDaysBetween,
   dayListExtendNeeds,
+  dayListFollowPosition,
   dayListSeedRange,
   dayListTopIndexAt,
   type DayListLayout,
@@ -53,6 +56,11 @@ type Props = {
   onPressItem?: (item: CalendarItem) => void;
   /** Day whose sticky header is pinned at the top; drives the drum center card. */
   onTopDayChange?: (day: string) => void;
+  /**
+   * CAL-DRUM-FOLLOW: written on every scroll with day number + fraction through
+   * the pinned section, so the drum turns with the list both ways.
+   */
+  followPosition?: SharedValue<number> | null;
 };
 
 type Range = { start: string; end: string };
@@ -88,6 +96,7 @@ export function DayListPane({
   showHiddenBadge,
   onPressItem,
   onTopDayChange,
+  followPosition = null,
 }: Props) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
@@ -113,6 +122,11 @@ export function DayListPane({
   fetchRef.current = fetchRange;
   const onTopRef = useRef(onTopDayChange);
   onTopRef.current = onTopDayChange;
+  const followRef = useRef(followPosition);
+  followRef.current = followPosition;
+  const setFollow = useCallback((pos: number) => {
+    if (followRef.current) followRef.current.value = pos;
+  }, []);
 
   const reportTop = useCallback((d: string) => {
     if (reportedTopRef.current === d) return;
@@ -133,6 +147,7 @@ export function DayListPane({
           if (gen !== genRef.current) return;
           rangeRef.current = r;
           scrollRef.current = { y: 0, topDay: target, intra: 0 };
+          setFollow(dayListDayNumber(target));
           setError(null);
           setItemsByDay(bucketByDay(rows));
           setRange(r);
@@ -148,7 +163,7 @@ export function DayListPane({
           if (gen === genRef.current) seedingRef.current = false;
         });
     },
-    [reportTop],
+    [reportTop, setFollow],
   );
 
   const extend = useCallback((dir: -1 | 1) => {
@@ -271,6 +286,8 @@ export function DayListPane({
     const curIdx = lay.days.indexOf(scrollRef.current.topDay);
     const offset = lay.headerOffsets[idx]!;
     reportTop(target);
+    // Drum already snapped to target; park follow there until the list lands.
+    setFollow(dayListDayNumber(target));
     jumpTargetRef.current = target;
     setTimeout(() => {
       if (jumpTargetRef.current === target) jumpTargetRef.current = null;
@@ -294,6 +311,8 @@ export function DayListPane({
       if (topDay === jumpTargetRef.current) jumpTargetRef.current = null;
     } else {
       reportTop(topDay);
+      const pos = dayListFollowPosition(lay, y);
+      if (pos != null) setFollow(pos);
     }
     const needs = dayListExtendNeeds(idx, lay.days.length);
     if (needs.before) extend(-1);
