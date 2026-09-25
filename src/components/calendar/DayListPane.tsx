@@ -80,6 +80,11 @@ type Props<T> = {
   compareItems?: (a: T, b: T) => number;
   matchesQuery?: (item: T, lowerQuery: string) => boolean;
   renderItem?: (item: T) => ReactElement;
+  /**
+   * JOURNAL-INLINE: exact height of an item row (default DAY_LIST_ITEM_H). Rows stay
+   * fixed-offset for getItemLayout, so this must be deterministic. Keep it memoized.
+   */
+  itemHeight?: (item: T) => number;
   /** Label under an empty day (default "No events"). */
   emptyLabel?: string;
   /**
@@ -112,6 +117,7 @@ type RowFns<T> = {
   day: (item: T) => string;
   compare: (a: T, b: T) => number;
   matches: (item: T, q: string) => boolean;
+  height?: (item: T) => number;
 };
 
 function bucketByDay<T>(rows: T[], fns: RowFns<T>, into?: Map<string, T[]>) {
@@ -150,6 +156,7 @@ export function DayListPane<T = CalendarItem>({
   compareItems,
   matchesQuery,
   renderItem,
+  itemHeight,
   emptyLabel = 'No events',
   collapseChrome = true,
 }: Props<T>) {
@@ -163,6 +170,7 @@ export function DayListPane<T = CalendarItem>({
     day: itemDay ?? (itemDayKey as unknown as (item: T) => string),
     compare: compareItems ?? (calendarCompare as unknown as (a: T, b: T) => number),
     matches: matchesQuery ?? (calendarMatches as unknown as (item: T, q: string) => boolean),
+    height: itemHeight,
   };
 
   const [range, setRange] = useState<Range | null>(null);
@@ -291,8 +299,8 @@ export function DayListPane<T = CalendarItem>({
         if (hits.length) source.set(d, hits);
       }
     }
-    return buildDayListLayout(days, source, fns.key);
-  }, [days, itemsByDay, query]);
+    return buildDayListLayout(days, source, fns.key, fns.height);
+  }, [days, itemsByDay, query, itemHeight]);
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
 
@@ -504,7 +512,8 @@ export function DayListPane<T = CalendarItem>({
       );
     }
     if (renderItem) {
-      return <View style={styles.itemRow}>{renderItem(row.item)}</View>;
+      const h = fnsRef.current.height;
+      return <View style={[styles.itemRow, h ? { height: h(row.item) } : null]}>{renderItem(row.item)}</View>;
     }
     const item = row.item as unknown as CalendarItem;
     const hidden = Boolean(showHiddenBadge && item.isHidden);

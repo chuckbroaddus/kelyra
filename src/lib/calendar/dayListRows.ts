@@ -73,6 +73,8 @@ export function buildDayListLayout<T>(
   days: string[],
   itemsByDay: Map<string, T[]>,
   itemKey: (item: T) => string,
+  /** JOURNAL-INLINE: per-item height (Journal rows with photos); default DAY_LIST_ITEM_H. */
+  itemHeight?: (item: T) => number,
 ): DayListLayout<T> {
   const rows: DayListRow<T>[] = [];
   const offsets: number[] = [];
@@ -81,7 +83,7 @@ export function buildDayListLayout<T>(
   const headerOffsets: number[] = [];
   let y = 0;
   const push = (row: DayListRow<T>) => {
-    const h = dayListRowHeight(row.kind);
+    const h = row.kind === 'item' && itemHeight ? itemHeight(row.item) : dayListRowHeight(row.kind);
     rows.push(row);
     offsets.push(y);
     lengths.push(h);

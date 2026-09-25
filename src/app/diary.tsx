@@ -1,11 +1,22 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { DayListPane } from '@/components/calendar/DayListPane';
 import { PeriodPager } from '@/components/calendar/PeriodPager';
-import { DiaryFileChip, DiaryLinkCard, DiaryRowMedia } from '@/components/diary/DiaryEntryMedia';
+import { DiaryFileChip, DiaryLinkCard, DiaryRowContent } from '@/components/diary/DiaryEntryMedia';
 import { DiarySettingsSheet } from '@/components/diary/DiarySettingsSheet';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { AttachMenu, PlusGlyph, type AttachChoice } from '@/components/ui/AttachMenu';
@@ -56,7 +67,16 @@ import {
   DIARY_PRIVACY_TITLE,
 } from '@/lib/diary/privacy';
 import { canOpenDiary, diarySeatForChrome } from '@/lib/diary/seat';
-import { diaryBodyUrls, diaryBodyWithoutUrls } from '@/lib/diary/links';
+import {
+  fileToken,
+  insertTokenAt,
+  nextPhotoNumber,
+  photoToken,
+  removeToken,
+  renumberStagedPhotoTokens,
+} from '@/lib/diary/inlineTokens';
+import { diaryBodyUrls } from '@/lib/diary/links';
+import { planDiaryRow } from '@/lib/diary/rowPlan';
 import type { DiaryDraft, DiaryEntryRow, DiaryMediaRow, LedgerEventRow } from '@/lib/diary/types';
 import { pickMessageDocument } from '@/lib/messages/attachments';
 import { firstName, formatWhen } from '@/lib/format';
@@ -73,7 +93,16 @@ type DiaryPhotoView = { id: string; url: string };
 /** Journal row plus its attachments (batched per Day List window). */
 type JournalRow = DiaryEntryRow & { media?: DiaryMediaRow[] };
 /** Picked in the composer; uploaded on Done (works before the entry exists). */
-type StagedAttach = { key: string; kind: 'photo' | 'file'; uri: string; mimeType: string; name: string };
+/** `token` is the inline marker left in the Body; `n` is the draft photo number (photos only). */
+type StagedAttach = {
+  key: string;
+  kind: 'photo' | 'file';
+  uri: string;
+  mimeType: string;
+  name: string;
+  token: string;
+  n?: number;
+};
 /** Title grows 1 to 3 rows, Body 3 to 7; past that the box scrolls. 24 px padding + 2 px border. */
 const FIELD_LINE = type.body.lineHeight ?? 24;
 const FIELD_CHROME = 26;
@@ -161,6 +190,32 @@ export default function DiaryScreen() {
   const [composerPhotos, setComposerPhotos] = useState<DiaryPhotoView[]>([]);
   const [composerFiles, setComposerFiles] = useState<DiaryMediaRow[]>([]);
   const [staged, setStaged] = useState<StagedAttach[]>([]);
+  // JOURNAL-INLINE: pickers resolve after awaits, so read the live Body / staged / cursor.
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
+  const stagedRef = useRef(staged);
+  stagedRef.current = staged;
+  const bodySelRef = useRef<{ start: number; end: number } | null>(null);
+  const { width: windowWidth } = useWindowDimensions();
+  // Rough chars per line for 15px row text: window less page gutter, Day List indent, card padding.
+  const rowCharsPerLine = Math.max(20, Math.floor((Math.min(windowWidth, 720) - 32 - 16 - 24) / 7.8));
+  const planJournalRow = useCallback(
+    (row: JournalRow) => {
+      const when = row.updated_at !== row.created_at ? `Edited ${formatWhen(row.updated_at)}` : formatWhen(row.created_at);
+      return planDiaryRow({
+        title: row.title,
+        body: row.body,
+        media: row.media ?? [],
+        meta: (row.tags ?? []).join(' · ') || when,
+        charsPerLine: rowCharsPerLine,
+      });
+    },
+    [rowCharsPerLine],
+  );
+  const journalItemHeight = useCallback(
+    (entry: DiaryEntryRow) => planJournalRow(entry as JournalRow).height,
+    [planJournalRow],
+  );
   /** Web only: textarea height from content (native multiline grows on its own). */
   const [titleH, setTitleH] = useState(TITLE_MIN_H);
   const [bodyH, setBodyH] = useState(BODY_MIN_H);
@@ -508,11 +563,18 @@ export default function DiaryScreen() {
       if (seat === 'parent' && children.length >= 2 && !childId) {
         throw new Error('Pick a child before saving.');
       }
+      // JOURNAL-INLINE: staged photos upload after the saved ones, so fix their marker numbers.
+      const savedBody = renumberStagedPhotoTokens(
+        body,
+        staged.filter((item) => item.kind === 'photo').map((item) => item.n ?? 0),
+        composerPhotos.length,
+      );
+      if (savedBody !== body) setBody(savedBody);
       let entryId: string;
       if (editing) {
         entryId = editing.id;
         await updateDiaryEntry(editing.id, {
-          body,
+          body: savedBody,
           title,
           entryDate,
           tags,
@@ -523,7 +585,7 @@ export default function DiaryScreen() {
         const created = await createDiaryEntry({
           ownerProfileId: profile.id,
           seat,
-          body,
+          body: savedBody,
           title,
           entryDate,
           tags,
@@ -577,7 +639,23 @@ export default function DiaryScreen() {
 
   function stageAttach(kind: StagedAttach['kind'], uri: string, mimeType: string, name: string) {
     const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setStaged((prev) => [...prev, { key, kind, uri, mimeType, name }]);
+    // JOURNAL-INLINE: leave a marker where the cursor was; the list shows the media there.
+    const current = bodyRef.current;
+    const stagedPhotos = stagedRef.current.filter((item) => item.kind === 'photo').length;
+    const n = kind === 'photo' ? nextPhotoNumber(current, composerPhotos.length + stagedPhotos) : undefined;
+    const token = n ? photoToken(n) : fileToken(name);
+    const inserted = insertTokenAt(current, bodySelRef.current, token);
+    bodyRef.current = inserted.body;
+    bodySelRef.current = { start: inserted.cursor, end: inserted.cursor };
+    setBody(inserted.body);
+    const item: StagedAttach = { key, kind, uri, mimeType, name, token, n };
+    stagedRef.current = [...stagedRef.current, item];
+    setStaged((prev) => [...prev, item]);
+  }
+
+  function removeStaged(item: StagedAttach) {
+    setStaged((prev) => prev.filter((p) => p.key !== item.key));
+    setBody((current) => removeToken(current, item.token));
   }
 
   async function attachFileFromPicker() {
@@ -807,16 +885,14 @@ export default function DiaryScreen() {
 
   const renderJournalItem = (entry: DiaryEntryRow) => {
     const row = entry as JournalRow;
-    const urls = diaryBodyUrls(row.body);
-    const bodyText = urls.length ? diaryBodyWithoutUrls(row.body) : row.body.trim();
-    const headline = row.title?.trim() || bodyText || (urls.length ? 'Link' : 'Untitled');
-    const detail = [row.title?.trim() ? bodyText : '', (row.tags ?? []).join(' · ')]
-      .filter(Boolean)
-      .join(' · ');
+    // JOURNAL-INLINE: the row grows to fit title, body, and inline photos/files (height
+    // from the same plan the Day List uses for offsets). Tap a photo for full screen;
+    // tap anywhere else to open the entry.
+    const plan = planJournalRow(row);
     return (
       <SwipeActionCard
         onPress={() => openEdit(row)}
-        accessibilityLabel={headline}
+        accessibilityLabel={plan.compact ? plan.headline : plan.label}
         backgroundColor={colors.wash}
         borderColor={colors.line}
         trailing={[
@@ -824,19 +900,22 @@ export default function DiaryScreen() {
           { key: 'delete', label: 'Delete', tone: 'danger', onPress: () => setPendingDelete(row) },
         ]}
       >
-        <View style={styles.rowText}>
-          <Text style={[styles.rowTitle, { color: colors.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-            {headline}
-          </Text>
-          <Text style={[styles.rowMeta, { color: colors.mute }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-            {detail || (row.updated_at !== row.created_at ? `Edited ${formatWhen(row.updated_at)}` : formatWhen(row.created_at))}
-          </Text>
-          <DiaryRowMedia
+        {plan.compact ? (
+          <View style={styles.rowText}>
+            <Text style={[styles.rowTitle, { color: colors.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+              {plan.headline}
+            </Text>
+            <Text style={[styles.rowMeta, { color: colors.mute }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+              {plan.meta}
+            </Text>
+          </View>
+        ) : (
+          <DiaryRowContent
+            blocks={plan.blocks}
             media={row.media ?? []}
-            urls={urls}
             onOpenPhotos={(uris, index) => setViewer({ uris, index })}
           />
-        </View>
+        )}
       </SwipeActionCard>
     );
   };
@@ -956,6 +1035,7 @@ export default function DiaryScreen() {
               [row.title ?? '', row.body, ...(row.tags ?? [])].some((t) => t.toLowerCase().includes(q))
             }
             renderItem={renderJournalItem}
+            itemHeight={journalItemHeight}
             collapseChrome={false}
             emptyLabel="No entries"
           />
@@ -1020,6 +1100,9 @@ export default function DiaryScreen() {
           value={body}
           onChangeText={setBody}
           onFocus={() => setAttachMenuOpen(false)}
+          onSelectionChange={(e) => {
+            bodySelRef.current = e.nativeEvent.selection;
+          }}
           multiline
           scrollEnabled
           onContentSizeChange={
@@ -1083,7 +1166,7 @@ export default function DiaryScreen() {
                         accessibilityRole="button"
                         accessibilityLabel="Remove photo"
                         hitSlop={8}
-                        onPress={() => setStaged((prev) => prev.filter((p) => p.key !== item.key))}
+                        onPress={() => removeStaged(item)}
                         style={styles.stagedRemove}
                       >
                         <Icon name="close" size={12} color="#FFFFFF" />
@@ -1109,7 +1192,7 @@ export default function DiaryScreen() {
                 <DiaryFileChip
                   key={item.key}
                   name={item.name}
-                  onRemove={() => setStaged((prev) => prev.filter((p) => p.key !== item.key))}
+                  onRemove={() => removeStaged(item)}
                 />
               ))}
             {diaryBodyUrls(body).map((url) => (
