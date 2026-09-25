@@ -416,7 +416,7 @@ function ChildCard({
               key={field.key}
               label={field.label}
               value={draft[field.key] ?? ''}
-              multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'notes'}
+              multiline={field.key === 'address' || field.key === 'allergies' || field.key === 'health_conditions' || field.key === 'notes'}
               onChangeText={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
             />
           ),

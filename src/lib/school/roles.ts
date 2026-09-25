@@ -115,6 +115,7 @@ export const PARENT_EDITABLE_CHILD_KEYS = [
   'emergency_name',
   'emergency_phone',
   'allergies',
+  'health_conditions',
   'notes',
 ] as const;
 

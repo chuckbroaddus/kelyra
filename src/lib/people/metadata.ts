@@ -1,4 +1,19 @@
-import type { ParentMetadataKey, StudentMetadataKey } from '@/lib/supabase/types';
+import {
+  birthdayForSave,
+  birthdayUnchanged,
+  coerceBirthdayISO,
+  formatBirthdayMd,
+  parseLooseDate as parseBirthdayInput,
+} from '../date/iso.ts';
+import type { ParentMetadataKey, StudentMetadataKey } from '../supabase/types.ts';
+
+export {
+  birthdayForSave,
+  birthdayUnchanged,
+  coerceBirthdayISO,
+  formatBirthdayMd,
+  parseBirthdayInput,
+};
 
 export const STUDENT_DETAIL_FIELDS: Array<{ key: Exclude<StudentMetadataKey, 'focusLog'>; label: string }> = [
   { key: 'preferred_name', label: 'Preferred name' },
@@ -9,8 +24,23 @@ export const STUDENT_DETAIL_FIELDS: Array<{ key: Exclude<StudentMetadataKey, 'fo
   { key: 'address', label: 'Address' },
   { key: 'emergency_name', label: 'Emergency contact' },
   { key: 'emergency_phone', label: 'Emergency phone' },
-  { key: 'allergies', label: 'Allergies / health' },
+  { key: 'allergies', label: 'Allergies' },
+  { key: 'health_conditions', label: 'Health conditions' },
   { key: 'notes', label: 'Notes' },
+];
+
+/** Office create-account + People student profile Optional group (Chuck 2026-09-25). */
+export const STUDENT_OFFICE_OPTIONAL_FIELDS: Array<{
+  key: Exclude<StudentMetadataKey, 'focusLog'>;
+  label: string;
+}> = [
+  { key: 'preferred_name', label: 'Preferred name' },
+  { key: 'birthday', label: 'Birthday' },
+  { key: 'grade_or_age', label: 'Grade or age' },
+  { key: 'emergency_name', label: 'Emergency contact' },
+  { key: 'emergency_phone', label: 'Emergency phone' },
+  { key: 'allergies', label: 'Allergies' },
+  { key: 'health_conditions', label: 'Health conditions' },
 ];
 
 export const PARENT_DETAIL_FIELDS: Array<{ key: ParentMetadataKey; label: string }> = [
@@ -24,6 +54,7 @@ export const PARENT_DETAIL_FIELDS: Array<{ key: ParentMetadataKey; label: string
 
 export const TEACHER_ONLY_STUDENT_KEYS: StudentMetadataKey[] = [
   'allergies',
+  'health_conditions',
   'notes',
   'emergency_name',
   'emergency_phone',
@@ -32,6 +63,10 @@ export const TEACHER_ONLY_STUDENT_KEYS: StudentMetadataKey[] = [
   'address',
   'grade_or_age',
 ];
+
+export function isTeacherOnlyStudentKey(key: string): boolean {
+  return (TEACHER_ONLY_STUDENT_KEYS as string[]).includes(key);
+}
 
 export function metaString(metadata: Record<string, unknown> | null | undefined, key: string): string | null {
   const value = metadata?.[key];
@@ -52,11 +87,43 @@ export function setMetaKey(
   return next;
 }
 
-export {
-  coerceBirthdayISO,
-  formatBirthdayMd,
-  parseLooseDate as parseBirthdayInput,
-} from '@/lib/date/iso';
+/** Build metadata patch from optional field drafts. Birthday uses birthdayForSave. */
+export function applyStudentOptionalDraft(
+  metadata: Record<string, unknown> | null | undefined,
+  draft: Record<string, string>,
+  fields: Array<{ key: string }> = STUDENT_OFFICE_OPTIONAL_FIELDS,
+): { ok: true; metadata: Record<string, unknown> } | { ok: false; error: string } {
+  let next = { ...(metadata ?? {}) };
+  for (const field of fields) {
+    const raw = draft[field.key] ?? '';
+    if (field.key === 'birthday') {
+      const stored = metaString(metadata, 'birthday');
+      if (birthdayUnchanged(raw, stored)) continue;
+      const result = birthdayForSave(raw);
+      if (!result.ok) return result;
+      next = setMetaKey(next, field.key, result.value);
+    } else {
+      next = setMetaKey(next, field.key, raw);
+    }
+  }
+  return { ok: true, metadata: next };
+}
+
+export function studentOptionalDraftFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+  fields: Array<{ key: string }> = STUDENT_OFFICE_OPTIONAL_FIELDS,
+): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const field of fields) {
+    const stored = metaString(metadata, field.key) ?? '';
+    next[field.key] = field.key === 'birthday' ? coerceBirthdayISO(stored) ?? stored : stored;
+  }
+  return next;
+}
+
+export function studentOptionalHasValues(draft: Record<string, string>): boolean {
+  return STUDENT_OFFICE_OPTIONAL_FIELDS.some((field) => (draft[field.key] ?? '').trim());
+}
 
 export function relationshipLabel(metadata: Record<string, unknown> | null | undefined): string | null {
   const rel = metaString(metadata, 'relationship');
@@ -89,6 +156,10 @@ const STUDENT_FIELD_ALIASES: Record<string, Exclude<StudentMetadataKey, 'focusLo
   emergency_phone: 'emergency_phone',
   'emergency phone': 'emergency_phone',
   allergies: 'allergies',
+  allergy: 'allergies',
+  health_conditions: 'health_conditions',
+  'health conditions': 'health_conditions',
+  health: 'health_conditions',
   notes: 'notes',
   note: 'notes',
 };

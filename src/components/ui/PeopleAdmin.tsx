@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { PrimaryButton } from '@/components/ui/Button';
+import { DateInput } from '@/components/ui/DateInput';
 import { HandleLink } from '@/components/ui/HandleLink';
 import { NoticePopup } from '@/components/ui/NoticePopup';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -36,9 +37,16 @@ import {
   resetLoginPassword,
   setAlsoHat,
   setAlsoParent as saveAlsoParent,
+  setStudentLink,
   updateProfileDetails,
   type DirectoryPerson,
 } from '@/lib/school/api';
+import {
+  applyStudentOptionalDraft,
+  STUDENT_OFFICE_OPTIONAL_FIELDS,
+} from '@/lib/people/metadata';
+import { mintOfficeStudent } from '@/lib/students/api';
+import { coerceBirthdayISO } from '@/lib/date/iso';
 import {
   fieldForServerError,
   firstCreateLoginError,
@@ -375,6 +383,8 @@ export function CreateLoginForm({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  // STUDENT-OPTIONAL: seven student.metadata fields when role = student.
+  const [studentOptional, setStudentOptional] = useState<Record<string, string>>({});
   // NEW-PERSON-AVATAR: picked locally, uploaded after the login exists.
   const [photo, setPhoto] = useState<{ uri: string; mimeType: string; framed?: boolean } | null>(null);
   // AVATAR-PREVIEW: cutout + face-center runs right after the shot; Working K pops up meanwhile.
@@ -436,6 +446,15 @@ export function CreateLoginForm({
     const errors = validateCreateLogin(draft, existing);
     setFieldErrors(errors);
     if (firstCreateLoginError(errors) || !role) return;
+    let studentMetadata: Record<string, unknown> = {};
+    if (role === 'student') {
+      const built = applyStudentOptionalDraft({}, studentOptional);
+      if (!built.ok) {
+        fail(built.error);
+        return;
+      }
+      studentMetadata = built.metadata;
+    }
     setBusy(true);
     try {
       const newId = await createLogin({
@@ -450,7 +469,19 @@ export function CreateLoginForm({
         alsoTeacher: canAlsoBeTeacher(role) && alsoTeacher,
       });
       const missed: string[] = [];
-      if (phone.trim() || address.trim() || notes.trim()) {
+      if (role === 'student') {
+        try {
+          const ownerId = profile?.id ?? newId;
+          const student = await mintOfficeStudent({
+            displayName,
+            teacherId: ownerId,
+            metadata: studentMetadata,
+          });
+          await setStudentLink(newId, student.id);
+        } catch {
+          missed.push('student details');
+        }
+      } else if (phone.trim() || address.trim() || notes.trim()) {
         try {
           const saved = await getProfile(newId);
           await updateProfileDetails({
@@ -497,6 +528,7 @@ export function CreateLoginForm({
       setPhone('');
       setAddress('');
       setNotes('');
+      setStudentOptional({});
       setPhoto(null);
       setFieldErrors({});
       setStatus(
@@ -649,15 +681,53 @@ export function CreateLoginForm({
       ) : null}
       <View style={styles.gap} />
       <Text style={[type.meta, styles.optionalHead, { color: colors.mute }]}>Optional</Text>
-      {label('Phone', false)}
-      <TextField dictationSafe keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
-      <View style={styles.gap} />
-      {label('Address', false)}
-      <TextField dictationSafe placeholder="Address" value={address} onChangeText={setAddress} />
-      <View style={styles.gap} />
-      {label('Notes', false)}
-      <TextField dictationSafe multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
-      <View style={styles.gap} />
+      {role === 'student' ? (
+        <>
+          {STUDENT_OFFICE_OPTIONAL_FIELDS.map((field) =>
+            field.key === 'birthday' ? (
+              <View key={field.key}>
+                <DateInput
+                  label={field.label}
+                  mode="birthday"
+                  clearable
+                  value={coerceBirthdayISO(studentOptional[field.key])}
+                  onChange={(iso) =>
+                    setStudentOptional((current) => ({ ...current, [field.key]: iso ?? '' }))
+                  }
+                />
+                <View style={styles.gap} />
+              </View>
+            ) : (
+              <View key={field.key}>
+                {label(field.label, false)}
+                <TextField
+                  dictationSafe
+                  placeholder={field.label}
+                  value={studentOptional[field.key] ?? ''}
+                  multiline={field.key === 'allergies' || field.key === 'health_conditions'}
+                  keyboardType={field.key === 'emergency_phone' ? 'phone-pad' : 'default'}
+                  onChangeText={(value) =>
+                    setStudentOptional((current) => ({ ...current, [field.key]: value }))
+                  }
+                />
+                <View style={styles.gap} />
+              </View>
+            ),
+          )}
+        </>
+      ) : (
+        <>
+          {label('Phone', false)}
+          <TextField dictationSafe keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
+          <View style={styles.gap} />
+          {label('Address', false)}
+          <TextField dictationSafe placeholder="Address" value={address} onChangeText={setAddress} />
+          <View style={styles.gap} />
+          {label('Notes', false)}
+          <TextField dictationSafe multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
+          <View style={styles.gap} />
+        </>
+      )}
       <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy || processingPhoto} onPress={() => void create()} />
       <PhotoSheet
         visible={photoOpen}
