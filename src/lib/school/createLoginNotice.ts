@@ -17,6 +17,14 @@ export function createdAccountNotice(
   return { tone: 'error', message: `${done} But ${missed.join(' and ')} did not save. Add them from their profile.` };
 }
 
+/** AFTER-CREATE-JUMP: People sub-tab that lists a just-created login (staff stay on Staff even
+ * when they also wear the parent hat). */
+export function peopleTabForCreatedRole(role: string): 'staff' | 'parents' | 'students' {
+  if (role === 'student') return 'students';
+  if (role === 'parent') return 'parents';
+  return 'staff';
+}
+
 /** Error copy when validation or the create call fails. */
 export function createAccountErrorNotice(reason: string): CreateLoginNotice {
   const detail = reason.trim() || 'Something went wrong.';
