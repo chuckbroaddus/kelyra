@@ -198,9 +198,6 @@ export default function ClassOfficeScreen() {
     <Screen keyboard maxWidth={640} scroll={false} avoidKeyboard={false}>
       <View style={styles.officeColumn}>
       <Text style={[type.display, { color: colors.ink }]}>{klass.name}</Text>
-      <Text style={[styles.lead, { color: colors.mute }]}>
-        School office card. This is not the teacher desk — no capture, no grade book from here.
-      </Text>
       <PersonTabs tabs={tabs} value={pane} onChange={setTab} />
       {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
 
@@ -510,11 +507,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     width: '100%',
     maxWidth: '100%',
-  },
-  lead: {
-    ...type.body,
-    marginTop: 8,
-    marginBottom: 8,
   },
   mint: {
     gap: 12,
