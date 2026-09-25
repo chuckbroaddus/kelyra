@@ -234,6 +234,7 @@ export default function CalendarScreen() {
     mode: 'create' | 'edit' | 'view';
     eventId?: string | null;
     initialDraft?: PendingCalendarDraft | null;
+    initialDate?: string | null;
   } | null>(null);
   const [askDraft, setAskDraft] = useState<PendingCalendarDraft | null>(null);
   const [menuItem, setMenuItem] = useState<CalendarItem | null>(null);
@@ -1024,7 +1025,10 @@ export default function CalendarScreen() {
             <IconButton
               name="plus"
               label="Add event"
-              onPress={() => setComposer({ mode: 'create' })}
+              onPress={() =>
+                // CAL-LIST-PLUS: Day List + starts on the sticky header day (dayAnchor).
+                setComposer({ mode: 'create', initialDate: dayListMode ? dayAnchor : null })
+              }
             />
           ) : null}
           <IconButton
@@ -1444,6 +1448,7 @@ export default function CalendarScreen() {
               : null
           }
           initialDraft={composer?.initialDraft ?? askDraft}
+          initialDate={composer?.initialDate ?? null}
           onClose={() => {
             setComposer(null);
             setAskDraft(null);
