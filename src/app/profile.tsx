@@ -295,7 +295,7 @@ export default function ProfileScreen() {
             }}
           />
         ) : null}
-        {photoBusy ? <WorkingLine text="Working…" /> : editable ? (
+        {photoBusy ? <WorkingLine text="Working…" /> : editable && !office ? (
           <Text style={[styles.meta, { color: colors.mute }]}>Tap the circle to change your photo</Text>
         ) : null}
       </View>

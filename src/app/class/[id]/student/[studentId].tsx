@@ -917,7 +917,9 @@ export default function StudentScreen() {
         />
       ) : (
         <Text style={[type.meta, { color: colors.mute }]}>
-          No login assigned. Students sign in with the account you assign here — they do not pick a roster name from a class code.
+          {isAdminRole(profile)
+            ? 'No login assigned.'
+            : 'No login assigned. Students sign in with the account you assign here — they do not pick a roster name from a class code.'}
         </Text>
       )}
       {canAssignLogin && !login

@@ -353,7 +353,7 @@ export default function ParentPage() {
         <>
           {childClasses.length === 0 ? (
             <Text style={[type.meta, { color: colors.mute }]}>
-              No classes yet. Classes show up when a linked child is on a roster.
+              {isAdminRole(profile) ? 'No classes yet.' : 'No classes yet. Classes show up when a linked child is on a roster.'}
             </Text>
           ) : null}
           {childClasses.map((klass) => (
@@ -398,7 +398,7 @@ export default function ParentPage() {
         />
       ) : (
         <Text style={[type.meta, { color: colors.mute }]}>
-          No login assigned. Parents sign in with the account you assign here.
+          {isAdminRole(profile) ? 'No login assigned.' : 'No login assigned. Parents sign in with the account you assign here.'}
         </Text>
       )}
       {canAssignLogin && !login
@@ -424,9 +424,11 @@ export default function ParentPage() {
           </Text>
         )
       ) : null}
-      <Text style={[type.meta, { color: colors.mute }]}>
-        They sign in with their parent login. Linked children and the focus skill show up there automatically.
-      </Text>
+      {!isAdminRole(profile) ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          They sign in with their parent login. Linked children and the focus skill show up there automatically.
+        </Text>
+      ) : null}
       </>
       ) : null}
 

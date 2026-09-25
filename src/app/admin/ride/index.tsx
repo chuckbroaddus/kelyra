@@ -58,7 +58,7 @@ export default function AdminRideScreen() {
 
       <Card>
         <Text style={[styles.label, { color: colors.mute }]}>
-          Archive day&apos;s photos (superintendent only)
+          Archive day&apos;s photos
         </Text>
         <TextField label="School date YYYY-MM-DD" value={day} onChangeText={setDay} />
         <PrimaryButton
