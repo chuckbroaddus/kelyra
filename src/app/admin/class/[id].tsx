@@ -222,8 +222,9 @@ export default function ClassOfficeScreen() {
         >
       {pane === 'teacher' ? (
         <>
-          <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} />
+          <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} quiet />
           <FeedIconRow
+            hint={false}
             value={asFeedIcon(klass.feed_icon, DEFAULT_CLASS_FEED_ICON)}
             onPick={async (icon) => {
               try {
@@ -237,7 +238,7 @@ export default function ClassOfficeScreen() {
           />
           <SectionHeader label="Teachers" first />
           {teachers.length === 0 ? (
-            <Text style={[type.meta, { color: colors.mute }]}>No teacher yet. Add one from the list.</Text>
+            <Text style={[type.meta, { color: colors.mute }]}>No teacher yet.</Text>
           ) : null}
           {teachers.map((teacher) => (
             <ListRow
@@ -261,12 +262,7 @@ export default function ClassOfficeScreen() {
               ]}
             />
           ))}
-          <SectionHeader label="All teachers" />
-          {availableTeachers.length === 0 ? (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              Teachers at this school show up here. Swipe left to add.
-            </Text>
-          ) : null}
+          {availableTeachers.length ? <SectionHeader label="All teachers" /> : null}
           {availableTeachers.map((teacher) => (
             <ListRow
               key={teacher.id}
@@ -320,12 +316,7 @@ export default function ClassOfficeScreen() {
               ]}
             />
           ))}
-          <SectionHeader label="All parents" />
-          {availableParents.length === 0 ? (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              Parents not yet on this class show up here. Swipe left to add.
-            </Text>
-          ) : null}
+          {availableParents.length ? <SectionHeader label="All parents" /> : null}
           {availableParents.map((parent) => (
             <ListRow
               key={parent.id}
@@ -387,12 +378,7 @@ export default function ClassOfficeScreen() {
               ]}
             />
           ))}
-          <SectionHeader label="All students" />
-          {availableStudents.length === 0 ? (
-            <Text style={[type.meta, { color: colors.mute }]}>
-              Students from other classes at this school show up here. Swipe left to add.
-            </Text>
-          ) : null}
+          {availableStudents.length ? <SectionHeader label="All students" /> : null}
           {availableStudents.map((student) => (
             <ListRow
               key={student.id}
@@ -425,9 +411,6 @@ export default function ClassOfficeScreen() {
           setPickedKids([]);
         }}
       >
-        <Text style={[type.body, { color: colors.mute }]}>
-          This parent has more than one child. Choose who should join this class.
-        </Text>
         {picking?.children.map((child) => {
           const checked = pickedKids.includes(child.id);
           return (

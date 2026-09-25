@@ -19,3 +19,13 @@ test('Students tab has no "New names on the school roster" helper (Chuck 2026-09
   assert.match(src, /placeholder="First and last name"/);
   assert.match(src, /onPress=\{\(\) => void addNewStudent\(\)\}/);
 });
+
+test('office class card sweep: no instructional copy left (Chuck 2026-09-25)', () => {
+  assert.doesNotMatch(src, /Add one from the list|show up here|Swipe left to add|more than one child\. Choose/);
+  assert.match(src, /No teacher yet\./);
+  assert.match(src, /\{availableTeachers\.length \? <SectionHeader label="All teachers" \/> : null\}/);
+  assert.match(src, /<ClassAvatarRow klass=\{klass\} onChange=\{setKlass\} onError=\{setError\} quiet \/>/);
+  assert.match(src, /<FeedIconRow\s+hint=\{false\}/);
+  const picker = readFileSync(new URL('../../components/ui/FeedIconPicker.tsx', import.meta.url), 'utf8');
+  assert.match(picker, /\{hint \? \(/);
+});

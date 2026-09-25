@@ -12,17 +12,21 @@ type Props = {
   visible: boolean;
   value: FeedIconName;
   title?: string;
+  /** Office class card passes false: no explainer line (Chuck 2026-09-25). */
+  hint?: boolean;
   onClose: () => void;
   onPick: (name: FeedIconName) => void;
 };
 
-export function FeedIconPicker({ visible, value, title = 'Feed icon', onClose, onPick }: Props) {
+export function FeedIconPicker({ visible, value, title = 'Feed icon', hint = true, onClose, onPick }: Props) {
   const { colors } = useTheme();
   return (
     <FormSheet visible={visible} title={title} onClose={onClose}>
-      <Text style={[type.meta, { color: colors.mute }]}>
-        This mark is the tab for this feed in Messages. Pick one that matches the class.
-      </Text>
+      {hint ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          This mark is the tab for this feed in Messages. Pick one that matches the class.
+        </Text>
+      ) : null}
       <View style={styles.grid}>
         {FEED_ICON_CATALOG.map((item) => {
           const selected = item.name === value;
@@ -60,10 +64,12 @@ export function FeedIconPicker({ visible, value, title = 'Feed icon', onClose, o
 export function FeedIconRow({
   value,
   title = 'Feed icon',
+  hint = true,
   onPick,
 }: {
   value: FeedIconName;
   title?: string;
+  hint?: boolean;
   onPick: (name: FeedIconName) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -78,6 +84,7 @@ export function FeedIconRow({
       <FeedIconPicker
         visible={open}
         value={value}
+        hint={hint}
         onClose={() => setOpen(false)}
         onPick={(name) => void onPick(name)}
       />
