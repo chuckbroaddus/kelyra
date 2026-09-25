@@ -46,6 +46,9 @@ const PURPLE = '#B46BFF';
 const LID_PURPLE = '#8a5cff';
 const LID_CYAN = '#4cc8f8';
 
+/** Face/comet intro+outro stay on the JS driver (see SoftMark comment). */
+const SOFT_NATIVE_DRIVER = false;
+
 /** Soft v8b lid2 blink delay (ms) — SoT `.lid2 { animation-delay: .12s }`. */
 const LID2_DELAY_MS = 120;
 
@@ -194,6 +197,9 @@ export function SoftMark({
   /** Keep comet mounted through outro so SOFT_INTRO.cometMs / outroMs morph can run. */
   const [cometMounted, setCometMounted] = useState(working);
 
+  // JS driver on purpose: SoftMark re-renders every frame (comet rAF). Under Fabric each
+  // re-render commits the JS-side Animated value, which stays at its start value (0) while a
+  // native-driven timing runs, so the face opacity/scale got pinned at 0 and the eyes vanished.
   // t_7dc9b8f1: SoftMark owns intro — face grow, lids blink-open, comet zoom — then full orbit.
   const faceGrow = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
   const faceOpacity = useRef(new Animated.Value(working && reduce ? 1 : 0)).current;
@@ -222,13 +228,13 @@ export function SoftMark({
         toValue: 1,
         duration: SOFT_INTRO.faceMs,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       });
       const show = Animated.timing(faceOpacity, {
         toValue: 1,
         duration: SOFT_INTRO.faceMs,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       });
       // Lids: closed → open blink (then looping glance/blink takes over via faceMotion).
       const lids = Animated.sequence([
@@ -236,26 +242,26 @@ export function SoftMark({
           toValue: 1,
           duration: SOFT_INTRO.blinkMs,
           easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
+          useNativeDriver: SOFT_NATIVE_DRIVER,
         }),
         Animated.timing(blinkOpen, {
           toValue: 0.15,
           duration: SOFT_INTRO.blinkMs,
           easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
+          useNativeDriver: SOFT_NATIVE_DRIVER,
         }),
         Animated.timing(blinkOpen, {
           toValue: 1,
           duration: SOFT_INTRO.blinkMs,
           easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
+          useNativeDriver: SOFT_NATIVE_DRIVER,
         }),
       ]);
       const cometZoom = Animated.timing(cometIn, {
         toValue: 1,
         duration: SOFT_INTRO.cometMs,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       });
       const intro = Animated.parallel([grow, show, lids, cometZoom]);
       intro.start();
@@ -268,19 +274,19 @@ export function SoftMark({
         toValue: 0,
         duration: SOFT_INTRO.outroMs,
         easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       }),
       Animated.timing(faceOpacity, {
         toValue: 0,
         duration: SOFT_INTRO.outroMs,
         easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       }),
       Animated.timing(cometIn, {
         toValue: 0,
         duration: SOFT_INTRO.outroMs,
         easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: SOFT_NATIVE_DRIVER,
       }),
     ]);
     outro.start(({ finished }) => {
