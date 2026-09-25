@@ -28,6 +28,7 @@ import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api
 import { listMyFeeds, setSchoolFeedIcon, type FeedRef } from '@/lib/feeds/api';
 import { getSchoolIdentity, type SchoolIdentity } from '@/lib/school/identity';
 import { deleteClass } from '@/lib/classes/delete';
+import { sortClassesByName } from '@/lib/classes/sortByName';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import type { IconName } from '@/components/ui/Icon';
@@ -328,9 +329,7 @@ export default function HomeScreen() {
                   ? showCreateClass
                     ? 'Create a class on New, then assign a teacher.'
                     : 'No classes yet. The office assigns the classes you teach.'
-                  : officeSeat
-                    ? 'Every class in the school. Open a card for teacher and roster.'
-                    : null;
+                  : null;
                 return lead ? (
                   <Text style={[styles.lead, { color: colors.mute }]}>{lead}</Text>
                 ) : null;
@@ -340,7 +339,7 @@ export default function HomeScreen() {
                   {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
                 </Text>
               ) : null}
-              {(classes ?? []).map((item) => {
+              {sortClassesByName(classes ?? []).map((item) => {
                 const lesson = lessonRollup.find((row) => row.classId === item.id);
                 return (
                 <ListRow
