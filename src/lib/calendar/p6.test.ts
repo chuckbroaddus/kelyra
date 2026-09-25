@@ -86,7 +86,11 @@ test('CAL-P6-5C: Day List mounts drum; continuous sticky-header list (CEO 2026-0
   const pane = read('src/components/calendar/DayListPane.tsx');
   assert.match(pane, /stickyHeaderIndices=\{layout\.headerIndices\}/);
   assert.match(pane, /getItemLayout/);
-  assert.match(pane, /maintainVisibleContentPosition/);
+  // DAYLIST-NO-MVCP: iOS anchored on blank spacers and jumped; place-keeping is ours on every platform.
+  assert.doesNotMatch(pane, /maintainVisibleContentPosition=\{/);
+  assert.match(pane, /DAYLIST-NO-MVCP/);
+  assert.match(pane, /dayListCompensatedOffset/);
+  assert.match(pane, /onMomentumScrollEnd/);
   assert.match(pane, /dayListExtendNeeds/);
   assert.match(pane, /formatDayPeriodTitle/);
   assert.match(pane, /fontSize: 22/);

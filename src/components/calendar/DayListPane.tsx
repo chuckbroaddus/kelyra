@@ -229,6 +229,7 @@ export function DayListPane<T = CalendarItem>({
       seedingRef.current = true;
       loadingBeforeRef.current = false;
       loadingAfterRef.current = false;
+      pendingBeforeRef.current = null;
       const r = dayListSeedRange(target);
       fetchRef
         .current(r.start, r.end)
@@ -255,6 +256,37 @@ export function DayListPane<T = CalendarItem>({
     [reportTop, setFollow],
   );
 
+  /**
+   * DAYLIST-NO-MVCP: finger down or momentum coasting. Older days are held until the
+   * list is at rest, because keeping the place after a prepend means a scrollToOffset,
+   * and that would stop a flick mid-coast.
+   */
+  const motionRef = useRef({ dragging: false, momentum: false });
+  const endDragTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingBeforeRef = useRef<{ gen: number; chunk: Range; rows: T[] } | null>(null);
+
+  const applyChunk = useCallback((dir: -1 | 1, chunk: Range, rows: T[]) => {
+    setItemsByDay((prev) => {
+      const next = new Map(prev);
+      for (const d of dayListDaysBetween(chunk.start, chunk.end)) next.delete(d);
+      return bucketByDay(rows, fnsRef.current, next);
+    });
+    const cur = rangeRef.current!;
+    const nextRange =
+      dir < 0 ? { start: chunk.start, end: cur.end } : { start: cur.start, end: chunk.end };
+    rangeRef.current = nextRange;
+    setRange(nextRange);
+  }, []);
+
+  const flushPendingBefore = useCallback(() => {
+    const pending = pendingBeforeRef.current;
+    if (!pending) return;
+    pendingBeforeRef.current = null;
+    loadingBeforeRef.current = false;
+    if (pending.gen !== genRef.current || !rangeRef.current) return;
+    applyChunk(-1, pending.chunk, pending.rows);
+  }, [applyChunk]);
+
   const extend = useCallback((dir: -1 | 1) => {
     const r = rangeRef.current;
     if (!r || seedingRef.current) return;
@@ -266,25 +298,29 @@ export function DayListPane<T = CalendarItem>({
     fetchRef
       .current(chunk.start, chunk.end)
       .then((rows) => {
-        if (gen !== genRef.current) return;
-        setItemsByDay((prev) => {
-          const next = new Map(prev);
-          for (const d of dayListDaysBetween(chunk.start, chunk.end)) next.delete(d);
-          return bucketByDay(rows, fnsRef.current, next);
-        });
-        const cur = rangeRef.current!;
-        const nextRange =
-          dir < 0 ? { start: chunk.start, end: cur.end } : { start: cur.start, end: chunk.end };
-        rangeRef.current = nextRange;
-        setRange(nextRange);
+        if (gen !== genRef.current) {
+          flag.current = false;
+          return;
+        }
+        const moving = motionRef.current.dragging || motionRef.current.momentum;
+        if (dir < 0 && moving) {
+          // Keep the flag set so no second fetch starts; flushed at rest.
+          pendingBeforeRef.current = { gen, chunk, rows };
+          return;
+        }
+        applyChunk(dir, chunk, rows);
+        flag.current = false;
       })
       .catch(() => {
         // Next scroll tick near the edge retries.
-      })
-      .finally(() => {
         flag.current = false;
       });
-  }, []);
+  }, [applyChunk]);
+
+  const settle = useCallback(() => {
+    motionRef.current = { dragging: false, momentum: false };
+    flushPendingBefore();
+  }, [flushPendingBefore]);
 
   // Mount: paint around the opening day.
   useEffect(() => {
@@ -324,8 +360,11 @@ export function DayListPane<T = CalendarItem>({
     totalHeightShared.value = layout.totalHeight;
   }, [layout, headerOffsetsShared, dayNumbersShared, totalHeightShared]);
 
-  // Web keeps the same content under the top edge when rows change above it
-  // (prepend, refresh, search). Native does this via maintainVisibleContentPosition.
+  // Keep the same content under the top edge when rows change above it (prepend,
+  // refresh, search). DAYLIST-NO-MVCP: native too. iOS maintainVisibleContentPosition
+  // anchors on the first view past the top edge, which in a virtualized list is often
+  // a blank spacer; when the render window moved, the spacer moved and iOS shifted the
+  // list by that much (Today landed on alternating random days; flicks looped back).
   const laidOutSeedRef = useRef(-1);
   useLayoutEffect(() => {
     if (!range) return;
@@ -333,7 +372,6 @@ export function DayListPane<T = CalendarItem>({
       laidOutSeedRef.current = seedId;
       return;
     }
-    if (Platform.OS !== 'web') return;
     const { topDay, intra, y } = scrollRef.current;
     const off = dayListCompensatedOffset(layout, topDay, intra);
     if (off == null || Math.abs(off - y) < 0.5) return;
@@ -421,7 +459,7 @@ export function DayListPane<T = CalendarItem>({
     const offset = layout.headerOffsets[idx]!;
     reportTop(target);
     setFollow(dayListDayNumber(target));
-    // After maintainVisibleContentPosition has applied its own shift for the insert.
+    // After the place-keeping scroll above has run for the insert.
     requestAnimationFrame(() => {
       listRef.current?.scrollToOffset({ offset, animated: true });
     });
@@ -622,15 +660,29 @@ export function DayListPane<T = CalendarItem>({
         maxToRenderPerBatch={30}
         windowSize={21}
         removeClippedSubviews={false}
-        maintainVisibleContentPosition={
-          Platform.OS === 'web' ? undefined : { minIndexForVisible: 0 }
-        }
         nestedScrollEnabled
         scrollEventThrottle={16}
         onScroll={scrollHandler}
         onScrollBeginDrag={(event) => {
+          if (endDragTimerRef.current) clearTimeout(endDragTimerRef.current);
+          motionRef.current = { dragging: true, momentum: false };
           setJumpTarget(null);
           if (collapseChrome) chrome?.onScrollBeginDrag(event);
+        }}
+        onScrollEndDrag={() => {
+          motionRef.current = { ...motionRef.current, dragging: false };
+          // Momentum begins right after end-drag when there is a flick; wait a beat.
+          if (endDragTimerRef.current) clearTimeout(endDragTimerRef.current);
+          endDragTimerRef.current = setTimeout(() => {
+            if (!motionRef.current.momentum && !motionRef.current.dragging) settle();
+          }, 120);
+        }}
+        onMomentumScrollBegin={() => {
+          if (endDragTimerRef.current) clearTimeout(endDragTimerRef.current);
+          motionRef.current = { ...motionRef.current, momentum: true };
+        }}
+        onMomentumScrollEnd={() => {
+          if (!motionRef.current.dragging) settle();
         }}
         contentContainerStyle={styles.scrollContent}
         accessibilityLabel="Day activity list"
