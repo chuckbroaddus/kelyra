@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -11,8 +12,10 @@ import {
   dayListChunkAfter,
   dayListChunkBefore,
   dayListCompensatedOffset,
+  dayListDayNumber,
   dayListDaysBetween,
   dayListExtendNeeds,
+  dayListFollowPosition,
   dayListSeedRange,
   dayListTopIndexAt,
 } from './dayListRows.ts';
@@ -92,4 +95,34 @@ test('dayListCompensatedOffset: prepend keeps the same content under the top edg
   const off = dayListCompensatedOffset(b, '2026-02-05', 20)!;
   assert.equal(off - y, b.headerOffsets[b.days.indexOf('2026-02-04')]!);
   assert.equal(dayListCompensatedOffset(b, '2025-01-01', 0), null);
+});
+
+test('CAL-DRUM-FOLLOW dayListDayNumber is whole consecutive days', () => {
+  assert.equal(dayListDayNumber('1970-01-01'), 0);
+  assert.equal(dayListDayNumber('2026-03-09') - dayListDayNumber('2026-03-08'), 1);
+  assert.equal(dayListDayNumber('2026-11-02') - dayListDayNumber('2026-11-01'), 1);
+  assert.equal(dayListDayNumber('2027-01-01') - dayListDayNumber('2026-12-31'), 1);
+});
+
+test('CAL-DRUM-FOLLOW dayListFollowPosition runs 0..1 through each section', () => {
+  const layout = { headerOffsets: [0, 100, 300], days: ['2026-02-03', '2026-02-04', '2026-02-05'], totalHeight: 400 };
+  const base = dayListDayNumber('2026-02-03');
+  assert.equal(dayListFollowPosition(layout, 0), base);
+  assert.equal(dayListFollowPosition(layout, 50), base + 0.5);
+  assert.equal(dayListFollowPosition(layout, 100), base + 1);
+  assert.equal(dayListFollowPosition(layout, 200), base + 1.5);
+  assert.equal(dayListFollowPosition(layout, 350), base + 2.5);
+  assert.equal(dayListFollowPosition({ headerOffsets: [], days: [], totalHeight: 0 }, 10), null);
+});
+
+test('CAL-DRUM-FOLLOW wiring: list feeds follow, pager follows unless drum owns it', () => {
+  const pager = readFileSync('src/components/calendar/PeriodPager.tsx', 'utf8');
+  const pane = readFileSync('src/components/calendar/DayListPane.tsx', 'utf8');
+  const screen = readFileSync('src/app/calendar.tsx', 'utf8');
+  assert.match(pager, /followPosition\?: SharedValue<number> \| null/);
+  assert.match(pager, /dragShared\.value = -clamped \* pitch/);
+  assert.match(pager, /followBlockShared\.value = 2/);
+  assert.match(pane, /dayListFollowPosition\(lay, y\)/);
+  assert.match(pane, /setFollow\(dayListDayNumber\(target\)\)/);
+  assert.match(screen, /followPosition=\{dayListMode && !reduceMotion \? dayListFollow : null\}/);
 });

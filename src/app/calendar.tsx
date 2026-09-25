@@ -167,6 +167,8 @@ export default function CalendarScreen() {
   const [dayAnchor, setDayAnchor] = useState(() => dayRangeContaining().day);
   /** Day List: bump to scroll the list to dayAnchor (drum snap / Today). */
   const [dayListJump, setDayListJump] = useState(0);
+  /** CAL-DRUM-FOLLOW: Day List scroll position (day number + fraction) for the drum. */
+  const dayListFollow = useSharedValue(0);
   /** Day List: bump when load() runs so the list refetches its rolling range. */
   const [dayListReloadKey, setDayListReloadKey] = useState(0);
   const [agendaAnchor, setAgendaAnchor] = useState(() => dayRangeContaining().day);
@@ -1081,6 +1083,7 @@ export default function CalendarScreen() {
           }
           dayCount={stepperCount}
           onJumpToday={jumpToday}
+          followPosition={dayListMode && !reduceMotion ? dayListFollow : null}
           accessibilityPrevLabel={activeView === 'agenda' ? 'Earlier' : 'Previous'}
           accessibilityNextLabel={activeView === 'agenda' ? 'Later' : 'Next'}
           onShift={(steps) => {
@@ -1180,6 +1183,7 @@ export default function CalendarScreen() {
                 showHiddenBadge={showHiddenBadge}
                 onPressItem={openItem}
                 onTopDayChange={onDayListTopDay}
+                followPosition={dayListFollow}
               />
             </View>
           ) : (

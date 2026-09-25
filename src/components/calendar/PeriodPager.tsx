@@ -53,6 +53,7 @@ import {
   visualShiftForSlotPool,
   type PeriodKind,
 } from '@/lib/calendar/periodPager';
+import { dayListDayNumber } from '@/lib/calendar/dayListRows';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
   WHEEL_HERO_HEIGHT,
@@ -96,6 +97,12 @@ type Props = {
   /** Signed slot steps (soft-capped by WHEEL_MAX_FLING_SLOTS; may be 30+). */
   onShift: (steps: number) => void;
   onJumpToday: () => void;
+  /**
+   * CAL-DRUM-FOLLOW: continuous day position (days since epoch + fraction
+   * through that day's section) from Day List scroll. When set (kind 'day'),
+   * the drum turns with the list both ways; drum pan/snap always wins.
+   */
+  followPosition?: SharedValue<number> | null;
   accessibilityPrevLabel?: string;
   accessibilityNextLabel?: string;
 };
@@ -321,6 +328,7 @@ export function PeriodPager({
   dayCount = 3,
   onShift,
   onJumpToday,
+  followPosition = null,
   accessibilityPrevLabel = 'Previous',
   accessibilityNextLabel = 'Next',
 }: Props) {
@@ -344,6 +352,11 @@ export function PeriodPager({
   const dragShared = useSharedValue(0);
   /** 1 during programmed snap/coast — freezes SlotPool + absolute transforms. */
   const snapFreezeShared = useSharedValue(0);
+  // CAL-DRUM-FOLLOW: anchor day number + follow gate.
+  // followBlock 2 = drum pan/snap owns dragShared; 1 = wait until list is
+  // within half a day of the anchor (after a jump); 0 = follow the list.
+  const anchorPosShared = useSharedValue(kind === 'day' ? dayListDayNumber(anchor) : 0);
+  const followBlockShared = useSharedValue(0);
   const snapFreezeRef = useRef(false);
   /** Absolute steps the in-flight snap will commit on rest (intended targetSteps). */
   const pendingSnapStepsRef = useRef(0);
@@ -397,7 +410,9 @@ export function PeriodPager({
     setFlinging(false);
     setFlingOriginAnchor(null);
     settling.current = false;
-  }, [anchor, kind, dayCount, dragShared, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
+    anchorPosShared.value = kind === 'day' ? dayListDayNumber(anchor) : 0;
+    if (followBlockShared.value !== 0) followBlockShared.value = 1;
+  }, [anchor, kind, dayCount, dragShared, snapFreezeShared, updateAbsorbedShift, updateVisualShift, anchorPosShared, followBlockShared]);
 
   // Native: rebound period keys as total drag / pitch crosses integers (trunc, not round).
   // Skip while programmed snap/coast freezes SlotPool (no mid-spring content recycle).
@@ -411,6 +426,28 @@ export function PeriodPager({
       }
     },
     [pitch, snapFreezeShared, updateVisualShift],
+  );
+
+  // CAL-DRUM-FOLLOW: drum turns with Day List scroll (forward and back).
+  useAnimatedReaction(
+    () => {
+      if (!followPosition) return null;
+      return [followPosition.value - anchorPosShared.value, followBlockShared.value];
+    },
+    (next) => {
+      'worklet';
+      if (next == null) return;
+      const delta = next[0];
+      const block = next[1];
+      if (block === 2) return;
+      if (block === 1) {
+        if (Math.abs(delta) >= 0.5) return;
+        followBlockShared.value = 0;
+      }
+      const clamped = Math.max(-2, Math.min(2, delta));
+      dragShared.value = -clamped * pitch;
+    },
+    [followPosition, pitch],
   );
 
   const onFail = useCallback(() => setFailed(true), []);
@@ -490,8 +527,10 @@ export function PeriodPager({
       updateVisualShift(0);
       dragShared.value = 0;
       dragPxRef.current = 0;
+      followBlockShared.value = 0;
       return;
     }
+    followBlockShared.value = 1;
     // visualShift / absorbedShift reset in layout effect when parent anchor updates.
     finishShift(commit);
   }, [dragShared, finishShift, pitch, snapFreezeShared, updateAbsorbedShift, updateVisualShift]);
@@ -504,6 +543,7 @@ export function PeriodPager({
       // so ContentPolicy silhouettes beyond ±3 can mount.
       const freeze = shouldFreezeSlotPoolDuringSnap(true, absSteps);
       pendingSnapStepsRef.current = targetSteps;
+      followBlockShared.value = 2;
       snapFreezeRef.current = freeze;
       snapFreezeShared.value = freeze ? 1 : 0;
 
@@ -601,6 +641,7 @@ export function PeriodPager({
 
   const onPanBegin = useCallback(() => {
     if (settling.current || failed) return;
+    followBlockShared.value = 2;
     // CAL-P6-9A: disable interactive pop for the drum gesture lifetime.
     holdStackGestures();
     setShowCenterExtras(false);
@@ -658,6 +699,8 @@ export function PeriodPager({
         setFlinging(false);
         setShowCenterExtras(true);
         setFlingOriginAnchor(null);
+        // Tap: release the pan block; a side tap re-blocks via animateSnap.
+        followBlockShared.value = 1;
         tapAtStageX(stageX);
         return;
       }
