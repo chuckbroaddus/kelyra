@@ -174,6 +174,12 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
     fadeIn(ctaOpacity);
   }, [ctaOpacity]);
 
+  // SPLASH-CTA-EFFECT: the CTA overlay mounts on hasCompletedSplash; re-run the fade after
+  // mount so a native-driven start on an unattached value can't leave Sign in at opacity 0.
+  useEffect(() => {
+    if (hasCompletedSplash) fadeIn(ctaOpacity);
+  }, [hasCompletedSplash, ctaOpacity]);
+
   const revealForm = useCallback(() => {
     setShowForm(true);
     fadeIn(formOpacity);
@@ -181,7 +187,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
   /** Reveal CTA after visual crossfade — keep player mounted until playback ends (audio). */
   const finishVisualSplash = useCallback(() => {
-    if (finishingRef.current || splashSessionCompleted) {
+    // SPLASH-INSTANCE-GUARDS: per-instance refs, not the module flag. A hidden stacked
+    // copy (sign-out under a pushed screen) must not strand the visible one without CTA.
+    if (finishingRef.current || hasCompletedSplashRef.current) {
       markCompleted();
       return;
     }
@@ -203,7 +211,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
    * when markCompleted flips state — otherwise useFocusEffect cleanup kills AAC mid-drain.
    */
   const beginVideoCrossfade = useCallback(() => {
-    if (fadingRef.current || hasCompletedSplashRef.current || splashSessionCompleted) return;
+    if (fadingRef.current || hasCompletedSplashRef.current) return;
     if (!showVideoRef.current) {
       finishVisualSplash();
       return;
@@ -238,7 +246,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
   /** Skip: opacity 0 + unmount video immediately — no pause/unload while covering. */
   const skipSplash = useCallback(() => {
-    if (finishingRef.current || hasCompletedSplashRef.current || splashSessionCompleted) return;
+    if (finishingRef.current || hasCompletedSplashRef.current) return;
     finishingRef.current = true;
     fadingRef.current = true;
     playbackEndedRef.current = true;
@@ -252,7 +260,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   }, [markCompleted, revealCta, revealForm, videoOpacity]);
 
   const tryPlayUnmuted = useCallback(async (video: SplashVideoHandle | null) => {
-    if (!video || splashSessionCompleted) return false;
+    if (!video || hasCompletedSplashRef.current) return false;
     try {
       // Unmute + volume + play in one gesture turn — do not await mute/volume first
       // (Safari drops the user-activation token across intervening awaits).
@@ -287,7 +295,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
       let ownedVideo: SplashVideoHandle | null = null;
       const safetyTimer = setTimeout(() => {
         if (cancelled) return;
-        if (!splashSessionCompleted) {
+        if (!hasCompletedSplashRef.current) {
           completeNaturalRef.current();
         }
         // Last resort: tear down hidden player if playToEnd never arrived.
@@ -300,7 +308,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         } catch {
           // Still attempt playback if audio mode setup fails.
         }
-        if (cancelled || splashSessionCompleted) return;
+        if (cancelled || hasCompletedSplashRef.current) return;
         ownedVideo = videoRef.current;
         // Web: always muted autoplay + tap-for-sound (repeatable on every full reload).
         if (Platform.OS === 'web') {
@@ -315,7 +323,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         }
         // Native: attempt unmuted (playsInSilentMode); muted fallback if blocked.
         const started = await tryPlayUnmuted(ownedVideo);
-        if (!started && !cancelled && !splashSessionCompleted) {
+        if (!started && !cancelled && !hasCompletedSplashRef.current) {
           try {
             setAwaitingGesture(true);
             await ownedVideo?.setIsMutedAsync(true);
@@ -358,12 +366,12 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
       if (playbackEnded) {
         playbackEndedRef.current = true;
-        if (!fadingRef.current && !finishingRef.current && !splashSessionCompleted) {
+        if (!fadingRef.current && !finishingRef.current && !hasCompletedSplashRef.current) {
           // Rare: finish before crossfade ratio — still run visual path first.
           beginVideoCrossfade();
         }
         // Unmount once ended; if fade still running, fade completion checks playbackEndedRef.
-        if (fadingRef.current && (finishingRef.current || splashSessionCompleted)) {
+        if (fadingRef.current && (finishingRef.current || hasCompletedSplashRef.current)) {
           unmountSplashVideo();
         } else if (!fadingRef.current) {
           unmountSplashVideo();
@@ -371,7 +379,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         return;
       }
 
-      if (fadingRef.current || finishingRef.current || splashSessionCompleted) return;
+      if (fadingRef.current || finishingRef.current || hasCompletedSplashRef.current) return;
 
       // Crossfade well before dead end — do not wait for didJustFinish for the logo hold.
       const pastCrossfade =
@@ -395,7 +403,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   }, []);
 
   const unlockAudioIfNeeded = useCallback(async () => {
-    if (!awaitingGesture || hasCompletedSplash || splashSessionCompleted) return;
+    if (!awaitingGesture || hasCompletedSplash) return;
     // Unmute+play only — no prior awaits that would drop the web user-gesture token.
     const unlocked = await tryPlayUnmuted(videoRef.current);
     if (unlocked) flashSoundOnHint();
@@ -429,7 +437,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   }, [revealForm, runSignIn, showForm]);
 
   const onVideoPress = useCallback(() => {
-    if (showVideo && !hasCompletedSplash && !splashSessionCompleted) {
+    if (showVideo && !hasCompletedSplash) {
       // Web autoplay policy: first body tap unmutes inline (gesture stack); Skip stays distinct.
       if (awaitingGesture) {
         void unlockAudioIfNeeded();
@@ -471,7 +479,9 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
               ref={videoRef}
               source={videoSource}
               style={styles.video}
-              shouldPlay
+              // SPLASH-FOCUS-PLAY: native plays only from the focus effect (after audio mode);
+              // hidden stacked copies stay silent. Web keeps muted autoplay.
+              shouldPlay={Platform.OS === 'web'}
               isLooping={false}
               // Mute prop tracks awaitingGesture so web muted-autoplay survives re-render.
               isMuted={awaitingGesture}

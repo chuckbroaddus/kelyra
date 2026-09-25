@@ -803,3 +803,18 @@ test('t_bf043882: sign-in / splash brand is still+CTA — KelyraMark stays out o
   assert.doesNotMatch(provision, /splashStillSources|SplashSignInButton|splashBrand/);
 });
 
+
+test('sign-out double mount: hidden stacked copy stays silent and cannot strand the visible CTA', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  // Native plays only from the focus effect (after audio mode); no autoplay at player creation.
+  assert.match(splash, /shouldPlay=\{Platform\.OS === 'web'\}/);
+  // Completion guards are per-instance; the module flag only seeds startCompleted / focus branch.
+  const crossfade = splash.match(/const beginVideoCrossfade = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[/);
+  assert.ok(crossfade);
+  assert.doesNotMatch(crossfade[1], /splashSessionCompleted/);
+  const status = splash.match(/const onPlaybackStatusUpdate = useCallback\(([\s\S]*?)\n  \);/);
+  assert.ok(status);
+  assert.doesNotMatch(status[1], /splashSessionCompleted/);
+  // CTA fade re-runs after the overlay mounts.
+  assert.match(splash, /if \(hasCompletedSplash\) fadeIn\(ctaOpacity\);/);
+});
