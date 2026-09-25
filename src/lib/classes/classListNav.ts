@@ -7,8 +7,13 @@ import { isOfficeChromeRole } from '../chrome/seat.ts';
  * - main-classes: home Classes tab (always opens class detail)
  * - parent-classes-tab: parent person view Classes tab (office: read-only)
  * - student-classes-tab: student person view Classes tab (office: read-only)
+ * - staff-classes-tab: staff person view Classes tab (office: read-only)
  */
-export type ClassListEntryPoint = 'main-classes' | 'parent-classes-tab' | 'student-classes-tab';
+export type ClassListEntryPoint =
+  | 'main-classes'
+  | 'parent-classes-tab'
+  | 'student-classes-tab'
+  | 'staff-classes-tab';
 
 /**
  * Entry-point-based pressability (Chuck amendment).
@@ -19,7 +24,11 @@ export function classListRowPressable(
   role: string | null | undefined,
 ): boolean {
   if (entryPoint === 'main-classes') return true;
-  if (entryPoint === 'parent-classes-tab' || entryPoint === 'student-classes-tab') {
+  if (
+    entryPoint === 'parent-classes-tab' ||
+    entryPoint === 'student-classes-tab' ||
+    entryPoint === 'staff-classes-tab'
+  ) {
     return !isOfficeChromeRole(role);
   }
   return true;
