@@ -53,6 +53,7 @@ import post from '../../../assets/icons/post.png';
 import alert from '../../../assets/icons/alert.png';
 import speaker from '../../../assets/icons/speaker.png';
 import mute from '../../../assets/icons/mute.png';
+import none from '../../../assets/icons/none.png';
 import grades from '../../../assets/icons/grades.png';
 import statusAssigned from '../../../assets/icons/statusAssigned.png';
 import statusStarted from '../../../assets/icons/statusStarted.png';
@@ -156,6 +157,7 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'alert': alert,
   'speaker': speaker,
   'mute': mute,
+  'none': none,
   'grades': grades,
   'statusAssigned': statusAssigned,
   'statusStarted': statusStarted,

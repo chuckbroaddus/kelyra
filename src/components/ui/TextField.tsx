@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { radius, type, webFocus } from '@/constants/theme';
@@ -12,10 +12,14 @@ type Props = TextInputProps & {
     nativeEvent?: { clipboardData?: DataTransfer };
     clipboardData?: DataTransfer;
   }) => void;
+  /** Control inside the field's right edge (e.g. a mic). */
+  accessory?: ReactNode;
+  /** `center` = vertically centered (single line); `bottom` = bottom-right corner (multiline). */
+  accessoryPlacement?: 'center' | 'bottom';
 };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, style, onFocus, onBlur, ...rest },
+  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', ...rest },
   ref,
 ) {
   const { colors, scheme } = useTheme();
@@ -23,35 +27,48 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
   return (
     <View style={styles.wrap}>
       {label ? <Text style={[styles.label, { color: colors.mute }]}>{label}</Text> : null}
-      <TextInput
-        ref={ref}
-        placeholderTextColor={colors.mute}
-        keyboardAppearance={scheme}
-        {...rest}
-        onFocus={(event) => {
-          setFocused(true);
-          onFocus?.(event);
-          if (Platform.OS === 'web') {
-            const node = event.target as unknown as { scrollIntoView?: (opts?: ScrollIntoViewOptions) => void };
-            requestAnimationFrame(() => node.scrollIntoView?.({ block: 'center', inline: 'nearest' }));
-          }
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          onBlur?.(event);
-        }}
-        style={[
-          styles.field,
-          {
-            borderColor: focused ? colors.brand : colors.line,
-            backgroundColor: colors.elevated,
-            color: colors.ink,
-          },
-          rest.multiline && styles.multiline,
-          focused && webFocus(colors.brand),
-          style,
-        ]}
-      />
+      <View style={styles.inputWrap}>
+        <TextInput
+          ref={ref}
+          placeholderTextColor={colors.mute}
+          keyboardAppearance={scheme}
+          {...rest}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+            if (Platform.OS === 'web') {
+              const node = event.target as unknown as {
+                scrollIntoView?: (opts?: ScrollIntoViewOptions) => void;
+              };
+              requestAnimationFrame(() => node.scrollIntoView?.({ block: 'center', inline: 'nearest' }));
+            }
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
+          style={[
+            styles.field,
+            {
+              borderColor: focused ? colors.brand : colors.line,
+              backgroundColor: colors.elevated,
+              color: colors.ink,
+            },
+            rest.multiline && styles.multiline,
+            focused && webFocus(colors.brand),
+            accessory ? styles.withAccessory : null,
+            style,
+          ]}
+        />
+        {accessory ? (
+          <View
+            pointerEvents="box-none"
+            style={accessoryPlacement === 'bottom' ? styles.accessoryBottom : styles.accessoryCenter}
+          >
+            {accessory}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 });
@@ -77,5 +94,24 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 72,
     textAlignVertical: 'top',
+  },
+  inputWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  withAccessory: {
+    paddingRight: 48,
+  },
+  accessoryCenter: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 4,
+    justifyContent: 'center',
+  },
+  accessoryBottom: {
+    position: 'absolute',
+    right: 4,
+    bottom: 4,
   },
 });

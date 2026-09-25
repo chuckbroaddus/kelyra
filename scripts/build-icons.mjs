@@ -501,6 +501,11 @@ const RECIPES = {
     RECIPES.speaker(p);
     line(p, 4.4, 4.4, 19.6, 19.6, ST);
   },
+  /** None / no class: circle with a slash. */
+  none: (p) => {
+    circle(p, 12, 12, 8.8, ST, false);
+    line(p, 5.8, 5.8, 18.2, 18.2, ST);
+  },
   /** Student tray: own marks. Report card, not the teacher 2×2 records grid. */
   grades: (p) => {
     roundRect(p, 5.2, 3.2, 13.6, 17.6, 1.2, ST, false);

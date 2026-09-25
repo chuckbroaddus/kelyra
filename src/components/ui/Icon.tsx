@@ -57,6 +57,7 @@ export type IconName =
   | 'alert'
   | 'speaker'
   | 'mute'
+  | 'none'
   | 'grades'
   | 'statusAssigned'
   | 'statusStarted'
