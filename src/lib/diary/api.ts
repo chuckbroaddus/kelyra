@@ -9,6 +9,15 @@ import type { DiaryDraft, DiaryEntryRow, DiaryMediaRow, LedgerEventRow } from '@
 import { readUriAsBytes } from '@/lib/media/upload';
 import { signedDiaryUrl } from '@/lib/media/signedUrl';
 import { requireSupabase } from '@/lib/supabase/client';
+import {
+  DIARY_EMPTY_FILE_ERROR,
+  DIARY_EMPTY_PHOTO_ERROR,
+  assertAllowedDiaryMime,
+  assertDiaryByteSize,
+  buildDiaryStoragePath,
+  diaryFileExt,
+  diaryPhotoExt,
+} from './uploadGuard';
 
 /** Untyped until Database types regenerate after CoS applies migration. */
 function diaryDb(): any {
@@ -140,12 +149,18 @@ export async function attachDiaryPhoto(input: {
   mimeType: string;
 }): Promise<DiaryMediaRow> {
   const mediaId = cryptoRandomId();
-  const ext = input.mimeType.includes('png') ? 'png' : 'jpg';
-  const storagePath = `${input.ownerProfileId}/${input.seat}/${input.entryId}/${mediaId}.${ext}`;
   const bytes = new Uint8Array(await readUriAsBytes(input.uri));
-  if (!bytes.byteLength) throw new Error('That photo was empty.');
+  assertDiaryByteSize(bytes.byteLength, DIARY_EMPTY_PHOTO_ERROR);
+  const contentType = assertAllowedDiaryMime(input.mimeType || 'image/jpeg');
+  const storagePath = buildDiaryStoragePath({
+    ownerId: input.ownerProfileId,
+    seat: input.seat,
+    entryId: input.entryId,
+    mediaId,
+    ext: diaryPhotoExt(contentType),
+  });
   const { error: upError } = await diaryDb().storage.from('diary').upload(storagePath, bytes, {
-    contentType: input.mimeType || 'image/jpeg',
+    contentType,
     upsert: false,
   });
   if (upError) throw upError;
@@ -157,7 +172,7 @@ export async function attachDiaryPhoto(input: {
       owner_profile_id: input.ownerProfileId,
       kind: 'photo',
       storage_path: storagePath,
-      content_type: input.mimeType || 'image/jpeg',
+      content_type: contentType,
       byte_size: bytes.byteLength,
     })
     .select('*')
@@ -187,12 +202,17 @@ export async function attachDiaryFile(input: {
   mimeType: string;
   name: string;
 }): Promise<DiaryMediaRow> {
-  const mediaId = cryptoRandomId();
-  const ext = (input.name.split('.').pop() ?? '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'bin';
-  const storagePath = `${input.ownerProfileId}/${input.seat}/${input.entryId}/${mediaId}.${ext}`;
   const bytes = new Uint8Array(await readUriAsBytes(input.uri));
-  if (!bytes.byteLength) throw new Error('That file was empty.');
-  const contentType = input.mimeType || 'application/octet-stream';
+  assertDiaryByteSize(bytes.byteLength, DIARY_EMPTY_FILE_ERROR);
+  const contentType = assertAllowedDiaryMime(input.mimeType);
+  const mediaId = cryptoRandomId();
+  const storagePath = buildDiaryStoragePath({
+    ownerId: input.ownerProfileId,
+    seat: input.seat,
+    entryId: input.entryId,
+    mediaId,
+    ext: diaryFileExt(input.name),
+  });
   const { error: upError } = await diaryDb().storage.from('diary').upload(storagePath, bytes, {
     contentType,
     upsert: false,
