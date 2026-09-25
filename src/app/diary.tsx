@@ -21,7 +21,7 @@ import { RemoteImage } from '@/components/ui/RemoteImage';
 import { Screen } from '@/components/ui/Screen';
 import { SwipeActionCard } from '@/components/ui/SwipeActionCard';
 import { TextField } from '@/components/ui/TextField';
-import { radius, type } from '@/constants/theme';
+import { radius, shadows, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { shiftDay } from '@/lib/calendar/day';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
@@ -97,7 +97,7 @@ const MIC_ON_INK = '#FFFFFF';
 const PLUS_GLYPH = 14;
 
 export default function DiaryScreen() {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const reduceMotion = useReducedMotion();
   const { profile } = useAuth();
   const chrome = useChrome();
@@ -1014,10 +1014,12 @@ export default function DiaryScreen() {
           ]}
           accessory={renderMic('title')}
         />
-        <TextField
+        <View style={attachMenuOpen ? styles.popoverHost : null}>
+          <TextField
           label="Body"
           value={body}
           onChangeText={setBody}
+          onFocus={() => setAttachMenuOpen(false)}
           multiline
           scrollEnabled
           onContentSizeChange={
@@ -1042,8 +1044,15 @@ export default function DiaryScreen() {
               <PlusGlyph color={colors.mute} size={PLUS_GLYPH} />
             </Pressable>
           }
-        />
-        {attachMenuOpen ? <AttachMenu onPick={onAttachChoice} /> : null}
+          topPopover={
+            attachMenuOpen ? (
+              <View style={[styles.attachPopover, scheme === 'light' ? shadows.light : null]}>
+                <AttachMenu onPick={onAttachChoice} />
+              </View>
+            ) : undefined
+          }
+          />
+        </View>
         {linkOpen ? (
           <View style={styles.linkRow}>
             <View style={styles.linkField}>
@@ -1412,6 +1421,9 @@ const styles = StyleSheet.create({
   titleBox: { minHeight: TITLE_MIN_H, maxHeight: TITLE_MAX_H },
   bodyBox: { minHeight: BODY_MIN_H, maxHeight: BODY_MAX_H },
   attachStack: { gap: 8 },
+  /** Lifts the Body field above later siblings so its + pop-up floats over them. */
+  popoverHost: { zIndex: 20, elevation: 20 },
+  attachPopover: { width: 180, borderRadius: 12 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   linkField: { flex: 1, minWidth: 0 },
   stagedPhotos: { gap: 8 },
