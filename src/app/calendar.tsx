@@ -1425,6 +1425,7 @@ export default function CalendarScreen() {
       {seat ? (
         <EventComposer
           visible={composer != null}
+          layers={layers}
           mode={composer?.mode ?? 'create'}
           seat={seat}
           eventId={composer?.eventId}

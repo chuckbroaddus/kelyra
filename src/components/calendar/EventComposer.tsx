@@ -27,14 +27,18 @@ import {
 } from '@/lib/calendar/api';
 import type { PendingCalendarDraft } from '@/lib/calendar/askDraft';
 import { REVIEW_DRAFT_BANNER } from '@/lib/calendar/askDraft';
-import { roleTintColor, roleTintLabel } from '@/lib/calendar/roleTint';
-import type { CalendarEventKind, CalendarSeat } from '@/lib/calendar/types';
+import {
+  composerTargetKey,
+  composerTargets,
+  type ComposerTarget,
+} from '@/lib/calendar/composerTargets';
+import { roleTintColor } from '@/lib/calendar/roleTint';
+import type { CalendarEventKind, CalendarLayer, CalendarSeat } from '@/lib/calendar/types';
 import {
   categoriesForKind,
   composeEventInstant,
   datePart,
   defaultKindForSeat,
-  kindsForSeat,
   scopeForKind,
   timePart,
   visibilityCaption,
@@ -52,6 +56,8 @@ type Props = {
   eventId?: string | null;
   classId?: string | null;
   childStudentId?: string | null;
+  /** Calendars the seat can see; composer offers only the ones it controls. */
+  layers?: CalendarLayer[];
   /** Phase E Ask parked draft — CR-A Review, not saved until Save. */
   initialDraft?: PendingCalendarDraft | null;
   onClose: () => void;
@@ -60,6 +66,8 @@ type Props = {
 
 type Draft = {
   kind: CalendarEventKind;
+  /** Class calendar target when kind === 'class'. */
+  classId: string | null;
   title: string;
   startDate: string | null;
   endDate: string | null;
@@ -74,6 +82,7 @@ function emptyDraft(seat: CalendarSeat, classId?: string | null, childId?: strin
   const kind = defaultKindForSeat(seat, { classId, childStudentId: childId }) ?? 'personal';
   return {
     kind,
+    classId: kind === 'class' ? classId ?? null : null,
     title: '',
     startDate: datePart(new Date().toISOString()),
     endDate: null,
@@ -89,15 +98,9 @@ function sameDraft(a: Draft, b: Draft): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-function kindRoleTint(kind: CalendarEventKind): string {
-  if (kind === 'school') return 'school';
-  if (kind === 'class') return 'academic';
-  return 'personal';
-}
-
 /**
  * CR-A lean (CAL-30): sheet/modal. Title, DATE-P1, all-day, kind, category, body,
- * AI draft banner, visibility, Calendar row ≤4 role tints. No Reminder/Travel/URL/
+ * AI draft banner, visibility, Calendar chip row (every calendar the seat controls). No Reminder/Travel/URL/
  * Attachments/Invitees/Alert/Repeat. Dirty dismiss confirms. Save commits.
  */
 export function EventComposer({
@@ -107,6 +110,7 @@ export function EventComposer({
   eventId,
   classId,
   childStudentId,
+  layers,
   initialDraft,
   onClose,
   onSaved,
@@ -129,11 +133,13 @@ export function EventComposer({
   const sheetOpacity = useRef(new Animated.Value(1)).current;
 
   const dirty = !sameDraft(draft, baseline);
-  const kinds = kindsForSeat(seat).filter((kind) => {
-    if (kind === 'class' && !classId) return false;
-    if (kind === 'absence' && !childStudentId) return false;
-    return true;
-  });
+  // CAL-COMPOSE-TARGETS: every calendar this seat controls (each class a teacher
+  // teaches; never School for a teacher). Server re-checks on Save.
+  const targets = useMemo(
+    () => composerTargets(seat, layers ?? [], { classId, childStudentId }),
+    [seat, layers, classId, childStudentId],
+  );
+  const selectedTargetKey = composerTargetKey(draft.kind, draft.classId);
   const cats = categoriesForKind(draft.kind);
 
   useEffect(() => {
@@ -179,6 +185,8 @@ export function EventComposer({
         const next: Draft = fromAskDraft
           ? {
               kind: initialDraft.kind,
+              classId:
+                initialDraft.kind === 'class' ? initialDraft.classId ?? classId ?? null : null,
               title: askTitle,
               startDate: initialDraft.startDate,
               endDate: initialDraft.endDate,
@@ -237,6 +245,7 @@ export function EventComposer({
                 : 'personal';
         const next: Draft = {
           kind,
+          classId: kind === 'class' ? detail.classId ?? null : null,
           title: detail.title,
           startDate: datePart(detail.startsAt),
           endDate: datePart(detail.endsAt),
@@ -276,9 +285,11 @@ export function EventComposer({
     onClose();
   };
 
-  const setKind = (kind: CalendarEventKind) => {
-    const category = categoriesForKind(kind)[0] ?? draft.category;
-    setDraft((cur) => ({ ...cur, kind, category }));
+  const setTarget = (target: ComposerTarget) => {
+    const kind = target.kind;
+    const category =
+      kind === draft.kind ? draft.category : categoriesForKind(kind)[0] ?? draft.category;
+    setDraft((cur) => ({ ...cur, kind, classId: target.classId, category }));
     setCaption(visibilityCaption(scopeForKind(kind), category));
   };
 
@@ -299,8 +310,8 @@ export function EventComposer({
       setError('Pick a child before adding an absence');
       return;
     }
-    if (draft.kind === 'class' && !classId) {
-      setError('Open a class before adding a class event');
+    if (draft.kind === 'class' && !draft.classId) {
+      setError('Pick a class calendar for this event');
       return;
     }
     setBusy(true);
@@ -331,7 +342,7 @@ export function EventComposer({
           allDay: draft.allDay,
           category: draft.category,
           body: draft.body,
-          classId: draft.kind === 'class' ? classId : null,
+          classId: draft.kind === 'class' ? draft.classId : null,
           childStudentId: draft.kind === 'absence' ? childStudentId : null,
           source: fromAsk ? 'ai_nl' : 'manual',
         });
@@ -403,47 +414,38 @@ export function EventComposer({
                 </Text>
               ) : null}
 
-              {/* CAL-31 Calendar row ≤4 role tints (kind pick). No Reminder tab. */}
-              {mode === 'create' && kinds.length > 0 ? (
+              {/* CAL-COMPOSE-TARGETS: one chip per calendar you control, one scrollable row. */}
+              {mode === 'create' && targets.length > 0 ? (
                 <View style={styles.block}>
                   <Text style={[styles.label, { color: colors.mute }]}>Calendar</Text>
-                  <View style={styles.calRow}>
-                    {kinds.map((kind) => {
-                      const tint = kindRoleTint(kind);
-                      const selected = draft.kind === kind;
-                      const label =
-                        kind === 'absence'
-                          ? 'Absence'
-                          : kind === 'class'
-                            ? roleTintLabel('academic')
-                            : roleTintLabel(tint);
+                  <ChipRow>
+                    {targets.map((target) => {
+                      const selected = selectedTargetKey === target.key;
+                      const tintColor = roleTintColor(target.roleTint, colors);
                       return (
                         <Pressable
-                          key={kind}
+                          key={target.key}
                           disabled={readOnly}
-                          onPress={() => !readOnly && setKind(kind)}
+                          onPress={() => !readOnly && setTarget(target)}
                           accessibilityRole="button"
                           accessibilityState={{ selected }}
-                          accessibilityLabel={`Calendar ${label}`}
+                          accessibilityLabel={`Calendar ${target.label}`}
                           style={[
                             styles.calChip,
                             {
-                              borderColor: selected ? roleTintColor(tint, colors) : colors.line,
+                              borderColor: selected ? tintColor : colors.line,
                               backgroundColor: selected ? colors.wash : colors.elevated,
                             },
                           ]}
                         >
-                          <View
-                            style={[
-                              styles.calDot,
-                              { backgroundColor: roleTintColor(tint, colors) },
-                            ]}
-                          />
-                          <Text style={[styles.calLabel, { color: colors.ink }]}>{label}</Text>
+                          <View style={[styles.calDot, { backgroundColor: tintColor }]} />
+                          <Text style={[styles.calLabel, { color: colors.ink }]} numberOfLines={1}>
+                            {target.label}
+                          </Text>
                         </Pressable>
                       );
                     })}
-                  </View>
+                  </ChipRow>
                 </View>
               ) : null}
 
@@ -615,7 +617,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 4,
   },
-  calRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   calChip: {
     flexDirection: 'row',
     alignItems: 'center',
