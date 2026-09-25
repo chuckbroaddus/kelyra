@@ -166,6 +166,67 @@ export async function attachDiaryPhoto(input: {
   return data as DiaryMediaRow;
 }
 
+/** Batch media for a Day List window (one query, not one per row). */
+export async function listDiaryMediaFor(entryIds: string[]): Promise<DiaryMediaRow[]> {
+  if (!entryIds.length) return [];
+  const { data, error } = await diaryDb()
+    .from('diary_media')
+    .select('*')
+    .in('entry_id', entryIds)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as DiaryMediaRow[];
+}
+
+/** Any file (PDF, doc, …) on a Journal entry. Needs migration 20260924213000 (kind 'file' + file_name). */
+export async function attachDiaryFile(input: {
+  ownerProfileId: string;
+  seat: DiarySeat;
+  entryId: string;
+  uri: string;
+  mimeType: string;
+  name: string;
+}): Promise<DiaryMediaRow> {
+  const mediaId = cryptoRandomId();
+  const ext = (input.name.split('.').pop() ?? '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'bin';
+  const storagePath = `${input.ownerProfileId}/${input.seat}/${input.entryId}/${mediaId}.${ext}`;
+  const bytes = new Uint8Array(await readUriAsBytes(input.uri));
+  if (!bytes.byteLength) throw new Error('That file was empty.');
+  const contentType = input.mimeType || 'application/octet-stream';
+  const { error: upError } = await diaryDb().storage.from('diary').upload(storagePath, bytes, {
+    contentType,
+    upsert: false,
+  });
+  if (upError) throw upError;
+  const { data, error } = await diaryDb()
+    .from('diary_media')
+    .insert({
+      id: mediaId,
+      entry_id: input.entryId,
+      owner_profile_id: input.ownerProfileId,
+      kind: 'file',
+      storage_path: storagePath,
+      content_type: contentType,
+      byte_size: bytes.byteLength,
+      file_name: input.name,
+    })
+    .select('*')
+    .single();
+  if (error) {
+    // Uploaded bytes without a row would be orphaned; best-effort cleanup.
+    try {
+      await diaryDb().storage.from('diary').remove([storagePath]);
+    } catch {
+      // ignore
+    }
+    if (/diary_media_kind_check|file_name/.test(error.message ?? '')) {
+      throw new Error('Files on Journal entries need a pending database update. Photos work now.');
+    }
+    throw error;
+  }
+  return data as DiaryMediaRow;
+}
+
 export async function diaryMediaSignedUrl(storagePath: string): Promise<string | null> {
   return signedDiaryUrl(storagePath);
 }

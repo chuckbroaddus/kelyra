@@ -16,10 +16,12 @@ type Props = TextInputProps & {
   accessory?: ReactNode;
   /** `center` = vertically centered (single line); `bottom` = bottom-right corner (multiline). */
   accessoryPlacement?: 'center' | 'bottom';
+  /** Second control in the field's top-right corner (e.g. attach "+"). */
+  topAccessory?: ReactNode;
 };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField(
-  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', ...rest },
+  { label, style, onFocus, onBlur, accessory, accessoryPlacement = 'center', topAccessory, ...rest },
   ref,
 ) {
   const { colors, scheme } = useTheme();
@@ -56,7 +58,7 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
             },
             rest.multiline && styles.multiline,
             focused && webFocus(colors.brand),
-            accessory ? styles.withAccessory : null,
+            accessory || topAccessory ? styles.withAccessory : null,
             style,
           ]}
         />
@@ -66,6 +68,11 @@ export const TextField = forwardRef<TextInput, Props>(function TextField(
             style={accessoryPlacement === 'bottom' ? styles.accessoryBottom : styles.accessoryCenter}
           >
             {accessory}
+          </View>
+        ) : null}
+        {topAccessory ? (
+          <View pointerEvents="box-none" style={styles.accessoryTop}>
+            {topAccessory}
           </View>
         ) : null}
       </View>
@@ -108,6 +115,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 4,
     justifyContent: 'center',
+  },
+  accessoryTop: {
+    position: 'absolute',
+    right: 4,
+    top: 4,
   },
   accessoryBottom: {
     position: 'absolute',

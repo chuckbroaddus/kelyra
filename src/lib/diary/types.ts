@@ -18,10 +18,12 @@ export type DiaryMediaRow = {
   id: string;
   entry_id: string;
   owner_profile_id: string;
-  kind: 'photo';
+  kind: 'photo' | 'file';
   storage_path: string;
   content_type: string | null;
   byte_size: number | null;
+  /** Original name for `kind: 'file'` (migration 20260924213000). */
+  file_name?: string | null;
   created_at: string;
 };
 
