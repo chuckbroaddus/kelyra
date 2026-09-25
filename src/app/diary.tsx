@@ -1160,8 +1160,15 @@ export default function DiaryScreen() {
                 {staged
                   .filter((item) => item.kind === 'photo')
                   .map((item) => (
-                    <View key={item.key} style={[styles.photoComposerWrap, { borderColor: colors.line }]}>
-                      <RemoteImage uri={item.uri} style={styles.photoComposer} contentFit="cover" />
+                    <View key={item.key} style={[styles.stagedTile, { borderColor: colors.line, backgroundColor: colors.wash }]}>
+                      <RemoteImage uri={item.uri} style={styles.stagedTileImg} contentFit="cover" />
+                      {item.n ? (
+                        <View style={styles.stagedBadge}>
+                          <Text style={styles.stagedBadgeText} maxFontSizeMultiplier={1}>
+                            Photo {item.n}
+                          </Text>
+                        </View>
+                      ) : null}
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Remove photo"
@@ -1509,6 +1516,22 @@ const styles = StyleSheet.create({
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   linkField: { flex: 1, minWidth: 0 },
   stagedPhotos: { gap: 8 },
+  /**
+   * Fixed-size staged thumbnails. A % width inside a horizontal ScrollView has no width
+   * to resolve against, so the old 100%/4:3 tile collapsed and the Date field drew over it.
+   */
+  stagedTile: { width: 96, height: 96, borderRadius: 10, borderWidth: 1, overflow: 'hidden' },
+  stagedTileImg: { width: '100%', height: '100%' },
+  stagedBadge: {
+    position: 'absolute',
+    left: 4,
+    bottom: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  stagedBadgeText: { color: '#FFFFFF', fontSize: 11, lineHeight: 14, fontWeight: '600' },
   stagedRemove: {
     position: 'absolute',
     top: 4,
