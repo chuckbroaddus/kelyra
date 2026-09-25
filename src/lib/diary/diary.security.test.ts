@@ -258,6 +258,9 @@ test('JOURNAL-ENTRY (CEO 2026-09-24): Done, Body before Date, class tabs + No cl
   assert.match(composer, /\.\.\.taughtClasses\.map[\s\S]*\{ key: NO_CLASS_TAB, label: 'No class', icon: 'none' as const \}/);
   assert.match(composer, /<Avatar/);
   assert.match(composer, /accessoryPlacement="bottom"/);
+  // Tags sit below the student tag section; heading is sentence case (no uppercase transform).
+  assert.ok(composer.indexOf('Tag to a Student') < composer.indexOf('label="Tags (comma-separated)"'));
+  assert.doesNotMatch(screen, /textTransform: 'uppercase'/);
   // Recording state = solid highlight circle behind the mic; no "Recording…" text line.
   assert.match(screen, /active && \{ backgroundColor: colors\.danger \}/);
   assert.doesNotMatch(composer, /Recording \{dictateTarget/);
