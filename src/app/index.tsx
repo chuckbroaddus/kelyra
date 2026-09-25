@@ -9,6 +9,7 @@ import { FeedIconRow } from '@/components/ui/FeedIconPicker';
 import { SchoolIdentityFields } from '@/components/ui/SchoolIdentity';
 import { HandleLink } from '@/components/ui/HandleLink';
 import { ListRow } from '@/components/ui/ListRow';
+import { NoticePopup } from '@/components/ui/NoticePopup';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
@@ -20,6 +21,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { can } from '@/lib/school/matrix';
+import { peopleTabForCreatedRole, type CreateLoginNotice } from '@/lib/school/createLoginNotice';
 import { isAlsoParent, isOfficeRole, roleStatus } from '@/lib/school/roles';
 import { createClass, listClasses, listSchoolClasses, type SchoolClass } from '@/lib/classes/api';
 import { listGradeLessonRollup, type ClassLessonRollup } from '@/lib/lessons/api';
@@ -52,6 +54,11 @@ export default function HomeScreen() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState('classes');
   const [newKind, setNewKind] = useState('person');
+  // AFTER-CREATE-JUMP: after New creates a login/class, land on the list that now holds it.
+  const [peopleTab, setPeopleTab] = useState('staff');
+  const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
+  const [createdNotice, setCreatedNotice] = useState<CreateLoginNotice | null>(null);
+  const dismissCreatedNotice = useCallback(() => setCreatedNotice(null), []);
   const [schoolFeed, setSchoolFeed] = useState<FeedRef | null>(null);
   const [schoolIdentity, setSchoolIdentity] = useState<SchoolIdentity | null>(null);
   const [lessonRollup, setLessonRollup] = useState<ClassLessonRollup[]>([]);
@@ -143,8 +150,14 @@ export default function HomeScreen() {
     try {
       const created = await createClass(name);
       setName('');
-      // Office card only — teachers must not land on /admin/class/[id].
-      if (isOfficeRole(profile)) router.replace(`/admin/class/${created.id}`);
+      if (officeSeat) {
+        // AFTER-CREATE-JUMP: show the new class highlighted in the Classes list.
+        setJustCreatedId(created.id);
+        setTab('classes');
+        router.setParams({ tab: 'classes' });
+        setCreatedNotice({ tone: 'success', message: `${created.name} has been created.` });
+        await load();
+      } else if (isOfficeRole(profile)) router.replace(`/admin/class/${created.id}`);
       else router.replace('/?switch=1');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not create class');
@@ -209,6 +222,7 @@ export default function HomeScreen() {
           value={pane}
           onChange={(key) => {
             setTab(key);
+            setJustCreatedId(null);
             router.setParams({ tab: key });
           }}
         />
@@ -303,7 +317,9 @@ export default function HomeScreen() {
             </>
           ) : null}
 
-          {pane === 'people' && officeSeat ? <PeopleDirectory /> : null}
+          {pane === 'people' && officeSeat ? (
+            <PeopleDirectory tab={peopleTab} onTabChange={setPeopleTab} highlightId={justCreatedId} />
+          ) : null}
 
           {pane === 'classes' ? (
             <>
@@ -341,6 +357,7 @@ export default function HomeScreen() {
                   photoUrl={item.avatarUrl}
                   hasPhoto={Boolean(item.avatar_asset_id)}
                   onPress={() => openClass(item.id)}
+                  selected={item.id === justCreatedId}
                   trailing={
                     canDeleteClass
                       ? [
@@ -365,7 +382,17 @@ export default function HomeScreen() {
               {newTabs.length > 1 ? (
                 <PersonTabs tabs={newTabs} value={newPane} onChange={setNewKind} />
               ) : null}
-              {newPane === 'person' && canCreateLogin ? <CreateLoginForm /> : null}
+              {newPane === 'person' && canCreateLogin ? (
+                <CreateLoginForm
+                  onCreated={(created) => {
+                    setPeopleTab(peopleTabForCreatedRole(created.role));
+                    setJustCreatedId(created.id);
+                    setCreatedNotice(created.notice);
+                    setTab('people');
+                    router.setParams({ tab: 'people' });
+                  }}
+                />
+              ) : null}
               {newPane === 'class' && showCreateClass ? (
                 <>
                   <TextField
@@ -389,6 +416,7 @@ export default function HomeScreen() {
         </ScrollView>
       ) : null}
       </View>
+      <NoticePopup notice={createdNotice} onDismiss={dismissCreatedNotice} />
       <ConfirmSheet
         visible={Boolean(pending)}
         title={`Delete ${pending?.name ?? 'class'}?`}

@@ -74,14 +74,29 @@ const PEOPLE_TABS = [
   { key: 'students', label: 'Students', icon: 'setup' as const },
 ];
 
-export function PeopleDirectory() {
+export function PeopleDirectory({
+  tab: tabProp,
+  onTabChange,
+  highlightId,
+}: {
+  /** AFTER-CREATE-JUMP: host-controlled sub-tab so a new login opens on its list. */
+  tab?: string;
+  onTabChange?: (tab: string) => void;
+  /** Row tinted (selected) so the just-created person is easy to spot. */
+  highlightId?: string | null;
+} = {}) {
   const { colors } = useTheme();
   const { profile, refresh } = useAuth();
   const router = useRouter();
   const [rows, setRows] = useState<DirectoryPerson[] | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState('staff');
+  const [ownTab, setOwnTab] = useState('staff');
+  const tab = tabProp ?? ownTab;
+  const setTab = (next: string) => {
+    setOwnTab(next);
+    onTabChange?.(next);
+  };
   const [resetTarget, setResetTarget] = useState<{ id: string; username: string } | null>(null);
   // PEOPLE-DEACTIVATE: swipe "Delete" deactivates; deleted people sit behind a toggle with Restore.
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; handle: string } | null>(null);
@@ -228,6 +243,7 @@ export function PeopleDirectory() {
             avatarName={row.display_name || row.username}
             photoUrl={row.photoUrl}
             onPress={() => openPerson(row)}
+            selected={row.id === highlightId}
             trailing={trailing}
           />
         );
@@ -339,7 +355,9 @@ export function PeopleDirectory() {
 export function CreateLoginForm({
   onCreated,
 }: {
-  onCreated?: (role: SchoolRole) => void;
+  /** AFTER-CREATE-JUMP: host moves to People and shows the success notice itself (this form
+   * unmounts when the pane changes, so its own popup would vanish). */
+  onCreated?: (created: { id: string; role: SchoolRole; notice: CreateLoginNotice }) => void;
 }) {
   const { colors } = useTheme();
   const { profile } = useAuth();
@@ -443,7 +461,8 @@ export function CreateLoginForm({
           missed.push('the photo');
         }
       }
-      setNotice(createdAccountNotice(displayName, username, missed));
+      const createdNotice = createdAccountNotice(displayName, username, missed);
+      if (!onCreated) setNotice(createdNotice);
       setEmail('');
       setUsername('');
       setDisplayName('');
@@ -464,7 +483,7 @@ export function CreateLoginForm({
             ? 'Account created. Link their children from a class Parents list. They must change the password on first sign-in.'
             : 'Account created. They must change the password on first sign-in.',
       );
-      onCreated?.(role);
+      onCreated?.({ id: newId, role, notice: createdNotice });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not create account';
       const field = fieldForServerError(message);
