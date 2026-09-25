@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GhostButton } from '@/components/ui/Button';
+import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
@@ -26,8 +26,10 @@ export const DIARY_LEDGER_FAMILIES: Array<{ key: string | null; label: string }>
 
 type Props = {
   visible: boolean;
-  /** Done / backdrop: parent applies filters (replaces the old ledger Apply tap). */
+  /** Done (bottom): parent applies filters (replaces the old ledger Apply tap). */
   onDone: () => void;
+  /** Cancel (top) / backdrop / back: parent restores the settings from when the sheet opened. */
+  onCancel: () => void;
   // Common
   sortOldest: boolean;
   onChangeSortOldest: (oldest: boolean) => void;
@@ -65,7 +67,8 @@ type Props = {
 
 /**
  * DIARY-GEAR: Diary settings — Common / Journal / Ledger sections (CEO 2026-09-24).
- * Sort, Tag, Student pointer, Ledger filters and CSV live here; Done applies.
+ * Sort, Tag, Student pointer, Ledger filters and CSV live here.
+ * Cancel (top) discards changes; Done (bottom) applies them.
  */
 export function DiarySettingsSheet(props: Props) {
   const { colors } = useTheme();
@@ -73,7 +76,7 @@ export function DiarySettingsSheet(props: Props) {
   const reduceMotion = useReducedMotion();
   const web = Platform.OS === 'web';
   const opacity = useRef(new Animated.Value(1)).current;
-  const { visible, onDone } = props;
+  const { visible, onDone, onCancel } = props;
 
   useEffect(() => {
     if (!visible) return;
@@ -95,8 +98,8 @@ export function DiarySettingsSheet(props: Props) {
   );
 
   return (
-    <ScreenOverlay visible={visible} onRequestClose={onDone}>
-      <Pressable style={styles.backdrop} onPress={onDone} accessibilityLabel="Dismiss settings" />
+    <ScreenOverlay visible={visible} onRequestClose={onCancel}>
+      <Pressable style={styles.backdrop} onPress={onCancel} accessibilityLabel="Cancel settings" />
       <Animated.View
         style={[
           styles.sheet,
@@ -112,7 +115,7 @@ export function DiarySettingsSheet(props: Props) {
       >
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.ink }]}>Settings</Text>
-          <GhostButton label="Done" onPress={onDone} />
+          <GhostButton label="Cancel" onPress={onCancel} />
         </View>
         <ScrollView
           style={styles.scroll}
@@ -288,6 +291,9 @@ export function DiarySettingsSheet(props: Props) {
             </>
           ) : null}
         </ScrollView>
+        <View style={[styles.footer, { borderTopColor: colors.line }]}>
+          <PrimaryButton label="Done" onPress={onDone} />
+        </View>
       </Animated.View>
     </ScreenOverlay>
   );
@@ -317,7 +323,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: { ...type.title, fontSize: 20 },
-  scroll: { flexGrow: 0 },
+  scroll: { flexGrow: 0, flexShrink: 1 },
+  footer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 12,
+  },
   scrollContent: { gap: 10, paddingBottom: 8 },
   heading: { ...type.title, fontSize: 17, marginTop: 12 },
   section: {

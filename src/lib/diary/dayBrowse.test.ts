@@ -168,6 +168,9 @@ test('DIARY-CAL chrome: tabs pinned on top, then Today · + search gear, then dr
   assert.match(pin, /name="search"/);
   assert.match(pin, /name="settings"/);
   assert.match(screen, /pin=\{pinnedChrome\}/);
+  // Tab row stays put: Diary lists never collapse the app header / top gap on scroll.
+  assert.equal(screen.split('collapseChrome={false}').length - 1, 2);
+  assert.match(read('src/components/calendar/DayListPane.tsx'), /collapseChrome && !drivingRef\.current/);
   // Body search field gone; magnifier toggles a local-match input.
   assert.doesNotMatch(screen, /label="Search"/);
   assert.match(screen, /query=\{searchQuery\}/);
@@ -243,6 +246,15 @@ test('DIARY-GEAR: Settings has Common / Journal / Ledger sections', () => {
   assert.ok(sheet.indexOf('Export CSV') > ledger, 'CSV under Ledger');
   assert.ok(sheet.indexOf('label="Tag"') > journal && sheet.indexOf('label="Tag"') < ledger);
   assert.ok(sheet.indexOf('label="Newest"') > common && sheet.indexOf('label="Newest"') < journal);
+  // Cancel in the title row (discards); Done at the bottom (applies).
+  const cancelAt = sheet.indexOf('label="Cancel"');
+  const doneAt = sheet.indexOf('<PrimaryButton label="Done"');
+  assert.ok(cancelAt > 0 && cancelAt < common, 'Cancel in title row');
+  assert.ok(doneAt > sheet.indexOf('</ScrollView>'), 'Done below the scroll body');
+  assert.match(sheet, /onRequestClose=\{onCancel\}/);
+  const screen = read('src/app/diary.tsx');
+  assert.match(screen, /onCancel=\{cancelSettings\}/);
+  assert.match(screen, /settingsSnapRef/);
 });
 
 test('diary glyph: locked C3 closed cover + spine + bottom forked ribbon (no table)', () => {

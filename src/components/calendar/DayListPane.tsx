@@ -82,6 +82,11 @@ type Props<T> = {
   renderItem?: (item: T) => ReactElement;
   /** Label under an empty day (default "No events"). */
   emptyLabel?: string;
+  /**
+   * false: list scroll never hides the app header / tray (Diary — keeps the pinned
+   * tab row still when a tab switch remounts the list). Default true (Calendar).
+   */
+  collapseChrome?: boolean;
   /** Day whose sticky header is pinned at the top; drives the drum center card. */
   onTopDayChange?: (day: string) => void;
   /**
@@ -146,6 +151,7 @@ export function DayListPane<T = CalendarItem>({
   matchesQuery,
   renderItem,
   emptyLabel = 'No events',
+  collapseChrome = true,
 }: Props<T>) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
@@ -380,7 +386,7 @@ export function DayListPane<T = CalendarItem>({
   /** CAL-LIST-FOLLOW: true while the drum drives the list (hold chrome + top-day reports). */
   const drivingRef = useRef(false);
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!drivingRef.current) chrome?.onScroll(event);
+    if (collapseChrome && !drivingRef.current) chrome?.onScroll(event);
     const lay = layoutRef.current;
     const y = event.nativeEvent.contentOffset.y;
     const idx = dayListTopIndexAt(lay.headerOffsets, y);
@@ -578,7 +584,7 @@ export function DayListPane<T = CalendarItem>({
         onScroll={scrollHandler}
         onScrollBeginDrag={(event) => {
           setJumpTarget(null);
-          chrome?.onScrollBeginDrag(event);
+          if (collapseChrome) chrome?.onScrollBeginDrag(event);
         }}
         contentContainerStyle={styles.scrollContent}
         accessibilityLabel="Day activity list"
