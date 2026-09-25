@@ -106,74 +106,71 @@ test('locked empty / twin / presence copy constants', () => {
   assert.match(DIARY_PRESENCE_HONESTY, /Presence marks never show other people/);
 });
 
-test('DB-B UI: JournalMonthGrid + RG-DROP; no CalendarItem on Journal path', () => {
+test('DIARY-CAL UI: Day drum + Day List replace month grid (CEO 2026-09-24)', () => {
   const screen = read('src/app/diary.tsx');
-  const grid = read('src/components/diary/JournalMonthGrid.tsx');
   const helpers = read('src/lib/diary/dayBrowse.ts');
 
-  assert.match(screen, /JournalMonthGrid/);
-  assert.match(screen, /selectedDay/);
-  assert.match(screen, /DIARY_EMPTY_DAY_COPY/);
+  // Month grid + helper copy gone from the screen; Calendar Day drum + Day List instead.
+  assert.doesNotMatch(screen, /JournalMonthGrid/);
+  assert.doesNotMatch(screen, /DIARY_PRESENCE_HONESTY/);
+  assert.doesNotMatch(screen, /\{DIARY_FERPA_NOTE\}<\/Text>/);
+  assert.match(screen, /<PeriodPager\s+kind="day"/);
+  assert.match(screen, /<DayListPane<DiaryEntryRow>/);
+  assert.match(screen, /<DayListPane<LedgerEventRow>/);
+  assert.match(screen, /renderItem=\{renderJournalItem\}/);
+  assert.match(screen, /renderItem=\{renderLedgerItem\}/);
+  assert.match(screen, /onTopDayChange=\{setSelectedDay\}/);
+  assert.match(screen, /drivePosition=\{listDrive\}/);
   assert.match(screen, /DIARY_TWIN_FAIL_CLOSED/);
-  assert.match(screen, /presenceByDay/);
-  assert.match(screen, /openNew\(draft\)|openNew\(\)/);
+  assert.match(screen, /openNew\(draft\)/);
   assert.match(screen, /setEntryDate\(prefill\?\.entry_date \?\? selectedDay\)/);
-  assert.match(screen, /journalMonthContaining\(selectedDay\)/);
-  assert.match(screen, /from:\s*month\.fromIso/);
-  assert.match(screen, /to:\s*month\.toIso/);
 
-  // RG-DROP: no primary Journal From/To state or Apply on Journal path
+  // RG-DROP: no primary Journal From/To state
   assert.doesNotMatch(screen, /journalFrom|setJournalFrom|journalTo|setJournalTo/);
-  assert.doesNotMatch(screen, /diaryFilterDate\(journalFrom\)/);
-  // Ledger keeps From/To + Apply
+  // Ledger From/To move to Settings; Done applies (no Apply filters tap).
   assert.match(screen, /ledgerFrom/);
-  assert.match(screen, /label=\"Apply filters\"/);
-  assert.match(screen, /label=\"From date \(YYYY-MM-DD\)\"/);
+  assert.doesNotMatch(screen, /Apply filters/);
+  assert.match(screen, /onDone=\{applySettings\}/);
+  const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
+  assert.match(sheet, /label=\"From date \(YYYY-MM-DD\)\"/);
+  assert.match(sheet, /label="Done"/);
+  assert.doesNotMatch(sheet, /Apply filters/);
 
-  // FW-FORK: no Calendar module imports on Journal path (comments may name the ban)
-  for (const src of [screen, grid, helpers]) {
-    assert.doesNotMatch(src, /from ['\"]@\/components\/calendar/);
-    assert.doesNotMatch(src, /from ['\"]@\/lib\/calendar/);
+  // Journal rows stay DiaryEntryRow (no CalendarItem / EventComposer on the Journal path).
+  for (const src of [screen, helpers]) {
     assert.doesNotMatch(src, /import\s*\{[^}]*\bCalendarItem\b/);
     assert.doesNotMatch(src, /import\s*\{[^}]*\broleTint\b/);
-    assert.doesNotMatch(src, /import\s*\{[^}]*\bDayColumn\b/);
     assert.doesNotMatch(src, /import\s*\{[^}]*\bCalendarsSheet\b/);
     assert.doesNotMatch(src, /import\s*\{[^}]*\bEventComposer\b/);
-    assert.doesNotMatch(src, /import\s+AgendaList\b/);
   }
-
-  // No DB-C view chips
   assert.doesNotMatch(screen, /label=\"Days\"|label=\"Week\"|label=\"Year\"/);
-  assert.match(grid, /accessibilityLabel=\"Today\"/);
-  assert.match(grid, /Previous month/);
-  assert.match(grid, /presenceMark/);
 });
 
 test('SEAT: student closed; ST-A tray IA unchanged (no fifth tray invent)', () => {
   const screen = read('src/app/diary.tsx');
   assert.match(screen, /Student seat has no Diary/);
   assert.match(screen, /canOpenDiary/);
-  assert.doesNotMatch(screen, /from ['"]@\/components\/calendar/);
 });
 
-test('layout B: phone month-above-tabs; web ≥720 split; month survives Ledger', () => {
+test('DIARY-CAL chrome: tabs pinned on top, then Today · + search gear, then drum', () => {
   assert.equal(DAYCHROME_WEB_SPLIT_MIN, 720);
   assert.equal(dayChromeLayout(390), 'phone-stack');
-  assert.equal(dayChromeLayout(719), 'phone-stack');
-  assert.equal(dayChromeLayout(720), 'web-split');
   assert.equal(dayChromeLayout(1280), 'web-split');
 
   const screen = read('src/app/diary.tsx');
-  assert.match(screen, /dayChromeLayout\(layout\.width\)/);
-  assert.match(screen, /dayChromeSplit/);
-  assert.match(screen, /!dayChromeSplit \? monthChrome/);
-  assert.match(screen, /journal-daychrome-web-split/);
-  // Shared month chrome for both segments (follow-active-tab)
-  assert.match(screen, /presenceMode=\{presenceMode\}/);
-  assert.match(screen, /presenceMode = segment === 'journal'/);
-  assert.match(screen, /ledgerPresenceByDay|ledgerPresenceCountByDay/);
-  // Month survives Ledger path
-  assert.match(screen, /segment === 'journal' \? journalStream : ledgerStream/);
+  const pinStart = screen.indexOf('const pinnedChrome');
+  const pin = screen.slice(pinStart, screen.indexOf('return (', pinStart));
+  const tabsAt = pin.indexOf('<PersonTabs');
+  const todayAt = pin.indexOf('label="Today"');
+  const drumAt = pin.indexOf('<PeriodPager');
+  assert.ok(tabsAt >= 0 && tabsAt < todayAt && todayAt < drumAt);
+  assert.match(pin, /name="plus"/);
+  assert.match(pin, /name="search"/);
+  assert.match(pin, /name="settings"/);
+  assert.match(screen, /pin=\{pinnedChrome\}/);
+  // Body search field gone; magnifier toggles a local-match input.
+  assert.doesNotMatch(screen, /label="Search"/);
+  assert.match(screen, /query=\{searchQuery\}/);
   // Shared selectedDay kept across tab switch (single state)
   assert.match(screen, /const \[selectedDay, setSelectedDay\]/);
   assert.equal(screen.split('setSelectedDay').length > 2, true);
@@ -203,7 +200,7 @@ test('follow-active-tab: Journal PR-BOTH dots; Ledger tick ≠ journal dot', () 
   assert.doesNotMatch(grid, /from ['"]@\/lib\/calendar\/roleTint|import\s*\{[^}]*\broleTint\b/);
 });
 
-test('ledger day filter: agenda anchors selectedDay; empty has no New entry', () => {
+test('ledger day filter helpers; + and swipe Delete are Journal-only', () => {
   const rows = [
     { id: 'a', created_at: '2026-09-16T10:00:00.000Z' },
     { id: 'b', created_at: '2026-09-19T10:00:00.000Z' },
@@ -216,22 +213,36 @@ test('ledger day filter: agenda anchors selectedDay; empty has no New entry', ()
     emptySel.slice(1).map((g) => g.day),
     ['2026-09-19', '2026-09-16'],
   );
+  assert.equal(DIARY_LEDGER_EMPTY_DAY_COPY, 'No ledger actions on this day.');
 
   const screen = read('src/app/diary.tsx');
-  assert.match(screen, /buildLedgerAgendaGroups/);
-  assert.match(screen, /DIARY_LEDGER_EMPTY_DAY_COPY/);
-  assert.equal(DIARY_LEDGER_EMPTY_DAY_COPY, 'No ledger actions on this day.');
-  // Ledger empty card must not offer New entry
-  const ledgerStreamStart = screen.indexOf('const ledgerStream');
-  const ledgerStream = screen.slice(ledgerStreamStart, screen.indexOf('return (', ledgerStreamStart));
-  assert.doesNotMatch(ledgerStream, /label="New entry"/);
-  // Journal empty still has New entry
-  const journalStreamStart = screen.indexOf('const journalStream');
-  const journalStream = screen.slice(journalStreamStart, ledgerStreamStart);
-  assert.match(journalStream, /label="New entry"/);
+  // No New entry button; + (Journal tab only) opens the composer.
+  assert.doesNotMatch(screen, /<PrimaryButton label="New entry"/);
+  assert.match(screen, /segment === 'journal' && !failClosedEmpty \? \(/);
+  // DIARY-SWIPE: Delete is a right-to-left swipe action on Journal rows, not a button.
+  assert.doesNotMatch(screen, /<GhostButton label="Delete"/);
+  const journalRow = screen.slice(
+    screen.indexOf('const renderJournalItem'),
+    screen.indexOf('const renderLedgerItem'),
+  );
+  assert.match(journalRow, /<SwipeActionCard/);
+  assert.match(journalRow, /label: 'Delete'/);
+  const ledgerRow = screen.slice(screen.indexOf('const renderLedgerItem'), screen.indexOf('const pinnedChrome'));
+  assert.doesNotMatch(ledgerRow, /Delete|SwipeActionCard/);
   // Teacher pointer never in month cells
   const grid = read('src/components/diary/JournalMonthGrid.tsx');
   assert.doesNotMatch(grid, /pointer|Student pointer|journalStudentId/);
+});
+
+test('DIARY-GEAR: Settings has Common / Journal / Ledger sections', () => {
+  const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
+  const common = sheet.indexOf("'Common'");
+  const journal = sheet.indexOf("'Journal'");
+  const ledger = sheet.indexOf("'Ledger'");
+  assert.ok(common > 0 && common < journal && journal < ledger, 'section order');
+  assert.ok(sheet.indexOf('Export CSV') > ledger, 'CSV under Ledger');
+  assert.ok(sheet.indexOf('label="Tag"') > journal && sheet.indexOf('label="Tag"') < ledger);
+  assert.ok(sheet.indexOf('label="Newest"') > common && sheet.indexOf('label="Newest"') < journal);
 });
 
 test('diary glyph: locked C3 closed cover + spine + bottom forked ribbon (no table)', () => {
