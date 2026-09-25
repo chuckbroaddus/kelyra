@@ -57,6 +57,8 @@ export type ProfileRow = {
   /** PEOPLE-DEACTIVATE: set when office "Delete" deactivated this person. */
   deactivated_at?: string | null;
   deactivated_by?: string | null;
+  /** PEOPLE-PURGE: set when office "Permanently delete" removed the login (name-only record). */
+  purged_at?: string | null;
 };
 
 export type AuditEventRow = {
@@ -1151,6 +1153,10 @@ export type Database = {
       };
       admin_set_person_active: {
         Args: { p_profile_id: string; p_active: boolean };
+        Returns: undefined;
+      };
+      admin_purge_person: {
+        Args: { p_profile_id: string };
         Returns: undefined;
       };
       set_capability_grant: {

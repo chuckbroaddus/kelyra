@@ -31,3 +31,20 @@ export function deactivatedStatus(handle: string): string {
 export function restoredStatus(handle: string): string {
   return `${handle} was restored and can sign in again.`;
 }
+
+export function isPurged(row: { purged_at?: string | null } | null | undefined): boolean {
+  return Boolean(row?.purged_at);
+}
+
+/** PEOPLE-PURGE: typed-name confirm. Their name stays on what they made (Chuck 2026-09-25). */
+export function purgeConfirmCopy(name: string) {
+  return {
+    title: `Permanently delete ${name}?`,
+    body: `${name}'s login and their links to classes, message threads, calendars, and duties are removed for good, along with their private journal and AI chats. Homework, grades, messages, and anything else they made stay, with their name on it.`,
+    confirmLabel: 'Permanently delete',
+  };
+}
+
+export function purgedStatus(name: string): string {
+  return `${name} was permanently deleted.`;
+}
