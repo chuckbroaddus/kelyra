@@ -48,6 +48,7 @@ import {
 } from '@/lib/school/createLoginValidation';
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { uploadProfilePhoto } from '@/lib/people/photos';
+import { prepareFramedPortrait } from '@/lib/people/framePortrait';
 import {
   createAccountErrorNotice,
   createdAccountNotice,
@@ -374,7 +375,9 @@ export function CreateLoginForm({
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   // NEW-PERSON-AVATAR: picked locally, uploaded after the login exists.
-  const [photo, setPhoto] = useState<{ uri: string; mimeType: string } | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; mimeType: string; framed?: boolean } | null>(null);
+  // AVATAR-PREVIEW: cutout + face-center runs right after the shot; Working K pops up meanwhile.
+  const [processingPhoto, setProcessingPhoto] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<CreateLoginErrors>({});
   const [status, setStatus] = useState<string | null>(null);
@@ -395,7 +398,25 @@ export function CreateLoginForm({
     try {
       await waitForModalDismiss();
       const picked = await pickNormalizedPhoto(fromCamera && !webCameraNeeded(fromCamera));
-      if (picked) setPhoto(picked);
+      if (!picked) return;
+      if (!profile) {
+        setPhoto(picked);
+        return;
+      }
+      setProcessingPhoto(true);
+      try {
+        const framed = await prepareFramedPortrait({
+          teacherId: profile.id,
+          uri: picked.uri,
+          mimeType: picked.mimeType,
+        });
+        setPhoto({ ...framed, framed: true });
+      } catch {
+        // Processing is offline: keep the raw shot; create still frames it on save.
+        setPhoto(picked);
+      } finally {
+        setProcessingPhoto(false);
+      }
     } catch (err) {
       fail(err instanceof Error ? err.message : 'Could not open photos');
     }
@@ -456,6 +477,7 @@ export function CreateLoginForm({
             personId,
             uri: photo.uri,
             mimeType: photo.mimeType,
+            preframed: photo.framed,
           });
         } catch {
           missed.push('the photo');
@@ -635,7 +657,7 @@ export function CreateLoginForm({
       {label('Notes', false)}
       <TextField dictationSafe multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
       <View style={styles.gap} />
-      <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy} onPress={() => void create()} />
+      <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy || processingPhoto} onPress={() => void create()} />
       <PhotoSheet
         visible={photoOpen}
         hasPhoto={Boolean(photo)}
@@ -647,7 +669,7 @@ export function CreateLoginForm({
         }}
         onCancel={() => setPhotoOpen(false)}
       />
-      <NoticePopup notice={notice} onDismiss={dismissNotice} working={busy ? 'Creating account…' : null} />
+      <NoticePopup notice={notice} onDismiss={dismissNotice} working={busy ? 'Creating account…' : processingPhoto ? 'Processing photo…' : null} />
     </>
   );
 }

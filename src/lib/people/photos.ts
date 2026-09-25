@@ -192,6 +192,8 @@ export async function uploadProfilePhoto(input: {
   uri: string;
   mimeType: string;
   imageUrl?: string | null;
+  /** AVATAR-PREVIEW: already cut out + centered (prepareFramedPortrait); skip reprocessing. */
+  preframed?: boolean;
 }): Promise<void> {
   // Face crop + background cutout. People records only — never group chat avatars.
   const framed = await uploadFramedProfilePhoto({
@@ -199,6 +201,7 @@ export async function uploadProfilePhoto(input: {
     uri: input.uri,
     mimeType: input.mimeType,
     imageUrl: input.imageUrl,
+    preframed: input.preframed,
   });
   await setProfilePhoto(input.kind, input.personId, framed.id);
 }
