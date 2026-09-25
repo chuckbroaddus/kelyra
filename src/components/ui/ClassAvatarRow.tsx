@@ -19,9 +19,11 @@ type Props = {
   klass: ClassRow;
   onChange: (next: ClassRow) => void;
   onError: (message: string | null) => void;
+  /** Office class card: no explainer status once a photo is set (Chuck 2026-09-25). */
+  quiet?: boolean;
 };
 
-export function ClassAvatarRow({ klass, onChange, onError }: Props) {
+export function ClassAvatarRow({ klass, onChange, onError, quiet = false }: Props) {
   const { teacher } = useAuth();
   const chrome = useChrome();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -106,7 +108,7 @@ export function ClassAvatarRow({ klass, onChange, onError }: Props) {
     <>
       <ListRow
         title="Class avatar"
-        status={busy ? 'Saving…' : hasPhoto ? 'Shown next to the class name' : 'None yet'}
+        status={busy ? 'Saving…' : hasPhoto ? (quiet ? undefined : 'Shown next to the class name') : 'None yet'}
         avatarName={klass.name}
         photoUrl={klass.avatarUrl}
         hasPhoto={hasPhoto}
