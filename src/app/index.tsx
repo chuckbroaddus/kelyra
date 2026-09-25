@@ -282,27 +282,23 @@ export default function HomeScreen() {
               {isAlsoParent(profile) ? (
                 <ListRow
                   title="My children"
-                  status="Progress for your own kids"
                   icon="children"
                   onPress={() => router.push('/parent')}
                 />
               ) : null}
               <ListRow
                 title="Dismissal curb"
-                status="Walk line, checkout, attach plate"
                 icon="ride"
                 onPress={() => router.push('/ride')}
               />
               <ListRow
                 title="Ride office"
-                status="Lines, restrictions, archive"
                 icon="manage"
                 onPress={() => router.push('/admin/ride')}
               />
               {canViewActivity ? (
                 <ListRow
                   title="Activity"
-                  status="Immutable change log"
                   icon="history"
                   onPress={() => router.push('/activity')}
                 />
@@ -310,7 +306,6 @@ export default function HomeScreen() {
               {canEditMatrix ? (
                 <ListRow
                   title="Responsibilities"
-                  status="Who may do what (UI chrome; server stays the hard gate)"
                   icon="details"
                   onPress={() => router.push('/admin/matrix')}
                 />
@@ -325,18 +320,15 @@ export default function HomeScreen() {
           {pane === 'classes' ? (
             <>
               {(() => {
-                const lead = empty
-                  ? showCreateClass
-                    ? 'Create a class on New, then assign a teacher.'
-                    : 'No classes yet. The office assigns the classes you teach.'
-                  : null;
+                const lead =
+                  empty && !showCreateClass ? 'No classes yet. The office assigns the classes you teach.' : null;
                 return lead ? (
                   <Text style={[styles.lead, { color: colors.mute }]}>{lead}</Text>
                 ) : null;
               })()}
               {empty ? (
                 <Text style={[type.meta, { color: colors.mute }]}>
-                  {showCreateClass ? 'Name a class on New.' : 'No classes yet.'}
+                  No classes yet.
                 </Text>
               ) : null}
               {sortClassesByName(classes ?? []).map((item) => {

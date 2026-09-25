@@ -76,9 +76,8 @@ export default function ActivityScreen() {
   return (
     <Screen maxWidth={720} keyboard>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 12 }]}>
-        Append-only. Nobody can edit or delete these rows — including the Superintendent.
         {rows
-          ? ` Showing ${visible.length}${visible.length !== rows.length ? ` of ${rows.length}` : ''} event${rows.length === 1 ? '' : 's'}${
+          ? `Showing ${visible.length}${visible.length !== rows.length ? ` of ${rows.length}` : ''} event${rows.length === 1 ? '' : 's'}${
               rows.length ? `, back to ${formatWhen(rows[rows.length - 1]!.created_at)}` : ''
             }.`
           : ''}

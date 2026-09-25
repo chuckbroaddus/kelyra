@@ -22,6 +22,7 @@ import {
   threadDisplayName,
   type ThreadPreview,
 } from '@/lib/messages/api';
+import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { formatHandle } from '@/lib/school/roles';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -206,9 +207,13 @@ export default function MessagesScreen() {
           {threads && visible.length === 0 ? (
             <Text style={[type.body, { color: colors.mute }]}>
               {threads.length === 0
-                ? 'No messages yet. Tap the compose icon to start one.'
+                ? isOfficeChromeRole(chrome.role)
+                  ? 'No messages yet.'
+                  : 'No messages yet. Tap the compose icon to start one.'
                 : favorites.length && !query.trim() && filter === 'all'
-                  ? 'Favorites are at the top. Unpin one to see it in the list again.'
+                  ? isOfficeChromeRole(chrome.role)
+                    ? ''
+                    : 'Favorites are at the top. Unpin one to see it in the list again.'
                   : 'No matches.'}
             </Text>
           ) : null}

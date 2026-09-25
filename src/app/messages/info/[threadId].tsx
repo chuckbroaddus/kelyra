@@ -281,7 +281,7 @@ export default function ThreadInfoScreen() {
       !((familyStudentId || familyLock) && profile && lockedMemberIds.has(profile.id)) ? (
         <DangerButton label="Leave group" onPress={() => setPending({ kind: 'leave' })} />
       ) : null}
-      {kind === 'group' && (familyStudentId || familyLock) ? (
+      {kind === 'group' && (familyStudentId || familyLock) && !admin ? (
         <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
           {familyLock
             ? 'Parents and students stay on this shared family chat and cannot be removed.'

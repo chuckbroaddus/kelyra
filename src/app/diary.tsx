@@ -66,6 +66,7 @@ import {
   DIARY_PRIVACY_BODY,
   DIARY_PRIVACY_TITLE,
 } from '@/lib/diary/privacy';
+import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { canOpenDiary, diarySeatForChrome } from '@/lib/diary/seat';
 import {
   fileToken,
@@ -1308,7 +1309,7 @@ export default function DiaryScreen() {
                       );
                     })}
                   </ScrollView>
-                ) : studentPointer ? (
+                ) : isOfficeChromeRole(chrome.role) ? null : studentPointer ? (
                   <Text style={[type.meta, { color: colors.mute }]}>
                     Student tagged — pick a class to change it, or Clear.
                   </Text>
@@ -1327,7 +1328,7 @@ export default function DiaryScreen() {
                   />
                 ) : null}
               </>
-            ) : (
+            ) : isOfficeChromeRole(chrome.role) ? null : (
               <Text style={[type.meta, { color: colors.mute }]}>
                 Tagging a student needs a class you teach. Teachers do not create classes from Diary.
               </Text>
