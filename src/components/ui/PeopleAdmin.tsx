@@ -6,6 +6,7 @@ import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
 import { PrimaryButton } from '@/components/ui/Button';
 import { HandleLink } from '@/components/ui/HandleLink';
+import { NoticePopup } from '@/components/ui/NoticePopup';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
 import { ResetPasswordSheet } from '@/components/ui/ResetPasswordSheet';
@@ -21,6 +22,11 @@ import {
   setAlsoParent as saveAlsoParent,
   type DirectoryPerson,
 } from '@/lib/school/api';
+import {
+  createAccountErrorNotice,
+  createdAccountNotice,
+  type CreateLoginNotice,
+} from '@/lib/school/createLoginNotice';
 import { canShowOfficeReset, peopleDirectoryPersonHref, RESET_PASSWORD_COPY } from '@/lib/school/resetPassword';
 import {
   canAlsoBeAdministrator,
@@ -209,20 +215,27 @@ export function CreateLoginForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // CREATE-ACCOUNT-POPUP: brief pop-up on success or failure (inline text stays for next steps).
+  const [notice, setNotice] = useState<CreateLoginNotice | null>(null);
+  const dismissNotice = useCallback(() => setNotice(null), []);
+  const fail = (reason: string) => {
+    setError(reason);
+    setNotice(createAccountErrorNotice(reason));
+  };
 
   const create = async () => {
     setError(null);
     setStatus(null);
     if (!displayName.trim() && !username.trim()) {
-      setError('Need a display name or @username.');
+      fail('Need a display name or @username.');
       return;
     }
     if (!email.includes('@') || !email.includes('.')) {
-      setError('Need a real email.');
+      fail('Need a real email.');
       return;
     }
     if (password.length < 6) {
-      setError('Temporary password must be at least 6 characters.');
+      fail('Temporary password must be at least 6 characters.');
       return;
     }
     setBusy(true);
@@ -238,6 +251,7 @@ export function CreateLoginForm({
         alsoAdministrator: canAlsoBeAdministrator(role) && alsoAdministrator,
         alsoTeacher: canAlsoBeTeacher(role) && alsoTeacher,
       });
+      setNotice(createdAccountNotice(displayName, username));
       setEmail('');
       setUsername('');
       setDisplayName('');
@@ -254,7 +268,7 @@ export function CreateLoginForm({
       );
       onCreated?.(role);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create account');
+      fail(err instanceof Error ? err.message : 'Could not create account');
     } finally {
       setBusy(false);
     }
@@ -321,6 +335,7 @@ export function CreateLoginForm({
       ) : null}
       <View style={styles.gap} />
       <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy} onPress={() => void create()} />
+      <NoticePopup notice={notice} onDismiss={dismissNotice} />
     </>
   );
 }
