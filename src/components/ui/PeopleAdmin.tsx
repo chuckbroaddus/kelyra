@@ -382,6 +382,7 @@ export function CreateLoginForm({
       ) : null}
       {label('Display name', true)}
       <TextField
+        dictationSafe
         placeholder="Display name"
         value={displayName}
         onChangeText={(value) => {
@@ -393,6 +394,7 @@ export function CreateLoginForm({
       <View style={styles.gap} />
       {label('Username', true)}
       <TextField
+        dictationSafe
         autoCapitalize="none"
         autoCorrect={false}
         placeholder="@username"
@@ -406,6 +408,7 @@ export function CreateLoginForm({
       <View style={styles.gap} />
       {label('Email', true)}
       <TextField
+        dictationSafe
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
@@ -420,6 +423,7 @@ export function CreateLoginForm({
       <View style={styles.gap} />
       {label('Temporary password', true)}
       <TextField
+        dictationSafe
         autoCapitalize="none"
         autoCorrect={false}
         placeholder="Temporary password"
@@ -479,13 +483,13 @@ export function CreateLoginForm({
       <View style={styles.gap} />
       <Text style={[type.meta, styles.optionalHead, { color: colors.mute }]}>Optional</Text>
       {label('Phone', false)}
-      <TextField keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
+      <TextField dictationSafe keyboardType="phone-pad" placeholder="Phone" value={phone} onChangeText={setPhone} />
       <View style={styles.gap} />
       {label('Address', false)}
-      <TextField placeholder="Address" value={address} onChangeText={setAddress} />
+      <TextField dictationSafe placeholder="Address" value={address} onChangeText={setAddress} />
       <View style={styles.gap} />
       {label('Notes', false)}
-      <TextField multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
+      <TextField dictationSafe multiline placeholder="Notes" value={notes} onChangeText={setNotes} />
       <View style={styles.gap} />
       <PrimaryButton label={busy ? 'Creating…' : 'Create account'} disabled={busy} onPress={() => void create()} />
       <PhotoSheet
