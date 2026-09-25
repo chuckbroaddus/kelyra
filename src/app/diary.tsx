@@ -1076,6 +1076,7 @@ export default function DiaryScreen() {
           setComposerOpen(false);
           setAttachMenuOpen(false);
           setLinkOpen(false);
+          setError(null);
           setDraft(null);
           setComposerPhotos([]);
           setStaged([]);
@@ -1340,6 +1341,8 @@ export default function DiaryScreen() {
           autoCapitalize="none"
         />
 
+        {/* JOURNAL-ATTACH: the screen's error line sits behind the sheet, so show failures here too. */}
+        {error ? <Text style={[type.meta, { color: colors.danger }]}>{error}</Text> : null}
         <PrimaryButton label={busy ? 'Saving…' : 'Done'} onPress={() => void saveEntry()} disabled={busy || recording} />
       </FormSheet>
 
