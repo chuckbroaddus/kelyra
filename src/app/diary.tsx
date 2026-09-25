@@ -385,9 +385,35 @@ export default function DiaryScreen() {
     setListJump((n) => n + 1);
   }
 
+  /** Snapshot when Settings opens so Cancel can discard edits. */
+  const settingsSnapRef = useRef<typeof filtersRef.current & { journalClassId: string | null } | null>(null);
+
+  function openSettings() {
+    settingsSnapRef.current = { ...filtersRef.current, journalClassId };
+    setSettingsOpen(true);
+  }
+
   function applySettings() {
+    settingsSnapRef.current = null;
     setSettingsOpen(false);
     setListReload((k) => k + 1);
+  }
+
+  function cancelSettings() {
+    const snap = settingsSnapRef.current;
+    settingsSnapRef.current = null;
+    setSettingsOpen(false);
+    if (!snap) return;
+    setSortOldest(snap.sortOldest);
+    setFocusedChildId(snap.focus);
+    setJournalTag(snap.journalTag);
+    setJournalClassId(snap.journalClassId);
+    setJournalStudentId(snap.journalStudentId);
+    setFamily(snap.family);
+    setLedgerFrom(snap.ledgerFrom);
+    setLedgerTo(snap.ledgerTo);
+    setLedgerClassId(snap.ledgerClassId);
+    setLedgerStudentId(snap.ledgerStudentId);
   }
 
   function openEdit(row: DiaryEntryRow) {
@@ -671,7 +697,7 @@ export default function DiaryScreen() {
               if (searchOpen) setSearchQuery('');
             }}
           />
-          <IconButton name="settings" label="Diary settings" onPress={() => setSettingsOpen(true)} />
+          <IconButton name="settings" label="Diary settings" onPress={openSettings} />
         </View>
       </View>
       {searchOpen ? (
@@ -737,6 +763,7 @@ export default function DiaryScreen() {
               [row.title ?? '', row.body, ...(row.tags ?? [])].some((t) => t.toLowerCase().includes(q))
             }
             renderItem={renderJournalItem}
+            collapseChrome={false}
             emptyLabel="No entries"
           />
         </View>
@@ -757,6 +784,7 @@ export default function DiaryScreen() {
             compareItems={compareLedger}
             matchesQuery={(row, q) => row.summary.toLowerCase().includes(q)}
             renderItem={renderLedgerItem}
+            collapseChrome={false}
             emptyLabel="No activity"
           />
         </View>
@@ -946,6 +974,7 @@ export default function DiaryScreen() {
       <DiarySettingsSheet
         visible={settingsOpen}
         onDone={applySettings}
+        onCancel={cancelSettings}
         sortOldest={sortOldest}
         onChangeSortOldest={setSortOldest}
         childOptions={
