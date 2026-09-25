@@ -503,7 +503,7 @@ export function CreateLoginForm({
         }}
         onCancel={() => setPhotoOpen(false)}
       />
-      <NoticePopup notice={notice} onDismiss={dismissNotice} />
+      <NoticePopup notice={notice} onDismiss={dismissNotice} working={busy ? 'Creating account…' : null} />
     </>
   );
 }
