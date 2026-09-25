@@ -132,7 +132,10 @@ test('DIARY-CAL UI: Day drum + Day List replace month grid (CEO 2026-09-24)', ()
   assert.doesNotMatch(screen, /Apply filters/);
   assert.match(screen, /onDone=\{applySettings\}/);
   const sheet = read('src/components/diary/DiarySettingsSheet.tsx');
-  assert.match(sheet, /label=\"From date \(YYYY-MM-DD\)\"/);
+  assert.match(sheet, /label="From date"/);
+  assert.match(sheet, /label="To date"/);
+  assert.match(sheet, /<DateInput/);
+  assert.doesNotMatch(sheet, /From date \(YYYY-MM-DD\)|To date \(YYYY-MM-DD\)/);
   assert.match(sheet, /label="Done"/);
   assert.doesNotMatch(sheet, /Apply filters/);
 
