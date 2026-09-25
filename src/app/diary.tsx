@@ -131,7 +131,6 @@ export default function DiaryScreen() {
   const { profile } = useAuth();
   const chrome = useChrome();
   const router = useRouter();
-  usePushedTitle('Diary');
 
   const seat = diarySeatForChrome({
     profile,
@@ -141,6 +140,8 @@ export default function DiaryScreen() {
   const teacherLike = seat === 'teacher' || seat === 'staff';
 
   const [segment, setSegment] = useState<Segment>('journal');
+  // Header title follows the tab (CEO 2026-09-24: Journal, not Diary).
+  usePushedTitle(segment === 'journal' ? 'Journal' : 'Ledger');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   /** DIARY-CAL: search lives behind the magnifier (local match, like Calendar). */
