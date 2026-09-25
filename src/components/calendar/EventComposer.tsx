@@ -438,7 +438,6 @@ export function EventComposer({
                             },
                           ]}
                         >
-                          <View style={[styles.calDot, { backgroundColor: tintColor }]} />
                           <Text style={[styles.calLabel, { color: colors.ink }]} numberOfLines={1}>
                             {target.label}
                           </Text>
@@ -627,7 +626,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 44,
   },
-  calDot: { width: 10, height: 10, borderRadius: 5 },
   calLabel: { ...type.meta, fontWeight: '600' },
   error: type.body,
 });
