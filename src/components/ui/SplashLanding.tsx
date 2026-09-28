@@ -41,6 +41,39 @@ export const splashOfficeFooter =
   "Account creation is performed by the school office. Please contact your school's administration for access.";
 
 /**
+ * Shipped still intrinsics + neon letter-box X offset from image center (source px).
+ * Y is cover-centered; do not chase the +4 px source Y (AC-SPLASH-CENTER-1).
+ */
+export const SPLASH_STILL_LETTERBOX = {
+  landscape: { width: 1920, height: 1080, offsetX: 18.5 },
+  portrait: { width: 1080, height: 1920, offsetX: 26.0 },
+} as const;
+
+/**
+ * Cover crop that parks the letter-box center on the viewport horizontal center
+ * (Sign in centerline). Bumps scale only when cover has no horizontal slack.
+ */
+export function splashStillCropLayout(
+  viewportWidth: number,
+  viewportHeight: number,
+  aspect: SplashAspectKey,
+): { width: number; height: number; left: number; top: number } {
+  const { width: iw, height: ih, offsetX: ox } = SPLASH_STILL_LETTERBOX[aspect];
+  let scale = Math.max(viewportWidth / iw, viewportHeight / ih);
+  const miss = ox * scale;
+  const halfOverflowX = Math.max(0, (iw * scale - viewportWidth) / 2);
+  if (halfOverflowX < miss) {
+    // Width-locked: ~2% on 16×9, ~5% on 9×16 — just enough to cover after the shift.
+    scale = Math.max(scale, viewportWidth / (iw - 2 * ox), viewportHeight / ih);
+  }
+  const width = iw * scale;
+  const height = ih * scale;
+  const left = viewportWidth / 2 - (iw / 2 + ox) * scale;
+  const top = (viewportHeight - height) / 2;
+  return { width, height, left, top };
+}
+
+/**
  * Crossfade the opaque Video off well before the clip’s dead end (black frames).
  * Logo hold is the CEO JPG underneath — never the last decoded video frame.
  */
@@ -134,6 +167,11 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const videoSourceKey = lockedVideoSourceKeyRef.current ?? sourceKey;
   const videoSource = splashSources[videoSourceKey];
   const stillSource = splashStillSources[sourceKey];
+  // Letter-box crop on the settled still — not a shared JPG-center anchor.
+  const stillCrop =
+    width > 0 && height > 0
+      ? splashStillCropLayout(width, height, sourceKey)
+      : null;
 
   const videoOpacity = useRef(new Animated.Value(startCompleted ? 0 : 1)).current;
   const ctaOpacity = useRef(new Animated.Value(startCompleted ? 1 : 0)).current;
@@ -457,13 +495,13 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
   return (
     <View style={styles.root} accessibilityLabel="Kelyra">
-      {/* CEO JPG still — ALWAYS mounted under video; absoluteFill cover (not a stale window box). */}
+      {/* CEO JPG still — ALWAYS mounted under video; cover crop parks letter-box on Sign in X. */}
       <Image
         source={stillSource}
         accessibilityLabel={hasCompletedSplash ? 'Kelyra' : undefined}
         accessible={hasCompletedSplash}
         resizeMode="cover"
-        style={styles.still}
+        style={stillCrop ? [styles.still, stillCrop] : styles.stillFallback}
       />
       {showVideo ? (
         <Pressable
@@ -620,6 +658,11 @@ const styles = StyleSheet.create({
     }),
   },
   still: {
+    position: 'absolute',
+    zIndex: 1,
+  },
+  /** Pre-measure fallback only — live crop uses splashStillCropLayout. */
+  stillFallback: {
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
