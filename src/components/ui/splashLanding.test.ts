@@ -107,13 +107,15 @@ test('CEO JPG still always under video; crossfade opacity then unmount (no black
   assert.match(splash, /zIndex:\s*1/);
   assert.match(splash, /zIndex:\s*2/);
   assert.match(splash, /zIndex:\s*3/);
-  // Full-bleed cover via absoluteFill + 100% of root (not a one-shot window box alone).
+  // Full-bleed cover via letter-box crop layout (not a one-shot window box alone).
   assert.doesNotMatch(splash, /mediaBox\s*=\s*\{\s*width,\s*height\s*\}/);
-  assert.match(splash, /style=\{styles\.still\}/);
+  assert.match(splash, /splashStillCropLayout/);
+  assert.match(splash, /stillCrop \? \[styles\.still, stillCrop\] : styles\.stillFallback/);
   assert.match(splash, /style=\{styles\.video\}/);
+  assert.match(splash, /still:\s*\{[\s\S]*?position:\s*'absolute'[\s\S]*?zIndex:\s*1/);
   assert.match(
     splash,
-    /still:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
+    /stillFallback:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFill[\s\S]*?width:\s*'100%'[\s\S]*?height:\s*'100%'/,
   );
   assert.match(
     splash,
@@ -672,6 +674,7 @@ test('web splash video uses HTML5 absolute fill + object-fit cover (not expo-av 
   assert.ok(existsSync(join(root, 'src/components/ui/SplashVideo.tsx')));
   assert.match(web, /createElement\('video'/);
   assert.match(web, /objectFit:\s*'cover'/);
+  // Playback crop stays center; settled still uses splashStillCropLayout (AC-SPLASH-CENTER-1).
   assert.match(web, /objectPosition:\s*'center'/);
   assert.match(web, /position:\s*'absolute'/);
   assert.match(web, /playsInline:\s*true/);
@@ -699,6 +702,82 @@ test('web splash video uses HTML5 absolute fill + object-fit cover (not expo-av 
   assert.match(native, /nativeControls=\{false\}/);
   assert.match(types, /SplashVideoHandle/);
   assert.match(types, /SplashPlaybackStatus/);
+});
+
+test('AC-SPLASH-CENTER-1: settled still letter-box sits on Sign in horizontal centerline', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+
+  // Keep cover; do not bless JPG-center objectPosition as a pass for the settled still.
+  assert.match(splash, /resizeMode="cover"/);
+  assert.doesNotMatch(splash, /objectPosition\s*:/);
+  assert.doesNotMatch(splash, /['"]object-position['"]/);
+  assert.match(splash, /export function splashStillCropLayout/);
+  assert.match(splash, /SPLASH_STILL_LETTERBOX/);
+  // Distinct letter-box anchors — not one shared percentage per still.
+  assert.match(splash, /landscape:\s*\{[^}]*offsetX:\s*18\.5/);
+  assert.match(splash, /portrait:\s*\{[^}]*offsetX:\s*26\.0/);
+  assert.match(splash, /viewportWidth \/ \(iw - 2 \* ox\)/);
+  assert.match(splash, /viewportWidth \/ 2 - \(iw \/ 2 \+ ox\) \* scale/);
+  assert.match(splash, /stillCrop \? \[styles\.still, stillCrop\] : styles\.stillFallback/);
+
+  const letterbox = {
+    landscape: { width: 1920, height: 1080, offsetX: 18.5 },
+    portrait: { width: 1080, height: 1920, offsetX: 26.0 },
+  } as const;
+
+  function crop(
+    viewportWidth: number,
+    viewportHeight: number,
+    aspect: keyof typeof letterbox,
+  ) {
+    const { width: iw, height: ih, offsetX: ox } = letterbox[aspect];
+    let scale = Math.max(viewportWidth / iw, viewportHeight / ih);
+    const miss = ox * scale;
+    const halfOverflowX = Math.max(0, (iw * scale - viewportWidth) / 2);
+    if (halfOverflowX < miss) {
+      scale = Math.max(scale, viewportWidth / (iw - 2 * ox), viewportHeight / ih);
+    }
+    const width = iw * scale;
+    const height = ih * scale;
+    const left = viewportWidth / 2 - (iw / 2 + ox) * scale;
+    const top = (viewportHeight - height) / 2;
+    return { width, height, left, top, scale, iw, ih, ox };
+  }
+
+  // Eight measured sizes from notes/company/splash-logo-center-measure.md.
+  const cases: Array<{ vw: number; vh: number; aspect: keyof typeof letterbox }> = [
+    { vw: 390, vh: 844, aspect: 'portrait' },
+    { vw: 430, vh: 932, aspect: 'portrait' },
+    { vw: 768, vh: 1024, aspect: 'portrait' },
+    { vw: 800, vh: 800, aspect: 'landscape' },
+    { vw: 1024, vh: 768, aspect: 'landscape' },
+    { vw: 1280, vh: 720, aspect: 'landscape' },
+    { vw: 1440, vh: 900, aspect: 'landscape' },
+    { vw: 1920, vh: 800, aspect: 'landscape' },
+  ];
+
+  for (const { vw, vh, aspect } of cases) {
+    const layout = crop(vw, vh, aspect);
+    const markX = layout.left + (layout.iw / 2 + layout.ox) * layout.scale;
+    const buttonX = vw / 2;
+    assert.ok(
+      Math.abs(markX - buttonX) < 0.01,
+      `${vw}×${vh} mark X ${markX} must equal Sign in centerline ${buttonX}`,
+    );
+    // Cover after shift: edges still fill the viewport.
+    assert.ok(layout.left <= 0.01, `${vw}×${vh} left must cover`);
+    assert.ok(layout.left + layout.width >= vw - 0.01, `${vw}×${vh} right must cover`);
+    assert.ok(layout.top <= 0.01, `${vw}×${vh} top must cover`);
+    assert.ok(layout.top + layout.height >= vh - 0.01, `${vw}×${vh} bottom must cover`);
+  }
+
+  // Width-locked sizes bump scale (~5% portrait, ~2% landscape); slack sizes do not.
+  const portraitLocked = crop(768, 1024, 'portrait');
+  const landscapeLocked = crop(1280, 720, 'landscape');
+  const portraitSlack = crop(390, 844, 'portrait');
+  assert.ok(portraitLocked.scale / (768 / 1080) > 1.04 && portraitLocked.scale / (768 / 1080) < 1.06);
+  assert.ok(landscapeLocked.scale / (1280 / 1920) > 1.015 && landscapeLocked.scale / (1280 / 1920) < 1.025);
+  assert.equal(portraitSlack.scale, 844 / 1920);
 });
 
 test('splash still JPGs are non-black CEO holds (JPEG magic + neon ink present)', () => {
