@@ -12,7 +12,7 @@ ARM behaves as **Human Resources for SuperGrok Premium credits**. CoS may set co
 | Rule | Value |
 |---|---|
 | Daily cap | **12% of weekly SuperGrok credit** per America/Chicago day |
-| Grok Bot daily cap | **14% of weekly Cursor sand** per Chicago day. Week resets **Saturday 15:51 CT** (`grok_bot_usage.json` `snapshot.resets_at`) |
+| Grok Bot daily cap | **14% of weekly Cursor sand** per Chicago day. Week resets **Thursday ~10:52 CT** (`grok_bot_usage.json` `snapshot.resets_at` wins). **Paced:** daily cap = min(14%, weekly remaining at day start ÷ Chicago days left incl. reset day) so the week lasts to Thursday (CEO 2026-09-28) |
 | Weekly reset | **Monday 01:38** America/Chicago (billing `currentPeriod.end` is SoT when present) |
 | Ready gate | CoS **asks ARM** (`--pool supergrok` and/or `--pool grok-bot`) before `ready`. DENY → sticky `needs_arm_grant:<pool>` (auto-retry on close, no poll) |
 | Collection | Snapshot + activity profile on team work, including **zero-delta** rows (API is whole-number percents) |
