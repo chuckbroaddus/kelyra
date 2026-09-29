@@ -59,20 +59,29 @@ test('student_classes returns avatar_photo_path from classes.avatar_asset_id', (
   assert.match(fn, /c_asset\.storage_path/);
 });
 
-test('client: Settings and office Teacher pane reuse ClassAvatarRow / PhotoSheet', () => {
+test('client: Settings and office Manage pane reuse ClassAvatarRow / PhotoSheet', () => {
   const settings = read('src/app/class/[id]/settings.tsx');
   const office = read('src/app/admin/class/[id].tsx');
   const row = read('src/components/ui/ClassAvatarRow.tsx');
   const api = read('src/lib/classes/avatar.ts');
   assert.match(settings, /<ClassAvatarRow /);
+  assert.match(office, /pane === 'manage'/);
   assert.match(office, /<ClassAvatarRow /);
+  const manageIdx = office.indexOf("pane === 'manage'");
+  const teacherIdx = office.indexOf("pane === 'teacher'");
+  const avatarIdx = office.indexOf('<ClassAvatarRow ');
+  assert.ok(manageIdx >= 0 && teacherIdx >= 0 && avatarIdx >= 0);
+  assert.ok(manageIdx < avatarIdx && avatarIdx < teacherIdx, 'office ClassAvatarRow is on Manage, not Teacher');
   assert.match(row, /<PhotoSheet/);
   assert.match(row, /title="Class avatar"/);
   assert.match(row, /pickAndSetClassAvatar/);
   assert.match(row, /setClassAvatar\(klass\.id, null\)/);
+  assert.match(row, /snapshotClassAvatarFromTeacher/);
+  assert.match(row, /teacherImages=\{quiet \? teacherImages : undefined\}/);
   assert.match(api, /\.rpc\(\s*'set_class_avatar'/);
   assert.match(api, /uploadTeacherAsset/);
   assert.match(api, /pickNormalizedPhoto/);
+  assert.match(api, /snapshotClassAvatarFromTeacher/);
 });
 
 test('class lists that already show a class circle pass avatarUrl', () => {

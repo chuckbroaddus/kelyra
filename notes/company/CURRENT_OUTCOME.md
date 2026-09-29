@@ -8,7 +8,7 @@
 
 ## What this period is
 
-Finish and prove the features already in the class app, in the order below. Put invited people on the stack that already exists only after Chuck accepts the beta page. Write down how the product can charge only as far as the money page goes. Keep every new or changed screen for his mock-up.
+Finish and prove the features already in the class app, in the order below. Put invited people on the stack that already exists only after Chuck accepts the beta page. Write down how the product can charge only as far as the money page goes. A changed screen follows Two speeds in `kelyra-company-os`.
 
 A trial school next week means invited accounts on the current project, using what already works, with the gaps written down. It does not mean a new domain, a store listing, a price, or a claim that Kelyra is a school's official record.
 
@@ -41,11 +41,11 @@ Rows marked `leave` or `wait-chuck` stay dark. The 295 blocked cards already on 
 | | | Price, who pays, and any Stripe product |
 | | | A public address, a store listing, or a FERPA "school official" claim |
 | A mergeable pull request, and the migration files inside it, while `RAPID_DEV.md` says `Status: on` | | Live SQL that is not part of a merged pull request |
-| | | Any screen whose look he has not approved |
+| | | A new look he has not described |
 
-Mock-up approval stays his. A screen that already matches a picture he approved can be proved and reported. A screen that needs a new look stops as a mock-up.
+Mock-up approval stays his. A screen that already matches a picture he approved can be proved and reported. A new look he has not described stops as a mock-up.
 
-Intent Quality Gate, design stamps, ARM grants, and the DevOps-only ship seat still apply to every row that is built.
+A prototype follows Two speeds in `kelyra-company-os`. Intent Quality Gate and design stamps apply when Chuck says the row is ready to prove or ship. ARM grants and the DevOps-only ship seat stay as that skill states them.
 
 ## Assessments that already stop
 

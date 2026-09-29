@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Office class Manage tab — options</title>
+<style>
+  body { margin: 0; background: #141311; color: #F4EFE6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.45; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 36px 0 8px; }
+  p, li { font-size: 14px; color: #D9D0C5; }
+  .meta { color: #B0A79C; font-size: 13px; }
+  .note { border: 1px solid #3D3832; background: #1E1C19; border-radius: 10px; padding: 12px 14px; margin: 14px 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .frame { background: #1E1C19; border: 1px solid #3D3832; border-radius: 12px; padding: 12px; }
+  .tag { color: #E07A3A; font-size: 12px; font-weight: 650; margin-bottom: 8px; }
+  .cap { color: #B0A79C; font-size: 12px; margin: 8px 0 0; }
+  .screen { background: #F7F3EC; color: #1A1612; border-radius: 16px; padding: 16px 16px 12px; box-sizing: border-box; }
+  .phone .screen { width: 390px; max-width: 100%; }
+  .web .screen { width: 640px; max-width: 100%; }
+  .cname { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+  .tabs { display: flex; gap: 4px; align-items: center; overflow-x: auto; padding: 6px 8px 8px 0;
+    border-bottom: 1px solid #E7E0D6; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .hit { width: 44px; height: 44px; border-radius: 22px; flex: none; display: flex; align-items: center;
+    justify-content: flex-start; padding: 0 11px; box-sizing: border-box; color: #6A635B; gap: 8px; }
+  .hit.on { width: auto; background: #F8E2D4; color: #B03E0E; }
+  .hit .lab { font-size: 14px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+  .g { width: 22px; height: 22px; flex: none; display: block; }
+  .sec { margin: 0 0 4px; font-size: 12px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: #6A635B; }
+  .row { min-height: 56px; display: flex; align-items: center; gap: 12px; }
+  .row + .row { border-top: 1px solid #E7E0D6; }
+  .av { width: 36px; height: 36px; border-radius: 18px; background: #EFE8DE; color: #6A635B;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 650; flex: none; }
+  .slot { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex: none; color: #1A1612; }
+  .t { font-size: 16px; line-height: 1.2; }
+  .st { font-size: 13px; color: #6A635B; }
+  .chev { margin-left: auto; color: #6A635B; font-size: 18px; }
+  .pill { margin-left: auto; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 10px; }
+  .wash { background: #EFE8DE; color: #1A1612; }
+  .brand { background: #B03E0E; color: #FFF8F3; }
+  .glyphbox { display: flex; gap: 16px; align-items: center; }
+  .glyphcard { background: #F7F3EC; color: #1A1612; border-radius: 12px; padding: 12px 14px; min-width: 140px; }
+  .glyphcard.off { opacity: 0.55; }
+  pre { background: #1E1C19; border: 1px solid #3D3832; border-radius: 10px; padding: 12px; overflow-x: auto;
+    font-size: 12px; line-height: 1.35; color: #F4EFE6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Office class Manage tab — options</h1>
+  <p class="meta">Option pack for Product Manager. No pick locked. Hats: superintendent and administrator on /admin/class/{id}. also_administrator uses this same card. Not a second screen. Light panes use the app light palette. Page chrome is dark so the panes read as the product. Note: notes/company/office-class-manage-tab-options.md</p>
+  <div class="note">
+    <p style="margin:0">Label is Manage. Icon is home <code>manage</code> (sliders). Not Settings. Not a new glyph. Opening the class still lands on Teacher. Manage holds only Class avatar (quiet) and Feed icon. Teacher keeps the teachers list and loses those two rows. Phone: five icons in the existing PersonTabs scroller. No overflow menu.</p>
+  </div>
+
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="manage" viewBox="0 0 24 24">
+      <line x1="3.2" y1="6.2" x2="20.8" y2="6.2" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      <circle cx="16.4" cy="6.2" r="1.7" fill="currentColor"/>
+      <line x1="3.2" y1="12" x2="20.8" y2="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      <circle cx="8.2" cy="12" r="1.7" fill="currentColor"/>
+      <line x1="3.2" y1="17.8" x2="20.8" y2="17.8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      <circle cx="13.4" cy="17.8" r="1.7" fill="currentColor"/>
+    </symbol>
+    <symbol id="feed" viewBox="0 0 24 24">
+      <rect x="2.6" y="2.8" width="18.8" height="12.2" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      <line x1="12" y1="15" x2="12" y2="19.2" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      <line x1="6.4" y1="20.4" x2="17.6" y2="20.4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="person" viewBox="0 0 24 24">
+      <circle cx="12" cy="8.2" r="3.1" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      <path d="M6.2 19.6c.9-3.8 3-5.4 5.8-5.4s4.9 1.6 5.8 5.4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="parents" viewBox="0 0 24 24">
+      <circle cx="7.4" cy="7.6" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="16.6" cy="7.6" r="2.3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M3.6 19.2c.6-3.2 2.2-4.6 3.8-4.6s3.2 1.4 3.8 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M12.8 19.2c.6-3.2 2.2-4.6 3.8-4.6s3.2 1.4 3.8 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="9.6" y1="14.2" x2="14.4" y2="14.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="setup" viewBox="0 0 24 24">
+      <circle cx="8.2" cy="8.4" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M3.8 18.8c.7-3.2 2.2-4.6 4.4-4.6s3.7 1.4 4.4 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="16.6" cy="9.6" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M13.2 18.8c.5-2.4 1.6-3.4 3.4-3.4s2.9 1 3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="gear" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      <path d="M12 3.2v2.6M12 18.2v2.6M3.2 12h2.6M18.2 12h2.6M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="school" viewBox="0 0 24 24">
+      <path d="M12 3.2 L20.2 8.2 H3.8 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="5.2" y="8.2" width="13.6" height="11.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="10.2" y="13.2" width="3.6" height="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="plus" viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      <line x1="5" y1="12" x2="19" y2="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+    </symbol>
+  </svg>
+
+  <h2>Glyph — Manage, not Settings</h2>
+  <div class="glyphbox">
+    <div class="glyphcard">
+      <svg class="g" style="color:#B03E0E"><use href="#manage"/></svg>
+      <div class="t" style="margin-top:6px">Manage</div>
+      <div class="st">Icon key manage. This tab.</div>
+    </div>
+    <div class="glyphcard off">
+      <svg class="g" style="color:#6A635B"><use href="#gear"/></svg>
+      <div class="t" style="margin-top:6px">Settings</div>
+      <div class="st">Teacher desk only. Not this tab.</div>
+    </div>
+  </div>
+  <p class="cap">Home Manage uses the sliders. The teacher desk keeps the gear at /class/{id}/settings. Do not rename that desk to Manage.</p>
+
+  <h2>Home, for comparison — not a class order</h2>
+  <p>schoolHomeTabs is Feed · Classes · People · Manage · New. Manage sits after People, before New. This class row has no Classes, People, or New. Neither option below copies that row. Both reuse the label and the glyph.</p>
+  <div class="frame" style="max-width:640px">
+    <div class="screen">
+      <div class="tabs" aria-label="Home tabs, Manage selected, not a class option">
+        <div class="hit" title="Feed"><svg class="g"><use href="#school"/></svg></div>
+        <div class="hit" title="Classes"><svg class="g"><use href="#feed"/></svg></div>
+        <div class="hit" title="People"><svg class="g"><use href="#person"/></svg></div>
+        <div class="hit on" title="Manage"><svg class="g"><use href="#manage"/></svg><span class="lab">Manage</span></div>
+        <div class="hit" title="New"><svg class="g"><use href="#plus"/></svg></div>
+      </div>
+      <p class="st" style="margin:10px 0 4px">School name, school feed icon, and the other home rows stay here. They are not on the class Manage pane.</p>
+    </div>
+  </div>
+
+  <h2>Before — Teacher holds the two rows</h2>
+  <p>Today. Not an option. Superintendent and administrator. Opens on Teacher. Class avatar and Feed icon sit above the teachers list.</p>
+  <div class="frame phone">
+    <div class="tag">Before · phone 390 · Teacher selected</div>
+    <div class="screen">
+      <div class="cname">Period 2 English</div>
+      <div class="tabs" aria-label="Before, Teacher selected">
+        <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+        <div class="hit on" title="Teacher"><svg class="g"><use href="#person"/></svg><span class="lab">Teacher</span></div>
+        <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+        <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+      </div>
+      <div class="row">
+        <div class="av">P2</div>
+        <div><div class="t">Class avatar</div><div class="st">None yet</div></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="row">
+        <div class="slot"><svg class="g"><use href="#feed"/></svg></div>
+        <div><div class="t">Feed icon</div><div class="st">Classroom</div></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="sec" style="margin-top:16px">Teachers</div>
+      <div class="row">
+        <div class="av">MC</div>
+        <div class="t">Ms. Chen</div>
+        <div class="pill wash">Remove</div>
+      </div>
+    </div>
+    <p class="cap">These two rows move. The teachers list stays on Teacher.</p>
+  </div>
+
+  <h2>After the move — Teacher pane, either order</h2>
+  <p>Opening the class still lands here. Class avatar and Feed icon are gone from this pane. Same pane on phone and on the 640 column.</p>
+  <div class="pair">
+    <div class="frame phone">
+      <div class="tag">After · phone 390 · opens on Teacher</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="After, Teacher selected, order not shown">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit on" title="Teacher"><svg class="g"><use href="#person"/></svg><span class="lab">Teacher</span></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+          <div class="hit" title="Manage"><svg class="g"><use href="#manage"/></svg></div>
+        </div>
+        <div class="sec">Teachers</div>
+        <div class="row">
+          <div class="av">MC</div>
+          <div class="t">Ms. Chen</div>
+          <div class="pill wash">Remove</div>
+        </div>
+        <div class="sec" style="margin-top:16px">All teachers</div>
+        <div class="row">
+          <div class="av">JH</div>
+          <div class="t">Jordan Hale</div>
+          <div class="pill brand">Add</div>
+        </div>
+      </div>
+      <p class="cap">No Class avatar. No Feed icon. Tab order in this frame is A so the fifth icon is visible. B uses the same pane.</p>
+    </div>
+    <div class="frame web">
+      <div class="tag">After · web column maxWidth 640 · opens on Teacher</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="After, web, Teacher selected">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit on" title="Teacher"><svg class="g"><use href="#person"/></svg><span class="lab">Teacher</span></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+          <div class="hit" title="Manage"><svg class="g"><use href="#manage"/></svg></div>
+        </div>
+        <div class="sec">Teachers</div>
+        <div class="row">
+          <div class="av">MC</div>
+          <div class="t">Ms. Chen</div>
+          <div class="pill wash">Remove</div>
+        </div>
+        <div class="sec" style="margin-top:16px">All teachers</div>
+        <div class="row">
+          <div class="av">JH</div>
+          <div class="t">Jordan Hale</div>
+          <div class="pill brand">Add</div>
+        </div>
+      </div>
+      <p class="cap">Same list. Wider column. Still no Class avatar. Still no Feed icon.</p>
+    </div>
+  </div>
+
+  <h2>A — Manage last</h2>
+  <p>Feed · Teacher · Parents · Students · Manage. Stance: quiet settings at the end, nearest to home (Manage after the working tabs; this row has no New). Not the open state. You tapped Manage.</p>
+  <div class="pair">
+    <div class="frame phone">
+      <div class="tag">A · phone 390 · Manage selected</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="A, Manage last, Manage selected">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit" title="Teacher"><svg class="g"><use href="#person"/></svg></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+          <div class="hit on" title="Manage"><svg class="g"><use href="#manage"/></svg><span class="lab">Manage</span></div>
+        </div>
+        <div class="row">
+          <div class="av">P2</div>
+          <div><div class="t">Class avatar</div><div class="st">None yet</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="row">
+          <div class="slot"><svg class="g"><use href="#feed"/></svg></div>
+          <div><div class="t">Feed icon</div><div class="st">Classroom</div></div>
+          <div class="chev">›</div>
+        </div>
+      </div>
+      <p class="cap">Five icons in the PersonTabs scroller. No overflow menu. Selected tab shows Manage. Others are icon-only. Pane is the two moved rows only.</p>
+    </div>
+    <div class="frame web">
+      <div class="tag">A · web column maxWidth 640 · Manage selected</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="A, web, Manage selected">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit" title="Teacher"><svg class="g"><use href="#person"/></svg></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+          <div class="hit on" title="Manage"><svg class="g"><use href="#manage"/></svg><span class="lab">Manage</span></div>
+        </div>
+        <div class="row">
+          <div class="av">P2</div>
+          <div><div class="t">Class avatar</div><div class="st">None yet</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="row">
+          <div class="slot"><svg class="g"><use href="#feed"/></svg></div>
+          <div><div class="t">Feed icon</div><div class="st">Classroom</div></div>
+          <div class="chev">›</div>
+        </div>
+      </div>
+      <p class="cap">Same two rows. Wider column. Still no school name, no school feed icon, no syllabus, no delete class.</p>
+    </div>
+  </div>
+
+  <h2>B — Manage after Teacher</h2>
+  <p>Feed · Teacher · Manage · Parents · Students. Stance: the rows move one tab right of the pane they leave. This is not home. Home puts Manage after People, not after the second tab.</p>
+  <div class="pair">
+    <div class="frame phone">
+      <div class="tag">B · phone 390 · opens on Teacher</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="B, opens on Teacher">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit on" title="Teacher"><svg class="g"><use href="#person"/></svg><span class="lab">Teacher</span></div>
+          <div class="hit" title="Manage"><svg class="g"><use href="#manage"/></svg></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+        </div>
+        <div class="sec">Teachers</div>
+        <div class="row">
+          <div class="av">MC</div>
+          <div class="t">Ms. Chen</div>
+          <div class="pill wash">Remove</div>
+        </div>
+      </div>
+      <p class="cap">Landing is still Teacher. Manage is the next icon, not the selected one. No Class avatar. No Feed icon.</p>
+    </div>
+    <div class="frame phone">
+      <div class="tag">B · phone 390 · Manage selected</div>
+      <div class="screen">
+        <div class="cname">Period 2 English</div>
+        <div class="tabs" aria-label="B, Manage after Teacher, Manage selected">
+          <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+          <div class="hit" title="Teacher"><svg class="g"><use href="#person"/></svg></div>
+          <div class="hit on" title="Manage"><svg class="g"><use href="#manage"/></svg><span class="lab">Manage</span></div>
+          <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+          <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+        </div>
+        <div class="row">
+          <div class="av">P2</div>
+          <div><div class="t">Class avatar</div><div class="st">None yet</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="row">
+          <div class="slot"><svg class="g"><use href="#feed"/></svg></div>
+          <div><div class="t">Feed icon</div><div class="st">Classroom</div></div>
+          <div class="chev">›</div>
+        </div>
+      </div>
+      <p class="cap">Same two rows as A. Order does not add a row. Scroller, not a menu.</p>
+    </div>
+  </div>
+  <div class="frame web" style="margin-top:16px">
+    <div class="tag">B · web column maxWidth 640 · Manage selected</div>
+    <div class="screen">
+      <div class="cname">Period 2 English</div>
+      <div class="tabs" aria-label="B, web, Manage selected">
+        <div class="hit" title="Feed"><svg class="g"><use href="#feed"/></svg></div>
+        <div class="hit" title="Teacher"><svg class="g"><use href="#person"/></svg></div>
+        <div class="hit on" title="Manage"><svg class="g"><use href="#manage"/></svg><span class="lab">Manage</span></div>
+        <div class="hit" title="Parents"><svg class="g"><use href="#parents"/></svg></div>
+        <div class="hit" title="Students"><svg class="g"><use href="#setup"/></svg></div>
+      </div>
+      <div class="row">
+        <div class="av">P2</div>
+        <div><div class="t">Class avatar</div><div class="st">None yet</div></div>
+        <div class="chev">›</div>
+      </div>
+      <div class="row">
+        <div class="slot"><svg class="g"><use href="#feed"/></svg></div>
+        <div><div class="t">Feed icon</div><div class="st">Classroom</div></div>
+        <div class="chev">›</div>
+      </div>
+    </div>
+    <p class="cap">Same pane on the wide column. Parents and Students stay icon-only to the right of Manage.</p>
+  </div>
+
+  <h2>Out</h2>
+  <ul>
+    <li>Teacher desk Settings keeps Class avatar and Feed icon. Label Settings. Gear, not sliders. Path /class/{id}/settings.</li>
+    <li>Parent and student class screens do not gain Manage.</li>
+    <li>also_administrator uses this card. Not a second screen.</li>
+    <li>Class avatar sheet is not redrawn. Card t_bec78653 moves with the row.</li>
+    <li>No school name, no school feed icon, no syllabus, no delete class on this pane.</li>
+  </ul>
+  <p class="meta">Recommendation only, not a lock: A, Manage last. The choice left for Product Manager is the tab order.</p>
+
+</main>
+</body>
+</html>

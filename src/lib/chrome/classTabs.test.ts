@@ -24,7 +24,7 @@ const DEFAULT_ORDER = [
   'settings',
 ] as const;
 
-const OFFICE_ORDER = ['feed', 'teacher', 'parents', 'students'] as const;
+const OFFICE_ORDER = ['feed', 'teacher', 'parents', 'students', 'manage'] as const;
 
 test('CT-01: CLASS_TABS default ≤8 ordered Today·Needs·Feed·Students·Assignments·Gradebook·Parents·Settings', () => {
   const keys = CLASS_TABS.map((tab) => tab.key);
@@ -47,15 +47,20 @@ test('CT-02/03/04: Week, Heatmap, Family not in default icon set', () => {
   assert.ok(!keys.has('syllabus'));
 });
 
-test('CT-05: OFFICE_CLASS_TABS freeze Feed·Teacher·Parents·Students', () => {
+test('CT-05: OFFICE_CLASS_TABS freeze Feed·Teacher·Parents·Students·Manage', () => {
   assert.deepEqual(
     OFFICE_CLASS_TABS.map((tab) => tab.key),
     [...OFFICE_ORDER],
   );
+  assert.equal(OFFICE_CLASS_TABS.find((tab) => tab.key === 'manage')?.label, 'Manage');
+  assert.equal(OFFICE_CLASS_TABS.find((tab) => tab.key === 'manage')?.icon, 'manage');
+  assert.equal(OFFICE_CLASS_TABS.at(-1)?.key, 'manage');
   const teacher = new Set(CLASS_TABS.map((tab) => tab.key));
   const office = new Set(OFFICE_CLASS_TABS.map((tab) => tab.key));
   assert.ok(office.has('teacher'));
+  assert.ok(office.has('manage'));
   assert.ok(!teacher.has('teacher'));
+  assert.ok(!teacher.has('manage'));
   assert.notDeepEqual([...teacher].sort(), [...office].sort());
 });
 

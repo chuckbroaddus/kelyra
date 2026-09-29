@@ -1,6 +1,7 @@
 # DITL-S-01 — Student assignments submit
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
+<!-- DITL-UPDATE t_0aafd388 2026-09-29: Stamp 6 header Open Capture; Capture camera non-goal superseded for this shutter; tray count unchanged -->
 
 | Field | Value |
 |-------|-------|
@@ -26,7 +27,7 @@ A student signs in, uses the 6-tab student tray, opens Assignments, completes an
 | # | Beat | Surface |
 |---|------|---------|
 | 1 | Sign in student | `/sign-in` |
-| 2 | Confirm tray 6: Assignments · Feeds · Classes · Grades · People · Ask | student tray |
+| 2 | Confirm tray 6: Assignments · Feeds · Classes · Grades · People · Ask. Tray count stays six. Do not add or remove a student tray tab. Header shutter is not a tray tab. | student tray |
 | 3 | Assignments Home To Do | `/todo` |
 | 4 | Open assigned set; answer items | `/todo` or assignment route |
 | 5 | Submit; confirm leaves To Do → Done path | `/todo` Done tab |
@@ -60,7 +61,7 @@ Student auth; tray; to-do/submit; class landing; feeds; people read.
 
 ## Explicit non-goals
 
-Capture camera; grade Approve; Ride tab; parent seat; editing roster.
+Capture camera as a header-dark non-goal is **superseded, kept**. Grade Approve stays out (turning homework in is not a grade). Ride tab; parent seat; editing roster; a Capture tray tab; changing the tray count. DITL-S-02 diary camera is a different sheet. Do not merge them.
 
 ## Dual path (UI + Ask) — refine 2026-09-10
 
@@ -79,7 +80,7 @@ Own work only; Done state; multi-class; sign-out ≠ leave class; Ask not solver
 
 ## Artifacts + DB assert (refine-2)
 
-Consumer of teacher-authored work: open assignments created under T-04 / F-ASSIGN (diverse subjects). After submit: `submissions.status` progressed/completed for **own** student_id only; no cross-class mash. Does not re-ingest photos.
+Consumer of teacher-authored work: open assignments created under T-04 / F-ASSIGN (diverse subjects). After submit: `submissions.status` progressed/completed for **own** student_id only; no cross-class mash. **Superseded, kept:** "Does not re-ingest photos" as a reason to keep the student header dark. Own homework for submission may use the header shutter. Turning it in is not a grade. Do not re-run teacher ingest.
 
 ## Teardown / cleanup (refine-2 2026-09-10)
 
@@ -124,8 +125,19 @@ SoT: `working-k-avatar-soft-v8b-verbatim-host.md` (+ `working-k-avatar-soft-inte
 
 SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` comments (R4/CR/R5/3DW/P6). Missing on-disk proveout/intent files noted in card complete comment.
 
+## Stamp 6 Capture (header)
+
+Card `t_0aafd388`. Lock: Stamp 6 in `notes/company/superintendent-capture-stamp.md`. PM lock: `notes/company/superintendent-capture-pm.md`. Not a new day. Not a case rewrite. Do not copy a dark student header.
+
+**Header this plan names.** The student seat shows one header shutter, spoken name Open Capture, except Messages and open Search. Not dark. Not a tray tab. Tray stays six: Assignments · Feeds · Classes · Grades · People · Ask. Do not add or remove a student tray tab. Do not change that count.
+
+**Seat list this plan owns.** Own face for the avatar, a linked parent's face for that parent's avatar, or own homework for submission. Turning it in is not a grade. A photo does not set a grade. Only the teacher sets a classwork grade. The leave is the same camera. Confirm again on that same linked parent replaces the avatar. A wrong face does not attach. Cancel before confirm is not that leave. Not another student. Not a new person. Not the office list. Not the school logo. A contact or emergency card with no field this seat can already change stays a refusal. Nothing is filed. The portrait stays in.
+
+**Not this sheet.** Capture camera is no longer a non-goal for this header shutter. DITL-S-02 diary camera is a different sheet. Do not merge them. Teach keeps today's teacher Capture. Do not add the office list to Teach.
+
 ## Changelog
 
 
+- **2026-09-29 (t_0aafd388):** Stamp 6 header Open Capture on the student seat. Capture-camera non-goal superseded for this shutter. Tray count stays six. S-02 diary camera not merged.
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways

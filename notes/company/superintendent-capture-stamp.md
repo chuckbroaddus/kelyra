@@ -8,7 +8,7 @@ Intent: notes/company/superintendent-capture-intent.md (t_50b07cb4)
 Options: notes/company/superintendent-capture-options.md (t_4bebb648)
 Author: qa-supervisor
 
-Current verdict: Stamp 4, below. Stamp 1 stays REJECTED. Stamp 2 stays APPROVED and is not the build lock. Stamp 3 stays REJECTED and is not the build lock. Do not copy Stamp 1, Stamp 2, or Stamp 3 onto the parent.
+Current verdict: Stamp 7, below. Stamp 1 stays REJECTED. Stamp 2 stays APPROVED and is not the build lock. Stamp 3 stays REJECTED and is not the build lock. Stamp 4 stays APPROVED and is not the build lock. Stamp 5 stays REJECTED and is not the build lock. Stamp 6 stays APPROVED and is not the build lock for this choice. Do not copy Stamp 1, Stamp 2, Stamp 3, Stamp 4, or Stamp 5 onto the parent. Do not copy Stamp 6's unlabeled office person-create forward.
 
 Verdict: REJECTED. Choice A stays the product choice. The lock is not safe to copy onto the parent until the parent-tray lines change.
 
@@ -400,6 +400,317 @@ DITL-T-01, DITL-T-02, and DITL-DH-01 keep today's homework Capture. Do not add t
 ## Stop
 
 Do not complete t_3bd86748. Do not implement. Do not start a build loop. Do not staff anyone. Do not clear the legal and security flag. Do not edit app code, docs/ui-design.md, or the PM lock. Engineering stays off until CoS copies this APPROVED stamp onto the parent, a Drive line is copied from the feature map, and a Chuck mock-up exists. This seat does not invent those.
+
+## Stamp 5
+
+Date: 2026-09-29
+Card: t_71e9785d
+Parent tracker: t_3bd86748 (do not complete that card)
+PM lock: notes/company/superintendent-capture-pm.md (office merge t_f5b99886). PM: APPROVED 2026-09-29 for this revision. This seat does not edit that file.
+Mock: notes/company/superintendent-capture-mockup.html. CEO pass 2026-09-29. This seat does not change the header or the jobs.
+Prior stamps: Stamp 1 (t_6f669883) stays REJECTED. Stamp 2 (t_aafe1d69) stays APPROVED and is not the build lock. Stamp 3 (t_54089753) stays REJECTED and is not the build lock. Stamp 4 (t_8b45af26) stays APPROVED and is not the build lock. Do not copy Stamp 4 forward. It still keeps the school logo superintendent-only, and it still refuses a linked parent's face on the student strip.
+
+Verdict: REJECTED. Superintendent and administrator have one list. Student, parent, and teacher match the CEO pass on the jobs. The lock is not safe to copy until a cross-person avatar has a leave that seat can already use. Do not split the office seats. Do not put a seat back in the dark. Do not drop the job.
+
+### DESIGN STAMP
+
+```
+DESIGN STAMP
+Feature/bug: Office Capture merge
+Quality goals: agree with the office-merge lists. Superintendent and administrator share one list. Student, parent, and teacher match the CEO pass on the jobs. A student confirm of a linked parent's face, and a parent confirm of a linked child's face, are not safe to copy until the leave is named. Header stays. No tray tab is added or removed. Photograph is not Approve. A photo does not set a grade.
+Surface: both
+Drive: missing from the feature map — do not invent
+Persona: office, teacher, parent, student
+Seat: the active seat
+Motion: none
+PM: APPROVED  date: 2026-09-29  profile-session: product-manager / t_f5b99886
+QA Supervisor: REJECTED  date: 2026-09-29  profile-session: qa-supervisor / t_71e9785d
+Intent gaps remaining: Those two confirms name Remove on that person's existing photo sheet. Those seats cannot open that sheet. File that must change: notes/company/superintendent-capture-pm.md.
+```
+
+## Answer
+
+Superintendent and administrator have one list. Yes. The mock Office row says they are the same. The office-merge fence, the hat table, AC-SC-4, AC-SC-17, AC-SC-25, and the closed list give both seats the same jobs and the same refusals. The school logo is on both. A confirmed create of a class, a roster, or a new person is on both. If one can do it, the other can. If one is refused, the other is refused. This seat does not reject to split them. Do not copy Stamp 4's superintendent-only logo forward. Do not copy an administrator who cannot create a person forward.
+
+Student matches the CEO pass on the jobs. Own face for the avatar. A linked parent's face for that parent's avatar. Own homework for submission. Turning it in is not a grade. Not another student. Not a grade. The student-card leave stays. A contact or emergency card with no field that seat can already change is a refusal. Nothing is filed. The portrait stays in. That leave is not this gap.
+
+Parent matches the CEO pass on the jobs. Own face and a linked child's face for avatars. That child's homework to turn in. That homework in Ask as co-educator. Own bio. Not another family. Extra work is not an official grade. Twins stay one child at a time. The mock says extra practice. The lock says gap assignments. That is the same Ask job, not a new strip name and not a new header label. Not the reject. Do not invent a Gap assignments control.
+
+Teacher matches the CEO pass. Anything they want, including classwork, except a photo used to create a class, a roster, or a new person. Only the teacher sets a classwork grade. The photo does not set it. Office may not send classwork to a teacher for grading. Office may not set a grade.
+
+Header matches. Existing capture icon, left of Search, spoken name Open Capture, not a tray tab. The mock does not add a tray tab. Do not add one. Do not remove one. Surface: both. Drive is missing from the feature map. This seat does not invent a Drive line.
+
+## Gap
+
+File that must change: `notes/company/superintendent-capture-pm.md`. Do not edit `docs/ui-design.md`. Do not edit the mock. Do not draw a screen. Do not split superintendent from administrator. Do not remove the student header shutter or the parent header shutter. Do not drop the linked-parent face or the linked-child face. CEO passed those jobs. This reject does not contradict that pass.
+
+Own face is in and has a leave. The student can already change their own face. The parent can already change their own face. `canEditProfile` is true when the actor is the target. That part is not the gap.
+
+The student story, AC-SC-14, AC-SC-22, and AC-SC-27 also let the student confirm a linked parent's face onto that parent's avatar. The parent story, AC-SC-22, and AC-SC-26 let the parent confirm a linked child's face onto that child's avatar. AC-SC-22 says the leave is Remove on that person's existing photo sheet, then attach to the right person that seat may already touch.
+
+That sheet is not a control those seats can already open. `canEditProfile` is true for self, for superintendent, or for administrator when the target is not protected staff. A student editing a parent is false. A parent editing a child is false. The parent photo sheet lives on the class parent page. The student photo sheet on a class page is not the parent seat. Parent routes do not open a child's photo sheet. Student routes do not open a parent's photo sheet. "That seat may already touch" does not name a control this seat found.
+
+AC-SC-19 is cancel or dismiss before confirm. That is not a leave after the avatar is filed. AC-SC-20 says a person who already has a photo does not change until they confirm. That does not say a later confirm on the same person is the leave. It does not undo a photo that landed on the other linked parent or the other linked child. No move control. The wrong person is not deleted.
+
+The lock must say one of these, in the PM file, without a new screen and without a new label:
+
+1. The same camera is the leave. Confirm again on that same linked person replaces the avatar. A face that is not the person they meant does not attach. Say that in the student story, the parent story, AC-SC-20, and AC-SC-22. Do not offer cancel-before-confirm as that leave.
+2. Or name the existing control the student can already use to Remove a linked parent's photo, and the existing control the parent can already use to Remove a linked child's photo. This seat did not find that control. Do not invent a photo sheet on the other person's page.
+
+This seat does not pick which. The office list stays one list. The jobs stay.
+
+## Not a reject reason
+
+- One office list. It matches the mock. Do not split it.
+- Student, parent, and teacher job lists. They match the CEO pass. The student-card leave stays.
+- Header. Existing capture icon, left of Search, spoken name Open Capture. Not a tray tab. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it.
+- Office create after confirm. Cancel before confirm files nothing. A wrong roster enroll uses the existing office swipe Remove. A confirmed new person is a person. A confirmed new class is a class. This icon does not delete them. The office seat can already reach Delete {first name} and Delete class. This seat does not reject to put Delete on the camera. Do not invent that control on the strip.
+- gap assignments versus extra practice. Same Ask job. The strip names homework into Ask, not a new button. Do not invent a Gap assignments control.
+- Drive. The feature map has no Open Capture line. This seat does not invent one. Engineering stays off until a Drive line is copied from that map.
+- Legal and security. Flagged. Not browsed. Not cleared. Not the reason for this reject. Counsel still must see the shared office list before build. That flag is not this gap.
+- Motion. None.
+- Parent card. Not completed. Do not complete t_3bd86748.
+
+## Prove-out
+
+Not written. Nothing is built. A prove-out OBJECTIVE waits for an APPROVED stamp. Do not execute tests. Do not staff qa-engineer. Do not copy Stamp 2 or Stamp 4 prove-out forward. Those objectives still split the office list, or they still refuse the linked-parent face.
+
+## DITL IMPACT
+
+```
+DITL IMPACT
+Change: Office Capture merge — Stamp 5 REJECTED. No user-visible change accepted.
+Verdict: NONE
+Plans touched: none
+Cases touched: none
+New DITL needed: no
+Seed/artifacts: none
+Notes: Do not file a new DITL-UPDATE from this reject. Do not rewrite the plans. Do not add or remove a tray tab. t_dc2e1120 stays stale. It encodes Stamp 2: parent and student stay dark, administrator stays dark, and administrator photo extract stays a gap. Do not unblock that card. Do not complete it. Do not copy those lines into the plans. Stamp 4's rows are not this build lock either. A later APPROVED stamp names the rows.
+```
+
+## Stop
+
+Do not complete t_3bd86748. Do not implement. Do not start a build loop. Do not staff anyone. Do not clear the legal and security flag. Do not edit app code, docs/ui-design.md, the mock, or the PM lock. CoS does not copy a REJECTED stamp onto the parent as APPROVED. PM names the cross-person avatar leave. This seat stamps again on a later card. Engineering stays off.
+
+## Stamp 6
+
+Date: 2026-09-29
+Card: t_2bbbd789
+Parent tracker: t_3bd86748 (do not complete that card)
+PM lock: notes/company/superintendent-capture-pm.md (cross-person avatar leave t_e90d2988). PM: APPROVED 2026-09-29 for that leave. Office merge t_f5b99886 stays PM: APPROVED. This seat does not edit that file.
+Mock: notes/company/superintendent-capture-mockup.html. CEO pass 2026-09-29 stands. That pass is not this stamp. This seat does not edit the mock.
+Prior stamps: Stamp 1 (t_6f669883) stays REJECTED. Stamp 2 (t_aafe1d69) stays APPROVED and is not the build lock. Stamp 3 (t_54089753) stays REJECTED and is not the build lock. Stamp 4 (t_8b45af26) stays APPROVED and is not the build lock. Stamp 5 (t_71e9785d) stays REJECTED and is not the build lock. Do not copy Stamp 4 or Stamp 5 forward. Stamp 4 still keeps the school logo superintendent-only, and it still refuses a linked parent's face on the student strip. Stamp 5 still says the leave is missing.
+
+Verdict: APPROVED. The leave is named. The student story, the parent story, AC-SC-20, and AC-SC-22 agree. Cancel before confirm is not offered as that leave. No new gap. Nothing is built.
+
+### DESIGN STAMP
+
+```
+DESIGN STAMP
+Feature/bug: Office Capture merge — cross-person avatar leave
+Quality goals: agree with the office-merge list, including the leave. Superintendent and administrator share one list. If one can do it, the other can. If one is refused, the other is refused. Student, parent, and teacher match the CEO pass on the jobs. After a student files a linked parent's face, and after a parent files a linked child's face, the same camera is the leave. Confirm again on that same linked person replaces the avatar. A face that is not the person they meant does not attach. Cancel before confirm is not that leave. Header stays. No tray tab is added or removed. Photograph is not Approve. A photo does not set a grade.
+Surface: both
+Drive: missing from the feature map — do not invent
+Persona: office, teacher, parent, student
+Seat: the active seat
+Motion: none
+PM: APPROVED  date: 2026-09-29  profile-session: product-manager / t_f5b99886
+Cross-person avatar leave: PM: APPROVED  date: 2026-09-29  profile-session: product-manager / t_e90d2988
+QA Supervisor: APPROVED  date: 2026-09-29  profile-session: qa-supervisor / t_2bbbd789
+Intent gaps remaining: none
+```
+
+## Agreement
+
+Read the student story, the parent story, AC-SC-20, and AC-SC-22 in notes/company/superintendent-capture-pm.md after t_e90d2988. They agree. Pick is option 1 from Stamp 5. This seat does not reopen the jobs. This seat does not split the office seats.
+
+Shared rule, in all four places: the same camera is the leave. Confirm again on that same linked person replaces the avatar. A face that is not the person they meant does not attach. Cancel before confirm is not that leave.
+
+The student story says that in the first person, for a linked parent. It does not offer cancel as the leave. The parent story says that in the first person, for a linked child. It does not offer cancel as the leave. AC-SC-20 names the same camera, the same replace, and the same non-attach. It says do not offer cancel-before-confirm as that leave. Those seats do not open that person's photo sheet for this leave. AC-SC-22 names the same four sentences. It says do not offer Remove on that person's photo sheet as that leave. Those seats cannot open that sheet.
+
+AC-SC-19 stays cancel or dismiss before confirm. That is the preview leave. It says that cancel is not the leave after a student has filed a linked parent's face, or after a parent has filed a linked child's face. The lock does not offer it as that leave.
+
+AC-SC-14, AC-SC-26, AC-SC-27, gap 8, and gap 10 say the same leave. They do not offer cancel as that leave. They do not invent a photo sheet on the other person's page. Office still uses Remove on a sheet that seat can already open. That office leave is not the student leave and not the parent leave.
+
+## Not a new gap
+
+No new control. No new screen. No new label. No new route. The jobs stay. A student may still file a linked parent's face. A parent may still file a linked child's face. Do not drop either job. Do not put a seat back in the dark. Superintendent and administrator stay one list. Do not split them.
+
+Clear-to-initials is not this leave. Stamp 5 option 1 is replace on the same camera. Do not invent Remove on the other person's photo sheet. The wrong person is not deleted. No move control. A face that is not the person they meant does not attach. The old avatar stays until a later confirm on that same linked person replaces it.
+
+Own face is not this gap. The student can already change their own face. The parent can already change their own face. That sheet stays. It is not the leave for the other linked person.
+
+The student-card leave stays. A contact or emergency card with no field that seat can already change is a refusal. Nothing is filed. The portrait stays in. That leave is not this gap. Do not reopen it.
+
+Header stays. Existing capture icon, left of Search, spoken name Open Capture. Not a tray tab. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it.
+
+Drive is still missing. The feature map has no Open Capture line. This seat does not invent one. Engineering stays off until a Drive line is copied from that map.
+
+Legal and security stay flagged. Not browsed. Not cleared. Not a reason to reject the leave. Counsel still must see the shared office list before build. That flag is not this gap.
+
+Motion: none. CEO pass on the mock stands. That pass is not this stamp. Parent card is not completed. Do not complete t_3bd86748.
+
+## Prove-out
+
+Not executed. Nothing is built. Do not staff qa-engineer from this seat. Chief of Staff staffs that card after build, from the OBJECTIVE below. This seat does not grade screenshots. Do not copy Stamp 2 or Stamp 4 prove-out forward. Those objectives still split the office list, or they still refuse the linked-parent face. Stamp 5 has no prove-out. Do not write one from that reject.
+
+```
+PROVE-OUT OBJECTIVE:
+Prove the office Capture merge, including the cross-person avatar leave, against notes/company/superintendent-capture-pm.md and Stamp 6 in notes/company/superintendent-capture-stamp.md. Run this only after implementation. Experience-first: sign in and look. Do not pass on code inspection alone. Verify the acceptance ids below. Do not invent a Drive line. The feature map has no Open Capture line. A screen check that needs Drive waits until that line is copied from the map. This seat does not invent the route or the control.
+
+Full featured means every signed-in account can start from one header shutter, accessibility name Open Capture, route /capture. The tap does not file. Confirm is not Approve, not a score, and not a grade. A photo does not set a grade. One seat shows one shutter. No tray tab is added or removed. Superintendent and administrator share one list. Do not ship a split.
+
+Hats and chrome. AC-SC-1, AC-SC-5, AC-SC-6, AC-SC-7, AC-SC-8, AC-SC-9, AC-SC-10, AC-SC-11, AC-SC-23, AC-SC-28.
+Superintendent office seat, not on Messages, Search closed, not on My children: the camera sits immediately left of Search, name Open Capture. Administrator office seat, same show rules: the same camera and the same list. Teach seat: header camera, name Open Capture. The teacher may confirm anything they photograph, including classwork, except a photo used to create a new class, a class roster, or a new person. Those three are refusals. Nothing is filed for them. Not a second icon. Parent seat, including parent-only: parent shutter, except on Messages and while Search is open. Student seat: student shutter, same hides. No tray shows a Capture tab. Do not add a tray tab. Do not remove a tray tab. Do not grade Calendar. Leave Calendar where DITL-P-01 already put it. Dual-hat: one shutter, the active seat. The shutter that was showing unmounts before the next seat paints. Office and Teach never show both. Parent does not show the office list. Phone and web: same icon rules, same label, same list for that seat.
+
+Office list. AC-SC-2, AC-SC-3, AC-SC-4, AC-SC-12, AC-SC-16, AC-SC-17, AC-SC-18, AC-SC-24, AC-SC-25, AC-SC-30.
+Both office seats: the strip may name the school logo, a contact card, one class list, a face for someone new, a face for someone already at the school, or a photo used to create a class, a roster, or a new person. Confirm, not a silent insert. It does not name classwork to send to a teacher for grading. It does not name a grade. If one office seat can do it, the other can. If one is refused, the other is refused. A handbook, a policy, or minutes is a refusal on every seat. Parent and student do not get the office create jobs, the office class list, or the school logo.
+
+Parent and student jobs. AC-SC-14, AC-SC-15, AC-SC-26, AC-SC-27, AC-SC-29.
+Parent strip names only their own face, a linked child's face, that child's homework for submission, that child's homework into Ask, or their own bio. Not another family. Twins stay one child at a time. Ask is co-educator with the teacher. Extra work is not an official gradebook grade. It does not complete the parent card. Student strip names their own face for the avatar, a linked parent's face for that parent's avatar, or their own homework for submission. Turning it in is not a grade. It does not name another student, a grade, or a new person. A contact or emergency card that has no field the student can already change is a refusal. Nothing is filed. The portrait stays in. The student confirm strip drops keys that seat cannot already change, including phone, email, address, emergency_name, and emergency_phone. Do not treat those five names as a closed list that lets other hidden keys through.
+
+Cross-person avatar leave. AC-SC-20 and AC-SC-22. This is the Stamp 5 gap. It is closed only if these hold.
+After a student files a linked parent's face, that student cannot open that parent's photo sheet. The same camera is the leave. Confirm again on that same linked parent replaces the avatar. A face that is not the person they meant does not attach. Cancel before confirm is not that leave. Do not offer Remove on that sheet as the leave. After a parent files a linked child's face, that parent cannot open that child's photo sheet. The same camera is the leave. Confirm again on that same linked child replaces the avatar. A face that is not the person they meant does not attach. Cancel before confirm is not that leave. Do not offer Remove on that sheet as the leave. The old avatar stays until that later confirm. The wrong person is not deleted. No move control. No new screen. No new label. Office, a face on the wrong person: Remove on that person's existing photo sheet, then attach to the right person that seat may already touch. Do not use that office leave as the student leave or the parent leave.
+
+Multiplicity. AC-SC-13, AC-SC-18, AC-SC-29.
+Office: empty guess, low confidence, or two matches means pick existing people at this school, or confirm someone new. That confirm is not a silent insert. Each row says student, parent, or staff. No new picker screen. Parent pick lists only this parent and children already linked. Twins: one child at a time. A person outside that set is a stop. Student pick is themselves, or a linked parent for that parent's avatar. A classmate is a stop. Another parent who is not linked is a stop. A sheet that spans classes, office only: pick one class or leave. Do not split the sheet. One shutter is one photo.
+
+Reverse. AC-SC-19, AC-SC-20, AC-SC-21, AC-SC-22.
+Cancel or dismiss before confirm: back where they were. Nothing is inserted. No grade. No parked paper. That is the preview leave. It is not the leave after a linked parent's face is filed, and it is not the leave after a linked child's face is filed. Fail if that avatar is filed and cancel-before-confirm is offered as the undo. A person, class, or logo that already has a photo does not change until confirm. Remove photo is the existing danger control on a sheet that seat can already open. The person stays. The circle falls back to initials. A wrong enroll after roster confirm is undone with the existing office swipe Remove on class Students. That person is not deleted. This camera does not show Remove.
+
+Fail if any of these appear: a seat with no header shutter when the show rules pass; a split office list; the school logo refused on administrator; a confirmed create refused on one office seat and allowed on the other; a tray tab added or removed, including a Capture tab or a deleted Calendar tab; Approve, a score, or a grade set by this photo; a student or parent sent to the other person's photo sheet as the leave; cancel-before-confirm offered as that leave; the linked-parent face or the linked-child face dropped; a new screen, label, or route invented as that leave; a student confirm that writes a key that seat cannot already change; IEP or 504 extracted into fields. The legal and security flag is not cleared by this prove-out.
+
+Surface: both. Persona: office, teacher, parent, student. Seat: the active seat. Motion: none.
+Do not complete t_3bd86748 from the prove-out card. Do not treat a missing Drive line as a pass. Do not rewrite DITL plans from the prove-out card. Do not copy Stamp 2, Stamp 4, or Stamp 5 forward.
+```
+
+## DITL IMPACT
+
+```
+DITL IMPACT
+Change: Office Capture merge — Stamp 6 APPROVED. Every signed-in seat would keep one header shutter for that seat's list. Superintendent and administrator would share one list, including the school logo and a confirmed create. After a student files a linked parent's face, and after a parent files a linked child's face, the same camera is the leave. Confirm again on that same linked person replaces the avatar. A face that is not the person they meant does not attach. Cancel before confirm is not that leave. No tray tab is added or removed. Nothing is built on this card.
+Verdict: UPDATE_PLANS
+Plans touched: DITL-O-07, DITL-O-01, DITL-DH-02, DITL-P-01, DITL-S-01
+Cases touched: DITL-P-01 (expects no camera), DITL-O-07 (expects photo-extract GAP)
+New DITL needed: no
+Seed/artifacts: none
+Notes: Do not rewrite the plans from this card. Do not add or remove a tray tab. CoS files DITL-UPDATE. Chuck unblocks before any rewrite. This seat does not staff that card.
+t_dc2e1120 stays stale. It encodes Stamp 2: parent and student stay dark, administrator stays dark, and administrator photo extract stays a gap. Do not unblock that card. Do not complete it. Do not copy those lines into the plans. Stamp 4's rows are not this build lock either. They still keep the school logo superintendent-only, and they still refuse a linked parent's face.
+DITL-O-07 still says office photo extract is a gap because there is no office Capture tray. After an approved ship, a contact card on either office seat would no longer be that gap. Do not copy "administrator stays a gap." DITL-O-07-UI-01 and DITL-O-07-UI-02 stay the manual preferred-name path. Do not rewrite them on this card. Do not add a Capture tray tab.
+DITL-O-01 does not say either office seat shows Open Capture. Beat 7 is still super-only for school name and logo. After an approved ship, both office seats would show Open Capture except Messages, open Search, and My children. The Capture list does not split. Do not keep the school logo superintendent-only on that strip. This stamp does not edit docs/data-model.md.
+DITL-DH-02 beat 8 still says Home·Ride·Ask only. That 3-tab line is not this icon. After an approved ship the parent seat would show the parent shutter. My children, office chrome still up, stays hidden. Do not use the update to add or remove a parent tray tab. Calendar stays where DITL-P-01 put it.
+DITL-P-01 beat 2 says four tabs and no camera. After an approved ship the tray stays four, including Calendar, and the header would show Open Capture except Messages and open Search. The linked-child face leave is part of that shutter, not a new day. Do not read "no camera" as a reason to delete Calendar or to keep the header dark. The DITL-P-01 cases that expect no camera follow that plan rewrite. Do not rewrite them on this card.
+DITL-S-01 lists Capture camera as a non-goal. After an approved ship that line would be stale for a header shutter on the student seat, including a linked parent's face and own homework for submission. Turning it in is not a grade. The leave is the same camera, not a new day. Do not add or remove a student tray tab. Do not use this update to change the tray count the plan already has. DITL-S-02 diary camera is a different sheet. Do not merge them.
+DITL-T-01, DITL-T-02, and DITL-DH-01 keep today's teacher Capture. Do not add the office list to Teach. Do not add or remove a tray tab. The three create refusals are a confirm-strip check, not a new day.
+```
+
+## Stop
+
+Do not complete t_3bd86748. Do not implement. Do not start a build loop. Do not staff anyone. Do not clear the legal and security flag. Do not edit app code, docs/ui-design.md, the mock, or the PM lock. Engineering stays off until CoS copies this APPROVED stamp onto the parent and a Drive line is copied from the feature map. This seat does not invent those. CEO pass is not this stamp.
+
+## Stamp 7
+
+Date: 2026-09-29
+Card: t_d488e911
+Parent tracker: t_3bd86748 (do not complete that card)
+PM lock: notes/company/superintendent-capture-pm.md (person-photo choice t_9eb82afb). PM: APPROVED 2026-09-29 for that choice. This seat does not edit that file.
+Mock: notes/company/superintendent-capture-mockup.html. CEO pass 2026-09-29 stands. That pass is not this stamp. This seat does not edit the mock.
+Drive source: .grok/skills/verify-kelyra/features/open-capture.md. The office line is copied. This seat does not invent a second control name.
+Prior stamps: Stamp 1 (t_6f669883) stays REJECTED. Stamp 2 (t_aafe1d69) stays APPROVED and is not the build lock. Stamp 3 (t_54089753) stays REJECTED and is not the build lock. Stamp 4 (t_8b45af26) stays APPROVED and is not the build lock. Stamp 5 (t_71e9785d) stays REJECTED and is not the build lock. Stamp 6 (t_2bbbd789) stays APPROVED and is not the build lock for this choice. Do not copy Stamp 6's unlabeled office person-create forward. Do not delete earlier stamps.
+
+Verdict: APPROVED. An office person photo waits for the two-way choice. It does not attach and does not create until they choose. Teacher, parent, and student are refused choice 2. They do not see that choice. The choice is named. No new gap. Nothing is built.
+
+### DESIGN STAMP
+
+```
+DESIGN STAMP
+Feature/bug: Person photo must choose avatar or new person
+Quality goals: agree with the person-photo choice. A photo of a person on an office seat does not attach and does not create until they choose. Choice 1 is avatar on a person who already exists. Choice 2 is create a new person and use this photo as that person's avatar. Not a silent insert. Cancel before the choice files nothing. A face that is not the person they meant does not attach to an existing person. Superintendent and administrator share that choice. If one sees it, the other sees it. Teacher, parent, and student do not get choice 2 and do not see that choice. A photo used to create a class or a roster still waits for confirm and is not this choice. Header stays. No tray tab is added or removed. Photograph is not Approve. A photo does not set a grade. Legal flag stays. Security flag stays.
+Surface: both
+Drive: / click=[aria-label=Open Capture]
+Persona: office
+Seat: the active seat
+Motion: none
+PM: APPROVED  date: 2026-09-29  profile-session: product-manager / t_9eb82afb
+QA Supervisor: APPROVED  date: 2026-09-29  profile-session: qa-supervisor / t_d488e911
+Intent gaps remaining: none
+```
+
+## Agreement
+
+Read the person-photo fence, the office list, the office story, the administrator story, the teacher story, the parent story, the student story, the hat table, the closed list, quality goals 1, 2, 5, 6, and 7, and AC-SC-4, AC-SC-7, AC-SC-12, AC-SC-13, AC-SC-14, AC-SC-25, AC-SC-26, AC-SC-27, and AC-SC-31 in notes/company/superintendent-capture-pm.md after t_9eb82afb. They agree. This seat does not reopen the other jobs. This seat does not split the office seats. This seat does not give teacher, parent, or student a new-person create.
+
+Office answer: yes. A photo of a person on an office seat waits for the two-way choice. It does not attach and does not create until they choose. Choice 1 is avatar on a person who already exists. Choice 2 is create a new person and use this photo as that person's avatar. Not a silent insert. Cancel before the choice files nothing. A face that is not the person they meant does not attach to an existing person. Superintendent and administrator share that choice. If one sees it, the other sees it.
+
+Other seats: yes, refused. Teacher, parent, and student do not see that choice. They do not get choice 2. The teacher story, the parent story, the student story, AC-SC-7, AC-SC-26, AC-SC-27, and AC-SC-31 say that. Create-a-new-person stays office only. That is not an open assumption. The lock and this card name the same refusal.
+
+The unlabeled office confirm that creates a person is superseded. Do not copy it forward. A class or a roster still waits for confirm. That confirm is not this choice. The cross-person avatar leave stays. The student-card leave stays. Those are not this gap.
+
+## Not a new gap
+
+No new control. No new screen. No new label. No new route. No second control name. Header stays. Existing capture icon, left of Search, spoken name Open Capture. Not a tray tab. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it.
+
+Choice 2 does not name a login. The lock does not say this choice creates a login. That is not a gap and not a new screen. Do not invent a kind picker. Do not invent a label. Each existing row still says student, parent, or staff. That row label is already in the lock. It is not a new control.
+
+Drive is copied from .grok/skills/verify-kelyra/features/open-capture.md. Office line: `/ click=[aria-label=Open Capture]`. Teacher uses the same click on `/`. Parent uses the same click on `/parent`. Student uses the same click on `/todo`. Those routes are already in that file. This seat does not invent a second control name. Persona on this stamp is office. Seat is the active seat. Motion is none.
+
+Legal and security stay flagged. Not browsed. Not cleared. Not a reason to reject this choice. Counsel still must see this choice before build. That flag is not this gap. Do not clear either flag.
+
+A photo does not set a grade. Photograph is not Approve. Parent card is not completed. Do not complete t_3bd86748. CEO pass on the mock stands. That pass is not this stamp. Nothing is built.
+
+## Prove-out
+
+Not executed. Nothing is built. Do not staff qa-engineer from this seat. Chief of Staff staffs that card after build, from the OBJECTIVE below. This seat does not grade screenshots. Do not copy Stamp 6's unlabeled office person-create forward. Do not copy Stamp 2 or Stamp 4 prove-out forward. Stamp 5 has no prove-out. Do not write one from that reject.
+
+```
+PROVE-OUT OBJECTIVE:
+Prove the office person-photo choice against notes/company/superintendent-capture-pm.md and Stamp 7 in notes/company/superintendent-capture-stamp.md. Run this only after implementation. Experience-first: sign in and look. Do not pass on code inspection alone. Verify the acceptance ids below. Drive is copied from .grok/skills/verify-kelyra/features/open-capture.md. Do not invent a second control name. Do not invent a screen or a label.
+
+Full featured for this choice means an office person photo waits. It does not attach and does not create until they choose. Choice 1 is avatar on a person who already exists. Choice 2 is create a new person and use this photo as that person's avatar. Not a silent insert. Cancel before the choice files nothing. A face that is not the person they meant does not attach to an existing person. Teacher, parent, and student do not see that choice. They do not get choice 2. Superintendent and administrator share it. If one sees it, the other sees it. Header stays. No tray tab is added or removed. A photo does not set a grade. The other jobs stay. Do not reopen them. Do not ship an unlabeled office confirm that creates a person.
+
+Chrome. AC-SC-1, AC-SC-2, AC-SC-6, AC-SC-23.
+Office, superintendent or administrator, not on Messages, Search closed, not on My children: one header shutter, accessibility name Open Capture, immediately left of Search. Drive: / click=[aria-label=Open Capture]. The tap opens /capture and does not file. Parent and student show the same name when their hides are clear. Teacher uses the same click. Parent route already in the map: /parent. Student route already in the map: /todo. Same control name. Phone and web follow the same label. No tray shows a Capture tab. Do not add a tray tab. Do not remove a tray tab. Do not grade Calendar.
+
+Office choice. AC-SC-4, AC-SC-12, AC-SC-13, AC-SC-14, AC-SC-25, AC-SC-31.
+Both office seats, after a photo of a person: it does not attach and does not create until they choose. Choice 1: avatar on a person who already exists. Empty guess, low confidence, or two matches is still that wait. Each row says student, parent, or staff. No new picker screen. A face that is not the person they meant does not attach to an existing person. Choice 2: create a new person and use this photo as that avatar. Not a silent insert. That choice does not create a login. Do not invent a kind picker. Do not invent a label. If one office seat sees the choice, the other sees it. A missing choice on one office seat is a split. Do not ship a split. A class or a roster still waits for confirm. That confirm is not this choice. It does not insert on capture.
+
+Refused seats. AC-SC-7, AC-SC-26, AC-SC-27.
+Teach seat does not see the person-photo choice. The teacher does not get choice 2. A photo used to create a new class, a class roster, or a new person is a refusal. Nothing is filed for those three. Parent strip does not name choice 2 and does not name a new person. Student strip does not name choice 2 and does not name a new person. Do not give them a new-person create. Their other jobs stay. Do not drop the linked-parent face, the linked-child face, or the student-card leave. Those leaves are not this choice.
+
+Reverse. AC-SC-19, AC-SC-20, AC-SC-22.
+Cancel or dismiss before the choice, on an office person photo: back where they were. Nothing is inserted. No avatar is attached. No new person. An office person photo does not replace an avatar until they choose. Office, a face already on the wrong person: Remove on that person's existing photo sheet, then choose the right person. Do not use that office leave as the student leave or the parent leave. After a student files a linked parent's face, and after a parent files a linked child's face, the same camera is still the leave. Do not reopen that leave. Do not offer choice 2 as that leave.
+
+Fail if any of these appear: an office person photo that attaches or creates before the choice; an unlabeled confirm that creates a person; choice 2 on teacher, parent, or student; a split office list; a new screen, label, route, or second control name; a login created by this choice; a tray tab added or removed; Approve, a score, or a grade set by this photo; the legal flag cleared; the security flag cleared. The other jobs are not defects on this card.
+
+Surface: both. Persona: office. Seat: the active seat. Motion: none.
+Do not complete t_3bd86748 from the prove-out card. Do not rewrite DITL plans from the prove-out card. Do not copy Stamp 6's unlabeled office person-create forward. Engineering stays off while the legal and security flags are open. This prove-out does not clear them.
+```
+
+## DITL IMPACT
+
+```
+DITL IMPACT
+Change: Person photo must choose avatar or new person — Stamp 7 APPROVED. An office person photo would wait for the two-way choice. Choice 1 is avatar on a person who already exists. Choice 2 is create a new person and use this photo as that avatar. Not a silent insert. Cancel before the choice files nothing. Teacher, parent, and student would not see choice 2. Superintendent and administrator would share the choice. If one sees it, the other sees it. No tray tab is added or removed. Nothing is built on this card.
+Verdict: UPDATE_PLANS
+Plans touched: DITL-O-01, DITL-DH-02, DITL-O-07
+Cases touched: none
+New DITL needed: no
+Seed/artifacts: none
+Notes: Do not rewrite the plans from this card. Do not add or remove a tray tab. CoS files DITL-UPDATE. Chuck unblocks before any rewrite. This seat does not staff that card.
+DITL-O-01 still names a face for someone new, a face for someone already at the school, or a photo used to create a class, a roster, or a new person, as confirm. That is the unlabeled office person-create. Do not copy it forward. After an approved ship, a photo of a person waits for the two-way choice. A class or a roster still waits for confirm. That confirm is not this choice.
+DITL-DH-02 copies that same unlabeled office person-create on the office seat list. The parent seat list must not gain choice 2. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it.
+DITL-O-07 still says a confirmed create of a new person stays the shared office list on DITL-O-01. That sentence must not keep the unlabeled confirm. The person-photo choice stays on the office list. It is not a new day on this bio-attach plan. Do not add a Capture tray tab.
+DITL-P-01 and DITL-S-01 must not gain choice 2. DITL-S-01 already says not a new person. Do not add a new-person create. Do not add or remove a tray tab. DITL-T-01 keeps today's teacher Capture. Do not add choice 2. Do not add the office list to Teach.
+t_dc2e1120 stays stale. It encodes Stamp 2. Do not unblock that card. Do not complete it. Do not copy those lines into the plans.
+```
+
+## Stop
+
+Do not complete t_3bd86748. Do not implement. Do not start a build loop. Do not staff anyone. Do not clear the legal and security flag. Do not edit app code, docs/ui-design.md, the mock, or the PM lock. Do not rewrite the plans. Engineering stays off while the legal and security flags are open. CoS copies this APPROVED stamp onto the parent. This seat does not invent a Drive line. CEO pass is not this stamp.
+
+
+
+
 
 
 

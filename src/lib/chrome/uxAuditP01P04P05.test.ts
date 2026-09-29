@@ -12,17 +12,19 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-/** P-01 — §3.2 / §34.1: camera teacher-only; student/parent trailing = search → messages → hamburger. */
-test('P-01: showHeaderCapture false for student/parent; true for teacher (not messages)', () => {
-  assert.equal(showHeaderCapture('/', 'student'), false);
-  assert.equal(showHeaderCapture('/', 'parent'), false);
-  assert.equal(showHeaderCapture('/todo', 'student'), false);
-  assert.equal(showHeaderCapture('/parent', 'parent'), false);
+/** P-01 — §3.2 Stamp 7: Open Capture on every signed-in seat; Messages / office My children hide. */
+test('P-01: showHeaderCapture true for every signed-in seat (not messages; office hides My children)', () => {
+  assert.equal(showHeaderCapture('/', 'student'), true);
+  assert.equal(showHeaderCapture('/', 'parent'), true);
+  assert.equal(showHeaderCapture('/todo', 'student'), true);
+  assert.equal(showHeaderCapture('/parent', 'parent'), true);
   assert.equal(showHeaderCapture('/', 'teacher'), true);
   assert.equal(showHeaderCapture('/capture', 'teacher'), true);
   assert.equal(showHeaderCapture('/messages', 'teacher'), false);
-  assert.equal(showHeaderCapture('/', 'superintendent'), false);
-  assert.equal(showHeaderCapture('/', 'administrator'), false);
+  assert.equal(showHeaderCapture('/', 'superintendent'), true);
+  assert.equal(showHeaderCapture('/', 'administrator'), true);
+  assert.equal(showHeaderCapture('/parent', 'superintendent'), false);
+  assert.equal(showHeaderCapture('/messages', 'administrator'), false);
 });
 
 test('P-01: AppHeader trailing order is capture → search → mail → menu; camera gated', () => {

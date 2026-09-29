@@ -97,9 +97,8 @@ test('L5: header search placeholder follows chrome.role seat, not isOfficeRole(p
     header,
     /chromeState\.role === 'superintendent' \|\| chromeState\.role === 'administrator'/,
   );
-  // useAuth is allowed for capture.use matrix gating only — not for placeholder seat.
-  assert.match(header, /useAuth/);
-  assert.match(header, /can\(profile,\s*'capture\.use',\s*'own',\s*grants\)/);
+  // Stamp 7: photograph grant is seat-based via showHeaderCapture — not matrix capture.use.
+  assert.doesNotMatch(header, /can\(profile,\s*'capture\.use'/);
   assert.match(header, /showHeaderCapture\(pathname,\s*chromeState\.role\)/);
 });
 

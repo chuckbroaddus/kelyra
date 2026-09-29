@@ -1,6 +1,7 @@
 # DITL-DH-02 — Dual-hat Office+Parent
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
+<!-- DITL-UPDATE t_0aafd388 2026-09-29: Stamp 6 header Open Capture; beat 8 tray line is not this icon; parent header not dark -->
 
 | Field | Value |
 |-------|-------|
@@ -27,13 +28,13 @@ Office staff who is also a parent: morning on office seat (Feed/Classes/People/M
 | # | Beat | Surface |
 |---|------|---------|
 | 1 | Sign in office seat | `/sign-in` |
-| 2 | Tray: Feed · Classes · People · Manage · Ask (no Ride tab) | office tray |
+| 2 | Tray: Feed · Classes · People · Manage · Ask (no Ride tab). Do not add a Capture tray tab. Do not remove a tray tab. Header shutter is not a tray tab. | office tray |
 | 3 | People: directory / admin people | `/?tab=people`, `/admin/people` |
 | 4 | Manage pane; open staff Ride/duty wall | `/?tab=manage`, `/admin/ride`, `/ride` |
 | 5 | Confirm Manage tab active for duty routes | tray |
 | 6 | **Do not** expect parent leave control on duty wall | duty UI |
 | 7 | Drawer **Parent** seat switch | hamburger |
-| 8 | Parent tray Home·Ride·Ask only | parent tray |
+| 8 | Parent tray Home·Ride·Ask only. **This 3-tab line is not the Capture icon.** Do not add or remove a parent tray tab. Parent header is not dark. See Stamp 6 section. | parent tray |
 | 9 | Own child Ride check-in + leave | `/parent/ride` |
 | 10 | Parent Home children isolation | `/parent` |
 | 11 | Switch **Office** back; tray office 5 | seat switch |
@@ -120,8 +121,17 @@ SoT: `working-k-avatar-soft-v8b-verbatim-host.md` (+ `working-k-avatar-soft-inte
 
 SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` comments (R4/CR/R5/3DW/P6). Missing on-disk proveout/intent files noted in card complete comment.
 
+## Stamp 6 Capture (header)
+
+Card `t_0aafd388`. Lock: Stamp 6 in `notes/company/superintendent-capture-stamp.md`. PM lock: `notes/company/superintendent-capture-pm.md`. Not a new day. Not a case rewrite. Do not copy parent-stays-dark, administrator-stays-dark, or a superintendent-only school logo.
+
+**Header this plan names.** One header shutter, the active seat, spoken name Open Capture. Office seat hides: Messages, open Search, and My children. Parent seat hides: Messages and open Search. My children, office chrome still up, stays hidden. Not a tray tab. Beat 8's Home·Ride·Ask-only line is not this icon. Do not add or remove a parent tray tab. Do not add or remove an office tray tab. Calendar stays where DITL-P-01 already put it. Administrator is not a camera gap. Parent header is not dark.
+
+**Seat lists this plan owns.** Office seat, administrator or superintendent: the shared office Capture list. School logo, a contact card, one class list, a face for someone new, a face for someone already at the school, or a photo used to create a class, a roster, or a new person. Confirm, not a silent insert. The school logo is not superintendent-only on that strip. Office may not send classwork to a teacher for grading. A photo does not set a grade. Only the teacher sets a classwork grade. Parent seat: the parent list, not the office list. Own face, a linked child's face, that child's homework for submission, that child's homework into Ask, or own bio. Not another family. Linked-child face: the same camera is the leave. Confirm again on that same child replaces the avatar. A wrong face does not attach. Cancel before confirm is not that leave. Teach, if switched, keeps today's teacher Capture. Do not add the office list to Teach. This plan does not edit `docs/data-model.md`.
+
 ## Changelog
 
 
+- **2026-09-29 (t_0aafd388):** Stamp 6 header Open Capture on the active seat. Beat 8 tray line is not this icon. Parent header is not dark. Administrator is not a camera gap. No tray tab added or removed.
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways

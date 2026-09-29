@@ -24,8 +24,23 @@ test('office class card sweep: no instructional copy left (Chuck 2026-09-25)', (
   assert.doesNotMatch(src, /Add one from the list|show up here|Swipe left to add|more than one child\. Choose/);
   assert.match(src, /No teacher yet\./);
   assert.match(src, /\{availableTeachers\.length \? <SectionHeader label="All teachers" \/> : null\}/);
-  assert.match(src, /<ClassAvatarRow klass=\{klass\} onChange=\{setKlass\} onError=\{setError\} quiet \/>/);
-  assert.match(src, /<FeedIconRow\s+hint=\{false\}/);
   const picker = readFileSync(new URL('../../components/ui/FeedIconPicker.tsx', import.meta.url), 'utf8');
   assert.match(picker, /\{hint \? \(/);
+});
+
+test('AC-OCM: Manage hosts Class avatar + Feed icon; Teacher keeps list only; open lands on Teacher', () => {
+  assert.match(src, /useState\('teacher'\)/);
+  assert.match(src, /tabs\.some\(\(item\) => item\.key === tab\) \? tab : 'teacher'/);
+  assert.match(src, /pane === 'manage'/);
+  const manageIdx = src.indexOf("pane === 'manage'");
+  const teacherIdx = src.indexOf("pane === 'teacher'");
+  const avatarIdx = src.indexOf('<ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} quiet />');
+  const feedRowIdx = src.indexOf('<FeedIconRow');
+  assert.ok(manageIdx >= 0 && teacherIdx >= 0 && avatarIdx >= 0 && feedRowIdx >= 0);
+  assert.ok(manageIdx < avatarIdx && avatarIdx < teacherIdx, 'Class avatar lives on Manage, before Teacher pane');
+  assert.ok(manageIdx < feedRowIdx && feedRowIdx < teacherIdx, 'Feed icon lives on Manage, before Teacher pane');
+  assert.match(src, /<FeedIconRow\s+hint=\{false\}/);
+  const teacherBlock = src.slice(teacherIdx, src.indexOf("pane === 'parents'"));
+  assert.doesNotMatch(teacherBlock, /ClassAvatarRow|FeedIconRow/);
+  assert.match(teacherBlock, /SectionHeader label="Teachers"/);
 });

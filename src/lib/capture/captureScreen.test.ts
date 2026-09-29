@@ -67,7 +67,11 @@ test('Capture recognizes syllabus intent and respects teacher note', () => {
   assert.match(source, /spokenSuggestsSyllabus|spokenSuggestsIntent/);
   assert.match(source, /teacherNote:\s*spokenName/);
   assert.match(source, /This will be a class syllabus \/ grading policy/);
-  assert.match(source, /\['syllabus', 'Syllabus'\]/);
+  assert.match(
+    readFileSync(join(process.cwd(), 'src/lib/capture/seatJobs.ts'), 'utf8'),
+    /\['syllabus', 'Syllabus'\]/,
+  );
+  assert.match(source, /seatUnsureIntentOptions\(chromeRole\)/);
   assert.match(source, /parse-class-syllabus/);
   assert.match(source, /upsertSyllabusAskDraft/);
   assert.match(source, /Parse syllabus for \$\{name\}/);
@@ -100,11 +104,14 @@ test('Capture classifies answer_key / vehicle / hold intents and wires confirms'
   assert.match(source, /This will be a Ride vehicle \/ license plate/);
   assert.match(source, /Recognized — lesson plan surface not shipping yet/);
   assert.match(source, /Recognized — feed photo post not shipping yet/);
-  assert.match(source, /\['answer_key', 'Answer key'\]/);
-  assert.match(source, /\['vehicle', 'Vehicle \/ plate'\]/);
-  assert.match(source, /\['lesson_plan', 'Lesson plan'\]/);
-  assert.match(source, /\['lesson_materials', 'Lesson materials'\]/);
-  assert.match(source, /\['feed_photo', 'Feed photo'\]/);
+  // Stamp 7: unsure strip options live in seatJobs (Teach keeps these chips).
+  const seatJobs = readFileSync(join(process.cwd(), 'src/lib/capture/seatJobs.ts'), 'utf8');
+  assert.match(seatJobs, /\['answer_key', 'Answer key'\]/);
+  assert.match(seatJobs, /\['vehicle', 'Vehicle \/ plate'\]/);
+  assert.match(seatJobs, /\['lesson_plan', 'Lesson plan'\]/);
+  assert.match(seatJobs, /\['lesson_materials', 'Lesson materials'\]/);
+  assert.match(seatJobs, /\['feed_photo', 'Feed photo'\]/);
+  assert.match(source, /seatUnsureIntentOptions\(chromeRole\)/);
   assert.match(source, /analyze-answer-key/);
   assert.match(source, /updateAssignment/);
   assert.match(source, /Attach key to assignment/);

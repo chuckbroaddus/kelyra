@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Class avatar — Use the Teacher's Avatar Image</title>
+<style>
+  body { margin: 0; background: #141311; color: #F4EFE6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.45; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 36px 0 8px; }
+  h3 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+  p, li { font-size: 14px; color: #D9D0C5; }
+  .meta { color: #B0A79C; font-size: 13px; }
+  .note { border: 1px solid #3D3832; background: #1E1C19; border-radius: 10px; padding: 12px 14px; margin: 14px 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 12px 0 20px; }
+  .frame { background: #1E1C19; border: 1px solid #3D3832; border-radius: 12px; padding: 12px; }
+  .tag { color: #E07A3A; font-size: 12px; margin-bottom: 8px; }
+  .cap { color: #B0A79C; font-size: 12px; margin-top: 8px; }
+  .stage { background: rgba(26,22,18,0.40); border-radius: 14px; min-height: 300px;
+    display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+  .stage.web { align-items: center; padding: 20px 12px; min-height: 340px; }
+  .sheet { background: #FFFCFA; color: #1A1612; width: 100%; box-sizing: border-box;
+    padding: 16px 16px 18px; border: 1px solid #E7E0D6; border-bottom: 0;
+    border-top-left-radius: 18px; border-top-right-radius: 18px; }
+  .stage.web .sheet { width: 100%; max-width: 400px; border-radius: 18px; border-bottom: 1px solid #E7E0D6; }
+  .sheet h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 650; }
+  .srow { min-height: 44px; display: flex; align-items: center; gap: 10px; font-size: 16px; line-height: 1.25; }
+  .srow.danger { color: #B53A32; }
+  .srow.ghost { justify-content: center; color: #6A635B; border: 1px solid #E7E0D6; border-radius: 12px; margin-top: 8px; }
+  .srow.off, .ceo.off { opacity: 0.45; }
+  .ceo { font-size: 15px; font-weight: 600; padding: 8px 0 2px; line-height: 1.3; }
+  .sub { font-size: 13px; color: #6A635B; margin: 0 0 4px 42px; }
+  .face { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 650; color: #1A1612; flex: none; }
+  .mc { background: #F8E2D4; }
+  .jr { background: #E7E0D6; color: #6A635B; }
+  .so { background: #DCEFE4; }
+  .kept { background: #F8E7C8; }
+  .cls { background: #EFE8DE; }
+  .mark { margin-left: auto; color: #B03E0E; font-size: 12px; font-weight: 650; white-space: nowrap; }
+  .pane { background: #F7F3EC; color: #1A1612; border-radius: 12px; padding: 12px 12px 4px; margin-bottom: 8px; }
+  .pane .name { font-size: 18px; font-weight: 650; }
+  .tabs { display: flex; gap: 12px; font-size: 12px; color: #6A635B; margin: 6px 0 8px; }
+  .tabs b { color: #1A1612; font-weight: 650; }
+  .listrow { display: flex; align-items: center; gap: 10px; min-height: 52px; border-top: 1px solid #E7E0D6; }
+  .listrow .t { font-size: 16px; }
+  .listrow .st { font-size: 13px; color: #6A635B; }
+  .who { font-size: 12px; color: #B0A79C; margin: 0 0 8px; }
+  .split { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .circap { font-size: 12px; color: #6A635B; text-align: center; margin-top: 4px; }
+  .neg { background: #FFFCFA; color: #1A1612; border-radius: 12px; padding: 12px; border: 1px solid #E7E0D6; }
+
+</style>
+</head>
+<body>
+<main>
+  <h1>Class avatar — Use the Teacher's Avatar Image</h1>
+  <p class="meta">Option pack for Product Manager. No pick locked. Hats: superintendent and administrator, same sheet. The sheet moves with the Class avatar row. Today's Teacher pane is not the locked host. Do not add a Manage tab here. Label is exact: Use the Teacher's Avatar Image. Light sheets use the app light palette (elevated #FFFCFA, ink #1A1612). Page chrome is dark so the sheets read as the product.</p>
+  <div class="note">
+    <p style="margin:0 0 8px">PhotoSheet contents only. A separate card moves Class avatar and Feed icon off the office Teacher pane onto a Manage tab (parent t_cd1f4295). This page does not add that tab. If the row moves, these rows move with it.</p>
+    <p style="margin:0">PhotoSheet is shared. This block is class-avatar only. It does not appear on person photos, school logo, create-account, or homework-as-profile. Note: notes/company/class-avatar-teacher-image-options.md</p>
+  </div>
+
+  <h2>Before</h2>
+  <p>Office class card, where the Class avatar row sits today. Host pane is not locked. Superintendent and administrator. Sheet has no teacher-image row yet.</p>
+  <div class="pane">
+    <div class="name">Period 2 English</div>
+    <div class="tabs"><span>Feed</span><b>Teacher</b><span>Parents</span><span>Students</span></div>
+    <div class="listrow"><span class="face cls">P2</span><div><div class="t">Class avatar</div><div class="st">None yet</div></div></div>
+  </div>
+  <p class="cap">Tab row above is where the row sits today. Not a lock. The sheets are what move.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">Phone bottom sheet · before</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">No class photo, so Remove photo is absent. No Use the Teacher's Avatar Image yet.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">Web card · max width 400 · before</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Centered card, not a bottom sheet. Same rows.</p>
+    </div>
+  </div>
+  <h2>Choice 1 — Which teacher</h2>
+  <p>Many teachers first. Do not pick. 1A names each face. 1B is one row and cannot say which teacher. 1C is a second step in the same sheet, not a new screen.</p>
+  <h3>1A — header, then each teacher. Many. Recommendation picture only — label not shortened.</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1A · phone bottom sheet · many teachers</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Sentence is a header, not a row. Each teacher is a face and a name. Tap one face.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1A · web card · many teachers</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same rows. Centered card, max width 400.</p>
+    </div>
+  </div>
+  <h3>1A — one teacher. Same header. The sentence is not replaced by the name.</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1A · phone · one teacher</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">No class photo yet, so no Remove photo. One face under the full sentence.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1A · web card · one teacher</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same one-teacher sheet as a card.</p>
+    </div>
+  </div>
+  <h3>1B — one row, the sentence only. Wrong for many teachers.</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1B · phone · many teachers</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow">Use the Teacher's Avatar Image</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Full label. No face. No name. Maya Chen and Sam Ortiz are both on this class. The row cannot say which face.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1B · web card · many teachers</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow">Use the Teacher's Avatar Image</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same wrong row as a card. Do not hide a picker behind it. That is 1C.</p>
+    </div>
+  </div>
+  <h3>1C — sentence row first. Many teachers open a second step in this sheet.</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1C · phone · step 1 of 2</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow">Use the Teacher's Avatar Image<div class="mark">2 teachers</div></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Label is the full sentence. No single face. Meta is the count, not a shortened label.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1C · web card · step 1 of 2</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow">Use the Teacher's Avatar Image<div class="mark">2 teachers</div></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same first step as a card.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1C · phone · step 2 of 2</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row · not a new screen</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow">Back</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same Class avatar title. Back returns to Take photo and Choose from library. Back exists only here.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1C · web card · step 2 of 2</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row · not a new screen</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow">Back</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same second step as a card. Still not a new screen.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">1C · phone · one teacher, one step</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow"><span class="face mc">MC</span><span>Use the Teacher's Avatar Image</span></div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">One teacher with a photo: face at the left. Label is not shortened to Maya Chen.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">1C · web card · one teacher, one step</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow"><span class="face mc">MC</span><span>Use the Teacher's Avatar Image</span></div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same one-step row as a card.</p>
+    </div>
+  </div>
+  <h2>Choice 2 — Zero teachers and no photo</h2>
+  <p>Drawn, not only described. Words if the row shows and cannot be used: <b>No teacher yet.</b> and <b>No photo yet.</b> Not links. Do not pick 2A or 2B.</p>
+  <h3>Zero teachers</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">2A · phone · row absent</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Block is not in the sheet. The Teachers list under the sheet already says No teacher yet.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">2A · web card · row absent</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same absent block as a card.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">2B · phone · present, not tappable</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo off">Use the Teacher's Avatar Image</div>
+          <div class="sub">No teacher yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Full sentence stays. It does not take a tap. Words: No teacher yet.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">2B · web card · present, not tappable</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo off">Use the Teacher's Avatar Image</div>
+          <div class="sub">No teacher yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same disabled sentence as a card.</p>
+    </div>
+  </div>
+  <h3>A teacher with no photo. Maya Chen has a photo. Jordan Reed does not.</h3>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">2A · phone · missing photo omitted</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Jordan Reed is not in the sheet. Only a face that can be used is listed.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">2B · phone · missing photo shown, not tappable</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow off"><span class="face jr">JR</span> Jordan Reed</div>
+          <div class="sub">No photo yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Jordan stays visible. Words: No photo yet. Not a link to edit that face.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">2A · web card · missing photo omitted</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Jordan omitted on the card too.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">2B · web card · missing photo shown, not tappable</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow off"><span class="face jr">JR</span> Jordan Reed</div>
+          <div class="sub">No photo yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same disabled Jordan row as a card.</p>
+    </div>
+  </div>
+  <h2>Choice 3 — Already using that image</h2>
+  <p>Reopen when the class circle already came from Maya Chen. The check is the words Using this image, not a new glyph. Tapping that row again does nothing. Sheet stays open. Do not pick 3A or 3B.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">3A · office ListRow stays quiet</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="name">Period 2 English</div>
+        <div class="tabs"><span>Feed</span><b>Teacher</b><span>Parents</span><span>Students</span></div>
+        <div class="listrow"><span class="face mc">MC</span><div><div class="t">Class avatar</div></div></div>
+      </div>
+      <p class="cap">Photo is set. No status line. Not “Shown next to the class name”. Teacher tab is where the row sits today. Not a lock.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">3B · office ListRow names the source</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="name">Period 2 English</div>
+        <div class="tabs"><span>Feed</span><b>Teacher</b><span>Parents</span><span>Students</span></div>
+        <div class="listrow"><span class="face mc">MC</span><div><div class="t">Class avatar</div><div class="st">Using Maya Chen's image</div></div></div>
+      </div>
+      <p class="cap">This ends the quiet law on this row. It is not the Settings sentence. Teacher tab is today's host, not a lock.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">Sheet · phone · already Maya Chen</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Tap on Maya Chen does not write again. Take photo, library, Remove photo, and Cancel stay.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">Sheet · web card · already Maya Chen</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow"><span class="face so">SO</span> Sam Ortiz</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same check as a card. 3A and 3B share this sheet. They differ on the ListRow.</p>
+    </div>
+  </div>
+  <h2>Choice 4 — Snapshot or follow</h2>
+  <p>Do not pick. Both start the same: the office tap used Maya Chen's face. Then she changes her own photo. Same Class avatar sheet. It moves with the row. Superintendent and administrator.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">4A · snapshot · phone</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="split">
+          <div><span class="face kept">MC</span><div class="circap">Class circle<br>kept earlier face</div></div>
+          <div><span class="face so">MC</span><div class="circap">Maya's row<br>current face</div></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face so">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="sub">Class kept the earlier photo.</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Class circle does not move when she changes her photo. The two circles may differ.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">4B · follow · web card</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="split">
+          <div><span class="face so">MC</span><div class="circap">Class circle<br>matches her now</div></div>
+          <div><span class="face so">MC</span><div class="circap">Maya's row<br>current face</div></div>
+        </div>
+      </div>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face so">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Class circle changes when she changes hers. Circles match.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">4A · snapshot · web card</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face so">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="sub">Class kept the earlier photo.</div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same snapshot words as a card. Take photo and library stay above the teacher block.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">4B · follow · phone</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face so">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Class circle matches her current face. No “Class kept the earlier photo.”</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">4B · she later has no photo · phone</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="listrow"><span class="face cls">P2</span><div><div class="t">Class avatar</div><div class="st">None yet</div></div></div>
+      </div>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow off"><span class="face jr">MC</span> Maya Chen</div>
+          <div class="sub">No photo yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Follow only. Source is gone, so the class circle is initials. She is not checked.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">4B · she later has no photo · web card</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow off"><span class="face jr">MC</span> Maya Chen</div>
+          <div class="sub">No photo yet.</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same follow-ended sheet as a card. Remove photo is absent because the class photo is gone.</p>
+    </div>
+  </div>
+  <h2>Choice 5 — Office only, or also Settings</h2>
+  <p>CEO required the office path. Both pictures keep it. A teacher opening Settings is only 5B, not a new screen. Do not pick.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">5A · office · phone · row is here</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Office path. Not dropped.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">5A · Settings · web card · row is not here</div>
+      <p class="who">Class Settings · a teacher of this class. Not a new screen.</p>
+      <div class="pane">
+        <div class="name">Period 2 English</div>
+        <div class="tabs"><span>Today</span><span>Students</span><b>Settings</b></div>
+        <div class="listrow"><span class="face cls">P2</span><div><div class="t">Class avatar</div><div class="st">None yet</div></div></div>
+      </div>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Today's sheet. No Use the Teacher's Avatar Image. An office user who opens Settings also does not see it on 5A.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">5B · office · web card · row is still here</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Office path stays. Same rows as a card.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">5B · Settings · phone · same row</div>
+      <p class="who">Class Settings · teacher of this class, or office. Not a new screen.</p>
+      <div class="pane">
+        <div class="name">Period 2 English</div>
+        <div class="tabs"><span>Today</span><span>Students</span><b>Settings</b></div>
+        <div class="listrow"><span class="face mc">MC</span><div><div class="t">Class avatar</div><div class="st">Shown next to the class name</div></div></div>
+      </div>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same block. Settings status shown is 3A: Shown next to the class name. 3B would say Using Maya Chen's image instead.</p>
+    </div>
+  </div>
+  <h2>Start, change, remove, reopen</h2>
+  <p>Office Class avatar sheet. Superintendent and administrator. The sheet moves with the row. Picture is 1A so the face is named. Web is the same rows in a centered card. The remove pair shows both.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">Start · phone · no class photo</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Tap Maya Chen. Sheet closes. Class circle becomes her face. Remove photo is absent until a photo is set.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">Change · phone · Take photo or library instead</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Take photo or Choose from library replaces her face with a new capture. Next open: no row says Using this image. Her row remains so they can switch back.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">Remove · phone</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Remove photo clears the class circle to initials. It does not remove Maya Chen's photo. Next open: None yet, no Remove photo, no Using this image.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">Remove · after · web card</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="pane">
+        <div class="listrow"><span class="face cls">P2</span><div><div class="t">Class avatar</div><div class="st">None yet</div></div></div>
+      </div>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Opened again after Remove photo. Her face is still offered. It is not checked.</p>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="frame">
+      <div class="tag">Already that image · phone</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Open again while it is already her image. Tap on her row does nothing. Sheet stays open.</p>
+    </div>
+    <div class="frame">
+      <div class="tag">Already that image · web card</div>
+      <p class="who">Office Class avatar sheet · superintendent and administrator · moves with the row</p>
+      <div class="stage web">
+        <div class="sheet">
+          <h4>Class avatar</h4>
+          <div class="srow">Take photo</div>
+          <div class="srow">Choose from library</div>
+          <div class="ceo">Use the Teacher's Avatar Image</div>
+          <div class="srow"><span class="face mc">MC</span> Maya Chen <span class="mark">Using this image</span></div>
+          <div class="srow danger">Remove photo</div>
+          <div class="srow ghost">Cancel</div>
+        </div>
+      </div>
+      <p class="cap">Same reopen as a card.</p>
+    </div>
+  </div>
+  <h2>Not these sheets</h2>
+  <p>Constraint, not an option. PhotoSheet is shared. These callers do not gain Use the Teacher's Avatar Image.</p>
+  <div class="pair">
+    <div class="frame">
+      <div class="neg">
+        <h3>Person photo</h3>
+        <div class="srow">Take photo</div>
+        <div class="srow">Choose from library</div>
+        <div class="srow danger">Remove photo</div>
+        <div class="srow ghost">Cancel</div>
+      </div>
+      <p class="cap">No teacher-image row.</p>
+    </div>
+    <div class="frame">
+      <div class="neg">
+        <h3>School logo</h3>
+        <div class="srow">Take photo</div>
+        <div class="srow">Choose from library</div>
+        <div class="srow danger">Remove photo</div>
+        <div class="srow ghost">Cancel</div>
+      </div>
+      <p class="cap">No teacher-image row.</p>
+    </div>
+    <div class="frame">
+      <div class="neg">
+        <h3>Create account</h3>
+        <div class="srow">Take photo</div>
+        <div class="srow">Choose from library</div>
+        <div class="srow ghost">Cancel</div>
+      </div>
+      <p class="cap">No teacher-image row.</p>
+    </div>
+    <div class="frame">
+      <div class="neg">
+        <h3>Homework as profile</h3>
+        <div class="srow">Take photo</div>
+        <div class="srow">Choose from library</div>
+        <div class="srow">Use this homework as profile</div>
+        <div class="srow ghost">Cancel</div>
+      </div>
+      <p class="cap">Existing homework row only. Not Use the Teacher's Avatar Image.</p>
+    </div>
+  </div>
+  <div class="note">
+    <p style="margin:0 0 8px"><b>Open issue. Do not solve.</b> set_class_avatar rejects an asset unless assets.teacher_id is the signed-in user (supabase/migrations/20260911000003_class_avatar.sql, exception Unknown photo). A superintendent or administrator cannot point the class at the teacher's existing photo with today's RPC. The pictures still show the row. Follow (4B) is a different write from copying a face once. Not designed here.</p>
+    <p style="margin:0"><b>Recommendation only. Not a lock.</b> 1A, 2B, 3A, 5B. No recommendation on snapshot versus follow.</p>
+  </div>
+</main>
+</body>
+</html>

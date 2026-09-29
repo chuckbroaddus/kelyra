@@ -117,13 +117,40 @@ export function classifyPageText(text, expectPersona) {
   return '';
 }
 
+/**
+ * Feature-map Drive lines use bare multi-word labels:
+ *   click=[aria-label=Open Capture]
+ * That is not a valid CSS attribute selector (unquoted value + space).
+ * Quote the value so web querySelector can find the control. Phone still
+ * reads the accessible name via accessibleNameFromClick.
+ */
+export function normalizeClickSelector(selector) {
+  const value = String(selector || '').trim();
+  if (!value) return value;
+  if (/aria-label\s*=\s*["']/i.test(value)) return value;
+  const bare = value.match(/^\[\s*aria-label\s*=\s*([^\]]+?)\s*\]$/i);
+  if (!bare) return value;
+  const name = bare[1].trim();
+  if (!name) return value;
+  // CSS bare identifiers cannot contain spaces or quotes.
+  if (/[\s"']/.test(name)) {
+    return `[aria-label="${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`;
+  }
+  return `[aria-label=${name}]`;
+}
+
 /** The Drive click is a CSS attribute selector. The phone tap uses the accessible name. */
 export function accessibleNameFromClick(selector) {
   const value = String(selector || '').trim();
-  const quoted = value.match(/aria-label\s*=\s*"([^"]+)"/i);
-  if (quoted) return quoted[1].trim();
-  const bare = value.match(/aria-label\s*=\s*([^\]\s]+)/i);
-  if (bare) return bare[1].trim();
+  const double = value.match(/aria-label\s*=\s*"([^"]+)"/i);
+  if (double) return double[1].trim();
+  const single = value.match(/aria-label\s*=\s*'([^']+)'/i);
+  if (single) return single[1].trim();
+  // Bare map form may include spaces: [aria-label=Open Capture]
+  const bareBracket = value.match(/aria-label\s*=\s*([^\]]+?)\s*\]/i);
+  if (bareBracket) return bareBracket[1].trim();
+  const bareToken = value.match(/aria-label\s*=\s*([^\s\]]+)/i);
+  if (bareToken) return bareToken[1].trim();
   if (!value || value.startsWith('[') || value.startsWith('#') || value.startsWith('.')) return '';
   return value;
 }
@@ -704,8 +731,12 @@ async function shot(send, file) {
 }
 
 async function click(send, selector) {
+  // Normalize bare multi-word aria-label so querySelector is valid CSS.
+  const want = normalizeClickSelector(selector || '');
+  const byName = accessibleNameFromClick(selector || '');
   const expression = `(() => {
-    const want = ${JSON.stringify(selector || '')};
+    const want = ${JSON.stringify(want)};
+    const byName = ${JSON.stringify(byName)};
     const here = location.pathname;
     const labelOf = (node) => ((node.innerText || node.getAttribute('aria-label') || node.getAttribute('placeholder') || '')).trim();
     const skip = /sign out|disconnect|search/i;
@@ -720,10 +751,28 @@ async function click(send, selector) {
         return true;
       }
     };
-    if (!want) return 'missing';
-    let el = document.querySelector(want);
-    if (el && (skip.test(labelOf(el)) || leaves(el))) el = null;
-    if (!el) return 'missing';
+    const usable = (node) => node && !skip.test(labelOf(node)) && !leaves(node);
+    if (!want && !byName) return 'missing';
+    let el = null;
+    if (want) {
+      try {
+        el = document.querySelector(want);
+      } catch {
+        el = null;
+      }
+    }
+    if (!usable(el) && byName) {
+      // Fallback: exact aria-label match (RN Web Pressable / role=button).
+      const nodes = document.querySelectorAll('[aria-label], button, [role="button"]');
+      for (const node of nodes) {
+        const label = (node.getAttribute('aria-label') || '').trim();
+        if (label === byName && usable(node)) {
+          el = node;
+          break;
+        }
+      }
+    }
+    if (!usable(el)) return 'missing';
     const before = location.pathname + ' ' + labelOf(el);
     el.click();
     return before;

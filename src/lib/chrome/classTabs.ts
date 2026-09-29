@@ -25,6 +25,7 @@ export const OFFICE_CLASS_TABS: ClassDeskTab[] = [
   { key: 'teacher', label: 'Teacher', icon: 'person' },
   { key: 'parents', label: 'Parents', icon: 'parents' },
   { key: 'students', label: 'Students', icon: 'setup' },
+  { key: 'manage', label: 'Manage', icon: 'manage' },
 ];
 
 /** Demoted keys: not default ClassTabs icons; routes stay for teacher deep links. */
