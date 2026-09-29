@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DateInput } from '@/components/ui/DateInput';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
@@ -60,7 +61,12 @@ export default function AdminRideScreen() {
         <Text style={[styles.label, { color: colors.mute }]}>
           Archive day&apos;s photos
         </Text>
-        <TextField label="School date YYYY-MM-DD" value={day} onChangeText={setDay} />
+        <DateInput
+          label="School date"
+          value={day.trim() ? day : null}
+          onChange={(iso) => setDay(iso ?? '')}
+          clearable
+        />
         <PrimaryButton
           label="Archive"
           disabled={!isSuper}
