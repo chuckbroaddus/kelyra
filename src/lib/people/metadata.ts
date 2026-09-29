@@ -43,6 +43,46 @@ export const STUDENT_OFFICE_OPTIONAL_FIELDS: Array<{
   { key: 'health_conditions', label: 'Health conditions' },
 ];
 
+export type OptionalFieldSpec = { key: string; label: string };
+
+const STAFF_CREATE_OPTIONAL_FIELDS: OptionalFieldSpec[] = [
+  { key: 'phone', label: 'Phone' },
+  { key: 'address', label: 'Address' },
+  { key: 'notes', label: 'Notes' },
+];
+
+const OFFICE_OPTIONAL_SPECS: OptionalFieldSpec[] = STUDENT_OFFICE_OPTIONAL_FIELDS.map((field) => ({
+  key: field.key,
+  label: field.label,
+}));
+
+/** Create-account Optional group for the selected role chip (Student → all 7). */
+export function createAccountOptionalFields(role: string | null | undefined): OptionalFieldSpec[] {
+  if (role === 'student') return OFFICE_OPTIONAL_SPECS;
+  return STAFF_CREATE_OPTIONAL_FIELDS;
+}
+
+/**
+ * ProfileDetails student optional rows for a person.
+ * Empty when not a student login. Office (showSensitive default true) yields all 7.
+ */
+export function profileStudentOptionalFields(input: {
+  role: string | null | undefined;
+  showSensitiveStudentFields?: boolean;
+}): OptionalFieldSpec[] {
+  if (input.role !== 'student') return [];
+  if (input.showSensitiveStudentFields === false) {
+    return OFFICE_OPTIONAL_SPECS.filter((field) => !isTeacherOnlyStudentKey(field.key));
+  }
+  return OFFICE_OPTIONAL_SPECS;
+}
+
+/** True when keys are exactly the seven office optional fields in Chuck order. */
+export function isFullStudentOfficeOptionalSet(fields: Array<{ key: string }>): boolean {
+  if (fields.length !== STUDENT_OFFICE_OPTIONAL_FIELDS.length) return false;
+  return STUDENT_OFFICE_OPTIONAL_FIELDS.every((field, index) => fields[index]?.key === field.key);
+}
+
 export const PARENT_DETAIL_FIELDS: Array<{ key: ParentMetadataKey; label: string }> = [
   { key: 'relationship', label: 'Relationship' },
   { key: 'phone', label: 'Phone' },

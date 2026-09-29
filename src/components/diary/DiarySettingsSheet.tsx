@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
+import { DateInput } from '@/components/ui/DateInput';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
@@ -223,17 +224,19 @@ export function DiarySettingsSheet(props: Props) {
                   />
                 ))}
               </ChipRow>
-              <TextField
-                label="From date (YYYY-MM-DD)"
-                value={props.ledgerFrom}
-                onChangeText={props.onChangeLedgerFrom}
-                autoCapitalize="none"
+              <DateInput
+                label="From date"
+                value={props.ledgerFrom.trim() ? props.ledgerFrom : null}
+                onChange={(iso) => props.onChangeLedgerFrom(iso ?? '')}
+                clearable
+                max={props.ledgerTo.trim() ? props.ledgerTo : null}
               />
-              <TextField
-                label="To date (YYYY-MM-DD)"
-                value={props.ledgerTo}
-                onChangeText={props.onChangeLedgerTo}
-                autoCapitalize="none"
+              <DateInput
+                label="To date"
+                value={props.ledgerTo.trim() ? props.ledgerTo : null}
+                onChange={(iso) => props.onChangeLedgerTo(iso ?? '')}
+                clearable
+                min={props.ledgerFrom.trim() ? props.ledgerFrom : null}
               />
               {label('Class (taught)')}
               {props.taughtClasses.length ? (
