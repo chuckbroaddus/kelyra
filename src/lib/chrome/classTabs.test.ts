@@ -32,7 +32,7 @@ test('CT-01: CLASS_TABS default ≤8 ordered Today·Needs·Feed·Students·Assig
   assert.equal(CLASS_TABS.length, 8);
   assert.deepEqual(keys, [...DEFAULT_ORDER]);
   assert.equal(CLASS_TABS.find((tab) => tab.key === 'needs')?.label, 'Needs Attention');
-  assert.equal(CLASS_TABS.find((tab) => tab.key === 'settings')?.icon, 'settings');
+  assert.equal(CLASS_TABS.find((tab) => tab.key === 'settings')?.icon, 'manage');
   assert.equal(CLASS_TABS.at(-1)?.key, 'settings');
 });
 

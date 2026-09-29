@@ -17,7 +17,7 @@ export const CLASS_TABS: ClassDeskTab[] = [
   { key: 'assignments', label: 'Assignments', icon: 'work' },
   { key: 'gradebook', label: 'Gradebook', icon: 'records' },
   { key: 'parents', label: 'Parents', icon: 'parents' },
-  { key: 'settings', label: 'Settings', icon: 'settings' },
+  { key: 'settings', label: 'Settings', icon: 'manage' },
 ];
 
 export const OFFICE_CLASS_TABS: ClassDeskTab[] = [
