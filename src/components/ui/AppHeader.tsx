@@ -19,10 +19,8 @@ import { Icon } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
 import { MarqueeText } from '@/components/ui/MarqueeText';
 import { chrome, type } from '@/constants/theme';
-import { useAuth } from '@/lib/auth/AuthProvider';
 import { isChromePushed, useChrome } from '@/lib/chrome/ChromeProvider';
 import { showHeaderCapture } from '@/lib/chrome/headerCapture';
-import { can } from '@/lib/school/matrix';
 import { headerTitleFor } from '@/lib/chrome/titles';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -43,7 +41,6 @@ function searchPlaceholder(from: string, role: string): string {
 export function AppHeader() {
   const { colors, scheme } = useTheme();
   const chromeState = useChrome();
-  const { profile, grants } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -68,10 +65,8 @@ export function AppHeader() {
   });
   const onHome = (pathForChrome === '/' || pathForChrome === '') && !pushed;
   const logoUrl = chromeState.schoolLogoUrl;
-  const capture =
-    showHeaderCapture(pathname, chromeState.role) &&
-    can(profile, 'capture.use', 'own', grants) &&
-    !searching;
+  // Photograph grant is seat-based (Stamp 7). Not matrix capture.use — that row stays homework Approve wall.
+  const capture = showHeaderCapture(pathname, chromeState.role) && !searching;
   const count = chromeState.badgeCount;
   const expand = useRef(new Animated.Value(searching ? 1 : 0)).current;
   const [reduce, setReduce] = useState(false);

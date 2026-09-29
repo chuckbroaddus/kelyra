@@ -14,6 +14,7 @@ import {
   classifyPhoneOpen,
   findAccessibilityPoint,
   isUnsafeDriveTarget,
+  normalizeClickSelector,
   phoneAuthState,
   phoneFieldsMatch,
   chromeRestoreDismissLabel,
@@ -62,15 +63,34 @@ test('phone http open is Safari and a bundle overlay is a harness status', () =>
 test('phone tap uses the accessible name and ignores an unchanged tree', () => {
   assert.equal(accessibleNameFromClick('[aria-label=Messages]'), 'Messages');
   assert.equal(accessibleNameFromClick('[aria-label="Clear restriction"]'), 'Clear restriction');
+  // Feature-map Open Capture line is bare + multi-word (invalid raw CSS).
+  assert.equal(accessibleNameFromClick('[aria-label=Open Capture]'), 'Open Capture');
+  assert.equal(normalizeClickSelector('[aria-label=Open Capture]'), '[aria-label="Open Capture"]');
+  assert.equal(normalizeClickSelector('[aria-label=Messages]'), '[aria-label=Messages]');
+  assert.equal(
+    normalizeClickSelector('[aria-label="Clear restriction"]'),
+    '[aria-label="Clear restriction"]',
+  );
+  // Web click must normalize AND keep a by-name fallback for RN Web Pressable.
+  const clickSrc = readFileSync(join(process.cwd(), 'scripts/ui-drive.mjs'), 'utf8');
+  const clickFn = clickSrc.slice(clickSrc.indexOf('async function click('), clickSrc.indexOf('async function driveWeb('));
+  assert.match(clickFn, /normalizeClickSelector/);
+  assert.match(clickFn, /accessibleNameFromClick/);
+  assert.match(clickFn, /aria-label/);
+  assert.match(clickFn, /byName/);
   const tree = parseAccessibilityTree(JSON.stringify([
     { AXLabel: 'Search', type: 'Button', enabled: true, frame: { x: 0, y: 0, width: 40, height: 20 } },
     { AXLabel: 'Messages', type: 'Button', enabled: true, frame: { x: 10, y: 20, width: 40, height: 20 } },
     { AXLabel: 'Messages, 2 waiting', type: 'Button', enabled: true, frame: { x: 80, y: 20, width: 40, height: 20 } },
+    { AXLabel: 'Open Capture', type: 'Button', enabled: true, frame: { x: 40, y: 20, width: 40, height: 20 } },
   ]));
   const point = findAccessibilityPoint(tree, 'Messages');
   assert.equal(point.label, 'Messages');
   assert.equal(point.x, 30);
   assert.equal(point.y, 30);
+  const capture = findAccessibilityPoint(tree, accessibleNameFromClick('[aria-label=Open Capture]'));
+  assert.equal(capture.label, 'Open Capture');
+  assert.equal(capture.x, 60);
   assert.equal(accessibilityChanged(tree, tree), false);
   const after = parseAccessibilityTree(JSON.stringify([
     { AXLabel: 'Taylor Lee', type: 'Button', enabled: true, frame: { x: 0, y: 80, width: 100, height: 40 } },
@@ -84,6 +104,7 @@ test('phone tap uses the accessible name and ignores an unchanged tree', () => {
   const src = readFileSync(join(process.cwd(), 'scripts/ui-drive.mjs'), 'utf8');
   assert.match(src, /idb/);
   assert.match(src, /PHONE_TAP_UNCHANGED/);
+  assert.match(src, /normalizeClickSelector/);
   assert.doesNotMatch(src, /cliclick/);
 });
 
@@ -153,7 +174,8 @@ test('phone sign-in is three steps and stops once a tray is visible', () => {
 
 test('an empty click is not filled with the first button', () => {
   const src = readFileSync(join(process.cwd(), 'scripts/ui-drive.mjs'), 'utf8');
-  assert.match(src, /if \(!want\) return 'missing'/);
+  // Missing selector and missing accessible name both refuse — never invent a button.
+  assert.match(src, /if \(!want && !byName\) return 'missing'/);
   assert.doesNotMatch(src, /querySelectorAll\('button, \[role="tab"\]'\)/);
   assert.match(src, /classifyPhoneOpen/);
   assert.doesNotMatch(src, /Safari \/ embedded web/);
@@ -177,6 +199,8 @@ test('args reject a bad surface and an unsafe click', () => {
     /UNSAFE_FLAG/,
   );
   assert.doesNotThrow(() => assertArgs({ ...ok, click: '[aria-label="Clear restriction"]' }));
+  // Bare multi-word Open Capture is the locked feature-map form — must stay legal.
+  assert.doesNotThrow(() => assertArgs({ ...ok, click: '[aria-label=Open Capture]' }));
 });
 
 test('redact strips tokens the persona server must not echo', () => {

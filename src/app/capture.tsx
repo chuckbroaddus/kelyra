@@ -40,7 +40,17 @@ import {
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
 import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
-import { resolveCaptureClass } from '@/lib/classes/api';
+import {
+  directoryPersonKindLabel,
+  seatMayCreatePersonFromPhoto,
+  seatRefusesCreateFromPhoto,
+  seatSeesPersonPhotoChoice,
+  seatShowsCaptureComposerExtras,
+  seatShowsCapturePhotoFileIcons,
+  seatUnsureIntentOptions,
+  type CaptureChromeRole,
+} from '@/lib/capture/seatJobs';
+import { createClass, resolveCaptureClass } from '@/lib/classes/api';
 import { approveCapture, markNoteOnly } from '@/lib/gaps/api';
 import { invokeAi } from '@/lib/ai/invoke';
 import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
@@ -77,6 +87,8 @@ import {
   signedOriginalUrlsForAssetIds,
   uploadProfilePhoto,
 } from '@/lib/people/photos';
+import { listDirectory, type DirectoryPerson } from '@/lib/school/api';
+import { setSchoolLogo } from '@/lib/school/identity';
 import { isOfficeRole } from '@/lib/school/roles';
 import {
   addConfirmedStudents,
@@ -87,6 +99,7 @@ import {
   listPendingRosterImports,
   listRoster,
   markRosterImportConfirmed,
+  mintOfficeStudent,
   suggestRosterFromPhoto,
   updateStudentMetadata,
   type RosterStudent,
@@ -96,7 +109,7 @@ import { birthdayForSave } from '@/lib/date/iso';
 import { upsertSyllabusAskDraft } from '@/lib/syllabus/api';
 import { invokeRideLpr, staffAttachVehicle, uploadRidePhoto } from '@/lib/ride/api';
 import { plateNorm } from '@/lib/ride/plate';
-import type { AssignmentRow } from '@/lib/supabase/types';
+import type { AssignmentRow, ProfilePhotoKind } from '@/lib/supabase/types';
 
 type CaptureIntent =
   | 'homework'
@@ -110,6 +123,8 @@ type CaptureIntent =
   | 'lesson_plan'
   | 'lesson_materials'
   | 'feed_photo'
+  | 'school_logo'
+  | 'create_class'
   | 'unsure';
 
 const NAMED_INTENTS = [
@@ -124,6 +139,8 @@ const NAMED_INTENTS = [
   'lesson_plan',
   'lesson_materials',
   'feed_photo',
+  'school_logo',
+  'create_class',
 ] as const;
 
 /** Teacher note / spoken text that should force a clear Capture intent. */
@@ -158,6 +175,8 @@ function spokenSuggestsIntent(text: string): CaptureIntent | null {
   ) {
     return 'syllabus';
   }
+  if (/\b(school\s+logo|logo\s+for\s+(the\s+)?school)\b/.test(t)) return 'school_logo';
+  if (/\b(new\s+class|create\s+(a\s+)?class|add\s+(a\s+)?class)\b/.test(t)) return 'create_class';
   return null;
 }
 
@@ -200,8 +219,23 @@ const INTENT_COPY: Record<CaptureIntent, string> = {
   lesson_plan: 'This will be a lesson plan (recognized — surface not shipping yet)',
   lesson_materials: 'This will be lesson materials (recognized — surface not shipping yet)',
   feed_photo: 'This will be a feed photo (recognized — no auto-post yet)',
+  school_logo: 'This will be the school logo',
+  create_class: 'This will be a new class',
   unsure: 'This will be… (pick a job — we will not guess)',
 };
+
+/** Student seat cannot already change these contact/emergency keys (AC-SC-15 / AC-SC-27). */
+const STUDENT_HIDDEN_CARD_KEYS = new Set([
+  'phone',
+  'email',
+  'address',
+  'emergency_name',
+  'emergency_phone',
+  'allergies',
+  'health_conditions',
+  'notes',
+  'grade_or_age',
+]);
 
 export default function CaptureScreen() {
   const { colors } = useTheme();
@@ -209,11 +243,14 @@ export default function CaptureScreen() {
   const chrome = useChrome();
   const setForceHidden = chrome.setForceHidden;
   const chromeClassId = chrome.classId;
-  const chromeRole = chrome.role;
+  const chromeRole = chrome.role as CaptureChromeRole;
   const router = useRouter();
-  const { teacher, loading: authLoading } = useAuth();
+  const { teacher, loading: authLoading, profile } = useAuth();
   const office = chromeRole !== 'none' && isOfficeRole(chromeRole);
   const teachSeat = chromeRole === 'teacher';
+  const composerExtras = seatShowsCaptureComposerExtras(chromeRole);
+  const photoFileIcons = seatShowsCapturePhotoFileIcons(chromeRole);
+  const personPhotoChoiceOpen = seatSeesPersonPhotoChoice(chromeRole);
 
   const [pages, setPages] = useState<Array<{ key: string; uri: string; mimeType: string }>>([]);
   const [files, setFiles] = useState<CaptureFile[]>([]);
@@ -223,12 +260,18 @@ export default function CaptureScreen() {
   const [spokenName, setSpokenName] = useState('');
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [parents, setParents] = useState<ClassParent[]>([]);
+  const [directoryPeople, setDirectoryPeople] = useState<DirectoryPerson[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [parentName, setParentName] = useState('');
   const [portraitTarget, setPortraitTarget] = useState<'student' | 'parent'>('student');
+  /** Office person photo: wait for choice before attach or create (AC-SC-31). */
+  const [personPhotoChoice, setPersonPhotoChoice] = useState<'choose' | 'attach' | 'create' | null>(
+    null,
+  );
+  const [directoryPersonId, setDirectoryPersonId] = useState<string | null>(null);
   const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
@@ -345,9 +388,25 @@ export default function CaptureScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!teacher) return;
       void (async () => {
         try {
+          setMicId(await getPreferredDeviceId('audio'));
+          setCameraId(await getPreferredDeviceId('video'));
+          if (personPhotoChoiceOpen) {
+            try {
+              setDirectoryPeople(await listDirectory());
+            } catch {
+              setDirectoryPeople([]);
+            }
+          } else {
+            setDirectoryPeople([]);
+          }
+          if (!teacher) {
+            setRoster([]);
+            setParents([]);
+            setAssignments([]);
+            return;
+          }
           const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
           setRoster(await listRoster(klass.id));
           setAssignments(await listClassAssignments(klass.id));
@@ -357,13 +416,11 @@ export default function CaptureScreen() {
           } catch {
             setParents([]);
           }
-          setMicId(await getPreferredDeviceId('audio'));
-          setCameraId(await getPreferredDeviceId('video'));
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Could not load roster');
         }
       })();
-    }, [teacher, chromeClassId]),
+    }, [teacher, chromeClassId, personPhotoChoiceOpen]),
   );
 
   useFocusEffect(
@@ -384,6 +441,9 @@ export default function CaptureScreen() {
   );
 
   // Avoid OAuth-return flash: session may still be hydrating after redirect (t_9bb57c2c).
+  // Stamp 7: every signed-in seat opens /capture. Staff use teachers row; parent/student use profile id.
+  const assetOwnerId = teacher?.id ?? profile?.id ?? null;
+  const activeClassId = teacher?.active_class_id ?? null;
   if (authLoading) {
     return (
       <Screen>
@@ -391,7 +451,7 @@ export default function CaptureScreen() {
       </Screen>
     );
   }
-  if (!teacher) {
+  if (!assetOwnerId || chromeRole === 'none') {
     return (
       <Screen>
         <Text style={[styles.lead, { color: colors.mute }]}>Sign in first, then come back to capture.</Text>
@@ -411,6 +471,8 @@ export default function CaptureScreen() {
     setVehicleMake('');
     setVehicleModel('');
     setAnswerKeyPreview(null);
+    setPersonPhotoChoice(null);
+    setDirectoryPersonId(null);
   };
 
   const resetSlip = () => {
@@ -675,7 +737,7 @@ export default function CaptureScreen() {
 
       if (firstImage) {
         const uploaded = await uploadTeacherAsset({
-          teacherId: teacher.id,
+          teacherId: assetOwnerId,
           kind: 'photo',
           uri: firstImage.uri,
           mimeType: firstImage.mimeType,
@@ -744,7 +806,32 @@ export default function CaptureScreen() {
         nextIntent === 'unsure' &&
         (result.studentGuessName || result.gaps?.length || spokenName.trim())
       ) {
-        nextIntent = 'homework';
+        // Office / parent / student must not silently land on classwork grade.
+        nextIntent = teachSeat ? 'homework' : 'unsure';
+      }
+
+      const allowedKeys = new Set(seatUnsureIntentOptions(chromeRole).map(([key]) => key));
+      if (nextIntent !== 'unsure' && !allowedKeys.has(nextIntent)) {
+        if (
+          (nextIntent === 'roster' || nextIntent === 'create_class') &&
+          seatRefusesCreateFromPhoto(chromeRole, nextIntent === 'roster' ? 'roster' : 'class')
+        ) {
+          setError('This seat cannot create a class or roster from a photo.');
+          setClassified(result);
+          setIntent(null);
+          setAsking(false);
+          setBusy(false);
+          return;
+        }
+        if (nextIntent === 'homework' && office) {
+          setError('Office may not send classwork to a teacher for grading.');
+          setClassified(result);
+          setIntent(null);
+          setAsking(false);
+          setBusy(false);
+          return;
+        }
+        nextIntent = 'unsure';
       }
 
       const rosterNames = roster.map((student) => ({
@@ -758,19 +845,43 @@ export default function CaptureScreen() {
         : null;
       const matched = paperName ? matchPaperName(paperName, rosterNames) : { guessedStudentId: null, confidence: 0 };
       const guessOnRoster = fromId ?? matched.guessedStudentId;
-      if (guessOnRoster) setStudentId(guessOnRoster);
+      if (guessOnRoster && !personPhotoChoiceOpen) setStudentId(guessOnRoster);
       if (result.parentGuessName) setParentName(result.parentGuessName);
       if (!spokenName.trim() && (result.studentGuessName || result.note)) {
         setSpokenName(result.studentGuessName || result.note || '');
       }
 
-      const mapped = mapClassifierFields(
+      let mapped = mapClassifierFields(
         result.fields ?? [],
         nextIntent === 'parent_card' ? 'parent' : 'student',
       );
+      if (chromeRole === 'student' && nextIntent === 'student_card') {
+        mapped = mapped.filter((field) => !STUDENT_HIDDEN_CARD_KEYS.has(field.key));
+        if (!mapped.length) {
+          setError(
+            'A contact or emergency card with no field this seat can already change is a refusal. Nothing is filed. The portrait stays in.',
+          );
+          setClassified(result);
+          setIntent('portrait');
+          setPersonPhotoChoice(null);
+          setAsking(false);
+          setBusy(false);
+          setStatus(null);
+          return;
+        }
+      }
       setFieldChecks(mapped.map((field) => ({ ...field, checked: true })));
       setClassified(result);
       setIntent(nextIntent);
+      // AC-SC-31: office person photo does not attach and does not create until they choose.
+      if (nextIntent === 'portrait' && personPhotoChoiceOpen) {
+        setPersonPhotoChoice('choose');
+        setDirectoryPersonId(null);
+        setStudentId(null);
+        setParentId(null);
+      } else {
+        setPersonPhotoChoice(null);
+      }
 
       if (nextIntent === 'vehicle' && pages.length && teacher) {
         try {
@@ -780,7 +891,7 @@ export default function CaptureScreen() {
           let make = '';
           let model = '';
           for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
-            const storagePath = await uploadRidePhoto(teacher.id, page.uri, page.mimeType);
+            const storagePath = await uploadRidePhoto(assetOwnerId, page.uri, page.mimeType);
             const lpr = await invokeRideLpr(storagePath);
             if (lpr.plateFront) front = lpr.plateFront;
             if (lpr.plateBack) back = lpr.plateBack;
@@ -853,7 +964,7 @@ export default function CaptureScreen() {
           }
           if (assigned && assignmentHasKey(assigned)) {
             const media = await evaluateCaptureMedia({
-              teacherId: teacher.id,
+              teacherId: assetOwnerId,
               pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
               audioUri,
               audioMime,
@@ -905,14 +1016,14 @@ export default function CaptureScreen() {
     setStatus(null);
     setError(null);
     try {
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId);
       const photoAssets =
         evaluation?.photoAssets?.length === pages.length
           ? evaluation.photoAssets
           : await Promise.all(
               pages.map((page) =>
                 uploadTeacherAsset({
-                  teacherId: teacher.id,
+                  teacherId: assetOwnerId,
                   kind: 'photo',
                   uri: page.uri,
                   mimeType: page.mimeType,
@@ -924,7 +1035,7 @@ export default function CaptureScreen() {
         ? evaluation.audioAsset
         : audioUri
           ? await uploadTeacherAsset({
-              teacherId: teacher.id,
+              teacherId: assetOwnerId,
               kind: 'audio',
               uri: audioUri,
               mimeType: audioMime,
@@ -1072,14 +1183,14 @@ export default function CaptureScreen() {
       setBusy(true);
       setError(null);
       try {
-        const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+        const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId);
         const photoAssets =
           evaluation?.photoAssets?.length === pages.length
             ? evaluation.photoAssets
             : await Promise.all(
                 pages.map((page) =>
                   uploadTeacherAsset({
-                    teacherId: teacher.id,
+                    teacherId: assetOwnerId,
                     kind: 'photo',
                     uri: page.uri,
                     mimeType: page.mimeType,
@@ -1110,11 +1221,28 @@ export default function CaptureScreen() {
   };
 
   const savePortraitConfirm = async () => {
-    const personId = portraitTarget === 'student' ? studentId : parentId;
-    if (!personId) {
-      setError('Pick a person for the portrait.');
+    if (!assetOwnerId) {
+      setError('Sign in first, then come back to capture.');
       return;
     }
+    // AC-SC-31: office person photo does not attach/create until they choose.
+    if (personPhotoChoiceOpen && (personPhotoChoice == null || personPhotoChoice === 'choose')) {
+      setError('Choose avatar on an existing person, or create a new person. Cancel files nothing.');
+      return;
+    }
+    if (personPhotoChoiceOpen && personPhotoChoice === 'attach' && !directoryPersonId) {
+      setError('Pick the person this face belongs to. A face that is not them does not attach.');
+      return;
+    }
+    if (
+      personPhotoChoiceOpen &&
+      personPhotoChoice === 'create' &&
+      !seatMayCreatePersonFromPhoto(chromeRole)
+    ) {
+      setError('This seat cannot create a new person from a photo.');
+      return;
+    }
+
     const source = pages[0];
     if (!source && !uploadedAssetId) {
       setError('Add a photo first.');
@@ -1123,28 +1251,169 @@ export default function CaptureScreen() {
     setBusy(true);
     setError(null);
     try {
+      let kind: ProfilePhotoKind = portraitTarget;
+      let personId: string | null = portraitTarget === 'student' ? studentId : parentId;
+
+      // Parent / student: own face (and linked person when already selected). Never mint.
+      if (chromeRole === 'student' && profile?.student_id && !personPhotoChoiceOpen) {
+        kind = 'student';
+        personId = studentId ?? profile.student_id;
+      } else if (chromeRole === 'parent' && profile?.parent_id && !personPhotoChoiceOpen) {
+        if (portraitTarget === 'parent' || !studentId) {
+          kind = 'parent';
+          personId = parentId ?? profile.parent_id;
+        }
+      }
+
+      if (personPhotoChoiceOpen && personPhotoChoice === 'attach') {
+        const picked = directoryPeople.find((row) => row.id === directoryPersonId);
+        if (!picked) {
+          setError('Pick the person this face belongs to.');
+          setBusy(false);
+          return;
+        }
+        const rowKind = directoryPersonKindLabel(picked);
+        if (rowKind === 'student' && picked.student_id) {
+          kind = 'student';
+          personId = picked.student_id;
+        } else if (rowKind === 'parent' && picked.parent_id) {
+          kind = 'parent';
+          personId = picked.parent_id;
+        } else {
+          kind = 'teacher';
+          personId = picked.id;
+        }
+      } else if (personPhotoChoiceOpen && personPhotoChoice === 'create') {
+        if (!teacher) {
+          setError('Office staff capture needs a staff login.');
+          setBusy(false);
+          return;
+        }
+        const name = spokenName.replace(/\s+/g, ' ').trim() || parentName.replace(/\s+/g, ' ').trim();
+        if (!name) {
+          setError('Name the new person before creating.');
+          setBusy(false);
+          return;
+        }
+        if (portraitTarget === 'parent') {
+          const created = await createParent({
+            teacherId: assetOwnerId,
+            displayName: name,
+            createdVia: 'photo_card',
+          });
+          kind = 'parent';
+          personId = created.parent.id;
+        } else {
+          const created = await mintOfficeStudent({
+            displayName: name,
+            teacherId: assetOwnerId,
+            createdVia: 'typed',
+          });
+          kind = 'student';
+          personId = created.id;
+        }
+      }
+
+      if (!personId) {
+        setError(
+          seatRefusesCreateFromPhoto(chromeRole, 'person')
+            ? 'Pick a person for the portrait. This seat cannot create a new person.'
+            : 'Pick a person for the portrait.',
+        );
+        setBusy(false);
+        return;
+      }
+
       if (source) {
         await uploadProfilePhoto({
-          teacherId: teacher.id,
-          kind: portraitTarget,
+          teacherId: assetOwnerId,
+          kind,
           personId,
           uri: source.uri,
           mimeType: source.mimeType,
           imageUrl: null,
         });
       } else if (uploadedAssetId) {
-        await setProfilePhoto(portraitTarget, personId, uploadedAssetId);
+        await setProfilePhoto(kind, personId, uploadedAssetId);
       }
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
       resetSlip();
       setStatus('Portrait saved.');
-      if (portraitTarget === 'student') {
-        router.replace(`/class/${klass.id}/student/${personId}`);
+      if (kind === 'student' && teacher) {
+        const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId).catch(() => null);
+        if (klass) router.replace(`/class/${klass.id}/student/${personId}`);
+        else router.replace('/');
+      } else if (kind === 'parent' && teacher) {
+        const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId).catch(() => null);
+        if (klass) router.replace(`/class/${klass.id}/parent/${personId}`);
+        else router.replace('/');
       } else {
-        router.replace(`/class/${klass.id}/parent/${personId}`);
+        router.replace(chromeRole === 'parent' ? '/parent' : chromeRole === 'student' ? '/todo' : '/');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not set photo');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveSchoolLogoConfirm = async () => {
+    if (!office) {
+      setError('Only the office may set the school logo.');
+      return;
+    }
+    if (!assetOwnerId) {
+      setError('Sign in first, then come back to capture.');
+      return;
+    }
+    const source = pages[0];
+    if (!source && !uploadedAssetId) {
+      setError('Add a logo photo first.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      let assetId = uploadedAssetId;
+      if (source) {
+        const asset = await uploadTeacherAsset({
+          teacherId: assetOwnerId,
+          kind: 'photo',
+          uri: source.uri,
+          mimeType: source.mimeType,
+        });
+        assetId = asset.id;
+      }
+      if (!assetId) throw new Error('Add a logo photo first.');
+      await setSchoolLogo(assetId);
+      resetSlip();
+      setStatus('School logo saved.');
+      router.replace('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the school logo');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveCreateClassConfirm = async () => {
+    if (seatRefusesCreateFromPhoto(chromeRole, 'class')) {
+      setError('This seat cannot create a class from a photo.');
+      return;
+    }
+    const name = spokenName.replace(/\s+/g, ' ').trim();
+    if (!name) {
+      setError('Name the class before confirming.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const klass = await createClass(name);
+      resetSlip();
+      setStatus('Class created.');
+      router.replace(`/admin/class/${klass.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create class');
     } finally {
       setBusy(false);
     }
@@ -1166,7 +1435,7 @@ export default function CaptureScreen() {
       let id = parentId;
       if (!id) {
         const created = await createParent({
-          teacherId: teacher.id,
+          teacherId: assetOwnerId,
           displayName: parentName,
           createdVia: 'photo_card',
           metadata,
@@ -1182,7 +1451,7 @@ export default function CaptureScreen() {
         await updateParentMetadata(id, merged);
         if (studentId) await linkChild(id, studentId);
       }
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId);
       resetSlip();
       setStatus('Parent saved.');
       router.replace(`/class/${klass.id}/parent/${id}`);
@@ -1201,7 +1470,7 @@ export default function CaptureScreen() {
     setBusy(true);
     setError(null);
     try {
-      const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+      const klass = await resolveCaptureClass(assetOwnerId, activeClassId, chromeClassId);
       const student = await getStudent(studentId);
       const checked = fieldChecks.filter((field) => field.checked);
       let metadata = { ...student.metadata };
@@ -1232,7 +1501,7 @@ export default function CaptureScreen() {
             ? await Promise.all(
                 pages.map((page) =>
                   uploadTeacherAsset({
-                    teacherId: teacher.id,
+                    teacherId: assetOwnerId,
                     kind: 'photo',
                     uri: page.uri,
                     mimeType: page.mimeType,
@@ -1262,6 +1531,10 @@ export default function CaptureScreen() {
   };
 
   const saveRosterConfirm = async () => {
+    if (seatRefusesCreateFromPhoto(chromeRole, 'roster')) {
+      setError('This seat cannot create a roster from a photo.');
+      return;
+    }
     if (!chromeClassId) {
       router.replace('/?switch=1');
       return;
@@ -1274,7 +1547,7 @@ export default function CaptureScreen() {
         if (office) {
           await addConfirmedStudents({
             classId: chromeClassId,
-            teacherId: teacher.id,
+            teacherId: assetOwnerId,
             names: selected.map((row) => row.name),
             createdVia: 'photo_list',
           });
@@ -1336,7 +1609,7 @@ export default function CaptureScreen() {
       let asset = evaluation?.photoAssets?.[0] ?? null;
       if (!asset && firstImage) {
         asset = await uploadTeacherAsset({
-          teacherId: teacher.id,
+          teacherId: assetOwnerId,
           kind: 'photo',
           uri: firstImage.uri,
           mimeType: firstImage.mimeType,
@@ -1408,7 +1681,7 @@ export default function CaptureScreen() {
       let model = vehicleModel.trim();
       if ((!front && !back) && pages.length) {
         for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
-          const storagePath = await uploadRidePhoto(teacher.id, page.uri, page.mimeType);
+          const storagePath = await uploadRidePhoto(assetOwnerId, page.uri, page.mimeType);
           const lpr = await invokeRideLpr(storagePath);
           if (lpr.plateFront) front = plateNorm(lpr.plateFront) || front;
           if (lpr.plateBack) back = plateNorm(lpr.plateBack) || back;
@@ -1499,7 +1772,7 @@ export default function CaptureScreen() {
       let asset = evaluation?.photoAssets?.[0] ?? null;
       if (!asset && firstImage) {
         asset = await uploadTeacherAsset({
-          teacherId: teacher.id,
+          teacherId: assetOwnerId,
           kind: 'photo',
           uri: firstImage.uri,
           mimeType: firstImage.mimeType,
@@ -1550,11 +1823,52 @@ export default function CaptureScreen() {
       );
     }
     if (intent === 'portrait') {
+      if (personPhotoChoiceOpen && (personPhotoChoice == null || personPhotoChoice === 'choose')) {
+        return (
+          <PrimaryButton
+            disabled
+            label="Choose before filing"
+            onPress={() => undefined}
+          />
+        );
+      }
+      const attachReady =
+        personPhotoChoiceOpen && personPhotoChoice === 'attach'
+          ? Boolean(directoryPersonId)
+          : personPhotoChoiceOpen && personPhotoChoice === 'create'
+            ? Boolean(spokenName.trim() || parentName.trim())
+            : portraitTarget === 'student'
+              ? Boolean(studentId)
+              : Boolean(parentId);
       return (
         <PrimaryButton
-          disabled={busy || (portraitTarget === 'student' ? !studentId : !parentId)}
-          label={busy ? 'Saving…' : 'Use as profile'}
+          disabled={busy || !attachReady}
+          label={
+            busy
+              ? 'Saving…'
+              : personPhotoChoice === 'create'
+                ? 'Create person'
+                : 'Use as profile'
+          }
           onPress={() => void savePortraitConfirm()}
+        />
+      );
+    }
+    if (intent === 'school_logo') {
+      return (
+        <PrimaryButton
+          disabled={busy || (!pages.length && !uploadedAssetId)}
+          label={busy ? 'Saving…' : 'Save school logo'}
+          onPress={() => void saveSchoolLogoConfirm()}
+        />
+      );
+    }
+    if (intent === 'create_class') {
+      return (
+        <PrimaryButton
+          disabled={busy || !spokenName.trim()}
+          label={busy ? 'Saving…' : 'Create class'}
+          onPress={() => void saveCreateClassConfirm()}
         />
       );
     }
@@ -1686,14 +2000,16 @@ export default function CaptureScreen() {
           }}
         />
       </View>
-      <IconButton
-        name="mic"
-        size="lg"
-        tone={micLive ? 'danger' : 'wash'}
-        live={micLive}
-        label={micLive ? 'Stop listening' : 'Dictate into the field'}
-        onPress={() => void (micLive ? stopRecording() : startRecording())}
-      />
+      {composerExtras ? (
+        <IconButton
+          name="mic"
+          size="lg"
+          tone={micLive ? 'danger' : 'wash'}
+          live={micLive}
+          label={micLive ? 'Stop listening' : 'Dictate into the field'}
+          onPress={() => void (micLive ? stopRecording() : startRecording())}
+        />
+      ) : null}
     </View>
   );
 
@@ -1707,8 +2023,9 @@ export default function CaptureScreen() {
     </View>
   );
 
+  // AC-SC-3: papers seats are one camera still — no web drop except Teach composer.
   const webDropProps =
-    Platform.OS === 'web'
+    Platform.OS === 'web' && composerExtras
       ? ({
           onDragEnter: (event: { preventDefault?: () => void; stopPropagation?: () => void }) => {
             event.preventDefault?.();
@@ -1763,7 +2080,7 @@ export default function CaptureScreen() {
               clearClassify();
             }}
           />
-          {Platform.OS === 'web' && pages.length === 0 ? (
+          {Platform.OS === 'web' && composerExtras && pages.length === 0 ? (
             <Text style={[type.meta, styles.dropHint, { color: colors.mute }]}>
               Drop photos, videos, or files here
             </Text>
@@ -1812,20 +2129,24 @@ export default function CaptureScreen() {
               label="Camera"
               onPress={() => void pickCamera()}
             />
-            <IconButton
-              name="photo"
-              size="lg"
-              tone={selectedSource === 'library' ? 'brand' : 'wash'}
-              label="Photo or Video"
-              onPress={() => void pickLibrary()}
-            />
-            <IconButton
-              name="file"
-              size="lg"
-              tone={selectedSource === 'files' ? 'brand' : 'wash'}
-              label="Files"
-              onPress={() => void pickFiles()}
-            />
+            {photoFileIcons ? (
+              <>
+                <IconButton
+                  name="photo"
+                  size="lg"
+                  tone={selectedSource === 'library' ? 'brand' : 'wash'}
+                  label="Photo or Video"
+                  onPress={() => void pickLibrary()}
+                />
+                <IconButton
+                  name="file"
+                  size="lg"
+                  tone={selectedSource === 'files' ? 'brand' : 'wash'}
+                  label="Files"
+                  onPress={() => void pickFiles()}
+                />
+              </>
+            ) : null}
           </View>
           {teachSeat ? (
             <GhostButton
@@ -1859,22 +2180,23 @@ export default function CaptureScreen() {
 
           {intent === 'unsure' ? (
             <View style={styles.gaps}>
-              {(
-                [
-                  ['homework', 'Grade'],
-                  ['syllabus', 'Syllabus'],
-                  ['answer_key', 'Answer key'],
-                  ['vehicle', 'Vehicle / plate'],
-                  ['lesson_plan', 'Lesson plan'],
-                  ['lesson_materials', 'Lesson materials'],
-                  ['feed_photo', 'Feed photo'],
-                  ['roster', 'Roster'],
-                  ['portrait', 'Portrait'],
-                  ['parent_card', 'Parent card'],
-                  ['student_card', 'Student card'],
-                ] as const
-              ).map(([key, label]) => (
-                <SecondaryButton key={key} label={label} onPress={() => setIntent(key)} />
+              {seatUnsureIntentOptions(chromeRole).map(([key, label]) => (
+                <SecondaryButton
+                  key={key}
+                  label={label}
+                  onPress={() => {
+                    const next = key as CaptureIntent;
+                    setIntent(next);
+                    if (next === 'portrait' && personPhotoChoiceOpen) {
+                      setPersonPhotoChoice('choose');
+                      setDirectoryPersonId(null);
+                      setStudentId(null);
+                      setParentId(null);
+                    } else {
+                      setPersonPhotoChoice(null);
+                    }
+                  }}
+                />
               ))}
             </View>
           ) : null}
@@ -2037,31 +2359,141 @@ export default function CaptureScreen() {
 
           {intent === 'portrait' ? (
             <>
-              <View style={styles.gaps}>
-                <Chip
-                  label="Student"
-                  selected={portraitTarget === 'student'}
-                  onPress={() => setPortraitTarget('student')}
-                />
-                <Chip
-                  label="Parent"
-                  selected={portraitTarget === 'parent'}
-                  onPress={() => setPortraitTarget('parent')}
-                />
-              </View>
-              {(portraitTarget === 'student' ? roster : parents).map((person) => (
-                <ListRow
-                  key={person.id}
-                  title={person.display_name}
-                  photoUrl={'photoUrl' in person ? person.photoUrl : null}
-                  chevron={false}
-                  selected={portraitTarget === 'student' ? person.id === studentId : person.id === parentId}
-                  onPress={() => {
-                    if (portraitTarget === 'student') setStudentId(person.id);
-                    else setParentId(person.id);
-                  }}
-                />
-              ))}
+              {personPhotoChoiceOpen ? (
+                <>
+                  <Text style={[type.meta, { color: colors.mute }]}>
+                    A photo of a person does not attach and does not create until you choose. Cancel before the
+                    choice files nothing.
+                  </Text>
+                  <View style={styles.gaps}>
+                    <SecondaryButton
+                      label="Avatar on someone who already exists"
+                      onPress={() => {
+                        setPersonPhotoChoice('attach');
+                        setDirectoryPersonId(null);
+                      }}
+                    />
+                    {seatMayCreatePersonFromPhoto(chromeRole) ? (
+                      <SecondaryButton
+                        label="Create a new person"
+                        onPress={() => {
+                          setPersonPhotoChoice('create');
+                          setDirectoryPersonId(null);
+                        }}
+                      />
+                    ) : null}
+                    <GhostButton
+                      label="Cancel"
+                      onPress={() => {
+                        // Cancel before the choice files nothing (AC-SC-19 / AC-SC-31).
+                        resetSlip();
+                        setStatus(null);
+                        setError(null);
+                      }}
+                    />
+                  </View>
+                  {personPhotoChoice === 'attach' ? (
+                    <>
+                      <Text style={[type.meta, { color: colors.mute }]}>
+                        Pick the person. Each row says student, parent, or staff. A face that is not them does
+                        not attach.
+                      </Text>
+                      {directoryPeople.map((person) => {
+                        const kind = directoryPersonKindLabel(person);
+                        const title =
+                          person.display_name?.trim() || person.username || 'Person';
+                        return (
+                          <ListRow
+                            key={person.id}
+                            title={title}
+                            status={kind}
+                            photoUrl={person.photoUrl}
+                            chevron={false}
+                            selected={person.id === directoryPersonId}
+                            onPress={() => setDirectoryPersonId(person.id)}
+                          />
+                        );
+                      })}
+                    </>
+                  ) : null}
+                  {personPhotoChoice === 'create' ? (
+                    <>
+                      <Text style={[type.meta, { color: colors.mute }]}>
+                        Create a new person and use this photo as that avatar. Not a silent insert. Does not
+                        create a login.
+                      </Text>
+                      <View style={styles.gaps}>
+                        <Chip
+                          label="Student"
+                          selected={portraitTarget === 'student'}
+                          onPress={() => setPortraitTarget('student')}
+                        />
+                        <Chip
+                          label="Parent"
+                          selected={portraitTarget === 'parent'}
+                          onPress={() => setPortraitTarget('parent')}
+                        />
+                      </View>
+                      <TextField
+                        label="Name"
+                        value={spokenName}
+                        onChangeText={setSpokenName}
+                        autoCapitalize="words"
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <View style={styles.gaps}>
+                    <Chip
+                      label="Student"
+                      selected={portraitTarget === 'student'}
+                      onPress={() => setPortraitTarget('student')}
+                    />
+                    <Chip
+                      label="Parent"
+                      selected={portraitTarget === 'parent'}
+                      onPress={() => setPortraitTarget('parent')}
+                    />
+                  </View>
+                  {(portraitTarget === 'student' ? roster : parents).map((person) => (
+                    <ListRow
+                      key={person.id}
+                      title={person.display_name}
+                      photoUrl={'photoUrl' in person ? person.photoUrl : null}
+                      chevron={false}
+                      selected={
+                        portraitTarget === 'student' ? person.id === studentId : person.id === parentId
+                      }
+                      onPress={() => {
+                        if (portraitTarget === 'student') setStudentId(person.id);
+                        else setParentId(person.id);
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+            </>
+          ) : null}
+
+          {intent === 'school_logo' ? (
+            <Text style={[type.meta, { color: colors.mute }]}>
+              Confirm replaces the school logo. Cancel before confirm keeps the old logo.
+            </Text>
+          ) : null}
+
+          {intent === 'create_class' ? (
+            <>
+              <Text style={[type.meta, { color: colors.mute }]}>
+                Confirm creates the class. It does not insert on capture. Name it first.
+              </Text>
+              <TextField
+                label="Class name"
+                value={spokenName}
+                onChangeText={setSpokenName}
+                autoCapitalize="words"
+              />
             </>
           ) : null}
 
@@ -2204,7 +2636,7 @@ export default function CaptureScreen() {
         <ClassStackBinder
           visible={stackOpen}
           onClose={() => setStackOpen(false)}
-          teacherId={teacher.id}
+          teacherId={assetOwnerId}
           classes={chrome.classes}
           initialClassId={chromeClassId}
           teachSeat={teachSeat}

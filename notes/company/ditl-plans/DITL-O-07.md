@@ -1,19 +1,22 @@
 # DITL-O-07 — Office bio attach for existing student (card fields)
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
+<!-- DITL-UPDATE t_0aafd388 2026-09-29: Stamp 6 header Open Capture; office contact card no longer a photo-extract gap; no Capture tray tab -->
 
 | Field | Value |
 |-------|-------|
 | Plan ID | DITL-O-07 |
 | Title | Office/Super: attach contact/bio fields to existing student (card data); no invent roster |
 | Primary hat | administrator **and** superintendent (run both) |
-| Support | SUPPORTED Details + `update_student`; photo extract **PARTIAL/GAP** (no office Capture tray) |
+| Support | SUPPORTED Details + `update_student`. **Superseded, kept:** photo extract **PARTIAL/GAP** (no office Capture tray). That gap is not current. Administrator is not a camera gap. |
 | Regression tags | `office`, `bio`, `student-card`, `people`, `ask-dual`, `ferpa`, `teardown` |
 | CEO story | Associate student data-card fields to existing DB record (office hat) |
 
 ## Goal / story
 
-Office attaches the **same contact/bio field set** as the handwritten student data card onto an **already-existing** student (F-STUDENTS S1). Photo OCR/extract lives on teacher Capture (`DITL-T-05`). Office path: open existing person → edit canonical metadata (UI + Ask) → DB assert → revert. Do not invent Document AI for office chrome.
+Office attaches the **same contact/bio field set** as the handwritten student data card onto an **already-existing** student (F-STUDENTS S1). Office path: open existing person → edit canonical metadata (UI + Ask) → DB assert → revert. Do not invent Document AI for office chrome.
+
+**Superseded, kept:** "Photo OCR/extract lives on teacher Capture (`DITL-T-05`)." That sentence is not a reason to leave either office seat dark, and it is not a reason to add a Capture tray tab. Teach keeps today's teacher Capture. Do not add the office list to Teach.
 
 ## Preconditions / fixtures
 
@@ -29,7 +32,7 @@ Office attaches the **same contact/bio field set** as the handwritten student da
 | 2 | Open existing student (search/directory) | SUPPORTED | People / student person | `search_students` / `list_people` |
 | 3 | Edit bio fields from card values | SUPPORTED | Details / profile | `update_student` |
 | 4 | **DB assert** each canonical key | SUPPORTED | read-back Details | Ask get student if available |
-| 5 | Photo-from-card extract on office seat | **PARTIAL/GAP** | no Capture tray on office | no office scan-card tool — do not invent |
+| 5 | Photo-from-card extract on office seat | **Superseded, kept:** PARTIAL/GAP (no office Capture tray). **Current:** not a gap on either office seat. See Stamp 6 section. Do not add a Capture tray tab. | no Capture tray — superseded as the gap; do not add a Capture tray tab | no office scan-card Ask tool — do not invent |
 | 6 | Reverse: revert metadata to baseline | SUPPORTED | Details | `update_student` |
 | 7 | FERPA: no IEP/504 columns | SUPPORTED | Details keys only | same |
 | 8 | Sign out | SUPPORTED | hamburger | — |
@@ -39,7 +42,7 @@ Office attaches the **same contact/bio field set** as the handwritten student da
 - Lifecycle: find existing student → write fields → assert → revert → sign-out
 - Multiplicity: twins — pick correct S1 only
 - Dual-hat: not required (DH-02 separate)
-- Non-goals: invent student; office camera student_card pipeline; IEP/504; teacher Capture (T-05)
+- Non-goals: invent student on this bio-attach day (a confirmed create of a new person stays the shared office list on DITL-O-01, not a new day here); IEP/504 extracted into fields; a Capture tray tab; adding the office list to Teach. **Superseded, kept:** "office camera student_card pipeline" as a non-goal that leaves the office header dark. Teacher Capture (T-05) stays Teach.
 
 ## Artifacts + DB assert
 
@@ -58,7 +61,7 @@ Same targets as T-05: `preferred_name`, `birthday`, `phone`, `email`, `address`,
 
 ## Suggested QE themes
 
-Office vs super parity on update_student; GAP honest on office photo extract; teardown baseline; pairs with T-05.
+Office vs super parity on the shared contact-card confirm. **Superseded, kept:** "GAP honest on office photo extract." Administrator is not a camera gap. Teardown baseline; pairs with T-05 for Teach only. DITL-O-07-UI-01 and DITL-O-07-UI-02 stay the manual preferred-name path. Do not rewrite those cases on this card.
 
 ## Soft v8b chrome (idle/working)
 
@@ -91,8 +94,19 @@ SoT: `working-k-avatar-soft-v8b-verbatim-host.md` (+ `working-k-avatar-soft-inte
 
 SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` comments (R4/CR/R5/3DW/P6). Missing on-disk proveout/intent files noted in card complete comment.
 
+## Stamp 6 Capture (header)
+
+Card `t_0aafd388`. Lock: Stamp 6 in `notes/company/superintendent-capture-stamp.md`. PM lock: `notes/company/superintendent-capture-pm.md`. Not a new day. Not a case rewrite. Do not copy parent-stays-dark, administrator-stays-dark, or a superintendent-only school logo.
+
+**Header this plan names.** On this office day, administrator and superintendent each have one header shutter, spoken name Open Capture, except the hides already locked: Messages, open Search, and My children. Not a tray tab. Do not add a Capture tray tab. Do not remove a tray tab. Administrator is not a camera gap.
+
+**Seat list this plan owns.** Contact card, on the shared office Capture list. If one office seat can confirm it, the other can. Confirm, not a silent insert. A photo does not set a grade. Office may not send classwork to a teacher for grading. Only the teacher sets a classwork grade. The school logo is on that same shared strip, not superintendent-only. This plan does not edit `docs/data-model.md`.
+
+**Not this card.** DITL-O-07-UI-01 and DITL-O-07-UI-02 stay the manual preferred-name path. Do not rewrite those cases here. Teach keeps today's teacher Capture. Do not add the office list to Teach.
+
 ## Changelog
 
 
+- **2026-09-29 (t_0aafd388):** Stamp 6 header Open Capture on both office seats. Contact card is no longer a photo-extract gap. No Capture tray tab. UI-01 and UI-02 not rewritten.
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways

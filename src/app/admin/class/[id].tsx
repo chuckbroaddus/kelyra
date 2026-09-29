@@ -220,7 +220,7 @@ export default function ClassOfficeScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-      {pane === 'teacher' ? (
+      {pane === 'manage' ? (
         <>
           <ClassAvatarRow klass={klass} onChange={setKlass} onError={setError} quiet />
           <FeedIconRow
@@ -236,6 +236,11 @@ export default function ClassOfficeScreen() {
               }
             }}
           />
+        </>
+      ) : null}
+
+      {pane === 'teacher' ? (
+        <>
           <SectionHeader label="Teachers" first />
           {teachers.length === 0 ? (
             <Text style={[type.meta, { color: colors.mute }]}>No teacher yet.</Text>

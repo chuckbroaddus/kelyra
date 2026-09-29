@@ -9,10 +9,22 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/ui/Avatar';
 import { GhostButton } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { hitSlop, radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+
+export type PhotoSheetTeacherImage = {
+  id: string;
+  displayName: string;
+  photoUrl: string | null;
+  photoAssetId: string;
+  /** Class holds a snapshot from this teacher (and they still have a photo). */
+  usingThisImage?: boolean;
+  /** Snapshot source still this teacher, but their current face differs. */
+  keptEarlier?: boolean;
+};
 
 type Props = {
   visible: boolean;
@@ -25,6 +37,9 @@ type Props = {
   onRemove?: () => void;
   /** Optional third source (Journal attach): any file. */
   onFile?: () => void;
+  /** Office Class avatar sheet only (AC-CATI). Absent/empty → no teacher-image block. */
+  teacherImages?: PhotoSheetTeacherImage[];
+  onTeacherImage?: (teacherId: string) => void;
   onCancel: () => void;
 };
 
@@ -48,11 +63,15 @@ export function PhotoSheet({
   onUseHomework,
   onRemove,
   onFile,
+  teacherImages,
+  onTeacherImage,
   onCancel,
 }: Props) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const web = Platform.OS === 'web';
+  const teachers = teacherImages?.filter((row) => Boolean(row.id)) ?? [];
+  const showTeacherBlock = teachers.length > 0;
 
   const run = (action: () => void, waitForPicker = false) => {
     // Web: fire the picker in this click before unmounting the sheet, or the
@@ -100,6 +119,57 @@ export function PhotoSheet({
               onPress={() => run(() => onUseHomework?.())}
               color={colors.ink}
             />
+          ) : null}
+          {showTeacherBlock ? (
+            <>
+              <Text
+                accessibilityRole="header"
+                style={[styles.teacherHeader, { color: colors.ink }]}
+              >
+                Use the Teacher's Avatar Image
+              </Text>
+              {teachers.map((teacher) => {
+                const matchOnly = Boolean(teacher.usingThisImage && !teacher.keptEarlier);
+                return (
+                  <View key={teacher.id}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        teacher.usingThisImage
+                          ? teacher.keptEarlier
+                            ? `${teacher.displayName}. Using this image. Class kept the earlier photo.`
+                            : `${teacher.displayName}. Using this image`
+                          : teacher.displayName
+                      }
+                      hitSlop={hitSlop}
+                      onPress={() => {
+                        if (matchOnly) return;
+                        run(() => onTeacherImage?.(teacher.id));
+                      }}
+                      style={({ pressed }) => [styles.teacherRow, pressed && !matchOnly && { opacity: 0.7 }]}
+                    >
+                      <Avatar
+                        name={teacher.displayName}
+                        photoUrl={teacher.photoUrl}
+                        hasPhoto
+                        size={32}
+                      />
+                      <Text style={[styles.teacherName, { color: colors.ink }]} numberOfLines={2}>
+                        {teacher.displayName}
+                      </Text>
+                      {teacher.usingThisImage ? (
+                        <Text style={[styles.usingMark, { color: colors.brand }]}>Using this image</Text>
+                      ) : null}
+                    </Pressable>
+                    {teacher.usingThisImage && teacher.keptEarlier ? (
+                      <Text style={[styles.keptLine, { color: colors.mute }]}>
+                        Class kept the earlier photo.
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </>
           ) : null}
           {hasPhoto ? (
             <Row label="Remove photo" onPress={() => run(() => onRemove?.())} color={colors.danger} />
@@ -177,4 +247,32 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowLabel: type.body,
+  teacherHeader: {
+    ...type.rowTitle,
+    paddingTop: 8,
+    paddingBottom: 2,
+    // Exact CEO label — never uppercase / ellipsize (AC-CATI-1).
+  },
+  teacherRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  teacherName: {
+    ...type.body,
+    flex: 1,
+    flexShrink: 1,
+  },
+  usingMark: {
+    ...type.meta,
+    fontWeight: '600',
+    flexShrink: 0,
+    marginLeft: 8,
+  },
+  keptLine: {
+    ...type.meta,
+    marginLeft: 42,
+    marginBottom: 4,
+  },
 });

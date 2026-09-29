@@ -2,6 +2,7 @@
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_2c13f9ac 2026-09-24: Journal daychrome scan note (primary on T-04) -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
+<!-- DITL-UPDATE t_0aafd388 2026-09-29: Stamp 6 header Open Capture; tray stays four including Calendar; no camera superseded -->
 
 | Field | Value |
 |-------|-------|
@@ -29,7 +30,7 @@ Before school, a parent with two children opens Kelyra, checks each child’s pu
 | # | Beat | Surface / chrome |
 |---|------|------------------|
 | 1 | Sign in as parent | `/sign-in` → lands parent seat |
-| 2 | Confirm tray **Home · Ride · Ask · Calendar** (4 tabs; no camera; no staff tabs) | Parent tray |
+| 2 | Confirm tray **Home · Ride · Ask · Calendar** (4 tabs; no staff tabs). **Superseded, kept:** "no camera." Do not read that as a reason to delete Calendar or to keep the header dark. Header shutter, spoken name Open Capture, except Messages and open Search. Not a tray tab. | Parent tray |
 | 3 | Open **Home**; see child chips / list for both children | `/parent` |
 | 4 | Select child A; review thin grades / class cards / focus (P-H2 style) | `/parent` (+ `/parent/grades` if present) |
 | 5 | Switch to child B; confirm A state clears (sibling isolation) | `/parent` |
@@ -80,11 +81,11 @@ Full parent grades book (P-G* if still open defect — call PARTIAL, do not fail
 | Restricted fail-closed | UI message opaque | Ask must not leak restriction reason |
 | Sign out | hamburger | — |
 
-Ask must not publish/mutate grades. Physical camera beats stay UI-primary.
+Ask must not publish/mutate grades. Physical Ride camera beats stay UI-primary. **Superseded, kept** if read as "no header camera": the Ride car-ahead shutter is not this header. The header shows Open Capture except Messages and open Search. Do not delete Calendar.
 
 ## Suggested QE case themes (not cases)
 
-Sibling clear; check-in success XX; leave→left; restricted fail; tray = 4 including Calendar after parent login; Ask dual-path grades read without grade write.
+Sibling clear; check-in success XX; leave→left; restricted fail; tray = 4 including Calendar after parent login. **Superseded, kept:** reading "no camera" as a dark header. Ask dual-path grades read without grade write. Do not rewrite the cases on this card.
 
 ## Teardown / cleanup (refine-2 2026-09-10)
 
@@ -135,10 +136,19 @@ SoT: `working-k-avatar-soft-v8b-verbatim-host.md` (+ `working-k-avatar-soft-inte
 
 SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` comments (R4/CR/R5/3DW/P6). Missing on-disk proveout/intent files noted in card complete comment.
 
+## Stamp 6 Capture (header)
+
+Card `t_0aafd388`. Lock: Stamp 6 in `notes/company/superintendent-capture-stamp.md`. PM lock: `notes/company/superintendent-capture-pm.md`. Not a new day. Not a case rewrite. Do not copy parent-stays-dark.
+
+**Header this plan names.** The parent seat shows one header shutter, spoken name Open Capture, except Messages and open Search. Not dark. Not a tray tab. Tray stays four, including Calendar: Home · Ride · Ask · Calendar. Do not add or remove a tray tab. Do not read "no camera" as a reason to delete Calendar or to keep the header dark. Cases that expect no camera are not rewritten on this card.
+
+**Seat list this plan owns.** The parent list only. Own face, a linked child's face, that child's homework for submission, that child's homework into Ask, or own bio. Not the office list. Not the school logo. Not another family. Twins stay one child at a time. Linked-child face: the same camera is the leave. Confirm again on that same child replaces the avatar. A wrong face does not attach. Cancel before confirm is not that leave. A photo does not set a grade. Extra work is not an official gradebook grade. Only the teacher sets a classwork grade. The Ride car-ahead photo is not this header shutter. Do not merge them.
+
 ## Changelog
 
 
-- **2026-09-27 (t_9fd8ed09):** Parent tray includes Calendar (4 tabs: Home · Ride · Ask · Calendar; no camera; no staff tabs)
+- **2026-09-29 (t_0aafd388):** Stamp 6 header Open Capture on the parent seat. Tray stays four, including Calendar. "No camera" superseded. Cases not rewritten.
+- **2026-09-27 (t_9fd8ed09):** Parent tray includes Calendar (4 tabs: Home · Ride · Ask · Calendar; no staff tabs). **Superseded, kept:** "no camera."
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_2c13f9ac):** Journal daychrome scan note (primary on T-04)
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways

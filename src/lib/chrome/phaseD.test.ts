@@ -91,7 +91,7 @@ test('STU-02 / OFF-08 / D4: student tray + OFFICE_CLASS_TABS unchanged; office H
   assert.deepEqual(trayKeysForRole('administrator'), OFFICE_KEYS);
   assert.deepEqual(
     OFFICE_CLASS_TABS.map((tab) => tab.key),
-    ['feed', 'teacher', 'parents', 'students'],
+    ['feed', 'teacher', 'parents', 'students', 'manage'],
   );
   const studentAsk = tabsFor('student', '/ask', null, 0).find((tab) => tab.key === 'ask');
   assert.equal(studentAsk?.label, 'Ask');

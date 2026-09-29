@@ -124,6 +124,8 @@ export async function uploadTeacherAsset(input: {
   uri: string;
   mimeType: string;
   skipThumb?: boolean;
+  /** Nested under `{teacherId}/{prefix}/…` (class-avatar snapshot source mark). */
+  prefix?: string;
 }): Promise<AssetRow> {
   if (input.kind === 'photo') {
     const uploaded = await uploadPhotoPair({
@@ -131,6 +133,7 @@ export async function uploadTeacherAsset(input: {
       uri: input.uri,
       mimeType: input.mimeType,
       skipThumb: input.skipThumb,
+      prefix: input.prefix,
     });
     return insertAssetRow({
       teacherId: input.teacherId,

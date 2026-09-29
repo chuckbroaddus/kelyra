@@ -25,17 +25,28 @@ export type ClassTeacher = {
   username: string | null;
   email: string | null;
   photoUrl: string | null;
+  photo_asset_id: string | null;
 };
 
 async function asTeachers(ids: string[]): Promise<ClassTeacher[]> {
   if (!ids.length) return [];
   const supabase = requireSupabase();
-  const [{ data: profiles }, { data: teachers }] = await Promise.all([
+  type FaceRow = { profile_id: string; photo_asset_id: string | null; storage_path: string | null };
+  const loadFaces = async (): Promise<FaceRow[]> => {
+    const { data, error } = await supabase.rpc('profile_photo_assets', { p_ids: ids });
+    if (error || !data) return [];
+    return data;
+  };
+  const [{ data: profiles }, { data: teachers }, faces] = await Promise.all([
     supabase.from('profiles').select('id, username, display_name, email, student_id, parent_id').in('id', ids),
     supabase.from('teachers').select('id, display_name, email').in('id', ids),
+    loadFaces(),
   ]);
   const profileById = new Map((profiles ?? []).map((row) => [row.id, row]));
   const teacherById = new Map((teachers ?? []).map((row) => [row.id, row]));
+  const assetById = new Map(
+    faces.filter((row) => row.photo_asset_id).map((row) => [row.profile_id, row.photo_asset_id as string]),
+  );
   const photos = await photoUrlsForProfiles(
     (profiles ?? []).map((row) => ({
       id: row.id,
@@ -52,13 +63,18 @@ async function asTeachers(ids: string[]): Promise<ClassTeacher[]> {
       username: person?.username ?? null,
       email: person?.email ?? teacher?.email ?? null,
       photoUrl: photos.get(id) ?? null,
+      photo_asset_id: assetById.get(id) ?? null,
     };
   });
 }
 
 export async function listClassTeachers(classId: string): Promise<ClassTeacher[]> {
   const supabase = requireSupabase();
-  const { data, error } = await supabase.from('class_teachers').select('teacher_id').eq('class_id', classId);
+  const { data, error } = await supabase
+    .from('class_teachers')
+    .select('teacher_id')
+    .eq('class_id', classId)
+    .order('created_at', { ascending: true });
   if (!error) {
     return asTeachers((data ?? []).map((row) => row.teacher_id));
   }

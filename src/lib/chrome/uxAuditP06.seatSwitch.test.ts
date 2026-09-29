@@ -72,7 +72,7 @@ test('P-06 settle: teacher seat never office tray nouns or office People altitud
   );
 });
 
-test('P-06 settle: office seat never teacher Capture/Needs tray or camera; no Ride tray', () => {
+test('P-06 settle: office seat never teacher Capture/Needs tray; header Open Capture; no Ride tray', () => {
   const dual = { role: 'superintendent' as const, also_teacher: true };
   const officeRole = resolveStaffChromeRole(dual, 'office');
   assert.equal(officeRole, 'superintendent');
@@ -80,7 +80,10 @@ test('P-06 settle: office seat never teacher Capture/Needs tray or camera; no Ri
   assert.ok(!trayKeysForRole(officeRole!).includes('capture'));
   assert.ok(!trayKeysForRole(officeRole!).includes('inbox'));
   assert.ok(!trayKeysForRole(officeRole!).includes('ride'));
-  assert.equal(showHeaderCapture('/', officeRole!), false);
+  // Stamp 7: office shows header Open Capture (not a tray tab). Hide on Messages / My children.
+  assert.equal(showHeaderCapture('/', officeRole!), true);
+  assert.equal(showHeaderCapture('/parent', officeRole!), false);
+  assert.equal(showHeaderCapture('/messages', officeRole!), false);
   assert.equal(showHeaderCapture('/', 'teacher'), true);
   assert.equal(showHeaderCapture('/messages', 'teacher'), false);
 

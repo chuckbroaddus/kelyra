@@ -1,9 +1,21 @@
 import { Platform } from 'react-native';
 
-import { uploadTeacherAsset } from '@/lib/media/upload';
+import {
+  classAvatarFromPrefix,
+  parseClassAvatarTeacherSource,
+  type ClassAvatarTeacherSource,
+} from '@/lib/classes/avatarSource';
+import { loadPhotoAssetPaths, uploadTeacherAsset } from '@/lib/media/upload';
 import { pickNormalizedPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { signedUrlsForAssetIds } from '@/lib/people/photos';
+import { signedOriginalUrlsForAssetIds, signedUrlsForAssetIds } from '@/lib/people/photos';
 import { requireSupabase } from '@/lib/supabase/client';
+
+export {
+  CLASS_AVATAR_FROM_SEGMENT,
+  classAvatarFromPrefix,
+  parseClassAvatarTeacherSource,
+  type ClassAvatarTeacherSource,
+} from '@/lib/classes/avatarSource';
 
 export async function setClassAvatar(classId: string, assetId: string | null): Promise<void> {
   const { error } = await requireSupabase().rpc('set_class_avatar', {
@@ -25,6 +37,14 @@ export async function hydrateClassAvatars<T extends { avatar_asset_id?: string |
   }));
 }
 
+export async function loadClassAvatarTeacherSource(
+  avatarAssetId: string | null | undefined,
+): Promise<ClassAvatarTeacherSource | null> {
+  if (!avatarAssetId) return null;
+  const paths = await loadPhotoAssetPaths([avatarAssetId]);
+  return parseClassAvatarTeacherSource(paths[0]?.storage_path);
+}
+
 export async function uploadClassAvatar(input: {
   teacherId: string;
   classId: string;
@@ -36,6 +56,33 @@ export async function uploadClassAvatar(input: {
     kind: 'photo',
     uri: input.uri,
     mimeType: input.mimeType,
+  });
+  await setClassAvatar(input.classId, asset.id);
+  const urls = await signedUrlsForAssetIds([asset.id]);
+  return { avatar_asset_id: asset.id, avatarUrl: urls.get(asset.id) ?? null };
+}
+
+/**
+ * 4A snapshot: copy the teacher's face into an office-owned asset, then point the class at the copy.
+ * Never sets classes.avatar_asset_id to the teacher's live photo_asset_id (set_class_avatar also
+ * rejects that for office — assets.teacher_id must be auth.uid()).
+ */
+export async function snapshotClassAvatarFromTeacher(input: {
+  officeUserId: string;
+  classId: string;
+  teacherId: string;
+  sourcePhotoAssetId: string;
+}): Promise<{ avatar_asset_id: string; avatarUrl: string | null }> {
+  const originals = await signedOriginalUrlsForAssetIds([input.sourcePhotoAssetId]);
+  const uri = originals.get(input.sourcePhotoAssetId);
+  if (!uri) throw new Error('Could not read that teacher photo');
+
+  const asset = await uploadTeacherAsset({
+    teacherId: input.officeUserId,
+    kind: 'photo',
+    uri,
+    mimeType: 'image/jpeg',
+    prefix: classAvatarFromPrefix(input.teacherId, input.sourcePhotoAssetId),
   });
   await setClassAvatar(input.classId, asset.id);
   const urls = await signedUrlsForAssetIds([asset.id]);
