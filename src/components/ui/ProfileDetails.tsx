@@ -10,9 +10,8 @@ import { type } from '@/constants/theme';
 import { coerceBirthdayISO, formatLocaleDate } from '@/lib/date/iso';
 import {
   applyStudentOptionalDraft,
-  isTeacherOnlyStudentKey,
   metaString,
-  STUDENT_OFFICE_OPTIONAL_FIELDS,
+  profileStudentOptionalFields,
   studentOptionalDraftFromMetadata,
 } from '@/lib/people/metadata';
 import { formatHandle, STAFF_PROFILE_FIELDS, type StaffProfileFieldKey } from '@/lib/school/roles';
@@ -51,9 +50,10 @@ export function ProfileDetails({
     : STAFF_PROFILE_FIELDS;
   const { colors } = useTheme();
   const isStudent = profile.role === 'student';
-  const optionalFields = showSensitiveStudentFields
-    ? STUDENT_OFFICE_OPTIONAL_FIELDS
-    : STUDENT_OFFICE_OPTIONAL_FIELDS.filter((field) => !isTeacherOnlyStudentKey(field.key));
+  const optionalFields = profileStudentOptionalFields({
+    role: profile.role,
+    showSensitiveStudentFields,
+  });
 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<StaffProfileFieldKey, string>>({
