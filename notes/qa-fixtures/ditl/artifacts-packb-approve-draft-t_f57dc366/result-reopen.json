@@ -1,0 +1,53 @@
+{
+  "card": "t_f57dc366",
+  "capture": "4ac67add-3f16-4ee9-a924-53b1005fb95a",
+  "steps": {
+    "initial": {
+      "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=focus",
+      "packB": false,
+      "accept": false,
+      "approve": false,
+      "confirm": false,
+      "draft": true,
+      "head": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Draft score | SUGGESTED GAP | Review | No suggested gaps yet. Draft cheaply, Look again, or type one below. | Draft cheap | Look again | EXPLAIN | Draft only — not a grade. Keep private by default. | Explain | Add gap | Keep as a note"
+    },
+    "btns": [
+      "Back",
+      "Open Capture",
+      "Search",
+      "3",
+      "JL Jordan Lee Jordan Lee Add details",
+      "Assign",
+      "Give practice for two-digit regrouping",
+      "Mark two-digit regrouping proficient",
+      "Dismiss focus",
+      "Open photo full screen. Pinch to zoom.",
+      "Draft cheap",
+      "Look again",
+      "Explain",
+      "Add gap",
+      "Keep as a note"
+    ],
+    "ac1": false,
+    "ac2": false,
+    "ac3": true
+  },
+  "result": "FAIL_AC1",
+  "parent": {
+    "morgan": true,
+    "jordan": false,
+    "approve": false,
+    "packB": false
+  },
+  "hits": {
+    "approve": false
+  },
+  "evidence": [
+    "SHOT 01-in http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301 ditl-Math Period 3 | ditl-Math Period 3 | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Review | Jordan Lee | Jordan Lee | Review | Jordan Lee | Jordan Lee",
+    "GOTO http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=focus",
+    "SHOT 02-focus-capture http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=focus Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Draft score | SUGGESTED GAP | Review | No suggested gaps yet. Draft cheaply, Look again, or type one below. | Draft cheap | Look again | EXPLAIN | Draft only — not a grade. Keep private by default. | Explain | Add gap | Keep as a note",
+    "SIG {\"packB\":false,\"accept\":false,\"approve\":false,\"confirm\":false,\"draft\":true}",
+    "BTNS [\"Back\",\"Open Capture\",\"Search\",\"3\",\"JL Jordan Lee Jordan Lee Add details\",\"Assign\",\"Give practice for two-digit regrouping\",\"Mark two-digit regrouping proficient\",\"Dismiss focus\",\"Open photo full screen. Pinch to zoom.\",\"Draft cheap\",\"Look again\",\"Explain\",\"Add gap\",\"Keep as a note\"]",
+    "SHOT 05-parent http://127.0.0.1:8081/parent Avery Quinn | Avery Quinn | Desk | Needs Attention | Diary | Calendar | Kelyra | AQ | Avery Quinn | Avery Quinn | MP | ditl-English Homeroom | Morgan Patel | Morgan Patel | Your teacher has not shared an update yet. | CLASSES | APUSH | No published average yet | See all grades | ditl-English Homeroom | No published average yet | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 1 | See all grades | Edit details"
+  ]
+}

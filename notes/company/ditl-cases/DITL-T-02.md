@@ -63,11 +63,11 @@
 - Pre: same teacher session context.
 - Steps (Ask):
   1. Route `/sign-in` → sign in `ditl-teacher-a` / `DITL-teacher-test`.
-  2. Use `/ask` teacher grade view / Approve if tools appear.
-  3. Confirm Ask cannot silently publish `approved_score` without teacher UI Approve (web or Pack B phone).
-- Expected: GAP noted if full grade tools missing; Ask Approve must fail closed.
+  2. Attempt Ask Approve, `approve_capture`, or any confirm card that would write `approved_score`.
+  3. Repeat as office admin for a school-wide capture. The same fail-closed rule applies. There is no confirm card.
+- Expected: Ask cannot write an approved score. The tool is gone or fail-closed. No confirm card. Screen Approve still works and is the only approve path. Office admin is included, school-wide.
 - Teardown: sign out.
-- PARTIAL/GAP: full grade tools = PARTIAL/GAP on Ask; Ask Approve = non-goal
+- PARTIAL/GAP: full grade tools may still be PARTIAL; Ask Approve is not a gap to build — it must fail closed
 
 **DITL-T-02-UI-SOFT-v8b** | tags: chrome, soft, ask
 - Pre: same as plan primary login

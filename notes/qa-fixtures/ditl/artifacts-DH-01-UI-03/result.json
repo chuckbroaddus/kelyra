@@ -1,0 +1,37 @@
+{
+  "case": "DITL-DH-01-UI-03",
+  "result": "PARTIAL",
+  "evidence": [
+    "01-after-signin: http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 :: ditl-Math Period 3 | ditl-Math Period 3 | 2 | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Review | Jordan Lee | Jordan Lee | Review | Jordan Lee | Jordan Lee | 2",
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301",
+    "02-teach-home: http://localhost:8081/ :: Classes | Classes | @ditl-teacher-a · Teacher · Parent | D3 | ditl-Math Period 3 | ditl-Math Period 3 | ›",
+    "teach_tray {\"home\":false,\"ride\":false,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":false,\"approve\":false}",
+    "OK step2: staff tray {\"home\":false,\"ride\":false,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":false,\"approve\":false}",
+    "03-ride-before-parent-seat: http://localhost:8081/parent/ride :: Ride | Ride | 2 | Ride | Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. | Line | ditl-Line A Front | ditl-Line B Side | Children this stop | Morgan Patel | Car ahead plate (if LPR unreadable — type or speak into this field) | Photo car ahead | I'm first | Manage vehicles | 2",
+    "ride_before {\"url\":\"http://localhost:8081/parent/ride\",\"rideUi\":true,\"tray\":{\"home\":false,\"ride\":true,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":false,\"approve\":false}}",
+    "OK step3: direct ride before switch url=http://localhost:8081/parent/ride",
+    "04-parent-home: http://localhost:8081/parent :: Avery Quinn | Avery Quinn | 2 | AQ | Avery Quinn | Avery Quinn | MP | ditl-English Homeroom | Morgan Patel | Morgan Patel | Your teacher has not shared an update yet. | CLASSES | APUSH | No published average yet | See all grades | ditl-English Homeroom | No published average yet | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 1 | See all grades | Edit details | 2",
+    "parentSwitch=null parent_tray {\"home\":false,\"ride\":false,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":false,\"approve\":false}",
+    "MISS step4: H=false R=false A=false cap=false",
+    "OK step5: noTeacherTools approve=false desk=false",
+    "OK step6: morgan=true jordanBleed=false",
+    "05-parent-ride: http://localhost:8081/parent/ride :: Ride | Ride | 2 | Ride | Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. | Line | ditl-Line A Front | ditl-Line B Side | Children this stop | Morgan Patel | Car ahead plate (if LPR unreadable — type or speak into this field) | Photo car ahead | I'm first | Manage vehicles | 2",
+    "OK step7: url=http://localhost:8081/parent/ride rideOk=true morgan=true",
+    "06-after-checkin-try: http://localhost:8081/parent/ride :: Ride | Ride | 2 | Ride | You’re in this line. | Line · ditl-Line A Front | You are 1 | Morgan | Leave line | Line | ditl-Line A Front | ditl-Line B Side | Children this stop | Morgan Patel | Car ahead plate (if LPR unreadable — type or speak into this field) | Photo car ahead | I'm first | Leave this line before checking in here again. | Check in successful, you are 1 vehicle in line | Manage vehicles | 2",
+    "inLine=true",
+    "07-after-leave: http://localhost:8081/parent/ride :: Ride | Ride | 2 | Ride | Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. | Line | ditl-Line A Front | ditl-Line B Side | Children this stop | Morgan Patel | Car ahead plate (if LPR unreadable — type or speak into this field) | Photo car ahead | I'm first | You’re out of ditl-Line A Front. | Manage vehicles | 2",
+    "OK step8: leave=true",
+    "08-back-teach: http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 :: ditl-Math Period 3 | ditl-Math Period 3 | 2 | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Working… | Today | This week | Today | Today | Calendar | No students yet. | Add students | 2",
+    "teachSwitch=null back {\"home\":false,\"ride\":false,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":true,\"approve\":false}",
+    "OK step9: backTeach {\"home\":false,\"ride\":false,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":true,\"approve\":false}",
+    "09-ride-under-teach-chrome: http://localhost:8081/parent/ride :: Ride | Ride | Ride | Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. | Line | ditl-Line A Front | ditl-Line B Side | Children this stop | Morgan Patel | Car ahead plate (if LPR unreadable — type or speak into this field) | Photo car ahead | I'm first | Manage vehicles",
+    "ride_under_teach url=http://localhost:8081/parent/ride tray={\"home\":false,\"ride\":true,\"ask\":false,\"desk\":false,\"capture\":false,\"needs\":false,\"approve\":false}",
+    "OK step10: ride under teach chrome url=http://localhost:8081/parent/ride",
+    "99-signout: http://localhost:8081/sign-in :: Sign in | Account creation is performed by the school office. Please contact your school's administration for access.",
+    "OK step11: url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "misses": [
+    "MISS step4: H=false R=false A=false cap=false"
+  ]
+}

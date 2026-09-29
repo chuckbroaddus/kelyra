@@ -1,6 +1,6 @@
-import type { AnswerKeyItem } from '@/lib/assignments/keys';
-import { scoreKey, type ExtractMark, type ScoredKeyItem, type ScoreKeyResult } from '@/lib/assignments/scoreKey';
-import type { StoredHomeworkDraft } from '@/lib/gaps/api';
+import type { AnswerKeyItem } from '../assignments/keys.ts';
+import { scoreKey, type ExtractMark, type ScoredKeyItem, type ScoreKeyResult } from '../assignments/scoreKey.ts';
+import type { StoredHomeworkDraft } from '../gaps/api.ts';
 
 /** A1 §5.1 model_draft score pass — method key_score; never family-visible. */
 export type KeyScoreModelDraft = StoredHomeworkDraft & {
@@ -92,4 +92,42 @@ export function draftScoreFromItems(items: ScoredKeyItem[], maxScore?: number | 
   }
   const possible = scored.reduce((sum, item) => sum + item.points, 0);
   return possible > 0 ? Math.round((earned / possible) * 1000) / 10 : null;
+}
+
+const KEY_TYPES = new Set(['mc', 'numeric', 'short', 'work']);
+
+/** Read Pack B items from a saved capture model_draft (key_score only). */
+export function keyScoreItemsFromDraft(draft: unknown): ScoredKeyItem[] {
+  if (!draft || typeof draft !== 'object') return [];
+  const row = draft as { method?: unknown; items?: unknown };
+  if (row.method !== 'key_score' || !Array.isArray(row.items)) return [];
+  const out: ScoredKeyItem[] = [];
+  for (const [index, raw] of row.items.entries()) {
+    if (!raw || typeof raw !== 'object') continue;
+    const item = raw as Record<string, unknown>;
+    const n = Number.isFinite(item.n) ? Number(item.n) : index + 1;
+    const type = KEY_TYPES.has(String(item.type)) ? (item.type as ScoredKeyItem['type']) : 'short';
+    const expected = typeof item.expected === 'string' ? item.expected : '';
+    const extracted = typeof item.extracted === 'string' ? item.extracted : item.extracted === null ? null : null;
+    const points = Number.isFinite(item.points) ? Number(item.points) : 1;
+    const awarded =
+      item.awarded == null || item.awarded === ''
+        ? null
+        : Number.isFinite(Number(item.awarded))
+          ? Number(item.awarded)
+          : null;
+    const confidence =
+      typeof item.confidence === 'number' && Number.isFinite(item.confidence) ? item.confidence : null;
+    const residual = Boolean(item.residual) || awarded == null;
+    const flag = typeof item.flag === 'string' ? item.flag : null;
+    const confirmed = Boolean(item.confirmed);
+    out.push({ n, type, expected, extracted, points, awarded, confidence, residual, flag, confirmed });
+  }
+  return out;
+}
+
+export function keyScoreAssignmentIdFromDraft(draft: unknown): string | null {
+  if (!draft || typeof draft !== 'object') return null;
+  const id = (draft as { assignment_id?: unknown }).assignment_id;
+  return typeof id === 'string' && id.trim() ? id : null;
 }

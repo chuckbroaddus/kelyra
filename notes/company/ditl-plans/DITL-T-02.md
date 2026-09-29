@@ -1,6 +1,7 @@
 # DITL-T-02 — Teacher Grade and Assign (web) (BATCH-v1 UPDATE)
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_3be49702 2026-09-24: RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required -->
+<!-- DITL-UPDATE t_18cd105a 2026-09-28: Ask cannot write an approved score; screen Approve stays -->
 <!-- DITL-UPDATE t_1520f9f5 2026-09-24: DRIVE-NEEDS Settings sticky Drive/folder/Scan → Needs-first split -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
 <!-- DITL-UPDATE t_71f42604 2026-09-24: Students ClassTabs single row (layout host only; no Screen.collapse duplicate) -->
@@ -85,7 +86,7 @@ SIS passback; weighted district report; office syllabus policy; auto-publish AI 
 | Activity | UI | Ask |
 |----------|----|-----|
 | Needs open draft | `/inbox` | `list_inbox` |
-| Approve gap / keyed draft (web) | student record Approve | `approve_capture` (capability) — web alternate; phone Pack B also valid (T-01) |
+| Approve gap / keyed draft (web) | student record screen Approve | Ask is not an approve path. `approve_capture` is gone or fail-closed. No confirm card. Phone Pack B screen Approve also stays (T-01). |
 | Generate/assign practice | assign UI | `create_assignment` / revise_practice_page |
 | Gradebook score | `/class/{id}/gradebook` | `list_grade_cells`; score write **PARTIAL** if no write tool |
 | Syllabus publish/unpublish | `/class/{id}/syllabus` | `scan_class_syllabus` / draft get/discard / published get |
@@ -97,7 +98,7 @@ Deep authoring day expansion lives in **DITL-T-04**; T-02 remains Approve/assign
 
 ## Suggested QE themes
 
-Approve-before-visible; assignment 3–8 items; syllabus sum 100; class isolation; Ask approve parity; web Approve still works when phone Pack B path also exists (neither exclusive); **batch-origin drafts Approve only on explicit teacher tap; Confirm split ≠ Approve; unnamed batch packets stay Inbox until filed**.
+Approve-before-visible; assignment 3–8 items; syllabus sum 100; class isolation; Ask cannot write an approved score; screen Approve stays; web Approve still works when phone Pack B path also exists (neither exclusive); **batch-origin drafts Approve only on explicit teacher tap; Confirm split ≠ Approve; unnamed batch packets stay Inbox until filed**.
 
 ## Artifacts + DB assert (refine-2)
 

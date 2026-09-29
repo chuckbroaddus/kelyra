@@ -1,0 +1,26 @@
+{
+  "surface": "web",
+  "card": "t_e9a28a6e",
+  "ac": {
+    "AC-ASK-INBOX-1": "PASS",
+    "AC-ASK-INBOX-2": "PASS",
+    "AC-ASK-INBOX-3_parent": "PASS",
+    "AC-ASK-INBOX-3_student": "PASS",
+    "AC-ASK-INBOX-3_dh_parent": true
+  },
+  "teacherSigned": true,
+  "inboxOpen": true,
+  "inboxSnip": "Needs Attention | Needs Attention | Desk | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Sign in to see work that still needs a name.",
+  "inboxHasNeedsChrome": true,
+  "teacherAskSnip": "Kelyra | Kelyra | 1 | Desk | 1 | Needs Attention | Diary | Calendar | Kelyra | ditl-Math Period 3 | Call list_inbox for the open class. Return the tool result items (id/status) or empty list. Do not Approve or delete. Do not invent rows. | Inbox items for ditl-Math Period 3: | id: `1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba` — status: `draft` | New chat",
+  "ac1": true,
+  "ac2": true,
+  "ac1_detail": "list path no seat refusal",
+  "parentAskSnip": "Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call list_inbox to list the teacher Needs inbox for ditl-Math Period 3. Return the tool result. | I can’t. No `list_inbox` tool on this parent seat, and I won’t open a teacher Needs inbox. | New chat | Pick a child on Home first, then choose an assignment here.",
+  "ac3_parent": true,
+  "studentAskSnip": "Kelyra | Kelyra | 6 | Assignments | Feeds | Classes | Grades | People | Calendar | Ask | Call list_inbox to list the teacher Needs inbox. Return the tool result. | I can’t list the teacher Needs inbox from this student seat. No `list_inbox` tool here. | New chat",
+  "ac3_student": true,
+  "dualHatParentSwitch": true,
+  "dhParentAskSnip": "Kelyra | Kelyra | 1 | Desk | 1 | Needs Attention | Diary | Calendar | Kelyra | ditl-Math Period 3 | Call list_inbox for the teacher Needs inbox. Return tool result. | Needs inbox for Math Period 3: | Capture `1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba` — status draft, ai pending — Jordan Lee (`2bcee429-11ce-4f84-b2de-9aab349f03cc`) | New chat",
+  "ac3_dh_parent": true
+}

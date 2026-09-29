@@ -1,5 +1,6 @@
 # DITL-P-02 Cases (Parent PM homework Ask + message)
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
+<!-- DITL-UPDATE t_2673db4c 2026-09-28: parent Ask lists the asked child's assignments; sibling mix is a fail; message still sends -->
 
 **Plan:** [DITL-P-02](../ditl-plans/DITL-P-02.md)
 **Pre:** F-PARENT-1, S1, published assignments/grades, Ask available.
@@ -23,7 +24,7 @@
   2. Use Ask tool `list_my_assignments` for S1=`Jordan Lee`.
   3. Use Ask tool `send_message_to_teacher` about homework.
   4. Confirm Ask does not mutate grades.
-- Expected: Assignments listed; message succeeds.
+- Expected: Assignments listed are S1=`Jordan Lee` only. A list that mixes a sibling is a fail. Message to the teacher still sends. Ask does not mutate grades.
 - Teardown: sign out.
 - PARTIAL/GAP: none
 

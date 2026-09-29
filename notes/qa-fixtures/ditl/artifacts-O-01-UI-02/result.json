@@ -1,0 +1,34 @@
+{
+  "case": "DITL-O-01-UI-02",
+  "result": "FAIL",
+  "lane": "C",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-c",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "OK stepapi-super: status=200 role=undefined name=undefined teacherRow=false feeds=[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":true},{\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c",
+    "OK stepapi-admin: status=200 role=undefined name=undefined teacherRow=false feeds=[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":true},{\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c",
+    "OK step1: super UI url=http://localhost:8081/ splashish=true",
+    "MISS step2: superLeftSplash=false identityLabels=false identityEdit=false matrixEdit=true",
+    "FAIL super UI: SplashLanding wall without teachers row",
+    "OK stepsignout-super: url=http://localhost:8081/sign-in",
+    "OK step3: admin UI url=http://localhost:8081/ splashish=true",
+    "MISS step4: adminLeftSplash=false hasIdentity=false hasMatrixEdit=true restricted=false",
+    "SAME-AS-SEQ55: ditl-admin auth OK but SplashLanding — Home if (!teacher) return SplashLanding",
+    "OK step5: teardown url=http://localhost:8081/sign-in"
+  ],
+  "findings": [
+    "FINDING: ditl-super auth OK but UI stuck SplashLanding (Home gates on teachers row); severity P0; case DITL-O-01-UI-02",
+    "FINDING: ditl-admin stuck SplashLanding (same as DITL-O-01-UI-01/seq55); severity P0; case DITL-O-01-UI-02"
+  ],
+  "gaps": [],
+  "api": {
+    "super": {
+      "status": 200,
+      "teacher": false
+    },
+    "admin": {
+      "status": 200,
+      "teacher": false
+    }
+  }
+}

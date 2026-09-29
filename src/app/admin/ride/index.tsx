@@ -8,7 +8,12 @@ import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
-import { archiveDayPhotos, ensureDefaultLines, setPickupRestriction } from '@/lib/ride/api';
+import {
+  archiveDayPhotos,
+  clearPickupRestriction,
+  ensureDefaultLines,
+  setPickupRestriction,
+} from '@/lib/ride/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function AdminRideScreen() {
@@ -51,6 +56,17 @@ export default function AdminRideScreen() {
               active: true,
             })
               .then(() => setStatus('Restriction saved'))
+              .catch((err) => setStatus(err instanceof Error ? err.message : 'Failed'));
+          }}
+        />
+        <GhostButton
+          label="Clear restriction"
+          onPress={() => {
+            void clearPickupRestriction({
+              studentId,
+              parentId: parentId || null,
+            })
+              .then(() => setStatus('Restriction cleared'))
               .catch((err) => setStatus(err instanceof Error ? err.message : 'Failed'));
           }}
         />

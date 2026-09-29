@@ -1,0 +1,18 @@
+{
+  "result": "PARTIAL",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301",
+    "OK step2: title=ditl-Hist HW 28649169 assignId=76f4b8b3-e0fc-437a-9542-3cc04c664082 url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/assignment/76f4b8b3-e0fc-437a-9542-3cc04c664082?brief=1 snip=ditl-Hist HW 28649169 | ditl-Hist HW 28649169 | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | This column shows in the grade book even before anyone turns it in. | Tutor brief | Draft |",
+    "OK step3: upload=library classifyHit=true picked=true savedWork=true stillProposal=false snip=Capture | Capture | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Image Preview | Drop photos, videos, or files here | Upload class stack | Saved to Jordan Lee. Next photo whenever you’re ready.",
+    "OK step4: hasTitle=true scored=false url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/gradebook snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Gradebook | Gradebook | Gr",
+    "OK step5: msgOk snip=Taylor Lee | Taylor Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | TL | Taylor Lee | Tap for details | You · 1 hr ago | ditl-T-03-UI-01 teacher reply via type | AQ | TL | Taylor Lee · 1 hr ago | ditl-T-03-UI-01-179052468",
+    "OK step6: comms list snip=Messages | Messages | Desk | Needs Attention | Diary | Calendar | Kelyra | Messages | ditl-Sandbox Academy | APUSH | ditl-English Homeroom | ditl-Math Period 3 | Alerts | Messages | Messages | Favorit",
+    "OK step7: teardown url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 assignId=76f4b8b3-e0fc-437a-9542-3cc04c664082"
+  ],
+  "findings": [],
+  "case": "DITL-T-04-UI-01",
+  "marker": "ditl-T-04-UI-01-1790528649169",
+  "title": "ditl-Hist HW 28649169",
+  "createdAssignmentId": "76f4b8b3-e0fc-437a-9542-3cc04c664082",
+  "note": "Gradebook column OK but score not written; assignment delete UI not found; sign-out incomplete. Capture saved to Jordan; parent msg OK."
+}

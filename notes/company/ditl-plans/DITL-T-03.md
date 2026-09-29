@@ -2,6 +2,8 @@
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_3be49702 2026-09-24: RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
+<!-- DITL-UPDATE t_24fe09ff 2026-09-28: teacher messages tray is school-walled; no contact delete; no new screen -->
+<!-- DITL-UPDATE t_2853355f 2026-09-28: Record P2 break (Jacquee Broaddus on tray); PASS seq 14; no fix yet -->
 
 | Field | Value |
 |-------|-------|
@@ -30,7 +32,7 @@ Between blocks, teacher clears communication and filing debt: reads alerts via M
 | 2 | Header messages badge → `/messages` | header mail |
 | 3 | PersonTabs: Messages / Alerts (and feed tabs if present) | `/messages` |
 | 4 | Open alert detail if any | `/notifications/{id}` or alerts tab |
-| 5 | Open 1:1 parent thread; reply | `/messages/{id}` |
+| 5 | Open 1:1 parent thread; reply. **BREAK (P2):** Sandbox teacher tray lists non-DITL contact Jacquee Broaddus alongside Taylor Lee. Case DITL-T-03-UI-01 (seq 14) PASSed with this finding (t_1baa2cbf); no fix until Chuck says. | `/messages/{id}` |
 | 6 | **Reverse:** back without send; draft discard | composer |
 | 7 | Search glass → find student by name | `/search` |
 | 8 | Open student record from search | `/class/{id}/student/{sid}` |
@@ -46,7 +48,7 @@ Sign-in → comms/search/people → sign-out.
 
 ## Multiplicity
 
-Multiple threads; class-scoped parents list.
+Multiple threads; class-scoped parents list. People on the messages tray are in the signed-in teacher's school only.
 
 ## Reverse / cancel
 
@@ -62,13 +64,13 @@ Messages; alerts badge; search; class parents; Needs; Ask.
 
 ## Explicit non-goals
 
-Group chat product expansion; SMS; email digest; SIS contacts import.
+Group chat product expansion; SMS; email digest; SIS contacts import; deleting a contact; a new messages screen; showing an other-school person from a bad link.
 
 ## Dual path (UI + Ask) — refine 2026-09-10
 
 | Activity | UI | Ask |
 |----------|----|-----|
-| Messages / Alerts tabs | header → `/messages` | `list_threads` / `my_unread_messages` |
+| Messages / Alerts tabs | header → `/messages`. Tray lists only this teacher's school. A bad link does not show an other-school person. In-school people stay. No contact delete. No new screen. | `list_threads` / `my_unread_messages` |
 | Reply parent | composer | `send_message` |
 | Search student | `/search` | `search_students` / `list_roster` |
 | Class parents directory | `/class/{id}/parents` | `search_parents` / `get_parent` |
@@ -140,3 +142,4 @@ SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` c
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_3be49702):** RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways
+- **2026-09-28 (t_2853355f):** Record P2 break (Jacquee Broaddus on tray); PASS seq 14; no fix yet

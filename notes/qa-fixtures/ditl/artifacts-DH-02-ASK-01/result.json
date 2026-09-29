@@ -1,0 +1,47 @@
+{
+  "case": "DITL-DH-02-ASK-01",
+  "result": "PARTIAL",
+  "evidence": [
+    "HEALTH 200",
+    "== 01-post-signin http://localhost:8081/ Spring Baptist Academy Spring Baptist Academy Home Diary Calendar KelyraAsk Sign in Account creation is performed by the school office. Please contact your school's administration for access.",
+    "== 02-matrix http://localhost:8081/admin/matrix Responsibilities Responsibilities Home Diary Calendar KelyraAsk All areas School People Classes Roster Records Family Ride Messages Diary Calendar Audit School School home The School / House landing screen. Superintendent School Administrator School Teacher Own Parent Own Student Own School App settings Theme and device settings popup. Superintendent Own Administrator Own Teacher Own Parent Own Student Own School Edit this matrix Change who may do what, then the app follows. Superintendent All Administrator None Teacher None Parent None Student None School School name and logo Wordmark and mark in the header. Superintendent All Administrator None Teacher None Parent None Student None People ",
+    "SESSION_OK true",
+    "== 03-ask-office http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Create a parent record List the classes",
+    "OFFICE_ASK chips true composer 1",
+    "== 04-ask-office-sent http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. Working… New chat",
+    "== 05-menu-office http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. list people… New chat @ditl-admin D Home Diary Calendar Ask Kelyra Activity Messages My children Parent Sign out",
+    "SEAT_CLICK Switch to Parent seat",
+    "== 06-after-parent-seat http://localhost:8081/parent Devon Hale Devon Hale Home Ride Calendar Ask DH Devon Hale Devon Hale JL ditl-Math Period 3 Jordan Lee Jordan Lee Mar 15 This week Jordan is working on a skill the teacher will name soon PRACTICE None yet From the teacher Still working on ditl-bulk-jordan-place-value. CLASSES ditl-English Homeroom Current average 88% How grades work Homework · 40% Quiz · 40% Participation · 20% Why this average? See all grades ditl-Math Period 3 Current average 92% How grades work Homework · 40% Quiz · 40% Participation · 20% Missing: 2 Why this average? See all grades Edit details",
+    "== 07-parent-home http://localhost:8081/parent Devon Hale Devon Hale Home Diary Calendar KelyraAsk DH Devon Hale Devon Hale JL ditl-Math Period 3 Jordan Lee Jordan Lee Mar 15 This week Jordan is working on a skill the teacher will name soon PRACTICE None yet From the teacher Still working on ditl-bulk-jordan-place-value. CLASSES ditl-English Homeroom Current average 88% How grades work Homework · 40% Quiz · 40% Participation · 20% Why this average? See all grades ditl-Math Period 3 Current average 92% How grades work Homework · 40% Quiz · 40% Participation · 20% Missing: 2 Why this average? See all grades Edit details",
+    "PARENT_SURFACE true",
+    "== 08-ask-parent http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. New chat",
+    "MENU_PARENT [\"Search\",\"Messages\",\"Open menu\",\"New chat\",\"Add attachment\",\"Send\",\"Open profile, @ditl-admin\",\"Home\",\"Diary\",\"Calendar\",\"Ask Kelyra\",\"Activity\",\"My children\",\"Switch to Parent seat\",\"Sign out\",\"Settings\"]",
+    "== 09-menu-parent http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. New chat @ditl-admin D Home Diary Calendar Ask Kelyra Activity Messages My children Parent Sign out",
+    "== 10-ask-parent-sent http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. What can I see about my child Jordan only? Working… New chat",
+    "MY_CHILDREN My children",
+    "== 11-my-children http://localhost:8081/parent Devon Hale Devon Hale Home Diary Calendar KelyraAsk DH Devon Hale Devon Hale JL ditl-Math Period 3 Jordan Lee Jordan Lee Mar 15 This week Jordan is working on a skill the teacher will name soon PRACTICE None yet From the teacher Still working on ditl-bulk-jordan-place-value. CLASSES ditl-English Homeroom Current average 88% How grades work Homework · 40% Quiz · 40% Participation · 20% Why this average? See all grades ditl-Math Period 3 Current average 92% How grades work Homework · 40% Quiz · 40% Participation · 20% Missing: 2 Why this average? See all grades Edit details",
+    "== 12-ask-after-children http://localhost:8081/ask Kelyra Kelyra Home Diary Calendar KelyraAsk Summarize office roster scope only. What can I see about my child Jordan only? New chat",
+    "SIGNOUT Sign out",
+    "== 13-signout http://localhost:8081/ Skip Tap for sound"
+  ],
+  "notes": [
+    "Home splash parked t_3191917a — not refiled",
+    "Ask seat-scope / dual-hat context: after Switch to Parent seat, /parent shows S1 Jordan only (good); /ask still shows prior office thread text and menu still offers Switch to Parent seat — same class as parked t_99e3a96c, not refiled",
+    "Office /ask composer+chips OK; parent surface OK; isolation on Ask not fully green"
+  ],
+  "findings": [],
+  "metrics": {
+    "sessionOk": true,
+    "officeChips": true,
+    "officeComposer": 1,
+    "seat": "Switch to Parent seat",
+    "parentSurface": true,
+    "seesJordan": false,
+    "seesJordan2": true,
+    "officeChipBleed": false,
+    "officeBleed2": false,
+    "scopeMiss": false,
+    "so": "Sign out",
+    "gradeNote": "manual regrade: office chat bleed on parent /ask"
+  }
+}

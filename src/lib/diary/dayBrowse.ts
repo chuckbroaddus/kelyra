@@ -45,7 +45,7 @@ export type JournalMonthModel = {
   label: string;
 };
 
-export type JournalAgendaGroup<T extends { entry_date: string }> = {
+export type JournalAgendaGroup<T> = {
   day: string;
   rows: T[];
   isSelected: boolean;

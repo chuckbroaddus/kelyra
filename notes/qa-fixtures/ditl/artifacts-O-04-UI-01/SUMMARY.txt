@@ -1,0 +1,35 @@
+START DITL-O-04-UI-01
+OK stepapi-admin: status=200 hasToken=true uid=
+INPUT_COUNT 2
+== 01-admin-after-signin http://localhost:8081/
+Spring Baptist Academy Spring Baptist Academy Home Diary Calendar KelyraAsk Sign in Account creation is performed by the school office. Please contact your school's administration for access.
+HAS_LS_TOKEN true URL http://localhost:8081/
+SPLASH_AFTER_SIGNIN true — one direct route /admin/ride only
+== 02-admin-ride-once http://localhost:8081/admin/ride
+Ride office Ride office Home Diary Calendar KelyraAsk Ride office Ensure default lines (K–2 / 3–5) Pickup restriction Student id Parent id (optional) Office reason (never shown to parent) Save restriction Archive day's photos School date YYYY-MM-DD Archive Administrators cannot archive.
+ROUTE /admin/ride leftSplash=true hasRestrictUi=true url=http://localhost:8081/admin/ride
+FIELD_COUNT 4
+== 03-restrict-filled http://localhost:8081/admin/ride
+Ride office Ride office Home Diary Calendar KelyraAsk Ride office Ensure default lines (K–2 / 3–5) Pickup restriction Student id Parent id (optional) Office reason (never shown to parent) Save restriction Archive day's photos School date YYYY-MM-DD Archive Administrators cannot archive.
+== 04-after-save http://localhost:8081/admin/ride
+Ride office Ride office Home Diary Calendar KelyraAsk Ride office Ensure default lines (K–2 / 3–5) Pickup restriction Student id Parent id (optional) Office reason (never shown to parent) Save restriction Archive day's photos School date YYYY-MM-DD Archive Administrators cannot archive. Restriction saved
+BAN_SET_UI true statusHint true
+CONF_PROBE {"hasAt":true,"atLen":868,"s1":"2bcee429-11ce-4f84-b2de-9aab349f03cc","p1":"08a3d52d-132d-451e-971c-e1ac3b3cfc29","base":""}
+DB_RESTRICT 200 n=1 confirmed=true
+== 05-messages-notify chrome-error://chromewebdata/
+This site can’t be reached localhost refused to connect. Try: Checking the connection Checking the proxy and the firewall ERR_CONNECTION_REFUSED Reload Details
+NOTIFY_SEEN false
+GAP notify path to P1 not visible in Messages after save (plan PARTIAL/GAP ok)
+FATAL Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8081/admin/ride
+Call log:
+  - navigating to "http://localhost:8081/admin/ride", waiting until "domcontentloaded"
+
+RESULT FAIL from script crash mid-teardown; graded RESULT PARTIAL
+
+CLOSE:
+RESULT PARTIAL
+- ban set UI Restriction saved + DB active n=1 for S1×P1 (ditl-parent-1)
+- Home splash parked (not finding)
+- notify GAP (expo died on /messages; plan auto-notify PARTIAL/GAP)
+- FINDING: Ride office has no clear/deactivate restriction control after Save; severity P2; case DITL-O-04-UI-01
+- ban left active (pre for O-04-UI-02); expo restarted on :8081 after refuse

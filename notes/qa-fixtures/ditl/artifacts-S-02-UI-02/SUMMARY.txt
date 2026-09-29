@@ -1,0 +1,11 @@
+DITL-S-02-UI-02 RESULT=PASS lane=C Chromium /tmp/ditl-pw-lane-c
+App: http://localhost:8081 user=ditl-student-s1
+OK step1: url=http://localhost:8081/todo signedIn=true jordan=false
+OK step2: url=http://localhost:8081/student/grades grades=true math=true eng=true s1marks=true bleedS2=false
+OK step3: mathFiltered=true mathView=true mathHas92=true url=http://localhost:8081/student/grades?class=all
+OK step4: engFiltered=true engView=true engHas88=true
+OK step5: detailOk=true stillNoS2=true url=http://localhost:8081/student/grades?class=d1715000-0000-4000-a000-000000000302 snip=Grades | Grades | 1 | Assignments | Feeds | Classes | Grades | People | Calendar | Ask | All | ditl-English Homeroom | ditl-Math Period 3 | ditl-English Homeroom | ditl-English Homeroom | All | Quarter 1 | Quarter 2 | Qu
+OK step6: ownOnly=true jordanContext=true
+OK step7: signedOut=true url=http://localhost:8081/sign-in
+FINDINGS:
+(none)

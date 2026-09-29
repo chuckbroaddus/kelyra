@@ -25,7 +25,7 @@ import { assignmentHasKey, listClassAssignments, matchSpokenAssignment } from '@
 import { parseKeyItems } from '@/lib/assignments/keys';
 import { scoreKey } from '@/lib/assignments/scoreKey';
 import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
-import { extractMarksFromVisionItems } from '@/lib/keygrade/draft';
+import { buildKeyScoreDraft, extractMarksFromVisionItems } from '@/lib/keygrade/draft';
 import { AssignmentPicker } from '@/components/ui/AssignmentPicker';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -620,8 +620,12 @@ export default function ProposalScreen() {
         assignmentId,
       });
       const numeric = scoreMark === 'numeric' && score.trim() ? Number(score) : null;
-      const draftPayload = {
-        gaps: gaps.filter((gap) => gap.label.trim()).map((gap, index) => ({ label: gap.label, sortOrder: index + 1 })),
+      const assigned = assignments.find((row) => row.id === assignmentId) ?? null;
+      const gapRows = gaps
+        .filter((gap) => gap.label.trim())
+        .map((gap, index) => ({ label: gap.label, sortOrder: index + 1 }));
+      const baseDraft = {
+        gaps: gapRows,
         draftScore: Number.isFinite(numeric as number) ? numeric : null,
         teacherNote: note || null,
         scoreMark,
@@ -629,6 +633,33 @@ export default function ProposalScreen() {
         skipGrade: scoreMark !== 'numeric' && !gaps.some((gap) => gap.label.trim()),
         costUsd: aiCost,
       };
+      // Persist key_score items so saved-draft teacher review can show Pack B Accept.
+      const draftPayload =
+        assigned && assignmentHasKey(assigned) && keyDraftItems.length
+          ? (() => {
+              const marks = extractMarksFromVisionItems(keyDraftItems);
+              const keyed = buildKeyScoreDraft({
+                keyItems: parseKeyItems(assigned.key_items),
+                extract: marks,
+                assignmentId: assigned.id,
+                maxScore: assigned.max_score,
+                modelTotal: Number.isFinite(numeric as number) ? (numeric as number) : null,
+                teacherNote: note || null,
+                gaps: gapRows,
+                costUsd: aiCost,
+              });
+              return {
+                ...keyed.draft,
+                items: keyed.scored.items.map((item) => ({ ...item, confirmed: false })),
+                draftScore:
+                  Number.isFinite(numeric as number) && numeric != null
+                    ? (numeric as number)
+                    : keyed.draft.draftScore,
+                scoreMark,
+                gradeKind,
+              };
+            })()
+          : baseDraft;
       await saveCaptureEvaluation(capture.id, draftPayload, studentId);
       if (studentId) {
         const attached = await attachCapture(capture.id, studentId);

@@ -1,0 +1,67 @@
+{
+  "case": "DITL-S-02-ASK-01",
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/todo signedIn=true",
+    "OK step2: ask_home url=http://localhost:8081/ask onAsk=true",
+    "OK step3: my_grades_reply gradesReply=true bleedSuspect=false",
+    "OK step4: explain_assignment explainReply=true",
+    "OK step5: read_only mutateSuspect=false hitMutate=false hits=63",
+    "OK step6: dual_grades dual=true dualBleed=false url=http://localhost:8081/student/grades",
+    "OK step7: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "user": "ditl-student-s1",
+  "lane": "C",
+  "ud": "/tmp/ditl-pw-lane-c",
+  "askHits": [
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "s": "[]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "s": "[]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "s": "[]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "s": "[]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "s": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false},{\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false},{\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "s": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "s": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "s": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false},{\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false},{\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "s": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "s": "[]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "s": "[{\"usd\":0.1306,\"cap_usd\":null}]"
+    },
+    {
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "s": "[]"
+    }
+  ]
+}

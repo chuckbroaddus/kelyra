@@ -1502,7 +1502,8 @@ const TOOLS: Record<string, AskToolSpec> = {
     def: {
       type: "function",
       name: "list_inbox",
-      description: "Teacher-only inbox capture statuses for a class. Office-only seats refuse.",
+      description:
+        "Needs inbox capture statuses for the open class (same list as /inbox). Teach seat only. Empty list is success. Does not Approve, delete, or send.",
       parameters: {
         type: "object",
         properties: { class_id: { type: "string" } },
@@ -1510,7 +1511,11 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
-      if (!ctx.teacherId) return { error: "Teacher seat required." };
+      // Same gate as opening /inbox: active Teach seat (chrome live.role).
+      // Do not refuse on missing teacherId — listInbox is class_id + JWT/RLS.
+      if (ctx.live.role !== 'teacher') {
+        return { error: 'Needs inbox is only on the Teach seat.' };
+      }
       const classId = str(args, "class_id") || ctx.classId;
       if (!classId) return { error: "Need class_id." };
       const { listInbox } = await import("@/lib/captures/api");
@@ -1579,6 +1584,92 @@ const TOOLS: Record<string, AskToolSpec> = {
       };
       strip(safe);
       return { progress: safe };
+    },
+  },
+  list_my_assignments: {
+    capability: 'children.view',
+    def: {
+      type: 'function',
+      name: 'list_my_assignments',
+      description:
+        'Parent seat: list one linked child\'s real assignments (title, due, class name). Named child wins over Home bind. Never mix siblings. Never invent titles. Not teacher list_assignments.',
+      parameters: {
+        type: 'object',
+        properties: {
+          child_name: { type: 'string', description: 'Named child — wins over Home bind.' },
+          child_student_id: { type: 'string' },
+          student_id: { type: 'string', description: 'Alias for child_student_id.' },
+        },
+        additionalProperties: false,
+      },
+    },
+    run: async (args, ctx) => {
+      // Parent seat only. Dual-hat on teacher/office seat is out of this lock.
+      const onParentSeat = ctx.live.role === 'parent' || ctx.profile?.role === 'parent';
+      if (!onParentSeat) return { error: 'Parent seat only.' };
+      if (ctx.profile?.role !== 'parent' && !ctx.profile?.parent_id) {
+        return { error: 'Parent seat only.' };
+      }
+      const { listParentLinkedChildren } = await import('@/lib/diary/api');
+      const { resolveParentAskChild, shapeParentAskAssignments } = await import(
+        '@/lib/ai/askParentAssignments'
+      );
+      const linkedChildren = await listParentLinkedChildren();
+      const resolved = resolveParentAskChild({
+        linkedChildren,
+        childName: str(args, 'child_name') || null,
+        childStudentId: str(args, 'child_student_id') || str(args, 'student_id') || null,
+        boundStudentId: ctx.live.studentId || null,
+      });
+      if (!resolved.ok) {
+        if (resolved.kind === 'need_which_child') {
+          return {
+            need_which_child: true,
+            children: resolved.children.map((c) => ({ id: c.id, name: c.display_name })),
+            note: 'Ask which child in this thread. Do not return a mixed sibling assignment list.',
+          };
+        }
+        return {
+          error: resolved.error,
+          ...(resolved.matches
+            ? { matches: resolved.matches.map((c) => ({ id: c.id, name: c.display_name })) }
+            : {}),
+        };
+      }
+
+      const { loadFamilyStudentGradebook } = await import('@/lib/gradebook/api');
+      let book;
+      try {
+        book = await loadFamilyStudentGradebook(resolved.child.id, {
+          displayName: resolved.child.display_name,
+        });
+      } catch (err) {
+        return {
+          error:
+            err instanceof Error
+              ? err.message
+              : 'Could not load that child\'s assignments. A failed class lookup is not a list.',
+        };
+      }
+
+      const classNameById = new Map(book.classes.map((room) => [room.classId, room.className]));
+      const assignments = shapeParentAskAssignments(
+        book.assignments.map((row) => ({
+          title: row.title,
+          due_at: row.due_at,
+          class_name: classNameById.get(row.class_id) ?? null,
+        })),
+      );
+      return {
+        child_id: resolved.child.id,
+        child_name: resolved.child.display_name,
+        assignments,
+        count: assignments.length,
+        note:
+          assignments.length === 0
+            ? 'No assignments visible for this child. Do not invent titles or borrow a sibling\'s list.'
+            : 'One child only. Do not mix a sibling\'s work into the reply.',
+      };
     },
   },
   my_unread_messages: {
@@ -1736,63 +1827,6 @@ const TOOLS: Record<string, AskToolSpec> = {
     },
   },
 
-  approve_capture: {
-    capability: 'capture.approve',
-    def: {
-      type: 'function',
-      name: 'approve_capture',
-      description:
-        'Approve a capture (teacher last click). Writes approved gaps/score via existing JWT APIs. Student/parent refused. Not PPT-to-practice.',
-      parameters: {
-        type: 'object',
-        properties: {
-          capture_id: { type: 'string' },
-          score: { type: 'number' },
-          score_mark: { type: 'string', enum: ['numeric', 'pass', 'fail'] },
-          assignment_id: { type: 'string' },
-        },
-        required: ['capture_id'],
-        additionalProperties: false,
-      },
-    },
-    run: async (args, ctx) => {
-      if (ctx.profile?.role === 'student' || ctx.profile?.role === 'parent') {
-        return { error: 'Approve is not available on this seat.' };
-      }
-      const captureId = str(args, 'capture_id');
-      if (!captureId) return { error: 'Need capture_id.' };
-      const { requireSupabase } = await import('@/lib/supabase/client');
-      const { approveCapture } = await import('@/lib/gaps/api');
-      const supabase = requireSupabase();
-      const { data: capture, error } = await supabase.from('captures').select('*').eq('id', captureId).maybeSingle();
-      if (error) throw error;
-      if (!capture) return { error: 'Capture not found.' };
-      const { data: gaps, error: gapErr } = await supabase
-        .from('skill_gaps')
-        .select('*')
-        .eq('capture_id', captureId)
-        .order('sort_order', { ascending: true });
-      if (gapErr) throw gapErr;
-      const scoreRaw = args.score;
-      const score = typeof scoreRaw === 'number' && Number.isFinite(scoreRaw) ? scoreRaw : undefined;
-      const scoreMarkRaw = str(args, 'score_mark');
-      const scoreMark =
-        scoreMarkRaw === 'numeric' || scoreMarkRaw === 'pass' || scoreMarkRaw === 'fail'
-          ? scoreMarkRaw
-          : undefined;
-      const assignmentId = str(args, 'assignment_id') || null;
-      const result = await approveCapture(capture, gaps ?? [], score, {
-        ...(scoreMark ? { scoreMark } : {}),
-        assignmentId,
-      });
-      return {
-        approved: true,
-        capture_id: captureId,
-        skill_id: result.skillId,
-        skill_label: result.skillLabel,
-      };
-    },
-  },
   delete_capture: {
     capability: 'capture.approve',
     def: {
@@ -2444,9 +2478,29 @@ const TOOLS: Record<string, AskToolSpec> = {
 
 };
 
+/** Classmate / teacher-class tools parent seat must never offer (AC-DUAL-ASK-2). */
+const PARENT_SEAT_DENIED_TOOLS = new Set([
+  'list_roster',
+  'search_students',
+  'list_inbox',
+]);
+
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
   // Control plane in askToolPolicy — office walls + matrix; unknown names denied.
-  return isAskToolAllowed(spec.def.name, ctx.profile, ctx.grants);
+  if (!isAskToolAllowed(spec.def.name, ctx.profile, ctx.grants)) return false;
+  // list_inbox: active Teach seat only (matches /inbox tray). Parent/office seats stay refused
+  // even when the profile also teaches. Do not weaken teacherSeatOnly on other tools.
+  if (spec.def.name === 'list_inbox' && ctx.live.role !== 'teacher') return false;
+  // Dual-hat: walls follow active seat, not job-of-record (AC-DUAL-ASK-2).
+  if (ctx.live.role === 'parent') {
+    if (PARENT_SEAT_DENIED_TOOLS.has(spec.def.name)) return false;
+    const parentish = {
+      role: 'parent' as const,
+      parent_id: ctx.profile?.parent_id ?? ctx.profile?.id ?? null,
+    };
+    if (!isAskToolAllowed(spec.def.name, parentish, ctx.grants)) return false;
+  }
+  return true;
 }
 
 function labelFor(name: string): string {

@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import {
   availableChromeSeats,
   canChooseChromeSeat,
@@ -9,7 +12,9 @@ import {
   defaultChromeSeat,
   isOfficeChromeRole,
   otherOfficeTeacherSeatRow,
+  readSessionParentSeat,
   resolveStaffChromeRole,
+  writeSessionParentSeat,
 } from './seat.ts';
 
 test('canChooseChromeSeat for office+also_teacher and staff+also_parent', () => {
@@ -60,6 +65,27 @@ test('DH-07 coldStartChromeSeatPreference ignores stored parent', () => {
     resolveStaffChromeRole({ role: 'administrator', parent_id: 'p1' }, coldStartChromeSeatPreference('parent')),
     'administrator',
   );
+});
+
+test('AC-DUAL-ASK-1 same-session Parent altitude survives bare /ask; cold start does not', () => {
+  const profileId = `seat-test-${Date.now()}`;
+  writeSessionParentSeat(profileId, false);
+  assert.equal(readSessionParentSeat(profileId), false);
+  writeSessionParentSeat(profileId, true);
+  assert.equal(readSessionParentSeat(profileId), true);
+  writeSessionParentSeat(profileId, false);
+  assert.equal(readSessionParentSeat(profileId), false);
+
+  // DH-07: durable store never restores Parent; session-only altitude.
+  assert.equal(coldStartChromeSeatPreference('parent'), null);
+
+  const seatSrc = readFileSync(join(process.cwd(), 'src/lib/chrome/seat.ts'), 'utf8');
+  assert.match(seatSrc, /if \(readSessionParentSeat\(profileId\)\) return 'parent'/);
+  assert.match(
+    seatSrc,
+    /if \(seat === 'parent'\) \{[\s\S]*writeSessionParentSeat\(profileId, true\)/,
+  );
+  assert.match(seatSrc, /writeSessionParentSeat\(profileId, false\)/);
 });
 
 test('resolveStaffChromeRole: also_teacher does not force teacher without seat', () => {

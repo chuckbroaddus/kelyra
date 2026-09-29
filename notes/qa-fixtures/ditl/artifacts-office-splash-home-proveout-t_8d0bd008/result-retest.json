@@ -1,0 +1,38 @@
+{
+  "AC-3-signed-out": {
+    "pass": true,
+    "detail": "Skip | Tap for sound"
+  },
+  "AC-1": {
+    "pass": true,
+    "detail": "Spring Baptist Academy | Spring Baptist Academy | Home | Diary | Calendar | KelyraAsk | @ditl-admin · Administrator · Parent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert"
+  },
+  "AC-2-tabs": {
+    "pass": false,
+    "detail": "people=false manage=true School | School | Home | Diary | Calendar | KelyraAsk | Working…"
+  },
+  "AC-9": {
+    "pass": false,
+    "detail": "out=false back=true"
+  },
+  "AC-5": {
+    "pass": true,
+    "detail": "Spring Baptist Academy | Spring Baptist Academy | Home | Diary | Calendar | KelyraAsk | @ditl-super · Superintendent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert | Post | Post | Post · School · 6 hr ago | Devon Hale @di"
+  },
+  "AC-5-manage": {
+    "pass": true,
+    "detail": "School | School | Home | Diary | Calendar | KelyraAsk | Working…"
+  },
+  "AC-5-phone": {
+    "pass": true,
+    "detail": "Spring Baptist Academy | Spring Baptist Academy | @ditl-super · Superintendent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert | Post | Post | Post · School · 6 hr ago | Devon Hale @ditl-admin | ditl-O06-UI02-1790536848361"
+  },
+  "AC-1-phone": {
+    "pass": true,
+    "detail": "Spring Baptist Academy | Spring Baptist Academy | @ditl-admin · Administrator · Parent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert | Post | Post | Post · School · 6 hr "
+  },
+  "PHONE": {
+    "pass": false,
+    "detail": "page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8081/?tab=manage\nCall log:\n  - navigating to \"http://127.0.0.1:8081/?tab=manage\", waiting until \"domcontentloaded\"\n"
+  }
+}

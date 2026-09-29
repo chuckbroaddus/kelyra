@@ -1,0 +1,22 @@
+DITL-O-07-UI-02 RESULT=GAP lane=A Chromium /tmp/ditl-pw-lane-a
+OK step0: app HTTP 200
+OK step1: ditl-admin url=http://localhost:8081/ splash=true
+PARKED-P0: Home splash wall already on t_3191917a — not filed again
+OK step2: S1 Details url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc splash=false
+S1_META_BEFORE={"preferred_name":false,"birthday":false,"phone":true,"email":true,"address":true,"emergency_name":false,"emergency_phone":false,"grade_or_age":false,"notes":true,"has_marker":false}
+PARKED: Preferred-name PHOTO sheet (t_87f01316) — not filed
+OK step3: photo step GAP known; hints=0
+S1_META_AFTER={"preferred_name":false,"birthday":false,"phone":true,"email":true,"address":true,"emergency_name":false,"emergency_phone":false,"grade_or_age":false,"notes":true,"has_marker":false}
+OK step4: metadata keys check after={"preferred_name":false,"birthday":false,"phone":true,"email":true,"address":true,"emergency_name":false,"emergency_phone":false,"grade_or_age":false,"notes":true,"has_marker":false}
+ROSTER_STUDENT_IDS=none
+OK step5: no bleed S2 Jamie (899214d4) markers=[]
+OK step5b: no bleed S5 Samira Okonkwo (cd84bffd) markers=[] preferred Sammy only (not S1)
+NOTE: S3 Morgan not on ditl-Math (prior T-05); S4 Riley id unresolved this lane — no bleed surface checked
+OK step6: signout url=http://localhost:8081/sign-in
+RESULT_DETAIL attach=false bleed=false findings=0
+EVIDENCE: S1 Details live; birthday already cleared (UI-03, not restored); phone/email/address/notes present; preferred/birthday empty; FILE_INPUTS=0; PHOTO sheet on Preferred name (parked t_87f01316)
+FINDINGS:
+none
+GAPS:
+GAP: office photo extract / attach-from-card — no Capture tray (known; not refiled)
+SHOTS: notes/qa-fixtures/ditl/artifacts-O-07-UI-02/*.png run.log bleed-extra.json

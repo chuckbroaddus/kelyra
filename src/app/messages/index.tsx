@@ -45,13 +45,14 @@ export default function MessagesScreen() {
   const load = useCallback(async () => {
     if (!profile) return;
     setError(null);
+    // Feeds and threads load separately so a stuck thread query cannot leave Working forever.
     try {
-      const [nextThreads, nextFeeds] = await Promise.all([
-        listThreads(profile.id),
-        listMyFeeds(profile),
-      ]);
-      setThreads(nextThreads);
-      setFeeds(nextFeeds);
+      setFeeds(await listMyFeeds(profile));
+    } catch {
+      setFeeds([]);
+    }
+    try {
+      setThreads(await listThreads(profile.id));
     } catch (err) {
       setThreads([]);
       setError(err instanceof Error ? err.message : 'Could not load messages');

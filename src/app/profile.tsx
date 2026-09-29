@@ -309,6 +309,7 @@ export default function ProfileScreen() {
             canEdit={editable}
             showSensitiveStudentFields={office || !mine || shown.role !== 'student'}
             actorId={profile?.id ?? teacher?.id ?? null}
+            onBeginEdit={() => setPhotoOpen(false)}
             onSaved={(next) => {
               setViewing(next);
               if (mine) void refresh();

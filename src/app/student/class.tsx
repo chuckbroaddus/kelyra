@@ -29,6 +29,7 @@ import {
   type StudentPerson,
   type StudentTodo,
 } from '@/lib/student-session/api';
+import { studentTodoOpenPath } from '@/lib/student-session/work';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Pane = 'feed' | 'students' | 'assignments' | 'grades';
@@ -110,8 +111,8 @@ export default function StudentClassScreen() {
   );
 
   const openWork = (item: StudentTodo) => {
-    if (item.kind === 'lesson') router.push(`/lesson/${item.assignmentId}` as never);
-    else if (item.kind === 'practice') router.push(`/todo/${item.submissionId}` as never);
+    const path = studentTodoOpenPath(item);
+    if (path) router.push(path as never);
   };
 
   const message = async (person: StudentPerson) => {

@@ -1,0 +1,18 @@
+{
+  "case": "DITL-O-02-UI-02",
+  "result": "FAIL",
+  "lane": "C",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-c",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "OK stepapi-admin: status=200 role=undefined name=undefined teacherRow=false math=[] eng=[] s1=[{\"id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"metadata\":{\"email\":\"alex.rivera@school.edu\",\" s3=[{\"id\":\"6247a702-f1c4-47ac-88ce-699c4b2d0a75\",\"display_name\":\"Morgan Patel\",\"metadata\":{}}] enroll=null",
+    "MISS step1: url=http://localhost:8081/ splashish=true",
+    "MISS step2: one roster attempt route=/?tab=classes url=http://localhost:8081/?tab=classes leftSplash=false reachedRoster=false",
+    "SAME-AS-SEQ55/56/57: ditl-admin auth OK but SplashLanding; class roster route also stuck",
+    "PARKED-P0: splash wall already on t_3191917a — not filed again",
+    "CASE-STEPS-SKIPPED: assign S1→Math and S3→English not reachable in UI",
+    "OK stepteardown: url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "gaps": []
+}

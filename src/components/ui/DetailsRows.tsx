@@ -23,11 +23,14 @@ export function DetailsRows({ rows, onPress, onClear }: Props) {
       {rows.map((row) => {
         const empty = !row.value?.trim();
         const mail = !empty && (row.key === 'email' || looksLikeEmail(row.value));
+        // Distinct from hero "Change photo" — Preferred name / Add preferred name open the editor.
+        const editLabel = empty ? `Add ${row.label.toLowerCase()}` : `Edit ${row.label}`;
         return (
           <View key={row.key} style={[styles.row, { borderBottomColor: colors.line }]}>
             <View style={styles.main}>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel={editLabel}
                 onPress={() => onPress(row)}
                 style={({ pressed }) => [pressed && { opacity: 0.8 }]}
               >
@@ -40,6 +43,7 @@ export function DetailsRows({ rows, onPress, onClear }: Props) {
               ) : (
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityLabel={editLabel}
                   onPress={() => onPress(row)}
                   style={({ pressed }) => [styles.value, pressed && { opacity: 0.8 }]}
                 >

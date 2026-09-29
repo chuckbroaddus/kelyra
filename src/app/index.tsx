@@ -142,7 +142,9 @@ export default function HomeScreen() {
     );
   }
 
-  if (!teacher) {
+  // Settled office seat reaches office home without a teachers row. Teacher seat
+  // with no row stays on splash. AuthProvider selects only — never insert here.
+  if (!teacher && !officeSeat) {
     return <SplashLanding error={error} />;
   }
 

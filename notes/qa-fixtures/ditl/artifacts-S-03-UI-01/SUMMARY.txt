@@ -1,0 +1,12 @@
+DITL-S-03-UI-01 RESULT=PASS lane=C Chromium /tmp/ditl-pw-lane-c
+App: http://localhost:8081 user=ditl-student-s1
+OK step1: url=http://localhost:8081/todo signedIn=true
+OK step2: msgSurface=true teacherish=false bleed=false
+OK step3: threadOpen=true url=http://localhost:8081/messages/4ef24cae-51fd-463c-8e56-46fe4bf0ac6b
+OK step4: replied=true replyVisible=true
+OK step5: todoSurface=true focusCue=false url=http://localhost:8081/todo
+OK step6: focusOpened=true focusMarked=true focusDetail=true gradesFocus=false url=http://localhost:8081/student/grades
+OK step7: peopleOk=true peopleBleed=false
+OK step8: signedOut=true
+FINDINGS:
+(none)

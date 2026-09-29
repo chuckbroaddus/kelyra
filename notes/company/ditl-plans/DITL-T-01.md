@@ -2,6 +2,7 @@
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_2c13f9ac 2026-09-24: Journal daychrome scan note (primary on T-04) -->
 <!-- DITL-UPDATE t_3be49702 2026-09-24: RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required -->
+<!-- DITL-UPDATE t_18cd105a 2026-09-28: Ask cannot write an approved score; screen Approve stays -->
 <!-- DITL-UPDATE t_1520f9f5 2026-09-24: DRIVE-NEEDS Settings sticky Drive/folder/Scan → Needs-first split -->
 <!-- DITL-UPDATE t_f7164ca9 2026-09-24: SWITCH-G Disconnect Gmail + Open Drive return-to-picker; Teach-only -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
@@ -98,7 +99,7 @@ Generate practice; parent messaging; Ride duty; face match/OCR names; multi-stud
 | Voice observation note | `/capture` | PHYSICAL-ONLY |
 | Cancel capture | UI discard | — |
 | Pack B confirm (keyed) | `/capture` review bottom sheet | UI-primary; Ask must not publish |
-| Pack B phone Approve (keyed) | **Approve this capture** on review | `approve_capture` if capability; else UI-primary — Teach seat only |
+| Pack B phone Approve (keyed) | **Approve this capture** on the screen review | Ask is not an approve path. `approve_capture` is gone or fail-closed. No confirm card. Office admin is the same school-wide fail-closed rule. Teach screen Approve stays. |
 | Class isolation | class switcher | Ask class ground; switch clears assignment ground |
 | Desk summarize | Desk | `summarize_class_desk` |
 | BATCH Upload stack + Split Review | web CE-A / SR-A flow | — (physical upload + manual UI only; Ask must not Confirm split or invent packets) |

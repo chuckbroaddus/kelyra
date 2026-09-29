@@ -1,0 +1,18 @@
+{
+  "case": "DITL-S-01-ASK-01",
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/todo signedIn=true",
+    "OK step2: ask_surface url=http://localhost:8081/ask onAsk=true",
+    "OK step3: list_attempt listed=true names=true empty=false",
+    "OK step4: open_screen_or_nav opened=false url=http://localhost:8081/ask",
+    "GAP: submit via Ask is UI-primary (case known GAP) — not a finding",
+    "OK step5: submit_via_ask_ui_primary_gap observed_submit_on_ask=false",
+    "OK step6: dual_path_todo=true url=http://localhost:8081/todo",
+    "OK step7: ask_groundish=true"
+  ],
+  "findings": [],
+  "lane": "C",
+  "user": "ditl-student-s1",
+  "note": "Known GAP submit-via-Ask (UI-primary) — not filed as finding"
+}

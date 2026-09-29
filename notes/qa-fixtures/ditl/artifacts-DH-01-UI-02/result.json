@@ -1,0 +1,21 @@
+{
+  "result": "PARTIAL",
+  "evidence": [
+    "01-in: http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 :: ditl-Math Period 3 | ditl-Math Period 3 | 5 | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Review | Jordan Lee | Jordan Lee | Review | Jordan Lee | Jordan Lee | Review | Jordan Lee | Jordan Lee | Review | Riley Chen | Riley Chen | Needs a name | Needs a name | Needs a name | 5",
+    "02-inbox: http://localhost:8081/inbox :: Needs Attention | Needs Attention | 5 | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790531215247 | Sep 27, 12:47 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Sep 27, 12:04 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review |",
+    "03-review: http://localhost:8081/inbox :: Needs Attention | Needs Attention | 5 | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790531215247 | Sep 27, 12:47 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Sep 27, 12:04 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review |",
+    "packB_on_review=false",
+    "04-after-review-actions: http://localhost:8081/inbox :: Needs Attention | Needs Attention | 5 | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790531215247 | Sep 27, 12:47 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Sep 27, 12:04 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review |",
+    "05-inbox-before-del: http://localhost:8081/inbox :: Needs Attention | Needs Attention | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790531215247 | Sep 27, 12:47 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Sep 27, 12:04 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Hea",
+    "06-after-delete: http://localhost:8081/inbox :: Needs Attention | Needs Attention | 5 | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790531215247 | Sep 27, 12:47 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Sep 27, 12:04 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review |",
+    "deleteAttempt=true stillMarker=true",
+    "07-parent: http://localhost:8081/parent :: Avery Quinn | Avery Quinn | AQ | Avery Quinn | Avery Quinn | MP | ditl-English Homeroom | Morgan Patel | Morgan Patel | Your teacher has not shared an update yet. | CLASSES | APUSH | No published average yet | See all grades | ditl-English Homeroom | No published average yet | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 1 | See all grades | Edit details",
+    "iso {\"morgan\":true,\"jordan\":false,\"approve\":false,\"packB\":false}",
+    "99-out: http://localhost:8081/ :: Classes | Classes | Skip | Tap for sound",
+    "NOTE: Pack B UI not reached — homework capture never selects keyed assignment (assignmentId only on answer_key)."
+  ],
+  "findings": [],
+  "packB": false,
+  "case": "DITL-DH-01-UI-02",
+  "note": "pass1 draft Jordan; pass2 review+delete+parent"
+}

@@ -740,9 +740,21 @@ export type Database = {
         Partial<{ student_id: string | null; email: string | null; accepted_at: string | null }>
       >;
       ask_threads: Table<
-        { id: string; profile_id: string; school_id: string; created_at: string; cleared_at: string | null },
-        { profile_id: string; school_id: string; cleared_at?: string | null },
-        Partial<{ cleared_at: string | null }>
+        {
+          id: string;
+          profile_id: string;
+          school_id: string;
+          seat: 'teacher' | 'parent' | 'office' | 'student' | null;
+          created_at: string;
+          cleared_at: string | null;
+        },
+        {
+          profile_id: string;
+          school_id: string;
+          seat?: 'teacher' | 'parent' | 'office' | 'student' | null;
+          cleared_at?: string | null;
+        },
+        Partial<{ seat: 'teacher' | 'parent' | 'office' | 'student' | null; cleared_at: string | null }>
       >;
       ask_messages: Table<
         {
@@ -892,6 +904,23 @@ export type Database = {
           status: string;
           error_code: string | null;
         }>
+      >;
+      /** Ride office blacklist; writes go through office_set_pickup_restriction. */
+      pickup_restrictions: Table<
+        {
+          id: string;
+          school_id: string;
+          student_id: string;
+          parent_id: string | null;
+          vehicle_id: string | null;
+          reason: string | null;
+          active: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        never,
+        never
       >;
     };
     Views: Record<string, never>;
@@ -1333,13 +1362,18 @@ add_group_member: { Args: { p_thread_id: string; p_profile_id: string }; Returns
       set_school_logo: { Args: { p_asset_id: string | null }; Returns: string | null };
       set_school_ai_cap: { Args: { p_usd: number }; Returns: number };
       ai_spend_this_month: { Args: Record<string, never>; Returns: Array<{ usd: number; cap_usd: number | null }> };
-      ask_open_thread: { Args: Record<string, never>; Returns: string };
-      ask_list_messages: { Args: { p_limit?: number }; Returns: AskMessageRow[] };
+      ask_open_thread: { Args: { p_seat?: string | null }; Returns: string };
+      ask_list_messages: { Args: { p_limit?: number; p_seat?: string | null }; Returns: AskMessageRow[] };
       ask_append_message: {
-        Args: { p_role: 'user' | 'assistant'; p_body: string; p_payload?: MessagePayload | null };
+        Args: {
+          p_role: 'user' | 'assistant';
+          p_body: string;
+          p_payload?: MessagePayload | null;
+          p_seat?: string | null;
+        };
         Returns: string;
       };
-      ask_new_thread: { Args: Record<string, never>; Returns: string };
+      ask_new_thread: { Args: { p_seat?: string | null }; Returns: string };
       ask_purge_old: { Args: Record<string, never>; Returns: undefined };
       set_class_feed_icon: { Args: { p_class_id: string; p_icon: string }; Returns: string };
       set_class_avatar: { Args: { p_class_id: string; p_asset_id: string | null }; Returns: string | null };

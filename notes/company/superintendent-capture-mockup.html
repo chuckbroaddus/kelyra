@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Open Capture — dark header look</title>
+  <style>
+    :root {
+      --bg: #141311;
+      --elevated: #1E1C19;
+      --card: #26231F;
+      --ink: #F4EFE6;
+      --mute: #B0A79C;
+      --line: #3D3832;
+      --brand: #E07A3A;
+      --wash: #2A2723;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.45 system-ui, sans-serif;
+    }
+    main { max-width: 760px; margin: 0; padding: 28px 20px 48px; }
+    h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+    .lead { color: var(--mute); margin: 0 0 20px; max-width: 62ch; }
+    .callout {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 0 0 28px;
+    }
+    .callout strong { color: var(--brand); }
+    .bar {
+      display: flex;
+      align-items: center;
+      height: 56px;
+      padding: 0 8px 0 12px;
+      background: var(--elevated);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      gap: 8px;
+    }
+    .logo {
+      width: 36px; height: 36px; border-radius: 50%; flex: none;
+      background: var(--wash); border: 1px solid var(--line);
+    }
+    .word { flex: 1; font-size: 20px; font-weight: 700; }
+    .hits { display: flex; align-items: center; }
+    .hit {
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      color: var(--ink);
+    }
+    .hit.cam { color: var(--brand); }
+    .hit svg { width: 22px; height: 22px; display: block; }
+    .legend {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin: 10px 0 0; color: var(--mute); font-size: 13px;
+    }
+    .legend b { color: var(--ink); font-weight: 600; }
+    h2 { font-size: 15px; margin: 28px 0 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    th { color: var(--mute); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    td.seat { font-weight: 700; white-space: nowrap; }
+    .no { color: var(--mute); }
+    .hides { margin: 22px 0 0; color: var(--mute); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>The look is one header camera</h1>
+    <p class="lead">Same bar on every signed-in account. The camera is the icon you already know, sitting just left of Search. The words “Open Capture” are the spoken name, not a label painted on the button.</p>
+
+    <div class="callout">
+      <div class="bar" aria-label="Header example">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="word">Feed</span>
+        <div class="hits">
+          <span class="hit cam" title="Open Capture">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.4" y="5.4" width="19.2" height="13.4" rx="3.2"/>
+              <circle cx="12" cy="12.1" r="4.1"/>
+            </svg>
+          </span>
+          <span class="hit" title="Search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+              <circle cx="10.2" cy="10.2" r="6.4"/>
+              <line x1="15" y1="15" x2="20.6" y2="20.6"/>
+            </svg>
+          </span>
+          <span class="hit" title="Messages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.8" y="5.6" width="18.4" height="13" rx="1.2"/>
+              <line x1="3.4" y1="6.4" x2="12" y2="13.2"/>
+              <line x1="20.6" y1="6.4" x2="12" y2="13.2"/>
+            </svg>
+          </span>
+          <span class="hit" title="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+              <line x1="3.2" y1="6.2" x2="20.8" y2="6.2"/>
+              <line x1="3.2" y1="12" x2="20.8" y2="12"/>
+              <line x1="3.2" y1="17.8" x2="20.8" y2="17.8"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <p class="legend"><span><b>Orange camera</b> is the new slot.</span><span>Search, messages, and menu stay where they are.</span><span>Tap does not file the photo.</span></p>
+    </div>
+
+    <h2>What changes is who may photograph what</h2>
+    <table>
+      <thead>
+        <tr><th>Seat</th><th>May photograph</th><th>May not</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="seat">Superintendent</td>
+          <td>A person already at the school, a contact card, one class list, the school logo.</td>
+          <td class="no">A new person. A grade.</td>
+        </tr>
+        <tr>
+          <td class="seat">Administrator</td>
+          <td>The same papers as the superintendent.</td>
+          <td class="no">The school logo.</td>
+        </tr>
+        <tr>
+          <td class="seat">Teacher</td>
+          <td>Homework. The camera they already have.</td>
+          <td class="no">A second papers camera.</td>
+        </tr>
+        <tr>
+          <td class="seat">Parent</td>
+          <td>Their own face, a child already linked to them, and those contact cards.</td>
+          <td class="no">Another family.</td>
+        </tr>
+        <tr>
+          <td class="seat">Student</td>
+          <td>Their own face.</td>
+          <td class="no">A contact card, unless it only has a field they can already edit. Another student.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="hides">The camera is hidden on Messages, while Search is open, and on My children if the office seat is still up. It is not a new tray tab.</p>
+  </main>
+</body>
+</html>

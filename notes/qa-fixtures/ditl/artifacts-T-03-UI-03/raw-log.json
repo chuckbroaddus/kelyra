@@ -1,0 +1,30 @@
+{
+  "marker": "ditl-T-03-UI-03-1790525449965",
+  "checks": {
+    "teacherHome": true,
+    "taylor": true,
+    "avery": false,
+    "jacquee": true,
+    "parentChrome": false,
+    "wrongSeat": false,
+    "hasAlertsTab": true,
+    "makeup": false,
+    "ditlMarkerUi01": false
+  },
+  "alertChecks": {
+    "bodyLen": 416,
+    "empty": false,
+    "hasItems": true,
+    "slice": "Messages | Messages | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Messages | ditl-Sandbox Academy | APUSH | ditl-English Homeroom | ditl-Math Period 3 | Alerts | Messages | Messages | 3 | Favorite | TL | Taylor Lee | Taylor Lee | You: ditl-T-03-UI-03-1790525348520 parent-notification-path probe | 11:10 AM | Favorite | JB | Jacquee Broaddus | Jacquee Broaddus | No messages yet | 9/11/26 | Messages"
+  },
+  "threadChecks": {
+    "url": "http://localhost:8081/messages/24afbe48-3bf7-49be-90da-88e09bcfe1c5",
+    "hasParentMsg": true,
+    "hasTeacherReply": true,
+    "hasUi01Marker": true,
+    "composer": false,
+    "slice": "Taylor Lee | Taylor Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | TL | Taylor Lee | Tap for details | You · 14 min ago | ditl-T-03-UI-01 teacher reply via type | AQ | TL | Taylor Lee · 13 min ago | ditl-T-03-UI-01-1790524688352 parent: Jordan out Friday — makeup quiz? | You · 12 min ago | ditl-T-03-UI-01-1790524688352 teacher: Yes, makeup Tuesday P3. | AQ | You · 1 min ago | ditl-T-03-UI-03-1790525348520 parent-notification-path probe | AQ"
+  },
+  "sentOk": true,
+  "alertDetail": ""
+}

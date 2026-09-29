@@ -447,10 +447,12 @@ export default function AssignmentEditScreen() {
     setBusy(true);
     setStatus(null);
     try {
-      await startAskThread();
+      await startAskThread('teacher');
       await appendAskMessage(
         'user',
         `Revise this follow-up practice page before I assign it.\nTitle: ${value.title}\nAssignment id: ${assignmentId}\nClass id: ${id}\nQuestions (keep them as one assignment):\n${questions || '(see the hosted page)'}\nRebuild the page when I tell you what to change.`,
+        null,
+        'teacher',
       );
       const ret = `/class/${id}/assignment/${assignmentId}${lockedStudentId ? `?student=${lockedStudentId}` : ''}`;
       router.push(`/ask?return=${encodeURIComponent(ret)}` as never);

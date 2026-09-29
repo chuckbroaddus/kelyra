@@ -19,6 +19,7 @@ import {
   RIDE_LEAVE_FAIL_MESSAGE,
 } from './copy.ts';
 import { applyWalkAttachForm } from './attachForm.ts';
+import { pickupRestrictionClearTargets } from './restriction.ts';
 
 const root = process.cwd();
 function read(rel: string): string {
@@ -409,4 +410,51 @@ test('RIDE walk photo migration: matched vehicle keys on dismissal_staff_walk_ph
   assert.match(ui, /applyWalkAttachForm/);
   assert.match(ui, /setAttachModel\(applied\.model\)/);
   assert.doesNotMatch(ui, /if \(lpr\.model\) setAttachModel/);
+});
+
+test('AC-BAN-CLEAR: office ride card has Clear + Save; clear deactivates by id only', () => {
+  const ui = read('src/app/admin/ride/index.tsx');
+  assert.match(ui, /label="Save restriction"/);
+  assert.match(ui, /label="Clear restriction"/);
+  assert.match(ui, /active:\s*true/);
+  assert.match(ui, /clearPickupRestriction\(/);
+  assert.match(ui, /setPickupRestriction\(/);
+  // Clear stays on the same Pickup restriction card (not a toast undo / new screen).
+  assert.match(ui, /Pickup restriction[\s\S]*Clear restriction/);
+  assert.doesNotMatch(ui, /parent\/ride/);
+
+  const api = read('src/lib/ride/api.ts');
+  assert.match(api, /export async function clearPickupRestriction/);
+  assert.match(api, /from\('pickup_restrictions'\)/);
+  assert.match(api, /\.eq\('active',\s*true\)/);
+  // Must resolve row id before deactivate — null p_id + active false inserts a second row.
+  assert.match(api, /setPickupRestriction\(\{[\s\S]*?id,[\s\S]*?active:\s*false/);
+  assert.match(api, /pickupRestrictionClearTargets/);
+
+  const rpc = read(rpcs);
+  const body = rpc.slice(rpc.indexOf('create or replace function public.office_set_pickup_restriction'));
+  assert.match(body, /if p_id is null then[\s\S]*?insert into public\.pickup_restrictions/);
+  assert.match(body, /else[\s\S]*?update public\.pickup_restrictions/);
+});
+
+test('AC-BAN-CLEAR-2: clear targets that student+parent pair only', () => {
+  const rows = [
+    { id: 'ban-p1', student_id: 'jordan', parent_id: 'parent-1', active: true },
+    { id: 'ban-p2', student_id: 'jordan', parent_id: 'parent-2', active: true },
+    { id: 'ban-wide', student_id: 'jordan', parent_id: null, active: true },
+    { id: 'ban-other', student_id: 'other-kid', parent_id: 'parent-1', active: true },
+    { id: 'ban-cleared', student_id: 'jordan', parent_id: 'parent-1', active: false },
+  ];
+  assert.deepEqual(pickupRestrictionClearTargets(rows, 'jordan', 'parent-1'), ['ban-p1']);
+  assert.deepEqual(pickupRestrictionClearTargets(rows, 'jordan', null), ['ban-wide']);
+  assert.deepEqual(pickupRestrictionClearTargets(rows, 'jordan', 'parent-2'), ['ban-p2']);
+  // Already cleared: no ids → clear must not call insert with active false.
+  assert.deepEqual(
+    pickupRestrictionClearTargets(
+      rows.filter((r) => r.id !== 'ban-p1'),
+      'jordan',
+      'parent-1',
+    ),
+    [],
+  );
 });

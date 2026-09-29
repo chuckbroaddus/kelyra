@@ -1,0 +1,72 @@
+seq,case_id,task_id,result,started_at,completed_at,duration_s,grok_bot_before_pct,grok_bot_after_pct,grok_bot_delta_pct,quantized_zero,allocation_id,findings_n,notes
+12,DITL-T-02-UI-05,t_6cae6c1e,PARTIAL,,,,53.1678,53.4409,0.2731,False,a_f474c96122,0,dual-path fixture missing; read-only
+13,DITL-T-02-ASK-01,t_d3edaa5f,PARTIAL,,,,53.4965,53.6276,0.1311,False,a_ebb121bb68,1,code-path verified; Ask approve spec conflict
+14,DITL-T-03-UI-01,t_1baa2cbf,PASS,,,,,,,,,1,supergrok qa-engineer; grok-bot columns empty by design
+15,DITL-T-03-UI-02,t_031765dd,PASS,,,,,,,,,0,supergrok qa-engineer lane A; grok-bot columns empty by design
+28,DITL-P-01-UI-01,t_2fbe53c5,PARTIAL,,,,,,,,,1,supergrok qa-engineer lane B; grok-bot columns empty by design
+36,DITL-S-01-UI-01,t_1d897c10,PARTIAL,,,,,,,,,2,supergrok qa-engineer lane C; grok-bot columns empty by design
+16,DITL-T-03-UI-03,t_bab6dede,PASS,,,,,,,,,0,supergrok qa-engineer lane A; grok-bot columns empty by design
+37,DITL-S-01-ASK-01,t_7db6d31c,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+17,DITL-T-03-ASK-01,t_f8f9a893,PASS,,,,,,,,,1,supergrok lane A; grok-bot columns empty by design
+38,DITL-S-01-UI-02,t_0d5b4b77,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+39,DITL-S-02-UI-01,t_73ce5215,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+18,DITL-T-05-UI-01,t_8e1e60e3,PARTIAL,,,,,,,,,0,supergrok lane A teardown incomplete; grok-bot columns empty by design
+40,DITL-S-02-ASK-01,t_67496134,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+29,DITL-P-01-ASK-01,t_0827177d,PARTIAL,,,,,,,,,0,supergrok lane B; grok-bot columns empty by design
+41,DITL-S-02-UI-02,t_15d214e6,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+19,DITL-T-05-UI-02,t_8979b4b4,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+30,DITL-P-02-UI-01,t_e4fcb9f3,PASS,,,,,,,,,0,supergrok lane B; grok-bot columns empty by design
+42,DITL-S-03-UI-01,t_d8382ac3,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+31,DITL-P-02-ASK-01,t_4911ebfb,PARTIAL,,,,,,,,,1,supergrok lane B; grok-bot columns empty by design
+20,DITL-T-05-UI-03,t_2baea371,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+32,DITL-P-03-UI-01,t_6e2a954b,PASS,,,,,,,,,0,supergrok lane B; grok-bot columns empty by design
+43,DITL-S-03-ASK-01,t_d299c3fa,PASS,,,,,,,,,0,supergrok lane C; grok-bot columns empty by design
+33,DITL-P-03-UI-02,t_0d834e9d,PASS,,,,,,,,,0,supergrok lane B; grok-bot columns empty by design
+34,DITL-P-03-UI-03,t_2e53b5ef,PASS,,,,,,,,,0,supergrok lane B; grok-bot columns empty by design
+21,DITL-T-04-UI-01,t_580487bb,PARTIAL,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+44,DITL-S-03-UI-02,t_a5b4db86,PARTIAL,,,,,,,,,0,supergrok lane C; same submit break already parked t_ae57706e
+35,DITL-P-03-ASK-01,t_45a863d5,PARTIAL,,,,,,,,,0,supergrok lane B; expected GAP; grok-bot columns empty by design
+22,DITL-T-04-UI-02,t_a81ee12c,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+78,DITL-X-01-GAP-01,t_ba2ab17f,GAP,,,,,,,,,0,supergrok lane B; known Author pack-emit GAP; grok-bot columns empty by design
+23,DITL-T-04-UI-03,t_7ef315af,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+55,DITL-O-01-UI-01,t_af573836,FAIL,,,,,,,,,1,supergrok lane C; P0 admin splash gate
+24,DITL-T-04-UI-04,t_cc559685,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+56,DITL-O-01-UI-02,t_97ace909,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+25,DITL-T-04-UI-05,t_437434ec,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+57,DITL-O-02-UI-01,t_c70ba915,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+26,DITL-T-04-UI-06,t_2ad3c6c3,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+58,DITL-O-02-UI-02,t_17c38e8d,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+27,DITL-T-04-ASK-01,t_5313d1d1,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+59,DITL-O-02-UI-03,t_e9c78e2a,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+60,DITL-O-02-UI-04,t_af5f7f50,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+45,DITL-DH-01-UI-01,t_865fa97d,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+61,DITL-O-02-UI-05,t_765830f2,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+62,DITL-O-03-UI-01,t_829eafa4,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+46,DITL-DH-01-UI-02,t_f25bb7d6,PARTIAL,,,,,,,,,1,supergrok lane A; Pack B never appeared
+63,DITL-O-03-UI-02,t_4005dbe2,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+47,DITL-DH-01-UI-03,t_6df4c673,PARTIAL,,,,,,,,,0,supergrok lane A; tray text miss; findings none
+64,DITL-O-03-UI-03,t_9c4fb4cb,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+48,DITL-DH-01-UI-04,t_102eb36d,PASS,,,,,,,,,0,supergrok lane A; grok-bot columns empty by design
+65,DITL-O-04-UI-01,t_84618922,PARTIAL,,,,,,,,,1,supergrok lane C; ban saved; no clear control
+49,DITL-DH-01-UI-05,t_d0e0cee4,SKIP,,,,,,,,,0,app down; no live drive
+66,DITL-O-04-UI-02,t_5b8b3f1b,PASS,,,,,,,,,0,supergrok lane C; ban fail-closed; findings none
+67,DITL-O-04-UI-03,t_f5593ed9,PASS,,,,,,,,,0,supergrok lane C; parent-2 check-in allowed
+49,DITL-DH-01-UI-05,t_3269b73a,PASS,,,,,,,,,0,supergrok lane A retry; parent seat no Approve
+68,DITL-O-04-UI-04,t_31131c42,PARTIAL,,,,,,,,,0,supergrok lane C; same no-clear P2 already parked t_ba828734
+50,DITL-DH-01-ASK-01,t_08c093ba,PARTIAL,,,,,,,,,2,supergrok lane A; Ask not seat-scoped
+69,DITL-O-05-UI-01,t_16aa31a2,FAIL,,,,,,,,,0,supergrok lane C; same splash P0 already parked t_3191917a
+51,DITL-DH-02-UI-01,t_437daffb,FAIL,,,,,,,,,0,supergrok lane C; roster screen missing already noted
+52,DITL-DH-02-UI-02,t_d774fdb8,PARTIAL,,,,,,,,,0,supergrok lane A; bio write did not land; findings none
+53,DITL-DH-02-UI-03,t_7c539180,FAIL,,,,,,,,,0,app down; no live drive; retrying
+53,DITL-DH-02-UI-03,t_726a8dd0,PASS,,,,,,,,,0,supergrok lane C retry; parent Ride no office bleed; FINDINGS none
+70,DITL-O-05-UI-02,t_a5d18d8e,FAIL,,,,,,,,,0,supergrok lane C; Math-A never created; findings none
+54,DITL-DH-02-ASK-01,t_071e22cb,PARTIAL,,,,,,,,,0,parent ask seat-scope parked t_99e3a96c; FINDINGS none
+71,DITL-O-05-UI-03,t_bf1f9a74,GAP,,,,,,,,,0,lane C; delete-teacher GAP expected; findings none; splash parked not refiled
+72,DITL-O-05-UI-04,t_f021520e,FAIL,,,,,,,,,0,lane A; Math-A and reassign UI absent; findings none; splash parked not refiled
+73,DITL-O-06-UI-01,t_bc8ec4b2,PARTIAL,,,,,,,,,1,supergrok lane A; alert kind tab did not switch; splash parked not refiled
+74,DITL-O-06-UI-02,t_8c786357,PARTIAL,,,,,,,,,0,supergrok lane A; notify path absent; alert-kind parked not refiled; app down after send; findings none
+75,DITL-O-07-UI-01,t_354fefb1,FAIL,,,,,,,,,1,lane A; metadata SUPPORTED path MISS preferred-name opened PHOTO sheet; app refused mid-run not filed; splash and photo GAP not refiled
+76,DITL-O-07-UI-02,t_69de1ce9,FAIL,,,,,,,,,0,supergrok lane A; localhost:8081 refused; no browser; findings none
+77,DITL-O-07-UI-03,t_ad439b79,PASS,,,,,,,,,0,supergrok lane A live screen; birthday cleared; findings none; grok-bot columns empty by design
+,,t_64f06ecd,FAIL,,,,,,,,,1,list_my_assignments stop-mid-work; message send ok
+,,t_dafe6218,FAIL,,,,,,,,,1,Pack B missing on saved keyed draft; already t_fae04be8

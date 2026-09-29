@@ -137,7 +137,7 @@ Until then: this file is the contract for that future loop.
 | PR-02 | P0 | U | Copy fixtures | **No** “end-to-end encrypted” / “only you can ever see this” / “unreadable by Kelyra” |
 | PR-03 | P0 | UI | Settings → Diary | Same honest paragraph as first-run |
 | PR-04 | P0 | UI | FERPA/HR note | “Personal reflection — not the official student file.” No “send to principal” |
-| PR-05 | P0 | I/S | Media fetch | Private bucket + owner signed URL only; bare public URL fails |
+| PR-05 | P0 | I/S | Media fetch | Private `diary` bucket + owner short-TTL signed URL only; bare public URL fails; files open in the system handler, not a WebView |
 | PR-06 | P0 | I | Delete entry | GC unreferenced diary objects (or mark for GC) |
 | PR-07 | P1 | I | Signed URL | Short TTL; no bucket listing |
 
@@ -236,7 +236,7 @@ Map 1:1 to D1-01…D1-16. Future loop fails if any **P0** missing.
 |---|---|---|---|---|
 | SEC-01 | P0 | D1-01 | Owner-only RLS; never staff/admin/taught helpers | SQL `doesNotMatch` + cross-user JWT zero rows |
 | SEC-02 | P0 | D1-02 | Parent 2+ children missing child → empty | Parent JWT twin fixtures (PD-01…PD-03) |
-| SEC-03 | P0 | D1-03 | Private `diary` bucket; path prefix uid; no public URL; no reuse photos/audio/files | Storage policies + object URL fail without signature |
+| SEC-03 | P0 | D1-03 | Private `diary` bucket; path `{uid}/{seat}/{entry_id}/{media_id}.{ext}`; no public URL; not photos/audio/files/ingest; files via system handler | Storage policies + object URL fail without signature |
 | SEC-04 | P0 | D1-04 | `write_ledger` definer; uid from auth; REVOKE authenticated; no client mutate | Grant tests + forged INSERT denied |
 | SEC-05 | P0 | D1-05 | Never copy diary body/title/media/STT into audit or ledger; no write_audit on diary CRUD | Static + RPC (LV-03…LV-05) |
 | SEC-06 | P0 | D1-06 | No teacher SELECT on audit_events; new ledger_events; /activity admin | Policy review + teacher JWT on audit empty |

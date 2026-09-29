@@ -1,0 +1,25 @@
+DITL-O-02-UI-02 RESULT=FAIL
+
+Lane: C · Engine: hermes SuperGrok · Browser: Chromium persistent user-data-dir=/tmp/ditl-pw-lane-c
+App: http://localhost:8081
+Case: Assign S1 Jordan Lee → Math (A); S3 Morgan Patel → English (B); verify roster isolation
+Actor: ditl-admin only (not teacher-a / parent-1)
+
+EVIDENCE:
+- API sign-in-handle ditl-admin: HTTP 200 + access_token. teachers row absent (teacherRow=false).
+- S1 Jordan Lee id 2bcee429-… and S3 Morgan Patel id 6247a702-… readable via students select.
+- classes Math/English lists empty under admin RLS (math=[] eng=[]); enrollments probe null — no class id for deep link.
+- UI sign-in: handle+password → lands http://localhost:8081/ still Sign-in + Spring Baptist Academy splash (not ditl-Sandbox office chrome). splashish=true.
+- One class-roster attempt only (card rule): GET /?tab=classes (fallback; no math class id) → still Sign-in splash; leftSplash=false; reachedRoster=false. Did not burn run on splash clicks.
+- Assign S1→Math / S3→English and isolation verify: not reachable → not executed. No enrollment mutations → no teardown of enrollments.
+- Teardown: clear storage → /sign-in. Shared seed untouched.
+- Screenshots: notes/qa-fixtures/ditl/artifacts-O-02-UI-02/01-admin-after-signin.png, 02-roster-once-__tab_classes.png, 99-signout.png
+- result.json + run-ui-02.mjs in same dir.
+
+FINDINGS:
+none (parked splash P0 already on t_3191917a — not re-filed per card)
+
+GAPS:
+none for this case id (case PARTIAL/GAP: none; blocked by product splash wall)
+
+RESULT: FAIL — cannot complete class assignment / roster isolation while office admin UI remains on SplashLanding after auth.

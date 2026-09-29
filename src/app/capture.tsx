@@ -821,28 +821,58 @@ export default function CaptureScreen() {
         }
       }
 
-      if (nextIntent === 'homework' && selectedAssignment && assignmentHasKey(selectedAssignment) && pages.length) {
+      if (nextIntent === 'homework' && pages.length && imageUrl) {
         try {
-          const media = await evaluateCaptureMedia({
-            teacherId: teacher.id,
-            pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
-            audioUri,
-            audioMime,
-          });
-          setEvaluation(media);
-          if (media.photoAssets.length) {
-            const keyed = await runKeyedExtract(media.photoAssets, selectedAssignment);
-            setEvaluation({
-              ...media,
-              gaps: keyed.draft.gaps,
-              draftScore: keyed.draft.draftScore,
-              teacherNote: keyed.draft.teacherNote,
-              studentName: keyed.draft.studentName ?? media.studentName,
-              costUsd: keyed.draft.costUsd ?? media.costUsd,
-              pageAssetIds: keyed.draft.pageAssetIds,
+          let assigned =
+            selectedAssignment && assignmentHasKey(selectedAssignment) ? selectedAssignment : null;
+          if (!assigned) {
+            const keyedRows = assignments.filter((row) => assignmentHasKey(row));
+            if (keyedRows.length) {
+              const keyUrls = await signedOriginalUrlsForAssetIds(
+                keyedRows.map((row) => row.key_asset_id).filter((id): id is string => Boolean(id)),
+              );
+              const match = await invokeAi<{ assignmentId?: string | null; confidence?: number }>(
+                'match-key',
+                {
+                  imageUrl,
+                  keys: keyedRows.map((row) => ({
+                    id: row.id,
+                    title: row.title,
+                    phash: row.key_phash,
+                    layout: row.key_layout,
+                    header: row.key_header,
+                    imageUrl: row.key_asset_id ? keyUrls.get(row.key_asset_id) ?? null : null,
+                  })),
+                },
+              ).catch(() => ({ assignmentId: null as string | null, confidence: 0 }));
+              if (match.assignmentId) {
+                assigned = keyedRows.find((row) => row.id === match.assignmentId) ?? null;
+                if (assigned) setAssignmentId(assigned.id);
+              }
+            }
+          }
+          if (assigned && assignmentHasKey(assigned)) {
+            const media = await evaluateCaptureMedia({
+              teacherId: teacher.id,
+              pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
+              audioUri,
+              audioMime,
             });
-            setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
-            setReviewOpen(true);
+            setEvaluation(media);
+            if (media.photoAssets.length) {
+              const keyed = await runKeyedExtract(media.photoAssets, assigned);
+              setEvaluation({
+                ...media,
+                gaps: keyed.draft.gaps,
+                draftScore: keyed.draft.draftScore,
+                teacherNote: keyed.draft.teacherNote,
+                studentName: keyed.draft.studentName ?? media.studentName,
+                costUsd: keyed.draft.costUsd ?? media.costUsd,
+                pageAssetIds: keyed.draft.pageAssetIds,
+              });
+              setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
+              setReviewOpen(true);
+            }
           }
         } catch {
           // Confirm strip still works without Pack B extract.
@@ -901,9 +931,13 @@ export default function CaptureScreen() {
             })
           : null;
 
-      const keyItems = selectedAssignment ? parseKeyItems(selectedAssignment.key_items) : [];
+      const assignedForKey =
+        selectedAssignment && assignmentHasKey(selectedAssignment)
+          ? selectedAssignment
+          : assignments.find((row) => row.id === assignmentId && assignmentHasKey(row)) ?? null;
+      const keyItems = assignedForKey ? parseKeyItems(assignedForKey.key_items) : [];
       const keyed =
-        selectedAssignment && assignmentHasKey(selectedAssignment) && packItems.length
+        assignedForKey && packItems.length
           ? buildKeyScoreDraft({
               keyItems,
               extract: packItems.map((item) => ({
@@ -912,8 +946,8 @@ export default function CaptureScreen() {
                 confidence: item.confidence,
                 flag: item.flag,
               })),
-              assignmentId: selectedAssignment.id,
-              maxScore: selectedAssignment.max_score,
+              assignmentId: assignedForKey.id,
+              maxScore: assignedForKey.max_score,
               teacherNote: evaluation?.teacherNote ?? null,
               studentName: evaluation?.studentName ?? null,
               gaps: evaluation?.gaps ?? [],
@@ -952,7 +986,7 @@ export default function CaptureScreen() {
         photoAssetId: photo?.id ?? uploadedAssetId,
         audioAssetId: audio?.id,
         transcript: spokenName.trim() || null,
-        assignmentId: selectedAssignment?.id ?? null,
+        assignmentId: assignedForKey?.id ?? selectedAssignment?.id ?? assignmentId ?? null,
       });
 
       let fullText = spokenName.trim() || evaluation?.transcript?.trim() || '';
@@ -1012,7 +1046,7 @@ export default function CaptureScreen() {
         await approveCapture(latest ?? captureRow, latest?.gaps ?? [], draftScore, {
           scoreMark: 'numeric',
           gradeKind: 'homework',
-          assignmentId: selectedAssignment?.id ?? null,
+          assignmentId: assignedForKey?.id ?? selectedAssignment?.id ?? assignmentId ?? null,
         });
         resetSlip();
         setStatus('Approved. Grade published.');

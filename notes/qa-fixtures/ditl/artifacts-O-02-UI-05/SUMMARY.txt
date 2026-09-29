@@ -1,0 +1,13 @@
+DITL-O-02-UI-05 RESULT=FAIL lane=C Chromium /tmp/ditl-pw-lane-c
+OK stepapi-admin: status=200 s1=2bcee429-11ce-4f84-b2de-9aab349f03cc rosterN=33 names=Jordan Lee:2bcee429,Jamie Lee:899214d4,Morgan Patel:6247a702,Sam Ortiz:miss,Riley Quinn:miss
+MISS step1: url=http://localhost:8081/ splashish=true
+MISS step2: route=/?tab=person&studentId=2bcee429-11ce-4f84-b2de-9aab349f03cc url=http://localhost:8081/?tab=person&studentId=2bcee429-11ce-4f84-b2de-9aab349f03cc leftSplash=false onRoster=false
+SAME-AS-SEQ57-60: ditl-admin auth OK but SplashLanding; one roster direct route also stuck
+PARKED-P0: splash wall already on t_3191917a — not filed again
+CASE-STEPS-SKIPPED: roster ops on S1 + bleed check UI not reachable
+OK step3: no-UI-mutation DB delta bleedOthers=0 (expect 0; no ops performed)
+OK stepteardown: url=http://localhost:8081/sign-in
+FINDINGS:
+none (parked splash P0 not re-filed)
+GAPS:
+none

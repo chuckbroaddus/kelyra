@@ -1,0 +1,40 @@
+{
+  "case": "DITL-DH-02-UI-02",
+  "result": "PARTIAL",
+  "steps": {
+    "s1": true,
+    "s2": true,
+    "s3": false,
+    "s4": true,
+    "s5": false
+  },
+  "evidence": [
+    "START DITL-DH-02-UI-02 lane=A UD=/tmp/ditl-pw-lane-a",
+    "MARKER DITL-DH02-UI02-6uy0",
+    "BIO_ROUTE /class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "INPUT_COUNT 2 user ditl-admin",
+    "== 01-after-signin http://localhost:8081/ Spring Baptist Academy | Spring Baptist Academy | Home | Diary | Calendar | KelyraAsk | Sign in | Account creation is performed by the school office. Please contact your school's administration for access.",
+    "OK step1: url=http://localhost:8081/ splash=true",
+    "HAS_SPLASH_HOME true (parked t_3191917a — not refiled)",
+    "== 01b-matrix http://localhost:8081/admin/matrix Responsibilities | Responsibilities | Home | Diary | Calendar | KelyraAsk | All areas | School | People | Classes | Roster | Records | Family | Ride | Messages | Diary | Calendar | Audit | School | School home | The School / House landing screen. | Superintendent | School | Administrator | School | Teacher | Own | Parent | Own | Student | Own | School | App settings | Theme and device settings popup. | Superintendent | Own | Administrator | Own | Teacher | Own | Parent | Own | Student | Own | School | Edit this matrix | Change who may do what, then the app follows. | Superintendent | All | Administrator | None | Teacher | None | Parent | None | Student | None | School | School name and logo | Wordmark and mark in the header. | Superintendent | All | Administrator | None | Teacher | None | Parent | None | Student | None | People | See logins | People list and directory. | Superintendent |",
+    "MATRIX_URL http://localhost:8081/admin/matrix",
+    "== 02-bio-direct http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | Home | Diary | Calendar | KelyraAsk | JL | Jordan Lee | Jordan Lee | Mar 15 | Classes | Parents | Details | Details | Details | Name | Jordan Lee | Clear | Preferred name | Add preferred name | Birthday | Mar 15, 2012 | Clear | Grade or age | Add grade or age | Phone | (512) 555-0142 | Clear | Email | alex.rivera@school.edu | Clear | Address | 123 Maple St Austin TX 78701 | Clear | Emergency contact | Add emergency contact | Emergency phone | Add emergency phone | Allergies | Add allergies | Health conditions | Add health conditions | Notes | Name: Alex Rivera | Date: 9/10/2026 | Name: Alex Rivera | Date: 9/10/2026 | Clear | LOGIN | Unassign | @ | @ditl-student-s1 | @ditl-student-s1 | ditl-student-s1@ditl.test | Remove from ditl-Math Period 3 | Delete Jordan",
+    "OK step2: onStudent=true missing=false splash=false url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "== 03-edit-sheet http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | Home | Diary | Calendar | KelyraAsk | JL | Jordan Lee | Jordan Lee | Mar 15 | Classes | Parents | Details | Details | Details | Name | Jordan Lee | Clear | Preferred name | Add preferred name | Birthday | Mar 15, 2012 | Clear | Grade or age | Add grade or age | Phone | (512) 555-0142 | Clear | Email | alex.rivera@school.edu | Clear | Address | 123 Maple St Austin TX 78701 | Clear | Emergency contact | Add emergency contact | Emergency phone | Add emergency phone | Allergies | Add allergies | Health conditions | Add health conditions | Notes | Name: Alex Rivera | Date: 9/10/2026 | Name: Alex Rivera | Date: 9/10/2026 | Clear | LOGIN | Unassign | @ | @ditl-student-s1 | @ditl-student-s1 | ditl-student-s1@ditl.test | Remove from ditl-Math Period 3 | Delete Jordan",
+    "EDIT_OPEN false",
+    "FILLED false DITL-DH02-UI02-6uy0",
+    "== 04-filled http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | Home | Diary | Calendar | KelyraAsk | JL | Jordan Lee | Jordan Lee | Mar 15 | Classes | Parents | Details | Details | Details | Name | Jordan Lee | Clear | Preferred name | Add preferred name | Birthday | Mar 15, 2012 | Clear | Grade or age | Add grade or age | Phone | (512) 555-0142 | Clear | Email | alex.rivera@school.edu | Clear | Address | 123 Maple St Austin TX 78701 | Clear | Emergency contact | Add emergency contact | Emergency phone | Add emergency phone | Allergies | Add allergies | Health conditions | Add health conditions | Notes | Name: Alex Rivera | Date: 9/10/2026 | Name: Alex Rivera | Date: 9/10/2026 | Clear | LOGIN | Unassign | @ | @ditl-student-s1 | @ditl-student-s1 | ditl-student-s1@ditl.test | Remove from ditl-Math Period 3 | Delete Jordan",
+    "== 05-after-save http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | Home | Diary | Calendar | KelyraAsk | JL | Jordan Lee | Jordan Lee | Mar 15 | Classes | Parents | Details | Details | Details | Name | Jordan Lee | Clear | Preferred name | Add preferred name | Birthday | Mar 15, 2012 | Clear | Grade or age | Add grade or age | Phone | (512) 555-0142 | Clear | Email | alex.rivera@school.edu | Clear | Address | 123 Maple St Austin TX 78701 | Clear | Emergency contact | Add emergency contact | Emergency phone | Add emergency phone | Allergies | Add allergies | Health conditions | Add health conditions | Notes | Name: Alex Rivera | Date: 9/10/2026 | Name: Alex Rivera | Date: 9/10/2026 | Clear | LOGIN | Unassign | @ | @ditl-student-s1 | @ditl-student-s1 | ditl-student-s1@ditl.test | Remove from ditl-Math Period 3 | Delete Jordan",
+    "MISS step3: filled=false saved=false markerOnScreen=false",
+    "SEAT_SWITCH null",
+    "== 06-parent-view http://localhost:8081/parent Devon Hale | Devon Hale | Home | Diary | Calendar | KelyraAsk | DH | Devon Hale | Devon Hale | JL | ditl-Math Period 3 | Jordan Lee | Jordan Lee | Mar 15 | This week Jordan is working on | a skill the teacher will name soon | PRACTICE | None yet | From the teacher | Still working on ditl-bulk-jordan-place-value. | CLASSES | ditl-English Homeroom | Current average 88% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Why this average? | See all grades | ditl-Math Period 3 | Current average 92% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 2 | Why this average? | See all grades | Edit details",
+    "== 07-parent-s1 http://localhost:8081/parent Devon Hale | Devon Hale | Home | Diary | Calendar | KelyraAsk | DH | Devon Hale | Devon Hale | JL | ditl-Math Period 3 | Jordan Lee | Jordan Lee | Mar 15 | This week Jordan is working on | a skill the teacher will name soon | PRACTICE | None yet | From the teacher | Still working on ditl-bulk-jordan-place-value. | CLASSES | ditl-English Homeroom | Current average 88% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Why this average? | See all grades | ditl-Math Period 3 | Current average 92% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 2 | Why this average? | See all grades | Edit details",
+    "OK step4: jordan=true marker=false url=http://localhost:8081/parent",
+    "MISS step5: parentSeesUpdate=false marker=false",
+    "== 99-signout chrome-error://chromewebdata/ This site can’t be reached | localhost refused to connect. | Try: | Checking the connection | Checking the proxy and the firewall | ERR_CONNECTION_REFUSED | Reload | Details"
+  ],
+  "findings": [],
+  "marker": "DITL-DH02-UI02-6uy0",
+  "bioRoute": "/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+  "okCount": 3
+}

@@ -1,0 +1,9 @@
+{
+  "surface": "phone-viewport-web",
+  "evidence": [
+    "PASS PHONE-VP-SIGNIN",
+    "FAIL PHONE-VP-ASK-OPEN",
+    "FAIL PHONE-VP-AC1 stopped=false snip=s"
+  ],
+  "result": "FAIL"
+}

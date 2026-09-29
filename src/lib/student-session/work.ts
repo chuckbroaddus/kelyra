@@ -103,3 +103,18 @@ export function studentGradeLine(
   }
   return statusLabel(item.status) || '';
 }
+
+/**
+ * Existing student To Do open destinations (phone + web).
+ * Lesson → /lesson/[assignmentId]. Practice and planned → /todo/[submissionId].
+ * Other kinds (e.g. capture) have no open destination.
+ */
+export function studentTodoOpenPath(item: {
+  kind: string;
+  submissionId: string;
+  assignmentId: string;
+}): string | null {
+  if (item.kind === 'lesson') return `/lesson/${item.assignmentId}`;
+  if (item.kind === 'practice' || item.kind === 'planned') return `/todo/${item.submissionId}`;
+  return null;
+}

@@ -157,7 +157,11 @@ test('A1 actor system line names the signed-in profile only', () => {
 test('A1 askTools allowed() delegates to askToolPolicy', () => {
   const ask = read('src/lib/ai/askTools.ts');
   assert.match(ask, /import \{ isAskToolAllowed \} from '@\/lib\/ai\/askToolPolicy'/);
-  assert.match(ask, /return isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
+  assert.match(ask, /isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
+  const allowedFn = ask.slice(ask.indexOf('function allowed('), ask.indexOf('function labelFor('));
+  // list_inbox adds a live Teach-seat wall after policy (AC-ASK-INBOX); other tools stay policy-only.
+  assert.match(allowedFn, /list_inbox/);
+  assert.match(allowedFn, /ctx\.live\.role\s*!==\s*'teacher'/);
 });
 
 test('A1 ask-assistant handlers filter by policy after getUser (not raw body.tools)', () => {
@@ -187,12 +191,18 @@ test('A1 ask-assistant handlers filter by policy after getUser (not raw body.too
 });
 
 
-test('A4 approve/delete refuse student/parent; teacher capture.approve allowed', () => {
+test('A4 delete refuse student/parent; teacher capture.approve delete allowed; approve_capture gone', () => {
   const teacher = { role: 'teacher' as const };
   const student = { role: 'student' as const };
   const parent = { role: 'parent' as const };
   const admin = { role: 'administrator' as const };
-  for (const name of ['approve_capture', 'delete_capture', 'delete_gap']) {
+  const superintend = { role: 'superintendent' as const };
+  // Ask approve_capture removed — no hat may write approved_score via Ask.
+  for (const profile of [teacher, student, parent, admin, superintend]) {
+    assert.equal(isAskToolAllowed('approve_capture', profile, grants), false);
+  }
+  assert.equal('approve_capture' in ASK_TOOL_POLICY, false);
+  for (const name of ['delete_capture', 'delete_gap']) {
     assert.equal(isAskToolAllowed(name, teacher, grants), true);
     assert.equal(isAskToolAllowed(name, student, grants), false);
     assert.equal(isAskToolAllowed(name, parent, grants), false);
@@ -208,6 +218,26 @@ test('A4 approve/delete refuse student/parent; teacher capture.approve allowed',
   assert.equal(isAskToolAllowed('delete_class', parent, grants), false);
   assert.equal(isAskToolAllowed('delete_class', teacher, grants), false);
   assert.equal(isAskToolAllowed('delete_class', admin, grants), true);
+});
+
+test('AC-ASK-APPROVE: Ask cannot write approved_score; screen Approve path stays', () => {
+  const askTools = read('src/lib/ai/askTools.ts');
+  assert.doesNotMatch(askTools, /approve_capture\s*:/);
+  assert.doesNotMatch(askTools, /approveCapture/);
+  assert.doesNotMatch(askTools, /from\('@\/lib\/gaps\/api'\)/);
+
+  const prompt = read('src/lib/ai/askPrompt.ts');
+  assert.doesNotMatch(prompt, /Prefer approve_capture|Approve only via approve_capture|you may Approve via/);
+  assert.match(prompt, /Never Approve via Ask|Ask never writes an approved score/);
+
+  // On-screen Approve still calls approveCapture (AC-ASK-APPROVE-2).
+  for (const path of [
+    'src/app/capture.tsx',
+    'src/app/proposal.tsx',
+    'src/app/class/[id]/student/[studentId].tsx',
+  ]) {
+    assert.match(read(path), /approveCapture/);
+  }
 });
 
 test('A4 office login/hats/provision; also_administrator is not office', () => {

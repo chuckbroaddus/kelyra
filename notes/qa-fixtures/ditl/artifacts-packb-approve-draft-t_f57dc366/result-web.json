@@ -1,0 +1,40 @@
+{
+  "card": "t_f57dc366",
+  "case": "DITL-DH-01-UI-02",
+  "surface": "web",
+  "steps": {
+    "ac1_visible": false,
+    "ac2_accept": false,
+    "ac3_parent_hide": true
+  },
+  "packB": {
+    "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "packBHeader": false,
+    "accept": false,
+    "approveCapture": false,
+    "confirm": false,
+    "bodyHead": "Jordan Lee | Jordan Lee | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee packb-proof-20260927 | Review with class. Good job! | APPROVED GAP | Approved | Remove | Remove | Approved for Jordan Lee"
+  },
+  "parent": {
+    "morgan": true,
+    "jordan": false,
+    "approve": false,
+    "packB": false
+  },
+  "result": "FAIL_AC1",
+  "evidence": [
+    "SHOT w-01-signin http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301 ditl-Math Period 3 | ditl-Math Period 3 | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Review | Jordan Lee | Jordan Lee",
+    "SHOT w-02-inbox http://127.0.0.1:8081/inbox Needs Attention | Needs Attention | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Review | JL | Jordan Lee | Jordan Lee | Completed | Completed ditl-PhaseB Assign NoUnhide | Sep 27, 9:59 PM | Review",
+    "INBOX_DUMP {\"url\":\"http://127.0.0.1:8081/inbox\",\"hasJordan\":true,\"head\":\"Needs Attention Needs Attention 2 Desk 2 Needs Attention Diary Calendar Kelyra Needs a name Review All Draft queued (1) Note Delete Review Jordan Lee Jordan Lee Review Heard: Jordan Lee Sep 11, 1:32 AM · 1 page Review Note only Delete Review JL Jordan Lee Jordan Lee Completed Completed ditl-PhaseB Assign NoUnhide Sep 27, 9:59 PM Review\"}",
+    "NAV_CLICK {\"how\":\"click-review-jordan\",\"sample\":\"Needs Attention Needs Attention 2 Desk 2 Needs Attention Diary Calendar Kelyra Needs a name Review All Draft queued (1) \"}",
+    "SHOT w-03-after-review-click http://127.0.0.1:8081/inbox Needs Attention | Needs Attention | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Review | JL | Jordan Lee | Jordan Lee | Completed | Completed ditl-PhaseB Assign NoUnhide | Sep 27, 9:59 PM | Review",
+    "HREF_TRY null",
+    "SHOT w-05-student-focus http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee packb-proof-20260927 | Review with class. Good job! | APPROVED GAP | Approved | Remove | Remove | Approved for Jordan Lee",
+    "SHOT w-06-focus-tab http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc Jordan Lee | Jordan Lee | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee packb-proof-20260927 | Review with class. Good job! | APPROVED GAP | Approved | Remove | Remove | Approved for Jordan Lee",
+    "PACKB_SIG {\"packBHeader\":false,\"accept\":false,\"approveCapture\":false,\"confirm\":false} http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "NO_PACKB_BTNS [\"Back\",\"Open Capture\",\"Search\",\"Messages, 2 waiting\",\"Jordan\",\"Jamie\",\"Riley\",\"Samira\",\"Jordan Lee\",\"Change photo, Jordan Lee\",\"Assign\",\"Give practice for two-digit regrouping\",\"Mark two-digit regrouping proficient\",\"Dismiss focus\",\"Open photo full screen. Pinch to zoom.\",\"Remove\",\"Remove\"]",
+    "SHOT w-09-parent http://127.0.0.1:8081/parent Avery Quinn | Avery Quinn | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | AQ | Avery Quinn | Avery Quinn | MP | ditl-English Homeroom | Morgan Patel | Morgan Patel | Your teacher has not shared an update yet. | CLASSES | APUSH | No published average yet | See all grades | ditl-English Homeroom | No published average yet | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 1 | See all grades | Edit details",
+    "PARENT_ISO {\"morgan\":true,\"jordan\":false,\"approve\":false,\"packB\":false}",
+    "SHOT w-99-out http://127.0.0.1:8081/ Classes | Classes | Desk | Needs Attention | Diary | Calendar | Kelyra | Skip | Tap for sound"
+  ]
+}

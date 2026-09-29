@@ -1,0 +1,36 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | ",
+    "OK step2: title=ditl-Multi 0530040634 id=4807260b-aca5-400f-9ba1-a7ce80c93f4f url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/assignment/4807260b-aca5-400f-9ba1-a7ce80c93f4f?brief=1",
+    "OK step3: gb snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Gradebook | Gradebook | Gradebook | Heatmap | Gradebook | Gradebook | All | Quarter 1 | Quarter 2 | Quarter 3 | Quarter 4 | Semester 1 | Semester 2 | Year | All | All | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Assignment | Overall | ditl-Math Period 3 | ditl-",
+    "OK step4: studentsOnGb=[\"Jordan\",\"Jamie\",\"Riley\",\"Samira\"] titleHit=true",
+    "OK step5: jordan snip=Jordan Lee | Jordan Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Mar 15 | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jordan-place-value | Give practice for ditl-bulk-jordan-place-value | Mark ditl-bulk-jordan-place-value proficient | Dismiss focus | Heard: History homework for Jordan Lee ditl-",
+    "OK step6: jamie ok=true bleed=false snip=Jamie Lee | Jamie Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | JL | Jamie Lee | Jamie Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jamie-decimals | Give practice for ditl-bulk-jamie-decimals | Mark ditl-bulk-jamie-decimals proficient | Dismiss focus | No work filed yet.",
+    "OK step7: class2 url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000302 titleLeak=false snip=Class | Class | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | No students yet. | Add students | Could not load class",
+    "MISS step8: assign detail snip=Assignment | Assignment | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | This screen does not exist. | Go home",
+    "OK step9: sign-out url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301"
+  ],
+  "findings": [],
+  "case": "DITL-T-04-UI-05",
+  "dump": {
+    "title": "ditl-Multi 0530040634",
+    "createdAssignmentId": "4807260b-aca5-400f-9ba1-a7ce80c93f4f",
+    "gradebook": "ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Gradebook | Gradebook | Gradebook | Heatmap | Gradebook | Gradebook | All | Quarter 1 | Quarter 2 | Quarter 3 | Quarter 4 | Semester 1 | Semester 2 | Year | All | All | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Assignment | Overall | ditl-Math Period 3 | ditl-Math Period 3 | ditl-Math Quiz | ditl-Math Quiz | ditl-Math HW S1 | ditl-Math HW S1 | ditl-PhaseB Publish Probe | ditl-PhaseB Publish Probe | ditl-PhaseB Assign NoUnhide | ditl-PhaseB Assign NoUnhide | ditl-Hist HW 28402546 | ditl-Hist HW 28402546 | ditl-Hist HW 28534336 | ditl-Hist HW 28534336 | ditl-Hist HW 28649169 | ditl-Hist HW 28649169 | ditl-Multi 0529975246 | ditl-Multi 0529975246 | ditl-Multi 0530040634 | ditl-Multi 0530040634 | 92% | — | — | — | — | — | — | — | 92 | — | — | — | — | Export CSV",
+    "multi": {
+      "found": [
+        "Jordan",
+        "Jamie",
+        "Riley",
+        "Samira"
+      ],
+      "titleHit": true,
+      "studentCount": 4
+    },
+    "jordan": "Jordan Lee | Jordan Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Mar 15 | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jordan-place-value | Give practice for ditl-bulk-jordan-place-value | Mark ditl-bulk-jordan-place-value proficient | Dismiss focus | Heard: History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | History homework for Jordan Lee ditl-T-04-UI-01-1790528649169 | Draft score | SUGGESTED GAP | Review | No suggested gaps yet. Draft cheaply, Look again, or type one below. | Draft cheap | Look again | EXPLAIN | Draft only — not a grade. Keep private by default. | Explain | Add gap | Keep as a note",
+    "jamie": "Jamie Lee | Jamie Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | JL | Jamie Lee | Jamie Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jamie-decimals | Give practice for ditl-bulk-jamie-decimals | Mark ditl-bulk-jamie-decimals proficient | Dismiss focus | No work filed yet.",
+    "bleedJamie": false,
+    "class2": "Class | Class | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | No students yet. | Add students | Could not load class",
+    "assignDetail": "Assignment | Assignment | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | This screen does not exist. | Go home"
+  }
+}

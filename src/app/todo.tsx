@@ -20,6 +20,7 @@ import {
   type StudentTodo,
 } from '@/lib/student-session/api';
 import { queryParam } from '@/lib/student-session/classes';
+import { studentTodoOpenPath } from '@/lib/student-session/work';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function TodoScreen() {
@@ -70,13 +71,8 @@ export default function TodoScreen() {
   );
 
   const open = (item: StudentTodo) => {
-    if (item.kind === 'lesson') {
-      router.push(`/lesson/${item.assignmentId}` as never);
-      return;
-    }
-    if (item.kind === 'practice') {
-      router.push(`/todo/${item.submissionId}` as never);
-    }
+    const path = studentTodoOpenPath(item);
+    if (path) router.push(path as never);
   };
 
   const setClass = (id: string | 'all') => {

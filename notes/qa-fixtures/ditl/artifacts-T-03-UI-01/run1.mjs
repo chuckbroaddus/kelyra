@@ -1,0 +1,15 @@
+import { chromium } from './../_pw/node_modules/playwright/index.mjs';
+const A = new URL('.', import.meta.url).pathname;
+const pw = process.env.DITL_PW;
+const b = await chromium.launch({ channel: 'chrome', headless: true }); const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
+const shot = async (n) => { await p.waitForTimeout(2500); await p.screenshot({ path: A + n + '.png' }); console.log('==', n, p.url()); console.log((await p.innerText('body')).slice(0, 700).replace(/\n+/g,' | ')); };
+await p.goto('http://localhost:8081/sign-in'); await shot('01-signin');
+const inputs = p.locator('input'); console.log('inputs', await inputs.count());
+await inputs.nth(0).fill('ditl-teacher-a');
+await p.locator('input[type=password]').first().fill(pw);
+await p.locator('input[type=password]').first().press('Enter');
+await shot('02-after-signin');
+await p.goto('http://localhost:8081/messages'); await shot('03-messages');
+await p.goto('http://localhost:8081/inbox'); await shot('04-inbox');
+await p.context().storageState({ path: A + '.state.json' });
+await b.close();

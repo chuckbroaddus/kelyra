@@ -114,3 +114,10 @@ notes/qa-fixtures/batch-ingest/oversized-300mb.pdf
 
 # corpus-v2 generator venv
 notes/qa-fixtures/corpus-v2/_gen/.venv/
+
+# DITL fixture secrets / JWT-bearing run artifacts (do not commit)
+notes/qa-fixtures/ditl/artifacts-P-01-ASK-01/_pw
+notes/qa-fixtures/ditl/artifacts-T-03-UI-01/.state.json
+notes/qa-fixtures/ditl/artifacts-T-05-UI-01/run3.out
+notes/qa-fixtures/ditl/artifacts-T-05-UI-01/run4.out
+notes/qa-fixtures/ditl/artifacts-T-05-UI-01/run5.out

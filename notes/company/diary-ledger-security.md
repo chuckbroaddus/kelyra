@@ -52,7 +52,7 @@ Architecture’s extra constraint is a **query** rule (RPC/view). If v1 leaves `
 
 `photos` already has thread + school-logo SELECT. Reusing it for diary is confused-deputy.
 
-**Must-fix:** New bucket `diary`, `public=false`. Path `{owner_profile_id}/{seat}/{entry_id}/{media_id}`; first segment = `auth.uid()::text`. Owner signed URLs, short TTL. No public object URL. Family / student / co-teacher / Office: no storage policy. Delete entry GCs objects. v1: no persisted diary audio.
+**Must-fix:** Bucket `diary` only, `public=false`. Do not upload Journal bytes to `photos`, `audio`, `files`, or `ingest` (thread, class, or worker policies). Path contract `{auth.uid()}/{seat}/{entry_id}/{media_id}.{ext}`; first segment = `auth.uid()::text`. Seat is part of the path, not only a UI filter. Owner signed URLs, short TTL (client 600s). No public object URL. Files open with the system handler, not an in-app WebView. Family / student / co-teacher / Office: no storage policy. Unfurl of body links is display-only — do not write it into `diary_media`, ledger, or messages. Delete entry GCs objects. v1: no persisted diary audio. Live RLS does not yet bind seat + entry id (debt `t_2afbbd20`).
 
 ### T4 — Ledger forgery / confused-deputy `write_ledger` (P0)
 
@@ -114,7 +114,7 @@ Reuse live patterns; do not invent a second authz stack.
 | Ledger writes | Emitters only: teacher assign/Approve/`file_capture`/publish syllabus (not drafts); staff office RPCs that already `write_audit`. Student RPCs never emit teacher ledger. |
 | Ledger content | Short summary. Grade snippet OK. **No** diary body, STT, media URLs, matcher guesses, un-Approved drafts, Feed, Calendar. |
 | Approve | Nothing is a grade until Approve. Ledger on Approve (or AFTER trigger on status/score) still swallows errors. |
-| Storage | Dedicated `diary` bucket; path prefix uid; signed URL; GC on delete. |
+| Storage | Dedicated `diary` bucket; path `{uid}/{seat}/{entry_id}/{media_id}.{ext}`; owner signed URL; system handler for files; not `files`/`photos`/`ingest`. Seat bind in RLS is debt `t_2afbbd20`. |
 | STT / Ask | Server-side; Save required; `diary.draft`; PII logs. |
 | Copy | US-PRIV-1 strings only. FERPA/HR: no “send to principal.” |
 | Hard-delete | Confirm “cannot be undone.” No trash. No existence audit. Residual: legal hold / backups until retention job exists. |
@@ -160,7 +160,7 @@ Soft FERPA posture unchanged (`docs/architecture.md`): paid no-training, keys se
 |---|---|---|---|
 | D1-01 | P0 | Owner-only RLS; **never** `is_staff` / `is_school_admin` / `teaches_class` on diary or ledger | SQL `doesNotMatch` those helpers |
 | D1-02 | P0 | Parent 2+ children: server fail-closed without focused `child_student_id`; no client-only filter | RPC/RLS test twins |
-| D1-03 | P0 | New private `diary` bucket; path prefix = uid; no public URL; do not reuse `photos`/`audio`/`files` | Storage policies |
+| D1-03 | P0 | Private `diary` bucket; path `{uid}/{seat}/{entry_id}/{media_id}.{ext}`; no public URL; not `photos`/`audio`/`files`/`ingest`; files via system handler, not WebView | Storage policies + client path |
 | D1-04 | P0 | `write_ledger`: definer, uid from `auth.uid()`, REVOKE from `authenticated`; no client INSERT/UPDATE/DELETE | Grant tests |
 | D1-05 | P0 | Never copy diary body/title/media/STT into `audit_events` or `ledger_events`; no `write_audit` on diary CRUD | Static + RPC |
 | D1-06 | P0 | Do **not** open teacher SELECT on `audit_events`; new `ledger_events`; `/activity` stays admin | Policy review |

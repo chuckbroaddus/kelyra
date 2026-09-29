@@ -66,9 +66,12 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   list_grade_cells: { capability: 'assignments.manage', need: null },
   assignment_completion: { capability: 'assignments.manage', need: null },
   summarize_class_desk: { capability: 'classes.teach', need: null },
-  list_inbox: { capability: 'capture.use', need: null, teacherSeatOnly: true },
+  // Teach-seat wall is live.role in askTools (matches /inbox). capture.use keeps student/parent/office-only out;
+  // also_teacher on an office profile may be offered only while chrome seat is teacher.
+  list_inbox: { capability: 'capture.use', need: null },
   list_my_practice: { capability: null, need: null },
   my_children_progress: { capability: 'children.view', need: null },
+  list_my_assignments: { capability: 'children.view', need: null },
   my_unread_messages: { capability: 'messages.use', need: null },
   list_feed: { capability: null, need: null },
   search_audit: { capability: 'audit.view', need: 'school' },
@@ -76,7 +79,7 @@ export const ASK_TOOL_POLICY: Record<string, AskToolPolicyEntry> = {
   list_thread_messages: { capability: 'messages.use', need: null },
   send_message: { capability: 'messages.use', need: null },
   // A4 write/admin wrappers (JWT APIs only; also_administrator is not office)
-  approve_capture: { capability: 'capture.approve', need: null },
+  // approve_capture removed — Ask never writes approved_score (screen Approve only).
   delete_capture: { capability: 'capture.approve', need: null },
   delete_gap: { capability: 'capture.approve', need: null },
   delete_student: { capability: 'roster.delete', need: null },

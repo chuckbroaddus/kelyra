@@ -1,0 +1,1596 @@
+{
+  "case": "turnin-after-sql",
+  "submission": "8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+  "user": "ditl-student-s1",
+  "web": {
+    "label": "web1280",
+    "signedIn": true,
+    "ac1": true,
+    "couldNot": false,
+    "submitOk": true,
+    "submitFail": false,
+    "shots": [
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/web1280-01-after-signin.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/web1280-02-detail.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/web1280-03-after-turnin.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/web1280-05-todo-list.png"
+    ],
+    "hits": [
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 204,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_submit",
+        "snip": ""
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      }
+    ]
+  },
+  "phone": {
+    "label": "phone390",
+    "signedIn": true,
+    "ac1": false,
+    "couldNot": false,
+    "submitOk": false,
+    "submitFail": false,
+    "shots": [
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/phone390-01-after-signin.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/phone390-02-detail.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/phone390-03-no-turnin-control.png",
+      "/Users/chuckbroaddus/projects/kelyra/notes/qa-fixtures/ditl/artifacts-turnin-after-sql/phone390-05-todo-list.png"
+    ],
+    "hits": [
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": ""
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": ""
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+        "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+        "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+        "snip": "[]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+        "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+        "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+        "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+      },
+      {
+        "st": 200,
+        "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+        "snip": "[]"
+      }
+    ]
+  },
+  "rpcHits": [
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 204,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_submit",
+      "snip": ""
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "web1280",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": ""
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": ""
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_classes",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000302\",\"class_name\":\"ditl-English Homeroom\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"e774a71a-df66-4bc0-a330-391efa24a148\",\"teacher_name\":\"Blake Rivera\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}, \n {\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"feed_icon\":\"feedClass\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"teacher_name\":\"Avery Quinn\",\"teacher_photo_path\":null,\"avatar_photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_me",
+      "snip": "[{\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"photo_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.5556,\"cap_usd\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000301\",\"name\":\"ditl-Math Period 3\",\"icon\":\"feedClass\",\"can_edit\":false}]"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"4378b67e-7e79-4661-92da-5cea7d951192\",\"assignment_id\":\"c85edb80-8572-4e34-999d-2bf3ca711fd2\",\"assignment_title\":\"Homework: two-digit regrouping\",\"kind\":\"capture\",\"status\":\"graded\",\"due_at\":null,\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":88,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"two-digit regrouping\",\"help_mode\":\"of"
+    },
+    {
+      "label": "phone390",
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    }
+  ],
+  "evidence": [
+    "PASS web1280-signin: url=http://127.0.0.1:8081/todo jordan=false",
+    "PASS web1280-open: url=http://127.0.0.1:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377 hasTurn=true err=false",
+    "PASS web1280-AC-TURNIN-1: couldNot=false clicked=true submitOk=true submitFail=false left=true snips=[{\"st\":204,\"u\":\"https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_submit\",\"snip\":\"\"}] url=http://127.0.0.1:8081/todo",
+    "PASS web1280-AC-TURNIN-2: already=false secondWrite=false",
+    "PASS web1280-AC-TURNIN-3: bleed=false",
+    "PASS phone390-signin: url=http://127.0.0.1:8081/todo jordan=false",
+    "PASS phone390-open: url=http://127.0.0.1:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377 hasTurn=false err=false",
+    "FAIL phone390-AC-TURNIN-1: couldNot=false clicked=false submitOk=false submitFail=false left=false snips=[] url=http://127.0.0.1:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+    "PASS phone390-AC-TURNIN-2: already=false secondWrite=false",
+    "PASS phone390-AC-TURNIN-3: bleed=false"
+  ],
+  "verdict": {
+    "AC-TURNIN-1": false,
+    "AC-TURNIN-2": true,
+    "AC-TURNIN-3": true
+  }
+}

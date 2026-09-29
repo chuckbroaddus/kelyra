@@ -249,7 +249,9 @@ export default function InboxScreen() {
             badge={captureBadge(item.status)}
             onPress={() =>
               item.student_id
-                ? router.push(`/class/${item.class_id}/student/${item.student_id}`)
+                ? router.push(
+                    `/class/${item.class_id}/student/${item.student_id}?capture=${item.id}&tab=focus`,
+                  )
                 : openAssign(item.id)
             }
             pills={
@@ -263,7 +265,10 @@ export default function InboxScreen() {
                       key: 'review',
                       label: 'Review',
                       kind: 'primary',
-                      onPress: () => router.push(`/class/${item.class_id}/student/${item.student_id}`),
+                      onPress: () =>
+                        router.push(
+                          `/class/${item.class_id}/student/${item.student_id}?capture=${item.id}&tab=focus`,
+                        ),
                     },
                     {
                       key: 'note',
@@ -290,7 +295,10 @@ export default function InboxScreen() {
                       label: 'Review',
                       tone: 'brand',
                       autoCommit: false,
-                      onPress: () => router.push(`/class/${item.class_id}/student/${item.student_id}`),
+                      onPress: () =>
+                        router.push(
+                          `/class/${item.class_id}/student/${item.student_id}?capture=${item.id}&tab=focus`,
+                        ),
                     },
                   ]
             }

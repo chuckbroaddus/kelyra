@@ -1,0 +1,18 @@
+{
+  "case": "DITL-O-02-UI-04",
+  "result": "FAIL",
+  "lane": "C",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-c",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "OK stepapi-admin: status=200 role=undefined name=undefined s1id=2bcee429-11ce-4f84-b2de-9aab349f03cc math=null metaKeys=email,notes,phone,address,birthday",
+    "MISS step1: url=http://localhost:8081/ splashish=true",
+    "MISS step2: route=/?tab=person&studentId=2bcee429-11ce-4f84-b2de-9aab349f03cc url=http://localhost:8081/?tab=person&studentId=2bcee429-11ce-4f84-b2de-9aab349f03cc leftSplash=false onStudent=false",
+    "SAME-AS-SEQ57/58/59: ditl-admin auth OK but SplashLanding; bio direct route also stuck",
+    "PARKED-P0: splash wall already on t_3191917a — not filed again",
+    "CASE-STEPS-SKIPPED: preferred_name/birthday/phone UI edit not reachable",
+    "OK stepteardown: url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "gaps": []
+}

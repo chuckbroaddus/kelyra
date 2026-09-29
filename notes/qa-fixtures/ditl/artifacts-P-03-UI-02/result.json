@@ -1,0 +1,18 @@
+{
+  "case": "DITL-P-03-UI-02",
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: url=http://localhost:8081/parent/ride",
+    "OK step3: picks Jamie visible",
+    "OK step4: position_visible=true failish=false",
+    "OK step5: no_twin_mix isolation=true",
+    "OK step6: leave_clicked=true leftish=true",
+    "OK step7: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "misses": [],
+  "fatals": [],
+  "lane": "B",
+  "ud": "/tmp/ditl-pw-lane-b"
+}

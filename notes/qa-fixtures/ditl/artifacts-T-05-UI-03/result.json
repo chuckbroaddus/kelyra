@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301",
+    "OK step2: S1 details url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "OK step3: before markers pref=false grade=false",
+    "OK step4: after update pref=true grade=true",
+    "OK step5: clear actions fired=2",
+    "OK step6: after clear still pref=false grade=false",
+    "OK step7: jamie bleed=false",
+    "OK step8: signout url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "case": "DITL-T-05-UI-03"
+}

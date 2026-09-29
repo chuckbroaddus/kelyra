@@ -119,7 +119,7 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 
 **Capture stays on Capture after save.** Filing a stack cannot yank the teacher into a student page.
 
-**The header camera never files.** It opens unified **Capture** (`/capture`) — the only chrome entry after the tray Capture tab was removed as redundant. Ask AI proposes; the teacher confirms on Capture. The matcher still never inserts a student. Approve is still the last click on anything that becomes a grade. Do not use ListenSheet → `/proposal` as the primary header-camera path (locked 2026-09-11).
+**The header camera never files.** Every signed-in seat opens the same `/capture` and never files. Confirm on that sheet is not Approve. It is the only chrome entry after the tray Capture tab was removed as redundant. Ask AI proposes; the person on that seat confirms on Capture. The matcher still never inserts a student. Approve is still the last click on anything that becomes a grade. Do not use ListenSheet → `/proposal` as the primary header-camera path (locked 2026-09-11). Capture-on-all-accounts (2026-09-28, Stamp 4): one shutter for the active seat. Accessibility label **Open Capture**.
 
 ---
 
@@ -130,13 +130,13 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 | Role | Chrome | Hidden chrome |
 |---|---|---|
 | Teacher (signed in) | Header + context row + floating tray + hamburger | — |
-| Student (join session) | Header + context row + role tray + hamburger | Camera. No other students’ grades |
-| Parent (invite session) | Header + context row + role tray + hamburger | Camera. No other children, no scores, no “Grok” |
+| Student (join session) | Header + context row + role tray + hamburger | Other students’ grades. Header camera hides on Messages and while Search is open — the seat does not omit the slot |
+| Parent (invite session) | Header + context row + role tray + hamburger | Other children, scores, “Grok”. Header camera hides on Messages and while Search is open — the seat does not omit the slot |
 | Signed out / `/sign-in` / `/join` (pre-session) | Wordmark only | Tray, hamburger, camera, search, bell |
 
-`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own role trays** (not the teacher Capture/Needs Attention density and **no camera**). Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
+`TeacherShell` today hides chrome on `/sign-in`, `/join`, `/todo`, `/parent`. That is wrong for this spec. Student and parent **get their own role trays** (not the teacher Capture/Needs Attention density). The header camera is **Open Capture** on every signed-in seat (§3.2). Only `/sign-in` and the pre-session `/join` (before a name is picked) stay chrome-less.
 
-**“Shorter tray” (superseded gloss, 2026-09-09).** Early drafts said student/parent get a “shorter tray.” That meant **no teacher Capture/Needs Attention density and no camera** — not “fewer tabs than teacher.” Locked counts live in **§34.2** (and §31.1): **student 6**, **parent 3** (Home · Ride · Ask), **teacher 4**, **office 5**. Do not cut the student 6-tab tray to satisfy this section.
+**“Shorter tray” (superseded gloss, 2026-09-09).** Early drafts said student/parent get a “shorter tray.” That meant **no teacher Capture/Needs Attention density** — not “fewer tabs than teacher.” The “no camera” half of that gloss is superseded (2026-09-28, Stamp 4): every signed-in seat can show Open Capture. Locked counts stay in **§34.2** (and §31.1). Do not cut the student 6-tab tray to satisfy this section. Do not add or remove a parent tray tab. Do not add or remove a student tray tab. Calendar stays where DITL-P-01 put it.
 
 ### 3.2 Header slots (one recipe)
 
@@ -151,16 +151,26 @@ Every signed-in screen uses this exact header. It is not the React Navigation st
 | Slot | Size | Who sees it | Action |
 |---|---|---|---|
 | Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. **School logo** same size as the Ask Kelyra mark (`header bar + 12` square in a slot of width `markSize` / height bar), contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
-| Camera | 44 × 44, `capture` icon | **Teacher only**, hidden while search is open | Opens the device camera, then `/proposal` (§14) |
+| Camera | 44 × 44, existing `capture` icon. Accessibility label **Open Capture** | Every signed-in seat, except on Messages and while Search is open. Office seats also hide it on My children | Tap routes to `/capture`. Does not file. Confirm is not Approve. Confirm jobs are that seat's closed list below. Not `/proposal` as the primary path |
 | Search | 44 × 44, `search` glyph | Teacher, student, parent | Icon slides left; a field slides out from it (§34). Results on `/search` |
 | Messages | 44 × 44, `mail` glyph | Teacher, student, parent | Pushes `/messages`. Red count badge = **unread alerts**, same as the old bell. Hidden at 0 |
 | Hamburger | 44 × 44, 3-line `menu` icon, `ink`, **far right** | Teacher, student, parent | Opens the left drawer (§3.3, two-phase §34). Hidden on pushed screens |
 
 Wordmark starts on the left. When the school has a logo, that **logo** (not an icon) sits at Ask Kelyra mark size (`header bar + 12`, same slot geometry) immediately left of the wordmark for student, parent, teacher, and office. Gap between trailing icons: 0 (they are 44-wide hits). Hamburger is last. Trailing cluster right-pad: 4. Header height: **56** portrait, **44** landscape phone, **56** tablet. Background `elevated`, 1 px `line` on the bottom. No shadow. The header **does not hide on scroll**. Pushed screens keep the school **logo** immediately right of Back.
 
-On student / parent the camera slot is omitted; search sits immediately left of messages.
+The camera slot is not omitted for administrator, parent, or student. It hides on Messages, while Search is open, and on My children for office seats. When it is hidden, search sits immediately left of messages.
 
 Wordmark (and school logo) on the left. Amazon’s camera sits **between the wordmark and the glass**. Search is immediately left of messages. Hamburger is last. Do not put Profile in the header. Do not restore the bell. Do not put the camera inside a search field.
+
+**Open Capture (2026-09-28, Stamp 4).** The slot shows on every signed-in seat that is not Messages and not an open Search. Office seats also hide it on My children. Tap routes to `/capture` and does not file. Confirm is not Approve. Do not add a tray tab, a glyph, a records cabinet, or a Drive line. Do not write that administrator, parent, or student omit the slot.
+
+Confirm jobs are that seat's closed list. One shutter is one photo. No seat shows two shutters. School logo only when the office job is superintendent.
+
+- **Superintendent office.** An existing student’s portrait, an existing parent’s portrait, a parent contact card, a student emergency or contact card, a staff photo of an existing staff person, one existing class list, the school logo.
+- **Administrator office.** That list, except the school logo. A logo photo is a refusal.
+- **Teacher.** Today’s homework Capture only. Not the papers shutter. Not a second icon. Not a merged strip.
+- **Parent.** Their own portrait, a portrait of a child already linked to them, their own contact card, that child’s contact or emergency card. Not another family. Do not add or remove a tray tab.
+- **Student.** Their own portrait. The confirm strip drops keys that seat cannot already change. A contact or emergency card with no such field is a refusal. Nothing is filed. The portrait stays in. Do not add or remove a tray tab.
 
 ### 3.3 Hamburger drawer
 
@@ -273,7 +283,7 @@ Desk is always the start (house glyph; label **Desk**); it opens the **Classes**
 
 Family, **Classes** (picker via `/?switch=1`), Appearance, Profile, Sign out live in the hamburger, not the tray. Teacher drawer does **not** list each class.
 
-**Student tray (6), left → right** — shipped student chrome (§31.1 / §34.2). Do **not** cut to 2 tabs. No camera. No Profile in tray. Profile stays hamburger-only.
+**Student tray (6), left → right** — shipped student chrome (§31.1 / §34.2). Do **not** cut to 2 tabs. Do not add or remove a tray tab. Header camera is **Open Capture** (§3.2). No Profile in tray. Profile stays hamburger-only.
 
 | # | Key | Icon (`Icon` name) | Tray / a11y label | Route | Active when |
 |---|---|---|---|---|---|
@@ -284,7 +294,7 @@ Family, **Classes** (picker via `/?switch=1`), Appearance, Profile, Sign out liv
 | 5 | `people` | `person` | **People** | `/student/people` | `/student/people…` |
 | 6 | `ask` | `ask` | **Ask** (a11y; web label may read Kelyra on the mark slot) | `/ask` | `/ask` |
 
-**Parent tray (3), left → right** — CEO-locked car-rider chrome (2026-09-09). Keys/icons/routes match `tabsFor('parent')` in `src/lib/chrome/trayTabs.ts`. No camera. No Profile in tray. **No student Ride. No teacher sixth tab for Ride.**
+**Parent tray (3), left → right** — CEO-locked car-rider chrome (2026-09-09). Keys/icons/routes match `tabsFor('parent')` in `src/lib/chrome/trayTabs.ts`. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it. Header camera is **Open Capture** (§3.2). No Profile in tray. **No student Ride. No teacher sixth tab for Ride.**
 
 | # | Key | Icon (`Icon` name) | Tray / a11y label | Header title | Route | Active when |
 |---|---|---|---|---|---|---|
@@ -1393,7 +1403,7 @@ Full-bleed splash MP4 (`SplashLanding`): **9×16** when the viewport is portrait
 
 #### Signed in, zero classes
 
-Header title **Classes** (teacher). Tray Desk/House active. No camera usefulness until a class exists (camera still opens, proposal will say `Name a class first`).
+Header title **Classes** (teacher). Tray Desk/House active. The header camera still opens `/capture`. It does not file. Do not revive `/proposal` as that path.
 
 Vertical: `Name your class` → field → Primary `Create class` → hamburger holds Appearance + Sign out.
 
@@ -1460,6 +1470,8 @@ The old `StickyTable` roster, the big-number “Needs you” card, and the fille
 
 **Locked 2026-09-11.** Unified Capture via the header camera (`/capture`). Tray Capture tab removed as redundant. Do not keep a parallel ListenSheet → `/proposal` as the primary header-camera path.
 
+**Teach seat keeps this composer.** Office, parent, and student are papers seats: one camera still. Do not put both strips on one seat.
+
 **Job.** Bring anything into Kelyra (camera, library photo/video, file, typed or spoken text), let Ask AI classify it against Kelyra features, confirm, then file. Stay on Capture after save (`resetSlip()`, `mute` confirmation). Matcher never invents a student. Nothing is a grade until Approve.
 
 **No context chips on `/capture`.** Remove Photo · Voice · Pages entirely. `contextReserve` is **0** on `/capture`. Amazon chips remain on Needs Attention (`/inbox`), student To-do, and multi-child parent Home only (§3.6, §32.7).
@@ -1504,7 +1516,9 @@ Left `flex: 1.2`. Right min width 280. Sticky Ask AI / confirm pinned to the bot
 
 **Empty / signed out.** Existing. Tray hidden until signed in.
 
-**Header camera = Capture.** Tapping the header camera **routes to `/capture`** (focus Camera / open device camera from the unified sheet). Do **not** open ListenSheet → `/proposal` as the primary path. Header camera opens unified Capture (`/capture`); there is no tray Capture tab.
+**Header camera = Capture.** Tapping the header camera **routes to `/capture`** (Teach: focus Camera / open device camera from today’s composer. Papers seats: one camera still). Do **not** open ListenSheet → `/proposal` as the primary path. There is no tray Capture tab.
+
+**Papers seats (2026-09-28, Stamp 4).** Office, parent, and student on `/capture` are one camera still. No Photo or Video, no Files, no mic, no web drag-and-drop, no Upload class stack. Confirm jobs are that seat's closed list (§3.2). Teach seat keeps today’s composer above. Do not put both strips on one seat. The tap does not file. Confirm is not Approve. School logo only when the office job is superintendent.
 
 **Class stack (BATCH-v1 · Teach seat · web).** Capture overflow **Upload class stack** binds one class + pages-per-student, uploads, waits on `pages_done`, then **always** opens **Split Review** (SR-A filmstrip: split / merge / blank / reorder; keyboard S / M / B). Confirm is disabled at 0 non-blank packets; Confirm calls `confirm_ingest_batch` and routes to Needs Attention with unnamed captures (`student_id` null). No per-packet student names in Split Review (NA-A naming is Inbox-only). Phone: status / “open on computer” gate — not primary Split Review. Confirm ≠ Approve.
 
@@ -1629,7 +1643,7 @@ CSV: `formatCell` strings. Theme-independent. §15.
 
 **Landscape.** Office: add-students left, enrolled list right when `isSplit`. On `phone-landscape`, one column; the printed-list camera uses the wide side. Teachers: one enrolled-list column.
 
-The header camera on this tab still goes to `/proposal`. If the classifier says **roster**, office lands on the existing confirm checklist. That is the same photo-of-list flow, just started from the camera icon.
+The header camera on this tab goes to `/capture`, not `/proposal`. Do not revive `/proposal` as the primary path. A roster, office seats only, hands off to the existing confirm checklist after they name an existing class. Parent and student do not get that roster handoff.
 
 ---
 
@@ -1715,7 +1729,7 @@ Sign out lives in the hamburger and on Profile, not as a ghost on the worksheet.
 
 **Job.** A note home. Silence if the teacher has not approved.
 
-**Header title:** **Home** (parent tray key `home`; §3.5). No camera. Floating tray is **Home · Ride · Ask** (§3.4 / §34.2) — Ride is a sibling tab, not a card buried only on this page.
+**Header title:** **Home** (parent tray key `home`; §3.5). Header camera is **Open Capture** (§3.2); this page does not omit the slot. Floating tray stays as written in §3.4 / §34.2 — do not add or remove a tray tab. Ride is a sibling tab, not a card buried only on this page. Calendar stays where DITL-P-01 put it.
 
 **Primary.** None.
 
@@ -1964,7 +1978,7 @@ Optional deep-review route. **Primary path is inline confirm on `/capture`** (20
 
 ### 14.1 Flow
 
-**Locked 2026-09-11:** header camera opens unified **`/capture`** (§13.4); tray Capture tab removed as redundant. Classification confirm is inline on Capture. `/proposal` is optional deep review, not the primary path.
+**Locked 2026-09-11:** header camera opens unified **`/capture`** (§13.4); tray Capture tab removed as redundant. Classification confirm is inline on Capture. `/proposal` is optional deep review, not the primary path. This numbered flow is the **Teach** composer. Office, parent, and student open the same `/capture` as a papers shutter (one camera still; §13.4). Do not put both strips on one seat. Administrator, parent, and student are not omitted.
 
 1. Teacher taps the header **camera** → navigate to **`/capture`** (open/focus device **Camera** from the unified sheet).
 2. Teacher adds any asset: Camera, Photo or Video (library), Files, web drag-and-drop onto **Image Preview**, and/or text (type or tap mic for live STT into the same field).
@@ -1981,7 +1995,7 @@ A Grade is the job, not “homework only.” Kinds: Homework, Class participatio
 
 “No grade” / “Don’t grade” / “Forget trying to grade” → skip photo evaluation, mark **Pass**.
 
-There is no **Record the name** control. The header camera already has the mic.
+There is no **Record the name** control. The Teach composer already has the mic. Papers seats do not (§13.4).
 
 | Teacher said | Vision |
 |---|---|
@@ -3271,12 +3285,13 @@ Add `MarqueeText` to the primitives list in §18.d. No new npm packages. No SQL.
 
 | Role | Tray | Header extras | Hidden |
 |---|---|---|---|
-| Superintendent / Administrator | Feed · Classes · People · Manage · Ask (**no** Ride tray tab; dismissal/curb under Manage) | Messages + search. No camera | Parent↔student link is **on** |
-| Teacher | **Desk · Needs Attention · Class · Ask** (4; no Profile tab; **no** Ride tab; **no** tray Capture) | Camera + messages + search. Header camera opens unified **Capture** (`/capture`) | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
-| Parent | **Home · Ride · Ask** (3; keys `home`/`ride`/`ask`; icons `today`/`ride`/`ask`; hrefs `/parent`, `/parent/ride`, `/ask`. Profile hamburger-only) | Messages + search | Camera, grade book, other children, add-a-child |
-| Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped **6**-tab student tray; Profile hamburger-only) | Messages + search | Camera, other students’ grades |
+| Superintendent | Feed · Classes · People · Manage · Ask (**no** Ride tray tab; dismissal/curb under Manage) | Camera + messages + search. Label **Open Capture**. Route `/capture`. Hides on Messages, open Search, and My children. School logo is on this confirm strip only | Parent↔student link is **on** |
+| Administrator | Feed · Classes · People · Manage · Ask (**no** Ride tray tab; dismissal/curb under Manage) | Camera + messages + search. Same hides. School logo is not on this confirm strip. A logo photo is a refusal | Parent↔student link is **on** |
+| Teacher | **Desk · Needs Attention · Class · Ask** (4; no Profile tab; **no** Ride tab; **no** tray Capture) | Camera + messages + search. Header camera opens `/capture`. Homework Capture only — not the papers shutter | **Cannot** link parent↔student. No Office People / Manage / matrix as primary chrome |
+| Parent | **Home · Ride · Ask** (3; keys `home`/`ride`/`ask`; icons `today`/`ride`/`ask`; hrefs `/parent`, `/parent/ride`, `/ask`. Profile hamburger-only) | Camera + messages + search. Hides on Messages and while Search is open | Grade book, other children, add-a-child. Do not add or remove a tray tab. Calendar stays where DITL-P-01 put it |
+| Student | Assignments · Feeds · Classes · Grades · People · Ask (shipped **6**-tab student tray; Profile hamburger-only) | Camera + messages + search. Hides on Messages and while Search is open | Other students’ grades. Do not add or remove a tray tab |
 
-Header cluster is now `[camera?] [search] [messages]`. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs Attention** tray badge = `countNeedsYou` (separate from messages).
+Header cluster is `[camera] [search] [messages]` on every signed-in seat, with the hides above. The old tell “Administrator: messages and search, no camera. Parent and student stay no camera.” is superseded (2026-09-28, Stamp 4). Office tray stays Feed, Classes, People, Manage, Ask. Do not add or remove a parent tray tab. Do not add or remove a student tray tab. Mail is the school messenger, not email. Badge on messages = unread **alerts**. Teacher **Needs Attention** tray badge = `countNeedsYou` (separate from messages).
 
 Superintendent hamburger: **Feed** · **Classes** · **People** · **Manage** · **Ask**. Administrator hamburger extras are **People** · **Activity** · **Messages** · **Responsibilities** only — they do **not** include Feed or Manage; Feed in the drawer is superintendent §36.2 only (tray Feed remains for both office seats). Pure **teacher seat** never shows those office nouns.
 
@@ -3299,7 +3314,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 **Explicit chrome seat** (client preference only — not JWT, not SQL). Preference domain: `office` | `teacher` | `parent`. `also_teacher` on an office job-of-record means they **may choose** Office or Teacher chrome; it must **never** silently force the teacher tray. `also_parent` on staff means they **may choose** Parent chrome; it must **never** silently force Parent seat or add Ride to a staff tray.
 
 - Dual-hat office+teacher: default seat = **Office**. Seat switch sets preference `office` | `teacher`. When seat = **teacher**, chrome === pure teacher: **Desk · Needs Attention · Class · Ask** (header camera opens Capture); office People / Manage / matrix / school Activity hide from primary chrome.
-- When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask. **Still no Ride tray tab** — staff curb/dismissal stays Manage altitude.
+- When seat = **office**, office tray stays Feed · Classes · People · Manage · Ask. **Still no Ride tray tab** — staff curb/dismissal stays Manage altitude. Header camera is the papers shutter (**Open Capture**). School logo only when the office job is superintendent.
 - Staff with parent hat (`also_parent`) get **two orthogonal drawer paths:** **My children** = deep-link into the `/parent` family **without** flipping seat (no parent tray / no Ride tab under staff chrome). **Parent** = altitude seat switch (Teach/Office class) that sets preference `parent`, rebuilds tray from `tabsFor('parent')` only → **Home · Ride · Ask**, lands parent root `/parent`. **Ride requires Parent seat** — My children alone is not the Ride menu path.
 - Parent-only logins (no staff seat) still use the parent tray **Home · Ride · Ask** with no seat row needed.
 - Default seat stays job-of-record: office > teacher. **Never default into Parent.** Parent is opt-in altitude.
@@ -3320,7 +3335,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 | Landing | Seat change **always** lands **seat root** (`/` / teacher landing with active-class rules as today). Do **not** stay-on-compatible-route. |
 | Motion | **0 ms** chrome morph. Drawer keeps existing two-phase exit (§34 / §35). Reduce Motion = already instant; no extra path. |
 | Tray | Rebuild from `tabsFor(newRole)` only — full unmount/remount or key remount. **Never** concatenate tab arrays or item-wise morph. |
-| Camera | Mounts **iff** new role is `teacher`; unmounts on office. Gate on `role === 'teacher'`, not `also_teacher`. |
+| Camera | One shutter for the active seat. Teach mounts today’s homework Capture. Office mounts the papers shutter. Parent mounts the parent shutter. Student mounts the student shutter. The shutter that was showing unmounts before the next seat paints. Gate on the active seat, not `also_teacher`. `also_teacher` does not merge the two shutters. School logo only when the office job is superintendent. Administrator, parent, and student are not omitted. |
 | Logo | School logo **unchanged** across office↔teacher (same school). |
 | Wordmark | `headerTitleFor` for **new** pathname + **new** role only (§3.5). Ask exception unchanged (KelyraMark + Ask rules). |
 | Parent | **My children** drawer path **unchanged** (orthogonal deep-link). **Parent seat** altitude row is a separate control — see next subsection (G3 / IQG-RIDE). |
@@ -3332,7 +3347,7 @@ People is a school-home tab (`/?tab=people`), not a separate `/admin/people` can
 2. **Resolve** `chrome.role` from preference (this section).
 3. **Replace route** to seat home **before or atomically with** tray key set — never leave the prior seat’s path driving `headerTitleFor` after role flip.
 4. **Rebuild tray** from `tabsFor(newRole)` only.
-5. **Header:** school logo stays; wordmark = post-commit role+path; camera on teacher only / off office.
+5. **Header:** school logo stays; wordmark = post-commit role+path; one shutter for the new seat (homework on Teach, papers on office). Not both.
 6. Ask special case unchanged: `/ask` → KelyraMark + Ask wordmark rules; seat does not invent a second Ask title.
 
 Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old tray + half-new title at any frame.
@@ -3358,7 +3373,7 @@ Shell under scrim may already hold **target** seat chrome (preferred) or stay pr
 | Landing | Parent seat change **always** lands **parent root** `/parent` (`chromeSeatRootHref('parent')`). Do **not** stay-on-compatible-route. Reverse to office/teacher always lands seat root `/` (teacher landing rules as P-06). |
 | Motion | **0 ms** chrome morph. Drawer keeps existing two-phase exit (§34 / §35). Reduce Motion = already instant; no extra path. Same family as P-06. |
 | Tray | Rebuild from `tabsFor(newRole)` only — full unmount/remount or key remount. Parent → **Home · Ride · Ask** only. **Never** concatenate staff + parent tabs or item-wise morph. |
-| Camera | Unmounts on parent (parent has no header camera). Mounts again only if reverse lands teacher. Gate on `role === 'teacher'`, not hats. |
+| Camera | Parent seat mounts the parent shutter. It does not omit the slot. Reverse to Teach mounts homework Capture; reverse to office mounts the papers shutter. The prior shutter unmounts first. Gate on the active seat, not hats. One seat, one shutter. |
 | Logo | School logo **unchanged** across seats (same school). |
 | Wordmark | `headerTitleFor` for **new** pathname + **new** role only (§3.5). After Parent land: parent Home wordmark on `/parent`; never prior Teach/Office noun for even one frame. |
 | My children | **Orthogonal** deep-link. Does **not** set preference `parent`. Does **not** rebuild parent tray. **Not** Ride SoT. Still works without exposing Ride tab (DH-06). |
@@ -3371,7 +3386,7 @@ Shell under scrim may already hold **target** seat chrome (preferred) or stay pr
 2. **Resolve** `chrome.role` from preference (`resolveStaffChromeRole` → `parent` when seat=parent).
 3. **Replace route** to seat root **before or atomically with** tray key set — parent → `/parent`; reverse → `/`.
 4. **Rebuild tray** from `tabsFor(newRole)` only.
-5. **Header:** school logo stays; wordmark = post-commit role+path only; camera off on parent / on teacher only after reverse.
+5. **Header:** school logo stays; wordmark = post-commit role+path only; one shutter for the landed seat. Parent is not dark.
 6. Ask special case unchanged.
 
 Shell under scrim may already hold **target** seat chrome (preferred) or stay previous until drawer unmounts — **must not** paint half-old staff tray + parent title, or parent tray + prior staff wordmark, at any frame.
@@ -3709,7 +3724,7 @@ No new npm packages. Matcher never inserts a student. Nothing is a grade until t
 
 **Messages** uses the existing `mail` glyph. The red **corner** badge is **unread alerts** (`badgeCount`). It is **not** unread DMs. Hidden at 0. Tap → `/messages`. The same count sits on the **Alerts** tab (`alert`) in the Messages-center PersonTabs. Anatomy: §10.1.
 
-**Search sits immediately left of messages.** Camera (teacher only) sits immediately left of search. Do not add a sixth header icon. Do not put Profile in the header.
+**Search sits immediately left of messages.** Camera sits immediately left of search on every signed-in seat (§3.2). It hides on Messages, while Search is open, and on My children for office seats. Do not add a sixth header icon. Do not put Profile in the header. Do not omit the slot for administrator, parent, or student.
 
 **Title marquee.** The wordmark is `MarqueeText` in a flex slot with `minWidth: 0` and overflow clip. If the title is longer than the slot (long class names, person names), it crawls with the same physics as §30: 1200 ms hold, 30 pt/s, 800 ms end hold, fade, blank, restart. Reduce Motion and VoiceOver: static, no crawl. Do **not** ellipsis. Do **not** make the title tappable.
 
@@ -4080,7 +4095,7 @@ src/app/admin/people.tsx
 | `OFFICE_CLASS_TABS` | Feed · Teacher · Parents · Students — frozen |
 | Desk wordmark | **Class name** on class panes (§32.7) |
 | Ask | Tray-last; teacher may bind active `classId` / class chip |
-| Header camera | Opens unified **Capture** (`/capture`); Ask AI proposes, teacher confirms. Camera mounts on **teacher seat only** (not on office seat, even if `also_teacher`) |
+| Header camera | Opens `/capture` on every signed-in seat. Label **Open Capture**. The tap does not file. Confirm is not Approve. Teach mounts today’s homework Capture. Office mounts the papers shutter. Parent mounts the parent shutter. Student mounts the student shutter. `also_teacher` does not merge the two shutters. School logo only when the office job is superintendent. Administrator, parent, and student are not omitted |
 | Web ≥720 | Same five labels visible |
 | Dual-hat seat | Explicit client `office` \| `teacher` \| `parent` preference; `also_teacher` never silent-forces teacher tray; `also_parent` never silent-forces Parent or staff Ride tab; default dual-hat job-of-record = **Office** (never cold-start Parent). Switch = **HamburgerDrawer** other-seat rows only (§31.4b / §37.3) |
 | Non-goals | No sixth tray tab; no Profile-in-tray; no seat SQL; no Office People on pure teacher; no student-skin rewrite; no merged trays; no header seat chip; no office/teacher Ride tray tab; no “Ride seat” as sole Parent altitude label |

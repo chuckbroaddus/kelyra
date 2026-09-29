@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | To",
+    "OK step2: url=http://localhost:8081/capture",
+    "OK step3: upload=library uploadedUi=true",
+    "OK step4: classifyHit=true snip=Capture | Capture | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | This will be an answer key for an assignment | Math answer key mixed for ditl-Math ditl-T-04-UI-03-1790529436598 | Pick the assignment this key belongs to. Confirm attaches and parses the key — your last ",
+    "OK step5: intent=true pickedAssign=true",
+    "OK step6: savedClick=true analyzeKey=true classify=true stillProposal=false snip=ditl-Math HW S1 | ditl-Math HW S1 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | This column shows in the grade book even before anyone turns it in. | Tutor brief | Draft | TYPE | Lesson | Practice | TITLE | FOR THE GRADE BOOK | Optional. The grade book groups rows by class, then unit, then section. | Unit | Section | ASSIGNMENT (GRADE) CATEG",
+    "OK step7: keyOnAssign=false url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/assignments snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Assignments | Assignments | Create Assignment | COMING DUE | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW"
+  ],
+  "findings": [],
+  "case": "DITL-T-04-UI-03",
+  "hits": {
+    "classify": true,
+    "analyzeKey": true,
+    "createAssign": false,
+    "matchKey": false
+  },
+  "marker": "ditl-T-04-UI-03-1790529436598",
+  "key": "ditl-mixed-math-key-T-04.jpg"
+}

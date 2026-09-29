@@ -1,0 +1,271 @@
+[
+  {
+    "k": "after_signin",
+    "v": {
+      "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301",
+      "tray": [
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "labels": [
+        "ditl-Math Period 3",
+        "Open Capture",
+        "Needs Attention",
+        "Gradebook",
+        "Parents",
+        "Open Calendar",
+        "Jordan",
+        "Jamie",
+        "Jordan Lee",
+        "Jordan Lee",
+        "Jordan Lee",
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "approveHits": [],
+      "textHead": "ditl-Math Period 3 ditl-Math Period 3 4 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Today Today Today This week Today Today Calendar JL Jordan Jordan JL Jamie Jamie RC Riley Riley SO Samira Samira Review Jordan Lee Jordan Lee Review Jordan Lee Jordan Lee Review Jordan Lee Jordan Lee 4"
+    },
+    "t": 1790577491425
+  },
+  {
+    "k": "teach_ask_land",
+    "v": {
+      "url": "http://127.0.0.1:8081/ask",
+      "tray": [
+        "Add attachment",
+        "Send",
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "labels": [
+        "Kelyra",
+        "Kelyra",
+        "Open Capture",
+        "ditl-Math Period 3",
+        "Who still needs a name?",
+        "Draft a parent sentence for Jordan.",
+        "What gaps did I approve this week?",
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "approveHits": [
+        "What gaps did I approve this week?"
+      ],
+      "textHead": "Kelyra Kelyra 4 ditl-Math Period 3 Who still needs a name? Draft a parent sentence for Jordan. What gaps did I approve this week? Could not find the function public.ask_list_messages(p_limit, p_seat) in the schema cache 4",
+      "trayKind": {
+        "tray": [
+          "Add attachment",
+          "Send",
+          "Desk",
+          "Needs Attention, 4 waiting",
+          "Diary",
+          "Calendar",
+          "Kelyra",
+          "Kelyra"
+        ],
+        "parentish": false,
+        "teachish": true,
+        "hasHome": false,
+        "hasRide": false,
+        "hasAsk": true,
+        "hasDesk": true,
+        "hasNeeds": true,
+        "hasCapture": false
+      }
+    },
+    "t": 1790577495905
+  },
+  {
+    "k": "teach_ask_send",
+    "v": {
+      "filled": {
+        "ok": true,
+        "tag": "TEXTAREA",
+        "ph": "Ask…"
+      },
+      "sent": "Send"
+    },
+    "t": 1790577506832
+  },
+  {
+    "k": "teach_ask_after",
+    "v": {
+      "url": "http://127.0.0.1:8081/ask",
+      "tray": [
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "labels": [
+        "Kelyra",
+        "Kelyra",
+        "Open Capture",
+        "ditl-Math Period 3",
+        "Desk",
+        "Needs Attention, 4 waiting",
+        "Diary",
+        "Calendar",
+        "Kelyra",
+        "Kelyra"
+      ],
+      "approveHits": [],
+      "textHead": "Kelyra Kelyra 4 ditl-Math Period 3 List my taught classes and any recent captures or Needs items. Marker teach-ask-DH01ASK01-rerun. Taught: ditl-Math Period 3. Desk: 0 unassigned, 1 draft. Focus: Jordan Lee (two-digit regrouping), Jamie Lee (ditl-bulk-jamie-decimals), Samira Okonkwo (ditl-bulk-samira-area). Same three as top gaps. Needs: 3 Jordan Lee captures — 2 attached, 1 draft (ai pending). Inbox opened. Marker teach-ask-DH01ASK01-rerun. Working… New chat 4",
+      "trayKind": {
+        "tray": [
+          "Desk",
+          "Needs Attention, 4 waiting",
+          "Diary",
+          "Calendar",
+          "Kelyra",
+          "Kelyra"
+        ],
+        "parentish": false,
+        "teachish": true,
+        "hasHome": false,
+        "hasRide": false,
+        "hasAsk": true,
+        "hasDesk": true,
+        "hasNeeds": true,
+        "hasCapture": false
+      }
+    },
+    "t": 1790577508429
+  },
+  {
+    "k": "teach_scan",
+    "v": {
+      "hasMath": true,
+      "hasRosterish": true,
+      "hasCapture": false,
+      "hasNeeds": true,
+      "hasApproveThis": false,
+      "text": "Needs Attention Needs Attention 4 Draft queued (1) Note Delete Review JL Jordan Lee Jordan Lee Review Heard: Math homework for Jordan Lee keyed ditl-DH-01-UI-02-1790576788496 Sep 28, 1:27 AM · 1 page Review Note only Delete Note Delete Review JL Jordan Lee Jordan Lee Review Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 Sep 27, 11:55 PM · 1 page Review Note only Delete Note Delete Review JL Jordan Lee Jordan Lee Review Heard: Jordan Lee Sep 11, 1:32 AM · 1 page Review Note only Delete Review JL Jordan Lee Jordan Lee Completed Completed ditl-PhaseB Assign NoUnhide Sep 27, 9:59 PM Review Needs a name Review All 4"
+    },
+    "t": 1790577509559
+  },
+  {
+    "k": "parent_switch",
+    "v": {
+      "hit": "Switch to Parent seat",
+      "drawerHow": "Open menu"
+    },
+    "t": 1790577515402
+  },
+  {
+    "k": "after_parent",
+    "v": {
+      "url": "http://127.0.0.1:8081/parent",
+      "tray": [
+        "See all grades",
+        "Edit details",
+        "Home",
+        "Ride",
+        "Calendar",
+        "Ask",
+        "Kelyra"
+      ],
+      "labels": [
+        "Morgan Patel",
+        "See all grades",
+        "See all grades",
+        "Home",
+        "Ride",
+        "Calendar",
+        "Ask",
+        "Kelyra"
+      ],
+      "approveHits": [],
+      "textHead": "Avery Quinn Avery Quinn AQ Avery Quinn Avery Quinn MP ditl-English Homeroom Morgan Patel Morgan Patel Your teacher has not shared an update yet. CLASSES APUSH No published average yet See all grades ditl-English Homeroom No published average yet How grades work Homework · 40% Quiz · 40% Participation · 20% Missing: 1 See all grades Edit details",
+      "trayKind": {
+        "tray": [
+          "See all grades",
+          "Edit details",
+          "Home",
+          "Ride",
+          "Calendar",
+          "Ask",
+          "Kelyra"
+        ],
+        "parentish": true,
+        "teachish": false,
+        "hasHome": true,
+        "hasRide": true,
+        "hasAsk": true,
+        "hasDesk": false,
+        "hasNeeds": false,
+        "hasCapture": false
+      }
+    },
+    "t": 1790577515423
+  },
+  {
+    "k": "parent_bare_ask",
+    "v": {
+      "url": "http://127.0.0.1:8081/ask",
+      "tray": [
+        "Add attachment",
+        "Send",
+        "Home",
+        "Ride",
+        "Calendar",
+        "Ask",
+        "Kelyra"
+      ],
+      "labels": [
+        "Kelyra",
+        "Kelyra",
+        "Home",
+        "Ride",
+        "Calendar",
+        "Ask",
+        "Kelyra"
+      ],
+      "approveHits": [],
+      "textHead": "Kelyra Kelyra Ask a question about this week’s work. Could not find the function public.ask_list_messages(p_limit, p_seat) in the schema cache Which assignment? Pick one so Ask can help with that work — or just chat. Just chatting",
+      "trayKind": {
+        "tray": [
+          "Add attachment",
+          "Send",
+          "Home",
+          "Ride",
+          "Calendar",
+          "Ask",
+          "Kelyra"
+        ],
+        "parentish": true,
+        "teachish": false,
+        "hasHome": true,
+        "hasRide": true,
+        "hasAsk": true,
+        "hasDesk": false,
+        "hasNeeds": false,
+        "hasCapture": false
+      }
+    },
+    "t": 1790577520869
+  },
+  {
+    "k": "ERROR",
+    "v": "page.waitForTimeout: Target page, context or browser has been closed\n    at typeAsk (/Users/chuckbroaddus/projects/kelyra/notes/qa-runs/ditl-dh-01-ask-01-rerun/run.mjs:189:11)\n    at async main (/Users/chuckbroaddus/projects/kelyra/notes/qa-runs/ditl-dh-01-ask-01-rerun/run.mjs:275:21)",
+    "t": 1790577523511
+  }
+]

@@ -1,0 +1,15 @@
+DITL-O-07-UI-01 RESULT=FAIL lane=A Chromium /tmp/ditl-pw-lane-a
+App http://localhost:8081 HTTP 200 at start; mid-run ERR_CONNECTION_REFUSED (post-run curl 000).
+OK step1: ditl-admin sign-in -> Home splash Spring Baptist Academy url=/ splash=true
+PARKED-P0: Home splash wall already on t_3191917a — not filed again
+OK step2: /class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc S1 Jordan Lee Details (Preferred name, Birthday Mar 15 2012, Phone, Email, Address, Emergency*, Notes, LOGIN @ditl-student-s1)
+GAP step3 photo: no input[type=file]; PHOTO sheet seen (Take photo | Choose from library | Use this homework as profile | Cancel) — card-OCR attach not proven; known office photo GAP not re-filed
+MISS step4: metadata filledKeys empty; Preferred name path left PHOTO sheet; canonical Jordy/2017-04-12/555-0101/email/address/emergency/3rd NOT on S1
+OK step5: no S2 bleed text observed (check after app death is weak)
+MISS teardown: clear=0; connection refused before sign-out
+FINDINGS:
+FINDING: S1 Details metadata edit did not open/persist canonical keys (Preferred name opened PHOTO sheet; filledKeys empty); severity P1; case DITL-O-07-UI-01
+FINDING: localhost:8081 refused connection mid-case after Details was live; severity P2; case DITL-O-07-UI-01
+GAPS:
+GAP: office photo extract / attach-from-card not completed (photo sheet only) — known gaps.md
+SHOTS: notes/qa-fixtures/ditl/artifacts-O-07-UI-01/*.png run.log

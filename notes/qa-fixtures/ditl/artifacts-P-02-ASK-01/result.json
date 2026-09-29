@@ -1,0 +1,24 @@
+{
+  "case": "DITL-P-02-ASK-01",
+  "result": "FAIL",
+  "lane": "B",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-b",
+  "seat": "ditl-parent-1",
+  "child": "Jordan Lee",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: ask_url=http://localhost:8081/ask open=true",
+    "MISS step3: list_ok=false siblingMix=false failWording=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call list_my_assignments for Jordan Lee only (S1). List assignment titles, due dates, and class names. Do not invent. Do not list Jamie Lee. Do not change grades. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "OK step4: message_toolish=true snip=list_my_assignments for Jordan Lee only (S1). List assignment titles, due dates, and class names. Do not invent. Do not list Jamie Lee. Do not change grades. | I started that work, then stopped. Check People or the class card to confirm what was saved. | Call send_message_to_teacher for Jordan Lee about homework. Message body: DITL-P-02-ASK-01-r2 parent check-in on homework — no reply needed. Confirm the tool result. Do not change grades. | Sent. Message saved in your thread (`bac967b1-8b3e-488d-a629-7b6a5856e14f`). Grades unchanged. | New chat",
+    "OK step5: no_grade_mutation_ui=true",
+    "OK step6: grades_visibleish=true (confirm Ask did not wipe)",
+    "OK step7: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [
+    "FINDING: parent Ask list_my_assignments did not list Jordan-only assignments; severity P2; case DITL-P-02-ASK-01"
+  ],
+  "misses": [
+    "MISS step3: list_ok=false siblingMix=false failWording=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call list_my_assignments for Jordan Lee only (S1). List assignment titles, due dates, and class names. Do not invent. Do not list Jamie Lee. Do not change grades. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat"
+  ],
+  "gaps": []
+}

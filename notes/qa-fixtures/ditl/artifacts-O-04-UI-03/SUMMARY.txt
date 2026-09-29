@@ -1,0 +1,30 @@
+START DITL-O-04-UI-03
+OK api-admin: status=200 hasToken=true
+OK api-parent2: status=200 hasToken=true uid=6091de31-5f4d-45f3-acd3-46947352b2cc
+P2_PROFILE status=200 parent_id=6091de31-5f4d-45f3-acd3-46947352b2cc name=Cameron Brooks
+DB_P2_BAN_PRE status=200 n=0
+INPUT_COUNT 2 user ditl-admin
+== 01-admin-after-signin http://localhost:8081/
+Spring Baptist Academy Spring Baptist Academy Home Diary Calendar KelyraAsk Sign in Account creation is performed by the school office. Please contact your school's administration for access.
+HAS_SPLASH_ADMIN true
+== 02-admin-ride http://localhost:8081/admin/ride
+Ride office Ride office Home Diary Calendar KelyraAsk Ride office Ensure default lines (K–2 / 3–5) Pickup restriction Student id Parent id (optional) Office reason (never shown to parent) Save restriction Archive day's photos School date YYYY-MM-DD Archive Administrators cannot archive.
+ADMIN_RIDE_OK true url=http://localhost:8081/admin/ride
+INPUT_COUNT 2 user ditl-parent-2
+== 03-parent2-after-signin http://localhost:8081/parent
+Cameron Brooks Cameron Brooks Home Ride Calendar Ask CB Cameron Brooks Cameron Brooks JL ditl-Math Period 3 Jordan Lee Jordan Lee Mar 15 This week Jordan is working on a skill the teacher will name soon PRACTICE None yet From the teacher Still working on ditl-bulk-jordan-place-value. CLASSES ditl-English Homeroom Current average 88% How grades work Homework · 40% Quiz · 40% Participation · 20% Why this average? See all grades ditl-Math Period 3 Current average 92% How grades work Homework · 40% Quiz · 40% Participation · 20% Missing: 2 Why this average? See all grades Edit details
+== 04-parent2-ride-hub http://localhost:8081/parent/ride
+Ride Ride Home Ride Calendar Ask Ride Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. Line ditl-Line A Front ditl-Line B Side Children this stop Jordan Lee Car ahead plate (if LPR unreadable — type or speak into this field) Photo car ahead I'm first Manage vehicles
+PARENT2_RIDE_OK true url=http://localhost:8081/parent/ride
+== 05-picks http://localhost:8081/parent/ride
+Ride Ride Home Ride Calendar Ask Ride Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. Line ditl-Line A Front ditl-Line B Side Children this stop Jordan Lee Car ahead plate (if LPR unreadable — type or speak into this field) Photo car ahead I'm first Manage vehicles
+== 06-after-checkin http://localhost:8081/parent/ride
+Ride Ride Home Ride Calendar Ask Ride You’re in this line. Line · ditl-Line A Front You are 1 Jordan Leave line Line ditl-Line A Front ditl-Line B Side Children this stop Jordan Lee Car ahead plate (if LPR unreadable — type or speak into this field) Photo car ahead I'm first Leave this line before checking in here again. Check in successful, you are 1 vehicle in line Manage vehicles
+FAIL_CLOSED false POS_OR_WAITING true LEAK false
+== 07-after-leave http://localhost:8081/parent/ride
+Ride Ride Home Ride Calendar Ask Ride Pick children for this stop, then photo the car ahead — or I’m first. You do not pick which of your cars you are in. Line ditl-Line A Front ditl-Line B Side Children this stop Jordan Lee Car ahead plate (if LPR unreadable — type or speak into this field) Photo car ahead I'm first You’re out of ditl-Line A Front. Manage vehicles
+DB_P2_BAN_POST status=200 n=0
+== 99-signout http://localhost:8081/sign-in
+Sign in Account creation is performed by the school office. Please contact your school's administration for access.
+RESULT PASS — allowed P2 check-in granted; no P2 restriction; left line
+RESULT PASS

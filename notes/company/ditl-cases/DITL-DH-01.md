@@ -1,6 +1,8 @@
 # DITL-DH-01 Cases (Dual-hat Teacher+Parent mixed day)
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar R4/R5/3DW/P6 navigation case -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle/working case beat -->
+<!-- DITL-UPDATE t_3443168f 2026-09-28: saved-draft review shows Pack B Approve or Accept; parent steps stay -->
+<!-- DITL-UPDATE t_495014c2 2026-09-28: bare /ask keeps parent tray; roster and captures hidden; transcript seat-scoped -->
 
 **Plan:** [DITL-DH-01](../ditl-plans/DITL-DH-01.md)
 **KEYGRADE:** Teach seat may Pack B phone-Approve keyed captures on **own classes** only. Parent seat must **never** Approve and must not see drafts/extracts (M11 post-Approve only). IQG Pack B / CEO locks.
@@ -26,11 +28,11 @@
 - Steps (UI):
   1. Sign in; stay on **Teach** seat.
   2. Capture keyed HW for S1 at `/capture`.
-  3. Pack B confirm (bottom sheet) + tap **Approve this capture** on Teach seat.
+  3. Save the keyed homework. Open that inbox draft's existing teacher review on phone and on web. Pack B Approve or Accept recommendation is shown. Accept works.
   4. Confirm publish for S1 on own class.
   5. Switch to Parent seat; open S3=`Morgan Patel` grades / Home.
   6. Confirm Parent seat shows **no** Approve chrome, **no** draft/extract for any keyed work, and only post-Approve cells for S3 (M11).
-- Expected: Teach seat may Pack B phone-Approve on own classes. Parent seat never Approves; no draft leak across seat. S3 child view ≠ C-MATH teach roster blend.
+- Expected: After save, the inbox draft's teacher review shows Pack B Approve or Accept and accept works, on phone and on web. Teach seat may Pack B phone-Approve on own classes. Parent seat never Approves; no draft leak across seat. S3 child view ≠ C-MATH teach roster blend.
 - Artifact: F-ART-HW-MATH-HW or F-ART-HW-MATH-ALG-TYPED
 - DB assert: Teach Approve sets approved path for S1; Parent queries omit drafts
 - Teardown: revert test Approve/capture; sign out.
@@ -72,9 +74,11 @@
 - Steps (Ask):
   1. `/ask` in teacher context (list class / captures).
   2. Switch context to parent seat.
-  3. `/ask` my_children / child grades.
-  4. Confirm Ask follows seat walls (no Parent-seat Approve; no teach roster bleed).
-- Expected: Context aware; isolation; Ask does not Approve keyed drafts in either seat beyond product walls.
+  3. Open bare `/ask` in that same signed-in parent session.
+  4. Confirm the tray stays Home · Ride · Ask. A Teach tray on bare `/ask` is a fail.
+  5. Confirm the parent scroll hides the teacher roster and captures. A Teach roster still in that scroll is a fail.
+  6. Ask a parent question, switch back to Teach, and ask a teach question. The transcript is seat-scoped both ways.
+- Expected: Parent tray stays on bare `/ask`. Teacher roster and captures stay hidden. Transcript is seat-scoped both ways. Ask is not blocked. No new Ask screen. Ask does not Approve.
 - Teardown: sign out.
 - PARTIAL/GAP: none
 

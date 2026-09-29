@@ -1,0 +1,14 @@
+DITL-O-07-UI-03 RESULT=PASS lane=A Chromium /tmp/ditl-pw-lane-a
+OK step0: app HTTP 200
+OK step1: ditl-admin url=http://localhost:8081/ splash=true
+PARKED-P0: Home splash wall already on t_3191917a — not filed again
+OK step2: S1 Details url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc splash=false
+INVENTORY keys present: birthday,phone,email,address,notes
+OK step3: cleared key=birthday via=Clear button
+OK step4: verify removed key=birthday keyGone=true
+OK step5: signout url=http://localhost:8081/sign-in
+FINDINGS:
+none
+GAPS:
+none
+SHOTS: notes/qa-fixtures/ditl/artifacts-O-07-UI-03/*.png

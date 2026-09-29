@@ -1,0 +1,24 @@
+{
+  "case": "DITL-S-01-UI-02",
+  "result": "PASS",
+  "lane": "C",
+  "user": "ditl-student-s1",
+  "school": "ditl-Sandbox Academy",
+  "submissionId": "8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+  "assignmentTitle": "ditl-PhaseB Assign NoUnhide",
+  "statusAfter": "done_tab_click_unconfirmed",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/todo signedIn=true",
+    "OK step2: todo body has To Do",
+    "OK step3: detail sid=8c1e6ed0-f708-454b-b509-9b40ff2c3377 url=http://localhost:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+    "OK step4: partial_work fields=0 NO Turn in",
+    "OK step5: abandoned to list url=http://localhost:8081/todo",
+    "OK step6: doneSwitched=false phaseOnDone=false statusAfter=done_tab_click_unconfirmed",
+    "OK step7: todo_still_has_row=true",
+    "OK step8: signout url=http://localhost:8081/sign-in",
+    "Known prior: WorkRow Open pill miss (UI-01) — not re-filed.",
+    "gradeSignals=0 statusAfter=done_tab_click_unconfirmed"
+  ],
+  "findings": [],
+  "note": "Abandon without Turn in; expect no half-grade, status remains assigned."
+}

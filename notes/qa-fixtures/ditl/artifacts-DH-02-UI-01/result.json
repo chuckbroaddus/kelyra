@@ -1,0 +1,51 @@
+{
+  "case": "DITL-DH-02-UI-01",
+  "result": "FAIL",
+  "steps": {
+    "s1": true,
+    "s2": false,
+    "s3": false,
+    "s4": true,
+    "s5": true
+  },
+  "evidence": [
+    "START DITL-DH-02-UI-01",
+    "INPUT_COUNT 2 user ditl-admin",
+    "== 01-after-signin http://localhost:8081/ Spring Baptist Academy | Spring Baptist Academy | Sign in | Account creation is performed by the school office. Please contact your school's administration for access.",
+    "OK step1: url=http://localhost:8081/ splash=true",
+    "HAS_SPLASH_HOME true (parked t_3191917a — not refiled)",
+    "== 02-admin-roster http://localhost:8081/admin/roster People | People | This screen does not exist. | Go home",
+    "MISS step2: rosterOk=false missing=true url=http://localhost:8081/admin/roster",
+    "ROSTER_PROBE ok=false missing=true splash=false",
+    "SEAT_SWITCH null",
+    "MY_CHILDREN_FALLBACK null",
+    "== 03-parent-seat http://localhost:8081/admin/roster People | People | This screen does not exist. | Go home",
+    "tray03 {\"blob\":\"Home || Diary || Calendar || KelyraAsk\",\"keys\":{\"people\":true,\"roster\":false,\"home\":true,\"ride\":false,\"ask\":true,\"desk\":false,\"capture\":false,\"needs\":false,\"calendar\":true},\"officeBleed\":false}",
+    "MISS step3: sw=null url=http://localhost:8081/admin/roster keys={\"people\":true,\"roster\":false,\"home\":true,\"ride\":false,\"ask\":true,\"desk\":false,\"capture\":false,\"needs\":false,\"calendar\":true} blob=Home || Diary || Calendar || KelyraAsk",
+    "== 04-my-children http://localhost:8081/admin/roster People | People | This screen does not exist. | Go home",
+    "== 04b-parent-route http://localhost:8081/parent Devon Hale | Devon Hale | DH | Devon Hale | Devon Hale | JL | ditl-Math Period 3 | Jordan Lee | Jordan Lee | Mar 15 | This week Jordan is working on | a skill the teacher will name soon | PRACTICE | None yet | From the teacher | Still working on ditl-bulk-jordan-place-value. | CLASSES | ditl-English Homeroom | Current average 88% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Why this average? | See all grades | ditl-Math Period 3 | Current average 92% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 2 | Why this average? | See all grades | Edit details",
+    "OK step4: jordan=true others=[] officeHidden=true tray={\"people\":false,\"roster\":false,\"home\":true,\"ride\":false,\"ask\":true,\"desk\":false,\"capture\":false,\"needs\":false,\"calendar\":true}",
+    "CLICK_JORDAN true",
+    "== 05-s1-details http://localhost:8081/parent Devon Hale | Devon Hale | DH | Devon Hale | Devon Hale | JL | ditl-Math Period 3 | Jordan Lee | Jordan Lee | Mar 15 | This week Jordan is working on | a skill the teacher will name soon | PRACTICE | None yet | From the teacher | Still working on ditl-bulk-jordan-place-value. | CLASSES | ditl-English Homeroom | Current average 88% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Why this average? | See all grades | ditl-Math Period 3 | Current average 92% | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 2 | Why this average? | See all grades | Edit details",
+    "OK step5: url=http://localhost:8081/parent bodyHasJordan=true",
+    "OK stepiso: office tools hidden keys={\"people\":false,\"roster\":false,\"home\":true,\"ride\":false,\"ask\":true,\"desk\":false,\"capture\":false,\"needs\":false,\"calendar\":true} bleed=false",
+    "== 99-signout http://localhost:8081/sign-in Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+  ],
+  "findings": [],
+  "tray": {
+    "blob": "Why this average? || See all grades || Why this average? || See all grades || Edit details || Home || Diary || Calendar || KelyraAsk",
+    "keys": {
+      "people": false,
+      "roster": false,
+      "home": true,
+      "ride": false,
+      "ask": true,
+      "desk": false,
+      "capture": false,
+      "needs": false,
+      "calendar": true
+    },
+    "officeBleed": false
+  },
+  "reason": "card-stop: splash+roster unmatched"
+}

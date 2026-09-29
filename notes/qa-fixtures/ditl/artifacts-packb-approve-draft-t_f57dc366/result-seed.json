@@ -1,0 +1,66 @@
+{
+  "card": "t_f57dc366",
+  "marker": "packb-draft-1790571280614",
+  "hits": {
+    "classify": true,
+    "matchKey": true,
+    "storeDraft": true,
+    "approve": false
+  },
+  "steps": {
+    "liveCapturePackB": {
+      "packB": false,
+      "accept": false,
+      "approve": false,
+      "confirm": false
+    },
+    "afterSave": {
+      "packB": false,
+      "accept": false,
+      "approve": false,
+      "confirm": false
+    },
+    "savedClick": true,
+    "inboxHasMarker": true,
+    "savedReview": {
+      "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?tab=work",
+      "packB": false,
+      "accept": false,
+      "approve": false,
+      "confirm": false,
+      "head": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Work | Work | Create Assignment | COMING DUE | ditl-Multi 0530040634 · Sep 28 | ditl-Multi 0529975246 · Sep 28 | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW 28534336 · Sep 28 | ditl-Hist HW 28402546 · Sep 28 | All | Homework | Quiz | Test | Mid-term | Final | Project | Presentation | Class participation | Behavior | Other | Preview | Delete | ditl-Math HW S1 | ditl-Math HW S1 | Graded | Graded · Sep 15 | Daily | Open | Grade book | Preview | Delete | ditl-PhaseB Assign NoUnhide | ditl-PhaseB Assign NoUnhide | Completed | Completed · Sep 19 | Open | Grade book | Preview | Delete | ditl-Multi 0530040634 | ditl-Multi 0530040634 | Assigned | Assigned · Sep 28 | Quarter 1 | Open | Grade book | Previe"
+    },
+    "ac1": false,
+    "ac2": false,
+    "afterAcceptHead": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Work | Work | Create Assignment | COMING DUE | ditl-Multi 0530040634 · Sep 28 | ditl-Multi 0529975246 · Sep 28 | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW 28534336 · Sep 28 | ditl-Hist HW 28402546 · Sep 28 | All | Homework | Quiz | Test | Mid-term | Final | Project | Presentation | Class participation",
+    "ac3": true
+  },
+  "result": "FAIL_AC1",
+  "parent": {
+    "morgan": true,
+    "jordan": false,
+    "approve": false,
+    "packB": false
+  },
+  "captureId": "4ac67add-3f16-4ee9-a924-53b1005fb95a",
+  "evidence": [
+    "HW_EXISTS true packb-draft-1790571280614",
+    "SHOT 01-in http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301 ditl-Math Period 3 | ditl-Math Period 3 | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Review | Jordan Lee | Jordan Lee",
+    "SHOT 02-capture http://127.0.0.1:8081/capture Capture | Capture | Desk | Needs Attention | Diary | Calendar | Kelyra | Image Preview | Drop photos, videos, or files here | Upload class stack",
+    "SHOT 03-upload http://127.0.0.1:8081/capture Capture | Capture | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | Ask AI to process",
+    "SHOT 04-classify http://127.0.0.1:8081/capture Capture | Capture | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | This will be student work / a grade draft | Suggested student: Jordan Lee. Tap another to change. | Jordan | Jamie | Riley | Samira | Unknown | Save as note | Clear AI result | Save to student",
+    "SHOT 05-jordan-assign http://127.0.0.1:8081/capture Capture | Capture | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | This will be student work / a grade draft | Read on the page: Jordan Lee. Pick the student — we will not invent one. | Jordan | Jamie | Riley | Samira | Unknown | Save as note | Clear AI result | Save to Inbox",
+    "LIVE_CAP {\"packB\":false,\"accept\":false,\"approve\":false,\"confirm\":false} match true",
+    "SAVE_CLICK /Save to Inbox/i",
+    "SHOT 06-after-save http://127.0.0.1:8081/capture Capture | Capture | 2 | Desk | 2 | Needs Attention | Diary | Calendar | Kelyra | Image Preview | Drop photos, videos, or files here | Upload class stack | Saved to Jordan Lee. Next photo whenever you’re ready.",
+    "SHOT 07-inbox http://127.0.0.1:8081/inbox Needs Attention | Needs Attention | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Note | Delete | Review | JL | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Sep 27, 11:55 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | JL | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Review | JL | Jordan Lee | Jordan Lee | Completed | Completed ditl-PhaseB Assign NoUnhide | Sep 27, 9:59 PM | Review",
+    "INBOX_MARKER true packb-draft-1790571280614",
+    "REVIEW_NAV review",
+    "SHOT 08-review http://127.0.0.1:8081/inbox Needs Attention | Needs Attention | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Sep 27, 11:55 PM · 1 page | Review | Note only | Delete | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Review | JL | Jordan Lee | Jordan Lee | Completed | Completed ditl-PhaseB Assign NoUnhide | Sep 27, 9:59 PM | Review",
+    "SHOT 09-student-work http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?tab=work Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Work | Work | Create Assignment | COMING DUE | ditl-Multi 0530040634 · Sep 28 | ditl-Multi 0529975246 · Sep 28 | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW 28534336 · Sep 28 | ditl-Hist HW 28402546 · Sep 28 | All | Homework | Quiz | Test | Mid-term | Final | Project | Presentation | Class participation | Behavior | Other | Preview | Delete | ditl-Math HW S1 | ditl-Math HW S1 | Graded | Graded · Sep 15 | Daily | Open | Grade book | Preview | Delete |",
+    "SHOT 10-after-draft-row http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?tab=work Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Work | Work | Create Assignment | COMING DUE | ditl-Multi 0530040634 · Sep 28 | ditl-Multi 0529975246 · Sep 28 | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW 28534336 · Sep 28 | ditl-Hist HW 28402546 · Sep 28 | All | Homework | Quiz | Test | Mid-term | Final | Project | Presentation | Class participation | Behavior | Other | Preview | Delete | ditl-Math HW S1 | ditl-Math HW S1 | Graded | Graded · Sep 15 | Daily | Open | Grade book | Preview | Delete |",
+    "AC1 false {\"packB\":false,\"accept\":false,\"approve\":false,\"confirm\":false}",
+    "SHOT 13-parent http://127.0.0.1:8081/parent Avery Quinn | Avery Quinn | Desk | Needs Attention | Diary | Calendar | Kelyra | AQ | Avery Quinn | Avery Quinn | MP | ditl-English Homeroom | Morgan Patel | Morgan Patel | Your teacher has not shared an update yet. | CLASSES | APUSH | No published average yet | See all grades | ditl-English Homeroom | No published average yet | How grades work | Homework · 40% | Quiz · 40% | Participation · 20% | Missing: 1 | See all grades | Edit details",
+    "PARENT {\"morgan\":true,\"jordan\":false,\"approve\":false,\"packB\":false}"
+  ]
+}

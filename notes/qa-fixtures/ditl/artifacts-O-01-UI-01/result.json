@@ -1,0 +1,21 @@
+{
+  "case": "DITL-O-01-UI-01",
+  "result": "FAIL",
+  "lane": "C",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-c",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "OK auth: sign-in-handle/password 200; profile Devon Hale administrator; list_my_feeds ditl-Sandbox Academy",
+    "OK teachers row null for ditl-admin (also_teacher=false)",
+    "FAIL UI stuck SplashLanding Spring Baptist + Sign in; no People directory",
+    "FAIL root: src/app/index.tsx if (!teacher) return SplashLanding — office admin without teachers row",
+    "OK contrast: ditl-teacher-a and ditl-student-s1 hydrate chrome on same :8081",
+    "GAP manage unsupported not exercised — blocked by P0"
+  ],
+  "findings": [
+    "FINDING: office admin ditl-admin auth succeeds but Home requires teachers row so SplashLanding never exits — People/Manage unreachable; severity P0; case DITL-O-01-UI-01"
+  ],
+  "gaps": [
+    "GAP: unsupported manage not exercised — blocked by P0 splash gate"
+  ]
+}

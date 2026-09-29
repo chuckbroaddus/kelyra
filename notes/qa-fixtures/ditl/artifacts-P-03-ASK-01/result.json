@@ -1,0 +1,20 @@
+{
+  "case": "DITL-P-03-ASK-01",
+  "result": "PARTIAL",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: ask_url=http://localhost:8081/ask open=true",
+    "OK step3: vehicle_ask_gap=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call list_my_vehicles or list_vehicles for this parent. Return plate codes for DITL-AAA1 and DITL-BBB2 if a tool exists. Do not invent plates. If no vehicle tool exists, say so clearly. | No vehicle tool exists here. I cannot list plates or call `list_my_vehicles` / `list_vehicles`. I will not invent plate codes. | New chat",
+    "OK step4: line_checkin_ask_gap=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call check_in_to_line or ride_check_in: Line A, vehicle DITL-AAA1, child Jordan Lee only. If no line check-in Ask tool exists, say clearly that check-in is UI/PHYSICAL only. Do not invent a successful check-in. | No line check-in Ask tool. Check-in is UI/PHYSICAL only. Not filed. | New chat",
+    "OK step5: no_released_mint=true",
+    "OK step6: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "gaps": [
+    "GAP: parent Ask has no vehicle list/CRUD tool (expected PARTIAL/GAP)",
+    "GAP: parent Ask has no line check-in/leave tools (expected PARTIAL/GAP; PHYSICAL-ONLY)"
+  ],
+  "misses": [],
+  "ud": "/tmp/ditl-pw-lane-b",
+  "lane": "B"
+}

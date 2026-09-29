@@ -1,0 +1,28 @@
+{
+  "marker": "ditl-T-03-UI-02-1790525099965",
+  "checks": {
+    "needsAttention": true,
+    "chipName": true,
+    "chipReview": true,
+    "chipAll": true,
+    "jordan": true,
+    "riley": true,
+    "needsNameRow": true,
+    "draftQueued": true,
+    "empty": false,
+    "wrongSeat": false,
+    "jacquee": false,
+    "parentChrome": false
+  },
+  "nameOnlyUnassigned": {
+    "hasNeedsAName": true,
+    "hasJordanReview": false,
+    "bodySlice": "Needs Attention | Needs Attention | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Delete | Assign | Needs a name | Needs a name | Needs a name | Sep 10, 11:47 PM · Voice note | Assign name | Delete | Unassigned work"
+  },
+  "reviewOnly": {
+    "hasJordan": true,
+    "hasRiley": true,
+    "bodySlice": "Needs Attention | Needs Attention | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Needs a name | Review | All | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Note | Delete | Review | Riley Chen | Riley Chen | Review | Sep 10, 11:47 PM · 1 page | Review | Note only | Delete | Drafts waiting for Approve"
+  },
+  "homeUrl": "http://localhost:8081/sign-in"
+}

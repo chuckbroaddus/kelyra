@@ -15,11 +15,15 @@ function read(rel: string): string {
 
 test('SEC-01: ChromeProvider resolves seat before isTeacherRole force', () => {
   const src = read('src/lib/chrome/ChromeProvider.tsx');
-  assert.match(src, /resolveStaffChromeRole\(profile,\s*seatPreference\)/);
+  assert.match(src, /resolveStaffChromeRole\(profile,/);
   assert.doesNotMatch(src, /if \(isTeacherRole\(profile\)\) return 'teacher'/);
   assert.match(src, /setChromeSeat/);
   assert.match(src, /canChooseSeat/);
   assert.doesNotMatch(src, /current_seat\s*\(/);
+  const dual = { role: 'administrator' as const, also_teacher: true };
+  assert.equal(resolveStaffChromeRole(dual, 'office'), 'administrator');
+  assert.equal(resolveStaffChromeRole(dual, null), 'administrator');
+  assert.notEqual(resolveStaffChromeRole(dual, null), 'teacher');
 });
 
 test('SEC-01 dual-hat: office seat tray === office; teacher seat === pure teacher', () => {

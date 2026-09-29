@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -15,6 +15,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { DetailsRows } from '@/components/ui/DetailsRows';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { ExplainDraftCard } from '@/components/ui/ExplainDraftCard';
+import { KeygradePackBReview } from '@/components/ui/KeygradePackBReview';
 import { MathText } from '@/components/ui/MathText';
 import { IconButton } from '@/components/ui/IconButton';
 import { AssignmentWorkList } from '@/components/ui/AssignmentWorkList';
@@ -30,6 +31,7 @@ import { TextField } from '@/components/ui/TextField';
 import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import type { ScoredKeyItem } from '@/lib/assignments/scoreKey';
 import { listProfiles, setStudentLink } from '@/lib/school/api';
 import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
@@ -56,9 +58,16 @@ import {
   listStudentGaps,
   markNoteOnly as markCaptureNoteOnly,
   signStudentCaptureOriginals,
+  storeCaptureDraft,
   updateGapLabel,
+  type StoredHomeworkDraft,
   type StudentCapture,
 } from '@/lib/gaps/api';
+import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
+import {
+  keyScoreAssignmentIdFromDraft,
+  keyScoreItemsFromDraft,
+} from '@/lib/keygrade/draft';
 import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/gaps/history';
 import {
   createParent,
@@ -170,6 +179,8 @@ export default function StudentScreen() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [tab, setTab] = useState(() => studentTabFromParam(chrome.role, tabParam));
+  const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
+  const allowKeygradeApprove = canApproveKeygrade(chrome.role);
 
   useEffect(() => {
     setTab(studentTabFromParam(chrome.role, tabParam));
@@ -242,6 +253,19 @@ export default function StudentScreen() {
   const latest =
     captures.find((item) => item.id === captureParam) ??
     captures[0];
+  const keyedDraftOpen =
+    Boolean(latest) &&
+    (latest?.status === 'draft' || latest?.status === 'attached') &&
+    keyScoreItemsFromDraft(latest?.model_draft).length > 0;
+  /** Pack B on saved keyed draft — Teach seat only (AC-PACKB-1/3). */
+  const showPackB = keyedDraftOpen && allowKeygradeApprove;
+  const packAssignmentId = useMemo(
+    () =>
+      keyScoreAssignmentIdFromDraft(latest?.model_draft) ||
+      latest?.assignment_id ||
+      null,
+    [latest?.model_draft, latest?.assignment_id],
+  );
 
   useEffect(() => {
     let live = true;
@@ -255,14 +279,106 @@ export default function StudentScreen() {
     };
   }, [latest?.id]);
 
+  useEffect(() => {
+    setPackItems(keyScoreItemsFromDraft(latest?.model_draft));
+  }, [latest?.id, latest?.model_draft]);
+
   const editedGaps = () =>
     (latest?.gaps ?? []).map((gap) => ({
       ...gap,
       label: (draftLabels[gap.id] ?? gap.label).trim(),
     }));
 
+  const persistPackDraft = async (draftScore: number | null) => {
+    if (!latest || !studentId) throw new Error('Capture missing.');
+    const prior = (latest.model_draft ?? {}) as StoredHomeworkDraft;
+    const nextDraft: StoredHomeworkDraft = {
+      ...prior,
+      schema_version: 1,
+      method: 'key_score',
+      assignment_id: packAssignmentId ?? prior.assignment_id ?? null,
+      gaps: Array.isArray(prior.gaps) ? prior.gaps : [],
+      draftScore,
+      teacherNote: prior.teacherNote ?? latest.teacher_note ?? null,
+      studentName: prior.studentName ?? null,
+      pageAssetIds: prior.pageAssetIds,
+      items: packItems as unknown as StoredHomeworkDraft['items'],
+      residuals: packItems.filter((item) => item.residual || item.awarded == null).length,
+      scoreMark: 'numeric',
+      gradeKind: prior.gradeKind ?? 'homework',
+    };
+    await storeCaptureDraft(latest.id, nextDraft, studentId);
+    return nextDraft;
+  };
+
+  const onPackBApprove = async (draftScore: number | null) => {
+    if (!latest || !studentId || !classId || assigningRef.current) return;
+    if (!canApproveKeygrade(chrome.role)) {
+      setError('Teach seat required to Approve keyed work.');
+      return;
+    }
+    if (!studentId) {
+      setError('File a student before Approve. Unassigned cannot publish.');
+      return;
+    }
+    assigningRef.current = true;
+    setAssigning(true);
+    setError(null);
+    setStatus('Approving…');
+    try {
+      const gaps = editedGaps();
+      for (const gap of gaps) {
+        if (gap.id) await updateGapLabel(gap.id, gap.label);
+      }
+      const saved = await persistPackDraft(draftScore);
+      const captureForApprove = {
+        ...latest,
+        model_draft: saved,
+        draft_score: draftScore,
+        assignment_id: packAssignmentId ?? latest.assignment_id ?? null,
+      };
+      await approveCapture(captureForApprove, gaps, draftScore, {
+        scoreMark: 'numeric',
+        gradeKind: 'homework',
+        assignmentId: packAssignmentId,
+      });
+      await load();
+      setStatus(null);
+    } catch (err) {
+      setStatus(null);
+      setError(err instanceof Error ? err.message : 'Could not approve');
+    } finally {
+      assigningRef.current = false;
+      setAssigning(false);
+    }
+  };
+
+  const onPackBSaveDraft = async (draftScore: number | null) => {
+    if (!latest || !studentId || assigningRef.current) return;
+    assigningRef.current = true;
+    setAssigning(true);
+    setError(null);
+    setStatus('Saving draft…');
+    try {
+      await persistPackDraft(draftScore);
+      if (draftScore != null) setScore(String(draftScore));
+      await load();
+      setStatus(null);
+    } catch (err) {
+      setStatus(null);
+      setError(err instanceof Error ? err.message : 'Could not save draft');
+    } finally {
+      assigningRef.current = false;
+      setAssigning(false);
+    }
+  };
+
   const onAssignGap = async (alsoPractice: boolean) => {
     if (!latest || !studentId || !classId || assigningRef.current) return;
+    if (!canApproveKeygrade(chrome.role)) {
+      setError('Teach seat required to Approve.');
+      return;
+    }
     assigningRef.current = true;
     setAssigning(true);
     setError(null);
@@ -376,6 +492,7 @@ export default function StudentScreen() {
 
   const openEdit = () => {
     if (!student) return;
+    // Preferred name / Details rows open the editor — never the photo sheet.
     const next: Record<string, string> = {
       display_name: student.display_name,
     };
@@ -386,6 +503,12 @@ export default function StudentScreen() {
         field.key === 'birthday' ? coerceBirthdayISO(stored) ?? stored : stored;
     }
     setDraft(next);
+    if (photoOpen) {
+      // RN Modal: dismiss photo first, then present Details (same pattern as openPhotoSheet).
+      setPhotoOpen(false);
+      setTimeout(() => setEditOpen(true), 50);
+      return;
+    }
     setEditOpen(true);
   };
 
@@ -637,6 +760,7 @@ export default function StudentScreen() {
     ? unlinkedExistingParents.filter((parent) => parent.display_name.toLowerCase().includes(parentNeedle))
     : unlinkedExistingParents;
   const openPhotoSheet = () => {
+    setEditOpen(false);
     if (photoOpen) {
       setPhotoOpen(false);
       setTimeout(() => setPhotoOpen(true), 50);
@@ -713,7 +837,10 @@ export default function StudentScreen() {
       <DetailsRows
         rows={details}
         onPress={openEdit}
-        onClear={(row) => setConfirm({ kind: 'clear', key: row.key, label: row.label })}
+        onClear={(row) => {
+          setPhotoOpen(false);
+          setConfirm({ kind: 'clear', key: row.key, label: row.label });
+        }}
       />
       ) : null}
       {tab === 'focus' ? (
@@ -795,14 +922,29 @@ export default function StudentScreen() {
                 </Text>
               ) : null}
               {latest.teacher_note ? <MathText style={type.body} color={colors.ink}>{latest.teacher_note}</MathText> : null}
-              {latest.status === 'draft' || latest.status === 'attached' ? (
+              {showPackB ? (
+                <KeygradePackBReview
+                  chromeRole={chrome.role}
+                  items={packItems}
+                  maxScore={null}
+                  studentId={studentId ?? null}
+                  twinCandidates={[]}
+                  roster={[]}
+                  busy={assigning}
+                  onChangeItems={setPackItems}
+                  onSelectStudent={() => undefined}
+                  onApprove={(nextScore) => void onPackBApprove(nextScore)}
+                  onSaveDraft={(nextScore) => void onPackBSaveDraft(nextScore)}
+                />
+              ) : null}
+              {!showPackB && (latest.status === 'draft' || latest.status === 'attached') ? (
                 <TextField
                   label="Draft score"
                   value={score}
                   keyboardType="numeric"
                   onChangeText={setScore}
                 />
-              ) : latest.approved_score != null || latest.draft_score != null ? (
+              ) : !showPackB && (latest.approved_score != null || latest.draft_score != null) ? (
                 <Text style={[type.meta, { color: colors.mute }]}>
                   Score {latest.approved_score ?? latest.draft_score}
                 </Text>
@@ -845,7 +987,7 @@ export default function StudentScreen() {
                 <Text style={[type.meta, { color: colors.mute }]}>Kept as a note</Text>
               ) : (
                 <>
-                  {latest.gaps.length ? (
+                  {!showPackB && allowKeygradeApprove && latest.gaps.length ? (
                     <>
                       <PrimaryButton
                         disabled={assigning}
@@ -1091,7 +1233,8 @@ export default function StudentScreen() {
                       router.setParams({ capture: item.id });
                     }}
                     pills={[
-                      ...(item.status === 'draft' || item.status === 'attached'
+                      ...(allowKeygradeApprove &&
+                      (item.status === 'draft' || item.status === 'attached')
                         ? [{
                             key: 'approve',
                             label: 'Approve',

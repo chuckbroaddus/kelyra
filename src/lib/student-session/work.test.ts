@@ -9,6 +9,7 @@ import {
   sortStudentTodo,
   studentGradeLine,
   studentStatusIcon,
+  studentTodoOpenPath,
   studentWorkDateLine,
   type StudentWorkItem,
 } from './work.ts';
@@ -98,5 +99,26 @@ test('grade line shows a mark only after graded', () => {
   assert.equal(
     studentGradeLine({ status: 'graded', approvedScore: 90, scoreMark: 'numeric' }, (_mark, score) => String(score), submissionStatusLabel),
     '90',
+  );
+});
+
+test('studentTodoOpenPath: practice and planned open own /todo/[submissionId]; lesson opens /lesson/[assignmentId]', () => {
+  assert.equal(
+    studentTodoOpenPath({ kind: 'practice', submissionId: 'sub-p', assignmentId: 'asg-p' }),
+    '/todo/sub-p',
+  );
+  assert.equal(
+    studentTodoOpenPath({ kind: 'planned', submissionId: 'sub-pl', assignmentId: 'asg-pl' }),
+    '/todo/sub-pl',
+  );
+  assert.equal(
+    studentTodoOpenPath({ kind: 'lesson', submissionId: 'sub-l', assignmentId: 'asg-l' }),
+    '/lesson/asg-l',
+  );
+  assert.equal(studentTodoOpenPath({ kind: 'capture', submissionId: 'sub-c', assignmentId: 'asg-c' }), null);
+  // Own clicked row id — not a sibling submission or another student's.
+  assert.equal(
+    studentTodoOpenPath({ kind: 'planned', submissionId: '8c1e6ed0-f708-454b-b509-9b40ff2c3377', assignmentId: 'other' }),
+    '/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377',
   );
 });

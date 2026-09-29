@@ -1,0 +1,13 @@
+DITL-S-03-UI-02 RESULT=PARTIAL lane=C Chromium /tmp/ditl-pw-lane-c
+App: http://localhost:8081 user=ditl-student-s1 school=ditl-Sandbox Academy
+OK step1: url=http://localhost:8081/todo signedIn=true
+OK step2: listOk=true focusCue=true cross=false PhaseB+Hist on To Do
+OK step3: opened=true sid=8c1e6ed0-f708-454b-b509-9b40ff2c3377 title=ditl-PhaseB Assign NoUnhide
+OK step4: stillOnDetail=true items empty (ANSWER_FIELDS=0) Turn in sticky shown
+MISS step5: Turn in → student_submit 400 P0001 Submission not found or already submitted; completed=false status still started
+OK step6: list still shows PhaseB open after failed submit (stillOpenOnly)
+OK step7: peopleBleed=false (Jamie names only no scores)
+OK step8: signedOut=true
+FINDINGS:
+FINDING: student Turn in on focus practice PhaseB calls student_submit and gets 400 Submission not found or already submitted while list still shows started and empty items/kind=planned; severity P1; case DITL-S-03-UI-02
+Artifacts: notes/qa-fixtures/ditl/artifacts-S-03-UI-02/

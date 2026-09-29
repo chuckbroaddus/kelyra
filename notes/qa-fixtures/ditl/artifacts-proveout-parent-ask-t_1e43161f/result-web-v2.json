@@ -1,0 +1,18 @@
+{
+  "case": "proveout-parent-ask-t_1e43161f-v2",
+  "surface": "web",
+  "evidence": [
+    "PASS SIGNIN: http://localhost:8081/parent",
+    "PASS ASK-CHIPS-VISIBLE: chips aid only",
+    "FAIL AC-PARENT-ASK-1: stopped=true cant=false titles=false reply=st_my_assignments. Titles, due dates, class names. Do not invent. No grade changes. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "FAIL AC-PARENT-ASK-2: stopped=true titles=false jamieOnly=false reply=Kelyra | Kelyra | Home | Ride | Calendar | Ask | List Jordan Lee assignments only. Use list_my_assignments. Titles, due dates, class names. Do not invent. No grade changes. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "FAIL AC-PARENT-ASK-3: reply=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work.",
+    "PASS LEAVE: http://localhost:8081/parent"
+  ],
+  "fails": [
+    "FAIL AC-PARENT-ASK-1: stopped=true cant=false titles=false reply=st_my_assignments. Titles, due dates, class names. Do not invent. No grade changes. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "FAIL AC-PARENT-ASK-2: stopped=true titles=false jamieOnly=false reply=Kelyra | Kelyra | Home | Ride | Calendar | Ask | List Jordan Lee assignments only. Use list_my_assignments. Titles, due dates, class names. Do not invent. No grade changes. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "FAIL AC-PARENT-ASK-3: reply=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work."
+  ],
+  "result": "FAIL"
+}

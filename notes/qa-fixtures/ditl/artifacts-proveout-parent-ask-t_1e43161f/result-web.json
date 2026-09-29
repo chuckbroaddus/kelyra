@@ -1,0 +1,17 @@
+{
+  "case": "proveout-parent-ask-t_1e43161f",
+  "surface": "web",
+  "seat": "ditl-parent-1",
+  "loop_prior": "wf_01a0e4ae95a076f0b48864bb33b0a32b escalated",
+  "evidence": [
+    "PASS SIGNIN: url=http://localhost:8081/parent",
+    "PASS AC-PARENT-ASK-1: failLookup=false real=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | List Jordan Lee assignments only. Use list_my_assignments. Include titles, due dates, and class names when present. Do not invent titles. Do not change grades. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "PASS AC-PARENT-ASK-2: failLookup=false mixed=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | List Jordan Lee assignments only. Use list_my_assignments. Include titles, due dates, and class names when present. Do not invent titles. Do not change grades. | I started that work, then stopped. Check People or the class card to confirm what was saved. | New chat",
+    "PASS AC-PARENT-ASK-2b: asksWhich=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work.",
+    "FATAL Error: page.waitForTimeout: Target page, context or browser has been closed"
+  ],
+  "fails": [
+    "FATAL Error: page.waitForTimeout: Target page, context or browser has been closed"
+  ],
+  "result": "FAIL"
+}

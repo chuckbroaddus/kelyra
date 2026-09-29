@@ -1,0 +1,23 @@
+{
+  "case": "DITL-P-02-UI-01",
+  "result": "PASS",
+  "lane": "B",
+  "user_data_dir": "/tmp/ditl-pw-lane-b",
+  "app": "http://localhost:8081",
+  "actor": "ditl-parent-1",
+  "evidence": [
+    "OK step1: sign-in → /parent Taylor Lee parent seat",
+    "OK step2: /parent Home chips Jordan+Jamie; Jamie focus ditl-bulk-jamie-decimals",
+    "OK step3: select Jordan → focus ditl-bulk-jordan-place-value PRACTICE; English 88% Math 92%",
+    "OK step4: /ask parent Ask surface",
+    "OK step5: Ask reply place-value parent tips (ones/tens/hundreds; expanded form)",
+    "OK step6: /messages list Avery Quinn teacher thread",
+    "OK step7: opened thread 24afbe48…; sent DITL-P-02-UI-01 parent homework check-in on Jordan (Just now)",
+    "OK step8: /parent/grades Jordan/Jamie filters; PhaseB rows",
+    "OK step9: return /parent dual path ok",
+    "OK step10: sign-out → /sign-in"
+  ],
+  "findings": [],
+  "misses": [],
+  "note": "First automated pass listed /messages without opening thread (composer missed). Msg-only re-run opened Avery Quinn and sent successfully. No product finding."
+}

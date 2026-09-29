@@ -1,0 +1,20 @@
+DITL-S-01-UI-02 RESULT=PASS lane=C Chromium /tmp/ditl-pw-lane-c
+App: http://localhost:8081 user=ditl-student-s1 school=ditl-Sandbox Academy
+Case: abandon without submit (no Turn in)
+
+Evidence:
+- Sign-in OK → /todo Jordan seat class chips ditl-English + ditl-Math
+- Opened assigned row via deep-link /todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377
+  (WorkRow Open/title click does not navigate — known UI-01; not re-filed)
+- Detail: ditl-PhaseB Assign NoUnhide + Turn in sticky; FIELDS=0 (planned empty items)
+- Partial work attempted; did NOT click Turn in
+- Navigated away to /todo; row still Due Sep 19 on To Do
+- No submit/grade network signals (gradeSignals=0)
+- Done segment click unconfirmed on RN web (list UI unchanged); PhaseB never proven on Done
+- Sign-out → /sign-in
+
+FINDINGS: (none new)
+Known GAP/TRACK / already-filed: To Do Open pill miss; planned-kind empty items / Turn-in fail on UI-01 — not re-filed.
+
+Screens: notes/qa-fixtures/ditl/artifacts-S-01-UI-02/*.png
+Runner: notes/qa-fixtures/ditl/artifacts-S-01-UI-02/run-ui-02.mjs

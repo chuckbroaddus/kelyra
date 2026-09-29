@@ -1,0 +1,15 @@
+fix,kind,finding_id,decision_at,status,stamp_minutes,build_minutes,e2e_minutes,credit_recorded_pct,credit_open_reserve_pct,credit_closes,credit_quantized_zero,notes
+office splash home,product,t_3191917a,2026-09-27 15:06,waiting credit,1428,,2560,46.0,,16,8,8 quantized-zero closes; card deltas are not additive
+student Turn in,product,t_ae57706e,2026-09-27 15:11,build escalated,4,383,397,2.0,,6,4,build escalated; 4 quantized-zero closes; card deltas are not additive
+feed Alert composer,product,t_14c82527,2026-09-27 15:12,waiting credit,4,,2554,1.0,,6,5,5 quantized-zero closes; card deltas are not additive
+preferred name edit,product,t_87f01316,2026-09-27 15:13,build escalated,6,109,124,-69.0,,7,0,build escalated; card deltas are not additive
+Ask cannot approve,product,t_07c1b2b4,2026-09-27 15:16,build escalated,537,130,145,28.0,,8,2,build escalated; 2 quantized-zero closes; card deltas are not additive
+teacher tray school scope,product,t_2853355f,2026-09-27 15:21,build escalated,6,30,442,21.0,,9,4,build escalated; 4 quantized-zero closes; card deltas are not additive
+student To Do opens on web,product,t_a7868c98,2026-09-27 15:22,build escalated,214,197,208,30.0,,6,1,build escalated; 1 quantized-zero closes; card deltas are not additive
+Ask teacher inbox,product,t_837efff9,2026-09-27 15:22,build escalated,179,154,169,24.0,,6,0,build escalated; card deltas are not additive
+parent Ask assignments,product,t_df0481c4,2026-09-27 15:23,build escalated,125,49,60,10.0,,6,1,build escalated; 1 quantized-zero closes; card deltas are not additive
+Pack B Approve on draft,product,t_019ab036,2026-09-27 15:24,build escalated,511,50,90,18.0,,9,4,build escalated; 4 quantized-zero closes; card deltas are not additive
+clear pickup restriction,product,t_ba828734,2026-09-27 15:25,build escalated,3,12,28,9.0,,7,2,build escalated; 2 quantized-zero closes; card deltas are not additive
+parent-seat Ask scope,product,t_99e3a96c,2026-09-27 15:26,build escalated,4,469,486,5.0,,6,2,build escalated; 2 quantized-zero closes; card deltas are not additive
+parent Calendar test update,test,t_7300ab10,2026-09-27 15:28,test updated,5,,18,5.0,,5,1,1 quantized-zero closes; card deltas are not additive
+ALL FIXES SO FAR,campaign,,2026-09-27 15:06,in progress,,,2560,-54,,89,,publisher counter move for this fix wave; not a sum of the rows above; counter 62 to 8

@@ -1,0 +1,7 @@
+{
+  "result": "FAIL",
+  "reason": "app down",
+  "evidence": [
+    "HEALTH 0"
+  ]
+}

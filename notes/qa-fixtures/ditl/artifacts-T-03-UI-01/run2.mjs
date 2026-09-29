@@ -1,0 +1,10 @@
+import { chromium } from './../_pw/node_modules/playwright/index.mjs';
+const A = new URL('.', import.meta.url).pathname;
+const b = await chromium.launch({ channel: 'chrome', headless: true });
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, storageState: A + '.state.json' }); const p = await ctx.newPage();
+const shot = async (n, w=2500) => { await p.waitForTimeout(w); await p.screenshot({ path: A + n + '.png' }); console.log('==', n, p.url()); console.log((await p.innerText('body')).slice(0, 900).replace(/\n+/g,' | ')); };
+await p.goto('http://localhost:8081/messages/new'); await shot('05-new');
+const q = p.getByPlaceholder('Type a name'); await q.fill('Taylor'); await shot('06-search', 3000);
+await p.getByText('Taylor Lee', { exact: false }).first().click(); await shot('07-picked');
+console.log('buttons:', (await p.locator('[role=button]').allInnerTexts()).join(' / ').slice(0,500));
+await b.close();

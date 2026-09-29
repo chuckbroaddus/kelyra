@@ -523,7 +523,7 @@ export function ClassStackBinder({
         {showWaiting ? (
           <View style={styles.gaps}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <WorkingMark size={28} />
+              <WorkingMark size={20} />
               <Text style={[type.body, { color: colors.ink, flex: 1 }]}>{INGEST_COPY.received}</Text>
             </View>
             <Text style={[type.meta, { color: colors.mute }]} accessibilityLiveRegion="polite">

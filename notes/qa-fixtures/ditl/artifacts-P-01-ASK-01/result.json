@@ -1,0 +1,22 @@
+{
+  "case": "DITL-P-01-ASK-01",
+  "result": "PARTIAL",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: ask_url=http://localhost:8081/ask groundedish=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work. | Which assignment? | Pick one so Ask can help with that work — or just chat. | DS | ditl-Ma",
+    "OK step3: jordan_progressish=true snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call my_children_progress. Summarize focus and practice for Jordan Lee only. Do not invent scores. Do not change grades. | Jordan Lee — ditl-Math Period 3.   | Focus: ditl-bulk-jordan-place-value.   | Practice: none listed.   | Parent sentence: Still working on ditl-bulk-jordan-place-value. | New chat",
+    "MISS step4: jamie_progressish=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call my_children_progress. Summarize focus and practice for Jordan Lee only. Do not invent scores. Do not change grades. | Jordan Lee — ditl-Math Period 3.   | Focus: ditl-bulk-jordan-place-value.   | Practice: none listed.   | Parent sentence: Still working on ditl-bulk-jordan-place-value. | New chat",
+    "MISS step5: avgish=false strong=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work.",
+    "OK step6: no_grade_mutation_ui=true",
+    "OK step7: signedOut=true url=http://localhost:8081/sign-in",
+    "GAP: vehicle pick / Ride check-in / leave = no Ask tools (case known GAP) — not findings"
+  ],
+  "findings": [],
+  "misses": [
+    "MISS step4: jamie_progressish=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Call my_children_progress. Summarize focus and practice for Jordan Lee only. Do not invent scores. Do not change grades. | Jordan Lee — ditl-Math Period 3.   | Focus: ditl-bulk-jordan-place-value.   | Practice: none listed.   | Parent sentence: Still working on ditl-bulk-jordan-place-value. | New chat",
+    "MISS step5: avgish=false strong=false snip=Kelyra | Kelyra | Home | Ride | Calendar | Ask | Ask a question about this week’s work."
+  ],
+  "gaps": [
+    "GAP: vehicle pick / Ride check-in / leave — no Ask tools; PHYSICAL-ONLY camera (case PARTIAL/GAP)"
+  ]
+}

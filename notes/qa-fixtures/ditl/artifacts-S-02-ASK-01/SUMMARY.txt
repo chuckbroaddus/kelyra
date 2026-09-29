@@ -1,0 +1,11 @@
+DITL-S-02-ASK-01 RESULT PASS
+App: http://localhost:8081 user=ditl-student-s1
+OK step1: url=http://localhost:8081/todo signedIn=true
+OK step2: ask_home url=http://localhost:8081/ask onAsk=true
+OK step3: my_grades_reply gradesReply=true bleedSuspect=false
+OK step4: explain_assignment explainReply=true
+OK step5: read_only mutateSuspect=false hitMutate=false hits=63
+OK step6: dual_grades dual=true dualBleed=false url=http://localhost:8081/student/grades
+OK step7: signedOut=true url=http://localhost:8081/sign-in
+FINDINGS:
+(none)

@@ -156,15 +156,51 @@ export function coldStartChromeSeatPreference(
   return null;
 }
 
+/** Same-tab / same-JS-runtime Parent altitude. Survives /ask refresh; dies on new browser session. */
+const SESSION_PARENT_KEY_PREFIX = 'kelyra.chrome.seat.session.';
+const sessionParentByProfile = new Map<string, true>();
+
+export function chromeSeatSessionKey(profileId: string): string {
+  return `${SESSION_PARENT_KEY_PREFIX}${profileId}`;
+}
+
+/** True when this signed-in session still holds Parent altitude (not DH-07 cold start). */
+export function readSessionParentSeat(profileId: string): boolean {
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      return window.sessionStorage.getItem(chromeSeatSessionKey(profileId)) === 'parent';
+    } catch {
+      return sessionParentByProfile.has(profileId);
+    }
+  }
+  return sessionParentByProfile.has(profileId);
+}
+
+export function writeSessionParentSeat(profileId: string, on: boolean): void {
+  if (on) sessionParentByProfile.set(profileId, true);
+  else sessionParentByProfile.delete(profileId);
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      const key = chromeSeatSessionKey(profileId);
+      if (on) window.sessionStorage.setItem(key, 'parent');
+      else window.sessionStorage.removeItem(key);
+    } catch {
+      // Memory map above still holds for this runtime.
+    }
+  }
+}
+
 export async function loadChromeSeatPreference(
   profileId: string | null | undefined,
 ): Promise<ChromeSeatPreference | null> {
   if (!profileId) return null;
+  // Same-session Parent (bare /ask refresh) before durable office/teacher restore.
+  if (readSessionParentSeat(profileId)) return 'parent';
   try {
     const key = chromeSeatStorageKey(profileId);
     const raw = await AsyncStorage.getItem(key);
     const seat = coldStartChromeSeatPreference(raw);
-    // Drop stale parent so a later read cannot resurrect Parent tray.
+    // Drop stale parent so a later read cannot resurrect Parent tray across cold start.
     if (raw === 'parent') {
       await AsyncStorage.removeItem(key);
     }
@@ -180,10 +216,12 @@ export async function saveChromeSeatPreference(
   seat: ChromeSeatPreference,
 ): Promise<void> {
   const key = chromeSeatStorageKey(profileId);
-  // Parent is in-session only (DH-07). Clearing leaves job-of-record default on cold start.
+  // Parent is in-session only (DH-07). Session storage holds altitude for same-tab /ask.
   if (seat === 'parent') {
+    writeSessionParentSeat(profileId, true);
     await AsyncStorage.removeItem(key);
     return;
   }
+  writeSessionParentSeat(profileId, false);
   await AsyncStorage.setItem(key, seat);
 }

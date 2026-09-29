@@ -16,6 +16,7 @@ import {
   showStudentStatusIcon,
   studentGradeLine,
   studentStatusIcon,
+  studentTodoOpenPath,
   studentWorkDateLine,
 } from '@/lib/student-session/work';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -65,7 +66,7 @@ export function StudentWorkList({
         <Text style={[styles.empty, { color: colors.mute }]}>{empty}</Text>
       ) : (
         visible.map((item) => {
-          const openable = item.kind === 'lesson' || item.kind === 'practice';
+          const openable = studentTodoOpenPath(item) != null;
           const status = grades
             ? studentGradeLine(item, (mark, score) => formatScoreMark(mark === 'pass' || mark === 'fail' ? mark : 'numeric', score), submissionStatusLabel)
             : studentWorkDateLine(item);
@@ -86,6 +87,7 @@ export function StudentWorkList({
                   />
                 ) : undefined
               }
+              onPress={openable ? () => onOpen(item) : undefined}
               pills={
                 openable
                   ? [

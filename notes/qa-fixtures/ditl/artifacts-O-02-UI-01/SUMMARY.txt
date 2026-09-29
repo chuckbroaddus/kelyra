@@ -1,0 +1,24 @@
+DITL-O-02-UI-01 RESULT=FAIL
+
+Lane: C · Engine: hermes SuperGrok · Browser: Chromium persistent user-data-dir=/tmp/ditl-pw-lane-c
+App: http://localhost:8081 (expo web started this run; was down at first attempt)
+Case: roster Math + link ditl-parent-1/2 to S1 Jordan Lee + edit bio
+Actor: ditl-admin only (not teacher-a / parent-1)
+
+EVIDENCE:
+- API sign-in-handle ditl-admin: HTTP 200 + access_token. teachers row for profile: absent (teacherRow=false). S1 Jordan Lee id 2bcee429-… readable via students select.
+- UI sign-in: form filled handle+password; localStorage gains sb-*-auth-token; lands on http://localhost:8081/ still chrome Sign-in + Spring Baptist Academy branding (not ditl-Sandbox office chrome).
+- Splashish=true after sign-in (Home gates without teachers row) — same wall as seq 55/56.
+- One roster attempt only: GET /?tab=people (no math class id via RLS/null classes) → still Sign-in splash; leftSplash=false; reachedRoster=false. Did not burn run on splash clicks.
+- Parent link P1/P2 and bio edit: not reachable → not executed. No test links created → no unlink needed.
+- Teardown: clear storage → /sign-in. Shared seed untouched.
+- Screenshots: notes/qa-fixtures/ditl/artifacts-O-02-UI-01/01-admin-after-signin.png, 02-roster-once-__tab_people.png, 99-signout.png, probe-*.png
+- result.json + run-ui-01.mjs in same dir.
+
+FINDINGS:
+none (parked splash P0 already on t_3191917a — not re-filed per card)
+
+GAPS:
+none for this case id (case has PARTIAL/GAP: none; blocked by product wall not case GAP)
+
+RESULT: FAIL — cannot complete roster/parent-link/bio steps while office admin UI remains on SplashLanding after auth.

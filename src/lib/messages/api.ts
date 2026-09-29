@@ -1,6 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { signedMessageUrl } from '@/lib/messages/attachments';
+import {
+  applySchoolWallToThread,
+  filterDirectoryBySchool,
+  filterMembersBySchool,
+  type SchoolWallPerson,
+} from '@/lib/messages/schoolWall';
 import { attachProfilePhotos } from '@/lib/people/photos';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { MessagePayload, MessageRow, MessageThreadKind, ProfileRow } from '@/lib/supabase/types';
@@ -43,53 +49,112 @@ export async function unreadCount(): Promise<number> {
   if (error || !memberships?.length) return 0;
   const live = memberships.filter((row) => !row.muted_at);
   if (!live.length) return 0;
-  const { data: threads } = await supabase
-    .from('message_threads')
-    .select('id, last_message_at')
-    .in(
-      'id',
-      live.map((row) => row.thread_id),
-    );
+  const liveIds = live.map((row) => row.thread_id);
+  const [{ data: threads }, { data: members }, { data: meRow }] = await Promise.all([
+    supabase.from('message_threads').select('id, last_message_at, kind, title').in('id', liveIds),
+    supabase.from('message_thread_members').select('thread_id, profile_id').in('thread_id', liveIds),
+    supabase.from('profiles').select('school_id').eq('id', myId).maybeSingle(),
+  ]);
+  const mySchoolId = meRow?.school_id ?? null;
+  if (mySchoolId == null || mySchoolId === '') return 0;
+  const otherIds = [
+    ...new Set((members ?? []).map((row) => row.profile_id).filter((id) => id !== myId)),
+  ];
+  const { data: people } = otherIds.length
+    ? await supabase.from('profiles').select('id, school_id, username, display_name, role').in('id', otherIds)
+    : { data: [] as SchoolWallPerson[] };
+  const personById = new Map<string, SchoolWallPerson>(
+    (people ?? []).map((row) => [
+      row.id,
+      {
+        id: row.id,
+        school_id: row.school_id,
+        username: row.username,
+        display_name: row.display_name,
+        role: row.role,
+      },
+    ]),
+  );
   const lastAt = new Map((threads ?? []).map((row) => [row.id, row.last_message_at]));
+  const threadById = new Map((threads ?? []).map((row) => [row.id, row]));
   let n = 0;
   for (const row of live) {
     const at = lastAt.get(row.thread_id);
-    if (at && (!row.last_read_at || at > row.last_read_at)) n += 1;
+    if (!at || (row.last_read_at && !(at > row.last_read_at))) continue;
+    const thread = threadById.get(row.thread_id);
+    if (!thread) continue;
+    const others = (members ?? []).filter((m) => m.thread_id === row.thread_id && m.profile_id !== myId);
+    const kept = applySchoolWallToThread(
+      mySchoolId,
+      {
+        id: thread.id,
+        kind: thread.kind === 'group' ? 'group' : 'direct',
+        title: thread.title ?? null,
+        lastMessageAt: thread.last_message_at,
+        lastBody: null,
+        lastFromMe: false,
+        photoUrl: null,
+        muted: false,
+        unread: true,
+        pinned: false,
+        otherIds: others.map((m) => m.profile_id),
+      },
+      personById,
+    );
+    if (kept) n += 1;
   }
   return n;
 }
 
 export async function listMessageableIds(): Promise<Set<string>> {
-  const { data, error } = await requireSupabase().rpc('message_directory');
-  if (error) return new Set();
-  return new Set((data ?? []).map((row) => row.id));
+  try {
+    const rows = await listMessageDirectory();
+    return new Set(rows.map((row) => row.id));
+  } catch {
+    return new Set();
+  }
 }
 
 export async function listMessageDirectory(): Promise<ProfileRow[]> {
   const { data, error } = await requireSupabase().rpc('message_directory');
   if (error) throw new Error(error.message || 'Could not load people');
-  const rows = [...(data ?? [])];
+  const raw = [...(data ?? [])];
+
+  let mine: ProfileRow | null = null;
+  try {
+    const { loadMyProfile } = await import('@/lib/school/api');
+    mine = await loadMyProfile();
+  } catch {
+    // Without the signed-in school we cannot safely list — fail closed.
+    return [];
+  }
+  const mySchoolId = mine?.school_id ?? null;
+  // Fail closed: null school_id is not in the school.
+  let rows = filterDirectoryBySchool(mySchoolId, raw);
+
   try {
     const { isAdminRole } = await import('@/lib/school/roles');
-    const { loadMyProfile, listProfiles } = await import('@/lib/school/api');
-    const mine = await loadMyProfile();
+    const { listProfiles } = await import('@/lib/school/api');
     if (!isAdminRole(mine)) return rows;
     const everyone = await listProfiles();
     const have = new Set(rows.map((row) => row.id));
-    for (const person of everyone) {
+    for (const person of filterDirectoryBySchool(mySchoolId, everyone)) {
       if (person.id === mine?.id || have.has(person.id)) continue;
       rows.push(person);
       have.add(person.id);
     }
   } catch {
-    // Directory RPC is enough when People list is not readable.
+    // School-filtered directory RPC is enough when People list is not readable.
   }
   return rows;
 }
 
 async function loadLocalPins(): Promise<Set<string>> {
   try {
-    const raw = await AsyncStorage.getItem(PINS_KEY);
+    const raw = await Promise.race([
+      AsyncStorage.getItem(PINS_KEY),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+    ]);
     const parsed = raw ? (JSON.parse(raw) as string[]) : [];
     return new Set(Array.isArray(parsed) ? parsed : []);
   } catch {
@@ -134,62 +199,97 @@ export async function listThreads(myId: string): Promise<ThreadPreview[]> {
     loadLocalPins(),
   ]);
   const otherIds = [...new Set((members ?? []).map((row) => row.profile_id).filter((id) => id !== myId))];
-  const people = otherIds.length ? await listPeopleByIds(otherIds) : [];
-  const personById = new Map(people.map((row) => [row.id, row]));
+  // Profiles first (no photo sign) so the school wall can drop other-school people before Storage.
+  const [{ data: meRow }, { data: rawPeople }] = await Promise.all([
+    supabase.from('profiles').select('school_id').eq('id', myId).maybeSingle(),
+    otherIds.length
+      ? supabase
+          .from('profiles')
+          .select('id, school_id, username, display_name, role, student_id, parent_id')
+          .in('id', otherIds)
+      : Promise.resolve({ data: [] as Array<Pick<ProfileRow, 'id' | 'school_id' | 'username' | 'display_name' | 'role' | 'student_id' | 'parent_id'>> }),
+  ]);
+  const mySchoolId = meRow?.school_id ?? null;
+  // Fail closed: null school_id is not in a school — empty tray.
+  if (mySchoolId == null || mySchoolId === '') return [];
+  const personById = new Map<string, SchoolWallPerson>(
+    (rawPeople ?? []).map((row) => [
+      row.id,
+      {
+        id: row.id,
+        school_id: row.school_id,
+        username: row.username,
+        display_name: row.display_name,
+        role: row.role,
+        photoUrl: null,
+      },
+    ]),
+  );
   const lastByThread = new Map<string, { body: string; created_at: string; sender_id: string }>();
   for (const row of lastMessages ?? []) {
     if (!lastByThread.has(row.thread_id)) lastByThread.set(row.thread_id, row);
   }
   const readBy = new Map(memberships.map((row) => [row.thread_id, row]));
-  const customPhotos = await Promise.all(
-    (threads ?? []).map(async (thread) => {
-      const path = 'photo_path' in thread ? thread.photo_path : null;
-      if (!path) return [thread.id, null] as const;
-      return [thread.id, await signedMessageUrl('photo', path, 'thumb')] as const;
-    }),
-  );
-  const photoByThread = new Map(customPhotos);
-  return (threads ?? []).map((thread) => {
+  const previews: ThreadPreview[] = [];
+  for (const thread of threads ?? []) {
     const others = (members ?? []).filter((row) => row.thread_id === thread.id && row.profile_id !== myId);
-    const otherId = others[0]?.profile_id;
     const last = lastByThread.get(thread.id);
     const mine = readBy.get(thread.id);
     const lastAt = last?.created_at ?? thread.last_message_at;
     const kind: MessageThreadKind = thread.kind === 'group' ? 'group' : 'direct';
-    const faces: ThreadFace[] = others.flatMap((row) => {
-      const person = personById.get(row.profile_id);
-      if (!person) return [];
-      return [
-        {
-          id: person.id,
-          name: person.display_name || person.username,
-          photoUrl: person.photoUrl,
-        },
-      ];
-    });
-    return {
-      id: thread.id,
-      kind,
-      title: thread.title ?? null,
-      lastMessageAt: thread.last_message_at,
-      lastBody: last?.body ?? null,
-      lastFromMe: last?.sender_id === myId,
-      other: otherId
-        ? {
-            id: otherId,
-            username: personById.get(otherId)?.username ?? '',
-            display_name: personById.get(otherId)?.display_name ?? null,
-            role: personById.get(otherId)?.role ?? 'teacher',
-          }
-        : null,
-      faces,
-      photoUrl: photoByThread.get(thread.id) ?? null,
-      memberCount: others.length + 1,
-      muted: Boolean(mine?.muted_at),
-      unread: Boolean(lastAt && !mine?.muted_at && (!mine?.last_read_at || lastAt > mine.last_read_at)),
-      pinned: Boolean(mine && 'pinned_at' in mine && mine.pinned_at) || localPins.has(thread.id),
-    };
-  });
+    const walled = applySchoolWallToThread(
+      mySchoolId,
+      {
+        id: thread.id,
+        kind,
+        title: thread.title ?? null,
+        lastMessageAt: thread.last_message_at,
+        lastBody: last?.body ?? null,
+        lastFromMe: last?.sender_id === myId,
+        photoUrl: null,
+        muted: Boolean(mine?.muted_at),
+        unread: Boolean(lastAt && !mine?.muted_at && (!mine?.last_read_at || lastAt > mine.last_read_at)),
+        pinned: Boolean(mine && 'pinned_at' in mine && mine.pinned_at) || localPins.has(thread.id),
+        otherIds: others.map((row) => row.profile_id),
+      },
+      personById,
+    );
+    if (walled) previews.push(walled);
+  }
+  // Hydrate thumbs after the wall without blocking the tray on Storage.
+  const keptPeople = [...new Set(previews.flatMap((row) => row.faces.map((face) => face.id)))];
+  const keptThreadIds = previews.map((row) => row.id);
+  if (!keptPeople.length && !keptThreadIds.length) return previews;
+  try {
+    const photoDeadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200));
+    const hydrated = Promise.all([
+      keptPeople.length ? listPeopleByIds(keptPeople) : Promise.resolve([] as ThreadPerson[]),
+      Promise.all(
+        (threads ?? [])
+          .filter((thread) => keptThreadIds.includes(thread.id))
+          .map(async (thread) => {
+            const path = 'photo_path' in thread ? thread.photo_path : null;
+            if (!path) return [thread.id, null] as const;
+            return [thread.id, await signedMessageUrl('photo', path, 'thumb')] as const;
+          }),
+      ),
+    ]);
+    const raced = await Promise.race([hydrated.then((value) => ({ ok: true as const, value })), photoDeadline.then(() => ({ ok: false as const }))]);
+    if (!raced.ok) return previews;
+    const [photos, customPhotos] = raced.value;
+    const photoByPerson = new Map(photos.map((row) => [row.id, row.photoUrl]));
+    const photoByThread = new Map(customPhotos);
+    return previews.map((preview) => ({
+      ...preview,
+      photoUrl: photoByThread.get(preview.id) ?? null,
+      faces: preview.faces.map((face) => ({
+        ...face,
+        photoUrl: photoByPerson.get(face.id) ?? null,
+      })),
+    }));
+  } catch {
+    return previews;
+  }
 }
 
 export function subscribeThread(threadId: string, onInsert: (row: MessageRow) => void): () => void {
@@ -336,7 +436,16 @@ export async function listThreadMembers(threadId: string): Promise<ThreadPerson[
     .select('profile_id, muted_at')
     .eq('thread_id', threadId);
   if (error) throw error;
-  return listPeopleByIds((members ?? []).map((row) => row.profile_id));
+  const people = await listPeopleByIds((members ?? []).map((row) => row.profile_id));
+  const { data: auth } = await supabase.auth.getUser();
+  const myId = auth.user?.id;
+  if (!myId) return [];
+  const me = people.find((row) => row.id === myId);
+  const mySchoolId =
+    me?.school_id ??
+    (await supabase.from('profiles').select('school_id').eq('id', myId).maybeSingle()).data?.school_id ??
+    null;
+  return filterMembersBySchool(myId, mySchoolId, people);
 }
 
 export async function addGroupMember(threadId: string, profileId: string): Promise<void> {

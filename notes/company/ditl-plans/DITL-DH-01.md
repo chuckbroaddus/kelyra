@@ -3,6 +3,9 @@
 <!-- DITL-UPDATE t_3be49702 2026-09-24: RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required -->
 <!-- DITL-UPDATE t_1520f9f5 2026-09-24: DRIVE-NEEDS Settings sticky Drive/folder/Scan → Needs-first split -->
 <!-- DITL-UPDATE t_f7164ca9 2026-09-24: SWITCH-G Disconnect Gmail + Open Drive return-to-picker; Teach-only -->
+<!-- DITL-UPDATE t_3443168f 2026-09-28: saved-draft teacher review shows Pack B Approve or Accept on phone and web; Parent still hides Approve -->
+<!-- DITL-UPDATE t_495014c2 2026-09-28: bare /ask keeps the parent tray; roster and captures hidden; transcript seat-scoped -->
+<!-- DITL-UPDATE t_18cd105a 2026-09-28: Ask is not an approve path; screen Approve stays -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
 <!-- DITL-UPDATE t_71f42604 2026-09-24: Students ClassTabs single row (layout host only; no Screen.collapse duplicate) -->
 <!-- DITL-UPDATE t_730cda45 2026-09-24: CT-A ClassTabs morph + DeskSpanTabs visibility on Teach desk -->
@@ -37,7 +40,7 @@ Same login is a teacher and a parent of a student (not necessarily own class). M
 | 1 | Sign in; land teacher seat | `/sign-in` → teacher tray |
 | 2 | Drawer: both **My children** (deep-link) and **Parent** (seat switch) visible as designed | hamburger |
 | 3 | Capture one file on own class | `/capture` |
-| 3b | Optional keyed: Pack B confirm + **phone Approve** on Teach seat only (own class) | `/capture` review |
+| 3b | Optional keyed: Pack B confirm + **phone Approve** on Teach seat only (own class). A saved keyed homework draft shows the existing Pack B Approve or Accept recommendation on the teacher review, on phone and on web, not only the live `/capture` review. Parent seat still hides Approve. | `/capture` review and saved-draft teacher review |
 | 3c | **BATCH-v1 (Teach only):** Upload class stack on web; bind one class; Split Review; Confirm → captures/Inbox | web CE-A / SR-A (Teach seat) |
 | 3d | **Assert no Parent stack:** after optional peek at Parent seat chrome (or drawer), Upload stack / Split Review entry is **absent** (zero discovery) | Parent chrome |
 | 4 | **My children** deep-link: opens `/parent` **without** flipping tray to parent (no Ride tab under teacher chrome); no Approve chrome here; **no** stack upload | `/parent` under staff chrome |
@@ -46,7 +49,7 @@ Same login is a teacher and a parent of a student (not necessarily own class). M
 | 7 | Parent Home: own children only; post-Approve cells only; **no** Approve / draft / extract; no teacher gradebook write; **no** Upload stack | `/parent` |
 | 8 | Ride check-in for linked child | `/parent/ride` |
 | 9 | Leave line | `/parent/ride` |
-| 10 | Ask on parent seat (parent context) — Ask must not expose class-stack tools | `/ask` |
+| 10 | Ask on parent seat, including bare `/ask` in the same signed-in session. Parent tray stays (Home · Ride · Ask). Teacher roster and captures stay hidden. Transcript is seat-scoped both ways. Ask is not blocked. No new Ask screen. No class-stack tools. | `/ask` |
 | 11 | Drawer **Teach** switch back; tray teacher 5; wordmark from new seat only; stack entry available again only on Teach | seat switch |
 | 12 | Confirm no concatenated trays / no Ride on teacher | tray |
 | 13 | Sign out | hamburger |
@@ -82,12 +85,12 @@ Teacher editing own child’s official grades via parent seat; Parent-seat KEYGR
 | Activity | UI | Ask |
 |----------|----|-----|
 | Capture on Teach seat | `/capture` | PHYSICAL-ONLY |
-| Pack B phone Approve (Teach only) | `/capture` review Approve | UI/`approve_capture`; **forbidden** on Parent seat |
+| Pack B phone Approve (Teach only) | `/capture` review Approve, and the saved-draft teacher review on phone and web | Screen Approve or Accept only. Ask is not an approve path (`approve_capture` gone or fail-closed; no confirm card). **Forbidden** on Parent seat |
 | BATCH Upload stack (Teach only) | web CE-A / SR-A | —; Ask must not Confirm split; **forbidden** on Parent seat |
 | My children deep-link | drawer My children → `/parent` staff chrome | Ask must not flip seat; no Approve; no stack |
 | Parent seat switch | drawer **Parent** | no Ask seat-switch tool — **UI-primary** altitude |
 | Parent grades / Ride | `/parent`, `/parent/ride` | Ask parent tools only **after** Parent seat; Ride PHYSICAL |
-| Ask per seat | tray Ask | teacher ops vs parent co-teacher walls; no class-stack on Parent |
+| Ask per seat | tray Ask, including bare `/ask` | Parent tray stays. Teacher roster and captures hidden. Transcript seat-scoped both ways. No class-stack on Parent. Ask is not an approve path. |
 | Teach switch back | drawer Teach | UI-primary |
 
 ## Suggested QE themes

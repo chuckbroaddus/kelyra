@@ -1,0 +1,54 @@
+{
+  "case": "DITL-O-07-UI-02",
+  "result": "GAP",
+  "lane": "A",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-a",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "OK step0: app HTTP 200",
+    "OK step1: ditl-admin url=http://localhost:8081/ splash=true",
+    "PARKED-P0: Home splash wall already on t_3191917a — not filed again",
+    "OK step2: S1 Details url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc splash=false",
+    "S1_META_BEFORE={\"preferred_name\":false,\"birthday\":false,\"phone\":true,\"email\":true,\"address\":true,\"emergency_name\":false,\"emergency_phone\":false,\"grade_or_age\":false,\"notes\":true,\"has_marker\":false}",
+    "PARKED: Preferred-name PHOTO sheet (t_87f01316) — not filed",
+    "OK step3: photo step GAP known; hints=0",
+    "S1_META_AFTER={\"preferred_name\":false,\"birthday\":false,\"phone\":true,\"email\":true,\"address\":true,\"emergency_name\":false,\"emergency_phone\":false,\"grade_or_age\":false,\"notes\":true,\"has_marker\":false}",
+    "OK step4: metadata keys check after={\"preferred_name\":false,\"birthday\":false,\"phone\":true,\"email\":true,\"address\":true,\"emergency_name\":false,\"emergency_phone\":false,\"grade_or_age\":false,\"notes\":true,\"has_marker\":false}",
+    "ROSTER_STUDENT_IDS=none",
+    "OK step5: no bleed S2-S5 anyBleed=false report={\"899214d4-1ed7-47bd-8a1a-8304e8b7e692\":[]}",
+    "OK step6: signout url=http://localhost:8081/sign-in",
+    "RESULT_DETAIL attach=false bleed=false findings=0"
+  ],
+  "findings": [],
+  "gaps": [
+    "GAP: office photo extract / attach-from-card — no Capture tray (known; not refiled)"
+  ],
+  "bleedReport": {
+    "899214d4-1ed7-47bd-8a1a-8304e8b7e692": []
+  },
+  "invBefore": {
+    "preferred_name": false,
+    "birthday": false,
+    "phone": true,
+    "email": true,
+    "address": true,
+    "emergency_name": false,
+    "emergency_phone": false,
+    "grade_or_age": false,
+    "notes": true,
+    "has_marker": false
+  },
+  "invAfter": {
+    "preferred_name": false,
+    "birthday": false,
+    "phone": true,
+    "email": true,
+    "address": true,
+    "emergency_name": false,
+    "emergency_phone": false,
+    "grade_or_age": false,
+    "notes": true,
+    "has_marker": false
+  },
+  "rosterIds": []
+}

@@ -96,10 +96,11 @@
 - Steps (Ask):
   1. Route `/sign-in` → sign in `ditl-teacher-a` / `DITL-teacher-test`.
   2. Use Ask to list captures / keyed drafts (documented capability).
-  3. Attempt Ask Approve / `grade_photo` / publish `approved_score` if tool appears.
-- Expected: Ask must **not** Approve or publish keyed grades. Full Pack B confirm+phone Approve is **UI-primary** on Capture review (UI-05). Note GAP if Ask lacks full capture list tools.
+  3. Attempt Ask Approve, `approve_capture`, `grade_photo`, or a confirm card that would publish `approved_score`.
+  4. Repeat as office admin. The refuse is school-wide. No confirm card.
+- Expected: Ask must not write an approved score. Tool gone or fail-closed. No confirm card. Screen Pack B confirm and phone Approve stay UI-primary (UI-05). Office admin is included.
 - Teardown: sign out.
-- PARTIAL/GAP: Ask capture list = PARTIAL/GAP if no full tools; Ask Approve = explicit non-goal (must fail closed)
+- PARTIAL/GAP: Ask capture list = PARTIAL/GAP if no full tools; Ask Approve must fail closed (not a feature to add)
 
 **DITL-T-01-UI-SOFT-v8b** | tags: chrome, soft, ask
 - Pre: same as plan primary login

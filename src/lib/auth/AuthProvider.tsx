@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { isSupabaseConfigured } from '@/constants/config';
 import { clearAskGroundOnActiveClassChange } from '@/lib/ask/assignmentGround';
 import { loadTeacherProfile, getSession, signOut as signOutRequest } from '@/lib/auth/api';
+import { injectPersonaFromQuery } from '@/lib/auth/personaInject';
 import { invalidateNeedsCountCache } from '@/lib/chrome/needsCountCache';
 import { bindSignedUrlCacheUser, clearSignedUrlCache } from '@/lib/media/signedUrl';
 import { loadMyProfile } from '@/lib/school/api';
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
+      await injectPersonaFromQuery();
       const next = await getSession();
       setSession(next);
       if (!next) {

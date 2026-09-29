@@ -30,6 +30,8 @@ type Props = {
   showSensitiveStudentFields?: boolean;
   /** Acting staff id for minting a student card if profile.student_id is null. */
   actorId?: string | null;
+  /** Close photo sheet (or other overlays) when Preferred name / Details edit opens. */
+  onBeginEdit?: () => void;
 };
 
 function valueFor(profile: ProfileRow, key: StaffProfileFieldKey): string {
@@ -45,6 +47,7 @@ export function ProfileDetails({
   fields,
   showSensitiveStudentFields = true,
   actorId = null,
+  onBeginEdit,
 }: Props) {
   const shownFields = fields?.length
     ? STAFF_PROFILE_FIELDS.filter((field) => fields.includes(field.key))
@@ -88,17 +91,34 @@ export function ProfileDetails({
   }, [isStudent, profile.student_id, profile.id]);
 
   const openEdit = () => {
+    // Preferred name row opens Edit profile — not the photo sheet.
+    onBeginEdit?.();
     setError(null);
-    setDraft({
-      display_name: profile.display_name ?? '',
-      username: profile.username,
-      email: profile.email ?? '',
-      phone: profile.phone ?? '',
-      address: profile.address ?? '',
-      notes: profile.notes ?? '',
-    });
-    setStudentDraft(studentOptionalDraftFromMetadata(student?.metadata));
-    setOpen(true);
+    void (async () => {
+      let row = student;
+      if (isStudent && profile.student_id && !row) {
+        try {
+          row = await getStudent(profile.student_id);
+          setStudent(row);
+        } catch {
+          setError('Could not load student details');
+          return;
+        }
+      }
+      setDraft({
+        display_name: profile.display_name ?? '',
+        username: profile.username,
+        email: profile.email ?? '',
+        phone: profile.phone ?? '',
+        address: profile.address ?? '',
+        notes: profile.notes ?? '',
+      });
+      // Seed from the loaded student so a preferred-name-only save cannot clear siblings.
+      setStudentDraft(studentOptionalDraftFromMetadata(row?.metadata));
+      // If onBeginEdit dismissed PhotoSheet, wait a tick so Modals do not stack.
+      if (onBeginEdit) setTimeout(() => setOpen(true), 50);
+      else setOpen(true);
+    })();
   };
 
   const save = async () => {
@@ -116,14 +136,23 @@ export function ProfileDetails({
       });
       let linked = next;
       if (isStudent && showSensitiveStudentFields) {
-        const built = applyStudentOptionalDraft(student?.metadata ?? {}, studentDraft);
+        let row = student;
+        if (!row && profile.student_id) {
+          row = await getStudent(profile.student_id);
+          setStudent(row);
+        }
+        const built = applyStudentOptionalDraft(row?.metadata ?? {}, studentDraft);
         if (!built.ok) {
           setError(built.error);
           return;
         }
-        if (student) {
-          const updated = await updateStudentMetadata(student, built.metadata);
+        if (row) {
+          // Existing student only — never mint a second card for a linked login.
+          const updated = await updateStudentMetadata(row, built.metadata);
           setStudent(updated);
+        } else if (profile.student_id) {
+          setError('Could not load student details');
+          return;
         } else if (actorId) {
           const minted = await mintOfficeStudent({
             displayName: draft.display_name || profile.display_name || profile.username,
@@ -172,6 +201,9 @@ export function ProfileDetails({
       />
       {!canEdit ? (
         <Text style={[styles.lock, { color: colors.mute }]}>You cannot edit this profile.</Text>
+      ) : null}
+      {error && !open ? (
+        <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
       ) : null}
       <FormSheet visible={open} title="Edit profile" onClose={() => setOpen(false)}>
         {STAFF_PROFILE_FIELDS.map((field) => (

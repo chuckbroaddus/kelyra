@@ -1,0 +1,108 @@
+{
+  "card": "t_2bef14a3",
+  "web": {
+    "writesBefore": 0,
+    "routes": [
+      {
+        "url": "http://127.0.0.1:8081/capture?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a",
+        "approve": false,
+        "draft": false,
+        "head": "Capture | Capture | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Image Preview | Drop photos, videos, or files here | Upload class stack",
+        "labels": [
+          "Open Capture",
+          "Search",
+          "3",
+          "Open menu",
+          "Camera",
+          "Photo or Video",
+          "Files",
+          "Upload class stack",
+          "Dictate into the field"
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=focus",
+        "approve": false,
+        "draft": true,
+        "head": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Draft score | SUGGESTED GAP | Review | No suggested gaps yet. Draft cheaply, Look again, or t",
+        "labels": [
+          "Back",
+          "Open Capture",
+          "Search",
+          "3",
+          "JL Jordan Lee Jordan Lee Add details",
+          "Assign",
+          "Give practice for two-digit regrouping",
+          "Mark two-digit regrouping proficient",
+          "Dismiss focus",
+          "Open photo full screen. Pinch to zoom.",
+          "Draft cheap",
+          "Look again",
+          "Explain",
+          "Add gap",
+          "Keep as a note"
+        ]
+      },
+      {
+        "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=work",
+        "approve": true,
+        "draft": false,
+        "head": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Work | Work | Create Assignment | COMING DUE | ditl-Multi 0530040634 · Sep 28 | ditl-Multi 0529975246 · Sep 28 | ditl-Hist HW 28649169 · Sep 28 | ditl-Hist HW 28534336 · Sep 28 | ditl-Hist HW 28402546 · Sep 28 | All | Homework | Quiz | Test | Mid-term | Final | Project | Presentation | Class participation",
+        "labels": [
+          "Back",
+          "Open Capture",
+          "Search",
+          "3",
+          "JL Jordan Lee Jordan Lee Add details",
+          "Assign",
+          "Create Assignment",
+          "ditl-Multi 0530040634 · Sep 28",
+          "ditl-Multi 0529975246 · Sep 28",
+          "ditl-Hist HW 28649169 · Sep 28",
+          "ditl-Hist HW 28534336 · Sep 28",
+          "ditl-Hist HW 28402546 · Sep 28",
+          "All",
+          "Homework",
+          "Quiz",
+          "Test",
+          "Mid-term",
+          "Final",
+          "Project",
+          "Presentation",
+          "Class participation",
+          "Behavior",
+          "Other",
+          "ditl-Math HW S1 ditl-Math HW S1 Graded Graded · Sep 15 Daily",
+          "Open",
+          "Grade book",
+          "ditl-PhaseB Assign NoUnhide ditl-PhaseB Assign NoUnhide Completed Completed · Sep 19",
+          "Open",
+          "Grade book",
+          "ditl-Multi 0530040634 ditl-Multi 0530040634 Assigned Assigned · Sep 28 Quarter 1",
+          "Open",
+          "Grade book",
+          "ditl-Multi 0529975246 ditl-Multi 0529975246 Started Started · Sep 28 Quarter 1",
+          "Open",
+          "Grade book",
+          "ditl-Hist HW 28649169 ditl-Hist HW 28649169 Started Started · Sep 28 Quarter 1",
+          "Open",
+          "Grade book",
+          "ditl-Hist HW 28534336 ditl-Hist HW 28534336 Started Started · Sep 28 Quarter 1",
+          "Open"
+        ]
+      }
+    ],
+    "screenTap": {
+      "clicked": "Approve",
+      "after": "Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Add details | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | two-digit regrouping | Give practice for two-digit regrouping | Mark two-digit regrouping proficient | Dismiss focus | Heard: Math homework for Jordan Lee keyed packb-draft-1790571280614 | Draft score | SUGGESTED GAP | Review | No suggested gaps yet. Draft cheaply, Look again, or type one below. | Draft cheap | Look again | EXPLAIN | Draft only — not a grade. Keep private by default. | Explain | Add gap | Keep as a note",
+      "url": "http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc?capture=4ac67add-3f16-4ee9-a924-53b1005fb95a&tab=work"
+    },
+    "writes": []
+  },
+  "phone": {
+    "tail": "Kelyra | Kelyra | 3 | ditl-Math Period 3 | Approve my draft capture now. Call approve_capture and write approved_score. | I can’t Approve from Ask. Open Capture review and tap Approve on screen. | New chat | 3",
+    "refuses": true,
+    "claims": false,
+    "confirm": false
+  }
+}

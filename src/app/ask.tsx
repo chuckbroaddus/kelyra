@@ -13,17 +13,24 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
 import { runAskAgent, type AskChatLine } from '@/lib/ai/askAgent';
 import { GAUTH_REFUSAL_TITLE } from '@/lib/ai/askHomeworkRefuse';
-import { ASK_MODEL_TURNS, appendAskMessage, listAskMessages, startAskThread } from '@/lib/ai/askHistory';
+import {
+  ASK_MODEL_TURNS,
+  appendAskMessage,
+  askSeatFromChromeRole,
+  isTeacherAskHref,
+  listAskMessages,
+  startAskThread,
+} from '@/lib/ai/askHistory';
 import {
   effectiveAskAssignmentGround,
   getAskParentChildId,
 } from '@/lib/ask/assignmentGround';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { isOfficeChromeRole } from '@/lib/chrome/seat';
 import { firstName } from '@/lib/format';
 import { signedMessageUrl, type DraftAttach } from '@/lib/messages/attachments';
 import { can } from '@/lib/school/matrix';
-import { isOfficeRole } from '@/lib/school/roles';
 import { listRoster } from '@/lib/students/api';
 import type { MessagePayload } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -65,16 +72,24 @@ export default function AskScreen() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('Asking AI…');
   const [error, setError] = useState<string | null>(null);
-  const office = isOfficeRole(profile);
+  // Dual-hat: chrome seat is SoT for Ask role guards and ground rules.
+  const askRole = chrome.role !== 'none' ? chrome.role : (profile?.role ?? 'teacher');
+  const askSeat = askSeatFromChromeRole(askRole);
+  // Walls follow active seat — never job-of-record isOfficeRole(profile) on parent seat.
+  const office = isOfficeChromeRole(askRole);
+  // Parent seat does not inherit teacher working class.
+  const askClassId = askRole === 'teacher' || office ? chrome.classId : null;
+  const askClassName = askRole === 'teacher' || office ? chrome.className : null;
+  const askClassCount = askRole === 'teacher' || office ? chrome.classes.length : 0;
 
   const loadHistory = useCallback(async () => {
-    if (!profile) {
+    if (!profile || !askSeat) {
       setMessages([]);
       setReady(true);
       return;
     }
     try {
-      const rows = await listAskMessages();
+      const rows = await listAskMessages(askSeat);
       setMessages(
         rows.map((row) => ({
           id: row.id,
@@ -88,20 +103,18 @@ export default function AskScreen() {
     } finally {
       setReady(true);
     }
-  }, [profile]);
+  }, [profile, askSeat]);
 
   useEffect(() => {
     setReady(false);
+    setMessages([]);
     void loadHistory();
   }, [loadHistory]);
-  const [chips, setChips] = useState<string[]>(
-    office
-      ? ['Create a parent record', 'List the classes']
-      : ['Who still needs a name?', 'What gaps did I approve this week?'],
-  );
+  const [chips, setChips] = useState<string[]>([
+    'Who still needs a name?',
+    'What gaps did I approve this week?',
+  ]);
   const [groundTick, setGroundTick] = useState(0);
-  // Dual-hat: chrome seat is SoT for Ask role guards and ground rules.
-  const askRole = chrome.role !== 'none' ? chrome.role : (profile?.role ?? 'teacher');
   const [parentBoundId, setParentBoundId] = useState<string | null>(() => getAskParentChildId());
   const onGroundChange = useCallback(() => setGroundTick((n) => n + 1), []);
   // Re-read module child id on focus so twin switch on Home re-prompts Which assignment?
@@ -123,8 +136,8 @@ export default function AskScreen() {
       setChips(['Create a parent record', 'List the classes']);
       return;
     }
-    if (chrome.role !== 'teacher' || !chrome.classId) return;
-    void listRoster(chrome.classId)
+    if (askRole !== 'teacher' || !askClassId) return;
+    void listRoster(askClassId)
       .then((roster) => {
         const first = roster[0]?.display_name;
         if (first) {
@@ -136,11 +149,11 @@ export default function AskScreen() {
         }
       })
       .catch(() => undefined);
-  }, [chrome.role, chrome.classId, office, profile]);
+  }, [askRole, askClassId, office, profile, grants]);
 
   const send = async (text: string, payload: DraftAttach | MessagePayload | null = null) => {
     const trimmed = text.trim();
-    if ((!trimmed && !payload) || busy) return;
+    if ((!trimmed && !payload) || busy || !askSeat) return;
     const body =
       trimmed ||
       (payload?.type === 'photo' ? 'Photo' : payload?.type === 'file' ? payload.name : payload?.type === 'link' ? payload.title : '');
@@ -151,23 +164,24 @@ export default function AskScreen() {
     setStatus('Asking AI…');
     setError(null);
     try {
-      const savedId = await appendAskMessage('user', body, payload).catch(() => null);
+      const savedId = await appendAskMessage('user', body, payload, askSeat).catch(() => null);
       if (savedId) userBubble.id = savedId;
       const forModel = next.slice(-ASK_MODEL_TURNS);
       const lastPhoto = forModel.findLastIndex((row) => row.payload?.type === 'photo');
       const ground = effectiveAskAssignmentGround(askRole);
       const reply = await runAskAgent({
         profile,
-        teacherId: teacher?.id ?? null,
-        classId: chrome.classId,
+        // teachers.id === profile.id; prefer loaded row, else Teach-seat profile id (Inbox gate).
+        teacherId: teacher?.id ?? (askRole === 'teacher' ? profile?.id ?? null : null),
+        classId: askClassId,
         live: {
           // Dual-hat: chrome / profile seat is SoT — never merge seats.
           role: askRole,
           displayName: profile?.display_name ?? null,
           handle: profile?.username ?? null,
-          classId: chrome.classId,
-          className: chrome.className,
-          classCount: chrome.classes.length,
+          classId: askClassId,
+          className: askClassName,
+          classCount: askClassCount,
           studentId: boundStudentId,
           screen: pathname || '/ask',
           assignmentId: ground?.assignmentId ?? null,
@@ -178,9 +192,12 @@ export default function AskScreen() {
       });
       const bot: Bubble = { from: 'assistant', text: reply.text };
       setMessages([...next, bot]);
-      const botId = await appendAskMessage('assistant', reply.text, null).catch(() => null);
+      const botId = await appendAskMessage('assistant', reply.text, null, askSeat).catch(() => null);
       if (botId) bot.id = botId;
-      if (reply.href) router.push(reply.href as never);
+      // Parent seat must not navigate into teacher roster / capture routes.
+      if (reply.href && !(askRole === 'parent' && isTeacherAskHref(reply.href))) {
+        router.push(reply.href as never);
+      }
     } catch {
       setError('Kelyra is offline. Try again in a moment.');
     } finally {
@@ -189,11 +206,11 @@ export default function AskScreen() {
   };
 
   const onNewChat = async () => {
-    if (busy) return;
+    if (busy || !askSeat) return;
     setBusy(true);
     setError(null);
     try {
-      await startAskThread();
+      await startAskThread(askSeat);
       setMessages([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start a new chat');

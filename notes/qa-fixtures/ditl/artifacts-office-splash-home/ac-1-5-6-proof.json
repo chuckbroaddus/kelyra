@@ -1,0 +1,45 @@
+{
+  "ac-office-home-1": {
+    "pass": true,
+    "role": "administrator",
+    "hasTeacherBefore": false,
+    "hasTeacherAfter": false,
+    "peopleOk": true,
+    "splash": false,
+    "office": true,
+    "hasPeople": true,
+    "hasManage": true,
+    "preview": "Spring Baptist Academy Spring Baptist Academy Home Diary Calendar KelyraAsk @ditl-admin · Administrator · Parent Feed Classes People Manage New Classes Classes Post Alert Post Post Post · School · 5 hr ago Devon Hale @ditl-admin ditl-O06-UI02-1790536848361 ALERT notify path Replies · 0 Post · School · 5 hr ago Devon Hale @ditl-admin ditl-O06-UI01-1790536220851 POST school feed Replies · 0 Post · S"
+  },
+  "ac-office-home-5": {
+    "pass": true,
+    "role": "superintendent",
+    "hasTeacherBefore": false,
+    "hasTeacherAfter": false,
+    "manageOk": true,
+    "splash": false,
+    "office": true,
+    "hasPeople": true,
+    "hasManage": true,
+    "preview": "Spring Baptist Academy Spring Baptist Academy Home Diary Calendar KelyraAsk @ditl-super · Superintendent Feed Classes People Manage New People People Post Alert Post Post Post · School · 5 hr ago Devon Hale @ditl-admin ditl-O06-UI02-1790536848361 ALERT notify path Replies · 0 Post · School · 5 hr ago Devon Hale @ditl-admin ditl-O06-UI01-1790536220851 POST school feed Replies · 0 Post · School · 5 "
+  },
+  "ac-office-home-6": {
+    "pass": true,
+    "officeSeatNoRow": true,
+    "teacherSeatNoRowSplash": true,
+    "noInsertOnTeacherSeatNoRow": true,
+    "officeSeatWithRow": true,
+    "teacherSeatWithRow": true,
+    "teachUrl": "http://127.0.0.1:8081/",
+    "backOffice": true,
+    "teachersRowUnchangedForChuck": true,
+    "teachPreview": "Classes Classes 2 Desk 2 Needs Attention Diary Calendar Kelyra @superintendent · Superintendent · Teacher A APUSH APUSH › BC bible class bible class › DH ditl-English Homeroom ditl-English Homeroom › D3 ditl-Math Period 3 ditl-Math Period 3 › EC English Class English Class › FB FL02 Live Class B FL0",
+    "menuHadTeach": true
+  },
+  "_cleanup": {
+    "adminAlsoTeacher": false,
+    "adminHasTeacher": false,
+    "chuckAlsoTeacher": false,
+    "chuckHasTeacher": true
+  }
+}

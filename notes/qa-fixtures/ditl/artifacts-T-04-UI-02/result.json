@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today | Today | Calendar | JL | Jordan | Jordan | ",
+    "OK step2: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/gradebook snip=ditl-Math Period 3 | ditl-Math Period 3 | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Gradebook | Gradebook | Gradebook | Heatmap | Gradebook | Gradebook | All | Quarter 1 | Quarter 2 | Quarter 3 | Quarter 4 | Semester 1 | Semester 2 | Year | All | All | JL | Jordan | Jordan | JL | Jamie | Jamie | RC | Riley | Riley | SO | Samira | Samira | Assignment | Overall | ditl-Math Period 3 | ditl-",
+    "OK step3: overallLabel=true numeric=true blankOnly=false percents=[92] after=Overall | ditl-Math Period 3 | ditl-Math Period 3 | ditl-Math HW S1 | ditl-Math HW S1 | ditl-Math Quiz | ditl-Math Quiz | ditl-PhaseB Publish Probe | ditl-PhaseB Publish Probe | ditl-PhaseB Assign NoUnhide | ditl-PhaseB Assign NoUnhide | ditl-Hist HW 28402546",
+    "OK step4: syllabusPublished=true hasWeights=true weightLines=[\"Status: Published\",\"Categories and weights drive the final average. Nothing is a grade until you Approve work.\",\"Sum 100% · OK\",\"Add category\",\"+ Test\",\"Weight %\",\"key: homework\",\"Weight %\",\"key: quiz\",\"Weight %\",\"key: participation\",\"Year composite weighting comes later. v1 filters by term; weights are category weights inside the term.\",\"These apply across categories. Category-specific drop/makeup lives on each type.\",\"Score floor % (optional)\",\"Live weights update only when you publish changes (sum must be 100%).\"]",
+    "OK step5: jordan snip=Jordan Lee | Jordan Lee | 4 | Desk | 4 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Mar 15 | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jordan-place-value | Give practice for ditl-bulk-jordan-place-value | Mark ditl-bulk-jordan-place-value proficient | Dismiss focus | Heard: History homework for Jordan Lee ditl-",
+    "OK step6: published syllabus weights + Overall % visible",
+    "OK step7: teardown sign-out url=http://localhost:8081/"
+  ],
+  "findings": [],
+  "case": "DITL-T-04-UI-02",
+  "classId": "d1715000-0000-4000-a000-000000000301",
+  "studentId": "2bcee429-11ce-4f84-b2de-9aab349f03cc"
+}

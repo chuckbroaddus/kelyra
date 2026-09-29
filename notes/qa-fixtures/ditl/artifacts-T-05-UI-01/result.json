@@ -1,0 +1,217 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301 signedIn=true wrongSeat=false",
+    "OK step2: capture_surface url=http://localhost:8081/capture",
+    "OK step3: upload_path=library pageOk=true snip=Capture | Capture | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | Ask AI to process",
+    "OK step4: classifyHit=true snip=Capture | Capture | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | Remove page | Upload class stack | This will be a student card | Student card for Jordan Lee | Confirm every field. We will not invent a student. | JL | Jordan Lee | Jordan Lee | JL | Jamie Lee | Jamie Lee | RC | Riley Chen | Riley Chen | SO | Samira Okonkwo | Samira Okonkwo | A | Address | Address | 123 Maple St Austin TX 78701 | P | Phone | Phone | (512) 555-0142 | E | Email | Email | alex.rivera@school.edu | B | ",
+    "OK step5: jordan_visible=true picked=true",
+    "OK step5.5: saveEnabled=true",
+    "OK step6: after_save url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc snip=Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Mar 15 | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jordan-place-value | Give practice for ditl-bulk-jordan-place-value | Mark di",
+    "OK step6.5: details_fields=true snip=Jordan Lee | Jordan Lee | 3 | Desk | 3 | Needs Attention | Diary | Calendar | Kelyra | JL | Jordan Lee | Jordan Lee | Mar 15 | Focus | Skill history | Work | Practice | Parents | Details | Focus | Focus | Focus | ditl-bulk-jordan-place-value | Give practice for ditl-bulk-jordan-place-value | Mark ditl-bulk-jordan-place-value proficient | Dismiss focus | SUGGESTED GAP | Note | No suggested gaps yet",
+    "MISS step7: teardown_signout url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301"
+  ],
+  "findings": [],
+  "net": [
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c5d8b180\",\"name\":\"APUSH\",\"icon\":\"feedUSHistory\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c5d8b180\",\"name\":\"APUSH\",\"icon\":\"feedUSHistory\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": ""
+    },
+    {
+      "st": 401,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/assets?select=id%2Cstorage_path%2Cthumb_storage_path&id=in.%2898370f89-ded2-45d9-a08b-3aae57f18ae3%29",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/assets?select=id%2Cstorage_path%2Cthumb_storage_path&id=in.%2898370f89-ded2-45d9-a08b-3aae57f18ae3%29",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c5d8b180\",\"name\":\"APUSH\",\"icon\":\"feedUSHistory\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/ai_spend_this_month",
+      "snip": "[{\"usd\":0.1306,\"cap_usd\":null}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_my_feeds",
+      "snip": "[{\"kind\":\"school\",\"id\":\"d1715000-0000-4000-a000-000000000001\",\"name\":\"ditl-Sandbox Academy\",\"icon\":\"feedSchool\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"4c6b9d5f-4472-4ebd-8255-00e6c5d8b180\",\"name\":\"APUSH\",\"icon\":\"feedUSHistory\",\"can_edit\":false}, \n {\"kind\":\"class\",\"id\":\"d1715000-0000-4000-a000-000000000302\",\"name\":\"ditl-English Homeroom\",\"icon\":\"feedClass\",\"can_edit\":false}, \n {\"kind\":\"class\",\""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/school_logo_paths",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/assets?select=id%2Cstorage_path%2Cthumb_storage_path&id=in.%2898370f89-ded2-45d9-a08b-3aae57f18ae3%29",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/profile_photo_assets",
+      "snip": "[{\"profile_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"photo_asset_id\":null,\"storage_path\":null}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/assets?select=id%2Cstorage_path%2Cthumb_storage_path&id=in.%2898370f89-ded2-45d9-a08b-3aae57f18ae3%29",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/captures?select=*&class_id=eq.d1715000-0000-4000-a000-000000000301&status=in.%28unassigned%2Cattached%2Cdraft%2",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/list_alerts_for_me",
+      "snip": "[]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/students?select=*&id=in.%282bcee429-11ce-4f84-b2de-9aab349f03cc%2C899214d4-1ed7-47bd-8a1a-8304e8b7e692%2C8c5316",
+      "snip": "[{\"id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"teacher_id\":\"bf2c0770-c854-433d-9291-dd704e75307e\",\"display_name\":\"Jordan Lee\",\"sort_name\":\"Lee, Jordan\",\"name_aliases\":[\"Jordan\"],\"current_focus_skill_id\":\"1977a49a-1881-4e09-8965-3907174980d4\",\"parent_sentence\":\"Still working on ditl-bulk-jordan-place-value.\",\"metadata\":{\"email\": \"alex.rivera@school.edu\", \"notes\": \"Name: Alex Rivera\\nDate: 9/10/2026"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/captures?select=*&class_id=eq.d1715000-0000-4000-a000-000000000301&status=eq.unassigned",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/captures?select=*&class_id=eq.d1715000-0000-4000-a000-000000000301&status=eq.draft",
+      "snip": ""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/students?select=id%2Cdisplay_name%2Ccurrent_focus_skill_id&id=in.%282bcee429-11ce-4f84-b2de-9aab349f03cc%2C8992",
+      "snip": "[{\"id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"current_focus_skill_id\":\"1977a49a-1881-4e09-8965-3907174980d4\"}, \n {\"id\":\"899214d4-1ed7-47bd-8a1a-8304e8b7e692\",\"display_name\":\"Jamie Lee\",\"current_focus_skill_id\":\"ea458b5c-7aa4-46e1-a299-d105d073aab3\"}, \n {\"id\":\"8c5316e3-8967-4013-b3c1-c6dc1fcb9eb9\",\"display_name\":\"Riley Chen\",\"current_focus_skill_id\":\"f7e7393b-6430-411e-"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/captures?select=id&class_id=eq.d1715000-0000-4000-a000-000000000301",
+      "snip": "[{\"id\":\"08f8f3d1-995b-4d55-9382-655ff046c06e\"}, \n {\"id\":\"f0a588ce-3977-437f-8924-940d9ab58b0c\"}, \n {\"id\":\"1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba\"}, \n {\"id\":\"0792b88d-9052-4af5-974a-c0275ae5949f\"}]"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/students?select=id%2Cdisplay_name%2Ccurrent_focus_skill_id%2Cphoto_asset_id&id=in.%282bcee429-11ce-4f84-b2de-9a",
+      "snip": "[{\"id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"display_name\":\"Jordan Lee\",\"current_focus_skill_id\":\"1977a49a-1881-4e09-8965-3907174980d4\",\"photo_asset_id\":null}, \n {\"id\":\"899214d4-1ed7-47bd-8a1a-8304e8b7e692\",\"display_name\":\"Jamie Lee\",\"current_focus_skill_id\":\"ea458b5c-7aa4-46e1-a299-d105d073aab3\",\"photo_asset_id\":null}, \n {\"id\":\"8c5316e3-8967-4013-b3c1-c6dc1fcb9eb9\",\"display_name\":\"Riley Chen\",\""
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/captures?select=id%2Cclass_id%2Cstudent_id%2Ckind%2Cphoto_asset_id%2Caudio_asset_id%2Ctranscript%2Cinput_source",
+      "snip": "[{\"id\":\"1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba\",\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"kind\":\"homework\",\"photo_asset_id\":\"cf6240b0-a07a-47a4-8e4a-253b5b47cacd\",\"audio_asset_id\":null,\"transcript\":\"Jordan Lee\",\"input_source\":\"camera\",\"status\":\"draft\",\"guessed_student_id\":\"2bcee429-11ce-4f84-b2de-9aab349f03cc\",\"match_confidence\":1,\"draft_s"
+    }
+  ]
+}

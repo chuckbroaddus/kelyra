@@ -1,0 +1,54 @@
+{
+  "kind": "ui-proof",
+  "date": "2026-09-27",
+  "gate": "src/app/index.tsx if (!teacher && !officeSeat) return SplashLanding",
+  "auth": "AuthProvider select-only; no teachers insert from Home",
+  "results": {
+    "ac-office-home-1": {
+      "pass": true,
+      "evidence": [
+        "ac1-admin-office-home.png",
+        "ac1-people.png"
+      ],
+      "notes": "ditl-admin administrator hasTeacher=false \u2192 office home; People tab Staff list"
+    },
+    "ac-office-home-5": {
+      "pass": true,
+      "evidence": [
+        "ac5-super-office-home.png",
+        "ac5-manage.png"
+      ],
+      "notes": "ditl-super superintendent hasTeacher=false \u2192 office home; Manage reachable"
+    },
+    "ac-office-home-6": {
+      "pass": true,
+      "evidence": [
+        "ac6a-office-seat-no-row.png",
+        "ac6b-teacher-seat-no-row-splash.png",
+        "ac6c-office-seat-with-row.png",
+        "ac6d-teacher-seat-with-row.png",
+        "ac6e-back-office.png"
+      ],
+      "notes": {
+        "pass": true,
+        "officeSeatNoRow": true,
+        "teacherSeatNoRowSplash": true,
+        "noInsertOnTeacherSeatNoRow": true,
+        "officeSeatWithRow": true,
+        "teacherSeatWithRow": true,
+        "teachUrl": "http://127.0.0.1:8081/",
+        "backOffice": true,
+        "teachersRowUnchangedForChuck": true,
+        "teachPreview": "Classes Classes 2 Desk 2 Needs Attention Diary Calendar Kelyra @superintendent \u00b7 Superintendent \u00b7 Teacher A APUSH APUSH \u203a BC bible class bible class \u203a DH ditl-English Homeroom ditl-English Homeroom \u203a D3 ditl-Math Period 3 ditl-Math Period 3 \u203a EC English Class English Class \u203a FB FL02 Live Class B FL0",
+        "menuHadTeach": true
+      }
+    }
+  },
+  "cleanup": {
+    "adminAlsoTeacher": false,
+    "adminHasTeacher": false,
+    "chuckAlsoTeacher": false,
+    "chuckHasTeacher": true
+  },
+  "all_pass": true
+}

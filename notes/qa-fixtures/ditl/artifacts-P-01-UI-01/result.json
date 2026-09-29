@@ -1,0 +1,19 @@
+{
+  "case": "DITL-P-01-UI-01",
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: tray H=true R=true A=true cam=false",
+    "OK step3: chips Jordan=true Jamie=true",
+    "OK step4: url=http://localhost:8081/parent gradesish=true",
+    "OK step5: Jamie visible after switch=true",
+    "OK step6: url=http://localhost:8081/parent/ride",
+    "OK step7: vehicle surface plate=true (check-in does not pick own car)",
+    "OK step8: children chips present for pick",
+    "OK step9: position_visible=true failish=false",
+    "OK step10: leave_clicked=true leftish=true",
+    "OK step11: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "misses": []
+}

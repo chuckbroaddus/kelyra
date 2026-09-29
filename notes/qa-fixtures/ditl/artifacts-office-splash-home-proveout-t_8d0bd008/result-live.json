@@ -1,0 +1,93 @@
+{
+  "results": {
+    "AC-OFFICE-HOME-3-signed-out-web": {
+      "pass": false,
+      "detail": "Skip | Tap for sound"
+    },
+    "AC-OFFICE-HOME-1-web": {
+      "pass": true,
+      "detail": "Spring Baptist Academy | Spring Baptist Academy | Home | Diary | Calendar | KelyraAsk | @ditl-admin · Administrator · Parent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert | Post | Post | Post · School · 6 hr ago | Devon "
+    },
+    "AC-OFFICE-HOME-2-web": {
+      "pass": true,
+      "detail": "people=true manage=true"
+    },
+    "AC-OFFICE-HOME-9-web": {
+      "pass": false,
+      "detail": "splashAfter=false officeAgain=true"
+    },
+    "AC-OFFICE-HOME-5-web": {
+      "pass": false,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    },
+    "AC-OFFICE-HOME-5-manage-web": {
+      "pass": false,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    },
+    "AC-OFFICE-HOME-7-web": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/ office=true"
+    },
+    "AC-OFFICE-HOME-3-teacher-web": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301 ditl-Math Period 3 | ditl-Math Period 3 | 1 | Desk | 1 | Needs Attention | Diary | Calendar | Kelyra | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents"
+    },
+    "AC-OFFICE-HOME-3-student-web": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/todo Assignments | Assignments | 6 | Assignments | Feeds | Classes | Grades | People | Calendar | Ask | To Do | Done | To Do | To Do | All | ditl-English Homeroom | ditl-Math Period 3 |"
+    },
+    "AC-OFFICE-HOME-3-parent-web": {
+      "pass": true,
+      "detail": "Taylor Lee | Taylor Lee | Home | Ride | Calendar | Ask | TL | Taylor Lee | Taylor Lee | JL | Jamie | Jamie | JL | Jordan | Jordan | JL | ditl-Math Period 3 | Jamie Lee | Jamie Lee | This week Jamie is"
+    },
+    "AC-OFFICE-HOME-8-splash-web": {
+      "pass": true,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    },
+    "AC-OFFICE-HOME-3-signed-out-phone": {
+      "pass": false,
+      "detail": "Skip | Tap for sound"
+    },
+    "AC-OFFICE-HOME-1-phone": {
+      "pass": true,
+      "detail": "Spring Baptist Academy | Spring Baptist Academy | @ditl-admin · Administrator · Parent | Feed | Classes | People | Manage | New | Classes | Classes | Post | Alert | Post | Post | Post · School · 6 hr ago | Devon Hale @ditl-admin | ditl-O06-UI02-17905"
+    },
+    "AC-OFFICE-HOME-2-phone": {
+      "pass": true,
+      "detail": "people=true manage=true"
+    },
+    "AC-OFFICE-HOME-9-phone": {
+      "pass": false,
+      "detail": "splashAfter=false officeAgain=true"
+    },
+    "AC-OFFICE-HOME-5-phone": {
+      "pass": false,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    },
+    "AC-OFFICE-HOME-5-manage-phone": {
+      "pass": false,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    },
+    "AC-OFFICE-HOME-7-phone": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/ office=true"
+    },
+    "AC-OFFICE-HOME-3-teacher-phone": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/class/d1715000-0000-4000-a000-000000000301 ditl-Math Period 3 | ditl-Math Period 3 | 1 | Today | Needs Attention | Feed | Students | Assignments | Gradebook | Parents | Settings | Today | Today | Today | This week | Today |"
+    },
+    "AC-OFFICE-HOME-3-student-phone": {
+      "pass": true,
+      "detail": "url=http://127.0.0.1:8081/todo Assignments | Assignments | 6 | To Do | Done | To Do | To Do | All | ditl-English Homeroom | ditl-Math Period 3 | All | All | ditl-PhaseB Assign NoUnhide | ditl-PhaseB Assign NoUnh"
+    },
+    "AC-OFFICE-HOME-3-parent-phone": {
+      "pass": true,
+      "detail": "Taylor Lee | Taylor Lee | TL | Taylor Lee | Taylor Lee | JL | Jamie | Jamie | JL | Jordan | Jordan | JL | ditl-Math Period 3 | Jamie Lee | Jamie Lee | This week Jamie is working on | ditl-bulk-jamie-d"
+    },
+    "AC-OFFICE-HOME-8-splash-phone": {
+      "pass": true,
+      "detail": "Sign in | Account creation is performed by the school office. Please contact your school's administration for access."
+    }
+  },
+  "at": "2026-09-28T01:30:13.909Z"
+}

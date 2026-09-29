@@ -1,0 +1,25 @@
+{
+  "s1": {
+    "id": "2bcee429-11ce-4f84-b2de-9aab349f03cc",
+    "display_name": "Jordan Lee"
+  },
+  "enrolls": {
+    "err": "Could not find the table 'public.class_enrollments' in the schema cache"
+  },
+  "archives": {
+    "enrollment_archives": {
+      "err": "Could not find the table 'public.enrollment_archives' in the schema cache"
+    },
+    "class_enrollment_archives": {
+      "err": "Could not find the table 'public.class_enrollment_archives' in the schema cache"
+    },
+    "student_archives": {
+      "err": "Could not find the table 'public.student_archives' in the schema cache"
+    },
+    "archives": {
+      "err": "Could not find the table 'public.archives' in the schema cache"
+    },
+    "enrollments_with_archived_at": null
+  },
+  "classes": null
+}

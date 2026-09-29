@@ -29,7 +29,7 @@ Before school, a parent with two children opens Kelyra, checks each child’s pu
 | # | Beat | Surface / chrome |
 |---|------|------------------|
 | 1 | Sign in as parent | `/sign-in` → lands parent seat |
-| 2 | Confirm tray **Home · Ride · Ask** (3 tabs; no camera; no staff tabs) | Parent tray |
+| 2 | Confirm tray **Home · Ride · Ask · Calendar** (4 tabs; no camera; no staff tabs) | Parent tray |
 | 3 | Open **Home**; see child chips / list for both children | `/parent` |
 | 4 | Select child A; review thin grades / class cards / focus (P-H2 style) | `/parent` (+ `/parent/grades` if present) |
 | 5 | Switch to child B; confirm A state clears (sibling isolation) | `/parent` |
@@ -71,7 +71,7 @@ Full parent grades book (P-G* if still open defect — call PARTIAL, do not fail
 
 | Activity | UI | Ask |
 |----------|----|-----|
-| Sign-in / tray confirm | `/sign-in` → Home·Ride·Ask | — |
+| Sign-in / tray confirm | `/sign-in` → Home·Ride·Ask·Calendar | — |
 | Review child grades / focus | `/parent` (+ `/parent/grades`) | `/ask` `my_children_progress`; `explain_my_class_average` / `get_published_class_syllabus` if offered |
 | Sibling switch isolation | child chips on Home | Ask ground must follow selected child; no mash |
 | Vehicle pick | `/parent/ride` or `/parent/vehicles` | **PARTIAL/GAP** — no vehicle CRUD Ask tool |
@@ -84,7 +84,7 @@ Ask must not publish/mutate grades. Physical camera beats stay UI-primary.
 
 ## Suggested QE case themes (not cases)
 
-Sibling clear; check-in success XX; leave→left; restricted fail; tray = 3 only after parent login; Ask dual-path grades read without grade write.
+Sibling clear; check-in success XX; leave→left; restricted fail; tray = 4 including Calendar after parent login; Ask dual-path grades read without grade write.
 
 ## Teardown / cleanup (refine-2 2026-09-10)
 
@@ -138,6 +138,7 @@ SoT: `calendar-r5-intent.md`, `calendar-3d-wheel-intent.md`, card `t_0a62f427` c
 ## Changelog
 
 
+- **2026-09-27 (t_9fd8ed09):** Parent tray includes Calendar (4 tabs: Home · Ride · Ask · Calendar; no camera; no staff tabs)
 - **2026-09-24 (t_0a62f427):** Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar
 - **2026-09-24 (t_2c13f9ac):** Journal daychrome scan note (primary on T-04)
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways

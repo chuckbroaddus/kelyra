@@ -1,0 +1,107 @@
+{
+  "case": "DITL-S-03-UI-02",
+  "result": "PARTIAL",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/todo signedIn=true",
+    "OK step2: listOk=true focusCue=true cross=false",
+    "OK step3: opened=true sid=8c1e6ed0-f708-454b-b509-9b40ff2c3377 title=ditl-PhaseB Assign NoUnhide url=http://localhost:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+    "OK step4: filled_ops=0 stillOnDetail=true url=http://localhost:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377 bodyHasAns=false",
+    "MISS step5: completed=false clickedTurnIn=true submitHit=false completeCue=false leftToTodo=false url=http://localhost:8081/todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+    "OK step6: onDone=true titleOnDone=true stillOpenOnly=true",
+    "OK step7: peopleBleed=false",
+    "OK step8: signedOut=true"
+  ],
+  "findings": [
+    "FINDING: student Turn in on focus practice PhaseB calls student_submit and gets 400 Submission not found or already submitted while list still shows started and empty items/kind=planned; severity P1; case DITL-S-03-UI-02"
+  ],
+  "user": "ditl-student-s1",
+  "lane": "C",
+  "ud": "/tmp/ditl-pw-lane-c",
+  "submissionId": "8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+  "focusTitle": "ditl-PhaseB Assign NoUnhide",
+  "completed": false,
+  "onDone": true,
+  "rpcHits": [
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"c045a52d-47e2-48a9-8d60-1520007f3481\",\"assignment_id\":\"e3a7e01e-8a0b-4234-aacf-e9d151042411\",\"assignment_title\":\"ditl-Hist HW 28402546\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 400,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_submit",
+      "snip": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"Submission not found or already submitted\"}"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    },
+    {
+      "st": 200,
+      "u": "https://aohibokgilxhqwmupdfv.supabase.co/rest/v1/rpc/student_list_todo",
+      "snip": "[{\"submission_id\":\"f0a8dac9-09ad-4bfb-9d97-50f48f94a5a5\",\"assignment_id\":\"76f4b8b3-e0fc-437a-9542-3cc04c664082\",\"assignment_title\":\"ditl-Hist HW 28649169\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0000-4000-a000-000000000301\",\"class_name\":\"ditl-Math Period 3\",\"class_icon\":\"feedClass\",\"approved_score\":null,\"score_mark\":\"numeric\",\"deck_id\":null,\"lesson_version\":null,\"items\":[],\"answers\":null,\"focus_label\":\"ditl-bulk-jordan-place-value\",\"help_mode\":\"off\"},{\"submission_id\":\"73ef8961-67db-4d3d-862a-e39b6cc0d804\",\"assignment_id\":\"ff362576-235c-4b06-834b-9b5a41829667\",\"assignment_title\":\"ditl-Hist HW 28534336\",\"kind\":\"planned\",\"status\":\"assigned\",\"due_at\":\"2026-09-28T21:00:00+00:00\",\"submitted_at\":null,\"class_id\":\"d1715000-0"
+    }
+  ],
+  "submitError": "Submission not found or already submitted"
+}

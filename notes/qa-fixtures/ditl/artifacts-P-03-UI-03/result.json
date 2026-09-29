@@ -1,0 +1,18 @@
+{
+  "case": "DITL-P-03-UI-03",
+  "result": "PASS",
+  "evidence": [
+    "OK step0: restriction fixture set for Jordan",
+    "OK step1: url=http://localhost:8081/parent parentish=true",
+    "OK step2: url=http://localhost:8081/parent/ride",
+    "OK step3: picks Jordan visible",
+    "OK step4: fail_closed=true position=false",
+    "OK step5: no_reason_shown leak=false",
+    "OK step6: signedOut=true url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "misses": [],
+  "fatals": [],
+  "lane": "B",
+  "ud": "/tmp/ditl-pw-lane-b"
+}

@@ -1,0 +1,29 @@
+{
+  "case": "DITL-S-01-UI-01",
+  "result": "PARTIAL",
+  "lane": "C",
+  "user": "ditl-student-s1",
+  "school": "ditl-Sandbox Academy",
+  "submissionId": "8c1e6ed0-f708-454b-b509-9b40ff2c3377",
+  "assignmentTitle": "ditl-PhaseB Assign NoUnhide",
+  "assignmentKind": "planned",
+  "evidence": [
+    "Live Chromium user-data-dir=/tmp/ditl-pw-lane-c headless against http://localhost:8081",
+    "OK sign-in ditl-student-s1 → /todo Jordan Lee student_me class ditl-Math Period 3",
+    "OK /todo shows To Do|Done + class chips ditl-English Homeroom | ditl-Math Period 3",
+    "OK seeded open row: ditl-PhaseB Assign NoUnhide Due Sep 19 (only open assigned item)",
+    "MISS WorkRow Open pill: getByText(/^Open$/)=0; title/due clicks did not route (RN web)",
+    "OK deep-link /todo/8c1e6ed0-f708-454b-b509-9b40ff2c3377 after student_list_todo RPC capture",
+    "Detail paint: title + class ditl-Math Period 3 + Turn in sticky; FIELDS=0 (items:[])",
+    "MISS Turn in: UI shows Could not submit; stayed on detail; status remained assigned on To Do",
+    "OK /student/class shows ditl-English Homeroom + ditl-Math Period 3 isolation surface",
+    "OK sign-out cleared session → /sign-in",
+    "Teardown: no status change (submit failed); no DB reset needed",
+    "Screens: notes/qa-fixtures/ditl/artifacts-S-01-UI-01/*.png"
+  ],
+  "findings": [
+    "FINDING: Student practice Turn in returns Could not submit for seeded assigned planned-kind row ditl-PhaseB Assign NoUnhide (empty items); severity P1; case DITL-S-01-UI-01",
+    "FINDING: Student To Do WorkRow Open pill not reachable / title click does not navigate on web (no href; Open count 0); severity P2; case DITL-S-01-UI-01"
+  ],
+  "notes": "Only open todo was kind=planned not practice; no alternate seeded practice with answer fields. Per card do not invent schoolwork → PARTIAL."
+}

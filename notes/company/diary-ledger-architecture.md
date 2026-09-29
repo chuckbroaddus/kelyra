@@ -89,12 +89,13 @@ Hard-delete. Confirm “cannot be undone.” No trash. No `write_audit` on diary
 | `id` | uuid PK | |
 | `entry_id` | uuid NOT NULL | FK CASCADE |
 | `owner_profile_id` | uuid NOT NULL | Denormalized for storage RLS |
-| `kind` | text | v1: `photo` only |
-| `storage_path` | text NOT NULL | See §2.4 |
-| `content_type` | text | |
-| `byte_size` | int | |
+| `kind` | text | `photo` or `file`. Not photo-only (ADR 2026-09-25). |
+| `file_name` | text NULL | Display name for `file`. Not a storage key. |
+| `storage_path` | text NOT NULL | See §2.4. Contract is the seat path, not a free string. |
+| `content_type` | text | Client mime today. Allowlist is debt `t_2afbbd20`, not a second bucket. |
+| `byte_size` | int | Empty file rejected in the client. Size cap is the same debt. |
 
-Not a `captures` row. Not Inbox. Delete entry GC’s objects.
+Not a `captures` row. Not Inbox. Not a message attachment. Not a ledger or audit row. Delete entry GC’s objects. Do not copy body or media paths into `ledger_events`.
 
 ### 2.3 `ledger_events` (new; not a view on `audit_events`)
 
@@ -118,13 +119,17 @@ Indexes: `(owner_profile_id, seat, created_at desc)`, `(student_id)`, `(class_id
 
 ### 2.4 Storage
 
-**New bucket `diary`:** `public = false`. Do **not** reuse `photos` / `audio` / `files` (those already have thread/class/logo policies).
+**Bucket `diary` only** (`public = false`). ADR 2026-09-25, CEO accepted. Do **not** upload Journal bytes to `photos`, `audio`, `files`, or `ingest`. Those buckets have thread, class, logo, or worker policies. A Journal file must not become a message attachment.
 
-Path: `{owner_profile_id}/{seat}/{entry_id}/{media_id}`. First segment **must** equal `auth.uid()`.
+Path contract: `{auth.uid()}/{seat}/{entry_id}/{media_id}.{ext}`. First segment **must** equal `auth.uid()`. **Seat is part of the path, not only a UI filter.** Extension is part of the object name (client: `jpg`/`png` for photos; file name extension, else `bin`).
 
-Reads: owner-only **signed URLs** (short TTL). No public object URL. No family/co-teacher/Office SELECT (US-PRIV-2).
+Reads: owner-only **signed URLs**, short TTL (client 600s). No public object URL. No family/co-teacher/Office SELECT (US-PRIV-2). **Files** open with the system handler, not an in-app WebView. Photos may use the in-app image viewer on that signed URL.
+
+Body link cards may keep the Feed-style look. Unfurl output is display-only. Do **not** write unfurl images or URLs into `diary_media`, ledger, or messages.
 
 v1 STT: audio is request-ephemeral; **do not** persist raw diary audio.
+
+RLS today checks owner uid and bucket prefix uid only. It does **not** yet bind `storage_path` to seat + entry id, and file rows have no mime or size cap. That gap is debt `t_2afbbd20`. Do not treat this paragraph as applied SQL.
 
 ## 3. Authz / RLS (honest)
 
@@ -148,7 +153,7 @@ Research models A/B/C (DIARY-R1 §2). **Ship C. Advertise C. Roadmap B. Do not c
 | Ledger SELECT | `owner_profile_id = auth.uid()`. UI filters `seat` = active chrome. |
 | Ledger INSERT | **Not** client. Only `write_ledger` SECURITY DEFINER. |
 | Ledger UPDATE/DELETE | **Revoke from all.** Append-mostly. |
-| Storage `diary` | First path segment = `auth.uid()`::text. Same hats. |
+| Storage `diary` | Object name contract is `{auth.uid()}/{seat}/{entry_id}/{media_id}.{ext}`. Live policy still checks first segment = `auth.uid()`::text only. Seat/entry bind is debt `t_2afbbd20`, not a claim that RLS already enforces it. |
 
 Client may INSERT diary rows under RLS. `write_ledger`: REVOKE EXECUTE from `authenticated`; call only from existing definer RPCs. Owner always `auth.uid()` inside the helper — never a parameter the client picks.
 
@@ -259,7 +264,7 @@ Not a full threat model. Pick-up list. **Do not** treat RLS as encryption.
 |---|---|---|---|
 | T1 | Office/co-teacher SELECT via `is_staff` / `teaches_class` copy-paste | Policies owner-only; security tests must `doesNotMatch` those helpers (pattern: lesson_packs) | Reviewer misses a new policy |
 | T2 | `service_role` / dashboard / backups read plaintext | Honest copy; restrict dashboard; no diary in logs | Host + backups still have body |
-| T3 | Public or reused `photos` bucket | Dedicated `diary` bucket, `public=false`, path prefix = uid | Mis-set bucket public flag |
+| T3 | Public bucket, or Journal bytes in `photos` / `files` / `ingest` | Private `diary` only; path `{auth.uid()}/{seat}/{entry_id}/{media_id}.{ext}`; system handler for files | Mis-set public flag; RLS not yet binding seat (debt `t_2afbbd20`) |
 | T4 | Signed URL leak / referrer | Short TTL; no public listing | Forwarded URL until expiry |
 | T5 | Client `write_ledger` forgery | REVOKE execute; emitters only | Trigger bugs |
 | T6 | Ledger miss on Approve | Best-effort; monitor; never fail the grade write | Defense gap if emit always fails |

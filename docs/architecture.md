@@ -65,7 +65,7 @@ One TypeScript client. One hosted backend. One server-side AI adapter. No custom
 | **Backend** | **Supabase** | Auth, Postgres, Storage, Edge Functions, RLS. No separate Nest/Rails app in v1. |
 | **Database** | **Postgres 15+** on Supabase | Schema from `docs/data-model.md`. Relational grade book. `students.metadata jsonb` unused in UI. |
 | **Auth** | Supabase Auth | Teacher: email + magic link or password. Parent: magic link on invite. Student: class `join_code` + pick roster name → signed session with `student_id` claim (custom token or a thin Edge Function). |
-| **Storage** | Supabase Storage (private buckets) | `photos/`, `audio/`. Signed URLs, reused until near expiry. Lists and avatars load `*_thumb`; Capture review and AI use the original. Not public. |
+| **Storage** | Supabase Storage (private buckets) | `photos/`, `audio/`. Signed URLs, reused until near expiry. Lists and avatars load `*_thumb`; Capture review and AI use the original. Not public. Journal photos and files are not these buckets — see Journal storage. |
 | **AI** | **SpaceXAI (xAI)** behind a 5-method adapter | Cheap vision (`grok-4.20-0309-non-reasoning`, `detail: low`, resized to 1280) for classify / homework drafts / keys. Text (`grok-build-0.1`) for practice and PPT outlines. **grok-4.6** only for Ask and an explicit Look-again pass. Homework attached from Inbox is queued; teacher taps Draft queued. STT is Grok Voice. Local: `npm run ai:dev`. Production: `XAI_API_KEY` in Edge secrets. PPT → `npm run pptx:lesson` extracts text locally and does not store the BJU file. |
 | **AI fallback (not wired until needed)** | Gemini 3.5 Flash-Lite | Cheapest published all-in-one meter in `research/06`. Swap inside the adapter if handwriting or cost fails. Do **not** add Document AI / Textract in v1. |
 | **Email** | Resend or Postmark | Parent invite link. Not SMS. |
@@ -144,3 +144,25 @@ Gemini Flash-Lite as the adapter backend would likely sit at the low end of the 
 4. Web Approve + simple grade book.
 5. Generate practice + student class-link to-do.
 6. Parent invite.
+
+---
+
+## Journal storage (ADR 2026-09-25)
+
+CEO accepted 2026-09-25 4:23 PM CT. This section is that decision only. It is not a restamp of this file (`t_90dfa50e` stays parked). It does not change the Journal screen. Path-bind and mime/size enforcement stay on debt `t_2afbbd20`. No app code and no SQL from this ADR.
+
+Journal photos and files stay in the private `diary` bucket (`public = false`).
+
+Object path: `{auth.uid()}/{seat}/{entry_id}/{media_id}.{ext}`.
+
+Seat is part of the path, not only a UI filter. The same JWT can wear more than one hat; the seat segment is the wall the object name carries.
+
+They are not message attachments. Do not upload Journal bytes to `files`, `photos`, or `ingest`. Those buckets have thread, class, or worker policies. A Journal PDF must not become readable by a thread member.
+
+The row is `diary_media`, with `kind` in `photo|file`. Not a `captures` row. Not Inbox. Not a ledger or audit row. Hard-delete must not write the diary body or media paths into `ledger_events`.
+
+Reads are an owner-only short-TTL signed URL. The client TTL is 600 seconds (`DIARY_SIGN_TTL_SEC`). Files open with the system handler (`Linking.openURL`), not an in-app WebView and not a public object URL. Photos may render in the in-app image viewer from that signed URL. That viewer is not a WebView and not a public URL.
+
+Body link cards may keep the approved Feed-style look. Unfurl output is display-only. Do not write unfurl results into `diary_media`, ledger, or messages. Do not add a second bucket or a second backend for Journal links.
+
+Shape spec: `notes/company/diary-ledger-architecture.md` §2.2–§2.4. Weekly record: `notes/company/ARCH_WEEKLY_2026-09-25.md`.

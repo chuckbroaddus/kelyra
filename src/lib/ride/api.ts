@@ -1,4 +1,5 @@
 import { uploadPhotoPair } from '@/lib/media/upload';
+import { pickupRestrictionClearTargets } from '@/lib/ride/restriction';
 import { requireSupabase } from '@/lib/supabase/client';
 
 export type DismissalLine = { id: string; name: string; sort: number; status: string };
@@ -290,6 +291,40 @@ export async function setPickupRestriction(input: {
     p_active: input.active ?? true,
   });
   if (error) throw error;
+}
+
+/**
+ * Clear the saved restriction for student + optional parent.
+ * Must pass p_id: office_set_pickup_restriction inserts when p_id is null even if active false.
+ * Already-cleared pair: no-op (does not insert).
+ */
+export async function clearPickupRestriction(input: {
+  studentId: string;
+  parentId?: string | null;
+}): Promise<void> {
+  const studentId = input.studentId.trim();
+  if (!studentId) throw new Error('student required');
+  const parentId = input.parentId?.trim() ? input.parentId.trim() : null;
+
+  let query = requireSupabase()
+    .from('pickup_restrictions')
+    .select('id, student_id, parent_id, active')
+    .eq('student_id', studentId)
+    .eq('active', true);
+  query = parentId == null ? query.is('parent_id', null) : query.eq('parent_id', parentId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const ids = pickupRestrictionClearTargets(data ?? [], studentId, parentId);
+  for (const id of ids) {
+    await setPickupRestriction({
+      id,
+      studentId,
+      parentId,
+      active: false,
+    });
+  }
 }
 
 export async function archiveDayPhotos(schoolDate: string): Promise<{ archived_count?: number }> {

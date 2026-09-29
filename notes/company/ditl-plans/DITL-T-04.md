@@ -2,6 +2,7 @@
 <!-- DITL-UPDATE t_0a62f427 2026-09-24: Calendar surface R4/CR/R5/3DW/P6 deltas; Desk≠Year; Diary≠Calendar -->
 <!-- DITL-UPDATE t_2c13f9ac 2026-09-24: Journal daychrome B + follow-tab; month survives Ledger; DB-PROD-04/DB-LEDGER-01 -->
 <!-- DITL-UPDATE t_3be49702 2026-09-24: RS-B Decision Accept-first; draft≠grade; Parent never Accept; Pack B still required -->
+<!-- DITL-UPDATE t_18cd105a 2026-09-28: Ask cannot write an approved score; screen Approve stays -->
 <!-- DITL-UPDATE t_b4f598b3 2026-09-24: Soft v8b idle=kelyra.png / working=letter+face+comet; morph both ways -->
 <!-- DITL-UPDATE t_71f42604 2026-09-24: Students ClassTabs single row (layout host only; no Screen.collapse duplicate) -->
 <!-- DITL-UPDATE t_730cda45 2026-09-24: CT-A ClassTabs morph + DeskSpanTabs visibility on Teach desk -->
@@ -34,7 +35,7 @@ Full teacher academic day on shipped surfaces: apply syllabus to class; create a
 | 4 | Create quiz (category=quiz) | SUPPORTED | assign UI category quiz | Ask `create_assignment` category quiz — **no** quiz→include shortcut |
 | 5 | Scan answer key → associate assignment | SUPPORTED | key photo + assign flow | `/ask` `scan_answer_key` then confirm `create_assignment` |
 | 6 | Scan answer key → associate quiz | SUPPORTED | same with quiz category | Ask scan + create quiz category |
-| 7 | Focus exercise for one student | SUPPORTED | Approve gap sets `current_focus_skill`; generate/assign practice to student | Ask `approve_capture` / desk tools + `create_assignment` practice; `summarize_class_desk` focus list — map “focus exercise” to practice-on-focus, not invented object |
+| 7 | Focus exercise for one student | SUPPORTED | Screen Approve of a gap sets `current_focus_skill`; generate/assign practice to student | Ask must not approve. `approve_capture` is gone or fail-closed. No confirm card. Screen Approve stays. Then `create_assignment` practice; `summarize_class_desk` focus list — map “focus exercise” to practice-on-focus, not invented object |
 | 8 | Grade assignment submission | SUPPORTED | gradebook / submission score after Approve gate | Ask `list_grade_cells`; score write may be UI-primary if no grade-write tool → **PARTIAL** score-via-Ask |
 | 9 | Grade quiz submission | SUPPORTED | gradebook | same PARTIAL Ask score |
 | 10 | Message student’s parent | SUPPORTED | `/messages` or class parent page | `/ask` `send_message` / `list_threads` |

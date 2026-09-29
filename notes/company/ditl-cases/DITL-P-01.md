@@ -9,7 +9,7 @@
 - Pre: F-PARENT-1 (`ditl-parent-1`), S1=`Jordan Lee`, S2=`Jamie Lee`, published grades on Math (A), V1=`DITL-AAA1`, Line A, passwords `DITL-parent-test`
 - Steps (UI):
   1. Route `/sign-in` → sign in `ditl-parent-1` / `DITL-parent-test` → parent seat.
-  2. Confirm tray Home·Ride·Ask (no camera/staff) at `/parent`.
+  2. Confirm tray Home · Ride · Ask · Calendar (4 tabs; no camera; no staff tabs) at `/parent`.
   3. Home (`/parent`): see child chips for S1+S2 (no bleed).
   4. Select S1 (`Jordan Lee`) → thin grades/focus visible (P-H2 style) at `/parent/grades`.
   5. Switch S2 (`Jamie Lee`) → prior state clears (isolation).
@@ -19,7 +19,7 @@
   9. Check-in (photo or first) → position XX visible only at `/parent/ride`.
   10. Leave line → `left` event.
   11. Sign out.
-- Expected: Sibling isolation; position only; leave succeeds (no released mint); tray=3 only.
+- Expected: Sibling isolation; position only; leave succeeds (no released mint); tray=4 including Calendar (Home · Ride · Ask · Calendar; no camera; no staff tabs).
 - Artifact: none
 - DB assert: ride_events for parent only (type check-in/left); no other parents affected.
 - Teardown: per plan: leave line if waiting → sign out (idempotent). Isolation `ditl-` only.
@@ -47,6 +47,7 @@
 ## Changelog
 
 
+- **2026-09-27 (t_57a4d791):** Parent tray UI-01 expects Calendar (4 tabs: Home · Ride · Ask · Calendar)
 - **2026-09-24 (t_0a62f427):** Calendar R4/R5/3DW/P6 navigation case
 - **2026-09-24 (t_b4f598b3):** Soft v8b idle/working case beat
 

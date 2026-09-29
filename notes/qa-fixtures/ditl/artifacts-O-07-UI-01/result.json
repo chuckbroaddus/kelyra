@@ -1,0 +1,22 @@
+{
+  "case": "DITL-O-07-UI-01",
+  "result": "FAIL",
+  "lane": "A",
+  "browser": "Chromium persistent /tmp/ditl-pw-lane-a",
+  "app": "http://localhost:8081",
+  "evidence": [
+    "start HTTP 200; mid-run ERR_CONNECTION_REFUSED; post-run curl 000",
+    "OK step1 splash Home after ditl-admin sign-in",
+    "OK step2 S1 Details via class student route",
+    "GAP photo sheet Take photo/Choose from library only",
+    "MISS metadata filledKeys empty",
+    "app dead before teardown/sign-out"
+  ],
+  "findings": [
+    "FINDING: S1 Details metadata edit did not open/persist canonical keys (Preferred name opened PHOTO sheet; filledKeys empty); severity P1; case DITL-O-07-UI-01",
+    "FINDING: localhost:8081 refused connection mid-case after Details was live; severity P2; case DITL-O-07-UI-01"
+  ],
+  "gaps": [
+    "GAP: office photo extract / attach-from-card — photo sheet UI only, no proven card attach (known gaps.md)"
+  ]
+}

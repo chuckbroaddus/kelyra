@@ -1,0 +1,20 @@
+{
+  "surface": "phone-vp",
+  "inboxSnip": "Needs Attention | Needs Attention | 1 | Draft queued (1) | Note | Delete | Review | Jordan Lee | Jordan Lee | Review | Heard: Jordan Lee | Sep 11, 1:32 AM · 1 page | Review | Note only | Delete | Needs a name | Review | All | 1",
+  "inboxHasJordan": true,
+  "teacherAsk": "Kelyra | Kelyra | 1 | ditl-Math Period 3 | Call list_inbox for the open class. Return id/status or empty. No Approve. | 1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba — draft | New chat | 1",
+  "seatRefuse": false,
+  "listed": true,
+  "ac1": true,
+  "ac2": true,
+  "parentAsk": "Kelyra | Kelyra | Call list_inbox for teacher Needs inbox. Return tool result. | I can’t. There’s no `list_inbox` tool on this parent seat, and I don’t open the teacher Needs inbox. | Unread for you: use Messages. Needs Attention is the teacher Capture queue — not this profile. | New chat | Pick a child on Home first, then choose an assignment here.",
+  "ac3_parent": true,
+  "studentAsk": "Kelyra | Kelyra | 6 | Call list_inbox for teacher Needs inbox. Return tool result. | I can’t call `list_inbox`. That tool isn’t on this student seat. | New chat",
+  "ac3_student": true,
+  "ac": {
+    "AC-ASK-INBOX-1": "PASS",
+    "AC-ASK-INBOX-2": "PASS",
+    "AC-ASK-INBOX-3_parent": "PASS",
+    "AC-ASK-INBOX-3_student": "PASS"
+  }
+}

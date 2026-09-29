@@ -1,0 +1,6 @@
+DITL-S-03-ASK-01 RESULT=PASS lane=C Chromium /tmp/ditl-pw-lane-c
+App: http://localhost:8081 user=ditl-student-s1
+list_threads/list_thread_messages → one Avery thread (UI-01 marker)
+focus via list_my_practice focus labels ditl-bulk-jordan-place-value (S1 only)
+send_message id 47f09edb thread 4ef24cae; dual /messages shows probe
+FINDINGS: none

@@ -29,6 +29,7 @@ import {
 } from '@/lib/chrome/hideOnScroll';
 import { isOpenWork } from '@/lib/assignments/status';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { peekPendingUiProofSeat } from '@/lib/auth/personaInject';
 import { unreadCount } from '@/lib/messages/api';
 import { isStaffRole } from '@/lib/school/roles';
 import {
@@ -37,6 +38,7 @@ import {
   chromePathnameForSeatNav,
   chromeSeatRootHref,
   loadChromeSeatPreference,
+  readSessionParentSeat,
   resolveStaffChromeRole,
   saveChromeSeatPreference,
   shouldClearSeatNavPath,
@@ -271,6 +273,21 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setSeatPreference(null);
       setSeatNavPath(null);
       return;
+    }
+    const pending = peekPendingUiProofSeat();
+    if (pending && availableChromeSeats(profile).includes(pending)) {
+      setSeatPreference(pending);
+      // Parent seat is session-only; save still writes session altitude for bare /ask.
+      void saveChromeSeatPreference(profile.id, pending);
+      setSeatNavPath(chromeSeatRootHref(pending));
+      return () => {
+        live = false;
+      };
+    }
+    // Sync session Parent into seatPreference before async restore so resolveStaffChromeRole
+    // always sees seatPreference (SEC-01) and bare /ask keeps Parent (AC-DUAL-ASK-1).
+    if (readSessionParentSeat(profile.id)) {
+      setSeatPreference('parent');
     }
     void loadChromeSeatPreference(profile.id).then((stored) => {
       if (live) setSeatPreference(stored);

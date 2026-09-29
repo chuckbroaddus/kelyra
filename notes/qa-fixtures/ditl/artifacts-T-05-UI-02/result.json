@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "evidence": [
+    "OK step1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301",
+    "MISS step2: rileyId=null",
+    "OK step3: samiraId=cd84bffd-33fb-4023-a7e3-c39598b85e88",
+    "OK stepS-jordan-S1: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/2bcee429-11ce-4f84-b2de-9aab349f03cc cardHits=[] mar15=true addDetails=false expectCard=true",
+    "OK step4: S1 mar15=true hits=[]",
+    "OK stepS-jamie-S2: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/899214d4-1ed7-47bd-8a1a-8304e8b7e692 cardHits=[] mar15=false addDetails=true expectCard=false",
+    "OK step5: S2 bleed=false hits=[] addDetails=true",
+    "OK step6: S4 id unresolved — checked roster presence only",
+    "OK stepS-samira-S5: url=http://localhost:8081/class/d1715000-0000-4000-a000-000000000301/student/cd84bffd-33fb-4023-a7e3-c39598b85e88 cardHits=[] mar15=false addDetails=false expectCard=false",
+    "OK step7: S5 bleed=false hits=[]",
+    "OK step8: S3 Morgan Patel not on Teacher A Math (seed) — no bleed surface",
+    "OK step9: twin_names_visible=true",
+    "OK step10: signout url=http://localhost:8081/sign-in"
+  ],
+  "findings": [],
+  "case": "DITL-T-05-UI-02",
+  "lane": "A",
+  "bleedList": []
+}
