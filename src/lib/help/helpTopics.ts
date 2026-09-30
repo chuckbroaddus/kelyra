@@ -67,7 +67,7 @@ export const BUNDLED_HELP_TOPICS: HelpTopic[] = [
   topic('help.excused', 'Excused',
     'Removed from earned and possible. Never a zero.',
     ['live_grade', 'report_card'],
-    'Excused test: only remaining work averages.', 'FR-HELP-02'),
+    '98/120 when the 10-pt item is excused vs 98/130 if it counted as zero.', 'FR-HELP-02'),
   topic('help.late', 'Late penalty',
     'Changes the counted score. Does not change max points unless the function says so.',
     ['live_grade', 'report_card', 'letter'],

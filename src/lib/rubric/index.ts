@@ -38,5 +38,6 @@ export {
   buildProposalFromParse,
   isProposalOpen,
   statusAfterConfirm,
+  shouldPostAiScoreToGradebook,
   AI_HIGH_CONFIDENCE_THRESHOLD,
 } from './aiProposal.ts';
