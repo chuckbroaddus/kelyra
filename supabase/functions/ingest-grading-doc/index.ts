@@ -6,23 +6,17 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { isAllowedAskImageUrl } from '../_shared/askImageUrl.ts';
 import { imageDetailFor } from '../_shared/aiPolicy.ts';
-
-const SCHOOL_PATHS = new Set([
-  'level', 'calendar.template', 'calendar.year_start', 'calendar.year_end', 'calendar.model',
-  'calendar.period_model', 'credit.policy', 'credit.unit', 'credit.year_link', 'credit.attendance_gate',
-  'credit.passing_threshold', 'rollup.preset', 'rollup.custom_weights', 'rollup.exam_enabled',
-  'scale.default_id', 'scale.list', 'scale.bands', 'scale.passing_pct', 'scale.rounding',
-  'qp.tables', 'qp.method', 'levels.list', 'gpa.mode', 'gpa.profiles', 'gpa.include', 'gpa.repeat',
-  'locks.map', 'school.notes',
-]);
-
-const SYLLABUS_PATHS = new Set([
-  'syllabus.title', 'syllabus.engine', 'syllabus.within_category', 'syllabus.categories',
-  'syllabus.late_rule', 'syllabus.missing_rule', 'syllabus.extra_credit_method', 'syllabus.ec_cap',
-  'syllabus.floor', 'syllabus.ceiling', 'syllabus.book_mode', 'syllabus.exam_weight',
-  'syllabus.rollup_preset', 'syllabus.rounding', 'syllabus.empty_category', 'syllabus.narrative',
-  'syllabus.term_structure',
-]);
+import { isAllowedPath } from '../_shared/ingestAllowedPaths.ts';
+import {
+  normalizeProposalFields,
+  schoolProposalHasCore,
+} from '../_shared/ingestNormalize.ts';
+import {
+  buildSchoolPolicyIngestPrompt,
+  buildSchoolPolicyRetryPrompt,
+  buildSyllabusIngestPrompt,
+} from '../_shared/ingestPrompts.ts';
+import type { IngestField, IngestProposal, IngestWarning } from '../_shared/ingestProposalTypes.ts';
 
 function clamp01(n: unknown): number {
   const x = typeof n === 'number' ? n : Number(n);
@@ -31,7 +25,12 @@ function clamp01(n: unknown): number {
 }
 
 function statusFor(conf: number, explicit: unknown): string {
-  if (explicit === 'proposed' || explicit === 'needs_review' || explicit === 'unknown' || explicit === 'conflict') {
+  if (
+    explicit === 'proposed' ||
+    explicit === 'needs_review' ||
+    explicit === 'unknown' ||
+    explicit === 'conflict'
+  ) {
     return String(explicit);
   }
   if (conf >= 0.8) return 'proposed';
@@ -50,57 +49,52 @@ function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: cors() });
 }
 
-function syllabusPrompt(sourceId: string, classId: string): string {
-  return `You extract a CLASS SYLLABUS grading contract from document page images.
-Return JSON only. Paths must be from: ${[...SYLLABUS_PATHS].join(', ')}.
-Shape: {"source_id":"${sourceId}","wizard":"syllabus","kind":"syllabus","document_kind_guess":"syllabus_policy|rubric|mixed|unknown","overall_confidence":0,"fields":[{"path":"syllabus.engine","value":"weighted_percent_inside","confidence":0.9,"evidence":{"quote":"...","page":1,"region":null},"status":"proposed"}],"ambiguities":[],"warnings":[]}
-Rules: no student PII; no publish; no invented paths; partial fill ok; do not guess unreadable pages.
-Class: ${classId}`;
+function parseEvidence(raw: unknown): { quote: string; page: number | null; region: string | null } {
+  if (!raw || typeof raw !== 'object') return { quote: '', page: null, region: null };
+  const o = raw as Record<string, unknown>;
+  const quote =
+    typeof o.quote === 'string'
+      ? o.quote.slice(0, 500)
+      : typeof o.text === 'string'
+        ? o.text.slice(0, 500)
+        : '';
+  let page: number | null = null;
+  if (typeof o.page === 'number' && Number.isFinite(o.page)) page = Math.max(1, Math.floor(o.page));
+  const region = typeof o.region === 'string' ? o.region.slice(0, 120) : null;
+  return { quote, page, region };
 }
 
-function schoolPrompt(sourceId: string, schoolId: string): string {
-  return `You extract a SCHOOL Grading and Reporting Policy from document page images.
-Return JSON only. Paths must be from: ${[...SCHOOL_PATHS].join(', ')}.
-Shape: {"source_id":"${sourceId}","wizard":"school","kind":"school_policy","document_kind_guess":"grading_policy|handbook|gpa_chart|unknown","overall_confidence":0,"fields":[{"path":"calendar.template","value":"tx_six_weeks","confidence":0.9,"evidence":{"quote":"...","page":1,"region":null},"status":"proposed"}],"ambiguities":[],"warnings":[]}
-Rules: no student scores as stored grades; no publish; Texas templates are candidates not forced facts.
-School: ${schoolId}`;
-}
-
-function normalizeProposal(
-  parsed: Record<string, unknown>,
+function skeletonProposal(
   kind: 'syllabus' | 'school_policy',
   sourceId: string,
-): Record<string, unknown> {
+  parsed: Record<string, unknown>,
+): IngestProposal {
   const wizard = kind === 'school_policy' ? 'school' : 'syllabus';
-  const allow = kind === 'school_policy' ? SCHOOL_PATHS : SYLLABUS_PATHS;
   const fieldsIn = Array.isArray(parsed.fields) ? parsed.fields : [];
-  const fields: unknown[] = [];
+  const fields: IngestField[] = [];
   const dropped: string[] = [];
   for (const row of fieldsIn) {
     if (!row || typeof row !== 'object') continue;
     const o = row as Record<string, unknown>;
     const path = typeof o.path === 'string' ? o.path.trim() : '';
     if (!path) continue;
-    if (!allow.has(path)) {
+    if (!isAllowedPath(wizard, path)) {
       dropped.push(path);
       continue;
     }
     const confidence = clamp01(o.confidence);
-    const ev = o.evidence && typeof o.evidence === 'object' ? (o.evidence as Record<string, unknown>) : {};
     fields.push({
       path,
       value: o.value ?? null,
       confidence,
-      evidence: {
-        quote: typeof ev.quote === 'string' ? ev.quote.slice(0, 500) : '',
-        page: typeof ev.page === 'number' ? Math.max(1, Math.floor(ev.page)) : null,
-        region: typeof ev.region === 'string' ? ev.region : null,
-      },
-      status: statusFor(confidence, o.status),
+      evidence: parseEvidence(o.evidence),
+      status: statusFor(confidence, o.status) as IngestField['status'],
       source_doc_id: sourceId,
     });
   }
-  const warnings = Array.isArray(parsed.warnings) ? [...parsed.warnings] : [];
+  const warnings: IngestWarning[] = Array.isArray(parsed.warnings)
+    ? (parsed.warnings as IngestWarning[])
+    : [];
   if (dropped.length) {
     warnings.push({
       code: 'unknown_paths_dropped',
@@ -108,19 +102,37 @@ function normalizeProposal(
       severity: 'info',
     });
   }
-  return {
+  const base: IngestProposal = {
     source_id: typeof parsed.source_id === 'string' ? parsed.source_id : sourceId,
     wizard,
     kind,
     fields,
-    ambiguities: Array.isArray(parsed.ambiguities) ? parsed.ambiguities : [],
+    ambiguities: Array.isArray(parsed.ambiguities)
+      ? (parsed.ambiguities as IngestProposal['ambiguities'])
+      : [],
     warnings,
-    document_kind_guess: typeof parsed.document_kind_guess === 'string' ? parsed.document_kind_guess : null,
+    document_kind_guess:
+      typeof parsed.document_kind_guess === 'string' ? parsed.document_kind_guess : null,
     overall_confidence: clamp01(parsed.overall_confidence),
   };
+  return normalizeProposalFields(base);
 }
 
-// Main handler
+async function callModel(
+  supabase: ReturnType<typeof createClient>,
+  apiKey: string,
+  content: Array<Record<string, unknown>>,
+): Promise<Record<string, unknown>> {
+  const payload = await callMetered(supabase, apiKey, {
+    job: 'classify',
+    functionName: 'ingest-grading-doc',
+    payload: [{ role: 'user', content }],
+  });
+  const parsed = extractJson(outputText(payload));
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+  return parsed as Record<string, unknown>;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors() });
   try {
@@ -137,7 +149,8 @@ Deno.serve(async (req) => {
     if (authError || !auth.user?.id) return json({ error: 'Sign in to Kelyra first.' }, 401);
 
     const body = await req.json();
-    const kind = body.kind === 'school_policy' ? 'school_policy' : body.kind === 'syllabus' ? 'syllabus' : null;
+    const kind =
+      body.kind === 'school_policy' ? 'school_policy' : body.kind === 'syllabus' ? 'syllabus' : null;
     if (!kind) return json({ error: 'kind must be syllabus or school_policy' }, 400);
 
     const classId =
@@ -194,7 +207,10 @@ Deno.serve(async (req) => {
 
     const sourceId =
       typeof body.source_id === 'string' && body.source_id ? body.source_id : crypto.randomUUID();
-    const prompt = kind === 'syllabus' ? syllabusPrompt(sourceId, classId) : schoolPrompt(sourceId, schoolId);
+    const prompt =
+      kind === 'syllabus'
+        ? buildSyllabusIngestPrompt({ class_id: classId, source_id: sourceId })
+        : buildSchoolPolicyIngestPrompt({ school_id: schoolId, source_id: sourceId });
 
     let jobId: string | null = null;
     try {
@@ -215,41 +231,58 @@ Deno.serve(async (req) => {
       jobId = null;
     }
 
-    const content: Array<Record<string, unknown>> = [];
+    const imageContent: Array<Record<string, unknown>> = [];
     for (const url of imageUrls.slice(0, 20)) {
-      content.push({ type: 'input_image', image_url: url, detail: imageDetailFor('cheap') });
+      imageContent.push({ type: 'input_image', image_url: url, detail: imageDetailFor('cheap') });
     }
-    content.push({
-      type: 'input_text',
-      text: `${prompt}\nStorage paths (page order):\n${
-        storagePaths.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(urls only)'
-      }`,
-    });
+    const pathNote =
+      'Storage paths (page order):\n' +
+      (storagePaths.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(urls only)');
 
     const apiKey = requireXaiKey();
     try {
-      const payload = await callMetered(supabase, apiKey, {
-        job: 'classify',
-        functionName: 'ingest-grading-doc',
-        payload: [{ role: 'user', content }],
-      });
-      const parsed = extractJson(outputText(payload)) as Record<string, unknown>;
-      const proposal = normalizeProposal(parsed, kind, sourceId);
+      let parsed = await callModel(supabase, apiKey, [
+        ...imageContent,
+        { type: 'input_text', text: prompt + '\n' + pathNote },
+      ]);
+      let proposal = skeletonProposal(kind, sourceId, parsed);
+
+      // Handbook empty / missing core → one stricter retry
+      if (kind === 'school_policy' && !schoolProposalHasCore(proposal)) {
+        const retryPrompt = buildSchoolPolicyRetryPrompt({
+          school_id: schoolId,
+          source_id: sourceId,
+        });
+        parsed = await callModel(supabase, apiKey, [
+          ...imageContent,
+          { type: 'input_text', text: retryPrompt + '\n' + pathNote },
+        ]);
+        proposal = skeletonProposal(kind, sourceId, parsed);
+        proposal.warnings = [
+          ...proposal.warnings,
+          {
+            code: 'school_core_retry',
+            message: 'Retried school policy extract with stricter core-field prompt.',
+            severity: 'info',
+          },
+        ];
+      }
+
       if (jobId) {
         await supabase.from('ingest_jobs').update({ status: 'proposed', proposal }).eq('id', jobId);
       }
       return json({ ok: true, job_id: jobId, proposal });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not read this document.';
-      const proposal = normalizeProposal(
+      const proposal = skeletonProposal(
+        kind,
+        sourceId,
         {
           source_id: sourceId,
           fields: [],
           warnings: [{ code: 'low_ocr', message, severity: 'block' }],
           overall_confidence: 0,
         },
-        kind,
-        sourceId,
       );
       if (jobId) {
         await supabase

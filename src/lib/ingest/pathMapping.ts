@@ -8,9 +8,46 @@ import { asIngestableDraft, mergeProposalIntoDraft } from './mergeProposal.ts';
 import type { IngestProposal, MergeOptions, MergeResult } from './proposalTypes.ts';
 
 function asLateRule(raw: unknown): LateRule {
-  if (!raw || typeof raw !== 'object') return { type: 'none' };
+  if (raw == null) return { type: 'none' };
+  if (typeof raw === 'string') {
+    // Mirror coerceLateRule basics for string leftovers
+    const s = raw.toLowerCase();
+    if (/not\s*accepted|no\s*late|none|not_accepted|hard\s*deadline/.test(s) && !/per\s*day|per\s*hour|\d+\s*%/.test(s)) {
+      return { type: 'none' };
+    }
+    const m = s.match(/(-?\d+(?:\.\d+)?)\s*%?\s*(?:points?)?\s*per\s*day/);
+    if (m || /per\s*day/.test(s)) {
+      return {
+        type: 'per_day',
+        amount: Math.abs(Number(m?.[1] ?? 10)),
+        unit: /point/.test(s) ? 'points' : 'percent',
+      };
+    }
+    const h = s.match(/(-?\d+(?:\.\d+)?)\s*%?\s*per\s*hour/);
+    if (h || /per\s*hour/.test(s)) {
+      return {
+        type: 'per_hour',
+        amount: Math.abs(Number(h?.[1] ?? 5)),
+        unit: /point/.test(s) ? 'points' : 'percent',
+      };
+    }
+    const flat = s.match(/(-?\d+(?:\.\d+)?)\s*(%|percent|points?)/);
+    if (flat) {
+      return {
+        type: 'flat',
+        amount: Math.abs(Number(flat[1])),
+        unit: /point/.test(flat[2]) ? 'points' : 'percent',
+      };
+    }
+    return { type: 'none' };
+  }
+  if (typeof raw !== 'object') return { type: 'none' };
   const o = raw as Record<string, unknown>;
-  const type = o.type;
+  let type = o.type;
+  if (type === 'flat_percent' || type === 'flat_points') type = 'flat';
+  if (type === 'percent_per_day') type = 'per_day';
+  if (type === 'percent_per_hour') type = 'per_hour';
+  if (type === 'not_accepted' || type === 'hard_deadline') type = 'none';
   if (type === 'flat' || type === 'per_day' || type === 'per_hour' || type === 'none') {
     return {
       type,
@@ -121,6 +158,10 @@ export function applyProposalToSyllabusDraft(
         break;
       case 'syllabus.missing_rule':
         if (f.value === 'zero' || f.value === 'floor' || f.value === 'omit') next.missing_rule = f.value;
+        else if (f.value && typeof f.value === 'object') {
+          const t = (f.value as { type?: string }).type;
+          if (t === 'zero' || t === 'floor' || t === 'omit') next.missing_rule = t;
+        }
         break;
       case 'syllabus.extra_credit_method':
         if (f.value === 'A' || f.value === 'B' || f.value === 'C') next.extra_credit_method = f.value;
