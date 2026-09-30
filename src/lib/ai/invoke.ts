@@ -26,6 +26,7 @@ export async function invokeAi<T extends object>(
     | 'cutout-logo'
     | 'analyze-answer-key'
     | 'parse-class-syllabus'
+    | 'ingest-grading-doc'
     | 'explain-capture'
     | 'practice-help'
     | 'match-key'

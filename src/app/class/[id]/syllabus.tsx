@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { SyllabusWizard } from '@/components/syllabus/SyllabusWizard';
+import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
+import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import {
   applyAskImport,
   draftFromBundle,
@@ -24,6 +26,9 @@ import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { invokeAi } from '@/lib/ai/invoke';
+import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
+import { applyProposalToSyllabusDraft } from '@/lib/ingest/pathMapping';
+import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
 import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -64,6 +69,8 @@ export default function SyllabusScreen() {
   const [askDraft, setAskDraft] = useState<Record<string, unknown> | null>(null);
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
+  const [ingestCamera, setIngestCamera] = useState(false);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -203,6 +210,59 @@ export default function SyllabusScreen() {
     }
   };
 
+  /** GB-11 v2 document ingest → IngestProposal review (does not replace parse-class-syllabus). */
+  const runIngestDoc = async (uri: string, mimeType: string) => {
+    if (!id || !teacher) return;
+    setBusy(true);
+    setError(null);
+    setStatus('Reading document into proposal…');
+    try {
+      const asset = await uploadTeacherAsset({
+        teacherId: teacher.id,
+        kind: 'photo',
+        uri,
+        mimeType,
+      });
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (!imageUrl) throw new Error('Could not open the uploaded document.');
+      const { proposal } = await invokeIngestGradingDoc({
+        kind: 'syllabus',
+        class_id: id,
+        storage_paths: [asset.storage_path],
+        image_urls: [imageUrl],
+        source_id: asset.id,
+      });
+      setIngestProposal(proposal);
+      setStatus('Proposal ready — review fields, then apply into the wizard.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not read that document');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onStartFromDocument = async () => {
+    if (webCameraNeeded(true)) {
+      setIngestCamera(true);
+      return;
+    }
+    try {
+      const photo = await pickNormalizedPhoto(false);
+      if (!photo) return;
+      await runIngestDoc(photo.uri, photo.mimeType);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open document');
+    }
+  };
+
+  const applyIngestFields = (accepted: IngestField[]) => {
+    if (!draft || !ingestProposal) return;
+    const filtered: IngestProposal = { ...ingestProposal, fields: accepted };
+    setDraft(applyProposalToSyllabusDraft(draft, filtered));
+    setIngestProposal(null);
+    setStatus('Proposal applied into wizard. Review before publish.');
+  };
+
   const applyAsk = () => {
     if (!askDraft || !draft) return;
     const applied = applyAskDraftToEditor(askDraft);
@@ -273,6 +333,28 @@ export default function SyllabusScreen() {
         </Card>
       ) : null}
 
+      {ingestProposal ? (
+        <IngestProposalReview
+          proposal={ingestProposal}
+          sourceLabel="document"
+          onApply={applyIngestFields}
+          onDiscard={() => {
+            setIngestProposal(null);
+            setStatus('Proposal discarded. Published syllabus unchanged.');
+          }}
+        />
+      ) : null}
+
+      {ingestCamera ? (
+        <WebCameraCapture
+          onCapture={(uri, mimeType) => {
+            setIngestCamera(false);
+            void runIngestDoc(uri, mimeType);
+          }}
+          onCancel={() => setIngestCamera(false)}
+        />
+      ) : null}
+
       {cameraOpen ? (
         <WebCameraCapture
           onCapture={(uri, mimeType) => {
@@ -288,6 +370,7 @@ export default function SyllabusScreen() {
             label="Answer a few questions instead"
             onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
           />
+          <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
           <GhostButton align="left" label="Import from photo" onPress={() => void onPickPhoto(true)} />
           <GhostButton align="left" label="Choose photo" onPress={() => void onPickPhoto(false)} />
         </View>

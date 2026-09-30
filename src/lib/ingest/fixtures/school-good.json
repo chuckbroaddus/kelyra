@@ -1,0 +1,49 @@
+{
+  "source_id": "fixture-school-good",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.91,
+  "fields": [
+    {
+      "path": "calendar.template",
+      "value": "tx_six_weeks",
+      "confidence": 0.95,
+      "evidence": { "quote": "Six-week averages are 2/7 of the semester", "page": 2, "region": null },
+      "status": "proposed"
+    },
+    {
+      "path": "rollup.preset",
+      "value": "2/7+1/7",
+      "confidence": 0.93,
+      "evidence": { "quote": "exam is 1/7", "page": 2, "region": null },
+      "status": "proposed"
+    },
+    {
+      "path": "credit.passing_threshold",
+      "value": 70,
+      "confidence": 0.97,
+      "evidence": { "quote": "Passing is 70", "page": 2, "region": null },
+      "status": "proposed"
+    },
+    {
+      "path": "gpa.mode",
+      "value": "unweighted_and_weighted",
+      "confidence": 0.85,
+      "evidence": { "quote": "AP A = 5.0, regular A = 4.0", "page": 2, "region": null },
+      "status": "proposed"
+    },
+    {
+      "path": "levels.list",
+      "value": [
+        { "key": "on_level", "label": "Regular", "weighted_bonus": 0, "bump_on_d": false },
+        { "key": "ap", "label": "AP", "weighted_bonus": 1.0, "bump_on_d": false }
+      ],
+      "confidence": 0.8,
+      "evidence": { "quote": "AP A = 5.0, regular A = 4.0", "page": 2, "region": null },
+      "status": "proposed"
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}
