@@ -111,10 +111,16 @@ export async function analyzeTurnedInReview(
   submissionId: string,
   draft?: SubmissionReviewDraft | null,
 ): Promise<SubmissionReviewDraft> {
-  const data = await invokeAi<SubmissionReviewDraft & { ok?: boolean }>('review-submission', {
+  const data = await invokeAi<
+    SubmissionReviewDraft & { ok?: boolean; kind?: string; error?: string }
+  >('review-submission', {
     submissionId,
     ...(draft ? { draft } : {}),
   });
+  // GB-14: rubric path stores AiGradeProposal; no single-score draft to merge.
+  if (data && typeof data === 'object' && (data as { kind?: string }).kind === 'rubric_proposal') {
+    return parseSubmissionReview(draft ?? null);
+  }
   return parseSubmissionReview(data);
 }
 

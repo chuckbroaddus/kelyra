@@ -22,3 +22,21 @@ export {
   snapshotRubric,
   type TemplateKey,
 } from './templates.ts';
+export type {
+  AiGradeProposal,
+  AiGradeProposalCell,
+  AiGradeProposalStatus,
+  ParseAiGradeResult,
+} from './aiProposal.ts';
+export {
+  buildAiGradePrompt,
+  parseAiGradeResponse,
+  shouldUseRubricAi,
+  toDraftAssessment,
+  cellsToSelections,
+  applyTeacherCellEdits,
+  buildProposalFromParse,
+  isProposalOpen,
+  statusAfterConfirm,
+  AI_HIGH_CONFIDENCE_THRESHOLD,
+} from './aiProposal.ts';
