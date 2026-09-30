@@ -36,6 +36,7 @@ import {
   type TurnedInReview,
 } from '@/lib/practice/reviewApi';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { RubricScorePanel } from '@/components/rubric/RubricScorePanel';
 
 export default function SubmissionReviewScreen() {
   const { colors } = useTheme();
@@ -563,6 +564,19 @@ export default function SubmissionReviewScreen() {
       )}
 
       {suggestedGrade}
+
+      {review?.assignment?.id ? (
+        <RubricScorePanel
+          assignmentId={review.assignment.id}
+          submissionId={submissionId}
+          studentId={review.studentId}
+          assignmentMax={review.assignment.max_score ?? null}
+          onConfirmed={(raw) => {
+            if (raw != null) setScore(String(raw));
+            void load();
+          }}
+        />
+      ) : null}
 
       {editable && allowAccept ? (
         <>

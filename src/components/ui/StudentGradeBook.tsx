@@ -10,6 +10,7 @@ import {
   FamilyAssignmentDetail,
   type FamilyAssignmentDetailModel,
 } from '@/components/ui/FamilyAssignmentDetail';
+import { FamilyRubricReadOnly } from '@/components/rubric/FamilyRubricReadOnly';
 import { FamilySyllabusSummary } from '@/components/ui/FamilySyllabusSummary';
 import { MissingUpcomingStrip } from '@/components/ui/MissingUpcomingStrip';
 import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
@@ -294,6 +295,14 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
         include_in_average: includeKnown,
       },
       cell,
+      rubricNode: (
+        <FamilyRubricReadOnly
+          assignmentId={row.assignment.id}
+          submissionId={cell.submissionId}
+          categoryLabel={categoryLabel}
+          scoreText={cell.score != null ? String(cell.score) : null}
+        />
+      ),
     });
   };
 
