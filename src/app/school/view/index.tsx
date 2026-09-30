@@ -23,13 +23,14 @@ import { requireSupabase } from '@/lib/supabase/client';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { PolicyViewBody } from './PolicyViewBody';
 
-type TabId = 'grading_reporting' | 'calendar' | 'syllabi' | 'grades' | 'overview';
+type TabId = 'grading_reporting' | 'calendar' | 'syllabi' | 'grades' | 'class_rank' | 'overview';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'grading_reporting', label: 'Grading policy' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'syllabi', label: 'My syllabi' },
   { id: 'grades', label: 'Posted grades' },
+  { id: 'class_rank', label: 'Class Rank & GPA' },
   { id: 'overview', label: 'Overview' },
 ];
 
@@ -245,6 +246,20 @@ export default function SchoolViewHubScreen() {
               ))}
             </>
           )}
+        </Card>
+      ) : null}
+
+      {tab === 'class_rank' ? (
+        <Card>
+          <Text style={[type.body, { color: colors.ink }]}>Class Rank & GPA</Text>
+          <Text style={[type.meta, { color: colors.mute, marginTop: 6 }]}>
+            Unweighted and weighted GPA come from transcript rows. Optional rank GPA (6.0 table)
+            freezes at a school date for class rank. Not shown on the elementary parent view or the
+            parent-phone 6.0 grid.
+          </Text>
+          <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
+            Rank list and freeze controls land here after the school enables a rank_6 profile.
+          </Text>
         </Card>
       ) : null}
 

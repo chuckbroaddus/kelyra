@@ -37,6 +37,13 @@ export type TermGrade = {
   credits_earned: number;
   course_level: string;
   quality_points: number;
+  /** Optional snapshot points (GB-16). */
+  unweighted_points?: number | null;
+  weighted_points?: number | null;
+  /** SRS §6.7 include flags (defaults true/true/false when omitted). */
+  include_unweighted?: boolean;
+  include_weighted?: boolean;
+  include_rank?: boolean;
   repeat: boolean;
   flags?: string[];
   exam_pct?: number | null;
