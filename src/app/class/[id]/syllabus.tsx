@@ -283,6 +283,11 @@ export default function SyllabusScreen() {
         />
       ) : (
         <View style={styles.row}>
+          <GhostButton
+            align="left"
+            label="Answer a few questions instead"
+            onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
+          />
           <GhostButton align="left" label="Import from photo" onPress={() => void onPickPhoto(true)} />
           <GhostButton align="left" label="Choose photo" onPress={() => void onPickPhoto(false)} />
         </View>

@@ -119,6 +119,10 @@ export default function GradingPolicyWizardScreen() {
 
   return (
     <Screen maxWidth={720} keyboard>
+      <GhostButton
+        label="Answer a few questions instead"
+        onPress={() => router.push('/school/grading-policy/interview' as never)}
+      />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>{summary}</Text>
       <ChipRow>
         {WIZARD_STEPS.map((id) => (
