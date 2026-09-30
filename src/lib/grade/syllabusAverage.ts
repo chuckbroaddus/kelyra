@@ -1132,12 +1132,98 @@ function storeWeightPercent(weightUsed01: number): number {
 }
 
 /** Plain-English rule lines for family syllabus summary. */
+const ENGINE_PLAIN: Record<string, string> = {
+  total_points: 'Total points (earned ÷ possible across the class)',
+  weighted_points_inside: 'Weighted categories · points inside each category',
+  weighted_percent_inside: 'Weighted categories · equal percent inside each category',
+  item_weights: 'Each assignment has its own weight',
+  none: 'No overall grade is computed',
+};
+
+const EC_PLAIN: Record<string, string> = {
+  A: 'Extra credit is its own category weight',
+  B: 'Extra credit adds to earned points (skipping it does not lower anyone)',
+  C: 'Extra credit is outside the 100% category sum',
+};
+
+function lateRulePlain(rule: LateRule | null | undefined): string {
+  if (!rule || rule.type === 'none') return 'Late work: teacher decides case by case (no automatic penalty).';
+  const amt = rule.amount ?? 0;
+  const unit = rule.unit === 'points' ? 'points' : '%';
+  if (rule.type === 'flat') return `Late work: −${amt}${unit} flat.`;
+  if (rule.type === 'per_day') return `Late work: −${amt}${unit} per day.`;
+  if (rule.type === 'per_hour') return `Late work: −${amt}${unit} per hour.`;
+  return 'Late work: teacher decides case by case (no automatic penalty).';
+}
+
+function semesterComputationPlain(input: {
+  rollup_preset?: string | null;
+  exam_weight?: number | null;
+  book_mode?: string | null;
+}): string {
+  const rollup = input.rollup_preset?.trim();
+  if (rollup) {
+    const exam =
+      input.exam_weight != null && Number.isFinite(input.exam_weight)
+        ? ` Exam weight ${input.exam_weight}.`
+        : '';
+    return `Semester is computed with rollup ${rollup}.${exam}`;
+  }
+  if (input.book_mode === 'rolling_year') {
+    return 'Semester uses a rolling year book (scores carry forward).';
+  }
+  return 'Semester combines marking-period averages per the school calendar rollup.';
+}
+
+/**
+ * Parent-facing special-rule lines (§11 item 10).
+ * Lists engine, scale, late, drop-lowest, extra credit method, and semester computation.
+ * Category weight lines stay on FamilySyllabusSummary rows.
+ */
 export function plainSyllabusRules(
   categories: SyllabusCategoryInput[],
   policies?: SyllabusPolicies | null,
+  extras?: {
+    engine?: string | null;
+    late_rule?: LateRule | null;
+    extra_credit_method?: 'A' | 'B' | 'C' | string | null;
+    rollup_preset?: string | null;
+    exam_weight?: number | null;
+    book_mode?: string | null;
+    /** Optional letter-scale name when the publish payload includes one. */
+    scale_label?: string | null;
+  } | null,
 ): string[] {
   const lines: string[] = [];
   const p = policies ?? {};
+  const x = extras ?? {};
+
+  if (x.engine) {
+    lines.push(`Engine: ${ENGINE_PLAIN[x.engine] ?? x.engine}.`);
+  }
+  lines.push(
+    x.scale_label?.trim()
+      ? `Letter scale: ${x.scale_label.trim()}.`
+      : 'Letter scale: follows the school grading policy.',
+  );
+  lines.push(lateRulePlain(x.late_rule ?? null));
+
+  if (x.extra_credit_method) {
+    lines.push(
+      `Extra credit: ${EC_PLAIN[x.extra_credit_method] ?? `method ${x.extra_credit_method}`}.`,
+    );
+  } else if (p.extra_credit_allowed) {
+    lines.push('Extra-credit columns are allowed.');
+  }
+
+  lines.push(
+    semesterComputationPlain({
+      rollup_preset: x.rollup_preset,
+      exam_weight: x.exam_weight,
+      book_mode: x.book_mode,
+    }),
+  );
+
   if (p.missing_as_zero) {
     lines.push('Missing work that is due counts as zero.');
   } else {
@@ -1151,20 +1237,23 @@ export function plainSyllabusRules(
   if (p.min_floor_percent != null) {
     lines.push(`No score below ${p.min_floor_percent}% after rules.`);
   }
-  if (p.extra_credit_allowed) {
-    lines.push('Extra-credit columns are allowed.');
-  }
+
+  let anyDrop = false;
   for (const category of categories) {
     if (category.active === false) continue;
     const drop = category.rules?.drop_lowest_n ?? 0;
     if (drop > 0) {
-      lines.push(`Drops the lowest ${drop} ${category.label} score${drop === 1 ? '' : 's'}.`);
+      anyDrop = true;
+      lines.push(`Drop-lowest: drops the lowest ${drop} ${category.label} score${drop === 1 ? '' : 's'}.`);
     }
     const replace = category.rules?.replace_lowest_with_makeup;
     if (replace?.enabled) {
       const cap = replace.cap_percent != null ? `, at most ${replace.cap_percent}%` : '';
       lines.push(`A makeup can replace the lowest ${category.label}${cap}.`);
     }
+  }
+  if (!anyDrop) {
+    lines.push('Drop-lowest: none.');
   }
   return lines;
 }

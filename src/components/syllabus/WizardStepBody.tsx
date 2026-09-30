@@ -1,6 +1,7 @@
 /**
  * Step bodies for GB-08 syllabus wizard.
  */
+import { useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
@@ -9,6 +10,7 @@ import { ChipRow } from '@/components/ui/ChipRow';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
+import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import {
   ENGINE_OPTIONS,
   activeWeightSum,
@@ -253,6 +255,8 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 
 function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const lateLocked = isFieldLocked(draft, 'late');
+  const [excusedHelpOpen, setExcusedHelpOpen] = useState(false);
+  const excusedHelp = getBundledHelpTopic('help.excused');
   return (
     <>
       <Text style={[type.meta, { color: colors.mute }]}>Missing work</Text>
@@ -275,6 +279,19 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
         Excused always omits earned and possible — never a zero.
       </Text>
+      <GhostButton
+        label={excusedHelpOpen ? 'Hide Excused help' : 'Help on Excused'}
+        onPress={() => setExcusedHelpOpen((v) => !v)}
+      />
+      {excusedHelpOpen && excusedHelp ? (
+        <View style={{ marginTop: 8, gap: 4 }}>
+          <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>{excusedHelp.title}</Text>
+          <Text style={[type.meta, { color: colors.mute }]}>{excusedHelp.meaning}</Text>
+          {excusedHelp.example ? (
+            <Text style={[type.meta, { color: colors.ink }]}>Example: {excusedHelp.example}</Text>
+          ) : null}
+        </View>
+      ) : null}
       <LockNote draft={draft} field="late" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>Late penalty</Text>
       <ChipRow>
@@ -313,8 +330,10 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           <TextField
             label="Amount"
             keyboardType="numeric"
+            editable={!lateLocked}
             value={draft.late_rule.amount == null ? '' : String(draft.late_rule.amount)}
             onChangeText={(text) => {
+              if (lateLocked) return;
               const n = Number(text);
               onChange(
                 patchDraft(draft, {
@@ -327,6 +346,7 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             <Chip
               label="Percent"
               selected={draft.late_rule.unit !== 'points'}
+              disabled={lateLocked}
               onPress={() =>
                 onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'percent' } }))
               }
@@ -334,6 +354,7 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             <Chip
               label="Points"
               selected={draft.late_rule.unit === 'points'}
+              disabled={lateLocked}
               onPress={() =>
                 onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'points' } }))
               }
