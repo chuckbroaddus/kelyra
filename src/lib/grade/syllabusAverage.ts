@@ -2,9 +2,15 @@
  * Class syllabus weighted average (AVG v1).
  * Pure: approved_score 0–100 only. Nothing is a grade until Approve.
  * include_in_average = counts in its type average, not a slice of the final.
+ *
+ * GB-01: final weighted sum / floor / empty-category renormalize route through
+ * engine v2 (`computePeriod`) as weighted_percent_inside. Makeup replace,
+ * contribution explain rows, and legacy cell gates stay in this adapter.
  */
 
 import { isAwaitingGrade, isOpenWork } from '../assignments/status.ts';
+import { computePeriod } from './engine/index.ts';
+import type { EngineAssignment, EngineCell, EngineSyllabus } from './engine/types.ts';
 import {
   GRADE_TERM_ROLLUP,
   matchesGradeTermFilter,
@@ -125,11 +131,6 @@ function clampScore(score: number): number | null {
   if (!Number.isFinite(score)) return null;
   if (score < 0 || score > 100) return null;
   return score;
-}
-
-function mean(scores: number[]): number | null {
-  if (!scores.length) return null;
-  return scores.reduce((sum, n) => sum + n, 0) / scores.length;
 }
 
 function roundFinal(value: number, rounding: SyllabusPolicies['rounding']): number {
@@ -592,28 +593,87 @@ export function computeSyllabusAverage(
       }
     }
 
-    const avg = mean(eligible.map((row) => row.score));
+    // Defer category average to engine; stash eligible scores on contributions path.
     categoryResults.push({
       key: category.key,
       label: category.label,
       weightPercent: Number(category.weight_percent),
-      average: avg,
+      average: null,
       eligibleCount: eligible.length,
-      omitted: avg == null,
+      omitted: eligible.length === 0,
       renormalizedWeightPercent: null,
       contributions,
-    });
+      // temporary: carry scores for engine adapter (stripped below)
+      ...({ _eligibleScores: eligible.map((row) => ({ id: row.assignment.id, score: row.score })) } as object),
+    } as CategoryAverageResult & { _eligibleScores?: { id: string; score: number }[] });
   }
 
-  const withData = categoryResults.filter((row) => row.average != null);
-  const renormalized = withData.length > 0 && withData.length < categoryResults.length;
+  type CatWithScores = CategoryAverageResult & {
+    _eligibleScores?: { id: string; score: number }[];
+  };
+  const cats = categoryResults as CatWithScores[];
+
+  const engineAssignments: EngineAssignment[] = [];
+  const engineCells: EngineCell[] = [];
+  for (const cat of cats) {
+    for (const row of cat._eligibleScores ?? []) {
+      engineAssignments.push({
+        id: row.id,
+        category: cat.key,
+        period_id: 'legacy',
+        max_points: 100,
+        count_toward_final: true,
+        extra_credit: false,
+        can_exceed_max: false,
+        item_factor: 1,
+        droppable: true,
+      });
+      engineCells.push({
+        assignment_id: row.id,
+        raw: row.score,
+        status: 'graded',
+      });
+    }
+  }
+
+  const engineSyllabus: EngineSyllabus = {
+    engine: 'weighted_percent_inside',
+    categories: cats.map((c) => ({
+      key: c.key,
+      label: c.label,
+      weight: c.weightPercent,
+      include: true,
+      // drops already applied in adapter
+    })),
+    missing: 'omit',
+    late: { type: 'none' },
+    extra_credit: { method: 'B' },
+    period_floor_pct: floor != null && Number.isFinite(floor) ? Number(floor) : null,
+    empty_category: 'renormalize',
+    book_mode: 'reset_each_marking_period',
+    rounding: 'none',
+  };
+
+  const period = computePeriod(engineSyllabus, engineAssignments, engineCells, 'legacy');
+
+  for (const cat of cats) {
+    const eng = period.categories.find((c) => c.key === cat.key);
+    cat.average = eng?.pct ?? null;
+    cat.eligibleCount = eng?.eligible_count ?? cat.eligibleCount;
+    cat.omitted = cat.average == null;
+    cat.renormalizedWeightPercent =
+      eng && eng.weight_used > 0 ? storeWeightPercent(eng.weight_used) : null;
+    delete cat._eligibleScores;
+  }
+
+  const renormalized = period.renormalized;
   if (renormalized) {
     disclosures.push(
       'Categories with no graded work yet are left out and the other weights are scaled so they still add to 100%.',
     );
   }
 
-  if (!withData.length) {
+  if (period.pct == null) {
     return {
       mode: 'empty',
       overall: null,
@@ -627,22 +687,7 @@ export function computeSyllabusAverage(
     };
   }
 
-  const weightTotal = withData.reduce((sum, row) => sum + row.weightPercent, 0);
-  let overallUnrounded = 0;
-  for (const row of categoryResults) {
-    if (row.average == null || weightTotal <= 0) {
-      row.renormalizedWeightPercent = null;
-      continue;
-    }
-    const w = (row.weightPercent / weightTotal) * 100;
-    row.renormalizedWeightPercent = w;
-    overallUnrounded += row.average * (w / 100);
-  }
-
-  if (floor != null && Number.isFinite(floor)) {
-    overallUnrounded = Math.max(overallUnrounded, Number(floor));
-  }
-
+  const overallUnrounded = period.pct;
   const overall = roundFinal(overallUnrounded, rounding);
 
   return {
@@ -656,6 +701,10 @@ export function computeSyllabusAverage(
     adjustedNotes,
     notCounted,
   };
+}
+
+function storeWeightPercent(weightUsed01: number): number {
+  return weightUsed01 * 100;
 }
 
 /** Plain-English rule lines for family syllabus summary. */
