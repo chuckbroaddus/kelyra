@@ -308,6 +308,23 @@ export function elementaryYear6(opts: TemplateOptions = {}): GradingCalendar {
   return elementaryYear(6, opts);
 }
 
+/** Two semesters with no child marking periods (FR-CAL-01 semester model). */
+export function semesterOnly(opts: TemplateOptions = {}): GradingCalendar {
+  const drafts: PeriodDraft[] = [
+    { code: 'Y1', name: 'Year', kind: 'year', parent_code: null, sort_order: 0 },
+    { code: 'S1', name: 'Semester 1', kind: 'credit_term', parent_code: 'Y1', sort_order: 10 },
+    { code: 'S2', name: 'Semester 2', kind: 'credit_term', parent_code: 'Y1', sort_order: 20 },
+  ];
+  const rollups: TermRollup[] = [
+    buildTermRollup({
+      term_id: 'Y1',
+      child_period_ids: ['S1', 'S2'],
+      preset: opts.rollup_preset ?? '50/50',
+    }),
+  ];
+  return baseCalendar(opts, 'Semester (no quarters)', 'high', 'semester', drafts, rollups, 'semester');
+}
+
 /**
  * FR-FORM-S03 custom grain: N official marking periods, `perTerm` per credit term.
  * Proposes P1…Pn and S1…Sk (k = N / perTerm). Typical: S1, S2.
@@ -397,6 +414,7 @@ export const TEMPLATE_BUILDERS: Record<
   college_term: collegeTerm,
   elementary_year_4: elementaryYear4,
   elementary_year_6: elementaryYear6,
+  semester: semesterOnly,
 };
 
 export function buildTemplate(key: TemplateKey, opts: TemplateOptions = {}): GradingCalendar {

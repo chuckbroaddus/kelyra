@@ -71,6 +71,8 @@ export type SyllabusLocks = {
   floor: boolean;
   late: boolean;
   drop_lowest: boolean;
+  retake: boolean;
+  assignment_max: boolean;
   book_mode: boolean;
   rollup: boolean;
 };
@@ -79,6 +81,9 @@ export type GpaMode = 'off' | 'unweighted' | 'unweighted_and_weighted' | 'with_r
 
 /** Quality-point method choice for the wizard (defaults to letter_map). */
 export type QpMethodChoice = 'letter_map' | 'numeric_band' | 'percent_map';
+
+/** Optional human reason shown on locked syllabus fields (FR-FORM-T01). */
+export type SyllabusLockReasons = Partial<Record<keyof SyllabusLocks, string>>;
 
 export type GradingPolicyPayload = {
   level: SchoolLevelChoice;
@@ -97,6 +102,8 @@ export type GradingPolicyPayload = {
   gpa_mode: GpaMode;
   gpa_profiles: GpaProfile[];
   locks: SyllabusLocks;
+  /** Optional per-field lock reasons (GB-18). */
+  lock_reasons: SyllabusLockReasons;
 };
 
 export type SetupDraft = {
@@ -134,8 +141,23 @@ export const DEFAULT_LOCKS: SyllabusLocks = {
   floor: false,
   late: false,
   drop_lowest: false,
+  retake: false,
+  assignment_max: false,
   book_mode: false,
   rollup: true,
+};
+
+export const DEFAULT_LOCK_REASON_COPY: Record<keyof SyllabusLocks, string> = {
+  engine: 'School grading policy locks the calculation engine.',
+  categories: 'School grading policy locks category structure or weights.',
+  scale: 'Letter scale is set by the school grading policy.',
+  floor: 'Period floor is set by the school grading policy.',
+  late: 'Late penalty rule is set by the school grading policy.',
+  drop_lowest: 'Drop-lowest policy is set by the school.',
+  retake: 'Retake rules are set by the school grading policy.',
+  assignment_max: 'Assignment max points policy is set by the school.',
+  book_mode: 'Book reset mode is set by the school calendar policy.',
+  rollup: 'Term rollup / exam weight is set by the school calendar.',
 };
 
 export const STEP_LABELS: Record<WizardStepId, string> = {
@@ -235,6 +257,7 @@ export function defaultRollupForTemplate(template: TemplateKey | 'custom'): Roll
   if (template === 'college_term') return 'year_mean';
   if (template === 'elementary_year_4') return '25x4';
   if (template === 'elementary_year_6') return 'year_mean';
+  if (template === 'semester') return '50/50';
   return '50/50';
 }
 
@@ -346,6 +369,7 @@ export function createEmptyDraft(school_id: string, level: SchoolLevelChoice = '
     'gpa.profiles': field(defaultGpaProfiles(gpaMode, qpTableId), 'default'),
     'gpa.repeat': field('include_both' as const, 'default'),
     'locks.map': field({ ...DEFAULT_LOCKS }, 'default'),
+    'locks.reasons': field({} as SyllabusLockReasons, 'default'),
   };
 
   return {
@@ -431,6 +455,7 @@ export function draftToPayload(draft: SetupDraft): GradingPolicyPayload {
     gpa_mode: gpaMode,
     gpa_profiles: getFieldValue<GpaProfile[]>(draft, 'gpa.profiles', defaultGpaProfiles(gpaMode)),
     locks: getFieldValue<SyllabusLocks>(draft, 'locks.map', DEFAULT_LOCKS),
+    lock_reasons: getFieldValue<SyllabusLockReasons>(draft, 'locks.reasons', {}),
   };
 }
 
@@ -651,6 +676,7 @@ export function payloadForDb(payload: GradingPolicyPayload): Record<string, unkn
     gpa_mode: payload.gpa_mode,
     gpa_profiles: payload.gpa_profiles,
     locks: payload.locks,
+    lock_reasons: payload.lock_reasons ?? {},
   };
 }
 
@@ -893,6 +919,7 @@ export function draftFromStoredPayload(
   if (p.gpa_mode) next = setField(next, 'gpa.mode', p.gpa_mode, 'user');
   if (p.gpa_profiles) next = setField(next, 'gpa.profiles', p.gpa_profiles, 'user');
   if (p.locks) next = setField(next, 'locks.map', p.locks, 'user');
+  if (p.lock_reasons) next = setField(next, 'locks.reasons', p.lock_reasons, 'user');
   return { ...next, current_step: step };
 }
 

@@ -207,3 +207,17 @@ test('unfit rollup preset falls back instead of throwing (25x4 on nine-weeks)', 
   assert.ok(presetsForChildCount(4).includes('25x4'));
   assert.ok(presetsForChildCount(3).includes('2/7+1/7'));
 });
+
+test('semester template is two credit terms with 50/50 year rollup', async () => {
+  const { semesterOnly, buildTemplate } = await import('./templates.ts');
+  const cal = semesterOnly({ year: YEAR });
+  assert.equal(cal.period_model, 'semester');
+  assert.deepEqual(
+    cal.periods.filter((p) => p.kind === 'credit_term').map((p) => p.code),
+    ['S1', 'S2'],
+  );
+  assert.equal(cal.periods.filter((p) => p.kind === 'marking_period').length, 0);
+  const y = cal.rollups.find((r) => r.term_id === 'Y1')!;
+  assert.equal(rollupWeightsValid(y.components), true);
+  assert.equal(buildTemplate('semester').period_model, 'semester');
+});

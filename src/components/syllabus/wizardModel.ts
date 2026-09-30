@@ -170,7 +170,7 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   review: 'help.engine.weighted_points',
 };
 
-/** School lock flags (copied shape from GB-07 SyllabusLocks). */
+/** School lock flags (aligned with src/lib/syllabus/locks.ts + GB-07). */
 export type SyllabusLocks = {
   engine: boolean;
   categories: boolean;
@@ -178,6 +178,8 @@ export type SyllabusLocks = {
   floor: boolean;
   late: boolean;
   drop_lowest: boolean;
+  retake: boolean;
+  assignment_max: boolean;
   book_mode: boolean;
   rollup: boolean;
 };
@@ -189,6 +191,8 @@ export const DEFAULT_LOCKS: SyllabusLocks = {
   floor: false,
   late: false,
   drop_lowest: false,
+  retake: false,
+  assignment_max: false,
   book_mode: false,
   rollup: true,
 };
@@ -200,6 +204,8 @@ export const LOCK_REASONS: Record<keyof SyllabusLocks, string> = {
   floor: 'Period floor is set by the school grading policy.',
   late: 'Late penalty rule is set by the school grading policy.',
   drop_lowest: 'Drop-lowest policy is set by the school.',
+  retake: 'Retake rules are set by the school grading policy.',
+  assignment_max: 'Assignment max points policy is set by the school.',
   book_mode: 'Book reset mode is set by the school calendar policy.',
   rollup: 'Term rollup / exam weight is set by the school calendar.',
 };
@@ -349,6 +355,7 @@ export function applySchoolPolicyDefaults(
   draft: SyllabusWizardDraft,
   policy: {
     locks?: Partial<SyllabusLocks> | null;
+    lock_reasons?: Partial<Record<keyof SyllabusLocks, string>> | null;
     rollup_preset?: string | null;
     exam_weight?: number | null;
     book_mode?: BookMode | null;
@@ -367,7 +374,9 @@ export function applySchoolPolicyDefaults(
     lock_reasons: {},
   };
   (Object.keys(locks) as Array<keyof SyllabusLocks>).forEach((k) => {
-    if (locks[k]) next.lock_reasons[k] = LOCK_REASONS[k];
+    if (locks[k]) {
+      next.lock_reasons[k] = policy.lock_reasons?.[k] ?? LOCK_REASONS[k];
+    }
   });
   if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
   if (policy.exam_weight != null) next.exam_weight = policy.exam_weight;
@@ -417,7 +426,10 @@ export function draftFromBundle(input: {
     lock_reasons: Object.fromEntries(
       (Object.keys(locks) as Array<keyof SyllabusLocks>)
         .filter((k) => locks[k])
-        .map((k) => [k, LOCK_REASONS[k]]),
+        .map((k) => [
+          k,
+          withPolicy.lock_reasons[k] ?? input.schoolPolicy?.lock_reasons?.[k] ?? LOCK_REASONS[k],
+        ]),
     ),
     marking_period_scope: s.marking_period_scope,
     empty_category:
@@ -507,6 +519,16 @@ export function patchDraft(
     if (isFieldLocked(draft, 'rollup') && (partial.rollup_preset != null || partial.exam_weight !== undefined)) {
       next.rollup_preset = draft.rollup_preset;
       next.exam_weight = draft.exam_weight;
+    }
+    // Generic lock keys for GB-15 fields (retake / assignment_max) if present on draft bag.
+    if (isFieldLocked(draft, 'retake') && (partial as Record<string, unknown>).retake !== undefined) {
+      (next as Record<string, unknown>).retake = (draft as Record<string, unknown>).retake;
+    }
+    if (
+      isFieldLocked(draft, 'assignment_max') &&
+      (partial as Record<string, unknown>).assignment_max !== undefined
+    ) {
+      (next as Record<string, unknown>).assignment_max = (draft as Record<string, unknown>).assignment_max;
     }
   }
   // Keep within_category aligned with engine choice when unlocked.
