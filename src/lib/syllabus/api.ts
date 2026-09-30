@@ -15,6 +15,7 @@ import {
   buildSyllabusVersionSnapshot,
   defaultSyllabusV2Fields,
   parseLateRule,
+  parseSyllabusRetake,
   type BookMode,
   type ExtraCreditMethod,
   type MissingRule,
@@ -24,6 +25,7 @@ import {
   type SyllabusVersionSnapshot,
   type WithinCategory,
 } from '@/lib/syllabus/types';
+import type { RetakeRule } from '@/lib/grade/engine/types';
 
 export type SyllabusStatus = 'draft' | 'published' | 'archived';
 
@@ -84,6 +86,8 @@ export type ClassSyllabusDraft = {
   rounding: SyllabusRounding;
   floor: number | null;
   ceiling: number | null;
+  /** null = retakes off (today). */
+  retake: RetakeRule | null;
   exam_weight: number | null;
   rollup_preset: string | null;
   syllabus_version: number;
@@ -281,6 +285,7 @@ function asSyllabus(row: Record<string, unknown> | null | undefined, classId: st
     rounding,
     floor: row.floor == null ? null : Number(row.floor),
     ceiling: row.ceiling == null ? null : Number(row.ceiling),
+    retake: parseSyllabusRetake(row.retake),
     exam_weight: row.exam_weight == null ? null : Number(row.exam_weight),
     rollup_preset: (row.rollup_preset as string | null) ?? null,
     syllabus_version: Number(row.syllabus_version ?? 1),
@@ -357,6 +362,7 @@ function payloadFromEditor(input: {
   rounding?: SyllabusRounding;
   floor?: number | null;
   ceiling?: number | null;
+  retake?: RetakeRule | null;
   exam_weight?: number | null;
   rollup_preset?: string | null;
   locks?: Record<string, unknown>;
@@ -384,6 +390,7 @@ function payloadFromEditor(input: {
     rounding: input.rounding ?? d.rounding,
     floor: input.floor ?? null,
     ceiling: input.ceiling ?? null,
+    retake: input.retake ?? null,
     exam_weight: input.exam_weight ?? null,
     rollup_preset: input.rollup_preset ?? null,
     locks: input.locks ?? {},
@@ -424,6 +431,7 @@ type SyllabusEditorInput = {
   rounding?: SyllabusRounding;
   floor?: number | null;
   ceiling?: number | null;
+  retake?: RetakeRule | null;
   exam_weight?: number | null;
   rollup_preset?: string | null;
   locks?: Record<string, unknown>;
@@ -467,6 +475,7 @@ export async function publishClassSyllabus(
       rounding: payload.rounding as SyllabusRounding,
       floor: payload.floor as number | null,
       ceiling: payload.ceiling as number | null,
+      retake: (payload.retake as RetakeRule | null) ?? null,
       exam_weight: payload.exam_weight as number | null,
       rollup_preset: payload.rollup_preset as string | null,
       locks: payload.locks as Record<string, unknown>,

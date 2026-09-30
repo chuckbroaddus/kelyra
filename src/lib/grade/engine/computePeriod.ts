@@ -103,6 +103,8 @@ function totalPoints(
     renormalized: false,
     ec_added: fin.ec_added,
     floor_applied: fin.floor_applied,
+    ceiling_applied: fin.ceiling_applied,
+    floor_ceiling_note: fin.floor_ceiling_note,
     blocked_by_incomplete: blocked,
     min_grades_blocked: false,
   };
@@ -142,6 +144,8 @@ function itemWeights(
     renormalized,
     ec_added: fin.ec_added,
     floor_applied: fin.floor_applied,
+    ceiling_applied: fin.ceiling_applied,
+    floor_ceiling_note: fin.floor_ceiling_note,
     blocked_by_incomplete: blocked,
     min_grades_blocked: false,
   };
@@ -261,6 +265,8 @@ function weighted(
     renormalized,
     ec_added: fin.ec_added,
     floor_applied: fin.floor_applied,
+    ceiling_applied: fin.ceiling_applied,
+    floor_ceiling_note: fin.floor_ceiling_note,
     blocked_by_incomplete: blocked,
     min_grades_blocked,
   };

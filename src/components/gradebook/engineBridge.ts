@@ -47,6 +47,9 @@ export type BridgeCell = {
 export type BridgeSyllabus = {
   categories: SyllabusCategoryInput[];
   policies?: SyllabusPolicies | null;
+  /** Optional engine-v2 fields when full syllabus is available. */
+  ceiling_pct?: number | null;
+  retake?: import('../../lib/grade/engine/types.ts').RetakeRule | null;
 };
 
 function asCellStatus(cell: BridgeCell): CellStatus {
@@ -69,6 +72,10 @@ export function buildEngineSyllabus(syllabus: BridgeSyllabus): EngineSyllabus {
     policies.min_floor_percent != null && Number.isFinite(Number(policies.min_floor_percent))
       ? Number(policies.min_floor_percent)
       : null;
+  const ceiling =
+    syllabus.ceiling_pct != null && Number.isFinite(Number(syllabus.ceiling_pct))
+      ? Number(syllabus.ceiling_pct)
+      : null;
   return {
     engine: 'weighted_percent_inside',
     categories: syllabus.categories
@@ -84,6 +91,8 @@ export function buildEngineSyllabus(syllabus: BridgeSyllabus): EngineSyllabus {
     late: { type: 'none' },
     extra_credit: { method: 'B' },
     period_floor_pct: floor,
+    ceiling_pct: ceiling,
+    retake: syllabus.retake ?? null,
     empty_category: 'renormalize',
     book_mode: 'reset_each_marking_period',
     rounding: policies.rounding === 'nearest_whole' ? 'nearest_whole' : 'none',

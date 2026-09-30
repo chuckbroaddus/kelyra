@@ -470,6 +470,9 @@ export default function GradebookScreen() {
             <Text style={[type.meta, { color: colors.mute }]}>
               {cellSheet?.title} · {cellSheet?.mark}
             </Text>
+            <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
+              Group score: one shared raw for a group; per-student override wins (stored per student).
+            </Text>
             {isGraded(cellSheet?.status) || isAwaitingGrade(cellSheet?.status) || cellSheet?.kind === 'lesson' ? (
               <GhostButton
                 align="left"

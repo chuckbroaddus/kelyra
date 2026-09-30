@@ -365,6 +365,102 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           onChange(patchDraft(draft, { ec_cap: n == null || !Number.isFinite(n) ? null : n }));
         }}
       />
+      <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
+        Retakes (default off)
+      </Text>
+      <ChipRow>
+        <Chip
+          label={draft.retake ? 'Retakes ON' : 'Retakes OFF'}
+          selected={Boolean(draft.retake)}
+          onPress={() =>
+            onChange(
+              patchDraft(draft, {
+                retake: draft.retake
+                  ? null
+                  : {
+                      eligible_category_ids: [],
+                      attempts: 2,
+                      method: 'higher_of',
+                      cap: 70,
+                      window_days: null,
+                    },
+              }),
+            )
+          }
+        />
+      </ChipRow>
+      {draft.retake ? (
+        <>
+          <ChipRow>
+            {(
+              [
+                ['replace', 'Replace'],
+                ['higher_of', 'Higher of'],
+                ['average', 'Average'],
+              ] as const
+            ).map(([id, label]) => (
+              <Chip
+                key={id}
+                label={label}
+                selected={draft.retake?.method === id}
+                onPress={() =>
+                  onChange(patchDraft(draft, { retake: { ...draft.retake!, method: id } }))
+                }
+              />
+            ))}
+          </ChipRow>
+          <TextField
+            label="Max attempts"
+            keyboardType="numeric"
+            value={String(draft.retake.attempts ?? 2)}
+            onChangeText={(text) => {
+              const n = Math.max(1, Number(text) || 1);
+              onChange(patchDraft(draft, { retake: { ...draft.retake!, attempts: n } }));
+            }}
+          />
+          <TextField
+            label="Cap % (e.g. Texas 70)"
+            keyboardType="numeric"
+            value={draft.retake.cap == null ? '' : String(draft.retake.cap)}
+            onChangeText={(text) => {
+              const n = text.trim() === '' ? null : Number(text);
+              onChange(
+                patchDraft(draft, {
+                  retake: {
+                    ...draft.retake!,
+                    cap: n == null || !Number.isFinite(n) ? null : n,
+                  },
+                }),
+              );
+            }}
+          />
+          <TextField
+            label="Window days (optional)"
+            keyboardType="numeric"
+            value={draft.retake.window_days == null ? '' : String(draft.retake.window_days)}
+            onChangeText={(text) => {
+              const n = text.trim() === '' ? null : Number(text);
+              onChange(
+                patchDraft(draft, {
+                  retake: {
+                    ...draft.retake!,
+                    window_days: n == null || !Number.isFinite(n) ? null : n,
+                  },
+                }),
+              );
+            }}
+          />
+        </>
+      ) : null}
+      <TextField
+        label="Period ceiling % (optional)"
+        keyboardType="numeric"
+        value={draft.ceiling == null ? '' : String(draft.ceiling)}
+        onChangeText={(text) => {
+          const n = text.trim() === '' ? null : Number(text);
+          onChange(patchDraft(draft, { ceiling: n == null || !Number.isFinite(n) ? null : n }));
+        }}
+      />
       <ChipRow>
         <Chip
           label={draft.publish_to_family ? 'Publish to family: Yes' : 'Publish to family: No'}

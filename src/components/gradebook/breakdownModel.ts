@@ -46,9 +46,14 @@ export type BreakdownVM = {
   renormalized: boolean;
   ec_added: number;
   floor_applied: boolean;
+  ceiling_applied?: boolean;
+  floor_ceiling_note?: string | null;
   blocked_by_incomplete: boolean;
   rounding: string;
   rounding_step: string;
+  /** Term-level note when used with computeTerm + exam_exempt. */
+  exam_exempt?: boolean;
+  exam_exempt_note?: string | null;
 };
 
 export type TitleLookup = (assignmentId: string) => string;
@@ -158,7 +163,11 @@ export function buildBreakdownVM(
   const notes: string[] = [];
   if (result.renormalized) notes.push('Empty categories renormalized');
   if (result.ec_added) notes.push(`Extra credit +${result.ec_added}`);
-  if (result.floor_applied) notes.push('Period floor applied');
+  if (result.floor_applied) {
+    notes.push(result.floor_ceiling_note || 'Period floor applied');
+  } else if (result.ceiling_applied) {
+    notes.push(result.floor_ceiling_note || 'Period ceiling applied');
+  }
   if (result.blocked_by_incomplete) notes.push('Blocked by incomplete');
 
   return {
@@ -169,8 +178,28 @@ export function buildBreakdownVM(
     renormalized: result.renormalized,
     ec_added: result.ec_added,
     floor_applied: result.floor_applied,
+    ceiling_applied: result.ceiling_applied,
+    floor_ceiling_note: result.floor_ceiling_note ?? null,
     blocked_by_incomplete: result.blocked_by_incomplete,
     rounding,
     rounding_step,
+  };
+}
+
+/** Annotate a breakdown with term exam-exemption explain (AC12 / §7.6). */
+export function withExamExemptNote(
+  vm: BreakdownVM,
+  opts: { exam_exempt?: boolean; note?: string | null },
+): BreakdownVM {
+  if (!opts.exam_exempt) return vm;
+  const note = opts.note || 'Exam exempt';
+  const overall = vm.overall_unrounded_note
+    ? `${vm.overall_unrounded_note} · ${note}`
+    : note;
+  return {
+    ...vm,
+    exam_exempt: true,
+    exam_exempt_note: note,
+    overall_unrounded_note: overall,
   };
 }

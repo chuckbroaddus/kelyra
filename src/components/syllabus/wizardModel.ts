@@ -3,7 +3,7 @@
  * Owns draft shape + validation; publish goes through src/lib/syllabus/api.
  * Relative imports only so node:test can load this without path aliases.
  */
-import type { LateRule } from '../../lib/grade/engine/types.ts';
+import type { LateRule, RetakeRule } from '../../lib/grade/engine/types.ts';
 import type { CategoryRules, SyllabusPolicies } from '../../lib/grade/syllabusAverage.ts';
 import type {
   BookMode,
@@ -61,6 +61,8 @@ export type ClassSyllabusDraft = {
   rounding: SyllabusRounding;
   floor: number | null;
   ceiling: number | null;
+  /** null = retakes off (today). */
+  retake: RetakeRule | null;
   exam_weight: number | null;
   rollup_preset: string | null;
   syllabus_version: number;
@@ -165,7 +167,7 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   within: 'help.engine.weighted_percent',
   drops: 'help.drop_lowest',
   status_late: 'help.missing',
-  extra_credit: 'help.extra_credit_b',
+  extra_credit: 'help.retake_cap',
   book_rollup: 'help.reset_period',
   review: 'help.engine.weighted_points',
 };
@@ -268,6 +270,7 @@ export type SyllabusWizardDraft = {
   rounding: SyllabusRounding;
   floor: number | null;
   ceiling: number | null;
+  retake: RetakeRule | null;
   exam_weight: number | null;
   rollup_preset: string | null;
   locks: SyllabusLocks;
@@ -322,6 +325,7 @@ export function createEmptyWizardDraft(classId: string): SyllabusWizardDraft {
     rounding: 'nearest_whole',
     floor: null,
     ceiling: null,
+    retake: null,
     exam_weight: null,
     rollup_preset: null,
     locks: { ...DEFAULT_LOCKS },
@@ -411,6 +415,7 @@ export function draftFromBundle(input: {
     rounding: s.rounding,
     floor: s.floor,
     ceiling: s.ceiling,
+    retake: s.retake ?? null,
     exam_weight: s.exam_weight,
     rollup_preset: s.rollup_preset,
     locks,
@@ -699,6 +704,7 @@ export function toEditorInput(draft: SyllabusWizardDraft) {
     rounding: draft.rounding,
     floor: draft.floor,
     ceiling: draft.ceiling,
+    retake: draft.retake,
     exam_weight: draft.exam_weight,
     rollup_preset: draft.rollup_preset,
     locks: draft.locks as unknown as Record<string, unknown>,

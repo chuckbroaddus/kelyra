@@ -70,6 +70,7 @@ function draftToEngineSyllabus(draft: SyllabusWizardDraft): EngineSyllabus {
     },
     period_floor_pct: draft.floor,
     ceiling_pct: draft.ceiling,
+    retake: draft.retake ?? null,
     empty_category: draft.empty_category,
     book_mode: draft.book_mode,
     rounding: draft.rounding,

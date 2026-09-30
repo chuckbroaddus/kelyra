@@ -62,6 +62,16 @@ export type CreditPolicy = {
   unit: CreditUnit;
   year_link: boolean;
   attendance_gate: boolean;
+  /**
+   * FR-CR-06 exam exemption. Default enabled:false so existing schools unchanged.
+   * Stored inside credit.policy draft field and payload.credit_policy.
+   */
+  exam_exemption?: {
+    enabled: boolean;
+    min_avg: number | null;
+    max_absences: number | null;
+    renormalize: boolean;
+  };
 };
 
 export type SyllabusLocks = {
@@ -156,7 +166,7 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   level: 'help.wizard.level',
   calendar: 'help.glyphs.6w',
   dates: 'help.wizard.dates',
-  credit: 'help.year_link',
+  credit: 'help.exam_exemption',
   rollup: 'help.rollup.2_7',
   scale: 'help.scale.tx70',
   quality_points: 'help.gpa.numeric_table',
@@ -219,13 +229,19 @@ export function defaultGpaModeForLevel(level: SchoolLevelChoice): GpaMode {
 }
 
 export function defaultCreditForLevel(level: SchoolLevelChoice): CreditPolicy {
+  const exam_exemption = {
+    enabled: false,
+    min_avg: null as number | null,
+    max_absences: null as number | null,
+    renormalize: true,
+  };
   if (level === 'elementary') {
-    return { unit: 'none', year_link: false, attendance_gate: false };
+    return { unit: 'none', year_link: false, attendance_gate: false, exam_exemption };
   }
   if (level === 'college') {
-    return { unit: 'semester_0_5', year_link: false, attendance_gate: false };
+    return { unit: 'semester_0_5', year_link: false, attendance_gate: false, exam_exemption };
   }
-  return { unit: 'semester_0_5', year_link: true, attendance_gate: true };
+  return { unit: 'semester_0_5', year_link: true, attendance_gate: true, exam_exemption };
 }
 
 export function defaultRollupForTemplate(template: TemplateKey | 'custom'): RollupPresetKey {

@@ -40,6 +40,26 @@ export type LateRule = {
   grace_hours?: number;
 };
 
+/** FR-SYL-12 retake. Default null/off = today's single-score behavior. */
+export type RetakeMethod = 'replace' | 'higher_of' | 'average';
+
+export type RetakeRule = {
+  eligible_category_ids: string[];
+  attempts: number;
+  method: RetakeMethod;
+  /** Cap counted percent (e.g. Texas 70). null = no cap. */
+  cap: number | null;
+  window_days: number | null;
+};
+
+/** School policy FR-CR-06 / §6.3 — default enabled:false. */
+export type ExamExemptionPolicy = {
+  enabled: boolean;
+  min_avg: number | null;
+  max_absences: number | null;
+  renormalize: boolean;
+};
+
 export type EngineSyllabus = {
   engine: Engine;
   categories: EngineCategory[];
@@ -49,6 +69,8 @@ export type EngineSyllabus = {
   extra_credit: { method: 'A' | 'B' | 'C'; cap_pct?: number | null };
   period_floor_pct?: number | null;
   ceiling_pct?: number | null;
+  /** null/undefined = retakes off (single raw). */
+  retake?: RetakeRule | null;
   empty_category: 'renormalize' | 'zero';
   book_mode: 'reset_each_marking_period' | 'rolling_year';
   rounding: 'nearest_whole' | 'half_up' | 'truncate' | 'none';
@@ -68,6 +90,13 @@ export type EngineAssignment = {
   droppable: boolean;
   flags?: string[];
   item_weight_pct?: number | null;
+  retake_eligible?: boolean;
+};
+
+export type ScoreAttempt = {
+  raw: number;
+  at?: string | null;
+  status?: CellStatus;
 };
 
 export type EngineCell = {
@@ -76,6 +105,14 @@ export type EngineCell = {
   status: CellStatus;
   submitted_at?: string | null;
   graded_at?: string | null;
+  /**
+   * Optional multi-attempt list (GB-15). When present and retake is on,
+   * engine picks the counted raw; otherwise cell.raw is used.
+   */
+  attempts?: ScoreAttempt[];
+  /** Provenance only — engine math ignores; groupScore resolves before store. */
+  score_source?: 'individual' | 'group' | 'group_override' | null;
+  group_id?: string | null;
 };
 
 export type ItemBreakdown = {
@@ -104,6 +141,10 @@ export type PeriodResult = {
   renormalized: boolean;
   ec_added: number;
   floor_applied: boolean;
+  /** True when ceiling clamped the period average. */
+  ceiling_applied?: boolean;
+  /** Human note when floor/ceiling changed the value. */
+  floor_ceiling_note?: string | null;
   blocked_by_incomplete: boolean;
   min_grades_blocked: boolean;
 };
@@ -122,6 +163,9 @@ export type TermResult = {
   renormalized: boolean;
   blocked: boolean;
   components_used: { period_id: string; weight_used: number; pct: number | null }[];
+  /** True when exam was omitted via exemption (AC12 / §7.6). */
+  exam_exempt?: boolean;
+  exam_exempt_note?: string | null;
 };
 
 export type WhatIfTarget = {

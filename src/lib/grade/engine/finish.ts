@@ -18,9 +18,21 @@ export function applyEcFloorCeiling(
   syllabus: EngineSyllabus,
   periodPct: number | null,
   ecPointsAsPercent: number,
-): { pct: number | null; ec_added: number; floor_applied: boolean } {
+): {
+  pct: number | null;
+  ec_added: number;
+  floor_applied: boolean;
+  ceiling_applied: boolean;
+  floor_ceiling_note: string | null;
+} {
   if (periodPct == null) {
-    return { pct: null, ec_added: 0, floor_applied: false };
+    return {
+      pct: null,
+      ec_added: 0,
+      floor_applied: false,
+      ceiling_applied: false,
+      floor_ceiling_note: null,
+    };
   }
   let pct = periodPct;
   let ec_added = 0;
@@ -38,17 +50,27 @@ export function applyEcFloorCeiling(
     ec_added = cap;
   }
 
+  const beforeFloorCeil = pct;
   let floor_applied = false;
+  let ceiling_applied = false;
   if (syllabus.period_floor_pct != null && pct < syllabus.period_floor_pct) {
     pct = syllabus.period_floor_pct;
     floor_applied = true;
   }
   if (syllabus.ceiling_pct != null && pct > syllabus.ceiling_pct) {
     pct = syllabus.ceiling_pct;
+    ceiling_applied = true;
+  }
+
+  let floor_ceiling_note: string | null = null;
+  if (floor_applied) {
+    floor_ceiling_note = `Period floor ${syllabus.period_floor_pct}% raised ${storePrecision(beforeFloorCeil)} → ${pct}`;
+  } else if (ceiling_applied) {
+    floor_ceiling_note = `Period ceiling ${syllabus.ceiling_pct}% capped ${storePrecision(beforeFloorCeil)} → ${pct}`;
   }
 
   pct = storePrecision(roundPct(pct, syllabus.rounding, syllabus.decimals ?? 0));
-  return { pct, ec_added, floor_applied };
+  return { pct, ec_added, floor_applied, ceiling_applied, floor_ceiling_note };
 }
 
 export function emptyPeriod(period_id: string, blocked = false): PeriodResult {
@@ -59,6 +81,8 @@ export function emptyPeriod(period_id: string, blocked = false): PeriodResult {
     renormalized: false,
     ec_added: 0,
     floor_applied: false,
+    ceiling_applied: false,
+    floor_ceiling_note: null,
     blocked_by_incomplete: blocked,
     min_grades_blocked: false,
   };
