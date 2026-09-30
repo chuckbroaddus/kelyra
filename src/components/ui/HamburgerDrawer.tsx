@@ -422,6 +422,13 @@ export function HamburgerDrawer() {
                           leading={<Icon name="grades" color={colors.ink} size={22} />}
                         />
                       ) : null}
+                      {matches('Transfer', q) || matches('Transfer-in', q) ? (
+                        <DrawerRow
+                          label="Transfer-in grade"
+                          onPress={() => go('/school/transfer-in')}
+                          leading={<Icon name="grades" color={colors.ink} size={22} />}
+                        />
+                      ) : null}
                       {matches('School', q) || matches('School View', q) ? (
                         <DrawerRow
                           label="School"

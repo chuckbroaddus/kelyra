@@ -9,10 +9,18 @@ import { makeScaleFromTemplate } from '../scale/scale.ts';
 import {
   applyOverride,
   applyYearLinkCredit,
+  buildEligibilitySnapshot,
+  buildReportCardLines,
   buildTermGrade,
+  buildTransferInPeriod,
+  buildTransferInTerm,
+  convertTransferLetter,
   defaultCreditPolicy,
+  DEFAULT_TRANSFER_LETTER_TO_PCT,
   gpaFromTermGrades,
   postPeriod,
+  setTermRowFlags,
+  yearCreditEarned,
   type PostedPeriodGrade,
   type PostingTermRollup,
   type TermGrade,
@@ -423,4 +431,187 @@ test('failing term earns 0 credit below threshold', () => {
   assert.equal(term.pct, 55);
   assert.equal(term.credits_attempted, 0.5);
   assert.equal(term.credits_earned, 0);
+});
+
+test('FR-GPA-08 default transfer letter map', () => {
+  assert.equal(convertTransferLetter('A+'), 98);
+  assert.equal(convertTransferLetter('A'), 95);
+  assert.equal(convertTransferLetter('B-'), 82);
+  assert.equal(convertTransferLetter('F'), 55);
+  assert.equal(DEFAULT_TRANSFER_LETTER_TO_PCT['C+'], 78);
+  // school override map
+  assert.equal(convertTransferLetter('B', { B: 84, F: 50 }), 84);
+});
+
+test('transfer-in period + term rows carry transfer flag and audit', () => {
+  const period = buildTransferInPeriod({
+    class_id: 'c1',
+    student_id: 's1',
+    marking_period_code: '6W1',
+    letter: 'B+',
+    scale: us,
+    stored_by: 'counselor-1',
+    stored_at: '2026-03-01T00:00:00.000Z',
+    reason: 'transfer from Spring ISD',
+  });
+  assert.equal(period.row.pct, 88);
+  assert.equal(period.row.letter, 'B+');
+  assert.equal(period.row.source, 'transfer');
+  assert.ok((period.row.flags ?? []).includes('transfer'));
+  assert.equal(period.audit.reason, 'transfer from Spring ISD');
+  assert.equal(period.audit.old_pct, null);
+
+  const term = buildTransferInTerm({
+    class_id: 'c1',
+    student_id: 's1',
+    course: 'Algebra I',
+    course_code: 'ALG1',
+    credit_term: 'S1',
+    letter: 'A-',
+    scale: us,
+    credit_policy: defaultCreditPolicy({ passing_threshold: 60 }),
+    stored_by: 'counselor-1',
+  });
+  assert.equal(term.row.pct, 92);
+  assert.equal(term.row.letter, 'A-');
+  assert.ok((term.row.flags ?? []).includes('transfer'));
+  assert.equal(term.row.credits_earned, 0.5);
+  assert.equal(term.audit.new_flags?.[0], 'transfer');
+});
+
+test('conduct stored on period and excluded from GPA', () => {
+  const [row] = postPeriod(
+    {
+      class_id: 'c1',
+      student_id: 's1',
+      marking_period_code: '6W1',
+      pct: 90,
+      conduct: 'E',
+      absences: 2,
+      syllabus_version: '1',
+      stored_by: 't',
+    },
+    us,
+  );
+  assert.equal(row!.conduct, 'E');
+  assert.equal(row!.absences, 2);
+  const lines = buildReportCardLines([row!]);
+  assert.equal(lines[0]!.conduct, 'E');
+
+  // GPA uses term rows only — conduct is not a term field
+  const gBefore = gpaFromTermGrades(
+    [
+      tg({ course: 'English', letter: 'A', credits_attempted: 1, credits_earned: 1 }),
+    ],
+    uwProfile,
+  );
+  const gAfter = gpaFromTermGrades(
+    [
+      tg({ course: 'English', letter: 'A', credits_attempted: 1, credits_earned: 1 }),
+    ],
+    uwProfile,
+  );
+  assert.equal(gBefore, gAfter);
+  assert.equal(gBefore, 4);
+});
+
+test('FR-POST-06 eligibility flags below-passing credit courses', () => {
+  const snap = buildEligibilitySnapshot(
+    [
+      { student_id: 's1', class_id: 'math', marking_period_code: '6W1', pct: 92 },
+      { student_id: 's1', class_id: 'eng', marking_period_code: '6W1', pct: 65 },
+      { student_id: 's2', class_id: 'math', marking_period_code: '6W1', pct: 88 },
+      {
+        student_id: 's1',
+        class_id: 'pe',
+        marking_period_code: '6W1',
+        pct: 50,
+        is_credit_course: false,
+      },
+    ],
+    70,
+    { marking_period_code: '6W1' },
+  );
+  const s1 = snap.find((x) => x.student_id === 's1')!;
+  const s2 = snap.find((x) => x.student_id === 's2')!;
+  assert.equal(s1.ineligible, true);
+  assert.deepEqual(s1.failing_class_ids, ['eng']);
+  assert.equal(s2.ineligible, false);
+});
+
+test('setTermRowFlags admin edit is audited and keeps ops flags', () => {
+  const base: TermGrade = {
+    id: 'tg-1',
+    class_id: 'c1',
+    student_id: 's1',
+    course: 'Bio',
+    credit_term: 'S1',
+    pct: 80,
+    letter: 'B',
+    credits_attempted: 0.5,
+    credits_earned: 0.5,
+    course_level: 'regular',
+    quality_points: 3,
+    repeat: false,
+    flags: ['year_link'],
+  };
+  const { row, audit } = setTermRowFlags(base, ['transfer', 'cbe', 'repeat'], {
+    reason: 'counselor correction',
+    by: 'admin-1',
+  });
+  assert.ok(row.flags!.includes('year_link'));
+  assert.ok(row.flags!.includes('transfer'));
+  assert.ok(row.flags!.includes('cbe'));
+  assert.ok(row.flags!.includes('repeat'));
+  assert.equal(row.repeat, true);
+  assert.equal(audit.reason, 'counselor correction');
+  assert.deepEqual(audit.old_flags, ['year_link']);
+});
+
+test('year-link attendance gate is flag only; year credit totals 1.0', () => {
+  const policy = defaultCreditPolicy({
+    passing_threshold: 70,
+    year_link: { enabled: true, min_year_average: 70 },
+    attendance_gate: { enabled: true, min_attendance_pct: 90 },
+  });
+  const s1 = buildTermGrade({
+    class_id: 'c1',
+    student_id: 's1',
+    course: 'Biology',
+    posted_children: [{ marking_period_code: 'Q1', pct: 68 }],
+    rollup: {
+      term_id: 'S1',
+      components: [{ period_id: 'Q1', weight: 1 }],
+      exam: { enabled: false, code: 'exam' },
+      missing_child: 'renormalize',
+    },
+    scale: tx,
+    course_level: 'regular',
+    credit_policy: policy,
+    attendance_pct: 80,
+  });
+  assert.ok((s1.flags ?? []).includes('credit_denied'));
+  // With year_link on, store does not zero earned solely for attendance
+  assert.equal(s1.credits_earned, 0); // still fail by mark
+
+  const s2: TermGrade = {
+    ...s1,
+    credit_term: 'S2',
+    pct: 72,
+    letter: 'C',
+    credits_earned: 0.5,
+    flags: ['credit_denied'],
+  };
+  const linked = applyYearLinkCredit(
+    [
+      { ...s1, credits_earned: 0 },
+      s2,
+    ],
+    policy,
+  );
+  assert.equal(yearCreditEarned(linked), 1.0);
+  assert.ok((linked[0]!.flags ?? []).includes('credit_denied'));
+  assert.ok((linked[0]!.flags ?? []).includes('year_link'));
+  assert.equal(linked[0]!.pct, 68);
+  assert.equal(linked[1]!.pct, 72);
 });

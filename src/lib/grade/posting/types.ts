@@ -1,9 +1,41 @@
 /**
  * Layer 2/3 stored grades — SRS §5.7 / §6.7, CONTRACT reserved names.
  * snake_case for SQL/JSON round-trip.
+ * GB-17: conduct, transfer flags, eligibility, transfer letter map.
  */
 
-export type PostedSource = 'computed' | 'override';
+export type PostedSource = 'computed' | 'override' | 'transfer';
+
+/** Canonical transcript row flags (FR-POST-03 / §6.7). */
+export const TERM_ROW_FLAGS = [
+  'transfer',
+  'cbe',
+  'pf',
+  'credit_denied',
+  'repeat',
+] as const;
+export type TermRowFlag = (typeof TERM_ROW_FLAGS)[number];
+
+/** FR-GPA-08 default transfer letter → percent (shipped; school may override). */
+export const DEFAULT_TRANSFER_LETTER_TO_PCT: Record<string, number> = {
+  'A+': 98,
+  A: 95,
+  'A-': 92,
+  'B+': 88,
+  B: 85,
+  'B-': 82,
+  'C+': 78,
+  C: 75,
+  'C-': 72,
+  'D+': 68,
+  D: 65,
+  'D-': 62,
+  F: 55,
+};
+
+/** Default conduct / citizenship marks (FR-SYL-17). */
+export const DEFAULT_CONDUCT_MARKS = ['E', 'S', 'N', 'U'] as const;
+export type ConductMark = (typeof DEFAULT_CONDUCT_MARKS)[number];
 
 /** Layer-2 freeze of a marking-period average (report card). */
 export type PostedPeriodGrade = {
@@ -16,6 +48,12 @@ export type PostedPeriodGrade = {
   marking_period_id?: string | null;
   pct: number | null;
   letter: string | null;
+  /** Non-GPA conduct / citizenship mark (FR-POST-01 / FR-SYL-17). */
+  conduct?: string | null;
+  /** Absence count snapshot at store (optional). */
+  absences?: number | null;
+  /** Row flags e.g. transfer. */
+  flags?: string[];
   syllabus_version: string;
   stored_at: string;
   stored_by: string;
@@ -45,6 +83,7 @@ export type TermGrade = {
   include_weighted?: boolean;
   include_rank?: boolean;
   repeat: boolean;
+  /** transfer | cbe | pf | credit_denied | repeat | year_link | exam_exempt … */
   flags?: string[];
   exam_pct?: number | null;
   exam_exempt?: boolean;
@@ -62,6 +101,9 @@ export type GradeOverride = {
   old_letter: string | null;
   new_pct: number | null;
   new_letter: string | null;
+  /** Optional prior/next flags for admin flag edits. */
+  old_flags?: string[] | null;
+  new_flags?: string[] | null;
   /** Required non-empty (FR-POST-07). */
   reason: string;
   by: string;
@@ -92,8 +134,33 @@ export type ComputedPeriodInput = {
   marking_period_id?: string | null;
   pct: number | null;
   letter?: string | null;
+  conduct?: string | null;
+  absences?: number | null;
+  flags?: string[];
   syllabus_version: string | number;
   stored_by: string;
   stored_at?: string;
   source?: PostedSource;
+};
+
+/** FR-POST-06 eligibility snapshot (not a transcript field). */
+export type EligibilitySnapshot = {
+  student_id: string;
+  marking_period_code: string;
+  ineligible: boolean;
+  failing_class_ids: string[];
+  stored_at?: string;
+};
+
+/** One report-card line for a student/period. */
+export type ReportCardLine = {
+  class_id: string;
+  student_id: string;
+  marking_period_code: string;
+  pct: number | null;
+  letter: string | null;
+  conduct: string | null;
+  absences: number | null;
+  flags: string[];
+  source: PostedSource;
 };

@@ -32,6 +32,8 @@ export function defaultSyllabusV2Fields() {
     syllabus_version: 1,
     locks: {} as Record<string, unknown>,
     marking_period_scope: null as string | null,
+    /** FR-SYL-17 conduct scale id; null = off (default). */
+    conduct_scale_id: null as string | null,
   };
 }
 
