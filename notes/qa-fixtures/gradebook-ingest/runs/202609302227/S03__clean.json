@@ -1,0 +1,98 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "43f1fe61-313b-4518-be90-fccfe7cea20b",
+    "proposal": {
+      "source_id": "S03-clean-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "World History",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "World History",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-clean-202609302227"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_points_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Weighted by category; items combine by raw points inside each category.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-clean-202609302227"
+        },
+        {
+          "path": "syllabus.within_category",
+          "value": "points_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Within each category, scores are the sum of points earned ÷ points possible (points-inside).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-clean-202609302227"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 35
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 25
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Essays | 40%\nQuizzes | 35%\nProjects | 25%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-clean-202609302227"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "flat",
+            "amount": 20,
+            "unit": "points"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work: flat −20 points once late (not per day).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-clean-202609302227"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9560000000000001
+    }
+  }
+}

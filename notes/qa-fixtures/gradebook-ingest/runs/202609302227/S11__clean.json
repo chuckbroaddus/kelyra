@@ -1,0 +1,87 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "205911b9-1041-462c-92fe-99ad44a9d097",
+    "proposal": {
+      "source_id": "S11-clean-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Math Syllabus",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Math Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302227"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302227"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 25
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302227"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Within-category calculation method is not specified in the syllabus.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "rubric",
+      "overall_confidence": 0.9333333333333332
+    }
+  }
+}

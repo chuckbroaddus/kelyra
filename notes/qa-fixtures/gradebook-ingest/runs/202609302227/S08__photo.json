@@ -1,0 +1,115 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "89256652-4bbc-4683-a706-71410d4a27f1",
+    "proposal": {
+      "source_id": "S08-photo-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "PE / Athletics — Ms. Brooks",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "PE / Athletics — Ms. Brooks",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major_grades",
+              "label": "Major grades",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": "floor",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work uses a floor of 50 (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        },
+        {
+          "path": "syllabus.floor",
+          "value": 50,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work uses a floor of 50 (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "No late work accepted.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302227"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Within-category calculation method (points vs percent) is not specified.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9550000000000001
+    }
+  }
+}

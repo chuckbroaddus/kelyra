@@ -1,0 +1,249 @@
+{
+  "before": {
+    "overall": "36.0%",
+    "syllabus": "42.2%",
+    "handbook": "18.5%",
+    "negatives": "60.0%",
+    "clean": "34.1%",
+    "photo": "39.3%",
+    "totals": {
+      "correct": 54,
+      "wrong": 44,
+      "missing": 38,
+      "correctly-flagged-for-review": 2,
+      "hallucinated": 38
+    },
+    "s11_19": 0.8,
+    "s11_20": 0
+  },
+  "after": {
+    "overall": "61.1%",
+    "syllabus": "60.8%",
+    "handbook": "47.7%",
+    "negatives": "100.0%",
+    "clean": "60.3%",
+    "photo": "62.6%",
+    "totals": {
+      "correct": 97,
+      "wrong": 10,
+      "missing": 32,
+      "correctly-flagged-for-review": 2,
+      "hallucinated": 28
+    },
+    "s11_19": 1,
+    "s11_20": 0.8333333333333334
+  },
+  "per_doc": [
+    {
+      "id": "H01/clean",
+      "before": 0,
+      "after": 83
+    },
+    {
+      "id": "H01/photo",
+      "before": 27,
+      "after": 86
+    },
+    {
+      "id": "H02/clean",
+      "before": 17,
+      "after": 60
+    },
+    {
+      "id": "H03/clean",
+      "before": 0,
+      "after": 50
+    },
+    {
+      "id": "H03/photo",
+      "before": 20,
+      "after": 50
+    },
+    {
+      "id": "H04/clean",
+      "before": 0,
+      "after": 60
+    },
+    {
+      "id": "H05/clean",
+      "before": 50,
+      "after": 60
+    },
+    {
+      "id": "H05/photo",
+      "before": 67,
+      "after": 60
+    },
+    {
+      "id": "H06/clean",
+      "before": 25,
+      "after": 25
+    },
+    {
+      "id": "H07/clean",
+      "before": 20,
+      "after": 100
+    },
+    {
+      "id": "H08/clean",
+      "before": 0,
+      "after": 33
+    },
+    {
+      "id": "H09/clean",
+      "before": 0,
+      "after": 0
+    },
+    {
+      "id": "H09/photo",
+      "before": 0,
+      "after": 0
+    },
+    {
+      "id": "H10/clean",
+      "before": 33,
+      "after": 0
+    },
+    {
+      "id": "N01/clean",
+      "before": 100,
+      "after": 100
+    },
+    {
+      "id": "N01/photo",
+      "before": 100,
+      "after": 100
+    },
+    {
+      "id": "N02/clean",
+      "before": 100,
+      "after": 100
+    },
+    {
+      "id": "N03/clean",
+      "before": 0,
+      "after": 100
+    },
+    {
+      "id": "N03/photo",
+      "before": 0,
+      "after": 100
+    },
+    {
+      "id": "S01/clean",
+      "before": 80,
+      "after": 100
+    },
+    {
+      "id": "S01/photo",
+      "before": 80,
+      "after": 100
+    },
+    {
+      "id": "S02/clean",
+      "before": 25,
+      "after": 60
+    },
+    {
+      "id": "S03/clean",
+      "before": 17,
+      "after": 80
+    },
+    {
+      "id": "S03/photo",
+      "before": 17,
+      "after": 80
+    },
+    {
+      "id": "S04/clean",
+      "before": 40,
+      "after": 67
+    },
+    {
+      "id": "S05/clean",
+      "before": 60,
+      "after": 60
+    },
+    {
+      "id": "S05/photo",
+      "before": 25,
+      "after": 60
+    },
+    {
+      "id": "S06/clean",
+      "before": 50,
+      "after": 63
+    },
+    {
+      "id": "S06/photo",
+      "before": 71,
+      "after": 63
+    },
+    {
+      "id": "S07/clean",
+      "before": 60,
+      "after": 80
+    },
+    {
+      "id": "S08/clean",
+      "before": 0,
+      "after": 14
+    },
+    {
+      "id": "S08/photo",
+      "before": 0,
+      "after": 14
+    },
+    {
+      "id": "S09/clean",
+      "before": 60,
+      "after": 80
+    },
+    {
+      "id": "S09/photo",
+      "before": 60,
+      "after": 80
+    },
+    {
+      "id": "S10/clean",
+      "before": 33,
+      "after": 50
+    },
+    {
+      "id": "S11/clean",
+      "before": 50,
+      "after": 50
+    },
+    {
+      "id": "S11/photo",
+      "before": 50,
+      "after": 50
+    },
+    {
+      "id": "S12/clean",
+      "before": 33,
+      "after": 33
+    },
+    {
+      "id": "S12/photo",
+      "before": 33,
+      "after": 33
+    }
+  ],
+  "rule_violations_after": [
+    {
+      "id": "H09",
+      "variant": "clean",
+      "v": [
+        "FR-AI-24#6"
+      ]
+    },
+    {
+      "id": "H09",
+      "variant": "photo",
+      "v": [
+        "FR-AI-24#6"
+      ]
+    }
+  ]
+}

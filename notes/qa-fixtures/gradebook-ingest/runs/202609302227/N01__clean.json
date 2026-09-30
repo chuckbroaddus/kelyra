@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "6cc20976-c187-447c-9cad-4381ac9095d5",
+    "proposal": {
+      "source_id": "N01-clean-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "empty_document",
+          "message": "The provided image is too blurry or contains insufficient readable text to extract syllabus policies.",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}
