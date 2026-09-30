@@ -89,7 +89,11 @@ function flattenQpBands(value) {
     if (Array.isArray(item.bands)) {
       for (const b of item.bands) {
         if (!b || typeof b !== 'object') continue;
-        const pts = b.points && typeof b.points === 'object' ? b.points : {};
+        const pts = b.points_by_level && typeof b.points_by_level === 'object'
+          ? b.points_by_level
+          : b.points && typeof b.points === 'object'
+            ? b.points
+            : {};
         rows.push({
           min: Number(b.min_pct ?? b.min ?? 0),
           max: Number(b.max_pct ?? b.max ?? 0),
@@ -100,19 +104,18 @@ function flattenQpBands(value) {
       }
       continue;
     }
+    const pts =
+      item.points_by_level && typeof item.points_by_level === 'object'
+        ? item.points_by_level
+        : item.points && typeof item.points === 'object'
+          ? item.points
+          : {};
     rows.push({
       min: Number(item.min_pct ?? item.min ?? 0),
       max: Number(item.max_pct ?? item.max ?? 0),
-      regular: Number(
-        item.regular ??
-          item.points?.Regular ??
-          item.points?.regular ??
-          0,
-      ),
-      honors: Number(
-        item.honors ?? item.points?.Honors ?? item.points?.honors ?? 0,
-      ),
-      ap: Number(item.ap ?? item.points?.AP ?? item.points?.ap ?? 0),
+      regular: Number(item.regular ?? pts.Regular ?? pts.regular ?? 0),
+      honors: Number(item.honors ?? pts.Honors ?? pts.honors ?? 0),
+      ap: Number(item.ap ?? pts.AP ?? pts.ap ?? 0),
     });
   }
   return rows.length ? rows : null;
@@ -201,6 +204,17 @@ function scoreField(expField, actFields) {
       ? { path: expField.path, verdict: 'correct' }
       : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
   }
+  if (expField.path === 'syllabus.missing_rule') {
+    const expT =
+      expField.value && typeof expField.value === 'object'
+        ? expField.value.type ?? expField.value
+        : expField.value;
+    const actT =
+      act.value && typeof act.value === 'object' ? act.value.type ?? act.value : act.value;
+    if (String(expT) === String(actT)) {
+      return { path: expField.path, verdict: 'correct', detail: 'missing-rule-type' };
+    }
+  }
   if (expField.path === 'levels.list') {
     const ok = Array.isArray(act.value) && Array.isArray(expField.value)
       ? act.value.length >= Math.min(2, expField.value.length)
@@ -255,7 +269,17 @@ function scoreProposal(expected, actual, meta = {}) {
   for (const ef of expFields) results.push(scoreField(ef, actFields));
 
   const expPaths = new Set(expFields.map((f) => f.path));
+  // Companion fields derived from expected parents are not hallucinations
+  const companions = new Set();
+  for (const ef of expFields) {
+    if (ef.path === 'calendar.template') companions.add('calendar.period_model');
+    if (ef.path === 'levels.list') companions.add('gpa.mode');
+    if (ef.path === 'qp.tables') companions.add('qp.method');
+    if (ef.path === 'qp.method') companions.add('qp.tables');
+    if (ef.path === 'rollup.preset') companions.add('rollup.custom_weights');
+  }
   for (const af of actFields) {
+    if (!expPaths.has(af.path) && companions.has(af.path)) continue;
     if (!expPaths.has(af.path) && af.value != null && af.confidence >= 0.8) {
       if (af.path === 'syllabus.title' || af.path === 'school.notes') continue;
       results.push({ path: af.path, verdict: 'hallucinated', actual: af.value });

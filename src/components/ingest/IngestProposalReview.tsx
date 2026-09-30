@@ -8,6 +8,8 @@ import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/But
 import { Card } from '@/components/ui/Card';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
+import { labelForIngestPath, labelForIngestValue } from '@/lib/ingest/fieldLabels';
+import { dedupeWarningsAndAmbiguities } from '@/lib/ingest/normalizeFieldValues';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -18,6 +20,7 @@ type Props = {
   sourceLabel?: string;
   onApply: (accepted: IngestField[]) => void;
   onDiscard: () => void;
+  showRawPaths?: boolean;
 };
 
 function confColor(c: number, colors: { good: string; warn: string; danger: string; mute: string }) {
@@ -26,17 +29,13 @@ function confColor(c: number, colors: { good: string; warn: string; danger: stri
   return colors.danger;
 }
 
-function valuePreview(v: unknown): string {
-  if (v == null) return '—';
-  if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v);
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}
-
-export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard }: Props) {
+export function IngestProposalReview({
+  proposal,
+  sourceLabel,
+  onApply,
+  onDiscard,
+  showRawPaths = false,
+}: Props) {
   const { colors } = useTheme();
   const [decisions, setDecisions] = useState<Record<string, Decision>>(() => {
     const init: Record<string, Decision> = {};
@@ -47,8 +46,33 @@ export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard
     return init;
   });
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [debugOpen, setDebugOpen] = useState(false);
 
   const rows = useMemo(() => proposal.fields, [proposal.fields]);
+  const { warnings, ambiguities } = useMemo(
+    () => dedupeWarningsAndAmbiguities(proposal.warnings ?? [], proposal.ambiguities ?? []),
+    [proposal.warnings, proposal.ambiguities],
+  );
+
+  const notices = useMemo(() => {
+    const out: Array<{ key: string; text: string; block: boolean }> = [];
+    const seen = new Set<string>();
+    for (const a of ambiguities) {
+      const t = a.message.trim();
+      const k = t.toLowerCase().replace(/^ambiguity:\s*/i, '');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ key: `a-${a.code}`, text: t, block: false });
+    }
+    for (const w of warnings) {
+      const t = w.message.trim();
+      const k = t.toLowerCase().replace(/^ambiguity:\s*/i, '');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ key: `w-${w.code}`, text: t, block: w.severity === 'block' });
+    }
+    return out;
+  }, [warnings, ambiguities]);
 
   return (
     <View>
@@ -59,17 +83,12 @@ export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard
         <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
           AI never publishes. Accept, edit, or reject each field, then continue in the wizard.
         </Text>
-        {proposal.warnings.map((w, i) => (
+        {notices.map((n) => (
           <Text
-            key={`${w.code}-${i}`}
-            style={[type.meta, { color: w.severity === 'block' ? colors.danger : colors.warn, marginTop: 4 }]}
+            key={n.key}
+            style={[type.meta, { color: n.block ? colors.danger : colors.warn, marginTop: 4 }]}
           >
-            {w.message}
-          </Text>
-        ))}
-        {proposal.ambiguities.map((a, i) => (
-          <Text key={`${a.code}-${i}`} style={[type.meta, { color: colors.warn, marginTop: 4 }]}>
-            Ambiguity: {a.message}
+            {n.text}
           </Text>
         ))}
       </Card>
@@ -81,20 +100,25 @@ export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard
           f.evidence.page != null
             ? `p. ${f.evidence.page}: ${f.evidence.quote}`
             : f.evidence.quote || 'No quote';
+        const label = labelForIngestPath(f.path);
+        const preview = labelForIngestValue(f.path, f.value);
         return (
           <Card key={f.path}>
             <View style={styles.head}>
-              <Text style={[type.body, { color: colors.ink, flex: 1, fontWeight: '600' }]}>{f.path}</Text>
+              <Text style={[type.body, { color: colors.ink, flex: 1, fontWeight: '600' }]}>{label}</Text>
               <Text style={[type.meta, { color: badge }]}>
                 {Math.round(f.confidence * 100)}% · {f.status}
               </Text>
             </View>
+            {(showRawPaths || debugOpen) && (
+              <Text style={[type.meta, { color: colors.mute }]}>Key: {f.path}</Text>
+            )}
             <Text style={[type.meta, { color: colors.mute }]}>{evidence}</Text>
-            <Text style={[type.body, { color: colors.ink, marginTop: 6 }]}>{valuePreview(f.value)}</Text>
+            <Text style={[type.body, { color: colors.ink, marginTop: 6 }]}>{preview}</Text>
             {decision === 'edit' ? (
               <TextField
                 label="Edited value (JSON or text)"
-                value={edits[f.path] ?? valuePreview(f.value)}
+                value={edits[f.path] ?? preview}
                 onChangeText={(t) => setEdits((e) => ({ ...e, [f.path]: t }))}
               />
             ) : null}
@@ -117,6 +141,11 @@ export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard
         );
       })}
 
+      <GhostButton
+        label={debugOpen ? 'Hide field keys' : 'Show field keys'}
+        onPress={() => setDebugOpen((v) => !v)}
+      />
+
       <PrimaryButton
         label="Apply into wizard"
         onPress={() => {
@@ -125,7 +154,7 @@ export function IngestProposalReview({ proposal, sourceLabel, onApply, onDiscard
             const d = decisions[f.path] ?? 'reject';
             if (d === 'reject') continue;
             if (d === 'edit') {
-              const raw = edits[f.path] ?? valuePreview(f.value);
+              const raw = edits[f.path] ?? labelForIngestValue(f.path, f.value);
               let value: unknown = raw;
               try {
                 value = JSON.parse(raw);

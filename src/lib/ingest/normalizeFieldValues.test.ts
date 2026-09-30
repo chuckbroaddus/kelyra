@@ -345,3 +345,151 @@ test('S06 sum110 categories keep 110 after normalize', () => {
   const sum = cats.reduce((s, c) => s + c.weight_percent, 0);
   assert.equal(sum, 110);
 });
+
+test('H09 qp.tables flat rows coerce to points_by_level', async () => {
+  const { coerceQpTables, coerceLevelsList, normalizeProposalFields } = await import(
+    './normalizeFieldValues.ts'
+  );
+  const tables = coerceQpTables([
+    { min: 97, max: 100, regular: 4, honors: 5, ap: 6 },
+    { min: 93, max: 96, Regular: 3.8, Honors: 4.8, AP: 5.8 },
+  ]);
+  assert.ok(tables);
+  assert.equal(tables![0].points_by_level.regular, 4);
+  assert.equal(tables![0].points_by_level.ap, 6);
+  const levels = coerceLevelsList(['Pre-AP', 'DC', 'IB Higher Level', 'OnRamps', 'Regular']);
+  assert.deepEqual(
+    levels?.map((l) => l.key),
+    ['preap', 'dual_credit', 'ib_hl', 'onramps', 'regular'],
+  );
+
+  const p = normalizeProposalFields({
+    source_id: 'H09',
+    wizard: 'school',
+    kind: 'school_policy',
+    fields: [
+      {
+        path: 'qp.tables',
+        value: [{ min: 97, max: 100, regular: 4, honors: 5, ap: 6 }],
+        confidence: 0.95,
+        evidence: ev('97–100 AP 6.0'),
+        status: 'proposed',
+        source_doc_id: 'H09',
+      },
+    ],
+    ambiguities: [],
+    warnings: [],
+    document_kind_guess: 'gpa_chart',
+    overall_confidence: 0.9,
+  });
+  assert.ok(p.fields.find((f) => f.path === 'qp.method')?.value === 'numeric_band');
+  assert.ok(p.fields.find((f) => f.path === 'levels.list'));
+});
+
+test('hallucination patterns: drop no-evidence, placeholder quote, invalid rollup, total_points cats', () => {
+  const p = parseIngestProposal({
+    wizard: 'syllabus',
+    fields: [
+      {
+        path: 'syllabus.engine',
+        value: 'total_points',
+        confidence: 0.99,
+        evidence: ev('All assignments add by total points'),
+      },
+      {
+        path: 'syllabus.categories',
+        value: [
+          { label: 'Unit labs', weight_percent: 0 },
+          { label: 'Notebook', weight_percent: 0 },
+        ],
+        confidence: 0.95,
+        evidence: ev('Unit labs: 50 pts'),
+      },
+      {
+        path: 'syllabus.rollup_preset',
+        value: 'texas_70_pass',
+        confidence: 0.9,
+        evidence: ev('TX 70 pass scale'),
+      },
+      {
+        path: 'syllabus.floor',
+        value: 50,
+        confidence: 0.9,
+        evidence: ev('Late work cannot fall below a floor of 50%.'),
+      },
+      {
+        path: 'syllabus.late_rule',
+        value: { type: 'per_day', amount: 10, unit: 'percent' },
+        confidence: 0.9,
+        evidence: ev('Late work −10% per day'),
+      },
+      {
+        path: 'syllabus.missing_rule',
+        value: 'zero',
+        confidence: 0.8,
+        evidence: ev('Hard deadline: no work accepted after the unit ends.'),
+      },
+      {
+        path: 'syllabus.within_category',
+        value: null,
+        confidence: 0.4,
+        evidence: ev('The syllabus does not state whether items average by points or percent.'),
+        status: 'unknown',
+      },
+    ],
+    ambiguities: [
+      {
+        code: 'within_category',
+        message: 'The syllabus does not state whether items average by points or percent.',
+        paths: ['syllabus.within_category'],
+      },
+    ],
+    warnings: [
+      {
+        code: 'within_category_unspecified',
+        message: 'The syllabus does not state whether items average by points or percent.',
+        severity: 'warn',
+      },
+    ],
+  });
+  assert.ok(!p.fields.some((f) => f.path === 'syllabus.categories'));
+  assert.ok(!p.fields.some((f) => f.path === 'syllabus.rollup_preset' && f.value != null));
+  assert.ok(!p.fields.some((f) => f.path === 'syllabus.floor' && f.value != null));
+  assert.ok(!p.fields.some((f) => f.path === 'syllabus.missing_rule' && f.value != null));
+  const late = p.fields.find((f) => f.path === 'syllabus.late_rule')?.value as {
+    floor_pct?: number;
+  };
+  assert.equal(late?.floor_pct, 50);
+  // one ambiguity, no duplicate warning with same meaning
+  assert.equal(p.ambiguities.filter((a) => a.code === 'within_category').length, 1);
+  assert.ok(!p.warnings.some((w) => /does not state whether items/i.test(w.message)));
+});
+
+test('qp.method alone without tables is dropped', () => {
+  const p = parseIngestProposal(
+    {
+      wizard: 'school',
+      fields: [
+        {
+          path: 'qp.method',
+          value: 'numeric_band',
+          confidence: 0.9,
+          evidence: ev('AP A = 5.0'),
+        },
+      ],
+    },
+    { expected_kind: 'school_policy' },
+  );
+  assert.ok(!p.fields.some((f) => f.path === 'qp.method'));
+});
+
+test('UI labels cover every emit path + friendly calendar value', async () => {
+  const { pathsMissingLabels, labelForIngestPath, labelForIngestValue } = await import(
+    './fieldLabels.ts'
+  );
+  assert.deepEqual(pathsMissingLabels(), []);
+  assert.equal(labelForIngestPath('syllabus.title'), 'Course title');
+  assert.equal(labelForIngestPath('calendar.template'), 'Grading calendar');
+  assert.equal(labelForIngestValue('calendar.template', 'tx_six_weeks'), 'Texas six weeks');
+  assert.equal(labelForIngestPath('qp.tables'), 'Quality-point chart');
+});
