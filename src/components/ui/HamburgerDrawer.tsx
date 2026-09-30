@@ -415,6 +415,13 @@ export function HamburgerDrawer() {
                           leading={<Icon name="details" color={colors.ink} size={22} />}
                         />
                       ) : null}
+                      {matches('Grading', q) || matches('Reporting Policy', q) || matches('Grading and Reporting Policy', q) ? (
+                        <DrawerRow
+                          label="Grading and Reporting Policy"
+                          onPress={() => go('/school/grading-policy')}
+                          leading={<Icon name="grades" color={colors.ink} size={22} />}
+                        />
+                      ) : null}
                       <Hairline />
                     </>
                   ) : null}

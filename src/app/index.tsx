@@ -299,6 +299,11 @@ export default function HomeScreen() {
                 icon="manage"
                 onPress={() => router.push('/admin/ride')}
               />
+              <ListRow
+                title="Grading and Reporting Policy"
+                icon="grades"
+                onPress={() => router.push('/school/grading-policy')}
+              />
               {canViewActivity ? (
                 <ListRow
                   title="Activity"
