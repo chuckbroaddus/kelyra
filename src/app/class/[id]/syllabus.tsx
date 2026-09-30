@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -278,11 +278,18 @@ export default function SyllabusScreen() {
 
   return (
     <Screen keyboard pageChromeHosted>
-      <SectionHeader label="How this class grades" first />
+      <View style={[styles.titleHeader, styles.titleHeaderFirst, { backgroundColor: colors.bg }]}>
+        <Text
+          style={[type.section, styles.titleHeaderLabel, { color: colors.mute }]}
+          numberOfLines={1}
+        >
+          Grading Syllabus
+        </Text>
+      </View>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
-          Categories and weights drive the final average. Nothing is a grade until you Approve work.
+          The categories and weights below drive the final average.
         </Text>
         <Text style={[type.meta, { color: sum === 100 ? colors.good : colors.warn, marginTop: 8 }]}>
           Sum {Math.round(sum * 1000) / 1000}%
@@ -307,7 +314,7 @@ export default function SyllabusScreen() {
       ) : null}
 
       <TextField
-        label="Syllabus title"
+        label="SYLLABUS TITLE"
         placeholder="Room 14 Math — Fall 2026"
         value={title}
         onChangeText={setTitle}
@@ -422,7 +429,7 @@ export default function SyllabusScreen() {
 
       <SectionHeader label="Terms" />
       <Text style={[type.meta, { color: colors.mute }]}>
-        Year composite weighting comes later. v1 filters by term; weights are category weights inside the term.
+        Select whether final grades are calculated per Quarter, per Semester, per Year, or Custom. Your assignments will still define in which term the grade would apply.
       </Text>
       <ChipRow>
         {(
@@ -621,6 +628,30 @@ export default function SyllabusScreen() {
 }
 
 const styles = StyleSheet.create({
+  titleHeader: {
+    marginTop: 24,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingVertical: 6,
+    zIndex: 4,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        top: 0,
+      },
+      default: {},
+    }),
+  },
+  titleHeaderFirst: {
+    marginTop: 0,
+  },
+  titleHeaderLabel: {
+    flexShrink: 1,
+    textTransform: 'none',
+  },
   actions: {
     gap: 10,
     marginTop: 16,
