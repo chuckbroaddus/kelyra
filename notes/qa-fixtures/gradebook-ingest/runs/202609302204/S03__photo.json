@@ -1,0 +1,115 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "8ebf2ad6-f8c6-42f2-89df-f47e50488e7d",
+    "proposal": {
+      "source_id": "S03-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "World History",
+          "confidence": 1,
+          "evidence": {
+            "quote": "World History",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Weighted by category; items combine by raw points inside each category.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Essays",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.35
+            },
+            {
+              "name": "Projects",
+              "weight": 0.25
+            }
+          ],
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Essays 40%\nQuizzes 35%\nProjects 25%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.within_category",
+          "value": "points_sum",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Within each category, scores are the sum of points earned ÷ points possible (points-inside).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": "flat_deduction",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Late work: flat -20 points once late (not per day).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "value": "method_b",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Extra credit: Method B — optional EC does not lower anyone who skips it.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "value": "none_stated",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Cap: none stated.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S03-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

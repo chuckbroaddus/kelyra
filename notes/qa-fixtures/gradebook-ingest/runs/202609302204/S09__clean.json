@@ -1,0 +1,111 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "a3dc30d5-c3c4-4bb2-a4e9-33cd3980b464",
+    "proposal": {
+      "source_id": "S09-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Art I",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Art I",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Studio 30 · Critique 20 · Sketchbook 20 · Projects 20 · Final 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Studio",
+              "weight": 30
+            },
+            {
+              "name": "Critique",
+              "weight": 20
+            },
+            {
+              "name": "Sketchbook",
+              "weight": 20
+            },
+            {
+              "name": "Projects",
+              "weight": 20
+            },
+            {
+              "name": "Final",
+              "weight": 10
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Studio 30 · Critique 20 · Sketchbook 20 · Projects 20 · Final 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": "flat -10% once",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late: flat -10% once.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "value": "Method C (separate bucket)",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Extra credit Method C (separate bucket).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        },
+        {
+          "path": "syllabus.narrative",
+          "value": "Grading philosophy: growth over perfection — narrative only, not a category.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Grading philosophy: growth over perfection — narrative only, not a category.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

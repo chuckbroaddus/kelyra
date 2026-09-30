@@ -1,0 +1,2286 @@
+{
+  "stamp": "202609302204",
+  "overall_accuracy": 0.3599234099234099,
+  "syllabus_accuracy": 0.4223809523809523,
+  "handbook_accuracy": 0.18495670995670999,
+  "negative_accuracy": 0.6,
+  "clean_accuracy": 0.3413333333333333,
+  "photo_accuracy": 0.3931199752628324,
+  "documents": [
+    {
+      "id": "S01",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.8,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "correctly-flagged-for-review"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "actual": "-10% per day"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S01",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.8,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "correctly-flagged-for-review"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "actual": "10% per day"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S02",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.25,
+      "counts": {
+        "correct": 1,
+        "wrong": 3,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "wrong",
+          "expected": "total_points",
+          "actual": "points"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "none"
+          },
+          "actual": "not_accepted"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "zero"
+          },
+          "actual": "zero"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S03",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.16666666666666666,
+      "counts": {
+        "correct": 1,
+        "wrong": 4,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "wrong",
+          "expected": "weighted_points_inside",
+          "actual": "weighted_percent_inside"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "wrong",
+          "expected": "points_inside",
+          "actual": "total_points"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 35
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 25
+            }
+          ],
+          "actual": [
+            {
+              "name": "Essays",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.35
+            },
+            {
+              "name": "Projects",
+              "weight": 0.25
+            }
+          ]
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "flat",
+            "amount": 20,
+            "unit": "points"
+          },
+          "actual": "flat -20 points once late (not per day)."
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "verdict": "hallucinated",
+          "actual": "none stated"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S03",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.16666666666666666,
+      "counts": {
+        "correct": 1,
+        "wrong": 4,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "wrong",
+          "expected": "weighted_points_inside",
+          "actual": "weighted_percent_inside"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "wrong",
+          "expected": "points_inside",
+          "actual": "points_sum"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 35
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 25
+            }
+          ],
+          "actual": [
+            {
+              "name": "Essays",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.35
+            },
+            {
+              "name": "Projects",
+              "weight": 0.25
+            }
+          ]
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "flat",
+            "amount": 20,
+            "unit": "points"
+          },
+          "actual": "flat_deduction"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "verdict": "hallucinated",
+          "actual": "none_stated"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S04",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.4,
+      "counts": {
+        "correct": 2,
+        "wrong": 3,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "wrong",
+          "expected": "percent_inside",
+          "actual": "mean"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "per_hour",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "actual": "-5% per hour late, max 24 hours."
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "omit"
+          },
+          "actual": "omit"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S05",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.6,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "hallucinated",
+          "actual": 50
+        },
+        {
+          "path": "rule.no_renormalize",
+          "verdict": "correct"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S05",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.25,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 30
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 20
+            }
+          ],
+          "actual": [
+            {
+              "name": "Essays",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.3
+            },
+            {
+              "name": "Homework",
+              "weight": 0.2
+            }
+          ]
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "hallucinated",
+          "actual": 50
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S06",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0.5,
+      "counts": {
+        "correct": 4,
+        "wrong": 1,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 50
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 40
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 20
+            }
+          ],
+          "actual": [
+            {
+              "category": "Tests",
+              "weight": 50
+            },
+            {
+              "category": "Quizzes",
+              "weight": 40
+            },
+            {
+              "category": "Homework",
+              "weight": 20
+            }
+          ]
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.ceiling",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.retake",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "verdict": "hallucinated",
+          "actual": "no work accepted after the unit ends"
+        },
+        {
+          "path": "rule.no_renormalize",
+          "verdict": "correct"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S06",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.7142857142857143,
+      "counts": {
+        "correct": 5,
+        "wrong": 1,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "hard_deadline"
+          },
+          "actual": "Hard deadline: no work accepted after the unit ends."
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.ceiling",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.retake",
+          "verdict": "missing"
+        },
+        {
+          "path": "rule.no_renormalize",
+          "verdict": "correct"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S07",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.6,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "per_day",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "actual": "-5% per day"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S08",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 3,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "major",
+              "label": "Major",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "actual": [
+            {
+              "name": "Major grades",
+              "weight": 0.6
+            },
+            {
+              "name": "Daily",
+              "weight": 0.4
+            }
+          ]
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "floor",
+            "floor": 50
+          },
+          "actual": "floor"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "none"
+          },
+          "actual": "zero"
+        },
+        {
+          "path": "syllabus.retake",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.narrative",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "hallucinated",
+          "actual": 50
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S08",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 3,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "key": "major",
+              "label": "Major",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "actual": [
+            {
+              "name": "Major grades",
+              "weight": 60
+            },
+            {
+              "name": "Daily",
+              "weight": 40
+            }
+          ]
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "floor",
+            "floor": 50
+          },
+          "actual": "Missing work uses a floor of 50 (not zero)."
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "none"
+          },
+          "actual": "No late work accepted."
+        },
+        {
+          "path": "syllabus.retake",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.narrative",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "hallucinated",
+          "actual": 50
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S09",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.6,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "flat",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "actual": "flat -10% once"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.narrative",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S09",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.6,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "flat",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "actual": "flat -10% once"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.narrative",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S10",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0.3333333333333333,
+      "counts": {
+        "correct": 2,
+        "wrong": 1,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "wrong",
+          "expected": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent",
+            "floor": 0
+          },
+          "actual": "Late -10%/day with floor 0."
+        },
+        {
+          "path": "syllabus.ceiling",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.narrative",
+          "verdict": "missing"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "hallucinated",
+          "actual": "weighted_percent_inside"
+        },
+        {
+          "path": "syllabus.floor",
+          "verdict": "hallucinated",
+          "actual": 0
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H01",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "missing": 6,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "missing"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "credit.passing_threshold",
+          "verdict": "missing"
+        },
+        {
+          "path": "gpa.mode",
+          "verdict": "missing"
+        },
+        {
+          "path": "levels.list",
+          "verdict": "missing"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H01",
+      "kind": "handbook",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.2727272727272727,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 3,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 5
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "credit.passing_threshold",
+          "verdict": "correct"
+        },
+        {
+          "path": "gpa.mode",
+          "verdict": "missing"
+        },
+        {
+          "path": "levels.list",
+          "verdict": "correct"
+        },
+        {
+          "path": "calendar.year_start",
+          "verdict": "hallucinated",
+          "actual": 2026
+        },
+        {
+          "path": "calendar.year_end",
+          "verdict": "hallucinated",
+          "actual": 2027
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "verdict": "hallucinated",
+          "actual": true
+        },
+        {
+          "path": "rollup.custom_weights",
+          "verdict": "hallucinated",
+          "actual": {
+            "periods": [
+              2,
+              2,
+              2
+            ],
+            "exam": 1,
+            "denominator": 7
+          }
+        },
+        {
+          "path": "qp.tables",
+          "verdict": "hallucinated",
+          "actual": {
+            "On-level": {
+              "A": 4,
+              "B": 3,
+              "C": 2,
+              "D": 1,
+              "F": 0
+            },
+            "Honors": {
+              "A": 4.5,
+              "B": 3.5,
+              "C": 2.5,
+              "D": 1.5,
+              "F": 0
+            },
+            "AP": {
+              "A": 5,
+              "B": 4,
+              "C": 3,
+              "D": 2,
+              "F": 0
+            }
+          }
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H02",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.16666666666666666,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 3,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "wrong",
+          "expected": "nine_weeks",
+          "actual": "quarter"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "verdict": "correct"
+        },
+        {
+          "path": "school.notes",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.custom_weights",
+          "verdict": "hallucinated",
+          "actual": {
+            "Q1": 0.4,
+            "Q2": 0.4,
+            "Exam": 0.2
+          }
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H03",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "wrong",
+          "expected": "semester",
+          "actual": "custom"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "locks.map",
+          "verdict": "wrong",
+          "expected": {
+            "categories": true,
+            "homework_max_percent": 10
+          },
+          "actual": {
+            "homework_max_pct": 10
+          }
+        },
+        {
+          "path": "rollup.custom_weights",
+          "verdict": "hallucinated",
+          "actual": {
+            "MP1": 45,
+            "MP2": 45,
+            "exam": 10
+          }
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "verdict": "hallucinated",
+          "actual": true
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H03",
+      "kind": "handbook",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.2,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "locks.map",
+          "verdict": "wrong",
+          "expected": {
+            "categories": true,
+            "homework_max_percent": 10
+          },
+          "actual": {
+            "homework_max_weight": 0.1
+          }
+        },
+        {
+          "path": "rollup.custom_weights",
+          "verdict": "hallucinated",
+          "actual": {
+            "MP1": 0.45,
+            "MP2": 0.45,
+            "EXAM": 0.1
+          }
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H04",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "missing"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "missing"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "wrong",
+          "expected": "50/50",
+          "actual": "50_50"
+        },
+        {
+          "path": "credit.year_link",
+          "verdict": "wrong",
+          "expected": true,
+          "actual": "paired"
+        },
+        {
+          "path": "calendar.model",
+          "verdict": "hallucinated",
+          "actual": "trimester"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "verdict": "hallucinated",
+          "actual": false
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H05",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0.5,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "missing"
+        },
+        {
+          "path": "levels.list",
+          "verdict": "correct"
+        },
+        {
+          "path": "rollup.custom_weights",
+          "verdict": "hallucinated",
+          "actual": {
+            "coursework": 85,
+            "exam": 15
+          }
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H05",
+      "kind": "handbook",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.88,
+      "field_accuracy": 0.6666666666666666,
+      "counts": {
+        "correct": 2,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "wrong",
+          "expected": "85/15",
+          "actual": "85_15"
+        },
+        {
+          "path": "levels.list",
+          "verdict": "correct"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H06",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.25,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "gpa.include",
+          "verdict": "missing"
+        },
+        {
+          "path": "school.notes",
+          "verdict": "missing"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "hallucinated",
+          "actual": "nine_weeks"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H07",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.2,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "credit.passing_threshold",
+          "verdict": "missing"
+        },
+        {
+          "path": "scale.passing_pct",
+          "verdict": "correct"
+        },
+        {
+          "path": "scale.bands",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "letter": "A",
+              "min": 90,
+              "max": 100
+            },
+            {
+              "letter": "B",
+              "min": 80,
+              "max": 89
+            },
+            {
+              "letter": "C",
+              "min": 70,
+              "max": 79
+            },
+            {
+              "letter": "F",
+              "min": 0,
+              "max": 59
+            }
+          ],
+          "actual": [
+            {
+              "scale_id": "default",
+              "name": "A",
+              "min": 90,
+              "max": 100,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "B",
+              "min": 80,
+              "max": 89,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "C",
+              "min": 70,
+              "max": 79,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "F",
+              "min": 0,
+              "max": 59,
+              "gpa": null
+            }
+          ]
+        },
+        {
+          "path": "scale.list",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "id": "default",
+              "name": "Standard Scale"
+            }
+          ]
+        },
+        {
+          "path": "scale.default_id",
+          "verdict": "hallucinated",
+          "actual": "default"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H08",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "scale.bands",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "letter": "A",
+              "min": 93,
+              "max": 100
+            },
+            {
+              "letter": "A-",
+              "min": 90,
+              "max": 92
+            },
+            {
+              "letter": "B+",
+              "min": 87,
+              "max": 89
+            },
+            {
+              "letter": "B",
+              "min": 83,
+              "max": 86
+            },
+            {
+              "letter": "B-",
+              "min": 80,
+              "max": 82
+            }
+          ],
+          "actual": [
+            {
+              "scale_id": "plus_minus",
+              "name": "A",
+              "min": 93,
+              "max": 100,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "A-",
+              "min": 90,
+              "max": 92,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B+",
+              "min": 87,
+              "max": 89,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B",
+              "min": 83,
+              "max": 86,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B-",
+              "min": 80,
+              "max": 82,
+              "gpa": null
+            }
+          ]
+        },
+        {
+          "path": "gpa.rank",
+          "verdict": "missing"
+        },
+        {
+          "path": "school.notes",
+          "verdict": "wrong",
+          "expected": "Transfer A=95 B=85 C=75 D=65 F=50",
+          "actual": "Transfer grades mapping rules: incoming letter A maps to 95%, B to 85%, C to 75%, D to 65%, F to 50%. Class rank uses the weighted GPA profile only."
+        },
+        {
+          "path": "scale.list",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "id": "plus_minus",
+              "name": "Plus/Minus Scale",
+              "default": true
+            }
+          ]
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "H09",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "qp.method",
+          "verdict": "wrong",
+          "expected": "numeric_band",
+          "actual": "band"
+        },
+        {
+          "path": "qp.tables",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "min": 97,
+              "max": 100,
+              "regular": 4,
+              "honors": 5,
+              "ap": 6
+            },
+            {
+              "min": 93,
+              "max": 96,
+              "regular": 3.8,
+              "honors": 4.8,
+              "ap": 5.8
+            },
+            {
+              "min": 90,
+              "max": 92,
+              "regular": 3.6,
+              "honors": 4.6,
+              "ap": 5.6
+            },
+            {
+              "min": 87,
+              "max": 89,
+              "regular": 3.3,
+              "honors": 4.3,
+              "ap": 5.3
+            },
+            {
+              "min": 83,
+              "max": 86,
+              "regular": 3,
+              "honors": 4,
+              "ap": 5
+            }
+          ],
+          "actual": [
+            {
+              "name": "Standard Numeric Band Quality Points",
+              "bands": [
+                {
+                  "min_pct": 97,
+                  "max_pct": 100,
+                  "points": {
+                    "Regular": 4,
+                    "Honors": 5,
+                    "AP": 6
+                  }
+                },
+                {
+                  "min_pct": 93,
+                  "max_pct": 96,
+                  "points": {
+                    "Regular": 3.8,
+                    "Honors": 4.8,
+                    "AP": 5.8
+                  }
+                },
+                {
+                  "min_pct": 90,
+                  "max_pct": 92,
+                  "points": {
+                    "Regular": 3.6,
+                    "Honors": 4.6,
+                    "AP": 5.6
+                  }
+                },
+                {
+                  "min_pct": 87,
+                  "max_pct": 89,
+                  "points": {
+                    "Regular": 3.3,
+                    "Honors": 4.3,
+                    "AP": 5.3
+                  }
+                },
+                {
+                  "min_pct": 83,
+                  "max_pct": 86,
+                  "points": {
+                    "Regular": 3,
+                    "Honors": 4,
+                    "AP": 5
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": "levels.list",
+          "verdict": "missing"
+        },
+        {
+          "path": "qp.tables",
+          "verdict": "missing",
+          "rule_violation": "FR-AI-24#6"
+        }
+      ],
+      "rule_violations": [
+        "FR-AI-24#6"
+      ]
+    },
+    {
+      "id": "H09",
+      "kind": "handbook",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "qp.method",
+          "verdict": "wrong",
+          "expected": "numeric_band",
+          "actual": "banded"
+        },
+        {
+          "path": "qp.tables",
+          "verdict": "wrong",
+          "expected": [
+            {
+              "min": 97,
+              "max": 100,
+              "regular": 4,
+              "honors": 5,
+              "ap": 6
+            },
+            {
+              "min": 93,
+              "max": 96,
+              "regular": 3.8,
+              "honors": 4.8,
+              "ap": 5.8
+            },
+            {
+              "min": 90,
+              "max": 92,
+              "regular": 3.6,
+              "honors": 4.6,
+              "ap": 5.6
+            },
+            {
+              "min": 87,
+              "max": 89,
+              "regular": 3.3,
+              "honors": 4.3,
+              "ap": 5.3
+            },
+            {
+              "min": 83,
+              "max": 86,
+              "regular": 3,
+              "honors": 4,
+              "ap": 5
+            }
+          ],
+          "actual": [
+            {
+              "name": "Standard Numeric Band Quality Points",
+              "bands": [
+                {
+                  "min": 97,
+                  "max": 100,
+                  "points": {
+                    "Regular": 4,
+                    "Honors": 5,
+                    "AP": 6
+                  }
+                },
+                {
+                  "min": 93,
+                  "max": 96,
+                  "points": {
+                    "Regular": 3.8,
+                    "Honors": 4.8,
+                    "AP": 5.8
+                  }
+                },
+                {
+                  "min": 90,
+                  "max": 92,
+                  "points": {
+                    "Regular": 3.6,
+                    "Honors": 4.6,
+                    "AP": 5.6
+                  }
+                },
+                {
+                  "min": 87,
+                  "max": 89,
+                  "points": {
+                    "Regular": 3.3,
+                    "Honors": 4.3,
+                    "AP": 5.3
+                  }
+                },
+                {
+                  "min": 83,
+                  "max": 86,
+                  "points": {
+                    "Regular": 3,
+                    "Honors": 4,
+                    "AP": 5
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "path": "levels.list",
+          "verdict": "missing"
+        },
+        {
+          "path": "qp.tables",
+          "verdict": "missing",
+          "rule_violation": "FR-AI-24#6"
+        }
+      ],
+      "rule_violations": [
+        "FR-AI-24#6"
+      ]
+    },
+    {
+      "id": "H10",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0.3333333333333333,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "levels.list",
+          "verdict": "correct"
+        },
+        {
+          "path": "gpa.repeat",
+          "verdict": "wrong",
+          "expected": {
+            "policy": "forgive_higher"
+          },
+          "actual": "replace_lower"
+        },
+        {
+          "path": "gpa.include",
+          "verdict": "missing"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "*",
+          "verdict": "correct",
+          "detail": "negative handled"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "*",
+          "verdict": "correct",
+          "detail": "negative handled"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "*",
+          "verdict": "correct",
+          "detail": "negative handled"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "*",
+          "verdict": "hallucinated",
+          "detail": "filled 2"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.85,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "*",
+          "verdict": "hallucinated",
+          "detail": "filled 3"
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S11",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.5,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "name": "Tests",
+              "weight": 40
+            },
+            {
+              "name": "Quizzes",
+              "weight": 20
+            },
+            {
+              "name": "Homework",
+              "weight": 25
+            },
+            {
+              "name": "Participation",
+              "weight": 15
+            }
+          ]
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S11",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.5,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "name": "Tests",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.2
+            },
+            {
+              "name": "Homework",
+              "weight": 0.25
+            },
+            {
+              "name": "Participation",
+              "weight": 0.15
+            }
+          ]
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S12",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.95,
+      "field_accuracy": 0.3333333333333333,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "name": "Homework & Classwork",
+              "weight": 30
+            },
+            {
+              "name": "Quizzes",
+              "weight": 25
+            },
+            {
+              "name": "Tests/Projects",
+              "weight": 30
+            },
+            {
+              "name": "Participation",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "hallucinated",
+          "actual": "-10% per day. No exceptions without prior arrangement."
+        }
+      ],
+      "rule_violations": []
+    },
+    {
+      "id": "S12",
+      "kind": "syllabus",
+      "variant": "photo",
+      "http_status": 200,
+      "overall_confidence": 0.9,
+      "field_accuracy": 0.3333333333333333,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "hallucinated",
+          "actual": [
+            {
+              "name": "Homework & Classwork",
+              "weight": 30
+            },
+            {
+              "name": "Quizzes",
+              "weight": 25
+            },
+            {
+              "name": "Tests/Projects",
+              "weight": 30
+            },
+            {
+              "name": "Participation",
+              "weight": 15
+            }
+          ]
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "hallucinated",
+          "actual": "-10% per day. No exceptions without prior arrangement."
+        }
+      ],
+      "rule_violations": []
+    }
+  ],
+  "field_totals": {
+    "correct": 54,
+    "wrong": 44,
+    "missing": 38,
+    "correctly-flagged-for-review": 2,
+    "hallucinated": 38
+  },
+  "s11_19": {
+    "id": "S01",
+    "kind": "syllabus",
+    "variant": "clean",
+    "http_status": 200,
+    "overall_confidence": 0.95,
+    "field_accuracy": 0.8,
+    "counts": {
+      "correct": 3,
+      "wrong": 1,
+      "missing": 0,
+      "correctly-flagged-for-review": 1,
+      "hallucinated": 0
+    },
+    "fields": [
+      {
+        "path": "syllabus.title",
+        "verdict": "correct"
+      },
+      {
+        "path": "syllabus.engine",
+        "verdict": "correct"
+      },
+      {
+        "path": "syllabus.within_category",
+        "verdict": "correctly-flagged-for-review"
+      },
+      {
+        "path": "syllabus.categories",
+        "verdict": "correct"
+      },
+      {
+        "path": "syllabus.late_rule",
+        "verdict": "wrong",
+        "expected": {
+          "type": "per_day",
+          "amount": 10,
+          "unit": "percent"
+        },
+        "actual": "-10% per day"
+      }
+    ],
+    "rule_violations": []
+  },
+  "s11_20": {
+    "id": "H01",
+    "kind": "handbook",
+    "variant": "clean",
+    "http_status": 200,
+    "overall_confidence": 0,
+    "field_accuracy": 0,
+    "counts": {
+      "correct": 0,
+      "wrong": 0,
+      "missing": 6,
+      "correctly-flagged-for-review": 0,
+      "hallucinated": 0
+    },
+    "fields": [
+      {
+        "path": "calendar.template",
+        "verdict": "missing"
+      },
+      {
+        "path": "calendar.period_model",
+        "verdict": "missing"
+      },
+      {
+        "path": "rollup.preset",
+        "verdict": "missing"
+      },
+      {
+        "path": "credit.passing_threshold",
+        "verdict": "missing"
+      },
+      {
+        "path": "gpa.mode",
+        "verdict": "missing"
+      },
+      {
+        "path": "levels.list",
+        "verdict": "missing"
+      }
+    ],
+    "rule_violations": []
+  }
+}

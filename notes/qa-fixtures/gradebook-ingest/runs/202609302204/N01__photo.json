@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "4ac61489-4e96-4170-8110-f27d5864afb3",
+    "proposal": {
+      "source_id": "N01-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        "The provided image is blank/unreadable; no syllabus grading contract fields could be extracted."
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

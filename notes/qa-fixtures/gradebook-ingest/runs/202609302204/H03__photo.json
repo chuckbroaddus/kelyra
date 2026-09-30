@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "069fb576-d3c5-43d2-bf83-acffb3770169",
+    "proposal": {
+      "source_id": "H03-photo-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "semester",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Credit terms are semesters. Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-photo-202609302204"
+        },
+        {
+          "path": "rollup.custom_weights",
+          "value": {
+            "MP1": 0.45,
+            "MP2": 0.45,
+            "EXAM": 0.1
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-photo-202609302204"
+        },
+        {
+          "path": "locks.map",
+          "value": {
+            "homework_max_weight": 0.1
+          },
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "School lock: homework category weight may not exceed 10% in any class syllabus.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

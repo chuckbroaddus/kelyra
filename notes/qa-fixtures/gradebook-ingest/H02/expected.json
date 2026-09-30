@@ -1,0 +1,71 @@
+{
+  "source_id": "H02",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "calendar.template",
+      "value": "nine_weeks",
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "nine weeks",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "calendar.period_model",
+      "value": "nine_weeks",
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "nine weeks",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "rollup.preset",
+      "value": "40/40/20",
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "40% + 40% + Exam 20%",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "rollup.exam_enabled",
+      "value": true,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Exam",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "school.notes",
+      "value": "Exam exemption average ≥ 90 and ≤ 3 absences",
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "exemption",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

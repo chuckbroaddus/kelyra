@@ -1,0 +1,91 @@
+{
+  "source_id": "S03",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.engine",
+      "value": "weighted_points_inside",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "points-inside",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.within_category",
+      "value": "points_inside",
+      "confidence": 0.88,
+      "evidence": {
+        "quote": "points-inside",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.categories",
+      "value": [
+        {
+          "key": "essays",
+          "label": "Essays",
+          "weight_percent": 40
+        },
+        {
+          "key": "quizzes",
+          "label": "Quizzes",
+          "weight_percent": 35
+        },
+        {
+          "key": "projects",
+          "label": "Projects",
+          "weight_percent": 25
+        }
+      ],
+      "confidence": 0.93,
+      "evidence": {
+        "quote": "Essays 40 Quizzes 35 Projects 25",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "flat",
+        "amount": 20,
+        "unit": "points"
+      },
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "−20 points",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.extra_credit_method",
+      "value": "B",
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "Method B",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

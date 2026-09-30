@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "afdb873c-b4bb-4b32-b6e4-522875499c31",
+    "proposal": {
+      "source_id": "H05-photo-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "tx_six_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Six-week periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-photo-202609302204"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "85_15",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Full-year elective rollup may use 85/15 (coursework / final).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-photo-202609302204"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            "On-level",
+            "Honors",
+            "IB SL",
+            "IB HL",
+            "Dual Credit"
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Levels: On-level, Honors, IB SL, IB HL, Dual Credit.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.88
+    }
+  }
+}

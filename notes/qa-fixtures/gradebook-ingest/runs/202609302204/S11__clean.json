@@ -1,0 +1,71 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "7cf2f5e0-ebc1-4f68-a39a-d4f1cfb2a565",
+    "proposal": {
+      "source_id": "S11-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Math Syllabus",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Math Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Tests",
+              "weight": 40
+            },
+            {
+              "name": "Quizzes",
+              "weight": 20
+            },
+            {
+              "name": "Homework",
+              "weight": 25
+            },
+            {
+              "name": "Participation",
+              "weight": 15
+            }
+          ],
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

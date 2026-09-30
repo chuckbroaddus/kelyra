@@ -1,0 +1,126 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "51b415a0-61d5-4474-a5d5-e5b16550dd8b",
+    "proposal": {
+      "source_id": "S07-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Spanish II",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Spanish II",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Category % ... Tests 25 ... Quizzes 20 ...",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Tests",
+              "weight": 25,
+              "drop_lowest": 0
+            },
+            {
+              "name": "Quizzes",
+              "weight": 20,
+              "drop_lowest": 2
+            },
+            {
+              "name": "Speaking",
+              "weight": 15,
+              "drop_lowest": 0
+            },
+            {
+              "name": "Writing",
+              "weight": 15,
+              "drop_lowest": 0
+            },
+            {
+              "name": "Homework",
+              "weight": 10,
+              "drop_lowest": 0
+            },
+            {
+              "name": "Projects",
+              "weight": 10,
+              "drop_lowest": 0
+            },
+            {
+              "name": "Participation",
+              "weight": 5,
+              "drop_lowest": 0
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 25 never drop\nQuizzes 20 drop lowest 2\nSpeaking 15\nWriting 15\nHomework 10\nProjects 10\nParticipation 5",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": "-5% per day",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late: -5% per day.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "value": "Method A",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Extra credit Method A, cap +5 points on the period.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "value": 5,
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "cap +5 points on the period",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

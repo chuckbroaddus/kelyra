@@ -1,0 +1,100 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "d0b4c59c-91ac-403a-af35-97383bcaa1eb",
+    "proposal": {
+      "source_id": "H07-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "scale.passing_pct",
+          "value": 60,
+          "confidence": 1,
+          "evidence": {
+            "quote": "Passing mark is 60.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202609302204"
+        },
+        {
+          "path": "scale.list",
+          "value": [
+            {
+              "id": "default",
+              "name": "Standard Scale"
+            }
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Letter Percent A 90-100 B 80-89 C 70-79 F 0-59 No D letter is used.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202609302204"
+        },
+        {
+          "path": "scale.default_id",
+          "value": "default",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "GRADE SCALE",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202609302204"
+        },
+        {
+          "path": "scale.bands",
+          "value": [
+            {
+              "scale_id": "default",
+              "name": "A",
+              "min": 90,
+              "max": 100,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "B",
+              "min": 80,
+              "max": 89,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "C",
+              "min": 70,
+              "max": 79,
+              "gpa": null
+            },
+            {
+              "scale_id": "default",
+              "name": "F",
+              "min": 0,
+              "max": 59,
+              "gpa": null
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "A 90-100\nB 80-89\nC 70-79\nF 0-59\nNo D letter is used.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

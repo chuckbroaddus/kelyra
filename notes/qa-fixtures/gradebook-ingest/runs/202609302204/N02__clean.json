@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "01a8f9c3-855f-47d0-9851-e49f4b38f0da",
+    "proposal": {
+      "source_id": "N02-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy|rubric|mixed|unknown",
+      "overall_confidence": 0
+    }
+  }
+}

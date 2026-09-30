@@ -1,0 +1,59 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "f02e66c4-b7ac-4efd-bce5-362965014505",
+    "proposal": {
+      "source_id": "S11-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-photo-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Tests",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.2
+            },
+            {
+              "name": "Homework",
+              "weight": 0.25
+            },
+            {
+              "name": "Participation",
+              "weight": 0.15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

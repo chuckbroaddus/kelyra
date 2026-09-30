@@ -1,0 +1,16 @@
+{
+  "source_id": "N01",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "unknown",
+  "overall_confidence": 0.05,
+  "fields": [],
+  "ambiguities": [],
+  "warnings": [
+    {
+      "code": "low_ocr",
+      "message": "Image unreadable; retake required.",
+      "severity": "block"
+    }
+  ]
+}

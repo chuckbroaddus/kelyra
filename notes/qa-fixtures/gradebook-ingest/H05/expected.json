@@ -1,0 +1,73 @@
+{
+  "source_id": "H05",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "calendar.template",
+      "value": "tx_six_weeks",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Six-week",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "rollup.preset",
+      "value": "85/15",
+      "confidence": 0.92,
+      "evidence": {
+        "quote": "85/15",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "levels.list",
+      "value": [
+        {
+          "key": "on_level",
+          "label": "On-level",
+          "weighted_bonus": 0
+        },
+        {
+          "key": "honors",
+          "label": "Honors",
+          "weighted_bonus": 0.5
+        },
+        {
+          "key": "ib_sl",
+          "label": "IB SL",
+          "weighted_bonus": 1
+        },
+        {
+          "key": "ib_hl",
+          "label": "IB HL",
+          "weighted_bonus": 1
+        },
+        {
+          "key": "dual_credit",
+          "label": "Dual Credit",
+          "weighted_bonus": 1
+        }
+      ],
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "IB SL IB HL Dual Credit",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

@@ -1,0 +1,63 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "f66be45d-d877-478e-9eb1-1b7de08bceaa",
+    "proposal": {
+      "source_id": "H05-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "tx_six_weeks",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Six-week periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302204"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            "On-level",
+            "Honors",
+            "IB SL",
+            "IB HL",
+            "Dual Credit"
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Levels: On-level, Honors, IB SL, IB HL, Dual Credit.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302204"
+        },
+        {
+          "path": "rollup.custom_weights",
+          "value": {
+            "coursework": 85,
+            "exam": 15
+          },
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Full-year elective rollup may use 85/15 (coursework / final).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "e1e59783-5bbe-416b-9877-73e9a2716573",
+    "proposal": {
+      "source_id": "N03-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Tests 70% Homework 30% / Essays 50% Daily 50%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Tests",
+              "weight": 0.7
+            },
+            {
+              "name": "Homework",
+              "weight": 0.3
+            },
+            {
+              "name": "Essays",
+              "weight": 0.5
+            },
+            {
+              "name": "Daily",
+              "weight": 0.5
+            }
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Tests 70% Homework 30% / Essays 50% Daily 50%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N03-photo-202609302204"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": "-5%/day",
+          "confidence": 0.8,
+          "evidence": {
+            "quote": "Late -5%/day",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N03-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.85
+    }
+  }
+}

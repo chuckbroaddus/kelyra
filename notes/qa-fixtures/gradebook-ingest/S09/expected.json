@@ -1,0 +1,89 @@
+{
+  "source_id": "S09",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.categories",
+      "value": [
+        {
+          "key": "studio",
+          "label": "Studio",
+          "weight_percent": 30
+        },
+        {
+          "key": "critique",
+          "label": "Critique",
+          "weight_percent": 20
+        },
+        {
+          "key": "sketchbook",
+          "label": "Sketchbook",
+          "weight_percent": 20
+        },
+        {
+          "key": "projects",
+          "label": "Projects",
+          "weight_percent": 20
+        },
+        {
+          "key": "final",
+          "label": "Final",
+          "weight_percent": 10
+        }
+      ],
+      "confidence": 0.88,
+      "evidence": {
+        "quote": "30 20 20 20 10",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "flat",
+        "amount": 10,
+        "unit": "percent"
+      },
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "flat −10%",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.extra_credit_method",
+      "value": "C",
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "Method C",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.narrative",
+      "value": "growth over perfection",
+      "confidence": 0.75,
+      "evidence": {
+        "quote": "growth over perfection",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

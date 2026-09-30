@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "3f4b7b49-0189-46cf-8c2a-7766cebd0258",
+    "proposal": {
+      "source_id": "S05-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "English II",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "English II",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-photo-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Category weights",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-photo-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Essays",
+              "weight": 0.4
+            },
+            {
+              "name": "Quizzes",
+              "weight": 0.3
+            },
+            {
+              "name": "Homework",
+              "weight": 0.2
+            }
+          ],
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Essays 40%\nQuizzes 30%\nHomework 20%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-photo-202609302204"
+        },
+        {
+          "path": "syllabus.floor",
+          "value": 50,
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Late work cannot fall below a floor of 50%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [
+        "Category weights currently sum to 90 instead of 100 as noted in the syllabus."
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

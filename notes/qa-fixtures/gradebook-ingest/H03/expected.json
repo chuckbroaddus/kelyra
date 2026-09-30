@@ -1,0 +1,62 @@
+{
+  "source_id": "H03",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "calendar.template",
+      "value": "semester",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "semesters",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "calendar.period_model",
+      "value": "semester",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "semesters",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "rollup.preset",
+      "value": "45/45/10",
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "45% 45% 10%",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "locks.map",
+      "value": {
+        "categories": true,
+        "homework_max_percent": 10
+      },
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "homework ... 10%",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

@@ -1,0 +1,526 @@
+{
+  "generated_at": "2026-09-30T22:10:27.867Z",
+  "count": 25,
+  "cases": [
+    {
+      "id": "S01",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.engine",
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.within_category"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-24#1",
+        "FR-AI-06"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S02",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.engine",
+        "syllabus.late_rule",
+        "syllabus.missing_rule"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "§6.5"
+      ],
+      "photo": false
+    },
+    {
+      "id": "S03",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.engine",
+        "syllabus.within_category",
+        "syllabus.extra_credit_method",
+        "syllabus.late_rule"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "§7.1"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S04",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.engine",
+        "syllabus.within_category",
+        "syllabus.missing_rule",
+        "syllabus.late_rule"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "FR-AI-17"
+      ],
+      "photo": false
+    },
+    {
+      "id": "S05",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.categories"
+      ],
+      "srs_refs": [
+        "FR-AI-21",
+        "FR-AI-13"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S06",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.floor",
+        "syllabus.ceiling",
+        "syllabus.retake",
+        "syllabus.late_rule"
+      ],
+      "srs_refs": [
+        "FR-AI-21",
+        "§11"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S07",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.extra_credit_method",
+        "syllabus.ec_cap",
+        "syllabus.late_rule"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": false
+    },
+    {
+      "id": "S08",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.missing_rule",
+        "syllabus.retake",
+        "syllabus.categories"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S09",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.extra_credit_method",
+        "syllabus.categories",
+        "syllabus.narrative"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S10",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "syllabus.floor",
+        "syllabus.ceiling",
+        "syllabus.late_rule",
+        "syllabus.categories"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "FR-AI-17"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H01",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "calendar.template",
+        "rollup.preset",
+        "credit.passing_threshold",
+        "levels.list",
+        "gpa.mode"
+      ],
+      "srs_refs": [
+        "§11.20",
+        "FR-AI-24#2"
+      ],
+      "photo": true
+    },
+    {
+      "id": "H02",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "calendar.template",
+        "rollup.preset",
+        "rollup.exam_enabled"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H03",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "calendar.template",
+        "rollup.preset",
+        "locks.map"
+      ],
+      "srs_refs": [
+        "FR-AI-07",
+        "FR-AI-24#4"
+      ],
+      "photo": true
+    },
+    {
+      "id": "H04",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "calendar.template",
+        "rollup.preset",
+        "credit.year_link"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "§6.3"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H05",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "rollup.preset",
+        "levels.list",
+        "calendar.template"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": true
+    },
+    {
+      "id": "H06",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "gpa.include",
+        "calendar.template",
+        "school.notes"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H07",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "credit.passing_threshold",
+        "scale.bands",
+        "scale.passing_pct"
+      ],
+      "srs_refs": [
+        "FR-AI-05",
+        "§5.9"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H08",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "scale.bands",
+        "gpa.rank",
+        "school.notes"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": false
+    },
+    {
+      "id": "H09",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "qp.tables",
+        "qp.method",
+        "levels.list"
+      ],
+      "srs_refs": [
+        "FR-AI-21",
+        "FR-AI-24#6"
+      ],
+      "photo": true
+    },
+    {
+      "id": "H10",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [
+        "levels.list",
+        "gpa.repeat",
+        "gpa.include"
+      ],
+      "srs_refs": [
+        "FR-AI-05"
+      ],
+      "photo": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [],
+      "srs_refs": [
+        "FR-AI-13",
+        "FR-AI-20",
+        "FR-AI-24#5"
+      ],
+      "photo": true
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "source.html"
+      ],
+      "fields_exercised": [],
+      "srs_refs": [
+        "FR-AI-13",
+        "FR-AI-03"
+      ],
+      "photo": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg",
+        "source.html"
+      ],
+      "fields_exercised": [],
+      "srs_refs": [
+        "FR-AI-13"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S11",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg"
+      ],
+      "fields_exercised": [
+        "syllabus.categories"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "real-photo"
+      ],
+      "photo": true
+    },
+    {
+      "id": "S12",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "notes.md",
+        "photo.jpg"
+      ],
+      "fields_exercised": [
+        "syllabus.categories"
+      ],
+      "srs_refs": [
+        "real-photo"
+      ],
+      "photo": true
+    }
+  ]
+}
