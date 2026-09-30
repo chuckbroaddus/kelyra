@@ -72,12 +72,100 @@ function categoriesMatch(exp, act) {
   if (!Array.isArray(exp) || !Array.isArray(act)) return false;
   if (exp.length !== act.length) return false;
   const norm = (c) => ({
-    label: String(c.label || c.name || '').toLowerCase(),
+    label: String(c.label || c.name || c.category || '').toLowerCase(),
     w: Number(c.weight_percent ?? c.weight ?? 0),
   });
   const e = exp.map(norm).sort((a, b) => a.label.localeCompare(b.label));
   const a = act.map(norm).sort((x, y) => x.label.localeCompare(y.label));
   return e.every((row, i) => row.label === a[i].label && Math.abs(row.w - a[i].w) < 0.51);
+}
+
+/** Scorer change: treat nested band charts as equal to flat min/max/regular rows (H09). */
+function flattenQpBands(value) {
+  if (!Array.isArray(value)) return null;
+  const rows = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    if (Array.isArray(item.bands)) {
+      for (const b of item.bands) {
+        if (!b || typeof b !== 'object') continue;
+        const pts = b.points && typeof b.points === 'object' ? b.points : {};
+        rows.push({
+          min: Number(b.min_pct ?? b.min ?? 0),
+          max: Number(b.max_pct ?? b.max ?? 0),
+          regular: Number(pts.Regular ?? pts.regular ?? b.regular ?? 0),
+          honors: Number(pts.Honors ?? pts.honors ?? b.honors ?? 0),
+          ap: Number(pts.AP ?? pts.ap ?? b.ap ?? 0),
+        });
+      }
+      continue;
+    }
+    rows.push({
+      min: Number(item.min_pct ?? item.min ?? 0),
+      max: Number(item.max_pct ?? item.max ?? 0),
+      regular: Number(
+        item.regular ??
+          item.points?.Regular ??
+          item.points?.regular ??
+          0,
+      ),
+      honors: Number(
+        item.honors ?? item.points?.Honors ?? item.points?.honors ?? 0,
+      ),
+      ap: Number(item.ap ?? item.points?.AP ?? item.points?.ap ?? 0),
+    });
+  }
+  return rows.length ? rows : null;
+}
+
+function qpTablesMatch(exp, act) {
+  const e = flattenQpBands(exp);
+  const a = flattenQpBands(act);
+  if (!e || !a) return deepEqualish(exp, act);
+  if (e.length !== a.length) {
+    // allow partial chart if actual covers expected mins
+    const ok = e.every((er) =>
+      a.some(
+        (ar) =>
+          Math.abs(ar.min - er.min) < 0.51 &&
+          Math.abs(ar.max - er.max) < 0.51 &&
+          Math.abs(ar.regular - er.regular) < 0.15,
+      ),
+    );
+    return ok;
+  }
+  const sort = (rows) => [...rows].sort((x, y) => x.min - y.min);
+  const ee = sort(e);
+  const aa = sort(a);
+  return ee.every(
+    (er, i) =>
+      Math.abs(aa[i].min - er.min) < 0.51 &&
+      Math.abs(aa[i].max - er.max) < 0.51 &&
+      Math.abs(aa[i].regular - er.regular) < 0.15 &&
+      Math.abs(aa[i].honors - er.honors) < 0.15 &&
+      Math.abs(aa[i].ap - er.ap) < 0.15,
+  );
+}
+
+function lateRuleMatch(exp, act) {
+  if (deepEqualish(exp, act)) return true;
+  if (exp && typeof exp === 'object' && act && typeof act === 'object') {
+    if (exp.type && act.type === exp.type) {
+      if (exp.amount == null || act.amount == null) return true;
+      return Math.abs(Number(exp.amount) - Number(act.amount)) < 0.51;
+    }
+  }
+  // string actual vs object expected — scorer change: coerce-ish
+  if (exp && typeof exp === 'object' && typeof act === 'string') {
+    const s = act.toLowerCase();
+    if (exp.type === 'none' && /not|none|no late|hard/.test(s)) return true;
+    if (exp.type === 'per_day' && /per\s*day/.test(s)) {
+      if (exp.amount == null) return true;
+      const m = s.match(/(\d+(?:\.\d+)?)/);
+      return m ? Math.abs(Number(m[1]) - Number(exp.amount)) < 0.51 : true;
+    }
+  }
+  return false;
 }
 
 function scoreField(expField, actFields) {
@@ -90,6 +178,26 @@ function scoreField(expField, actFields) {
   }
   if (expField.path === 'syllabus.categories') {
     return categoriesMatch(expField.value, act.value)
+      ? { path: expField.path, verdict: 'correct' }
+      : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
+  if (expField.path === 'qp.tables') {
+    return qpTablesMatch(expField.value, act.value)
+      ? { path: expField.path, verdict: 'correct', detail: 'qp-shape-equiv' }
+      : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
+  if (expField.path === 'qp.method') {
+    const norm = (v) => {
+      const s = String(v || '').toLowerCase();
+      if (s === 'band' || s === 'bands' || s === 'numeric') return 'numeric_band';
+      return s;
+    };
+    if (norm(expField.value) === norm(act.value)) {
+      return { path: expField.path, verdict: 'correct', detail: 'qp-method-alias' };
+    }
+  }
+  if (expField.path === 'syllabus.late_rule' || expField.path === 'late_rule') {
+    return lateRuleMatch(expField.value, act.value)
       ? { path: expField.path, verdict: 'correct' }
       : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
   }

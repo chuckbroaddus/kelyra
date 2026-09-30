@@ -3,6 +3,7 @@
  * Drops unknown paths, clamps confidence, derives status, flags conflicts.
  */
 import { isAllowedPath, LOCK_TO_PATHS } from './allowedPaths.ts';
+import { normalizeProposalFields } from './normalizeFieldValues.ts';
 import type {
   IngestAmbiguity,
   IngestEvidence,
@@ -264,7 +265,7 @@ export function parseIngestProposal(raw: unknown, opts: ParseOptions = {}): Inge
     obj.overall_confidence,
     deduped.length ? deduped.reduce((s, f) => s + f.confidence, 0) / deduped.length : 0,
   );
-  return {
+  const base: IngestProposal = {
     source_id,
     wizard,
     kind,
@@ -274,4 +275,5 @@ export function parseIngestProposal(raw: unknown, opts: ParseOptions = {}): Inge
     document_kind_guess: typeof obj.document_kind_guess === 'string' ? obj.document_kind_guess : null,
     overall_confidence: overall,
   };
+  return normalizeProposalFields(base);
 }

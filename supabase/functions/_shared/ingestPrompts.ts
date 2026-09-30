@@ -7,7 +7,7 @@ import {
   CALENDAR_TEMPLATES,
   ENGINE_VALUES,
   ROLLUP_PRESETS,
-} from './allowedPaths.ts';
+} from './ingestAllowedPaths.ts';
 
 export type PromptKind = 'syllabus' | 'school_policy';
 

@@ -11,6 +11,7 @@ export * from './proposalTypes';
 export * from './allowedPaths';
 export * from './prompts';
 export * from './parseProposal';
+export * from './normalizeFieldValues';
 export * from './mergeProposal';
 export * from './pathMapping';
 export * from './invokeIngest';

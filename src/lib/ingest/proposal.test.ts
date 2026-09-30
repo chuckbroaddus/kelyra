@@ -64,8 +64,18 @@ test('parser: clamps confidence and derives status', () => {
   const p = parseIngestProposal({
     wizard: 'syllabus',
     fields: [
-      { path: 'syllabus.title', value: 'X', confidence: 1.5 },
-      { path: 'syllabus.floor', value: 50, confidence: -2 },
+      {
+        path: 'syllabus.title',
+        value: 'X',
+        confidence: 1.5,
+        evidence: { quote: 'X', page: 1, region: null },
+      },
+      {
+        path: 'syllabus.floor',
+        value: 50,
+        confidence: -2,
+        evidence: { quote: 'floor', page: 1, region: null },
+      },
     ],
   });
   const t = p.fields.find((f) => f.path === 'syllabus.title');
