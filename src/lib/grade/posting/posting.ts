@@ -641,6 +641,9 @@ export function termGradeToTranscriptRow(tg: TermGrade): TranscriptRow {
     level: tg.course_level,
     pass_fail: passFail,
     flags,
+    include_unweighted: tg.include_unweighted,
+    include_weighted: tg.include_weighted,
+    include_rank: tg.include_rank,
   };
 }
 

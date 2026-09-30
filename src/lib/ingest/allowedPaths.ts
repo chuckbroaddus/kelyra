@@ -30,6 +30,7 @@ export const SCHOOL_POLICY_PATHS = [
   'gpa.profiles',
   'gpa.include',
   'gpa.repeat',
+  'gpa.rank',
   'locks.map',
   'school.notes',
 ] as const;

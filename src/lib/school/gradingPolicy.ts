@@ -10,8 +10,13 @@ import type { CourseLevel, GpaProfile, QualityPointTable } from '../grade/gpa/gp
 import {
   DEFAULT_COURSE_LEVELS,
   DEFAULT_QUALITY_TABLES,
+  defaultGpaProfileSet,
+  defaultInclude,
+  courseLevelPickerOptions,
 } from '../grade/gpa/gpa.ts';
 import { DEFAULT_TRANSFER_LETTER_TO_PCT } from '../grade/posting/types.ts';
+
+export { courseLevelPickerOptions };
 
 export type FieldSource = 'user' | 'template' | 'default' | 'ai' | 'assumed';
 
@@ -70,7 +75,10 @@ export type SyllabusLocks = {
   rollup: boolean;
 };
 
-export type GpaMode = 'off' | 'unweighted' | 'unweighted_and_weighted';
+export type GpaMode = 'off' | 'unweighted' | 'unweighted_and_weighted' | 'with_rank';
+
+/** Quality-point method choice for the wizard (defaults to letter_map). */
+export type QpMethodChoice = 'letter_map' | 'numeric_band' | 'percent_map';
 
 export type GradingPolicyPayload = {
   level: SchoolLevelChoice;
@@ -152,8 +160,8 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   rollup: 'help.rollup.2_7',
   scale: 'help.scale.tx70',
   quality_points: 'help.gpa.numeric_table',
-  course_levels: 'help.gpa.weighted',
-  gpa: 'help.gpa.unweighted',
+  course_levels: 'help.gpa.course_level',
+  gpa: 'help.gpa.profiles',
   locks: 'help.wizard.locks',
   review: 'help.wizard.review',
 };
@@ -231,18 +239,16 @@ export function defaultRollupForTemplate(template: TemplateKey | 'custom'): Roll
 }
 
 export function defaultGpaProfiles(mode: GpaMode, tableId: string = 'tx-4'): GpaProfile[] {
+  // Preserve legacy keys unweighted|weighted for existing drafts; rank uses rank_6.
   if (mode === 'off') return [];
+  if (mode === 'with_rank') {
+    return defaultGpaProfileSet({ mode: 'with_rank', letterTableId: tableId });
+  }
   const base: GpaProfile = {
     key: 'unweighted',
     table_id: tableId,
     use_level_bonus: false,
-    include: {
-      pe: true,
-      pass_fail: true,
-      local_credit: false,
-      recovery: true,
-      below_passing: 'zero',
-    },
+    include: defaultInclude({ local_credit: false }),
     repeat: 'include_both',
   };
   if (mode === 'unweighted') return [base];
@@ -252,7 +258,26 @@ export function defaultGpaProfiles(mode: GpaMode, tableId: string = 'tx-4'): Gpa
       ...base,
       key: 'weighted',
       use_level_bonus: true,
-      include: { ...base.include, pe: false },
+      include: defaultInclude({ pe: false, athletics: false, local_credit: false }),
+    },
+  ];
+}
+
+/** Map wizard QP method chip → tables list (keeps letter tables; adds tx-6 when numeric). */
+export function qualityTablesForMethod(method: QpMethodChoice): QualityPointTable[] {
+  const letter = Object.values(DEFAULT_QUALITY_TABLES)
+    .filter((t) => t.method === 'letter_map')
+    .map((t) => ({
+      ...t,
+      rows: t.rows.map((r) => ({ ...r, points_by_level: { ...r.points_by_level } })),
+    }));
+  if (method === 'letter_map') return letter;
+  const numeric = DEFAULT_QUALITY_TABLES['tx-6-numeric']!;
+  return [
+    ...letter,
+    {
+      ...numeric,
+      rows: numeric.rows.map((r) => ({ ...r, points_by_level: { ...r.points_by_level } })),
     },
   ];
 }
@@ -315,9 +340,11 @@ export function createEmptyDraft(school_id: string, level: SchoolLevelChoice = '
     'scale.default_id': field(scale.id, 'template'),
     'scale.list': field([scale], 'template'),
     'qp.tables': field(qp, 'template'),
+    'qp.method': field('letter_map' as QpMethodChoice, 'default'),
     'levels.list': field(DEFAULT_COURSE_LEVELS.map((l) => ({ ...l })), 'template'),
     'gpa.mode': field(gpaMode, 'default'),
     'gpa.profiles': field(defaultGpaProfiles(gpaMode, qpTableId), 'default'),
+    'gpa.repeat': field('include_both' as const, 'default'),
     'locks.map': field({ ...DEFAULT_LOCKS }, 'default'),
   };
 
