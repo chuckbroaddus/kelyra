@@ -55,6 +55,7 @@ test('elementary draft turns GPA off and credit none', () => {
   const payload = draftToPayload(draft);
   assert.equal(payload.gpa_mode, 'off');
   assert.equal(payload.credit_policy.unit, 'none');
+  assert.equal(payload.credit_policy.exam_exemption?.enabled, false);
   assert.equal(canPublish(payload), true);
 });
 

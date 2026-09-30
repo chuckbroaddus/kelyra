@@ -16,6 +16,10 @@ test('bundled help includes FR-HELP engine and GPA keys', () => {
   assert.ok(keys.includes('help.gpa.profiles'));
   assert.ok(keys.includes('help.gpa.rank'));
   assert.ok(keys.includes('help.wizard.review'));
+  assert.ok(keys.includes('help.exam_exemption'));
+  assert.ok(keys.includes('help.retake_cap'));
+  assert.ok(keys.includes('help.period_floor'));
+  assert.ok(keys.includes('help.group_score'));
   assert.ok(BUNDLED_HELP_TOPICS.length >= 24);
 });
 

@@ -430,6 +430,110 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             );
           },
         )}
+        <View style={{ height: 12 }} />
+        <Text style={[type.meta, { color: colors.mute }]}>Exam exemption (default off)</Text>
+        <Chip
+          label={
+            (cur.exam_exemption?.enabled ?? false)
+              ? 'Exam exemption ON'
+              : 'Exam exemption OFF'
+          }
+          selected={cur.exam_exemption?.enabled === true}
+          onPress={() => {
+            const ee = cur.exam_exemption ?? {
+              enabled: false,
+              min_avg: null,
+              max_absences: null,
+              renormalize: true,
+            };
+            setDraft(
+              setField(
+                draft,
+                'credit.policy',
+                { ...cur, exam_exemption: { ...ee, enabled: !ee.enabled } },
+                'user',
+              ),
+            );
+          }}
+        />
+        {cur.exam_exemption?.enabled ? (
+          <>
+            <TextField
+              label="Min pre-exam average %"
+              keyboardType="numeric"
+              value={
+                cur.exam_exemption.min_avg == null ? '' : String(cur.exam_exemption.min_avg)
+              }
+              onChangeText={(text) => {
+                const ee = cur.exam_exemption!;
+                const n = text.trim() === '' ? null : Number(text);
+                setDraft(
+                  setField(
+                    draft,
+                    'credit.policy',
+                    {
+                      ...cur,
+                      exam_exemption: {
+                        ...ee,
+                        min_avg: n == null || !Number.isFinite(n) ? null : n,
+                      },
+                    },
+                    'user',
+                  ),
+                );
+              }}
+            />
+            <TextField
+              label="Max absences"
+              keyboardType="numeric"
+              value={
+                cur.exam_exemption.max_absences == null
+                  ? ''
+                  : String(cur.exam_exemption.max_absences)
+              }
+              onChangeText={(text) => {
+                const ee = cur.exam_exemption!;
+                const n = text.trim() === '' ? null : Number(text);
+                setDraft(
+                  setField(
+                    draft,
+                    'credit.policy',
+                    {
+                      ...cur,
+                      exam_exemption: {
+                        ...ee,
+                        max_absences: n == null || !Number.isFinite(n) ? null : n,
+                      },
+                    },
+                    'user',
+                  ),
+                );
+              }}
+            />
+            <Chip
+              label={
+                cur.exam_exemption.renormalize !== false
+                  ? 'Renormalize remaining weights'
+                  : 'Do not renormalize'
+              }
+              selected={cur.exam_exemption.renormalize !== false}
+              onPress={() => {
+                const ee = cur.exam_exemption!;
+                setDraft(
+                  setField(
+                    draft,
+                    'credit.policy',
+                    {
+                      ...cur,
+                      exam_exemption: { ...ee, renormalize: ee.renormalize === false },
+                    },
+                    'user',
+                  ),
+                );
+              }}
+            />
+          </>
+        ) : null}
       </>
     );
   }

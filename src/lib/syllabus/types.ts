@@ -3,8 +3,9 @@
  * snake_case for SQL/JSON round-trip.
  */
 
-import type { Engine, LateRule } from '@/lib/grade/engine/types';
+import type { Engine, LateRule, RetakeRule } from '@/lib/grade/engine/types';
 import type { CategoryRules, SyllabusPolicies } from '@/lib/grade/syllabusAverage';
+import { parseRetakeRule } from '@/lib/grade/engine/retake';
 
 export type SyllabusEngine = Engine;
 
@@ -27,6 +28,8 @@ export function defaultSyllabusV2Fields() {
     rounding: 'nearest_whole' as SyllabusRounding,
     floor: null as number | null,
     ceiling: null as number | null,
+    /** null = retakes off (today). */
+    retake: null as RetakeRule | null,
     exam_weight: null as number | null,
     rollup_preset: null as string | null,
     syllabus_version: 1,
@@ -60,6 +63,7 @@ export type SyllabusVersionSnapshot = {
   rounding: SyllabusRounding;
   floor: number | null;
   ceiling: number | null;
+  retake: RetakeRule | null;
   exam_weight: number | null;
   rollup_preset: string | null;
   locks: Record<string, unknown>;
@@ -117,6 +121,7 @@ export function buildSyllabusVersionSnapshot(input: {
     rounding: v2.rounding,
     floor: v2.floor,
     ceiling: v2.ceiling,
+    retake: v2.retake ?? null,
     exam_weight: v2.exam_weight,
     rollup_preset: v2.rollup_preset,
     locks: v2.locks ?? {},
@@ -154,4 +159,10 @@ export function parseLateRule(raw: unknown): LateRule {
     };
   }
   return { type: 'none' };
+}
+
+export { parseRetakeRule };
+
+export function parseSyllabusRetake(raw: unknown): RetakeRule | null {
+  return parseRetakeRule(raw);
 }
