@@ -1,6 +1,8 @@
 import type { IconName } from '@/components/ui/Icon';
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { GRADE_TERM_FILTERS } from '@/lib/grade/marks';
+import { PeriodFilterBar } from './PeriodFilterBar';
+import type { GradingCalendar } from './periodGlyphs';
 
 const TERM_ICONS: Record<(typeof GRADE_TERM_FILTERS)[number]['key'], IconName> = {
   all: 'termAll',
@@ -23,9 +25,23 @@ type Props = {
   value: string;
   onChange: (key: string) => void;
   stacked?: boolean;
+  /** When present (from class calendar), renders generated PeriodFilterBar per GB-04 / SRS §5.10.
+   *  With no calendar, must emit exactly same keys+look as today (legacy path kept for compat).
+   */
+  calendar?: GradingCalendar;
 };
 
-/** All + Counts toward. Pie-slice glyphs; selected name marquees. */
-export function GradeTermTabs({ value, onChange, stacked }: Props) {
+/** All + Counts toward. When calendar, uses SVG glyphs; else legacy PNG icons via PersonTabs. */
+export function GradeTermTabs({ value, onChange, stacked, calendar }: Props) {
+  if (calendar) {
+    return (
+      <PeriodFilterBar
+        calendar={calendar}
+        selectedPeriodId={value}
+        onSelect={onChange}
+        stacked={stacked}
+      />
+    );
+  }
   return <PersonTabs tabs={TABS} value={value} onChange={onChange} stacked={stacked} />;
 }
