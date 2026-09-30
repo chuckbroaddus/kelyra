@@ -1,4 +1,5 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
 
 import { GhostButton } from '@/components/ui/Button';
 import { radius, type } from '@/constants/theme';
@@ -21,6 +22,8 @@ export type FamilyAssignmentDetailModel = {
   familyComment?: string | null;
   assignment?: (Pick<AverageAssignment, 'id' | 'include_in_average'> & { category?: string | null }) | null;
   cell: GradeCell;
+  /** GB-13 optional confirmed rubric view. */
+  rubricNode?: ReactNode;
 };
 
 type Props = {
@@ -120,6 +123,7 @@ export function FamilyAssignmentDetail({ visible, detail, average, onClose }: Pr
                 </Text>
               );
             })}
+            {detail.rubricNode ? <View style={{ marginTop: 16 }}>{detail.rubricNode}</View> : null}
             <GhostButton align="left" label="Close" onPress={onClose} />
           </ScrollView>
         </View>

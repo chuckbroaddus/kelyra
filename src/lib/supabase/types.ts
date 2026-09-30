@@ -228,6 +228,8 @@ export type AssignmentRow = {
   calendar_visibility?: 'hidden' | 'published' | null;
   calendar_published_at?: string | null;
   calendar_published_by?: string | null;
+  /** GB-13 optional rubric association (FR-RUB-00). */
+  rubric_association_id?: string | null;
 };
 
 export type LessonPackRow = {

@@ -54,6 +54,7 @@ import {
 } from '@/lib/tutorBrief/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { WorkingLine } from '@/components/ui/WorkingMark';
+import { RubricAttachSlot } from '@/components/rubric/RubricAttachSlot';
 
 type KeyAnalysis = {
   pageState?: 'blank' | 'filled' | 'unsure';
@@ -605,6 +606,14 @@ export default function AssignmentEditScreen() {
           lockWorkKind={!creating || followUpMode}
           hidePackPicker={followUpMode}
           syllabusCategories={syllabusCategories}
+        />
+      ) : null}
+      {!creating && assignmentId ? (
+        <RubricAttachSlot
+          assignmentId={assignmentId}
+          onOpenBuilder={(rid) =>
+            router.push((rid ? `/rubrics/${rid}` : '/rubrics/new') as never)
+          }
         />
       ) : null}
       {status ? <Text style={[type.body, { color: colors.danger }]}>{status}</Text> : null}

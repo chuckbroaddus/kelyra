@@ -56,6 +56,8 @@ function ThemedRoot() {
           <Stack.Screen name="class/[id]" />
           <Stack.Screen name="lesson/[assignmentId]" options={LESSON_PLAYER_STACK_OPTIONS} />
           <Stack.Screen name="assignment/new" />
+          <Stack.Screen name="rubrics/index" />
+          <Stack.Screen name="rubrics/[rubricId]" />
         </Stack>
       </AppShell>
     </NavigationTheme>
