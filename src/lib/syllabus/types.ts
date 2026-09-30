@@ -3,9 +3,9 @@
  * snake_case for SQL/JSON round-trip.
  */
 
-import type { Engine, LateRule, RetakeRule } from '@/lib/grade/engine/types';
-import type { CategoryRules, SyllabusPolicies } from '@/lib/grade/syllabusAverage';
-import { parseRetakeRule } from '@/lib/grade/engine/retake';
+import type { Engine, LateRule, RetakeRule } from '../grade/engine/types.ts';
+import type { CategoryRules, SyllabusPolicies } from '../grade/syllabusAverage.ts';
+import { parseRetakeRule } from '../grade/engine/retake.ts';
 
 export type SyllabusEngine = Engine;
 
