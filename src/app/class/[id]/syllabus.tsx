@@ -17,6 +17,7 @@ import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import {
   applyAskImport,
+  canFinishReview,
   draftFromBundle,
   toEditorInput,
   type SyllabusWizardDraft,
@@ -146,6 +147,11 @@ export default function SyllabusScreen() {
     if (!id || !draft) return;
     if (draft.syllabus_status === 'published') {
       setError('This syllabus is published. Use Publish to update live weights.');
+      return;
+    }
+    // §11.15: weighted engines block Save until active weights = 100%.
+    if (!canFinishReview(draft)) {
+      setError('Fix category weights (must total 100%) before saving.');
       return;
     }
     setBusy(true);

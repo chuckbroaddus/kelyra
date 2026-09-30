@@ -2,13 +2,14 @@
  * GB-07 School Grading and Reporting Policy wizard (office admin).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
+import { FormSheet } from '@/components/ui/FormSheet';
 import { ListRow } from '@/components/ui/ListRow';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
@@ -77,6 +78,8 @@ export default function GradingPolicyWizardScreen() {
   const { profile } = useAuth();
   const office = isOfficeRole(profile);
   const schoolId = profile?.school_id ?? '';
+  const { width } = useWindowDimensions();
+  const narrow = width <= 400;
   usePushedTitle('Grading policy');
 
   const [draft, setDraft] = useState<SetupDraft | null>(null);
@@ -84,7 +87,7 @@ export default function GradingPolicyWizardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   const [ingestCamera, setIngestCamera] = useState(false);
 
@@ -226,7 +229,29 @@ export default function GradingPolicyWizardScreen() {
         ))}
       </ChipRow>
 
-      {helpOpen && help ? (
+      {/* §11.18: on phone-width, help opens as a sheet (not an inline card that steals vertical space). */}
+      <GhostButton
+        label={helpOpen ? 'Hide help' : 'Show help'}
+        onPress={() => setHelpOpen((v) => !v)}
+      />
+      {narrow ? (
+        <FormSheet
+          visible={Boolean(helpOpen && help)}
+          title={help?.title ?? 'Help'}
+          onClose={() => setHelpOpen(false)}
+        >
+          {help ? (
+            <>
+              <Text style={[type.meta, { color: colors.mute }]}>{help.meaning}</Text>
+              {help.example ? (
+                <Text style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
+                  Example: {help.example}
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+        </FormSheet>
+      ) : helpOpen && help ? (
         <Card>
           <View style={styles.helpHead}>
             <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>{help.title}</Text>
@@ -237,9 +262,7 @@ export default function GradingPolicyWizardScreen() {
             <Text style={[type.meta, { color: colors.ink, marginTop: 6 }]}>Example: {help.example}</Text>
           ) : null}
         </Card>
-      ) : (
-        <GhostButton label="Show help" onPress={() => setHelpOpen(true)} />
-      )}
+      ) : null}
 
       <Card>
         <Text style={[type.title, { color: colors.ink, marginBottom: 12 }]}>{STEP_LABELS[step]}</Text>
@@ -341,6 +364,8 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     );
   }
   if (step === 'dates') {
+    // §11.14: six-weeks shows six marking-period date rows (not quarter fields / term+exam clutter).
+    const dateRows = payload.calendar.periods.filter((p) => p.kind === 'marking_period');
     return (
       <>
         <TextField
@@ -361,16 +386,14 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             setDraft(d);
           }}
         />
-        {payload.calendar.periods
-          .filter((p) => p.kind === 'marking_period' || p.kind === 'credit_term' || p.kind === 'exam')
-          .map((p) => (
-            <ListRow
-              key={p.code}
-              title={`${p.code} · ${p.name}`}
-              status={`${p.start_date ?? '—'} → ${p.end_date ?? '—'} · ${p.kind}`}
-              chevron={false}
-            />
-          ))}
+        {dateRows.map((p) => (
+          <ListRow
+            key={p.code}
+            title={`${p.code} · ${p.name}`}
+            status={`${p.start_date ?? '—'} → ${p.end_date ?? '—'}`}
+            chevron={false}
+          />
+        ))}
       </>
     );
   }

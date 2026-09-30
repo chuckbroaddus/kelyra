@@ -619,7 +619,15 @@ function mapExplain(
     syllabus,
     average,
     ruleLines: syllabus.published
-      ? plainSyllabusRules(categories, syllabus.policies_public)
+      ? plainSyllabusRules(categories, syllabus.policies_public, {
+          engine: syllabus.engine ?? null,
+          late_rule: syllabus.late_rule ?? null,
+          extra_credit_method: syllabus.extra_credit_method ?? null,
+          rollup_preset: syllabus.rollup_preset ?? null,
+          exam_weight: syllabus.exam_weight ?? null,
+          book_mode: syllabus.book_mode ?? null,
+          scale_label: null,
+        })
       : [],
     assignments,
     cells,

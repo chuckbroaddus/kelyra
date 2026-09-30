@@ -140,7 +140,11 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
           />
         )}
       </View>
-      <GhostButton label={busy ? 'Saving…' : 'Save draft'} onPress={onSaveDraft} disabled={Boolean(busy)} />
+      <GhostButton
+        label={busy ? 'Saving…' : 'Save draft'}
+        onPress={onSaveDraft}
+        disabled={Boolean(busy) || !canFinishReview(draft)}
+      />
       {footer}
     </View>
   );
