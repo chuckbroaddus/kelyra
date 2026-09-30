@@ -43,7 +43,7 @@ import {
   type WizardStepId,
 } from '@/lib/school/gradingPolicy';
 import type { TemplateKey } from '@/lib/grade/calendar/types';
-import { ROLLUP_PRESET_KEYS } from '@/lib/grade/calendar/index';
+import { ROLLUP_PRESET_KEYS, presetsForChildCount } from '@/lib/grade/calendar/index';
 import { listScaleTemplates, makeScaleFromTemplate } from '@/lib/grade/scale/scale';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -312,9 +312,20 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     );
   }
   if (step === 'rollup') {
+    // Only offer presets that fit how many marking periods each credit term has.
+    const cal = getFieldValue<{ periods?: { id: string; kind: string; parent_id: string | null }[] } | null>(
+      draft,
+      'calendar.model',
+      null,
+    );
+    const firstTerm = cal?.periods?.find((p) => p.kind === 'credit_term');
+    const childCount = firstTerm
+      ? (cal?.periods ?? []).filter((p) => p.kind === 'marking_period' && p.parent_id === firstTerm.id).length
+      : (cal?.periods ?? []).filter((p) => p.kind === 'marking_period').length;
+    const presetKeys = childCount > 0 ? presetsForChildCount(childCount) : ROLLUP_PRESET_KEYS;
     return (
       <ChipRow>
-        {ROLLUP_PRESET_KEYS.map((key) => (
+        {presetKeys.map((key) => (
           <Chip
             key={key}
             label={key}

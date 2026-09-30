@@ -13,6 +13,27 @@ export const ROLLUP_PRESET_KEYS: readonly RollupPresetKey[] = [
 
 const WEIGHT_EPS = 0.0001;
 
+/** Presets with a fixed child count; others (85/15, year_mean) fit any count. */
+const PRESET_CHILD_COUNT: Partial<Record<RollupPresetKey, number>> = {
+  '2/7+1/7': 3,
+  '40/40/20': 2,
+  '45/45/10': 2,
+  '3/7+3/7+1/7': 2,
+  '25x4': 4,
+  '50/50': 2,
+};
+
+/** True when `key` can roll up exactly `childCount` children. */
+export function presetFitsChildCount(key: RollupPresetKey, childCount: number): boolean {
+  const need = PRESET_CHILD_COUNT[key];
+  return need === undefined || need === childCount;
+}
+
+/** Presets usable for a term with `childCount` children, in display order. */
+export function presetsForChildCount(childCount: number): RollupPresetKey[] {
+  return ROLLUP_PRESET_KEYS.filter((k) => presetFitsChildCount(k, childCount));
+}
+
 /** True when component weights sum to 1 within ±0.0001. */
 export function rollupWeightsValid(
   components: { weight: number }[],
@@ -124,7 +145,12 @@ export function buildTermRollup(input: {
   exam_code?: string;
   missing_child?: 'renormalize' | 'block';
 }): TermRollup {
-  const w = weightsForPreset(input.preset, input.child_period_ids.length);
+  // An unfit preset (e.g. 25x4 on a 2-quarter semester) falls back to an equal
+  // mean instead of throwing, so a wizard choice can never crash the app.
+  const preset = presetFitsChildCount(input.preset, input.child_period_ids.length)
+    ? input.preset
+    : 'year_mean';
+  const w = weightsForPreset(preset, input.child_period_ids.length);
   if (w.child_weights.length !== input.child_period_ids.length) {
     throw new Error('preset child weight count mismatch');
   }

@@ -188,9 +188,22 @@ test('periodForDate picks finest marking period; progress is not transcript', ()
   assert.equal(periodForDate(cal, '1999-01-01'), null);
 });
 
-test('buildTermRollup rejects bad child counts for fixed presets', () => {
+test('weightsForPreset rejects bad child counts; buildTermRollup falls back to equal mean', () => {
   assert.throws(() => weightsForPreset('2/7+1/7', 2));
-  assert.throws(() =>
-    buildTermRollup({ term_id: 'S1', child_period_ids: ['Q1'], preset: '40/40/20' }),
-  );
+  const r = buildTermRollup({ term_id: 'S1', child_period_ids: ['Q1'], preset: '40/40/20' });
+  assert.deepEqual(r.components, [{ period_id: 'Q1', weight: 1 }]);
+  assert.equal(r.exam.enabled, false);
+});
+
+test('unfit rollup preset falls back instead of throwing (25x4 on nine-weeks)', async () => {
+  const { nineWeeks } = await import('./templates.ts');
+  const { presetsForChildCount, presetFitsChildCount } = await import('./rollups.ts');
+  const cal = nineWeeks({ rollup_preset: '25x4' });
+  const s1 = cal.rollups.find((r) => r.term_id === 'S1')!;
+  const sum = s1.components.reduce((a, c) => a + c.weight, 0);
+  assert.ok(Math.abs(sum - 1) < 0.0001);
+  assert.equal(presetFitsChildCount('25x4', 2), false);
+  assert.ok(!presetsForChildCount(2).includes('25x4'));
+  assert.ok(presetsForChildCount(4).includes('25x4'));
+  assert.ok(presetsForChildCount(3).includes('2/7+1/7'));
 });

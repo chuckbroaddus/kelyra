@@ -15,6 +15,8 @@ export {
   ROLLUP_PRESET_KEYS,
   assertRollupWeights,
   buildTermRollup,
+  presetFitsChildCount,
+  presetsForChildCount,
   rollupWeightsValid,
   weightsForPreset,
 } from './rollups.ts';
