@@ -134,19 +134,43 @@ test('T-04/T-14 save_class_syllabus_draft always status=draft; never keeps publi
   assert.match(publish, /syllabus version conflict/);
 });
 
-test('UI: Save draft hidden while published; live edits use Publish confirm', () => {
+test('UI: published syllabus blocks silent draft save; live edits use Publish confirm', () => {
+  // GB-08 wizard shell + class syllabus screen (replaced old single-file editor).
   const ui = read('src/app/class/[id]/syllabus.tsx');
-  assert.match(ui, /syllabusStatus === 'published'/);
-  assert.match(ui, /Live weights update only when you publish changes/);
-  assert.match(ui, /Use Publish changes to update live weights/);
+  const wizard = read('src/components/syllabus/SyllabusWizard.tsx');
+
+  // Save draft still exists in the wizard chrome, but the screen refuses a silent
+  // live write while published — teacher must Publish (with confirm).
+  assert.match(wizard, /GhostButton label=\{busy \? 'Saving…' : 'Save draft'\}/);
+  assert.match(ui, /onSaveDraft=\{\(\) => void onSaveDraft\(\)\}/);
+  assert.match(ui, /draft\.syllabus_status === 'published'/);
+  assert.match(
+    ui,
+    /This syllabus is published\. Use Publish to update live weights\./,
+  );
+  const saveDraft = ui.slice(ui.indexOf('const onSaveDraft = async'));
+  const saveBody = saveDraft.slice(0, saveDraft.indexOf('const applyTemplateCopy'));
+  assert.match(saveBody, /draft\.syllabus_status === 'published'/);
+  assert.match(saveBody, /Use Publish to update live weights/);
+  // Published path returns before any draft write; draft save only for non-published.
+  const publishedGate = saveBody.indexOf("draft.syllabus_status === 'published'");
+  const publishedReturn = saveBody.indexOf('return;', publishedGate);
+  const draftWrite = saveBody.indexOf('saveClassSyllabusDraft');
+  assert.ok(publishedGate >= 0 && publishedReturn > publishedGate);
+  assert.ok(draftWrite > publishedReturn);
+
+  // Published → confirm kind live_edit before publishClassSyllabus; not a silent save.
   assert.match(ui, /kind: 'live_edit'/);
-  const actions = ui.slice(ui.indexOf('<View style={styles.actions}>'));
-  const publishedBranch = actions.slice(0, actions.indexOf('</View>'));
-  assert.match(publishedBranch, /syllabusStatus === 'published'/);
-  assert.match(publishedBranch, /SecondaryButton label="Save draft"/);
-  assert.ok(
-    publishedBranch.indexOf("syllabusStatus === 'published'") <
-      publishedBranch.indexOf('SecondaryButton label="Save draft"'),
+  const onPublish = ui.slice(ui.indexOf('const onPublishPress'));
+  const onPublishBody = onPublish.slice(0, onPublish.indexOf('const parsePhoto'));
+  assert.match(onPublishBody, /draft\.syllabus_status === 'published'/);
+  assert.match(onPublishBody, /setConfirm\(\{ kind: 'live_edit' \}\)/);
+  assert.match(ui, /confirm\?\.kind === 'publish' \|\| confirm\?\.kind === 'live_edit'/);
+  assert.match(ui, /void doPublish\(\)/);
+  assert.match(ui, /publishClassSyllabus/);
+  assert.match(
+    ui,
+    /Changing weights recalculates averages for everyone using the new weights/,
   );
 });
 
