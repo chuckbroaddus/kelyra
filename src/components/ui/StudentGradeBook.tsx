@@ -13,6 +13,12 @@ import {
 import { FamilySyllabusSummary } from '@/components/ui/FamilySyllabusSummary';
 import { MissingUpcomingStrip } from '@/components/ui/MissingUpcomingStrip';
 import { WhyAverageSheet } from '@/components/ui/WhyAverageSheet';
+import { GradeBreakdownSheet } from '@/components/gradebook/GradeBreakdownSheet';
+import { loadClassGradingCalendar } from '@/components/gradebook/loadCalendar';
+import {
+  filterAssignmentsByPeriod,
+  periodFilterLabel,
+} from '@/components/gradebook/periodScope';
 import { GhostButton } from '@/components/ui/Button';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { WorkingLine } from '@/components/ui/WorkingMark';
@@ -20,7 +26,8 @@ import { studentHead } from '@/constants/table';
 import { type } from '@/constants/theme';
 import { defaultExpandedIds, visibleBookRows, type BookNode } from '@/lib/assignments/tree';
 import { firstName } from '@/lib/format';
-import { gradeTermLabel, matchesGradeTermFilter } from '@/lib/grade/marks';
+import { isGraded } from '@/lib/assignments/status';
+import type { GradingCalendar } from '@/lib/grade/calendar/types';
 import {
   gradeCell,
   loadFamilyStudentGradebook,
@@ -57,6 +64,8 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
   const [status, setStatus] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [termFilter, setTermFilter] = useState('all');
+  const [calendar, setCalendar] = useState<GradingCalendar | null>(null);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [syllabus, setSyllabus] = useState<PublishedFamilySyllabus | null>(null);
   const [average, setAverage] = useState<SyllabusAverageResult | null>(null);
   const [ruleLines, setRuleLines] = useState<string[]>([]);
@@ -88,6 +97,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       setExplainAssignments([]);
       setMissing([]);
       setUpcoming([]);
+      setCalendar(null);
       return;
     }
     try {
@@ -110,6 +120,12 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       setMissing([]);
       setUpcoming([]);
     }
+    void loadClassGradingCalendar(classId)
+      .then((cal) => {
+        if (studentId && studentIdRef.current !== studentId) return;
+        setCalendar(cal);
+      })
+      .catch(() => setCalendar(null));
   }, [classId, termFilter, studentId]);
 
   useFocusEffect(
@@ -154,9 +170,10 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
     if (!book) return null;
     return {
       ...book,
-      assignments: classAssignments.filter((row) => matchesGradeTermFilter(row, termFilter)),
+      assignments: filterAssignmentsByPeriod(classAssignments, termFilter, calendar),
     };
-  }, [book, classAssignments, termFilter]);
+  }, [book, classAssignments, termFilter, calendar]);
+  const periodLabel = periodFilterLabel(termFilter, calendar);
   const tree = useMemo(() => (filteredBook ? studentBookTree(filteredBook, classId) : []), [classId, filteredBook]);
   const visibleRows = useMemo(() => visibleBookRows(tree, expanded), [tree, expanded]);
   const [paneWidth, setPaneWidth] = useState(0);
@@ -217,7 +234,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
 
   const student = book.student;
   const termTabs = classAssignments.length > 0 ? (
-    <GradeTermTabs value={termFilter} onChange={setTermFilter} />
+    <GradeTermTabs value={termFilter} onChange={setTermFilter} calendar={calendar ?? undefined} />
   ) : null;
 
   if (!classAssignments.length) {
@@ -235,7 +252,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
       <View style={styles.pane}>
         {termTabs}
         <Text style={[styles.empty, { color: colors.mute }]}>
-          No {gradeTermLabel(termFilter)} columns yet.
+          No {periodLabel} columns yet.
         </Text>
       </View>
     );
@@ -292,9 +309,14 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
             <View style={styles.hero}>
               <Text style={[type.title, { color: colors.ink }]}>Current average · {average.overall}%</Text>
               <Text style={[type.meta, { color: colors.mute }]}>
-                Based on approved work in {gradeTermLabel(termFilter)}
+                Based on approved work in {periodLabel}
               </Text>
               <GhostButton align="left" label="Why this average?" onPress={() => setWhyOpen(true)} />
+              <GhostButton
+                align="left"
+                label="Breakdown & what-if"
+                onPress={() => setBreakdownOpen(true)}
+              />
             </View>
           ) : null}
           <FamilySyllabusSummary
@@ -356,9 +378,47 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
         average={average}
         childName={studentId ? shownName : null}
         className={classLabel}
-        termLabel={gradeTermLabel(termFilter)}
+        termLabel={periodLabel}
         onClose={() => setWhyOpen(false)}
       />
+      {breakdownOpen && filteredBook ? (
+        <GradeBreakdownSheet
+          visible
+          onClose={() => setBreakdownOpen(false)}
+          studentName={shownName}
+          className={classLabel}
+          periodLabel={periodLabel}
+          periodFilter={termFilter}
+          assignments={filteredBook.assignments.map((row) => ({
+            id: row.id,
+            title: row.title,
+            category: row.category,
+            include_in_average: row.include_in_average,
+            max_score: row.max_score,
+            due_at: row.due_at,
+            is_makeup: row.is_makeup,
+            marking_period_id: (row as { marking_period_id?: string | null }).marking_period_id,
+            term: row.term,
+          }))}
+          cells={filteredBook.assignments.map((row) => {
+            const cell = gradeCell(book, row.id, student.id);
+            return {
+              assignmentId: row.id,
+              approvedScore: cell.score,
+              scoreMark: cell.scoreMark,
+              status: cell.status,
+              approved: isGraded(cell.status),
+            };
+          })}
+          categories={(syllabus?.categories ?? []).map((c) => ({
+            key: c.key,
+            label: c.label,
+            weight_percent: Number(c.weight_percent),
+            active: true,
+          }))}
+          policies={null}
+        />
+      ) : null}
       <FamilyAssignmentDetail
         visible={Boolean(detail)}
         detail={detail}
