@@ -12,6 +12,7 @@ import {
   schoolProposalHasCore,
 } from '../_shared/ingestNormalize.ts';
 import {
+  buildHandwritingTranscribePrompt,
   buildSchoolPolicyIngestPrompt,
   buildSchoolPolicyRetryPrompt,
   buildSyllabusIngestPrompt,
@@ -241,9 +242,33 @@ Deno.serve(async (req) => {
 
     const apiKey = requireXaiKey();
     try {
+      // Two-pass for images: transcribe first (handwriting / low quality), then extract.
+      let transcriptNote = '';
+      if (imageContent.length > 0) {
+        try {
+          const trParsed = await callModel(supabase, apiKey, [
+            ...imageContent,
+            { type: 'input_text', text: buildHandwritingTranscribePrompt() },
+          ]);
+          const transcript =
+            typeof trParsed.transcript === 'string' ? trParsed.transcript.trim() : '';
+          const quality = typeof trParsed.quality === 'string' ? trParsed.quality : '';
+          if (transcript) {
+            transcriptNote =
+              `\nWorking transcript (${quality || 'unknown'} quality) — extract ONLY facts supported below; quotes must still match the page:\n` +
+              transcript.slice(0, 8000);
+          } else if (quality === 'unreadable') {
+            transcriptNote =
+              '\nTranscript empty / unreadable. Prefer empty fields + block warning over guesses.';
+          }
+        } catch {
+          // transcription optional — fall through to single-pass extract
+        }
+      }
+
       let parsed = await callModel(supabase, apiKey, [
         ...imageContent,
-        { type: 'input_text', text: prompt + '\n' + pathNote },
+        { type: 'input_text', text: prompt + '\n' + pathNote + transcriptNote },
       ]);
       let proposal = skeletonProposal(kind, sourceId, parsed);
 
@@ -255,7 +280,7 @@ Deno.serve(async (req) => {
         });
         parsed = await callModel(supabase, apiKey, [
           ...imageContent,
-          { type: 'input_text', text: retryPrompt + '\n' + pathNote },
+          { type: 'input_text', text: retryPrompt + '\n' + pathNote + transcriptNote },
         ]);
         proposal = skeletonProposal(kind, sourceId, parsed);
         proposal.warnings = [
@@ -266,6 +291,39 @@ Deno.serve(async (req) => {
             severity: 'info',
           },
         ];
+      }
+
+      // Syllabus weak / handwriting: one more pass if almost empty and we have images
+      if (
+        kind === 'syllabus' &&
+        proposal.fields.filter((f) => f.value != null).length < 2 &&
+        imageContent.length > 0 &&
+        transcriptNote
+      ) {
+        parsed = await callModel(supabase, apiKey, [
+          ...imageContent,
+          {
+            type: 'input_text',
+            text:
+              prompt +
+              '\n' +
+              pathNote +
+              transcriptNote +
+              '\nSTRICT: Use the transcript. Emit every category/late/missing fact the transcript supports with verbatim quotes.',
+          },
+        ]);
+        const retryProp = skeletonProposal(kind, sourceId, parsed);
+        if (retryProp.fields.length > proposal.fields.length) {
+          proposal = retryProp;
+          proposal.warnings = [
+            ...proposal.warnings,
+            {
+              code: 'handwriting_retry',
+              message: 'Retried extract using page transcription.',
+              severity: 'info',
+            },
+          ];
+        }
       }
 
       if (jobId) {

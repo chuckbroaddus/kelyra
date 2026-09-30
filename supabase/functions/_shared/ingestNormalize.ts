@@ -35,7 +35,37 @@ function evidenceOk(ev: IngestEvidence | undefined | null): boolean {
   if (!ev) return false;
   const q = typeof ev.quote === 'string' ? ev.quote.trim() : '';
   const r = typeof ev.region === 'string' ? ev.region.trim() : '';
-  return q.length > 0 || r.length > 0;
+  if (!q && !r) return false;
+  if (q && isPlaceholderQuote(q)) return false;
+  return true;
+}
+
+/** Quotes that are meta / invented, not verbatim page text. */
+export function isPlaceholderQuote(quote: string): boolean {
+  const q = quote.trim().toLowerCase();
+  if (!q) return true;
+  if (
+    /^(not stated|n\/?a|none|unknown|null|\(not stated\)|no quote|omitted|not on (the )?page)$/i.test(
+      q,
+    )
+  ) {
+    return true;
+  }
+  // Pure meta sentences the model invents when a field is missing
+  if (
+    /does not (state|say|specify|mention)|not (explicitly )?(stated|specified|defined)|cannot (be )?(determined|read)|unreadable|no (visible|clear) (text|evidence)/i.test(
+      q,
+    ) &&
+    !/\d+\s*%/.test(q)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function quoteText(ev: IngestEvidence | undefined | null): string {
+  if (!ev) return '';
+  return typeof ev.quote === 'string' ? ev.quote : '';
 }
 
 function statusFor(conf: number, explicit: unknown): IngestFieldStatus {
@@ -157,17 +187,29 @@ export function coerceEngine(raw: unknown): string | null {
   return null;
 }
 
-export function coerceMissingRule(raw: unknown): 'zero' | 'floor' | 'omit' | null {
+export function coerceMissingRule(
+  raw: unknown,
+): 'zero' | 'floor' | 'omit' | { type: 'zero' | 'floor' | 'omit'; floor?: number } | null {
   if (raw == null) return null;
   if (typeof raw === 'object') {
-    const t = (raw as { type?: unknown }).type;
-    return coerceMissingRule(t);
+    const o = raw as { type?: unknown; floor?: unknown; floor_pct?: unknown };
+    const t = coerceMissingRule(o.type);
+    const base = typeof t === 'string' ? t : t && typeof t === 'object' ? t.type : null;
+    if (!base) return null;
+    if (base === 'floor') {
+      const fl = num(o.floor ?? o.floor_pct);
+      return fl != null ? { type: 'floor', floor: fl } : { type: 'floor' };
+    }
+    return base;
   }
   const s = String(raw).toLowerCase().trim();
   if (s === 'zero' || s === '0' || /count[s]?\s+as\s+zero|missing.*zero|zero\s+for\s+missing/.test(s)) {
     return 'zero';
   }
-  if (s === 'floor' || /missing.*floor|floor\s+for\s+missing/.test(s)) return 'floor';
+  if (s === 'floor' || /missing.*floor|floor\s+for\s+missing|floor\s+of\s+\d+/.test(s)) {
+    const fl = s.match(/floor\s*(?:of\s*)?(\d+)/);
+    return fl ? { type: 'floor', floor: Number(fl[1]) } : 'floor';
+  }
   if (s === 'omit' || s === 'excuse' || s === 'excused' || /omit|do\s+not\s+count|excused/.test(s)) {
     return 'omit';
   }
@@ -276,6 +318,216 @@ export function coerceQpMethod(raw: unknown): string | null {
   if (s === 'letter_map' || s === 'letter') return 'letter_map';
   if (s === 'percent_map' || s === 'percent') return 'percent_map';
   return s || null;
+}
+
+const LEVEL_SYNONYMS: Array<{ key: string; label: string; bonus: number; re: RegExp }> = [
+  { key: 'ap', label: 'AP', bonus: 1, re: /^(ap|a\.p\.|advanced\s*placement)$/i },
+  { key: 'ib_hl', label: 'IB HL', bonus: 1, re: /^(ib[_\s-]?hl|ib\s*higher(\s*level)?|higher\s*level)$/i },
+  { key: 'ib_sl', label: 'IB SL', bonus: 0.5, re: /^(ib[_\s-]?sl|ib\s*standard(\s*level)?|standard\s*level)$/i },
+  { key: 'preap', label: 'Pre-AP', bonus: 0.5, re: /^(pre[_\s-]?ap|pre[_\s-]?ib|preap)$/i },
+  { key: 'honors', label: 'Honors', bonus: 0.5, re: /^(honors?|advanced|h)$/i },
+  {
+    key: 'dual_credit',
+    label: 'Dual Credit',
+    bonus: 1,
+    re: /^(dual([_\s-]?credit|[_\s-]?enrollment)?|dc|de)$/i,
+  },
+  { key: 'onramps', label: 'OnRamps', bonus: 1, re: /^(on[_\s-]?ramps?)$/i },
+  { key: 'modified', label: 'Modified', bonus: -0.5, re: /^(modified|applied|fundamentals)$/i },
+  { key: 'local', label: 'Local credit', bonus: 0, re: /^(local([_\s-]?credit)?)$/i },
+  {
+    key: 'regular',
+    label: 'Regular',
+    bonus: 0,
+    re: /^(regular|on[_\s-]?level|onlevel|level|standard|college\s*prep|cp)$/i,
+  },
+];
+
+export function coerceCourseLevelKey(raw: string): {
+  key: string;
+  label: string;
+  weighted_bonus: number;
+} {
+  const s = raw.trim();
+  for (const row of LEVEL_SYNONYMS) {
+    if (row.re.test(s) || row.re.test(s.replace(/\s+/g, '_')) || row.re.test(s.replace(/\s+/g, ''))) {
+      return { key: row.key, label: row.label, weighted_bonus: row.bonus };
+    }
+  }
+  // partial contains
+  const lower = s.toLowerCase();
+  if (/\bib\b/.test(lower) && /\bhl\b|higher/.test(lower)) {
+    return { key: 'ib_hl', label: 'IB HL', weighted_bonus: 1 };
+  }
+  if (/\bib\b/.test(lower) && /\bsl\b|standard/.test(lower)) {
+    return { key: 'ib_sl', label: 'IB SL', weighted_bonus: 0.5 };
+  }
+  if (/pre[-\s]?ap|pre[-\s]?ib/.test(lower)) return { key: 'preap', label: 'Pre-AP', weighted_bonus: 0.5 };
+  if (/\bap\b|advanced placement/.test(lower)) return { key: 'ap', label: 'AP', weighted_bonus: 1 };
+  if (/honors|advanced/.test(lower)) return { key: 'honors', label: 'Honors', weighted_bonus: 0.5 };
+  if (/dual|onramps|on-ramps/.test(lower)) {
+    if (/onramp/.test(lower)) return { key: 'onramps', label: 'OnRamps', weighted_bonus: 1 };
+    return { key: 'dual_credit', label: 'Dual Credit', weighted_bonus: 1 };
+  }
+  if (/modified|applied/.test(lower)) return { key: 'modified', label: 'Modified', weighted_bonus: -0.5 };
+  if (/local/.test(lower)) return { key: 'local', label: 'Local credit', weighted_bonus: 0 };
+  if (/regular|on[-\s]?level|on level/.test(lower)) {
+    return { key: 'regular', label: 'Regular', weighted_bonus: 0 };
+  }
+  return { key: slugKey(s, 0), label: s, weighted_bonus: 0 };
+}
+
+export function coerceLevelsList(
+  raw: unknown,
+): Array<{ key: string; label: string; weighted_bonus: number }> | null {
+  if (raw == null) return null;
+  let list: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      list = JSON.parse(raw);
+    } catch {
+      list = raw.split(/[,;|/]/).map((x) => x.trim()).filter(Boolean);
+    }
+  }
+  if (!Array.isArray(list) || !list.length) return null;
+  const out: Array<{ key: string; label: string; weighted_bonus: number }> = [];
+  const seen = new Set<string>();
+  list.forEach((row, i) => {
+    if (typeof row === 'string') {
+      const c = coerceCourseLevelKey(row);
+      if (seen.has(c.key)) return;
+      seen.add(c.key);
+      out.push(c);
+      return;
+    }
+    if (!row || typeof row !== 'object') return;
+    const o = row as Record<string, unknown>;
+    const label = String(o.label ?? o.name ?? o.key ?? `Level ${i + 1}`);
+    const fromLabel = coerceCourseLevelKey(label);
+    const keyRaw = typeof o.key === 'string' && o.key ? o.key : fromLabel.key;
+    const mapped = coerceCourseLevelKey(String(keyRaw));
+    const key = mapped.key !== slugKey(String(keyRaw), i) || LEVEL_SYNONYMS.some((x) => x.re.test(String(keyRaw)))
+      ? mapped.key
+      : fromLabel.key;
+    const bonus =
+      num(o.weighted_bonus ?? o.bonus ?? o.points) ??
+      (key === fromLabel.key ? fromLabel.weighted_bonus : mapped.weighted_bonus);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      key,
+      label: label || mapped.label || fromLabel.label,
+      weighted_bonus: bonus,
+    });
+  });
+  return out.length ? out : null;
+}
+
+function levelKeyFromHeader(h: string): string {
+  return coerceCourseLevelKey(h).key;
+}
+
+/**
+ * Normalize numeric-band / quality-point charts into row list:
+ * { min_pct, max_pct, points_by_level } — never a flat +1.0 bonus guess.
+ */
+export function coerceQpTables(raw: unknown): Array<{
+  min_pct: number;
+  max_pct: number;
+  points_by_level: Record<string, number>;
+}> | null {
+  if (raw == null) return null;
+  let list: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      list = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  // Single table object with rows/bands
+  if (list && typeof list === 'object' && !Array.isArray(list)) {
+    const o = list as Record<string, unknown>;
+    if (Array.isArray(o.rows)) list = o.rows;
+    else if (Array.isArray(o.bands)) list = o.bands;
+    else if (Array.isArray(o.tables)) {
+      const nested: unknown[] = [];
+      for (const t of o.tables) {
+        if (t && typeof t === 'object') {
+          const to = t as Record<string, unknown>;
+          if (Array.isArray(to.bands)) nested.push(...to.bands);
+          else if (Array.isArray(to.rows)) nested.push(...to.rows);
+          else nested.push(t);
+        }
+      }
+      list = nested;
+    }
+  }
+  if (!Array.isArray(list) || !list.length) return null;
+
+  const rows: Array<{ min_pct: number; max_pct: number; points_by_level: Record<string, number> }> =
+    [];
+
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+
+    // Nested table with bands
+    if (Array.isArray(o.bands)) {
+      const nested = coerceQpTables(o.bands);
+      if (nested) rows.push(...nested);
+      continue;
+    }
+    if (Array.isArray(o.rows) && o.min == null && o.min_pct == null) {
+      const nested = coerceQpTables(o.rows);
+      if (nested) rows.push(...nested);
+      continue;
+    }
+
+    const min = num(o.min_pct ?? o.min ?? o.low ?? o.from);
+    const max = num(o.max_pct ?? o.max ?? o.high ?? o.to);
+    if (min == null || max == null) continue;
+
+    const points_by_level: Record<string, number> = {};
+    const ptsObj =
+      o.points_by_level && typeof o.points_by_level === 'object'
+        ? (o.points_by_level as Record<string, unknown>)
+        : o.points && typeof o.points === 'object'
+          ? (o.points as Record<string, unknown>)
+          : null;
+
+    if (ptsObj) {
+      for (const [k, v] of Object.entries(ptsObj)) {
+        const n = num(v);
+        if (n == null) continue;
+        points_by_level[levelKeyFromHeader(k)] = n;
+      }
+    }
+
+    // Flat level columns on the row
+    for (const [k, v] of Object.entries(o)) {
+      if (
+        /^(min|max|min_pct|max_pct|low|high|from|to|letter|points|points_by_level|bands|rows)$/i.test(
+          k,
+        )
+      ) {
+        continue;
+      }
+      const n = num(v);
+      if (n == null) continue;
+      if (
+        /regular|honors|preap|pre_ap|ap|ib|dual|onramp|modified|local|on_level|onlevel/i.test(k) ||
+        LEVEL_SYNONYMS.some((x) => x.re.test(k))
+      ) {
+        points_by_level[levelKeyFromHeader(k)] = n;
+      }
+    }
+
+    if (!Object.keys(points_by_level).length) continue;
+    rows.push({ min_pct: min, max_pct: max, points_by_level });
+  }
+
+  return rows.length ? rows : null;
 }
 
 /** Map custom rollup weights onto a preset enum when they match. */
@@ -435,6 +687,9 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   const out: IngestField[] = [];
   let derivedPreset: IngestField | null = null;
   let derivedPeriod: IngestField | null = null;
+  let pendingLateFloor: number | null = null;
+  let pendingLateFloorEv: IngestEvidence | null = null;
+  let pendingLateFloorSrc: string | null = null;
 
   for (const f of fields) {
     const path = f.path;
@@ -464,8 +719,18 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       }
       case 'syllabus.engine': {
         const eng = coerceEngine(value);
-        if (eng) value = eng;
-        else if (value != null) {
+        if (eng) {
+          value = eng;
+          const q = quoteText(ev).toLowerCase();
+          const strong =
+            /total\s*points|weighted|percent-?inside|points-?inside|item\s*weight|no\s*overall|ungrad|sbg|standards/.test(
+              q,
+            );
+          if (!strong && eng !== 'total_points') {
+            confidence = Math.min(confidence, 0.72);
+            status = 'needs_review';
+          }
+        } else if (value != null) {
           status = 'needs_review';
           confidence = Math.min(confidence, 0.55);
         }
@@ -474,7 +739,7 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       case 'syllabus.within_category': {
         const w = coerceWithinCategory(value);
         value = w;
-        if (w == null && f.value != null) {
+        if (w == null) {
           status = 'unknown';
           confidence = Math.min(confidence, 0.4);
           if (!ambiguities.some((a) => a.code === 'within_category')) {
@@ -493,7 +758,19 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         if (cats) value = cats;
         break;
       }
+      case 'syllabus.retake': {
+        value = coerceRetake(value);
+        break;
+      }
       case 'syllabus.missing_rule': {
+        const q = quoteText(ev).toLowerCase();
+        // Hard deadline / late language is not a missing-work rule
+        if (/hard\s*deadline|no work accepted after|after the unit|late work/.test(q) && !/missing/.test(q)) {
+          value = null;
+          status = 'unknown';
+          confidence = Math.min(confidence, 0.4);
+          break;
+        }
         const m = coerceMissingRule(value);
         if (m) value = m;
         else if (value != null) {
@@ -508,11 +785,23 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         }
         break;
       }
-      case 'syllabus.retake': {
-        value = coerceRetake(value);
+      case 'syllabus.floor': {
+        const q = quoteText(ev).toLowerCase();
+        // Late floor belongs on late_rule.floor_pct, not period floor
+        if (/late/.test(q) && /floor/.test(q) && !/period|average|marking|six-?week|report/.test(q)) {
+          const fl = num(value);
+          if (fl != null) {
+            // Stash via synthetic late patch after loop using warnings side channel
+            (f as IngestField & { _late_floor?: number })._late_floor = fl;
+          }
+          value = null;
+          status = 'unknown';
+          confidence = Math.min(confidence, 0.4);
+          break;
+        }
+        value = num(value);
         break;
       }
-      case 'syllabus.floor':
       case 'syllabus.ceiling':
       case 'syllabus.ec_cap':
       case 'syllabus.exam_weight':
@@ -528,6 +817,18 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         }
         break;
       }
+      case 'syllabus.rollup_preset':
+      case 'rollup.preset': {
+        const p = coerceRollupPreset(value);
+        if (p) value = p;
+        else if (value != null) {
+          // Invalid invent like texas_70_pass
+          value = null;
+          status = 'unknown';
+          confidence = Math.min(confidence, 0.35);
+        }
+        break;
+      }
       case 'calendar.template': {
         const t = coerceCalendarTemplate(value);
         if (t) value = t;
@@ -535,11 +836,6 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       }
       case 'calendar.period_model': {
         const p = coercePeriodModel(value);
-        if (p) value = p;
-        break;
-      }
-      case 'rollup.preset': {
-        const p = coerceRollupPreset(value);
         if (p) value = p;
         break;
       }
@@ -563,26 +859,40 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         if (m) value = m;
         break;
       }
+      case 'qp.tables': {
+        const tables = coerceQpTables(value);
+        if (tables) {
+          value = tables;
+          // Ensure method accompanies tables
+          if (!fields.some((x) => x.path === 'qp.method' && x.value != null)) {
+            // will add after loop if missing
+          }
+        } else if (value != null) {
+          status = 'needs_review';
+          confidence = Math.min(confidence, 0.55);
+        }
+        break;
+      }
       case 'levels.list': {
-        if (Array.isArray(value)) {
-          value = value.map((row, i) => {
-            if (typeof row === 'string') {
-              const label = row;
-              const key = slugKey(label, i);
-              let bonus = 0;
-              if (/^ap\b/i.test(label) || label.toUpperCase() === 'AP') bonus = 1;
-              else if (/honors/i.test(label)) bonus = 0.5;
-              return { key, label, weighted_bonus: bonus };
-            }
-            if (row && typeof row === 'object') {
-              const o = row as Record<string, unknown>;
-              const label = String(o.label ?? o.name ?? o.key ?? `Level ${i + 1}`);
-              const key = String(o.key ?? slugKey(label, i));
-              const bonus = num(o.weighted_bonus ?? o.bonus ?? o.points) ?? 0;
-              return { ...o, key, label, weighted_bonus: bonus };
-            }
-            return row;
-          });
+        const levels = coerceLevelsList(value);
+        if (levels) value = levels;
+        break;
+      }
+      case 'gpa.include': {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          const o = value as Record<string, unknown>;
+          const outInc: Record<string, unknown> = { ...o };
+          if ('pre_9' in o && !('pre9' in o)) outInc.pre9 = o.pre_9;
+          value = outInc;
+        }
+        break;
+      }
+      case 'gpa.repeat': {
+        if (typeof value === 'string') {
+          const s = value.toLowerCase();
+          if (/forgive|higher|replace/.test(s)) value = { policy: 'forgive_higher' };
+          else if (/both|include_both/.test(s)) value = { policy: 'include_both' };
+          else if (/average/.test(s)) value = { policy: 'average' };
         }
         break;
       }
@@ -595,26 +905,45 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         derivedPeriod = {
           path: 'calendar.period_model',
           value: 'six_weeks',
-          confidence: Math.min(confidence, 0.9),
+          confidence: Math.min(confidence, 0.75),
           evidence: ev,
-          status: statusFor(Math.min(confidence, 0.9), null),
+          status: 'needs_review',
           source_doc_id: f.source_doc_id,
         };
       } else if (value === 'nine_weeks') {
         derivedPeriod = {
           path: 'calendar.period_model',
           value: 'nine_weeks',
-          confidence: Math.min(confidence, 0.9),
+          confidence: Math.min(confidence, 0.75),
           evidence: ev,
-          status: statusFor(Math.min(confidence, 0.9), null),
+          status: 'needs_review',
           source_doc_id: f.source_doc_id,
         };
       }
     }
 
-    if (value == null && f.value != null && status === 'proposed') {
-      // coerced away entirely
-      continue;
+    // Capture late floor stash before push
+    const lateFloor = (f as IngestField & { _late_floor?: number })._late_floor;
+    if (lateFloor != null) {
+      pendingLateFloor = lateFloor;
+      pendingLateFloorEv = ev;
+      pendingLateFloorSrc = f.source_doc_id;
+    }
+
+    if (value == null && f.value != null) {
+      // Coerced away: only keep explicit unknown/review cards (e.g. within_category)
+      if (!(status === 'unknown' || status === 'needs_review' || status === 'conflict')) {
+        continue;
+      }
+      // Drop coerced-away noise that we only marked unknown to skip (floor remap, invalid rollup)
+      if (
+        path === 'syllabus.floor' ||
+        path === 'syllabus.rollup_preset' ||
+        path === 'rollup.preset' ||
+        path === 'syllabus.missing_rule'
+      ) {
+        continue;
+      }
     }
 
     out.push({
@@ -635,6 +964,78 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
     byPath.set('calendar.period_model', derivedPeriod);
   }
 
+  // Apply late floor onto late_rule when period floor was a late-floor mis-map
+  if (pendingLateFloor != null) {
+    const late = byPath.get('syllabus.late_rule');
+    if (late && late.value && typeof late.value === 'object') {
+      const lr = { ...(late.value as Record<string, unknown>), floor_pct: pendingLateFloor };
+      byPath.set('syllabus.late_rule', { ...late, value: lr });
+    } else if (!late) {
+      byPath.set('syllabus.late_rule', {
+        path: 'syllabus.late_rule',
+        value: { type: 'none', floor_pct: pendingLateFloor },
+        confidence: 0.7,
+        evidence: pendingLateFloorEv ?? { quote: `floor ${pendingLateFloor}`, page: 1, region: null },
+        status: 'needs_review',
+        source_doc_id: pendingLateFloorSrc,
+      });
+    }
+  }
+
+  // Drop zero-weight "categories" when engine is total_points (assignment point lists)
+  const engField = byPath.get('syllabus.engine');
+  const catField = byPath.get('syllabus.categories');
+  if (
+    engField?.value === 'total_points' &&
+    catField &&
+    Array.isArray(catField.value) &&
+    (catField.value as { weight_percent?: number }[]).every((c) => !c.weight_percent)
+  ) {
+    byPath.delete('syllabus.categories');
+  }
+
+  // qp.method without tables → drop (bonus-guess pattern)
+  if (byPath.has('qp.method') && !byPath.has('qp.tables')) {
+    const m = byPath.get('qp.method');
+    if (m?.value === 'numeric_band') byPath.delete('qp.method');
+  }
+  // qp.tables without method → add numeric_band
+  if (byPath.has('qp.tables') && !byPath.has('qp.method')) {
+    const t = byPath.get('qp.tables')!;
+    byPath.set('qp.method', {
+      path: 'qp.method',
+      value: 'numeric_band',
+      confidence: Math.min(t.confidence, 0.9),
+      evidence: t.evidence,
+      status: statusFor(Math.min(t.confidence, 0.9), null),
+      source_doc_id: t.source_doc_id,
+    });
+  }
+
+  // Derive levels columns from qp.tables when levels missing
+  if (!byPath.has('levels.list') && byPath.has('qp.tables')) {
+    const t = byPath.get('qp.tables')!;
+    const rows = t.value as Array<{ points_by_level?: Record<string, number> }>;
+    const keys = new Set<string>();
+    for (const r of rows || []) {
+      for (const k of Object.keys(r.points_by_level || {})) keys.add(k);
+    }
+    if (keys.size) {
+      const list = [...keys].map((k) => {
+        const c = coerceCourseLevelKey(k);
+        return { key: c.key, label: c.label, weighted_bonus: c.weighted_bonus };
+      });
+      byPath.set('levels.list', {
+        path: 'levels.list',
+        value: list,
+        confidence: Math.min(t.confidence, 0.85),
+        evidence: t.evidence,
+        status: statusFor(Math.min(t.confidence, 0.85), null),
+        source_doc_id: t.source_doc_id,
+      });
+    }
+  }
+
   const levels = byPath.get('levels.list');
   if (levels && Array.isArray(levels.value) && !byPath.has('gpa.mode')) {
     const hasBonus = levels.value.some(
@@ -645,18 +1046,25 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       byPath.set('gpa.mode', {
         path: 'gpa.mode',
         value: 'unweighted_and_weighted',
-        confidence: Math.min(levels.confidence, 0.85),
+        confidence: Math.min(levels.confidence, 0.75),
         evidence: levels.evidence,
-        status: statusFor(Math.min(levels.confidence, 0.85), null),
+        status: 'needs_review',
         source_doc_id: levels.source_doc_id,
       });
     }
   }
 
-  const finalFields = [...byPath.values()].filter((f) => {
-    if (f.value == null && f.status === 'proposed') return false;
-    return true;
+  // Drop null/empty noise unless status is an explicit review card
+  let finalFields = [...byPath.values()].filter((f) => {
+    if (f.value != null && f.value !== '') return true;
+    return f.status === 'unknown' || f.status === 'needs_review' || f.status === 'conflict';
   });
+
+  // Dedupe warnings + ambiguities by normalized meaning
+  const { warnings: dedupedW, ambiguities: dedupedA } = dedupeWarningsAndAmbiguities(
+    warnings,
+    ambiguities,
+  );
 
   const overall =
     finalFields.length > 0
@@ -666,11 +1074,52 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   return {
     ...proposal,
     fields: finalFields,
-    ambiguities,
-    warnings,
+    ambiguities: dedupedA,
+    warnings: dedupedW,
     document_kind_guess,
     overall_confidence: overall,
   };
+}
+
+function normMsg(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/^ambiguity:\s*/i, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+export function dedupeWarningsAndAmbiguities(
+  warnings: IngestWarning[],
+  ambiguities: IngestAmbiguity[],
+): { warnings: IngestWarning[]; ambiguities: IngestAmbiguity[] } {
+  const seen = new Set<string>();
+  const outA: IngestAmbiguity[] = [];
+  for (const a of ambiguities) {
+    const k = `${a.code}|${normMsg(a.message)}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    // Also reserve message-only so warning with same meaning drops
+    seen.add(`msg|${normMsg(a.message)}`);
+    outA.push(a);
+  }
+  const outW: IngestWarning[] = [];
+  for (const w of warnings) {
+    const msgKey = `msg|${normMsg(w.message)}`;
+    const codeKey = `${w.code}|${normMsg(w.message)}`;
+    if (seen.has(msgKey) || seen.has(codeKey)) continue;
+    // near-dup: within_category warnings when ambiguity exists
+    if (
+      /within_category|items (inside|within) a category|combine inside/i.test(w.code + w.message) &&
+      outA.some((a) => a.code === 'within_category')
+    ) {
+      continue;
+    }
+    seen.add(msgKey);
+    seen.add(codeKey);
+    outW.push(w);
+  }
+  return { warnings: outW, ambiguities: outA };
 }
 
 /** True when school handbook core fields are present enough to skip retry. */

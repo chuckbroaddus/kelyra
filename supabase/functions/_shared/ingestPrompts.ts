@@ -21,11 +21,15 @@ Hard rules:
 - Do not silently renormalize weights that sum to 90 or 110 (FR-AI-21). Keep 40/30/20 or 50/40/20 as written.
 - Partial fill is success. Unreadable pages → empty fields + warning, do not guess.
 - confidence is 0..1. status is proposed | needs_review | unknown | conflict.
-- EVERY filled field MUST include evidence.quote copied from the page. No quote → omit the field (null), never invent.
+- EVERY filled field MUST include evidence.quote copied VERBATIM from the page. No quote → omit the field entirely. Never use meta quotes like "(not stated)" or "does not say".
 - evidence.page is 1-based or null.
 - If the image shows TWO syllabi / two handbooks / two classes on one page: set document_kind_guess to "mixed", empty fields[], and a block warning asking the teacher to retake each document separately (FR-AI-13).
-- Handwritten or blurry photos: first silently transcribe readable lines, then extract only what the transcription supports. Low OCR → empty + warning, do not invent policy.
+- Handwritten or blurry photos: first silently transcribe readable lines into a working transcript, then extract ONLY facts the transcript supports. Low OCR → empty + warning, do not invent policy.
 - Candidates (Texas 6-week, 70-pass, 2/7 rollup, Honors +0.5 / AP +1.0) are MATCH options, not forced facts (FR-AI-17).
+- Do NOT invent defaults (engine, floor, missing_rule, categories, qp.method) when the page is silent.
+- Letter scale / passing threshold is NOT a rollup.preset.
+- Late-work floor is late_rule.floor_pct — not syllabus.floor (period floor only when the page says period/average floor).
+- Hard deadline / "no work after unit ends" → late_rule type none — never missing_rule zero.
 `.trim();
 
 const SYLLABUS_FEW_SHOT = `
@@ -35,10 +39,11 @@ JSON fragment:
 {"path":"syllabus.engine","value":"weighted_percent_inside","confidence":0.7,"evidence":{"quote":"Tests 50%, Daily 50%","page":1},"status":"needs_review"}
 {"path":"syllabus.categories","value":[{"key":"tests","label":"Tests","weight_percent":50},{"key":"daily","label":"Daily","weight_percent":50,"drop_lowest":1}],"confidence":0.95,"evidence":{"quote":"Tests 50%, Daily 50%. Drop 1 lowest Daily","page":1},"status":"proposed"}
 {"path":"syllabus.late_rule","value":{"type":"per_day","amount":10,"unit":"percent"},"confidence":0.95,"evidence":{"quote":"Late work −10% per day","page":1},"status":"proposed"}
-{"path":"syllabus.within_category","value":null,"confidence":0.4,"evidence":{"quote":"(not stated)","page":1},"status":"unknown"}
+If within-category method is not on the page: OMIT syllabus.within_category from fields[]; add ONE ambiguity card (do not also add a duplicate warning with the same meaning).
 late_rule MUST be an object {type,amount,unit}, never a free string.
 categories use label + weight_percent (not name/weight aliases only).
 engine enums: total_points | weighted_points_inside | weighted_percent_inside | item_weights | none.
+Total-points pages that list assignment point values are NOT category weights — omit syllabus.categories (or put names only in narrative).
 `.trim();
 
 const SCHOOL_FEW_SHOT = `
@@ -50,8 +55,15 @@ JSON fragment:
 {"path":"rollup.preset","value":"2/7+1/7","confidence":0.95,"evidence":{"quote":"each six-weeks is 2/7 and the semester exam is 1/7","page":1},"status":"proposed"}
 {"path":"credit.passing_threshold","value":70,"confidence":0.97,"evidence":{"quote":"Passing is 70","page":1},"status":"proposed"}
 {"path":"gpa.mode","value":"unweighted_and_weighted","confidence":0.9,"evidence":{"quote":"AP A = 5.0","page":1},"status":"proposed"}
+{"path":"levels.list","value":[{"key":"regular","label":"On-level","weighted_bonus":0},{"key":"honors","label":"Honors","weighted_bonus":0.5},{"key":"ap","label":"AP","weighted_bonus":1}],"confidence":0.9,"evidence":{"quote":"AP A = 5.0; Honors +0.5; On-level A = 4.0","page":1},"status":"proposed"}
 ALWAYS emit calendar.template AND rollup.preset when the page supports them (with evidence). Prefer rollup.preset enum over rollup.custom_weights when the weights match a preset (2/7+1/7, 40/40/20, 50/50, …).
-Numeric quality-point charts → qp.tables rows + qp.method "numeric_band" (do not collapse to +1.0 only).
+
+Numeric quality-point chart example (MUST keep full rows — never collapse to +1.0 only):
+Text: "97–100: Regular 4.0 · Honors 5.0 · AP 6.0. 93–96: 3.8 / 4.8 / 5.8."
+{"path":"qp.method","value":"numeric_band","confidence":0.95,"evidence":{"quote":"97–100: Regular 4.0 · Honors 5.0 · AP 6.0","page":1},"status":"proposed"}
+{"path":"qp.tables","value":[{"min_pct":97,"max_pct":100,"points_by_level":{"regular":4,"honors":5,"ap":6}},{"min_pct":93,"max_pct":96,"points_by_level":{"regular":3.8,"honors":4.8,"ap":5.8}}],"confidence":0.95,"evidence":{"quote":"97–100: Regular 4.0 · Honors 5.0 · AP 6.0","page":1},"status":"proposed"}
+{"path":"levels.list","value":[{"key":"regular","label":"Regular","weighted_bonus":0},{"key":"honors","label":"Honors","weighted_bonus":0.5},{"key":"ap","label":"AP","weighted_bonus":1}],"confidence":0.9,"evidence":{"quote":"Regular 4.0 · Honors 5.0 · AP 6.0","page":1},"status":"proposed"}
+Never emit qp.method without qp.tables rows. Map level synonyms: Pre-AP→preap, DC/Dual→dual_credit, IB Higher Level→ib_hl, IB SL→ib_sl, OnRamps→onramps, on-level/Regular→regular.
 `.trim();
 
 export function buildIngestSystemPreamble(kind: PromptKind): string {
@@ -60,6 +72,12 @@ export function buildIngestSystemPreamble(kind: PromptKind): string {
   return `You extract a ${kind === 'syllabus' ? 'CLASS SYLLABUS grading contract' : 'SCHOOL Grading and Reporting Policy'} from document page images for a teacher/admin.
 ${SHARED_RULES}
 Allowed paths: ${paths}`;
+}
+
+export function buildHandwritingTranscribePrompt(): string {
+  return `You are a careful OCR assistant for teacher documents.
+Return JSON only: {"transcript":"full readable text in reading order","quality":"typed"|"handwritten"|"mixed"|"unreadable","notes":"optional"}.
+Copy letters and numbers you can see. Do not invent policy. If unreadable, transcript="" and quality="unreadable".`;
 }
 
 export function buildSyllabusIngestPrompt(opts?: { class_id?: string; source_id?: string }): string {
@@ -141,7 +159,8 @@ Mapping targets (FR-AI-05 school policy):
 - credit.policy {unit, year_link, attendance_gate}, credit.passing_threshold
 - scale.bands / scale.list / scale.passing_pct / scale.rounding
 - gpa.mode off|unweighted|unweighted_and_weighted; gpa.profiles; levels.list (Honors/AP/IB/Dual)
-- qp.tables / qp.method (letter_map|numeric_band|percent_map) — keep full numeric charts, do not flatten to +1.0
+- qp.tables / qp.method (letter_map|numeric_band|percent_map) — full numeric charts as rows {min_pct,max_pct,points_by_level}; never flatten to +1.0 bonus only
+- levels.list keys: regular, honors, preap, ap, ib_hl, ib_sl, dual_credit, onramps, modified, local (with weighted_bonus or table column)
 - locks.map if who-may-edit is stated; school.notes for unmapped philosophy
 "Six weeks" + "exam 1/7" → tx_six_weeks + 2/7+1/7.
 Do NOT extract example student GPA totals as stored grades (FR-AI-10).
