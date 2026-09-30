@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "c0654393-9c6d-4ceb-ac7a-b1d1be15496c",
+    "proposal": {
+      "source_id": "H10-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "name": "Honors",
+              "weight": 0.5
+            },
+            {
+              "name": "AP",
+              "weight": 1
+            },
+            {
+              "name": "OnRamps",
+              "weight": 1
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Levels include Honors (+0.5), AP (+1.0), and OnRamps (weighted like Dual Credit).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H10-clean-202609302204"
+        },
+        {
+          "path": "gpa.repeat",
+          "value": "replace_lower",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Repeat/forgive: when a course is repeated, the higher grade replaces the lower in GPA (forgiveness).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H10-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9
+    }
+  }
+}

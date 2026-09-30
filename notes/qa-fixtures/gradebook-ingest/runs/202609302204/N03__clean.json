@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "05561f9b-2f59-48d7-8a78-d5b67689f95b",
+    "proposal": {
+      "source_id": "N03-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Math — Ms. A / English — Mr. B",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Math — Ms. A\nEnglish — Mr. B",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N03-clean-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Tests 70% Homework 30%\nEssays 50% Daily 50%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N03-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9
+    }
+  }
+}

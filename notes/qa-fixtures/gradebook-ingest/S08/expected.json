@@ -1,0 +1,90 @@
+{
+  "source_id": "S08",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.categories",
+      "value": [
+        {
+          "key": "major",
+          "label": "Major",
+          "weight_percent": 60
+        },
+        {
+          "key": "daily",
+          "label": "Daily",
+          "weight_percent": 40
+        }
+      ],
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "60 40",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.missing_rule",
+      "value": {
+        "type": "floor",
+        "floor": 50
+      },
+      "confidence": 0.88,
+      "evidence": {
+        "quote": "floor of 50",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "none"
+      },
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "No late work",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.retake",
+      "value": {
+        "method": "replace",
+        "attempts": 1
+      },
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "replaces the old",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.narrative",
+      "value": "Conduct mark E/S/N/U separate from numeric average",
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "Conduct mark",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

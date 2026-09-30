@@ -1,0 +1,105 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "3e81c673-a20a-44b3-9910-3f8458c36117",
+    "proposal": {
+      "source_id": "H09-photo-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "qp.method",
+          "value": "banded",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "QUALITY POINTS (NUMERIC BAND)",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202609302204"
+        },
+        {
+          "path": "qp.tables",
+          "value": [
+            {
+              "name": "Standard Numeric Band Quality Points",
+              "bands": [
+                {
+                  "min": 97,
+                  "max": 100,
+                  "points": {
+                    "Regular": 4,
+                    "Honors": 5,
+                    "AP": 6
+                  }
+                },
+                {
+                  "min": 93,
+                  "max": 96,
+                  "points": {
+                    "Regular": 3.8,
+                    "Honors": 4.8,
+                    "AP": 5.8
+                  }
+                },
+                {
+                  "min": 90,
+                  "max": 92,
+                  "points": {
+                    "Regular": 3.6,
+                    "Honors": 4.6,
+                    "AP": 5.6
+                  }
+                },
+                {
+                  "min": 87,
+                  "max": 89,
+                  "points": {
+                    "Regular": 3.3,
+                    "Honors": 4.3,
+                    "AP": 5.3
+                  }
+                },
+                {
+                  "min": 83,
+                  "max": 86,
+                  "points": {
+                    "Regular": 3,
+                    "Honors": 4,
+                    "AP": 5
+                  }
+                }
+              ]
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "GPA uses a numeric quality-point chart (not a simple +1.0 bonus): ... 97-100 4.0 5.0 6.0 ... Do not collapse this into \"AP +1.0\" only.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202609302204"
+        },
+        {
+          "path": "school.notes",
+          "value": "GPA uses a numeric quality-point chart (not a simple +1.0 bonus). Do not collapse this into \"AP +1.0\" only.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "GPA uses a numeric quality-point chart (not a simple +1.0 bonus):\nDo not collapse this into \"AP +1.0\" only.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "gpa_chart",
+      "overall_confidence": 0.95
+    }
+  }
+}

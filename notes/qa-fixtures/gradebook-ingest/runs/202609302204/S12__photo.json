@@ -1,0 +1,83 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "59b015da-530b-493f-8589-4f363922b895",
+    "proposal": {
+      "source_id": "S12-photo-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "ENGLISH 8 - COURSE SYLLABUS 2026-27",
+          "confidence": 1,
+          "evidence": {
+            "quote": "ENGLISH 8 - COURSE SYLLABUS 2026-27",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202609302204"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Homework & Classwork: 30% | Quizzes: 25% | Tests/Projects: 30% | Participation: 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202609302204"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "name": "Homework & Classwork",
+              "weight": 30
+            },
+            {
+              "name": "Quizzes",
+              "weight": 25
+            },
+            {
+              "name": "Tests/Projects",
+              "weight": 30
+            },
+            {
+              "name": "Participation",
+              "weight": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Homework & Classwork: 30% | Quizzes: 25% | Tests/Projects: 30% | Participation: 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202609302204"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": "-10% per day. No exceptions without prior arrangement.",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Late work: -10% per day. No exceptions without prior arrangement.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9
+    }
+  }
+}

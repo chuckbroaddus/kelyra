@@ -1,0 +1,68 @@
+{
+  "source_id": "H07",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "credit.passing_threshold",
+      "value": 60,
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "Passing mark is 60",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "scale.passing_pct",
+      "value": 60,
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "60",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "scale.bands",
+      "value": [
+        {
+          "letter": "A",
+          "min": 90,
+          "max": 100
+        },
+        {
+          "letter": "B",
+          "min": 80,
+          "max": 89
+        },
+        {
+          "letter": "C",
+          "min": 70,
+          "max": 79
+        },
+        {
+          "letter": "F",
+          "min": 0,
+          "max": 59
+        }
+      ],
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "No D",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

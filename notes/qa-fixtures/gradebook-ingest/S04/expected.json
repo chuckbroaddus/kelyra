@@ -1,0 +1,98 @@
+{
+  "source_id": "S04",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.engine",
+      "value": "weighted_percent_inside",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "percent-inside",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.within_category",
+      "value": "percent_inside",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "percent-inside",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.categories",
+      "value": [
+        {
+          "key": "tests",
+          "label": "Tests",
+          "weight_percent": 40
+        },
+        {
+          "key": "labs",
+          "label": "Labs",
+          "weight_percent": 30
+        },
+        {
+          "key": "homework",
+          "label": "Homework",
+          "weight_percent": 20
+        },
+        {
+          "key": "participation",
+          "label": "Participation",
+          "weight_percent": 10
+        }
+      ],
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "40 30 20 10",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "per_hour",
+        "amount": 5,
+        "unit": "percent"
+      },
+      "confidence": 0.88,
+      "evidence": {
+        "quote": "−5% per hour",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.missing_rule",
+      "value": {
+        "type": "omit"
+      },
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "omit from the average",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

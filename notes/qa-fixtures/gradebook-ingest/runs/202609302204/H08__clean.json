@@ -1,0 +1,96 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "657b7f25-7512-4e04-bed4-a2950c7d1504",
+    "proposal": {
+      "source_id": "H08-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "scale.list",
+          "value": [
+            {
+              "id": "plus_minus",
+              "name": "Plus/Minus Scale",
+              "default": true
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "PLUS/MINUS & TRANSFER",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H08-clean-202609302204"
+        },
+        {
+          "path": "scale.bands",
+          "value": [
+            {
+              "scale_id": "plus_minus",
+              "name": "A",
+              "min": 93,
+              "max": 100,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "A-",
+              "min": 90,
+              "max": 92,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B+",
+              "min": 87,
+              "max": 89,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B",
+              "min": 83,
+              "max": 86,
+              "gpa": null
+            },
+            {
+              "scale_id": "plus_minus",
+              "name": "B-",
+              "min": 80,
+              "max": 82,
+              "gpa": null
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "A 93–100\nA− 90–92\nB+ 87–89\nB 83–86\nB− 80–82",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H08-clean-202609302204"
+        },
+        {
+          "path": "school.notes",
+          "value": "Transfer grades mapping rules: incoming letter A maps to 95%, B to 85%, C to 75%, D to 65%, F to 50%. Class rank uses the weighted GPA profile only.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Transfer grades: incoming letter A maps to 95%, B to 85%, C to 75%, D to 65%, F to 50%. Class rank uses the weighted GPA profile only.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H08-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

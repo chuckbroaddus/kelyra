@@ -1,0 +1,96 @@
+{
+  "source_id": "H09",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "qp.method",
+      "value": "numeric_band",
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "numeric quality-point chart",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "qp.tables",
+      "value": [
+        {
+          "min": 97,
+          "max": 100,
+          "regular": 4,
+          "honors": 5,
+          "ap": 6
+        },
+        {
+          "min": 93,
+          "max": 96,
+          "regular": 3.8,
+          "honors": 4.8,
+          "ap": 5.8
+        },
+        {
+          "min": 90,
+          "max": 92,
+          "regular": 3.6,
+          "honors": 4.6,
+          "ap": 5.6
+        },
+        {
+          "min": 87,
+          "max": 89,
+          "regular": 3.3,
+          "honors": 4.3,
+          "ap": 5.3
+        },
+        {
+          "min": 83,
+          "max": 86,
+          "regular": 3,
+          "honors": 4,
+          "ap": 5
+        }
+      ],
+      "confidence": 0.95,
+      "evidence": {
+        "quote": "97–100 AP 6.0",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "levels.list",
+      "value": [
+        {
+          "key": "on_level",
+          "label": "Regular"
+        },
+        {
+          "key": "honors",
+          "label": "Honors"
+        },
+        {
+          "key": "ap",
+          "label": "AP"
+        }
+      ],
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Regular Honors AP",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

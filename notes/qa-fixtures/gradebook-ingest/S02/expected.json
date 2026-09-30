@@ -1,0 +1,63 @@
+{
+  "source_id": "S02",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.title",
+      "value": "Biology Lab",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Biology Lab",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.engine",
+      "value": "total_points",
+      "confidence": 0.92,
+      "evidence": {
+        "quote": "total points",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "none"
+      },
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "not accepted",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.missing_rule",
+      "value": {
+        "type": "zero"
+      },
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "counts as zero",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

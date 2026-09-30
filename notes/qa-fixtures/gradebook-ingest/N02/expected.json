@@ -1,0 +1,16 @@
+{
+  "source_id": "N02",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "unknown",
+  "overall_confidence": 0.2,
+  "fields": [],
+  "ambiguities": [],
+  "warnings": [
+    {
+      "code": "wrong_document_type",
+      "message": "Not a syllabus or grading policy.",
+      "severity": "block"
+    }
+  ]
+}

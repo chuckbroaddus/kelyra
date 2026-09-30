@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "fd1eb28f-3b92-4f14-bf92-2e866ed02495",
+    "proposal": {
+      "source_id": "H01-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": null,
+      "overall_confidence": 0
+    }
+  }
+}

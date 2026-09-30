@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "02b5ebf0-3a8c-4fb0-b529-3b5ca64bcbb6",
+    "proposal": {
+      "source_id": "N01-clean-202609302204",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "BLANK_DOCUMENT",
+          "message": "The provided image is blank/unreadable; no syllabus grading contract information could be extracted."
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

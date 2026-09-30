@@ -1,0 +1,75 @@
+{
+  "source_id": "H08",
+  "wizard": "school",
+  "kind": "school_policy",
+  "document_kind_guess": "grading_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "scale.bands",
+      "value": [
+        {
+          "letter": "A",
+          "min": 93,
+          "max": 100
+        },
+        {
+          "letter": "A-",
+          "min": 90,
+          "max": 92
+        },
+        {
+          "letter": "B+",
+          "min": 87,
+          "max": 89
+        },
+        {
+          "letter": "B",
+          "min": 83,
+          "max": 86
+        },
+        {
+          "letter": "B-",
+          "min": 80,
+          "max": 82
+        }
+      ],
+      "confidence": 0.92,
+      "evidence": {
+        "quote": "A−",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "gpa.rank",
+      "value": {
+        "uses": "weighted"
+      },
+      "confidence": 0.88,
+      "evidence": {
+        "quote": "rank uses the weighted GPA",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "school.notes",
+      "value": "Transfer A=95 B=85 C=75 D=65 F=50",
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "Transfer grades",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

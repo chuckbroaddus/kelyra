@@ -1,0 +1,72 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "3ffbd570-22c8-42e9-ba68-f9e882a6f2e2",
+    "proposal": {
+      "source_id": "H03-clean-202609302204",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "custom",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Credit terms are semesters. Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202609302204"
+        },
+        {
+          "path": "locks.map",
+          "value": {
+            "homework_max_pct": 10
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "School lock: homework category weight may not exceed 10% in any class syllabus.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202609302204"
+        },
+        {
+          "path": "rollup.custom_weights",
+          "value": {
+            "MP1": 45,
+            "MP2": 45,
+            "exam": 10
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202609302204"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "value": true,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "exam 10%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202609302204"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}
