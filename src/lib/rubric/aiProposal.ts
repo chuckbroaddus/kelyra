@@ -518,4 +518,33 @@ export function statusAfterConfirm(edited: boolean): AiGradeProposalStatus {
   return edited ? 'edited' : 'accepted';
 }
 
+/**
+ * SRS §11.23 / FR-AI-GRADE — pure gate for posting an AI proposal into the gradebook.
+ * Proposal alone never writes a score; teacher Confirm is required.
+ */
+export function shouldPostAiScoreToGradebook(input: {
+  teacherConfirmed: boolean;
+  writeScore?: boolean;
+  associationUseForGrading: boolean;
+  rubricUseForGrading: boolean;
+  /** Open proposal statuses never post even if flags are wrong. */
+  proposalStatus?: AiGradeProposalStatus | null;
+}): boolean {
+  if (!input.teacherConfirmed) return false;
+  if (input.writeScore === false) return false;
+  if (!input.associationUseForGrading || !input.rubricUseForGrading) return false;
+  const st = input.proposalStatus;
+  if (
+    st === 'proposed' ||
+    st === 'processing' ||
+    st === 'ready_for_review' ||
+    st === 'needs_manual' ||
+    st === 'rejected' ||
+    st === 'discarded'
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export { HIGH_CONF as AI_HIGH_CONFIDENCE_THRESHOLD };
