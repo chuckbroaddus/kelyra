@@ -230,19 +230,29 @@ export default function SchoolViewHubScreen() {
             </Text>
           ) : (
             <>
-              {posted.map((r) => (
-                <Text key={String(r.id)} style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
-                  {String(r.marking_period_code ?? 'Period')}: {r.pct != null ? `${r.pct}%` : '—'}
-                  {r.letter ? ` ${String(r.letter)}` : ''}
-                </Text>
-              ))}
-              {terms.map((r) => (
-                <Text key={String(r.id)} style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
-                  {String(r.course ?? 'Course')} · {String(r.credit_term ?? '')}:{' '}
-                  {r.pct != null ? `${r.pct}%` : '—'}
-                  {r.letter ? ` ${String(r.letter)}` : ''}
-                </Text>
-              ))}
+              {posted.map((r) => {
+                const flags = Array.isArray(r.flags) ? (r.flags as string[]) : [];
+                return (
+                  <Text key={String(r.id)} style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
+                    {String(r.marking_period_code ?? 'Period')}: {r.pct != null ? `${r.pct}%` : '—'}
+                    {r.letter ? ` ${String(r.letter)}` : ''}
+                    {r.conduct ? ` · conduct ${String(r.conduct)}` : ''}
+                    {flags.length ? ` · ${flags.join(', ')}` : ''}
+                  </Text>
+                );
+              })}
+              {terms.map((r) => {
+                const flags = Array.isArray(r.flags) ? (r.flags as string[]) : [];
+                return (
+                  <Text key={String(r.id)} style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
+                    {String(r.course ?? 'Course')} · {String(r.credit_term ?? '')}:{' '}
+                    {r.pct != null ? `${r.pct}%` : '—'}
+                    {r.letter ? ` ${String(r.letter)}` : ''}
+                    {r.credits_earned != null ? ` · ${String(r.credits_earned)} cr` : ''}
+                    {flags.length ? ` · ${flags.join(', ')}` : ''}
+                  </Text>
+                );
+              })}
             </>
           )}
         </Card>
@@ -255,12 +265,20 @@ export default function SchoolViewHubScreen() {
             This page will hold the school’s overview. It is not published yet.
           </Text>
           {schoolId ? (
-            <Pressable
-              onPress={() => router.push('/school/grading-policy' as never)}
-              style={styles.link}
-            >
-              <Text style={[type.meta, { color: colors.brand }]}>Open policy setup (office)</Text>
-            </Pressable>
+            <>
+              <Pressable
+                onPress={() => router.push('/school/grading-policy' as never)}
+                style={styles.link}
+              >
+                <Text style={[type.meta, { color: colors.brand }]}>Open policy setup (office)</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/school/transfer-in' as never)}
+                style={styles.link}
+              >
+                <Text style={[type.meta, { color: colors.brand }]}>Transfer-in grade (office)</Text>
+              </Pressable>
+            </>
           ) : null}
         </Card>
       ) : null}

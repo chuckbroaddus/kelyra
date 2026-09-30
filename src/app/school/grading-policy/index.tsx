@@ -396,6 +396,34 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             setDraft(setField(draft, 'credit.policy', { ...cur, year_link: !cur.year_link }, 'user'))
           }
         />
+        <View style={{ height: 12 }} />
+        <Text style={[type.meta, { color: colors.mute }]}>
+          Transfer letter → percent (FR-GPA-08). Edit values; empty letters keep the shipped default.
+        </Text>
+        {(['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'] as const).map(
+          (L) => {
+            const map = getFieldValue<Record<string, number>>(
+              draft,
+              'credit.transfer_letter_to_pct',
+              {},
+            );
+            return (
+              <TextField
+                key={L}
+                label={`Transfer ${L}`}
+                value={map[L] != null ? String(map[L]) : ''}
+                onChangeText={(v) => {
+                  const n = v.trim() === '' ? undefined : Number(v);
+                  const next = { ...map };
+                  if (n == null || !Number.isFinite(n)) delete next[L];
+                  else next[L] = n;
+                  setDraft(setField(draft, 'credit.transfer_letter_to_pct', next, 'user'));
+                }}
+                keyboardType="decimal-pad"
+              />
+            );
+          },
+        )}
       </>
     );
   }

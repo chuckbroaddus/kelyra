@@ -10,6 +10,7 @@ import { GradebookCellMark } from '@/components/ui/GradebookCellMark';
 import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
 import { GradeTermTabs } from '@/components/ui/GradeTermTabs';
+import { ConductEntryPanel } from '@/components/gradebook/ConductEntryPanel';
 import { GradeBreakdownSheet } from '@/components/gradebook/GradeBreakdownSheet';
 import { loadClassGradingCalendar } from '@/components/gradebook/loadCalendar';
 import {
@@ -93,7 +94,10 @@ export default function GradebookScreen() {
     status: string;
     categories: SyllabusCategoryInput[];
     policies: SyllabusPolicies | null;
+    conductScaleId?: string | null;
   } | null>(null);
+  /** FR-SYL-17 conduct marks by student — ride on next period store. */
+  const [conductMarks, setConductMarks] = useState<Record<string, string | null>>({});
 
   useFocusEffect(
     useCallback(() => {
@@ -121,6 +125,8 @@ export default function GradebookScreen() {
           setSyllabusForOverall({
             status: bundle.syllabus.status,
             policies: bundle.syllabus.policies ?? null,
+            conductScaleId:
+              (bundle.syllabus as { conduct_scale_id?: string | null }).conduct_scale_id ?? null,
             categories: bundle.categories.map((c) => ({
               key: c.key,
               label: c.label,
@@ -349,6 +355,16 @@ export default function GradebookScreen() {
     <View style={styles.shell}>
     <Screen maxWidth={1100} scroll={false} pageChromeHosted collapse={collapsing}>
       {termTabs}
+      {!heatmap && book && book.students.length > 0 ? (
+        <ConductEntryPanel
+          students={book.students}
+          marks={conductMarks}
+          periodLabel={periodLabel}
+          onChange={(studentId, mark) =>
+            setConductMarks((prev) => ({ ...prev, [studentId]: mark }))
+          }
+        />
+      ) : null}
       <View style={styles.pane}>
       {heatmap ? (
         overview?.heatmapSkills.length && overview.heatmapStudents.length ? (

@@ -164,6 +164,22 @@ export const BUNDLED_HELP_TOPICS: HelpTopic[] = [
     'Side questions explain repercussions with a worked example. They do not save a choice or advance the graph.',
     ['live_grade', 'report_card', 'letter'],
     'Pending engine Q + “what if total points?” keeps the same chips.', 'FR-CHAT-22'),
+  topic('help.transfer_map', 'Transfer letter map',
+    'Incoming letter grades convert to a percent through this school map before the local scale and GPA tables apply.',
+    ['transcript', 'unweighted_gpa', 'weighted_gpa', 'letter'],
+    'Transfer B+ → 88% on the shipped map, then local letter.', 'FR-GPA-08'),
+  topic('help.conduct_mark', 'Conduct mark',
+    'Separate non-GPA citizenship / work-habits mark per period (E/S/N/U default). Copied to the report card on store.',
+    ['report_card'],
+    'Teacher enters E; report card shows E next to the period average. GPA unchanged.', 'FR-SYL-17'),
+  topic('help.eligibility', 'Eligibility snapshot',
+    'At period store, any credit-course grade below passing flags the student for staff. Not on the transcript; never AI-edited.',
+    ['eligibility', 'report_card'],
+    'English 65 with 70-pass → ineligible for that period.', 'FR-POST-06'),
+  topic('help.transfer_in', 'Transfer-in grade',
+    'Admin or counselor enters a posted period or semester grade without assignments. Stored with a transfer flag and audit.',
+    ['transcript', 'report_card', 'credit'],
+    'Enter B+ for S1 Algebra → 88% via transfer map, flag transfer.', 'FR-CR-07'),
 ];
 
 export function getBundledHelpTopic(key: string): HelpTopic | null {

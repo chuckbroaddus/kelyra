@@ -11,6 +11,7 @@ import {
   DEFAULT_COURSE_LEVELS,
   DEFAULT_QUALITY_TABLES,
 } from '../grade/gpa/gpa.ts';
+import { DEFAULT_TRANSFER_LETTER_TO_PCT } from '../grade/posting/types.ts';
 
 export type FieldSource = 'user' | 'template' | 'default' | 'ai' | 'assumed';
 
@@ -78,6 +79,8 @@ export type GradingPolicyPayload = {
   year_start: string | null;
   year_end: string | null;
   credit_policy: CreditPolicy;
+  /** FR-GPA-08 transfer letter→percent; default shipped map. */
+  transfer_letter_to_pct: Record<string, number>;
   rollup_preset: RollupPresetKey | 'custom';
   scales: GradeScale[];
   default_scale_id: string;
@@ -307,6 +310,7 @@ export function createEmptyDraft(school_id: string, level: SchoolLevelChoice = '
     'calendar.year_end': field(year_end, 'default'),
     'calendar.model': field(calendar, 'template'),
     'credit.policy': field(credit, 'default'),
+    'credit.transfer_letter_to_pct': field({ ...DEFAULT_TRANSFER_LETTER_TO_PCT }, 'default'),
     'rollup.preset': field(defaultRollupForTemplate(template), 'template'),
     'scale.default_id': field(scale.id, 'template'),
     'scale.list': field([scale], 'template'),
@@ -379,6 +383,11 @@ export function draftToPayload(draft: SetupDraft): GradingPolicyPayload {
     year_start: getFieldValue<string | null>(draft, 'calendar.year_start', null),
     year_end: getFieldValue<string | null>(draft, 'calendar.year_end', null),
     credit_policy: getFieldValue<CreditPolicy>(draft, 'credit.policy', defaultCreditForLevel(level)),
+    transfer_letter_to_pct: getFieldValue<Record<string, number>>(
+      draft,
+      'credit.transfer_letter_to_pct',
+      { ...DEFAULT_TRANSFER_LETTER_TO_PCT },
+    ),
     rollup_preset: getFieldValue<RollupPresetKey | 'custom'>(
       draft,
       'rollup.preset',
@@ -846,6 +855,9 @@ export function draftFromStoredPayload(
   if (p.year_start !== undefined) next = setField(next, 'calendar.year_start', p.year_start, 'user');
   if (p.year_end !== undefined) next = setField(next, 'calendar.year_end', p.year_end, 'user');
   if (p.credit_policy) next = setField(next, 'credit.policy', p.credit_policy, 'user');
+  if (p.transfer_letter_to_pct) {
+    next = setField(next, 'credit.transfer_letter_to_pct', p.transfer_letter_to_pct, 'user');
+  }
   if (p.rollup_preset) next = setField(next, 'rollup.preset', p.rollup_preset, 'user');
   if (p.scales) next = setField(next, 'scale.list', p.scales, 'user');
   if (p.default_scale_id) next = setField(next, 'scale.default_id', p.default_scale_id, 'user');
