@@ -10,7 +10,15 @@
 
 import { isAwaitingGrade, isOpenWork } from '../assignments/status.ts';
 import { computePeriod } from './engine/index.ts';
-import type { EngineAssignment, EngineCell, EngineSyllabus } from './engine/types.ts';
+import type {
+  CellStatus,
+  Engine,
+  EngineAssignment,
+  EngineCell,
+  EngineSyllabus,
+  LateRule,
+  PeriodResult,
+} from './engine/types.ts';
 import {
   GRADE_TERM_ROLLUP,
   matchesGradeTermFilter,
@@ -19,6 +27,10 @@ import {
   type GradeTerm,
   type ScoreMark,
 } from './marks.ts';
+import {
+  LEGACY_TO_NINE_WEEKS,
+  NINE_WEEKS_TO_LEGACY,
+} from './calendar/legacy.ts';
 
 export type SyllabusPolicies = {
   extra_credit_allowed?: boolean;
@@ -50,12 +62,36 @@ export type SyllabusCategoryInput = {
   sort_order?: number;
   active?: boolean;
   rules?: CategoryRules;
+  /** v2 */
+  drop_highest_n?: number;
+  keep_highest_n?: number | null;
+  droppable?: boolean;
+  never_drop_flags?: string[];
+  empty_policy?: 'renormalize' | 'zero' | null;
+  min_grades_per_term?: number | null;
 };
 
 export type SyllabusInput = {
   status?: 'draft' | 'published' | 'archived' | null;
   categories: SyllabusCategoryInput[];
   policies?: SyllabusPolicies | null;
+  /** When any of these are set (beyond defaults), adapter uses full engine v2 mapping. */
+  engine?: Engine;
+  within_category?: 'points_inside' | 'percent_inside' | null;
+  book_mode?: 'reset_each_marking_period' | 'rolling_year';
+  extra_credit_method?: 'A' | 'B' | 'C';
+  ec_cap?: number | null;
+  late_rule?: LateRule | null;
+  missing_rule?: 'zero' | 'floor' | 'omit';
+  rounding?: 'nearest_whole' | 'half_up' | 'truncate' | 'none';
+  floor?: number | null;
+  ceiling?: number | null;
+  exam_weight?: number | null;
+  rollup_preset?: string | null;
+  syllabus_version?: number;
+  marking_period_scope?: string | null;
+  /** Force v2 path even with defaults (tests / gradebook). */
+  use_engine_v2?: boolean;
 };
 
 export type AverageAssignment = {
@@ -70,6 +106,16 @@ export type AverageAssignment = {
   /** Ignored when syllabus is published. */
   weight_percent?: number | null;
   weight_band?: string | null;
+  /** v2 */
+  max_points?: number | null;
+  item_weight?: number | null;
+  extra_credit?: boolean;
+  droppable?: boolean;
+  marking_period_id?: string | null;
+  period_id?: string | null;
+  flags?: string[];
+  item_factor?: number;
+  can_exceed_max?: boolean;
 };
 
 export type AverageCell = {
@@ -80,12 +126,21 @@ export type AverageCell = {
   approvedAt?: string | null;
   status?: string | null;
   excused?: boolean;
+  /** v2 */
+  rawPoints?: number | null;
+  lateAppliedAt?: string | null;
+  gradeStatus?: string | null;
+  submittedAt?: string | null;
 };
 
 export type AverageOptions = {
   termFilter?: 'all' | GradeTerm | string;
   /** Clock for not-due checks. Defaults to now. */
   now?: Date | string | number;
+  /** When set, restrict to this marking period id (calendar-bound class). */
+  markingPeriodId?: string | null;
+  /** True when class has a grading_calendar_id (else legacy term mapping). */
+  hasCalendar?: boolean;
 };
 
 export type CellContribution = {
@@ -119,7 +174,254 @@ export type SyllabusAverageResult = {
   countedAssignmentIds: string[];
   adjustedNotes: string[];
   notCounted: Array<{ assignmentId: string; title: string; reason: string }>;
+  /** Engine v2 period result when v2 path ran (explain / gradebook). */
+  enginePeriod?: PeriodResult | null;
 };
+
+/** True when caller supplied non-default v2 settings or points fields. */
+export function syllabusHasV2Fields(
+  syllabus: SyllabusInput | null | undefined,
+  assignments: AverageAssignment[] = [],
+  cells: AverageCell[] = [],
+): boolean {
+  if (!syllabus) return false;
+  if (syllabus.use_engine_v2 === true) return true;
+  if (syllabus.engine && syllabus.engine !== 'weighted_percent_inside') return true;
+  if (syllabus.within_category === 'points_inside') return true;
+  if (syllabus.book_mode === 'rolling_year') return true;
+  if (syllabus.extra_credit_method && syllabus.extra_credit_method !== 'B') return true;
+  if (syllabus.ec_cap != null) return true;
+  if (syllabus.late_rule && syllabus.late_rule.type && syllabus.late_rule.type !== 'none') return true;
+  if (syllabus.missing_rule && syllabus.missing_rule !== 'omit') return true;
+  if (syllabus.ceiling != null) return true;
+  if (syllabus.floor != null && syllabus.policies?.min_floor_percent == null) return true;
+  if (syllabus.categories.some(
+    (c) =>
+      (c.drop_highest_n ?? 0) > 0 ||
+      (c.keep_highest_n != null && c.keep_highest_n > 0) ||
+      (Array.isArray(c.never_drop_flags) && c.never_drop_flags.length > 0) ||
+      c.empty_policy === 'zero',
+  )) {
+    return true;
+  }
+  if (assignments.some(
+    (a) =>
+      a.max_points != null ||
+      a.item_weight != null ||
+      a.extra_credit === true ||
+      a.droppable === false,
+  )) {
+    return true;
+  }
+  if (cells.some((c) => c.rawPoints != null || (c.gradeStatus != null && c.gradeStatus !== ''))) {
+    return true;
+  }
+  return false;
+}
+
+function assignmentInScope(
+  assignment: AverageAssignment,
+  options: AverageOptions,
+): boolean {
+  const termFilter = options.termFilter ?? 'all';
+  if (options.markingPeriodId) {
+    if (assignment.marking_period_id) {
+      return assignment.marking_period_id === options.markingPeriodId;
+    }
+    // No MP id: fall through to legacy term when unbound calendar
+    if (options.hasCalendar) return false;
+  }
+  if (options.hasCalendar && assignment.period_id) {
+    // period_id may be a store code (Q1) or uuid — match termFilter codes
+    if (termFilter === 'all') return true;
+    if (assignment.period_id === termFilter) return true;
+    const legacy = NINE_WEEKS_TO_LEGACY[assignment.period_id];
+    if (legacy && matchesGradeTermFilter({ term: legacy }, termFilter)) return true;
+    if (LEGACY_TO_NINE_WEEKS[termFilter as GradeTerm] === assignment.period_id) return true;
+  }
+  return matchesGradeTermFilter(assignment, termFilter);
+}
+
+function resolveMaxPoints(assignment: AverageAssignment): number {
+  if (assignment.max_points != null && Number.isFinite(Number(assignment.max_points))) {
+    return Math.max(0, Number(assignment.max_points));
+  }
+  return 100;
+}
+
+function resolveRawPoints(
+  assignment: AverageAssignment,
+  cell: AverageCell | undefined,
+  percentScore: number | null,
+): number | null {
+  if (cell?.rawPoints != null && Number.isFinite(Number(cell.rawPoints))) {
+    return Number(cell.rawPoints);
+  }
+  if (percentScore == null) return null;
+  const max = resolveMaxPoints(assignment);
+  // approved_score is 0–100 percent when raw_points absent
+  if (max === 100) return percentScore;
+  return (percentScore / 100) * max;
+}
+
+function mapGradeStatus(cell: AverageCell | undefined, hasNumeric: boolean): CellStatus {
+  if (cell?.excused) return 'excused';
+  const gs = (cell?.gradeStatus ?? '').toLowerCase();
+  if (gs === 'incomplete') return 'incomplete';
+  if (gs === 'dropped') return 'dropped';
+  if (gs === 'excused') return 'excused';
+  if (gs === 'missing') return 'missing';
+  if (gs === 'late') return 'late';
+  if (gs === 'ungraded') return 'ungraded';
+  if (gs === 'graded') return 'graded';
+  if (hasNumeric) return cell?.lateAppliedAt ? 'late' : 'graded';
+  return 'ungraded';
+}
+
+export function mapSyllabusToEngineV2(
+  syllabus: SyllabusInput,
+  assignments: AverageAssignment[],
+  cells: AverageCell[],
+  options: AverageOptions = {},
+): {
+  engineSyllabus: EngineSyllabus;
+  engineAssignments: EngineAssignment[];
+  engineCells: EngineCell[];
+  periodId: string;
+} {
+  const policies = syllabus.policies ?? {};
+  let engine: Engine = syllabus.engine ?? 'weighted_percent_inside';
+  if (syllabus.within_category === 'points_inside' && engine === 'weighted_percent_inside') {
+    engine = 'weighted_points_inside';
+  }
+  if (syllabus.within_category === 'percent_inside' && engine === 'weighted_points_inside') {
+    engine = 'weighted_percent_inside';
+  }
+
+  const missing: EngineSyllabus['missing'] =
+    syllabus.missing_rule ??
+    (policies.missing_as_zero === true ? 'zero' : 'omit');
+
+  const floor =
+    syllabus.floor != null && Number.isFinite(syllabus.floor)
+      ? Number(syllabus.floor)
+      : policies.min_floor_percent != null && Number.isFinite(policies.min_floor_percent)
+        ? Number(policies.min_floor_percent)
+        : null;
+
+  const engineSyllabus: EngineSyllabus = {
+    engine,
+    categories: syllabus.categories
+      .filter((c) => c.active !== false && Number(c.weight_percent) > 0)
+      .map((c) => ({
+        key: c.key,
+        label: c.label,
+        weight: Number(c.weight_percent),
+        include: true,
+        min_grades: c.min_grades_per_term ?? undefined,
+        drop_lowest: c.rules?.drop_lowest_n ?? 0,
+        drop_highest: c.drop_highest_n ?? 0,
+        keep_highest: c.keep_highest_n == null ? undefined : Number(c.keep_highest_n),
+        never_drop_flags: c.never_drop_flags ?? [],
+      })),
+    missing,
+    missing_floor_pct: floor == null ? undefined : floor,
+    late: syllabus.late_rule ?? { type: 'none' },
+    extra_credit: {
+      method: syllabus.extra_credit_method ?? 'B',
+      cap_pct: syllabus.ec_cap ?? null,
+    },
+    period_floor_pct: floor,
+    ceiling_pct: syllabus.ceiling ?? null,
+    empty_category:
+      syllabus.categories.find((c) => c.empty_policy === 'zero') != null ? 'zero' : 'renormalize',
+    book_mode: syllabus.book_mode ?? 'reset_each_marking_period',
+    rounding: 'none',
+  };
+
+  const periodId =
+    options.markingPeriodId ||
+    (options.termFilter && options.termFilter !== 'all'
+      ? LEGACY_TO_NINE_WEEKS[options.termFilter as GradeTerm] ?? String(options.termFilter)
+      : 'legacy');
+
+  const cellBy = new Map(cells.map((c) => [c.assignmentId, c]));
+  const engineAssignments: EngineAssignment[] = [];
+  const engineCells: EngineCell[] = [];
+  const now = asDate(options.now);
+
+  for (const assignment of assignments) {
+    if (!assignmentInScope(assignment, options)) continue;
+    if (assignment.include_in_average === false && !assignment.extra_credit) continue;
+    const cell = cellBy.get(assignment.id);
+    if (isNotDueYet(assignment, now) && !cellApproved(cell)) continue;
+
+    const max = resolveMaxPoints(assignment);
+    const approved = cellApproved(cell);
+    const percent = approved
+      ? clampScore(
+          numericScoreForAverage(cell?.scoreMark ?? 'numeric', cell?.approvedScore ?? null) ?? NaN,
+        )
+      : null;
+    const raw = resolveRawPoints(assignment, cell, percent);
+    const status = mapGradeStatus(
+      cell,
+      raw != null,
+    );
+    // missing_as_zero for due ungraded
+    let cellStatus = status;
+    if (
+      !approved &&
+      raw == null &&
+      isDue(assignment, now) &&
+      (missing === 'zero' || missing === 'floor') &&
+      status === 'ungraded'
+    ) {
+      cellStatus = 'missing';
+    }
+
+    const pid =
+      assignment.marking_period_id ||
+      assignment.period_id ||
+      (assignment.term
+        ? LEGACY_TO_NINE_WEEKS[parseGradeTerm(assignment.term)] ?? assignment.term
+        : periodId);
+
+    engineAssignments.push({
+      id: assignment.id,
+      category: assignment.category,
+      period_id: String(pid),
+      max_points: max,
+      due_at: assignment.due_at ?? null,
+      count_toward_final: assignment.include_in_average !== false,
+      extra_credit: assignment.extra_credit === true,
+      can_exceed_max: assignment.can_exceed_max === true,
+      item_factor: assignment.item_factor != null && assignment.item_factor > 0 ? assignment.item_factor : 1,
+      droppable: assignment.droppable !== false,
+      flags: assignment.flags,
+      item_weight_pct: assignment.item_weight ?? null,
+    });
+    engineCells.push({
+      assignment_id: assignment.id,
+      raw: cellStatus === 'missing' || cellStatus === 'ungraded' ? null : raw,
+      status: cellStatus,
+      submitted_at: cell?.submittedAt ?? null,
+      graded_at: cell?.approvedAt ?? null,
+    });
+  }
+
+  // book_mode rolling uses one period id for all when not filtering
+  const runPeriod =
+    engineSyllabus.book_mode === 'rolling_year' && !options.markingPeriodId
+      ? 'rolling'
+      : periodId;
+
+  if (engineSyllabus.book_mode === 'rolling_year' && runPeriod === 'rolling') {
+    for (const a of engineAssignments) a.period_id = 'rolling';
+  }
+
+  return { engineSyllabus, engineAssignments, engineCells, periodId: runPeriod };
+}
 
 function asDate(value: Date | string | number | undefined): Date {
   if (value instanceof Date) return value;
@@ -328,7 +630,13 @@ export function computeSyllabusAverage(
       countedAssignmentIds: [],
       adjustedNotes,
       notCounted,
+      enginePeriod: null,
     };
+  }
+
+  // Full engine v2 path (points, late, EC methods, drop high/keep high, …)
+  if (syllabusHasV2Fields(syllabus, assignments, cells) || options.markingPeriodId) {
+    return computeSyllabusAverageV2(syllabus!, assignments, cells, options, disclosures, adjustedNotes, notCounted);
   }
 
   const policies: SyllabusPolicies = syllabus!.policies ?? {};
@@ -341,7 +649,7 @@ export function computeSyllabusAverage(
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.label.localeCompare(b.label));
 
   const categoryKeys = new Set(activeCategories.map((c) => c.key));
-  const termAssignments = assignments.filter((row) => matchesGradeTermFilter(row, termFilter));
+  const termAssignments = assignments.filter((row) => assignmentInScope(row, options));
 
   for (const assignment of termAssignments) {
     if (!categoryKeys.has(assignment.category)) {
@@ -463,6 +771,7 @@ export function computeSyllabusAverage(
         isMakeup: Boolean(assignment.is_makeup),
       });
     }
+
 
     // Apply makeup replace + drop lowest on a copy of working scores.
     let eligible = working.map((row) => ({ ...row }));
@@ -684,6 +993,7 @@ export function computeSyllabusAverage(
       countedAssignmentIds,
       adjustedNotes,
       notCounted,
+      enginePeriod: period,
     };
   }
 
@@ -700,6 +1010,120 @@ export function computeSyllabusAverage(
     countedAssignmentIds,
     adjustedNotes,
     notCounted,
+    enginePeriod: period,
+  };
+}
+
+function computeSyllabusAverageV2(
+  syllabus: SyllabusInput,
+  assignments: AverageAssignment[],
+  cells: AverageCell[],
+  options: AverageOptions,
+  disclosures: string[],
+  adjustedNotes: string[],
+  notCounted: SyllabusAverageResult['notCounted'],
+): SyllabusAverageResult {
+  const policies = syllabus.policies ?? {};
+  const roundingPolicy = syllabus.rounding ?? policies.rounding ?? 'nearest_whole';
+  const mapped = mapSyllabusToEngineV2(syllabus, assignments, cells, options);
+  const period = computePeriod(
+    mapped.engineSyllabus,
+    mapped.engineAssignments,
+    mapped.engineCells,
+    mapped.periodId,
+  );
+
+  const activeCategories = [...syllabus.categories]
+    .filter((c) => c.active !== false && Number(c.weight_percent) > 0)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.label.localeCompare(b.label));
+
+  const categoryResults: CategoryAverageResult[] = activeCategories.map((c) => {
+    const eng = period.categories.find((x) => x.key === c.key);
+    const contributions: CellContribution[] = (eng?.items ?? []).map((item) => {
+      const asg = assignments.find((a) => a.id === item.assignment_id);
+      let role: CellContribution['role'] = 'counted';
+      if (item.role === 'dropped') role = 'dropped';
+      else if (item.role === 'omitted' || item.role === 'ungraded') role = 'excluded';
+      else if (item.role === 'ec') role = 'counted';
+      else if (item.role === 'incomplete') role = 'excluded';
+      return {
+        assignmentId: item.assignment_id,
+        title: asg?.title ?? item.assignment_id,
+        categoryKey: c.key,
+        score: item.pct ?? NaN,
+        role,
+        note: item.note,
+      };
+    });
+    return {
+      key: c.key,
+      label: c.label,
+      weightPercent: Number(c.weight_percent),
+      average: eng?.pct ?? null,
+      eligibleCount: eng?.eligible_count ?? 0,
+      omitted: eng?.pct == null,
+      renormalizedWeightPercent:
+        eng && eng.weight_used > 0 ? storeWeightPercent(eng.weight_used) : null,
+      contributions,
+    };
+  });
+
+  const countedAssignmentIds = categoryResults.flatMap((c) =>
+    c.contributions.filter((x) => x.role === 'counted').map((x) => x.assignmentId),
+  );
+
+  if (period.renormalized) {
+    disclosures.push(
+      'Categories with no graded work yet are left out and the other weights are scaled so they still add to 100%.',
+    );
+  }
+  if (period.ec_added) {
+    adjustedNotes.push(`Extra credit added ${period.ec_added} percentage points.`);
+  }
+  if (period.floor_applied) {
+    adjustedNotes.push('Period floor applied.');
+  }
+  if (period.blocked_by_incomplete) {
+    disclosures.push('Incomplete work is holding the period average.');
+  }
+
+  if (period.pct == null) {
+    return {
+      mode: 'empty',
+      overall: null,
+      overallUnrounded: null,
+      categories: categoryResults,
+      renormalized: period.renormalized,
+      disclosures,
+      countedAssignmentIds,
+      adjustedNotes,
+      notCounted,
+      enginePeriod: period,
+    };
+  }
+
+  const overallUnrounded = period.pct;
+  const overall =
+    roundingPolicy === 'none' || roundingPolicy === 'truncate' || roundingPolicy === 'half_up'
+      ? roundFinal(overallUnrounded, roundingPolicy === 'none' ? 'none' : 'nearest_whole')
+      : roundFinal(overallUnrounded, 'nearest_whole');
+  // Prefer engine-aware rounding when half_up/truncate — reuse engine round if available later
+  const finalOverall =
+    roundingPolicy === 'none'
+      ? overallUnrounded
+      : Math.round(overallUnrounded);
+
+  return {
+    mode: 'weighted',
+    overall: roundingPolicy === 'none' ? overallUnrounded : finalOverall,
+    overallUnrounded,
+    categories: categoryResults,
+    renormalized: period.renormalized,
+    disclosures,
+    countedAssignmentIds,
+    adjustedNotes,
+    notCounted,
+    enginePeriod: period,
   };
 }
 
