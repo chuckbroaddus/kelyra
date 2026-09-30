@@ -1,0 +1,32 @@
+{
+  "source_id": "fixture-partial",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.55,
+  "fields": [
+    {
+      "path": "syllabus.engine",
+      "value": null,
+      "confidence": 0.2,
+      "evidence": { "quote": "A 90-100 B 80-89", "page": 1, "region": null },
+      "status": "unknown"
+    },
+    {
+      "path": "syllabus.title",
+      "value": "Algebra I",
+      "confidence": 0.6,
+      "evidence": { "quote": "Algebra I Course Syllabus", "page": 1, "region": null },
+      "status": "needs_review"
+    }
+  ],
+  "ambiguities": [
+    {
+      "code": "engine_unknown",
+      "message": "Only a letter scale; no category weights.",
+      "paths": ["syllabus.engine"],
+      "choices": []
+    }
+  ],
+  "warnings": [{ "code": "scale_only", "message": "Scale text present but no school-scale path on syllabus wizard.", "severity": "info" }]
+}

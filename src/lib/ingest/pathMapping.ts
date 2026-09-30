@@ -1,0 +1,177 @@
+/**
+ * Map IngestProposal field values onto SyllabusWizardDraft / SetupDraft paths.
+ */
+import type { SyllabusWizardDraft } from '../../components/syllabus/wizardModel.ts';
+import type { LateRule } from '../grade/engine/types.ts';
+import type { SetupDraft, SetupDraftField } from '../school/gradingPolicy.ts';
+import { asIngestableDraft, mergeProposalIntoDraft } from './mergeProposal.ts';
+import type { IngestProposal, MergeOptions, MergeResult } from './proposalTypes.ts';
+
+function asLateRule(raw: unknown): LateRule {
+  if (!raw || typeof raw !== 'object') return { type: 'none' };
+  const o = raw as Record<string, unknown>;
+  const type = o.type;
+  if (type === 'flat' || type === 'per_day' || type === 'per_hour' || type === 'none') {
+    return {
+      type,
+      amount: o.amount == null ? undefined : Number(o.amount),
+      unit: o.unit === 'points' || o.unit === 'percent' ? o.unit : undefined,
+      floor_pct: o.floor_pct == null ? null : Number(o.floor_pct),
+      hard_deadline_days: o.hard_deadline_days == null ? null : Number(o.hard_deadline_days),
+      grace_hours: o.grace_hours == null ? undefined : Number(o.grace_hours),
+    };
+  }
+  return { type: 'none' };
+}
+
+function asCategories(raw: unknown): SyllabusWizardDraft['categories'] | null {
+  if (!Array.isArray(raw) || !raw.length) return null;
+  const out: SyllabusWizardDraft['categories'] = [];
+  raw.forEach((row, i) => {
+    if (!row || typeof row !== 'object') return;
+    const o = row as Record<string, unknown>;
+    const label = typeof o.label === 'string' ? o.label : `Category ${i + 1}`;
+    const keyRaw = typeof o.key === 'string' ? o.key : label;
+    const key =
+      String(keyRaw)
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, '')
+        .slice(0, 32) || `cat_${i + 1}`;
+    const dropLowest = Number(o.drop_lowest ?? o.drop_lowest_n ?? 0);
+    out.push({
+      key,
+      label,
+      weight_percent: Number(o.weight_percent ?? o.weight ?? 0),
+      sort_order: typeof o.sort_order === 'number' ? o.sort_order : i,
+      active: o.active !== false,
+      group: null,
+      default_include_in_average: o.default_include_in_average !== false,
+      min_grades_per_term:
+        o.min_grades == null && o.min_grades_per_term == null
+          ? null
+          : Number(o.min_grades ?? o.min_grades_per_term),
+      rules: {
+        drop_lowest_n: Number.isFinite(dropLowest) ? Math.max(0, dropLowest) : 0,
+        replace_lowest_with_makeup: { enabled: false, max_replacements: 1 },
+      },
+      drop_highest_n: Number(o.drop_highest_n ?? 0) || 0,
+      keep_highest_n: o.keep_highest_n == null ? null : Number(o.keep_highest_n),
+      droppable: o.droppable !== false,
+      never_drop_flags: Array.isArray(o.never_drop_flags) ? o.never_drop_flags.map(String) : [],
+      empty_policy:
+        o.empty_policy === 'zero' ? 'zero' : o.empty_policy === 'renormalize' ? 'renormalize' : null,
+    });
+  });
+  return out.length ? out : null;
+}
+
+// applyProposalToSyllabusDraft + mergeIntoSetupDraft patched below
+export function applyProposalToSyllabusDraft(
+  draft: SyllabusWizardDraft,
+  proposal: IngestProposal,
+  acceptedPaths?: Set<string>,
+): SyllabusWizardDraft {
+  const next = { ...draft, source: 'ask_import' as const };
+  for (const f of proposal.fields) {
+    if (acceptedPaths && !acceptedPaths.has(f.path)) continue;
+    if (f.status === 'unknown' || f.status === 'conflict') continue;
+    if (f.confidence < 0.5) continue;
+    switch (f.path) {
+      case 'syllabus.title':
+        if (typeof f.value === 'string') next.title = f.value;
+        break;
+      case 'syllabus.engine':
+        if (
+          f.value === 'total_points' ||
+          f.value === 'weighted_points_inside' ||
+          f.value === 'weighted_percent_inside' ||
+          f.value === 'item_weights' ||
+          f.value === 'none'
+        ) {
+          next.engine = f.value;
+        }
+        break;
+      case 'syllabus.within_category':
+        if (f.value === 'points_inside' || f.value === 'percent_inside') next.within_category = f.value;
+        else if (f.value == null) next.within_category = null;
+        break;
+      case 'syllabus.categories': {
+        const cats = asCategories(f.value);
+        if (cats) next.categories = cats;
+        break;
+      }
+      case 'syllabus.late_rule':
+        next.late_rule = asLateRule(f.value);
+        break;
+      case 'syllabus.missing_rule':
+        if (f.value === 'zero' || f.value === 'floor' || f.value === 'omit') next.missing_rule = f.value;
+        break;
+      case 'syllabus.extra_credit_method':
+        if (f.value === 'A' || f.value === 'B' || f.value === 'C') next.extra_credit_method = f.value;
+        break;
+      case 'syllabus.ec_cap':
+        next.ec_cap = f.value == null ? null : Number(f.value);
+        break;
+      case 'syllabus.floor':
+        next.floor = f.value == null ? null : Number(f.value);
+        break;
+      case 'syllabus.ceiling':
+        next.ceiling = f.value == null ? null : Number(f.value);
+        break;
+      case 'syllabus.book_mode':
+        if (f.value === 'reset_each_marking_period' || f.value === 'rolling_year') next.book_mode = f.value;
+        break;
+      case 'syllabus.exam_weight':
+        next.exam_weight = f.value == null ? null : Number(f.value);
+        break;
+      case 'syllabus.rollup_preset':
+        next.rollup_preset = f.value == null ? null : String(f.value);
+        break;
+      case 'syllabus.rounding':
+        if (
+          f.value === 'nearest_whole' ||
+          f.value === 'half_up' ||
+          f.value === 'truncate' ||
+          f.value === 'none'
+        ) {
+          next.rounding = f.value;
+        }
+        break;
+      case 'syllabus.empty_category':
+        if (f.value === 'renormalize' || f.value === 'zero') next.empty_category = f.value;
+        break;
+      case 'syllabus.term_structure':
+        if (
+          f.value === 'quarters' ||
+          f.value === 'semesters' ||
+          f.value === 'year' ||
+          f.value === 'custom'
+        ) {
+          next.term_structure = f.value;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return next;
+}
+
+export function mergeIntoSetupDraft(
+  setup: SetupDraft,
+  proposal: IngestProposal,
+  opts: MergeOptions = {},
+): { setup: SetupDraft; result: MergeResult } {
+  const ingestable = asIngestableDraft('school_grading_policy', setup.fields);
+  const result = mergeProposalIntoDraft(ingestable, proposal, opts);
+  const fields: Record<string, SetupDraftField> = {};
+  for (const [path, f] of Object.entries(result.draft.fields)) {
+    fields[path] = {
+      value: f.value,
+      source: f.source === 'ingest' ? 'ai' : (f.source as SetupDraftField['source']),
+      confidence: f.confidence,
+      evidence: f.evidence,
+    };
+  }
+  return { setup: { ...setup, fields, updated_at: new Date().toISOString() }, result };
+}

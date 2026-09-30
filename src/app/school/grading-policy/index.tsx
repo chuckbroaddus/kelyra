@@ -12,10 +12,18 @@ import { ChipRow } from '@/components/ui/ChipRow';
 import { ListRow } from '@/components/ui/ListRow';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
+import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
+import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
+import { mergeIntoSetupDraft } from '@/lib/ingest/pathMapping';
+import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
+import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
+import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
+import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { isOfficeRole } from '@/lib/school/roles';
 import {
   WIZARD_STEPS,
@@ -71,6 +79,8 @@ export default function GradingPolicyWizardScreen() {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [helpOpen, setHelpOpen] = useState(true);
+  const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
+  const [ingestCamera, setIngestCamera] = useState(false);
 
   useEffect(() => {
     if (!schoolId) return;
@@ -95,6 +105,59 @@ export default function GradingPolicyWizardScreen() {
   const back = () => {
     const i = stepIndex - 1;
     if (i >= 0) go(WIZARD_STEPS[i]!);
+  };
+
+  const runSchoolIngest = async (uri: string, mimeType: string) => {
+    if (!schoolId || !profile?.id) return;
+    setBusy(true);
+    setError(null);
+    setStatus('Reading policy document…');
+    try {
+      const asset = await uploadTeacherAsset({
+        teacherId: profile.id,
+        kind: 'photo',
+        uri,
+        mimeType,
+      });
+      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
+      if (!imageUrl) throw new Error('Could not open the uploaded document.');
+      const { proposal } = await invokeIngestGradingDoc({
+        kind: 'school_policy',
+        school_id: schoolId,
+        storage_paths: [asset.storage_path],
+        image_urls: [imageUrl],
+        source_id: asset.id,
+      });
+      setIngestProposal(proposal);
+      setStatus('Proposal ready — review fields before continuing the wizard.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not read that document');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onStartFromDocument = async () => {
+    if (webCameraNeeded(false)) {
+      setIngestCamera(true);
+      return;
+    }
+    try {
+      const photo = await pickNormalizedPhoto(false);
+      if (!photo) return;
+      await runSchoolIngest(photo.uri, photo.mimeType);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open document');
+    }
+  };
+
+  const applyIngestFields = (accepted: IngestField[]) => {
+    if (!draft || !ingestProposal) return;
+    const filtered: IngestProposal = { ...ingestProposal, fields: accepted };
+    const { setup } = mergeIntoSetupDraft(draft, filtered);
+    setDraft(setup);
+    setIngestProposal(null);
+    setStatus('Proposal applied. Review highlighted steps before publish.');
   };
 
   if (!office) {
@@ -124,6 +187,27 @@ export default function GradingPolicyWizardScreen() {
         onPress={() => router.push('/school/grading-policy/interview' as never)}
       />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>{summary}</Text>
+      <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
+      {ingestCamera ? (
+        <WebCameraCapture
+          onCapture={(uri, mimeType) => {
+            setIngestCamera(false);
+            void runSchoolIngest(uri, mimeType);
+          }}
+          onCancel={() => setIngestCamera(false)}
+        />
+      ) : null}
+      {ingestProposal ? (
+        <IngestProposalReview
+          proposal={ingestProposal}
+          sourceLabel="policy document"
+          onApply={applyIngestFields}
+          onDiscard={() => {
+            setIngestProposal(null);
+            setStatus('Proposal discarded. Published policy unchanged.');
+          }}
+        />
+      ) : null}
       <ChipRow>
         {WIZARD_STEPS.map((id) => (
           <Chip
