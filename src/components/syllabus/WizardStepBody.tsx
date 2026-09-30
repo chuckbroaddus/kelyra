@@ -70,6 +70,7 @@ export function WizardStepBody({ draft, step, colors, onChange }: Props) {
 }
 
 function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
+  const locked = isFieldLocked(draft, 'engine');
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
@@ -82,6 +83,7 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             key={opt.id}
             label={opt.label}
             selected={draft.engine === opt.id}
+            disabled={locked}
             onPress={() => onChange(patchDraft(draft, { engine: opt.id }))}
           />
         ))}
@@ -138,6 +140,7 @@ function CategoryCard({
 }
 
 function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & { sum: number }) {
+  const locked = isFieldLocked(draft, 'categories');
   return (
     <>
       <Text style={[type.meta, { color: sum === 100 ? colors.good : colors.warn }]}>
@@ -152,20 +155,26 @@ function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & 
         <Chip
           label="Renormalize empty"
           selected={draft.empty_category === 'renormalize'}
+          disabled={locked}
           onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
         />
         <Chip
           label="Empty = zero"
           selected={draft.empty_category === 'zero'}
+          disabled={locked}
           onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
         />
       </ChipRow>
-      <GhostButton align="left" label="Add category" onPress={() => onChange(addCategory(draft))} />
-      <ChipRow>
-        {GRADE_KINDS.filter((k) => !draft.categories.some((c) => c.key === k.key)).map((k) => (
-          <Chip key={k.key} label={`+ ${k.label}`} selected={false} onPress={() => onChange(addCategory(draft, k))} />
-        ))}
-      </ChipRow>
+      {!locked ? (
+        <GhostButton align="left" label="Add category" onPress={() => onChange(addCategory(draft))} />
+      ) : null}
+      {!locked ? (
+        <ChipRow>
+          {GRADE_KINDS.filter((k) => !draft.categories.some((c) => c.key === k.key)).map((k) => (
+            <Chip key={k.key} label={`+ ${k.label}`} selected={false} onPress={() => onChange(addCategory(draft, k))} />
+          ))}
+        </ChipRow>
+      ) : null}
       {draft.categories.map((row) => (
         <CategoryCard
           key={row.key}
@@ -243,6 +252,7 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 }
 
 function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
+  const lateLocked = isFieldLocked(draft, 'late');
   return (
     <>
       <Text style={[type.meta, { color: colors.mute }]}>Missing work</Text>
@@ -280,6 +290,7 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             key={id}
             label={label}
             selected={draft.late_rule.type === id}
+            disabled={lateLocked}
             onPress={() =>
               onChange(
                 patchDraft(draft, {
@@ -377,6 +388,8 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 }
 
 function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
+  const bookLocked = isFieldLocked(draft, 'book_mode');
+  const rollupLocked = isFieldLocked(draft, 'rollup');
   return (
     <>
       <LockNote draft={draft} field="book_mode" colors={colors} />
@@ -384,11 +397,13 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         <Chip
           label="Reset each marking period"
           selected={draft.book_mode === 'reset_each_marking_period'}
+          disabled={bookLocked}
           onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
         />
         <Chip
           label="Rolling year"
           selected={draft.book_mode === 'rolling_year'}
+          disabled={bookLocked}
           onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
         />
       </ChipRow>
@@ -396,13 +411,17 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <TextField
         label="Rollup preset (e.g. 2/7+1/7)"
         value={draft.rollup_preset ?? ''}
-        onChangeText={(text) => onChange(patchDraft(draft, { rollup_preset: text.trim() || null }))}
+        onChangeText={(text) => {
+          if (rollupLocked) return;
+          onChange(patchDraft(draft, { rollup_preset: text.trim() || null }));
+        }}
       />
       <TextField
         label="Exam weight (optional)"
         keyboardType="numeric"
         value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
         onChangeText={(text) => {
+          if (rollupLocked) return;
           const n = text.trim() === '' ? null : Number(text);
           onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
         }}

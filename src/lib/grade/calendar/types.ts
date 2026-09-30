@@ -61,7 +61,8 @@ export type TemplateKey =
   | 'trimester'
   | 'college_term'
   | 'elementary_year_4'
-  | 'elementary_year_6';
+  | 'elementary_year_6'
+  | 'semester';
 
 export type YearRange = {
   start: string;

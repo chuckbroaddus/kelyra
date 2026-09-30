@@ -41,9 +41,20 @@ import {
   unpublishClassSyllabus,
   upsertSyllabusAskDraft,
 } from '@/lib/syllabus/api';
-import { loadLatestPublished, type SyllabusLocks } from '@/lib/school/gradingPolicy';
+import {
+  buildSchoolLockPolicy,
+} from '@/lib/syllabus/locks';
+import { applyCopyToDraftBag, copySyllabusFromTemplate } from '@/lib/syllabus/copy';
+import { listSchoolSyllabusTemplates } from '@/lib/syllabus/templates';
+import {
+  loadLatestPublished,
+  type SyllabusLockReasons,
+  type SyllabusLocks,
+} from '@/lib/school/gradingPolicy';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import type { ClassRow } from '@/lib/supabase/types';
+import { Chip } from '@/components/ui/Chip';
+import { ChipRow } from '@/components/ui/ChipRow';
 
 type ConfirmKind =
   | { kind: 'publish' }
@@ -84,6 +95,7 @@ export default function SyllabusScreen() {
       const bundle = await getClassSyllabus(id);
       let schoolPolicy: {
         locks?: Partial<SyllabusLocks> | null;
+        lock_reasons?: Partial<SyllabusLockReasons> | null;
         rollup_preset?: string | null;
       } | null = null;
       const schoolId = profile?.school_id ?? null;
@@ -91,11 +103,16 @@ export default function SyllabusScreen() {
         try {
           const pub = await loadLatestPublished(schoolId);
           const payload = (pub?.payload ?? null) as
-            | { locks?: SyllabusLocks; rollup_preset?: string | null }
+            | {
+                locks?: SyllabusLocks;
+                lock_reasons?: SyllabusLockReasons;
+                rollup_preset?: string | null;
+              }
             | null;
           if (payload) {
             schoolPolicy = {
               locks: payload.locks ?? null,
+              lock_reasons: payload.lock_reasons ?? null,
               rollup_preset: payload.rollup_preset ?? null,
             };
           }
@@ -141,6 +158,50 @@ export default function SyllabusScreen() {
       setError(err instanceof Error ? err.message : 'Could not save draft');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const applyTemplateCopy = (templateKey: string) => {
+    if (!draft) return;
+    const policy = buildSchoolLockPolicy({
+      locks: draft.locks,
+      lock_reasons: draft.lock_reasons,
+    });
+    try {
+      const copy = copySyllabusFromTemplate(templateKey, policy, {
+        title: draft.title || undefined,
+      });
+      const bag = applyCopyToDraftBag(
+        {
+          engine: draft.engine,
+          categories: draft.categories,
+          late_rule: draft.late_rule,
+          missing_rule: draft.missing_rule,
+          floor: draft.floor,
+          book_mode: draft.book_mode,
+          extra_credit_method: draft.extra_credit_method,
+          title: draft.title,
+          rollup_preset: draft.rollup_preset,
+          exam_weight: draft.exam_weight,
+        },
+        copy,
+      );
+      setDraft({
+        ...draft,
+        engine: (bag.engine as typeof draft.engine) ?? draft.engine,
+        categories: (bag.categories as typeof draft.categories) ?? draft.categories,
+        late_rule: (bag.late_rule as typeof draft.late_rule) ?? draft.late_rule,
+        missing_rule: (bag.missing_rule as typeof draft.missing_rule) ?? draft.missing_rule,
+        floor: (bag.floor as number | null | undefined) ?? draft.floor,
+        book_mode: (bag.book_mode as typeof draft.book_mode) ?? draft.book_mode,
+        extra_credit_method:
+          (bag.extra_credit_method as typeof draft.extra_credit_method) ?? draft.extra_credit_method,
+        title: typeof bag.title === 'string' ? bag.title : draft.title,
+        source: 'copied',
+      });
+      setStatus(`Copied template “${templateKey}” into unlocked fields.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not copy template');
     }
   };
 
@@ -375,6 +436,18 @@ export default function SyllabusScreen() {
           <GhostButton align="left" label="Choose photo" onPress={() => void onPickPhoto(false)} />
         </View>
       )}
+
+      <Card>
+        <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Start from a school template</Text>
+        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
+          Copies unlocked fields only. School locks stay locked with their reason.
+        </Text>
+        <ChipRow>
+          {listSchoolSyllabusTemplates().map((t) => (
+            <Chip key={t.key} label={t.name} selected={false} onPress={() => applyTemplateCopy(t.key)} />
+          ))}
+        </ChipRow>
+      </Card>
 
       <SyllabusWizard
         draft={draft}

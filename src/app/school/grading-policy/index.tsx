@@ -50,7 +50,9 @@ import {
   type SchoolLevelChoice,
   type SetupDraft,
   type SyllabusLocks,
+  type SyllabusLockReasons,
   type WizardStepId,
+  DEFAULT_LOCK_REASON_COPY,
 } from '@/lib/school/gradingPolicy';
 import type { GpaProfile } from '@/lib/grade/gpa/gpa';
 import type { TemplateKey } from '@/lib/grade/calendar/types';
@@ -66,6 +68,7 @@ const TEMPLATES: TemplateKey[] = [
   'college_term',
   'elementary_year_4',
   'elementary_year_6',
+  'semester',
 ];
 
 export default function GradingPolicyWizardScreen() {
@@ -609,21 +612,54 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
   }
   if (step === 'locks') {
     const locks = getFieldValue<SyllabusLocks>(draft, 'locks.map', payload.locks);
+    const reasons = getFieldValue<SyllabusLockReasons>(draft, 'locks.reasons', payload.lock_reasons ?? {});
     return (
       <>
+        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
+          Locked fields stay visible to teachers but cannot be changed. Optional reason shows on the syllabus wizard.
+        </Text>
         {(Object.keys(locks) as Array<keyof SyllabusLocks>).map((key) => {
           const on = locks[key];
           return (
-            <Pressable
-              key={key}
-              onPress={() => setDraft(setField(draft, 'locks.map', { ...locks, [key]: !on }, 'user'))}
-              style={[styles.lockRow, { borderColor: colors.line }]}
-            >
-              <Text style={[type.body, { color: colors.ink }]}>{key}</Text>
-              <Text style={[type.meta, { color: on ? colors.brand : colors.mute }]}>
-                {on ? 'Locked' : 'Teacher may edit'}
-              </Text>
-            </Pressable>
+            <View key={key} style={[styles.lockBlock, { borderColor: colors.line }]}>
+              <Pressable
+                onPress={() => {
+                  const nextLocks = { ...locks, [key]: !on };
+                  let d = setField(draft, 'locks.map', nextLocks, 'user');
+                  const nextReasons = { ...reasons };
+                  if (!on) {
+                    nextReasons[key] = reasons[key] ?? DEFAULT_LOCK_REASON_COPY[key];
+                  } else {
+                    delete nextReasons[key];
+                  }
+                  d = setField(d, 'locks.reasons', nextReasons, 'user');
+                  setDraft(d);
+                }}
+                style={styles.lockRow}
+              >
+                <Text style={[type.body, { color: colors.ink }]}>{key}</Text>
+                <Text style={[type.meta, { color: on ? colors.brand : colors.mute }]}>
+                  {on ? 'Locked' : 'Teacher may edit'}
+                </Text>
+              </Pressable>
+              {on ? (
+                <TextField
+                  label="LOCK REASON"
+                  placeholder={DEFAULT_LOCK_REASON_COPY[key]}
+                  value={reasons[key] ?? ''}
+                  onChangeText={(text) =>
+                    setDraft(
+                      setField(
+                        draft,
+                        'locks.reasons',
+                        { ...reasons, [key]: text },
+                        'user',
+                      ),
+                    )
+                  }
+                />
+              ) : null}
+            </View>
           );
         })}
       </>
@@ -667,6 +703,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 12,
+  },
+  lockBlock: {
     borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 8,
+    marginBottom: 4,
   },
 });
