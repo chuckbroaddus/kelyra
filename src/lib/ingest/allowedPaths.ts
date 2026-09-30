@@ -53,6 +53,8 @@ export const SYLLABUS_PATHS = [
   'syllabus.empty_category',
   'syllabus.narrative',
   'syllabus.term_structure',
+  'syllabus.retake',
+  'syllabus.assignment_max',
 ] as const;
 
 export type SchoolPolicyPath = (typeof SCHOOL_POLICY_PATHS)[number];
@@ -78,6 +80,8 @@ export const LOCK_TO_PATHS: Record<string, string[]> = {
   floor: ['syllabus.floor'],
   late: ['syllabus.late_rule'],
   drop_lowest: ['syllabus.categories'],
+  retake: ['syllabus.retake'],
+  assignment_max: ['syllabus.assignment_max'],
   book_mode: ['syllabus.book_mode'],
   rollup: ['syllabus.rollup_preset', 'syllabus.exam_weight', 'rollup.preset'],
 };
@@ -107,6 +111,7 @@ export const CALENDAR_TEMPLATES = [
   'college_term',
   'elementary_year_4',
   'elementary_year_6',
+  'semester',
 ] as const;
 
 export const ROLLUP_PRESETS = [

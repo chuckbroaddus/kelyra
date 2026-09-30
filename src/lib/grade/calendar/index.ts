@@ -48,6 +48,7 @@ export {
   elementaryYear4,
   elementaryYear6,
   nineWeeks,
+  semesterOnly,
   trimester,
   txSixWeeks,
 } from './templates.ts';

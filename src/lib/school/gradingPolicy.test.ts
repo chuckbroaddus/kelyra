@@ -9,6 +9,7 @@ import {
   hardErrors,
   planCalendarBinding,
   planPublish,
+  setField,
   validatePolicyPayload,
   validateScaleBands,
   validateQualityPoints,
@@ -22,6 +23,31 @@ test('default high draft validates and can publish', () => {
   const issues = validatePolicyPayload(payload);
   assert.equal(hardErrors(issues).length, 0, JSON.stringify(issues));
   assert.equal(canPublish(payload), true);
+});
+
+test('lock_reasons round-trip on payload (GB-18)', () => {
+  let draft = createEmptyDraft('school-1', 'high');
+  draft = setField(
+    draft,
+    'locks.map',
+    {
+      engine: false,
+      categories: false,
+      scale: false,
+      floor: false,
+      late: true,
+      drop_lowest: false,
+      retake: false,
+      assignment_max: false,
+      book_mode: false,
+      rollup: false,
+    },
+    'user',
+  );
+  draft = setField(draft, 'locks.reasons', { late: 'Board late rule' }, 'user');
+  const payload = draftToPayload(draft);
+  assert.equal(payload.locks.late, true);
+  assert.equal(payload.lock_reasons.late, 'Board late rule');
 });
 
 test('elementary draft turns GPA off and credit none', () => {

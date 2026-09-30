@@ -72,10 +72,26 @@ export function applyProposalToSyllabusDraft(
   acceptedPaths?: Set<string>,
 ): SyllabusWizardDraft {
   const next = { ...draft, source: 'ask_import' as const };
+  const locked = (field: keyof typeof draft.locks) => draft.locks[field] === true;
   for (const f of proposal.fields) {
     if (acceptedPaths && !acceptedPaths.has(f.path)) continue;
     if (f.status === 'unknown' || f.status === 'conflict') continue;
     if (f.confidence < 0.5) continue;
+    // Lock wins — skip applying conflicting AI values (FR-AI lock rule).
+    if (f.path === 'syllabus.engine' && locked('engine')) continue;
+    if (f.path === 'syllabus.within_category' && locked('engine')) continue;
+    if (f.path === 'syllabus.categories' && (locked('categories') || locked('drop_lowest'))) continue;
+    if (f.path === 'syllabus.late_rule' && locked('late')) continue;
+    if (f.path === 'syllabus.floor' && locked('floor')) continue;
+    if (f.path === 'syllabus.book_mode' && locked('book_mode')) continue;
+    if (f.path === 'syllabus.retake' && locked('retake')) continue;
+    if (f.path === 'syllabus.assignment_max' && locked('assignment_max')) continue;
+    if (
+      (f.path === 'syllabus.rollup_preset' || f.path === 'syllabus.exam_weight') &&
+      locked('rollup')
+    ) {
+      continue;
+    }
     switch (f.path) {
       case 'syllabus.title':
         if (typeof f.value === 'string') next.title = f.value;

@@ -148,8 +148,45 @@ export function applySyllabusSlots(
   slots: ExtractedSlot[],
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...draftBag };
+  const locksRaw = (draftBag.locks ?? {}) as Record<string, boolean>;
+  const locked = (key: string) => locksRaw[key] === true;
+
+  // FR-CHAT-21: teacher interview cannot change school calendar, passing mark, or locked weights.
+  const blockedPaths = new Set<string>(['calendar.template', 'calendar.model', 'scale.passing_pct']);
+  if (locked('categories') || locked('weights')) {
+    blockedPaths.add('categories');
+    blockedPaths.add('syllabus.categories');
+  }
+  if (locked('engine')) {
+    blockedPaths.add('engine');
+    blockedPaths.add('syllabus.engine');
+  }
+  if (locked('late')) {
+    blockedPaths.add('late_rule');
+    blockedPaths.add('syllabus.late_rule');
+  }
+  if (locked('floor')) {
+    blockedPaths.add('floor');
+    blockedPaths.add('syllabus.floor');
+  }
+  if (locked('drop_lowest')) blockedPaths.add('drop_lowest');
+  if (locked('retake')) {
+    blockedPaths.add('retake');
+    blockedPaths.add('retakes');
+  }
+  if (locked('book_mode')) blockedPaths.add('book_mode');
+  if (locked('rollup')) {
+    blockedPaths.add('rollup_preset');
+    blockedPaths.add('exam_weight');
+  }
+  if (locked('scale')) {
+    blockedPaths.add('scale.default_id');
+    blockedPaths.add('scale.passing_pct');
+  }
+
   for (const s of slots) {
     if (!s.path) continue;
+    if (blockedPaths.has(s.path)) continue;
     if (s.path === 'categories' && Array.isArray(s.value)) {
       next.categories = s.value;
     } else if (s.path === 'engine') {
