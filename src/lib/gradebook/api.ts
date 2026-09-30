@@ -2,7 +2,15 @@ import { buildAssignmentTree, type BookNode } from '@/lib/assignments/tree';
 import { asSubmissionStatus, isAwaitingGrade, isGraded, submissionStatusLabel } from '@/lib/assignments/status';
 import { formatScoreMark, numericScoreForAverage, parseGradeTerm, type ScoreMark } from '@/lib/grade/marks';
 import { computeTeacherStudentOveralls } from '@/lib/grade/teacherOveralls';
-import type { SyllabusCategoryInput, SyllabusPolicies } from '@/lib/grade/syllabusAverage';
+import {
+  computeSyllabusAverage,
+  type AverageAssignment,
+  type AverageCell,
+  type SyllabusAverageResult,
+  type SyllabusCategoryInput,
+  type SyllabusInput,
+  type SyllabusPolicies,
+} from '@/lib/grade/syllabusAverage';
 import { lessonWorkLabel } from '@/lib/lessons/protocol';
 import { signedProfileUrl } from '@/lib/people/photos';
 import { loadStudentSession } from '@/lib/student-session/api';
@@ -20,6 +28,9 @@ export type GradeCell = {
   answers?: Record<string, unknown> | null;
   /** Family-safe turned-in stamp from submissions.submitted_at — never approved_at. */
   submittedAt?: string | null;
+  rawPoints?: number | null;
+  lateAppliedAt?: string | null;
+  gradeStatus?: string | null;
 };
 
 export type Gradebook = {
@@ -62,6 +73,11 @@ export async function loadGradebook(classId: string): Promise<Gradebook> {
     if (submissionError) throw submissionError;
     for (const row of submissions ?? []) {
       const assignment = columns.find((item) => item.id === row.assignment_id);
+      const sub = row as SubmissionRow & {
+        raw_points?: number | null;
+        late_applied_at?: string | null;
+        grade_status?: string | null;
+      };
       cells[cellKey(row.assignment_id, row.student_id)] = {
         status: row.status,
         score: row.approved_score,
@@ -69,6 +85,9 @@ export async function loadGradebook(classId: string): Promise<Gradebook> {
         submissionId: row.id,
         kind: assignment?.kind ?? null,
         answers: row.answers,
+        rawPoints: sub.raw_points ?? null,
+        lateAppliedAt: sub.late_applied_at ?? null,
+        gradeStatus: sub.grade_status ?? null,
       };
     }
   }
@@ -236,6 +255,158 @@ export function formatCell(cell: GradeCell): string {
 
 /** Teacher desk: per-student weighted overall via the same engine as family. */
 export function studentWeightedOveralls(
+  book: Gradebook,
+  syllabus: {
+    status: string | null | undefined;
+    categories: SyllabusCategoryInput[];
+    policies?: SyllabusPolicies | null;
+    engine?: SyllabusInput['engine'];
+    within_category?: SyllabusInput['within_category'];
+    book_mode?: SyllabusInput['book_mode'];
+    extra_credit_method?: SyllabusInput['extra_credit_method'];
+    ec_cap?: number | null;
+    late_rule?: SyllabusInput['late_rule'];
+    missing_rule?: SyllabusInput['missing_rule'];
+    rounding?: SyllabusInput['rounding'];
+    floor?: number | null;
+    ceiling?: number | null;
+    exam_weight?: number | null;
+    rollup_preset?: string | null;
+    syllabus_version?: number;
+    marking_period_scope?: string | null;
+    use_engine_v2?: boolean;
+  } | null | undefined,
+  termFilter: string = 'all',
+  opts?: { markingPeriodId?: string | null; hasCalendar?: boolean },
+): Record<string, number | null> {
+  const full = studentSyllabusAverages(book, syllabus, termFilter, opts);
+  const out: Record<string, number | null> = {};
+  for (const id of Object.keys(full)) out[id] = full[id]?.overall ?? null;
+  return out;
+}
+
+/** Overall + category breakdown per student (engine v2 adapter). */
+export function studentSyllabusAverages(
+  book: Gradebook,
+  syllabus: {
+    status: string | null | undefined;
+    categories: SyllabusCategoryInput[];
+    policies?: SyllabusPolicies | null;
+    engine?: SyllabusInput['engine'];
+    within_category?: SyllabusInput['within_category'];
+    book_mode?: SyllabusInput['book_mode'];
+    extra_credit_method?: SyllabusInput['extra_credit_method'];
+    ec_cap?: number | null;
+    late_rule?: SyllabusInput['late_rule'];
+    missing_rule?: SyllabusInput['missing_rule'];
+    rounding?: SyllabusInput['rounding'];
+    floor?: number | null;
+    ceiling?: number | null;
+    exam_weight?: number | null;
+    rollup_preset?: string | null;
+    syllabus_version?: number;
+    marking_period_scope?: string | null;
+    use_engine_v2?: boolean;
+  } | null | undefined,
+  termFilter: string = 'all',
+  opts?: { markingPeriodId?: string | null; hasCalendar?: boolean },
+): Record<string, SyllabusAverageResult> {
+  const out: Record<string, SyllabusAverageResult> = {};
+  const published =
+    syllabus != null &&
+    syllabus.status === 'published' &&
+    syllabus.categories.some((c) => c.active !== false && Number(c.weight_percent) > 0);
+
+  if (!published) {
+    for (const row of book.students) {
+      out[row.id] = {
+        mode: 'unpublished',
+        overall: null,
+        overallUnrounded: null,
+        categories: [],
+        renormalized: false,
+        disclosures: ['Syllabus weights not set.'],
+        countedAssignmentIds: [],
+        adjustedNotes: [],
+        notCounted: [],
+        enginePeriod: null,
+      };
+    }
+    return out;
+  }
+
+  const syllabusInput: SyllabusInput = {
+    status: 'published',
+    categories: syllabus.categories,
+    policies: syllabus.policies ?? null,
+    engine: syllabus.engine,
+    within_category: syllabus.within_category,
+    book_mode: syllabus.book_mode,
+    extra_credit_method: syllabus.extra_credit_method,
+    ec_cap: syllabus.ec_cap,
+    late_rule: syllabus.late_rule,
+    missing_rule: syllabus.missing_rule,
+    rounding: syllabus.rounding,
+    floor: syllabus.floor,
+    ceiling: syllabus.ceiling,
+    exam_weight: syllabus.exam_weight,
+    rollup_preset: syllabus.rollup_preset,
+    syllabus_version: syllabus.syllabus_version,
+    marking_period_scope: syllabus.marking_period_scope,
+    use_engine_v2: syllabus.use_engine_v2,
+  };
+
+  const assignments: AverageAssignment[] = book.assignments.map((row) => {
+    const r = row as AssignmentRow & {
+      max_points?: number | null;
+      item_weight?: number | null;
+      extra_credit?: boolean;
+      droppable?: boolean;
+      marking_period_id?: string | null;
+      is_makeup?: boolean;
+    };
+    return {
+      id: row.id,
+      title: row.title,
+      category: row.category ?? '',
+      term: row.term ?? null,
+      include_in_average: row.include_in_average,
+      due_at: row.due_at ?? null,
+      is_makeup: r.is_makeup,
+      max_points: r.max_points ?? null,
+      item_weight: r.item_weight ?? null,
+      extra_credit: r.extra_credit === true,
+      droppable: r.droppable !== false,
+      marking_period_id: r.marking_period_id ?? null,
+    };
+  });
+
+  for (const student of book.students) {
+    const cells: AverageCell[] = book.assignments.map((row) => {
+      const cell = gradeCell(book, row.id, student.id);
+      return {
+        assignmentId: row.id,
+        approvedScore: cell.score,
+        scoreMark: cell.scoreMark,
+        status: cell.status,
+        approvedAt: isGraded(cell.status) ? cell.submittedAt ?? 'graded' : null,
+        rawPoints: cell.rawPoints ?? null,
+        lateAppliedAt: cell.lateAppliedAt ?? null,
+        gradeStatus: cell.gradeStatus ?? null,
+        submittedAt: cell.submittedAt ?? null,
+      };
+    });
+    out[student.id] = computeSyllabusAverage(syllabusInput, assignments, cells, {
+      termFilter,
+      markingPeriodId: opts?.markingPeriodId ?? null,
+      hasCalendar: opts?.hasCalendar === true,
+    });
+  }
+  return out;
+}
+
+/** @deprecated Prefer studentSyllabusAverages; kept for call sites using teacherOveralls helper. */
+export function studentWeightedOverallsLegacy(
   book: Gradebook,
   syllabus: {
     status: string | null | undefined;

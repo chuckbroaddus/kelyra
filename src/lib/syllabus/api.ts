@@ -11,8 +11,33 @@ import {
   type SyllabusPolicies,
 } from '@/lib/grade/syllabusAverage';
 import { GRADE_KINDS, type GradeKind } from '@/lib/grade/marks';
+import {
+  buildSyllabusVersionSnapshot,
+  defaultSyllabusV2Fields,
+  parseLateRule,
+  type BookMode,
+  type ExtraCreditMethod,
+  type MissingRule,
+  type SyllabusEngine,
+  type SyllabusRounding,
+  type SyllabusV2Fields,
+  type SyllabusVersionSnapshot,
+  type WithinCategory,
+} from '@/lib/syllabus/types';
 
 export type SyllabusStatus = 'draft' | 'published' | 'archived';
+
+export type {
+  BookMode,
+  ExtraCreditMethod,
+  MissingRule,
+  SyllabusEngine,
+  SyllabusRounding,
+  SyllabusV2Fields,
+  SyllabusVersionSnapshot,
+  WithinCategory,
+};
+export { buildSyllabusVersionSnapshot, defaultSyllabusV2Fields, parseLateRule };
 
 export type SyllabusCategoryDraft = {
   id?: string;
@@ -25,6 +50,11 @@ export type SyllabusCategoryDraft = {
   default_include_in_average: boolean;
   min_grades_per_term?: number | null;
   rules: CategoryRules;
+  drop_highest_n?: number;
+  keep_highest_n?: number | null;
+  droppable?: boolean;
+  never_drop_flags?: string[];
+  empty_policy?: 'renormalize' | 'zero' | null;
 };
 
 export type ClassSyllabusDraft = {
@@ -32,7 +62,7 @@ export type ClassSyllabusDraft = {
   class_id: string;
   status: SyllabusStatus;
   title: string | null;
-  calc_mode: 'category_weight';
+  calc_mode: 'category_weight' | string;
   term_structure: 'quarters' | 'semesters' | 'year' | 'custom';
   active_term: string | null;
   policies: SyllabusPolicies;
@@ -44,6 +74,21 @@ export type ClassSyllabusDraft = {
   published_at: string | null;
   row_version: number;
   updated_at?: string;
+  engine: SyllabusEngine;
+  within_category: WithinCategory | null;
+  book_mode: BookMode;
+  extra_credit_method: ExtraCreditMethod;
+  ec_cap: number | null;
+  late_rule: SyllabusV2Fields['late_rule'];
+  missing_rule: MissingRule;
+  rounding: SyllabusRounding;
+  floor: number | null;
+  ceiling: number | null;
+  exam_weight: number | null;
+  rollup_preset: string | null;
+  syllabus_version: number;
+  locks: Record<string, unknown>;
+  marking_period_scope: string | null;
 };
 
 export type ClassSyllabusBundle = {
@@ -65,8 +110,28 @@ export type PublishedFamilySyllabus = {
     weight_percent: number;
     sort_order: number;
     rules?: CategoryRules;
+    drop_highest_n?: number;
+    keep_highest_n?: number | null;
+    droppable?: boolean;
+    never_drop_flags?: string[];
+    empty_policy?: 'renormalize' | 'zero' | null;
+    min_grades_per_term?: number | null;
   }>;
   policies_public?: SyllabusPolicies;
+  engine?: SyllabusEngine;
+  within_category?: WithinCategory | null;
+  book_mode?: BookMode;
+  extra_credit_method?: ExtraCreditMethod;
+  ec_cap?: number | null;
+  late_rule?: SyllabusV2Fields['late_rule'];
+  missing_rule?: MissingRule;
+  rounding?: SyllabusRounding;
+  floor?: number | null;
+  ceiling?: number | null;
+  exam_weight?: number | null;
+  rollup_preset?: string | null;
+  syllabus_version?: number;
+  marking_period_scope?: string | null;
   reason?: string;
 };
 
@@ -83,7 +148,11 @@ export type AverageExplainPayload = {
     score_mark: string | null;
     status: string | null;
     approved_at: string | null;
+    raw_points?: number | null;
+    late_applied_at?: string | null;
+    grade_status?: string | null;
   }>;
+  engine_breakdown?: Record<string, unknown>;
 };
 
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
@@ -133,6 +202,11 @@ export function emptyCategory(label: string, key: string, sort_order: number): S
     default_include_in_average: false,
     min_grades_per_term: null,
     rules: { drop_lowest_n: 0, replace_lowest_with_makeup: { enabled: false, max_replacements: 1 } },
+    drop_highest_n: 0,
+    keep_highest_n: null,
+    droppable: true,
+    never_drop_flags: [],
+    empty_policy: null,
   };
 }
 
@@ -159,12 +233,32 @@ export function weightsValidForPublish(categories: SyllabusCategoryDraft[]): boo
 
 function asSyllabus(row: Record<string, unknown> | null | undefined, classId: string): ClassSyllabusDraft | null {
   if (!row) return null;
+  const d = defaultSyllabusV2Fields();
+  const engineRaw = String(row.engine ?? d.engine);
+  const engine = (
+    ['total_points', 'weighted_points_inside', 'weighted_percent_inside', 'item_weights', 'none'].includes(engineRaw)
+      ? engineRaw
+      : d.engine
+  ) as SyllabusEngine;
+  const bookRaw = String(row.book_mode ?? d.book_mode);
+  const book_mode = (
+    bookRaw === 'rolling_year' ? 'rolling_year' : 'reset_each_marking_period'
+  ) as BookMode;
+  const ecm = String(row.extra_credit_method ?? d.extra_credit_method);
+  const extra_credit_method = (ecm === 'A' || ecm === 'C' ? ecm : 'B') as ExtraCreditMethod;
+  const miss = String(row.missing_rule ?? d.missing_rule);
+  const missing_rule = (miss === 'zero' || miss === 'floor' ? miss : 'omit') as MissingRule;
+  const rnd = String(row.rounding ?? d.rounding);
+  const rounding = (
+    rnd === 'half_up' || rnd === 'truncate' || rnd === 'none' ? rnd : 'nearest_whole'
+  ) as SyllabusRounding;
+  const within = row.within_category == null ? null : String(row.within_category);
   return {
     id: String(row.id ?? ''),
     class_id: String(row.class_id ?? classId),
     status: (row.status as SyllabusStatus) || 'draft',
     title: (row.title as string | null) ?? null,
-    calc_mode: 'category_weight',
+    calc_mode: String(row.calc_mode ?? 'category_weight'),
     term_structure: (row.term_structure as ClassSyllabusDraft['term_structure']) || 'year',
     active_term: (row.active_term as string | null) ?? null,
     policies: { ...defaultPolicies(), ...((row.policies as SyllabusPolicies) ?? {}) },
@@ -176,11 +270,31 @@ function asSyllabus(row: Record<string, unknown> | null | undefined, classId: st
     published_at: (row.published_at as string | null) ?? null,
     row_version: Number(row.row_version ?? 1),
     updated_at: row.updated_at as string | undefined,
+    engine,
+    within_category:
+      within === 'points_inside' || within === 'percent_inside' ? within : null,
+    book_mode,
+    extra_credit_method,
+    ec_cap: row.ec_cap == null ? null : Number(row.ec_cap),
+    late_rule: parseLateRule(row.late_rule),
+    missing_rule,
+    rounding,
+    floor: row.floor == null ? null : Number(row.floor),
+    ceiling: row.ceiling == null ? null : Number(row.ceiling),
+    exam_weight: row.exam_weight == null ? null : Number(row.exam_weight),
+    rollup_preset: (row.rollup_preset as string | null) ?? null,
+    syllabus_version: Number(row.syllabus_version ?? 1),
+    locks:
+      row.locks && typeof row.locks === 'object' && !Array.isArray(row.locks)
+        ? (row.locks as Record<string, unknown>)
+        : {},
+    marking_period_scope: (row.marking_period_scope as string | null) ?? null,
   };
 }
 
 function asCategory(row: Record<string, unknown>): SyllabusCategoryDraft {
   const rules = (row.rules as CategoryRules) ?? {};
+  const flags = row.never_drop_flags;
   return {
     id: row.id ? String(row.id) : undefined,
     key: String(row.key ?? 'other'),
@@ -200,6 +314,14 @@ function asCategory(row: Record<string, unknown>): SyllabusCategoryDraft {
         max_replacements: rules.replace_lowest_with_makeup?.max_replacements ?? 1,
       },
     },
+    drop_highest_n: Math.max(0, Number(row.drop_highest_n ?? 0)),
+    keep_highest_n: row.keep_highest_n == null ? null : Number(row.keep_highest_n),
+    droppable: row.droppable !== false,
+    never_drop_flags: Array.isArray(flags) ? flags.map(String) : [],
+    empty_policy:
+      row.empty_policy === 'renormalize' || row.empty_policy === 'zero'
+        ? row.empty_policy
+        : null,
   };
 }
 
@@ -225,7 +347,22 @@ function payloadFromEditor(input: {
   categories: SyllabusCategoryDraft[];
   source?: ClassSyllabusDraft['source'];
   terms?: unknown[];
+  engine?: SyllabusEngine;
+  within_category?: WithinCategory | null;
+  book_mode?: BookMode;
+  extra_credit_method?: ExtraCreditMethod;
+  ec_cap?: number | null;
+  late_rule?: SyllabusV2Fields['late_rule'];
+  missing_rule?: MissingRule;
+  rounding?: SyllabusRounding;
+  floor?: number | null;
+  ceiling?: number | null;
+  exam_weight?: number | null;
+  rollup_preset?: string | null;
+  locks?: Record<string, unknown>;
+  marking_period_scope?: string | null;
 }) {
+  const d = defaultSyllabusV2Fields();
   return {
     title: input.title,
     term_structure: input.term_structure,
@@ -237,6 +374,20 @@ function payloadFromEditor(input: {
     },
     terms: input.terms ?? [],
     source: input.source ?? 'manual',
+    engine: input.engine ?? d.engine,
+    within_category: input.within_category ?? d.within_category,
+    book_mode: input.book_mode ?? d.book_mode,
+    extra_credit_method: input.extra_credit_method ?? d.extra_credit_method,
+    ec_cap: input.ec_cap ?? null,
+    late_rule: input.late_rule ?? d.late_rule,
+    missing_rule: input.missing_rule ?? d.missing_rule,
+    rounding: input.rounding ?? d.rounding,
+    floor: input.floor ?? null,
+    ceiling: input.ceiling ?? null,
+    exam_weight: input.exam_weight ?? null,
+    rollup_preset: input.rollup_preset ?? null,
+    locks: input.locks ?? {},
+    marking_period_scope: input.marking_period_scope ?? null,
     categories: input.categories.map((c, index) => ({
       key: c.key,
       label: c.label.trim(),
@@ -247,20 +398,41 @@ function payloadFromEditor(input: {
       default_include_in_average: c.default_include_in_average === true,
       min_grades_per_term: c.min_grades_per_term ?? null,
       rules: c.rules ?? {},
+      drop_highest_n: Math.max(0, Number(c.drop_highest_n ?? 0)),
+      keep_highest_n: c.keep_highest_n ?? null,
+      droppable: c.droppable !== false,
+      never_drop_flags: Array.isArray(c.never_drop_flags) ? c.never_drop_flags : [],
+      empty_policy: c.empty_policy ?? null,
     })),
   };
 }
 
+type SyllabusEditorInput = {
+  title: string | null;
+  term_structure: ClassSyllabusDraft['term_structure'];
+  active_term: string | null;
+  policies: SyllabusPolicies;
+  categories: SyllabusCategoryDraft[];
+  source?: ClassSyllabusDraft['source'];
+  engine?: SyllabusEngine;
+  within_category?: WithinCategory | null;
+  book_mode?: BookMode;
+  extra_credit_method?: ExtraCreditMethod;
+  ec_cap?: number | null;
+  late_rule?: SyllabusV2Fields['late_rule'];
+  missing_rule?: MissingRule;
+  rounding?: SyllabusRounding;
+  floor?: number | null;
+  ceiling?: number | null;
+  exam_weight?: number | null;
+  rollup_preset?: string | null;
+  locks?: Record<string, unknown>;
+  marking_period_scope?: string | null;
+};
+
 export async function saveClassSyllabusDraft(
   classId: string,
-  input: {
-    title: string | null;
-    term_structure: ClassSyllabusDraft['term_structure'];
-    active_term: string | null;
-    policies: SyllabusPolicies;
-    categories: SyllabusCategoryDraft[];
-    source?: ClassSyllabusDraft['source'];
-  },
+  input: SyllabusEditorInput,
 ): Promise<void> {
   const { error } = await requireSupabase().rpc('save_class_syllabus_draft', {
     p_class_id: classId,
@@ -272,26 +444,42 @@ export async function saveClassSyllabusDraft(
 export async function publishClassSyllabus(
   classId: string,
   rowVersion: number,
-  input: {
-    title: string | null;
-    term_structure: ClassSyllabusDraft['term_structure'];
-    active_term: string | null;
-    policies: SyllabusPolicies;
-    categories: SyllabusCategoryDraft[];
-    source?: ClassSyllabusDraft['source'];
-  },
-): Promise<void> {
+  input: SyllabusEditorInput,
+): Promise<SyllabusVersionSnapshot> {
   if (!weightsValidForPublish(input.categories)) {
     throw new Error('Active category weights must sum to 100% before publish.');
   }
-  // Server deletes only the syllabus row's own source_asset_id after nulling it.
-  // Never send a client-supplied asset id to delete.
+  const payload = payloadFromEditor(input);
+  // Pure snapshot for callers/tests; server also inserts syllabus_versions.
+  const snapshot = buildSyllabusVersionSnapshot({
+    version: 0, // filled after read if needed; client uses next on local preview
+    title: input.title,
+    policies: input.policies,
+    categories: input.categories,
+    v2: {
+      engine: payload.engine as SyllabusEngine,
+      within_category: payload.within_category as WithinCategory | null,
+      book_mode: payload.book_mode as BookMode,
+      extra_credit_method: payload.extra_credit_method as ExtraCreditMethod,
+      ec_cap: payload.ec_cap as number | null,
+      late_rule: payload.late_rule as SyllabusV2Fields['late_rule'],
+      missing_rule: payload.missing_rule as MissingRule,
+      rounding: payload.rounding as SyllabusRounding,
+      floor: payload.floor as number | null,
+      ceiling: payload.ceiling as number | null,
+      exam_weight: payload.exam_weight as number | null,
+      rollup_preset: payload.rollup_preset as string | null,
+      locks: payload.locks as Record<string, unknown>,
+      marking_period_scope: payload.marking_period_scope as string | null,
+    },
+  });
   const { error } = await requireSupabase().rpc('publish_class_syllabus', {
     p_class_id: classId,
-    p_payload: payloadFromEditor(input),
+    p_payload: payload,
     p_row_version: rowVersion,
   });
   if (error) throw error;
+  return snapshot;
 }
 
 export async function unpublishClassSyllabus(classId: string, rowVersion: number): Promise<void> {
@@ -344,7 +532,20 @@ function mapExplain(
   upcoming: ReturnType<typeof partitionMissingUpcoming>['upcoming'];
 } {
   const syllabus = (data.syllabus ?? { ok: true, published: false }) as PublishedFamilySyllabus;
-  const assignments = (data.assignments ?? []) as AverageAssignment[];
+  const assignments = (data.assignments ?? []).map((row) => {
+    const r = row as AverageAssignment & Record<string, unknown>;
+    return {
+      ...r,
+      id: String(r.id),
+      title: String(r.title ?? ''),
+      category: String(r.category ?? ''),
+      max_points: r.max_points == null ? null : Number(r.max_points),
+      item_weight: r.item_weight == null ? null : Number(r.item_weight),
+      extra_credit: r.extra_credit === true,
+      droppable: r.droppable !== false,
+      marking_period_id: r.marking_period_id == null ? null : String(r.marking_period_id),
+    } as AverageAssignment;
+  });
   const approvedCells: AverageCell[] = (data.cells ?? []).map((row) => ({
     assignmentId: row.assignment_id,
     approvedScore: row.approved_score,
@@ -352,6 +553,9 @@ function mapExplain(
       row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
     approvedAt: row.approved_at,
     status: row.status,
+    rawPoints: row.raw_points == null ? null : Number(row.raw_points),
+    lateAppliedAt: row.late_applied_at ?? null,
+    gradeStatus: row.grade_status ?? null,
   }));
 
   const categories: SyllabusCategoryInput[] = (syllabus.categories ?? []).map((c) => ({
@@ -361,12 +565,36 @@ function mapExplain(
     sort_order: c.sort_order,
     active: true,
     rules: c.rules,
+    drop_highest_n: c.drop_highest_n,
+    keep_highest_n: c.keep_highest_n,
+    droppable: c.droppable,
+    never_drop_flags: c.never_drop_flags,
+    empty_policy: c.empty_policy,
+    min_grades_per_term: c.min_grades_per_term,
   }));
 
   // Average stays approved-only (computeSyllabusAverage / cellApproved).
   const average = computeSyllabusAverage(
     syllabus.published
-      ? { status: 'published', categories, policies: syllabus.policies_public ?? null }
+      ? {
+          status: 'published',
+          categories,
+          policies: syllabus.policies_public ?? null,
+          engine: syllabus.engine,
+          within_category: syllabus.within_category,
+          book_mode: syllabus.book_mode,
+          extra_credit_method: syllabus.extra_credit_method,
+          ec_cap: syllabus.ec_cap,
+          late_rule: syllabus.late_rule,
+          missing_rule: syllabus.missing_rule,
+          rounding: syllabus.rounding,
+          floor: syllabus.floor,
+          ceiling: syllabus.ceiling,
+          exam_weight: syllabus.exam_weight,
+          rollup_preset: syllabus.rollup_preset,
+          syllabus_version: syllabus.syllabus_version,
+          marking_period_scope: syllabus.marking_period_scope,
+        }
       : null,
     assignments,
     approvedCells,
