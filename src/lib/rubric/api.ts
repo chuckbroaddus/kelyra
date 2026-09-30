@@ -84,9 +84,20 @@ export async function getRubric(id: string): Promise<Rubric | null> {
   return data ? rowToRubric(data as RubricRow) : null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Pull a readable message out of an Error or a Supabase PostgrestError. */
+export function rubricErrorMessage(err: unknown, fallback = 'Save failed'): string {
+  if (err instanceof Error && err.message) return err.message;
+  const m = (err as { message?: unknown } | null)?.message;
+  return typeof m === 'string' && m ? m : fallback;
+}
+
 export async function saveRubric(rubric: Rubric): Promise<Rubric> {
+  // New drafts carry a local id like "rub_ab12cd34"; the column is uuid, so let
+  // the database assign one on first save.
   const payload = {
-    id: rubric.id,
+    ...(UUID_RE.test(rubric.id) ? { id: rubric.id } : {}),
     owner_id: rubric.owner_id,
     school_id: rubric.school_id,
     class_id: rubric.class_id,

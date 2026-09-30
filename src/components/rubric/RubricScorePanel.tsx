@@ -16,6 +16,7 @@ import {
   getAssessmentForSubmission,
   getAssociationForAssignment,
   saveRubricAssessment,
+  rubricErrorMessage,
 } from '@/lib/rubric/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -83,7 +84,7 @@ export function RubricScorePanel({
       setStatus(confirm ? 'Confirmed.' : 'Draft saved.');
       if (confirm) onConfirmed?.(row.mapped_raw_points);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Save failed');
+      setStatus(rubricErrorMessage(err));
     } finally {
       setBusy(false);
     }

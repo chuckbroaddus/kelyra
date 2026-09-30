@@ -24,7 +24,7 @@ import {
   type RubricCriterion,
   type TemplateKey,
 } from '@/lib/rubric';
-import { getRubric, publishRubric, saveRubric } from '@/lib/rubric/api';
+import { getRubric, publishRubric, rubricErrorMessage, saveRubric } from '@/lib/rubric/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export default function RubricBuilderScreen() {
@@ -91,7 +91,7 @@ export default function RubricBuilderScreen() {
       } else setStatus('Saved draft.');
       setDraft(row);
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Save failed');
+      setStatus(rubricErrorMessage(err));
     } finally {
       setBusy(false);
     }
