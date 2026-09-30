@@ -422,6 +422,13 @@ export function HamburgerDrawer() {
                           leading={<Icon name="grades" color={colors.ink} size={22} />}
                         />
                       ) : null}
+                      {matches('School', q) || matches('School View', q) ? (
+                        <DrawerRow
+                          label="School"
+                          onPress={() => go('/school/view')}
+                          leading={<Icon name="manage" color={colors.ink} size={22} />}
+                        />
+                      ) : null}
                       <Hairline />
                     </>
                   ) : null}
@@ -543,6 +550,17 @@ export function HamburgerDrawer() {
                 </>
               ) : null}
               {/* ST-20: teacher tray owns Diary — no hamburger synonym on teach seat. */}
+              {(matches('School', q) || matches('School View', q)) &&
+              (chromeState.role === 'teacher' ||
+                chromeState.role === 'administrator' ||
+                chromeState.role === 'parent' ||
+                chromeState.role === 'student') ? (
+                <DrawerRow
+                  label="School"
+                  onPress={() => go('/school/view')}
+                  leading={<Icon name="manage" color={colors.ink} size={22} />}
+                />
+              ) : null}
               <Hairline />
               {matches('Sign out', q) ? (
               <DrawerRow
@@ -611,6 +629,13 @@ export function HamburgerDrawer() {
                   label="People"
                   onPress={() => go('/student/people')}
                   leading={<Icon name="person" color={colors.ink} size={22} />}
+                />
+              ) : null}
+              {matches('School', q) || matches('School View', q) ? (
+                <DrawerRow
+                  label="School"
+                  onPress={() => go('/school/view')}
+                  leading={<Icon name="manage" color={colors.ink} size={22} />}
                 />
               ) : null}
               <Hairline />
@@ -688,6 +713,13 @@ export function HamburgerDrawer() {
                   label="Diary"
                   onPress={() => go('/diary')}
                   leading={<Icon name="diary" color={colors.ink} size={22} />}
+                />
+              ) : null}
+              {matches('School', q) || matches('School View', q) ? (
+                <DrawerRow
+                  label="School"
+                  onPress={() => go('/school/view')}
+                  leading={<Icon name="manage" color={colors.ink} size={22} />}
                 />
               ) : null}
               <Hairline />
