@@ -34,7 +34,8 @@ export async function invokeAi<T extends object>(
     | 'ai-spend'
     | 'draft-lesson-from-outline'
     | 'build-practice-lesson'
-    | 'generate-tutor-brief',
+    | 'generate-tutor-brief'
+    | 'setup-interview',
   body: Record<string, unknown>,
 ): Promise<T> {
   if (aiDevUrl) {
