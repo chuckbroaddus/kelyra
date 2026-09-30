@@ -37,6 +37,7 @@ import {
 } from '@/lib/practice/reviewApi';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { RubricScorePanel } from '@/components/rubric/RubricScorePanel';
+import { AiProposalCard } from '@/components/rubric/AiProposalCard';
 
 export default function SubmissionReviewScreen() {
   const { colors } = useTheme();
@@ -133,7 +134,10 @@ export default function SubmissionReviewScreen() {
       }
       const nextDraft = await analyzeTurnedInReview(submissionId, prior);
       if (reviewDraftIsEmpty(nextDraft)) {
-        throw new Error('Grok did not return a review. Your notes are still here. Try Ask AI again.');
+        // GB-14: rubric proposal may leave single-score draft empty; still reload proposal card.
+        await load();
+        setStatus(null);
+        return;
       }
       const merged = mergeReviewDraft(prior, nextDraft);
       kept = merged;
@@ -147,6 +151,7 @@ export default function SubmissionReviewScreen() {
       } catch {
         // Keep the merged draft on screen even if the row did not save.
       }
+      await load();
       setStatus(null);
     } catch (err) {
       draftRef.current = kept;
@@ -157,7 +162,7 @@ export default function SubmissionReviewScreen() {
       askingRef.current = false;
       setAsking(false);
     }
-  }, [persistDraft, submissionId]);
+  }, [persistDraft, submissionId, load]);
 
   useFocusEffect(
     useCallback(() => {
@@ -564,6 +569,19 @@ export default function SubmissionReviewScreen() {
       )}
 
       {suggestedGrade}
+
+      {review?.assignment?.id ? (
+        <AiProposalCard
+          assignmentId={review.assignment.id}
+          submissionId={submissionId}
+          studentId={review.studentId}
+          assignmentMax={review.assignment.max_score ?? null}
+          onConfirmed={(raw) => {
+            if (raw != null) setScore(String(raw));
+            void load();
+          }}
+        />
+      ) : null}
 
       {review?.assignment?.id ? (
         <RubricScorePanel

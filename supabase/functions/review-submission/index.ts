@@ -7,6 +7,12 @@ import {
   requireXaiKey,
   submissionReviewPrompt,
 } from '../_shared/ai.ts';
+import {
+  associationHasRubric,
+  buildEdgeAiGradePrompt,
+  parseEdgeAiGradeResponse,
+  type EdgeAssoc,
+} from '../_shared/aiRubricProposal.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,6 +33,16 @@ Deno.serve(async (req) => {
 
     const work = await loadWork(supabase, reqBody);
     if ('error' in work) return json({ error: work.error }, work.status);
+
+    // GB-14: rubric association → AiGradeProposal path (no single draft_score).
+    const rubricBranch = await tryRubricAiProposal(supabase, apiKey, {
+      submissionId: String(submissionId),
+      workText: work.text,
+      assignmentId: work.assignmentId,
+      assignmentTitle: work.assignmentTitle,
+      studentId: work.studentId,
+    });
+    if (rubricBranch) return rubricBranch;
 
     // Queued auto-review only — teacher Ask AI still runs on clean first-try work.
     if (reqBody.queued && work.kind === 'lesson' && !work.hasStruggle) {
@@ -83,6 +99,8 @@ async function loadWork(
       kind: string;
       studentId: string;
       hasStruggle: boolean;
+      assignmentId: string;
+      assignmentTitle: string;
     }
   | { error: string; status: number }
 > {
@@ -133,6 +151,8 @@ async function loadWork(
     kind,
     studentId: String(submission.student_id),
     hasStruggle: kind === 'lesson' ? lessonHasStruggle(answers) : true,
+    assignmentId: String(assignment.id),
+    assignmentTitle: String(assignment.title ?? 'Work'),
   };
 }
 
@@ -401,6 +421,79 @@ function cors() {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
+}
+
+/** GB-14: if assignment has rubric association, draft AiGradeProposal and skip single-score path. */
+async function tryRubricAiProposal(
+  supabase: ReturnType<typeof createClient>,
+  apiKey: string,
+  input: {
+    submissionId: string;
+    workText: string;
+    assignmentId: string;
+    assignmentTitle: string;
+    studentId: string;
+  },
+): Promise<Response | null> {
+  const { data: assocRow } = await supabase
+    .from('rubric_associations')
+    .select('id, assignment_id, rubric_id, rubric_version, snapshot')
+    .eq('assignment_id', input.assignmentId)
+    .maybeSingle();
+  const assoc = assocRow as EdgeAssoc | null;
+  if (!associationHasRubric(assoc) || !assoc?.snapshot) return null;
+
+  const prompt = buildEdgeAiGradePrompt({
+    rubric: assoc.snapshot,
+    assignmentTitle: input.assignmentTitle,
+    assignmentId: input.assignmentId,
+    submissionText: input.workText,
+  });
+  const payload = await callMetered(supabase, apiKey, {
+    job: 'review',
+    functionName: 'review-submission',
+    payload: prompt,
+    extra: { max_output_tokens: 2048 },
+  });
+  const raw = outputText(payload);
+  const parsed = parseEdgeAiGradeResponse(raw, assoc.snapshot);
+  if (!parsed.ok) {
+    return json({ error: parsed.error, kind: 'rubric_proposal' }, 502);
+  }
+  const status = parsed.needs_manual ? 'needs_manual' : 'proposed';
+  const row = {
+    submission_id: input.submissionId,
+    association_id: assoc.id,
+    assignment_id: input.assignmentId,
+    student_id: input.studentId,
+    cells: parsed.cells,
+    proposed_total: parsed.proposed_total,
+    proposed_max: parsed.proposed_max,
+    model: 'review-submission',
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  const { data: saved, error: saveError } = await supabase
+    .from('ai_grade_proposals')
+    .upsert(row, { onConflict: 'submission_id,association_id' })
+    .select('id, status, proposed_total, proposed_max, cells')
+    .single();
+  if (saveError) {
+    // Table may not be applied yet in some envs — surface clearly.
+    return json({ error: saveError.message, kind: 'rubric_proposal' }, 500);
+  }
+  // Do not write draft_score / approved — teacher confirms cells (FR-AI-GRADE-01).
+  return json({
+    ok: true,
+    kind: 'rubric_proposal',
+    proposalId: (saved as { id?: string } | null)?.id ?? null,
+    status,
+    proposed_total: parsed.proposed_total,
+    proposed_max: parsed.proposed_max,
+    cells: parsed.cells,
+    needs_manual: parsed.needs_manual,
+    reason: parsed.reason,
+  });
 }
 
 function json(body: unknown, status = 200) {
