@@ -43,13 +43,16 @@ import {
   setField,
   soFarSummary,
   validatePolicyPayload,
+  qualityTablesForMethod,
   type CreditPolicy,
   type GpaMode,
+  type QpMethodChoice,
   type SchoolLevelChoice,
   type SetupDraft,
   type SyllabusLocks,
   type WizardStepId,
 } from '@/lib/school/gradingPolicy';
+import type { GpaProfile } from '@/lib/grade/gpa/gpa';
 import type { TemplateKey } from '@/lib/grade/calendar/types';
 import { ROLLUP_PRESET_KEYS, presetsForChildCount } from '@/lib/grade/calendar/index';
 import { listScaleTemplates, makeScaleFromTemplate } from '@/lib/grade/scale/scale';
@@ -456,18 +459,48 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     );
   }
   if (step === 'quality_points') {
+    const method = getFieldValue<QpMethodChoice>(draft, 'qp.method', 'letter_map');
     return (
       <>
+        <Text style={[type.meta, { color: colors.mute, marginBottom: 6 }]}>Quality-point method</Text>
+        <ChipRow>
+          {(
+            [
+              ['letter_map', 'Letter map'],
+              ['numeric_band', 'Numeric band (6.0)'],
+              ['percent_map', 'Percent map'],
+            ] as const
+          ).map(([m, label]) => (
+            <Chip
+              key={m}
+              label={label}
+              selected={method === m}
+              onPress={() => {
+                let d = setField(draft, 'qp.method', m, 'user');
+                d = setField(d, 'qp.tables', qualityTablesForMethod(m), 'user');
+                setDraft(d);
+              }}
+            />
+          ))}
+        </ChipRow>
         {payload.quality_point_tables.map((t) => (
           <Card key={t.id}>
             <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>
               {t.id} · {t.method}
             </Text>
             <Text style={[type.meta, { color: colors.mute }]}>
-              {t.rows
-                .slice(0, 6)
-                .map((r) => `${r.letter ?? '?'}=${r.points_by_level.regular ?? '—'}`)
-                .join(' · ')}
+              {t.method === 'numeric_band'
+                ? t.rows
+                    .slice(0, 3)
+                    .map(
+                      (r) =>
+                        `${r.min_pct}–${r.max_pct}=${r.points_by_level.regular}/${r.points_by_level.honors ?? '—'}/${r.points_by_level.ap ?? '—'}`,
+                    )
+                    .join(' · ')
+                : t.rows
+                    .slice(0, 6)
+                    .map((r) => `${r.letter ?? '?'}=${r.points_by_level.regular ?? '—'}`)
+                    .join(' · ')}
               {t.rows.length > 6 ? ' …' : ''}
             </Text>
           </Card>
@@ -478,39 +511,72 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
   if (step === 'course_levels') {
     return (
       <>
-        {payload.course_levels.map((l) => (
-          <ListRow
-            key={l.key}
-            title={l.label}
-            status={`bonus ${l.weighted_bonus} · key ${l.key}`}
-            chevron={false}
-          />
-        ))}
+        {payload.course_levels
+          .filter((l) => l.key !== 'dual')
+          .map((l) => (
+            <ListRow
+              key={l.key}
+              title={l.label}
+              status={`bonus ${l.weighted_bonus} · key ${l.key}`}
+              chevron={false}
+            />
+          ))}
       </>
     );
   }
   if (step === 'gpa') {
+    const profiles = getFieldValue(draft, 'gpa.profiles', payload.gpa_profiles);
+    const repeat = getFieldValue(draft, 'gpa.repeat', profiles[0]?.repeat ?? 'include_both');
     return (
-      <ChipRow>
-        {(
-          [
-            ['off', 'GPA off'],
-            ['unweighted', 'Unweighted only'],
-            ['unweighted_and_weighted', 'Unweighted + weighted'],
-          ] as const
-        ).map(([mode, label]) => (
-          <Chip
-            key={mode}
-            label={label}
-            selected={getFieldValue<GpaMode>(draft, 'gpa.mode', 'off') === mode}
-            onPress={() => {
-              let d = setField(draft, 'gpa.mode', mode as GpaMode, 'user');
-              d = setField(d, 'gpa.profiles', defaultGpaProfiles(mode as GpaMode), 'user');
-              setDraft(d);
-            }}
-          />
-        ))}
-      </ChipRow>
+      <>
+        <ChipRow>
+          {(
+            [
+              ['off', 'GPA off'],
+              ['unweighted', 'Unweighted only'],
+              ['unweighted_and_weighted', 'Unweighted + weighted'],
+              ['with_rank', 'UW + W + rank 6.0'],
+            ] as const
+          ).map(([mode, label]) => (
+            <Chip
+              key={mode}
+              label={label}
+              selected={getFieldValue<GpaMode>(draft, 'gpa.mode', 'off') === mode}
+              onPress={() => {
+                let d = setField(draft, 'gpa.mode', mode as GpaMode, 'user');
+                d = setField(d, 'gpa.profiles', defaultGpaProfiles(mode as GpaMode), 'user');
+                setDraft(d);
+              }}
+            />
+          ))}
+        </ChipRow>
+        <Text style={[type.meta, { color: colors.mute, marginTop: 10 }]}>Repeat rule</Text>
+        <ChipRow>
+          {(
+            [
+              ['include_both', 'Keep both'],
+              ['replace', 'Replace'],
+              ['average', 'Average'],
+              ['forgive_d_f', 'Forgive D/F'],
+            ] as const
+          ).map(([rule, label]) => (
+            <Chip
+              key={rule}
+              label={label}
+              selected={repeat === rule}
+              onPress={() => {
+                const next = (profiles as GpaProfile[]).map((p) => ({ ...p, repeat: rule }));
+                let d = setField(draft, 'gpa.repeat', rule, 'user');
+                d = setField(d, 'gpa.profiles', next, 'user');
+                setDraft(d);
+              }}
+            />
+          ))}
+        </ChipRow>
+        <Text style={[type.meta, { color: colors.mute, marginTop: 10 }]}>
+          PE/athletics inclusion follows each profile (help.include_pe). Rank uses a narrower set.
+        </Text>
+      </>
     );
   }
   if (step === 'locks') {

@@ -12,8 +12,11 @@ test('bundled help includes FR-HELP engine and GPA keys', () => {
   const keys = listBundledHelpTopics().map((t) => t.key);
   assert.ok(keys.includes('help.engine.points'));
   assert.ok(keys.includes('help.gpa.weighted'));
+  assert.ok(keys.includes('help.gpa.course_level'));
+  assert.ok(keys.includes('help.gpa.profiles'));
+  assert.ok(keys.includes('help.gpa.rank'));
   assert.ok(keys.includes('help.wizard.review'));
-  assert.ok(BUNDLED_HELP_TOPICS.length >= 20);
+  assert.ok(BUNDLED_HELP_TOPICS.length >= 24);
 });
 
 test('getBundledHelpTopic returns title and example', () => {
