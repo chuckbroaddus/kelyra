@@ -1,0 +1,104 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "bf341ef1-dea6-4796-af60-2f3da231cd8f",
+    "proposal": {
+      "source_id": "H05-clean-202609302227",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "tx_six_weeks",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Six-week periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302227"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "85/15",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Full-year elective rollup may use 85/15 (coursework / final).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302227"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "key": "on_level",
+              "label": "On-level",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "honors",
+              "label": "Honors",
+              "weighted_bonus": 0.5
+            },
+            {
+              "key": "ib_sl",
+              "label": "IB SL",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "ib_hl",
+              "label": "IB HL",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "dual_credit",
+              "label": "Dual Credit",
+              "weighted_bonus": 0
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Levels: On-level, Honors, IB SL, IB HL, Dual Credit.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302227"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "six_weeks",
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Six-week periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302227"
+        },
+        {
+          "path": "gpa.mode",
+          "value": "unweighted_and_weighted",
+          "confidence": 0.85,
+          "evidence": {
+            "quote": "Levels: On-level, Honors, IB SL, IB HL, Dual Credit.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H05-clean-202609302227"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9099999999999999
+    }
+  }
+}

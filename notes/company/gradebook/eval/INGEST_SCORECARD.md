@@ -1,73 +1,88 @@
 # GB ingest scorecard — SRS §11.19 / §11.20
 
-**Run:** `notes/qa-fixtures/gradebook-ingest/runs/202609302204`  
+**BEFORE run:** `notes/qa-fixtures/gradebook-ingest/runs/202609302204`  
+**AFTER run:** `notes/qa-fixtures/gradebook-ingest/runs/202609302227`  
 **Corpus:** `notes/qa-fixtures/gradebook-ingest/` (25 cases)  
-**Edge:** live `ingest-grading-doc` · evaluation only
+**Edge:** live `ingest-grading-doc` on `aohibokgilxhqwmupdfv` (parent GB-INGEST-FIX / PR #312 / merge `90f0572`)
 
 ## Verdict
 
-| AC | Verdict |
-|----|---------|
-| **§11.19** | **PARTIAL PASS** — S01 clean/photo 80%: engine+categories+within_category review OK; late_rule free-string not structured. Save still human (proposal only). |
-| **§11.20** | **FAIL/FLARY** — H01 clean empty proposal; H01 photo 27% with six-weeks + pass 70 partial; rollup.preset weak. |
+| AC | BEFORE | AFTER |
+|----|--------|-------|
+| **§11.19** | PARTIAL — S01 80% (late_rule free-string) | **PASS** — S01 clean/photo **100%** field accuracy; within_category flagged for review; UI shows proposal review + manual Apply/Save |
+| **§11.20** | FAIL/FLARY — H01 clean empty; photo 27% | **PASS (field)** — H01 clean **83%** (levels.list missing only); photo **86%**; UI prefills policy draft; Publish remains manual; no transcript tables written pre-Publish |
 
-**Accuracy:** overall **36.0%** · syllabus **42.2%** · handbook **18.5%** · negatives **60.0%** · clean **34.1%** · photo **39.3%**
+## BEFORE vs AFTER accuracy
 
-Totals: correct 54 · wrong 44 · missing 38 · flagged-review 2 · hallucinated 38
+| Metric | BEFORE | AFTER | Δ |
+|--------|-------:|------:|--:|
+| overall | 36.0% | **61.1%** | +25.1 |
+| syllabus | 42.2% | **60.8%** | +18.6 |
+| handbook | 18.5% | **47.7%** | +29.2 |
+| negatives | 60.0% | **100%** | +40.0 |
+| clean | 34.1% | **60.3%** | +26.2 |
+| photo | 39.3% | **62.6%** | +23.3 |
 
-## Highlights
+Field totals BEFORE → AFTER: correct 54→97 · wrong 44→10 · missing 38→32 · flagged-review 2→2 · **hallucinated 38→28**
 
-### Per-document (selected)
+## Per-document (selected)
 
-| ID | clean | photo | Notes |
-|----|------:|------:|-------|
-| S01 (§11.19) | 80% | 80% | weights+within-cat OK; late shape fail |
-| S05 sum90 | 60% | 25% | no renormalize to 100 (FR-AI-21) |
-| S06 sum110 | 50% | 71% | 50/40/20 kept |
-| S08 hand | 0% | 0% | handwritten weak |
-| H01 (§11.20) | 0% | 27% | clean blank; photo partial TX pack |
-| H09 chart | 0%* | 0%* | *strict score; raw qp.tables 4/5/6 present |
-| N01/N02 | 100% | 100%/— | empty OK |
-| N03 mixed | 0% | 0% | silent merge FR-AI-13 fail |
-| S11/S12 real | ~50/33 | same | soft GT |
+| ID | BEFORE c/p | AFTER c/p | Notes |
+|----|----------:|----------:|-------|
+| S01 (§11.19) | 80/80 | **100/100** | late_rule structured; within_cat review |
+| S05 sum90 | 60/25 | 60/60 | no renormalize kept |
+| S06 sum110 | 50/71 | 62/62 | 50/40/20 kept; UI blocks Save |
+| S08 hand | 0/0 | 14/14 | still weak handwriting |
+| H01 (§11.20) | 0/27 | **83/86** | clean recovered; levels gap on clean |
+| H09 chart | 0/0 | 0/0 | FR-AI-24#6 qp.tables still missing |
+| H10 | — | 0 | levels/gpa.repeat/include missing |
+| N01/N02 | 100 | **100** | empty OK |
+| N03 mixed | 0/0 | **100/100** | empty fields + block warnings |
+| S11/S12 real | ~50/33 | 50/33 | soft GT / still hallucinated cats |
 
-Full table: `runs/202609302204/score.json`.
+Full matrix: `runs/202609302227/score.json` + `score-summary.json`.
 
-### Rules
+## Rules
 
-| Rule | Result |
-|------|--------|
-| FR-AI-21 no silent renormalize | PASS S05/S06 clean |
-| FR-AI-21 numeric chart | PASS content H09 qp.tables |
-| FR-AI-13 negatives | N01/N02 PASS; N03 FAIL |
-| No Publish from edge | PASS |
+| Rule | BEFORE | AFTER |
+|------|--------|-------|
+| FR-AI-21 no silent renormalize | PASS S05/S06 clean | PASS S05/S06 |
+| FR-AI-21 numeric chart (H09 qp.tables) | content present / strict fail | still missing → FR-AI-24#6 |
+| FR-AI-13 negatives | N01/N02 PASS; N03 FAIL | **N01/N02/N03 PASS** |
+| No Publish from edge | PASS | PASS |
 
-### Top failure patterns
+Remaining rule violations in AFTER run: **H09 clean/photo → FR-AI-24#6** (qp.tables missing).
 
-1. late_rule as string not object → prompt/normalize
-2. categories name/weight aliases → normalize
-3. handbook empty / missing rollup.preset → school prompt + retry
-4. custom_weights instead of preset enum → schema
-5. N03 merge two syllabi → FR-AI-13 guard
+## UI proof (required) @ 375px
 
-### Ranked fixes
+Harness: QA Chrome CDP `:9223` · worktree Expo web `:8091` (edge path; `EXPO_PUBLIC_AI_DEV_URL` cleared so client hits live `ingest-grading-doc`) · personas teacher/office.
 
-1. P0 coerce late/categories/retake shapes in normalizeProposal
-2. P0 school prompt force template+rollup.preset; retry empty
-3. P0 mixed-doc block (empty fields + warning)
-4. P1 few-shot §11.19/§11.20 in prompts
-5. P1 percent vs fraction clamp (×100 if sum≈1)
-6. P2 UI mapping tests + wizard highlight
+| Shot | Path | Result |
+|------|------|--------|
+| §11.19 S01 photo review | `runs/202609302227/ui-proof/s11-19-S01-photo-375.png` | Review UI + ambiguity/flag; **AI never publishes**; Apply/Discard manual |
+| N03 mixed warning | `runs/202609302227/ui-proof/N03-mixed-doc-warning-375.png` | Mixed-doc / separate-documents warning path |
+| S06 110% Save block | `runs/202609302227/ui-proof/S06-110-blocking-Save-375.png` | Weights 50/40/20; Save/publish blocked until 100% |
+| §11.20 H01 prefill | `runs/202609302227/ui-proof/s11-20-H01-prefill-375.png` | Policy wizard prefilled from document |
+| §11.20 after apply, no Publish | `runs/202609302227/ui-proof/s11-20-H01-after-apply-no-publish-375.png` | Status: proposal applied; Publish still manual |
 
-### Rerun
+Transcript pre-Publish: REST probes for `transcript_rows` / `gpa_transcript_rows` / `period_transcript_rows` returned **404** (relations not present on this dev schema) — no rows can have been written by apply-only. UI never auto-Published.
+
+Log: `runs/202609302227/ui-proof/ui-proof-log.json` + `h01-office-log.json`.
+
+## Remaining gaps (ranked)
+
+1. H09/H10 handbook QP tables + levels/repeat still empty (FR-AI-24#6)
+2. Hallucinations remain on S07–S12 engine/floor/categories (~28)
+3. S08 handwriting still ~14%
+4. H03 locks map shape (`homework_max_weight` vs `homework_max_percent`)
+5. H06 gpa.include list vs object shape
+6. Scorer still marks some string/object late/missing mismatches as wrong when value is right (S02/S04/S08 missing_rule)
+
+## Rerun
 
 ```bash
 npm run eval:ingest
-# stepwise: SKIP_RENDER=1 node scripts/gen-gradebook-ingest-fixtures.mjs
-# node scripts/render-gradebook-ingest-pngs.mjs
-# node scripts/eval-gradebook-ingest.mjs
+# UI: Expo worktree :8091 without EXPO_PUBLIC_AI_DEV_URL; CDP :9223; teacher/office personas
 ```
 
-Matrix: `notes/company/gradebook/eval/INGEST_MATRIX.md`  
-UI: edge proposal-only proven; CDP wizard screenshots optional under RAPID harness (Metro).
-
+Matrix: `notes/company/gradebook/eval/INGEST_MATRIX.md`

@@ -1,0 +1,44 @@
+{
+  "steps": [
+    "teacher_syllabus_ready",
+    "s01_done",
+    "n03_done",
+    "s06_done",
+    "office_policy_ready",
+    "h01_done"
+  ],
+  "failures": [],
+  "shots": [
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302227/ui-proof/s11-19-S01-photo-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302227/ui-proof/N03-mixed-doc-warning-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302227/ui-proof/S06-110-blocking-Save-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302227/ui-proof/s11-20-H01-prefill-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302227/ui-proof/s11-20-H01-after-apply-no-publish-375.png"
+  ],
+  "class_id": "d1715000-0000-4000-a000-000000000301",
+  "metro": "http://127.0.0.1:8091 worktree gb/ingest-fix",
+  "cdp": "9223",
+  "edge": "https://aohibokgilxhqwmupdfv.supabase.co/functions/v1/ingest-grading-doc",
+  "verdicts": {
+    "s11_19": {
+      "has_review_ui": true,
+      "has_flag": true,
+      "save_manual": true
+    },
+    "n03": {
+      "warning": true,
+      "api_mixed": true
+    },
+    "s06": {
+      "has_110_weights": true,
+      "block_copy": true,
+      "save_disabled": true
+    },
+    "s11_20": {
+      "prefill_ui": true,
+      "publish_manual": true,
+      "after_apply_no_auto_publish": true,
+      "transcript_probe": "transcript_* tables 404 on dev — zero rows written pre-Publish"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "body_prefill": "Grading policy\nGrading policy\n1\nAnswer a few questions instead\nhigh · tx_six_weeks · credit semester_0_5 · texas_no_d · pass 70 · GPA unweighted_and_weighted\nStart from a document\nSchool level\nCalendar\nDates & periods\nCredit policy\nTerm rollup\nGrade scale\nQuality points\nCourse levels\nGPA profiles\nTeacher locks\nReview & publish\nShow help\nSchool level\nelementary\nmiddle\nhigh\ncollege\nmixed\nProposal applied. Review highlighted steps before publish.\nBack\nContinue\nClose",
+  "has_review": false,
+  "no_auto_publish": true,
+  "transcript_before": {
+    "transcript_rows": {
+      "status": 404,
+      "cr": ""
+    },
+    "gpa_transcript_rows": {
+      "status": 404,
+      "cr": ""
+    },
+    "period_transcript_rows": {
+      "status": 404,
+      "cr": ""
+    }
+  },
+  "transcript_after": {
+    "transcript_rows": {
+      "status": 404,
+      "cr": ""
+    },
+    "gpa_transcript_rows": {
+      "status": 404,
+      "cr": ""
+    },
+    "period_transcript_rows": {
+      "status": 404,
+      "cr": ""
+    }
+  }
+}

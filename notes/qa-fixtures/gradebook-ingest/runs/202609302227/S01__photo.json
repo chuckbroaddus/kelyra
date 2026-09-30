@@ -1,0 +1,112 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "fc6e1972-0d23-4a97-88e0-215c562e3661",
+    "proposal": {
+      "source_id": "S01-photo-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Algebra I — Course Syllabus",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Algebra I — Course Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S01-photo-202609302227"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.85,
+          "evidence": {
+            "quote": "Your marking-period grade uses two categories:\nTests 50%\nDaily 50%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S01-photo-202609302227"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 50
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 50,
+              "drop_lowest": 1
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 50%\nDaily 50%\nDrop policy: drop 1 lowest Daily grade each six weeks.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S01-photo-202609302227"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work: -10% per day.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S01-photo-202609302227"
+        },
+        {
+          "path": "syllabus.within_category",
+          "value": null,
+          "confidence": 0.5,
+          "evidence": {
+            "quote": "The syllabus does not state whether items inside a category average by points or by percent.",
+            "page": 1,
+            "region": null
+          },
+          "status": "unknown",
+          "source_doc_id": "S01-photo-202609302227"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "The syllabus does not state whether items inside a category average by points or by percent.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "code": "within_category_unspecified",
+          "message": "Method for combining items within categories is not explicitly defined in the document.",
+          "severity": "warn"
+        }
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.85
+    }
+  }
+}

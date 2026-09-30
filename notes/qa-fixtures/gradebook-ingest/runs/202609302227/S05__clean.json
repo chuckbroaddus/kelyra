@@ -1,0 +1,105 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "068a0e24-bd7f-4405-8c4b-aa6363813f21",
+    "proposal": {
+      "source_id": "S05-clean-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "English II",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "English II",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-clean-202609302227"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.8,
+          "evidence": {
+            "quote": "Category weights (note: currently sum to 90 — teacher will fix)",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S05-clean-202609302227"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 30
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 20
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Essays | 40%\nQuizzes | 30%\nHomework | 20%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-clean-202609302227"
+        },
+        {
+          "path": "syllabus.floor",
+          "value": 50,
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Late work cannot fall below a floor of 50%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S05-clean-202609302227"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "category_sum_mismatch",
+          "message": "Category weights currently sum to 90 instead of 100.",
+          "paths": [
+            "syllabus.categories"
+          ],
+          "choices": [
+            "Keep written weights (sum to 90)",
+            "Normalize weights to 100"
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "code": "weights_sum_mismatch",
+          "message": "Category weights currently sum to 90 — teacher will fix.",
+          "severity": "warn"
+        },
+        {
+          "code": "policy_conflict",
+          "message": "School policy may lock homework <= 10%; this syllabus still lists 20% (conflict expected if lock on).",
+          "severity": "warn"
+        }
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9
+    }
+  }
+}

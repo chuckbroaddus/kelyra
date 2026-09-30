@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "91c3b1bf-5948-47b9-9a68-ddd8c299ab6c",
+    "proposal": {
+      "source_id": "N02-clean-202609302227",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "not_a_syllabus",
+          "message": "The provided document is a cafeteria weekly menu, not a class syllabus or grading contract.",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}
