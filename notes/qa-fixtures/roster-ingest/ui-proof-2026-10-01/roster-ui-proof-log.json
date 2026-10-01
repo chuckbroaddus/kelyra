@@ -1,0 +1,35 @@
+[
+  {
+    "signIn": "existing-session"
+  },
+  {
+    "id": "R01-clean",
+    "shot": "/tmp/roster-ingest-eval/R01-clean-review-375.png",
+    "settled": true,
+    "text": "ditl-Math Period 3 ditl-Math Period 3 1 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Students Students ADD STUDENTS Speak a name, photograph the printed list, or type. Confirm every name. Confirm every name. Nothing is added until you tap Add. ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ Add 8 students Cancel list STUDENTS ENROLLED Remove JL Jordan Lee Jordan Lee CB Cameron Cameron DH Devon Devon TL Taylor Taylor › Remove JL Jamie Lee Jamie Lee TL Taylor Taylor › Remove RC Riley Chen Riley Chen › Remove SO Samira Okonkwo Samira Okonkwo › Message these students ALL STUDENTS Add Adelio Rodabaugh Adelio Rodabaugh › Add AS Anna Smith Anna Smith › Add AS Anna Smith Anna Smith › Add AP Ashton Pow"
+  },
+  {
+    "id": "R20-rough",
+    "shot": "/tmp/roster-ingest-eval/R20-rough-review-375.png",
+    "settled": true,
+    "text": "ditl-Math Period 3 ditl-Math Period 3 1 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Students Students ADD STUDENTS Speak a name, photograph the printed list, or type. Confirm every name. Confirm every name. Nothing is added until you tap Add. ✓ ✓ ✓ ✓ ✓ ✓ ✓ Add 7 students Cancel list STUDENTS ENROLLED Remove JL Jordan Lee Jordan Lee CB Cameron Cameron DH Devon Devon TL Taylor Taylor › Remove JL Jamie Lee Jamie Lee TL Taylor Taylor › Remove RC Riley Chen Riley Chen › Remove SO Samira Okonkwo Samira Okonkwo › Message these students ALL STUDENTS Add Adelio Rodabaugh Adelio Rodabaugh › Add AS Anna Smith Anna Smith › Add AS Anna Smith Anna Smith › Add AP Ashton Power"
+  },
+  {
+    "id": "R29-handwritten",
+    "shot": "/tmp/roster-ingest-eval/R29-handwritten-review-375.png",
+    "settled": true,
+    "text": "ditl-Math Period 3 ditl-Math Period 3 1 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Students Students ADD STUDENTS Speak a name, photograph the printed list, or type. Confirm every name. Confirm every name. Nothing is added until you tap Add. ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ Add 12 students Cancel list STUDENTS ENROLLED Remove JL Jordan Lee Jordan Lee CB Cameron Cameron DH Devon Devon TL Taylor Taylor › Remove JL Jamie Lee Jamie Lee TL Taylor Taylor › Remove RC Riley Chen Riley Chen › Remove SO Samira Okonkwo Samira Okonkwo › Message these students ALL STUDENTS Add Adelio Rodabaugh Adelio Rodabaugh › Add AS Anna Smith Anna Smith › Add AS Anna Smith Anna Smith › Add AP A"
+  },
+  {
+    "id": "R32-rough-handwritten",
+    "shot": "/tmp/roster-ingest-eval/R32-rough-handwritten-review-375.png",
+    "settled": true,
+    "text": "ditl-Math Period 3 ditl-Math Period 3 1 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Students Students ADD STUDENTS Speak a name, photograph the printed list, or type. Confirm every name. Confirm every name. Nothing is added until you tap Add. ✓ ✓ ✓ ✓ ✓ ✓ ✓ Add 7 students Cancel list STUDENTS ENROLLED Remove JL Jordan Lee Jordan Lee CB Cameron Cameron DH Devon Devon TL Taylor Taylor › Remove JL Jamie Lee Jamie Lee TL Taylor Taylor › Remove RC Riley Chen Riley Chen › Remove SO Samira Okonkwo Samira Okonkwo › Message these students ALL STUDENTS Add Adelio Rodabaugh Adelio Rodabaugh › Add AS Anna Smith Anna Smith › Add AS Anna Smith Anna Smith › Add AP Ashton Power"
+  },
+  {
+    "id": "N01-negative",
+    "shot": "/tmp/roster-ingest-eval/N01-negative-review-375.png",
+    "settled": true,
+    "text": "ditl-Math Period 3 ditl-Math Period 3 1 Today Needs Attention Feed Students Assignments Gradebook Parents Settings Students Students ADD STUDENTS Speak a name, photograph the printed list, or type. Confirm every name. Choose list photo No student names found on that photo. Try a clearer photo of the class list, or type names below. Add student STUDENTS ENROLLED Remove JL Jordan Lee Jordan Lee CB Cameron Cameron DH Devon Devon TL Taylor Taylor › Remove JL Jamie Lee Jamie Lee TL Taylor Taylor › Remove RC Riley Chen Riley Chen › Remove SO Samira Okonkwo Samira Okonkwo › Message these students ALL STUDENTS Add Adelio Rodabaugh Adelio Rodabaugh › Add AS Anna Smith Anna Smith › Add AS Anna Smith A"
+  }
+]

@@ -401,6 +401,8 @@ async function analyzeHomework(supabase, body) {
   return { ok: true, gaps: draft.gaps };
 }
 
+const ROSTER_MAX_EDGE = 2048;
+
 const rosterPrompt = `You extract students from a class list, seating chart, attendance sheet, or roster photo/scan.
 Return JSON only, no markdown:
 {"document_kind_guess":"class_roster","rejected":false,"names":[{"name":"First Last","student_id":null,"grade":null,"period":null,"parent_contact":null,"confident":true}]}
@@ -411,19 +413,47 @@ Rules:
 - Keep the name as printed. If printed "LAST, FIRST" or "LAST FIRST" in all caps legal form, return "First Last" title case.
 - Do not invent a student who is not on the page. Do not invent surnames when only a first name is shown.
 - student_id / grade / period / parent_contact: copy only if clearly printed on that row. Otherwise null. Never invent IDs or contacts.
+- A "#" / "No." column of row numbers (1, 2, 3 …) is a row index, NOT student_id. Leave student_id null unless a real ID column is printed.
+- Photos may be rotated, crumpled, shadowed, glared, stained, or blurry. Only return names you can actually read on the paper. If part of the page is hidden or too blurry, return fewer names. Never fill missing rows with plausible-sounding names to match the row count.
+- confident=false for any name you are not sure you read letter-for-letter.
+- A name that is struck through / crossed out / scribbled over has been removed from the list: do NOT return it.
+- If only part of a row's name is readable (e.g. just a surname, or a first name whose surname is blurred on a list that otherwise prints full names), skip that row instead of returning a fragment.
 - parent_contact format when present: "Guardian Name <email-or-phone>".
 - confident=false if the line is unclear, partial, first-name-only, or might not be a student name.
-- 0 to 40 names. Prefer fewer high-quality names over junk.`;
+- 0 to 40 names. Prefer fewer high-quality names over junk.
+- Read each name letter by letter from the image. Never substitute a more common name that looks similar.
+- Smudged, crossed-out, masked with symbols (###, ???), or illegible lines: SKIP them entirely. Do not guess what they might say.
+- A last line cut off by the page edge, or a surname given only as an initial ("Sam K"): include it only with confident=false.
+- Count the rows you can actually read. names.length must never exceed that count. Never add names that are not printed (no names from a "page 2", footer, or your own guess).`;
+
+/** A run of small sequential integers (1,2,3…) in student_id is the "#" row column, not an ID. */
+function dropRowIndexIds(rows) {
+  const ids = rows.map((r) => r.student_id).filter((v) => v != null);
+  if (ids.length < 2) {
+    for (const r of rows) if (r.student_id != null && /^#?\s*\d{1,2}\.?$/.test(String(r.student_id))) r.student_id = null;
+    return rows;
+  }
+  const nums = ids.map((v) => (/^#?\s*(\d{1,3})\.?$/.exec(String(v).trim()) || [])[1]).map((v) => (v == null ? NaN : Number(v)));
+  const allSmall = nums.every((n) => Number.isFinite(n) && n <= 200);
+  const sequential = allSmall && nums.every((n, i) => i === 0 || n === nums[i - 1] + 1);
+  if (allSmall && Math.min(...nums) <= 2 && (sequential || Math.max(...nums) <= rows.length + 1)) {
+    for (const r of rows) r.student_id = null;
+  }
+  return rows;
+}
 
 async function extractRoster(body) {
   const imageUrl = String(body.imageUrl ?? '');
   if (!imageUrl) throw new Error('imageUrl required');
-  const prepared = await prepareImageForGrok(imageUrl);
+  // Phone photos of a printed list: the page is a small part of the frame, so 1280px + low
+  // detail cannot resolve the names and the model confabulates a full roster (rough eval R19–R28).
+  const prepared = await prepareImageForGrok(imageUrl, { maxEdge: ROSTER_MAX_EDGE });
   const payload = await grokCall('roster', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
+        // Roster names are dense small text; low detail invents OCR ghosts (eval R3).
+        { type: 'input_image', image_url: prepared, detail: 'high' },
         { type: 'input_text', text: rosterPrompt },
       ],
     },
@@ -449,6 +479,9 @@ async function extractRoster(body) {
     if (/^room\s*\d+/i.test(n)) return true;
     if (/^(mr|ms|mrs|dr|sra|sr|coach)\.?\s+/i.test(n) && n.split(/\s+/).length <= 3) return true;
     if (/^page\s*\d+(\s+of\s+\d+)?$/i.test(n)) return true;
+    // Masked / smudged OCR (symbols, digits) is never a real name.
+    if (/[#?*_\[\]{}<>|\\\/0-9@]/.test(n)) return true;
+    if (/^(continued|cut|smudged|illegible|unknown|n\/a)\b/i.test(lower)) return true;
     if (/^(page|total|totals|continued)\b/i.test(lower) && n.split(/\s+/).length <= 2) return true;
     return false;
   };
@@ -491,23 +524,33 @@ async function extractRoster(body) {
             if (junkName(name)) return null;
             return {
               name,
-              student_id: emptyToNull(row?.student_id ?? row?.studentId ?? row?.sid),
+              student_id: emptyToNull(
+                emptyToNull(row?.student_id ?? row?.studentId ?? row?.sid)?.replace(/^#\s*/, ''),
+              ),
               grade: emptyToNull(row?.grade ?? row?.grade_level),
               period: emptyToNull(row?.period),
               parent_contact: emptyToNull(row?.parent_contact ?? row?.parentContact),
-              confident: row?.confident !== false && name.split(/\s+/).length >= 2,
+              confident:
+                row?.confident !== false &&
+                name.split(/\s+/).length >= 2 &&
+                // Initial-only surname ("Sam K") = partial row.
+                !/\s[A-Za-z]\.?$/.test(name),
             };
           })
           .filter(Boolean)
           .filter((row, idx, arr) => arr.findIndex((x) => x.name.toLowerCase() === row.name.toLowerCase()) === idx)
           .slice(0, 40)
       : [];
+  dropRowIndexIds(names);
 
   return {
     document_kind_guess: rejected
       ? 'not_roster'
       : parsed?.document_kind_guess || (names.length ? 'class_roster' : 'not_roster'),
     rejected: rejected || names.length === 0 && parsed?.document_kind_guess === 'not_roster',
+    // Client starts every suggestion unchecked when the read is shaky (rough phone photo).
+    low_confidence:
+      names.length > 0 && names.filter((row) => row.confident === false).length / names.length >= 0.4,
     names,
   };
 }
@@ -2866,11 +2909,12 @@ function parseKeyItemsFromModel(raw) {
 
 const imagePrepCache = new Map();
 
-async function prepareImageForGrok(imageUrl) {
-  const hit = imagePrepCache.get(imageUrl);
+async function prepareImageForGrok(imageUrl, opts = {}) {
+  const key = opts.maxEdge ? `${opts.maxEdge}|${imageUrl}` : imageUrl;
+  const hit = imagePrepCache.get(key);
   if (hit) return hit;
-  const loaded = await loadImageForGrok(imageUrl);
-  imagePrepCache.set(imageUrl, loaded.dataUrl);
+  const loaded = await loadImageForGrok(imageUrl, opts);
+  imagePrepCache.set(key, loaded.dataUrl);
   if (imagePrepCache.size > 24) {
     const oldest = imagePrepCache.keys().next().value;
     if (oldest) imagePrepCache.delete(oldest);
@@ -2878,7 +2922,8 @@ async function prepareImageForGrok(imageUrl) {
   return loaded.dataUrl;
 }
 
-async function loadImageForGrok(imageUrl) {
+async function loadImageForGrok(imageUrl, opts = {}) {
+  const maxEdge = Number(opts.maxEdge) > 0 ? Number(opts.maxEdge) : MODEL_MAX_EDGE;
   // T16/T17: match Edge hydrateAskImages — do not follow redirects after allowlist.
   const response = await fetch(imageUrl, { redirect: 'error' });
   if (!response.ok) throw new Error('Could not download the homework photo.');
@@ -2915,8 +2960,8 @@ async function loadImageForGrok(imageUrl) {
     body = await sharp(body)
       .rotate()
       .resize({
-        width: MODEL_MAX_EDGE,
-        height: MODEL_MAX_EDGE,
+        width: maxEdge,
+        height: maxEdge,
         fit: 'inside',
         withoutEnlargement: true,
       })

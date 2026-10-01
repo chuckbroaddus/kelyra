@@ -1,0 +1,49 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Beckett Lowry",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Lowry 555-0141",
+        "confident": true
+      },
+      {
+        "name": "Camille Ostrowski",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Ostrowski 555-0142",
+        "confident": true
+      },
+      {
+        "name": "Desmond Achebe",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Ada Achebe 555-0143",
+        "confident": true
+      },
+      {
+        "name": "Eloise Fairfax",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "T. Fairfax 555-0144",
+        "confident": true
+      },
+      {
+        "name": "Gunnar Halvorsen",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "K. Halvorsen 555-0145",
+        "confident": true
+      }
+    ]
+  }
+}

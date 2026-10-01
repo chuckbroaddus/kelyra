@@ -1,0 +1,73 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Imogen Ravel",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jane",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Katya Orlova",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Leopold Finch",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Magnolia Reese",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Nestor Pavlou",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Octavia Prentiss",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Philippa Grey",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+[
+  {
+    "signIn": "existing-session"
+  },
+  {
+    "id": "K01-clean",
+    "preClick": "Photo",
+    "ok": true
+  },
+  {
+    "id": "K01-clean",
+    "preClick": "Take photo",
+    "ok": true
+  },
+  {
+    "id": "K01-clean",
+    "shot": "/tmp/anskey-ingest-eval/K01-clean-review-375.png",
+    "settled": true,
+    "text": "Assignment Assignment 5 Create an Assignment TYPE Lesson Practice TITLE FOR THE GRADE BOOK Optional. The grade book groups rows by class, then unit, then section. Unit Section ASSIGNMENT (GRADE) CATEGORY Counts toward the Homework average (40%). Homework Quiz Participation Does not count toward Homework average Not makeup DUE DATE ▾ Tomorrow Next week Clear MARK Number Pass/Fail Either COUNTS TOWARD Quarter 1 Quarter 2 Quarter 3 Quarter 4 Semester 1 Semester 2 Year ANSWER KEY Photo a blank worksheet and we will propose answers. A filled key we just read. Later homework matches this printed page. None Photo Typed items Read from your key — edit if needed. Read the written answers. Edit anythi"
+  },
+  {
+    "id": "K03-photo",
+    "preClick": "Photo",
+    "ok": true
+  },
+  {
+    "id": "K03-photo",
+    "preClick": "Take photo",
+    "ok": true
+  },
+  {
+    "id": "K03-photo",
+    "shot": "/tmp/anskey-ingest-eval/K03-photo-review-375.png",
+    "settled": true,
+    "text": "Assignment Assignment 5 Create an Assignment TYPE Lesson Practice TITLE FOR THE GRADE BOOK Optional. The grade book groups rows by class, then unit, then section. Unit Section ASSIGNMENT (GRADE) CATEGORY Counts toward the Homework average (40%). Homework Quiz Participation Does not count toward Homework average Not makeup DUE DATE ▾ Tomorrow Next week Clear MARK Number Pass/Fail Either COUNTS TOWARD Quarter 1 Quarter 2 Quarter 3 Quarter 4 Semester 1 Semester 2 Year ANSWER KEY Photo a blank worksheet and we will propose answers. A filled key we just read. Later homework matches this printed page. None Photo Typed items Read from your key — edit if needed. Read the written answers. Edit anythi"
+  },
+  {
+    "id": "K05-handwritten",
+    "preClick": "Photo",
+    "ok": true
+  },
+  {
+    "id": "K05-handwritten",
+    "preClick": "Take photo",
+    "ok": true
+  },
+  {
+    "id": "K05-handwritten",
+    "shot": "/tmp/anskey-ingest-eval/K05-handwritten-review-375.png",
+    "settled": true,
+    "text": "Assignment Assignment 5 Create an Assignment TYPE Lesson Practice TITLE FOR THE GRADE BOOK Optional. The grade book groups rows by class, then unit, then section. Unit Section ASSIGNMENT (GRADE) CATEGORY Counts toward the Homework average (40%). Homework Quiz Participation Does not count toward Homework average Not makeup DUE DATE ▾ Tomorrow Next week Clear MARK Number Pass/Fail Either COUNTS TOWARD Quarter 1 Quarter 2 Quarter 3 Quarter 4 Semester 1 Semester 2 Year ANSWER KEY Photo a blank worksheet and we will propose answers. A filled key we just read. Later homework matches this printed page. None Photo Typed items Read from your key — edit if needed. Read the written answers. Edit anythi"
+  },
+  {
+    "id": "N01-negative",
+    "preClick": "Photo",
+    "ok": true
+  },
+  {
+    "id": "N01-negative",
+    "preClick": "Take photo",
+    "ok": true
+  },
+  {
+    "id": "N01-negative",
+    "shot": "/tmp/anskey-ingest-eval/N01-negative-review-375.png",
+    "settled": true,
+    "text": "Assignment Assignment 5 Create an Assignment TYPE Lesson Practice TITLE FOR THE GRADE BOOK Optional. The grade book groups rows by class, then unit, then section. Unit Section ASSIGNMENT (GRADE) CATEGORY Counts toward the Homework average (40%). Homework Quiz Participation Does not count toward Homework average Not makeup DUE DATE ▾ Tomorrow Next week Clear MARK Number Pass/Fail Either COUNTS TOWARD Quarter 1 Quarter 2 Quarter 3 Quarter 4 Semester 1 Semester 2 Year ANSWER KEY Photo a blank worksheet and we will propose answers. A filled key we just read. Later homework matches this printed page. None Photo Typed items Key notes STUDENT HELP Does not apply to graded captures. Students never s"
+  }
+]
