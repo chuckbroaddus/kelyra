@@ -1,0 +1,9 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "no_hallucinate_empty": [
+    "birthday",
+    "allergies",
+    "emergency_phone"
+  ]
+}

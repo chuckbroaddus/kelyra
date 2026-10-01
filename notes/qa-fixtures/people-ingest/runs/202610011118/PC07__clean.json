@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Olivia Grant",
+    "confidence": 0.95,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Name",
+        "value": "Olivia Grant"
+      },
+      {
+        "label": "Phone",
+        "value": "555-217-6500"
+      },
+      {
+        "label": "Address",
+        "value": "250 Harbor Road"
+      },
+      {
+        "label": "Preferred contact",
+        "value": "Phone call"
+      },
+      {
+        "label": "Email",
+        "value": ""
+      }
+    ],
+    "names": [],
+    "note": null
+  }
+}

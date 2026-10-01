@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [
+      {
+        "label": "skill"
+      }
+    ],
+    "fields": [
+      {
+        "label": "field",
+        "value": "value"
+      }
+    ],
+    "names": [],
+    "note": null
+  }
+}

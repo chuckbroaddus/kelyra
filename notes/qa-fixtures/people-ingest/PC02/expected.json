@@ -1,0 +1,41 @@
+{
+  "source_id": "PC02",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Marcus Chen",
+  "studentGuessName": "Lily Chen",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "father"
+    },
+    {
+      "label": "phone",
+      "value": "555-318-9022"
+    },
+    {
+      "label": "email",
+      "value": "m.chen.family@example.net"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "father"
+    },
+    {
+      "key": "phone",
+      "value": "555-318-9022"
+    },
+    {
+      "key": "email",
+      "value": "m.chen.family@example.net"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

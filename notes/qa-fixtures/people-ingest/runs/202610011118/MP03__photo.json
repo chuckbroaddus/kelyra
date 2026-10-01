@@ -1,0 +1,61 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "roster",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Student",
+        "value": "Aiden Cole"
+      },
+      {
+        "label": "Parent",
+        "value": "Morgan Cole"
+      },
+      {
+        "label": "Phone",
+        "value": "555-800-0101"
+      },
+      {
+        "label": "Student",
+        "value": "Bella Diaz"
+      },
+      {
+        "label": "Parent",
+        "value": "Jordan Diaz"
+      },
+      {
+        "label": "Phone",
+        "value": "555-800-0102"
+      },
+      {
+        "label": "Student",
+        "value": "Owen Kim"
+      },
+      {
+        "label": "Parent",
+        "value": "Sasha Kim"
+      }
+    ],
+    "names": [
+      {
+        "id": null,
+        "name": "Aiden Cole"
+      },
+      {
+        "id": null,
+        "name": "Bella Diaz"
+      },
+      {
+        "id": null,
+        "name": "Owen Kim"
+      }
+    ],
+    "note": null
+  }
+}

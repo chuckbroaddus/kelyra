@@ -170,3 +170,55 @@ describe('student office optional fields', () => {
     assert.match(types, /health_conditions/);
   });
 });
+
+test('mapClassifierFields splits combined emergency "name — phone" (people ingest R2)', async () => {
+  const { mapClassifierFields: map } = await import('./metadata.ts');
+  const out = map([{ label: 'Emergency', value: 'Min Park — 555-222-0199' }], 'student');
+  assert.deepEqual(
+    out.map((f) => [f.key, f.value]),
+    [
+      ['emergency_name', 'Min Park'],
+      ['emergency_phone', '555-222-0199'],
+    ],
+  );
+});
+
+test('mapClassifierFields keeps explicit emergency phone over split', async () => {
+  const { mapClassifierFields: map } = await import('./metadata.ts');
+  const out = map(
+    [
+      { label: 'Emergency contact', value: 'Sofia Vargas' },
+      { label: 'Emergency phone', value: '555-612-8890' },
+    ],
+    'student',
+  );
+  assert.deepEqual(
+    out.map((f) => [f.key, f.value]),
+    [
+      ['emergency_name', 'Sofia Vargas'],
+      ['emergency_phone', '555-612-8890'],
+    ],
+  );
+});
+
+test('mapClassifierFields people-ingest aliases (student + parent)', async () => {
+  const { mapClassifierFields: map } = await import('./metadata.ts');
+  const s = map(
+    [
+      { label: 'Grade / age', value: 'Grade 7' },
+      { label: 'Student phone', value: '555-100-7788' },
+      { label: 'Home address', value: '88 Cedar Ct' },
+    ],
+    'student',
+  );
+  assert.deepEqual(s.map((f) => f.key), ['grade_or_age', 'phone', 'address']);
+  const p = map(
+    [
+      { label: 'Home phone', value: '555.318.9022' },
+      { label: 'Relation', value: 'Father' },
+      { label: 'E-mail', value: 'a@example.net' },
+    ],
+    'parent',
+  );
+  assert.deepEqual(p.map((f) => f.key), ['phone', 'relationship', 'email']);
+});

@@ -1,0 +1,41 @@
+{
+  "source_id": "PC03",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Samira Ortiz",
+  "studentGuessName": "Noah Ortiz",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "guardian"
+    },
+    {
+      "label": "phone",
+      "value": "555-770-1133"
+    },
+    {
+      "label": "notes",
+      "value": "Please call after 4pm"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "guardian"
+    },
+    {
+      "key": "phone",
+      "value": "555-770-1133"
+    },
+    {
+      "key": "notes",
+      "value": "Please call after 4pm"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

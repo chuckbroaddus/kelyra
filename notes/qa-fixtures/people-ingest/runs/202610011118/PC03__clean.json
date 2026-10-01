@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Samira Ortiz",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Name",
+        "value": "Samira Ortiz"
+      },
+      {
+        "label": "Rel",
+        "value": "guardian"
+      },
+      {
+        "label": "Cell",
+        "value": "555-770-1133"
+      },
+      {
+        "label": "Kid",
+        "value": "Noah Ortiz"
+      },
+      {
+        "label": "Note",
+        "value": "Please call after 4pm"
+      }
+    ],
+    "names": [],
+    "note": null
+  }
+}

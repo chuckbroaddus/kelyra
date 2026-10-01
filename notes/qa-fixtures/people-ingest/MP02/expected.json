@@ -1,0 +1,75 @@
+{
+  "source_id": "MP02",
+  "kind": "multi",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Pat Rivera",
+  "studentGuessName": "Sofia Rivera",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-555-0180"
+    },
+    {
+      "label": "address",
+      "value": "19 Maple Ave"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-555-0180"
+    },
+    {
+      "key": "address",
+      "value": "19 Maple Ave"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Pat Rivera"
+    },
+    {
+      "role": "student",
+      "name": "Sofia Rivera"
+    },
+    {
+      "role": "student",
+      "name": "Luis Rivera"
+    },
+    {
+      "role": "student",
+      "name": "Amelia Rivera"
+    }
+  ],
+  "names": [
+    {
+      "name": "Pat Rivera",
+      "confidence": 0.9
+    },
+    {
+      "name": "Sofia Rivera",
+      "confidence": 0.85
+    },
+    {
+      "name": "Luis Rivera",
+      "confidence": 0.85
+    },
+    {
+      "name": "Amelia Rivera",
+      "confidence": 0.85
+    }
+  ],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

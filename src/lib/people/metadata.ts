@@ -186,15 +186,35 @@ const STUDENT_FIELD_ALIASES: Record<string, Exclude<StudentMetadataKey, 'focusLo
   grade: 'grade_or_age',
   age: 'grade_or_age',
   'grade or age': 'grade_or_age',
+  'grade / age': 'grade_or_age',
   phone: 'phone',
   telephone: 'phone',
+  tel: 'phone',
+  cell: 'phone',
+  'student phone': 'phone',
   email: 'email',
+  'e-mail': 'email',
   address: 'address',
+  'home address': 'address',
   emergency_name: 'emergency_name',
   'emergency contact': 'emergency_name',
+  'emergency contact name': 'emergency_name',
   'emergency name': 'emergency_name',
+  emergency: 'emergency_name',
   emergency_phone: 'emergency_phone',
   'emergency phone': 'emergency_phone',
+  'emergency contact phone': 'emergency_phone',
+  'emergency number': 'emergency_phone',
+  'emergency contact number': 'emergency_phone',
+  'goes by': 'preferred_name',
+  'nick name': 'preferred_name',
+  birthdate: 'birthday',
+  'birth date': 'birthday',
+  'cell phone': 'phone',
+  mobile: 'phone',
+  'phone number': 'phone',
+  'medical conditions': 'health_conditions',
+  medical: 'health_conditions',
   allergies: 'allergies',
   allergy: 'allergies',
   health_conditions: 'health_conditions',
@@ -206,15 +226,38 @@ const STUDENT_FIELD_ALIASES: Record<string, Exclude<StudentMetadataKey, 'focusLo
 
 const PARENT_FIELD_ALIASES: Record<string, ParentMetadataKey> = {
   relationship: 'relationship',
+  rel: 'relationship',
+  'relationship to student': 'relationship',
   phone: 'phone',
   telephone: 'phone',
+  tel: 'phone',
+  cell: 'phone',
+  'home phone': 'phone',
+  'mobile phone': 'phone',
+  mobile: 'phone',
+  'cell phone': 'phone',
+  'phone number': 'phone',
+  relation: 'relationship',
+  'contact preference': 'preferred_contact',
+  'best way to reach': 'preferred_contact',
   email: 'email',
+  'e-mail': 'email',
   address: 'address',
+  'home address': 'address',
   preferred_contact: 'preferred_contact',
   'preferred contact': 'preferred_contact',
   notes: 'notes',
   note: 'notes',
 };
+
+/** "Min Park — 555-222-0199" / "Min Park (555) 222-0199" → { name, phone }; null when no phone. */
+export function splitNamePhone(value: string): { name: string; phone: string } | null {
+  const m = /^(.*?[A-Za-z][^\d]*?)\s*[—–\-,:|/]?\s*(\+?1?[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})\s*$/.exec(value.trim());
+  if (!m) return null;
+  const name = m[1].replace(/[\s—–\-,:|/(]+$/, '').trim();
+  if (!name || !/[A-Za-z]/.test(name)) return null;
+  return { name, phone: m[2].trim() };
+}
 
 export type MappedField = { key: string; label: string; value: string; canonical: boolean };
 
@@ -230,7 +273,23 @@ export function mapClassifierFields(
     const label = field.label.trim();
     const value = field.value.trim();
     if (!label || !value) continue;
-    const key = aliases[label.toLowerCase()];
+    const key = aliases[label.toLowerCase().replace(/\s+/g, ' ').replace(/[:*]+$/, '').trim()];
+    // "Emergency: Min Park — 555-222-0199" → name + phone (only when phone not given separately).
+    if (kind === 'student' && key === 'emergency_name' && !seen.has('emergency_name')) {
+      const split = splitNamePhone(value);
+      if (split) {
+        seen.add('emergency_name');
+        mapped.push({ key: 'emergency_name', label: 'Emergency contact', value: split.name, canonical: true });
+        const hasPhoneField = fields.some(
+          (f) => aliases[f.label.trim().toLowerCase()] === 'emergency_phone' && f.value.trim(),
+        );
+        if (!hasPhoneField && !seen.has('emergency_phone')) {
+          seen.add('emergency_phone');
+          mapped.push({ key: 'emergency_phone', label: 'Emergency phone', value: split.phone, canonical: true });
+        }
+        continue;
+      }
+    }
     if (key && !seen.has(key)) {
       seen.add(key);
       const pretty = (kind === 'student' ? STUDENT_DETAIL_FIELDS : PARENT_DETAIL_FIELDS).find(

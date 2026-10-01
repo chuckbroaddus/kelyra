@@ -1,0 +1,326 @@
+{
+  "generated_at": "2026-10-01T11:18:36.021Z",
+  "count": 21,
+  "cases": [
+    {
+      "id": "PC01",
+      "kind": "parent_card",
+      "photo": true,
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "address",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC02",
+      "kind": "parent_card",
+      "photo": true,
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC03",
+      "kind": "parent_card",
+      "photo": true,
+      "fields_exercised": [
+        "relationship",
+        "phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC04",
+      "kind": "parent_card",
+      "photo": false,
+      "fields_exercised": [
+        "relationship",
+        "email",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC05",
+      "kind": "parent_card",
+      "photo": true,
+      "fields_exercised": [
+        "phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC06",
+      "kind": "parent_card",
+      "photo": true,
+      "fields_exercised": [
+        "phone",
+        "email",
+        "relationship"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PC07",
+      "kind": "parent_card",
+      "photo": false,
+      "fields_exercised": [
+        "address",
+        "preferred_contact",
+        "phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC01",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "birthday",
+        "grade_or_age",
+        "emergency_name",
+        "emergency_phone",
+        "allergies"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC02",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "email",
+        "address",
+        "phone",
+        "grade_or_age"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC03",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "preferred_name",
+        "allergies",
+        "emergency_name"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC04",
+      "kind": "student_card",
+      "photo": false,
+      "fields_exercised": [
+        "grade_or_age",
+        "emergency_name"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC05",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "health_conditions",
+        "phone",
+        "birthday"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC06",
+      "kind": "student_card",
+      "photo": false,
+      "fields_exercised": [
+        "preferred_name",
+        "grade_or_age"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC07",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "birthday",
+        "emergency_name",
+        "emergency_phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "SC08",
+      "kind": "student_card",
+      "photo": true,
+      "fields_exercised": [
+        "notes",
+        "grade_or_age"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "MP01",
+      "kind": "multi",
+      "photo": true,
+      "fields_exercised": [
+        "phone",
+        "email",
+        "relationship"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "MP02",
+      "kind": "multi",
+      "photo": false,
+      "fields_exercised": [
+        "phone",
+        "address"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "MP03",
+      "kind": "multi",
+      "photo": true,
+      "fields_exercised": [
+        "phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "photo": true,
+      "fields_exercised": [],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "photo": false,
+      "fields_exercised": [],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "photo": true,
+      "fields_exercised": [],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    }
+  ]
+}

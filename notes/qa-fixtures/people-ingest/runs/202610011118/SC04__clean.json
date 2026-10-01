@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": "Alex Lee",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Harper Lee",
+    "draftScore": null,
+    "gaps": [
+      {
+        "label": "Date of birth"
+      },
+      {
+        "label": "Allergies"
+      },
+      {
+        "label": "Emergency phone"
+      }
+    ],
+    "fields": [
+      {
+        "label": "Name",
+        "value": "Harper Lee"
+      },
+      {
+        "label": "Grade",
+        "value": "4"
+      },
+      {
+        "label": "Emergency contact",
+        "value": "Alex Lee"
+      }
+    ],
+    "names": [
+      "Harper Lee"
+    ],
+    "note": null
+  }
+}

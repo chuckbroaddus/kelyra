@@ -1,0 +1,71 @@
+{
+  "source_id": "MP01",
+  "kind": "multi",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Dana Thompson",
+  "studentGuessName": "Maya Thompson",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-301-1001"
+    },
+    {
+      "label": "email",
+      "value": "dana.t@example.com"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-301-1001"
+    },
+    {
+      "key": "email",
+      "value": "dana.t@example.com"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Dana Thompson",
+      "relationship": "mother",
+      "phone": "555-301-1001"
+    },
+    {
+      "role": "parent",
+      "name": "Chris Thompson",
+      "relationship": "father",
+      "phone": "555-301-1002"
+    },
+    {
+      "role": "student",
+      "name": "Maya Thompson"
+    }
+  ],
+  "names": [
+    {
+      "name": "Dana Thompson",
+      "confidence": 0.9
+    },
+    {
+      "name": "Chris Thompson",
+      "confidence": 0.9
+    },
+    {
+      "name": "Maya Thompson",
+      "confidence": 0.85
+    }
+  ],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

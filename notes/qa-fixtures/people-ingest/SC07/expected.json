@@ -1,0 +1,41 @@
+{
+  "source_id": "SC07",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Grace Okafor",
+  "fields": [
+    {
+      "label": "birthday",
+      "value": "2013-07-22"
+    },
+    {
+      "label": "emergency name",
+      "value": "Chinedu Okafor"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-333-1212"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "birthday",
+      "value": "2013-07-22"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Chinedu Okafor"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-333-1212"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

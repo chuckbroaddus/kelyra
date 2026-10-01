@@ -1,0 +1,41 @@
+{
+  "source_id": "PC04",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Riley Quinn",
+  "studentGuessName": "Casey Quinn",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "other"
+    },
+    {
+      "label": "email",
+      "value": "riley.q.pickup@example.org"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Email"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "other"
+    },
+    {
+      "key": "email",
+      "value": "riley.q.pickup@example.org"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Email"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

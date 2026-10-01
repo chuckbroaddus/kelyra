@@ -1,0 +1,73 @@
+{
+  "source_id": "MP03",
+  "kind": "multi",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Morgan Cole",
+  "studentGuessName": "Aiden Cole",
+  "fields": [
+    {
+      "label": "phone",
+      "value": "555-800-0101"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "phone",
+      "value": "555-800-0101"
+    }
+  ],
+  "records": [
+    {
+      "role": "student",
+      "name": "Aiden Cole",
+      "parent": "Morgan Cole",
+      "phone": "555-800-0101"
+    },
+    {
+      "role": "student",
+      "name": "Bella Diaz",
+      "parent": "Jordan Diaz",
+      "phone": "555-800-0102"
+    },
+    {
+      "role": "student",
+      "name": "Owen Kim",
+      "parent": "Sasha Kim",
+      "phone": null
+    }
+  ],
+  "names": [
+    {
+      "name": "Aiden Cole",
+      "confidence": 0.8
+    },
+    {
+      "name": "Bella Diaz",
+      "confidence": 0.8
+    },
+    {
+      "name": "Owen Kim",
+      "confidence": 0.8
+    },
+    {
+      "name": "Morgan Cole",
+      "confidence": 0.8
+    },
+    {
+      "name": "Jordan Diaz",
+      "confidence": 0.8
+    },
+    {
+      "name": "Sasha Kim",
+      "confidence": 0.8
+    }
+  ],
+  "reject": false,
+  "accept_intents": [
+    "parent_card",
+    "roster",
+    "student_card"
+  ],
+  "note": null
+}

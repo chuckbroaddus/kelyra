@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Jamal Okonkwo",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Full name",
+        "value": "Jamal Okonkwo"
+      },
+      {
+        "label": "Grade / age",
+        "value": "Grade 7 · age 12"
+      },
+      {
+        "label": "Student phone",
+        "value": "555-100-7788"
+      },
+      {
+        "label": "Email",
+        "value": "jamal.o.student@example.com"
+      },
+      {
+        "label": "Home address",
+        "value": "88 Cedar Court, Unit 4"
+      }
+    ],
+    "names": [
+      {
+        "name": "Jamal Okonkwo",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

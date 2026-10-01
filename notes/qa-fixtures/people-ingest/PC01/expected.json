@@ -1,0 +1,63 @@
+{
+  "source_id": "PC01",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Jordan Blake",
+  "studentGuessName": "Avery Blake",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-201-4401"
+    },
+    {
+      "label": "email",
+      "value": "jordan.blake@example.com"
+    },
+    {
+      "label": "address",
+      "value": "412 Willow Lane, Apt 2B, Springfield"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Text message"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-201-4401"
+    },
+    {
+      "key": "email",
+      "value": "jordan.blake@example.com"
+    },
+    {
+      "key": "address",
+      "value": "412 Willow Lane, Apt 2B, Springfield"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Text message"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Jordan Blake",
+      "child": "Avery Blake"
+    }
+  ],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}
