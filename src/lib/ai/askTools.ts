@@ -1611,65 +1611,28 @@ const TOOLS: Record<string, AskToolSpec> = {
         return { error: 'Parent seat only.' };
       }
       const { listParentLinkedChildren } = await import('@/lib/diary/api');
-      const { resolveParentAskChild, shapeParentAskAssignments } = await import(
-        '@/lib/ai/askParentAssignments'
-      );
+      const { buildParentAskAssignmentToolResult } = await import('@/lib/ai/askParentAssignments');
+      const { loadFamilyStudentGradebook } = await import('@/lib/gradebook/api');
       const linkedChildren = await listParentLinkedChildren();
-      const resolved = resolveParentAskChild({
+      return buildParentAskAssignmentToolResult({
         linkedChildren,
         childName: str(args, 'child_name') || null,
         childStudentId: str(args, 'child_student_id') || str(args, 'student_id') || null,
         boundStudentId: ctx.live.studentId || null,
-      });
-      if (!resolved.ok) {
-        if (resolved.kind === 'need_which_child') {
+        loadBook: async (studentId, meta) => {
+          const book = await loadFamilyStudentGradebook(studentId, {
+            displayName: meta.displayName,
+          });
           return {
-            need_which_child: true,
-            children: resolved.children.map((c) => ({ id: c.id, name: c.display_name })),
-            note: 'Ask which child in this thread. Do not return a mixed sibling assignment list.',
+            classes: book.classes,
+            assignments: book.assignments.map((row) => ({
+              title: row.title,
+              due_at: row.due_at,
+              class_id: row.class_id,
+            })),
           };
-        }
-        return {
-          error: resolved.error,
-          ...(resolved.matches
-            ? { matches: resolved.matches.map((c) => ({ id: c.id, name: c.display_name })) }
-            : {}),
-        };
-      }
-
-      const { loadFamilyStudentGradebook } = await import('@/lib/gradebook/api');
-      let book;
-      try {
-        book = await loadFamilyStudentGradebook(resolved.child.id, {
-          displayName: resolved.child.display_name,
-        });
-      } catch (err) {
-        return {
-          error:
-            err instanceof Error
-              ? err.message
-              : 'Could not load that child\'s assignments. A failed class lookup is not a list.',
-        };
-      }
-
-      const classNameById = new Map(book.classes.map((room) => [room.classId, room.className]));
-      const assignments = shapeParentAskAssignments(
-        book.assignments.map((row) => ({
-          title: row.title,
-          due_at: row.due_at,
-          class_name: classNameById.get(row.class_id) ?? null,
-        })),
-      );
-      return {
-        child_id: resolved.child.id,
-        child_name: resolved.child.display_name,
-        assignments,
-        count: assignments.length,
-        note:
-          assignments.length === 0
-            ? 'No assignments visible for this child. Do not invent titles or borrow a sibling\'s list.'
-            : 'One child only. Do not mix a sibling\'s work into the reply.',
-      };
+        },
+      });
     },
   },
   my_unread_messages: {

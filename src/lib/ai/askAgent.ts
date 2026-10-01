@@ -1,6 +1,7 @@
 import { invokeAi } from '@/lib/ai/invoke';
 import { ASK_FALLBACK, buildAskInstructions, type AskLiveContext } from '@/lib/ai/askPrompt';
 import { gauthRefusalCard, shouldRefuseAskBeforeVendor } from '@/lib/ai/askHomeworkRefuse';
+import { formatParentAskListToolReply } from '@/lib/ai/askParentAssignments';
 import { askToolsFor, type AskToolContext } from '@/lib/ai/askTools';
 import { loadGrants } from '@/lib/school/matrixApi';
 import type { ProfileRow } from '@/lib/supabase/types';
@@ -141,6 +142,9 @@ export async function runAskAgent(input: {
 
   let href: string | undefined;
   let didWork = false;
+  // Parent list_my_assignments is terminal once it returns a definitive payload.
+  // DITL-P-02-ASK-01 failed when the model looped tools then hit stop-mid-work.
+  let parentListReply: string | null = null;
 
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
     input.onStatus?.(didWork ? 'Working…' : latestHasImage && round === 0 ? 'Looking at the photo…' : 'Asking AI…');
@@ -169,27 +173,43 @@ export async function runAskAgent(input: {
           ...(call.thoughtSignature ? { thoughtSignature: call.thoughtSignature } : {}),
         });
       }
+      let listOnlyRound = true;
       for (const call of reply.toolCalls) {
         input.onStatus?.(`${call.name.replace(/_/g, ' ')}…`);
         const result = await tools.run(call.name, call.arguments ?? '{}');
         if (result.href) href = result.href;
         history.push({ type: 'function_call_output', call_id: call.call_id, output: result.json });
+        if (call.name === 'list_my_assignments') {
+          const formatted = formatParentAskListToolReply(result.json);
+          if (formatted) parentListReply = formatted;
+        } else {
+          listOnlyRound = false;
+        }
+      }
+      // Definitive parent assignment list — do not burn more model rounds.
+      if (parentListReply && listOnlyRound) {
+        return { text: parentListReply, didWork: true, href };
       }
       continue;
     }
 
     const text = reply.text?.trim();
     return {
-      text: text || (didWork ? 'Done. I saved what I could from that request.' : ASK_FALLBACK),
+      text:
+        text ||
+        parentListReply ||
+        (didWork ? 'Done. I saved what I could from that request.' : ASK_FALLBACK),
       didWork,
       href,
     };
   }
 
   return {
-    text: didWork
-      ? 'I started that work, then stopped. Check People or the class card to confirm what was saved.'
-      : ASK_FALLBACK,
+    text: parentListReply
+      ? parentListReply
+      : didWork
+        ? 'I started that work, then stopped. Check People or the class card to confirm what was saved.'
+        : ASK_FALLBACK,
     didWork,
     href,
   };
