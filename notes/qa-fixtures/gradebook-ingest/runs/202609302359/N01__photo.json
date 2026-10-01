@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "51215da0-b1e1-4a89-a171-03b67a9bf186",
+    "proposal": {
+      "source_id": "N01-photo-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "unreadable_document",
+          "message": "The provided image is too blurry, dark, or blank to read any syllabus text or grading policy. Please retake the photo with better lighting and focus.",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

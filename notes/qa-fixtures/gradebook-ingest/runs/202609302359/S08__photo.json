@@ -1,0 +1,103 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "c183b0ed-44c7-49dc-b4b9-a5f94cb21025",
+    "proposal": {
+      "source_id": "S08-photo-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "PE / Athletics — Ms. Brooks",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "PE / Athletics — Ms. Brooks",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302359"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Major grades 60% • Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S08-photo-202609302359"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major_grades",
+              "label": "Major grades",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades 60% • Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302359"
+        },
+        {
+          "path": "syllabus.floor",
+          "value": 50,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work uses a floor of 50 (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302359"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "No late work accepted.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202609302359"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category item combination method (points vs percent) is not specified on the syllabus.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9200000000000002
+    }
+  }
+}

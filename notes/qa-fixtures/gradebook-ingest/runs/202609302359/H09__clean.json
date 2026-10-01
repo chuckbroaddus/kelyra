@@ -1,0 +1,134 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "9d9cc2a0-7018-43c1-ae2e-af6ca68a84ea",
+    "proposal": {
+      "source_id": "H09-clean-202609302359",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "qp.method",
+          "value": "numeric_band",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "QUALITY POINTS (NUMERIC BAND)",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-clean-202609302359"
+        },
+        {
+          "path": "qp.tables",
+          "value": [
+            {
+              "min_pct": 97,
+              "max_pct": 100,
+              "points_by_level": {
+                "regular": 4,
+                "honors": 5,
+                "ap": 6
+              }
+            },
+            {
+              "min_pct": 93,
+              "max_pct": 96,
+              "points_by_level": {
+                "regular": 3.8,
+                "honors": 4.8,
+                "ap": 5.8
+              }
+            },
+            {
+              "min_pct": 90,
+              "max_pct": 92,
+              "points_by_level": {
+                "regular": 3.6,
+                "honors": 4.6,
+                "ap": 5.6
+              }
+            },
+            {
+              "min_pct": 87,
+              "max_pct": 89,
+              "points_by_level": {
+                "regular": 3.3,
+                "honors": 4.3,
+                "ap": 5.3
+              }
+            },
+            {
+              "min_pct": 83,
+              "max_pct": 86,
+              "points_by_level": {
+                "regular": 3,
+                "honors": 4,
+                "ap": 5
+              }
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "97–100\t4.0\t5.0\t6.0\n93–96\t3.8\t4.8\t5.8\n90–92\t3.6\t4.6\t5.6\n87–89\t3.3\t4.3\t5.3\n83–86\t3.0\t4.0\t5.0",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-clean-202609302359"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "key": "regular",
+              "label": "Regular",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "honors",
+              "label": "Honors",
+              "weighted_bonus": 1
+            },
+            {
+              "key": "ap",
+              "label": "AP",
+              "weighted_bonus": 2
+            }
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Regular\tHonors\tAP\n4.0\t5.0\t6.0",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-clean-202609302359"
+        },
+        {
+          "path": "gpa.mode",
+          "value": "unweighted_and_weighted",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Regular\tHonors\tAP\n4.0\t5.0\t6.0",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H09-clean-202609302359"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "school_core_retry",
+          "message": "Retried school policy extract with stricter core-field prompt.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "gpa_chart",
+      "overall_confidence": 0.8875
+    }
+  }
+}

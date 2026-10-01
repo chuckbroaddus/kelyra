@@ -1,0 +1,115 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "2d02fc24-3e9b-4ef7-9e9b-748eb0036b4d",
+    "proposal": {
+      "source_id": "S04-clean-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Chemistry I",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Chemistry I",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Percent-inside weighted categories",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        },
+        {
+          "path": "syllabus.within_category",
+          "value": "percent_inside",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Inside a category, each assignment is scored as a percent then averaged (percent-inside).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 40
+            },
+            {
+              "key": "labs",
+              "label": "Labs",
+              "weight_percent": 30
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 20
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 10
+            }
+          ],
+          "confidence": 1,
+          "evidence": {
+            "quote": "Tests 40\nLabs 30\nHomework 20\nParticipation 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_hour",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "confidence": 1,
+          "evidence": {
+            "quote": "Late: –5% per hour late, max 24 hours.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": "omit",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Excused / missing with note: omit from the average (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S04-clean-202609302359"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 1
+    }
+  }
+}
