@@ -94,6 +94,9 @@ type ChromeValue = {
   chromePathname: string;
   visible: boolean;
   forceHidden: boolean;
+  /** Full-screen page (landscape Gradebook on a phone): no header, tray, or context row. */
+  immersive: boolean;
+  setImmersive: (on: boolean) => void;
   setForceHidden: (hidden: boolean) => void;
   headerChrome: HeaderChrome;
   setHeaderChrome: (next: HeaderChrome | null) => void;
@@ -215,6 +218,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const landscape = layout.orientation === 'landscape' && layout.isPhone;
 
   const [forceHidden, setForceHidden] = useState(false);
+  const [immersive, setImmersive] = useState(false);
   const [headerChrome, setHeaderChromeState] = useState<HeaderChrome>({});
   const setHeaderChrome = useCallback((next: HeaderChrome | null) => {
     setHeaderChromeState(next ?? {});
@@ -982,6 +986,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       visible,
       forceHidden,
       setForceHidden,
+      immersive,
+      setImmersive,
       headerChrome,
       setHeaderChrome,
       drawerOpen,
@@ -1049,6 +1055,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       chromePathname,
       visible,
       forceHidden,
+      immersive,
       headerChrome,
       setHeaderChrome,
       drawerOpen,

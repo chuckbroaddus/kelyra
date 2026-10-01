@@ -35,7 +35,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      <AppHeader />
+      {chromeState.immersive ? null : <AppHeader />}
       {layout.showTopBar ? (
         <>
           {/* Tray self-hides. Job tabs are a sibling — never one disappearing unit (AC-NTA-VIS-03). */}

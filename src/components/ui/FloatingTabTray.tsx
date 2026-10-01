@@ -34,7 +34,7 @@ export function FloatingTabTray() {
   const schoolFeedIcon = useSchoolFeedIcon();
   const remountKey = trayRemountKey(chromeState.role);
 
-  if (chromeState.role === 'none' || chromeState.forceHidden) return null;
+  if (chromeState.role === 'none' || chromeState.forceHidden || chromeState.immersive) return null;
 
   const tabs = (tabsFor(
     chromeState.role,

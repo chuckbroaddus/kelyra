@@ -28,7 +28,7 @@ export default function ClassStackLayout() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {showTabs && classId ? (
+      {showTabs && classId && !chrome?.immersive ? (
         <View
           style={[
             styles.tabs,
