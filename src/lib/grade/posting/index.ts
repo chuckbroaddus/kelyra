@@ -16,6 +16,21 @@ export {
   yearCreditEarned,
 } from './posting.ts';
 
+export {
+  applyConductToComputedInputs,
+  applyConductToPostingRows,
+  marksForPeriod,
+  nestConductMarkRows,
+  type ClassConductMarkRow,
+  type ConductMarksByPeriod,
+} from './conductMarks.ts';
+
+export {
+  listClassConductMarks,
+  loadConductMarksByPeriod,
+  upsertClassConductMark,
+} from './conductMarksApi.ts';
+
 export type {
   BuildTermGradeInput,
   OverrideTarget,
