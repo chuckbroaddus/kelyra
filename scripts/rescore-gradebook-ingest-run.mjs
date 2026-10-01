@@ -9,6 +9,7 @@ const ROOT = path.resolve(__dirname, '..');
 const CORPUS = path.join(ROOT, 'notes/qa-fixtures/gradebook-ingest');
 const stamp = process.argv[2] || '202610010202';
 const runDir = path.join(CORPUS, 'runs', stamp);
+const reNormalize = process.argv.includes('--normalize');
 
 const evalPath = path.join(ROOT, 'scripts/eval-gradebook-ingest.mjs');
 let src = fs.readFileSync(evalPath, 'utf8');
@@ -19,6 +20,16 @@ src += '\nexport { scoreProposal, summarize };\n';
 const tmp = path.join('/tmp', `gb-rescore-${stamp}.mjs`);
 fs.writeFileSync(tmp, src);
 const { scoreProposal, summarize } = await import(pathToFileURL(tmp).href + '?t=' + Date.now());
+
+let normalizeProposalFields = null;
+if (reNormalize) {
+  const normMod = await import(
+    pathToFileURL(path.join(ROOT, 'src/lib/ingest/normalizeFieldValues.ts')).href +
+      '?t=' +
+      Date.now()
+  );
+  normalizeProposalFields = normMod.normalizeProposalFields;
+}
 
 const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
 const perDoc = [];
@@ -43,7 +54,10 @@ for (const entry of manifest.cases) {
     const p = path.join(runDir, `${entry.id}__${variant}.json`);
     if (!fs.existsSync(p)) continue;
     const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
-    const proposal = raw.json?.proposal || raw.proposal || raw.json;
+    let proposal = raw.json?.proposal || raw.proposal || raw.json;
+    if (reNormalize && normalizeProposalFields && proposal?.fields) {
+      proposal = normalizeProposalFields(proposal);
+    }
     const rows = scoreProposal(expected, proposal, meta);
     const sum = summarize(rows);
     const acc = Math.round(sum.accuracy * 100);
@@ -108,7 +122,13 @@ fs.writeFileSync(
 );
 console.log(
   JSON.stringify(
-    { overall: summary.overall, totals, regressions: summary.regressions, handbook: summary.handbook },
+    {
+      overall: summary.overall,
+      totals,
+      regressions: summary.regressions,
+      handbook: summary.handbook,
+      normalize: reNormalize,
+    },
     null,
     2,
   ),

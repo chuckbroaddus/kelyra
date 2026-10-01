@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "5c08724e-f6c6-458d-b632-605463be8940",
+    "proposal": {
+      "source_id": "H06-clean-202610011122",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "nine_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Nine-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H06-clean-202610011122"
+        },
+        {
+          "path": "gpa.include",
+          "value": {
+            "pe": false,
+            "pass_fail": false,
+            "cbe": false
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "GPA inclusion: PE is excluded. Pass/Fail courses excluded. Credit-by-exam (CBE) excluded from GPA.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H06-clean-202610011122"
+        },
+        {
+          "path": "school.notes",
+          "value": "UIL eligibility uses the six-weeks/nine-weeks period grade; failing any class = ineligible until next grade check.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "UIL eligibility uses the six-weeks/nine-weeks period grade; failing any class = ineligible until next grade check.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H06-clean-202610011122"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "nine_weeks",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Nine-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H06-clean-202610011122"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.8999999999999999
+    }
+  }
+}

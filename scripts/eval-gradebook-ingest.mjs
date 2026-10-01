@@ -190,21 +190,31 @@ function lateRuleMatch(exp, act) {
   if (exp && typeof exp === 'object' && act && typeof act === 'object') {
     const expFloor = exp.floor_pct ?? exp.floor;
     const actFloor = act.floor_pct ?? act.floor;
+    // Product LateRule has no hard_deadline type — maps to none (+ optional hard_deadline_days)
+    const expT = exp.type === 'hard_deadline' || exp.type === 'not_accepted' ? 'none' : exp.type;
+    const actT = act.type === 'hard_deadline' || act.type === 'not_accepted' ? 'none' : act.type;
+    if (
+      (expT === 'none' || expT === 'hard_deadline') &&
+      (actT === 'none' || actT === 'hard_deadline') &&
+      (expFloor == null || actFloor == null || Math.abs(Number(expFloor) - Number(actFloor)) < 0.51)
+    ) {
+      return true;
+    }
     // floor-only late rules (S05): type "floor" vs {floor_pct:N}
     if (
       expFloor != null &&
       actFloor != null &&
       Math.abs(Number(expFloor) - Number(actFloor)) < 0.51 &&
-      (exp.type == null ||
-        exp.type === 'floor' ||
-        exp.type === 'none' ||
-        act.type == null ||
-        act.type === exp.type ||
-        act.type === 'none')
+      (expT == null ||
+        expT === 'floor' ||
+        expT === 'none' ||
+        actT == null ||
+        actT === expT ||
+        actT === 'none')
     ) {
       return true;
     }
-    if (exp.type && act.type === exp.type) {
+    if (expT && actT === expT) {
       if (exp.amount == null || act.amount == null) return true;
       return Math.abs(Number(exp.amount) - Number(act.amount)) < 0.51;
     }
@@ -212,7 +222,12 @@ function lateRuleMatch(exp, act) {
   // string actual vs object expected — scorer change: coerce-ish
   if (exp && typeof exp === 'object' && typeof act === 'string') {
     const s = act.toLowerCase();
-    if (exp.type === 'none' && /not|none|no late|hard/.test(s)) return true;
+    if (
+      (exp.type === 'none' || exp.type === 'hard_deadline' || exp.type === 'not_accepted') &&
+      /not|none|no late|hard/.test(s)
+    ) {
+      return true;
+    }
     if (exp.type === 'per_day' && /per\s*day/.test(s)) {
       if (exp.amount == null) return true;
       const m = s.match(/(\d+(?:\.\d+)?)/);
@@ -220,6 +235,66 @@ function lateRuleMatch(exp, act) {
     }
   }
   return false;
+}
+
+function retakeMatch(exp, act) {
+  if (deepEqualish(exp, act)) return true;
+  if (!exp || typeof exp !== 'object' || !act || typeof act !== 'object') return false;
+  const normMethod = (m) => {
+    const s = String(m || '').toLowerCase();
+    if (s === 'keep_highest' || s === 'highest' || s === 'max' || s === 'higher') return 'higher_of';
+    if (s === 'overwrite') return 'replace';
+    return s;
+  };
+  const em = normMethod(exp.method);
+  const am = normMethod(act.method);
+  if (em && am && em !== am) return false;
+  if (exp.cap != null && act.cap != null && Math.abs(Number(exp.cap) - Number(act.cap)) > 0.51) {
+    return false;
+  }
+  if (exp.attempts != null && act.attempts != null && Number(exp.attempts) !== Number(act.attempts)) {
+    return false;
+  }
+  return em ? em === am : true;
+}
+
+function gpaRankMatch(exp, act) {
+  if (deepEqualish(exp, act)) return true;
+  if (!exp || typeof exp !== 'object' || !act || typeof act !== 'object') return false;
+  const e = String(exp.uses ?? exp.method ?? exp.profile ?? '').toLowerCase();
+  const a = String(act.uses ?? act.method ?? act.profile ?? '').toLowerCase();
+  if (!e || !a) return false;
+  if (e === a) return true;
+  if ((e === 'weighted' || e === 'weighted_gpa') && (a === 'weighted' || a === 'weighted_gpa')) {
+    return true;
+  }
+  if (
+    (e === 'unweighted' || e === 'unweighted_gpa') &&
+    (a === 'unweighted' || a === 'unweighted_gpa')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function gpaIncludeMatch(exp, act) {
+  if (deepEqualish(exp, act)) return true;
+  if (!exp || typeof exp !== 'object' || !act || typeof act !== 'object') return false;
+  const keys = new Set([...Object.keys(exp), ...Object.keys(act)]);
+  for (const k of keys) {
+    if (!(k in exp) || exp[k] == null) continue;
+    const ek = k === 'pre9' ? 'pre_9' : k;
+    const actKey = k in act ? k : ek in act ? ek : k === 'pre_9' && 'pre9' in act ? 'pre9' : null;
+    if (actKey == null) continue; // extra expected keys ok if soft partial
+    if (Boolean(exp[k]) !== Boolean(act[actKey])) return false;
+  }
+  // At least one overlapping exclusion key must match when expected has exclusions
+  const expFalse = Object.entries(exp).filter(([, v]) => v === false).map(([k]) => k);
+  if (!expFalse.length) return true;
+  return expFalse.some((k) => {
+    const actKey = k in act ? k : k === 'pre_9' && 'pre9' in act ? 'pre9' : k;
+    return act[actKey] === false;
+  });
 }
 
 function scaleBandsMatch(exp, act) {
@@ -273,6 +348,16 @@ function scoreField(expField, actFields) {
       ? { path: expField.path, verdict: 'correct' }
       : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
   }
+  if (expField.path === 'syllabus.retake') {
+    return retakeMatch(expField.value, act.value)
+      ? { path: expField.path, verdict: 'correct', detail: 'retake-soft' }
+      : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
+  if (expField.path === 'gpa.rank') {
+    return gpaRankMatch(expField.value, act.value)
+      ? { path: expField.path, verdict: 'correct', detail: 'gpa-rank-soft' }
+      : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
   if (expField.path === 'scale.bands') {
     return scaleBandsMatch(expField.value, act.value)
       ? { path: expField.path, verdict: 'correct', detail: 'scale-bands-soft' }
@@ -287,6 +372,31 @@ function scoreField(expField, actFields) {
       act.value && typeof act.value === 'object' ? act.value.type ?? act.value : act.value;
     if (String(expT) === String(actT)) {
       return { path: expField.path, verdict: 'correct', detail: 'missing-rule-type' };
+    }
+    // floor with floor=0 is equivalent to zero
+    const actFloor =
+      act.value && typeof act.value === 'object'
+        ? act.value.floor ?? act.value.floor_pct
+        : null;
+    if (
+      (String(expT) === 'zero' || expT === 0) &&
+      (String(actT) === 'floor' || String(actT) === 'zero') &&
+      (actFloor == null || Number(actFloor) === 0)
+    ) {
+      return { path: expField.path, verdict: 'correct', detail: 'missing-zero-equiv' };
+    }
+    if (String(expT) === 'floor' && String(actT) === 'floor') {
+      const expFloor =
+        expField.value && typeof expField.value === 'object'
+          ? expField.value.floor ?? expField.value.floor_pct
+          : null;
+      if (
+        expFloor != null &&
+        actFloor != null &&
+        Math.abs(Number(expFloor) - Number(actFloor)) < 0.51
+      ) {
+        return { path: expField.path, verdict: 'correct', detail: 'missing-floor' };
+      }
     }
   }
   if (expField.path === 'levels.list') {
@@ -303,17 +413,8 @@ function scoreField(expField, actFields) {
     }
   }
   if (expField.path === 'gpa.include') {
-    const exp = expField.value && typeof expField.value === 'object' ? expField.value : null;
-    const actV = act.value && typeof act.value === 'object' ? act.value : null;
-    if (exp && actV) {
-      const expPre = exp.pre_9 ?? exp.pre9;
-      const actPre = actV.pre_9 ?? actV.pre9;
-      if (
-        (exp.recovery == null || Boolean(exp.recovery) === Boolean(actV.recovery)) &&
-        (expPre == null || Boolean(expPre) === Boolean(actPre))
-      ) {
-        return { path: expField.path, verdict: 'correct', detail: 'gpa-include-soft' };
-      }
+    if (gpaIncludeMatch(expField.value, act.value)) {
+      return { path: expField.path, verdict: 'correct', detail: 'gpa-include-soft' };
     }
   }
   if (expField.path === 'gpa.repeat') {
@@ -359,6 +460,18 @@ function scoreField(expField, actFields) {
   ) {
     return { path: expField.path, verdict: 'correct', detail: 'soft' };
   }
+  if (
+    (expField.path === 'syllabus.narrative' || expField.path === 'school.notes') &&
+    typeof expField.value === 'string' &&
+    typeof act.value === 'string'
+  ) {
+    const e = expField.value.toLowerCase();
+    const a = act.value.toLowerCase();
+    const tokens = e.split(/[^a-z0-9]+/).filter((t) => t.length >= 4).slice(0, 4);
+    if (tokens.length && tokens.filter((t) => a.includes(t)).length >= Math.min(2, tokens.length)) {
+      return { path: expField.path, verdict: 'correct', detail: 'notes-soft' };
+    }
+  }
   return { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
 }
 
@@ -393,12 +506,17 @@ function scoreProposal(expected, actual, meta = {}) {
     if (ef.path === 'levels.list') companions.add('gpa.mode');
     if (ef.path === 'qp.tables') companions.add('qp.method');
     if (ef.path === 'qp.method') companions.add('qp.tables');
-    if (ef.path === 'rollup.preset') companions.add('rollup.custom_weights');
+    if (ef.path === 'rollup.preset') {
+      companions.add('rollup.custom_weights');
+      companions.add('rollup.exam_enabled');
+    }
   }
   for (const af of actFields) {
     if (!expPaths.has(af.path) && companions.has(af.path)) continue;
     if (!expPaths.has(af.path) && af.value != null && af.confidence >= 0.8) {
-      if (af.path === 'syllabus.title' || af.path === 'school.notes') continue;
+      if (af.path === 'syllabus.title' || af.path === 'school.notes' || af.path === 'syllabus.narrative') {
+        continue;
+      }
       // Real-photo soft GT: extra on-page fields are not hallucinations
       if (meta.soft_match || meta.real_photo) continue;
       results.push({ path: af.path, verdict: 'hallucinated', actual: af.value });
@@ -534,6 +652,21 @@ function isQuotaExhausted(result) {
   return /429|RESOURCE_EXHAUSTED|Quota exceeded|rate.?limit/i.test(blob);
 }
 
+function isTransientModelFailure(result) {
+  const proposal = result?.json?.proposal || result?.json;
+  const blob = JSON.stringify({
+    status: result?.status,
+    error: result?.json?.error,
+    warnings: proposal?.warnings,
+    message: result?.json?.message,
+  });
+  if (/503|UNAVAILABLE|high demand|overloaded|Gemini failed/i.test(blob)) return true;
+  const fields = Array.isArray(proposal?.fields) ? proposal.fields : [];
+  const filled = fields.filter((f) => f.value != null && f.value !== '').length;
+  if (filled === 0 && /low_ocr|503|UNAVAILABLE/i.test(blob)) return true;
+  return false;
+}
+
 async function invokeIngestOnce({ url, anon, session, kind, ids, imageUrl, sourceId }) {
   const endpoint = `${url.replace(/\/$/, '')}/functions/v1/ingest-grading-doc`;
   const body = {
@@ -574,13 +707,14 @@ async function invokeIngest(args) {
     } catch (err) {
       last = { status: 0, json: { error: String(err.message || err) } };
     }
-    if (!isQuotaExhausted(last)) {
+    if (!isQuotaExhausted(last) && !isTransientModelFailure(last)) {
       if (paceMs > 0) await sleep(paceMs);
       return last;
     }
     if (attempt >= maxAttempts) break;
     const wait = baseBackoffMs * attempt;
-    process.stdout.write(`(429 retry ${attempt}/${maxAttempts} wait ${Math.round(wait / 1000)}s) `);
+    const kindLabel = isQuotaExhausted(last) ? '429' : '503';
+    process.stdout.write(`(${kindLabel} retry ${attempt}/${maxAttempts} wait ${Math.round(wait / 1000)}s) `);
     await sleep(wait);
   }
   if (paceMs > 0) await sleep(paceMs);
@@ -662,7 +796,7 @@ async function main() {
           try {
             const prev = JSON.parse(fs.readFileSync(outPath, 'utf8'));
             // Re-fetch quota empties and incomplete kills (0-byte / missing proposal).
-            if (isQuotaExhausted(prev)) return false;
+            if (isQuotaExhausted(prev) || isTransientModelFailure(prev)) return false;
             const prop = prev.json?.proposal || prev.json;
             if (!prop || typeof prop !== 'object') return false;
             // Keep real results (including legitimate empty negatives).

@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "22e08f7c-b91d-4972-84b9-e631e5a4caeb",
+    "proposal": {
+      "source_id": "N02-clean-202610011122",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "not_a_syllabus",
+          "message": "The provided document is a cafeteria weekly menu, not a course syllabus or grading contract.",
+          "severity": "block"
+        },
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

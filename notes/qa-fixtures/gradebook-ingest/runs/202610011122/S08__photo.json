@@ -1,0 +1,136 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "b76ff13d-40e4-454a-96bd-4bcd70bc364b",
+    "proposal": {
+      "source_id": "S08-photo-202610011122",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "PE / Athletics — Ms. Brooks",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "PE / Athletics — Ms. Brooks",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major",
+              "label": "Major grades",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": {
+            "type": "floor",
+            "floor": 50
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work uses a floor of 50 (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [],
+            "attempts": 1,
+            "method": "replace",
+            "cap": null,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Retakes: new score replaces the old one (one attempt).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "No late work accepted.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        },
+        {
+          "path": "syllabus.narrative",
+          "value": "Conduct mark is separate (E/S/N/U) — does not change the numeric average.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Conduct mark is separate (E/S/N/U) — does not change the numeric average.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-photo-202610011122"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category calculation method (points vs percent) is not specified.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9228571428571429
+    }
+  }
+}

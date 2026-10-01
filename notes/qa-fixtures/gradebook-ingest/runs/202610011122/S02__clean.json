@@ -1,0 +1,68 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "490b083d-50e9-42b6-8c54-d8f5808ebc02",
+    "proposal": {
+      "source_id": "S02-clean-202610011122",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Biology Lab",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Biology Lab",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S02-clean-202610011122"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "total_points",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "All assignments add by total points.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S02-clean-202610011122"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work is not accepted after the due date",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S02-clean-202610011122"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": "zero",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work counts as zero.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S02-clean-202610011122"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.97
+    }
+  }
+}

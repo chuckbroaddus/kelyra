@@ -1,0 +1,78 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "0f09d307-3ea9-462b-844d-4a5776b981e6",
+    "proposal": {
+      "source_id": "H02-clean-202610011122",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "nine_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Marking periods are nine weeks.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610011122"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "40/40/20",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Semester = Q1 40% + Q2 40% + Exam 20%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610011122"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "value": true,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Semester = Q1 40% + Q2 40% + Exam 20%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610011122"
+        },
+        {
+          "path": "school.notes",
+          "value": "Exam exemption: students with average >= 90 and <= 3 absences may exempt the exam; weights renormalize to 50/50.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Exam exemption: students with average ≥ 90 and ≤ 3 absences may exempt the exam; weights renormalize to 50/50.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610011122"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "nine_weeks",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Marking periods are nine weeks.",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H02-clean-202610011122"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9099999999999999
+    }
+  }
+}

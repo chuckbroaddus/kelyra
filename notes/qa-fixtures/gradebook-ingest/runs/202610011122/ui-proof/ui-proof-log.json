@@ -1,0 +1,38 @@
+{
+  "stamp": "202610011122",
+  "out": "notes/qa-fixtures/gradebook-ingest/runs/202610011122/ui-proof",
+  "tmp": "/tmp/gb-ingest-eval-r4",
+  "results": [
+    {
+      "name": "S01-photo-review-375",
+      "fixture": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_4646285c/notes/qa-fixtures/gradebook-ingest/S01/photo.jpg",
+      "ok": false,
+      "reason": "NO_FILE_INPUT"
+    },
+    {
+      "name": "S08-handwritten-375",
+      "fixture": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_4646285c/notes/qa-fixtures/gradebook-ingest/S08/photo.jpg",
+      "ok": false,
+      "reason": "NO_FILE_INPUT"
+    },
+    {
+      "name": "N03-mixed-doc-warning-375",
+      "fixture": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_4646285c/notes/qa-fixtures/gradebook-ingest/N03/photo.jpg",
+      "ok": false,
+      "reason": "NO_FILE_INPUT"
+    },
+    {
+      "name": "H01-policy-prefill-375",
+      "fixture": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_4646285c/notes/qa-fixtures/gradebook-ingest/H01/photo.jpg",
+      "ok": false,
+      "reason": "NO_START_BUTTON",
+      "detail": "missing"
+    },
+    {
+      "name": "H10-levels-repeat-include-375",
+      "fixture": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_4646285c/notes/qa-fixtures/gradebook-ingest/H10/clean.png",
+      "ok": false,
+      "reason": "NO_FILE_INPUT"
+    }
+  ]
+}
