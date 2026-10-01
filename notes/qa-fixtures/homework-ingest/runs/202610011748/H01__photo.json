@@ -1,0 +1,76 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 80,
+      "teacherNote": "Good work overall; check signs when distributing negatives.",
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "3x + 7 = 22",
+          "expected": "x = 5",
+          "seen": "x = 5",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "5(x - 4) = 15",
+          "expected": "x = 7",
+          "seen": "x = 7",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "-2x + 9 = -3",
+          "expected": "x = 6",
+          "seen": "x = 6",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "(1/2)x + 6 = 10",
+          "expected": "x = 8",
+          "seen": "x = 8",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "4x - 8 = 2x + 6",
+          "expected": "x = 7",
+          "seen": "x = 4",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0044,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

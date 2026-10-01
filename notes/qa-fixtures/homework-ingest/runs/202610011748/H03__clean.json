@@ -1,0 +1,60 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Definitions are incomplete or imprecise.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "define photosynthesis",
+          "expected": "process by which plants make food from light (or equivalent key definition)",
+          "seen": "plants make food from light",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "define cell",
+          "expected": "basic unit of life (or equivalent key definition)",
+          "seen": "basic unit of life",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "define nucleus",
+          "expected": "control center (of the cell) (or equivalent key definition)",
+          "seen": "control center",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.004,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

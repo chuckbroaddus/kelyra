@@ -1,0 +1,77 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "states of matter",
+          "sortOrder": 1
+        },
+        {
+          "label": "phase change temperatures",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": 25,
+      "teacherNote": "Missing third state of matter and water's freezing/boiling points.",
+      "studentName": "Jordan Chen",
+      "students": [
+        "Jordan Chen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "States of matter: solid, liquid, ___",
+          "expected": "gas",
+          "seen": "",
+          "credit": 0,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "Water freezes at:",
+          "expected": "0",
+          "seen": "",
+          "credit": 0,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "Boiling point C:",
+          "expected": "100",
+          "seen": "",
+          "credit": 0,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "Gas particles: far apart",
+          "expected": "far apart",
+          "seen": "far apart",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0038,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
