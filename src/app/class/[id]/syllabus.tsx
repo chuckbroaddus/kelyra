@@ -30,6 +30,7 @@ import { invokeAi } from '@/lib/ai/invoke';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { applyProposalToSyllabusDraft } from '@/lib/ingest/pathMapping';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
+import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
 import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -278,7 +279,7 @@ export default function SyllabusScreen() {
   };
 
   /** GB-11 v2 document ingest → IngestProposal review (does not replace parse-class-syllabus). */
-  const runIngestDoc = async (uri: string, mimeType: string) => {
+  const runIngestDoc = useCallback(async (uri: string, mimeType: string) => {
     if (!id || !teacher) return;
     setBusy(true);
     setError(null);
@@ -306,10 +307,13 @@ export default function SyllabusScreen() {
     } finally {
       setBusy(false);
     }
-  };
+  }, [id, teacher]);
+
+  useWebIngestFixtureHook('syllabus', runIngestDoc);
 
   const onStartFromDocument = async () => {
-    if (webCameraNeeded(true)) {
+    // Library / file path on web — no camera dependency for Start from a document.
+    if (webCameraNeeded(false)) {
       setIngestCamera(true);
       return;
     }

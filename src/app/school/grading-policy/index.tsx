@@ -22,6 +22,7 @@ import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { mergeIntoSetupDraft } from '@/lib/ingest/pathMapping';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
+import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
 import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
@@ -116,7 +117,7 @@ export default function GradingPolicyWizardScreen() {
     if (i >= 0) go(WIZARD_STEPS[i]!);
   };
 
-  const runSchoolIngest = async (uri: string, mimeType: string) => {
+  const runSchoolIngest = useCallback(async (uri: string, mimeType: string) => {
     if (!schoolId || !profile?.id) return;
     setBusy(true);
     setError(null);
@@ -144,7 +145,9 @@ export default function GradingPolicyWizardScreen() {
     } finally {
       setBusy(false);
     }
-  };
+  }, [schoolId, profile?.id]);
+
+  useWebIngestFixtureHook('school_policy', runSchoolIngest);
 
   const onStartFromDocument = async () => {
     if (webCameraNeeded(false)) {

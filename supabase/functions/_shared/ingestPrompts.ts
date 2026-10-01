@@ -120,9 +120,13 @@ Mapping targets (FR-AI-05 syllabus):
 - late_rule {type,amount,unit,floor_pct}, missing_rule, extra_credit_method A|B|C + ec_cap
 - floor/ceiling, book_mode, exam_weight, rollup_preset, title, narrative for unmapped philosophy
 Ambiguity rules (FR-AI-06): weights without how items combine → within_category unknown + ambiguity card.
-"No late work" → late.type none. "10% per day" → per_day 10 percent.
+"No late work" → late.type none. "Hard deadline / no work after unit ends" → late.type none (product shape; never invent hard_deadline enum).
+"10% per day" → per_day 10 percent.
 "Missing work uses a floor of 50" → missing_rule {type:floor, floor:50} (not syllabus.floor).
 "Retake replaces the old score" → retake {method:replace, attempts:1}.
+"Highest score kept" / "keep highest" / retake cap → retake {method:higher_of, cap:N}.
+Conduct mark / citizenship / E-S-N-U / philosophy lines that are not structured fields → syllabus.narrative with verbatim quote.
+Plus/minus scale notes on a syllabus → syllabus.narrative (do not invent scale.bands on class syllabus).
 "Method B" / "extra credit method B" → syllabus.extra_credit_method "B" (A|B|C only).
 "Lowest quiz dropped" → drop_lowest on that category. SBG/ungrading → engine none, do not coerce.
 Only a letter scale → do not invent categories; leave engine unknown.
@@ -173,10 +177,13 @@ Mapping targets (FR-AI-05 school policy):
 - credit.policy {unit, year_link, attendance_gate}, credit.passing_threshold
 - scale.bands / scale.list / scale.passing_pct / scale.rounding
 - gpa.mode off|unweighted|unweighted_and_weighted; gpa.profiles; levels.list (Honors/AP/IB/Dual/OnRamps)
-- gpa.repeat {policy: forgive_higher|include_both|average}; gpa.include {recovery, pre_9} when the page states exclusions
+- gpa.repeat {policy: forgive_higher|include_both|average}; gpa.include {recovery, pre_9, pe, pass_fail, cbe} when the page states exclusions (PE / P/F / CBE excluded from GPA)
+- gpa.rank {uses: weighted|unweighted} when class rank is described (prefer uses, not method)
 - qp.tables / qp.method (letter_map|numeric_band|percent_map) — full numeric charts as rows {min_pct,max_pct,points_by_level}; never flatten to +1.0 bonus only; never invent qp.method alone
 - levels.list keys: regular, honors, preap, ap, ib_hl, ib_sl, dual_credit, onramps, modified, local (with weighted_bonus or table column)
-- locks.map if who-may-edit is stated; school.notes for unmapped philosophy
+- rollup.exam_enabled true when exam weight appears in rollup (40/40/20, 45/45/10, 2/7+1/7); false for pure 50/50 no-exam
+- locks.map if who-may-edit or category caps are stated (e.g. homework max 10% → {categories:true, homework_max_percent:10})
+- school.notes for unmapped philosophy (exam exemption thresholds, UIL eligibility, transfer letter→percent maps)
 "Six weeks" + "exam 1/7" → tx_six_weeks + 2/7+1/7.
 Do NOT extract example student GPA totals as stored grades (FR-AI-10).
 School id context: ${opts?.school_id ?? 'unknown'}.

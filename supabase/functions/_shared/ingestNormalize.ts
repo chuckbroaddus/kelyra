@@ -199,6 +199,7 @@ export function coerceMissingRule(
     if (!base) return null;
     if (base === 'floor') {
       const fl = num(o.floor ?? o.floor_pct);
+      if (fl != null && fl === 0) return 'zero';
       return fl != null ? { type: 'floor', floor: fl } : { type: 'floor' };
     }
     return base;
@@ -209,6 +210,7 @@ export function coerceMissingRule(
   }
   if (s === 'floor' || /missing.*floor|floor\s+for\s+missing|floor\s+of\s+\d+/.test(s)) {
     const fl = s.match(/floor\s*(?:of\s*)?(\d+)/);
+    if (fl && Number(fl[1]) === 0) return 'zero';
     return fl ? { type: 'floor', floor: Number(fl[1]) } : 'floor';
   }
   if (s === 'omit' || s === 'excuse' || s === 'excused' || /omit|do\s+not\s+count|excused/.test(s)) {
@@ -279,7 +281,7 @@ export function coerceRetake(raw: unknown): Record<string, unknown> | null {
   if (raw == null) return null;
   if (typeof raw === 'string') {
     const s = raw.toLowerCase();
-    if (/higher|best|max/.test(s)) return { method: 'higher_of', attempts: 1, cap: null };
+    if (/higher|best|max|keep\s*highest/.test(s)) return { method: 'higher_of', attempts: 1, cap: null };
     if (/replace|new\s+score/.test(s)) return { method: 'replace', attempts: 1, cap: null };
     if (/average|avg|mean/.test(s)) return { method: 'average', attempts: 1, cap: null };
     const cap = s.match(/cap(?:ped)?\s*(?:at\s*)?(\d+)/);
@@ -289,7 +291,9 @@ export function coerceRetake(raw: unknown): Record<string, unknown> | null {
   if (typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
   let method = typeof o.method === 'string' ? o.method.toLowerCase() : '';
-  if (method === 'highest' || method === 'max' || method === 'higher') method = 'higher_of';
+  if (method === 'highest' || method === 'max' || method === 'higher' || method === 'keep_highest') {
+    method = 'higher_of';
+  }
   if (method === 'overwrite') method = 'replace';
   if (method !== 'replace' && method !== 'higher_of' && method !== 'average') {
     if (o.keep_highest || o.higher_of) method = 'higher_of';
@@ -645,8 +649,9 @@ function looksMixedDocument(proposal: {
   const title = proposal.fields.find((f) => f.path === 'syllabus.title' || f.path === 'school.notes');
   if (title && typeof title.value === 'string') {
     const t = title.value;
-    if (/\//.test(t) && /—|-/.test(t) && (t.match(/—|-/g) || []).length >= 2) return true;
+    // Require two syllabus words — do not treat "PE / Athletics — Ms. Brooks" as mixed
     if (/\bsyllabus\b.*\bsyllabus\b/i.test(t)) return true;
+    if (/\bhandbook\b.*\bhandbook\b/i.test(t)) return true;
   }
   return false;
 }
@@ -662,28 +667,42 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   const document_kind_guess = proposal.document_kind_guess;
 
   if (looksMixedDocument({ document_kind_guess, fields, warnings, ambiguities })) {
-    warnings.push({
-      code: 'mixed_document',
-      message:
-        'This image looks like two documents or two class policies on one page. Retake: photograph each syllabus or handbook page separately.',
-      severity: 'block',
-    });
-    return {
-      ...proposal,
-      fields: [],
-      ambiguities: [
-        ...ambiguities,
-        {
-          code: 'mixed_document',
-          message: 'Separate the documents and scan again.',
-          paths: [],
-          choices: ['retake_separate_pages'],
-        },
-      ],
-      warnings,
-      document_kind_guess: document_kind_guess || 'mixed',
-      overall_confidence: Math.min(proposal.overall_confidence, 0.2),
-    };
+    const filledCount = fields.filter((f) => f.value != null && f.value !== '').length;
+    const guessMixed = (document_kind_guess || '').toLowerCase() === 'mixed';
+    // Keep substantial extracts — model sometimes labels single handbooks "mixed"
+    if (filledCount >= 2) {
+      warnings.push({
+        code: 'mixed_document_review',
+        message:
+          'Document may mix topics; review extracted fields carefully. Photograph pages separately if two policies are on one page.',
+        severity: 'warn',
+      });
+      // fall through to normal coerce (do not wipe)
+    } else {
+      warnings.push({
+        code: 'mixed_document',
+        message:
+          'This image looks like two documents or two class policies on one page. Retake: photograph each syllabus or handbook page separately.',
+        severity: 'block',
+      });
+      return {
+        ...proposal,
+        fields: [],
+        ambiguities: [
+          ...ambiguities,
+          {
+            code: 'mixed_document',
+            message: 'Separate the documents and scan again.',
+            paths: [],
+            choices: ['retake_separate_pages'],
+          },
+        ],
+        warnings,
+        document_kind_guess: document_kind_guess || 'mixed',
+        overall_confidence: Math.min(proposal.overall_confidence, 0.2),
+      };
+    }
+    void guessMixed;
   }
 
   const out: IngestField[] = [];
@@ -938,20 +957,22 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       case 'gpa.include': {
         if (typeof value === 'string') {
           const s = value.toLowerCase();
+          const cleaned: Record<string, boolean> = {};
           if (/exclud|not\s+(counted|included)|omit/.test(s)) {
-            if (/recovery/.test(s) && /pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) {
-              value = { recovery: false, pre_9: false };
-            } else {
-              const cleaned: Record<string, boolean> = {};
-              if (/recovery/.test(s)) cleaned.recovery = false;
-              if (/pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) cleaned.pre_9 = false;
-              value = Object.keys(cleaned).length ? cleaned : { recovery: false, pre_9: false };
-            }
+            if (/recovery/.test(s)) cleaned.recovery = false;
+            if (/pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) cleaned.pre_9 = false;
+            if (/\bpe\b|physical\s*ed/.test(s)) cleaned.pe = false;
+            if (/pass[\s/-]*fail|p\s*\/\s*f/.test(s)) cleaned.pass_fail = false;
+            if (/\bcbe\b|credit\s*by\s*exam/.test(s)) cleaned.cbe = false;
+            value = Object.keys(cleaned).length
+              ? cleaned
+              : { recovery: false, pre_9: false };
           } else {
-            value = {
-              recovery: /recovery/.test(s) ? true : false,
-              pre_9: /pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s) ? true : false,
-            };
+            if (/recovery/.test(s)) cleaned.recovery = true;
+            if (/pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) cleaned.pre_9 = true;
+            if (/\bpe\b|physical\s*ed/.test(s) && /includ/.test(s)) cleaned.pe = true;
+            if (/\bpe\b|physical\s*ed/.test(s) && /exclud/.test(s)) cleaned.pe = false;
+            value = Object.keys(cleaned).length ? cleaned : { recovery: false, pre_9: false };
           }
         } else if (value && typeof value === 'object' && !Array.isArray(value)) {
           const o = value as Record<string, unknown>;
@@ -960,7 +981,28 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
           if ('pre_9' in o) outInc.pre_9 = Boolean(o.pre_9);
           else if ('pre9' in o) outInc.pre_9 = Boolean(o.pre9);
           if ('summer' in o) outInc.summer = Boolean(o.summer);
+          if ('pe' in o) outInc.pe = Boolean(o.pe);
+          if ('pass_fail' in o) outInc.pass_fail = Boolean(o.pass_fail);
+          else if ('passFail' in o) outInc.pass_fail = Boolean(o.passFail);
+          if ('cbe' in o) outInc.cbe = Boolean(o.cbe);
           value = Object.keys(outInc).length ? outInc : o;
+        }
+        break;
+      }
+      case 'gpa.rank': {
+        if (typeof value === 'string') {
+          const s = value.toLowerCase();
+          if (/unweight/.test(s)) value = { uses: 'unweighted' };
+          else if (/weight/.test(s)) value = { uses: 'weighted' };
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+          const o = value as Record<string, unknown>;
+          const uses = o.uses ?? o.method ?? o.profile;
+          if (typeof uses === 'string') {
+            const s = uses.toLowerCase();
+            if (/unweight/.test(s)) value = { uses: 'unweighted' };
+            else if (/weight/.test(s)) value = { uses: 'weighted' };
+            else value = { uses: s };
+          }
         }
         break;
       }
@@ -1078,6 +1120,47 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   if (derivedPeriod && !byPath.has('calendar.period_model')) {
     byPath.set('calendar.period_model', derivedPeriod);
   }
+  // Belt-and-suspenders: template always implies period_model when still missing
+  if (!byPath.has('calendar.period_model')) {
+    const tmpl = byPath.get('calendar.template');
+    const tv = tmpl && typeof tmpl.value === 'string' ? tmpl.value : null;
+    const periodFromTemplate =
+      tv === 'tx_six_weeks'
+        ? 'six_weeks'
+        : tv === 'nine_weeks' || tv === 'trimester' || tv === 'semester'
+          ? tv
+          : null;
+    if (periodFromTemplate && tmpl) {
+      byPath.set('calendar.period_model', {
+        path: 'calendar.period_model',
+        value: periodFromTemplate,
+        confidence: Math.min(tmpl.confidence, 0.8),
+        evidence: tmpl.evidence,
+        status: 'needs_review',
+        source_doc_id: tmpl.source_doc_id,
+      });
+    }
+  }
+  // rollup.exam_enabled from preset when model omitted it
+  if (!byPath.has('rollup.exam_enabled')) {
+    const presetF = byPath.get('rollup.preset');
+    const pv = presetF ? String(presetF.value || '') : '';
+    if (pv) {
+      const hasExam =
+        /2\/7\+1\/7|40\/40\/20|45\/45\/10|exam/i.test(pv) && !/^50\/50$/i.test(pv);
+      const noExam = /^50\/50$/i.test(pv) || /no\s*exam/i.test(pv);
+      if (hasExam || noExam) {
+        byPath.set('rollup.exam_enabled', {
+          path: 'rollup.exam_enabled',
+          value: hasExam,
+          confidence: Math.min(presetF!.confidence, 0.85),
+          evidence: presetF!.evidence,
+          status: statusFor(Math.min(presetF!.confidence, 0.85), null),
+          source_doc_id: presetF!.source_doc_id,
+        });
+      }
+    }
+  }
 
   // Apply late floor onto late_rule when period floor was a late-floor mis-map
   if (pendingLateFloor != null) {
@@ -1164,6 +1247,93 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         status: statusFor(Math.min(t.confidence, 0.85), null),
         source_doc_id: t.source_doc_id,
       });
+    }
+  }
+
+  // Lift sparse policy facts from any evidence quote already on the page
+  {
+    const blobs = [...byPath.values()]
+      .map((f) => `${quoteText(f.evidence)} ${typeof f.value === 'string' ? f.value : ''}`)
+      .join('\n');
+    const anySrc = [...byPath.values()][0];
+    const liftEv = (q: string): IngestEvidence => ({
+      quote: q.slice(0, 240),
+      page: 1,
+      region: null,
+    });
+    if (!byPath.has('locks.map')) {
+      const hw =
+        blobs.match(
+          /homework[^\n.]{0,40}?(?:max(?:imum)?|cap(?:ped)?|no more than|not exceed|at most|≤|<=)\s*(\d{1,2})\s*%/i,
+        ) ||
+        blobs.match(
+          /(?:max(?:imum)?|cap(?:ped)?|no more than|not exceed|at most|≤|<=)\s*(\d{1,2})\s*%[^\n.]{0,20}homework/i,
+        ) ||
+        blobs.match(/homework[^\n.]{0,20}locked[^\n.]{0,20}(\d{1,2})\s*%/i);
+      if (hw) {
+        byPath.set('locks.map', {
+          path: 'locks.map',
+          value: { categories: true, homework_max_percent: Number(hw[1]) },
+          confidence: 0.85,
+          evidence: liftEv(hw[0]),
+          status: 'proposed',
+          source_doc_id: anySrc?.source_doc_id ?? null,
+        });
+      }
+    }
+    if (!byPath.has('gpa.include')) {
+      const pe = /PE is excluded|exclude[sd]?\s+from\s+(cumulative\s+)?GPA[^\n.]{0,40}PE|\bPE\b[^\n.]{0,30}exclud/i.test(
+        blobs,
+      );
+      const pf = /pass\s*\/\s*fail|P\/F/i.test(blobs) && /exclud/i.test(blobs);
+      const cbe = /\bCBE\b|credit\s*by\s*exam/i.test(blobs) && /exclud/i.test(blobs);
+      if (pe || pf || cbe) {
+        const v: Record<string, boolean> = {};
+        if (pe) v.pe = false;
+        if (pf) v.pass_fail = false;
+        if (cbe) v.cbe = false;
+        byPath.set('gpa.include', {
+          path: 'gpa.include',
+          value: v,
+          confidence: 0.85,
+          evidence: liftEv(blobs.match(/[^\n]{0,40}(PE|P\/F|CBE|pass)[^\n]{0,60}/i)?.[0] || 'GPA include'),
+          status: 'proposed',
+          source_doc_id: anySrc?.source_doc_id ?? null,
+        });
+      }
+    }
+    if (!byPath.has('school.notes')) {
+      const note =
+        blobs.match(/[^\n.]{0,20}exam exemption[^\n.]{0,80}/i)?.[0] ||
+        blobs.match(/[^\n.]{0,20}UIL eligibility[^\n.]{0,80}/i)?.[0] ||
+        blobs.match(/[^\n.]{0,20}Transfer grades[^\n.]{0,100}/i)?.[0] ||
+        null;
+      if (note) {
+        byPath.set('school.notes', {
+          path: 'school.notes',
+          value: note.trim(),
+          confidence: 0.8,
+          evidence: liftEv(note.trim()),
+          status: 'needs_review',
+          source_doc_id: anySrc?.source_doc_id ?? null,
+        });
+      }
+    }
+    if (!byPath.has('syllabus.narrative')) {
+      const note =
+        blobs.match(/[^\n.]{0,10}Conduct mark[^\n.]{0,80}/i)?.[0] ||
+        blobs.match(/[^\n.]{0,20}plus\s*\/\s*minus[^\n.]{0,60}/i)?.[0] ||
+        null;
+      if (note) {
+        byPath.set('syllabus.narrative', {
+          path: 'syllabus.narrative',
+          value: note.trim(),
+          confidence: 0.75,
+          evidence: liftEv(note.trim()),
+          status: 'needs_review',
+          source_doc_id: anySrc?.source_doc_id ?? null,
+        });
+      }
     }
   }
 
