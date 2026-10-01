@@ -1,0 +1,41 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "rollup",
+      "field": "rollup.preset",
+      "box": [
+        32,
+        130.5,
+        715.7,
+        14
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "scale",
+      "field": "scale.bands",
+      "box": [
+        32,
+        184.6,
+        736,
+        131
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "passing",
+      "field": "scale.passing_pct",
+      "box": [
+        32,
+        330.1,
+        303.4,
+        14
+      ]
+    }
+  ]
+}

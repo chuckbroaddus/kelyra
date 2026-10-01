@@ -1,0 +1,74 @@
+{
+  "id": "P01",
+  "frame": [
+    1200,
+    1600
+  ],
+  "fields": {
+    "syllabus.categories": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "syllabus.late_rule": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "syllabus.missing_rule": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    }
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        356,
+        256,
+        963,
+        434
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        308,
+        413,
+        544,
+        457
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "missing",
+      "field": "syllabus.missing_rule",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        303,
+        435,
+        545,
+        480
+      ],
+      "reasons": {}
+    }
+  ]
+}
