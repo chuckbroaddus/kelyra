@@ -1,0 +1,50 @@
+{
+  "id": "H19",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 19,
+    "desk": "laminate",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.47,
+      "width": 0.8,
+      "rot": 14,
+      "keyTop": 0.08
+    },
+    "motion": {
+      "len": 9,
+      "angle": 8
+    },
+    "lowLight": {
+      "gain": 0.52,
+      "cast": [
+        1,
+        0.88,
+        0.66
+      ],
+      "gamma": 1.2
+    },
+    "noise": {
+      "sigma": 13,
+      "chroma": 1
+    },
+    "jpeg": {
+      "quality": 38
+    },
+    "effects": [
+      "rotation",
+      "motion-blur",
+      "low-light-noise-jpeg"
+    ]
+  },
+  "effects": [
+    "rotation",
+    "motion-blur",
+    "low-light-noise-jpeg"
+  ]
+}

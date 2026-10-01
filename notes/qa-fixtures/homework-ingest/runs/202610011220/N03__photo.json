@@ -1,0 +1,36 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "title",
+          "value": "Linear Equations HW"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": null,
+      "maxScore": null,
+      "items": [],
+      "costUsd": 0.0012,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

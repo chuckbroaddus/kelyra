@@ -1,0 +1,69 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [
+        {
+          "name": "Jamie",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Jamie",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "I bought apples, pears, and grapes.",
+          "seen": "I bought apples, pears, and grapes.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "After lunch, we went outside.",
+          "seen": "After lunch, we went outside.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "My dog, Max, likes the park.",
+          "seen": "My dog, Max, likes the park.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "Yes, I will come to the party.",
+          "seen": "Yes, I will come to the party.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0015,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

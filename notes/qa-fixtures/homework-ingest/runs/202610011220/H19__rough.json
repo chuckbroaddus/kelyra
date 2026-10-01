@@ -1,0 +1,93 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Riley Brooks"
+        },
+        {
+          "label": "date",
+          "value": "9/23"
+        },
+        {
+          "label": "period",
+          "value": "2"
+        },
+        {
+          "label": "problem_1",
+          "value": "Area of a 5 cm by 3 cm rectangle 15 cm²"
+        },
+        {
+          "label": "problem_2",
+          "value": "Perimeter of the same rectangle 16 cm"
+        },
+        {
+          "label": "problem_3",
+          "value": "Area of a square with side 4 in 16 in²"
+        },
+        {
+          "label": "problem_4",
+          "value": "Area of a triangle, base 6 m, height 4 m 12 m²"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "15 cm²",
+          "seen": "15 cm²",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "16 cm",
+          "seen": "16 cm",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "16 ft²",
+          "seen": "16 ft²",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "12 m²",
+          "seen": "24 m²",
+          "credit": 0,
+          "of": 1,
+          "gap": "triangle area formula"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

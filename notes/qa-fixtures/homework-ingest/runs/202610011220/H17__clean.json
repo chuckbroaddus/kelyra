@@ -1,0 +1,74 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Morgan Ellis",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Declaration of Independence",
+          "value": "1776"
+        },
+        {
+          "label": "Constitution signed",
+          "value": "1787"
+        },
+        {
+          "label": "Louisiana Purchase",
+          "value": "1803"
+        }
+      ],
+      "names": [
+        {
+          "name": "Morgan Ellis",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Morgan",
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "expected": "1776",
+          "seen": "1776",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "1787",
+          "seen": "1787",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "1803",
+          "seen": "1803",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

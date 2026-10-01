@@ -1,0 +1,64 @@
+{
+  "id": "H29",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 29,
+    "desk": "wood",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.84,
+      "rot": 4,
+      "keyTop": 0.16,
+      "keySide": -0.1
+    },
+    "smudges": [
+      {
+        "cx": 430,
+        "cy": 284,
+        "cw": 200,
+        "ch": 40,
+        "rot": -6,
+        "opacity": 0.3,
+        "pill": true
+      },
+      {
+        "cx": 420,
+        "cy": 440,
+        "cw": 220,
+        "ch": 46,
+        "rot": 3,
+        "opacity": 0.32,
+        "pill": true
+      }
+    ],
+    "fadeInk": 0.9,
+    "handShadow": {
+      "x": 1.02,
+      "y": 0.45,
+      "r": 0.22,
+      "rot": -90,
+      "opacity": 0.45
+    },
+    "jpeg": {
+      "quality": 58
+    },
+    "effects": [
+      "eraser-smudge",
+      "faint-pencil",
+      "perspective",
+      "hand-shadow"
+    ]
+  },
+  "effects": [
+    "eraser-smudge",
+    "faint-pencil",
+    "perspective",
+    "hand-shadow"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Jamie Ortiz"
+        },
+        {
+          "label": "date",
+          "value": "9/30/2025"
+        },
+        {
+          "label": "period",
+          "value": "P3"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Jamie",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "My neighbor Ms. Lee brings extra vegetables from her garden. She waved when I moved in last June. Last week she helped carry boxes up the stairs. I want to thank her with cookies.",
+          "seen": "My neighbor Ms. Lee brings extra vegetables from her garden. She waved when I moved in last June. Last week she helped carry boxes up the stairs. I want to thank her with cookies.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id": "H32",
+  "photo": false,
+  "hand": true,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 32,
+    "desk": "carpet",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.82,
+      "rot": 11,
+      "keyTop": 0.08
+    },
+    "lowLight": {
+      "gain": 0.55,
+      "cast": [
+        1,
+        0.9,
+        0.7
+      ],
+      "gamma": 1.15
+    },
+    "noise": {
+      "sigma": 11,
+      "chroma": 1
+    },
+    "jpeg": {
+      "quality": 46
+    },
+    "effects": [
+      "handwritten",
+      "rotation",
+      "low-light-noise-jpeg"
+    ]
+  },
+  "effects": [
+    "handwritten",
+    "rotation",
+    "low-light-noise-jpeg"
+  ]
+}

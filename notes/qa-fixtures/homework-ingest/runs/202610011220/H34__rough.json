@@ -1,0 +1,64 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Casey Nguyen",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "12 in",
+          "seen": "12 in",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "36 in",
+          "seen": "36 in",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "6 ft",
+          "seen": "6 ft",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "2 ft",
+          "seen": "3 ft",
+          "credit": 0,
+          "of": 1,
+          "gap": "unit conversion"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

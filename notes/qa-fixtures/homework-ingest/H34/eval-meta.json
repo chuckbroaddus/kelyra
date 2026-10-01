@@ -1,0 +1,55 @@
+{
+  "id": "H34",
+  "photo": false,
+  "hand": true,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 34,
+    "desk": "wood",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.84,
+      "rot": -6,
+      "keyTop": 0.22,
+      "keySide": -0.06
+    },
+    "crumple": {
+      "amp": 5,
+      "waves": 12,
+      "shadeGain": 1.3
+    },
+    "creases": {
+      "count": 10,
+      "strength": 0.42
+    },
+    "glare": [
+      {
+        "pcx": 420,
+        "pcy": 300,
+        "rx": 0.22,
+        "ry": 0.035,
+        "strength": 0.72,
+        "core": 0.3
+      }
+    ],
+    "jpeg": {
+      "quality": 56
+    },
+    "effects": [
+      "handwritten",
+      "crumpled-creases",
+      "glare",
+      "perspective"
+    ]
+  },
+  "effects": [
+    "handwritten",
+    "crumpled-creases",
+    "glare",
+    "perspective"
+  ]
+}

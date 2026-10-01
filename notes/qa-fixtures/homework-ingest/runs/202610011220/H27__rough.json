@@ -1,0 +1,56 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": ""
+        },
+        {
+          "label": "date",
+          "value": "9/29"
+        },
+        {
+          "label": "period",
+          "value": "P2"
+        },
+        {
+          "label": "1",
+          "value": "thermometer"
+        },
+        {
+          "label": "2",
+          "value": "precipitation"
+        },
+        {
+          "label": "3",
+          "value": "barometer"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": null,
+      "maxScore": null,
+      "items": [],
+      "costUsd": 0.0011,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

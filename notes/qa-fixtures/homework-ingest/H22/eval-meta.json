@@ -1,0 +1,82 @@
+{
+  "id": "H22",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 22,
+    "desk": "wood",
+    "out": [
+      1600,
+      1200
+    ],
+    "place": {
+      "cx": 0.5,
+      "cy": 0.75,
+      "width": 0.9,
+      "rot": -1.5,
+      "keyTop": 0.1
+    },
+    "clutter": [
+      {
+        "type": "ruler",
+        "x": 0.42,
+        "y": 0.08,
+        "rot": 4,
+        "s": 1.1
+      },
+      {
+        "type": "pencil",
+        "x": 0.78,
+        "y": 0.2,
+        "rot": -14,
+        "s": 0.9
+      },
+      {
+        "type": "clip",
+        "x": 0.12,
+        "y": 0.16,
+        "rot": 30,
+        "s": 1.2
+      }
+    ],
+    "crumple": {
+      "amp": 4,
+      "waves": 12,
+      "shadeGain": 1.2
+    },
+    "creases": {
+      "count": 9,
+      "strength": 0.4
+    },
+    "lowLight": {
+      "gain": 0.6,
+      "cast": [
+        1,
+        0.92,
+        0.75
+      ],
+      "gamma": 1.1
+    },
+    "noise": {
+      "sigma": 10,
+      "chroma": 0.8
+    },
+    "jpeg": {
+      "quality": 45
+    },
+    "effects": [
+      "crumpled-creases",
+      "low-light-noise-jpeg",
+      "crop-bottom"
+    ]
+  },
+  "effects": [
+    "crumpled-creases",
+    "low-light-noise-jpeg",
+    "crop-bottom"
+  ]
+}

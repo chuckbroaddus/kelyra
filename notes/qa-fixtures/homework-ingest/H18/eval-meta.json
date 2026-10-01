@@ -1,0 +1,73 @@
+{
+  "id": "H18",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 18,
+    "desk": "wood",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.86,
+      "rot": -3,
+      "keyTop": 0.34,
+      "keySide": 0.05
+    },
+    "glare": [
+      {
+        "pcx": 470,
+        "pcy": 300,
+        "rx": 0.15,
+        "ry": 0.07,
+        "strength": 0.92,
+        "core": 0.6
+      }
+    ],
+    "clutter": [
+      {
+        "type": "calculator",
+        "x": 0.06,
+        "y": 0.88,
+        "rot": 18,
+        "s": 0.7
+      },
+      {
+        "type": "sticky",
+        "x": 0.9,
+        "y": 0.08,
+        "rot": 12,
+        "s": 0.8,
+        "text": "test fri"
+      },
+      {
+        "type": "pencil",
+        "x": 0.62,
+        "y": 0.93,
+        "rot": -8,
+        "s": 0.9,
+        "over": true
+      }
+    ],
+    "light": {
+      "angle": 90,
+      "strength": 0.22
+    },
+    "jpeg": {
+      "quality": 60
+    },
+    "effects": [
+      "perspective",
+      "glare",
+      "clutter"
+    ]
+  },
+  "effects": [
+    "perspective",
+    "glare",
+    "clutter"
+  ]
+}

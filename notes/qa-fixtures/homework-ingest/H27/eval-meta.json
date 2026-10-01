@@ -1,0 +1,50 @@
+{
+  "id": "H27",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 27,
+    "desk": "grey",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.86,
+      "rot": -2,
+      "keyTop": -0.18,
+      "keySide": 0.06
+    },
+    "glare": [
+      {
+        "pcx": 225,
+        "pcy": 66,
+        "rx": 0.24,
+        "ry": 0.065,
+        "strength": 1,
+        "core": 0.95,
+        "coreLevel": 1
+      }
+    ],
+    "vignette": 0.85,
+    "noise": {
+      "sigma": 7,
+      "chroma": 0.7
+    },
+    "jpeg": {
+      "quality": 58
+    },
+    "effects": [
+      "flash-glare",
+      "vignette",
+      "perspective"
+    ]
+  },
+  "effects": [
+    "flash-glare",
+    "vignette",
+    "perspective"
+  ]
+}

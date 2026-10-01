@@ -1,0 +1,48 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Name: [redacted]",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "producer",
+          "value": "algae"
+        },
+        {
+          "label": "predator",
+          "value": "frog"
+        },
+        {
+          "label": "energy source",
+          "value": "sun"
+        },
+        {
+          "label": "decomposer",
+          "value": "mushrooms"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": null,
+      "maxScore": null,
+      "items": [],
+      "costUsd": 0.0011,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

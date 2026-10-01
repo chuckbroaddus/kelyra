@@ -1,0 +1,90 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "cognates"
+        }
+      ],
+      "fields": [
+        {
+          "label": "animal",
+          "value": "animal"
+        },
+        {
+          "label": "hospital",
+          "value": "hospital"
+        },
+        {
+          "label": "family",
+          "value": "familia"
+        },
+        {
+          "label": "color",
+          "value": "color"
+        }
+      ],
+      "names": [
+        {
+          "name": "Casey Nguyen",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 8,
+      "teacherNote": null,
+      "studentName": "Casey",
+      "maxScore": 8,
+      "items": [
+        {
+          "n": 1,
+          "expected": "animal",
+          "seen": "animal",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "hospital",
+          "seen": "hospital",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "familia",
+          "seen": "familia",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "color",
+          "seen": "color",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

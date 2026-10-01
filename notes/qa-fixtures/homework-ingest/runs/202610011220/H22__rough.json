@@ -1,0 +1,77 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Sam Patel"
+        },
+        {
+          "label": "date",
+          "value": "9/29"
+        },
+        {
+          "label": "period",
+          "value": "P2"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": "Some exponent confusion visible.",
+      "studentName": "Sam Patel",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "8",
+          "seen": "8",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "25",
+          "seen": "25",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "1",
+          "seen": "0",
+          "credit": 0,
+          "of": 1,
+          "gap": "zero exponent rule"
+        },
+        {
+          "n": 4,
+          "expected": "81",
+          "seen": "81",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

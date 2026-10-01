@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRoughCases } from './lib/homework-rough-cases.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -65,9 +66,11 @@ function expected(id, opts) {
   const neg = Boolean(opts.negative);
   const fields = [
     field('intent', opts.intent ?? (neg ? 'unsure' : 'homework'), 0.9),
-    field('studentName', opts.studentName ?? null, opts.studentName ? 0.9 : 0.2, opts.studentName ? 'proposed' : 'unknown'),
+    // status "absent" = not legible/visible in the evaluated image (must stay null);
+    // "uncertain" = degraded but partly readable (null OR the true value accepted by the scorer)
+    field('studentName', opts.studentName ?? null, opts.studentName ? 0.9 : 0.2, opts.studentNameStatus ?? (opts.studentName ? 'proposed' : 'unknown')),
     field('assignmentTitle', opts.assignmentTitle ?? null, opts.assignmentTitle ? 0.8 : 0.3, opts.assignmentTitle ? 'proposed' : 'unknown'),
-    field('draftScore', opts.draftScore ?? null, opts.draftScore != null ? 0.7 : 0.3, opts.draftScore != null ? 'proposed' : 'unknown'),
+    field('draftScore', opts.draftScore ?? null, opts.draftScore != null ? 0.7 : 0.3, opts.draftScoreStatus ?? (opts.draftScore != null ? 'proposed' : 'unknown')),
     field('maxScore', opts.maxScore ?? null, 0.5, opts.maxScore != null ? 'proposed' : 'unknown'),
     field('gaps', opts.gaps ?? [], 0.7),
     field('itemCount', opts.itemCount ?? null, 0.6, opts.itemCount != null ? 'proposed' : 'unknown'),
@@ -76,6 +79,7 @@ function expected(id, opts) {
     field('nameMissing', opts.nameMissing ?? false, 0.8),
     field('reject', opts.reject ?? neg, 0.9),
   ];
+  if (opts.studentNameAccept) fields[1].accept = opts.studentNameAccept;
   return {
     source_id: id,
     kind: neg ? 'negative' : 'homework',
@@ -518,6 +522,9 @@ CASES.push(
   },
 );
 
+// ROUGH_AND_HANDWRITTEN (H18+): see scripts/lib/homework-rough-cases.mjs
+CASES.push(...buildRoughCases(expected));
+
 function main() {
   ensureDir(OUT);
   const manifest = { generated_at: new Date().toISOString(), roster: ROSTER, cases: [] };
@@ -537,6 +544,8 @@ function main() {
           soft_student: true,
           soft_score_tol: 12,
           multi_page: Boolean(c.multi_page),
+          ...(c.rough ? { rough: { ...c.rough, effects: c.effects || [] } } : {}),
+          ...(c.effects ? { effects: c.effects } : {}),
         },
         null,
         2,
@@ -548,6 +557,8 @@ function main() {
       kind: c.expected.kind,
       photo: Boolean(c.photo),
       hand: Boolean(c.hand),
+      rough: Boolean(c.rough),
+      ...(c.effects ? { effects: c.effects } : {}),
       negative: Boolean(c.expected.negative),
     });
   }

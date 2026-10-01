@@ -1,0 +1,78 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Taylor Kim",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Left desk",
+          "value": "Taylor Kim"
+        },
+        {
+          "label": "Right desk",
+          "value": "Jamie Ortiz"
+        },
+        {
+          "label": "Partner Warm-up",
+          "value": "Taylor: 6 x 7 = 42\nJamie: 8 x 9 = 72\nTogether: 42 + 72 = 114"
+        }
+      ],
+      "names": [
+        {
+          "name": "Taylor Kim",
+          "confidence": 0.9
+        },
+        {
+          "name": "Jamie Ortiz",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Taylor Kim",
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "expected": "42",
+          "seen": "42",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "72",
+          "seen": "72",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "114",
+          "seen": "114",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

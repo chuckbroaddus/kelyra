@@ -1,0 +1,77 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Jordan Chen"
+        },
+        {
+          "label": "date",
+          "value": "9/30/2025"
+        },
+        {
+          "label": "period",
+          "value": "P3"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 25,
+      "teacherNote": null,
+      "studentName": "Jordan Chen",
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "expected": "solid, liquid, gas",
+          "seen": "solid, liquid, _____",
+          "credit": null,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "0°C or 32°F",
+          "seen": "Water freezes at:",
+          "credit": null,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "100°C or 212°F",
+          "seen": "Boiling point C:",
+          "credit": null,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "far apart",
+          "seen": "Gas particles: far apart",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0015,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

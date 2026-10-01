@@ -1,0 +1,45 @@
+{
+  "id": "H26",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 26,
+    "desk": "laminate",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.86,
+      "rot": -5,
+      "keyTop": 0.07
+    },
+    "defocus": 3,
+    "lowLight": {
+      "gain": 0.72,
+      "cast": [
+        1,
+        0.95,
+        0.85
+      ],
+      "gamma": 1.05
+    },
+    "noise": {
+      "sigma": 9,
+      "chroma": 0.8
+    },
+    "jpeg": {
+      "quality": 55
+    },
+    "effects": [
+      "defocus",
+      "low-light-noise-jpeg"
+    ]
+  },
+  "effects": [
+    "defocus",
+    "low-light-noise-jpeg"
+  ]
+}
