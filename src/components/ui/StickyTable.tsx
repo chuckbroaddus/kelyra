@@ -1,7 +1,6 @@
-import { type ReactNode, useRef } from 'react';
+import { type ReactNode, useMemo, useRef } from 'react';
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -11,12 +10,6 @@ import {
 } from 'react-native';
 
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
-import {
-  decideStickyHScroll,
-  stickyHScrollBeginDrag,
-  stickyHScrollRelease,
-  type StickyHDriver,
-} from '@/components/ui/stickyTableHScroll';
 import { type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -46,6 +39,13 @@ type Props<T> = {
   rowTone?: (row: T, index: number) => 'stripe' | 'group';
 };
 
+/**
+ * Frozen first column + horizontally scrolling grid.
+ *
+ * Horizontal motion has one owner: the body Animated.ScrollView. The sticky
+ * header mirrors the same offset with a native-driven translateX so finger
+ * lag and end bounce stay locked (no dual ScrollView onScroll→scrollTo pair).
+ */
 export function StickyTable<T>({
   rows,
   rowKey,
@@ -64,55 +64,21 @@ export function StickyTable<T>({
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
   const { scrollHandlers } = useMarqueeScroll();
-  const headRef = useRef<ScrollView>(null);
-  const bodyRef = useRef<ScrollView>(null);
-  /** Active horizontal driver — never cleared by a short timer (that caused flicker). */
-  const driving = useRef<StickyHDriver>('none');
-  const lastSyncedX = useRef(0);
-
-  const follow = (who: 'head' | 'body', x: number) => {
-    const decision = decideStickyHScroll({
-      driving: driving.current,
-      who,
-      x,
-      lastSyncedX: lastSyncedX.current,
-    });
-    if (decision.action === 'ignore') return;
-    driving.current = decision.nextDriving;
-    lastSyncedX.current = decision.nextLastX;
-    if (who === 'head') bodyRef.current?.scrollTo({ x, y: 0, animated: false });
-    else headRef.current?.scrollTo({ x, y: 0, animated: false });
-  };
-
-  const beginH = (who: 'head' | 'body') => {
-    driving.current = stickyHScrollBeginDrag(driving.current, who);
-  };
-
-  /** Drop lock when this scroller is done. Ignore peer end events. */
-  const endH = (who: 'head' | 'body') => {
-    driving.current = stickyHScrollRelease(driving.current, who);
-  };
-
-  /**
-   * End-drag may still have momentum — only release early when velocity is
-   * known and ~0. If velocity is missing (common on web), wait for
-   * onMomentumScrollEnd so a lagging follower cannot reverse-drive.
-   */
-  const endHAfterDrag = (
-    who: 'head' | 'body',
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
-    const vx = event.nativeEvent.velocity?.x;
-    if (vx != null && Math.abs(vx) < 0.05) endH(who);
-  };
-
-  const onHead = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    follow('head', event.nativeEvent.contentOffset.x);
-  };
-
-  const onBodyH = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    follow('body', event.nativeEvent.contentOffset.x);
-  };
+  // Shared body→header offset (incl. rubber-band overscroll).
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const onBodyH = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+        useNativeDriver: true,
+      }),
+    [scrollX],
+  );
+  const headerShiftStyle = useMemo(
+    () => ({
+      transform: [{ translateX: Animated.multiply(scrollX, -1) }],
+    }),
+    [scrollX],
+  );
 
   if (!rows.length) {
     return (
@@ -125,6 +91,7 @@ export function StickyTable<T>({
   }
 
   const bodyHeight = rows.length * rowHeight;
+  const panX = Platform.OS === 'web' ? ({ touchAction: 'pan-x' } as const) : null;
 
   const headerCells = (
     <View style={styles.row}>
@@ -156,8 +123,6 @@ export function StickyTable<T>({
     </View>
   );
 
-  const panX = Platform.OS === 'web' ? ({ touchAction: 'pan-x' } as const) : null;
-
   const headerRow = (
     <View
       collapsable={false}
@@ -170,32 +135,13 @@ export function StickyTable<T>({
         },
       ]}
     >
-      <ScrollView
-        ref={headRef}
-        horizontal
-        nestedScrollEnabled
-        directionalLockEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        onScroll={onHead}
-        onScrollBeginDrag={(event) => {
-          beginH('head');
-          scrollHandlers.onScrollBeginDrag?.(event);
-        }}
-        onScrollEndDrag={(event) => {
-          endHAfterDrag('head', event);
-          scrollHandlers.onScrollEndDrag?.(event);
-        }}
-        onMomentumScrollEnd={(event) => {
-          endH('head');
-          scrollHandlers.onMomentumScrollEnd?.(event);
-        }}
-        style={[styles.headScroll, panX]}
-        contentContainerStyle={{ paddingLeft: frozenWidth }}
+      {/* Header mirrors body contentOffset.x — not a second ScrollView. */}
+      <Animated.View
+        pointerEvents="box-none"
+        style={[styles.headMirror, { paddingLeft: frozenWidth }, headerShiftStyle, panX]}
       >
         {headerCells}
-      </ScrollView>
+      </Animated.View>
       <View
         pointerEvents="none"
         style={[
@@ -269,27 +215,19 @@ export function StickyTable<T>({
               ))}
             </View>
             <View style={[styles.hClip, { height: bodyHeight }]}>
-              <ScrollView
-                ref={bodyRef}
+              <Animated.ScrollView
                 horizontal
+                bounces
+                alwaysBounceHorizontal
                 showsHorizontalScrollIndicator
                 directionalLockEnabled
                 nestedScrollEnabled
-                scrollEventThrottle={16}
+                scrollEventThrottle={1}
                 keyboardShouldPersistTaps="handled"
                 onScroll={onBodyH}
-                onScrollBeginDrag={(event) => {
-                  beginH('body');
-                  scrollHandlers.onScrollBeginDrag?.(event);
-                }}
-                onScrollEndDrag={(event) => {
-                  endHAfterDrag('body', event);
-                  scrollHandlers.onScrollEndDrag?.(event);
-                }}
-                onMomentumScrollEnd={(event) => {
-                  endH('body');
-                  scrollHandlers.onMomentumScrollEnd?.(event);
-                }}
+                onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
+                onScrollEndDrag={scrollHandlers.onScrollEndDrag}
+                onMomentumScrollEnd={scrollHandlers.onMomentumScrollEnd}
                 style={[styles.bodyScroll, panX, { height: bodyHeight }]}
                 contentContainerStyle={{ height: bodyHeight }}
               >
@@ -321,7 +259,7 @@ export function StickyTable<T>({
                     </View>
                   ))}
                 </View>
-              </ScrollView>
+              </Animated.ScrollView>
             </View>
           </View>
         </View>
@@ -352,9 +290,10 @@ const styles = StyleSheet.create({
       default: {},
     }),
   },
-  headScroll: {
-    width: '100%',
+  headMirror: {
     height: '100%',
+    flexDirection: 'row',
+    alignItems: 'stretch',
   },
   frozenHead: {
     position: 'absolute',
