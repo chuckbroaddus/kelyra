@@ -468,8 +468,12 @@ const RECIPES = {
     circle(p, 13.4, 17.8, 1.7, 0, true);
   },
   photo: (p) => {
-    roundRect(p, 5.6, 3.6, 14.2, 10.4, 1.4, ST, false);
-    roundRect(p, 3.4, 8.4, 14.2, 10.4, 1.4, ST, false);
+    // Stack-of-images (library multi-select): back plate up-left, front plate with landscape.
+    // Closest to SF Symbol photo.on.rectangle / images-outline.
+    roundRect(p, 3.0, 2.8, 13.8, 10.6, 1.4, ST, false);
+    roundRect(p, 6.6, 8.2, 14.4, 11.8, 1.4, ST, false);
+    poly(p, [[8.4, 18.2], [11.6, 13.4], [13.8, 15.6], [16.8, 12.2], [19.6, 18.2]], ST, false);
+    circle(p, 17.2, 11.4, 1.35, ST, false);
   },
   file: (p) => {
     roundRect(p, 6.2, 3.2, 11.8, 17.6, 1.2, ST, false);

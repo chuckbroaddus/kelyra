@@ -159,6 +159,21 @@ test('Capture source icons track selectedSource highlight', () => {
   assert.doesNotMatch(source, /tone="brand" label="Camera"/);
 });
 
+test('Capture camera icon opens multi-shot session (no single-shot dismiss)', () => {
+  assert.match(source, /MultiShotCameraSession/);
+  assert.match(source, /MULTI_SHOT_BATCH_CAP/);
+  assert.match(source, /visible=\{cameraOpen\}/);
+  assert.match(source, /applyPhotos\(photos\)/);
+  assert.match(source, /setCameraOpen\(true\)/);
+  assert.doesNotMatch(source, /launchCameraAsync/);
+  assert.match(source, /label="Camera"/);
+  assert.match(source, /label="Photo or Video"/);
+  assert.match(source, /label="Files"/);
+  // Still three entry icons only — no fourth multi-photo control.
+  assert.doesNotMatch(source, /label="Multi[- ]?photo"/i);
+  assert.doesNotMatch(source, /Take another/);
+});
+
 test('Capture scrolls progress above sticky CTA when Ask AI / busy', () => {
   assert.match(source, /scrollRef = useRef<ScrollView>\(null\)/);
   assert.match(source, /scrollRef=\{scrollRef\}/);
