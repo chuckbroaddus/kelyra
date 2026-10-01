@@ -146,10 +146,13 @@ export type WizardStepId =
   | 'book_rollup'
   | 'review';
 
+/**
+ * Setup chrome tabs (7). `within` stays a type for old drafts / deep links only —
+ * its rule lives on the two Weighted engine radios (no separate tab).
+ */
 export const WIZARD_STEPS: WizardStepId[] = [
   'engine',
   'categories',
-  'within',
   'drops',
   'status_late',
   'extra_credit',
@@ -162,10 +165,22 @@ export const STEP_LABELS: Record<WizardStepId, string> = {
   categories: 'Categories',
   within: 'Inside a category',
   drops: 'Drop lowest',
-  status_late: 'Missing & late work',
+  status_late: 'Missing & late',
   extra_credit: 'Extra credit & retakes',
-  book_rollup: 'Grading periods & rounding',
+  book_rollup: 'Periods & rounding',
   review: 'Review & publish',
+};
+
+/** Icons for PersonTabs on the syllabus setup row (shared IconName strings). */
+export const STEP_ICONS: Record<WizardStepId, string> = {
+  engine: 'grades',
+  categories: 'records',
+  within: 'grades',
+  drops: 'filter',
+  status_late: 'alert',
+  extra_credit: 'plus',
+  book_rollup: 'calendar',
+  review: 'check',
 };
 
 export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
@@ -178,6 +193,40 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   book_rollup: 'help.reset_period',
   review: 'help.engine.weighted_points',
 };
+
+/** Drop-lowest UI range (0–3). Values outside clamp when set via the stepper. */
+export const DROP_LOWEST_OPTIONS = [0, 1, 2, 3] as const;
+
+export function clampDropLowest(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(3, Math.trunc(n)));
+}
+
+/** Late amount / unit fields — same rule as the existing late form. */
+export function showLateAmountFields(draft: { late_rule: LateRule }): boolean {
+  return draft.late_rule.type !== 'none';
+}
+
+/**
+ * Extra-credit cap field. Cap still stores for any method; the redraw only
+ * surfaces the field for methods B and C (adds points / own category).
+ */
+export function showExtraCreditCapField(draft: { extra_credit_method: ExtraCreditMethod }): boolean {
+  return draft.extra_credit_method === 'B' || draft.extra_credit_method === 'C';
+}
+
+/**
+ * Floor field for missing = “lowest grade allowed”. Period floor still lives on
+ * the Drop lowest step (unchanged); this gates the extra prompt on Missing & late.
+ */
+export function showMissingFloorField(draft: { missing_rule: MissingRule }): boolean {
+  return draft.missing_rule === 'floor';
+}
+
+/** Categories shown on the drop-lowest stepper (active only — same as before). */
+export function dropLowestCategories(categories: SyllabusCategoryDraft[]): SyllabusCategoryDraft[] {
+  return categories.filter((c) => c.active);
+}
 
 /** School lock flags (aligned with src/lib/syllabus/locks.ts + GB-07). */
 export type SyllabusLocks = {
@@ -231,21 +280,21 @@ export const ENGINE_OPTIONS: EngineOption[] = [
   {
     id: 'total_points',
     label: 'Total points',
-    plain: 'Add up all points earned and divide by points possible. A 100-point test counts more than a 10-point quiz. No category weights.',
+    plain: 'Every point counts the same. A 100-point test outweighs a 10-point quiz.',
     needsCategories: false,
     needsWithin: false,
   },
   {
     id: 'weighted_points_inside',
     label: 'Weighted, points count',
-    plain: 'Each category has a weight. Inside a category, assignments worth more points count more.',
+    plain: 'Categories have weights. Inside one, a 100-point test counts more than a 20-point quiz.',
     needsCategories: true,
     needsWithin: true,
   },
   {
     id: 'weighted_percent_inside',
     label: 'Weighted, all equal',
-    plain: 'Each category has a weight. Inside a category every assignment counts the same, no matter its points.',
+    plain: 'Categories have weights. Inside one, every assignment counts the same. 80/100 and 16/20 are both 80%.',
     needsCategories: true,
     needsWithin: true,
   },
@@ -485,15 +534,25 @@ export function applyAskImport(
 }
 
 export function setWizardStep(draft: SyllabusWizardDraft, step: WizardStepId): SyllabusWizardDraft {
-  return { ...draft, step };
+  const next = step === 'within' ? 'engine' : step;
+  return { ...draft, step: next };
 }
 
 export function visibleSteps(draft: SyllabusWizardDraft): WizardStepId[] {
   const opt = engineOption(draft.engine);
   return WIZARD_STEPS.filter((id) => {
-    if (id === 'categories' || id === 'within') return opt.needsCategories;
+    if (id === 'within') return false;
+    if (id === 'categories') return opt.needsCategories;
     return true;
   });
+}
+
+/** Resolve a draft.step that may be legacy `within` or hidden for the engine. */
+export function resolveWizardStep(draft: SyllabusWizardDraft): WizardStepId {
+  const steps = visibleSteps(draft);
+  if (draft.step === 'within') return steps.includes('engine') ? 'engine' : steps[0]!;
+  if (steps.includes(draft.step)) return draft.step;
+  return steps[0]!;
 }
 
 export function soFarSummary(draft: SyllabusWizardDraft): string {

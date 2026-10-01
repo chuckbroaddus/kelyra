@@ -119,6 +119,8 @@ export function isClassDeskTabsRoute(pathname: string): boolean {
  */
 export function classTabsStacked(pathname: string, tab?: string | null): boolean {
   if (pathname.includes('/gradebook')) return true;
+  // Syllabus setup is a demoted Settings sibling with its own PersonTabs shelf (§9.6).
+  if (pathname.includes('/syllabus')) return true;
   const desk = /\/class\/[^/]+\/?$/.test(pathname);
   return desk && tab !== 'needs';
 }

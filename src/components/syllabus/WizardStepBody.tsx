@@ -1,12 +1,12 @@
 /**
  * Step bodies for GB-08 syllabus wizard.
+ * Radios (full label + help under selected), steppers, switches — no choice ChipRows.
  */
 import { useState } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Pressable, Switch, Text, View, StyleSheet } from 'react-native';
 
-import { GhostButton } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
+import { GhostButton, SecondaryButton } from '@/components/ui/Button';
+import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
@@ -14,17 +14,26 @@ import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
 import { splitWeights } from '@/lib/syllabus/extraCreditWeights';
 import {
+  DROP_LOWEST_OPTIONS,
   ENGINE_OPTIONS,
+  STEP_LABELS,
   activeWeightSum,
   addCategory,
   canFinishReview,
+  clampDropLowest,
+  dropLowestCategories,
   engineOption,
   isFieldLocked,
   isWeightedEngine,
   parentFacingParagraph,
   patchCategory,
   patchDraft,
+  removeCategory,
   setEmptyCategoryPolicy,
+  setWizardStep,
+  showExtraCreditCapField,
+  showLateAmountFields,
+  showMissingFloorField,
   type SyllabusCategoryDraft,
   type SyllabusWizardDraft,
   type WizardStepId,
@@ -58,7 +67,133 @@ export function LockNote({
 }) {
   if (!isFieldLocked(draft, field)) return null;
   const why = draft.lock_reasons[field] ?? 'Your school sets this.';
-  return <Text style={[type.meta, { color: colors.warn, marginTop: 6 }]}>Set by your school — {why}</Text>;
+  return (
+    <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
+      <Text style={[type.meta, { color: colors.warn }]}>Set by your school — {why}</Text>
+    </View>
+  );
+}
+
+function RadioOption({
+  label,
+  plain,
+  selected,
+  disabled,
+  colors,
+  onPress,
+}: {
+  label: string;
+  plain?: string;
+  selected: boolean;
+  disabled?: boolean;
+  colors: StepColors;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected, disabled: Boolean(disabled) }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.radio,
+        {
+          borderColor: selected ? colors.brand : colors.line,
+          backgroundColor: selected ? colors.brand + '18' : 'transparent',
+          opacity: disabled ? 0.55 : 1,
+        },
+      ]}
+    >
+      <View style={styles.radioTop}>
+        <Text style={[type.body, { color: colors.ink, fontWeight: '600', flex: 1 }]}>{label}</Text>
+        <View
+          style={[
+            styles.dot,
+            {
+              borderColor: selected ? colors.brand : colors.mute,
+              backgroundColor: selected ? colors.brand : 'transparent',
+            },
+          ]}
+        />
+      </View>
+      {selected && plain ? (
+        <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>{plain}</Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
+function DropStepper({
+  label,
+  value,
+  disabled,
+  colors,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  disabled?: boolean;
+  colors: StepColors;
+  onChange: (n: number) => void;
+}) {
+  const v = clampDropLowest(value);
+  return (
+    <View style={[styles.stepper, { borderColor: colors.line }]} accessibilityRole="adjustable">
+      <Text style={[type.body, { color: colors.ink, fontWeight: '600', flex: 1 }]}>{label}</Text>
+      <View style={styles.pills}>
+        {DROP_LOWEST_OPTIONS.map((n) => {
+          const on = n === v;
+          return (
+            <Pressable
+              key={n}
+              disabled={disabled}
+              onPress={() => onChange(n)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              style={[
+                styles.pill,
+                { backgroundColor: on ? colors.brand : colors.line, opacity: disabled ? 0.5 : 1 },
+              ]}
+            >
+              <Text style={{ color: on ? '#1a120c' : colors.mute, fontWeight: '700', fontSize: 13 }}>{n}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function SwitchRow({
+  title,
+  subtitle,
+  value,
+  disabled,
+  colors,
+  onValueChange,
+}: {
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  disabled?: boolean;
+  colors: StepColors;
+  onValueChange: (v: boolean) => void;
+}) {
+  return (
+    <View style={[styles.switchRow, { borderColor: colors.line }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[type.body, { color: colors.ink, fontWeight: '600' }]}>{title}</Text>
+        {subtitle ? <Text style={[type.meta, { color: colors.mute, marginTop: 2 }]}>{subtitle}</Text> : null}
+      </View>
+      <Switch
+        value={value}
+        disabled={disabled}
+        onValueChange={onValueChange}
+        accessibilityLabel={title}
+        trackColor={{ false: colors.line, true: colors.brand }}
+      />
+    </View>
+  );
 }
 
 export function WizardStepBody({ draft, step, colors, onChange }: Props) {
@@ -70,7 +205,7 @@ export function WizardStepBody({ draft, step, colors, onChange }: Props) {
   if (step === 'status_late') return <StatusLateStep draft={draft} colors={colors} onChange={onChange} />;
   if (step === 'extra_credit') return <EcStep draft={draft} colors={colors} onChange={onChange} />;
   if (step === 'book_rollup') return <BookStep draft={draft} colors={colors} onChange={onChange} />;
-  return <ReviewStep draft={draft} colors={colors} sum={sum} />;
+  return <ReviewStep draft={draft} colors={colors} sum={sum} onChange={onChange} />;
 }
 
 function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
@@ -78,21 +213,20 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Choose how assignment scores add up to a grade for each grading period.
+        One choice. The line under it is the only help.
       </Text>
       <LockNote draft={draft} field="engine" colors={colors} />
-      <ChipRow>
-        {ENGINE_OPTIONS.map((opt) => (
-          <Chip
-            key={opt.id}
-            label={opt.label}
-            selected={draft.engine === opt.id}
-            disabled={locked}
-            onPress={() => onChange(patchDraft(draft, { engine: opt.id }))}
-          />
-        ))}
-      </ChipRow>
-      <Text style={[type.body, { color: colors.ink, marginTop: 12 }]}>{engineOption(draft.engine).plain}</Text>
+      {ENGINE_OPTIONS.map((opt) => (
+        <RadioOption
+          key={opt.id}
+          label={opt.label}
+          plain={opt.plain}
+          selected={draft.engine === opt.id}
+          disabled={locked}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { engine: opt.id }))}
+        />
+      ))}
       <TextField
         label="Syllabus name"
         placeholder="Room 14 Math — Fall 2026"
@@ -109,11 +243,13 @@ function CategoryCard({
   colors,
   locked,
   onPatch,
+  onDelete,
 }: {
   row: SyllabusCategoryDraft;
   colors: StepColors;
   locked: boolean;
   onPatch: (p: Partial<SyllabusCategoryDraft>) => void;
+  onDelete: () => void;
 }) {
   return (
     <View style={[styles.catCard, { borderColor: colors.line }]}>
@@ -127,17 +263,23 @@ function CategoryCard({
           onPatch({ weight_percent: Number.isFinite(n) ? n : 0 });
         }}
       />
-      <ChipRow>
-        <Chip label={row.active ? 'In use' : 'Not used'} selected={row.active} onPress={() => onPatch({ active: !row.active })} />
-        <Chip
-          label={row.default_include_in_average ? 'Counts in the average' : 'Counts only when you choose'}
-          selected={row.default_include_in_average}
-          onPress={() => onPatch({ default_include_in_average: !row.default_include_in_average })}
-        />
-      </ChipRow>
-      <Text style={[type.meta, { color: colors.mute }]}>
-        {locked ? 'Set by your school' : ''}
-      </Text>
+      <SwitchRow
+        title="In use"
+        value={row.active}
+        disabled={locked}
+        colors={colors}
+        onValueChange={(active) => onPatch({ active })}
+      />
+      <SwitchRow
+        title="Counts in the average"
+        subtitle={row.default_include_in_average ? 'Counts in the average' : 'Recorded, not in the grade'}
+        value={row.default_include_in_average}
+        disabled={locked}
+        colors={colors}
+        onValueChange={(default_include_in_average) => onPatch({ default_include_in_average })}
+      />
+      {!locked ? <GhostButton align="left" label="Delete category" onPress={onDelete} /> : null}
+      {locked ? <Text style={[type.meta, { color: colors.mute }]}>Set by your school</Text> : null}
     </View>
   );
 }
@@ -158,46 +300,64 @@ function WeightTotalLine({ draft, colors, sum }: { draft: SyllabusWizardDraft; c
 
 function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & { sum: number }) {
   const locked = isFieldLocked(draft, 'categories');
+  const [addOpen, setAddOpen] = useState(false);
+  const [customLabel, setCustomLabel] = useState('');
+  const available = GRADE_KINDS.filter((k) => !draft.categories.some((c) => c.key === k.key));
   return (
     <>
       <WeightTotalLine draft={draft} colors={colors} sum={sum} />
       <LockNote draft={draft} field="categories" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginVertical: 8 }]}>
-        If a category has no grades yet:
+      <Text style={[type.meta, { color: colors.mute, marginVertical: 8, fontWeight: '600' }]}>
+        If a category has no grades yet
       </Text>
-      <ChipRow>
-        <Chip
-          label="Skip it until it has grades"
-          selected={draft.empty_category === 'renormalize'}
-          disabled={locked}
-          onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
-        />
-        <Chip
-          label="Count it as 0"
-          selected={draft.empty_category === 'zero'}
-          disabled={locked}
-          onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
-        />
-      </ChipRow>
-      {!locked ? (
-        <GhostButton align="left" label="Add category" onPress={() => onChange(addCategory(draft))} />
-      ) : null}
-      {!locked ? (
-        <ChipRow>
-          {GRADE_KINDS.filter((k) => !draft.categories.some((c) => c.key === k.key)).map((k) => (
-            <Chip key={k.key} label={`+ ${k.label}`} selected={false} onPress={() => onChange(addCategory(draft, k))} />
-          ))}
-        </ChipRow>
-      ) : null}
+      <RadioOption
+        label="Skip it until it has grades"
+        selected={draft.empty_category === 'renormalize'}
+        disabled={locked}
+        colors={colors}
+        onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
+      />
+      <RadioOption
+        label="Count it as zero"
+        selected={draft.empty_category === 'zero'}
+        disabled={locked}
+        colors={colors}
+        onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
+      />
       {draft.categories.map((row) => (
         <CategoryCard
           key={row.key}
           row={row}
           colors={colors}
-          locked={isFieldLocked(draft, 'categories')}
+          locked={locked}
           onPatch={(partial) => onChange(patchCategory(draft, row.key, partial))}
+          onDelete={() => onChange(removeCategory(draft, row.key))}
         />
       ))}
+      {!locked ? <SecondaryButton label="Add category" onPress={() => setAddOpen(true)} fullWidth /> : null}
+      <FormSheet visible={addOpen} title="Add category" onClose={() => setAddOpen(false)}>
+        {available.map((k) => (
+          <GhostButton
+            key={k.key}
+            align="left"
+            label={k.label}
+            onPress={() => {
+              onChange(addCategory(draft, k));
+              setAddOpen(false);
+            }}
+          />
+        ))}
+        <TextField label="Custom name" value={customLabel} onChangeText={setCustomLabel} placeholder="Labs" />
+        <GhostButton
+          align="left"
+          label="Add custom"
+          onPress={() => {
+            onChange(addCategory(draft, { label: customLabel.trim() || 'Other' }));
+            setCustomLabel('');
+            setAddOpen(false);
+          }}
+        />
+      </FormSheet>
     </>
   );
 }
@@ -208,49 +368,46 @@ function WithinStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
         Example: a 20-point quiz and a 100-point test in the same category.
       </Text>
-      <ChipRow>
-        <Chip
-          label="Bigger assignments count more"
-          selected={draft.within_category === 'points_inside' || draft.engine === 'weighted_points_inside'}
-          onPress={() => onChange(patchDraft(draft, { within_category: 'points_inside' }))}
-        />
-        <Chip
-          label="Every assignment counts the same"
-          selected={draft.within_category === 'percent_inside' || draft.engine === 'weighted_percent_inside'}
-          onPress={() => onChange(patchDraft(draft, { within_category: 'percent_inside' }))}
-        />
-      </ChipRow>
-      <Text style={[type.body, { color: colors.ink, marginTop: 12 }]}>
-        {draft.engine === 'weighted_points_inside' || draft.within_category === 'points_inside'
-          ? 'Points count: 80/100 and 16/20 are added up, so the category is 96/120 (80%).'
-          : 'All equal: 80/100 and 16/20 are each 80%, and the two are averaged the same.'}
-      </Text>
+      <RadioOption
+        label="Bigger assignments count more"
+        plain="Points count: 80/100 and 16/20 are added up, so the category is 96/120 (80%)."
+        selected={draft.within_category === 'points_inside' || draft.engine === 'weighted_points_inside'}
+        colors={colors}
+        onPress={() => onChange(patchDraft(draft, { within_category: 'points_inside' }))}
+      />
+      <RadioOption
+        label="Every assignment counts the same"
+        plain="All equal: 80/100 and 16/20 are each 80%, and the two are averaged the same."
+        selected={draft.within_category === 'percent_inside' || draft.engine === 'weighted_percent_inside'}
+        colors={colors}
+        onPress={() => onChange(patchDraft(draft, { within_category: 'percent_inside' }))}
+      />
     </>
   );
 }
 
 function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
+  const dropLocked = isFieldLocked(draft, 'drop_lowest');
   return (
     <>
       <LockNote draft={draft} field="drop_lowest" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Dropping low scores happens inside one grading period only.
+        Drops happen inside one grading period. 0 means drop nothing.
       </Text>
-      {draft.categories
-        .filter((c) => c.active)
-        .map((row) => (
-          <View key={row.key} style={{ marginBottom: 10 }}>
-            <TextField
-              label={`${row.label}: how many lowest scores to drop (0–3)`}
-              keyboardType="numeric"
-              value={String(row.rules?.drop_lowest_n ?? 0)}
-              onChangeText={(text) => {
-                const n = Math.max(0, Math.min(3, Number(text) || 0));
-                onChange(patchCategory(draft, row.key, { rules: { ...row.rules, drop_lowest_n: n } }));
-              }}
-            />
-          </View>
-        ))}
+      {dropLowestCategories(draft.categories).map((row) => (
+        <DropStepper
+          key={row.key}
+          label={row.label}
+          value={row.rules?.drop_lowest_n ?? 0}
+          disabled={dropLocked}
+          colors={colors}
+          onChange={(n) =>
+            onChange(
+              patchCategory(draft, row.key, { rules: { ...row.rules, drop_lowest_n: clampDropLowest(n) } }),
+            )
+          }
+        />
+      ))}
       <LockNote draft={draft} field="floor" colors={colors} />
       <TextField
         label="Lowest grade allowed for the period, % (optional)"
@@ -269,25 +426,41 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const lateLocked = isFieldLocked(draft, 'late');
   const [excusedHelpOpen, setExcusedHelpOpen] = useState(false);
   const excusedHelp = getBundledHelpTopic('help.excused');
+  const missingPlains: Record<string, string> = {
+    omit: 'Left out until a score is entered.',
+    zero: 'Missing work counts as zero until a score is entered.',
+    floor: 'Missing work gets the lowest grade allowed for the period.',
+  };
   return (
     <>
-      <Text style={[type.meta, { color: colors.mute }]}>Missing work</Text>
-      <ChipRow>
-        {(
-          [
-            ['omit', "Doesn't count yet"],
-            ['zero', 'Count as 0'],
-            ['floor', 'Lowest grade allowed'],
-          ] as const
-        ).map(([id, label]) => (
-          <Chip
-            key={id}
-            label={label}
-            selected={draft.missing_rule === id}
-            onPress={() => onChange(patchDraft(draft, { missing_rule: id }))}
-          />
-        ))}
-      </ChipRow>
+      <Text style={[type.meta, { color: colors.mute, fontWeight: '600' }]}>Missing work</Text>
+      {(
+        [
+          ['omit', "Doesn't count yet"],
+          ['zero', 'Count as 0'],
+          ['floor', 'Lowest grade allowed'],
+        ] as const
+      ).map(([id, label]) => (
+        <RadioOption
+          key={id}
+          label={label}
+          plain={missingPlains[id]}
+          selected={draft.missing_rule === id}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { missing_rule: id }))}
+        />
+      ))}
+      {showMissingFloorField(draft) ? (
+        <TextField
+          label="Lowest grade allowed, %"
+          keyboardType="numeric"
+          value={draft.floor == null ? '' : String(draft.floor)}
+          onChangeText={(text) => {
+            const n = text.trim() === '' ? null : Number(text);
+            onChange(patchDraft(draft, { floor: n == null || !Number.isFinite(n) ? null : n }));
+          }}
+        />
+      ) : null}
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
         Excused work is left out of the grade completely. It is never a zero.
       </Text>
@@ -305,39 +478,38 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         </View>
       ) : null}
       <LockNote draft={draft} field="late" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>Late penalty</Text>
-      <ChipRow>
-        {(
-          [
-            ['none', 'None (I adjust by hand)'],
-            ['flat', 'One-time'],
-            ['per_day', 'Per day'],
-            ['per_hour', 'Per hour'],
-          ] as const
-        ).map(([id, label]) => (
-          <Chip
-            key={id}
-            label={label}
-            selected={draft.late_rule.type === id}
-            disabled={lateLocked}
-            onPress={() =>
-              onChange(
-                patchDraft(draft, {
-                  late_rule:
-                    id === 'none'
-                      ? { type: 'none' }
-                      : {
-                          type: id,
-                          amount: draft.late_rule.amount ?? 10,
-                          unit: draft.late_rule.unit ?? 'percent',
-                        },
-                }),
-              )
-            }
-          />
-        ))}
-      </ChipRow>
-      {draft.late_rule.type !== 'none' ? (
+      <Text style={[type.meta, { color: colors.mute, marginTop: 12, fontWeight: '600' }]}>Late penalty</Text>
+      {(
+        [
+          ['none', 'None, I adjust by hand'],
+          ['flat', 'One time'],
+          ['per_day', 'Per day'],
+          ['per_hour', 'Per hour'],
+        ] as const
+      ).map(([id, label]) => (
+        <RadioOption
+          key={id}
+          label={label}
+          selected={draft.late_rule.type === id}
+          disabled={lateLocked}
+          colors={colors}
+          onPress={() =>
+            onChange(
+              patchDraft(draft, {
+                late_rule:
+                  id === 'none'
+                    ? { type: 'none' }
+                    : {
+                        type: id,
+                        amount: draft.late_rule.amount ?? 10,
+                        unit: draft.late_rule.unit ?? 'percent',
+                      },
+              }),
+            )
+          }
+        />
+      ))}
+      {showLateAmountFields(draft) ? (
         <>
           <TextField
             label="Amount"
@@ -354,24 +526,24 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
               );
             }}
           />
-          <ChipRow>
-            <Chip
-              label="Percent"
-              selected={draft.late_rule.unit !== 'points'}
-              disabled={lateLocked}
-              onPress={() =>
-                onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'percent' } }))
-              }
-            />
-            <Chip
-              label="Points"
-              selected={draft.late_rule.unit === 'points'}
-              disabled={lateLocked}
-              onPress={() =>
-                onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'points' } }))
-              }
-            />
-          </ChipRow>
+          <RadioOption
+            label="Percent"
+            selected={draft.late_rule.unit !== 'points'}
+            disabled={lateLocked}
+            colors={colors}
+            onPress={() =>
+              onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'percent' } }))
+            }
+          />
+          <RadioOption
+            label="Points"
+            selected={draft.late_rule.unit === 'points'}
+            disabled={lateLocked}
+            colors={colors}
+            onPress={() =>
+              onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'points' } }))
+            }
+          />
         </>
       ) : null}
     </>
@@ -379,80 +551,81 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 }
 
 function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
+  const plains: Record<string, string> = {
+    A: 'Skipping it does nothing to the grade.',
+    B: 'Sits on top of the grade. Skipping it does not lower anyone.',
+    C: 'Extra credit is weighted as its own category on top of 100%.',
+  };
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
         Tip: “Adds bonus points” helps students who do extra credit without hurting students who skip it.
       </Text>
-      <ChipRow>
-        {(
-          [
-            ['A', 'Raises or replaces a score'],
-            ['B', 'Adds bonus points'],
-            ['C', 'Its own category'],
-          ] as const
-        ).map(([id, label]) => (
-          <Chip
-            key={id}
-            label={label}
-            selected={draft.extra_credit_method === id}
-            onPress={() => onChange(patchDraft(draft, { extra_credit_method: id }))}
-          />
-        ))}
-      </ChipRow>
-      <TextField
-        label="Most extra credit allowed, % (optional)"
-        keyboardType="numeric"
-        value={draft.ec_cap == null ? '' : String(draft.ec_cap)}
-        onChangeText={(text) => {
-          const n = text.trim() === '' ? null : Number(text);
-          onChange(patchDraft(draft, { ec_cap: n == null || !Number.isFinite(n) ? null : n }));
-        }}
-      />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-        Retakes (off unless you turn them on)
-      </Text>
-      <ChipRow>
-        <Chip
-          label={draft.retake ? 'Retakes: on' : 'Retakes: off'}
-          selected={Boolean(draft.retake)}
-          onPress={() =>
-            onChange(
-              patchDraft(draft, {
-                retake: draft.retake
-                  ? null
-                  : {
-                      eligible_category_ids: [],
-                      attempts: 2,
-                      method: 'higher_of',
-                      cap: 70,
-                      window_days: null,
-                    },
-              }),
-            )
-          }
+      {(
+        [
+          ['A', 'Raises or replaces a score'],
+          ['B', 'Adds bonus points'],
+          ['C', 'Its own category'],
+        ] as const
+      ).map(([id, label]) => (
+        <RadioOption
+          key={id}
+          label={label}
+          plain={plains[id]}
+          selected={draft.extra_credit_method === id}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { extra_credit_method: id }))}
         />
-      </ChipRow>
+      ))}
+      {showExtraCreditCapField(draft) ? (
+        <TextField
+          label="Most extra credit allowed, % (optional)"
+          keyboardType="numeric"
+          value={draft.ec_cap == null ? '' : String(draft.ec_cap)}
+          onChangeText={(text) => {
+            const n = text.trim() === '' ? null : Number(text);
+            onChange(patchDraft(draft, { ec_cap: n == null || !Number.isFinite(n) ? null : n }));
+          }}
+        />
+      ) : null}
+      <SwitchRow
+        title="Retakes"
+        subtitle="Off unless you turn them on"
+        value={Boolean(draft.retake)}
+        colors={colors}
+        onValueChange={(on) =>
+          onChange(
+            patchDraft(draft, {
+              retake: on
+                ? draft.retake ?? {
+                    eligible_category_ids: [],
+                    attempts: 2,
+                    method: 'higher_of',
+                    cap: 70,
+                    window_days: null,
+                  }
+                : null,
+            }),
+          )
+        }
+      />
       {draft.retake ? (
         <>
-          <ChipRow>
-            {(
-              [
-                ['replace', 'Use the newest score'],
-                ['higher_of', 'Keep the higher score'],
-                ['average', 'Average the tries'],
-              ] as const
-            ).map(([id, label]) => (
-              <Chip
-                key={id}
-                label={label}
-                selected={draft.retake?.method === id}
-                onPress={() =>
-                  onChange(patchDraft(draft, { retake: { ...draft.retake!, method: id } }))
-                }
-              />
-            ))}
-          </ChipRow>
+          {(
+            [
+              ['replace', 'Use the newest score'],
+              ['higher_of', 'Keep the higher score'],
+              ['average', 'Average the tries'],
+            ] as const
+          ).map(([id, label]) => (
+            <RadioOption
+              key={id}
+              label={label}
+              selected={draft.retake?.method === id}
+              colors={colors}
+              onPress={() => onChange(patchDraft(draft, { retake: { ...draft.retake!, method: id } }))}
+            />
+          ))}
           <TextField
             label="Most tries allowed"
             keyboardType="numeric"
@@ -505,13 +678,12 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           onChange(patchDraft(draft, { ceiling: n == null || !Number.isFinite(n) ? null : n }));
         }}
       />
-      <ChipRow>
-        <Chip
-          label={draft.publish_to_family ? 'Families can see this: Yes' : 'Families can see this: No'}
-          selected={draft.publish_to_family}
-          onPress={() => onChange(patchDraft(draft, { publish_to_family: !draft.publish_to_family }))}
-        />
-      </ChipRow>
+      <SwitchRow
+        title="Families can see this"
+        value={draft.publish_to_family}
+        colors={colors}
+        onValueChange={(publish_to_family) => onChange(patchDraft(draft, { publish_to_family }))}
+      />
     </>
   );
 }
@@ -522,81 +694,95 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <LockNote draft={draft} field="book_mode" colors={colors} />
-      <ChipRow>
-        <Chip
-          label="Start fresh each grading period"
-          selected={draft.book_mode === 'reset_each_marking_period'}
-          disabled={bookLocked}
-          onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
-        />
-        <Chip
-          label="One running average all year"
-          selected={draft.book_mode === 'rolling_year'}
-          disabled={bookLocked}
-          onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
-        />
-      </ChipRow>
+      <RadioOption
+        label="Start fresh each grading period"
+        selected={draft.book_mode === 'reset_each_marking_period'}
+        disabled={bookLocked}
+        colors={colors}
+        onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
+      />
+      <RadioOption
+        label="One running average all year"
+        selected={draft.book_mode === 'rolling_year'}
+        disabled={bookLocked}
+        colors={colors}
+        onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
+      />
       <LockNote draft={draft} field="rollup" colors={colors} />
-      <TextField
-        label="Semester grade formula (e.g. 2/7+1/7)"
-        value={draft.rollup_preset ?? ''}
-        onChangeText={(text) => {
-          if (rollupLocked) return;
-          onChange(patchDraft(draft, { rollup_preset: text.trim() || null }));
-        }}
-      />
-      <TextField
-        label="Exam weight (optional)"
-        keyboardType="numeric"
-        value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
-        onChangeText={(text) => {
-          if (rollupLocked) return;
-          const n = text.trim() === '' ? null : Number(text);
-          onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
-        }}
-      />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>How your year is split</Text>
-      <ChipRow>
-        {(
-          [
-            ['quarters', 'Quarters'],
-            ['semesters', 'Semesters'],
-            ['year', 'Year'],
-            ['custom', 'Custom'],
-          ] as const
-        ).map(([key, label]) => (
-          <Chip
-            key={key}
-            label={label}
-            selected={draft.term_structure === key}
-            onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
+      {rollupLocked ? (
+        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
+          <Text style={[type.meta, { color: colors.warn }]}>
+            Set by your school. Semester grade is the school formula
+            {draft.rollup_preset ? ` (${draft.rollup_preset})` : ''}. Exam weight
+            {draft.exam_weight != null ? ` is ${draft.exam_weight}` : ' is set'}. Not editable.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <TextField
+            label="Semester grade formula (e.g. 2/7+1/7)"
+            value={draft.rollup_preset ?? ''}
+            onChangeText={(text) => onChange(patchDraft(draft, { rollup_preset: text.trim() || null }))}
           />
-        ))}
-      </ChipRow>
+          <TextField
+            label="Exam weight (optional)"
+            keyboardType="numeric"
+            value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
+            onChangeText={(text) => {
+              const n = text.trim() === '' ? null : Number(text);
+              onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
+            }}
+          />
+        </>
+      )}
+      <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>How the year is split</Text>
+      {(
+        [
+          ['quarters', 'Quarters'],
+          ['semesters', 'Semesters'],
+          ['year', 'Year'],
+          ['custom', 'Custom'],
+        ] as const
+      ).map(([key, label]) => (
+        <RadioOption
+          key={key}
+          label={label}
+          selected={draft.term_structure === key}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
+        />
+      ))}
       <LockNote draft={draft} field="scale" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
-        Rounding (the letter scale comes from your school when it is set there).
-      </Text>
-      <ChipRow>
-        {(
-          [
-            ['nearest_whole', 'Round to nearest whole'],
-            ['half_up', 'Round .5 up'],
-            ['truncate', 'Drop decimals'],
-            ['none', "Don't round"],
-          ] as const
-        ).map(([id, label]) => (
-          <Chip
-            key={id}
-            label={label}
-            selected={draft.rounding === id}
-            onPress={() => onChange(patchDraft(draft, { rounding: id }))}
-          />
-        ))}
-      </ChipRow>
+      {isFieldLocked(draft, 'scale') ? (
+        <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
+          Letter scale is set by your school. Not editable here.
+        </Text>
+      ) : (
+        <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
+          Rounding (the letter scale comes from your school when it is set there).
+        </Text>
+      )}
+      <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>Rounding</Text>
+      {(
+        [
+          ['nearest_whole', 'Round to nearest whole'],
+          ['half_up', 'Round .5 up'],
+          ['truncate', 'Drop decimals'],
+          ['none', "Don't round"],
+        ] as const
+      ).map(([id, label]) => (
+        <RadioOption
+          key={id}
+          label={label}
+          selected={draft.rounding === id}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { rounding: id }))}
+        />
+      ))}
     </>
   );
 }
+
 function weightTotalText(draft: SyllabusWizardDraft, sum: number): string {
   const split = splitWeights(draft.categories, draft.extra_credit_method);
   return split.extraCredit > 0
@@ -604,20 +790,97 @@ function weightTotalText(draft: SyllabusWizardDraft, sum: number): string {
     : `${Math.round(sum * 1000) / 1000}%`;
 }
 
-function ReviewStep({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors: StepColors; sum: number }) {
+function ReviewStep({
+  draft,
+  colors,
+  sum,
+  onChange,
+}: {
+  draft: SyllabusWizardDraft;
+  colors: StepColors;
+  sum: number;
+  onChange: (d: SyllabusWizardDraft) => void;
+}) {
   const paragraph = parentFacingParagraph(draft);
+  const drops =
+    draft.categories
+      .filter((c) => c.active && Number(c.rules?.drop_lowest_n ?? 0) > 0)
+      .map((c) => `${c.rules.drop_lowest_n} ${c.label}`)
+      .join(', ') || 'None';
+  const late =
+    draft.late_rule.type === 'none'
+      ? 'By hand'
+      : draft.late_rule.type === 'flat'
+        ? 'One time'
+        : draft.late_rule.type === 'per_day'
+          ? 'Per day'
+          : 'Per hour';
+  const miss =
+    draft.missing_rule === 'zero'
+      ? 'Count as 0'
+      : draft.missing_rule === 'floor'
+        ? 'Lowest grade allowed'
+        : "Doesn't count yet";
+  const weights = isWeightedEngine(draft.engine)
+    ? draft.categories
+        .filter((c) => c.active)
+        .map((c) => Math.round(Number(c.weight_percent) * 1000) / 1000)
+        .join(' / ')
+    : '—';
+  const checks: Array<{ step: WizardStepId; label: string; value: string }> = [
+    { step: 'engine', label: STEP_LABELS.engine, value: engineOption(draft.engine).label },
+    { step: 'categories', label: STEP_LABELS.categories, value: weights },
+    { step: 'drops', label: STEP_LABELS.drops, value: drops },
+    { step: 'status_late', label: 'Missing', value: miss },
+    { step: 'status_late', label: 'Late', value: late },
+    {
+      step: 'extra_credit',
+      label: STEP_LABELS.extra_credit,
+      value:
+        draft.extra_credit_method === 'A'
+          ? 'Raises or replaces'
+          : draft.extra_credit_method === 'C'
+            ? 'Own category'
+            : 'Bonus points',
+    },
+    {
+      step: 'book_rollup',
+      label: STEP_LABELS.book_rollup,
+      value: draft.book_mode === 'rolling_year' ? 'Running average' : 'Fresh each period',
+    },
+  ];
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
         What families will read about how this class is graded:
       </Text>
-      <Text style={[type.body, { color: colors.ink }]}>{paragraph}</Text>
+      <View style={[styles.family, { borderColor: colors.line }]}>
+        <Text style={[type.body, { color: colors.ink }]}>{paragraph}</Text>
+      </View>
+      {checks.map((row, i) => (
+        <Pressable
+          key={`${row.label}-${i}`}
+          onPress={() => onChange(setWizardStep(draft, row.step))}
+          style={[styles.check, { borderBottomColor: colors.line }]}
+        >
+          <Text style={[type.meta, { color: colors.mute }]}>{row.label}</Text>
+          <Text style={[type.body, { color: colors.ink, fontWeight: '600', textAlign: 'right', flex: 1 }]}>
+            {row.value}
+          </Text>
+        </Pressable>
+      ))}
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
         How grades add up: {engineOption(draft.engine).label}
         {isWeightedEngine(draft.engine) ? ` · weights total ${weightTotalText(draft, sum)}` : ''}
-        {' · '}{syllabusStatusLabel(draft.syllabus_status)}
+        {' · '}
+        {syllabusStatusLabel(draft.syllabus_status)}
       </Text>
-      <Text style={[type.meta, { color: canFinishReview(draft) ? colors.good : colors.danger, marginTop: 8 }]}>
+      <Text
+        style={[
+          type.meta,
+          { color: canFinishReview(draft) ? colors.good : colors.danger, marginTop: 8, fontWeight: '600' },
+        ]}
+      >
         {canFinishReview(draft) ? 'Ready to publish.' : 'Fix the problems listed below before you publish.'}
       </Text>
     </>
@@ -625,6 +888,52 @@ function ReviewStep({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors
 }
 
 const styles = StyleSheet.create({
-  catCard: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10, marginTop: 10 },
+  catCard: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10, marginTop: 10, gap: 6 },
+  radio: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  radioTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, marginTop: 2 },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    gap: 8,
+  },
+  pills: { flexDirection: 'row', gap: 6 },
+  pill: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  lock: { borderRadius: 10, padding: 8, marginVertical: 6 },
+  family: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10, marginBottom: 10 },
+  check: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
 });
 
