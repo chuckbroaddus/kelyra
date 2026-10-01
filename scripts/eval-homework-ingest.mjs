@@ -450,7 +450,10 @@ async function main() {
   const perDoc = [];
   const allRows = [];
 
+  // EVAL_ONLY=H18,H20 → quick sanity subset (buckets then only cover those docs)
+  const only = (process.env.EVAL_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
   for (const entry of manifest.cases) {
+    if (only.length && !only.includes(entry.id)) continue;
     const caseDir = path.join(CORPUS, entry.id);
     const expected = JSON.parse(fs.readFileSync(path.join(caseDir, 'expected.json'), 'utf8'));
     let meta = {};
