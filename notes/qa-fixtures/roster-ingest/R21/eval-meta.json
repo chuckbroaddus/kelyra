@@ -1,0 +1,116 @@
+{
+  "id": "R21",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "hand_phone_shadow",
+    "defocus_blur",
+    "background_clutter"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2103,
+    "background": "laminate",
+    "scale": 0.88,
+    "rotate": 4,
+    "offset": [
+      -0.02,
+      0.04
+    ],
+    "clutter": [
+      {
+        "kind": "paper",
+        "cx": 0.9,
+        "cy": 0.12,
+        "w": 0.42,
+        "h": 0.4,
+        "angle": 22
+      },
+      {
+        "kind": "paper",
+        "cx": 0.06,
+        "cy": 0.9,
+        "w": 0.4,
+        "h": 0.3,
+        "angle": -12
+      },
+      {
+        "kind": "pen",
+        "cx": 0.94,
+        "cy": 0.7,
+        "w": 0.025,
+        "h": 0.3,
+        "angle": 12
+      },
+      {
+        "kind": "mug",
+        "cx": 0.9,
+        "cy": 0.93,
+        "r": 0.08
+      }
+    ],
+    "shadow": {
+      "cx": 0.62,
+      "cy": 0.27,
+      "rx": 0.2,
+      "ry": 0.07,
+      "angle": -25,
+      "armTo": [
+        1.15,
+        -0.05
+      ],
+      "armWidth": 0.2,
+      "strength": 0.6,
+      "soft": 0.022,
+      "fingers": [
+        [
+          0.42,
+          0.28,
+          0.1,
+          0.018,
+          160
+        ],
+        [
+          0.43,
+          0.31,
+          0.11,
+          0.018,
+          170
+        ],
+        [
+          0.45,
+          0.34,
+          0.1,
+          0.017,
+          178
+        ],
+        [
+          0.5,
+          0.365,
+          0.07,
+          0.016,
+          200
+        ]
+      ]
+    },
+    "defocus": 1.4,
+    "light": {
+      "gradient": [
+        0.2,
+        0.3
+      ],
+      "amount": 0.12,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 62
+  }
+}

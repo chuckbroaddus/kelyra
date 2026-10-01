@@ -1,0 +1,66 @@
+{
+  "id": "N04",
+  "kind": "negative",
+  "photo": false,
+  "handwritten": false,
+  "negative": true,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "rotation_9deg",
+    "glare_hotspot",
+    "background_clutter",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 4016,
+    "background": "wood",
+    "scale": 0.74,
+    "rotate": 9,
+    "keystone": {
+      "top": 0.9
+    },
+    "jitter": 0.004,
+    "clutter": [
+      {
+        "kind": "paper",
+        "cx": 0.85,
+        "cy": 0.15,
+        "w": 0.4,
+        "h": 0.35,
+        "angle": 18
+      },
+      {
+        "kind": "mug",
+        "cx": 0.12,
+        "cy": 0.88,
+        "r": 0.08
+      }
+    ],
+    "glare": [
+      {
+        "cx": 0.45,
+        "cy": 0.3,
+        "rx": 0.09,
+        "ry": 0.045,
+        "angle": 20,
+        "strength": 1.9
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.3
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 50
+  }
+}

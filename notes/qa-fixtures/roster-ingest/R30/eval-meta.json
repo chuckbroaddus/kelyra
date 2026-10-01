@@ -1,0 +1,79 @@
+{
+  "id": "R30",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "handwritten_mixed_print_cursive",
+    "keystone",
+    "hand_phone_shadow",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names",
+    "student_id"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 3012,
+    "background": "laminate",
+    "scale": 0.84,
+    "rotate": 5,
+    "keystone": {
+      "top": 0.8,
+      "bottom": 1.02
+    },
+    "jitter": 0.006,
+    "shadow": {
+      "cx": 0.14,
+      "cy": 0.42,
+      "rx": 0.17,
+      "ry": 0.07,
+      "angle": 10,
+      "armTo": [
+        -0.15,
+        0.62
+      ],
+      "armWidth": 0.2,
+      "strength": 0.58,
+      "soft": 0.022,
+      "fingers": [
+        [
+          0.3,
+          0.37,
+          0.09,
+          0.016,
+          0
+        ],
+        [
+          0.32,
+          0.405,
+          0.1,
+          0.016,
+          5
+        ],
+        [
+          0.31,
+          0.44,
+          0.09,
+          0.016,
+          12
+        ]
+      ]
+    },
+    "light": {
+      "gradient": [
+        0.3,
+        -0.3
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 7,
+    "jpeg": 52
+  }
+}

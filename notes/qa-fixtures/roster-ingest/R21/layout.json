@@ -1,0 +1,107 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Talia Brennan",
+      "field": null,
+      "box": [
+        28,
+        99,
+        76.5,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Ulric Sato",
+      "field": null,
+      "box": [
+        28,
+        124,
+        54.2,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Vivian Okafor",
+      "field": null,
+      "box": [
+        28,
+        149,
+        74.8,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Wesley Dunmore",
+      "field": null,
+      "box": [
+        28,
+        174,
+        95.6,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Xiomara Leal",
+      "field": null,
+      "box": [
+        28,
+        199,
+        73.7,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Yusuf Karimi",
+      "field": null,
+      "box": [
+        28,
+        224,
+        70.2,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Zara Whitlock",
+      "field": null,
+      "box": [
+        28,
+        249,
+        76.4,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Anders Pruitt",
+      "field": null,
+      "box": [
+        28,
+        274,
+        72.3,
+        14
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Bianca Soto",
+      "field": null,
+      "box": [
+        28,
+        299,
+        67.4,
+        14
+      ]
+    }
+  ]
+}

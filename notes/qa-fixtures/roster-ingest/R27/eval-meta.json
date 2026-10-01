@@ -1,0 +1,55 @@
+{
+  "id": "R27",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "strong_keystone",
+    "very_low_light_noise",
+    "motion_blur"
+  ],
+  "fields": [
+    "names",
+    "period"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2709,
+    "background": "carpet",
+    "scale": 0.94,
+    "rotate": -6,
+    "keystone": {
+      "top": 1.04,
+      "bottom": 0.72,
+      "left": 0.94
+    },
+    "jitter": 0.01,
+    "motion": {
+      "len": 6,
+      "angle": -35
+    },
+    "lowlight": {
+      "exposure": 0.5,
+      "gamma": 1.3,
+      "cast": [
+        1.1,
+        0.92,
+        0.7
+      ]
+    },
+    "noise": 12,
+    "light": {
+      "gradient": [
+        0.7,
+        0.5
+      ],
+      "amount": 0.35,
+      "vignette": 0.55
+    },
+    "jpeg": 42
+  }
+}

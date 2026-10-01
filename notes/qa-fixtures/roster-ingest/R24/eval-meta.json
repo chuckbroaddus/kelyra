@@ -1,0 +1,70 @@
+{
+  "id": "R24",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "page_curl_binding",
+    "shadow",
+    "rotation_7deg"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2406,
+    "background": "dark_desk",
+    "scale": 0.84,
+    "rotate": 7,
+    "keystone": {
+      "top": 0.95
+    },
+    "jitter": 0.004,
+    "curl": {
+      "side": "left",
+      "width": 0.32,
+      "angle": 86,
+      "depth": 0.68,
+      "lift": 18,
+      "bulge": 0.07
+    },
+    "shadow": {
+      "shape": "band",
+      "pts": [
+        [
+          0.55,
+          -0.1
+        ],
+        [
+          1.1,
+          -0.1
+        ],
+        [
+          1.1,
+          0.55
+        ],
+        [
+          0.82,
+          0.42
+        ]
+      ],
+      "strength": 0.42,
+      "soft": 0.05
+    },
+    "light": {
+      "gradient": [
+        0.5,
+        0.2
+      ],
+      "amount": 0.2,
+      "vignette": 0.35
+    },
+    "noise": 6,
+    "jpeg": 58
+  }
+}

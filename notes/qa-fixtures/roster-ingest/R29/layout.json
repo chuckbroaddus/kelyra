@@ -1,0 +1,140 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Adaeze Nwosu",
+      "field": null,
+      "box": [
+        131.5,
+        83.5,
+        185,
+        42.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Bram Halloran",
+      "field": null,
+      "box": [
+        139.5,
+        126.5,
+        204.6,
+        43.9
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Clio Bertrand",
+      "field": null,
+      "box": [
+        134.3,
+        169.4,
+        167.9,
+        44.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Dmitri Volkov",
+      "field": null,
+      "box": [
+        135.4,
+        206.7,
+        184.1,
+        44.9
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Eden Strickland",
+      "field": null,
+      "box": [
+        142.9,
+        252.5,
+        231.4,
+        44.6
+      ]
+    },
+    {
+      "kind": "crossed",
+      "name": "Farah Mistry",
+      "field": null,
+      "box": [
+        139.4,
+        296.5,
+        174.3,
+        46.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Kip Andersson",
+      "field": null,
+      "box": [
+        327,
+        264,
+        155.5,
+        56.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Gil Ramos",
+      "field": null,
+      "box": [
+        132.4,
+        332.8,
+        150.9,
+        44.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Honor Pemberton",
+      "field": null,
+      "box": [
+        133,
+        379.5,
+        226.1,
+        46.9
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Ike Larsen",
+      "field": null,
+      "box": [
+        129.8,
+        421,
+        135.4,
+        42.8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Jolene Watts",
+      "field": null,
+      "box": [
+        158.9,
+        462.1,
+        176.8,
+        43.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Lark Ellery",
+      "field": null,
+      "box": [
+        133.7,
+        507.4,
+        112.6,
+        45.9
+      ]
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "id": "R28",
+  "frame": [
+    1500,
+    2000
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Beckett Lowry",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        482,
+        269,
+        593,
+        319
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Beckett Lowry",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 0.92,
+      "suggest": "certain",
+      "frame_box": [
+        923,
+        415,
+        1069,
+        476
+      ],
+      "reasons": {
+        "covered": 2
+      }
+    },
+    {
+      "kind": "name",
+      "name": "Camille Ostrowski",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        472,
+        308,
+        612,
+        368
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Camille Ostrowski",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        912,
+        453,
+        1081,
+        522
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Desmond Achebe",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        459,
+        346,
+        593,
+        404
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Desmond Achebe",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        899,
+        491,
+        1064,
+        559
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Eloise Fairfax",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        445,
+        384,
+        551,
+        432
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Eloise Fairfax",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        886,
+        529,
+        1035,
+        592
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Gunnar Halvorsen",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        435,
+        423,
+        577,
+        483
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Gunnar Halvorsen",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        875,
+        568,
+        1049,
+        638
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Leona Marchetti",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.54,
+      "suggest": "uncertain",
+      "frame_box": [
+        422,
+        461,
+        549,
+        516
+      ],
+      "reasons": {
+        "covered": 11
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Leona Marchetti",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 0,
+      "suggest": "absent",
+      "frame_box": [
+        863,
+        606,
+        1032,
+        675
+      ],
+      "reasons": {
+        "covered": 24
+      }
+    },
+    {
+      "kind": "name",
+      "name": "Rafael Quiroga",
+      "field": null,
+      "inframe": 1,
+      "visible": 0,
+      "suggest": "absent",
+      "frame_box": [
+        409,
+        499,
+        524,
+        550
+      ],
+      "reasons": {
+        "covered": 24
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Rafael Quiroga",
+      "field": "parent_contact",
+      "inframe": 1,
+      "visible": 0,
+      "suggest": "absent",
+      "frame_box": [
+        849,
+        644,
+        1004,
+        708
+      ],
+      "reasons": {
+        "covered": 24
+      }
+    }
+  ]
+}

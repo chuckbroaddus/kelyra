@@ -1,0 +1,105 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Kala Rosenthal",
+        "student_id": "70311",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Lorcan Hale",
+        "student_id": "70312",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Marcelle Dutta",
+        "student_id": "70313",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Nikolai Brandt",
+        "student_id": "70314",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Odessa Fairbanks",
+        "student_id": "70315",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Pascal Bekoe",
+        "student_id": "70316",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rhea Castillo",
+        "student_id": "70317",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Stefan Moore",
+        "student_id": "70318",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Tamsin Odoyo",
+        "student_id": "70319",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ulysses Navarro",
+        "student_id": "70320",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Verity Shaw",
+        "student_id": "70321",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Wolfgang Tien",
+        "student_id": "70322",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "id": "R24",
+  "frame": [
+    1500,
+    2000
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Adele Fournier",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        340,
+        287,
+        448,
+        314
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Bastian Kroll",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        622,
+        321,
+        715,
+        347
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Coralie Mensah",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        885,
+        354,
+        1000,
+        382
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Dorian Platt",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1174,
+        389,
+        1261,
+        414
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Elodie Marsh",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        327,
+        423,
+        424,
+        449
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Fitz Okoro",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        612,
+        458,
+        689,
+        482
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Gwendolyn Ash",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        868,
+        489,
+        983,
+        518
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Hamish Tull",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1158,
+        525,
+        1245,
+        550
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Isolde Barros",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        307,
+        559,
+        405,
+        585
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Jude Kowalczyk",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        573,
+        592,
+        691,
+        621
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Keziah Roman",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        854,
+        626,
+        963,
+        654
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Linus Eberhardt",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1127,
+        660,
+        1244,
+        689
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Marisol Cruz",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        290,
+        696,
+        384,
+        722
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Nils Haugen",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        568,
+        731,
+        659,
+        756
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Ottilie Sorensen",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        832,
+        763,
+        950,
+        792
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Percy Lamb",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1124,
+        800,
+        1213,
+        825
+      ],
+      "reasons": {}
+    }
+  ]
+}

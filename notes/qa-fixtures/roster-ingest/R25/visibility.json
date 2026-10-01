@@ -1,0 +1,294 @@
+{
+  "id": "R25",
+  "frame": [
+    1500,
+    2000
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Amara Oyelowo",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        207,
+        300,
+        339,
+        317
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Amara Oyelowo",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        935,
+        272,
+        975,
+        285
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Erik Brandvold",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.71,
+      "suggest": "uncertain",
+      "frame_box": [
+        207,
+        332,
+        338,
+        350
+      ],
+      "reasons": {
+        "stain": 7
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Erik Brandvold",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        938,
+        304,
+        978,
+        318
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Noor Chaudhry",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.92,
+      "suggest": "certain",
+      "frame_box": [
+        206,
+        365,
+        338,
+        384
+      ],
+      "reasons": {
+        "stain": 2
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Noor Chaudhry",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        941,
+        337,
+        981,
+        351
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Remy Delacroix",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.88,
+      "suggest": "uncertain",
+      "frame_box": [
+        206,
+        398,
+        340,
+        417
+      ],
+      "reasons": {
+        "stain": 3
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Remy Delacroix",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        944,
+        370,
+        984,
+        384
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Liv Engstrom",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.88,
+      "suggest": "uncertain",
+      "frame_box": [
+        205,
+        433,
+        319,
+        451
+      ],
+      "reasons": {
+        "stain": 3
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Liv Engstrom",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        946,
+        403,
+        987,
+        417
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Cole Fairweather",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.92,
+      "suggest": "certain",
+      "frame_box": [
+        207,
+        465,
+        360,
+        485
+      ],
+      "reasons": {
+        "stain": 2
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Cole Fairweather",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        949,
+        436,
+        991,
+        451
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Isabel Gutierrez",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.83,
+      "suggest": "uncertain",
+      "frame_box": [
+        206,
+        499,
+        351,
+        519
+      ],
+      "reasons": {
+        "stain": 4
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Isabel Gutierrez",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        952,
+        470,
+        994,
+        484
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Tristan Holloway",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.63,
+      "suggest": "uncertain",
+      "frame_box": [
+        206,
+        534,
+        357,
+        554
+      ],
+      "reasons": {
+        "stain": 1,
+        "pen": 9
+      }
+    },
+    {
+      "kind": "field",
+      "name": "Tristan Holloway",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        955,
+        504,
+        997,
+        519
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Ren Iwasaki",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        203,
+        571,
+        304,
+        589
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Ren Iwasaki",
+      "field": "student_id",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        958,
+        538,
+        1000,
+        553
+      ],
+      "reasons": {}
+    }
+  ]
+}

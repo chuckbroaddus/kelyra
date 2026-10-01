@@ -1,0 +1,56 @@
+{
+  "id": "R20",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "rotation_14deg",
+    "glare_hotspot",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names",
+    "student_id",
+    "grade"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2002,
+    "background": "wood",
+    "scale": 0.78,
+    "rotate": -14,
+    "offset": [
+      0.01,
+      0
+    ],
+    "keystone": {
+      "top": 0.93
+    },
+    "jitter": 0.004,
+    "glare": [
+      {
+        "target": "Marcus Oyelaran",
+        "fx": 0.6,
+        "fy": 1,
+        "rx": 0.075,
+        "ry": 0.03,
+        "angle": -14,
+        "strength": 1.9
+      }
+    ],
+    "light": {
+      "gradient": [
+        -0.3,
+        0.5
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 5,
+    "jpeg": 55
+  }
+}

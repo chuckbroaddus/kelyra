@@ -1,0 +1,75 @@
+{
+  "source_id": "R27",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Thea Lockhart",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Ulysses Kane",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Valentina Rossi",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Wren Galloway",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Xavier Lund",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Yara Nasser",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Zeke Marlow",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Amos Whitaker",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {}
+}

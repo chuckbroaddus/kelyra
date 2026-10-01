@@ -1,0 +1,184 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Adele Fournier",
+      "field": null,
+      "box": [
+        68.6,
+        112,
+        85.3,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Bastian Kroll",
+      "field": null,
+      "box": [
+        267.3,
+        112,
+        73,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Coralie Mensah",
+      "field": null,
+      "box": [
+        450.7,
+        112,
+        91,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Dorian Platt",
+      "field": null,
+      "box": [
+        654.8,
+        112,
+        67.9,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Elodie Marsh",
+      "field": null,
+      "box": [
+        73.3,
+        206,
+        75.9,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Fitz Okoro",
+      "field": null,
+      "box": [
+        273.8,
+        206,
+        60,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Gwendolyn Ash",
+      "field": null,
+      "box": [
+        451.1,
+        206,
+        90.3,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Hamish Tull",
+      "field": null,
+      "box": [
+        654.8,
+        206,
+        67.9,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Isolde Barros",
+      "field": null,
+      "box": [
+        73,
+        300,
+        76.6,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Jude Kowalczyk",
+      "field": null,
+      "box": [
+        257.1,
+        300,
+        93.2,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Keziah Roman",
+      "field": null,
+      "box": [
+        453.6,
+        300,
+        85.3,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Linus Eberhardt",
+      "field": null,
+      "box": [
+        642.9,
+        300,
+        91.8,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Marisol Cruz",
+      "field": null,
+      "box": [
+        74.8,
+        394,
+        73,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Nils Haugen",
+      "field": null,
+      "box": [
+        268.3,
+        394,
+        70.8,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Ottilie Sorensen",
+      "field": null,
+      "box": [
+        450,
+        394,
+        92.5,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Percy Lamb",
+      "field": null,
+      "box": [
+        654.1,
+        394,
+        69.4,
+        15
+      ]
+    }
+  ]
+}

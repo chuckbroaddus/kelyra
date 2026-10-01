@@ -1,0 +1,59 @@
+{
+  "id": "R32",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "handwritten_cursive",
+    "page_curl_binding",
+    "glare_hotspot"
+  ],
+  "fields": [
+    "names",
+    "period"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 3214,
+    "background": "dark_desk",
+    "scale": 0.86,
+    "rotate": -4,
+    "keystone": {
+      "top": 0.92
+    },
+    "jitter": 0.004,
+    "curl": {
+      "side": "right",
+      "width": 0.3,
+      "angle": 84,
+      "depth": 0.6,
+      "lift": 14,
+      "bulge": 0.05
+    },
+    "glare": [
+      {
+        "target": "Jareth Bliss",
+        "fx": 0.7,
+        "fy": 0.5,
+        "rx": 0.07,
+        "ry": 0.035,
+        "angle": -10,
+        "strength": 1.8
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.4,
+        0.2
+      ],
+      "amount": 0.2,
+      "vignette": 0.35
+    },
+    "noise": 6,
+    "jpeg": 56
+  }
+}

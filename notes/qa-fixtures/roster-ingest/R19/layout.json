@@ -1,0 +1,228 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Aria Castellano",
+      "field": null,
+      "box": [
+        129.1,
+        108,
+        87.5,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Aria Castellano",
+      "field": "student_id",
+      "box": [
+        502.7,
+        108,
+        35,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Brody Kimura",
+      "field": null,
+      "box": [
+        129.1,
+        134,
+        81.5,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Brody Kimura",
+      "field": "student_id",
+      "box": [
+        502.7,
+        134,
+        36.7,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Celeste Obi",
+      "field": null,
+      "box": [
+        129.1,
+        160,
+        64.9,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Celeste Obi",
+      "field": "student_id",
+      "box": [
+        502.7,
+        160,
+        36.6,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Dashiell Grant",
+      "field": null,
+      "box": [
+        129.1,
+        186,
+        83.6,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Dashiell Grant",
+      "field": "student_id",
+      "box": [
+        502.7,
+        186,
+        36.8,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Esme Lindqvist",
+      "field": null,
+      "box": [
+        129.1,
+        212,
+        89.4,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Esme Lindqvist",
+      "field": "student_id",
+      "box": [
+        502.7,
+        212,
+        36.3,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Felix Haddad",
+      "field": null,
+      "box": [
+        129.1,
+        238,
+        77.4,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Felix Haddad",
+      "field": "student_id",
+      "box": [
+        502.7,
+        238,
+        36.8,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Greta Moreau",
+      "field": null,
+      "box": [
+        129.1,
+        264,
+        79.9,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Greta Moreau",
+      "field": "student_id",
+      "box": [
+        502.7,
+        264,
+        36,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Hugo Achterberg",
+      "field": null,
+      "box": [
+        129.1,
+        290,
+        98.6,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Hugo Achterberg",
+      "field": "student_id",
+      "box": [
+        502.7,
+        290,
+        37.2,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Ines Valcourt",
+      "field": null,
+      "box": [
+        129.1,
+        316,
+        76.9,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Ines Valcourt",
+      "field": "student_id",
+      "box": [
+        502.7,
+        316,
+        36.8,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Jasper Nakamura",
+      "field": null,
+      "box": [
+        129.1,
+        342,
+        101.9,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Jasper Nakamura",
+      "field": "student_id",
+      "box": [
+        502.7,
+        342,
+        35,
+        15
+      ]
+    }
+  ]
+}

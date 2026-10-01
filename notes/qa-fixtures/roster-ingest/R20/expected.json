@@ -1,0 +1,93 @@
+{
+  "source_id": "R20",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Kenji Ortiz-Baird",
+      "student_id": "K201",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Liesl Varga",
+      "student_id": "K202",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Marcus Oyelaran",
+      "student_id": "K203",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Nadia Petrov",
+      "student_id": "K204",
+      "grade": "11",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Orion Falk",
+      "student_id": "K205",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Paloma Reyes",
+      "student_id": "K206",
+      "grade": "11",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Quincy Adebayo",
+      "student_id": "K207",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Rosalind Teague",
+      "student_id": "K208",
+      "grade": "11",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Silas Ferreira",
+      "student_id": "K209",
+      "grade": "10",
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {
+    "rough_gt": {
+      "absent": [
+        "Marcus Oyelaran",
+        "Nadia Petrov"
+      ],
+      "uncertain": [
+        "Liesl Varga"
+      ]
+    }
+  }
+}

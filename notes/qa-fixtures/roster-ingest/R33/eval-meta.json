@@ -1,0 +1,81 @@
+{
+  "id": "R33",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "handwritten_many_hands",
+    "defocus_blur",
+    "background_clutter",
+    "rotation_5deg",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names",
+    "student_id"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 3315,
+    "background": "laminate",
+    "scale": 0.74,
+    "rotate": -5,
+    "offset": [
+      0.03,
+      0.01
+    ],
+    "keystone": {
+      "top": 0.93
+    },
+    "jitter": 0.004,
+    "clutter": [
+      {
+        "kind": "paper",
+        "cx": 0.12,
+        "cy": 0.15,
+        "w": 0.4,
+        "h": 0.45,
+        "angle": -15
+      },
+      {
+        "kind": "pen",
+        "cx": 0.94,
+        "cy": 0.42,
+        "w": 0.025,
+        "h": 0.3,
+        "angle": -20
+      },
+      {
+        "kind": "sticky",
+        "cx": 0.9,
+        "cy": 0.9,
+        "w": 0.14,
+        "h": 0.1,
+        "angle": -6
+      },
+      {
+        "kind": "phone",
+        "cx": 0.1,
+        "cy": 0.9,
+        "w": 0.18,
+        "h": 0.16,
+        "angle": 75
+      }
+    ],
+    "defocus": 1.7,
+    "light": {
+      "gradient": [
+        0.3,
+        0.5
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 50
+  }
+}

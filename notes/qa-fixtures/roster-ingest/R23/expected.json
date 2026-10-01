@@ -1,0 +1,150 @@
+{
+  "source_id": "R23",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Kaia Rosenthal",
+      "student_id": "70311",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Lorcan Hale",
+      "student_id": "70312",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Mireille Dutta",
+      "student_id": "70313",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Nikolai Brandt",
+      "student_id": "70314",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Odessa Fairbanks",
+      "student_id": "70315",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Pascal Ibekwe",
+      "student_id": "70316",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Rhea Castillo",
+      "student_id": "70317",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Stellan Moore",
+      "student_id": "70318",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Tamsin Oduya",
+      "student_id": "70319",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Ulises Navarro",
+      "student_id": "70320",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Verity Shaw",
+      "student_id": "70321",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Wolfgang Tieu",
+      "student_id": "70322",
+      "grade": null,
+      "period": "4",
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {
+    "rough_gt": {
+      "absent": [
+        "Kaia Rosenthal",
+        "Lorcan Hale"
+      ],
+      "uncertain": [
+        "Mireille Dutta"
+      ],
+      "uncertain_fields": {
+        "Mireille Dutta": [
+          "student_id",
+          "period"
+        ],
+        "Nikolai Brandt": [
+          "student_id"
+        ],
+        "Odessa Fairbanks": [
+          "student_id"
+        ],
+        "Pascal Ibekwe": [
+          "student_id"
+        ],
+        "Rhea Castillo": [
+          "student_id"
+        ],
+        "Stellan Moore": [
+          "student_id"
+        ],
+        "Tamsin Oduya": [
+          "student_id"
+        ],
+        "Ulises Navarro": [
+          "student_id"
+        ],
+        "Verity Shaw": [
+          "student_id"
+        ],
+        "Wolfgang Tieu": [
+          "student_id"
+        ]
+      }
+    }
+  }
+}

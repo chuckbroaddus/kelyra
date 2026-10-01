@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Kara Orton-burke",
+        "student_id": "K201",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Oscar Fulk",
+        "student_id": "K202",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Padma Iyer",
+        "student_id": "K203",
+        "grade": "11",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Danny Nakamura",
+        "student_id": "K204",
+        "grade": "11",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rashad Tanager",
+        "student_id": "K205",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Sara Fuentes",
+        "student_id": "K206",
+        "grade": "11",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kiana Okon",
+        "student_id": "K207",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kiran Osei",
+        "student_id": "K208",
+        "grade": "11",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kofi Osei",
+        "student_id": "K209",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

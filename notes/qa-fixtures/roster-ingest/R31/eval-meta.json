@@ -1,0 +1,54 @@
+{
+  "id": "R31",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "handwritten_pencil",
+    "cross_out_scribble",
+    "arrow_inserted_name",
+    "rotation_12deg",
+    "crumpled_paper",
+    "low_light_noise"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 3113,
+    "background": "wood",
+    "scale": 0.8,
+    "rotate": 12,
+    "jitter": 0.006,
+    "crumple": {
+      "amp": 6,
+      "cell": 100,
+      "shade": 0.2,
+      "creases": 5
+    },
+    "lowlight": {
+      "exposure": 0.66,
+      "gamma": 1.15,
+      "cast": [
+        1.05,
+        0.97,
+        0.84
+      ]
+    },
+    "noise": 11,
+    "light": {
+      "gradient": [
+        -0.4,
+        0.4
+      ],
+      "amount": 0.25,
+      "vignette": 0.4
+    },
+    "jpeg": 48
+  }
+}
