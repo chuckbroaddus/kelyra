@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { SyllabusWizard } from '@/components/syllabus/SyllabusWizard';
+import { IngestPendingPagesCard } from '@/components/ingest/IngestPendingPagesCard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import {
@@ -28,13 +29,19 @@ import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { invokeAi } from '@/lib/ai/invoke';
+import {
+  MAX_GRADING_DOC_PAGES,
+  maxPagesCopy,
+  readingStatusForPages,
+  uploadGradingDocPages,
+} from '@/lib/ingest/gradingDocPages';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { applyProposalToSyllabusDraft } from '@/lib/ingest/pathMapping';
 import { applyInterviewToSyllabusDraft, takeInterviewHandoff } from '@/lib/interview';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
-import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
+import { pickNormalizedPhoto, pickNormalizedPhotos, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import {
   applyAskDraftToEditor,
@@ -86,8 +93,28 @@ export default function SyllabusScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   const [ingestCamera, setIngestCamera] = useState(false);
+  const [pendingIngestPages, setPendingIngestPages] = useState<
+    Array<{ key: string; uri: string; mimeType: string }>
+  >([]);
   // Interview hand-off is one-shot; keep it so a focus reload before Save does not drop the answers.
   const interviewRef = useRef<ReturnType<typeof takeInterviewHandoff>>(null);
+
+  const appendIngestPages = useCallback((pages: Array<{ uri: string; mimeType: string }>) => {
+    if (!pages.length) return;
+    setPendingIngestPages((current) => {
+      const room = Math.max(0, MAX_GRADING_DOC_PAGES - current.length);
+      if (room <= 0) return current;
+      const add = pages.slice(0, room).map((page, index) => ({
+        key: `${Date.now()}-${current.length + index}-${Math.random().toString(36).slice(2, 6)}`,
+        uri: page.uri,
+        mimeType: page.mimeType || 'image/jpeg',
+      }));
+      return [...current, ...add];
+    });
+    if (pages.length > MAX_GRADING_DOC_PAGES) {
+      setStatus(maxPagesCopy());
+    }
+  }, []);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -294,27 +321,26 @@ export default function SyllabusScreen() {
   };
 
   /** GB-11 v2 document ingest → IngestProposal review (does not replace parse-class-syllabus). */
-  const runIngestDoc = useCallback(async (uri: string, mimeType: string) => {
+  const runIngestDoc = useCallback(async (pages: Array<{ uri: string; mimeType: string }>) => {
     if (!id || !teacher) return;
+    if (!pages.length) return;
     setBusy(true);
     setError(null);
-    setStatus('Reading your document…');
+    setStatus(readingStatusForPages(pages.length));
     try {
-      const asset = await uploadTeacherAsset({
+      const uploaded = await uploadGradingDocPages({
         teacherId: teacher.id,
-        kind: 'photo',
-        uri,
-        mimeType,
+        pages,
       });
-      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
-      if (!imageUrl) throw new Error('Could not open the uploaded document.');
+      if (uploaded.truncated) setStatus(maxPagesCopy());
       const { proposal } = await invokeIngestGradingDoc({
         kind: 'syllabus',
         class_id: id,
-        storage_paths: [asset.storage_path],
-        image_urls: [imageUrl],
-        source_id: asset.id,
+        storage_paths: uploaded.storage_paths,
+        image_urls: uploaded.image_urls,
+        source_id: uploaded.source_id,
       });
+      setPendingIngestPages([]);
       setIngestProposal(proposal);
       setStatus('Done reading. Check each setting we found, then tap Use these settings.');
     } catch (err) {
@@ -327,18 +353,30 @@ export default function SyllabusScreen() {
   useWebIngestFixtureHook('syllabus', runIngestDoc);
 
   const onStartFromDocument = async () => {
-    // Library / file path on web — no camera dependency for Start from a document.
-    if (webCameraNeeded(false)) {
-      setIngestCamera(true);
-      return;
-    }
+    // Library multi-select. Camera path uses ingestCamera + pending pages.
     try {
-      const photo = await pickNormalizedPhoto(false);
-      if (!photo) return;
-      await runIngestDoc(photo.uri, photo.mimeType);
+      const photos = await pickNormalizedPhotos({ max: MAX_GRADING_DOC_PAGES });
+      if (!photos?.length) return;
+      appendIngestPages(photos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not open document');
     }
+  };
+
+  const onAddIngestCameraPage = () => {
+    if (webCameraNeeded(true)) {
+      setIngestCamera(true);
+      return;
+    }
+    void (async () => {
+      try {
+        const photos = await pickNormalizedPhotos({ max: 1, fromCamera: true });
+        if (!photos?.length) return;
+        appendIngestPages(photos);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not open camera');
+      }
+    })();
   };
 
   const applyIngestFields = (accepted: IngestField[]) => {
@@ -431,11 +469,25 @@ export default function SyllabusScreen() {
         />
       ) : null}
 
+      {pendingIngestPages.length ? (
+        <IngestPendingPagesCard
+          pages={pendingIngestPages}
+          busy={busy}
+          canAddMore={pendingIngestPages.length < MAX_GRADING_DOC_PAGES}
+          onRemove={(key) => setPendingIngestPages((cur) => cur.filter((p) => p.key !== key))}
+          onAddAnother={onAddIngestCameraPage}
+          onRead={() =>
+            void runIngestDoc(pendingIngestPages.map((p) => ({ uri: p.uri, mimeType: p.mimeType })))
+          }
+          onClear={() => setPendingIngestPages([])}
+        />
+      ) : null}
+
       {ingestCamera ? (
         <WebCameraCapture
           onCapture={(uri, mimeType) => {
             setIngestCamera(false);
-            void runIngestDoc(uri, mimeType);
+            appendIngestPages([{ uri, mimeType }]);
           }}
           onCancel={() => setIngestCamera(false)}
         />
@@ -457,6 +509,12 @@ export default function SyllabusScreen() {
             onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
           />
           <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
+          <GhostButton
+            align="left"
+            label="Photograph document pages"
+            onPress={onAddIngestCameraPage}
+            disabled={busy}
+          />
           <GhostButton align="left" label="Take a photo of a syllabus" onPress={() => void onPickPhoto(true)} />
           <GhostButton align="left" label="Choose a syllabus photo" onPress={() => void onPickPhoto(false)} />
         </View>

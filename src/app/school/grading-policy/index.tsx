@@ -13,19 +13,25 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { ListRow } from '@/components/ui/ListRow';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
+import { IngestPendingPagesCard } from '@/components/ingest/IngestPendingPagesCard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import {
+  MAX_GRADING_DOC_PAGES,
+  maxPagesCopy,
+  readingStatusForPages,
+  uploadGradingDocPages,
+} from '@/lib/ingest/gradingDocPages';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { mergeIntoSetupDraft } from '@/lib/ingest/pathMapping';
 import { applyInterviewToSetupDraft, takeInterviewHandoff } from '@/lib/interview';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
-import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
-import { pickNormalizedPhoto, webCameraNeeded } from '@/lib/media/pickPhoto';
+import { pickNormalizedPhotos, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { isOfficeRole } from '@/lib/school/roles';
 import {
@@ -104,6 +110,24 @@ export default function GradingPolicyWizardScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   const [ingestCamera, setIngestCamera] = useState(false);
+  const [pendingIngestPages, setPendingIngestPages] = useState<
+    Array<{ key: string; uri: string; mimeType: string }>
+  >([]);
+
+  const appendIngestPages = useCallback((pages: Array<{ uri: string; mimeType: string }>) => {
+    if (!pages.length) return;
+    setPendingIngestPages((current) => {
+      const room = Math.max(0, MAX_GRADING_DOC_PAGES - current.length);
+      if (room <= 0) return current;
+      const add = pages.slice(0, room).map((page, index) => ({
+        key: `${Date.now()}-${current.length + index}-${Math.random().toString(36).slice(2, 6)}`,
+        uri: page.uri,
+        mimeType: page.mimeType || 'image/jpeg',
+      }));
+      return [...current, ...add];
+    });
+    if (pages.length > MAX_GRADING_DOC_PAGES) setStatus(maxPagesCopy());
+  }, []);
 
   useEffect(() => {
     if (!schoolId) return;
@@ -139,27 +163,26 @@ export default function GradingPolicyWizardScreen() {
     if (i >= 0) go(WIZARD_STEPS[i]!);
   };
 
-  const runSchoolIngest = useCallback(async (uri: string, mimeType: string) => {
+  const runSchoolIngest = useCallback(async (pages: Array<{ uri: string; mimeType: string }>) => {
     if (!schoolId || !profile?.id) return;
+    if (!pages.length) return;
     setBusy(true);
     setError(null);
-    setStatus('Reading your policy document…');
+    setStatus(readingStatusForPages(pages.length));
     try {
-      const asset = await uploadTeacherAsset({
+      const uploaded = await uploadGradingDocPages({
         teacherId: profile.id,
-        kind: 'photo',
-        uri,
-        mimeType,
+        pages,
       });
-      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
-      if (!imageUrl) throw new Error('Could not open the uploaded document.');
+      if (uploaded.truncated) setStatus(maxPagesCopy());
       const { proposal } = await invokeIngestGradingDoc({
         kind: 'school_policy',
         school_id: schoolId,
-        storage_paths: [asset.storage_path],
-        image_urls: [imageUrl],
-        source_id: asset.id,
+        storage_paths: uploaded.storage_paths,
+        image_urls: uploaded.image_urls,
+        source_id: uploaded.source_id,
       });
+      setPendingIngestPages([]);
       setIngestProposal(proposal);
       setStatus('Done reading. Check each setting we found, then tap Use these settings.');
     } catch (err) {
@@ -172,17 +195,29 @@ export default function GradingPolicyWizardScreen() {
   useWebIngestFixtureHook('school_policy', runSchoolIngest);
 
   const onStartFromDocument = async () => {
-    if (webCameraNeeded(false)) {
-      setIngestCamera(true);
-      return;
-    }
     try {
-      const photo = await pickNormalizedPhoto(false);
-      if (!photo) return;
-      await runSchoolIngest(photo.uri, photo.mimeType);
+      const photos = await pickNormalizedPhotos({ max: MAX_GRADING_DOC_PAGES });
+      if (!photos?.length) return;
+      appendIngestPages(photos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not open document');
     }
+  };
+
+  const onAddIngestCameraPage = () => {
+    if (webCameraNeeded(true)) {
+      setIngestCamera(true);
+      return;
+    }
+    void (async () => {
+      try {
+        const photos = await pickNormalizedPhotos({ max: 1, fromCamera: true });
+        if (!photos?.length) return;
+        appendIngestPages(photos);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not open camera');
+      }
+    })();
   };
 
   const applyIngestFields = (accepted: IngestField[]) => {
@@ -222,11 +257,29 @@ export default function GradingPolicyWizardScreen() {
       />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>{summary}</Text>
       <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
+      <GhostButton
+        label="Photograph policy pages"
+        onPress={onAddIngestCameraPage}
+        disabled={busy}
+      />
+      {pendingIngestPages.length ? (
+        <IngestPendingPagesCard
+          pages={pendingIngestPages}
+          busy={busy}
+          canAddMore={pendingIngestPages.length < MAX_GRADING_DOC_PAGES}
+          onRemove={(key) => setPendingIngestPages((cur) => cur.filter((p) => p.key !== key))}
+          onAddAnother={onAddIngestCameraPage}
+          onRead={() =>
+            void runSchoolIngest(pendingIngestPages.map((p) => ({ uri: p.uri, mimeType: p.mimeType })))
+          }
+          onClear={() => setPendingIngestPages([])}
+        />
+      ) : null}
       {ingestCamera ? (
         <WebCameraCapture
           onCapture={(uri, mimeType) => {
             setIngestCamera(false);
-            void runSchoolIngest(uri, mimeType);
+            appendIngestPages([{ uri, mimeType }]);
           }}
           onCancel={() => setIngestCamera(false)}
         />

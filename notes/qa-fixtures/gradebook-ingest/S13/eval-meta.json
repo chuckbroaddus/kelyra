@@ -1,0 +1,8 @@
+{
+  "id": "S13",
+  "kind": "syllabus",
+  "multi_page": true,
+  "pages": ["page-1.png", "page-2.png"],
+  "weights_on_page": 2,
+  "note": "Category weights live only on page 2 — single-page client would miss them."
+}

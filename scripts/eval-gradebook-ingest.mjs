@@ -667,12 +667,17 @@ function isTransientModelFailure(result) {
   return false;
 }
 
-async function invokeIngestOnce({ url, anon, session, kind, ids, imageUrl, sourceId }) {
+async function invokeIngestOnce({ url, anon, session, kind, ids, imageUrl, imageUrls, sourceId }) {
   const endpoint = `${url.replace(/\/$/, '')}/functions/v1/ingest-grading-doc`;
+  const urls = Array.isArray(imageUrls) && imageUrls.length
+    ? imageUrls
+    : imageUrl
+      ? [imageUrl]
+      : [];
   const body = {
     kind,
     source_id: sourceId,
-    image_urls: [imageUrl],
+    image_urls: urls,
     storage_paths: [],
     ...(kind === 'syllabus' ? { class_id: ids.class_id } : { school_id: ids.school_id }),
   };
@@ -730,6 +735,18 @@ function pickImage(caseDir, preferPhoto) {
   return null;
 }
 
+/** Multi-page cases list ordered page files in eval-meta.json.pages. */
+function pickMultiPageVariant(caseDir, meta) {
+  if (!meta?.multi_page || !Array.isArray(meta.pages) || !meta.pages.length) return null;
+  const files = [];
+  for (const name of meta.pages) {
+    const full = path.join(caseDir, name);
+    if (!fs.existsSync(full)) return null;
+    files.push(full);
+  }
+  return { files, variant: `pages-${files.length}` };
+}
+
 async function main() {
   const env = loadEnv();
   const stamp =
@@ -776,10 +793,15 @@ async function main() {
     const ids = kind === 'school_policy' ? officeIds : teacherIds;
 
     const variants = [];
-    const clean = pickImage(caseDir, false);
-    if (clean) variants.push(clean);
-    const photo = pickImage(caseDir, true);
-    if (photo && photo.file !== clean?.file) variants.push(photo);
+    const multi = pickMultiPageVariant(caseDir, meta);
+    if (multi) {
+      variants.push(multi);
+    } else {
+      const clean = pickImage(caseDir, false);
+      if (clean) variants.push(clean);
+      const photo = pickImage(caseDir, true);
+      if (photo && photo.file !== clean?.file) variants.push(photo);
+    }
     if (!variants.length) {
       console.warn('skip no image', entry.id);
       continue;
@@ -811,13 +833,16 @@ async function main() {
       } else {
         process.stdout.write(`… ${entry.id} ${v.variant} `);
         try {
+          const imageUrls = Array.isArray(v.files)
+            ? v.files.map((f) => toDataUrl(f))
+            : [toDataUrl(v.file)];
           result = await invokeIngest({
             url: auth.url,
             anon: auth.anon,
             session: auth.session,
             kind,
             ids,
-            imageUrl: toDataUrl(v.file),
+            imageUrls,
             sourceId,
           });
         } catch (err) {
