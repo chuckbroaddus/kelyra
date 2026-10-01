@@ -82,11 +82,30 @@ School-locked fields are pre-filled ("Set by school") and skipped.
 - The summary card ("Your setup — tap a line to change it") lets the user change any line. Lines are tagged Change / "Usual choice · check" / "Set by your school". "Put these answers in the form" fills the real form and opens its Review step. Nothing is published until Save draft or Publish.
 - All on-screen text uses plain words (rebased on #341). Stored ids are shown through `src/lib/grade/plainLabels.ts` or the word maps in `graph.ts`, so no raw ids, enum values, or ISO dates appear.
 
-## Finding (not fixed here: document mapper, Hermes card t_4646285c owns ingest)
+## Finding: document upload dropped retakes (fixed in cos/gb-upload-retakes)
 
-`applyProposalToSyllabusDraft` (`src/lib/ingest/pathMapping.ts`) has no case for `syllabus.retake` or
-`syllabus.assignment_max`, so **the document-upload path drops retakes**. The interview path sets retake after
-the shared mapper runs (`applyInterviewToSyllabusDraft`).
+Was: `applyProposalToSyllabusDraft` (`src/lib/ingest/pathMapping.ts`) had no case for `syllabus.retake`, so
+**the document-upload path dropped retakes** even though the model already returned them (round 4: S06
+`higher_of` cap 70, S08 `replace`). The interview patched retake in after the shared mapper.
+
+Now: the mapper maps `syllabus.retake` into `RetakeRule` (attempts, replace / higher_of / average, cap,
+categories matched onto the form's category keys; empty = every category). Two different retake rules in one
+document → `conflict` + a `retake_method` question, and the form is left alone. "No retakes" → retake off. The
+interview's retake goes through the same mapper (no special case). Tests: `src/lib/ingest/retakeMapping.test.ts`.
+
+Round-4 corpus replay (recorded model output → parse → mapper → form Review):
+
+| Case | Before (origin/main) | After |
+| --- | --- | --- |
+| S06 clean / photo | `retake: null`, no retake line | Retakes: one retake; the higher score counts, up to 70%. |
+| S08 clean / photo | `retake: null`, no retake line | Retakes: one retake; the new score replaces the old one. |
+
+Still open: `syllabus.assignment_max` has no field in the syllabus form draft (only a school lock), so the
+mapper has nowhere to put it.
+
+The prompt change (retake mapping target + examples) is in `supabase/functions/_shared/ingestPrompts.ts` and the
+normalizer mirror in `_shared/ingestNormalize.ts`: **`ingest-grading-doc` needs a deploy** for those to reach the
+model. The mapper fix works without it.
 
 ## Tests
 

@@ -2,9 +2,10 @@
  * Map IngestProposal field values onto SyllabusWizardDraft / SetupDraft paths.
  */
 import type { SyllabusWizardDraft } from '../../components/syllabus/wizardModel.ts';
-import type { LateRule } from '../grade/engine/types.ts';
+import type { LateRule, RetakeRule } from '../grade/engine/types.ts';
 import type { SetupDraft, SetupDraftField } from '../school/gradingPolicy.ts';
 import { asIngestableDraft, mergeProposalIntoDraft } from './mergeProposal.ts';
+import { coerceRetake, retakeTextConflicts } from './normalizeFieldValues.ts';
 import type { IngestProposal, MergeOptions, MergeResult } from './proposalTypes.ts';
 
 function asLateRule(raw: unknown): LateRule {
@@ -102,6 +103,51 @@ function asCategories(raw: unknown): SyllabusWizardDraft['categories'] | null {
   return out.length ? out : null;
 }
 
+/**
+ * Retake value → RetakeRule (same shape the interview writes), null = no retakes,
+ * 'conflict' = text names two different rules, 'invalid' = nothing usable.
+ */
+export function asRetake(raw: unknown): RetakeRule | null | 'conflict' | 'invalid' {
+  if (raw == null) return null;
+  if (typeof raw === 'string' && retakeTextConflicts(raw)) return 'conflict';
+  if (typeof raw === 'string' && !raw.trim()) return 'invalid';
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+  if (o && (o.enabled === false || o.allowed === false)) return null;
+  const r = coerceRetake(raw);
+  if (!r) {
+    // A string like “No retakes” coerces to null on purpose; anything else unreadable is invalid.
+    return typeof raw === 'string' && /\bno\b|\bnot\b/.test(raw.toLowerCase()) ? null : 'invalid';
+  }
+  return {
+    eligible_category_ids: Array.isArray(r.eligible_category_ids) ? (r.eligible_category_ids as unknown[]).map(String) : [],
+    attempts: Math.max(1, Math.floor(Number(r.attempts ?? 1)) || 1),
+    method: r.method as RetakeRule['method'],
+    cap: r.cap == null ? null : Number(r.cap),
+    window_days: r.window_days == null ? null : Number(r.window_days),
+  };
+}
+
+function catToken(s: string): string {
+  const t = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (t.endsWith('zzes')) return t.slice(0, -3);
+  if (t.endsWith('ies')) return `${t.slice(0, -3)}y`;
+  if (/(ches|shes|xes|sses)$/.test(t)) return t.slice(0, -2);
+  if (t.endsWith('s') && !t.endsWith('ss')) return t.slice(0, -1);
+  return t;
+}
+
+/** Document names (“Tests”, “test”, key “tests”) → this draft's category keys; unmatched names are kept as given. */
+function retakeCategoryKeys(names: string[], cats: SyllabusWizardDraft['categories']): string[] {
+  const out: string[] = [];
+  for (const n of names) {
+    const tok = catToken(n);
+    const hit = cats.find((c) => c.key === n || catToken(c.key) === tok || catToken(c.label) === tok);
+    const key = hit ? hit.key : n;
+    if (!out.includes(key)) out.push(key);
+  }
+  return out;
+}
+
 // applyProposalToSyllabusDraft + mergeIntoSetupDraft patched below
 export function applyProposalToSyllabusDraft(
   draft: SyllabusWizardDraft,
@@ -110,6 +156,8 @@ export function applyProposalToSyllabusDraft(
 ): SyllabusWizardDraft {
   const next = { ...draft, source: 'ask_import' as const };
   const locked = (field: keyof typeof draft.locks) => draft.locks[field] === true;
+  // Retakes resolve after the loop so category names map onto the final categories.
+  const retakes: Array<RetakeRule | null | 'conflict'> = [];
   for (const f of proposal.fields) {
     if (acceptedPaths && !acceptedPaths.has(f.path)) continue;
     if (f.status === 'unknown' || f.status === 'conflict') continue;
@@ -207,8 +255,23 @@ export function applyProposalToSyllabusDraft(
           next.term_structure = f.value;
         }
         break;
+      case 'syllabus.retake': {
+        const r = asRetake(f.value);
+        if (r !== 'invalid') retakes.push(r);
+        break;
+      }
       default:
         break;
+    }
+  }
+  if (retakes.length) {
+    const distinct = new Set(retakes.map((r) => JSON.stringify(r)));
+    // Conflicting retake rules (in one field or across fields) leave the form's value alone.
+    if (!retakes.includes('conflict') && distinct.size === 1) {
+      const r = retakes[0] as RetakeRule | null;
+      next.retake = r
+        ? { ...r, eligible_category_ids: retakeCategoryKeys(r.eligible_category_ids, next.categories) }
+        : null;
     }
   }
   return next;

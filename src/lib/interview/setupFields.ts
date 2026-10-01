@@ -116,6 +116,7 @@ const MAPPER_SYLLABUS_KEYS = [
   'rounding',
   'empty_category',
   'term_structure',
+  'retake',
 ] as const;
 
 function answered(session: InterviewSession, path: string): FilledSlot | null {
@@ -147,8 +148,6 @@ export function interviewToSyllabusProposal(session: InterviewSession): IngestPr
     }));
     fields.push(field('syllabus.categories', cats, Math.min(confFor(catF ?? undefined), confFor(dropF ?? undefined)), 'Interview: categories'));
   }
-  const retF = answered(session, 'retake');
-  if (retF) fields.push(field('syllabus.retake', retF.value, confFor(retF), 'Interview: retake'));
   return {
     source_id: `interview:${session.id}`,
     wizard: 'syllabus',
@@ -164,18 +163,15 @@ export function interviewToSyllabusProposal(session: InterviewSession): IngestPr
 /**
  * Land interview answers on the class's wizard draft exactly like the document
  * path does (applyProposalToSyllabusDraft), then the fields that mapper does
- * not carry yet (retake, extra-credit on/off).
+ * not carry yet (extra-credit on/off, empty-category policy).
  */
 export function applyInterviewToSyllabusDraft(
   target: SyllabusWizardDraft,
   session: InterviewSession,
 ): SyllabusWizardDraft {
   const proposal = interviewToSyllabusProposal(session);
+  // Retakes go through the shared mapper like every other document field.
   let next = applyProposalToSyllabusDraft(target, proposal);
-  const retF = answered(session, 'retake');
-  if (retF && target.locks.retake !== true) {
-    next = { ...next, retake: (retF.value ?? null) as SyllabusWizardDraft['retake'] };
-  }
   const ecAllowed = answered(session, 'extra_credit_allowed');
   if (ecAllowed) {
     next = { ...next, policies: { ...next.policies, extra_credit_allowed: ecAllowed.value === true } };
