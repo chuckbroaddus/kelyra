@@ -1,0 +1,66 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivers",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 67,
+      "teacherNote": "Evidence and theme are too vague and do not clearly support the main idea.",
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "1. Main idea:",
+          "expected": "The river flooded the town",
+          "seen": "The river flooded the town",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "2. Evidence:",
+          "expected": "Answers will vary but must be specific evidence from the text supporting the main idea",
+          "seen": "water rose overnight",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "3. Theme:",
+          "expected": "Answers will vary but must be a clear theme supported by the text",
+          "seen": "community helps",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0043,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Taylor Kim",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 83,
+      "teacherNote": null,
+      "studentName": "Taylor Kim",
+      "students": [
+        "Taylor Kim"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "6 x 8 =",
+          "expected": "48",
+          "seen": "48",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "7 x 7 =",
+          "expected": "49",
+          "seen": "49",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "9 x 6 =",
+          "expected": "54",
+          "seen": "54",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "8 x 7 =",
+          "expected": "56",
+          "seen": "54",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 5,
+          "question": "12 x 3 =",
+          "expected": "36",
+          "seen": "36",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 6,
+          "question": "4 x 9 =",
+          "expected": "36",
+          "seen": "36",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0045,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 67,
+      "teacherNote": "Student provided very brief and incomplete definitions.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "define photosynthesis",
+          "expected": "the process by which green plants and some other organisms use sunlight to synthesize foods with the help of chlorophyll (or equivalent key idea)",
+          "seen": "plants make food from light",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "define cell",
+          "expected": "the basic structural, functional, and biological unit of all known living organisms (or equivalent key idea)",
+          "seen": "basic unit of life",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "define nucleus",
+          "expected": "the central and most important part of an object, movement, or group, forming the basis for its activity and growth; in biology, the membrane-enclosed organelle found in eukaryotic cells that contains the cell's genetic material (or equivalent key idea)",
+          "seen": "control center",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0042,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

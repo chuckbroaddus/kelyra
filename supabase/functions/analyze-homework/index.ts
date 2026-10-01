@@ -226,7 +226,8 @@ async function draftFromPhotos(
   return {
     gaps,
     // Always derive from item credits when items exist; null when none are gradable (no rubber-stamp 100).
-    draftScore: items.length ? percentFromItemCredits(items) : modelScore,
+    // Empty items (reject / answer key) → null, never keep a bare model 0/score.
+    draftScore: items.length ? percentFromItemCredits(items) : null,
     teacherNote:
       typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
     costUsd: typeof payload.__kelyraUsd === 'number' ? payload.__kelyraUsd : null,
