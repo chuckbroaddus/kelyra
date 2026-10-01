@@ -1,0 +1,210 @@
+{
+  "generated_at": "2026-10-01T11:19:20.127Z",
+  "count": 21,
+  "cases": [
+    {
+      "id": "R01",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R02",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id",
+        "grade",
+        "period"
+      ]
+    },
+    {
+      "id": "R03",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R04",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R05",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id",
+        "grade"
+      ]
+    },
+    {
+      "id": "R06",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R07",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": true,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R08",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "period"
+      ]
+    },
+    {
+      "id": "R09",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "parent_contact"
+      ]
+    },
+    {
+      "id": "R10",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R11",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R12",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R13",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "grade",
+        "period"
+      ]
+    },
+    {
+      "id": "R14",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R15",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R16",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R17",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R18",
+      "kind": "roster",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "photo": false,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "photo": true,
+      "handwritten": false,
+      "fields_exercised": [
+        "names"
+      ]
+    }
+  ]
+}

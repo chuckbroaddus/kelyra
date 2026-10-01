@@ -1,0 +1,15 @@
+{
+  "id": "R13",
+  "kind": "roster",
+  "photo": true,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "fields": [
+    "names",
+    "grade",
+    "period"
+  ],
+  "srs": []
+}

@@ -1,0 +1,57 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Nina Ortega",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Owen Prior",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Piper Quinn",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rory Santos",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Skye Turner",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Uma V",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "source_id": "R16",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Arlo Beckett",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Blair Chen",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Cody Diaz",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Demi Ellis",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Ezra Frost",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [
+    "skipped_headers"
+  ],
+  "_eval": {}
+}

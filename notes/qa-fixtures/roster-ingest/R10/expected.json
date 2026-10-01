@@ -1,0 +1,49 @@
+{
+  "source_id": "R10",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Ava",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": false
+    },
+    {
+      "name": "Diego",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": false
+    },
+    {
+      "name": "Jonah",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": false
+    },
+    {
+      "name": "Lila",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": false
+    }
+  ],
+  "warnings": [
+    "first_names_only",
+    "smudged_line_skipped"
+  ],
+  "_eval": {
+    "allow_missing_smudge": true,
+    "soft_first_name": true
+  }
+}

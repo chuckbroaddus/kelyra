@@ -17,10 +17,14 @@ export async function suggestRosterFromPhoto(
   imageUrl: string,
   existingNames: string[],
 ): Promise<SuggestedRosterName[]> {
-  const data = await invokeAi<{ names?: Array<{ name?: string; confident?: boolean }> }>(
-    'extract-roster',
-    { imageUrl },
-  );
+  const data = await invokeAi<{
+    names?: Array<{ name?: string; confident?: boolean }>;
+    rejected?: boolean;
+    document_kind_guess?: string;
+  }>('extract-roster', { imageUrl });
+  if (data.rejected || data.document_kind_guess === 'not_roster') {
+    return [];
+  }
   const existing = new Set(existingNames.map((name) => normalizeRosterName(name)));
   const seen = new Set<string>();
   const suggestions: SuggestedRosterName[] = [];
@@ -28,6 +32,12 @@ export async function suggestRosterFromPhoto(
     const name = String(row.name ?? '').replace(/\s+/g, ' ').trim();
     const key = normalizeRosterName(name);
     if (!name || !key || seen.has(key)) continue;
+    // Drop obvious header/junk lines the model sometimes returns.
+    if (
+      /^(present|absent|period\s*\d+|room\s*\d+|mr\.?\s|ms\.?\s|mrs\.?\s|dr\.?\s)/i.test(name)
+    ) {
+      continue;
+    }
     seen.add(key);
     const alreadyHere = existing.has(key);
     suggestions.push({

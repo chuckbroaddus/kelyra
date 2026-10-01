@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Amelia Crowe",
+        "confident": true
+      },
+      {
+        "name": "Caleb Orth",
+        "confident": true
+      },
+      {
+        "name": "Daisy Fen",
+        "confident": true
+      },
+      {
+        "name": "Ethan Vale",
+        "confident": true
+      },
+      {
+        "name": "Freya Moss",
+        "confident": true
+      },
+      {
+        "name": "Gavin Shore",
+        "confident": true
+      },
+      {
+        "name": "Hannah Pike",
+        "confident": true
+      }
+    ]
+  }
+}

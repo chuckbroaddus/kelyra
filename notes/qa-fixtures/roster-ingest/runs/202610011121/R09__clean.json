@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Ivy Navarro",
+        "confident": true
+      },
+      {
+        "name": "Jude Palmer",
+        "confident": true
+      },
+      {
+        "name": "Kira Solis",
+        "confident": true
+      },
+      {
+        "name": "Luca Bianchi",
+        "confident": true
+      },
+      {
+        "name": "Mara Quinn",
+        "confident": true
+      }
+    ]
+  }
+}

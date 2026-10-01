@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Ravi Mehta",
+        "confident": true
+      },
+      {
+        "name": "Serena Holt",
+        "confident": true
+      },
+      {
+        "name": "Theo Grant",
+        "confident": true
+      },
+      {
+        "name": "Uma Desai",
+        "confident": true
+      },
+      {
+        "name": "Victor Lang",
+        "confident": true
+      },
+      {
+        "name": "Willow Cruz",
+        "confident": true
+      }
+    ]
+  }
+}

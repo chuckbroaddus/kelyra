@@ -1,0 +1,97 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Nora Ortiz",
+        "student_id": "8213",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Oscar Prior",
+        "student_id": "8214",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Pia Quill",
+        "student_id": "8215",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rafael Soto",
+        "student_id": "8216",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Sasha Tran",
+        "student_id": "8217",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Talia Upton",
+        "student_id": "8218",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Uri Vargas",
+        "student_id": "8219",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Vera Walsh",
+        "student_id": "8220",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Wyatt Xu",
+        "student_id": "8221",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Xena Young",
+        "student_id": "8222",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Yuri Zhao",
+        "student_id": "8223",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

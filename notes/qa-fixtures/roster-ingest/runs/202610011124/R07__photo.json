@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Yasmin Ortiz",
+        "confident": true
+      },
+      {
+        "name": "Brody Klein",
+        "confident": true
+      },
+      {
+        "name": "Cora Ellis",
+        "confident": true
+      },
+      {
+        "name": "Drew Nakamura",
+        "confident": true
+      },
+      {
+        "name": "Elise Fontaine",
+        "confident": true
+      },
+      {
+        "name": "Felix Huang",
+        "confident": true
+      },
+      {
+        "name": "Greta Lind",
+        "confident": true
+      },
+      {
+        "name": "Hugo Marquez",
+        "confident": true
+      }
+    ]
+  }
+}

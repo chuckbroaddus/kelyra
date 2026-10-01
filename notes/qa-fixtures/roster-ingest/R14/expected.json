@@ -1,0 +1,67 @@
+{
+  "source_id": "R14",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Taylor Anderson",
+      "student_id": "44001",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Jordan Brown",
+      "student_id": "44002",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Riley Clark",
+      "student_id": "44003",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Avery Davis",
+      "student_id": "44004",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Casey Evans",
+      "student_id": "44005",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Morgan Flores",
+      "student_id": "44006",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Quinn Green",
+      "student_id": "44007",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {}
+}

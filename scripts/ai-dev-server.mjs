@@ -400,14 +400,19 @@ async function analyzeHomework(supabase, body) {
   return { ok: true, gaps: draft.gaps };
 }
 
-const rosterPrompt = `You extract student names from a class list, seating chart, or attendance sheet photo.
+const rosterPrompt = `You extract students from a class list, seating chart, attendance sheet, or roster photo/scan.
 Return JSON only, no markdown:
-{"names":[{"name":"First Last","confident":true}]}
+{"document_kind_guess":"class_roster","rejected":false,"names":[{"name":"First Last","student_id":null,"grade":null,"period":null,"parent_contact":null,"confident":true}]}
+document_kind_guess is one of: class_roster, seating_chart, attendance, not_roster.
+rejected=true and names=[] when the image is NOT a student list (syllabus, homework, flyer, answer key, random photo).
 Rules:
-- Only personal names of students. Skip headers, period labels, Present/Absent, dates, room numbers, teacher names, and page titles.
-- Keep the name as printed. Do not invent a student who is not on the page.
-- confident=false if the line is unclear or might not be a student name.
-- 0 to 40 names.`;
+- Only personal names of students. Skip headers, period labels ("Period 3"), Present/Absent, dates, room numbers, teacher names (Mr./Ms./Dr./Sra./Coach), page titles, "Student name", column letters, and totals.
+- Keep the name as printed. If printed "LAST, FIRST" or "LAST FIRST" in all caps legal form, return "First Last" title case.
+- Do not invent a student who is not on the page. Do not invent surnames when only a first name is shown.
+- student_id / grade / period / parent_contact: copy only if clearly printed on that row. Otherwise null. Never invent IDs or contacts.
+- parent_contact format when present: "Guardian Name <email-or-phone>".
+- confident=false if the line is unclear, partial, first-name-only, or might not be a student name.
+- 0 to 40 names. Prefer fewer high-quality names over junk.`;
 
 async function extractRoster(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -423,16 +428,87 @@ async function extractRoster(body) {
     },
   ]);
   const parsed = extractJson(outputText(payload));
-  const names = Array.isArray(parsed.names)
-    ? parsed.names
-        .map((row) => ({
-          name: String(row?.name ?? '').replace(/\s+/g, ' ').trim(),
-          confident: row?.confident !== false,
-        }))
-        .filter((row) => row.name.length > 1)
-        .slice(0, 40)
-    : [];
-  return { names };
+  const rejected =
+    parsed?.rejected === true ||
+    parsed?.document_kind_guess === 'not_roster' ||
+    /not_roster|not a roster|not a (class )?list/i.test(String(parsed?.warning || ''));
+
+  const junkName = (name) => {
+    const n = String(name || '').replace(/\s+/g, ' ').trim();
+    if (n.length < 2) return true;
+    const lower = n.toLowerCase();
+    if (
+      /^(present|absent|tardy|excused|name|student|students|roster|period|room|date|total|page|class|section|grade|id|sid|teacher|homeroom|advisory)\b/i.test(
+        lower,
+      )
+    ) {
+      return true;
+    }
+    if (/^period\s*\d+/i.test(n)) return true;
+    if (/^room\s*\d+/i.test(n)) return true;
+    if (/^(mr|ms|mrs|dr|sra|sr|coach)\.?\s+/i.test(n) && n.split(/\s+/).length <= 3) return true;
+    if (/^page\s*\d+(\s+of\s+\d+)?$/i.test(n)) return true;
+    if (/^(page|total|totals|continued)\b/i.test(lower) && n.split(/\s+/).length <= 2) return true;
+    return false;
+  };
+
+  function titleCaseName(s) {
+    return String(s || '')
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  const flipLastFirst = (name) => {
+    const raw = String(name || '').replace(/\s+/g, ' ').trim();
+    const m = raw.match(/^([A-Za-z][A-Za-z\-']+),\s*([A-Za-z][A-Za-z\-']+(?:\s+[A-Za-z][A-Za-z\-']+)?)$/);
+    if (m) return titleCaseName(`${m[2]} ${m[1]}`);
+    if (/^[A-Z][A-Z\-']+\s+[A-Z][A-Z\-']+$/.test(raw) && raw === raw.toUpperCase()) {
+      const [a, b] = raw.split(/\s+/);
+      return titleCaseName(`${b} ${a}`);
+    }
+    return titleCaseName(raw);
+  };
+
+  const emptyToNull = (v) => {
+    if (v == null) return null;
+    const s = String(v).trim();
+    if (!s || s === 'null' || s === 'undefined' || s === '-' || s === '—') return null;
+    return s;
+  };
+
+  const names = rejected
+    ? []
+    : Array.isArray(parsed.names)
+      ? parsed.names
+          .map((row) => {
+            const rawName = String(row?.name ?? '').replace(/\s+/g, ' ').trim();
+            if (!rawName || junkName(rawName)) return null;
+            const name = flipLastFirst(rawName);
+            if (junkName(name)) return null;
+            return {
+              name,
+              student_id: emptyToNull(row?.student_id ?? row?.studentId ?? row?.sid),
+              grade: emptyToNull(row?.grade ?? row?.grade_level),
+              period: emptyToNull(row?.period),
+              parent_contact: emptyToNull(row?.parent_contact ?? row?.parentContact),
+              confident: row?.confident !== false && name.split(/\s+/).length >= 2,
+            };
+          })
+          .filter(Boolean)
+          .filter((row, idx, arr) => arr.findIndex((x) => x.name.toLowerCase() === row.name.toLowerCase()) === idx)
+          .slice(0, 40)
+      : [];
+
+  return {
+    document_kind_guess: rejected
+      ? 'not_roster'
+      : parsed?.document_kind_guess || (names.length ? 'class_roster' : 'not_roster'),
+    rejected: rejected || names.length === 0 && parsed?.document_kind_guess === 'not_roster',
+    names,
+  };
 }
 
 const speechPrompt = `You interpret what a K-12 teacher just said.

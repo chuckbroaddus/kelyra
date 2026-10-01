@@ -1,0 +1,13 @@
+{
+  "id": "R07",
+  "kind": "roster",
+  "photo": true,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "fields": [
+    "names"
+  ],
+  "srs": []
+}
