@@ -49,15 +49,15 @@ export const SYLLABUS_SECTIONS: InterviewSection[] = [
 ];
 
 export const SECTION_LABELS: Record<InterviewSection, string> = {
-  level: 'Level',
-  calendar: 'Calendar',
+  level: 'School level',
+  calendar: 'Grading periods',
   credit: 'Credit',
-  scale: 'Scale',
+  scale: 'Letter grades',
   gpa: 'GPA',
-  locks: 'Locks',
-  engine: 'Engine',
+  locks: 'Teacher limits',
+  engine: 'How grades add up',
   categories: 'Categories',
-  status: 'Status',
+  status: 'Missing & late',
   extras: 'Extras',
   review: 'Review',
 };
@@ -67,14 +67,14 @@ export const SCHOOL_NODES: QuestionNode[] = [
     id: 'S-Q1',
     section: 'level',
     paths: ['level'],
-    question: 'Who is this setup for?',
+    question: 'What kind of school is this?',
     help_key: 'help.wizard.level',
     chips: [
       { id: 'elementary', label: 'Elementary', slots: [{ path: 'level', value: 'elementary' }] },
       { id: 'middle', label: 'Middle', slots: [{ path: 'level', value: 'middle' }] },
       { id: 'high', label: 'High', slots: [{ path: 'level', value: 'high' }] },
       { id: 'college', label: 'College', slots: [{ path: 'level', value: 'college' }] },
-      { id: 'mixed', label: 'Mixed', slots: [{ path: 'level', value: 'mixed' }] },
+      { id: 'mixed', label: 'Several levels', slots: [{ path: 'level', value: 'mixed' }] },
     ],
   },
   {
@@ -93,9 +93,9 @@ export const SCHOOL_NODES: QuestionNode[] = [
     ],
     effects: (ctx) => {
       const t = templateOf(ctx);
-      if (t === 'tx_six_weeks') return 'Report cards will post 6 times. Transcript still stores S1 and S2.';
-      if (t === 'nine_weeks') return 'Report cards will post 4 times a year (quarters).';
-      if (t === 'trimester') return 'Three big report cards a year.';
+      if (t === 'tx_six_weeks') return 'Report cards will go home 6 times a year. Transcripts still show one grade for each semester.';
+      if (t === 'nine_weeks') return 'Report cards will go home 4 times a year (quarters).';
+      if (t === 'trimester') return 'Report cards will go home 3 times a year.';
       return null;
     },
   },
@@ -103,18 +103,18 @@ export const SCHOOL_NODES: QuestionNode[] = [
     id: 'S-Q3',
     section: 'credit',
     paths: ['credit.policy'],
-    question: 'Do those periods award high-school credit?',
+    question: 'Do these classes earn high school credit?',
     help_key: 'help.year_link',
     hidden: (ctx) => levelOf(ctx) === 'elementary',
     chips: [
       {
         id: 'sem05',
-        label: 'Yes, 0.5 per semester',
+        label: 'Yes, ½ credit per semester',
         slots: [{ path: 'credit.policy', value: { unit: 'semester_0_5', year_link: true, attendance_gate: true } }],
       },
       {
         id: 'year10',
-        label: 'Yes, 1.0 per year',
+        label: 'Yes, 1 credit per year',
         slots: [{ path: 'credit.policy', value: { unit: 'year_1_0', year_link: true, attendance_gate: true } }],
       },
       {
@@ -129,7 +129,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     id: 'S-Q4',
     section: 'credit',
     paths: ['rollup.preset'],
-    question: 'How do the periods become a semester grade?',
+    question: 'How do the grading periods add up to a semester grade?',
     help_key: 'help.rollup.2_7',
     hidden: (ctx) => {
       if (creditUnit(ctx) === 'none') return true;
@@ -137,10 +137,10 @@ export const SCHOOL_NODES: QuestionNode[] = [
       return t === 'elementary_year_4' || t === 'elementary_year_6' || t === '';
     },
     chips: [
-      { id: '27', label: '2/7 + exam 1/7 (Texas six-weeks)', slots: [{ path: 'rollup.preset', value: '2/7+1/7' }] },
-      { id: '404020', label: '40 / 40 / 20', slots: [{ path: 'rollup.preset', value: '40/40/20' }] },
-      { id: '5050', label: '50 / 50 no exam', slots: [{ path: 'rollup.preset', value: '50/50' }] },
-      { id: 'mean', label: 'Simple average', slots: [{ path: 'rollup.preset', value: 'year_mean' }] },
+      { id: '27', label: 'Three six-weeks + exam (Texas: 2/7 each, exam 1/7)', slots: [{ path: 'rollup.preset', value: '2/7+1/7' }] },
+      { id: '404020', label: 'Two periods 40% each + exam 20%', slots: [{ path: 'rollup.preset', value: '40/40/20' }] },
+      { id: '5050', label: 'Two periods 50% each, no exam', slots: [{ path: 'rollup.preset', value: '50/50' }] },
+      { id: 'mean', label: 'Plain average of the periods', slots: [{ path: 'rollup.preset', value: 'year_mean' }] },
       { id: 'ns', label: "I'm not sure", action: 'not_sure' },
     ],
   },
@@ -159,7 +159,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     chips: [
       { id: 'yes', label: 'Yes', slots: [{ path: 'exam.separate', value: true }] },
       { id: 'no', label: 'No', slots: [{ path: 'exam.separate', value: false }] },
-      { id: 'exempt', label: 'Exempt if high average', slots: [{ path: 'exam.separate', value: 'exempt_high' }] },
+      { id: 'exempt', label: 'Yes, but high averages can skip it', slots: [{ path: 'exam.separate', value: 'exempt_high' }] },
     ],
   },
   {
@@ -171,7 +171,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     chips: [
       {
         id: '10pt',
-        label: '10-point (90=A, 60 pass)',
+        label: '10-point (90 is an A, 60 passes)',
         slots: [
           { path: 'scale.default_id', value: 'us_10' },
           { path: 'scale.passing_pct', value: 60 },
@@ -179,7 +179,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       },
       {
         id: 'txd',
-        label: 'Texas 70 with D',
+        label: 'Texas: 70 passes, has a D',
         slots: [
           { path: 'scale.default_id', value: 'texas_with_d' },
           { path: 'scale.passing_pct', value: 70 },
@@ -187,7 +187,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       },
       {
         id: 'txnod',
-        label: 'Texas 70 no D',
+        label: 'Texas: 70 passes, no D',
         slots: [
           { path: 'scale.default_id', value: 'texas_no_d' },
           { path: 'scale.passing_pct', value: 70 },
@@ -195,7 +195,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       },
       {
         id: 'pm',
-        label: 'Plus-minus',
+        label: 'Plus/minus letters (A-, B+)',
         slots: [
           { path: 'scale.default_id', value: 'college_plus_minus' },
           { path: 'scale.passing_pct', value: 60 },
@@ -228,7 +228,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     chips: [
       {
         id: 'half',
-        label: 'Default +0.5 / +1.0',
+        label: 'Usual: +0.5 Honors, +1.0 AP',
         slots: [
           { path: 'gpa.weighted_bonus', value: 'default' },
           { path: 'levels.ap_points', value: 5.0 },
@@ -236,7 +236,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       },
       {
         id: 'num5',
-        label: 'Numeric 5.0 chart (AP A=5.0)',
+        label: '5.0 chart (an A in AP is 5.0)',
         slots: [
           { path: 'gpa.weighted_bonus', value: 'numeric_5' },
           { path: 'levels.ap_points', value: 5.0 },
@@ -244,7 +244,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       },
       {
         id: 'num6',
-        label: 'Numeric 6.0 chart',
+        label: '6.0 chart',
         slots: [
           { path: 'gpa.weighted_bonus', value: 'numeric_6' },
           { path: 'levels.ap_points', value: 6.0 },
@@ -270,17 +270,17 @@ export const SCHOOL_NODES: QuestionNode[] = [
     chips: [
       {
         id: 'pe',
-        label: 'PE out',
+        label: 'Leave out PE',
         slots: [{ path: 'gpa.exclude', value: { pe: true, pass_fail: true, aide: true, recovery: false } }],
       },
       {
         id: 'pf',
-        label: 'P/F out',
+        label: 'Leave out pass/fail classes',
         slots: [{ path: 'gpa.exclude', value: { pe: false, pass_fail: true, aide: false, recovery: false } }],
       },
       {
         id: 'all',
-        label: 'PE · P/F · aide · recovery',
+        label: 'Leave out PE, pass/fail, office aide, credit recovery',
         slots: [{ path: 'gpa.exclude', value: { pe: true, pass_fail: true, aide: true, recovery: true } }],
       },
       {
@@ -294,7 +294,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     id: 'S-Q10',
     section: 'review',
     paths: [],
-    question: 'Ready to open the form and publish when it looks right?',
+    question: 'Want to open the full form to check everything and publish?',
     help_key: 'help.wizard.review',
     chips: [
       { id: 'open', label: 'Open the form', action: 'open_form' },
@@ -309,18 +309,18 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     section: 'engine',
     paths: ['engine'],
     question:
-      'When you average the class, should a 100-point test outweigh a 10-point quiz, or should every assignment in a bucket count the same?',
+      'When you average grades, should a 100-point test count more than a 10-point quiz, or should every assignment in a category count the same?',
     help_key: 'help.engine',
     chips: [
       { id: 'points', label: 'Total points', slots: [{ path: 'engine', value: 'total_points' }] },
       {
         id: 'wpoints',
-        label: 'Weighted buckets (points inside)',
+        label: 'Weighted categories, points count',
         slots: [{ path: 'engine', value: 'weighted_points_inside' }],
       },
       {
         id: 'wpercent',
-        label: 'Weighted buckets (equal %)',
+        label: 'Weighted categories, all equal',
         slots: [{ path: 'engine', value: 'weighted_percent_inside' }],
       },
       { id: 'ns', label: "I'm not sure", action: 'not_sure' },
@@ -330,7 +330,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     id: 'T-Q2',
     section: 'categories',
     paths: ['categories'],
-    question: 'Name the buckets and their percents.',
+    question: 'What are your grade categories, and how much does each one count?',
     help_key: 'help.empty_category',
     hidden: (ctx) => {
       const e = engineOf(ctx);
@@ -339,7 +339,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     chips: [
       {
         id: '5050',
-        label: '50/50 major-daily',
+        label: 'Major 50%, Daily 50%',
         slots: [
           {
             path: 'categories',
@@ -352,7 +352,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
       },
       {
         id: '404020',
-        label: '40/40/20',
+        label: 'Tests 40%, Quizzes 40%, Homework 20%',
         slots: [
           {
             path: 'categories',
@@ -366,7 +366,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
       },
       {
         id: 'tqh',
-        label: 'Tests/Quiz/HW 50/20/30',
+        label: 'Tests 50%, Quizzes 20%, Homework 30%',
         slots: [
           {
             path: 'categories',
@@ -385,7 +385,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     id: 'T-Q3',
     section: 'categories',
     paths: ['within_category'],
-    question: 'Inside a bucket, does a 100-point test beat a 20-point quiz?',
+    question: 'Inside a category, should a 100-point test count more than a 20-point quiz?',
     help_key: 'help.engine.weighted_points',
     hidden: (ctx) => {
       const e = engineOf(ctx);
@@ -415,7 +415,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     id: 'T-Q4',
     section: 'status',
     paths: ['missing_rule'],
-    question: 'Missing work?',
+    question: 'How should missing work count?',
     help_key: 'help.missing',
     chips: [
       { id: 'zero', label: 'Counts as 0', slots: [{ path: 'missing_rule', value: 'zero' }] },
@@ -427,18 +427,18 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     id: 'T-Q5',
     section: 'status',
     paths: ['late_rule'],
-    question: 'Late work?',
+    question: 'How should late work be handled?',
     help_key: 'help.late',
     chips: [
-      { id: 'none', label: 'Not accepted / no auto penalty', slots: [{ path: 'late_rule', value: { type: 'none' } }] },
+      { id: 'none', label: 'No automatic penalty', slots: [{ path: 'late_rule', value: { type: 'none' } }] },
       {
         id: 'flat',
-        label: 'Flat penalty',
+        label: 'Take off the same amount once',
         slots: [{ path: 'late_rule', value: { type: 'flat_percent', percent: 10 } }],
       },
       {
         id: 'day',
-        label: '% per day',
+        label: 'Take off a percent each day',
         slots: [{ path: 'late_rule', value: { type: 'percent_per_day', percent: 10, max_percent: 50 } }],
       },
       { id: 'ns', label: "I'm not sure", action: 'not_sure' },
@@ -480,7 +480,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
       },
       {
         id: 'all',
-        label: 'Drop + EC + retakes',
+        label: 'Drop lowest, extra credit, and retakes',
         slots: [
           { path: 'drop_lowest', value: 1 },
           { path: 'extra_credit', value: true },
@@ -493,7 +493,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     id: 'T-Q7',
     section: 'review',
     paths: [],
-    question: 'Open the syllabus form to check the sample student and publish?',
+    question: 'Want to open the full form to check the sample students and publish?',
     help_key: 'help.engine.weighted_points',
     chips: [
       { id: 'open', label: 'Open the form', action: 'open_form' },

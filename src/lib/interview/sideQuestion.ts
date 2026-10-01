@@ -4,6 +4,7 @@
  */
 import { getBundledHelpTopic, type HelpTopic } from '../help/helpTopics.ts';
 import { getNode } from './graph.ts';
+import { HELP_AFFECT_WORDS } from '../grade/plainLabels.ts';
 import type { InterviewSession, QuestionNode, TurnKind } from './types.ts';
 
 const SIDE_RE =
@@ -44,8 +45,8 @@ export function resolveSideHelpKey(
 
 function affectsSentence(topic: HelpTopic): string {
   if (!topic.affects.length) return '';
-  const names = topic.affects.map((a) => a.replace(/_/g, ' '));
-  return `Layers that change: ${names.join(', ')}.`;
+  const names = topic.affects.map((a) => HELP_AFFECT_WORDS[a] ?? a.replace(/_/g, ' '));
+  return `This changes: ${names.join(', ')}.`;
 }
 
 export function answerSideQuestion(input: {
@@ -66,10 +67,10 @@ export function answerSideQuestion(input: {
     ({
       key,
       title: 'Help',
-      body: 'That choice changes how live grades and report cards combine. It does not publish by itself.',
-      meaning: 'Setup choices change averages and report cards, not past stored grades until you publish.',
+      body: 'That choice changes how current grades and report cards are figured. Nothing is published until you publish.',
+      meaning: 'Setup choices change averages and report cards. Saved grades don’t change until you publish.',
       affects: ['live_grade', 'report_card'] as HelpTopic['affects'],
-      example: 'Try the sample student on the form after you pick an option.',
+      example: 'Check the sample students on the form after you pick an option.',
       sru_ref: 'FR-CHAT-22',
     } satisfies HelpTopic);
 
@@ -83,9 +84,9 @@ export function answerSideQuestion(input: {
     topic.meaning,
     topic.example ? `Example: ${topic.example}` : null,
     affectsSentence(topic),
-    'This does not save a new choice until you tap a chip or confirm an answer.',
+    'Nothing is saved until you tap a choice or answer the question.',
     pending ? `Still on: ${pending.question}` : null,
-    offer ? 'Want the full form help instead? Tap Open the form.' : null,
+    offer ? 'Want to see the full form instead? Tap Open the form.' : null,
   ].filter(Boolean);
 
   return {
@@ -98,7 +99,7 @@ export function answerSideQuestion(input: {
 
 export function injectionDecline(pending: QuestionNode | null): string {
   const base =
-    "I can't do that from setup chat. I only fill the grading draft — no curves, no score edits, no publish.";
+    "I can't do that here. I can only help fill in your grading setup. I can't curve grades, change scores, or publish.";
   if (!pending) return base;
   return `${base} Still on: ${pending.question}`;
 }

@@ -5,6 +5,7 @@ import { applySlotsToSession, createSession, notSureDefaults } from './applySlot
 import { getNode } from './graph.ts';
 import { nextQuestion, openingMessage, readBackSummary } from './nextQuestion.ts';
 import { answerSideQuestion, injectionDecline } from './sideQuestion.ts';
+import { interviewSlotLine } from '../grade/plainLabels.ts';
 import type {
   ExtractionResult,
   InterviewSession,
@@ -114,7 +115,7 @@ export function processTurn(
 
   if (extraction.navigation === 'open_form' || extraction.navigation === 'confirm') {
     s = { ...s, status: 'handed_off', next_node: null, pending_node: null };
-    const msg = 'Opening the form with your draft. Publish stays on the form.';
+    const msg = 'Opening the form with your answers filled in. You publish from the form.';
     s = withTranscript(s, [stamp('assistant', msg, { kind: 'navigation' })]);
     return {
       session: s,
@@ -129,7 +130,7 @@ export function processTurn(
   }
 
   if (extraction.navigation === 'photo') {
-    const msg = 'Photo import uses the same draft. Come back to finish remaining questions after.';
+    const msg = 'Your photo will fill in the same form. Come back afterward to answer any questions that are left.';
     s = withTranscript(s, [stamp('assistant', msg, { kind: 'navigation' })]);
     return {
       session: s,
@@ -168,7 +169,7 @@ export function processTurn(
     const fails = (s.failed_parses[pendingId] ?? 0) + 1;
     s = { ...s, failed_parses: { ...s.failed_parses, [pendingId]: fails } };
     if (fails >= 2) {
-      const msg = 'I could not parse that twice. Opening that step on the form instead.';
+      const msg = 'Sorry, I still didn’t understand. Let’s open that part of the form instead.';
       s = withTranscript(s, [stamp('assistant', msg, { node_id: pendingId })]);
       s = { ...s, status: 'handed_off' };
       return {
@@ -183,8 +184,8 @@ export function processTurn(
       };
     }
     const msg = pending
-      ? `I didn't catch a value. ${pending.question}`
-      : 'I did not catch a value. Try a chip or a short answer.';
+      ? `Sorry, I didn't understand that. ${pending.question}`
+      : 'Sorry, I didn’t understand that. Tap a choice or type a short answer.';
     s = withTranscript(s, [stamp('assistant', msg, { node_id: pendingId })]);
     return {
       session: s,
@@ -206,7 +207,7 @@ export function processTurn(
 
   let assistant = '';
   if (extraction.restate) assistant = extraction.restate;
-  else if (slots.length) assistant = `Got it: ${slots.map((x) => x.path).join(', ')}.`;
+  else if (slots.length) assistant = `Got it. ${slots.map((x) => interviewSlotLine(x.path, x.value)).join('. ')}.`;
   if (effects) assistant = `${assistant}${assistant ? ' ' : ''}${effects}`;
 
   if (nq.done && nq.node) {

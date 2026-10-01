@@ -593,6 +593,6 @@ test('UI labels cover every emit path + friendly calendar value', async () => {
   assert.deepEqual(pathsMissingLabels(), []);
   assert.equal(labelForIngestPath('syllabus.title'), 'Course title');
   assert.equal(labelForIngestPath('calendar.template'), 'Grading calendar');
-  assert.equal(labelForIngestValue('calendar.template', 'tx_six_weeks'), 'Texas six weeks');
-  assert.equal(labelForIngestPath('qp.tables'), 'Quality-point chart');
+  assert.equal(labelForIngestValue('calendar.template', 'tx_six_weeks'), 'Six-week grading periods (Texas)');
+  assert.equal(labelForIngestPath('qp.tables'), 'GPA points chart');
 });

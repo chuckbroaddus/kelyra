@@ -147,19 +147,19 @@ export default function SyllabusScreen() {
   const onSaveDraft = async () => {
     if (!id || !draft) return;
     if (draft.syllabus_status === 'published') {
-      setError('This syllabus is published. Use Publish to update live weights.');
+      setError('This syllabus is already published. Tap Publish to save your changes.');
       return;
     }
     // §11.15: weighted engines block Save until active weights = 100%.
     if (!canFinishReview(draft)) {
-      setError('Fix category weights (must total 100%) before saving.');
+      setError('Your category weights need to add up to 100% before you can save.');
       return;
     }
     setBusy(true);
     setError(null);
     try {
       await saveClassSyllabusDraft(id, toEditorInput(draft));
-      setStatus('Draft saved — not used in averages yet.');
+      setStatus('Draft saved. It won’t change any grades until you publish.');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save draft');
@@ -206,7 +206,9 @@ export default function SyllabusScreen() {
         title: typeof bag.title === 'string' ? bag.title : draft.title,
         source: 'copied',
       });
-      setStatus(`Copied template “${templateKey}” into unlocked fields.`);
+      setStatus(
+        `Copied “${listSchoolSyllabusTemplates().find((t) => t.key === templateKey)?.name ?? templateKey}”. Settings your school controls were left as they are.`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not copy template');
     }
@@ -255,7 +257,7 @@ export default function SyllabusScreen() {
       });
       if (parsed.error) throw new Error(String(parsed.error));
       await upsertSyllabusAskDraft(id, { ...parsed, schema_version: 1, class_id: id }, asset.id);
-      setStatus('Ask draft ready — review before publish.');
+      setStatus('We read your photo. Check the settings below, then publish.');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that photo');
@@ -283,7 +285,7 @@ export default function SyllabusScreen() {
     if (!id || !teacher) return;
     setBusy(true);
     setError(null);
-    setStatus('Reading document into proposal…');
+    setStatus('Reading your document…');
     try {
       const asset = await uploadTeacherAsset({
         teacherId: teacher.id,
@@ -301,7 +303,7 @@ export default function SyllabusScreen() {
         source_id: asset.id,
       });
       setIngestProposal(proposal);
-      setStatus('Proposal ready — review fields, then apply into the wizard.');
+      setStatus('Done reading. Check each setting we found, then tap Use these settings.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that document');
     } finally {
@@ -331,21 +333,21 @@ export default function SyllabusScreen() {
     const filtered: IngestProposal = { ...ingestProposal, fields: accepted };
     setDraft(applyProposalToSyllabusDraft(draft, filtered));
     setIngestProposal(null);
-    setStatus('Proposal applied into wizard. Review before publish.');
+    setStatus('Settings added. Look them over, then publish.');
   };
 
   const applyAsk = () => {
     if (!askDraft || !draft) return;
     const applied = applyAskDraftToEditor(askDraft);
     if (applied.documentKind === 'rubric') {
-      setError('This looks like a scoring rubric. Rubric levels are not category weights.');
+      setError('This looks like a rubric for scoring one assignment, not a grading policy. Rubric levels can’t be used as category weights.');
       return;
     }
     if (applied.documentKind === 'mixed') {
-      setStatus('Mixed document — category weights applied; rubric criteria ignored.');
+      setStatus('This page has a grading policy and a rubric. We used the category weights and skipped the rubric.');
     }
     if (!applied.categories.length) {
-      setError('Could not read a grading policy from that photo. Enter weights manually.');
+      setError('We couldn’t find a grading policy in that photo. Please enter the weights yourself.');
       return;
     }
     setDraft(applyAskImport(draft, applied));
@@ -371,8 +373,8 @@ export default function SyllabusScreen() {
     draft.syllabus_status === 'published'
       ? 'Published'
       : draft.syllabus_status === 'draft'
-        ? 'Draft'
-        : 'Not set';
+        ? 'Draft (not used for grades yet)'
+        : 'Not set up yet';
 
   return (
     <Screen keyboard pageChromeHosted>
@@ -384,34 +386,34 @@ export default function SyllabusScreen() {
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
-          Guided setup T1–T8. Live preview updates as you choose. Nothing is a grade until you publish.
+          Step through each choice below. The sample grades update as you go. Nothing affects real grades until you publish.
         </Text>
       </Card>
 
       {askDraft ? (
         <Card>
-          <Text style={[type.body, { color: colors.ink }]}>From photo · Ask draft</Text>
+          <Text style={[type.body, { color: colors.ink }]}>Settings read from your photo</Text>
           <Text style={[type.meta, { color: colors.mute }]}>
-            Review every line. Nothing is live until you publish.
+            Check every line. Nothing changes until you publish.
           </Text>
           {String(askDraft.document_kind) === 'rubric' || String(askDraft.document_kind) === 'mixed' ? (
             <Text style={[type.meta, { color: colors.warn, marginTop: 6 }]}>
-              This looks like a scoring rubric (or mixed). Rubric levels are not category weights.
+              This looks like a rubric (or part of one). Rubric levels can’t be used as category weights.
             </Text>
           ) : null}
-          <PrimaryButton label="Apply checked into wizard" onPress={applyAsk} />
-          <GhostButton align="left" label="Discard draft" onPress={() => setConfirm({ kind: 'discard_ask' })} />
+          <PrimaryButton label="Use these settings" onPress={applyAsk} />
+          <GhostButton align="left" label="Throw away" onPress={() => setConfirm({ kind: 'discard_ask' })} />
         </Card>
       ) : null}
 
       {ingestProposal ? (
         <IngestProposalReview
           proposal={ingestProposal}
-          sourceLabel="document"
+          sourceLabel="your document"
           onApply={applyIngestFields}
           onDiscard={() => {
             setIngestProposal(null);
-            setStatus('Proposal discarded. Published syllabus unchanged.');
+            setStatus('Thrown away. Your published syllabus did not change.');
           }}
         />
       ) : null}
@@ -442,15 +444,15 @@ export default function SyllabusScreen() {
             onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
           />
           <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
-          <GhostButton align="left" label="Import from photo" onPress={() => void onPickPhoto(true)} />
-          <GhostButton align="left" label="Choose photo" onPress={() => void onPickPhoto(false)} />
+          <GhostButton align="left" label="Take a photo of a syllabus" onPress={() => void onPickPhoto(true)} />
+          <GhostButton align="left" label="Choose a syllabus photo" onPress={() => void onPickPhoto(false)} />
         </View>
       )}
 
       <Card>
         <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Start from a school template</Text>
         <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-          Copies unlocked fields only. School locks stay locked with their reason.
+          Copies the settings you’re allowed to change. Settings your school controls stay as they are.
         </Text>
         <ChipRow>
           {listSchoolSyllabusTemplates().map((t) => (
@@ -491,7 +493,7 @@ export default function SyllabusScreen() {
             : confirm?.kind === 'unpublish'
               ? 'Unpublish syllabus?'
               : confirm?.kind === 'discard_ask'
-                ? 'Discard Ask draft?'
+                ? 'Throw away the settings read from your photo?'
                 : ''
         }
         body={
@@ -504,13 +506,13 @@ export default function SyllabusScreen() {
                   : ''
               }`
             : confirm?.kind === 'unpublish'
-              ? 'Averages stop using these weights. Family “how grades work” hides. Approved scores stay.'
+              ? 'Averages stop using these weights, and families no longer see how this class is graded. Approved scores stay.'
               : confirm?.kind === 'discard_ask'
-                ? 'Clears the Ask draft only. A published syllabus stays intact.'
+                ? 'This only clears the settings read from your photo. Your published syllabus stays the same.'
                 : ''
         }
         confirmLabel={
-          confirm?.kind === 'unpublish' ? 'Unpublish' : confirm?.kind === 'discard_ask' ? 'Discard' : 'Publish'
+          confirm?.kind === 'unpublish' ? 'Unpublish' : confirm?.kind === 'discard_ask' ? 'Throw away' : 'Publish'
         }
         busy={busy}
         onCancel={() => setConfirm(null)}
@@ -539,7 +541,7 @@ export default function SyllabusScreen() {
                 setConfirm(null);
                 await load();
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Could not discard draft');
+                setError(err instanceof Error ? err.message : 'Could not throw away the photo settings');
               } finally {
                 setBusy(false);
               }

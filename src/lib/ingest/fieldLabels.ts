@@ -10,61 +10,61 @@ export const INGEST_FIELD_LABELS: Record<string, string> = {
   'calendar.template': 'Grading calendar',
   'calendar.year_start': 'School year start',
   'calendar.year_end': 'School year end',
-  'calendar.model': 'Calendar model',
-  'calendar.period_model': 'Marking period model',
+  'calendar.model': 'Grading calendar details',
+  'calendar.period_model': 'Grading period length',
   'credit.policy': 'Credit policy',
   'credit.unit': 'Credit unit',
   'credit.year_link': 'Year average for credit',
-  'credit.attendance_gate': 'Attendance gate for credit',
-  'credit.passing_threshold': 'Passing threshold',
-  'rollup.preset': 'Semester / year rollup',
-  'rollup.custom_weights': 'Custom rollup weights',
-  'rollup.exam_enabled': 'Semester exam in rollup',
+  'credit.attendance_gate': 'Attendance needed for credit',
+  'credit.passing_threshold': 'Passing grade',
+  'rollup.preset': 'Semester grade formula',
+  'rollup.custom_weights': 'Custom semester grade weights',
+  'rollup.exam_enabled': 'Semester exam counts in semester grade',
   'scale.default_id': 'Default letter scale',
   'scale.list': 'Letter scales',
-  'scale.bands': 'Letter bands',
+  'scale.bands': 'Letter grade ranges',
   'scale.passing_pct': 'Passing percent',
   'scale.rounding': 'Rounding rule',
-  'qp.tables': 'Quality-point chart',
-  'qp.method': 'Quality-point method',
+  'qp.tables': 'GPA points chart',
+  'qp.method': 'How GPA points are given',
   'levels.list': 'Course levels',
-  'gpa.mode': 'GPA mode',
-  'gpa.profiles': 'GPA profiles',
+  'gpa.mode': 'GPA',
+  'gpa.profiles': 'GPA types',
   'gpa.include': 'What counts in GPA',
   'gpa.repeat': 'Repeat course rule',
   'gpa.rank': 'Class rank GPA',
-  'locks.map': 'Teacher locks',
+  'locks.map': 'What teachers can change',
   'school.notes': 'School notes',
   'syllabus.title': 'Course title',
-  'syllabus.engine': 'Grading engine',
+  'syllabus.engine': 'How grades add up',
   'syllabus.within_category': 'Inside a category',
   'syllabus.categories': 'Grade categories',
   'syllabus.late_rule': 'Late penalty',
   'syllabus.missing_rule': 'Missing work',
-  'syllabus.extra_credit_method': 'Extra credit method',
-  'syllabus.ec_cap': 'Extra credit cap',
-  'syllabus.floor': 'Period floor',
-  'syllabus.ceiling': 'Period ceiling',
-  'syllabus.book_mode': 'Gradebook mode',
+  'syllabus.extra_credit_method': 'How extra credit works',
+  'syllabus.ec_cap': 'Most extra credit allowed',
+  'syllabus.floor': 'Lowest grade allowed',
+  'syllabus.ceiling': 'Highest grade allowed',
+  'syllabus.book_mode': 'Fresh start each grading period',
   'syllabus.exam_weight': 'Exam weight',
-  'syllabus.rollup_preset': 'Class rollup preset',
+  'syllabus.rollup_preset': 'Semester grade formula',
   'syllabus.rounding': 'Rounding',
-  'syllabus.empty_category': 'Empty category',
+  'syllabus.empty_category': 'Category with no grades yet',
   'syllabus.narrative': 'Other notes from document',
-  'syllabus.term_structure': 'Term structure',
+  'syllabus.term_structure': 'How the year is split',
   'syllabus.retake': 'Retakes',
-  'syllabus.assignment_max': 'Assignment max',
+  'syllabus.assignment_max': 'Most points per assignment',
 };
 
 const VALUE_LABELS: Record<string, Record<string, string>> = {
   'calendar.template': {
-    tx_six_weeks: 'Texas six weeks',
-    nine_weeks: 'Nine weeks',
-    trimester: 'Trimester',
-    college_term: 'College term',
-    elementary_year_4: 'Elementary (4 periods)',
-    elementary_year_6: 'Elementary (6 periods)',
-    semester: 'Semester',
+    tx_six_weeks: 'Six-week grading periods (Texas)',
+    nine_weeks: 'Nine-week grading periods (quarters)',
+    trimester: 'Trimesters',
+    college_term: 'College terms',
+    elementary_year_4: 'Elementary, 4 report cards a year',
+    elementary_year_6: 'Elementary, 6 report cards a year',
+    semester: 'Semesters',
   },
   'calendar.period_model': {
     six_weeks: 'Six weeks',
@@ -77,48 +77,48 @@ const VALUE_LABELS: Record<string, Record<string, string>> = {
   },
   'syllabus.engine': {
     total_points: 'Total points',
-    weighted_points_inside: 'Weighted, points inside',
-    weighted_percent_inside: 'Weighted, equal percent',
-    item_weights: 'Item weights',
+    weighted_points_inside: 'Weighted categories, points count',
+    weighted_percent_inside: 'Weighted categories, every assignment equal',
+    item_weights: 'Each assignment has its own weight',
     none: 'No overall grade',
   },
   'syllabus.within_category': {
-    points_inside: 'Add points inside the category',
-    percent_inside: 'Average percents inside the category',
+    points_inside: 'Bigger assignments count more',
+    percent_inside: 'Every assignment counts the same',
   },
   'syllabus.missing_rule': {
     zero: 'Count as zero',
-    floor: 'Use a floor',
-    omit: 'Omit from average',
+    floor: 'Counts as the lowest grade allowed',
+    omit: "Doesn't count until it's turned in",
   },
   'syllabus.extra_credit_method': {
-    A: 'Method A',
-    B: 'Method B',
-    C: 'Method C',
+    A: 'Raises or replaces a score',
+    B: 'Adds bonus points',
+    C: 'Has its own category',
   },
   'syllabus.book_mode': {
-    reset_each_marking_period: 'Reset each marking period',
-    rolling_year: 'Rolling year',
+    reset_each_marking_period: 'Start fresh each grading period',
+    rolling_year: 'Keep one running average all year',
   },
   'qp.method': {
-    letter_map: 'Letter map',
-    numeric_band: 'Numeric percent bands',
-    percent_map: 'Percent map',
+    letter_map: 'By letter grade',
+    numeric_band: 'By percent range',
+    percent_map: 'By exact percent',
   },
   'gpa.mode': {
-    off: 'Off',
-    unweighted: 'Unweighted only',
-    unweighted_and_weighted: 'Unweighted and weighted',
+    off: 'No GPA',
+    unweighted: 'Unweighted GPA only',
+    unweighted_and_weighted: 'Unweighted and weighted GPA',
   },
   'rollup.preset': {
-    '2/7+1/7': '2/7 + 1/7 (six-weeks + exam)',
-    '40/40/20': '40 / 40 / 20',
-    '45/45/10': '45 / 45 / 10',
-    '3/7+3/7+1/7': '3/7 + 3/7 + 1/7',
-    '85/15': '85 / 15',
-    '25x4': '25 × 4',
-    '50/50': '50 / 50',
-    year_mean: 'Simple year mean',
+    '2/7+1/7': 'Three six-weeks count 2/7 each, exam counts 1/7',
+    '40/40/20': 'Two grading periods 40% each, exam 20%',
+    '45/45/10': 'Two grading periods 45% each, exam 10%',
+    '3/7+3/7+1/7': 'Two grading periods 3/7 each, exam 1/7',
+    '85/15': 'Grading periods 85%, exam 15%',
+    '25x4': 'Four quarters, 25% each',
+    '50/50': 'Two grading periods, 50% each, no exam',
+    year_mean: 'Plain average of all grading periods',
   },
 };
 
@@ -140,13 +140,13 @@ export function labelForIngestValue(path: string, value: unknown): string {
   }
   if (path === 'syllabus.missing_rule' && typeof value === 'object') {
     const o = value as { type?: string; floor?: number };
-    if (o.type === 'floor') return o.floor != null ? `Floor of ${o.floor}` : 'Use a floor';
+    if (o.type === 'floor') return o.floor != null ? `Counts as ${o.floor}` : 'Counts as the lowest grade allowed';
     if (o.type === 'zero') return 'Count as zero';
-    if (o.type === 'omit') return 'Omit from average';
+    if (o.type === 'omit') return "Doesn't count until it's turned in";
   }
   if (path === 'syllabus.late_rule' && typeof value === 'object') {
     const o = value as { type?: string; amount?: number; unit?: string };
-    if (o.type === 'none') return 'No late work / not accepted';
+    if (o.type === 'none') return 'No automatic late penalty';
     if (o.type === 'per_day') return `−${o.amount ?? '?'} ${o.unit ?? 'percent'} per day`;
     if (o.type === 'per_hour') return `−${o.amount ?? '?'} ${o.unit ?? 'percent'} per hour`;
     if (o.type === 'flat') return `Flat −${o.amount ?? '?'} ${o.unit ?? 'percent'}`;
@@ -175,7 +175,7 @@ export function labelForIngestValue(path: string, value: unknown): string {
       .join(' · ');
   }
   if (path === 'qp.tables' && Array.isArray(value)) {
-    return `${value.length} quality-point band${value.length === 1 ? '' : 's'}`;
+    return `GPA points for ${value.length} grade range${value.length === 1 ? '' : 's'}`;
   }
   try {
     return JSON.stringify(value);

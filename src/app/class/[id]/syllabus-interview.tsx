@@ -13,7 +13,7 @@ export default function SyllabusInterviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { profile } = useAuth();
-  usePushedTitle('Syllabus interview');
+  usePushedTitle('Answer a few questions');
 
   const onOpenForm = (_draft: Record<string, unknown>, _session: InterviewSession) => {
     if (!id) return;

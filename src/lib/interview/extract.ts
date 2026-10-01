@@ -2,6 +2,7 @@
  * Slot extraction prompt builder + JSON parser (no live AI in unit tests).
  */
 import { getNode, nodesFor } from './graph.ts';
+import { interviewSlotLine } from '../grade/plainLabels.ts';
 import type { ExtractionResult, ExtractedSlot, InterviewSession, QuestionNode, TurnKind } from './types.ts';
 
 const LEGAL_PATHS_SCHOOL = [
@@ -160,7 +161,7 @@ export function heuristicExtract(
   if (chipId && pending) {
     const chip = pending.chips.find((c) => c.id === chipId);
     if (chip?.action === 'not_sure') {
-      return { turn_kind: 'slot_answer', slots: [], navigation: null, restate: 'Applying recommended default.' };
+      return { turn_kind: 'slot_answer', slots: [], navigation: null, restate: 'No problem. I’ll use the usual choice, and you can change it later.' };
     }
     if (chip?.action === 'open_form') {
       return { turn_kind: 'navigation', slots: [], navigation: 'open_form' };
@@ -175,7 +176,7 @@ export function heuristicExtract(
       return {
         turn_kind: 'slot_answer',
         slots: chip.slots.map((s) => ({ path: s.path, value: s.value, confidence: 1, evidence: chip.label })),
-        restate: `Recorded: ${chip.label}`,
+        restate: `Got it: ${chip.label}.`,
       };
     }
   }
@@ -227,7 +228,7 @@ export function heuristicExtract(
     return {
       turn_kind: 'slot_answer',
       slots,
-      restate: `I heard ${slots.map((s) => `${s.path}=${JSON.stringify(s.value)}`).join(', ')}.`,
+      restate: `I heard: ${slots.map((s) => interviewSlotLine(s.path, s.value)).join('. ')}.`,
     };
   }
   return { turn_kind: 'slot_answer', slots: [], restate: null };
