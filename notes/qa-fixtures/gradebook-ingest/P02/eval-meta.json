@@ -1,0 +1,66 @@
+{
+  "rough": true,
+  "rough_kind": "phone",
+  "weights_sum": 100,
+  "effects": [
+    "glare_on_late_rule",
+    "mild_keystone",
+    "hand_shadow",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {
+    "syllabus.late_rule": "absent"
+  },
+  "degrade": {
+    "seed": 3202,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "laminate",
+    "scale": 0.88,
+    "rotate": -3,
+    "keystone": {
+      "top": 0.93,
+      "bottom": 1
+    },
+    "jitter": 0.003,
+    "glare": [
+      {
+        "target": "late",
+        "fx": 0.55,
+        "fy": 0.4,
+        "rx": 0.2,
+        "ry": 0.014,
+        "strength": 2.4
+      }
+    ],
+    "shadow": {
+      "cx": 0.92,
+      "cy": 0.98,
+      "rx": 0.16,
+      "ry": 0.1,
+      "angle": -30,
+      "armTo": [
+        1.1,
+        1.2
+      ],
+      "strength": 0.4
+    },
+    "light": {
+      "gradient": [
+        -0.2,
+        0.4
+      ],
+      "amount": 0.14,
+      "vignette": 0.25
+    },
+    "noise": 4,
+    "jpeg": 66
+  }
+}

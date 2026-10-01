@@ -1,0 +1,41 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "box": [
+        28,
+        121,
+        744,
+        141
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "box": [
+        28,
+        312,
+        200.5,
+        14
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "missing",
+      "field": "syllabus.missing_rule",
+      "box": [
+        28,
+        334,
+        232,
+        14
+      ]
+    }
+  ]
+}

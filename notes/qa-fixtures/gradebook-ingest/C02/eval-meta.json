@@ -1,0 +1,52 @@
+{
+  "rough": true,
+  "rough_kind": "scan",
+  "effects": [
+    "photocopy_3rd_gen",
+    "toner_noise",
+    "dark_streaks",
+    "blotchy_background",
+    "skew",
+    "grayscale",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {
+    "scale.bands": "uncertain",
+    "scale.passing_pct": "uncertain"
+  },
+  "companions": [
+    "calendar.period_model",
+    "rollup.exam_enabled",
+    "credit.passing_threshold"
+  ],
+  "degrade": {
+    "seed": 4202,
+    "scan": {
+      "dpi_scale": 1,
+      "skew": -1.8,
+      "faint": 0.25,
+      "gamma": 1.15,
+      "toner": 0.22,
+      "speckle": 0.009,
+      "streaks": 5,
+      "blotch": 0.12,
+      "edge_shadow": "top",
+      "blur": 1.1,
+      "gray": true,
+      "threshold": 0.35,
+      "crop": [
+        0,
+        0.01,
+        0,
+        0
+      ]
+    },
+    "noise": 9,
+    "jpeg": 55
+  }
+}

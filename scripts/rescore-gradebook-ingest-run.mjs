@@ -50,7 +50,7 @@ for (const entry of manifest.cases) {
   let meta = {};
   const metaPath = path.join(caseDir, 'eval-meta.json');
   if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-  for (const variant of ['clean', 'photo']) {
+  for (const variant of ['clean', 'photo', 'rough']) {
     const p = path.join(runDir, `${entry.id}__${variant}.json`);
     if (!fs.existsSync(p)) continue;
     const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -58,7 +58,7 @@ for (const entry of manifest.cases) {
     if (reNormalize && normalizeProposalFields && proposal?.fields) {
       proposal = normalizeProposalFields(proposal);
     }
-    const rows = scoreProposal(expected, proposal, meta);
+    const rows = scoreProposal(expected, proposal, meta, variant);
     const sum = summarize(rows);
     const acc = Math.round(sum.accuracy * 100);
     const id = `${entry.id}/${variant}`;

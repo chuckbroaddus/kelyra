@@ -1,0 +1,113 @@
+{
+  "id": "P03",
+  "frame": [
+    1200,
+    1600
+  ],
+  "fields": {
+    "scale.bands": {
+      "boxes": 5,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "scale.passing_pct": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    }
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "bandA",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        999,
+        358,
+        1037,
+        371
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "bandB",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1005,
+        389,
+        1037,
+        402
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "bandC",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1005,
+        420,
+        1037,
+        433
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "bandD",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1004,
+        451,
+        1036,
+        464
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "bandF",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1011,
+        482,
+        1036,
+        495
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "passing",
+      "field": "scale.passing_pct",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        148,
+        484,
+        432,
+        509
+      ],
+      "reasons": {}
+    }
+  ]
+}

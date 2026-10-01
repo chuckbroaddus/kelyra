@@ -1,0 +1,64 @@
+{
+  "rough": true,
+  "rough_kind": "phone",
+  "multi_page": true,
+  "weights_sum": 100,
+  "effects": [
+    "two_page_spread",
+    "page2_cut_off",
+    "center_fold",
+    "keystone",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 1680,
+    "h": 1100
+  },
+  "dsf": 1.25,
+  "rough_gt": {
+    "syllabus.late_rule": "absent",
+    "syllabus.missing_rule": "absent",
+    "syllabus.retake": "absent"
+  },
+  "degrade": {
+    "seed": 3404,
+    "frame": [
+      1300,
+      1600
+    ],
+    "background": "wood",
+    "scale": 1.706,
+    "offset": [
+      0.375,
+      0
+    ],
+    "rotate": -2,
+    "keystone": {
+      "top": 0.95,
+      "bottom": 1.02
+    },
+    "creases": [
+      {
+        "at": [
+          0.5,
+          0.5
+        ],
+        "angle": 90,
+        "dark": 0.45,
+        "width": 6,
+        "shift": 0,
+        "panel": 0.93
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.3
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 4,
+    "jpeg": 68
+  }
+}

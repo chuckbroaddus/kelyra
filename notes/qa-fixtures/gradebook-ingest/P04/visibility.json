@@ -1,0 +1,101 @@
+{
+  "id": "P04",
+  "frame": [
+    1300,
+    1600
+  ],
+  "fields": {
+    "syllabus.categories": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "syllabus.late_rule": {
+      "boxes": 1,
+      "visible_min": 0.13,
+      "visible_mean": 0.13,
+      "suggest": "absent"
+    },
+    "syllabus.missing_rule": {
+      "boxes": 1,
+      "visible_min": 0.25,
+      "visible_mean": 0.25,
+      "suggest": "absent"
+    },
+    "syllabus.retake": {
+      "boxes": 1,
+      "visible_min": 0.25,
+      "visible_mean": 0.25,
+      "suggest": "absent"
+    }
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        174,
+        285,
+        1003,
+        445
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "inframe": 0.13,
+      "visible": 0.13,
+      "suggest": "absent",
+      "frame_box": [
+        1220,
+        238,
+        1783,
+        271
+      ],
+      "reasons": {
+        "off_frame": 21
+      }
+    },
+    {
+      "kind": "field",
+      "name": "missing",
+      "field": "syllabus.missing_rule",
+      "inframe": 0.25,
+      "visible": 0.25,
+      "suggest": "absent",
+      "frame_box": [
+        1209,
+        345,
+        1565,
+        371
+      ],
+      "reasons": {
+        "off_frame": 18
+      }
+    },
+    {
+      "kind": "field",
+      "name": "retake",
+      "field": "syllabus.retake",
+      "inframe": 0.25,
+      "visible": 0.25,
+      "suggest": "absent",
+      "frame_box": [
+        1217,
+        443,
+        1644,
+        472
+      ],
+      "reasons": {
+        "off_frame": 18
+      }
+    }
+  ]
+}

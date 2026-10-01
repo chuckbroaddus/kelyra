@@ -1,0 +1,57 @@
+{
+  "rough": true,
+  "rough_kind": "phone",
+  "low_light": true,
+  "weights_sum": 100,
+  "effects": [
+    "low_light",
+    "warm_cast",
+    "sensor_noise",
+    "motion_blur",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {},
+  "degrade": {
+    "seed": 3505,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "fabric",
+    "scale": 0.86,
+    "rotate": -5,
+    "keystone": {
+      "top": 0.9,
+      "bottom": 1
+    },
+    "jitter": 0.004,
+    "light": {
+      "gradient": [
+        0.6,
+        0.5
+      ],
+      "amount": 0.3,
+      "vignette": 0.55
+    },
+    "motion": {
+      "len": 2.5,
+      "angle": 20
+    },
+    "lowlight": {
+      "exposure": 0.5,
+      "gamma": 1.2,
+      "cast": [
+        1.08,
+        0.95,
+        0.72
+      ],
+      "noise": 9
+    },
+    "jpeg": 58
+  }
+}
