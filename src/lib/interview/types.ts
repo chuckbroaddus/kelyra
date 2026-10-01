@@ -50,6 +50,9 @@ export type InterviewSession = {
   status: InterviewStatus;
   transcript: TranscriptTurn[];
   section_index: number;
+  /** Seed draft (school defaults + locks) so “Start over” keeps them. */
+  base_draft?: Record<string, unknown> | null;
+  class_name?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -60,7 +63,9 @@ export type QuestionChip = {
   /** Slot writes when this chip is tapped. */
   slots?: Array<{ path: string; value: unknown }>;
   /** Special actions. */
-  action?: 'not_sure' | 'photo' | 'open_form' | 'skip' | 'confirm' | 'start_over';
+  action?: 'not_sure' | 'photo' | 'open_form' | 'skip' | 'confirm' | 'start_over' | 'edit' | 'defaults_rest';
+  /** For action 'edit': node id to re-ask from the review summary. */
+  edit_node?: string;
 };
 
 export type InterviewSection =
@@ -74,6 +79,8 @@ export type InterviewSection =
   | 'categories'
   | 'status'
   | 'extras'
+  | 'math'
+  | 'terms'
   | 'review';
 
 export type QuestionNode = {
@@ -87,6 +94,20 @@ export type QuestionNode = {
   /** Hide when predicate returns true given filled + draft. */
   hidden?: (ctx: GraphContext) => boolean;
   effects?: (ctx: GraphContext) => string | null;
+  /** Optional nodes offer “use defaults for the rest” and never block review. */
+  optional?: boolean;
+  /** Dynamic chips (e.g. per-category drop choices). Falls back to `chips`. */
+  chipsFor?: (ctx: GraphContext) => QuestionChip[];
+  /** Deterministic free-text parser for this node's paths. */
+  parse?: (text: string, ctx: GraphContext) => ExtractedSlot[];
+  /** Reject an answer (e.g. weights not 100). Returns a re-ask message or null. */
+  validate?: (slots: ExtractedSlot[], ctx: GraphContext) => string | null;
+  /** Values used for “not sure / school default”. Defaults to current draft values. */
+  defaults?: (ctx: GraphContext) => ExtractedSlot[];
+  /** One-line summary for the review card (null hides the line). */
+  summarize?: (ctx: GraphContext) => string | null;
+  /** Short label for the review “Edit …” chip. */
+  edit_label?: string;
 };
 
 export type GraphContext = {

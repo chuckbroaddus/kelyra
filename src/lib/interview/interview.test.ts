@@ -47,7 +47,7 @@ test('fixture model output fills three slots from mixed answer', () => {
   assert.notEqual(nq.node?.id, 'S-Q6');
   assert.notEqual(nq.node?.id, 'S-Q2');
   // credit or rollup or exam
-  assert.ok(nq.node && ['S-Q3', 'S-Q4', 'S-Q5', 'S-Q7', 'S-Q8', 'S-Q9', 'S-Q10'].includes(nq.node.id));
+  assert.ok(nq.node && ['S-Q2b', 'S-Q3', 'S-Q4', 'S-Q5', 'S-Q7', 'S-Q8', 'S-Q9', 'S-Q10'].includes(nq.node.id));
 });
 
 test('heuristic extract on example phrase fills three families', () => {

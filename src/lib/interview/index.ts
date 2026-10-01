@@ -24,9 +24,12 @@ export {
   getNode,
   nodePathsFilled,
   isNodeRelevant,
+  chipsOf,
+  defaultSlotsFor,
+  reviewNodeId,
 } from './graph.ts';
 
-export { nextQuestion, buildProgress, openingMessage, readBackSummary, graphContext } from './nextQuestion.ts';
+export { nextQuestion, buildProgress, openingMessage, readBackSummary, summaryLines, graphContext, type SummaryLine } from './nextQuestion.ts';
 
 export {
   createSession,
@@ -37,12 +40,15 @@ export {
   notSureDefaults,
   emptySchoolDraftBag,
   emptySyllabusDraftBag,
+  seedSyllabusFilled,
 } from './applySlots.ts';
 
 export {
   buildExtractionPrompt,
   parseExtractionResponse,
   heuristicExtract,
+  mergeExtractions,
+  reconcileSlots,
   legalPaths,
   normalizeSlot,
   normalizeTemplateValue,
@@ -55,4 +61,8 @@ export {
   injectionDecline,
 } from './sideQuestion.ts';
 
-export { beginInterview, processTurn, type TurnOutput } from './turn.ts';
+export { beginInterview, processTurn, fillOptionalDefaults, type TurnOutput } from './turn.ts';
+
+export * from './parseAnswers.ts';
+export * from './setupFields.ts';
+export * from './handoff.ts';
