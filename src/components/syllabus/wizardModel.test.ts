@@ -20,12 +20,17 @@ import {
   showLateAmountFields,
   showMissingFloorField,
   soFarSummary,
+  STEP_ICONS,
   toEditorInput,
   validateWizard,
   visibleSteps,
   weightsOk,
+  type WizardStepId,
 } from './wizardModel.ts';
 import { formatPct, runLivePreview } from './livePreview.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 test('empty draft defaults to weighted percent + 100% categories', () => {
   const d = createEmptyWizardDraft('class-1');
@@ -253,4 +258,33 @@ test('draftFromBundle restores published syllabus', () => {
   assert.equal(d.syllabus_status, 'published');
   assert.equal(d.row_version, 3);
   assert.equal(d.title, 'Alg 1');
+});
+
+test('STEP_ICONS maps every wizard step to a unique dedicated syllabus glyph', () => {
+  const expected: Record<WizardStepId, string> = {
+    engine: 'syllabusEngine',
+    categories: 'syllabusCategories',
+    within: 'syllabusWithin',
+    drops: 'syllabusDrops',
+    status_late: 'syllabusStatusLate',
+    extra_credit: 'syllabusExtraCredit',
+    book_rollup: 'syllabusBookRollup',
+    review: 'syllabusReview',
+  };
+  assert.deepEqual(STEP_ICONS, expected);
+  const names = Object.values(STEP_ICONS);
+  assert.equal(new Set(names).size, names.length, 'no duplicate silhouettes across STEP_ICONS');
+  for (const name of names) {
+    assert.match(name, /^syllabus/);
+  }
+  const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+  const recipes = readFileSync(join(root, 'scripts/build-icons.mjs'), 'utf8');
+  const assetsTs = readFileSync(join(root, 'src/components/ui/iconAssets.ts'), 'utf8');
+  const iconTs = readFileSync(join(root, 'src/components/ui/Icon.tsx'), 'utf8');
+  for (const name of names) {
+    assert.ok(recipes.includes(name + ': (p) =>'), 'recipe missing ' + name);
+    assert.ok(assetsTs.includes("'" + name + "': " + name), 'iconAssets missing ' + name);
+    assert.ok(iconTs.includes("| '" + name + "'"), 'IconName missing ' + name);
+    assert.equal(existsSync(join(root, 'assets/icons', name + '.png')), true, 'missing PNG ' + name);
+  }
 });

@@ -71,6 +71,14 @@ export type IconName =
   | 'termS1'
   | 'termS2'
   | 'termYear'
+  | 'syllabusEngine'
+  | 'syllabusCategories'
+  | 'syllabusWithin'
+  | 'syllabusDrops'
+  | 'syllabusStatusLate'
+  | 'syllabusExtraCredit'
+  | 'syllabusBookRollup'
+  | 'syllabusReview'
   | FeedIconName;
 
 type Props = {

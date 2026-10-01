@@ -103,6 +103,14 @@ import feedLibrary from '../../../assets/icons/feedLibrary.png';
 import feedHeart from '../../../assets/icons/feedHeart.png';
 import feedStar from '../../../assets/icons/feedStar.png';
 import feedSun from '../../../assets/icons/feedSun.png';
+import syllabusEngine from '../../../assets/icons/syllabusEngine.png';
+import syllabusCategories from '../../../assets/icons/syllabusCategories.png';
+import syllabusWithin from '../../../assets/icons/syllabusWithin.png';
+import syllabusDrops from '../../../assets/icons/syllabusDrops.png';
+import syllabusStatusLate from '../../../assets/icons/syllabusStatusLate.png';
+import syllabusExtraCredit from '../../../assets/icons/syllabusExtraCredit.png';
+import syllabusBookRollup from '../../../assets/icons/syllabusBookRollup.png';
+import syllabusReview from '../../../assets/icons/syllabusReview.png';
 
 export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'menu': menu,
@@ -207,4 +215,12 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'feedHeart': feedHeart,
   'feedStar': feedStar,
   'feedSun': feedSun,
+  'syllabusEngine': syllabusEngine,
+  'syllabusCategories': syllabusCategories,
+  'syllabusWithin': syllabusWithin,
+  'syllabusDrops': syllabusDrops,
+  'syllabusStatusLate': syllabusStatusLate,
+  'syllabusExtraCredit': syllabusExtraCredit,
+  'syllabusBookRollup': syllabusBookRollup,
+  'syllabusReview': syllabusReview,
 };
