@@ -129,7 +129,7 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
               {iss.step && iss.step !== step && steps.includes(iss.step) ? (
                 <GhostButton
                   align="left"
-                  label={iss.path.startsWith('categories') ? 'Edit weights' : `Go to ${STEP_LABELS[iss.step]}`}
+                  label={iss.step === 'categories' ? 'Edit weights' : `Go to ${STEP_LABELS[iss.step]}`}
                   onPress={() => go(iss.step!)}
                   disabled={Boolean(busy)}
                 />

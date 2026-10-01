@@ -290,12 +290,46 @@ function fmtNum(n: number): string {
 }
 
 /**
+ * The extra-credit category. Same test as src/lib/syllabus/extraCreditWeights.ts and
+ * SQL public.syllabus_is_extra_credit_category (kept inline so the edge copy stays self-contained).
+ */
+export function isExtraCreditCategoryLike(c: { key?: string; label?: string; rules?: unknown }): boolean {
+  if (c.rules && typeof c.rules === 'object' && (c.rules as { extra_credit?: unknown }).extra_credit === true) return true;
+  if (/^(extra_?credit|bonus)(_|$)/.test(String(c.key ?? '').toLowerCase())) return true;
+  return /^\s*(extra[\s_-]*credit|bonus)\b/i.test(String(c.label ?? ''));
+}
+
+/**
+ * Extra credit counted on top: regular categories total exactly 100% and the overage is
+ * exactly the extra-credit category (e.g. Tests 60 + Quizzes 40 + Extra credit 10).
+ */
+export function extraCreditOnTop(
+  cats: Array<{ label?: string; key?: string; weight_percent?: number | null; rules?: unknown }>,
+): { regular: number; extraCredit: number; labels: string[] } | null {
+  let regular = 0;
+  let extraCredit = 0;
+  const labels: string[] = [];
+  for (const c of cats) {
+    const w = typeof c.weight_percent === 'number' ? c.weight_percent : 0;
+    if (isExtraCreditCategoryLike(c)) {
+      extraCredit += w;
+      labels.push(String(c.label || c.key || 'Extra credit'));
+    } else regular += w;
+  }
+  if (!(extraCredit > 0) || Math.abs(regular - 100) > 0.01) return null;
+  return { regular: Math.round(regular * 1000) / 1000, extraCredit: Math.round(extraCredit * 1000) / 1000, labels };
+}
+
+/**
  * FR-AI-21: category weights that don't total 100% are kept exactly as written (never scaled)
  * and flagged in plain words. Points-based engines ('total_points', 'none') have no weights to check.
+ * An extra-credit category on top of a 100% total is fine unless the document picks a different
+ * extra-credit method (A or B), which can't count a category on top.
  */
 export function categoryWeightIssue(
-  cats: Array<{ label?: string; key?: string; weight_percent?: number | null }>,
+  cats: Array<{ label?: string; key?: string; weight_percent?: number | null; rules?: unknown }>,
   engine: string | null,
+  extraCreditMethod: string | null = null,
 ): CategoryWeightIssue | null {
   if (engine === 'total_points' || engine === 'none') return null;
   const weighted = cats.filter((c) => typeof c.weight_percent === 'number' && c.weight_percent > 0);
@@ -313,17 +347,21 @@ export function categoryWeightIssue(
     };
   }
   const parts = weighted.map((c) => `${name(c)} ${fmtNum(c.weight_percent as number)}%`).join(' + ');
-  const ec = weighted.filter((c) => /extra\s*credit|bonus/i.test(name(c)));
-  const ecSum = ec.reduce((s, c) => s + (c.weight_percent as number), 0);
-  const ecHint =
-    ec.length && Math.abs(sum - ecSum - 100) <= 0.01
-      ? ` Without ${ec.map(name).join(' and ')} they total 100%.`
-      : '';
+  const onTop = extraCreditOnTop(weighted);
+  if (onTop) {
+    if (extraCreditMethod == null || extraCreditMethod === 'C') return null;
+    return {
+      sum,
+      kind: 'off',
+      message: `These weights add up to ${fmtNum(sum)}% because ${onTop.labels.join(' and ')} (${fmtNum(onTop.extraCredit)}%) is listed as a category. To count it on top of 100%, choose “Extra credit has its own category”. Otherwise fix the weights so they total 100% before publishing.`,
+      note: `${parts} = ${fmtNum(sum)}%. We kept the numbers as written. Without ${onTop.labels.join(' and ')} they total 100%.`,
+    };
+  }
   return {
     sum,
     kind: 'off',
     message: `These weights add up to ${fmtNum(sum)}%. Fix them so they total 100% before publishing.`,
-    note: `${parts} = ${fmtNum(sum)}%. We kept the numbers as written.${ecHint}`,
+    note: `${parts} = ${fmtNum(sum)}%. We kept the numbers as written.`,
   };
 }
 
@@ -1340,10 +1378,29 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   const weightCat = byPath.get('syllabus.categories');
   if (weightCat && Array.isArray(weightCat.value)) {
     const engVal = byPath.get('syllabus.engine')?.value;
-    const issue = categoryWeightIssue(
-      weightCat.value as CoercedCategory[],
-      typeof engVal === 'string' ? engVal : null,
-    );
+    const ecmField = byPath.get('syllabus.extra_credit_method');
+    const ecm = typeof ecmField?.value === 'string' ? ecmField.value : null;
+    const engine = typeof engVal === 'string' ? engVal : null;
+    const issue = categoryWeightIssue(weightCat.value as CoercedCategory[], engine, ecm);
+    // Extra credit listed as its own category on top of 100% and no method stated → method C.
+    const onTop = engine === 'total_points' || engine === 'none' ? null : extraCreditOnTop(weightCat.value as CoercedCategory[]);
+    if (!issue && onTop && !ecmField) {
+      const conf = Math.min(weightCat.confidence, 0.85);
+      byPath.set('syllabus.extra_credit_method', {
+        path: 'syllabus.extra_credit_method',
+        value: 'C',
+        confidence: conf,
+        evidence: weightCat.evidence,
+        status: statusFor(conf, null),
+        source_doc_id: weightCat.source_doc_id,
+      });
+    }
+    if (!issue && onTop) {
+      // The model may still have noted the 110%; the overage is the extra-credit category, so drop it.
+      for (let i = warnings.length - 1; i >= 0; i -= 1) {
+        if (isModelWeightTotalWarning(warnings[i]!)) warnings.splice(i, 1);
+      }
+    }
     if (issue) {
       byPath.set('syllabus.categories', {
         ...weightCat,
