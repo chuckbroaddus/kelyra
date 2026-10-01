@@ -11,6 +11,7 @@ import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
 import {
   ENGINE_OPTIONS,
   activeWeightSum,
@@ -55,8 +56,8 @@ export function LockNote({
   colors: StepColors;
 }) {
   if (!isFieldLocked(draft, field)) return null;
-  const why = draft.lock_reasons[field] ?? 'Locked by school policy.';
-  return <Text style={[type.meta, { color: colors.warn, marginTop: 6 }]}>Locked — {why}</Text>;
+  const why = draft.lock_reasons[field] ?? 'Your school sets this.';
+  return <Text style={[type.meta, { color: colors.warn, marginTop: 6 }]}>Set by your school — {why}</Text>;
 }
 
 export function WizardStepBody({ draft, step, colors, onChange }: Props) {
@@ -76,7 +77,7 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Pick how assignment scores become a period percent.
+        Choose how assignment scores add up to a grade for each grading period.
       </Text>
       <LockNote draft={draft} field="engine" colors={colors} />
       <ChipRow>
@@ -92,7 +93,7 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       </ChipRow>
       <Text style={[type.body, { color: colors.ink, marginTop: 12 }]}>{engineOption(draft.engine).plain}</Text>
       <TextField
-        label="SYLLABUS TITLE"
+        label="Syllabus name"
         placeholder="Room 14 Math — Fall 2026"
         value={draft.title}
         onChangeText={(title) => onChange(patchDraft(draft, { title }))}
@@ -115,9 +116,9 @@ function CategoryCard({
 }) {
   return (
     <View style={[styles.catCard, { borderColor: colors.line }]}>
-      <TextField label="Label" value={row.label} onChangeText={(label) => onPatch({ label })} />
+      <TextField label="Category name" value={row.label} onChangeText={(label) => onPatch({ label })} />
       <TextField
-        label="Weight %"
+        label="Weight (%)"
         keyboardType="numeric"
         value={String(row.weight_percent)}
         onChangeText={(text) => {
@@ -126,16 +127,15 @@ function CategoryCard({
         }}
       />
       <ChipRow>
-        <Chip label={row.active ? 'Active' : 'Hidden'} selected={row.active} onPress={() => onPatch({ active: !row.active })} />
+        <Chip label={row.active ? 'In use' : 'Not used'} selected={row.active} onPress={() => onPatch({ active: !row.active })} />
         <Chip
-          label={row.default_include_in_average ? 'Counts by default' : 'Opt-in only'}
+          label={row.default_include_in_average ? 'Counts in the average' : 'Counts only when you choose'}
           selected={row.default_include_in_average}
           onPress={() => onPatch({ default_include_in_average: !row.default_include_in_average })}
         />
       </ChipRow>
       <Text style={[type.meta, { color: colors.mute }]}>
-        key: {row.key}
-        {locked ? ' · locked' : ''}
+        {locked ? 'Set by your school' : ''}
       </Text>
     </View>
   );
@@ -146,22 +146,22 @@ function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & 
   return (
     <>
       <Text style={[type.meta, { color: sum === 100 ? colors.good : colors.warn }]}>
-        Sum {Math.round(sum * 1000) / 1000}%
-        {sum < 100 ? ` · ${Math.round((100 - sum) * 1000) / 1000}% left` : sum > 100 ? ' · over 100%' : ' · OK'}
+        Total {Math.round(sum * 1000) / 1000}%
+        {sum < 100 ? ` · ${Math.round((100 - sum) * 1000) / 1000}% left to assign` : sum > 100 ? ' · over 100%' : ' · adds up to 100%'}
       </Text>
       <LockNote draft={draft} field="categories" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginVertical: 8 }]}>
-        Empty category default: renormalize (ignore weight until a score exists).
+        If a category has no grades yet:
       </Text>
       <ChipRow>
         <Chip
-          label="Renormalize empty"
+          label="Skip it until it has grades"
           selected={draft.empty_category === 'renormalize'}
           disabled={locked}
           onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
         />
         <Chip
-          label="Empty = zero"
+          label="Count it as 0"
           selected={draft.empty_category === 'zero'}
           disabled={locked}
           onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
@@ -194,24 +194,24 @@ function WithinStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Worked example: 20-pt quiz vs 100-pt test inside the same category.
+        Example: a 20-point quiz and a 100-point test in the same category.
       </Text>
       <ChipRow>
         <Chip
-          label="Points inside"
+          label="Bigger assignments count more"
           selected={draft.within_category === 'points_inside' || draft.engine === 'weighted_points_inside'}
           onPress={() => onChange(patchDraft(draft, { within_category: 'points_inside' }))}
         />
         <Chip
-          label="Equal percent"
+          label="Every assignment counts the same"
           selected={draft.within_category === 'percent_inside' || draft.engine === 'weighted_percent_inside'}
           onPress={() => onChange(patchDraft(draft, { within_category: 'percent_inside' }))}
         />
       </ChipRow>
       <Text style={[type.body, { color: colors.ink, marginTop: 12 }]}>
         {draft.engine === 'weighted_points_inside' || draft.within_category === 'points_inside'
-          ? 'Points inside: 80/100 and 16/20 → category uses total points (96/120).'
-          : 'Equal percent: 80/100 and 16/20 both count as 80% then average equally.'}
+          ? 'Points count: 80/100 and 16/20 are added up, so the category is 96/120 (80%).'
+          : 'All equal: 80/100 and 16/20 are each 80%, and the two are averaged the same.'}
       </Text>
     </>
   );
@@ -222,14 +222,14 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
     <>
       <LockNote draft={draft} field="drop_lowest" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Drop lowest applies inside one marking period only.
+        Dropping low scores happens inside one grading period only.
       </Text>
       {draft.categories
         .filter((c) => c.active)
         .map((row) => (
           <View key={row.key} style={{ marginBottom: 10 }}>
             <TextField
-              label={`${row.label} · drop lowest N (0–3)`}
+              label={`${row.label}: how many lowest scores to drop (0–3)`}
               keyboardType="numeric"
               value={String(row.rules?.drop_lowest_n ?? 0)}
               onChangeText={(text) => {
@@ -241,7 +241,7 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         ))}
       <LockNote draft={draft} field="floor" colors={colors} />
       <TextField
-        label="Period floor % (optional)"
+        label="Lowest grade allowed for the period, % (optional)"
         keyboardType="numeric"
         value={draft.floor == null ? '' : String(draft.floor)}
         onChangeText={(text) => {
@@ -263,9 +263,9 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <ChipRow>
         {(
           [
-            ['omit', 'Omit'],
+            ['omit', "Doesn't count yet"],
             ['zero', 'Count as 0'],
-            ['floor', 'Use floor'],
+            ['floor', 'Lowest grade allowed'],
           ] as const
         ).map(([id, label]) => (
           <Chip
@@ -277,7 +277,7 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         ))}
       </ChipRow>
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-        Excused always omits earned and possible — never a zero.
+        Excused work is left out of the grade completely. It is never a zero.
       </Text>
       <GhostButton
         label={excusedHelpOpen ? 'Hide Excused help' : 'Help on Excused'}
@@ -297,8 +297,8 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <ChipRow>
         {(
           [
-            ['none', 'None / manual'],
-            ['flat', 'Flat'],
+            ['none', 'None (I adjust by hand)'],
+            ['flat', 'One-time'],
             ['per_day', 'Per day'],
             ['per_hour', 'Per hour'],
           ] as const
@@ -370,14 +370,14 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Method B adds to earned without hurting students who skip EC.
+        Tip: “Adds bonus points” helps students who do extra credit without hurting students who skip it.
       </Text>
       <ChipRow>
         {(
           [
-            ['A', 'A · replace/boost'],
-            ['B', 'B · add earned'],
-            ['C', 'C · own category'],
+            ['A', 'Raises or replaces a score'],
+            ['B', 'Adds bonus points'],
+            ['C', 'Its own category'],
           ] as const
         ).map(([id, label]) => (
           <Chip
@@ -389,7 +389,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         ))}
       </ChipRow>
       <TextField
-        label="EC cap % (optional)"
+        label="Most extra credit allowed, % (optional)"
         keyboardType="numeric"
         value={draft.ec_cap == null ? '' : String(draft.ec_cap)}
         onChangeText={(text) => {
@@ -398,11 +398,11 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         }}
       />
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-        Retakes (default off)
+        Retakes (off unless you turn them on)
       </Text>
       <ChipRow>
         <Chip
-          label={draft.retake ? 'Retakes ON' : 'Retakes OFF'}
+          label={draft.retake ? 'Retakes: on' : 'Retakes: off'}
           selected={Boolean(draft.retake)}
           onPress={() =>
             onChange(
@@ -426,9 +426,9 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           <ChipRow>
             {(
               [
-                ['replace', 'Replace'],
-                ['higher_of', 'Higher of'],
-                ['average', 'Average'],
+                ['replace', 'Use the newest score'],
+                ['higher_of', 'Keep the higher score'],
+                ['average', 'Average the tries'],
               ] as const
             ).map(([id, label]) => (
               <Chip
@@ -442,7 +442,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             ))}
           </ChipRow>
           <TextField
-            label="Max attempts"
+            label="Most tries allowed"
             keyboardType="numeric"
             value={String(draft.retake.attempts ?? 2)}
             onChangeText={(text) => {
@@ -451,7 +451,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             }}
           />
           <TextField
-            label="Cap % (e.g. Texas 70)"
+            label="Highest retake grade, % (e.g. 70 in Texas)"
             keyboardType="numeric"
             value={draft.retake.cap == null ? '' : String(draft.retake.cap)}
             onChangeText={(text) => {
@@ -467,7 +467,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
             }}
           />
           <TextField
-            label="Window days (optional)"
+            label="Days allowed to retake (optional)"
             keyboardType="numeric"
             value={draft.retake.window_days == null ? '' : String(draft.retake.window_days)}
             onChangeText={(text) => {
@@ -485,7 +485,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         </>
       ) : null}
       <TextField
-        label="Period ceiling % (optional)"
+        label="Highest grade allowed for the period, % (optional)"
         keyboardType="numeric"
         value={draft.ceiling == null ? '' : String(draft.ceiling)}
         onChangeText={(text) => {
@@ -495,7 +495,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       />
       <ChipRow>
         <Chip
-          label={draft.publish_to_family ? 'Publish to family: Yes' : 'Publish to family: No'}
+          label={draft.publish_to_family ? 'Families can see this: Yes' : 'Families can see this: No'}
           selected={draft.publish_to_family}
           onPress={() => onChange(patchDraft(draft, { publish_to_family: !draft.publish_to_family }))}
         />
@@ -512,13 +512,13 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <LockNote draft={draft} field="book_mode" colors={colors} />
       <ChipRow>
         <Chip
-          label="Reset each marking period"
+          label="Start fresh each grading period"
           selected={draft.book_mode === 'reset_each_marking_period'}
           disabled={bookLocked}
           onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
         />
         <Chip
-          label="Rolling year"
+          label="One running average all year"
           selected={draft.book_mode === 'rolling_year'}
           disabled={bookLocked}
           onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
@@ -526,7 +526,7 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       </ChipRow>
       <LockNote draft={draft} field="rollup" colors={colors} />
       <TextField
-        label="Rollup preset (e.g. 2/7+1/7)"
+        label="Semester grade formula (e.g. 2/7+1/7)"
         value={draft.rollup_preset ?? ''}
         onChangeText={(text) => {
           if (rollupLocked) return;
@@ -543,7 +543,7 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
         }}
       />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>Term structure (legacy)</Text>
+      <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>How your year is split</Text>
       <ChipRow>
         {(
           [
@@ -563,15 +563,15 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       </ChipRow>
       <LockNote draft={draft} field="scale" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
-        Letter scale inherits the school grading policy when locked.
+        Rounding (the letter scale comes from your school when it is set there).
       </Text>
       <ChipRow>
         {(
           [
-            ['nearest_whole', 'Round nearest'],
-            ['half_up', 'Half up'],
-            ['truncate', 'Truncate'],
-            ['none', 'No round'],
+            ['nearest_whole', 'Round to nearest whole'],
+            ['half_up', 'Round .5 up'],
+            ['truncate', 'Drop decimals'],
+            ['none', "Don't round"],
           ] as const
         ).map(([id, label]) => (
           <Chip
@@ -590,16 +590,16 @@ function ReviewStep({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors
   return (
     <>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Parent-facing syllabus paragraph (generated from structured fields).
+        What families will read about how this class is graded:
       </Text>
       <Text style={[type.body, { color: colors.ink }]}>{paragraph}</Text>
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-        Engine: {engineOption(draft.engine).label}
-        {isWeightedEngine(draft.engine) ? ` · weights ${Math.round(sum * 1000) / 1000}%` : ''}
-        {' · '}status {draft.syllabus_status}
+        How grades add up: {engineOption(draft.engine).label}
+        {isWeightedEngine(draft.engine) ? ` · weights total ${Math.round(sum * 1000) / 1000}%` : ''}
+        {' · '}{syllabusStatusLabel(draft.syllabus_status)}
       </Text>
       <Text style={[type.meta, { color: canFinishReview(draft) ? colors.good : colors.danger, marginTop: 8 }]}>
-        {canFinishReview(draft) ? 'Ready to publish.' : 'Fix errors above before publish.'}
+        {canFinishReview(draft) ? 'Ready to publish.' : 'Fix the problems listed below before you publish.'}
       </Text>
     </>
   );

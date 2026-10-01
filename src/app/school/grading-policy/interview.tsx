@@ -12,7 +12,7 @@ import type { InterviewSession } from '@/lib/interview';
 export default function SchoolGradingPolicyInterviewScreen() {
   const router = useRouter();
   const { profile } = useAuth();
-  usePushedTitle('Policy interview');
+  usePushedTitle('Answer a few questions');
   const schoolId = profile?.school_id ?? '';
 
   const onOpenForm = (_draft: Record<string, unknown>, _session: InterviewSession) => {

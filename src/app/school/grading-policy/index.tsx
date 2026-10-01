@@ -61,6 +61,17 @@ import type { TemplateKey } from '@/lib/grade/calendar/types';
 import { ROLLUP_PRESET_KEYS, presetsForChildCount } from '@/lib/grade/calendar/index';
 import { listScaleTemplates, makeScaleFromTemplate } from '@/lib/grade/scale/scale';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import {
+  calendarNameLabel,
+  calendarTemplateLabel,
+  creditUnitLabel,
+  gpaModeLabel,
+  lockFieldLabel,
+  qpMethodLabel,
+  rollupPresetLabel,
+  scaleLabel,
+  schoolLevelLabel,
+} from '@/lib/grade/plainLabels';
 
 const LEVELS: SchoolLevelChoice[] = ['elementary', 'middle', 'high', 'college', 'mixed'];
 const TEMPLATES: TemplateKey[] = [
@@ -121,7 +132,7 @@ export default function GradingPolicyWizardScreen() {
     if (!schoolId || !profile?.id) return;
     setBusy(true);
     setError(null);
-    setStatus('Reading policy document…');
+    setStatus('Reading your policy document…');
     try {
       const asset = await uploadTeacherAsset({
         teacherId: profile.id,
@@ -139,7 +150,7 @@ export default function GradingPolicyWizardScreen() {
         source_id: asset.id,
       });
       setIngestProposal(proposal);
-      setStatus('Proposal ready — review fields before continuing the wizard.');
+      setStatus('Done reading. Check each setting we found, then tap Use these settings.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read that document');
     } finally {
@@ -169,14 +180,14 @@ export default function GradingPolicyWizardScreen() {
     const { setup } = mergeIntoSetupDraft(draft, filtered);
     setDraft(setup);
     setIngestProposal(null);
-    setStatus('Proposal applied. Review highlighted steps before publish.');
+    setStatus('Settings added. Look over each step, then publish.');
   };
 
   if (!office) {
     return (
       <Screen maxWidth={640}>
         <Text style={[type.body, { color: colors.danger }]}>
-          Office administrators only. Switch to an office seat to set grading policy.
+          Only school office staff can set the grading policy. Switch to your office account to continue.
         </Text>
       </Screen>
     );
@@ -185,7 +196,7 @@ export default function GradingPolicyWizardScreen() {
   if (!draft || !payload) {
     return (
       <Screen maxWidth={640}>
-        <Text style={[type.body, { color: colors.mute }]}>Loading defaults…</Text>
+        <Text style={[type.body, { color: colors.mute }]}>Loading…</Text>
       </Screen>
     );
   }
@@ -212,11 +223,11 @@ export default function GradingPolicyWizardScreen() {
       {ingestProposal ? (
         <IngestProposalReview
           proposal={ingestProposal}
-          sourceLabel="policy document"
+          sourceLabel="your policy document"
           onApply={applyIngestFields}
           onDiscard={() => {
             setIngestProposal(null);
-            setStatus('Proposal discarded. Published policy unchanged.');
+            setStatus('Thrown away. Your published policy did not change.');
           }}
         />
       ) : null}
@@ -299,10 +310,10 @@ export default function GradingPolicyWizardScreen() {
                   await saveDraftPayload(schoolId, payload);
                   const result = await publishPolicy(schoolId, payload);
                   setStatus(
-                    `Published v${result.plan.next_version}. Bound ${result.binding?.class_ids.length ?? 0} classes.`,
+                    `Published (version ${result.plan.next_version}). ${result.binding?.class_ids.length ?? 0} classes now use this grading calendar.`,
                   );
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Publish failed');
+                  setError(err instanceof Error ? err.message : 'Could not publish');
                 } finally {
                   setBusy(false);
                 }
@@ -332,7 +343,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {LEVELS.map((lvl) => (
           <Chip
             key={lvl}
-            label={lvl}
+            label={schoolLevelLabel(lvl)}
             selected={getFieldValue(draft, 'level', 'high') === lvl}
             onPress={() => setDraft(applyLevelDefaults(draft, lvl))}
           />
@@ -343,12 +354,12 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
   if (step === 'calendar') {
     return (
       <>
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>Calendar template</Text>
+        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>How often grades are posted</Text>
         <ChipRow>
           {TEMPLATES.map((t) => (
             <Chip
               key={t}
-              label={t}
+              label={calendarTemplateLabel(t)}
               selected={getFieldValue(draft, 'calendar.template', 'tx_six_weeks') === t}
               onPress={() => {
                 let nextDraft = setField(draft, 'calendar.template', t, 'user');
@@ -359,9 +370,13 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
           ))}
         </ChipRow>
         <View style={{ height: 8 }} />
-        <GhostButton label="I'm not sure — apply recommended" onPress={() => setDraft(applyTemplateNotSure(draft))} />
+        <GhostButton label="I'm not sure — use the usual choice" onPress={() => setDraft(applyTemplateNotSure(draft))} />
         <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-          Periods: {payload.calendar.periods.map((p) => p.code).join(', ')}
+          Grading periods:{' '}
+          {payload.calendar.periods
+            .filter((p) => p.kind === 'marking_period')
+            .map((p) => p.name)
+            .join(', ')}
         </Text>
       </>
     );
@@ -372,7 +387,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     return (
       <>
         <TextField
-          label="Year start (YYYY-MM-DD)"
+          label="First day of school (like 2026-08-15)"
           value={getFieldValue(draft, 'calendar.year_start', '') ?? ''}
           onChangeText={(v) => {
             let d = setField(draft, 'calendar.year_start', v || null, 'user');
@@ -381,7 +396,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
           }}
         />
         <TextField
-          label="Year end (YYYY-MM-DD)"
+          label="Last day of school (like 2027-05-28)"
           value={getFieldValue(draft, 'calendar.year_end', '') ?? ''}
           onChangeText={(v) => {
             let d = setField(draft, 'calendar.year_end', v || null, 'user');
@@ -392,8 +407,8 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {dateRows.map((p) => (
           <ListRow
             key={p.code}
-            title={`${p.code} · ${p.name}`}
-            status={`${p.start_date ?? '—'} → ${p.end_date ?? '—'}`}
+            title={p.name}
+            status={`${p.start_date ?? '—'} to ${p.end_date ?? '—'}`}
             chevron={false}
           />
         ))}
@@ -407,9 +422,9 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         <ChipRow>
           {(
             [
-              ['semester_0_5', 'Semester 0.5'],
-              ['year_1_0', 'Year 1.0'],
-              ['none', 'None'],
+              ['semester_0_5', '½ credit per semester'],
+              ['year_1_0', '1 credit per year'],
+              ['none', 'No credit'],
             ] as const
           ).map(([unit, label]) => (
             <Chip
@@ -422,7 +437,11 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         </ChipRow>
         <View style={{ height: 8 }} />
         <Chip
-          label={cur.year_link ? 'Year-link credit ON' : 'Year-link credit OFF'}
+          label={
+            cur.year_link
+              ? 'Average both semesters for credit: on'
+              : 'Average both semesters for credit: off'
+          }
           selected={cur.year_link}
           onPress={() =>
             setDraft(setField(draft, 'credit.policy', { ...cur, year_link: !cur.year_link }, 'user'))
@@ -430,7 +449,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         />
         <View style={{ height: 12 }} />
         <Text style={[type.meta, { color: colors.mute }]}>
-          Transfer letter → percent (FR-GPA-08). Edit values; empty letters keep the shipped default.
+          Grades from other schools: the percent each letter counts as. Leave a box empty to use the usual value.
         </Text>
         {(['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'] as const).map(
           (L) => {
@@ -442,7 +461,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             return (
               <TextField
                 key={L}
-                label={`Transfer ${L}`}
+                label={`${L} from another school (%)`}
                 value={map[L] != null ? String(map[L]) : ''}
                 onChangeText={(v) => {
                   const n = v.trim() === '' ? undefined : Number(v);
@@ -457,12 +476,12 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
           },
         )}
         <View style={{ height: 12 }} />
-        <Text style={[type.meta, { color: colors.mute }]}>Exam exemption (default off)</Text>
+        <Text style={[type.meta, { color: colors.mute }]}>Let students skip the semester exam (off unless you turn it on)</Text>
         <Chip
           label={
             (cur.exam_exemption?.enabled ?? false)
-              ? 'Exam exemption ON'
-              : 'Exam exemption OFF'
+              ? 'Exam skipping: on'
+              : 'Exam skipping: off'
           }
           selected={cur.exam_exemption?.enabled === true}
           onPress={() => {
@@ -485,7 +504,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {cur.exam_exemption?.enabled ? (
           <>
             <TextField
-              label="Min pre-exam average %"
+              label="Lowest average needed to skip (%)"
               keyboardType="numeric"
               value={
                 cur.exam_exemption.min_avg == null ? '' : String(cur.exam_exemption.min_avg)
@@ -510,7 +529,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
               }}
             />
             <TextField
-              label="Max absences"
+              label="Most absences allowed to skip"
               keyboardType="numeric"
               value={
                 cur.exam_exemption.max_absences == null
@@ -539,8 +558,8 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             <Chip
               label={
                 cur.exam_exemption.renormalize !== false
-                  ? 'Renormalize remaining weights'
-                  : 'Do not renormalize'
+                  ? 'Spread the exam’s weight over the grading periods'
+                  : 'Don’t spread the exam’s weight'
               }
               selected={cur.exam_exemption.renormalize !== false}
               onPress={() => {
@@ -580,7 +599,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {presetKeys.map((key) => (
           <Chip
             key={key}
-            label={key}
+            label={rollupPresetLabel(key)}
             selected={getFieldValue(draft, 'rollup.preset', '2/7+1/7') === key}
             onPress={() => {
               let d = setField(draft, 'rollup.preset', key, 'user');
@@ -599,7 +618,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
           {listScaleTemplates().map((t) => (
             <Chip
               key={t.key}
-              label={t.name}
+              label={scaleLabel(t.key, t.name)}
               selected={getFieldValue(draft, 'scale.default_id', '') === t.key}
               onPress={() => {
                 const scale = makeScaleFromTemplate(t.key);
@@ -623,13 +642,13 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     const method = getFieldValue<QpMethodChoice>(draft, 'qp.method', 'letter_map');
     return (
       <>
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 6 }]}>Quality-point method</Text>
+        <Text style={[type.meta, { color: colors.mute, marginBottom: 6 }]}>How GPA points are given</Text>
         <ChipRow>
           {(
             [
-              ['letter_map', 'Letter map'],
-              ['numeric_band', 'Numeric band (6.0)'],
-              ['percent_map', 'Percent map'],
+              ['letter_map', 'By letter grade'],
+              ['numeric_band', 'By percent range (6.0 chart)'],
+              ['percent_map', 'By exact percent'],
             ] as const
           ).map(([m, label]) => (
             <Chip
@@ -647,7 +666,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {payload.quality_point_tables.map((t) => (
           <Card key={t.id}>
             <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>
-              {t.id} · {t.method}
+              {qpMethodLabel(t.method)}
             </Text>
             <Text style={[type.meta, { color: colors.mute }]}>
               {t.method === 'numeric_band'
@@ -655,12 +674,12 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
                     .slice(0, 3)
                     .map(
                       (r) =>
-                        `${r.min_pct}–${r.max_pct}=${r.points_by_level.regular}/${r.points_by_level.honors ?? '—'}/${r.points_by_level.ap ?? '—'}`,
+                        `${r.min_pct}–${r.max_pct}%: regular ${r.points_by_level.regular}, honors ${r.points_by_level.honors ?? '—'}, AP ${r.points_by_level.ap ?? '—'}`,
                     )
                     .join(' · ')
                 : t.rows
                     .slice(0, 6)
-                    .map((r) => `${r.letter ?? '?'}=${r.points_by_level.regular ?? '—'}`)
+                    .map((r) => `${r.letter ?? '?'} = ${r.points_by_level.regular ?? '—'}`)
                     .join(' · ')}
               {t.rows.length > 6 ? ' …' : ''}
             </Text>
@@ -678,7 +697,11 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             <ListRow
               key={l.key}
               title={l.label}
-              status={`bonus ${l.weighted_bonus} · key ${l.key}`}
+              status={
+                l.weighted_bonus
+                  ? `${l.weighted_bonus > 0 ? '+' : ''}${l.weighted_bonus} extra GPA points`
+                  : 'No extra GPA points'
+              }
               chevron={false}
             />
           ))}
@@ -693,10 +716,10 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         <ChipRow>
           {(
             [
-              ['off', 'GPA off'],
+              ['off', 'No GPA'],
               ['unweighted', 'Unweighted only'],
-              ['unweighted_and_weighted', 'Unweighted + weighted'],
-              ['with_rank', 'UW + W + rank 6.0'],
+              ['unweighted_and_weighted', 'Unweighted and weighted'],
+              ['with_rank', 'Unweighted, weighted, and class rank'],
             ] as const
           ).map(([mode, label]) => (
             <Chip
@@ -711,14 +734,14 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
             />
           ))}
         </ChipRow>
-        <Text style={[type.meta, { color: colors.mute, marginTop: 10 }]}>Repeat rule</Text>
+        <Text style={[type.meta, { color: colors.mute, marginTop: 10 }]}>When a student repeats a course</Text>
         <ChipRow>
           {(
             [
-              ['include_both', 'Keep both'],
-              ['replace', 'Replace'],
-              ['average', 'Average'],
-              ['forgive_d_f', 'Forgive D/F'],
+              ['include_both', 'Count both grades'],
+              ['replace', 'Count only the new grade'],
+              ['average', 'Average the two'],
+              ['forgive_d_f', 'Drop an old D or F'],
             ] as const
           ).map(([rule, label]) => (
             <Chip
@@ -735,7 +758,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
           ))}
         </ChipRow>
         <Text style={[type.meta, { color: colors.mute, marginTop: 10 }]}>
-          PE/athletics inclusion follows each profile (help.include_pe). Rank uses a narrower set.
+          Whether PE and athletics count depends on the GPA type. Class rank leaves out more courses.
         </Text>
       </>
     );
@@ -746,7 +769,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     return (
       <>
         <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-          Locked fields stay visible to teachers but cannot be changed. Optional reason shows on the syllabus wizard.
+          Teachers can see settings you lock, but can’t change them. Add a short reason so they know why.
         </Text>
         {(Object.keys(locks) as Array<keyof SyllabusLocks>).map((key) => {
           const on = locks[key];
@@ -767,14 +790,14 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
                 }}
                 style={styles.lockRow}
               >
-                <Text style={[type.body, { color: colors.ink }]}>{key}</Text>
+                <Text style={[type.body, { color: colors.ink }]}>{lockFieldLabel(key)}</Text>
                 <Text style={[type.meta, { color: on ? colors.brand : colors.mute }]}>
-                  {on ? 'Locked' : 'Teacher may edit'}
+                  {on ? 'Locked' : 'Teachers can change'}
                 </Text>
               </Pressable>
               {on ? (
                 <TextField
-                  label="LOCK REASON"
+                  label="Why it is locked (teachers see this)"
                   placeholder={DEFAULT_LOCK_REASON_COPY[key]}
                   value={reasons[key] ?? ''}
                   onChangeText={(text) =>
@@ -802,11 +825,12 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         {soFarSummary(draft)}
       </Text>
       <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
-        Calendar {payload.calendar.name} · {payload.calendar.periods.length} periods ·{' '}
-        {payload.calendar.rollups.length} rollups
+        {calendarNameLabel(payload.calendar.name)} ·{' '}
+        {payload.calendar.periods.filter((p) => p.kind === 'marking_period').length} grading periods
       </Text>
       <Text style={[type.meta, { color: colors.mute }]}>
-        Scale {payload.default_scale_id} · GPA {payload.gpa_mode} · credit {payload.credit_policy.unit}
+        {scaleLabel(payload.default_scale_id, payload.scales[0]?.name)} · {gpaModeLabel(payload.gpa_mode)} ·{' '}
+        {creditUnitLabel(payload.credit_policy.unit)}
       </Text>
       {errors.length ? (
         <View style={{ marginTop: 12 }}>
@@ -818,7 +842,7 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         </View>
       ) : (
         <Text style={[type.meta, { color: colors.brand, marginTop: 12 }]}>
-          Ready to publish. Classes will bind to the new calendar.
+          Ready to publish. All your school’s classes will use this grading calendar.
         </Text>
       )}
     </>

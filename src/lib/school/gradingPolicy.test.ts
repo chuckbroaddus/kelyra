@@ -84,7 +84,7 @@ test('scale bands gap is an error', () => {
     ],
     'percent',
   );
-  assert.ok(issues.some((i) => i.message.includes('Gap')));
+  assert.ok(issues.some((i) => i.message.includes('gap')));
 });
 
 test('scale bands overlap is an error', () => {
@@ -110,7 +110,7 @@ test('every letter needs quality points', () => {
     rows: DEFAULT_QUALITY_TABLES['tx-4'].rows.filter((r) => r.letter !== 'D'),
   };
   const issues = validateQualityPoints([table], [scale]);
-  assert.ok(issues.some((i) => i.message.includes('Letter D')));
+  assert.ok(issues.some((i) => i.message.includes('letter D')));
 });
 
 test('draft -> payload -> publish bumps version', () => {

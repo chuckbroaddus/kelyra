@@ -13,6 +13,7 @@ import type {
   SyllabusRounding,
   WithinCategory,
 } from '../../lib/syllabus/types.ts';
+import { rollupPresetLabel } from '../../lib/grade/plainLabels.ts';
 
 export type { BookMode, ExtraCreditMethod, MissingRule, SyllabusEngine, SyllabusRounding, WithinCategory };
 
@@ -151,14 +152,14 @@ export const WIZARD_STEPS: WizardStepId[] = [
 ];
 
 export const STEP_LABELS: Record<WizardStepId, string> = {
-  engine: 'T1 Engine',
-  categories: 'T2 Categories',
-  within: 'T3 Within-category',
-  drops: 'T4 Drops',
-  status_late: 'T5 Missing & late',
-  extra_credit: 'T6 Extra credit',
-  book_rollup: 'T7 Book & rollup',
-  review: 'T8 Review',
+  engine: 'How grades add up',
+  categories: 'Categories',
+  within: 'Inside a category',
+  drops: 'Drop lowest',
+  status_late: 'Missing & late work',
+  extra_credit: 'Extra credit & retakes',
+  book_rollup: 'Grading periods & rounding',
+  review: 'Review & publish',
 };
 
 export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
@@ -200,16 +201,16 @@ export const DEFAULT_LOCKS: SyllabusLocks = {
 };
 
 export const LOCK_REASONS: Record<keyof SyllabusLocks, string> = {
-  engine: 'School grading policy locks the calculation engine.',
-  categories: 'School grading policy locks category structure or weights.',
-  scale: 'Letter scale is set by the school grading policy.',
-  floor: 'Period floor is set by the school grading policy.',
-  late: 'Late penalty rule is set by the school grading policy.',
-  drop_lowest: 'Drop-lowest policy is set by the school.',
-  retake: 'Retake rules are set by the school grading policy.',
-  assignment_max: 'Assignment max points policy is set by the school.',
-  book_mode: 'Book reset mode is set by the school calendar policy.',
-  rollup: 'Term rollup / exam weight is set by the school calendar.',
+  engine: 'Your school sets how the average is figured.',
+  categories: 'Your school sets the categories and their weights.',
+  scale: 'Your school sets the letter grade scale.',
+  floor: 'Your school sets the lowest grade allowed.',
+  late: 'Your school sets the late work penalty.',
+  drop_lowest: 'Your school sets whether low scores are dropped.',
+  retake: 'Your school sets the retake rules.',
+  assignment_max: 'Your school sets the most points an assignment can be worth.',
+  book_mode: 'Your school sets whether grades start fresh each grading period.',
+  rollup: 'Your school sets how grading periods and the exam make the semester grade.',
 };
 
 export type EngineOption = {
@@ -224,35 +225,35 @@ export const ENGINE_OPTIONS: EngineOption[] = [
   {
     id: 'total_points',
     label: 'Total points',
-    plain: 'Add up points earned ÷ points possible. A 100-pt test outweighs a 10-pt quiz. No category percents.',
+    plain: 'Add up all points earned and divide by points possible. A 100-point test counts more than a 10-point quiz. No category weights.',
     needsCategories: false,
     needsWithin: false,
   },
   {
     id: 'weighted_points_inside',
-    label: 'Weighted · points inside',
-    plain: 'Each category has a weight. Inside a category, bigger point values count more.',
+    label: 'Weighted, points count',
+    plain: 'Each category has a weight. Inside a category, assignments worth more points count more.',
     needsCategories: true,
     needsWithin: true,
   },
   {
     id: 'weighted_percent_inside',
-    label: 'Weighted · equal percent',
-    plain: 'Each category has a weight. Inside a category every assignment is the same percent, 20/20 = 50/50.',
+    label: 'Weighted, all equal',
+    plain: 'Each category has a weight. Inside a category every assignment counts the same, no matter its points.',
     needsCategories: true,
     needsWithin: true,
   },
   {
     id: 'item_weights',
-    label: 'Item weights',
-    plain: 'Each assignment carries its own weight percent. Categories are optional labels only.',
+    label: 'Each assignment weighted',
+    plain: 'You give each assignment its own weight. Categories are just labels.',
     needsCategories: false,
     needsWithin: false,
   },
   {
     id: 'none',
     label: 'No overall grade',
-    plain: 'Track scores without computing a single period average.',
+    plain: 'Keep scores without figuring an overall average for the grading period.',
     needsCategories: false,
     needsWithin: false,
   },
@@ -493,12 +494,22 @@ export function soFarSummary(draft: SyllabusWizardDraft): string {
   const eng = engineOption(draft.engine).label;
   const sum = Math.round(activeWeightSum(draft.categories) * 1000) / 1000;
   const cats = isWeightedEngine(draft.engine)
-    ? `${draft.categories.filter((c) => c.active).length} cats · ${sum}%`
+    ? `${draft.categories.filter((c) => c.active).length} categories adding to ${sum}%`
     : 'no category weights';
   const miss =
-    draft.missing_rule === 'zero' ? 'missing=0' : draft.missing_rule === 'floor' ? 'missing=floor' : 'missing=omit';
-  const book = draft.book_mode === 'rolling_year' ? 'rolling year' : 'reset each period';
-  return `${eng} · ${cats} · EC ${draft.extra_credit_method} · ${miss} · ${book}`;
+    draft.missing_rule === 'zero'
+      ? 'missing work counts as 0'
+      : draft.missing_rule === 'floor'
+        ? 'missing work gets the lowest grade allowed'
+        : "missing work doesn't count yet";
+  const ec =
+    draft.extra_credit_method === 'A'
+      ? 'extra credit raises a score'
+      : draft.extra_credit_method === 'C'
+        ? 'extra credit has its own category'
+        : 'extra credit adds bonus points';
+  const book = draft.book_mode === 'rolling_year' ? 'one average all year' : 'fresh start each grading period';
+  return `${eng} · ${cats} · ${ec} · ${miss} · ${book}`;
 }
 
 export function isFieldLocked(draft: SyllabusWizardDraft, field: keyof SyllabusLocks): boolean {
@@ -636,7 +647,7 @@ export function weightsOk(draft: SyllabusWizardDraft): boolean {
 export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
   const issues: WizardIssue[] = [];
   if (!draft.engine) {
-    issues.push({ path: 'engine', severity: 'error', message: 'Choose an engine.', step: 'engine' });
+    issues.push({ path: 'engine', severity: 'error', message: 'Choose how grades add up.', step: 'engine' });
   }
   if (isWeightedEngine(draft.engine)) {
     const sum = activeWeightSum(draft.categories);
@@ -644,7 +655,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
       issues.push({
         path: 'categories.weight_percent',
         severity: 'error',
-        message: `Active weights sum to ${Math.round(sum * 1000) / 1000}% (need 100%).`,
+        message: `Your category weights add up to ${Math.round(sum * 1000) / 1000}%. They need to add up to 100%.`,
         step: 'categories',
       });
     }
@@ -652,7 +663,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
       issues.push({
         path: 'categories',
         severity: 'error',
-        message: 'Add at least one active category.',
+        message: 'Add at least one category.',
         step: 'categories',
       });
     }
@@ -661,7 +672,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
     issues.push({
       path: 'late_rule.amount',
       severity: 'error',
-      message: 'Late penalty needs a non-negative amount.',
+      message: 'Enter a late penalty of 0 or more.',
       step: 'status_late',
     });
   }
@@ -669,7 +680,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
     issues.push({
       path: 'floor',
       severity: 'warning',
-      message: 'Missing-as-floor works best with a period floor percent set.',
+      message: 'You chose to give missing work the lowest grade allowed. Set that lowest grade on the Drop lowest step.',
       step: 'status_late',
     });
   }
@@ -677,7 +688,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
     issues.push({
       path: 'engine',
       severity: 'warning',
-      message: 'No overall grade — period averages will show NG.',
+      message: 'No overall grade: averages will show NG (no grade).',
       step: 'engine',
     });
   }
@@ -754,29 +765,30 @@ export function parentFacingParagraph(draft: SyllabusWizardDraft): string {
     draft.missing_rule === 'zero'
       ? 'Missing work counts as zero.'
       : draft.missing_rule === 'floor'
-        ? `Missing work uses the floor${draft.floor != null ? ` (${draft.floor}%)` : ''}.`
-        : 'Missing work is omitted until scored.';
+        ? `Missing work gets the lowest grade allowed${draft.floor != null ? ` (${draft.floor}%)` : ''}.`
+        : "Missing work doesn't count until it is graded.";
   lines.push(miss);
   lines.push('Excused work is never a zero.');
   if (draft.late_rule.type === 'none') lines.push('Late penalties are applied by the teacher when needed.');
   else {
-    lines.push(
-      `Late: ${draft.late_rule.type} ${draft.late_rule.amount ?? ''}${draft.late_rule.unit === 'points' ? ' pts' : '%'}.`,
-    );
+    const amt = `${draft.late_rule.amount ?? ''}${draft.late_rule.unit === 'points' ? ' points' : '%'}`;
+    const when =
+      draft.late_rule.type === 'per_day' ? ' for each day late' : draft.late_rule.type === 'per_hour' ? ' for each hour late' : '';
+    lines.push(`Late work loses ${amt}${when}.`);
   }
   if (draft.extra_credit_method === 'B') {
     lines.push('Extra credit adds to earned points without penalizing students who skip it.');
   } else if (draft.extra_credit_method === 'C') {
-    lines.push('Extra credit may sit in its own category (method C).');
+    lines.push('Extra credit has its own category.');
   } else {
-    lines.push('Extra credit follows method A (replace / boost within existing work).');
+    lines.push('Extra credit can raise or replace a score on existing work.');
   }
   lines.push(
     draft.book_mode === 'rolling_year'
       ? 'Scores roll across the year.'
-      : 'The gradebook resets each marking period; the semester formula combines periods.',
+      : 'Grades start fresh each grading period; the grading periods are then combined into the semester grade.',
   );
-  if (draft.rollup_preset) lines.push(`Term rollup: ${draft.rollup_preset}.`);
+  if (draft.rollup_preset) lines.push(`Semester grade: ${rollupPresetLabel(draft.rollup_preset)}.`);
   if (draft.exam_weight != null) lines.push(`Exam weight: ${draft.exam_weight}.`);
   return lines.join('\n');
 }

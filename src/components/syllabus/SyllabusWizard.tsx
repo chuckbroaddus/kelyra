@@ -67,9 +67,9 @@ function LivePreviewCard({ draft, colors }: { draft: SyllabusWizardDraft; colors
   const preview = useMemo(() => runLivePreview(draft), [draft]);
   return (
     <Card>
-      <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Live preview · sample period</Text>
+      <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Preview with sample students</Text>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Three fake students. Changes on any step recompute instantly.
+        Three made-up students. Their grades update as you make choices.
       </Text>
       {preview.students.map((s) => (
         <View key={s.id} style={[styles.previewRow, { borderColor: colors.line }]}>
@@ -123,7 +123,7 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
         <Card>
           {issues.map((iss, i) => (
             <Text key={`${iss.path}-${i}`} style={[type.meta, { color: iss.severity === 'error' ? c.danger : c.warn }]}>
-              {iss.severity === 'error' ? 'Error' : 'Note'}: {iss.message}
+              {iss.severity === 'error' ? 'Fix this' : 'Heads up'}: {iss.message}
             </Text>
           ))}
         </Card>

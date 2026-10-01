@@ -12,6 +12,12 @@ import { labelForIngestPath, labelForIngestValue } from '@/lib/ingest/fieldLabel
 import { dedupeWarningsAndAmbiguities } from '@/lib/ingest/normalizeFieldValues';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import {
+  INGEST_DECISION_LABELS,
+  ingestConfidenceLabel,
+  ingestStatusLabel,
+  plainIngestNotice,
+} from '@/lib/grade/plainLabels';
 
 type Decision = 'accept' | 'reject' | 'edit';
 
@@ -58,14 +64,16 @@ export function IngestProposalReview({
     const out: Array<{ key: string; text: string; block: boolean }> = [];
     const seen = new Set<string>();
     for (const a of ambiguities) {
-      const t = a.message.trim();
+      const t = plainIngestNotice(a.code, a.message.trim())?.trim() ?? '';
+      if (!t) continue;
       const k = t.toLowerCase().replace(/^ambiguity:\s*/i, '');
       if (seen.has(k)) continue;
       seen.add(k);
       out.push({ key: `a-${a.code}`, text: t, block: false });
     }
     for (const w of warnings) {
-      const t = w.message.trim();
+      const t = plainIngestNotice(w.code, w.message.trim())?.trim() ?? '';
+      if (!t) continue;
       const k = t.toLowerCase().replace(/^ambiguity:\s*/i, '');
       if (seen.has(k)) continue;
       seen.add(k);
@@ -78,10 +86,10 @@ export function IngestProposalReview({
     <View>
       <Card>
         <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>
-          Filled from {sourceLabel ?? proposal.source_id}. Review highlighted fields before saving.
+          We read {sourceLabel ?? 'your document'}. Check each setting below before you use it.
         </Text>
         <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
-          AI never publishes. Accept, edit, or reject each field, then continue in the wizard.
+          Nothing is saved or published yet. For each setting, tap Use, Change, or Skip.
         </Text>
         {notices.map((n) => (
           <Text
@@ -98,8 +106,10 @@ export function IngestProposalReview({
         const badge = confColor(f.confidence, colors as never);
         const evidence =
           f.evidence.page != null
-            ? `p. ${f.evidence.page}: ${f.evidence.quote}`
-            : f.evidence.quote || 'No quote';
+            ? `Page ${f.evidence.page}: “${f.evidence.quote}”`
+            : f.evidence.quote
+              ? `“${f.evidence.quote}”`
+              : 'We didn’t find this exact wording in the document.';
         const label = labelForIngestPath(f.path);
         const preview = labelForIngestValue(f.path, f.value);
         return (
@@ -107,7 +117,7 @@ export function IngestProposalReview({
             <View style={styles.head}>
               <Text style={[type.body, { color: colors.ink, flex: 1, fontWeight: '600' }]}>{label}</Text>
               <Text style={[type.meta, { color: badge }]}>
-                {Math.round(f.confidence * 100)}% · {f.status}
+                {ingestConfidenceLabel(f.confidence)} · {ingestStatusLabel(f.status)}
               </Text>
             </View>
             {(showRawPaths || debugOpen) && (
@@ -117,37 +127,37 @@ export function IngestProposalReview({
             <Text style={[type.body, { color: colors.ink, marginTop: 6 }]}>{preview}</Text>
             {decision === 'edit' ? (
               <TextField
-                label="Edited value (JSON or text)"
+                label="Your value"
                 value={edits[f.path] ?? preview}
                 onChangeText={(t) => setEdits((e) => ({ ...e, [f.path]: t }))}
               />
             ) : null}
             <View style={styles.row}>
               <SecondaryButton
-                label="Accept"
+                label="Use"
                 onPress={() => setDecisions((d) => ({ ...d, [f.path]: 'accept' }))}
               />
               <SecondaryButton
-                label="Edit"
+                label="Change"
                 onPress={() => setDecisions((d) => ({ ...d, [f.path]: 'edit' }))}
               />
               <GhostButton
-                label="Reject"
+                label="Skip"
                 onPress={() => setDecisions((d) => ({ ...d, [f.path]: 'reject' }))}
               />
             </View>
-            <Text style={[type.meta, { color: colors.mute }]}>Decision: {decision}</Text>
+            <Text style={[type.meta, { color: colors.mute }]}>{INGEST_DECISION_LABELS[decision] ?? decision}</Text>
           </Card>
         );
       })}
 
       <GhostButton
-        label={debugOpen ? 'Hide field keys' : 'Show field keys'}
+        label={debugOpen ? 'Hide technical details' : 'Show technical details'}
         onPress={() => setDebugOpen((v) => !v)}
       />
 
       <PrimaryButton
-        label="Apply into wizard"
+        label="Use these settings"
         onPress={() => {
           const accepted: IngestField[] = [];
           for (const f of rows) {
@@ -169,7 +179,7 @@ export function IngestProposalReview({
           onApply(accepted);
         }}
       />
-      <GhostButton label="Discard proposal" onPress={onDiscard} />
+      <GhostButton label="Throw away" onPress={onDiscard} />
     </View>
   );
 }

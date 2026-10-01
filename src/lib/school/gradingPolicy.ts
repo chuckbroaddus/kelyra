@@ -15,6 +15,13 @@ import {
   courseLevelPickerOptions,
 } from '../grade/gpa/gpa.ts';
 import { DEFAULT_TRANSFER_LETTER_TO_PCT } from '../grade/posting/types.ts';
+import {
+  calendarTemplateLabel,
+  creditUnitLabel,
+  gpaModeLabel,
+  scaleLabel,
+  schoolLevelLabel,
+} from '../grade/plainLabels.ts';
 
 export { courseLevelPickerOptions };
 
@@ -158,29 +165,29 @@ export const DEFAULT_LOCKS: SyllabusLocks = {
 };
 
 export const DEFAULT_LOCK_REASON_COPY: Record<keyof SyllabusLocks, string> = {
-  engine: 'School grading policy locks the calculation engine.',
-  categories: 'School grading policy locks category structure or weights.',
-  scale: 'Letter scale is set by the school grading policy.',
-  floor: 'Period floor is set by the school grading policy.',
-  late: 'Late penalty rule is set by the school grading policy.',
-  drop_lowest: 'Drop-lowest policy is set by the school.',
-  retake: 'Retake rules are set by the school grading policy.',
-  assignment_max: 'Assignment max points policy is set by the school.',
-  book_mode: 'Book reset mode is set by the school calendar policy.',
-  rollup: 'Term rollup / exam weight is set by the school calendar.',
+  engine: 'Your school sets how the average is figured.',
+  categories: 'Your school sets the categories and their weights.',
+  scale: 'Your school sets the letter grade scale.',
+  floor: 'Your school sets the lowest grade allowed.',
+  late: 'Your school sets the late work penalty.',
+  drop_lowest: 'Your school sets whether low scores are dropped.',
+  retake: 'Your school sets the retake rules.',
+  assignment_max: 'Your school sets the most points an assignment can be worth.',
+  book_mode: 'Your school sets whether grades start fresh each grading period.',
+  rollup: 'Your school sets how grading periods and the exam make the semester grade.',
 };
 
 export const STEP_LABELS: Record<WizardStepId, string> = {
   level: 'School level',
-  calendar: 'Calendar',
-  dates: 'Dates & periods',
-  credit: 'Credit policy',
-  rollup: 'Term rollup',
-  scale: 'Grade scale',
-  quality_points: 'Quality points',
+  calendar: 'Grading periods',
+  dates: 'School year dates',
+  credit: 'Credit',
+  rollup: 'Semester grade',
+  scale: 'Letter grades',
+  quality_points: 'GPA points',
   course_levels: 'Course levels',
-  gpa: 'GPA profiles',
-  locks: 'Teacher locks',
+  gpa: 'GPA',
+  locks: 'What teachers can change',
   review: 'Review & publish',
 };
 
@@ -480,12 +487,12 @@ export function validateScaleBands(bands: GradeScaleBand[], kind: 'percent' | 'm
   const issues: ValidationIssue[] = [];
   if (kind === 'mark') {
     if (bands.length === 0) {
-      issues.push({ path: 'scales.bands', severity: 'error', message: 'Mark scale needs at least one letter.' });
+      issues.push({ path: 'scales.bands', severity: 'error', message: 'Add at least one mark to the scale.' });
     }
     return issues;
   }
   if (bands.length === 0) {
-    issues.push({ path: 'scales.bands', severity: 'error', message: 'Scale needs at least one band.' });
+    issues.push({ path: 'scales.bands', severity: 'error', message: 'Add at least one letter grade to the scale.' });
     return issues;
   }
   const sorted = [...bands].sort((a, b) => a.min_pct - b.min_pct);
@@ -494,7 +501,7 @@ export function validateScaleBands(bands: GradeScaleBand[], kind: 'percent' | 'm
     issues.push({
       path: 'scales.bands',
       severity: 'error',
-      message: `Scale must start at 0 (got min ${sorted[0]!.min_pct}).`,
+      message: `The lowest letter grade must start at 0 (it starts at ${sorted[0]!.min_pct}).`,
     });
   }
   const last = sorted[sorted.length - 1]!;
@@ -502,7 +509,7 @@ export function validateScaleBands(bands: GradeScaleBand[], kind: 'percent' | 'm
     issues.push({
       path: 'scales.bands',
       severity: 'error',
-      message: `Scale must reach 100 (got max ${last.max_pct}).`,
+      message: `The highest letter grade must go up to 100 (it stops at ${last.max_pct}).`,
     });
   }
   for (let i = 0; i < sorted.length; i++) {
@@ -511,7 +518,7 @@ export function validateScaleBands(bands: GradeScaleBand[], kind: 'percent' | 'm
       issues.push({
         path: `scales.bands.${b.letter}`,
         severity: 'error',
-        message: `Band ${b.letter}: min ${b.min_pct} > max ${b.max_pct}.`,
+        message: `${b.letter}: the low end (${b.min_pct}) is above the high end (${b.max_pct}).`,
       });
     }
     if (i > 0) {
@@ -523,13 +530,13 @@ export function validateScaleBands(bands: GradeScaleBand[], kind: 'percent' | 'm
         issues.push({
           path: 'scales.bands',
           severity: 'error',
-          message: `Bands ${prev.letter} and ${b.letter} overlap.`,
+          message: `The ${prev.letter} and ${b.letter} ranges overlap.`,
         });
       } else if (gap > 1 + EPS) {
         issues.push({
           path: 'scales.bands',
           severity: 'error',
-          message: `Gap between ${prev.letter} and ${b.letter} (${prev.max_pct} → ${b.min_pct}).`,
+          message: `There is a gap between ${prev.letter} and ${b.letter} (${prev.max_pct} to ${b.min_pct}).`,
         });
       }
     }
@@ -543,7 +550,7 @@ export function validateQualityPoints(
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   if (tables.length === 0) {
-    issues.push({ path: 'qp.tables', severity: 'error', message: 'At least one quality-point table is required when GPA is on.' });
+    issues.push({ path: 'qp.tables', severity: 'error', message: 'GPA is on, so add a chart of GPA points for each letter.' });
     return issues;
   }
   for (const scale of scales) {
@@ -557,7 +564,7 @@ export function validateQualityPoints(
           issues.push({
             path: `qp.${table.id}.${letter}`,
             severity: 'error',
-            message: `Letter ${letter} on scale ${scale.id} has no quality points in ${table.id}.`,
+            message: `The letter ${letter} has no GPA points in the GPA chart.`,
           });
         }
       }
@@ -573,12 +580,12 @@ export function validatePolicyPayload(payload: GradingPolicyPayload): Validation
       issues.push({
         path: `calendar.rollups.${rollup.term_id}`,
         severity: 'error',
-        message: `Rollup for ${rollup.term_id} weights must sum to 1.`,
+        message: `The semester grade formula for ${payload.calendar.periods.find((p) => p.id === rollup.term_id)?.name ?? rollup.term_id} must add up to 100%.`,
       });
     }
   }
   if (payload.scales.length === 0) {
-    issues.push({ path: 'scales', severity: 'error', message: 'At least one grade scale is required.' });
+    issues.push({ path: 'scales', severity: 'error', message: 'Choose a letter grade scale.' });
   }
   for (const scale of payload.scales) {
     issues.push(...validateScaleBands(scale.bands, scale.kind).map((i) => ({
@@ -589,17 +596,17 @@ export function validatePolicyPayload(payload: GradingPolicyPayload): Validation
   if (payload.gpa_mode !== 'off') {
     issues.push(...validateQualityPoints(payload.quality_point_tables, payload.scales));
     if (payload.gpa_profiles.length === 0) {
-      issues.push({ path: 'gpa.profiles', severity: 'error', message: 'GPA is on but no profiles are defined.' });
+      issues.push({ path: 'gpa.profiles', severity: 'error', message: 'GPA is on, but no GPA type is chosen.' });
     }
     if (payload.course_levels.length === 0) {
-      issues.push({ path: 'levels', severity: 'error', message: 'GPA is on but course levels are empty.' });
+      issues.push({ path: 'levels', severity: 'error', message: 'GPA is on, but no course levels (like Regular or AP) are set.' });
     }
   }
   if (payload.credit_policy.unit === 'none' && payload.gpa_mode !== 'off') {
     issues.push({
       path: 'credit.policy',
       severity: 'warning',
-      message: 'Credit is none but GPA is enabled — typical for elementary only.',
+      message: 'Classes give no credit but GPA is on. That is unusual outside elementary school.',
     });
   }
   return issues;
@@ -654,7 +661,14 @@ export function soFarSummary(draft: SetupDraft): string {
   const gpa = getFieldValue<GpaMode>(draft, 'gpa.mode', 'off');
   const scale = getScaleTemplate(scaleId);
   const pass = scale?.passing_pct ?? 70;
-  return `${level} · ${template} · credit ${credit.unit} · ${scaleId} · pass ${pass} · GPA ${gpa}`;
+  return [
+    schoolLevelLabel(level),
+    calendarTemplateLabel(template),
+    creditUnitLabel(credit.unit),
+    scaleLabel(scaleId, scale?.name),
+    `${pass} is passing`,
+    gpaModeLabel(gpa),
+  ].join(' · ');
 }
 
 export function rebuildCalendarFromDraft(draft: SetupDraft): SetupDraft {

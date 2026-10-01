@@ -129,8 +129,8 @@ function cell(
 export function sampleCells(): Record<SampleStudentId, { name: string; note: string; cells: EngineCell[] }> {
   return {
     alex: {
-      name: 'Alex (solid)',
-      note: 'All work in; one late quiz.',
+      name: 'Alex (strong student)',
+      note: 'All work turned in; one late quiz.',
       cells: [
         cell('t1', 88),
         cell('t2', 40),
@@ -143,7 +143,7 @@ export function sampleCells(): Record<SampleStudentId, { name: string; note: str
     },
     blake: {
       name: 'Blake (missing)',
-      note: 'Missing homework + low test.',
+      note: 'Missing homework and a low test.',
       cells: [
         cell('t1', 62),
         cell('t2', 30),
@@ -156,7 +156,7 @@ export function sampleCells(): Record<SampleStudentId, { name: string; note: str
     },
     casey: {
       name: 'Casey (excused)',
-      note: 'Excused test; skipped EC.',
+      note: 'Excused from a test; skipped extra credit.',
       cells: [
         cell('t1', null, 'excused'),
         cell('t2', 45),

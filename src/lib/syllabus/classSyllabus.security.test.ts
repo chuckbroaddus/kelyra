@@ -148,14 +148,14 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   assert.match(ui, /draft\.syllabus_status === 'published'/);
   assert.match(
     ui,
-    /This syllabus is published\. Use Publish to update live weights\./,
+    /This syllabus is already published\. Tap Publish to save your changes\./,
   );
   const saveDraft = ui.slice(ui.indexOf('const onSaveDraft = async'));
   const saveBody = saveDraft.slice(0, saveDraft.indexOf('const applyTemplateCopy'));
   assert.match(saveBody, /draft\.syllabus_status === 'published'/);
-  assert.match(saveBody, /Use Publish to update live weights/);
+  assert.match(saveBody, /Tap Publish to save your changes/);
   assert.match(saveBody, /canFinishReview\(draft\)/);
-  assert.match(saveBody, /Fix category weights/);
+  assert.match(saveBody, /category weights need to add up to 100%/);
   // Published path returns before any draft write; draft save only for non-published.
   const publishedGate = saveBody.indexOf("draft.syllabus_status === 'published'");
   const publishedReturn = saveBody.indexOf('return;', publishedGate);

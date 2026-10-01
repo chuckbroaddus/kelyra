@@ -9,6 +9,7 @@ import {
   nodesFor,
   sectionsFor,
 } from './graph.ts';
+import { interviewSlotValue } from '../grade/plainLabels.ts';
 import type {
   GraphContext,
   InterviewSection,
@@ -54,7 +55,7 @@ export function buildProgress(
     state: sectionState(id),
   }));
 
-  const label = list.map((s) => (s.state === 'current' ? `→${s.label}` : s.label)).join(' · ');
+  const label = list.map((s) => (s.state === 'current' ? `▸ ${s.label}` : s.label)).join(' · ');
   return { sections: list, current_section: currentSection, label };
 }
 
@@ -85,9 +86,9 @@ export function nextQuestion(session: InterviewSession): NextQuestionResult {
 
 export function openingMessage(wizard: InterviewWizard): string {
   if (wizard === 'school') {
-    return "Set up how this school posts grades. Answer a few questions — I'll fill the same draft as the form. You can say things like “six-weeks, 70 is passing.”";
+    return "Let's set up how your school gives grades. Answer a few questions and I'll fill in the form for you. You can say things like “six-weeks, 70 is passing.”";
   }
-  return 'Build this class syllabus by answering a few questions. Same draft as the wizard — nothing publishes until you open the form and tap Publish.';
+  return "Let's set up how this class is graded. Answer a few questions and I'll fill in the form for you. Nothing is published until you open the form and tap Publish.";
 }
 
 export function readBackSummary(session: InterviewSession): string {
@@ -95,36 +96,36 @@ export function readBackSummary(session: InterviewSession): string {
   const parts: string[] = [];
   const v = (path: string) => f[path]?.value;
   if (session.wizard === 'school') {
-    if (v('level') != null) parts.push(String(v('level')));
+    if (v('level') != null) parts.push(interviewSlotValue('level', v('level')));
     if (v('calendar.template') != null) {
       const t = String(v('calendar.template'));
       parts.push(
-        t === 'tx_six_weeks' ? 'six report cards a year' : t.replace(/_/g, ' '),
+        t === 'tx_six_weeks' ? 'six report cards a year' : interviewSlotValue('calendar.template', t),
       );
     }
     if (v('credit.policy') != null) {
-      const c = v('credit.policy') as { unit?: string };
-      parts.push(c?.unit === 'none' ? 'no credit' : `credit ${c?.unit ?? ''}`);
+      parts.push(interviewSlotValue('credit.policy', v('credit.policy')));
     }
-    if (v('rollup.preset') != null) parts.push(`rollup ${String(v('rollup.preset'))}`);
+    if (v('rollup.preset') != null) {
+      parts.push(`semester grade: ${interviewSlotValue('rollup.preset', v('rollup.preset'))}`);
+    }
     if (v('scale.passing_pct') != null) parts.push(`${v('scale.passing_pct')} is passing`);
-    else if (v('scale.default_id') != null) parts.push(String(v('scale.default_id')));
-    if (v('gpa.mode') != null) parts.push(`GPA ${String(v('gpa.mode'))}`);
-    if (v('levels.ap_points') != null) parts.push(`AP A is ${v('levels.ap_points')} weighted`);
+    else if (v('scale.default_id') != null) parts.push(interviewSlotValue('scale.default_id', v('scale.default_id')));
+    if (v('gpa.mode') != null) parts.push(interviewSlotValue('gpa.mode', v('gpa.mode')));
+    if (v('levels.ap_points') != null) parts.push(`an A in AP is worth ${v('levels.ap_points')} points`);
   } else {
-    if (v('engine') != null) parts.push(String(v('engine')).replace(/_/g, ' '));
+    if (v('engine') != null) parts.push(interviewSlotValue('engine', v('engine')));
     if (v('categories') != null) {
       const cats = v('categories') as Array<{ label: string; weight_percent: number }>;
       if (Array.isArray(cats)) {
-        parts.push(cats.map((c) => `${c.label} ${c.weight_percent}`).join('/'));
+        parts.push(cats.map((c) => `${c.label} ${c.weight_percent}%`).join(', '));
       }
     }
-    if (v('missing_rule') != null) parts.push(`missing=${String(v('missing_rule'))}`);
+    if (v('missing_rule') != null) parts.push(`missing work: ${interviewSlotValue('missing_rule', v('missing_rule')).toLowerCase()}`);
     if (v('late_rule') != null) {
-      const lr = v('late_rule') as { type?: string };
-      parts.push(`late=${lr?.type ?? 'none'}`);
+      parts.push(`late work: ${interviewSlotValue('late_rule', v('late_rule')).toLowerCase()}`);
     }
   }
-  if (parts.length === 0) return 'Nothing captured yet.';
-  return `${parts.join(', ')}. Open the form to check dates and publish?`;
+  if (parts.length === 0) return 'Nothing answered yet.';
+  return `Here's what I have: ${parts.join('; ')}. Open the form to check the dates and publish?`;
 }

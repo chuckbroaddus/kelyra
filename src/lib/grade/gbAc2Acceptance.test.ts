@@ -104,7 +104,7 @@ test('§11.15 total points hides weights; weighted blocks Save until 100%', () =
   const wiz = read('src/components/syllabus/SyllabusWizard.tsx');
   assert.match(wiz, /!canFinishReview\(draft\)/);
   const screen = read('src/app/class/[id]/syllabus.tsx');
-  assert.match(screen, /Fix category weights/);
+  assert.match(screen, /category weights need to add up to 100%/);
 });
 
 test('§11.16 Help on Excused shows 98/120 vs 98/130', () => {
@@ -112,7 +112,7 @@ test('§11.16 Help on Excused shows 98/120 vs 98/130', () => {
   assert.ok(t);
   assert.match(t!.example ?? '', /98\/120/);
   assert.match(t!.example ?? '', /98\/130/);
-  assert.match(t!.meaning, /earned and possible/i);
+  assert.match(t!.meaning, /points earned and the points possible/i);
   const body = read('src/components/syllabus/WizardStepBody.tsx');
   assert.match(body, /Help on Excused/);
   assert.match(body, /help\.excused/);
@@ -122,7 +122,7 @@ test('§11.17 I\'m not sure → Texas 6-week editable', () => {
   const draft = applyTemplateNotSure(createEmptyDraft('s', 'high'));
   assert.equal(getFieldValue(draft, 'calendar.template', ''), 'tx_six_weeks');
   const ui = read('src/app/school/grading-policy/index.tsx');
-  assert.match(ui, /I'm not sure — apply recommended/);
+  assert.match(ui, /I'm not sure — use the usual choice/);
   assert.match(ui, /applyTemplateNotSure/);
   assert.match(ui, /setField\(draft, 'calendar\.template'/);
 });

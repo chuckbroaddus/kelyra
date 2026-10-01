@@ -23,6 +23,7 @@ import {
   type TurnOutput,
 } from '@/lib/interview';
 import { invokeAi } from '@/lib/ai/invoke';
+import { interviewSlotLine } from '@/lib/grade/plainLabels';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type Colors = { ink: string; mute: string; brand: string; danger: string; line: string; elevated: string };
@@ -143,7 +144,7 @@ export function InterviewScreen({
         }
         runLocal(userText, chipId);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Turn failed');
+        setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       } finally {
         setBusy(false);
         setText('');
@@ -154,10 +155,10 @@ export function InterviewScreen({
 
   const soFar = useMemo(() => {
     const keys = Object.keys(session.filled);
-    if (!keys.length) return 'Nothing captured yet';
+    if (!keys.length) return 'Nothing answered yet';
     return keys
       .slice(0, 8)
-      .map((k) => `${k}: ${JSON.stringify(session.filled[k]?.value)}`)
+      .map((k) => interviewSlotLine(k, session.filled[k]?.value))
       .join(' · ');
   }, [session.filled]);
 
@@ -189,11 +190,11 @@ export function InterviewScreen({
         ))}
       </ChipRow>
       <TextField
-        label="Something else"
+        label="Or type your own answer"
         value={text}
         onChangeText={setText}
         editable={!busy}
-        placeholder="Or type an answer"
+        placeholder="Type here"
       />
       <View style={styles.nav}>
         <SecondaryButton

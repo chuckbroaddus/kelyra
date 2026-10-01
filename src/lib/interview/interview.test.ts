@@ -95,7 +95,7 @@ test('progress math labels current section', () => {
   const session = createSession({ wizard: 'school', school_id: 's' });
   const nq = nextQuestion(session);
   assert.equal(nq.progress.current_section, 'level');
-  assert.match(nq.progress.label, /Level/);
+  assert.match(nq.progress.label, /School level/);
   const prog = buildProgress('school', nq.node, session.filled, session.draft);
   assert.equal(prog.sections[0]?.state, 'current');
   assert.ok(prog.sections.length >= 5);
