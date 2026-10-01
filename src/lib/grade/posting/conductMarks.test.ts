@@ -53,6 +53,12 @@ test('nestConductMarkRows groups by period then student and drops blanks', () =>
   assert.deepEqual(marksForPeriod(nested, 'missing'), {});
 });
 
+test('marksForPeriod matches period keys case-insensitively', () => {
+  const nested = nestConductMarkRows(rows);
+  assert.deepEqual(marksForPeriod(nested, '6w1'), { s1: 'E', s2: 'S', s4: null });
+  assert.deepEqual(marksForPeriod(nested, '6W2'), { s1: 'N' });
+});
+
 test('applyConductToComputedInputs fills conduct from saved marks', () => {
   const computed: ComputedPeriodInput[] = [
     {

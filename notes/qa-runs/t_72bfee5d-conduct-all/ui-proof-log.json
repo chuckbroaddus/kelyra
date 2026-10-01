@@ -1,0 +1,44 @@
+{
+  "shots": [
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_72bfee5d/kelyra/notes/qa-runs/t_72bfee5d-conduct-all/01-conduct-all-portrait-375.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_72bfee5d/kelyra/notes/qa-runs/t_72bfee5d-conduct-all/02-conduct-all-portrait-375-scrolled.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_72bfee5d/kelyra/notes/qa-runs/t_72bfee5d-conduct-all/03-conduct-all-landscape-812x375.png"
+  ],
+  "checks": [
+    {
+      "name": "portrait-all-lists-periods",
+      "hasPickPeriodPrompt": false,
+      "hasConduct": true,
+      "periodLabels": [
+        "Quarter 1",
+        "Quarter 2",
+        "Quarter 3",
+        "Quarter 4"
+      ],
+      "periodCount": 4,
+      "hasCombinedOnlyHint": false,
+      "sample": "ditl-Math Period 3\nditl-Math Period 3\n5\nToday\nNeeds Attention\nFeed\nStudents\nAssignments\nGradebook\nParents\nSettings\nGradebook\nGradebook\nGradebook\nConduct\nHeatmap\nConduct\nConduct\nAll\nQuarter 1\nQuarter 2\nQuarter 3\nQuarter 4\nSemester 1\nSemester 2\nYear\nAll\nAll\nConduct · Quarter 1\nSeparate non-GPA citizenship / work-habits mark per period (E/S/N/U default). Copied to the report card on store.\nJordan\nE\nS\nN\nU\nJamie\nE\nS\nN\nU\nRiley\nE\nS\nN\nU\nSamira\nE\nS\nN\nU\nConduct · Quarter 2\nSeparate non-GPA citizenship / work-habits mark per period (E/S/N/U default). Copied to the report card on store.\nJordan\nE\nS\nN\nU\nJam",
+      "ok": true
+    },
+    {
+      "name": "landscape-all-lists-periods",
+      "hasPickPeriodPrompt": false,
+      "hasConduct": true,
+      "periodLabels": [
+        "Quarter 1",
+        "Quarter 2",
+        "Quarter 3",
+        "Quarter 4"
+      ],
+      "periodCount": 4,
+      "hasCombinedOnlyHint": false,
+      "sample": "ditl-Math Period 3\nditl-Math Period 3\n5\nDesk\n4\nNeeds Attention\nDiary\nCalendar\nKelyra\nToday\nNeeds Attention\nFeed\nStudents\nAssignments\nGradebook\nParents\nSettings\nGradebook\nGradebook\nGradebook\nConduct\nHeatmap\nConduct\nConduct\nAll\nQuarter 1\nQuarter 2\nQuarter 3\nQuarter 4\nSemester 1\nSemester 2\nYear\nAll\nAll\nNo students yet.",
+      "ok": true
+    }
+  ],
+  "webPort": 8147,
+  "out": "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_72bfee5d/kelyra/notes/qa-runs/t_72bfee5d-conduct-all",
+  "classId": "d1715000-0000-4000-a000-000000000301",
+  "passed": true,
+  "failed": []
+}
