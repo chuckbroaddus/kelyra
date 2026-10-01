@@ -1,0 +1,45 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Jordan Blake",
+    "confidence": 0.95,
+    "studentGuessId": null,
+    "studentGuessName": "Avery Blake",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "(555) 201-4401"
+      },
+      {
+        "label": "email",
+        "value": "jordan.blake@example.com"
+      },
+      {
+        "label": "address",
+        "value": "412 Willow Lane, Apt 2B, Springfield"
+      },
+      {
+        "label": "preferred contact",
+        "value": "Text message"
+      }
+    ],
+    "names": [
+      {
+        "name": "Jordan Blake",
+        "confidence": 0.95
+      },
+      {
+        "name": "Avery Blake",
+        "confidence": 0.95
+      }
+    ],
+    "note": null
+  }
+}

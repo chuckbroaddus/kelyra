@@ -1,0 +1,33 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Harper Lee",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "4"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Alex Lee"
+      }
+    ],
+    "names": [
+      {
+        "name": "Harper Lee",
+        "confidence": 1
+      },
+      {
+        "name": "Alex Lee",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "spec": "PC01:clean",
+    "file": "notes/qa-fixtures/people-ingest/PC01/clean.png",
+    "outcome": "This will be a parent card",
+    "shots": [
+      "PC01-clean-review-375.png",
+      "PC01-clean-fields-375.png"
+    ],
+    "field_values": [
+      "Jordan Blake",
+      "Avery Blake"
+    ],
+    "text_excerpt": "Classes Classes 5 Remove page Upload class stack This will be a parent card Parent name R Relationship Relationship Mother P Phone Phone (555) 201-4401 E Email Email jordan.blake@example.com A Address Address 412 Willow Lane, Apt 2B, Springfield PC Preferred contact Preferred contact Text message Link a child (optional) JL Jordan Lee Jordan Lee JL Jamie Lee Jamie Lee RC Riley Chen Riley Chen SO Samira Okonkwo Samira Okonkwo Clear AI result Save parent 4"
+  },
+  {
+    "spec": "SC01:photo",
+    "file": "notes/qa-fixtures/people-ingest/SC01/photo.jpg",
+    "outcome": "This will be a student card",
+    "shots": [
+      "SC01-photo-review-375.png",
+      "SC01-photo-fields-375.png"
+    ],
+    "field_values": [
+      "Elena Vargas"
+    ],
+    "text_excerpt": "Classes Classes 5 Remove page Upload class stack This will be a student card Confirm every field. We will not invent a student. JL Jordan Lee Jordan Lee JL Jamie Lee Jamie Lee RC Riley Chen Riley Chen SO Samira Okonkwo Samira Okonkwo PN Preferred name Preferred name Ellie B Birthday Birthday March 14, 2012 GA Grade or age Grade or age 9 EC Emergency contact Emergency contact Sofia Vargas EP Emergency phone Emergency phone 555-612-4890 A Allergies Allergies Peanuts HC Health conditions Health conditions Asthma \u2014 Inhaler in backpack N Notes Notes Student name: Elena Vargas Clear AI result Save details 4"
+  },
+  {
+    "spec": "SC03:photo",
+    "file": "notes/qa-fixtures/people-ingest/SC03/photo.jpg",
+    "outcome": "This will be a student card",
+    "shots": [
+      "SC03-photo-review-375.png",
+      "SC03-photo-fields-375.png"
+    ],
+    "field_values": [
+      "Benjamin Park (Ben)"
+    ],
+    "text_excerpt": "Classes Classes 5 Remove page Upload class stack This will be a student card Confirm every field. We will not invent a student. JL Jordan Lee Jordan Lee JL Jamie Lee Jamie Lee RC Riley Chen Riley Chen SO Samira Okonkwo Samira Okonkwo A Allergies Allergies shellfish EC Emergency contact Emergency contact Min Park EP Emergency phone Emergency phone 555-222-0199 Clear AI result Save details 4"
+  },
+  {
+    "spec": "MP01:clean",
+    "file": "notes/qa-fixtures/people-ingest/MP01/clean.png",
+    "outcome": "This will be a parent card",
+    "shots": [
+      "MP01-clean-review-375.png",
+      "MP01-clean-fields-375.png"
+    ],
+    "field_values": [
+      "Dana Thompson",
+      "Maya Thompson"
+    ],
+    "text_excerpt": "Classes Classes 5 Remove page Upload class stack This will be a parent card Parent name R Relationship Relationship Mother P Phone Phone 555-301-1001 E Email Email dana.t@example.com N Notes Notes relationship: Father phone: 555-301-1002 email: chris.t@example.com Link a child (optional) JL Jordan Lee Jordan Lee JL Jamie Lee Jamie Lee RC Riley Chen Riley Chen SO Samira Okonkwo Samira Okonkwo Clear AI result Save parent 4"
+  },
+  {
+    "spec": "N01:clean",
+    "file": "notes/qa-fixtures/people-ingest/N01/clean.png",
+    "outcome": "This will be student work",
+    "shots": [
+      "N01-clean-review-375.png"
+    ],
+    "field_values": [],
+    "text_excerpt": "Classes Classes 5 Remove page Upload class stack This will be student work / a grade draft No name was clear. Unknown waits in Inbox. Jordan Jamie Riley Samira Unknown Save as note Clear AI result Save to Inbox 4"
+  }
+]

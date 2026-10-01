@@ -61,3 +61,16 @@ npm run eval:people
 
 Requires `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and personas in
 `~/.kelyra/ui-personas.json` (teacher or office). Never print secrets.
+
+## Scoring note (R2)
+
+`scripts/eval-people-ingest.mjs` maps classifier `fields[]` through the real
+`mapClassifierFields` from `src/lib/people/metadata.ts` (same as the Capture review
+screen), parent vs student by returned intent. Birthdays compare via `coerceBirthdayISO`.
+
+## UI proof
+
+`node scripts/people-ingest-ui-proof.mjs --port <web port> --stamp <run> PC01:clean SC03:photo ...`
+— own Expo web port (not 8081), one QA Chrome :9223 tab (always closed), CDP file-chooser
+feeds the fixture into Capture → "Photo or Video" → "Ask AI to process", screenshots the
+parent/student card review at 375px.

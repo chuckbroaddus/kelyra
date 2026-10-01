@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Christopher Nguyen",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Nickname",
+        "value": "Chris"
+      },
+      {
+        "label": "Age",
+        "value": "10"
+      }
+    ],
+    "names": [
+      {
+        "name": "Christopher Nguyen",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

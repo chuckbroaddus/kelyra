@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Priya Nair",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "date of birth",
+        "value": "2014-11-02"
+      },
+      {
+        "label": "phone",
+        "value": "555-909-3344"
+      },
+      {
+        "label": "health conditions",
+        "value": "Type 1 diabetes – nurse has care plan"
+      },
+      {
+        "label": "allergies",
+        "value": "None known"
+      }
+    ],
+    "names": [
+      {
+        "name": "Priya Nair",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}
