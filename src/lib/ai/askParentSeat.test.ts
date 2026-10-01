@@ -26,7 +26,8 @@ test('AC-DUAL-ASK-1 parent tray keys stay Home/Ride/Calendar/Ask — never Teach
   const chrome = read('src/lib/chrome/ChromeProvider.tsx');
   assert.match(chrome, /readSessionParentSeat\(profile\.id\)/);
   assert.match(chrome, /setSeatPreference\('parent'\)/);
-  assert.match(chrome, /resolveStaffChromeRole\(profile,\s*seatPreference\)/);
+  assert.match(chrome, /effectiveChromeSeatPreference\(profile\?\.id,\s*seatPreference\)/);
+  assert.match(chrome, /resolveStaffChromeRole\(/);
   // Opening /ask must not itself write a seat preference.
   const ask = read('src/app/ask.tsx');
   assert.doesNotMatch(ask, /setChromeSeat|saveChromeSeatPreference/);
@@ -67,6 +68,8 @@ test('AC-DUAL-ASK-2 allowed() parent seat wall is live.role + denies classmates'
   assert.match(wall, /'list_roster'/);
   assert.match(wall, /'search_students'/);
   assert.match(wall, /'list_inbox'/);
+  assert.match(wall, /'summarize_class_desk'/);
+  assert.match(wall, /'approve_capture'/);
   assert.match(wall, /role:\s*'parent'/);
 });
 
@@ -87,4 +90,7 @@ test('AC-DUAL-ASK-2 ask.tsx hides class chip and roster chips off teacher seat',
   assert.match(ask, /askClassId = askRole === 'teacher' \|\| office \? chrome\.classId : null/);
   assert.match(ask, /if \(askRole !== 'teacher' \|\| !askClassId\) return;/);
   assert.match(ask, /listRoster\(askClassId\)/);
+  // Parent seat must not feed teacher working class into ground chrome.
+  assert.match(ask, /classId=\{askClassId\}/);
+  assert.doesNotMatch(ask, /classId=\{chrome\.classId\}/);
 });

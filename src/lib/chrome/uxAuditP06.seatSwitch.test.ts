@@ -178,6 +178,18 @@ test('P-06 race: after Office commit while pathname still /class/c1, hold / word
   );
 });
 
+test('AC-DUAL-ASK-1 bare /ask clears optimistic seat-root chromePathname', () => {
+  assert.equal(
+    shouldClearSeatNavPath({ seatNavPath: '/parent', pathname: '/ask', role: 'parent' }),
+    true,
+  );
+  assert.equal(
+    shouldClearSeatNavPath({ seatNavPath: '/', pathname: '/ask', role: 'teacher' }),
+    true,
+  );
+  assert.equal(chromePathnameForSeatNav(null, '/ask'), '/ask');
+});
+
 test('P-06 helpers + default dual-hat Office; preference not JWT/SQL', () => {
   assert.equal(chromeSeatRootHref('office'), '/');
   assert.equal(chromeSeatRootHref('teacher'), '/');

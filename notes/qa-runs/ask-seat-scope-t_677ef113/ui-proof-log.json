@@ -1,0 +1,70 @@
+{
+  "shots": [
+    "/var/folders/qx/sky2_tt562g31xdnw5yz7shm0000gp/T/ask-seat-scope-t_677ef113/01-teach-ask-375.png",
+    "/var/folders/qx/sky2_tt562g31xdnw5yz7shm0000gp/T/ask-seat-scope-t_677ef113/02-parent-home-375.png",
+    "/var/folders/qx/sky2_tt562g31xdnw5yz7shm0000gp/T/ask-seat-scope-t_677ef113/03-parent-ask-tray-375.png",
+    "/var/folders/qx/sky2_tt562g31xdnw5yz7shm0000gp/T/ask-seat-scope-t_677ef113/04-parent-ask-bare-375.png"
+  ],
+  "checks": [
+    {
+      "name": "teach-ask",
+      "keys": {
+        "hasDesk": false,
+        "hasNeeds": false,
+        "hasRide": false,
+        "hasHome": false,
+        "hasCapture": true,
+        "hasAsk": true
+      },
+      "ok": true
+    },
+    {
+      "name": "parent-ask-tray",
+      "keys": {
+        "hasDesk": false,
+        "hasNeeds": false,
+        "hasRide": false,
+        "hasHome": false,
+        "hasCapture": false,
+        "hasAsk": true
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "tabCount": 4,
+      "ok": true,
+      "bodySample": "Kelyra\nKelyra\n1\nAsk a question about this week’s work.\nWhich assignment?\nPick one so Ask can help with that work — or just chat.\nJust chatting"
+    },
+    {
+      "name": "parent-ask-bare",
+      "keys": {
+        "hasDesk": false,
+        "hasNeeds": false,
+        "hasRide": false,
+        "hasHome": false,
+        "hasCapture": false,
+        "hasAsk": true
+      },
+      "labels": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "ok": true,
+      "bodySample": "Kelyra\nKelyra\n1\nAsk a question about this week’s work.\nWhich assignment?\nPick one so Ask can help with that work — or just chat.\nJust chatting"
+    },
+    {
+      "name": "parent-no-teach-roster-chrome",
+      "ok": true,
+      "hasTeachRoster": false
+    }
+  ],
+  "webPort": 8082,
+  "out": "/var/folders/qx/sky2_tt562g31xdnw5yz7shm0000gp/T/ask-seat-scope-t_677ef113",
+  "passed": true,
+  "failed": []
+}

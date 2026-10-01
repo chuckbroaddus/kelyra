@@ -2431,6 +2431,17 @@ const PARENT_SEAT_DENIED_TOOLS = new Set([
   'list_roster',
   'search_students',
   'list_inbox',
+  'summarize_class_desk',
+  'list_grade_cells',
+  'assignment_completion',
+  'list_assignments',
+  'scan_answer_key',
+  'create_assignment',
+  'delete_capture',
+  'delete_gap',
+  'enroll_student',
+  'list_classes',
+  'approve_capture',
 ]);
 
 function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {

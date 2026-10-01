@@ -10,6 +10,7 @@ import {
   chromeSeatRootHref,
   coldStartChromeSeatPreference,
   defaultChromeSeat,
+  effectiveChromeSeatPreference,
   isOfficeChromeRole,
   otherOfficeTeacherSeatRow,
   readSessionParentSeat,
@@ -86,6 +87,28 @@ test('AC-DUAL-ASK-1 same-session Parent altitude survives bare /ask; cold start 
     /if \(seat === 'parent'\) \{[\s\S]*writeSessionParentSeat\(profileId, true\)/,
   );
   assert.match(seatSrc, /writeSessionParentSeat\(profileId, false\)/);
+});
+
+test('AC-DUAL-ASK-1 effectiveChromeSeatPreference holds Parent before seatPreference state', () => {
+  const profileId = `seat-eff-${Date.now()}`;
+  writeSessionParentSeat(profileId, true);
+  assert.equal(effectiveChromeSeatPreference(profileId, null), 'parent');
+  assert.equal(effectiveChromeSeatPreference(profileId, 'teacher'), 'teacher');
+  assert.equal(effectiveChromeSeatPreference(profileId, 'office'), 'office');
+  writeSessionParentSeat(profileId, false);
+  assert.equal(effectiveChromeSeatPreference(profileId, null), null);
+  assert.equal(effectiveChromeSeatPreference(undefined, null), null);
+
+  const dual = { role: 'teacher' as const, parent_id: 'p1' };
+  writeSessionParentSeat(profileId, true);
+  assert.equal(
+    resolveStaffChromeRole(dual, effectiveChromeSeatPreference(profileId, null)),
+    'parent',
+  );
+  writeSessionParentSeat(profileId, false);
+
+  const chrome = readFileSync(join(process.cwd(), 'src/lib/chrome/ChromeProvider.tsx'), 'utf8');
+  assert.match(chrome, /effectiveChromeSeatPreference\(profile\?\.id,\s*seatPreference\)/);
 });
 
 test('resolveStaffChromeRole: also_teacher does not force teacher without seat', () => {

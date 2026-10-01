@@ -48,6 +48,9 @@ test('AC-DUAL-ASK-4 history client always sends p_seat', () => {
   assert.match(hist, /rpc\('ask_list_messages',\s*\{[\s\S]*p_seat:\s*seat/);
   assert.match(hist, /rpc\('ask_append_message',\s*\{[\s\S]*p_seat:/);
   assert.match(hist, /rpc\('ask_new_thread',\s*\{\s*p_seat:\s*seat\s*\}/);
+  // append requires seat — no teacher default that could mis-file parent turns.
+  assert.doesNotMatch(hist, /p_seat:\s*seat \?\? 'teacher'/);
+  assert.match(hist, /seat: AskTranscriptSeat,/);
 });
 
 test('AC-DUAL-ASK-4 SQL: parent never adopts legacy null-seat thread', () => {

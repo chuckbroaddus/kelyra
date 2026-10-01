@@ -88,6 +88,8 @@ export function chromeSeatRootHref(seat: ChromeSeatPreference): string {
 /**
  * When optimistic seatNavPath may clear. /class/* is teacher landing only — never clear
  * office seat-root `/` while the router is still on a prior teacher /class/* path.
+ * Shared multi-seat routes (/ask, /calendar, …) clear once role is committed so bare
+ * /ask keeps the active seat tray (AC-DUAL-ASK-1) instead of sticking seat-root chromePathname.
  */
 export function shouldClearSeatNavPath(input: {
   seatNavPath: string | null;
@@ -98,6 +100,20 @@ export function shouldClearSeatNavPath(input: {
   const { seatNavPath, pathname, role } = input;
   if (!seatNavPath) return false;
   if (pathname === seatNavPath) return true;
+  // Seat-neutral routes: tray/title must follow real pathname + committed role.
+  if (
+    pathname === '/ask' ||
+    pathname === '/calendar' ||
+    pathname === '/messages' ||
+    pathname === '/profile' ||
+    pathname === '/diary' ||
+    pathname === '/activity' ||
+    pathname === '/search' ||
+    pathname.startsWith('/calendar/') ||
+    pathname.startsWith('/messages/')
+  ) {
+    return true;
+  }
   if (seatNavPath === '/') {
     if (pathname === '') return true;
     // Teacher Desk often redirects `/` → `/class/{id}`; only then is /class/* arrived root.
@@ -174,6 +190,20 @@ export function readSessionParentSeat(profileId: string): boolean {
     }
   }
   return sessionParentByProfile.has(profileId);
+}
+
+/**
+ * Seat preference for chrome resolve on this paint.
+ * Session Parent wins over null state so bare /ask does not flash Teach before useEffect
+ * restores seatPreference (AC-DUAL-ASK-1). Explicit seatPreference (incl. teacher/office) wins.
+ */
+export function effectiveChromeSeatPreference(
+  profileId: string | null | undefined,
+  seatPreference: ChromeSeatPreference | null,
+): ChromeSeatPreference | null {
+  if (seatPreference) return seatPreference;
+  if (profileId && readSessionParentSeat(profileId)) return 'parent';
+  return null;
 }
 
 export function writeSessionParentSeat(profileId: string, on: boolean): void {
