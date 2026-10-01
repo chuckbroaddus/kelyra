@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   PanResponder,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -374,7 +375,10 @@ function WorkRowBody({
       accessibilityRole="button"
       accessibilityLabel={mainAccessibilityLabel}
       onPress={onMainPress}
-      style={({ pressed }) => [pressed ? { opacity: 0.88 } : null]}
+      style={({ pressed }) => [
+        Platform.OS === 'web' ? styles.clickable : null,
+        pressed ? { opacity: 0.88 } : null,
+      ]}
     >
       {({ pressed }) => (
         <View style={styles.mainHit}>
@@ -406,6 +410,7 @@ function WorkRowBody({
                 onPress={pill.onPress}
                 style={({ pressed }) => [
                   styles.pill,
+                  Platform.OS === 'web' ? styles.clickable : null,
                   pill.kind === 'primary' && { backgroundColor: colors.brand },
                   pill.kind === 'secondary' && {
                     backgroundColor: colors.elevated,
@@ -532,4 +537,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pillLabel: type.pill,
+  // Web pointer for title/Open so student To Do rows read as clickable (t_9eb6b7fc).
+  clickable: {
+    cursor: 'pointer',
+  },
 });
