@@ -1,0 +1,176 @@
+{
+  "source_id": "K20",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Geometry Midterm — Key",
+  "maxScore": 20,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Complementary angles sum",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "Vertical angles are",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "Sum of triangle angles",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 4,
+      "stem": "Pythagorean triple",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 5,
+      "stem": "Area of circle uses",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 6,
+      "stem": "Isosceles base angles",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 7,
+      "stem": "Parallel line slope",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 8,
+      "stem": "Rhombus diagonals",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 9,
+      "stem": "Exterior angle theorem",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 10,
+      "stem": "Midpoint formula",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 11,
+      "stem": "Volume of cylinder",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 12,
+      "stem": "SOH-CAH-TOA: sine",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 13,
+      "stem": "Similar triangles",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc",
+      "accept_absent": true
+    },
+    {
+      "n": 14,
+      "stem": "Regular hexagon angle",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "mc",
+      "legibility": "glare"
+    },
+    {
+      "n": 15,
+      "stem": "Arc length uses",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "mc",
+      "legibility": "glare"
+    },
+    {
+      "n": 16,
+      "stem": "Inscribed angle",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc",
+      "accept_absent": true
+    },
+    {
+      "n": 17,
+      "stem": "Tangent to circle",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 18,
+      "stem": "Distance formula",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 19,
+      "stem": "Converse statement",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 20,
+      "stem": "Surface area of cube",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

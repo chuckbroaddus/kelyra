@@ -1,0 +1,70 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "perspective",
+    "motion_blur",
+    "sensor_noise",
+    "jpeg"
+  ],
+  "rough_recipe": {
+    "seed": 1018,
+    "effects": [
+      "perspective",
+      "motion_blur",
+      "sensor_noise",
+      "jpeg"
+    ],
+    "background": {
+      "kind": "table",
+      "tone": [
+        92,
+        88,
+        84
+      ]
+    },
+    "place": {
+      "rot": 3,
+      "scale": 0.86,
+      "corners": [
+        [
+          0.09,
+          0.02
+        ],
+        [
+          -0.07,
+          0.05
+        ],
+        [
+          0.02,
+          -0.01
+        ],
+        [
+          -0.01,
+          -0.03
+        ]
+      ]
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "motion",
+        "len": 7,
+        "angle": 20
+      },
+      {
+        "type": "noise",
+        "sigma": 11
+      },
+      {
+        "type": "jpeg",
+        "quality": 55
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

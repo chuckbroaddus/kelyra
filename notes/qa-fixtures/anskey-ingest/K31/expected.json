@@ -1,0 +1,62 @@
+{
+  "source_id": "K31",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Algebra 2 – Quiz 4 Key",
+  "maxScore": 14,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "1",
+      "answer": "x = 5",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "2",
+      "answer": "x = -3",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "3",
+      "answer": "18",
+      "points": 3,
+      "needsTeacher": false,
+      "note": "partial: 1 for setup",
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "4",
+      "answer": "y = 2x + 1",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 5,
+      "stem": "5",
+      "answer": "(3, -2)",
+      "points": 3,
+      "needsTeacher": false,
+      "note": "½ credit if swapped",
+      "type": "numeric"
+    },
+    {
+      "n": 6,
+      "stem": "6",
+      "answer": "7/2",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

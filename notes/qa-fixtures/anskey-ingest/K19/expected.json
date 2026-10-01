@@ -1,0 +1,132 @@
+{
+  "source_id": "K19",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "CHAPTER 9 QUIZ — KEY",
+  "maxScore": 15,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "1",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "2",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "3",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 4,
+      "stem": "4",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 5,
+      "stem": "5",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 6,
+      "stem": "6",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 7,
+      "stem": "7",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 8,
+      "stem": "8",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 9,
+      "stem": "9",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 10,
+      "stem": "10",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 11,
+      "stem": "11",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 12,
+      "stem": "12",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 13,
+      "stem": "13",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 14,
+      "stem": "14",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 15,
+      "stem": "15",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

@@ -1,0 +1,52 @@
+{
+  "source_id": "K34",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "U.S. History Ch. 3 Review — KEY",
+  "maxScore": 8,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "In what year was the Declaration of Independence signed?",
+      "answer": "1776",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "Who was the first U.S. president?",
+      "answer": "Washington",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "Who is called the “Father of the Constitution”?",
+      "answer": "Madison",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "Explain two causes of the American Revolution.",
+      "answer": "",
+      "points": 4,
+      "needsTeacher": true,
+      "type": "work"
+    },
+    {
+      "n": 5,
+      "stem": "In what year was the Constitution ratified?",
+      "answer": "1788",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

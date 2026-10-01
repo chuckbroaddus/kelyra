@@ -1,0 +1,73 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "folded_creases",
+    "crumpled",
+    "rotation_9deg"
+  ],
+  "rough_recipe": {
+    "seed": 1023,
+    "effects": [
+      "folded_creases",
+      "crumpled",
+      "rotation_9deg"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": false
+    },
+    "place": {
+      "rot": -9,
+      "scale": 0.84
+    },
+    "page": [
+      {
+        "type": "crumple",
+        "amount": 0.85,
+        "bumps": 26,
+        "creases": [
+          [
+            0,
+            560,
+            840,
+            545
+          ],
+          [
+            430,
+            0,
+            415,
+            1100
+          ],
+          [
+            0,
+            300,
+            840,
+            380
+          ]
+        ]
+      }
+    ],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.9,
+        "gamma": 1.08,
+        "vignette": 0.3
+      },
+      {
+        "type": "noise",
+        "sigma": 8
+      },
+      {
+        "type": "jpeg",
+        "quality": 58
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

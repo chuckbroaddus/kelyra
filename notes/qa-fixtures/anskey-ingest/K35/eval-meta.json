@@ -1,0 +1,58 @@
+{
+  "eval_variants": [
+    "clean",
+    "rough"
+  ],
+  "rough": true,
+  "rough_effects": [
+    "desk_clutter",
+    "rotation_11deg",
+    "motion_blur"
+  ],
+  "rough_recipe": {
+    "seed": 1035,
+    "effects": [
+      "desk_clutter",
+      "rotation_11deg",
+      "motion_blur"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": true,
+      "busy": true
+    },
+    "place": {
+      "rot": -11,
+      "scale": 0.72
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "motion",
+        "len": 5,
+        "angle": -30
+      },
+      {
+        "type": "noise",
+        "sigma": 9
+      },
+      {
+        "type": "jpeg",
+        "quality": 55
+      }
+    ]
+  },
+  "handwritten": true,
+  "hand": {
+    "hand": "Chalkboard SE",
+    "ink": "pencil gray",
+    "features": [
+      "two_columns",
+      "cross_out_correction",
+      "quick_key"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

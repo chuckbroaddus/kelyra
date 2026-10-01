@@ -1,0 +1,78 @@
+{
+  "source_id": "K33",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Español 1 — Vocab Quiz KEY",
+  "maxScore": 8,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "dog",
+      "answer": "el perro",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "cat",
+      "answer": "el gato",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "house",
+      "answer": "la casa",
+      "points": 1,
+      "needsTeacher": false,
+      "note": "accept \"casa\" without article",
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "book",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "short",
+      "legibility": "glare"
+    },
+    {
+      "n": 5,
+      "stem": "table",
+      "answer": "la mesa",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 6,
+      "stem": "window",
+      "answer": "la ventana",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 7,
+      "stem": "school",
+      "answer": "la escuela",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 8,
+      "stem": "friend",
+      "answer": "el amigo",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

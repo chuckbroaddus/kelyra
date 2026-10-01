@@ -1,0 +1,90 @@
+{
+  "eval_variants": [
+    "clean",
+    "rough"
+  ],
+  "no_hallucinate_answers": true,
+  "rough": true,
+  "rough_effects": [
+    "perspective",
+    "glare_hotspot",
+    "jpeg"
+  ],
+  "rough_recipe": {
+    "seed": 1033,
+    "effects": [
+      "perspective",
+      "glare_hotspot",
+      "jpeg"
+    ],
+    "background": {
+      "kind": "table",
+      "tone": [
+        150,
+        140,
+        128
+      ]
+    },
+    "place": {
+      "rot": 4,
+      "scale": 0.84,
+      "corners": [
+        [
+          0.07,
+          0.03
+        ],
+        [
+          -0.05,
+          0
+        ],
+        [
+          0,
+          -0.02
+        ],
+        [
+          0,
+          0.01
+        ]
+      ]
+    },
+    "page": [
+      {
+        "type": "glare",
+        "cx": 320,
+        "cy": 357,
+        "rx": 170,
+        "ry": 46,
+        "core": 0.6,
+        "strength": 1
+      }
+    ],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.84,
+        "gamma": 1.1,
+        "vignette": 0.3
+      },
+      {
+        "type": "noise",
+        "sigma": 9
+      },
+      {
+        "type": "jpeg",
+        "quality": 50
+      }
+    ]
+  },
+  "handwritten": true,
+  "hand": {
+    "hand": "Bradley Hand",
+    "ink": "blue",
+    "features": [
+      "slanted_10deg",
+      "margin_note"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

@@ -1,0 +1,108 @@
+{
+  "source_id": "K22",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Pre-Algebra Quiz 7 — Key",
+  "maxScore": 12,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "19 + 19",
+      "answer": "38",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "56 ÷ 8",
+      "answer": "7",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "−4 × 3",
+      "answer": "-12",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "3/4 as a decimal",
+      "answer": "0.75",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 5,
+      "stem": "1/8 + 1/4",
+      "answer": "3/8",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 6,
+      "stem": "9²",
+      "answer": "81",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 7,
+      "stem": "√256",
+      "answer": "16",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 8,
+      "stem": "−13 + 8",
+      "answer": "-5",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 9,
+      "stem": "10 ÷ 4",
+      "answer": "2.5",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 10,
+      "stem": "6x = 78, x =",
+      "answer": "13",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 11,
+      "stem": "1/2 − 1/3",
+      "answer": "1/6",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 12,
+      "stem": "4³",
+      "answer": "64",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

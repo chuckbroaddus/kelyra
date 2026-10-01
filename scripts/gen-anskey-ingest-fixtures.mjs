@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRoughCases, studentUnderlayHtml } from './lib/anskey-rough-cases.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -650,8 +651,13 @@ ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
   },
 ];
 
+// Rough phone-photo (K18–K29) + handwritten (K30–K35) cases; see scripts/lib/anskey-rough-cases.mjs.
+CASES.push(...buildRoughCases({ page, item, expected }));
+
 function main() {
   ensureDir(OUT);
+  // Distractor asset (rendered by render script, used by degrade script; not an eval case).
+  write(path.join(OUT, '_underlay_student', 'source.html'), studentUnderlayHtml());
   const manifest = { generated_at: new Date().toISOString(), count: 0, cases: [] };
   for (const c of CASES) {
     const dir = path.join(OUT, c.id);
@@ -662,8 +668,14 @@ function main() {
       path.join(dir, 'notes.md'),
       `# ${c.id}\n\n${c.notes}\n\nFields: ${(c.fields || []).join(', ')}\n`,
     );
+    if (c.expectedClean) {
+      write(path.join(dir, 'expected.clean.json'), JSON.stringify(c.expectedClean, null, 2) + '\n');
+    }
     const meta = {
       ...(c.meta || {}),
+      ...(c.rough ? { rough: true, rough_effects: c.rough.effects, rough_recipe: c.rough } : {}),
+      ...(c.handwritten ? { handwritten: true, hand: c.handwritten } : {}),
+      ...(c.rough && !c.meta?.eval_variants ? { eval_variants: ['rough'] } : {}),
       photo: Boolean(c.photo),
       kind: c.kind || (c.expected.reject ? 'negative' : 'answer_key'),
       negative: Boolean(c.meta?.negative || c.expected.reject),
@@ -674,8 +686,22 @@ function main() {
       kind: meta.kind,
       photo: meta.photo,
       negative: meta.negative,
+      rough: Boolean(c.rough),
+      handwritten: Boolean(c.handwritten),
+      ...(c.rough ? { effects: c.rough.effects } : {}),
+      ...(c.handwritten ? { hand: c.handwritten.hand, hand_features: c.handwritten.features } : {}),
+      ...(meta.eval_variants ? { eval_variants: meta.eval_variants } : {}),
       fields_exercised: c.fields || [],
-      files: ['expected.json', 'notes.md', 'source.html', 'eval-meta.json'],
+      files: [
+        'expected.json',
+        ...(c.expectedClean ? ['expected.clean.json'] : []),
+        'notes.md',
+        'source.html',
+        'eval-meta.json',
+        'clean.png',
+        ...(c.photo ? ['photo.jpg'] : []),
+        ...(c.rough ? ['rough.jpg'] : []),
+      ],
     });
   }
   manifest.count = manifest.cases.length;

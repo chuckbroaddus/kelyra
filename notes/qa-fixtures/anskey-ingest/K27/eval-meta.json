@@ -1,0 +1,67 @@
+{
+  "no_hallucinate_extra_items": true,
+  "rough": true,
+  "rough_effects": [
+    "on_top_of_student_paper",
+    "rotation_7deg",
+    "shadow"
+  ],
+  "rough_recipe": {
+    "seed": 1027,
+    "pageHeight": 640,
+    "effects": [
+      "on_top_of_student_paper",
+      "rotation_7deg",
+      "shadow"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": false,
+      "underlay": {
+        "asset": "_underlay_student",
+        "rot": -6,
+        "scale": 0.86,
+        "dx": -0.12,
+        "dy": 0.12
+      }
+    },
+    "place": {
+      "rot": 7,
+      "scale": 0.72,
+      "dx": 0.1,
+      "dy": -0.12
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "shadow",
+        "shapes": [
+          {
+            "kind": "ellipse",
+            "cx": 0.1,
+            "cy": 0.1,
+            "rx": 0.4,
+            "ry": 0.25,
+            "rot": 20
+          }
+        ],
+        "blur": 0.06,
+        "strength": 0.4
+      },
+      {
+        "type": "noise",
+        "sigma": 9
+      },
+      {
+        "type": "jpeg",
+        "quality": 60
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

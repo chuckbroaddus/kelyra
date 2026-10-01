@@ -1,0 +1,54 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "rotation_16deg",
+    "low_light",
+    "sensor_noise",
+    "jpeg_heavy"
+  ],
+  "rough_recipe": {
+    "seed": 1019,
+    "effects": [
+      "rotation_16deg",
+      "low_light",
+      "sensor_noise",
+      "jpeg_heavy"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": true
+    },
+    "place": {
+      "rot": -16,
+      "scale": 0.8
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.58,
+        "gamma": 1.25,
+        "cast": [
+          1.06,
+          0.98,
+          0.82
+        ],
+        "vignette": 0.55
+      },
+      {
+        "type": "noise",
+        "sigma": 15
+      },
+      {
+        "type": "jpeg",
+        "quality": 36
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

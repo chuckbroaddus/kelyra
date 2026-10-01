@@ -1,0 +1,184 @@
+{
+  "status": 200,
+  "json": {
+    "pageState": "filled",
+    "header": "World History Quiz 11 — Answer Key",
+    "items": [
+      {
+        "n": 1,
+        "stem": "Capital of the Byzantine Empire",
+        "answer": "Constantinople",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 2,
+        "stem": "Year Rome fell (West)",
+        "answer": "476",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "numeric"
+      },
+      {
+        "n": 3,
+        "stem": "Founder of Islam",
+        "answer": "Muhammad",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 4,
+        "stem": "Charlemagne crowned in",
+        "answer": "800",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "numeric"
+      },
+      {
+        "n": 5,
+        "stem": "Feudal oath of loyalty",
+        "answer": "fealty",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 6,
+        "stem": "Black Death spread by",
+        "answer": "fleas",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 7,
+        "stem": "Magna Carta signed in",
+        "answer": "1215",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "numeric"
+      },
+      {
+        "n": 8,
+        "stem": "Mongol leader",
+        "answer": "Genghis Khan",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 9,
+        "stem": "Silk Road linked China and",
+        "answer": "Europe",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 10,
+        "stem": "MC: Crusades began in (A 1066 B 1095 C 1215)",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C"
+        ]
+      },
+      {
+        "n": 11,
+        "stem": "MC: Hundred Years' War: England vs (A Spain B France)",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B"
+        ]
+      },
+      {
+        "n": 12,
+        "stem": "Printing press inventor",
+        "answer": "Gutenberg",
+        "points": 1,
+        "needsTeacher": false
+      },
+      {
+        "n": 13,
+        "stem": "Renaissance began in",
+        "answer": "Italy",
+        "points": 1,
+        "needsTeacher": false
+      }
+    ],
+    "maxScore": 13,
+    "teacherNote": null,
+    "reject": false,
+    "phash": "003d3f3f3f3f0fbf",
+    "layout": [
+      0.7360294117647059,
+      0.8708333333333333,
+      0.8877450980392156,
+      0.8279411764705882,
+      0.8063725490196079,
+      0.7779411764705882,
+      0.7276960784313725,
+      0.6725490196078432,
+      0.7843137254901961,
+      0.9230392156862746,
+      0.9316176470588236,
+      0.9698529411764706,
+      0.9678921568627451,
+      0.9598039215686275,
+      0.9186274509803921,
+      0.971078431372549,
+      0.8139705882352941,
+      0.9262254901960785,
+      0.9686274509803922,
+      0.986764705882353,
+      0.9865196078431373,
+      0.9622549019607843,
+      0.9431372549019608,
+      0.9850490196078432,
+      0.845343137254902,
+      0.924264705882353,
+      0.9590686274509804,
+      0.9857843137254902,
+      0.9855392156862746,
+      0.9551470588235295,
+      0.9713235294117647,
+      0.9857843137254902,
+      0.8745098039215686,
+      0.921813725490196,
+      0.9649509803921569,
+      0.9860294117647059,
+      0.9850490196078432,
+      0.9536764705882353,
+      0.9767156862745098,
+      0.9860294117647059,
+      0.9,
+      0.9267156862745098,
+      0.9696078431372549,
+      0.9887254901960785,
+      0.9860294117647059,
+      0.95,
+      0.9365196078431373,
+      0.9852941176470589,
+      0.9240196078431373,
+      0.9203431372549019,
+      0.9164215686274509,
+      0.9203431372549019,
+      0.9742647058823529,
+      0.9659313725490196,
+      0.9811274509803921,
+      0.9666666666666667,
+      0.9448529411764706,
+      0.9112745098039216,
+      0.9781862745098039,
+      0.9879901960784314,
+      0.9862745098039216,
+      0.9502450980392156,
+      0.9612745098039216,
+      0.9404411764705882
+    ]
+  }
+}

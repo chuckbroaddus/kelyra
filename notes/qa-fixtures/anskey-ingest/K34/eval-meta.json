@@ -1,0 +1,84 @@
+{
+  "eval_variants": [
+    "clean",
+    "rough"
+  ],
+  "no_hallucinate_answers": true,
+  "rough": true,
+  "rough_effects": [
+    "crumpled",
+    "low_light",
+    "rotation_8deg"
+  ],
+  "rough_recipe": {
+    "seed": 1034,
+    "effects": [
+      "crumpled",
+      "low_light",
+      "rotation_8deg"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": false
+    },
+    "place": {
+      "rot": 8,
+      "scale": 0.84
+    },
+    "page": [
+      {
+        "type": "crumple",
+        "amount": 0.75,
+        "bumps": 24,
+        "creases": [
+          [
+            0,
+            470,
+            840,
+            500
+          ],
+          [
+            300,
+            0,
+            330,
+            1100
+          ]
+        ]
+      }
+    ],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.6,
+        "gamma": 1.2,
+        "cast": [
+          1.04,
+          0.98,
+          0.86
+        ],
+        "vignette": 0.5
+      },
+      {
+        "type": "noise",
+        "sigma": 13
+      },
+      {
+        "type": "jpeg",
+        "quality": 48
+      }
+    ]
+  },
+  "handwritten": true,
+  "hand": {
+    "hand": "Noteworthy",
+    "ink": "red pen on printed worksheet",
+    "features": [
+      "answers_in_blanks",
+      "cross_out_correction",
+      "rubric_note"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

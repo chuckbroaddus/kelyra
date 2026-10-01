@@ -1,0 +1,72 @@
+{
+  "no_hallucinate_extra_items": true,
+  "rough": true,
+  "rough_effects": [
+    "cropped_bottom",
+    "rotation_3deg",
+    "perspective"
+  ],
+  "rough_recipe": {
+    "seed": 1024,
+    "effects": [
+      "cropped_bottom",
+      "rotation_3deg",
+      "perspective"
+    ],
+    "background": {
+      "kind": "table",
+      "tone": [
+        120,
+        112,
+        100
+      ]
+    },
+    "place": {
+      "rot": 3,
+      "scale": 1,
+      "dy": 0,
+      "corners": [
+        [
+          0.02,
+          0
+        ],
+        [
+          -0.01,
+          0.02
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "noise",
+        "sigma": 9
+      },
+      {
+        "type": "crop",
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 0.612
+      },
+      {
+        "type": "jpeg",
+        "quality": 60
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}
