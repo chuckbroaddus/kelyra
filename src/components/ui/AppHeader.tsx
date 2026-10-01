@@ -14,10 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CountBadge } from '@/components/ui/CountBadge';
 import { RemoteImage } from '@/components/ui/RemoteImage';
+import { HeaderTitle } from '@/components/ui/HeaderTitle';
 import { HoverTip } from '@/components/ui/HoverTip';
 import { Icon } from '@/components/ui/Icon';
 import { KelyraMark } from '@/components/ui/KelyraMark';
-import { MarqueeText } from '@/components/ui/MarqueeText';
 import { chrome, type } from '@/constants/theme';
 import { isChromePushed, useChrome } from '@/lib/chrome/ChromeProvider';
 import { showHeaderCapture } from '@/lib/chrome/headerCapture';
@@ -198,21 +198,14 @@ export function AppHeader() {
             },
           ]}
         >
-          <MarqueeText
+          <HeaderTitle
             key={title}
             text={title}
-            align="start"
             accessible={!searching}
-            accessibilityLabel={title}
-            fadeColor={colors.elevated}
-            style={[
-              styles.wordmark,
-              {
-                color: colors.ink,
-                fontSize: titleSize,
-                lineHeight: titleLine,
-              },
-            ]}
+            baseSize={titleSize}
+            lineHeight={titleLine}
+            color={colors.ink}
+            style={styles.wordmark}
           />
         </Animated.View>
 
@@ -395,7 +388,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 8,
+    // Buttons already carry 11 pt of air inside their 44 box. 4 here gives the title room.
+    marginRight: 4,
   },
   wordmark: {
     ...type.title,

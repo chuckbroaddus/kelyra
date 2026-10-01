@@ -143,14 +143,14 @@ It is a real iPhone app. It follows the phone’s Light / Dark setting by defaul
 Every signed-in screen uses this exact header. It is not the React Navigation stack title.
 
 ```
-[ logo (header bar + 12) + Wordmark (flex, left, marquee) ]   [ camera 44 ] [ search 44 ] [ messages 44 ] [ ☰ 44 ]
+[ logo (header bar + 12) + Wordmark (flex, left, fit then …) ]   [ camera 44 ] [ search 44 ] [ messages 44 ] [ ☰ 44 ]
 ```
 
 **Superseded 2026-08-21.** Old slots were camera · search · bell, and search replaced the title with Cancel. See §34. Current recipe:
 
 | Slot | Size | Who sees it | Action |
 |---|---|---|---|
-| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line, **marquee** if overflow. **School logo** same size as the Ask Kelyra mark (`header bar + 12` square in a slot of width `markSize` / height bar), contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
+| Wordmark | 20 / 700 on Home, 18 / 700 on other tabs, `ink`, 1 line. If it overflows, the font **steps down to fit (floor 15)**, then ends in a **tail ellipsis**. It never marquees, so the first letters always show (`HeaderTitle`, `src/lib/chrome/headerTitleFit.ts`). **School logo** same size as the Ask Kelyra mark (`header bar + 12` square in a slot of width `markSize` / height bar), contain, immediately left of the wordmark. That is the uploaded circular-punched school logo (`schools.logo_asset_id`), the same mark on every signed-in role. Never a chrome glyph (`feedSchool`, `today`, house). If no logo is uploaded, omit the slot. Ask is the exception: the Kelyra mark takes this slot. | Everyone signed in | Not tappable. **Text changes with the selected tray icon** (§3.5) |
 | Camera | 44 × 44, existing `capture` icon. Accessibility label **Open Capture** | Every signed-in seat, except on Messages and while Search is open. Office seats also hide it on My children | Tap routes to `/capture`. Does not file. Confirm is not Approve. Confirm jobs are that seat's list in the Stamp 6 jobs below, except a person photo, which is the Stamp 7 choice. Not `/proposal` as the primary path |
 | Search | 44 × 44, `search` glyph | Teacher, student, parent | Icon slides left; a field slides out from it (§34). Results on `/search` |
 | Messages | 44 × 44, `mail` glyph | Teacher, student, parent | Pushes `/messages`. Red count badge = **unread alerts**, same as the old bell. Hidden at 0 |
@@ -330,7 +330,7 @@ The wordmark is the Facebook title swap: **it is the same English label as the h
 | Parent Ride | **Ride** | `Ride` on `/parent/ride` (and related parent vehicle surfaces) |
 | Office Feed / Classes / People / Manage | same labels | same labels on those tabs; school **name** only when the office home has no tab (or Manage still uses school name — do not invent a second title). **Dismissal curb / Ride office** stay Manage altitude — not a tray noun |
 
-Pushed screens (student record, search, messages, proposal, family, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. **Exception — assignment create/edit** (`/assignment/new`, `/class/{id}/assignment/…`, lesson-result Assign chrome): keep **both** the leading back chevron (where pushed) **and** the far-right hamburger (`keepMenu`). The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `Assignment`, the assignment title). If that name overflows the title slot, it **marquees** (§30, §34). Pop restores the hamburger / tray label. Do not ellipsis the header title.
+Pushed screens (student record, search, messages, proposal, family, **open assignment**) keep this header **and** a leading back chevron on the left. The far-right hamburger hides until pop. **Exception — assignment create/edit** (`/assignment/new`, `/class/{id}/assignment/…`, lesson-result Assign chrome): keep **both** the leading back chevron (where pushed) **and** the far-right hamburger (`keepMenu`). The wordmark becomes the pushed screen’s name (`Maya Chen`, `Search`, `Messages`, `Look at this`, `Family`, `Assignment`, the assignment title). If that name overflows the title slot, it shrinks to fit (floor 15) and then ends in a tail ellipsis (§3.2). Pop restores the hamburger / tray label. Never clip the start of the header title.
 
 ### 3.6 Second header row — context menu
 
@@ -3181,7 +3181,7 @@ We implement Music’s **sweep-and-reset**: hold at the start, crawl until the l
 
 **Do not marquee**
 
-Buttons, chips, context-menu pills, swipe tiles, PhaseBanner, `SectionHeader`, search fields, body / leads / confirm copy, Ask bubbles, `WorkingLine`, `ListRow` **status**, `WorkRow` **status and meta**, AssignmentPicker **meta**, grade-book **unit** and **section** labels, heatmap frozen gap labels (2 lines), `FloatingTabTray` labels. The header wordmark **does** marquee (§3.2). Unselected `PersonTabs` have no label.
+Buttons, chips, context-menu pills, swipe tiles, PhaseBanner, `SectionHeader`, search fields, body / leads / confirm copy, Ask bubbles, `WorkingLine`, `ListRow` **status**, `WorkRow` **status and meta**, AssignmentPicker **meta**, grade-book **unit** and **section** labels, heatmap frozen gap labels (2 lines), `FloatingTabTray` labels. The header wordmark does **not** marquee. It fits, then ellipsizes (§3.2). A crawl beside the school logo read as a left-clipped title (`ading policy`). Unselected `PersonTabs` have no label.
 
 One identity string per picture. Two tickers in one row is a carnival.
 
