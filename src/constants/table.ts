@@ -6,14 +6,14 @@ export const studentHead = {
 } as const;
 
 /**
- * Phone landscape: names only (no avatars). Shorter + slightly narrower so the
+ * Phone landscape: half-size avatars + name. Shorter + slightly narrower so the
  * Assignment frozen column + student strip fit a sideways phone without a tall header.
  * Portrait / tablet keep `studentHead`.
  */
 export const studentHeadLandscape = {
-  height: 36,
+  height: 48,
   colWidth: 56,
-  avatar: 0,
+  avatar: 28,
 } as const;
 
 export type StudentHeadMetrics = {
@@ -29,7 +29,10 @@ export function studentHeadFor(breakpoint: StudentHeadBreakpoint): StudentHeadMe
   return breakpoint === 'phone-landscape' ? studentHeadLandscape : studentHead;
 }
 
-/** True when the gradebook student header should omit avatars. */
+/**
+ * True on phone landscape: tighter student head (half avatar) and heatmap legend collapse.
+ * Avatars stay visible at `studentHeadLandscape.avatar`.
+ */
 export function studentHeadCompact(breakpoint: StudentHeadBreakpoint): boolean {
   return breakpoint === 'phone-landscape';
 }

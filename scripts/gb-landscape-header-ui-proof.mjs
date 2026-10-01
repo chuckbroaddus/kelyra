@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Gradebook landscape header UI proof (t_a054b175).
- * Portrait 375×812 keeps avatar + name; landscape 812×375 is names-only shorter strip.
+ * Gradebook landscape header UI proof (t_ee73d1b4 / t_a054b175).
+ * Portrait 375×812 keeps full avatar + name; landscape 812×375 half-size avatar + name.
  * Static fixture mirrors studentHead / studentHeadLandscape — no Supabase, no AI.
  *   node scripts/gb-landscape-header-ui-proof.mjs
  */
@@ -36,7 +36,7 @@ function loadPlaywright() {
 
 const { chromium } = loadPlaywright();
 const PORTRAIT = { height: 96, colWidth: 72, avatar: 56 };
-const LANDSCAPE = { height: 36, colWidth: 56, avatar: 0 };
+const LANDSCAPE = { height: 48, colWidth: 56, avatar: 28 };
 const NAMES = ['Ava', 'Ben', 'Cora', 'Diego', 'Elena', 'Finn', 'Gia', 'Hank'];
 
 // SECTION: html + main
@@ -62,8 +62,8 @@ function headerHtml(mode) {
   .row { display:flex; flex-direction:row; align-items:stretch; border-bottom:1px solid #e4dcd2; background:#fff8f0; }
   .frozen { width:156px; flex:0 0 156px; display:flex; align-items:center; padding:0 10px; font-weight:700; font-size:13px; border-right:1px solid #e4dcd2; height:${m.height}px; box-sizing:border-box; }
   .cols { display:flex; flex-direction:row; overflow:hidden; }
-  .col { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:${mode === 'landscape' ? 0 : 4}px; border-right:1px solid #efe6dc; box-sizing:border-box; }
-  .avatar { border-radius:999px; background:#c9b8a6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; }
+  .col { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:${mode === 'landscape' ? 2 : 4}px; border-right:1px solid #efe6dc; box-sizing:border-box; }
+  .avatar { border-radius:999px; background:#c9b8a6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:${mode === 'landscape' ? 12 : 18}px; }
   .name { font-size:11px; line-height:14px; font-weight:600; text-align:center; width:100%; }
   .name.compact { font-size:12px; line-height:16px; font-weight:700; }
   .grid { flex:1; background:#fff; }
@@ -77,7 +77,7 @@ function headerHtml(mode) {
       <div class="cols">${students}</div>
     </div>
     <div class="grid"></div>
-    <div class="meta">Portrait keeps avatars. Landscape is names only and shorter.</div>
+    <div class="meta">Portrait keeps full avatars. Landscape keeps half-size avatars and a shorter strip.</div>
   </div>
 </body></html>`;
 }
@@ -120,10 +120,12 @@ async function main() {
         headerHeight: h?.height ?? null,
         expectedHeight: LANDSCAPE.height,
         avatarCount: avatars,
+        expectedAvatar: LANDSCAPE.avatar,
         compactNameCount: compactNames,
         ok:
           Math.abs((h?.height ?? 0) - LANDSCAPE.height) <= 1 &&
-          avatars === 0 &&
+          avatars === NAMES.length &&
+          LANDSCAPE.avatar === PORTRAIT.avatar / 2 &&
           compactNames === NAMES.length &&
           (h?.height ?? 99) < PORTRAIT.height,
       };

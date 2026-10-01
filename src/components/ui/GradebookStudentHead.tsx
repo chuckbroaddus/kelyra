@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { MarqueeText } from '@/components/ui/MarqueeText';
-import { studentHead } from '@/constants/table';
+import { studentHead, studentHeadLandscape } from '@/constants/table';
 import { firstName } from '@/lib/format';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -13,8 +13,8 @@ type Props = {
   photoUrl?: string | null;
   href?: string;
   /**
-   * Phone landscape: names only, no avatar — keeps the sticky header short.
-   * Portrait / tablet leave this false.
+   * Phone landscape: half-size avatar + name — keeps the sticky header short.
+   * Portrait / tablet leave this false (full avatar).
    */
   compact?: boolean;
 };
@@ -30,6 +30,7 @@ export const GradebookStudentHead = memo(function GradebookStudentHead({
   const { colors } = useTheme();
   const router = useRouter();
   const label = firstName(name);
+  const avatarSize = compact ? studentHeadLandscape.avatar : studentHead.avatar;
   const face = (
     <View
       style={[styles.headStudent, compact && styles.headStudentCompact]}
@@ -37,14 +38,14 @@ export const GradebookStudentHead = memo(function GradebookStudentHead({
       accessibilityLabel={compact ? `Student ${label}` : undefined}
       testID={compact ? 'gradebook-student-head-compact' : 'gradebook-student-head'}
     >
-      {compact ? null : (
+      {avatarSize > 0 ? (
         <Avatar
           name={name}
           photoUrl={photoUrl}
-          size={studentHead.avatar}
+          size={avatarSize}
           recyclingKey={`gradehead:${name}:${photoUrl ?? ''}`}
         />
-      )}
+      ) : null}
       <MarqueeText
         text={label}
         align="center"
@@ -77,9 +78,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headStudentCompact: {
-    gap: 0,
+    gap: 2,
     justifyContent: 'center',
-    minHeight: 28,
   },
   headName: {
     fontSize: 11,

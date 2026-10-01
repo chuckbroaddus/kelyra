@@ -14,17 +14,20 @@ test('portrait and tablet keep full avatar header metrics', () => {
   assert.equal(studentHead.avatar > 0, true);
   assert.equal(studentHead.height, 96);
   assert.equal(studentHead.colWidth, 72);
+  assert.equal(studentHead.avatar, 56);
   assert.equal(studentHeadCompact('phone-portrait'), false);
   assert.equal(studentHeadCompact('tablet'), false);
 });
 
-test('phone landscape is names-only: shorter, narrower, no avatar slot', () => {
+test('phone landscape keeps half-size avatars: shorter, narrower header', () => {
   const land = studentHeadFor('phone-landscape');
   assert.deepEqual(land, studentHeadLandscape);
-  assert.equal(land.avatar, 0);
+  assert.equal(land.avatar, studentHead.avatar / 2);
+  assert.equal(land.avatar, 28);
   assert.ok(land.height < studentHead.height, 'landscape header must be shorter');
   assert.ok(land.colWidth <= studentHead.colWidth, 'landscape columns must not be wider');
-  assert.ok(land.height <= 40, 'landscape head stays under ~one text row + pad');
+  assert.ok(land.height <= 52, 'landscape head fits half avatar + name');
+  assert.ok(land.height >= land.avatar, 'head height covers avatar');
   assert.equal(studentHeadCompact('phone-landscape'), true);
 });
 
@@ -40,6 +43,8 @@ test('gradebook screen and heatmap import studentHeadFor for landscape', async (
   assert.match(gradebook, /compact=\{compactHead\}/);
   assert.match(heatmap, /studentHeadFor/);
   assert.match(heatmap, /compact=\{compactHead\}/);
-  assert.match(head, /compact\s*\?\s*null\s*:/);
+  assert.match(head, /studentHeadLandscape\.avatar/);
+  assert.match(head, /avatarSize\s*>\s*0/);
   assert.match(head, /compact\s*=\s*false/);
+  assert.doesNotMatch(head, /compact\s*\?\s*null\s*:/);
 });
