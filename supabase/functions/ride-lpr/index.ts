@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { CLOSEST_VEHICLE_RULES } from '../_shared/closestVehicle.ts';
+import { withCors } from '../_shared/cors.ts';
 import { emptyResult, shapeRideLprResult } from '../_shared/rideLprResult.ts';
 
 const PROMPT = `You read school car-rider / dismissal documents and vehicle photos for Kelyra Ride.
@@ -37,18 +38,7 @@ ${CLOSEST_VEHICLE_RULES}
 
 // Capture web calls ride-lpr straight from the browser (supabase.functions.invoke),
 // so the preflight and every reply need CORS headers or the plate read silently fails.
-const CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
-  const res = await handleRideLpr(req);
-  for (const [key, value] of Object.entries(CORS_HEADERS)) res.headers.set(key, value);
-  return res;
-});
+Deno.serve(withCors(handleRideLpr));
 
 async function handleRideLpr(req: Request): Promise<Response> {
   try {

@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { firstNameOnly, imageDetailFor } from '../_shared/aiPolicy.ts';
 import { CLOSEST_VEHICLE_RULES, guardVehicleFields } from '../_shared/closestVehicle.ts';
+import { withCors } from '../_shared/cors.ts';
 import { cleanHomeworkStudentName } from '../_shared/homeworkGrading.ts';
 
 const ALLOWED = [
@@ -43,8 +44,10 @@ function intentFromTeacherNote(teacherNote: string): CaptureIntent | null {
   return null;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
+// Capture web calls classify-capture from the browser: preflight + every JSON / error reply carry CORS.
+Deno.serve(withCors(handleClassifyCapture));
+
+async function handleClassifyCapture(req: Request): Promise<Response> {
   try {
     const authorization = req.headers.get('Authorization') ?? '';
     if (!authorization.startsWith('Bearer ')) {
@@ -170,4 +173,4 @@ ${rosterText || '(none)'}`,
   } catch (err) {
     return Response.json({ error: err instanceof Error ? err.message : 'Classify failed' }, { status: 400 });
   }
-});
+}
