@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Heatmap } from '@/components/Heatmap';
 import { GradebookViewTabs } from '@/components/ui/ClassTabs';
@@ -96,8 +96,8 @@ export default function GradebookScreen() {
     policies: SyllabusPolicies | null;
     conductScaleId?: string | null;
   } | null>(null);
-  /** FR-SYL-17 conduct marks by student — ride on next period store. */
-  const [conductMarks, setConductMarks] = useState<Record<string, string | null>>({});
+  /** FR-SYL-17 conduct marks by period key, then student — ride on next period store. */
+  const [conductMarks, setConductMarks] = useState<Record<string, Record<string, string | null>>>({});
 
   useFocusEffect(
     useCallback(() => {
@@ -358,16 +358,33 @@ export default function GradebookScreen() {
     <Screen maxWidth={1100} scroll={false} pageChromeHosted collapse={collapsing}>
       {termTabs}
       {conduct && book && book.students.length > 0 ? (
-        <ConductEntryPanel
-          students={book.students}
-          marks={conductMarks}
-          periodLabel={periodLabel}
-          onChange={(studentId, mark) =>
-            setConductMarks((prev) => ({ ...prev, [studentId]: mark }))
-          }
-        />
+        termFilter === 'all' ? (
+          <Text style={[styles.empty, { color: colors.mute }]}>
+            Conduct is marked per grading period. Pick a period above.
+          </Text>
+        ) : (
+          <ScrollView
+            style={styles.conductScroll}
+            contentContainerStyle={styles.conductScrollBody}
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled"
+          >
+            <ConductEntryPanel
+              key={termFilter}
+              students={book.students}
+              marks={conductMarks[termFilter] ?? {}}
+              periodLabel={periodLabel}
+              onChange={(studentId, mark) =>
+                setConductMarks((prev) => ({
+                  ...prev,
+                  [termFilter]: { ...(prev[termFilter] ?? {}), [studentId]: mark },
+                }))
+              }
+            />
+          </ScrollView>
+        )
       ) : null}
-      <View style={styles.pane}>
+      <View style={conduct && book && book.students.length > 0 ? styles.paneCollapsed : styles.pane}>
       {heatmap ? (
         overview?.heatmapSkills.length && overview.heatmapStudents.length ? (
           <Heatmap
@@ -592,6 +609,8 @@ export default function GradebookScreen() {
 }
 
 const styles = StyleSheet.create({
+  conductScroll: { flex: 1, minHeight: 0 },
+  conductScrollBody: { paddingBottom: 120 },
   shell: {
     flex: 1,
     minHeight: 0,
@@ -601,6 +620,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  /** Conduct tab: the ScrollView above owns the height. */
+  paneCollapsed: { flexGrow: 0, flexShrink: 0 },
   chipShelf: {
     marginTop: 0,
     marginBottom: 4,
