@@ -35,7 +35,17 @@ export function marksForPeriod(
   nested: ConductMarksByPeriod,
   periodKey: string,
 ): Record<string, string | null> {
-  return { ...(nested[periodKey] ?? {}) };
+  if (Object.prototype.hasOwnProperty.call(nested, periodKey)) {
+    return { ...(nested[periodKey] ?? {}) };
+  }
+  const want = String(periodKey ?? '')
+    .trim()
+    .toLowerCase();
+  if (!want) return {};
+  for (const [key, marks] of Object.entries(nested)) {
+    if (key.trim().toLowerCase() === want) return { ...marks };
+  }
+  return {};
 }
 
 /** Attach saved conduct onto pure postPeriod inputs for one period. */

@@ -13,6 +13,7 @@ import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { GradebookTreeLabel } from '@/components/ui/GradebookTreeLabel';
 import { GradeTermTabs } from '@/components/ui/GradeTermTabs';
 import { ConductEntryPanel } from '@/components/gradebook/ConductEntryPanel';
+import { conductPeriodColumns } from '@/components/gradebook/conductPeriodColumns';
 import { GradeBreakdownSheet } from '@/components/gradebook/GradeBreakdownSheet';
 import { loadClassGradingCalendar } from '@/components/gradebook/loadCalendar';
 import {
@@ -53,6 +54,7 @@ import { WorkingLine } from '@/components/ui/WorkingMark';
 import { getClassSyllabus } from '@/lib/syllabus/api';
 import {
   loadConductMarksByPeriod,
+  marksForPeriod,
   upsertClassConductMark,
   type ConductMarksByPeriod,
 } from '@/lib/grade/posting';
@@ -350,6 +352,10 @@ export default function GradebookScreen() {
       />
     ) : null;
   const periodLabel = periodFilterLabel(termFilter, calendar);
+  const conductColumns = useMemo(
+    () => (conduct ? conductPeriodColumns(termFilter, calendar) : []),
+    [calendar, conduct, termFilter],
+  );
 
   const collapsing = landscapeFull ? null : (
     <>
@@ -389,7 +395,7 @@ export default function GradebookScreen() {
       {landscapeFull ? <View style={{ height: Math.max(insets.top, 6), paddingLeft: insets.left }} /> : null}
       {termTabs}
       {conduct && book && book.students.length > 0 ? (
-        termFilter === 'all' ? (
+        conductColumns.length === 0 ? (
           <Text style={[styles.empty, { color: colors.mute }]}>
             Conduct is marked per grading period. Pick a period above.
           </Text>
@@ -404,35 +410,56 @@ export default function GradebookScreen() {
             onScrollBeginDrag={onChromeScrollBeginDrag}
             scrollEventThrottle={16}
           >
-            <ConductEntryPanel
-              key={termFilter}
-              students={book.students}
-              marks={conductMarks[termFilter] ?? {}}
-              periodLabel={periodLabel}
-              onChange={(studentId, mark) => {
-                if (!id || termFilter === 'all') return;
-                const periodKey = termFilter;
-                const previous = conductMarks[periodKey]?.[studentId] ?? null;
-                setConductMarks((prev) => ({
-                  ...prev,
-                  [periodKey]: { ...(prev[periodKey] ?? {}), [studentId]: mark },
-                }));
-                void upsertClassConductMark({
-                  classId: id,
-                  studentId,
-                  periodKey,
-                  mark,
-                }).catch((err) => {
-                  setConductMarks((prev) => ({
-                    ...prev,
-                    [periodKey]: { ...(prev[periodKey] ?? {}), [studentId]: previous },
-                  }));
-                  setStatus(
-                    err instanceof Error ? err.message : 'Could not save conduct mark',
-                  );
-                });
-              }}
-            />
+            <View
+              style={
+                conductColumns.length > 1
+                  ? [styles.conductAllGrid, win.width >= 700 ? styles.conductAllGridWide : null]
+                  : undefined
+              }
+            >
+              {conductColumns.map((col) => (
+                <View
+                  key={col.key}
+                  style={
+                    conductColumns.length > 1
+                      ? [styles.conductAllItem, win.width >= 700 ? styles.conductAllItemWide : null]
+                      : undefined
+                  }
+                >
+                  <ConductEntryPanel
+                    students={book.students}
+                    marks={marksForPeriod(conductMarks, col.key)}
+                    periodLabel={col.label}
+                    onChange={(studentId, mark) => {
+                      if (!id) return;
+                      const periodKey = col.key;
+                      const previous = marksForPeriod(conductMarks, periodKey)[studentId] ?? null;
+                      setConductMarks((prev) => ({
+                        ...prev,
+                        [periodKey]: { ...marksForPeriod(prev, periodKey), [studentId]: mark },
+                      }));
+                      void upsertClassConductMark({
+                        classId: id,
+                        studentId,
+                        periodKey,
+                        mark,
+                      }).catch((err) => {
+                        setConductMarks((prev) => ({
+                          ...prev,
+                          [periodKey]: {
+                            ...marksForPeriod(prev, periodKey),
+                            [studentId]: previous,
+                          },
+                        }));
+                        setStatus(
+                          err instanceof Error ? err.message : 'Could not save conduct mark',
+                        );
+                      });
+                    }}
+                  />
+                </View>
+              ))}
+            </View>
           </ScrollView>
         )
       ) : null}
@@ -663,6 +690,10 @@ export default function GradebookScreen() {
 const styles = StyleSheet.create({
   conductScroll: { flex: 1, minHeight: 0 },
   conductScrollBody: { paddingBottom: 120 },
+  conductAllGrid: { gap: 10 },
+  conductAllGridWide: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
+  conductAllItem: { width: '100%' },
+  conductAllItemWide: { width: '48%', minWidth: 280, flexGrow: 1 },
   shell: {
     flex: 1,
     minHeight: 0,
