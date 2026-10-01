@@ -6,6 +6,9 @@ import {
   studentHeadCompact,
   studentHeadFor,
   studentHeadLandscape,
+  tableRowHeight,
+  tableRowHeightDefault,
+  tableRowHeightLandscape,
 } from './table.ts';
 
 test('portrait and tablet keep full avatar header metrics', () => {
@@ -31,6 +34,15 @@ test('phone landscape keeps half-size avatars: shorter, narrower header', () => 
   assert.equal(studentHeadCompact('phone-landscape'), true);
 });
 
+test('table row height: portrait/tablet 44, phone-landscape ~36–40', () => {
+  assert.equal(tableRowHeight('phone-portrait'), tableRowHeightDefault);
+  assert.equal(tableRowHeight('tablet'), tableRowHeightDefault);
+  assert.equal(tableRowHeightDefault, 44);
+  assert.equal(tableRowHeight('phone-landscape'), tableRowHeightLandscape);
+  assert.ok(tableRowHeightLandscape >= 36 && tableRowHeightLandscape <= 40);
+  assert.ok(tableRowHeightLandscape < tableRowHeightDefault);
+});
+
 test('gradebook screen and heatmap import studentHeadFor for landscape', async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');
@@ -41,8 +53,11 @@ test('gradebook screen and heatmap import studentHeadFor for landscape', async (
   assert.match(gradebook, /studentHeadFor/);
   assert.match(gradebook, /studentHeadCompact/);
   assert.match(gradebook, /compact=\{compactHead\}/);
+  assert.match(gradebook, /tableRowHeight/);
+  assert.match(gradebook, /rowHeight=\{rowHeight\}/);
   assert.match(heatmap, /studentHeadFor/);
   assert.match(heatmap, /compact=\{compactHead\}/);
+  assert.match(heatmap, /tableRowHeight/);
   assert.match(head, /studentHeadLandscape\.avatar/);
   assert.match(head, /avatarSize\s*>\s*0/);
   assert.match(head, /compact\s*=\s*false/);

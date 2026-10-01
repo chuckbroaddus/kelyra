@@ -16,6 +16,14 @@ export const studentHeadLandscape = {
   avatar: 28,
 } as const;
 
+/** StickyTable body row — portrait / tablet default (tap-friendly). */
+export const tableRowHeightDefault = 44;
+/**
+ * Phone landscape body row — tighter so more assignments fit.
+ * Keep ≥36 so marks stay tappable; target ~38.
+ */
+export const tableRowHeightLandscape = 38;
+
 export type StudentHeadMetrics = {
   height: number;
   colWidth: number;
@@ -35,4 +43,9 @@ export function studentHeadFor(breakpoint: StudentHeadBreakpoint): StudentHeadMe
  */
 export function studentHeadCompact(breakpoint: StudentHeadBreakpoint): boolean {
   return breakpoint === 'phone-landscape';
+}
+
+/** Body row height for gradebook + heatmap grids. Portrait unchanged at 44. */
+export function tableRowHeight(breakpoint: StudentHeadBreakpoint): number {
+  return breakpoint === 'phone-landscape' ? tableRowHeightLandscape : tableRowHeightDefault;
 }

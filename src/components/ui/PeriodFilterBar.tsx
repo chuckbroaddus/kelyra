@@ -20,9 +20,17 @@ export type PeriodFilterBarProps = {
   showInterims?: boolean;
   onSelect: (periodId: string) => void;
   stacked?: boolean;
+  /** Phone landscape: equal-width tabs across the full row. */
+  distribute?: boolean;
 };
 
-export function PeriodFilterBar({ calendar, selectedPeriodId = 'all', onSelect, stacked }: PeriodFilterBarProps) {
+export function PeriodFilterBar({
+  calendar,
+  selectedPeriodId = 'all',
+  onSelect,
+  stacked,
+  distribute,
+}: PeriodFilterBarProps) {
   const short = useWindowDimensions().width < SHORT_LABEL_MAX_WIDTH;
   const tabs = useMemo<PersonTab[]>(
     () =>
@@ -41,5 +49,13 @@ export function PeriodFilterBar({ calendar, selectedPeriodId = 'all', onSelect, 
       })),
     [calendar, short],
   );
-  return <PersonTabs tabs={tabs} value={selectedPeriodId} onChange={onSelect} stacked={stacked} />;
+  return (
+    <PersonTabs
+      tabs={tabs}
+      value={selectedPeriodId}
+      onChange={onSelect}
+      stacked={stacked}
+      distribute={distribute}
+    />
+  );
 }

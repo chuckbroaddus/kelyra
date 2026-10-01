@@ -22,7 +22,7 @@ import {
 } from '@/components/gradebook/periodScope';
 import { Screen } from '@/components/ui/Screen';
 import { StickyTable } from '@/components/ui/StickyTable';
-import { studentHeadCompact, studentHeadFor } from '@/constants/table';
+import { studentHeadCompact, studentHeadFor, tableRowHeight } from '@/constants/table';
 import { chrome, radius, shadows, type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
@@ -177,6 +177,7 @@ export default function GradebookScreen() {
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
   const headMetrics = studentHeadFor(layout.breakpoint);
   const compactHead = studentHeadCompact(layout.breakpoint);
+  const rowHeight = tableRowHeight(layout.breakpoint);
   const colWidth = headMetrics.colWidth;
   const assignments = useMemo(
     () => (book ? filterAssignmentsByPeriod(book.assignments, termFilter, calendar) : []),
@@ -353,6 +354,7 @@ export default function GradebookScreen() {
         value={termFilter}
         onChange={setTermFilter}
         calendar={calendar ?? undefined}
+        distribute={layout.breakpoint === 'phone-landscape'}
       />
     ) : null;
   const periodLabel = periodFilterLabel(termFilter, calendar);
@@ -508,6 +510,7 @@ export default function GradebookScreen() {
             frozenTitle="Assignment"
             frozenWidth={frozenWidth}
             headHeight={headMetrics.height}
+            rowHeight={rowHeight}
             empty="No students yet."
             rowTone={(row) => (row.kind === 'assignment' ? 'stripe' : 'group')}
             renderFrozen={(row) => (
