@@ -145,3 +145,14 @@ All 15 `rough.jpg` and all 6 multi-car frames were opened and compared with GT b
 `notes/qa-fixtures/carrider-ingest/R06/rough.jpg` (thumb clips the first plate char → uncertain),
 `notes/qa-fixtures/carrider-ingest/R09/rough.jpg` ("Arjun Patel" surname washed out → uncertain),
 `notes/qa-fixtures/carrider-ingest/M06/rough.jpg` (foreground SNT 5742 readable; GVL 3816 and MKD 2479 readable behind it).
+
+### Closest-car fix (stacked PR, not yet evaluated)
+
+`supabase/functions/_shared/closestVehicle.ts` now holds `CLOSEST_VEHICLE_RULES`, which goes into both the ride-lpr
+prompt and the classify-capture vehicle line, plus `applyClosestVehicleGuard`. The model returns
+`other_plates_seen`. The server marks the read unreadable with `reject_reason: "multiple vehicles"` when the returned
+plate is in that list, or when the list is non-empty and confidence < 0.8. ride-lpr post-processing moved unchanged
+into `_shared/rideLprResult.ts` so tests can feed it mocked model output (`src/lib/ride/closestVehicle.test.ts`).
+classify-capture asks for `detail: 'high'` when the teacher note or `intentHint` says vehicle. The result will be
+scored by the strict run above once the quota resets: watch `multi_car` picked-wrong-car, and check that `clean` and
+`rough` don't regress.

@@ -1,78 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
-
-function cleanPlate(raw: unknown): string {
-  return typeof raw === 'string' ? raw.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
-}
-
-function cleanText(raw: unknown): string | null {
-  if (typeof raw !== 'string') return null;
-  const value = raw.replace(/\s+/g, ' ').trim();
-  return value || null;
-}
-
-function cleanSide(raw: unknown): 'front' | 'back' | 'unknown' {
-  const value = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
-  if (value === 'front' || value === 'back') return value;
-  return 'unknown';
-}
-
-const KINDS = [
-  'vehicle_photo',
-  'hang_tag',
-  'check_in_sheet',
-  'authorized_pickup',
-  'rejected',
-  'unknown',
-] as const;
-type DocKind = (typeof KINDS)[number];
-
-function cleanKind(raw: unknown): DocKind {
-  const v = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
-  if ((KINDS as readonly string[]).includes(v)) return v as DocKind;
-  return 'unknown';
-}
-
-function cleanNames(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
-  for (const item of raw) {
-    const t = cleanText(item);
-    if (t) out.push(t);
-  }
-  return out;
-}
-
-function cleanTag(raw: unknown): string | null {
-  if (typeof raw === 'number' && Number.isFinite(raw)) return String(Math.trunc(raw));
-  if (typeof raw !== 'string') return null;
-  const digits = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  return digits || null;
-}
-
-function emptyResult(extra: Record<string, unknown> = {}) {
-  return {
-    document_kind: 'unknown' as DocKind,
-    plate: null as string | null,
-    plateFront: null as string | null,
-    plateBack: null as string | null,
-    make: null as string | null,
-    model: null as string | null,
-    side: 'unknown' as const,
-    tag_number: null as string | null,
-    riders: [] as string[],
-    authorized_pickups: [] as string[],
-    unreadable: true,
-    confidence: 0,
-    reject_reason: null as string | null,
-    ...extra,
-  };
-}
+import { CLOSEST_VEHICLE_RULES } from '../_shared/closestVehicle.ts';
+import { emptyResult, shapeRideLprResult } from '../_shared/rideLprResult.ts';
 
 const PROMPT = `You read school car-rider / dismissal documents and vehicle photos for Kelyra Ride.
 Return JSON only with this shape:
-{"document_kind":"vehicle_photo","plate":"ABC1234","plateFront":null,"plateBack":null,"make":"Toyota","model":"Camry","side":"back","tag_number":null,"riders":[],"authorized_pickups":[],"confidence":0.0,"unreadable":false,"reject_reason":null}
+{"document_kind":"vehicle_photo","plate":"ABC1234","plateFront":null,"plateBack":null,"make":"Toyota","model":"Camry","side":"back","tag_number":null,"riders":[],"authorized_pickups":[],"confidence":0.0,"unreadable":false,"reject_reason":null,"other_plates_seen":[]}
 
 document_kind (pick one):
 - vehicle_photo: bumper/grille plate, temporary paper dealer tag, or vehicle body with plate
@@ -85,6 +19,7 @@ document_kind (pick one):
 Rules:
 - plate / plateFront / plateBack: uppercase letters+digits only. Strip spaces and hyphens.
 - If only part of a plate is visible, set plate null and unreadable true — NEVER invent missing characters.
+${CLOSEST_VEHICLE_RULES}
 - Temporary paper tags still count as vehicle_photo; read the printed number.
 - Out-of-state plates are fine; do not require Texas.
 - Ambiguous O vs 0: prefer digit 0 inside numeric runs; do not invent a different plate.
@@ -161,80 +96,7 @@ async function handleRideLpr(req: Request): Promise<Response> {
         },
       ],
     });
-    const parsed = extractJson(outputText(payload));
-    let document_kind = cleanKind(parsed.document_kind);
-    const plate = cleanPlate(parsed.plate);
-    let plateFront = cleanPlate(parsed.plateFront) || null;
-    let plateBack = cleanPlate(parsed.plateBack) || null;
-    const side = cleanSide(parsed.side);
-    if (!plateFront && side === 'front' && plate) plateFront = plate;
-    if (!plateBack && side === 'back' && plate) plateBack = plate;
-
-    let make = cleanText(parsed.make);
-    let model = cleanText(parsed.model);
-    const tag_number = cleanTag(parsed.tag_number ?? parsed.tagNumber);
-    const riders = cleanNames(parsed.riders);
-    const authorized_pickups = cleanNames(parsed.authorized_pickups ?? parsed.authorizedPickups);
-    const reject_reason = cleanText(parsed.reject_reason ?? parsed.rejectReason);
-
-    if (document_kind === 'unknown') {
-      if (reject_reason) document_kind = 'rejected';
-      else if (tag_number || (riders.length && !plate && !make)) document_kind = 'hang_tag';
-      else if (authorized_pickups.length) document_kind = 'authorized_pickup';
-      else if (riders.length > 1) document_kind = 'check_in_sheet';
-      else if (plate || plateFront || plateBack) document_kind = 'vehicle_photo';
-    }
-
-    if (document_kind === 'rejected') {
-      return Response.json({
-        document_kind,
-        plate: null,
-        plateFront: null,
-        plateBack: null,
-        make: null,
-        model: null,
-        side: 'unknown',
-        tag_number: null,
-        riders: [],
-        authorized_pickups: [],
-        unreadable: true,
-        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
-        reject_reason: reject_reason || 'not a vehicle or rider document',
-      });
-    }
-
-    const primary =
-      plateBack && plateFront && plateBack !== plateFront
-        ? plateBack
-        : plate || plateBack || plateFront || '';
-    let unreadable = Boolean(parsed.unreadable);
-    if (document_kind === 'vehicle_photo') {
-      if (!primary) {
-        unreadable = true;
-        make = null;
-        model = null;
-      }
-    }
-    if (document_kind === 'hang_tag' && !primary && !tag_number) unreadable = true;
-
-    return Response.json({
-      document_kind,
-      plate: document_kind === 'vehicle_photo' && unreadable ? null : primary || null,
-      plateFront,
-      plateBack,
-      make,
-      model,
-      side,
-      tag_number,
-      riders,
-      authorized_pickups,
-      unreadable:
-        document_kind === 'vehicle_photo'
-          ? unreadable || !primary
-          : Boolean(unreadable) && !tag_number && riders.length === 0 && !primary,
-      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
-      reject_reason: null,
-    });
+    return Response.json(shapeRideLprResult(extractJson(outputText(payload))));
   } catch (err) {
     return Response.json(
       emptyResult({

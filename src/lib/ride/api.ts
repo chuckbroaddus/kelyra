@@ -155,8 +155,18 @@ export type RideLprResult = {
   riders?: string[];
   authorized_pickups?: string[];
   confidence?: number;
+  /** 'multiple vehicles' when ride-lpr could not tell which car is the closest one (not a reject). */
   reject_reason?: string | null;
+  /** Plates of other vehicles / reflections the model saw (never this car's plate). */
+  other_plates_seen?: string[];
 };
+
+/** ride-lpr reject_reason when several cars were in frame and the closest one was not trusted. */
+export const RIDE_LPR_MULTIPLE_VEHICLES = 'multiple vehicles';
+
+export function isMultipleVehiclesRead(lpr: Pick<RideLprResult, 'reject_reason'>): boolean {
+  return lpr.reject_reason === RIDE_LPR_MULTIPLE_VEHICLES;
+}
 
 export async function invokeRideLpr(storagePath: string): Promise<RideLprResult> {
   const empty: RideLprResult = {
@@ -196,6 +206,9 @@ export async function invokeRideLpr(storagePath: string): Promise<RideLprResult>
       : [],
     confidence: typeof data.confidence === 'number' ? data.confidence : undefined,
     reject_reason: typeof data.reject_reason === 'string' ? data.reject_reason : null,
+    other_plates_seen: Array.isArray(data.other_plates_seen)
+      ? data.other_plates_seen.filter((x: unknown) => typeof x === 'string')
+      : [],
   };
 }
 

@@ -108,7 +108,7 @@ import {
 } from '@/lib/students/api';
 import { birthdayForSave } from '@/lib/date/iso';
 import { upsertSyllabusAskDraft } from '@/lib/syllabus/api';
-import { invokeRideLpr, staffAttachVehicle, uploadRidePhoto } from '@/lib/ride/api';
+import { invokeRideLpr, isMultipleVehiclesRead, staffAttachVehicle, uploadRidePhoto } from '@/lib/ride/api';
 import { plateNorm } from '@/lib/ride/plate';
 import type { AssignmentRow, ProfilePhotoKind } from '@/lib/supabase/types';
 
@@ -204,6 +204,8 @@ type ClassifyResult = {
   fields: { label: string; value: string }[];
   names: { name: string; confidence: number }[];
   note: string | null;
+  other_plates_seen?: string[];
+  vehicle_reject_reason?: string | null;
 };
 
 type CaptureFile = { key: string; uri: string; mimeType: string; name: string };
@@ -317,6 +319,7 @@ export default function CaptureScreen() {
     pickups: string[];
     reject: string | null;
     unreadable: boolean;
+    multipleVehicles?: boolean;
   } | null>(null);
   const [answerKeyPreview, setAnswerKeyPreview] = useState<{
     itemCount: number;
@@ -911,6 +914,7 @@ export default function CaptureScreen() {
           let readTag: string | null = null;
           let readReject: string | null = null;
           let readUnreadable = false;
+          let readMultipleVehicles = false;
           const readRiders: string[] = [];
           const readPickups: string[] = [];
           for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
@@ -918,7 +922,8 @@ export default function CaptureScreen() {
             const lpr = await invokeRideLpr(storagePath);
             readKind = lpr.document_kind ?? readKind;
             readTag = lpr.tag_number || readTag;
-            readReject = lpr.reject_reason || readReject;
+            if (isMultipleVehiclesRead(lpr)) readMultipleVehicles = true;
+            else readReject = lpr.reject_reason || readReject;
             readUnreadable = readUnreadable || lpr.unreadable;
             for (const name of lpr.riders ?? []) if (!readRiders.includes(name)) readRiders.push(name);
             for (const name of lpr.authorized_pickups ?? []) if (!readPickups.includes(name)) readPickups.push(name);
@@ -944,6 +949,7 @@ export default function CaptureScreen() {
             pickups: readPickups,
             reject: readReject,
             unreadable: readUnreadable && !front && !back,
+            multipleVehicles: readMultipleVehicles && !front && !back,
           });
           setStatus(null);
         } catch {
@@ -2378,6 +2384,10 @@ export default function CaptureScreen() {
               {vehicleRead?.reject ? (
                 <Text style={[type.meta, { color: colors.danger }]}>
                   {`Not a car-rider document: ${vehicleRead.reject}. Nothing was read into Ride.`}
+                </Text>
+              ) : vehicleRead?.multipleVehicles ? (
+                <Text style={[type.meta, { color: colors.danger }]}>
+                  More than one car in the photo and we could not tell which is closest — retake with just the car in front, or type the plate. We did not guess.
                 </Text>
               ) : vehicleRead?.unreadable ? (
                 <Text style={[type.meta, { color: colors.danger }]}>
