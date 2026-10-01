@@ -49,6 +49,15 @@ export function hasProgress(c: GradingCalendar): boolean {
   return c.show_interims_in_filter && c.periods.some(p => p.kind === 'progress');
 }
 
+const ORD = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+
+/** "1st Six Weeks" (wide) / "1st Six Wks." (phone) for six-week codes 6W1–6W6 / 6WY1–6WY6. Null otherwise. */
+export function sixWeeksLabel(code: string | null | undefined, short = false): string | null {
+  const m = /^6wy?([1-6])$/i.exec((code || '').trim());
+  if (!m) return null;
+  return `${ORD[Number(m[1]) - 1]} ${short ? 'Six Wks.' : 'Six Weeks'}`;
+}
+
 export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphSpec[] {
   if (!c?.period_model) return [];
   const model = c.period_model;
@@ -121,7 +130,7 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
       startDeg: g.s,
       sweepDeg: g.w,
       filled,
-      label: p?.name || code.toUpperCase(),
+      label: sixWeeksLabel(code) ?? (p?.name || code.toUpperCase()),
       storeCode: p?.code || code.toUpperCase(),
       dateRange: fmtRange(p?.start_date || null, p?.end_date || null),
       kind,

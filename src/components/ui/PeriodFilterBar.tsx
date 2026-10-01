@@ -5,10 +5,14 @@
  * label clipping/marquee instead of a bespoke ScrollView.
  */
 import React, { useMemo } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { PersonTabs, type PersonTab } from './PersonTabs';
 import { PeriodGlyph } from './PeriodGlyph';
 import { PERSON_TAB_GLYPH } from './personTabsLayout';
-import { glyphsForCalendar, type GradingCalendar } from './periodGlyphs';
+import { glyphsForCalendar, sixWeeksLabel, type GradingCalendar } from './periodGlyphs';
+
+/** Phone widths use the short six-weeks label ("1st Six Wks."). */
+const SHORT_LABEL_MAX_WIDTH = 600;
 
 export type PeriodFilterBarProps = {
   calendar: GradingCalendar;
@@ -19,11 +23,12 @@ export type PeriodFilterBarProps = {
 };
 
 export function PeriodFilterBar({ calendar, selectedPeriodId = 'all', onSelect, stacked }: PeriodFilterBarProps) {
+  const short = useWindowDimensions().width < SHORT_LABEL_MAX_WIDTH;
   const tabs = useMemo<PersonTab[]>(
     () =>
       glyphsForCalendar(calendar).map((g) => ({
         key: g.id,
-        label: g.label,
+        label: sixWeeksLabel(g.id, short) ?? g.label,
         glyph: (selected: boolean) => (
           <PeriodGlyph
             id={g.id}
@@ -34,7 +39,7 @@ export function PeriodFilterBar({ calendar, selectedPeriodId = 'all', onSelect, 
           />
         ),
       })),
-    [calendar],
+    [calendar, short],
   );
   return <PersonTabs tabs={tabs} value={selectedPeriodId} onChange={onSelect} stacked={stacked} />;
 }

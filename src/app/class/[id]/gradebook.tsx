@@ -64,6 +64,8 @@ export default function GradebookScreen() {
     trayHideDistance,
     trayRest,
     visible: chromeVisible,
+    onScroll: onChromeScroll,
+    onScrollBeginDrag: onChromeScrollBeginDrag,
   } = useChrome();
   const { id, tab: tabParam } = useLocalSearchParams<{ id: string; tab?: string }>();
   usePushedTitle(className ?? 'Class');
@@ -378,6 +380,10 @@ export default function GradebookScreen() {
             contentContainerStyle={styles.conductScrollBody}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
+            // Same brain as Feed / Gradebook: swipe up collapses tab rows + help, swipe down reveals.
+            onScroll={onChromeScroll}
+            onScrollBeginDrag={onChromeScrollBeginDrag}
+            scrollEventThrottle={16}
           >
             <ConductEntryPanel
               key={termFilter}
