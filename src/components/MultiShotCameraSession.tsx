@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { Icon } from '@/components/ui/Icon';
 import { type } from '@/constants/theme';
 import {
   MULTI_SHOT_BATCH_CAP,
@@ -78,6 +78,8 @@ export function MultiShotCameraSession({
   const [error, setError] = useState<string | null>(null);
   const [capHint, setCapHint] = useState<string | null>(null);
   const [reviewId, setReviewId] = useState<string | null>(null);
+  const [flashOpaque, setFlashOpaque] = useState(false);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -88,8 +90,28 @@ export function MultiShotCameraSession({
       setCapHint(null);
       setReviewId(null);
       setFacing('back');
+      setFlashOpaque(false);
+      if (flashTimer.current) {
+        clearTimeout(flashTimer.current);
+        flashTimer.current = null;
+      }
     }
   }, [visible]);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+    };
+  }, []);
+
+  const pulseFlash = useCallback(() => {
+    setFlashOpaque(true);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => {
+      setFlashOpaque(false);
+      flashTimer.current = null;
+    }, 140);
+  }, []);
 
   const finishCancel = useCallback(async () => {
     const batch = shots;
@@ -135,10 +157,11 @@ export function MultiShotCameraSession({
     setBusy(true);
     setError(null);
     setCapHint(null);
+    pulseFlash();
     try {
       const picture = await cam.takePictureAsync({
         quality: 0.7,
-        shutterSound: false,
+        shutterSound: true,
         exif: false,
       });
       if (!picture?.uri) {
@@ -216,12 +239,14 @@ export function MultiShotCameraSession({
               style={StyleSheet.absoluteFill}
               facing={facing}
               mode="picture"
+              animateShutter
               onCameraReady={() => setReady(true)}
               onMountError={(event) => {
                 setError(event.message || 'Could not open the camera.');
               }}
             />
           ) : null}
+          {flashOpaque ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.flash]} /> : null}
         </View>
 
         {error ? (
@@ -256,22 +281,41 @@ export function MultiShotCameraSession({
           <View style={styles.traySpacer} />
         )}
 
-        <View style={[styles.controls, { paddingBottom: Math.max(12, insets.bottom) }]}>
-          <SecondaryButton
-            label={facing === 'back' ? 'Front camera' : 'Back camera'}
-            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-          />
-          <IconButton
-            name="capture"
-            size="lg"
-            tone="brand"
-            label={atCap ? shutterDisabledMessage(count, max) || 'At limit' : 'Shutter'}
+        {/*
+          iOS-style bottom bar: flip | big round shutter | count.
+          Do not use SecondaryButton here — its base width is 100% and steals the row.
+          Hardware volume/side buttons are not wired by expo-camera; leave them alone.
+        */}
+        <View style={[styles.controls, { paddingBottom: Math.max(16, insets.bottom + 4) }]}>
+          <View style={styles.sideSlot}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={facing === 'back' ? 'Front camera' : 'Back camera'}
+              onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+              style={({ pressed }) => [styles.flipHit, pressed && { opacity: 0.75 }]}
+            >
+              <Icon name="focus" color="#fff" size={22} />
+            </Pressable>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={atCap ? shutterDisabledMessage(count, max) || 'At limit' : 'Shutter'}
+            accessibilityState={{ disabled: busy || !ready || atCap }}
             disabled={busy || !ready || atCap}
             onPress={() => void onShutter()}
-          />
-          <Text style={[type.meta, { color: '#ddd', minWidth: 48, textAlign: 'center' }]}>
-            {count}/{max}
-          </Text>
+            style={({ pressed }) => [
+              styles.shutterOuter,
+              (busy || !ready || atCap) && styles.shutterDisabled,
+              pressed && !(busy || !ready || atCap) && { opacity: 0.88, transform: [{ scale: 0.96 }] },
+            ]}
+          >
+            <View style={styles.shutterInner} />
+          </Pressable>
+          <View style={styles.sideSlot}>
+            <Text style={[type.meta, styles.countText]} accessibilityLabel={`${count} of ${max} photos`}>
+              {count}/{max}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -303,6 +347,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   preview: { flex: 1, overflow: 'hidden', backgroundColor: '#111' },
+  flash: {
+    backgroundColor: '#fff',
+    opacity: 0.85,
+  },
   banner: { paddingHorizontal: 12, paddingVertical: 8 },
   tray: { maxHeight: 88, backgroundColor: 'rgba(0,0,0,0.72)' },
   traySpacer: { height: 12 },
@@ -329,10 +377,47 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingTop: 10,
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingTop: 14,
+    paddingHorizontal: 28,
     backgroundColor: '#0a0a0a',
+  },
+  sideSlot: {
+    width: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flipHit: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  shutterOuter: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    borderWidth: 4,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  shutterInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#fff',
+  },
+  shutterDisabled: {
+    opacity: 0.35,
+  },
+  countText: {
+    color: '#ddd',
+    textAlign: 'center',
+    minWidth: 48,
   },
   reviewRoot: {
     flex: 1,
