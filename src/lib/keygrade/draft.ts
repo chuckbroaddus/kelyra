@@ -1,4 +1,4 @@
-import type { AnswerKeyItem } from '../assignments/keys.ts';
+import { normalizeKeyItems, type AnswerKeyItem } from '../assignments/keys.ts';
 import { scoreKey, type ExtractMark, type ScoredKeyItem, type ScoreKeyResult } from '../assignments/scoreKey.ts';
 import type { StoredHomeworkDraft } from '../gaps/api.ts';
 
@@ -12,6 +12,16 @@ export type KeyScoreModelDraft = StoredHomeworkDraft & {
   residuals: number;
   costUsd?: number | null;
 };
+
+/** Blank extract marks so Pack B still opens when vision extract is missing. */
+export function blankExtractMarks(keyItems: AnswerKeyItem[]): ExtractMark[] {
+  return normalizeKeyItems(keyItems).map((item) => ({
+    n: item.n,
+    extracted: null as string | null,
+    confidence: 0.2,
+    flag: 'blank' as const,
+  }));
+}
 
 export function buildKeyScoreDraft(input: {
   keyItems: AnswerKeyItem[];
@@ -50,6 +60,94 @@ export function buildKeyScoreDraft(input: {
     scoreMark: 'numeric',
   };
   return { draft, scored };
+}
+
+/**
+ * Persist path for keyed homework (AC-PACKB-1).
+ * Prefer teacher-confirmed packItems; otherwise seed blank extracts from the key
+ * so saved-draft review still mounts Pack B Accept.
+ */
+export function buildKeyedHomeworkPersistDraft(input: {
+  keyItems: AnswerKeyItem[];
+  assignmentId: string;
+  maxScore?: number | null;
+  packItems?: ScoredKeyItem[] | null;
+  modelTotal?: number | null;
+  teacherNote?: string | null;
+  studentName?: string | null;
+  gaps?: StoredHomeworkDraft['gaps'];
+  pageAssetIds?: string[];
+  costUsd?: number | null;
+  extractModel?: string | null;
+  gradeKind?: StoredHomeworkDraft['gradeKind'];
+}): { draft: KeyScoreModelDraft; scored: ScoreKeyResult } | null {
+  const keyItems = normalizeKeyItems(input.keyItems);
+  const pack = Array.isArray(input.packItems) ? input.packItems : [];
+  if (!keyItems.length && !pack.length) return null;
+
+  const extract: ExtractMark[] = pack.length
+    ? pack.map((item) => ({
+        n: item.n,
+        extracted: item.extracted,
+        confidence: item.confidence,
+        flag: item.flag,
+      }))
+    : blankExtractMarks(keyItems);
+
+  const { draft, scored } = buildKeyScoreDraft({
+    keyItems: keyItems.length ? keyItems : pack.map((item) => ({
+      n: item.n,
+      answer: item.expected,
+      points: item.points,
+      type: item.type,
+    })),
+    extract,
+    assignmentId: input.assignmentId,
+    maxScore: input.maxScore,
+    modelTotal: input.modelTotal,
+    teacherNote: input.teacherNote ?? null,
+    studentName: input.studentName ?? null,
+    gaps: input.gaps ?? [],
+    pageAssetIds: input.pageAssetIds,
+    costUsd: input.costUsd ?? null,
+    extractModel: input.extractModel ?? null,
+  });
+
+  const items = pack.length
+    ? pack
+    : scored.items.map((item) => ({ ...item, confirmed: false as const }));
+
+  return {
+    scored: { ...scored, items },
+    draft: {
+      ...draft,
+      items,
+      residuals: items.filter((item) => item.residual || item.awarded == null).length,
+      draftScore: input.modelTotal != null && Number.isFinite(input.modelTotal)
+        ? draft.draftScore
+        : draftScoreFromItems(items, input.maxScore) ?? draft.draftScore,
+      gradeKind: input.gradeKind ?? draft.gradeKind ?? 'homework',
+    },
+  };
+}
+
+/** Seed Pack B rows from an assignment key when draft items are missing. */
+export function packItemsFromAssignmentKey(input: {
+  keyItems: AnswerKeyItem[];
+  assignmentId?: string | null;
+  maxScore?: number | null;
+  modelTotal?: number | null;
+}): ScoredKeyItem[] {
+  const keyItems = normalizeKeyItems(input.keyItems);
+  if (!keyItems.length) return [];
+  const { scored } = buildKeyScoreDraft({
+    keyItems,
+    extract: blankExtractMarks(keyItems),
+    assignmentId: input.assignmentId ?? null,
+    maxScore: input.maxScore,
+    modelTotal: input.modelTotal,
+  });
+  return scored.items.map((item) => ({ ...item, confirmed: false }));
 }
 
 /** Vision `items` from evaluate-homework → extract marks (marks only; credit ignored for award). */

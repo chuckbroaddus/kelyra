@@ -57,7 +57,9 @@ import { invokeAi } from '@/lib/ai/invoke';
 import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
 import {
   buildKeyScoreDraft,
+  buildKeyedHomeworkPersistDraft,
   extractMarksFromVisionItems,
+  packItemsFromAssignmentKey,
 } from '@/lib/keygrade/draft';
 import { findTwinCandidates } from '@/lib/keygrade/twins';
 import { matchPaperName, shouldAutoAttach } from '@/lib/matching/matchName';
@@ -1007,25 +1009,41 @@ export default function CaptureScreen() {
             }
           }
           if (assigned && assignmentHasKey(assigned)) {
-            const media = await evaluateCaptureMedia({
-              teacherId: assetOwnerId,
-              pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
-              audioUri,
-              audioMime,
+            let nextPack = packItemsFromAssignmentKey({
+              keyItems: parseKeyItems(assigned.key_items),
+              assignmentId: assigned.id,
+              maxScore: assigned.max_score,
             });
-            setEvaluation(media);
-            if (media.photoAssets.length) {
-              const keyed = await runKeyedExtract(media.photoAssets, assigned);
-              setEvaluation({
-                ...media,
-                gaps: keyed.draft.gaps,
-                draftScore: keyed.draft.draftScore,
-                teacherNote: keyed.draft.teacherNote,
-                studentName: keyed.draft.studentName ?? media.studentName,
-                costUsd: keyed.draft.costUsd ?? media.costUsd,
-                pageAssetIds: keyed.draft.pageAssetIds,
+            try {
+              const media = await evaluateCaptureMedia({
+                teacherId: assetOwnerId,
+                pages: pages.map((page) => ({ uri: page.uri, mimeType: page.mimeType })),
+                audioUri,
+                audioMime,
               });
-              setPackItems(keyed.scored.items.map((item) => ({ ...item, confirmed: false })));
+              setEvaluation(media);
+              if (media.photoAssets.length) {
+                try {
+                  const keyed = await runKeyedExtract(media.photoAssets, assigned);
+                  setEvaluation({
+                    ...media,
+                    gaps: keyed.draft.gaps,
+                    draftScore: keyed.draft.draftScore,
+                    teacherNote: keyed.draft.teacherNote,
+                    studentName: keyed.draft.studentName ?? media.studentName,
+                    costUsd: keyed.draft.costUsd ?? media.costUsd,
+                    pageAssetIds: keyed.draft.pageAssetIds,
+                  });
+                  nextPack = keyed.scored.items.map((item) => ({ ...item, confirmed: false }));
+                } catch {
+                  // Keep blank pack from key so Pack B still mounts (AC-PACKB-1).
+                }
+              }
+            } catch {
+              // Confirm strip still works; blank pack from key below.
+            }
+            if (nextPack.length) {
+              setPackItems(nextPack);
               setReviewOpen(true);
             }
           }
@@ -1090,33 +1108,33 @@ export default function CaptureScreen() {
         selectedAssignment && assignmentHasKey(selectedAssignment)
           ? selectedAssignment
           : assignments.find((row) => row.id === assignmentId && assignmentHasKey(row)) ?? null;
-      const keyItems = assignedForKey ? parseKeyItems(assignedForKey.key_items) : [];
-      const keyed =
-        assignedForKey && packItems.length
-          ? buildKeyScoreDraft({
-              keyItems,
-              extract: packItems.map((item) => ({
-                n: item.n,
-                extracted: item.extracted,
-                confidence: item.confidence,
-                flag: item.flag,
-              })),
-              assignmentId: assignedForKey.id,
-              maxScore: assignedForKey.max_score,
-              teacherNote: evaluation?.teacherNote ?? null,
-              studentName: evaluation?.studentName ?? null,
-              gaps: evaluation?.gaps ?? [],
-              pageAssetIds: photoAssets.map((asset) => asset.id),
-              costUsd: evaluation?.costUsd ?? null,
-            })
-          : null;
+      // AC-PACKB-1: keyed assignment always persists key_score items (pack or blank from key).
+      const keyed = assignedForKey
+        ? buildKeyedHomeworkPersistDraft({
+            keyItems: parseKeyItems(assignedForKey.key_items),
+            assignmentId: assignedForKey.id,
+            maxScore: assignedForKey.max_score,
+            packItems,
+            modelTotal: draftScore ?? evaluation?.draftScore ?? classified?.draftScore ?? null,
+            teacherNote: evaluation?.teacherNote ?? classified?.note ?? null,
+            studentName: evaluation?.studentName ?? classified?.studentGuessName ?? null,
+            gaps: (evaluation?.gaps ?? classified?.gaps ?? []).map((gap, index) => ({
+              label: gap.label,
+              sortOrder:
+                'sortOrder' in gap && typeof (gap as { sortOrder?: number }).sortOrder === 'number'
+                  ? (gap as { sortOrder: number }).sortOrder
+                  : index + 1,
+            })),
+            pageAssetIds: photoAssets.map((asset) => asset.id),
+            costUsd: evaluation?.costUsd ?? null,
+            gradeKind: 'homework',
+          })
+        : null;
 
       const draftToSave = keyed
         ? {
             ...keyed.draft,
-            items: packItems,
             draftScore: draftScore ?? keyed.draft.draftScore,
-            residuals: packItems.filter((item) => item.residual || item.awarded == null).length,
           }
         : photoAssets.length
           ? {

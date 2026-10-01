@@ -26,7 +26,7 @@ import { assignmentHasKey, listClassAssignments, matchSpokenAssignment } from '@
 import { parseKeyItems } from '@/lib/assignments/keys';
 import { scoreKey } from '@/lib/assignments/scoreKey';
 import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
-import { buildKeyScoreDraft, extractMarksFromVisionItems } from '@/lib/keygrade/draft';
+import { buildKeyScoreDraft, buildKeyedHomeworkPersistDraft, extractMarksFromVisionItems } from '@/lib/keygrade/draft';
 import { AssignmentPicker } from '@/components/ui/AssignmentPicker';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
@@ -637,23 +637,36 @@ export default function ProposalScreen() {
         costUsd: aiCost,
       };
       // Persist key_score items so saved-draft teacher review can show Pack B Accept.
+      // AC-PACKB-1: keyed assignment always seeds items (live extracts or blank from key).
       const draftPayload =
-        assigned && assignmentHasKey(assigned) && keyDraftItems.length
+        assigned && assignmentHasKey(assigned)
           ? (() => {
-              const marks = extractMarksFromVisionItems(keyDraftItems);
-              const keyed = buildKeyScoreDraft({
+              const packFromVision = keyDraftItems.length
+                ? buildKeyScoreDraft({
+                    keyItems: parseKeyItems(assigned.key_items),
+                    extract: extractMarksFromVisionItems(keyDraftItems),
+                    assignmentId: assigned.id,
+                    maxScore: assigned.max_score,
+                    modelTotal: Number.isFinite(numeric as number) ? (numeric as number) : null,
+                    teacherNote: note || null,
+                    gaps: gapRows,
+                    costUsd: aiCost,
+                  }).scored.items.map((item) => ({ ...item, confirmed: false as const }))
+                : [];
+              const keyed = buildKeyedHomeworkPersistDraft({
                 keyItems: parseKeyItems(assigned.key_items),
-                extract: marks,
                 assignmentId: assigned.id,
                 maxScore: assigned.max_score,
+                packItems: packFromVision,
                 modelTotal: Number.isFinite(numeric as number) ? (numeric as number) : null,
                 teacherNote: note || null,
                 gaps: gapRows,
                 costUsd: aiCost,
+                gradeKind,
               });
+              if (!keyed) return baseDraft;
               return {
                 ...keyed.draft,
-                items: keyed.scored.items.map((item) => ({ ...item, confirmed: false })),
                 draftScore:
                   Number.isFinite(numeric as number) && numeric != null
                     ? (numeric as number)

@@ -43,6 +43,8 @@ test('Pack B Approve path remains reachable on Capture', () => {
   assert.match(source, /KeygradePackBReview/);
   assert.match(source, /canApproveKeygrade/);
   assert.match(source, /persistCapture\('approve'/);
+  assert.match(source, /buildKeyedHomeworkPersistDraft/);
+  assert.match(source, /packItemsFromAssignmentKey/);
 });
 
 test('Capture drops inbox hint and keyed-assignment chip card (t_93c16147)', () => {
