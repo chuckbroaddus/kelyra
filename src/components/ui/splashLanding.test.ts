@@ -86,7 +86,7 @@ test('CEO JPG still always under video; crossfade opacity then unmount (no black
 
   assert.match(splash, /splashStillSources/);
   assert.match(splash, /hasCompletedSplash/);
-  assert.match(splash, /splashSessionCompleted/);
+  assert.match(splash, /isSplashSessionCompleted|splashSessionCompleted/);
   assert.match(splash, /markCompleted/);
   assert.match(splash, /showVideo/);
   assert.match(splash, /videoOpacity/);
@@ -110,7 +110,8 @@ test('CEO JPG still always under video; crossfade opacity then unmount (no black
   // Full-bleed cover via letter-box crop layout (not a one-shot window box alone).
   assert.doesNotMatch(splash, /mediaBox\s*=\s*\{\s*width,\s*height\s*\}/);
   assert.match(splash, /splashStillCropLayout/);
-  assert.match(splash, /stillCrop \? \[styles\.still, stillCrop\] : styles\.stillFallback/);
+  assert.match(splash, /mediaCrop \? \[styles\.still, mediaCrop\] : styles\.stillFallback/);
+  assert.match(splash, /mediaCrop \?\? styles\.videoLayerFallback/);
   assert.match(splash, /style=\{styles\.video\}/);
   assert.match(splash, /still:\s*\{[\s\S]*?position:\s*'absolute'[\s\S]*?zIndex:\s*1/);
   assert.match(
@@ -139,7 +140,7 @@ test('orientation after complete does not remount SplashVideo with shouldPlay', 
   assert.match(splash, /\{showVideo \? \([\s\S]*?<SplashVideo[\s\S]*?shouldPlay/);
   // Session flag short-circuits focus/play effect so rotate after finish never replays.
   // Do not gate on hasCompletedSplash alone — that re-ran cleanup and clipped audio.
-  assert.match(splash, /if\s*\(\s*splashSessionCompleted\s*\)/);
+  assert.match(splash, /if\s*\(\s*isSplashSessionCompleted\s*\(\s*\)\s*\)/);
   assert.match(splash, /setShowVideo\(false\)/);
   assert.match(splash, /ownedVideo/);
   assert.match(splash, /let ownedVideo:\s*SplashVideoHandle\s*\|\s*null\s*=\s*null/);
@@ -718,7 +719,10 @@ test('AC-SPLASH-CENTER-1: settled still letter-box sits on Sign in horizontal ce
   assert.match(splash, /portrait:\s*\{[^}]*offsetX:\s*26\.0/);
   assert.match(splash, /viewportWidth \/ \(iw - 2 \* ox\)/);
   assert.match(splash, /viewportWidth \/ 2 - \(iw \/ 2 \+ ox\) \* scale/);
-  assert.match(splash, /stillCrop \? \[styles\.still, stillCrop\] : styles\.stillFallback/);
+  assert.match(splash, /mediaCrop \? \[styles\.still, mediaCrop\] : styles\.stillFallback/);
+  // Video layer uses the same crop box (no center-cover jump on crossfade).
+  assert.match(splash, /mediaCrop \?\? styles\.videoLayerFallback/);
+  assert.match(splash, /styles\.videoLayer/);
 
   const letterbox = {
     landscape: { width: 1920, height: 1080, offsetX: 18.5 },
@@ -891,10 +895,40 @@ test('sign-out double mount: hidden stacked copy stays silent and cannot strand 
   // Completion guards are per-instance; the module flag only seeds startCompleted / focus branch.
   const crossfade = splash.match(/const beginVideoCrossfade = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[/);
   assert.ok(crossfade);
-  assert.doesNotMatch(crossfade[1], /splashSessionCompleted/);
+  assert.doesNotMatch(crossfade[1], /splashSessionCompleted|isSplashSessionCompleted/);
   const status = splash.match(/const onPlaybackStatusUpdate = useCallback\(([\s\S]*?)\n  \);/);
   assert.ok(status);
-  assert.doesNotMatch(status[1], /splashSessionCompleted/);
+  assert.doesNotMatch(status[1], /splashSessionCompleted|isSplashSessionCompleted/);
   // CTA fade re-runs after the overlay mounts.
   assert.match(splash, /if \(hasCompletedSplash\) fadeIn\(ctaOpacity\);/);
+});
+
+test('t_655e1c7a: video + still share splashStillCropLayout box (no crossfade X jump)', () => {
+  const splash = read('src/components/ui/SplashLanding.tsx');
+  assert.match(splash, /const mediaCrop =/);
+  assert.match(splash, /mediaCrop \? \[styles\.still, mediaCrop\] : styles\.stillFallback/);
+  assert.match(splash, /mediaCrop \?\? styles\.videoLayerFallback/);
+  assert.match(splash, /Used for BOTH the settled still and the SplashVideo frame/);
+  // Same letter-box math drives both layers — not JPG-center video vs offset still.
+  assert.match(splash, /splashStillCropLayout\(width, height, mediaAspect\)/);
+  // No separate still-only crop variable — shared mediaCrop only.
+  assert.doesNotMatch(splash, /\bstillCrop\b/);
+});
+
+test('t_655e1c7a: sign-out resets splash session and suppresses auth loading gate', () => {
+  const auth = read('src/lib/auth/AuthProvider.tsx');
+  const sessionMod = read('src/components/ui/splashSession.ts');
+  const splash = read('src/components/ui/SplashLanding.tsx');
+
+  assert.match(sessionMod, /export function resetSplashSession/);
+  assert.match(sessionMod, /export function isSplashSessionCompleted/);
+  assert.match(sessionMod, /export function markSplashSessionCompleted/);
+  assert.match(splash, /from '@\/components\/ui\/splashSession'/);
+  assert.match(auth, /from '@\/components\/ui\/splashSession'/);
+  assert.match(auth, /resetSplashSession\(\)/);
+  assert.match(auth, /suppressAuthLoadingRef/);
+  assert.match(auth, /suppressAuthLoadingRef\.current = true/);
+  assert.match(auth, /if\s*\(\s*!suppressAuthLoadingRef\.current\s*\)\s*\{[\s\S]*?setLoading\(true\)/);
+  // Getting a session again clears the suppress so normal load gates return.
+  assert.match(auth, /suppressAuthLoadingRef\.current = false/);
 });

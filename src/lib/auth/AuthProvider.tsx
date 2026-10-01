@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { isSupabaseConfigured } from '@/constants/config';
 import { clearAskGroundOnActiveClassChange } from '@/lib/ask/assignmentGround';
@@ -14,6 +14,7 @@ import { shouldLoadTeacherRow } from '@/lib/school/roles';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import type { ProfileRow, TeacherRow } from '@/lib/supabase/types';
 import { unlockAppOrientation } from '@/lib/theme/screenOrientation';
+import { resetSplashSession } from '@/components/ui/splashSession';
 
 type AuthState = {
   configured: boolean;
@@ -41,13 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [grants, setGrants] = useState<GrantMap>(() => grantsFromCapabilities());
   const [error, setError] = useState<string | null>(null);
+  /**
+   * After sign-out, onAuthStateChange → refresh() must not flip loading true.
+   * Home treats loading as WorkingLine and would unmount SplashLanding mid-play.
+   */
+  const suppressAuthLoadingRef = useRef(false);
 
   const refresh = async () => {
     if (!configured) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    // SPLASH-LOGOUT-HITCH: keep SplashLanding mounted across post-signOut refresh.
+    if (!suppressAuthLoadingRef.current) {
+      setLoading(true);
+    }
     setError(null);
     try {
       await injectPersonaFromQuery();
@@ -58,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTeacher(null);
         setProfile(null);
       } else {
+        suppressAuthLoadingRef.current = false;
         await bindSignedUrlCacheUser(next.user.id);
         const mine = await loadMyProfile().catch(() => null);
         setProfile(mine);
@@ -156,6 +166,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshTeacher,
       setActiveClassId,
       signOut: async () => {
+        // Allow one splash play on the next signed-out landing (module flag otherwise sticks).
+        resetSplashSession();
+        // Arm before signOutRequest so concurrent onAuthStateChange refresh cannot load-gate.
+        suppressAuthLoadingRef.current = true;
+        setLoading(false);
         await signOutRequest();
         await clearSignedUrlCache();
         invalidateNeedsCountCache();
@@ -163,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTeacher(null);
         setProfile(null);
         setGrants(grantsFromCapabilities());
+        setLoading(false);
       },
     }),
     [configured, loading, session, teacher, profile, grants, error],
