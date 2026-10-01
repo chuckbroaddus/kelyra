@@ -75,10 +75,10 @@ test('HW-SCORE-02 bare arithmetic is re-checked in code; copied-wrong expected c
   ]);
   assert.deepEqual(out.map((it) => [it.expected, it.credit]), [
     ['56', 0],
-    ['1/2', 1],
+    ['0.5', 1],
     ['cell', 1],
     // blank seen on a code-solvable item → credit 0 (not invent / not leave as null-unscored)
-    ['3/4', 0],
+    ['0.75', 0],
   ]);
   assert.equal(percentFromItemCredits(out), 50);
 });
@@ -166,4 +166,29 @@ test('HW-SCORE-04 linear / percent / blank / unit code-grade stops rubber-stamps
     },
   ]);
   assert.equal(open[0]?.credit, 1);
+});
+
+test('HW-SCORE-05 decimals survive stripQuestionNoise; missing commas fail', () => {
+  assert.deepEqual(solveSimpleArithmetic('0.4 + 0.35 ='), { n: 3, d: 4 });
+  assert.deepEqual(solveSimpleArithmetic('2.5 x 4 ='), { n: 10, d: 1 });
+  assert.deepEqual(solveSimpleArithmetic('1.2 ÷ 0.3 ='), { n: 4, d: 1 });
+  const dec = settleHomeworkItems([
+    { question: '0.4 + 0.35 =', expected: '4.35', seen: '0.75', credit: 0, of: 1 },
+    { question: '2.5 x 4 =', expected: '20', seen: '10', credit: 0, of: 1 },
+    { question: '1.2 ÷ 0.3 =', expected: '4', seen: '0.4', credit: 1, of: 1 },
+  ]);
+  assert.deepEqual(
+    dec.map((it) => it.credit),
+    [1, 1, 0],
+  );
+  const commas = settleHomeworkItems([
+    {
+      question: 'Yes I will come to the party.',
+      expected: 'Yes, I will come to the party.',
+      seen: 'Yes I will come to the party.',
+      credit: 1,
+      of: 1,
+    },
+  ]);
+  assert.equal(commas[0]?.credit, 0);
 });

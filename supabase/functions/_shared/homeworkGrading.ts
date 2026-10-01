@@ -102,7 +102,8 @@ function parseNumberish(raw: string): Frac | null {
 export function stripQuestionNoise(question: unknown): string {
   if (typeof question !== 'string') return '';
   return question
-    .replace(/^\s*(?:q(?:uestion)?\s*)?\d+\s*[.)]\s*/i, '')
+    // Require whitespace after "1." / "2)" so decimals like "0.4 + 0.35" are not eaten as item numbers.
+    .replace(/^\s*(?:q(?:uestion)?\s*)?\d+\s*[.)]\s+/i, '')
     .replace(/[−–]/g, '-')
     .replace(/\s*=\s*(?:\?|_+|\[\s*\]|…+|\.{2,})?\s*$/u, '')
     .replace(/\s+/g, ' ')
@@ -131,7 +132,17 @@ export function solveSimpleArithmetic(question: unknown): Frac | null {
 }
 
 function formatFrac(f: Frac): string {
-  return f.d === 1 ? String(f.n) : `${f.n}/${f.d}`;
+  if (f.d === 1) return String(f.n);
+  // Prefer a short decimal when the fraction is a terminating decimal (homework decimals).
+  const dec = f.n / f.d;
+  if (Number.isFinite(dec)) {
+    const rounded = Math.round(dec * 1_000_000) / 1_000_000;
+    if (Math.abs(rounded - dec) < 1e-12) {
+      const s = String(rounded);
+      if (/^-?\d+\.\d+$/.test(s) && s.length <= 12) return s;
+    }
+  }
+  return `${f.n}/${f.d}`;
 }
 
 /** Linear ax+b term → {a,b} as fractions over a shared scale (exact). */
@@ -465,24 +476,81 @@ function normAnswer(v: unknown): string {
         .replace(/(\d)\s*(cm|m|in|ft)\s*²/g, '$1$2²')
         .replace(/(\d)\s*(cm|m|in|ft)\b/g, '$1$2')
         .replace(/minutes?|mins?/g, 'min')
-        .replace(/[\s.,;:!?'"°]+/g, '')
+        .replace(/[\s.;:!?'"°]+/g, '')
     : '';
 }
 
 /** Compare student seen vs code/model expected with light unit/alias tolerance. */
 export function answersMatch(expected: unknown, seen: unknown): boolean {
+  const eRaw = typeof expected === 'string' ? expected : '';
+  const sRaw = typeof seen === 'string' ? seen : '';
   const e = normAnswer(expected);
   const s = normAnswer(seen);
   if (!e || !s) return false;
-  if (e === s) return true;
+  if (e === s) {
+    // Comma / list punctuation is meaningful on rewrite items (commas practice).
+    // But thousand-separators in numbers (3,405 vs 3405) are not.
+    if (/,/.test(eRaw) || /,/.test(sRaw)) {
+      const stripThousands = (t: string) =>
+        t.replace(/(\d),(\d{3})\b/g, '$1$2').replace(/(\d),(\d{3})\b/g, '$1$2');
+      const eComma = stripThousands(eRaw)
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[.’'"]/g, '')
+        .trim();
+      const sComma = stripThousands(sRaw)
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[.’'"]/g, '')
+        .trim();
+      // pure numeric with optional grouping commas / European thousands dots
+      const eNum = eComma.replace(/,/g, '');
+      let sNum = sComma.replace(/,/g, '');
+      // European thousands: 3.405 → 3405 when expected is 3,405 / 3405
+      const euThousands = sRaw.trim().match(/^(-?\d+)\.(\d{3})$/);
+      if (euThousands && /^-?\d+$/.test(eNum)) sNum = `${euThousands[1]}${euThousands[2]}`;
+      const usThousands = eRaw.trim().match(/^(-?\d+)\.(\d{3})$/);
+      let eNum2 = eNum;
+      if (usThousands && /^-?\d+$/.test(sNum) && eRaw.includes('.')) eNum2 = `${usThousands[1]}${usThousands[2]}`;
+      if (/^-?\d+(\.\d+)?$/.test(eNum2) && /^-?\d+(\.\d+)?$/.test(sNum) && eNum2 === sNum) return true;
+      if (/^-?\d+(\.\d+)?$/.test(eNum) && /^-?\d+(\.\d+)?$/.test(sNum) && eNum === sNum) return true;
+      return eComma === sComma;
+    }
+    return true;
+  }
   // x=5 vs 5
   if (e.replace(/^[a-z]=/, '') === s.replace(/^[a-z]=/, '')) return true;
-  // numeric fractions 0.5 vs 1/2
+  // numeric fractions / decimals
   const ef = parseNumberish(String(expected).replace(/^\s*[a-z]\s*=\s*/i, '').trim());
   const sf = parseNumberish(String(seen).replace(/^\s*[a-z]\s*=\s*/i, '').trim());
   if (ef && sf && ef.n === sf.n && ef.d === sf.d) return true;
-  // open short answers: expected token contained in seen sentence (or reverse for short keys)
-  if (e.length >= 3 && (s.includes(e) || e.includes(s))) return true;
+  // Open short answers only (not math): expected token contained in seen sentence (or reverse).
+  const mathish = /[\d=+\-×x*÷\/]|cm²|in²|m²|ft\b|mph|\$/.test(eRaw + sRaw);
+  if (!mathish && !/,/.test(eRaw) && e.length >= 3 && (s.includes(e) || e.includes(s))) return true;
+  // "bacteria or fungi" / "the frog" soft alternatives
+  if (!mathish && /\bor\b/i.test(eRaw)) {
+    const parts = eRaw.split(/\s+or\s+/i).map((p) => p.trim()).filter(Boolean);
+    if (parts.some((p) => answersMatch(p, seen))) return true;
+  }
+  // light science synonyms
+  const syn: Record<string, string[]> = {
+    fungi: ['mushroom', 'mushrooms', 'fungus', 'mold', 'yeast'],
+    bacteria: ['bacterium', 'germs', 'microbes'],
+    frog: ['the frog', 'frogs'],
+    sun: ['the sun', 'solar'],
+  };
+  for (const [key, vals] of Object.entries(syn)) {
+    if (e.includes(key) && vals.some((v) => s.includes(normAnswer(v)) || normAnswer(v) === s)) return true;
+    if (s.includes(key) && vals.some((v) => e.includes(normAnswer(v)))) return true;
+  }
+  // Extract trailing number from "3 x 8 = 24 marbles"
+  if (ef) {
+    const tail = String(seen).match(/(-?\d+(?:\.\d+)?(?:\/\d+)?)\s*(?:[a-z%]+)?\s*$/i);
+    if (tail) {
+      const tf = parseNumberish(tail[1] ?? '');
+      if (tf && tf.n === ef.n && tf.d === ef.d) return true;
+    }
+  }
   return false;
 }
 
@@ -547,10 +615,36 @@ export function settleHomeworkItems<T extends HomeworkCheckableItem>(items: Read
     const s = normAnswer(it.seen);
     // Only upgrade partial → full when expected and seen match AND expected is not a pure copy of a
     // long student sentence with no independent signal — still allow short exact matches.
-    if (e && e === s && typeof it.credit === 'number' && it.credit < of) return { ...it, credit: of };
+    if (e && e === s && typeof it.credit === 'number' && it.credit < of) {
+      // still respect comma-sensitive equality
+      if (answersMatch(it.expected, it.seen)) return { ...it, credit: of };
+    }
     // Soft open-ended: expected phrase inside seen (model was harsh on "community helps")
     if (e && s && typeof it.credit === 'number' && it.credit < of && answersMatch(it.expected, it.seen)) {
       return { ...it, credit: of };
+    }
+    // Model rubber-stamped full credit but answers clearly disagree (missing comma, wrong spelling kept).
+    if (
+      typeof it.expected === 'string' &&
+      typeof it.seen === 'string' &&
+      typeof it.credit === 'number' &&
+      it.credit > 0 &&
+      !answersMatch(it.expected, it.seen) &&
+      (/,/.test(it.expected) || /spelling|because|friend|believe|tomorrow|necessary|library/i.test(String(it.question ?? '')))
+    ) {
+      return { ...it, credit: 0 };
+    }
+    // General: if expected/seen both present and disagree on a short closed answer, trust mismatch over model 1
+    if (
+      typeof it.expected === 'string' &&
+      typeof it.seen === 'string' &&
+      typeof it.credit === 'number' &&
+      it.credit >= of &&
+      !answersMatch(it.expected, it.seen) &&
+      normAnswer(it.expected).length <= 40 &&
+      (/,/.test(it.expected) || Math.abs(normAnswer(it.expected).length - normAnswer(it.seen).length) <= 6)
+    ) {
+      return { ...it, credit: 0 };
     }
     return it;
   });

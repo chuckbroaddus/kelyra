@@ -1,10 +1,36 @@
 # Homework ingest scorecard
 
+**Round 3 (rough accuracy):** `notes/qa-fixtures/homework-ingest/runs/202610011647` — see next section  
 **Baseline:** `notes/qa-fixtures/homework-ingest/runs/202610011118` (live; raw overall **68.8%** before scorer soft + percent normalize)  
 **Grading fix:** before `runs/202610011241` → after `runs/202610011321` — see next section  
 **Round 2 (rough corpus):** `notes/qa-fixtures/homework-ingest/runs/202610011220` — see next section  
 **Round 1:** `notes/qa-fixtures/homework-ingest/runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
 **Corpus:** 20 cases (H01–H17 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
+
+## Round 3 (`kelyra/t_5f54a056`) — before `202610011321` vs after `202610011647`
+
+**Gate:** draftScore ±12. Target rough ≥85%; missing drafts 0; no invented scores; clean/hand no worse.
+
+| Bucket | n | field acc | student | **score ±12** | missing | 100 when GT&lt;90 | hall |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| clean | 14 | 92.9% → **98.6%** | 100% → 100% | 64% → **93%** | 0 → 0 | 3 → 1 | 0 |
+| photo_mild | 10 | 92.0% → **98.0%** | 90% → **100%** | 70% → **90%** | 0 → 0 | 2 → 0 | 0 |
+| rough | 14 | 91.4% → **95.7%** | 100% → 100% | 57% → **79%** | 0 → 0 | 4 → 1 | 0 |
+| handwritten | 11 | 87.3% → **94.5%** | 82% → **100%** | 55% → **73%** | 0 → 0 | 3 → 1 | 0 |
+| handwritten_new | 6 | 86.7% → **93.3%** | 100% → 100% | 33% → **67%** | 0 → 0 | 3 → 1 | 0 |
+| negatives | 5 | 100% → 100% | 100% → 100% | 100% → 100% | 0 → 0 | 0 → 0 | 0 |
+
+Overall field accuracy 92.7% → **97.1%**. Rough ±12 **8/14 → 11/14 (79%)** — short of 85% target. Remaining rough misses: H28 (spelling sheet still “fixed” by the model), H32 (digit misreads on additions), H26 intermittent thousands separator. Missing drafts 0; hallucinations 0.
+
+### What changed (R3)
+1. **Code-grade more stems** in `_shared/homeworkGrading.ts`: linear equations, percent-of, unit conversions, area/perimeter, distribute/simplify; score from items only.
+2. **High image detail** always on evaluate-homework + analyze-homework (rough photos were on `detail:low`).
+3. **Prompts:** two-pass mental model (transcribe then grade), no blank invention, per-item confidence, never emit example JSON rows.
+4. **Safety nets:** blank/`?` seen → 0; low confidence → null; comma-sensitive rewrite credit; decimal stripQuestionNoise fix (no longer eats `0.4`); science soft synonyms; European thousands.
+5. **Unit tests** HW-SCORE-04/05 on mocked R3 failure classes.
+
+### Deploy (do not deploy from this seat)
+`supabase functions deploy analyze-homework classify-capture` (both import `_shared/homeworkGrading.ts`). evaluate-homework is ai-dev only.
 
 ## Grading fix (`cos/homework-grading-fix`) — before `202610011241` vs after `202610011321`
 
