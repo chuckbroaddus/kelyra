@@ -10,12 +10,11 @@ import { useFocusEffect } from 'expo-router';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { IconButton } from '@/components/ui/IconButton';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { SyllabusWizard, wizardPersonTabs } from '@/components/syllabus/SyllabusWizard';
-import { IngestPendingPagesCard } from '@/components/ingest/IngestPendingPagesCard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
-import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import {
   applyAskImport,
   canFinishReview,
@@ -31,9 +30,7 @@ import { type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { invokeAi } from '@/lib/ai/invoke';
 import {
-  MAX_GRADING_DOC_PAGES,
   maxPagesCopy,
   readingStatusForPages,
   uploadGradingDocPages,
@@ -43,9 +40,7 @@ import { applyProposalToSyllabusDraft } from '@/lib/ingest/pathMapping';
 import { applyInterviewToSyllabusDraft, takeInterviewHandoff } from '@/lib/interview';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
-import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
-import { pickNormalizedPhoto, pickNormalizedPhotos, webCameraNeeded } from '@/lib/media/pickPhoto';
-import { WebCameraCapture } from '@/components/WebCameraCapture';
+import { takeSyllabusIngestHandoff } from '@/lib/syllabus/ingestHandoff';
 import {
   applyAskDraftToEditor,
   discardSyllabusAskDraft,
@@ -53,7 +48,6 @@ import {
   publishClassSyllabus,
   saveClassSyllabusDraft,
   unpublishClassSyllabus,
-  upsertSyllabusAskDraft,
 } from '@/lib/syllabus/api';
 import {
   buildSchoolLockPolicy,
@@ -93,31 +87,9 @@ export default function SyllabusScreen() {
   const [draft, setDraft] = useState<SyllabusWizardDraft | null>(null);
   const [askDraft, setAskDraft] = useState<Record<string, unknown> | null>(null);
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
-  const [ingestCamera, setIngestCamera] = useState(false);
-  const [pendingIngestPages, setPendingIngestPages] = useState<
-    Array<{ key: string; uri: string; mimeType: string }>
-  >([]);
   // Interview hand-off is one-shot; keep it so a focus reload before Save does not drop the answers.
   const interviewRef = useRef<ReturnType<typeof takeInterviewHandoff>>(null);
-
-  const appendIngestPages = useCallback((pages: Array<{ uri: string; mimeType: string }>) => {
-    if (!pages.length) return;
-    setPendingIngestPages((current) => {
-      const room = Math.max(0, MAX_GRADING_DOC_PAGES - current.length);
-      if (room <= 0) return current;
-      const add = pages.slice(0, room).map((page, index) => ({
-        key: `${Date.now()}-${current.length + index}-${Math.random().toString(36).slice(2, 6)}`,
-        uri: page.uri,
-        mimeType: page.mimeType || 'image/jpeg',
-      }));
-      return [...current, ...add];
-    });
-    if (pages.length > MAX_GRADING_DOC_PAGES) {
-      setStatus(maxPagesCopy());
-    }
-  }, []);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -172,6 +144,12 @@ export default function SyllabusScreen() {
         setDraft(loaded);
       }
       setAskDraft(bundle.syllabus?.ask_draft ?? null);
+      // Capture syllabus Import multipage handoff (same runtime).
+      const fromCapture = takeSyllabusIngestHandoff(id);
+      if (fromCapture) {
+        setIngestProposal(fromCapture);
+        setStatus('Done reading. Check each setting we found, then tap Use these settings.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load syllabus');
     } finally {
@@ -286,51 +264,7 @@ export default function SyllabusScreen() {
     else setConfirm({ kind: 'publish' });
   };
 
-  const parsePhoto = async (uri: string, mimeType: string) => {
-    if (!id || !teacher) return;
-    setBusy(true);
-    setError(null);
-    setStatus('Reading syllabus photo…');
-    try {
-      const asset = await uploadTeacherAsset({
-        teacherId: teacher.id,
-        kind: 'photo',
-        uri,
-        mimeType,
-      });
-      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
-      if (!imageUrl) throw new Error('Could not open the uploaded photo.');
-      const parsed = await invokeAi<Record<string, unknown>>('parse-class-syllabus', {
-        classId: id,
-        imageUrl,
-        mimeType,
-      });
-      if (parsed.error) throw new Error(String(parsed.error));
-      await upsertSyllabusAskDraft(id, { ...parsed, schema_version: 1, class_id: id }, asset.id);
-      setStatus('We read your photo. Check the settings below, then publish.');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not read that photo');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onPickPhoto = async (preferCamera: boolean) => {
-    if (webCameraNeeded(preferCamera)) {
-      setCameraOpen(true);
-      return;
-    }
-    try {
-      const photo = await pickNormalizedPhoto(preferCamera);
-      if (!photo) return;
-      await parsePhoto(photo.uri, photo.mimeType);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open photo');
-    }
-  };
-
-  /** GB-11 v2 document ingest → IngestProposal review (does not replace parse-class-syllabus). */
+  /** GB-11 document ingest → IngestProposal review (fixture + Capture multipage Import). */
   const runIngestDoc = useCallback(async (pages: Array<{ uri: string; mimeType: string }>) => {
     if (!id || !teacher) return;
     if (!pages.length) return;
@@ -350,7 +284,6 @@ export default function SyllabusScreen() {
         image_urls: uploaded.image_urls,
         source_id: uploaded.source_id,
       });
-      setPendingIngestPages([]);
       setIngestProposal(proposal);
       setStatus('Done reading. Check each setting we found, then tap Use these settings.');
     } catch (err) {
@@ -361,33 +294,6 @@ export default function SyllabusScreen() {
   }, [id, teacher]);
 
   useWebIngestFixtureHook('syllabus', runIngestDoc);
-
-  const onStartFromDocument = async () => {
-    // Library multi-select. Camera path uses ingestCamera + pending pages.
-    try {
-      const photos = await pickNormalizedPhotos({ max: MAX_GRADING_DOC_PAGES });
-      if (!photos?.length) return;
-      appendIngestPages(photos);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open document');
-    }
-  };
-
-  const onAddIngestCameraPage = () => {
-    if (webCameraNeeded(true)) {
-      setIngestCamera(true);
-      return;
-    }
-    void (async () => {
-      try {
-        const photos = await pickNormalizedPhotos({ max: 1, fromCamera: true });
-        if (!photos?.length) return;
-        appendIngestPages(photos);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not open camera');
-      }
-    })();
-  };
 
   const applyIngestFields = (accepted: IngestField[]) => {
     if (!draft || !ingestProposal) return;
@@ -493,56 +399,24 @@ export default function SyllabusScreen() {
         />
       ) : null}
 
-      {pendingIngestPages.length ? (
-        <IngestPendingPagesCard
-          pages={pendingIngestPages}
-          busy={busy}
-          canAddMore={pendingIngestPages.length < MAX_GRADING_DOC_PAGES}
-          onRemove={(key) => setPendingIngestPages((cur) => cur.filter((p) => p.key !== key))}
-          onAddAnother={onAddIngestCameraPage}
-          onRead={() =>
-            void runIngestDoc(pendingIngestPages.map((p) => ({ uri: p.uri, mimeType: p.mimeType })))
-          }
-          onClear={() => setPendingIngestPages([])}
+      <View style={styles.row}>
+        <GhostButton
+          align="left"
+          label="Answer a few questions instead"
+          onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
         />
-      ) : null}
-
-      {ingestCamera ? (
-        <WebCameraCapture
-          onCapture={(uri, mimeType) => {
-            setIngestCamera(false);
-            appendIngestPages([{ uri, mimeType }]);
+        <IconButton
+          name="capture"
+          size="lg"
+          tone="brand"
+          label="Import syllabus with Capture"
+          disabled={busy || !id}
+          onPress={() => {
+            if (!id) return;
+            router.push(`/capture?preset=syllabus&classId=${encodeURIComponent(id)}` as never);
           }}
-          onCancel={() => setIngestCamera(false)}
         />
-      ) : null}
-
-      {cameraOpen ? (
-        <WebCameraCapture
-          onCapture={(uri, mimeType) => {
-            setCameraOpen(false);
-            void parsePhoto(uri, mimeType);
-          }}
-          onCancel={() => setCameraOpen(false)}
-        />
-      ) : (
-        <View style={styles.row}>
-          <GhostButton
-            align="left"
-            label="Answer a few questions instead"
-            onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
-          />
-          <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
-          <GhostButton
-            align="left"
-            label="Photograph document pages"
-            onPress={onAddIngestCameraPage}
-            disabled={busy}
-          />
-          <GhostButton align="left" label="Take a photo of a syllabus" onPress={() => void onPickPhoto(true)} />
-          <GhostButton align="left" label="Choose a syllabus photo" onPress={() => void onPickPhoto(false)} />
-        </View>
-      )}
+      </View>
 
       <Card>
         <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Start from a school template</Text>

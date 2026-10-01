@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
-const source = readFileSync(join(process.cwd(), 'src/app/capture.tsx'), 'utf8');
+const source = readFileSync(join(process.cwd(), 'src/components/capture/CaptureSurface.tsx'), 'utf8');
 
 test('capture camera focus effect depends on the stable chrome setter', () => {
   assert.match(source, /const setForceHidden = chrome\.setForceHidden/);
@@ -176,15 +176,23 @@ test('Capture camera icon opens multi-shot session (no single-shot dismiss)', ()
 
 test('Capture library picker is multi-select into the same batch path', () => {
   assert.match(source, /allowsMultipleSelection:\s*true/);
-  assert.match(source, /selectionLimit:\s*MULTI_SHOT_BATCH_CAP/);
+  assert.match(source, /selectionLimit:\s*batchCap/);
   assert.match(source, /orderedSelection:\s*true/);
-  assert.match(source, /result\.assets\.slice\(0,\s*MULTI_SHOT_BATCH_CAP\)/);
+  assert.match(source, /result\.assets\.slice\(0,\s*batchCap\)/);
+  assert.match(source, /MULTI_SHOT_BATCH_CAP/);
   assert.match(source, /if \(images\.length\) await applyPhotos\(images\)/);
   // Single-asset-only path must not remain as the only library finish.
   assert.doesNotMatch(
     source,
     /launchImageLibraryAsync\(\{[\s\S]*?\}\);\s*if \(result\.canceled \|\| !result\.assets\[0\]\) return;\s*const asset = result\.assets\[0\];\s*await applyLibraryAsset/,
   );
+});
+
+test('capture route resolves presets onto CaptureSurface', () => {
+  const route = readFileSync(join(process.cwd(), 'src/app/capture.tsx'), 'utf8');
+  assert.match(route, /CaptureSurface/);
+  assert.match(route, /resolveCapturePreset/);
+  assert.match(route, /preset=syllabus/);
 });
 
 test('Capture scrolls progress above sticky CTA when Ask AI / busy', () => {

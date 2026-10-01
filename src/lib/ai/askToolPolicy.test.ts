@@ -232,7 +232,7 @@ test('AC-ASK-APPROVE: Ask cannot write approved_score; screen Approve path stays
 
   // On-screen Approve still calls approveCapture (AC-ASK-APPROVE-2).
   for (const path of [
-    'src/app/capture.tsx',
+    'src/components/capture/CaptureSurface.tsx',
     'src/app/proposal.tsx',
     'src/app/class/[id]/student/[studentId].tsx',
   ]) {
