@@ -119,12 +119,16 @@ Mapping targets (FR-AI-05 syllabus):
 - engine, categories[{key,label,weight_percent,drop_lowest,min_grades}], within_category when clear
 - late_rule {type,amount,unit,floor_pct}, missing_rule, extra_credit_method A|B|C + ec_cap
 - floor/ceiling, book_mode, exam_weight, rollup_preset, title, narrative for unmapped philosophy
+- retake {eligible_category_ids:[category keys, [] = every category], attempts, method replace|higher_of|average, cap, window_days} as path syllabus.retake
 Ambiguity rules (FR-AI-06): weights without how items combine → within_category unknown + ambiguity card.
 "No late work" → late.type none. "Hard deadline / no work after unit ends" → late.type none (product shape; never invent hard_deadline enum).
 "10% per day" → per_day 10 percent.
 "Missing work uses a floor of 50" → missing_rule {type:floor, floor:50} (not syllabus.floor).
 "Retake replaces the old score" → retake {method:replace, attempts:1}.
 "Highest score kept" / "keep highest" / retake cap → retake {method:higher_of, cap:N}.
+"Retakes on tests only, within 5 days, two attempts" → retake {eligible_category_ids:["tests"], attempts:2, window_days:5}.
+"No retakes" / "retakes are not allowed" → syllabus.retake value null, status proposed (an answer, not unknown).
+Two different retake rules in one document (e.g. "replaces" and "keep the higher score") → syllabus.retake status conflict with both quotes; never pick one.
 Conduct mark / citizenship / E-S-N-U / philosophy lines that are not structured fields → syllabus.narrative with verbatim quote.
 Plus/minus scale notes on a syllabus → syllabus.narrative (do not invent scale.bands on class syllabus).
 "Method B" / "extra credit method B" → syllabus.extra_credit_method "B" (A|B|C only).

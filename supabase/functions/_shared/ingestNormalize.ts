@@ -277,27 +277,73 @@ export function coerceCategories(raw: unknown): CoercedCategory[] | null {
   return out;
 }
 
+/** True when retake text names more than one way to count the retake (replace / higher / average). */
+export function retakeTextConflicts(text: string): boolean {
+  const t = text.toLowerCase();
+  const kinds = [
+    /replac|new\s+score|overwrit/.test(t),
+    /higher|highest|best\s+(score|grade)|keep\s*(the\s*)?highest/.test(t),
+    /\baverag|\bavg\b|\bmean\b/.test(t),
+  ].filter(Boolean).length;
+  return kinds > 1;
+}
+
+const RETAKE_NONE_RE = /\bno\s+(retakes?|redos?|re-?tests?)\b|\b(retakes?|redos?|re-?tests?)\s+(are\s+|is\s+)?not\s+(allowed|offered|accepted|permitted)/;
+/** Document says retakes are off (“No retakes”, {enabled:false}). */
+export function isNoRetake(raw: unknown): boolean {
+  if (typeof raw === 'string') return RETAKE_NONE_RE.test(raw.toLowerCase());
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    return o.enabled === false || o.allowed === false;
+  }
+  return false;
+}
+
+const WORD_NUM: Record<string, number> = { one: 1, two: 2, three: 3, four: 4 };
+
+function retakeFromText(raw: string): Record<string, unknown> | null {
+  const s = raw.toLowerCase();
+  if (RETAKE_NONE_RE.test(s)) return null;
+  if (retakeTextConflicts(s)) return null;
+  const capM = s.match(/(?:cap(?:ped)?|max(?:imum)?|up\s+to|no\s+higher\s+than)\s*(?:at|of)?\s*(\d+(?:\.\d+)?)/);
+  const method = /higher|highest|best|keep\s*highest/.test(s)
+    ? 'higher_of'
+    : /replac|new\s+score|overwrit/.test(s)
+      ? 'replace'
+      : /\baverag|\bavg\b|\bmean\b/.test(s)
+        ? 'average'
+        : capM
+          ? 'higher_of'
+          : null;
+  if (!method) return null;
+  const attM = s.match(/\b(\d+|one|two|three|four)\s+(?:retakes?|attempts?|redos?|re-?tests?)\b/);
+  const attempts = attM ? (WORD_NUM[attM[1]!] ?? Number(attM[1])) : 1;
+  const winM = s.match(/within\s+(\d+)\s*(?:school\s+)?days?/);
+  return {
+    eligible_category_ids: [],
+    attempts: Math.max(1, Math.floor(attempts || 1)),
+    method,
+    cap: capM ? Number(capM[1]) : null,
+    window_days: winM ? Number(winM[1]) : null,
+  };
+}
+
 export function coerceRetake(raw: unknown): Record<string, unknown> | null {
   if (raw == null) return null;
-  if (typeof raw === 'string') {
-    const s = raw.toLowerCase();
-    if (/higher|best|max|keep\s*highest/.test(s)) return { method: 'higher_of', attempts: 1, cap: null };
-    if (/replace|new\s+score/.test(s)) return { method: 'replace', attempts: 1, cap: null };
-    if (/average|avg|mean/.test(s)) return { method: 'average', attempts: 1, cap: null };
-    const cap = s.match(/cap(?:ped)?\s*(?:at\s*)?(\d+)/);
-    if (cap) return { method: 'higher_of', attempts: 1, cap: Number(cap[1]) };
-    return null;
-  }
+  if (typeof raw === 'string') return retakeFromText(raw);
   if (typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
+  if (o.enabled === false || o.allowed === false) return null;
   let method = typeof o.method === 'string' ? o.method.toLowerCase() : '';
   if (method === 'highest' || method === 'max' || method === 'higher' || method === 'keep_highest') {
     method = 'higher_of';
   }
   if (method === 'overwrite') method = 'replace';
+  if (method === 'mean' || method === 'avg') method = 'average';
   if (method !== 'replace' && method !== 'higher_of' && method !== 'average') {
     if (o.keep_highest || o.higher_of) method = 'higher_of';
     else if (o.replace) method = 'replace';
+    else if (o.cap != null) method = 'higher_of';
     else return null;
   }
   const attempts = num(o.attempts ?? o.max_attempts) ?? 1;
@@ -706,6 +752,7 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   }
 
   const out: IngestField[] = [];
+  const noRetakeFields = new Set<IngestField>();
   let derivedPreset: IngestField | null = null;
   let derivedPeriod: IngestField | null = null;
   let pendingLateFloor: number | null = null;
@@ -793,6 +840,20 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         break;
       }
       case 'syllabus.retake': {
+        // Two different retake rules in one document → let the teacher pick, never guess.
+        const retakeText = typeof value === 'string' ? value : quoteText(ev);
+        if (retakeTextConflicts(retakeText)) {
+          value = null;
+          status = 'conflict';
+          confidence = Math.min(confidence, 0.4);
+          ambiguities.push({
+            code: 'retake_method',
+            message: 'The document gives more than one retake rule (for example “replaces” and “keep the higher score”).',
+            paths: ['syllabus.retake'],
+            choices: ['replace', 'higher_of', 'average'],
+          });
+          break;
+        }
         value = coerceRetake(value);
         break;
       }
@@ -1087,7 +1148,13 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       pendingMissingFloorSrc = f.source_doc_id;
     }
 
-    if (value == null && f.value != null) {
+    // “No retakes” is an answer (retake off), not noise: keep it as a null value.
+    const explicitNoRetake =
+      path === 'syllabus.retake' &&
+      status !== 'conflict' &&
+      (isNoRetake(f.value) || (f.value == null && isNoRetake(quoteText(ev))));
+    if (explicitNoRetake) value = null;
+    if (value == null && f.value != null && !explicitNoRetake) {
       // Coerced away: only keep explicit unknown/review cards (e.g. within_category)
       if (!(status === 'unknown' || status === 'needs_review' || status === 'conflict')) {
         continue;
@@ -1103,12 +1170,14 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       }
     }
 
-    out.push({
+    const pushed: IngestField = {
       ...f,
       value,
       confidence,
       status: statusFor(confidence, status),
-    });
+    };
+    if (explicitNoRetake) noRetakeFields.add(pushed);
+    out.push(pushed);
   }
 
   const byPath = new Map<string, IngestField>();
@@ -1358,6 +1427,8 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   // Drop null/empty noise unless status is an explicit review card
   let finalFields = [...byPath.values()].filter((f) => {
     if (f.value != null && f.value !== '') return true;
+    // Explicit “no retakes” is a real answer (retake off), not empty noise.
+    if (noRetakeFields.has(f)) return true;
     return f.status === 'unknown' || f.status === 'needs_review' || f.status === 'conflict';
   });
 

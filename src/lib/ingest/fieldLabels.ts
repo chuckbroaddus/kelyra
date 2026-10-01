@@ -129,6 +129,16 @@ export function labelForIngestPath(path: string): string {
 }
 
 export function labelForIngestValue(path: string, value: unknown): string {
+  if (path === 'syllabus.retake') {
+    if (value == null) return 'No retakes';
+    if (typeof value === 'object') {
+      const r = value as { method?: string; attempts?: number; cap?: number | null; window_days?: number | null; eligible_category_ids?: string[] };
+      const n = Math.max(1, Number(r.attempts ?? 1));
+      const how = r.method === 'replace' ? 'new score replaces the old one' : r.method === 'average' ? 'scores are averaged' : 'the higher score counts';
+      const on = r.eligible_category_ids?.length ? ` on ${r.eligible_category_ids.join(', ')}` : '';
+      return `${n === 1 ? 'One retake' : `${n} retakes`}${on}; ${how}${r.cap != null ? `, up to ${r.cap}%` : ''}${r.window_days != null ? `, within ${r.window_days} days` : ''}`;
+    }
+  }
   if (value == null) return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'number') return String(value);

@@ -745,6 +745,36 @@ export function toEditorInput(draft: SyllabusWizardDraft) {
   };
 }
 
+/** “Quizzes” → “quiz”, “Homework” → “homework” (for “Drops the lowest 1 quiz”). */
+export function singularLabel(label: string): string {
+  const t = label.trim().toLowerCase();
+  if (t.endsWith('zzes')) return t.slice(0, -3);
+  if (t.endsWith('ies')) return `${t.slice(0, -3)}y`;
+  if (/(ches|shes|xes|sses)$/.test(t)) return t.slice(0, -2);
+  if (t.endsWith('s') && !t.endsWith('ss')) return t.slice(0, -1);
+  return t;
+}
+
+/** Plain retake sentence for the Review step and families. */
+export function retakeSentence(draft: SyllabusWizardDraft): string {
+  const r = draft.retake;
+  if (!r) return 'No retakes.';
+  const n = Math.max(1, Number(r.attempts ?? 1));
+  const cats = (r.eligible_category_ids ?? []).map(
+    (k) => draft.categories.find((c) => c.key === k)?.label ?? k,
+  );
+  const on = cats.length ? ` on ${cats.join(', ')}` : '';
+  const how =
+    r.method === 'replace'
+      ? 'the new score replaces the old one'
+      : r.method === 'average'
+        ? 'the scores are averaged'
+        : 'the higher score counts';
+  const cap = r.cap != null ? `, up to ${r.cap}%` : '';
+  const win = r.window_days != null ? ` Retakes must be done within ${r.window_days} days.` : '';
+  return `Retakes: ${n === 1 ? 'one retake' : `${n} retakes`}${on}; ${how}${cap}.${win}`;
+}
+
 export function parentFacingParagraph(draft: SyllabusWizardDraft): string {
   const eng = engineOption(draft.engine);
   const lines: string[] = [];
@@ -758,8 +788,11 @@ export function parentFacingParagraph(draft: SyllabusWizardDraft): string {
     lines.push(`Categories: ${parts.join(', ') || 'none'}.`);
     const drops = draft.categories
       .filter((c) => c.active && Number(c.rules?.drop_lowest_n ?? 0) > 0)
-      .map((c) => `${c.label} drops ${c.rules.drop_lowest_n}`);
-    if (drops.length) lines.push(`Drops: ${drops.join('; ')}.`);
+      .map((c) => {
+        const n = Number(c.rules.drop_lowest_n);
+        return `${n} ${n === 1 ? singularLabel(c.label) : c.label.toLowerCase()}`;
+      });
+    if (drops.length) lines.push(`Drops the lowest ${drops.join(' and the lowest ')}.`);
   }
   const miss =
     draft.missing_rule === 'zero'
@@ -783,6 +816,7 @@ export function parentFacingParagraph(draft: SyllabusWizardDraft): string {
   } else {
     lines.push('Extra credit can raise or replace a score on existing work.');
   }
+  lines.push(retakeSentence(draft));
   lines.push(
     draft.book_mode === 'rolling_year'
       ? 'Scores roll across the year.'

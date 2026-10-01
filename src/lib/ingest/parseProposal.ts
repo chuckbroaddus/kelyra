@@ -241,9 +241,27 @@ export function parseIngestProposal(raw: unknown, opts: ParseOptions = {}): Inge
   }
 
   const byPath = new Map<string, IngestField>();
+  let retakeDisagrees = false;
   for (const f of fields) {
     const prev = byPath.get(f.path);
+    if (
+      prev &&
+      f.path === 'syllabus.retake' &&
+      JSON.stringify(prev.value ?? null) !== JSON.stringify(f.value ?? null)
+    ) {
+      // Two different retake rules: keep neither, ask the teacher (never pick by confidence).
+      retakeDisagrees = true;
+    }
     if (!prev || f.confidence > prev.confidence) byPath.set(f.path, f);
+  }
+  if (retakeDisagrees) {
+    const kept = byPath.get('syllabus.retake')!;
+    byPath.set('syllabus.retake', {
+      ...kept,
+      value: null,
+      status: 'conflict',
+      confidence: Math.min(kept.confidence, 0.4),
+    });
   }
   const deduped = [...byPath.values()];
   const warnings = parseWarnings(obj.warnings);
@@ -270,7 +288,19 @@ export function parseIngestProposal(raw: unknown, opts: ParseOptions = {}): Inge
     wizard,
     kind,
     fields: deduped,
-    ambiguities: parseAmbiguities(obj.ambiguities),
+    ambiguities: [
+      ...parseAmbiguities(obj.ambiguities),
+      ...(retakeDisagrees
+        ? [
+            {
+              code: 'retake_method',
+              message: 'The document gives more than one retake rule. Pick the one this class uses.',
+              paths: ['syllabus.retake'],
+              choices: ['replace', 'higher_of', 'average'],
+            },
+          ]
+        : []),
+    ],
     warnings,
     document_kind_guess: typeof obj.document_kind_guess === 'string' ? obj.document_kind_guess : null,
     overall_confidence: overall,
