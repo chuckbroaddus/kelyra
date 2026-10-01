@@ -104,6 +104,24 @@ function slots(obj: Record<string, unknown> | null, conf = 0.9): ExtractedSlot[]
   return Object.entries(obj).map(([path, value]) => ({ path, value, confidence: conf, evidence: null }));
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** 2026-08-15 → “Aug 15, 2026” (no raw ISO dates on screen). */
+function plainDate(v: unknown): string {
+  const m = typeof v === 'string' ? v.match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
+  if (!m) return v == null || v === '' ? 'not set' : String(v);
+  return `${MONTHS[Number(m[2]) - 1] ?? m[2]} ${Number(m[3])}, ${m[1]}`;
+}
+
+/** “ · 70 passes” unless the scale name already says it. */
+function passingSuffix(ctx: GraphContext): string {
+  const id = String(valueOf(ctx, 'scale.default_id'));
+  const pass = valueOf(ctx, 'scale.passing_pct');
+  if (pass == null) return '';
+  const name = SCALE_LABEL[id] ?? '';
+  return name.includes(`${String(pass)} passes`) ? '' : ` · ${String(pass)} passes`;
+}
+
 function pct(n: unknown): string {
   return n == null ? '—' : `${Math.round(Number(n) * 1000) / 1000}%`;
 }
@@ -273,7 +291,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       { id: 'sem', label: 'Semesters only', slots: [{ path: 'calendar.template', value: 'college_term' }] },
       { id: 'year4', label: 'Elementary, 4 report cards', slots: [{ path: 'calendar.template', value: 'elementary_year_4' }] },
       { id: 'year6', label: 'Elementary, 6 report cards', slots: [{ path: 'calendar.template', value: 'elementary_year_6' }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     effects: (ctx) => {
       const t = templateOf(ctx);
@@ -291,7 +309,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     help_key: 'help.wizard.dates',
     optional: true,
     edit_label: 'year dates',
-    summarize: (ctx) => `School year: ${String(valueOf(ctx, 'calendar.year_start') ?? '—')} → ${String(valueOf(ctx, 'calendar.year_end') ?? '—')}`,
+    summarize: (ctx) => `School year: ${plainDate(valueOf(ctx, 'calendar.year_start'))} to ${plainDate(valueOf(ctx, 'calendar.year_end'))}`,
     chips: [
       { id: 'ns', label: 'Use Aug 15 – May 28 for now', action: 'not_sure' },
       REST,
@@ -330,7 +348,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
         label: 'No credit',
         slots: [{ path: 'credit.policy', value: { unit: 'none', year_link: false, attendance_gate: false } }],
       },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     parse: (t) => {
       const s = t.toLowerCase();
@@ -360,7 +378,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       { id: '8515', label: 'Periods 85% + exam 15%', slots: [{ path: 'rollup.preset', value: '85/15' }] },
       { id: '5050', label: 'Two periods 50% each, no exam', slots: [{ path: 'rollup.preset', value: '50/50' }] },
       { id: 'mean', label: 'Plain average of the periods', slots: [{ path: 'rollup.preset', value: 'year_mean' }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     parse: (t) => {
       const m = t.match(/2\/7|40\s*\/\s*40\s*\/\s*20|45\s*\/\s*45\s*\/\s*10|85\s*\/\s*15|50\s*\/\s*50|3\/7/);
@@ -418,7 +436,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
     question: 'Which letter-grade scale do you use, and what is passing?',
     help_key: 'help.scale.tx70',
     edit_label: 'letter grades',
-    summarize: (ctx) => `Letter grades: ${SCALE_LABEL[String(valueOf(ctx, 'scale.default_id'))] ?? scaleLabel(valueOf(ctx, 'scale.default_id'))} · ${String(valueOf(ctx, 'scale.passing_pct') ?? '—')} passes`,
+    summarize: (ctx) => `Letter grades: ${SCALE_LABEL[String(valueOf(ctx, 'scale.default_id'))] ?? scaleLabel(valueOf(ctx, 'scale.default_id'))} ${passingSuffix(ctx)}`,
     chips: [
       { id: '10pt', label: '10-point (90 is an A, 60 passes)', slots: [{ path: 'scale.default_id', value: 'us_10' }, { path: 'scale.passing_pct', value: 60 }] },
       { id: 'txd', label: 'Texas: 70 passes, has a D', slots: [{ path: 'scale.default_id', value: 'texas_with_d' }, { path: 'scale.passing_pct', value: 70 }] },
@@ -426,7 +444,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       { id: 'pm', label: 'Plus/minus letters (A-, B+)', slots: [{ path: 'scale.default_id', value: 'college_plus_minus' }, { path: 'scale.passing_pct', value: 60 }] },
       { id: '7pt', label: '7-point (93 is an A)', slots: [{ path: 'scale.default_id', value: 'seven_point' }, { path: 'scale.passing_pct', value: 70 }] },
       { id: 'esnu', label: 'E / S / N / U marks (elementary)', slots: [{ path: 'scale.default_id', value: 'esnu' }, { path: 'scale.passing_pct', value: 70 }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
   },
   {
@@ -466,7 +484,7 @@ export const SCHOOL_NODES: QuestionNode[] = [
       { id: 'uw', label: 'Unweighted only', slots: [{ path: 'gpa.mode', value: 'unweighted' }] },
       { id: 'both', label: 'Unweighted and weighted', slots: [{ path: 'gpa.mode', value: 'unweighted_and_weighted' }] },
       { id: 'rank', label: 'Weighted, with class rank', slots: [{ path: 'gpa.mode', value: 'with_rank' }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
   },
   {
@@ -575,7 +593,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     section: 'engine',
     paths: ['engine'],
     question:
-      'When you average the class, should a 100-point test outweigh a 10-point quiz, or should every assignment in a bucket count the same?',
+      'When you average grades, should a 100-point test count more than a 10-point quiz, or should every assignment in a category count the same?',
     help_key: 'help.engine',
     hidden: (ctx) => lockedSyllabus(ctx, 'engine'),
     edit_label: 'how the average works',
@@ -594,7 +612,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
       },
       { id: 'item', label: 'Each assignment has its own weight', slots: [{ path: 'engine', value: 'item_weights' }, { path: 'within_category', value: null }] },
       { id: 'none', label: 'No overall grade', slots: [{ path: 'engine', value: 'none' }, { path: 'within_category', value: null }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     parse: (t) => slots(parseEngine(t)),
     defaults: (ctx) => {
@@ -651,7 +669,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
           { key: 'homework', label: 'Homework', weight_percent: 30 },
         ] }],
       },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     parse: (t) => {
       const cats = parseCategories(t);
@@ -677,7 +695,7 @@ export const SYLLABUS_NODES: QuestionNode[] = [
     chips: [
       { id: 'yes', label: 'Yes, points matter', slots: [{ path: 'within_category', value: 'points_inside' }, { path: 'engine', value: 'weighted_points_inside' }] },
       { id: 'no', label: 'No, each assignment is equal', slots: [{ path: 'within_category', value: 'percent_inside' }, { path: 'engine', value: 'weighted_percent_inside' }] },
-      { id: 'ns', label: "I'm not sure", action: 'not_sure' },
+      NS,
     ],
     parse: (t) => {
       const w = parseWithin(t);

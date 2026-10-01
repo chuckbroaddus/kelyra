@@ -206,7 +206,10 @@ async function shot(c, name) {
 
 async function teacherFlow(c, port) {
   await c.send('Page.navigate', { url: `http://127.0.0.1:${WEB_PORT}/class/${CLASS_ID}/syllabus-interview?kelyra_persona_port=${port}` });
-  await click(c, 'Weighted categories, all equal', 120000);
+  await waitText(c, /Weighted categories, all equal/, 120000);
+  await sleep(2500);
+  await click(c, 'Weighted categories, all equal');
+  await waitText(c, /What are your grade categories/, 30000);
   await sleep(800);
   await say(c, 'Tests 50, Quizzes 30, Homework 20');
   await click(c, 'Drop the lowest Quizzes*', 60000);
@@ -241,6 +244,9 @@ async function teacherFlow(c, port) {
   await scrollToText(c, 'Your answers are filled in', 80);
   await shot(c, 'gb-ask-setup-form-applied-375.png');
   fs.writeFileSync(path.join(OUT, 'form-applied.txt'), await bodyText(c));
+  await c.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: 187, y: 300, deltaX: 0, deltaY: -330 });
+  await sleep(900);
+  await shot(c, 'gb-ask-setup-form-review-375.png');
   if (SAVE) {
     await click(c, 'Save draft');
     await waitText(c, /Draft saved|Saved|Could not save|Fix /i, 60000);
@@ -255,6 +261,16 @@ async function officeFlow(c, port) {
   await click(c, 'High', 120000);
   await click(c, 'Every 6 weeks', 60000);
   await click(c, 'Use the usual choices for the rest', 60000);
+  // Required school questions are still asked: answer the next two, then “not sure” the rest.
+  await click(c, 'Yes, ½ credit per semester', 60000);
+  await click(c, 'Three six-weeks + exam (Texas: 2/7 each, exam 1/7)', 60000);
+  await sleep(1200);
+  await shot(c, 'gb-ask-setup-office-midflow-375.png');
+  for (let i = 0; i < 15; i += 1) {
+    if (/Your setup — tap a line to change it/.test(await bodyText(c))) break;
+    await click(c, 'Not sure — use the usual choice', 30000);
+    await sleep(1200);
+  }
   await waitText(c, /Your setup — tap a line to change it/, 90000);
   await sleep(800);
   await scrollToText(c, 'Your setup — tap a line to change it', 60);

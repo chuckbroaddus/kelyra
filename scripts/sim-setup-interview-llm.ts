@@ -73,7 +73,7 @@ async function main() {
   const schoolId = (await rest(url, anon, office, '/rest/v1/rpc/my_school_id', { method: 'POST', body: '{}' })) as string;
   if (!classId || typeof schoolId !== 'string') throw new Error('could not resolve teacher class / office school');
 
-  const calls: Array<{ conv: string; node: string | null; text: string; mode: string; slots: unknown }> = [];
+  const calls: Array<{ conv: string; node: string | null; text: string; mode: string; error?: string; slots: unknown }> = [];
   const make = (conv: string, wizard: 'school' | 'syllabus'): Extractor => async (session, text) => {
     const pending = session.pending_node ? getNode(session.wizard, session.pending_node) : null;
     const res = await fetch(`${url}/functions/v1/setup-interview`, {
@@ -90,7 +90,7 @@ async function main() {
     });
     const j = (await res.json().catch(() => ({}))) as { mode?: string; extraction?: unknown; error?: string };
     const model = parseExtractionResponse(j.extraction ?? {}, wizard);
-    calls.push({ conv, node: session.pending_node, text, mode: j.mode ?? `http_${res.status}:${j.error ?? ''}`, slots: model.slots });
+    calls.push({ conv, node: session.pending_node, text, mode: j.mode ?? `http_${res.status}`, error: j.error ? String(j.error).slice(0, 200) : undefined, slots: model.slots });
     // Same merge as InterviewScreen.
     const merged: ExtractionResult = mergeExtractions(session, text, model);
     await new Promise((r) => setTimeout(r, 400));

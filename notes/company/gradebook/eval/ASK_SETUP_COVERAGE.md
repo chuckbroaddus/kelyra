@@ -22,7 +22,7 @@ Legend: **Asked** = a question or chip sets it · **Parsed** = typed answers tur
 | Syllabus, before | 7 / 17 applicable | ~4 | **0** (handoff dropped the draft; `?from=interview` never read) |
 | Syllabus, after | 17 / 17 | 17 / 17 | 17 / 17 (through `applyProposalToSyllabusDraft`, same as documents) |
 | School, before | ~9 slots, 5 of them dead paths | — | **0** |
-| School, after | 25 / 25 required+optional+derived | 25 / 25 | 25 / 25 (through `mergeIntoSetupDraft`, same as documents) |
+| School, after | 27 / 27 required + optional + derived | 27 / 27 | 27 / 27 (through `mergeIntoSetupDraft`, same as documents) |
 
 Not applicable (nothing to ask): `syllabus.narrative`, `syllabus.assignment_max`, `rollup.custom_weights`, `school.notes`.
 
@@ -79,7 +79,8 @@ School-locked fields are pre-filled ("Set by school") and skipped.
 
 - Every question has a "Not sure" chip, and optional questions also have "Use defaults for the rest". Defaults are tagged "Default · check" on the summary.
 - If an answer can't be parsed, the question is asked again. After 2 misses the default is used and the interview moves on, so it can't get stuck. Gibberish counts as a miss even when the model calls it a side question.
-- The summary card ("Your setup — tap a line to change it") lets the user change any line. "Apply to the form" fills the real form, and nothing is published until Save draft or Publish.
+- The summary card ("Your setup — tap a line to change it") lets the user change any line. Lines are tagged Change / "Usual choice · check" / "Set by your school". "Put these answers in the form" fills the real form and opens its Review step. Nothing is published until Save draft or Publish.
+- All on-screen text uses plain words (rebased on #341). Stored ids are shown through `src/lib/grade/plainLabels.ts` or the word maps in `graph.ts`, so no raw ids, enum values, or ISO dates appear.
 
 ## Finding (not fixed here: document mapper, Hermes card t_4646285c owns ingest)
 
@@ -94,3 +95,14 @@ the shared mapper runs (`applyInterviewToSyllabusDraft`).
 - `src/lib/interview/simulatedConversations.test.ts` + `simConversations.ts`: 4 scripted conversations
   (A total points · B weighted with an invalid 110%, edit at summary · C not-sure + school lock + gibberish · D office).
 - `scripts/sim-setup-interview-llm.ts`: the same 4 conversations against the dev `setup-interview` model.
+
+## Results (2026-10-01)
+
+- Unit tests: `node --experimental-strip-types --test src/lib/interview/*.test.ts` → 25/25 pass.
+- LLM simulations (`scripts/sim-setup-interview-llm.ts`, dev `setup-interview`):
+  - Run 1 (25/25 model turns) found 3 merge problems: EC method left empty, engine/inside-category contradictions, and "not sure" not treated as an answer. All 3 are fixed.
+  - Run 2 (25/25 model turns): C failed because the model called gibberish a "side question", so the question re-asked forever. Fixed.
+  - Run 3 (25/25 model turns): B failed because the model flipped "each assignment counts the same" to points-inside. Fixed with coupled paths.
+  - Run 4 (13/25 model turns): A, B, C and D all pass.
+  - Later runs hit the Gemini 429 quota on dev. Every turn fell back to the parsers, and all 4 conversations still pass.
+- 375 px UI proof: `scripts/gb-ask-setup-ui-proof.mjs` (teacher and `--office`).
