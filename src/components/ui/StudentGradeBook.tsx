@@ -23,7 +23,7 @@ import {
 import { GhostButton } from '@/components/ui/Button';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { studentHead } from '@/constants/table';
+import { studentHeadCompact, studentHeadFor } from '@/constants/table';
 import { type } from '@/constants/theme';
 import { defaultExpandedIds, visibleBookRows, type BookNode } from '@/lib/assignments/tree';
 import { firstName } from '@/lib/format';
@@ -178,7 +178,9 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
   const tree = useMemo(() => (filteredBook ? studentBookTree(filteredBook, classId) : []), [classId, filteredBook]);
   const visibleRows = useMemo(() => visibleBookRows(tree, expanded), [tree, expanded]);
   const [paneWidth, setPaneWidth] = useState(0);
-  const studentCol = studentHead.colWidth;
+  const headMetrics = studentHeadFor(layout.breakpoint);
+  const compactHead = studentHeadCompact(layout.breakpoint);
+  const studentCol = headMetrics.colWidth;
   const onPaneLayout = useCallback((width: number) => {
     setPaneWidth((current) => (Math.abs(current - width) < 1 ? current : width));
   }, []);
@@ -343,7 +345,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
         rowKey={(row) => row.id}
         frozenTitle="Assignment"
         frozenWidth={frozenWidth}
-        headHeight={studentHead.height}
+        headHeight={headMetrics.height}
         empty="No assignments yet."
         rowTone={(row) => (row.kind === 'assignment' ? 'stripe' : 'group')}
         renderFrozen={(row) => (
@@ -364,7 +366,7 @@ export function StudentGradeBook({ classId, studentId, childName, photoUrl }: Pr
             title: firstName(shownName),
             width: studentCol,
             renderTitle: () => (
-              <GradebookStudentHead name={shownName} photoUrl={student.photoUrl} />
+              <GradebookStudentHead name={shownName} photoUrl={student.photoUrl} compact={compactHead} />
             ),
             render: (row) => {
               if (row.kind !== 'assignment' || !row.assignment) return null;

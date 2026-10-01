@@ -4,7 +4,7 @@ import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { type } from '@/constants/theme';
 import type { ReactNode } from 'react';
-import { studentHead } from '@/constants/table';
+import { studentHeadCompact, studentHeadFor } from '@/constants/table';
 import { firstName } from '@/lib/format';
 import type { HeatmapCell } from '@/lib/classes/overview';
 import { useLayout } from '@/lib/theme/layout';
@@ -23,9 +23,11 @@ export function Heatmap({ classId, skills, students, marks, leading, trailing }:
   const { colors } = useTheme();
   const layout = useLayout();
   const frozen = layout.breakpoint === 'tablet' ? 168 : layout.breakpoint === 'phone-landscape' ? 148 : 132;
-  const size = studentHead.colWidth;
+  const headMetrics = studentHeadFor(layout.breakpoint);
+  const compactHead = studentHeadCompact(layout.breakpoint);
+  const size = headMetrics.colWidth;
   const rowHeight = layout.breakpoint === 'phone-portrait' ? 44 : 48;
-  const headHeight = studentHead.height;
+  const headHeight = headMetrics.height;
   const legend = (
     <View style={styles.legend}>
       <LegendSwatch fill={colors.brandSoft} stroke={colors.brand} label="Focus" />
@@ -66,6 +68,7 @@ export function Heatmap({ classId, skills, students, marks, leading, trailing }:
               name={student.displayName}
               photoUrl={student.photoUrl}
               href={`/class/${classId}/student/${student.id}`}
+              compact={compactHead}
             />
           ),
           render: (skill) => {
