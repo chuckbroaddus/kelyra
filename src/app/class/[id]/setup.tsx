@@ -64,6 +64,20 @@ import type { RosterImportRow } from '@/lib/supabase/types';
 import type { ClassRow } from '@/lib/supabase/types';
 import { useFocusEffect } from 'expo-router';
 
+/** Shown in the review card when names were read but the pending import did not save. */
+export const ROSTER_PARK_FAILED_NOTE =
+  'These names were not saved for later. Add the checked names now, or they will be lost when you leave.';
+
+/** Supabase errors are plain objects, not Error instances; keep their message. */
+function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === 'object' && 'message' in err) {
+    const message = String((err as { message: unknown }).message ?? '').trim();
+    if (message) return message;
+  }
+  return fallback;
+}
+
 export default function SetupScreen() {
   const { colors } = useTheme();
   const layout = useLayout();
@@ -82,6 +96,8 @@ export default function SetupScreen() {
   const [readingList, setReadingList] = useState(false);
   // Shown inside the Add card: page-bottom status is off-screen at phone width.
   const [listNote, setListNote] = useState<string | null>(null);
+  // In-card note when the names are on screen but the pending import could not be saved.
+  const [parkNote, setParkNote] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedRosterName[]>([]);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
   const [micId, setMicId] = useState<string | null>(null);
@@ -253,6 +269,7 @@ export default function SetupScreen() {
     setReadingList(true);
     setError(null);
     setListNote(null);
+    setParkNote(null);
     setStatus('Reading names from the list…');
     try {
       const prepared = await normalizePhoto(uri, mimeType);
@@ -275,25 +292,27 @@ export default function SetupScreen() {
         setListNote('No student names found on that photo. Try a clearer photo of the class list, or type names below.');
         return;
       }
-      const parked = await createRosterImport({
-        classId: id,
-        photoAssetId: asset.id,
-        suggestions: next.map((row) => ({
-          name: row.name,
-          selected: row.selected,
-          already_enrolled: row.alreadyHere,
-        })),
-      });
-      setParkedAssetId(asset.id);
-      setImports((current) => [parked, ...current.filter((row) => row.id !== parked.id)]);
-      setStatus(
-        next.length
-          ? 'Confirm every name. Nothing is added until you tap Add.'
-          : 'No student names found. Try a clearer photo or type names below.',
-      );
+      // The names are already read and on screen. Saving the pending import is a separate
+      // step, so a failure here must not surface as "Could not read that list".
+      setStatus(null);
+      try {
+        const parked = await createRosterImport({
+          classId: id,
+          photoAssetId: asset.id,
+          suggestions: next.map((row) => ({
+            name: row.name,
+            selected: row.selected,
+            already_enrolled: row.alreadyHere,
+          })),
+        });
+        setParkedAssetId(asset.id);
+        setImports((current) => [parked, ...current.filter((row) => row.id !== parked.id)]);
+      } catch {
+        setParkNote(ROSTER_PARK_FAILED_NOTE);
+      }
     } catch (err) {
       setStatus(null);
-      setError(err instanceof Error ? err.message : 'Could not read that list');
+      setError(errorMessage(err, 'Could not read that list'));
     } finally {
       setReadingList(false);
     }
@@ -338,6 +357,7 @@ export default function SetupScreen() {
       setRoster(await listRoster(id));
       if (imports[0]) await markRosterImportConfirmed(imports[0].id);
       setSuggestions([]);
+      setParkNote(null);
       setParkedAssetId(null);
       setImports(await listPendingRosterImports(id));
       setName('');
@@ -557,6 +577,7 @@ export default function SetupScreen() {
           {suggestions.length ? (
             <>
               <Text style={[type.meta, { color: colors.mute }]}>Confirm every name. Nothing is added until you tap Add.</Text>
+              {parkNote ? <Text style={[type.meta, { color: colors.mute }]}>{parkNote}</Text> : null}
               {suggestions.map((row) => (
                 <View key={row.key} style={styles.suggestRow}>
                   <Pressable
@@ -595,7 +616,14 @@ export default function SetupScreen() {
                 label={`Add ${selectedCount} student${selectedCount === 1 ? '' : 's'}`}
                 onPress={() => void onAddFromPhoto()}
               />
-              <GhostButton align="left" label="Cancel list" onPress={() => setSuggestions([])} />
+              <GhostButton
+                align="left"
+                label="Cancel list"
+                onPress={() => {
+                  setSuggestions([]);
+                  setParkNote(null);
+                }}
+              />
             </>
           ) : (
             <>
