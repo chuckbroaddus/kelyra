@@ -7,9 +7,9 @@ import {
   isNodeRelevant,
   nodePathsFilled,
   nodesFor,
+  reviewNodeId,
   sectionsFor,
 } from './graph.ts';
-import { interviewSlotValue } from '../grade/plainLabels.ts';
 import type {
   GraphContext,
   InterviewSection,
@@ -63,7 +63,7 @@ export function buildProgress(
 export function nextQuestion(session: InterviewSession): NextQuestionResult {
   const ctx = graphContext(session);
   const nodes = nodesFor(session.wizard);
-  const reviewId = session.wizard === 'school' ? 'S-Q10' : 'T-Q7';
+  const reviewId = reviewNodeId(session.wizard);
 
   for (const node of nodes) {
     if (node.id === reviewId) continue;
@@ -86,46 +86,38 @@ export function nextQuestion(session: InterviewSession): NextQuestionResult {
 
 export function openingMessage(wizard: InterviewWizard): string {
   if (wizard === 'school') {
-    return "Let's set up how your school gives grades. Answer a few questions and I'll fill in the form for you. You can say things like “six-weeks, 70 is passing.”";
+    return "Let's set up how your school gives grades. Answer a few questions and I'll fill in the form for you. You can say things like “six-weeks, 70 is passing.” Say “not sure” any time to use the usual choice.";
   }
-  return "Let's set up how this class is graded. Answer a few questions and I'll fill in the form for you. Nothing is published until you open the form and tap Publish.";
+  return "Let's set up how this class is graded. Answer a few questions and I'll fill in the form for you. Nothing is published until you tap Publish on the form. Say “not sure” any time to use your school's usual choice.";
+}
+
+export type SummaryLine = { node_id: string; text: string; tag: 'answered' | 'default' | 'school' };
+
+/** Every relevant answered setting, one line each, tagged by where the value came from. */
+export function summaryLines(session: InterviewSession): SummaryLine[] {
+  const ctx = graphContext(session);
+  const lines: SummaryLine[] = [];
+  for (const node of nodesFor(session.wizard)) {
+    if (!node.summarize || !node.paths.length) continue;
+    if (!isNodeRelevant(node, ctx) && !node.paths.every((p) => session.filled[p]?.evidence === 'school lock')) continue;
+    const text = node.summarize(ctx);
+    if (!text) continue;
+    const fs = node.paths.map((p) => session.filled[p]).filter(Boolean);
+    const tag: SummaryLine['tag'] = fs.length && fs.every((f) => f!.evidence === 'school lock')
+      ? 'school'
+      : fs.some((f) => f!.source === 'assumed' && f!.evidence !== 'class name')
+        ? 'default'
+        : 'answered';
+    lines.push({ node_id: node.id, text, tag });
+  }
+  return lines;
 }
 
 export function readBackSummary(session: InterviewSession): string {
-  const f = session.filled;
-  const parts: string[] = [];
-  const v = (path: string) => f[path]?.value;
-  if (session.wizard === 'school') {
-    if (v('level') != null) parts.push(interviewSlotValue('level', v('level')));
-    if (v('calendar.template') != null) {
-      const t = String(v('calendar.template'));
-      parts.push(
-        t === 'tx_six_weeks' ? 'six report cards a year' : interviewSlotValue('calendar.template', t),
-      );
-    }
-    if (v('credit.policy') != null) {
-      parts.push(interviewSlotValue('credit.policy', v('credit.policy')));
-    }
-    if (v('rollup.preset') != null) {
-      parts.push(`semester grade: ${interviewSlotValue('rollup.preset', v('rollup.preset'))}`);
-    }
-    if (v('scale.passing_pct') != null) parts.push(`${v('scale.passing_pct')} is passing`);
-    else if (v('scale.default_id') != null) parts.push(interviewSlotValue('scale.default_id', v('scale.default_id')));
-    if (v('gpa.mode') != null) parts.push(interviewSlotValue('gpa.mode', v('gpa.mode')));
-    if (v('levels.ap_points') != null) parts.push(`an A in AP is worth ${v('levels.ap_points')} points`);
-  } else {
-    if (v('engine') != null) parts.push(interviewSlotValue('engine', v('engine')));
-    if (v('categories') != null) {
-      const cats = v('categories') as Array<{ label: string; weight_percent: number }>;
-      if (Array.isArray(cats)) {
-        parts.push(cats.map((c) => `${c.label} ${c.weight_percent}%`).join(', '));
-      }
-    }
-    if (v('missing_rule') != null) parts.push(`missing work: ${interviewSlotValue('missing_rule', v('missing_rule')).toLowerCase()}`);
-    if (v('late_rule') != null) {
-      parts.push(`late work: ${interviewSlotValue('late_rule', v('late_rule')).toLowerCase()}`);
-    }
-  }
-  if (parts.length === 0) return 'Nothing answered yet.';
-  return `Here's what I have: ${parts.join('; ')}. Open the form to check the dates and publish?`;
+  const lines = summaryLines(session);
+  if (lines.length === 0) return 'Nothing answered yet.';
+  const body = lines
+    .map((l) => `• ${l.text}${l.tag === 'school' ? ' (set by your school)' : l.tag === 'default' ? ' (usual choice — please check)' : ''}`)
+    .join('\n');
+  return `Here's what I have:\n${body}`;
 }

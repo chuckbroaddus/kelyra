@@ -3,7 +3,7 @@
  * Never publishes; final confirm hands draft to wizard review.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,10 +13,14 @@ import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import {
   beginInterview,
+  buildExtractionPrompt,
   createSession,
+  getNode,
   heuristicExtract,
+  mergeExtractions,
   parseExtractionResponse,
   processTurn,
+  summaryLines,
   type InterviewSession,
   type InterviewWizard,
   type QuestionChip,
@@ -34,6 +38,7 @@ export type InterviewScreenProps = {
   classId?: string | null;
   ownerId?: string | null;
   existingDraft?: Record<string, unknown> | null;
+  className?: string | null;
   onOpenForm: (draft: Record<string, unknown>, session: InterviewSession) => void;
   onClose?: () => void;
 };
@@ -70,6 +75,7 @@ export function InterviewScreen({
   classId,
   ownerId,
   existingDraft,
+  className,
   onOpenForm,
   onClose,
 }: InterviewScreenProps) {
@@ -82,16 +88,21 @@ export function InterviewScreen({
       class_id: classId ?? null,
       owner_id: ownerId ?? null,
       existing_draft: existingDraft ?? null,
+      class_name: className ?? null,
     });
     return beginInterview(s);
   };
-  const [session, setSession] = useState<InterviewSession>(() => boot().session);
-  const [lastOut, setLastOut] = useState<TurnOutput | null>(() => boot());
+  const [first] = useState<TurnOutput>(() => boot());
+  const [session, setSession] = useState<InterviewSession>(first.session);
+  const [lastOut, setLastOut] = useState<TurnOutput | null>(first);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const chips: QuestionChip[] = lastOut?.chips ?? [];
+  const lines = useMemo(() => summaryLines(session), [session]);
+  const reviewing = session.status === 'confirm';
+
   const progress = lastOut?.progress_label ?? '';
 
   const applyOut = useCallback(
@@ -105,7 +116,7 @@ export function InterviewScreen({
 
   const runLocal = useCallback(
     (userText: string, chipId?: string | null) => {
-      const extraction = heuristicExtract(session, userText, chipId);
+      const extraction = heuristicExtract(session, chipId ? '' : userText, chipId);
       const out = processTurn(session, userText || chipId || '', extraction, {
         chipId,
         notSure: chipId === 'ns',
@@ -115,16 +126,26 @@ export function InterviewScreen({
     [session, applyOut],
   );
 
+  const applyNow = useCallback(() => {
+    applyOut(
+      processTurn(session, 'Put these answers in the form', { turn_kind: 'navigation', slots: [], navigation: 'open_form' }),
+    );
+  }, [session, applyOut]);
+
   const runTurn = useCallback(
     async (userText: string, chipId?: string | null) => {
       setError(null);
       setBusy(true);
       try {
-        if (chipId && !userText) {
-          runLocal(userText, chipId);
+        if (chipId) {
+          const label =
+            chips.find((c) => c.id === chipId)?.label ??
+            (chipId.startsWith('edit:') ? `Change ${lines.find((l) => `edit:${l.node_id}` === chipId)?.text ?? 'that'}` : chipId);
+          runLocal(label, chipId);
           return;
         }
         try {
+          const pending = session.pending_node ? getNode(session.wizard, session.pending_node) : null;
           const res = await invokeAi<{ ok?: boolean; extraction?: unknown }>('setup-interview', {
             kind: wizard,
             wizard,
@@ -132,10 +153,12 @@ export function InterviewScreen({
             schoolId: schoolId ?? undefined,
             userText,
             chipId,
-            session,
+            session: { ...session, transcript: session.transcript.slice(-6), draft: {} },
+            prompt: buildExtractionPrompt(session, userText, pending),
           });
           if (res?.extraction) {
-            const extraction = parseExtractionResponse(res.extraction, wizard);
+            const model = parseExtractionResponse(res.extraction, wizard);
+            const extraction = mergeExtractions(session, userText, model);
             applyOut(processTurn(session, userText, extraction, { chipId }));
             return;
           }
@@ -150,27 +173,24 @@ export function InterviewScreen({
         setText('');
       }
     },
-    [session, wizard, classId, schoolId, applyOut, runLocal],
+    [session, wizard, classId, schoolId, applyOut, runLocal, chips, lines],
   );
 
   const soFar = useMemo(() => {
-    const keys = Object.keys(session.filled);
-    if (!keys.length) return 'Nothing answered yet';
-    return keys
-      .slice(0, 8)
-      .map((k) => interviewSlotLine(k, session.filled[k]?.value))
-      .join(' · ');
-  }, [session.filled]);
-
+    if (!lines.length) return 'Nothing answered yet';
+    return lines.map((l) => l.text).join(' · ');
+  }, [lines]);
   return (
     <View style={styles.root}>
       <Card>
         <Text style={[type.meta, { color: c.mute }]} accessibilityLabel="interview-progress">
           {progress}
         </Text>
-        <Text style={[type.meta, { color: c.ink, marginTop: 4 }]} numberOfLines={3}>
-          So far: {soFar}
-        </Text>
+        {reviewing ? null : (
+          <Text style={[type.meta, { color: c.ink, marginTop: 4 }]} numberOfLines={3}>
+            So far: {soFar}
+          </Text>
+        )}
       </Card>
       <View style={styles.thread}>
         {session.transcript.map((t, i) =>
@@ -184,9 +204,29 @@ export function InterviewScreen({
           ),
         )}
       </View>
+      {reviewing && lines.length ? (
+        <Card>
+          <Text style={[type.body, { color: c.ink, fontWeight: '700' }]}>Your setup — tap a line to change it</Text>
+          {lines.map((l) => (
+            <Pressable
+              key={l.node_id}
+              accessibilityRole="button"
+              accessibilityLabel={`Change ${l.text}`}
+              disabled={busy || l.tag === 'school'}
+              onPress={() => void runTurn('', `edit:${l.node_id}`)}
+              style={[styles.line, { borderColor: c.line }]}
+            >
+              <Text style={[type.body, { color: c.ink, flex: 1 }]}>{l.text}</Text>
+              <Text style={[type.meta, { color: l.tag === 'default' ? c.danger : c.mute }]}>
+                {l.tag === 'school' ? 'Set by your school' : l.tag === 'default' ? 'Usual choice · check' : 'Change'}
+              </Text>
+            </Pressable>
+          ))}
+        </Card>
+      ) : null}
       <ChipRow>
-        {chips.map((ch) => (
-          <Chip key={ch.id} label={ch.label} disabled={busy} onPress={() => void runTurn(ch.label, ch.id)} />
+        {chips.filter((ch) => !(reviewing && ch.action === 'edit')).map((ch) => (
+          <Chip key={ch.id} label={ch.label} disabled={busy} onPress={() => void runTurn('', ch.id)} />
         ))}
       </ChipRow>
       <TextField
@@ -205,7 +245,11 @@ export function InterviewScreen({
           }}
           disabled={busy || !text.trim()}
         />
-        <PrimaryButton label="Open the form" onPress={() => onOpenForm(session.draft, session)} disabled={busy} />
+        <PrimaryButton
+          label={reviewing ? 'Put these answers in the form' : 'Open the form'}
+          onPress={applyNow}
+          disabled={busy}
+        />
       </View>
       {error ? <Text style={[type.meta, { color: c.danger }]}>{error}</Text> : null}
       {onClose ? <GhostButton label="Close" onPress={onClose} /> : null}
@@ -224,4 +268,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   nav: { flexDirection: 'row', gap: 12, marginTop: 8, flexWrap: 'wrap' },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
 });

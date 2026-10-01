@@ -7,7 +7,7 @@ import { InterviewScreen } from '@/components/interview/InterviewScreen';
 import { Screen } from '@/components/ui/Screen';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
-import type { InterviewSession } from '@/lib/interview';
+import { putInterviewHandoff, type InterviewSession } from '@/lib/interview';
 
 export default function SchoolGradingPolicyInterviewScreen() {
   const router = useRouter();
@@ -15,10 +15,10 @@ export default function SchoolGradingPolicyInterviewScreen() {
   usePushedTitle('Answer a few questions');
   const schoolId = profile?.school_id ?? '';
 
-  const onOpenForm = (_draft: Record<string, unknown>, _session: InterviewSession) => {
-    // Same SetupDraft object conceptually; wizard loads its own empty then user reviews.
-    // Pass via query flag so wizard can prefer interview draft from memory if needed later.
-    router.replace('/school/grading-policy?from=interview&step=review' as never);
+  const onOpenForm = (_draft: Record<string, unknown>, session: InterviewSession) => {
+    // Hand the SetupDraft to the policy form; it merges via the same path as document ingest.
+    putInterviewHandoff('school', schoolId, session);
+    router.replace('/school/grading-policy?from=interview' as never);
   };
 
   return (

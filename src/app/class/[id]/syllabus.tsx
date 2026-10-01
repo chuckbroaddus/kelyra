@@ -3,7 +3,7 @@
  * Photo import (parse-class-syllabus / ask_draft) still applies into wizard fields.
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
@@ -19,6 +19,7 @@ import {
   applyAskImport,
   canFinishReview,
   draftFromBundle,
+  setWizardStep,
   toEditorInput,
   type SyllabusWizardDraft,
 } from '@/components/syllabus/wizardModel';
@@ -29,6 +30,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { invokeAi } from '@/lib/ai/invoke';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { applyProposalToSyllabusDraft } from '@/lib/ingest/pathMapping';
+import { applyInterviewToSyllabusDraft, takeInterviewHandoff } from '@/lib/interview';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
@@ -67,7 +69,7 @@ type ConfirmKind =
 
 export default function SyllabusScreen() {
   const { colors } = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
   const { teacher, setActiveClassId, profile } = useAuth();
   const chrome = useChrome();
@@ -84,6 +86,8 @@ export default function SyllabusScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   const [ingestCamera, setIngestCamera] = useState(false);
+  // Interview hand-off is one-shot; keep it so a focus reload before Save does not drop the answers.
+  const interviewRef = useRef<ReturnType<typeof takeInterviewHandoff>>(null);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -122,21 +126,28 @@ export default function SyllabusScreen() {
           // optional school defaults
         }
       }
-      setDraft(
-        draftFromBundle({
-          classId: id,
-          syllabus: bundle.syllabus,
-          categories: bundle.categories,
-          schoolPolicy,
-        }),
-      );
+      const loaded = draftFromBundle({
+        classId: id,
+        syllabus: bundle.syllabus,
+        categories: bundle.categories,
+        schoolPolicy,
+      });
+      // GB-12 interview hand-off: same mapper as document ingest, then review + Save/Publish here.
+      if (from === 'interview' && !interviewRef.current) interviewRef.current = takeInterviewHandoff('syllabus', id);
+      const interview = from === 'interview' ? interviewRef.current : null;
+      if (interview) {
+        setDraft(setWizardStep(applyInterviewToSyllabusDraft(loaded, interview), 'review'));
+        setStatus('Your answers are filled in below. Check them, then Save draft or Publish.');
+      } else {
+        setDraft(loaded);
+      }
       setAskDraft(bundle.syllabus?.ask_draft ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load syllabus');
     } finally {
       setLoading(false);
     }
-  }, [id, teacher, setActiveClassId, profile?.school_id]);
+  }, [id, teacher, setActiveClassId, profile?.school_id, from]);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,6 +171,7 @@ export default function SyllabusScreen() {
     try {
       await saveClassSyllabusDraft(id, toEditorInput(draft));
       setStatus('Draft saved. It won’t change any grades until you publish.');
+      interviewRef.current = null;
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save draft');
@@ -221,6 +233,7 @@ export default function SyllabusScreen() {
     try {
       await publishClassSyllabus(id, draft.row_version, toEditorInput(draft));
       setStatus('Syllabus published.');
+      interviewRef.current = null;
       setConfirm(null);
       await load();
     } catch (err) {

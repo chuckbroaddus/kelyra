@@ -3,7 +3,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -21,6 +21,7 @@ import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { invokeIngestGradingDoc } from '@/lib/ingest/invokeIngest';
 import { mergeIntoSetupDraft } from '@/lib/ingest/pathMapping';
+import { applyInterviewToSetupDraft, takeInterviewHandoff } from '@/lib/interview';
 import type { IngestField, IngestProposal } from '@/lib/ingest/proposalTypes';
 import { useWebIngestFixtureHook } from '@/lib/ingest/webIngestFixtureHook';
 import { uploadTeacherAsset, signedUrlForAsset } from '@/lib/media/upload';
@@ -87,6 +88,7 @@ const TEMPLATES: TemplateKey[] = [
 export default function GradingPolicyWizardScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { profile } = useAuth();
   const office = isOfficeRole(profile);
   const schoolId = profile?.school_id ?? '';
@@ -105,8 +107,17 @@ export default function GradingPolicyWizardScreen() {
 
   useEffect(() => {
     if (!schoolId) return;
-    setDraft(createEmptyDraft(schoolId, 'high'));
-  }, [schoolId]);
+    const empty = createEmptyDraft(schoolId, 'high');
+    // GB-12 interview hand-off: merged with the same mergeIntoSetupDraft as document ingest.
+    const interview = from === 'interview' ? takeInterviewHandoff('school', schoolId) : null;
+    if (interview) {
+      setDraft({ ...applyInterviewToSetupDraft(empty, interview), current_step: 'review' });
+      setStep('review');
+      setStatus('Your answers are filled in. Check each step, then publish.');
+    } else {
+      setDraft(empty);
+    }
+  }, [schoolId, from]);
 
   const payload = useMemo(() => (draft ? draftToPayload(draft) : null), [draft]);
   const issues = useMemo(() => (payload ? validatePolicyPayload(payload) : []), [payload]);
