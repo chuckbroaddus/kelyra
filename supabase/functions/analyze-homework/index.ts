@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
-import { asPass, homeworkDraftExists, imageDetailFor } from '../_shared/aiPolicy.ts';
+import { asPass, homeworkDraftExists } from '../_shared/aiPolicy.ts';
 import {
   homeworkPageAssetIdsForModel,
   isHomeworkPageImageMime,
@@ -17,12 +17,12 @@ import {
 
 const prompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1}]}
+{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1,"confidence":"high"}]}
 Rules:
 - 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
 - items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
 - If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
-- Do not invent a student name or extra biography.
+- Do not invent a student name or extra biography. Do not emit the example row above as if it were this page.
 ${HOMEWORK_GRADING_RULES}`;
 
 Deno.serve(async (req) => {
@@ -164,7 +164,7 @@ async function draftFromPhotos(
   pass: 'cheap' | 'look-again',
   captureId: string,
 ) {
-  const detail = imageDetailFor(pass);
+  const detail = 'high'; // always high for analyze-homework (rough photos need it)
   const content: Array<Record<string, unknown>> = [
     ...imageUrls.slice(0, MAX_HOMEWORK_PAGE_IMAGES).map((imageUrl) => ({
       type: 'input_image',
@@ -200,13 +200,24 @@ async function draftFromPhotos(
   const items = settleHomeworkItems(
     (Array.isArray(parsed.items) ? parsed.items : [])
       .map((row) => {
-        const r = row as { credit?: unknown; of?: unknown; question?: unknown; expected?: unknown; seen?: unknown };
+        const r = row as {
+          credit?: unknown;
+          of?: unknown;
+          question?: unknown;
+          expected?: unknown;
+          seen?: unknown;
+          confidence?: unknown;
+        };
         return {
           question: typeof r?.question === 'string' ? r.question : null,
           expected: typeof r?.expected === 'string' ? r.expected : null,
           seen: typeof r?.seen === 'string' ? r.seen : null,
           credit: typeof r?.credit === 'number' && Number.isFinite(r.credit) ? r.credit : null,
           of: typeof r?.of === 'number' && r.of > 0 ? r.of : 1,
+          confidence:
+            typeof r?.confidence === 'number' || typeof r?.confidence === 'string'
+              ? r.confidence
+              : null,
         };
       })
       .slice(0, 40),
