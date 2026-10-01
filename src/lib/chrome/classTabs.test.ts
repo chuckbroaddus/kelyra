@@ -220,3 +220,13 @@ test('AC-STU-CT-08: Students href is setup; selection students', () => {
   assert.equal(hrefForClassTab(id, 'students'), `/class/${id}/setup`);
   assert.equal(classTabFromRoute(`/class/${id}/setup`), 'students');
 });
+
+test('classTabsStacked: even spacing when a secondary tab row follows', async () => {
+  const { classTabsStacked } = await import('./classTabs.ts');
+  assert.equal(classTabsStacked('/class/abc/gradebook'), true);
+  assert.equal(classTabsStacked('/class/abc'), true);
+  assert.equal(classTabsStacked('/class/abc', 'week'), true);
+  assert.equal(classTabsStacked('/class/abc', 'needs'), false);
+  assert.equal(classTabsStacked('/class/abc/feed'), false);
+  assert.equal(classTabsStacked('/class/abc/assignments'), false);
+});
