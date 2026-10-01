@@ -40,12 +40,26 @@ export async function postMarkingPeriod(args: {
   }>;
   /** Required when overwriting an existing posted row. */
   reason?: string | null;
+  /**
+   * When set, load saved class_conduct_marks for this period_key and merge
+   * onto each row (explicit row.conduct still wins only if no saved mark key).
+   * Saved marks override empty/missing conduct on the payload.
+   */
+  conductPeriodKey?: string | null;
 }): Promise<RpcResult> {
   const supabase = requireSupabase();
+  let rows = args.rows;
+  const periodKey = args.conductPeriodKey?.trim();
+  if (periodKey) {
+    const { applyConductToPostingRows, marksForPeriod } = await import('./conductMarks.ts');
+    const { loadConductMarksByPeriod } = await import('./conductMarksApi.ts');
+    const nested = await loadConductMarksByPeriod(args.classId);
+    rows = applyConductToPostingRows(rows, marksForPeriod(nested, periodKey));
+  }
   const { data, error } = await supabase.rpc('post_marking_period' as never, {
     p_class_id: args.classId,
     p_marking_period_id: args.markingPeriodId,
-    p_rows: args.rows,
+    p_rows: rows,
     p_reason: args.reason ?? null,
   } as never);
   if (error) throw error;

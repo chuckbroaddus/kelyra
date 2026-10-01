@@ -48,6 +48,11 @@ import { exportGradebookCsv } from '@/lib/gradebook/csv';
 import { useFocusEffect } from 'expo-router';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { getClassSyllabus } from '@/lib/syllabus/api';
+import {
+  loadConductMarksByPeriod,
+  upsertClassConductMark,
+  type ConductMarksByPeriod,
+} from '@/lib/grade/posting';
 
 export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
@@ -96,8 +101,8 @@ export default function GradebookScreen() {
     policies: SyllabusPolicies | null;
     conductScaleId?: string | null;
   } | null>(null);
-  /** FR-SYL-17 conduct marks by period key, then student — ride on next period store. */
-  const [conductMarks, setConductMarks] = useState<Record<string, Record<string, string | null>>>({});
+  /** FR-SYL-17 conduct marks by period key, then student — persisted in class_conduct_marks. */
+  const [conductMarks, setConductMarks] = useState<ConductMarksByPeriod>({});
 
   useFocusEffect(
     useCallback(() => {
@@ -113,6 +118,11 @@ export default function GradebookScreen() {
       void loadClassGradingCalendar(id)
         .then(setCalendar)
         .catch(() => setCalendar(null));
+      void loadConductMarksByPeriod(id)
+        .then(setConductMarks)
+        .catch(() => {
+          /* table may not be applied yet — keep empty */
+        });
       void getClassSyllabus(id)
         .then((bundle) => {
           if (!bundle.exists || !bundle.syllabus) {
@@ -374,12 +384,29 @@ export default function GradebookScreen() {
               students={book.students}
               marks={conductMarks[termFilter] ?? {}}
               periodLabel={periodLabel}
-              onChange={(studentId, mark) =>
+              onChange={(studentId, mark) => {
+                if (!id || termFilter === 'all') return;
+                const periodKey = termFilter;
+                const previous = conductMarks[periodKey]?.[studentId] ?? null;
                 setConductMarks((prev) => ({
                   ...prev,
-                  [termFilter]: { ...(prev[termFilter] ?? {}), [studentId]: mark },
-                }))
-              }
+                  [periodKey]: { ...(prev[periodKey] ?? {}), [studentId]: mark },
+                }));
+                void upsertClassConductMark({
+                  classId: id,
+                  studentId,
+                  periodKey,
+                  mark,
+                }).catch((err) => {
+                  setConductMarks((prev) => ({
+                    ...prev,
+                    [periodKey]: { ...(prev[periodKey] ?? {}), [studentId]: previous },
+                  }));
+                  setStatus(
+                    err instanceof Error ? err.message : 'Could not save conduct mark',
+                  );
+                });
+              }}
             />
           </ScrollView>
         )

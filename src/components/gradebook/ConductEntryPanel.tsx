@@ -1,6 +1,6 @@
 /**
  * GB-17 FR-SYL-17 / FR-POST-01 — teacher conduct marks per student (non-GPA).
- * Marks ride on the next period store via postPeriod / postMarkingPeriod.
+ * Parent persists each tap to class_conduct_marks; postMarkingPeriod merges them at store.
  */
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
