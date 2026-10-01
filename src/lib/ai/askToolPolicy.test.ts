@@ -161,7 +161,7 @@ test('A1 askTools allowed() delegates to askToolPolicy', () => {
   const allowedFn = ask.slice(ask.indexOf('function allowed('), ask.indexOf('function labelFor('));
   // list_inbox adds a live Teach-seat wall after policy (AC-ASK-INBOX); other tools stay policy-only.
   assert.match(allowedFn, /list_inbox/);
-  assert.match(allowedFn, /ctx\.live\.role\s*!==\s*'teacher'/);
+  assert.match(allowedFn, /isListInboxTeachSeat\(ctx\.live\.role\)/);
 });
 
 test('A1 ask-assistant handlers filter by policy after getUser (not raw body.tools)', () => {

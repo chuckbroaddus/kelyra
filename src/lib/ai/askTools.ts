@@ -56,6 +56,7 @@ import {
 import type { ParentMetadataKey, ParentRow, ProfilePhotoKind, ProfileRow, StudentRow } from '@/lib/supabase/types';
 
 import type { AskLiveContext } from '@/lib/ai/askPrompt';
+import { isListInboxTeachSeat, runAskListInbox } from '@/lib/ai/askListInbox';
 import { isAskToolAllowed } from '@/lib/ai/askToolPolicy';
 import { parkPendingDiaryDraft } from '@/lib/diary/api';
 import { listCalendarItems } from '@/lib/calendar/api';
@@ -1511,25 +1512,9 @@ const TOOLS: Record<string, AskToolSpec> = {
       },
     },
     run: async (args, ctx) => {
-      // Same gate as opening /inbox: active Teach seat (chrome live.role).
-      // Do not refuse on missing teacherId — listInbox is class_id + JWT/RLS.
-      if (ctx.live.role !== 'teacher') {
-        return { error: 'Needs inbox is only on the Teach seat.' };
-      }
-      const classId = str(args, "class_id") || ctx.classId;
-      if (!classId) return { error: "Need class_id." };
-      const { listInbox } = await import("@/lib/captures/api");
-      const items = await listInbox(classId);
-      return {
-        class_id: classId,
-        items: items.slice(0, 40).map((row) => ({
-          id: row.id,
-          status: row.status,
-          ai_status: row.ai_status,
-          student_id: row.student_id,
-          matched_name: row.matchedName,
-        })),
-      };
+      // Same gate as /inbox: live.role Teach seat. Never refuse on missing teacherId.
+      const { listInbox } = await import('@/lib/captures/api');
+      return runAskListInbox(args, ctx, { listInbox });
     },
   },
 
@@ -2490,7 +2475,7 @@ function allowed(spec: AskToolSpec, ctx: AskToolContext): boolean {
   if (!isAskToolAllowed(spec.def.name, ctx.profile, ctx.grants)) return false;
   // list_inbox: active Teach seat only (matches /inbox tray). Parent/office seats stay refused
   // even when the profile also teaches. Do not weaken teacherSeatOnly on other tools.
-  if (spec.def.name === 'list_inbox' && ctx.live.role !== 'teacher') return false;
+  if (spec.def.name === 'list_inbox' && !isListInboxTeachSeat(ctx.live.role)) return false;
   // Dual-hat: walls follow active seat, not job-of-record (AC-DUAL-ASK-2).
   if (ctx.live.role === 'parent') {
     if (PARENT_SEAT_DENIED_TOOLS.has(spec.def.name)) return false;
