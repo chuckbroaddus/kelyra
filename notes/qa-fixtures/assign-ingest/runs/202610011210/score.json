@@ -1,0 +1,3382 @@
+{
+  "stamp": "202610011210",
+  "overall_accuracy": 0.9759570494864613,
+  "assignment_accuracy": 0.9659391534391535,
+  "lesson_accuracy": 1,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.9678760393046107,
+  "photo_accuracy": 0.989010989010989,
+  "record_match_rate": 1,
+  "hallucinations": 0,
+  "field_totals": {
+    "correct": 207,
+    "wrong": 6,
+    "missing": 0,
+    "hallucinated": 0,
+    "total": 213
+  },
+  "documents": [
+    {
+      "id": "A01",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 8
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Math Facts Warm-Up",
+          "actual": "Math Facts Warm-Up"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 5,
+          "actual": 5
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "7 + 8 =",
+            "answer": "15",
+            "points": 1
+          },
+          "actual": {
+            "stem": "7 + 8 =",
+            "answer": "15",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "12 − 5 =",
+            "answer": "7",
+            "points": 1
+          },
+          "actual": {
+            "stem": "12 - 5 =",
+            "answer": "7",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "6 × 4 =",
+            "answer": "24",
+            "points": 1
+          },
+          "actual": {
+            "stem": "6 × 4 =",
+            "answer": "24",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "36 ÷ 6 =",
+            "answer": "6",
+            "points": 1
+          },
+          "actual": {
+            "stem": "36 ÷ 6 =",
+            "answer": "6",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "9 + 11 =",
+            "answer": "20",
+            "points": 1
+          },
+          "actual": {
+            "stem": "9 + 11 =",
+            "answer": "20",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 5,
+          "expCount": 5
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A01",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 8
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Math Facts Warm-Up",
+          "actual": "Math Facts Warm-Up"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 5,
+          "actual": 5
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "7 + 8 =",
+            "answer": "15",
+            "points": 1
+          },
+          "actual": {
+            "stem": "7 + 8 =",
+            "answer": "15",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "12 − 5 =",
+            "answer": "7",
+            "points": 1
+          },
+          "actual": {
+            "stem": "12 - 5 =",
+            "answer": "7",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "6 × 4 =",
+            "answer": "24",
+            "points": 1
+          },
+          "actual": {
+            "stem": "6 × 4 =",
+            "answer": "24",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "36 ÷ 6 =",
+            "answer": "6",
+            "points": 1
+          },
+          "actual": {
+            "stem": "36 ÷ 6 =",
+            "answer": "6",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "9 + 11 =",
+            "answer": "20",
+            "points": 1
+          },
+          "actual": {
+            "stem": "9 + 11 =",
+            "answer": "20",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 5,
+          "expCount": 5
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A02",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Life Science Quiz — Cells",
+          "actual": "Life Science Quiz — Cells"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 10,
+          "actual": 10
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "The control center of the cell is the",
+            "answer": "B",
+            "points": 2
+          },
+          "actual": {
+            "stem": "The control center of the cell is the",
+            "answer": "B",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Plant cells have a rigid",
+            "answer": "C",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Plant cells have a rigid",
+            "answer": "C",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Energy is released in the",
+            "answer": "A",
+            "points": 3
+          },
+          "actual": {
+            "stem": "Energy is released in the",
+            "answer": "A",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Photosynthesis occurs mainly in the",
+            "answer": "B",
+            "points": 3
+          },
+          "actual": {
+            "stem": "Photosynthesis occurs mainly in the",
+            "answer": "B",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A02",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Life Science Quiz — Cells",
+          "actual": "Life Science Quiz — Cells"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 10,
+          "actual": 10
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "The control center of the cell is the",
+            "answer": "B",
+            "points": 2
+          },
+          "actual": {
+            "stem": "The control center of the cell is the",
+            "answer": "B",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Plant cells have a rigid",
+            "answer": "C",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Plant cells have a rigid",
+            "answer": "C",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Energy is released in the",
+            "answer": "A",
+            "points": 3
+          },
+          "actual": {
+            "stem": "Energy is released in the",
+            "answer": "A",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Photosynthesis occurs mainly in the",
+            "answer": "B",
+            "points": 3
+          },
+          "actual": {
+            "stem": "Photosynthesis occurs mainly in the",
+            "answer": "B",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A03",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 0.7777777777777778,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 2,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 9
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Unit 4 Test — Fractions",
+          "actual": "Unit 4 Test — Fractions"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 20,
+          "actual": 20
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Which equals 1/2?",
+            "answer": "B",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Which equals 1/2?",
+            "answer": "B",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": {
+            "stem": "3/4 + 1/4 =",
+            "answer": "B",
+            "points": 2
+          },
+          "actual": {
+            "stem": "3/4 + 1/4 =",
+            "answer": "A",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Simplify 6/9.",
+            "answer": "B",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Simplify 6/9.",
+            "answer": "B",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": {
+            "stem": "1/5 of 20 is",
+            "answer": "A",
+            "points": 2
+          },
+          "actual": {
+            "stem": "1/5 of 20 is",
+            "answer": "C",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Explain how to add 1/3 + 1/6. Write two sentences.",
+            "answer": "",
+            "points": 6
+          },
+          "actual": {
+            "stem": "Explain how to add 1/3 + 1/6. Write two sentences.",
+            "answer": "",
+            "points": 6,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "item.6",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Draw a model of 3/4.",
+            "answer": "",
+            "points": 6
+          },
+          "actual": {
+            "stem": "Draw a model of 3/4.",
+            "answer": "",
+            "points": 6,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 0.6666666666666666,
+          "matched": 4,
+          "expCount": 6
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A04",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "filled",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "ANSWER KEY — Decimal Practice",
+          "actual": "ANSWER KEY — Decimal Practice"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 5,
+          "actual": 5
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "0.5 + 0.25 =",
+            "answer": "0.75",
+            "points": 1
+          },
+          "actual": {
+            "stem": "0.5 + 0.25 =",
+            "answer": "0.75",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "1.2 × 3 =",
+            "answer": "3.6",
+            "points": 1
+          },
+          "actual": {
+            "stem": "1.2 × 3 =",
+            "answer": "3.6",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Round 4.678 to tenths:",
+            "answer": "4.7",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Round 4.678 to tenths:",
+            "answer": "4.7",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Which is larger? 0.09 or 0.1 →",
+            "answer": "0.1",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Which is larger? 0.09 or 0.1",
+            "answer": "0.1",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A04",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "filled",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "ANSWER KEY — Decimal Practice",
+          "actual": "ANSWER KEY — Decimal Practice"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 5,
+          "actual": 5
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "0.5 + 0.25 =",
+            "answer": "0.75",
+            "points": 1
+          },
+          "actual": {
+            "stem": "0.5 + 0.25 =",
+            "answer": "0.75",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "1.2 × 3 =",
+            "answer": "3.6",
+            "points": 1
+          },
+          "actual": {
+            "stem": "1.2 × 3 =",
+            "answer": "3.6",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Round 4.678 to tenths:",
+            "answer": "4.7",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Round 4.678 to tenths:",
+            "answer": "4.7",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Which is larger? 0.09 or 0.1 →",
+            "answer": "0.1",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Which is larger? 0.09 or 0.1",
+            "answer": "0.1",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A05",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 0.8571428571428571,
+      "record_match": true,
+      "counts": {
+        "correct": 6,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Friday Check — Place Value",
+          "actual": "Friday Check — Place Value"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "What is the value of 7 in 3,752?",
+            "answer": "700",
+            "points": 1
+          },
+          "actual": {
+            "stem": "What is the value of 7 in 3,752?",
+            "answer": "700",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": {
+            "stem": "Write 405 in expanded form:",
+            "answer": "400+5",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Write 405 in expanded form:",
+            "answer": "400 + 0 + 5 (or 400 + 5)",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "10 tens = ________ ones",
+            "answer": "100",
+            "points": 1
+          },
+          "actual": {
+            "stem": "10 tens = ________ ones",
+            "answer": "100",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Explain why 399 is less than 401:",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Explain why 399 is less than 401:",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 0.75,
+          "matched": 3,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A05",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 0.8571428571428571,
+      "record_match": true,
+      "counts": {
+        "correct": 6,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Friday Check — Place Value",
+          "actual": "Friday Check — Place Value"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "What is the value of 7 in 3,752?",
+            "answer": "700",
+            "points": 1
+          },
+          "actual": {
+            "stem": "What is the value of 7 in 3,752?",
+            "answer": "700",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": {
+            "stem": "Write 405 in expanded form:",
+            "answer": "400+5",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Write 405 in expanded form:",
+            "answer": "400 + 0 + 5 (or 400 + 5)",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "10 tens = ________ ones",
+            "answer": "100",
+            "points": 1
+          },
+          "actual": {
+            "stem": "10 tens = ________ ones",
+            "answer": "100",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Explain why 399 is less than 401:",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Explain why 399 is less than 401:",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 0.75,
+          "matched": 3,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A06",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Homework 12 — Ratios",
+          "actual": "Homework 12 — Ratios"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 8,
+          "actual": 8
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Simplify the ratio 12:18 →",
+            "answer": "2:3",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Simplify the ratio 12:18",
+            "answer": "2:3",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "If 3 apples cost $2, 6 apples cost $",
+            "answer": "4",
+            "points": 2
+          },
+          "actual": {
+            "stem": "If 3 apples cost $2, 6 apples cost $",
+            "answer": "4",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Write 5/20 as a unit rate (per 1):",
+            "answer": "1/4",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Write 5/20 as a unit rate (per 1)",
+            "answer": "1/4",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "True or false: 2:3 = 4:6",
+            "answer": "true",
+            "points": 2
+          },
+          "actual": {
+            "stem": "True or false: 2:3 = 4:6",
+            "answer": "True",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A06",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Homework 12 — Ratios",
+          "actual": "Homework 12 — Ratios"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 8,
+          "actual": 8
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Simplify the ratio 12:18 →",
+            "answer": "2:3",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Simplify the ratio 12:18 →",
+            "answer": "2:3",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "If 3 apples cost $2, 6 apples cost $",
+            "answer": "4",
+            "points": 2
+          },
+          "actual": {
+            "stem": "If 3 apples cost $2, 6 apples cost $",
+            "answer": "4",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Write 5/20 as a unit rate (per 1):",
+            "answer": "1/4",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Write 5/20 as a unit rate (per 1):",
+            "answer": "1/4",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "True or false: 2:3 = 4:6",
+            "answer": "true",
+            "points": 2
+          },
+          "actual": {
+            "stem": "True or false: 2:3 = 4:6",
+            "answer": "True",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A07",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Skill Check — Integers",
+          "actual": "Skill Check — Integers"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 10,
+          "actual": 10
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "−3 + 5 =",
+            "answer": "2",
+            "points": 1
+          },
+          "actual": {
+            "stem": "-3 + 5 =",
+            "answer": "2",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "|−8| =",
+            "answer": "8",
+            "points": 1
+          },
+          "actual": {
+            "stem": "|-8| =",
+            "answer": "8",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "−2 × −6 =",
+            "answer": "12",
+            "points": 3
+          },
+          "actual": {
+            "stem": "-2 × -6 =",
+            "answer": "12",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Order from least to greatest: 0, −4, 2, −1 →",
+            "answer": "-4, -1, 0, 2",
+            "points": 5
+          },
+          "actual": {
+            "stem": "Order from least to greatest: 0, -4, 2, -1",
+            "answer": "-4, -1, 0, 2",
+            "points": 5,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A08",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "filled",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Exit Ticket — Photosynthesis (KEY)",
+          "actual": "Exit Ticket — Photosynthesis (KEY)"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Gas plants take in:",
+            "answer": "carbon dioxide",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Gas plants take in:",
+            "answer": "carbon dioxide / CO2",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Gas plants release:",
+            "answer": "oxygen",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Gas plants release:",
+            "answer": "oxygen / O2",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Energy source:",
+            "answer": "sunlight",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Energy source:",
+            "answer": "sunlight",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Where in the cell?",
+            "answer": "chloroplast",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Where in the cell?",
+            "answer": "chloroplast",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A08",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "filled",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Exit Ticket — Photosynthesis (KEY)",
+          "actual": "Exit Ticket — Photosynthesis (KEY)"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Gas plants take in:",
+            "answer": "carbon dioxide",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Gas plants take in:",
+            "answer": "carbon dioxide / CO2",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Gas plants release:",
+            "answer": "oxygen",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Gas plants release:",
+            "answer": "oxygen / O2",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Energy source:",
+            "answer": "sunlight",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Energy source:",
+            "answer": "sunlight",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Where in the cell?",
+            "answer": "chloroplast",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Where in the cell?",
+            "answer": "chloroplast",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 4,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A09",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 8
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Vocabulary Match — Government",
+          "actual": "Vocabulary Match — Government"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 5,
+          "actual": 5
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Two-house legislature:",
+            "answer": "bicameral",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Two-house legislature:",
+            "answer": "bicameral",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Power split between national and state:",
+            "answer": "federalism",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Power split between national and state:",
+            "answer": "federalism",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Change to the Constitution:",
+            "answer": "amendment",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Change to the Constitution:",
+            "answer": "amendment",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "President rejects a bill:",
+            "answer": "veto",
+            "points": 1
+          },
+          "actual": {
+            "stem": "President rejects a bill:",
+            "answer": "veto",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Citizens elect representatives:",
+            "answer": "republic",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Citizens elect representatives:",
+            "answer": "republic",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 5,
+          "expCount": 5
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A10",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Reading Response (partial page)",
+          "actual": "Reading Response (partial page)"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 2,
+          "actual": 2
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Protagonist name:",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Protagonist name:",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Setting (place):",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Setting (place):",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 2,
+          "expCount": 2
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A10",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Reading Response (partial page)",
+          "actual": "Reading Response (partial page)"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 2,
+          "actual": 2
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Protagonist name:",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Protagonist name:",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Setting (place):",
+            "answer": "",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Setting (place):",
+            "answer": "",
+            "points": 1,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 2,
+          "expCount": 2
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A11",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 0.8571428571428571,
+      "record_match": true,
+      "counts": {
+        "correct": 6,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 7
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Warm-Up — Forces",
+          "actual": "Warm-Up — Forces"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 6,
+          "actual": 6
+        },
+        {
+          "path": "item.1",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": {
+            "stem": "T/F: Friction always slows motion.",
+            "answer": "true",
+            "points": 1
+          },
+          "actual": {
+            "stem": "T/F: Friction always slows motion.",
+            "answer": "False",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "T/F: Mass and weight are the same.",
+            "answer": "false",
+            "points": 1
+          },
+          "actual": {
+            "stem": "T/F: Mass and weight are the same.",
+            "answer": "False",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "A 2 kg object accelerates at 3 m/s². Net force =",
+            "answer": "6",
+            "points": 3
+          },
+          "actual": {
+            "stem": "A 2 kg object accelerates at 3 m/s². Net force =",
+            "answer": "6",
+            "points": 3,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Unit of force:",
+            "answer": "newton",
+            "points": 1
+          },
+          "actual": {
+            "stem": "Unit of force:",
+            "answer": "Newton",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 0.75,
+          "matched": 3,
+          "expCount": 4
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A12",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 9
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Chapter Quiz — Ecosystems",
+          "actual": "Chapter Quiz — Ecosystems"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 12,
+          "actual": 12
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "A living thing in a habitat is a(n)",
+            "answer": "organism",
+            "points": 2
+          },
+          "actual": {
+            "stem": "A living thing in a habitat is a(n) ______.",
+            "answer": "organism",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "All biotic + abiotic factors together make a(n)",
+            "answer": "ecosystem",
+            "points": 2
+          },
+          "actual": {
+            "stem": "All biotic + abiotic factors together make a(n) ______.",
+            "answer": "ecosystem",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Producers make food using",
+            "answer": "sunlight",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Producers make food using ______.",
+            "answer": "sunlight",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Primary consumers eat",
+            "answer": "producers",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Primary consumers eat ______.",
+            "answer": "producers",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "T/F: Energy pyramids are widest at the top.",
+            "answer": "false",
+            "points": 2
+          },
+          "actual": {
+            "stem": "T/F: Energy pyramids are widest at the top.",
+            "answer": "False",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.6",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Name one decomposer:",
+            "answer": "fungus",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Name one decomposer:",
+            "answer": "bacteria",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 6,
+          "expCount": 6
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A12",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 9
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Chapter Quiz — Ecosystems",
+          "actual": "Chapter Quiz — Ecosystems"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 12,
+          "actual": 12
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "A living thing in a habitat is a(n)",
+            "answer": "organism",
+            "points": 2
+          },
+          "actual": {
+            "stem": "A living thing in a habitat is a(n)",
+            "answer": "organism",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "All biotic + abiotic factors together make a(n)",
+            "answer": "ecosystem",
+            "points": 2
+          },
+          "actual": {
+            "stem": "All biotic + abiotic factors together make a(n)",
+            "answer": "ecosystem",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Producers make food using",
+            "answer": "sunlight",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Producers make food using",
+            "answer": "sunlight",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.4",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Primary consumers eat",
+            "answer": "producers",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Primary consumers eat",
+            "answer": "producers",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.5",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "T/F: Energy pyramids are widest at the top.",
+            "answer": "false",
+            "points": 2
+          },
+          "actual": {
+            "stem": "T/F: Energy pyramids are widest at the top.",
+            "answer": "False",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.6",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "Name one decomposer:",
+            "answer": "fungus",
+            "points": 2
+          },
+          "actual": {
+            "stem": "Name one decomposer:",
+            "answer": "bacteria",
+            "points": 2,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 6,
+          "expCount": 6
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A13",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 6
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Mini Quiz",
+          "actual": "Mini Quiz"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 3,
+          "actual": 3
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "2³ =",
+            "answer": "8",
+            "points": 1
+          },
+          "actual": {
+            "stem": "2³ =",
+            "answer": "8",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "√49 =",
+            "answer": "7",
+            "points": 1
+          },
+          "actual": {
+            "stem": "√49 =",
+            "answer": "7",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "5² − 4² =",
+            "answer": "9",
+            "points": 1
+          },
+          "actual": {
+            "stem": "5² - 4² =",
+            "answer": "9",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 3,
+          "expCount": 3
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A13",
+      "kind": "assignment_key",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 6
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Mini Quiz",
+          "actual": "Mini Quiz"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 3,
+          "actual": 3
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "2³ =",
+            "answer": "8",
+            "points": 1
+          },
+          "actual": {
+            "stem": "2³ =",
+            "answer": "8",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "√49 =",
+            "answer": "7",
+            "points": 1
+          },
+          "actual": {
+            "stem": "√49 =",
+            "answer": "7",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "5² − 4² =",
+            "answer": "9",
+            "points": 1
+          },
+          "actual": {
+            "stem": "5² - 4² =",
+            "answer": "9",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 3,
+          "expCount": 3
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A14",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "blank",
+          "actual": "blank"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Essay Prompt — Character Change",
+          "actual": "Essay Prompt — Character Change"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 20,
+          "actual": 20
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "In two paragraphs, describe how the main character changes from chapter 1 to chapter 8. Use two text details.",
+            "answer": "",
+            "points": 20
+          },
+          "actual": {
+            "stem": "In two paragraphs, describe how the main character changes from chapter 1 to chapter 8. Use two text details.",
+            "answer": "",
+            "points": 20,
+            "needsTeacher": true
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 1,
+          "expCount": 1
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "A15",
+      "kind": "assignment_key",
+      "variant": "clean",
+      "field_accuracy": 0.8333333333333334,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 6
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "ok": false,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": true,
+          "expected": "blank",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": "Spanish I — Cognates Quiz",
+          "actual": "Spanish I — Cognates Quiz"
+        },
+        {
+          "path": "maxScore",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": 3,
+          "actual": 3
+        },
+        {
+          "path": "item.1",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "\"Familia\" means",
+            "answer": "A",
+            "points": 1
+          },
+          "actual": {
+            "stem": "\"Familia\" means",
+            "answer": "A",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.2",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "\"Información\" means",
+            "answer": "B",
+            "points": 1
+          },
+          "actual": {
+            "stem": "\"Información\" means",
+            "answer": "B",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "item.3",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "expected": {
+            "stem": "\"Hospital\" means",
+            "answer": "C",
+            "points": 1
+          },
+          "actual": {
+            "stem": "\"Hospital\" means",
+            "answer": "C",
+            "points": 1,
+            "needsTeacher": false
+          }
+        },
+        {
+          "path": "record_match",
+          "ok": true,
+          "hallucinated": false,
+          "missing": false,
+          "wrong": false,
+          "itemAcc": 1,
+          "matched": 3,
+          "expCount": 3
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "L01",
+      "kind": "lesson_plan",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "ok": true,
+          "expected": "lesson_plan",
+          "actual": "lesson_plan",
+          "wrong": false
+        },
+        {
+          "path": "not_answer_key",
+          "ok": true,
+          "wrong": false,
+          "actual": "lesson_plan"
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "L01",
+      "kind": "lesson_plan",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "ok": true,
+          "expected": "lesson_plan",
+          "actual": "lesson_plan",
+          "wrong": false
+        },
+        {
+          "path": "not_answer_key",
+          "ok": true,
+          "wrong": false,
+          "actual": "lesson_plan"
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "L02",
+      "kind": "lesson_materials",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "ok": true,
+          "expected": "lesson_materials",
+          "actual": "lesson_materials",
+          "wrong": false
+        },
+        {
+          "path": "not_answer_key",
+          "ok": true,
+          "wrong": false,
+          "actual": "lesson_materials"
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "L03",
+      "kind": "lesson_plan",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "ok": true,
+          "expected": "lesson_plan",
+          "actual": "lesson_plan",
+          "wrong": false
+        },
+        {
+          "path": "not_answer_key",
+          "ok": true,
+          "wrong": false,
+          "actual": "lesson_plan"
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "L03",
+      "kind": "lesson_plan",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "ok": true,
+          "expected": "lesson_plan",
+          "actual": "lesson_plan",
+          "wrong": false
+        },
+        {
+          "path": "not_answer_key",
+          "ok": true,
+          "wrong": false,
+          "actual": "lesson_plan"
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "no_invented_key",
+          "ok": true,
+          "hallucinated": false,
+          "actual_item_answers": 0
+        },
+        {
+          "path": "classify_not_forced_key",
+          "ok": true,
+          "expected_not": [
+            "answer_key"
+          ],
+          "actual": "roster",
+          "wrong": false
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "no_invented_key",
+          "ok": true,
+          "hallucinated": false,
+          "actual_item_answers": 0
+        },
+        {
+          "path": "classify_not_forced_key",
+          "ok": true,
+          "expected_not": [
+            "answer_key"
+          ],
+          "actual": "roster",
+          "wrong": false
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "no_invented_key",
+          "ok": true,
+          "hallucinated": false,
+          "actual_item_answers": 0
+        },
+        {
+          "path": "classify_not_forced_key",
+          "ok": true,
+          "expected_not": [
+            "answer_key"
+          ],
+          "actual": "syllabus",
+          "wrong": false
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "no_invented_key",
+          "ok": true,
+          "hallucinated": false,
+          "actual_item_answers": 0
+        },
+        {
+          "path": "classify_not_forced_key",
+          "ok": true,
+          "expected_not": [
+            "answer_key",
+            "lesson_plan"
+          ],
+          "actual": "homework",
+          "wrong": false
+        },
+        {
+          "path": "student_work_flag",
+          "ok": true,
+          "wrong": false
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "no_invented_key",
+          "ok": true,
+          "hallucinated": false,
+          "actual_item_answers": 0
+        },
+        {
+          "path": "classify_not_forced_key",
+          "ok": true,
+          "expected_not": [
+            "answer_key",
+            "lesson_plan"
+          ],
+          "actual": "homework",
+          "wrong": false
+        },
+        {
+          "path": "student_work_flag",
+          "ok": true,
+          "wrong": false
+        }
+      ],
+      "key_http": 200,
+      "classify_http": 200
+    }
+  ]
+}

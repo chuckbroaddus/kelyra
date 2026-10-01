@@ -109,6 +109,8 @@ type Props = {
   busy?: boolean;
   keyBusy?: boolean;
   keyStatus?: string | null;
+  /** Key photo read failed or was rejected (wrong document). Shown next to the photo, not at page bottom. */
+  keyError?: string | null;
   submitLabel: string;
   onSubmit: () => void;
   onCancel?: () => void;
@@ -134,6 +136,7 @@ export function AssignmentForm({
   busy,
   keyBusy,
   keyStatus,
+  keyError,
   submitLabel,
   onSubmit,
   onCancel,
@@ -458,6 +461,11 @@ export function AssignmentForm({
           ) : null}
           {keyBusy ? <WorkingLine text="Working…" /> : null}
           {keyStatus ? <Text style={[type.meta, { color: colors.mute }]}>{keyStatus}</Text> : null}
+          {keyError ? (
+            <Text accessibilityRole="alert" style={[type.meta, { color: colors.danger }]}>
+              {keyError}
+            </Text>
+          ) : null}
           <ChipRow>
             <IconButton
               name="capture"

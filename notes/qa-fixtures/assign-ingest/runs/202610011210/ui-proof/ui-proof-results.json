@@ -1,0 +1,20 @@
+[
+  {
+    "spec": "N01:photo",
+    "file": "notes/qa-fixtures/assign-ingest/N01/photo.jpg",
+    "outcome": "Not an answer key",
+    "shots": [
+      "N01-photo-review-375.png"
+    ],
+    "field_values": []
+  },
+  {
+    "spec": "N02:clean",
+    "file": "notes/qa-fixtures/assign-ingest/N02/clean.png",
+    "outcome": "Not an answer key",
+    "shots": [
+      "N02-clean-review-375.png"
+    ],
+    "field_values": []
+  }
+]

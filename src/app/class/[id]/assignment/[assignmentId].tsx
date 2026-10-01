@@ -96,6 +96,7 @@ export default function AssignmentEditScreen() {
   const [studentLockedName, setStudentLockedName] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [keyStatus, setKeyStatus] = useState<string | null>(null);
+  const [keyError, setKeyError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [keyBusy, setKeyBusy] = useState(false);
   const [ready, setReady] = useState(creating && !isFollowUp);
@@ -326,6 +327,7 @@ export default function AssignmentEditScreen() {
     if (!teacher) return;
     setKeyBusy(true);
     setKeyStatus(null);
+    setKeyError(null);
     setStatus(null);
     try {
       const uploaded = await uploadTeacherAsset({
@@ -340,7 +342,13 @@ export default function AssignmentEditScreen() {
         analysis = await invokeAi<KeyAnalysis>('analyze-answer-key', { imageUrl: url });
       }
       if ((analysis as { reject?: boolean }).reject) {
-        throw new Error(analysis.teacherNote || 'That photo does not look like an answer key.');
+        throw new Error(
+          !analysis.teacherNote
+            ? 'That photo does not look like an answer key.'
+            : /^not an answer key/i.test(analysis.teacherNote)
+              ? analysis.teacherNote
+              : `Not an answer key — ${analysis.teacherNote}`,
+        );
       }
       const items = parseKeyItems(analysis.items);
       if (!items.length) {
@@ -371,7 +379,8 @@ export default function AssignmentEditScreen() {
         }
       }
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Could not read that key photo');
+      // Show the read/reject reason beside the key photo, where the teacher is looking.
+      setKeyError(err instanceof Error ? err.message : 'Could not read that key photo');
     } finally {
       setKeyBusy(false);
     }
@@ -404,6 +413,7 @@ export default function AssignmentEditScreen() {
       keyPageState: null,
     }));
     setKeyStatus(null);
+    setKeyError(null);
   };
 
   const currentMaterialSnap = (): TutorBriefMaterialSnapshot =>
@@ -600,6 +610,7 @@ export default function AssignmentEditScreen() {
           busy={busy || building}
           keyBusy={keyBusy}
           keyStatus={keyStatus}
+          keyError={keyError}
           submitLabel={followUpMode ? 'Assign to student' : creating ? 'Assign' : 'Save'}
           onSubmit={() => void save()}
           onCancel={() => router.back()}

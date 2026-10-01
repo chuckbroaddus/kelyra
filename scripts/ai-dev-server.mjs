@@ -2254,6 +2254,8 @@ Return JSON only, no markdown:
 Rules:
 - FIRST classify the document. If it is NOT an answer key (student homework with a student name, syllabus/weights, roster, car rider list, random notes), set reject=true, items=[], pageState="unsure", teacherNote="Not an answer key", maxScore=null. Do NOT invent answers.
 - pageState is blank (no answers written/printed/circled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
+- pageState describes the PAPER as photographed, before you solve anything. Empty answer lines = blank, even though you then fill in proposed answers. Only use filled when answers are visibly written/printed/circled on the page.
+- Read operators and exponents exactly: × vs +, − vs +, ÷, superscripts (2³ means 2 cubed), √. Read printed point values ("3 pts") per item.
 - Answer keys often PRINT the correct answers in bold/color next to each item. That is pageState=filled. EXTRACT those printed answers. Do NOT re-solve and replace them.
 - Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled.
 - header is the printed title / first direction line, or null. Do not invent a student name as header.
@@ -2264,6 +2266,7 @@ Rules:
 - If pageState is blank: SOLVE each keyed item when objectively answerable (math fact, MC letter, word-bank, short factual fill-ins like organism/ecosystem/sunlight). Opinion/explain/draw/open writing → needsTeacher=true and answer="". Still EMIT the item row with stem even when needsTeacher.
 - Partial pages ("continue on back"): still emit the visible blanks as items (needsTeacher if unanswerable). Never return items:[].
 - If pageState is filled: EXTRACT the written/circled/printed answers exactly. Prefer the key's printed answer over your own solution.
+- STEM vs ANSWER: stem is the printed question only. Never copy the written/printed answer into stem. "Round 4.678 to the tenths: 4.7" → stem "Round 4.678 to the tenths:", answer "4.7". "0.5 + 0.25 = 0.75" → stem "0.5 + 0.25 =", answer "0.75".
 - STUDENT WORK vs KEY: if the page shows a student name + filled blanks and says "student work" / draft score / "grade this child", set pageState "filled", teacherNote "student work — not a blank key", reject=true preferred, and still extract seen answers only if needed (do not re-solve as if blank).
 - ANSWER KEY title / "KEY" / teacher-annotated red answers → pageState "filled" and extract those answers.
 - points: use printed point values if present, else 1. maxScore is the sum of points.
@@ -2585,11 +2588,13 @@ async function analyzeAnswerKey(body) {
   if (!imageUrl) throw new Error('imageUrl required');
   const loaded = await loadImageForGrok(imageUrl);
   const signature = await pageSignature(loaded.bytes);
+  // Keys are small print (×/+, superscripts, "3 pts"). Low detail misread operators
+  // and point values in the assign-ingest eval; one key per assignment, so read it at high detail.
   const payload = await grokCall('key', [
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: loaded.dataUrl, detail: imageDetailFor('cheap') },
+        { type: 'input_image', image_url: loaded.dataUrl, detail: 'high' },
         { type: 'input_text', text: analyzeKeyPrompt },
       ],
     },
@@ -2838,6 +2843,12 @@ function parseKeyItemsFromModel(raw) {
       // Prefer MC letter when answer is full choice text with leading letter
       const letterLead = answer.match(/^([A-Ea-e])[).:\s]/);
       if (letterLead && (type === 'mc' || choices?.length)) answer = letterLead[1].toUpperCase();
+      // Filled keys: the model sometimes echoes the written answer onto the stem
+      // ("Round 4.678 to the tenths: 4.7"). Drop that trailing copy after = or :.
+      if (answer && stem.length > answer.length + 1 && stem.endsWith(answer)) {
+        const head = stem.slice(0, stem.length - answer.length).trimEnd();
+        if (/[=:]$/.test(head)) stem = head;
+      }
       return {
         n: Number.isFinite(n) ? n : index + 1,
         stem,
