@@ -1,21 +1,24 @@
 /**
- * GB-08 Syllabus wizard shell (T1–T8). Step bodies patched in.
+ * GB-08 Syllabus wizard shell — PersonTabs chrome + step bodies.
+ * Choice rows are radios / steppers / switches (no ChipRow).
  */
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
+import type { IconName } from '@/components/ui/Icon';
+import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { type } from '@/constants/theme';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { formatPct, runLivePreview } from '@/components/syllabus/livePreview';
 import {
   STEP_HELP_KEYS,
+  STEP_ICONS,
   STEP_LABELS,
   canFinishReview,
+  resolveWizardStep,
   setWizardStep,
   soFarSummary,
   validateWizard,
@@ -42,7 +45,17 @@ type Props = {
   onSaveDraft: () => void;
   onPublish: () => void;
   footer?: React.ReactNode;
+  /** Parent hosts PersonTabs in Screen.collapse when true. */
+  tabsHostedOutside?: boolean;
 };
+
+export function wizardPersonTabs(draft: SyllabusWizardDraft): PersonTab[] {
+  return visibleSteps(draft).map((id) => ({
+    key: id,
+    label: STEP_LABELS[id],
+    icon: STEP_ICONS[id] as IconName,
+  }));
+}
 
 function HelpCard({ step, colors }: { step: WizardStepId; colors: Colors }) {
   const [open, setOpen] = useState(true);
@@ -67,7 +80,7 @@ function LivePreviewCard({ draft, colors }: { draft: SyllabusWizardDraft; colors
   const preview = useMemo(() => runLivePreview(draft), [draft]);
   return (
     <Card>
-      <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Preview with sample students</Text>
+      <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>What the rules do</Text>
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
         Three made-up students. Their grades update as you make choices.
       </Text>
@@ -86,14 +99,23 @@ function LivePreviewCard({ draft, colors }: { draft: SyllabusWizardDraft; colors
   );
 }
 
-export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, footer }: Props) {
+export function SyllabusWizard({
+  draft,
+  onChange,
+  busy,
+  onSaveDraft,
+  onPublish,
+  footer,
+  tabsHostedOutside,
+}: Props) {
   const { colors } = useTheme();
   const c = colors as Colors;
   const steps = visibleSteps(draft);
-  const step = steps.includes(draft.step) ? draft.step : steps[0]!;
+  const step = resolveWizardStep(draft);
   const stepIndex = steps.indexOf(step);
   const issues = validateWizard(draft);
   const summary = soFarSummary(draft);
+  const tabs = useMemo(() => wizardPersonTabs(draft), [draft.engine, draft.categories.length]);
 
   const go = (id: WizardStepId) => onChange(setWizardStep(draft, id));
   const next = () => {
@@ -107,13 +129,23 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
 
   return (
     <View>
-      <Text style={[type.meta, { color: c.mute, marginBottom: 8 }]}>{summary}</Text>
-      <ChipRow>
-        {steps.map((id) => (
-          <Chip key={id} label={STEP_LABELS[id]} selected={id === step} quiet={id !== step} onPress={() => go(id)} />
-        ))}
-      </ChipRow>
+      <View style={styles.headerRow}>
+        <Text style={[type.meta, { color: c.mute, flex: 1 }]}>
+          {stepIndex + 1} of {steps.length} · {summary}
+        </Text>
+        <GhostButton
+          label={busy ? 'Saving…' : 'Save draft'}
+          onPress={onSaveDraft}
+          disabled={Boolean(busy) || !canFinishReview(draft)}
+        />
+      </View>
+
+      {!tabsHostedOutside ? (
+        <PersonTabs tabs={tabs} value={step} onChange={(key) => go(key as WizardStepId)} compact />
+      ) : null}
+
       <HelpCard step={step} colors={c} />
+      {/* Live preview stays on every step (existing behavior); Review also shows the samples. */}
       <LivePreviewCard draft={draft} colors={c} />
       <Card>
         <Text style={[type.title, { color: c.ink, marginBottom: 12 }]}>{STEP_LABELS[step]}</Text>
@@ -139,7 +171,6 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
         </Card>
       ) : null}
       <View style={styles.nav}>
-        {/* Each button takes half the row (full-width buttons pushed Publish off a 375px screen). */}
         <View style={styles.navCell}>
           <SecondaryButton label="Back" onPress={back} disabled={stepIndex <= 0 || Boolean(busy)} />
         </View>
@@ -148,24 +179,25 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
             <PrimaryButton label="Continue" onPress={next} disabled={Boolean(busy)} />
           ) : (
             <PrimaryButton
-              label={busy ? 'Publishing…' : 'Publish syllabus'}
+              label={busy ? 'Publishing…' : 'Publish'}
               onPress={onPublish}
               disabled={Boolean(busy) || !canFinishReview(draft)}
             />
           )}
         </View>
       </View>
-      <GhostButton
-        label={busy ? 'Saving…' : 'Save draft'}
-        onPress={onSaveDraft}
-        disabled={Boolean(busy) || !canFinishReview(draft)}
-      />
       {footer}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   helpHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 },
   previewRow: {
     flexDirection: 'row',

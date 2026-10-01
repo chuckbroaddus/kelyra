@@ -12,7 +12,7 @@ import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { SyllabusWizard } from '@/components/syllabus/SyllabusWizard';
+import { SyllabusWizard, wizardPersonTabs } from '@/components/syllabus/SyllabusWizard';
 import { IngestPendingPagesCard } from '@/components/ingest/IngestPendingPagesCard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
@@ -20,10 +20,13 @@ import {
   applyAskImport,
   canFinishReview,
   draftFromBundle,
+  resolveWizardStep,
   setWizardStep,
   toEditorInput,
   type SyllabusWizardDraft,
+  type WizardStepId,
 } from '@/components/syllabus/wizardModel';
+import { PersonTabs } from '@/components/ui/PersonTabs';
 import { type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
@@ -434,12 +437,26 @@ export default function SyllabusScreen() {
         ? 'Draft (not used for grades yet)'
         : 'Not set up yet';
 
+  const step = resolveWizardStep(draft);
+  const collapsing = (
+    <PersonTabs
+      tabs={wizardPersonTabs(draft)}
+      value={step}
+      compact
+      onChange={(key) => setDraft(setWizardStep(draft, key as WizardStepId))}
+    />
+  );
+
   return (
-    <Screen keyboard pageChromeHosted>
+    <Screen keyboard pageChromeHosted collapse={collapsing}>
       <View style={[styles.titleHeader, styles.titleHeaderFirst, { backgroundColor: colors.bg }]}>
         <Text style={[type.section, styles.titleHeaderLabel, { color: colors.mute }]} numberOfLines={1}>
           Grading Syllabus
         </Text>
+        <GhostButton
+          label="Back to settings"
+          onPress={() => router.replace(`/class/${id}/settings`)}
+        />
       </View>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
@@ -545,16 +562,12 @@ export default function SyllabusScreen() {
         busy={busy}
         onSaveDraft={() => void onSaveDraft()}
         onPublish={onPublishPress}
+        tabsHostedOutside
         footer={
           <View style={styles.actions}>
             {draft.syllabus_status === 'published' ? (
               <GhostButton align="left" label="Unpublish" onPress={() => setConfirm({ kind: 'unpublish' })} />
             ) : null}
-            <GhostButton
-              align="left"
-              label="Back to settings"
-              onPress={() => router.replace(`/class/${id}/settings`)}
-            />
           </View>
         }
       />

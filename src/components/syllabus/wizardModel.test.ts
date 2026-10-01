@@ -6,12 +6,19 @@ import {
   applyAskImport,
   applySchoolPolicyDefaults,
   canFinishReview,
+  clampDropLowest,
   createEmptyWizardDraft,
   draftFromBundle,
+  dropLowestCategories,
   isFieldLocked,
   parentFacingParagraph,
   patchCategory,
   patchDraft,
+  resolveWizardStep,
+  setWizardStep,
+  showExtraCreditCapField,
+  showLateAmountFields,
+  showMissingFloorField,
   soFarSummary,
   toEditorInput,
   validateWizard,
@@ -26,6 +33,8 @@ test('empty draft defaults to weighted percent + 100% categories', () => {
   assert.equal(weightsOk(d), true);
   assert.ok(soFarSummary(d).includes('Weighted'));
   assert.deepEqual(visibleSteps(d).includes('categories'), true);
+  assert.equal(visibleSteps(d).includes('within'), false);
+  assert.equal(visibleSteps(d).length, 7);
 });
 
 test('total_points hides category steps', () => {
@@ -34,6 +43,45 @@ test('total_points hides category steps', () => {
   assert.equal(visibleSteps(d).includes('categories'), false);
   assert.equal(weightsOk(d), true);
   assert.equal(canFinishReview(d), true);
+});
+
+test('conditional UI fields: floor / late amount / EC cap; drop clamp; publish gate', () => {
+  let d = createEmptyWizardDraft('c');
+  assert.equal(showMissingFloorField(d), false);
+  d = patchDraft(d, { missing_rule: 'floor' });
+  assert.equal(showMissingFloorField(d), true);
+
+  assert.equal(showLateAmountFields(d), false);
+  d = patchDraft(d, { late_rule: { type: 'per_day', amount: 5, unit: 'percent' } });
+  assert.equal(showLateAmountFields(d), true);
+
+  d = patchDraft(d, { extra_credit_method: 'A' });
+  assert.equal(showExtraCreditCapField(d), false);
+  d = patchDraft(d, { extra_credit_method: 'B' });
+  assert.equal(showExtraCreditCapField(d), true);
+  d = patchDraft(d, { extra_credit_method: 'C' });
+  assert.equal(showExtraCreditCapField(d), true);
+
+  assert.equal(clampDropLowest(9), 3);
+  assert.equal(clampDropLowest(-1), 0);
+  assert.equal(clampDropLowest(2.7), 2);
+  assert.deepEqual(
+    dropLowestCategories(d.categories).map((c) => c.key),
+    d.categories.filter((c) => c.active).map((c) => c.key),
+  );
+
+  d = patchCategory(d, 'tests', { weight_percent: 40 });
+  assert.equal(canFinishReview(d), false);
+  d = patchCategory(d, 'tests', { weight_percent: 50 });
+  assert.equal(canFinishReview(d), true);
+});
+
+test('legacy within step resolves to engine; setWizardStep remaps within', () => {
+  let d = createEmptyWizardDraft('c');
+  d = { ...d, step: 'within' };
+  assert.equal(resolveWizardStep(d), 'engine');
+  d = setWizardStep(d, 'within');
+  assert.equal(d.step, 'engine');
 });
 
 test('weights must sum 100; EC method C only lets the extra-credit category go on top', () => {

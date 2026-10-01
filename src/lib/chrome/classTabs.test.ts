@@ -224,6 +224,7 @@ test('AC-STU-CT-08: Students href is setup; selection students', () => {
 test('classTabsStacked: even spacing when a secondary tab row follows', async () => {
   const { classTabsStacked } = await import('./classTabs.ts');
   assert.equal(classTabsStacked('/class/abc/gradebook'), true);
+  assert.equal(classTabsStacked('/class/abc/syllabus'), true);
   assert.equal(classTabsStacked('/class/abc'), true);
   assert.equal(classTabsStacked('/class/abc', 'week'), true);
   assert.equal(classTabsStacked('/class/abc', 'needs'), false);
