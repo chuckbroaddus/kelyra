@@ -1,0 +1,10 @@
+{
+  "source_id": "N02",
+  "kind": "negative",
+  "document_kind_guess": "not_roster",
+  "rejected": true,
+  "overall_confidence": 0.15,
+  "names": [],
+  "warnings": [],
+  "_eval": {}
+}

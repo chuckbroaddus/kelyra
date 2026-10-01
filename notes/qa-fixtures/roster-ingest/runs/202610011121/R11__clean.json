@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Adrian Bell",
+        "confident": true
+      },
+      {
+        "name": "Bianca Cruz",
+        "confident": true
+      },
+      {
+        "name": "Celia Peralta",
+        "confident": true
+      },
+      {
+        "name": "Diana Espinosa",
+        "confident": true
+      },
+      {
+        "name": "Elena Frost",
+        "confident": true
+      },
+      {
+        "name": "Fiona Garcia",
+        "confident": true
+      },
+      {
+        "name": "Gina Hale",
+        "confident": true
+      },
+      {
+        "name": "Hector Ines",
+        "confident": true
+      },
+      {
+        "name": "Ingrid Jost",
+        "confident": true
+      },
+      {
+        "name": "Jules Kwon",
+        "confident": true
+      },
+      {
+        "name": "Kara Lane",
+        "confident": true
+      },
+      {
+        "name": "Luis Mendez",
+        "confident": true
+      }
+    ]
+  }
+}

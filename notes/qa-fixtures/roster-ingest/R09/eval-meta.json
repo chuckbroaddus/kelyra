@@ -1,0 +1,14 @@
+{
+  "id": "R09",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "fields": [
+    "names",
+    "parent_contact"
+  ],
+  "srs": []
+}

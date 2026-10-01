@@ -1,0 +1,73 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Aiden Brooks",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Bella Cruz",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Carter Dunn",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Della Fox",
+        "student_id": null,
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Evan Gobi",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Faye Ito",
+        "student_id": null,
+        "grade": null,
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gabe Jung",
+        "student_id": null,
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hana Kim",
+        "student_id": null,
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

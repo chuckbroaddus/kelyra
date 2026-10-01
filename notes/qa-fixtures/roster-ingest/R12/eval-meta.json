@@ -1,0 +1,14 @@
+{
+  "id": "R12",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": true,
+  "fields": [
+    "names",
+    "student_id"
+  ],
+  "srs": []
+}

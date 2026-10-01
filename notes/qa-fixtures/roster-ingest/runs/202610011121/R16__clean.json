@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Arlo Beckett",
+        "confident": true
+      },
+      {
+        "name": "Claire Chen",
+        "confident": true
+      },
+      {
+        "name": "Cody Diaz",
+        "confident": true
+      },
+      {
+        "name": "Demel Ellis",
+        "confident": true
+      },
+      {
+        "name": "Ezra Frost",
+        "confident": true
+      },
+      {
+        "name": "Mr. Stern",
+        "confident": false
+      }
+    ]
+  }
+}

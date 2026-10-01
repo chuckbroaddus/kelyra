@@ -1,0 +1,2962 @@
+{
+  "stamp": "202610011124",
+  "overall_accuracy": 0.8287824136913811,
+  "roster_accuracy": 0.797075453263859,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.8174291236713597,
+  "photo_accuracy": 0.8504568764568764,
+  "name_recall": 0.8632996632996632,
+  "name_precision": 0.8491021324354657,
+  "record_f1": 0.8554994388327721,
+  "hallucinations_total": 29,
+  "documents": [
+    {
+      "id": "R01",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 8,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ava Brooks",
+          "status": "correct",
+          "expected": "Ava Brooks",
+          "actual": "Ava Brooks"
+        },
+        {
+          "path": "student_id:Ava Brooks",
+          "status": "correct",
+          "expected": "A2401",
+          "actual": "A2401"
+        },
+        {
+          "path": "name:Diego Morales",
+          "status": "correct",
+          "expected": "Diego Morales",
+          "actual": "Diego Morales"
+        },
+        {
+          "path": "student_id:Diego Morales",
+          "status": "correct",
+          "expected": "A2402",
+          "actual": "A2402"
+        },
+        {
+          "path": "name:Harper Nguyen",
+          "status": "correct",
+          "expected": "Harper Nguyen",
+          "actual": "Harper Nguyen"
+        },
+        {
+          "path": "student_id:Harper Nguyen",
+          "status": "correct",
+          "expected": "A2403",
+          "actual": "A2403"
+        },
+        {
+          "path": "name:Jonah Patel",
+          "status": "correct",
+          "expected": "Jonah Patel",
+          "actual": "Jonah Patel"
+        },
+        {
+          "path": "student_id:Jonah Patel",
+          "status": "correct",
+          "expected": "A2404",
+          "actual": "A2404"
+        },
+        {
+          "path": "name:Lila Okonkwo",
+          "status": "correct",
+          "expected": "Lila Okonkwo",
+          "actual": "Lila Okonkwo"
+        },
+        {
+          "path": "student_id:Lila Okonkwo",
+          "status": "correct",
+          "expected": "A2405",
+          "actual": "A2405"
+        },
+        {
+          "path": "name:Mateo Ruiz",
+          "status": "correct",
+          "expected": "Mateo Ruiz",
+          "actual": "Mateo Ruiz"
+        },
+        {
+          "path": "student_id:Mateo Ruiz",
+          "status": "correct",
+          "expected": "A2406",
+          "actual": "A2406"
+        },
+        {
+          "path": "name:Nora Singh",
+          "status": "correct",
+          "expected": "Nora Singh",
+          "actual": "Nora Singh"
+        },
+        {
+          "path": "student_id:Nora Singh",
+          "status": "correct",
+          "expected": "A2407",
+          "actual": "A2407"
+        },
+        {
+          "path": "name:Owen Blake",
+          "status": "correct",
+          "expected": "Owen Blake",
+          "actual": "Owen Blake"
+        },
+        {
+          "path": "student_id:Owen Blake",
+          "status": "correct",
+          "expected": "A2408",
+          "actual": "A2408"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R01",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.6826923076923077,
+      "name_recall": 0.625,
+      "name_precision": 0.625,
+      "record_f1": 0.625,
+      "field_accuracy": 0.7692307692307693,
+      "hallucinations": 3,
+      "matched": 5,
+      "missing": 3,
+      "extra": 3,
+      "fields": [
+        {
+          "path": "name:Ava Brooks",
+          "status": "missing",
+          "expected": "Ava Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Diego Morales",
+          "status": "correct",
+          "expected": "Diego Morales",
+          "actual": "Diego Morales"
+        },
+        {
+          "path": "student_id:Diego Morales",
+          "status": "correct",
+          "expected": "A2402",
+          "actual": "A2402"
+        },
+        {
+          "path": "name:Harper Nguyen",
+          "status": "correct",
+          "expected": "Harper Nguyen",
+          "actual": "Harper Nguyen"
+        },
+        {
+          "path": "student_id:Harper Nguyen",
+          "status": "correct",
+          "expected": "A2403",
+          "actual": "A2403"
+        },
+        {
+          "path": "name:Jonah Patel",
+          "status": "missing",
+          "expected": "Jonah Patel",
+          "actual": null
+        },
+        {
+          "path": "name:Lila Okonkwo",
+          "status": "missing",
+          "expected": "Lila Okonkwo",
+          "actual": null
+        },
+        {
+          "path": "name:Mateo Ruiz",
+          "status": "correct",
+          "expected": "Mateo Ruiz",
+          "actual": "Mateo Ruiz"
+        },
+        {
+          "path": "student_id:Mateo Ruiz",
+          "status": "correct",
+          "expected": "A2406",
+          "actual": "A2406"
+        },
+        {
+          "path": "name:Nora Singh",
+          "status": "correct",
+          "expected": "Nora Singh",
+          "actual": "Nora Singh"
+        },
+        {
+          "path": "student_id:Nora Singh",
+          "status": "correct",
+          "expected": "A2407",
+          "actual": "A2407"
+        },
+        {
+          "path": "name:Owen Blake",
+          "status": "correct",
+          "expected": "Owen Blake",
+          "actual": "Owen Blake"
+        },
+        {
+          "path": "student_id:Owen Blake",
+          "status": "correct",
+          "expected": "A2408",
+          "actual": "A2408"
+        },
+        {
+          "path": "extra:Aria Brooks",
+          "status": "extra",
+          "expected": null,
+          "actual": "Aria Brooks"
+        },
+        {
+          "path": "extra:Josiah Patel",
+          "status": "extra",
+          "expected": null,
+          "actual": "Josiah Patel"
+        },
+        {
+          "path": "extra:Lila Chen",
+          "status": "extra",
+          "expected": null,
+          "actual": "Lila Chen"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R02",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.8809523809523809,
+      "name_recall": 0.8333333333333334,
+      "name_precision": 0.8333333333333334,
+      "record_f1": 0.8333333333333334,
+      "field_accuracy": 0.9523809523809523,
+      "hallucinations": 1,
+      "matched": 5,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Maya Chen",
+          "status": "correct",
+          "expected": "Maya Chen",
+          "actual": "Maya Chen"
+        },
+        {
+          "path": "student_id:Maya Chen",
+          "status": "correct",
+          "expected": "88201",
+          "actual": "88201"
+        },
+        {
+          "path": "grade:Maya Chen",
+          "status": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "period:Maya Chen",
+          "status": "correct",
+          "expected": "1",
+          "actual": "1"
+        },
+        {
+          "path": "name:Eli Foster",
+          "status": "missing",
+          "expected": "Eli Foster",
+          "actual": null
+        },
+        {
+          "path": "name:Sofia Garcia",
+          "status": "correct",
+          "expected": "Sofia Garcia",
+          "actual": "Sofia Garcia"
+        },
+        {
+          "path": "student_id:Sofia Garcia",
+          "status": "correct",
+          "expected": "88222",
+          "actual": "88222"
+        },
+        {
+          "path": "grade:Sofia Garcia",
+          "status": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "period:Sofia Garcia",
+          "status": "correct",
+          "expected": "1",
+          "actual": "1"
+        },
+        {
+          "path": "name:Jordan Kim",
+          "status": "correct",
+          "expected": "Jordan Kim",
+          "actual": "Jordan Kim"
+        },
+        {
+          "path": "student_id:Jordan Kim",
+          "status": "correct",
+          "expected": "88231",
+          "actual": "88231"
+        },
+        {
+          "path": "grade:Jordan Kim",
+          "status": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "period:Jordan Kim",
+          "status": "correct",
+          "expected": "1",
+          "actual": "1"
+        },
+        {
+          "path": "name:Camila Lopez",
+          "status": "correct",
+          "expected": "Camila Lopez",
+          "actual": "Camila Lopez"
+        },
+        {
+          "path": "student_id:Camila Lopez",
+          "status": "correct",
+          "expected": "88240",
+          "actual": "88240"
+        },
+        {
+          "path": "grade:Camila Lopez",
+          "status": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "period:Camila Lopez",
+          "status": "correct",
+          "expected": "1",
+          "actual": "1"
+        },
+        {
+          "path": "name:Noah Wright",
+          "status": "correct",
+          "expected": "Noah Wright",
+          "actual": "Noah Wright"
+        },
+        {
+          "path": "student_id:Noah Wright",
+          "status": "correct",
+          "expected": "88255",
+          "actual": "88255"
+        },
+        {
+          "path": "grade:Noah Wright",
+          "status": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "period:Noah Wright",
+          "status": "correct",
+          "expected": "1",
+          "actual": "1"
+        },
+        {
+          "path": "extra:Ella Foster",
+          "status": "extra",
+          "expected": null,
+          "actual": "Ella Foster"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R03",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 12,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Priya Shah",
+          "status": "correct",
+          "expected": "Priya Shah",
+          "actual": "Priya Shah"
+        },
+        {
+          "path": "name:Leo Anders",
+          "status": "correct",
+          "expected": "Leo Anders",
+          "actual": "Leo Anders"
+        },
+        {
+          "path": "name:Mila Torres",
+          "status": "correct",
+          "expected": "Mila Torres",
+          "actual": "Mila Torres"
+        },
+        {
+          "path": "name:Sam Quinn",
+          "status": "correct",
+          "expected": "Sam Quinn",
+          "actual": "Sam Quinn"
+        },
+        {
+          "path": "name:Zoe Hart",
+          "status": "correct",
+          "expected": "Zoe Hart",
+          "actual": "Zoe Hart"
+        },
+        {
+          "path": "name:Ben Cole",
+          "status": "correct",
+          "expected": "Ben Cole",
+          "actual": "Ben Cole"
+        },
+        {
+          "path": "name:Iris Moon",
+          "status": "correct",
+          "expected": "Iris Moon",
+          "actual": "Iris Moon"
+        },
+        {
+          "path": "name:Kai Brooks",
+          "status": "correct",
+          "expected": "Kai Brooks",
+          "actual": "Kai Brooks"
+        },
+        {
+          "path": "name:Ella Voss",
+          "status": "correct",
+          "expected": "Ella Voss",
+          "actual": "Ella Voss"
+        },
+        {
+          "path": "name:Max Reed",
+          "status": "correct",
+          "expected": "Max Reed",
+          "actual": "Max Reed"
+        },
+        {
+          "path": "name:Nina Park",
+          "status": "correct",
+          "expected": "Nina Park",
+          "actual": "Nina Park"
+        },
+        {
+          "path": "name:Omar Diaz",
+          "status": "correct",
+          "expected": "Omar Diaz",
+          "actual": "Omar Diaz"
+        }
+      ],
+      "actual_count": 12,
+      "rejected": false
+    },
+    {
+      "id": "R03",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 12,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Priya Shah",
+          "status": "correct",
+          "expected": "Priya Shah",
+          "actual": "Priya Shah"
+        },
+        {
+          "path": "name:Leo Anders",
+          "status": "correct",
+          "expected": "Leo Anders",
+          "actual": "Leo Anders"
+        },
+        {
+          "path": "name:Mila Torres",
+          "status": "correct",
+          "expected": "Mila Torres",
+          "actual": "Mila Torres"
+        },
+        {
+          "path": "name:Sam Quinn",
+          "status": "correct",
+          "expected": "Sam Quinn",
+          "actual": "Sam Quinn"
+        },
+        {
+          "path": "name:Zoe Hart",
+          "status": "correct",
+          "expected": "Zoe Hart",
+          "actual": "Zoe Hart"
+        },
+        {
+          "path": "name:Ben Cole",
+          "status": "correct",
+          "expected": "Ben Cole",
+          "actual": "Ben Cole"
+        },
+        {
+          "path": "name:Iris Moon",
+          "status": "correct",
+          "expected": "Iris Moon",
+          "actual": "Iris Moon"
+        },
+        {
+          "path": "name:Kai Brooks",
+          "status": "correct",
+          "expected": "Kai Brooks",
+          "actual": "Kai Brooks"
+        },
+        {
+          "path": "name:Ella Voss",
+          "status": "correct",
+          "expected": "Ella Voss",
+          "actual": "Ella Voss"
+        },
+        {
+          "path": "name:Max Reed",
+          "status": "correct",
+          "expected": "Max Reed",
+          "actual": "Max Reed"
+        },
+        {
+          "path": "name:Nina Park",
+          "status": "correct",
+          "expected": "Nina Park",
+          "actual": "Nina Park"
+        },
+        {
+          "path": "name:Omar Diaz",
+          "status": "correct",
+          "expected": "Omar Diaz",
+          "actual": "Omar Diaz"
+        }
+      ],
+      "actual_count": 12,
+      "rejected": false
+    },
+    {
+      "id": "R04",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 7,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Amelia Crowe",
+          "status": "correct",
+          "expected": "Amelia Crowe",
+          "actual": "Amelia Crowe"
+        },
+        {
+          "path": "name:Caleb Orth",
+          "status": "correct",
+          "expected": "Caleb Orth",
+          "actual": "Caleb Orth"
+        },
+        {
+          "path": "name:Daisy Fen",
+          "status": "correct",
+          "expected": "Daisy Fen",
+          "actual": "Daisy Fen"
+        },
+        {
+          "path": "name:Ethan Vale",
+          "status": "correct",
+          "expected": "Ethan Vale",
+          "actual": "Ethan Vale"
+        },
+        {
+          "path": "name:Freya Moss",
+          "status": "correct",
+          "expected": "Freya Moss",
+          "actual": "Freya Moss"
+        },
+        {
+          "path": "name:Gavin Shore",
+          "status": "correct",
+          "expected": "Gavin Shore",
+          "actual": "Gavin Shore"
+        },
+        {
+          "path": "name:Hannah Pike",
+          "status": "correct",
+          "expected": "Hannah Pike",
+          "actual": "Hannah Pike"
+        }
+      ],
+      "actual_count": 7,
+      "rejected": false
+    },
+    {
+      "id": "R05",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.8318840579710145,
+      "name_recall": 0.7777777777777778,
+      "name_precision": 0.7777777777777778,
+      "record_f1": 0.7777777777777778,
+      "field_accuracy": 0.9130434782608695,
+      "hallucinations": 2,
+      "matched": 7,
+      "missing": 2,
+      "extra": 2,
+      "fields": [
+        {
+          "path": "name:Isla Brennan",
+          "status": "correct",
+          "expected": "Isla Brennan",
+          "actual": "Isla Brennan"
+        },
+        {
+          "path": "student_id:Isla Brennan",
+          "status": "correct",
+          "expected": "T-110",
+          "actual": "T-110"
+        },
+        {
+          "path": "grade:Isla Brennan",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Jamal Washington",
+          "status": "correct",
+          "expected": "Jamal Washington",
+          "actual": "Jamal Washington"
+        },
+        {
+          "path": "student_id:Jamal Washington",
+          "status": "correct",
+          "expected": "T-111",
+          "actual": "T-111"
+        },
+        {
+          "path": "grade:Jamal Washington",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Keira Santos",
+          "status": "missing",
+          "expected": "Keira Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Liam Okafor",
+          "status": "missing",
+          "expected": "Liam Okafor",
+          "actual": null
+        },
+        {
+          "path": "name:Mina Cho",
+          "status": "correct",
+          "expected": "Mina Cho",
+          "actual": "Mina Cho"
+        },
+        {
+          "path": "student_id:Mina Cho",
+          "status": "correct",
+          "expected": "T-114",
+          "actual": "T-114"
+        },
+        {
+          "path": "grade:Mina Cho",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Nolan Berg",
+          "status": "correct",
+          "expected": "Nolan Berg",
+          "actual": "Nolan Berg"
+        },
+        {
+          "path": "student_id:Nolan Berg",
+          "status": "correct",
+          "expected": "T-115",
+          "actual": "T-115"
+        },
+        {
+          "path": "grade:Nolan Berg",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Olive Tran",
+          "status": "correct",
+          "expected": "Olive Tran",
+          "actual": "Olive Tran"
+        },
+        {
+          "path": "student_id:Olive Tran",
+          "status": "correct",
+          "expected": "T-116",
+          "actual": "T-116"
+        },
+        {
+          "path": "grade:Olive Tran",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Parker Ellis",
+          "status": "correct",
+          "expected": "Parker Ellis",
+          "actual": "Parker Ellis"
+        },
+        {
+          "path": "student_id:Parker Ellis",
+          "status": "correct",
+          "expected": "T-117",
+          "actual": "T-117"
+        },
+        {
+          "path": "grade:Parker Ellis",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Quinn Adler",
+          "status": "correct",
+          "expected": "Quinn Adler",
+          "actual": "Quinn Adler"
+        },
+        {
+          "path": "student_id:Quinn Adler",
+          "status": "correct",
+          "expected": "T-118",
+          "actual": "T-118"
+        },
+        {
+          "path": "grade:Quinn Adler",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "extra:Kaira Santos",
+          "status": "extra",
+          "expected": null,
+          "actual": "Kaira Santos"
+        },
+        {
+          "path": "extra:Liam Oskur",
+          "status": "extra",
+          "expected": null,
+          "actual": "Liam Oskur"
+        }
+      ],
+      "actual_count": 9,
+      "rejected": false
+    },
+    {
+      "id": "R05",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.9173333333333333,
+      "name_recall": 0.8888888888888888,
+      "name_precision": 0.8888888888888888,
+      "record_f1": 0.8888888888888888,
+      "field_accuracy": 0.96,
+      "hallucinations": 1,
+      "matched": 8,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Isla Brennan",
+          "status": "correct",
+          "expected": "Isla Brennan",
+          "actual": "Isla Brennan"
+        },
+        {
+          "path": "student_id:Isla Brennan",
+          "status": "correct",
+          "expected": "T-110",
+          "actual": "T-110"
+        },
+        {
+          "path": "grade:Isla Brennan",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Jamal Washington",
+          "status": "correct",
+          "expected": "Jamal Washington",
+          "actual": "Jamal Washington"
+        },
+        {
+          "path": "student_id:Jamal Washington",
+          "status": "correct",
+          "expected": "T-111",
+          "actual": "T-111"
+        },
+        {
+          "path": "grade:Jamal Washington",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Keira Santos",
+          "status": "correct",
+          "expected": "Keira Santos",
+          "actual": "Keira Santos"
+        },
+        {
+          "path": "student_id:Keira Santos",
+          "status": "correct",
+          "expected": "T-112",
+          "actual": "T-112"
+        },
+        {
+          "path": "grade:Keira Santos",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Liam Okafor",
+          "status": "missing",
+          "expected": "Liam Okafor",
+          "actual": null
+        },
+        {
+          "path": "name:Mina Cho",
+          "status": "correct",
+          "expected": "Mina Cho",
+          "actual": "Mina Cho"
+        },
+        {
+          "path": "student_id:Mina Cho",
+          "status": "correct",
+          "expected": "T-114",
+          "actual": "T-114"
+        },
+        {
+          "path": "grade:Mina Cho",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Nolan Berg",
+          "status": "correct",
+          "expected": "Nolan Berg",
+          "actual": "Nolan Berg"
+        },
+        {
+          "path": "student_id:Nolan Berg",
+          "status": "correct",
+          "expected": "T-115",
+          "actual": "T-115"
+        },
+        {
+          "path": "grade:Nolan Berg",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Olive Tran",
+          "status": "correct",
+          "expected": "Olive Tran",
+          "actual": "Olive Tran"
+        },
+        {
+          "path": "student_id:Olive Tran",
+          "status": "correct",
+          "expected": "T-116",
+          "actual": "T-116"
+        },
+        {
+          "path": "grade:Olive Tran",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Parker Ellis",
+          "status": "correct",
+          "expected": "Parker Ellis",
+          "actual": "Parker Ellis"
+        },
+        {
+          "path": "student_id:Parker Ellis",
+          "status": "correct",
+          "expected": "T-117",
+          "actual": "T-117"
+        },
+        {
+          "path": "grade:Parker Ellis",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "name:Quinn Adler",
+          "status": "correct",
+          "expected": "Quinn Adler",
+          "actual": "Quinn Adler"
+        },
+        {
+          "path": "student_id:Quinn Adler",
+          "status": "correct",
+          "expected": "T-118",
+          "actual": "T-118"
+        },
+        {
+          "path": "grade:Quinn Adler",
+          "status": "correct",
+          "expected": "10",
+          "actual": "10"
+        },
+        {
+          "path": "extra:Liam Okator",
+          "status": "extra",
+          "expected": null,
+          "actual": "Liam Okator"
+        }
+      ],
+      "actual_count": 9,
+      "rejected": false
+    },
+    {
+      "id": "R06",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.56,
+      "name_recall": 0.6666666666666666,
+      "name_precision": 0.6666666666666666,
+      "record_f1": 0.6666666666666666,
+      "field_accuracy": 0.4,
+      "hallucinations": 2,
+      "matched": 4,
+      "missing": 2,
+      "extra": 2,
+      "fields": [
+        {
+          "path": "name:Ravi Mehta",
+          "status": "correct",
+          "expected": "Ravi Mehta",
+          "actual": "Ravi Mehta"
+        },
+        {
+          "path": "student_id:Ravi Mehta",
+          "status": "wrong",
+          "expected": "C501",
+          "actual": "C901"
+        },
+        {
+          "path": "name:Sienna Holt",
+          "status": "missing",
+          "expected": "Sienna Holt",
+          "actual": null
+        },
+        {
+          "path": "name:Theo Grant",
+          "status": "correct",
+          "expected": "Theo Grant",
+          "actual": "Theo Grant"
+        },
+        {
+          "path": "student_id:Theo Grant",
+          "status": "wrong",
+          "expected": "C503",
+          "actual": "C903"
+        },
+        {
+          "path": "name:Uma Desai",
+          "status": "correct",
+          "expected": "Uma Desai",
+          "actual": "Uma Desai"
+        },
+        {
+          "path": "student_id:Uma Desai",
+          "status": "wrong",
+          "expected": "C504",
+          "actual": "C904"
+        },
+        {
+          "path": "name:Victor Lang",
+          "status": "correct",
+          "expected": "Victor Lang",
+          "actual": "Victor Lang"
+        },
+        {
+          "path": "student_id:Victor Lang",
+          "status": "wrong",
+          "expected": "C505",
+          "actual": "C905"
+        },
+        {
+          "path": "name:Willa Cross",
+          "status": "missing",
+          "expected": "Willa Cross",
+          "actual": null
+        },
+        {
+          "path": "extra:Serena Holt",
+          "status": "extra",
+          "expected": null,
+          "actual": "Serena Holt"
+        },
+        {
+          "path": "extra:Willa Cruz",
+          "status": "extra",
+          "expected": null,
+          "actual": "Willa Cruz"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R06",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.56,
+      "name_recall": 0.6666666666666666,
+      "name_precision": 0.6666666666666666,
+      "record_f1": 0.6666666666666666,
+      "field_accuracy": 0.4,
+      "hallucinations": 2,
+      "matched": 4,
+      "missing": 2,
+      "extra": 2,
+      "fields": [
+        {
+          "path": "name:Ravi Mehta",
+          "status": "missing",
+          "expected": "Ravi Mehta",
+          "actual": null
+        },
+        {
+          "path": "name:Sienna Holt",
+          "status": "correct",
+          "expected": "Sienna Holt",
+          "actual": "Sienna Holt"
+        },
+        {
+          "path": "student_id:Sienna Holt",
+          "status": "missing",
+          "expected": "C502",
+          "actual": null
+        },
+        {
+          "path": "name:Theo Grant",
+          "status": "correct",
+          "expected": "Theo Grant",
+          "actual": "Theo Grant"
+        },
+        {
+          "path": "student_id:Theo Grant",
+          "status": "missing",
+          "expected": "C503",
+          "actual": null
+        },
+        {
+          "path": "name:Uma Desai",
+          "status": "correct",
+          "expected": "Uma Desai",
+          "actual": "Uma Desai"
+        },
+        {
+          "path": "student_id:Uma Desai",
+          "status": "missing",
+          "expected": "C504",
+          "actual": null
+        },
+        {
+          "path": "name:Victor Lang",
+          "status": "correct",
+          "expected": "Victor Lang",
+          "actual": "Victor Lang"
+        },
+        {
+          "path": "student_id:Victor Lang",
+          "status": "missing",
+          "expected": "C505",
+          "actual": null
+        },
+        {
+          "path": "name:Willa Cross",
+          "status": "missing",
+          "expected": "Willa Cross",
+          "actual": null
+        },
+        {
+          "path": "extra:Kari Mehta",
+          "status": "extra",
+          "expected": null,
+          "actual": "Kari Mehta"
+        },
+        {
+          "path": "extra:Willow Cross",
+          "status": "extra",
+          "expected": null,
+          "actual": "Willow Cross"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R07",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 8,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Yasmin Ortiz",
+          "status": "correct",
+          "expected": "Yasmin Ortiz",
+          "actual": "Yasmin Ortiz"
+        },
+        {
+          "path": "name:Brody Klein",
+          "status": "correct",
+          "expected": "Brody Klein",
+          "actual": "Brody Klein"
+        },
+        {
+          "path": "name:Cora Ellis",
+          "status": "correct",
+          "expected": "Cora Ellis",
+          "actual": "Cora Ellis"
+        },
+        {
+          "path": "name:Drew Nakamura",
+          "status": "correct",
+          "expected": "Drew Nakamura",
+          "actual": "Drew Nakamura"
+        },
+        {
+          "path": "name:Elise Fontaine",
+          "status": "correct",
+          "expected": "Elise Fontaine",
+          "actual": "Elise Fontaine"
+        },
+        {
+          "path": "name:Felix Huang",
+          "status": "correct",
+          "expected": "Felix Huang",
+          "actual": "Felix Huang"
+        },
+        {
+          "path": "name:Greta Lind",
+          "status": "correct",
+          "expected": "Greta Lind",
+          "actual": "Greta Lind"
+        },
+        {
+          "path": "name:Hugo Marquez",
+          "status": "correct",
+          "expected": "Hugo Marquez",
+          "actual": "Hugo Marquez"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R07",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 8,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Yasmin Ortiz",
+          "status": "correct",
+          "expected": "Yasmin Ortiz",
+          "actual": "Yasmin Ortiz"
+        },
+        {
+          "path": "name:Brody Klein",
+          "status": "correct",
+          "expected": "Brody Klein",
+          "actual": "Brody Klein"
+        },
+        {
+          "path": "name:Cora Ellis",
+          "status": "correct",
+          "expected": "Cora Ellis",
+          "actual": "Cora Ellis"
+        },
+        {
+          "path": "name:Drew Nakamura",
+          "status": "correct",
+          "expected": "Drew Nakamura",
+          "actual": "Drew Nakamura"
+        },
+        {
+          "path": "name:Elise Fontaine",
+          "status": "correct",
+          "expected": "Elise Fontaine",
+          "actual": "Elise Fontaine"
+        },
+        {
+          "path": "name:Felix Huang",
+          "status": "correct",
+          "expected": "Felix Huang",
+          "actual": "Felix Huang"
+        },
+        {
+          "path": "name:Greta Lind",
+          "status": "correct",
+          "expected": "Greta Lind",
+          "actual": "Greta Lind"
+        },
+        {
+          "path": "name:Hugo Marquez",
+          "status": "correct",
+          "expected": "Hugo Marquez",
+          "actual": "Hugo Marquez"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R08",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.5288461538461539,
+      "name_recall": 0.625,
+      "name_precision": 0.625,
+      "record_f1": 0.625,
+      "field_accuracy": 0.38461538461538464,
+      "hallucinations": 3,
+      "matched": 5,
+      "missing": 3,
+      "extra": 3,
+      "fields": [
+        {
+          "path": "name:Aiden Brooks",
+          "status": "correct",
+          "expected": "Aiden Brooks",
+          "actual": "Aiden Brooks"
+        },
+        {
+          "path": "period:Aiden Brooks",
+          "status": "missing",
+          "expected": "1",
+          "actual": null
+        },
+        {
+          "path": "name:Bella Cruz",
+          "status": "correct",
+          "expected": "Bella Cruz",
+          "actual": "Bella Cruz"
+        },
+        {
+          "path": "period:Bella Cruz",
+          "status": "missing",
+          "expected": "1",
+          "actual": null
+        },
+        {
+          "path": "name:Carter Dunn",
+          "status": "correct",
+          "expected": "Carter Dunn",
+          "actual": "Carter Dunn"
+        },
+        {
+          "path": "period:Carter Dunn",
+          "status": "missing",
+          "expected": "2",
+          "actual": null
+        },
+        {
+          "path": "name:Delia Fox",
+          "status": "missing",
+          "expected": "Delia Fox",
+          "actual": null
+        },
+        {
+          "path": "name:Evan Goh",
+          "status": "missing",
+          "expected": "Evan Goh",
+          "actual": null
+        },
+        {
+          "path": "name:Faye Ito",
+          "status": "missing",
+          "expected": "Faye Ito",
+          "actual": null
+        },
+        {
+          "path": "name:Gabe Jung",
+          "status": "correct",
+          "expected": "Gabe Jung",
+          "actual": "Gabe Jung"
+        },
+        {
+          "path": "period:Gabe Jung",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        },
+        {
+          "path": "name:Hana Kim",
+          "status": "correct",
+          "expected": "Hana Kim",
+          "actual": "Hana Kim"
+        },
+        {
+          "path": "period:Hana Kim",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        },
+        {
+          "path": "extra:Della Fox",
+          "status": "extra",
+          "expected": null,
+          "actual": "Della Fox"
+        },
+        {
+          "path": "extra:Evan Gobi",
+          "status": "extra",
+          "expected": null,
+          "actual": "Evan Gobi"
+        },
+        {
+          "path": "extra:Page Ito",
+          "status": "extra",
+          "expected": null,
+          "actual": "Page Ito"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R09",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.8,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 0.5,
+      "hallucinations": 0,
+      "matched": 5,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ivy Navarro",
+          "status": "correct",
+          "expected": "Ivy Navarro",
+          "actual": "Ivy Navarro"
+        },
+        {
+          "path": "parent_contact:Ivy Navarro",
+          "status": "missing",
+          "expected": "Rosa Navarro <rosa.navarro@example.com>",
+          "actual": null
+        },
+        {
+          "path": "name:Jude Palmer",
+          "status": "correct",
+          "expected": "Jude Palmer",
+          "actual": "Jude Palmer"
+        },
+        {
+          "path": "parent_contact:Jude Palmer",
+          "status": "missing",
+          "expected": "Chris Palmer <555-0142>",
+          "actual": null
+        },
+        {
+          "path": "name:Kira Solis",
+          "status": "correct",
+          "expected": "Kira Solis",
+          "actual": "Kira Solis"
+        },
+        {
+          "path": "parent_contact:Kira Solis",
+          "status": "missing",
+          "expected": "Elena Solis <elena.solis@example.com>",
+          "actual": null
+        },
+        {
+          "path": "name:Luca Bianchi",
+          "status": "correct",
+          "expected": "Luca Bianchi",
+          "actual": "Luca Bianchi"
+        },
+        {
+          "path": "parent_contact:Luca Bianchi",
+          "status": "missing",
+          "expected": "Marco Bianchi <555-0199>",
+          "actual": null
+        },
+        {
+          "path": "name:Mara Quinn",
+          "status": "correct",
+          "expected": "Mara Quinn",
+          "actual": "Mara Quinn"
+        },
+        {
+          "path": "parent_contact:Mara Quinn",
+          "status": "missing",
+          "expected": "Pat Quinn <pat.quinn@example.com>",
+          "actual": null
+        }
+      ],
+      "actual_count": 5,
+      "rejected": false
+    },
+    {
+      "id": "R10",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.7,
+      "name_recall": 0.75,
+      "name_precision": 0.6,
+      "record_f1": 0.6666666666666665,
+      "field_accuracy": 0.75,
+      "hallucinations": 2,
+      "matched": 3,
+      "missing": 1,
+      "extra": 2,
+      "fields": [
+        {
+          "path": "name:Ava",
+          "status": "missing",
+          "expected": "Ava",
+          "actual": null
+        },
+        {
+          "path": "name:Diego",
+          "status": "correct",
+          "expected": "Diego",
+          "actual": "Diego"
+        },
+        {
+          "path": "name:Jonah",
+          "status": "correct",
+          "expected": "Jonah",
+          "actual": "Jonah"
+        },
+        {
+          "path": "name:Lila",
+          "status": "correct",
+          "expected": "Lila",
+          "actual": "Lila"
+        },
+        {
+          "path": "extra:Ara",
+          "status": "extra",
+          "expected": null,
+          "actual": "Ara"
+        },
+        {
+          "path": "extra:Isaac",
+          "status": "extra",
+          "expected": null,
+          "actual": "Isaac"
+        }
+      ],
+      "actual_count": 5,
+      "rejected": false
+    },
+    {
+      "id": "R10",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.75,
+      "name_recall": 0.75,
+      "name_precision": 0.75,
+      "record_f1": 0.75,
+      "field_accuracy": 0.75,
+      "hallucinations": 1,
+      "matched": 3,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Ava",
+          "status": "correct",
+          "expected": "Ava",
+          "actual": "Ava"
+        },
+        {
+          "path": "name:Diego",
+          "status": "correct",
+          "expected": "Diego",
+          "actual": "Diego"
+        },
+        {
+          "path": "name:Jonah",
+          "status": "missing",
+          "expected": "Jonah",
+          "actual": null
+        },
+        {
+          "path": "name:Lila",
+          "status": "correct",
+          "expected": "Lila",
+          "actual": "Lila"
+        },
+        {
+          "path": "extra:Isabel",
+          "status": "extra",
+          "expected": null,
+          "actual": "Isabel"
+        }
+      ],
+      "actual_count": 4,
+      "rejected": false
+    },
+    {
+      "id": "R11",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.6214285714285714,
+      "name_recall": 0.75,
+      "name_precision": 0.75,
+      "record_f1": 0.75,
+      "field_accuracy": 0.42857142857142855,
+      "hallucinations": 3,
+      "matched": 9,
+      "missing": 3,
+      "extra": 3,
+      "fields": [
+        {
+          "path": "name:Adrian Bell",
+          "status": "correct",
+          "expected": "Adrian Bell",
+          "actual": "Adrian Bell"
+        },
+        {
+          "path": "student_id:Adrian Bell",
+          "status": "missing",
+          "expected": "S201",
+          "actual": null
+        },
+        {
+          "path": "name:Bianca Cruz",
+          "status": "correct",
+          "expected": "Bianca Cruz",
+          "actual": "Bianca Cruz"
+        },
+        {
+          "path": "student_id:Bianca Cruz",
+          "status": "missing",
+          "expected": "S202",
+          "actual": null
+        },
+        {
+          "path": "name:Colin Drake",
+          "status": "missing",
+          "expected": "Colin Drake",
+          "actual": null
+        },
+        {
+          "path": "name:Dana Espinoza",
+          "status": "missing",
+          "expected": "Dana Espinoza",
+          "actual": null
+        },
+        {
+          "path": "name:Elena Frost",
+          "status": "correct",
+          "expected": "Elena Frost",
+          "actual": "Elena Frost"
+        },
+        {
+          "path": "student_id:Elena Frost",
+          "status": "missing",
+          "expected": "S205",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Garza",
+          "status": "missing",
+          "expected": "Finn Garza",
+          "actual": null
+        },
+        {
+          "path": "name:Gina Hale",
+          "status": "correct",
+          "expected": "Gina Hale",
+          "actual": "Gina Hale"
+        },
+        {
+          "path": "student_id:Gina Hale",
+          "status": "missing",
+          "expected": "S207",
+          "actual": null
+        },
+        {
+          "path": "name:Hector Ines",
+          "status": "correct",
+          "expected": "Hector Ines",
+          "actual": "Hector Ines"
+        },
+        {
+          "path": "student_id:Hector Ines",
+          "status": "missing",
+          "expected": "S208",
+          "actual": null
+        },
+        {
+          "path": "name:Ingrid Jost",
+          "status": "correct",
+          "expected": "Ingrid Jost",
+          "actual": "Ingrid Jost"
+        },
+        {
+          "path": "student_id:Ingrid Jost",
+          "status": "missing",
+          "expected": "S209",
+          "actual": null
+        },
+        {
+          "path": "name:Jules Kwon",
+          "status": "correct",
+          "expected": "Jules Kwon",
+          "actual": "Jules Kwon"
+        },
+        {
+          "path": "student_id:Jules Kwon",
+          "status": "missing",
+          "expected": "S210",
+          "actual": null
+        },
+        {
+          "path": "name:Kara Lane",
+          "status": "correct",
+          "expected": "Kara Lane",
+          "actual": "Kara Lane"
+        },
+        {
+          "path": "student_id:Kara Lane",
+          "status": "missing",
+          "expected": "S211",
+          "actual": null
+        },
+        {
+          "path": "name:Luis Mendez",
+          "status": "correct",
+          "expected": "Luis Mendez",
+          "actual": "Luis Mendez"
+        },
+        {
+          "path": "student_id:Luis Mendez",
+          "status": "missing",
+          "expected": "S212",
+          "actual": null
+        },
+        {
+          "path": "extra:Celia Perales",
+          "status": "extra",
+          "expected": null,
+          "actual": "Celia Perales"
+        },
+        {
+          "path": "extra:Diana Espinosa",
+          "status": "extra",
+          "expected": null,
+          "actual": "Diana Espinosa"
+        },
+        {
+          "path": "extra:Fiona Garcia",
+          "status": "extra",
+          "expected": null,
+          "actual": "Fiona Garcia"
+        }
+      ],
+      "actual_count": 12,
+      "rejected": false
+    },
+    {
+      "id": "R12",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.7359307359307359,
+      "name_recall": 0.9090909090909091,
+      "name_precision": 0.9090909090909091,
+      "record_f1": 0.9090909090909091,
+      "field_accuracy": 0.47619047619047616,
+      "hallucinations": 1,
+      "matched": 10,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Nora Ortiz",
+          "status": "correct",
+          "expected": "Nora Ortiz",
+          "actual": "Nora Ortiz"
+        },
+        {
+          "path": "student_id:Nora Ortiz",
+          "status": "missing",
+          "expected": "S213",
+          "actual": null
+        },
+        {
+          "path": "name:Oscar Price",
+          "status": "missing",
+          "expected": "Oscar Price",
+          "actual": null
+        },
+        {
+          "path": "name:Pia Quill",
+          "status": "correct",
+          "expected": "Pia Quill",
+          "actual": "Pia Quill"
+        },
+        {
+          "path": "student_id:Pia Quill",
+          "status": "missing",
+          "expected": "S215",
+          "actual": null
+        },
+        {
+          "path": "name:Rafael Soto",
+          "status": "correct",
+          "expected": "Rafael Soto",
+          "actual": "Rafael Soto"
+        },
+        {
+          "path": "student_id:Rafael Soto",
+          "status": "missing",
+          "expected": "S216",
+          "actual": null
+        },
+        {
+          "path": "name:Sasha Tran",
+          "status": "correct",
+          "expected": "Sasha Tran",
+          "actual": "Sasha Tran"
+        },
+        {
+          "path": "student_id:Sasha Tran",
+          "status": "missing",
+          "expected": "S217",
+          "actual": null
+        },
+        {
+          "path": "name:Talia Upton",
+          "status": "correct",
+          "expected": "Talia Upton",
+          "actual": "Talia Upton"
+        },
+        {
+          "path": "student_id:Talia Upton",
+          "status": "missing",
+          "expected": "S218",
+          "actual": null
+        },
+        {
+          "path": "name:Uri Vargas",
+          "status": "correct",
+          "expected": "Uri Vargas",
+          "actual": "Uri Vargas"
+        },
+        {
+          "path": "student_id:Uri Vargas",
+          "status": "missing",
+          "expected": "S219",
+          "actual": null
+        },
+        {
+          "path": "name:Vera Walsh",
+          "status": "correct",
+          "expected": "Vera Walsh",
+          "actual": "Vera Walsh"
+        },
+        {
+          "path": "student_id:Vera Walsh",
+          "status": "missing",
+          "expected": "S220",
+          "actual": null
+        },
+        {
+          "path": "name:Wyatt Xu",
+          "status": "correct",
+          "expected": "Wyatt Xu",
+          "actual": "Wyatt Xu"
+        },
+        {
+          "path": "student_id:Wyatt Xu",
+          "status": "missing",
+          "expected": "S221",
+          "actual": null
+        },
+        {
+          "path": "name:Xena Young",
+          "status": "correct",
+          "expected": "Xena Young",
+          "actual": "Xena Young"
+        },
+        {
+          "path": "student_id:Xena Young",
+          "status": "missing",
+          "expected": "S222",
+          "actual": null
+        },
+        {
+          "path": "name:Yuri Zhao",
+          "status": "correct",
+          "expected": "Yuri Zhao",
+          "actual": "Yuri Zhao"
+        },
+        {
+          "path": "student_id:Yuri Zhao",
+          "status": "missing",
+          "expected": "S223",
+          "actual": null
+        },
+        {
+          "path": "extra:Oscar Prior",
+          "status": "extra",
+          "expected": null,
+          "actual": "Oscar Prior"
+        }
+      ],
+      "actual_count": 11,
+      "rejected": false
+    },
+    {
+      "id": "R13",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.625,
+      "name_recall": 0.8333333333333334,
+      "name_precision": 0.8333333333333334,
+      "record_f1": 0.8333333333333334,
+      "field_accuracy": 0.3125,
+      "hallucinations": 1,
+      "matched": 5,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Amy Barlow",
+          "status": "correct",
+          "expected": "Amy Barlow",
+          "actual": "Amy Barlow"
+        },
+        {
+          "path": "grade:Amy Barlow",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Amy Barlow",
+          "status": "missing",
+          "expected": "2",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Carter",
+          "status": "correct",
+          "expected": "Ben Carter",
+          "actual": "Ben Carter"
+        },
+        {
+          "path": "grade:Ben Carter",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Ben Carter",
+          "status": "missing",
+          "expected": "2",
+          "actual": null
+        },
+        {
+          "path": "name:Chloe Dunn",
+          "status": "correct",
+          "expected": "Chloe Dunn",
+          "actual": "Chloe Dunn"
+        },
+        {
+          "path": "grade:Chloe Dunn",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Chloe Dunn",
+          "status": "missing",
+          "expected": "3",
+          "actual": null
+        },
+        {
+          "path": "name:Devin Fox",
+          "status": "missing",
+          "expected": "Devin Fox",
+          "actual": null
+        },
+        {
+          "path": "name:Eva Green",
+          "status": "correct",
+          "expected": "Eva Green",
+          "actual": "Eva Green"
+        },
+        {
+          "path": "grade:Eva Green",
+          "status": "missing",
+          "expected": "10",
+          "actual": null
+        },
+        {
+          "path": "period:Eva Green",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Hayes",
+          "status": "correct",
+          "expected": "Finn Hayes",
+          "actual": "Finn Hayes"
+        },
+        {
+          "path": "grade:Finn Hayes",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Finn Hayes",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        },
+        {
+          "path": "extra:Death Fox",
+          "status": "extra",
+          "expected": null,
+          "actual": "Death Fox"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R13",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.7333333333333333,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 0.3333333333333333,
+      "hallucinations": 0,
+      "matched": 6,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Amy Barlow",
+          "status": "correct",
+          "expected": "Amy Barlow",
+          "actual": "Amy Barlow"
+        },
+        {
+          "path": "grade:Amy Barlow",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Amy Barlow",
+          "status": "missing",
+          "expected": "2",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Carter",
+          "status": "correct",
+          "expected": "Ben Carter",
+          "actual": "Ben Carter"
+        },
+        {
+          "path": "grade:Ben Carter",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Ben Carter",
+          "status": "missing",
+          "expected": "2",
+          "actual": null
+        },
+        {
+          "path": "name:Chloe Dunn",
+          "status": "correct",
+          "expected": "Chloe Dunn",
+          "actual": "Chloe Dunn"
+        },
+        {
+          "path": "grade:Chloe Dunn",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Chloe Dunn",
+          "status": "missing",
+          "expected": "3",
+          "actual": null
+        },
+        {
+          "path": "name:Devin Fox",
+          "status": "correct",
+          "expected": "Devin Fox",
+          "actual": "Devin Fox"
+        },
+        {
+          "path": "grade:Devin Fox",
+          "status": "missing",
+          "expected": "10",
+          "actual": null
+        },
+        {
+          "path": "period:Devin Fox",
+          "status": "missing",
+          "expected": "3",
+          "actual": null
+        },
+        {
+          "path": "name:Eva Green",
+          "status": "correct",
+          "expected": "Eva Green",
+          "actual": "Eva Green"
+        },
+        {
+          "path": "grade:Eva Green",
+          "status": "missing",
+          "expected": "10",
+          "actual": null
+        },
+        {
+          "path": "period:Eva Green",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Hayes",
+          "status": "correct",
+          "expected": "Finn Hayes",
+          "actual": "Finn Hayes"
+        },
+        {
+          "path": "grade:Finn Hayes",
+          "status": "missing",
+          "expected": "9",
+          "actual": null
+        },
+        {
+          "path": "period:Finn Hayes",
+          "status": "missing",
+          "expected": "4",
+          "actual": null
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R14",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.8,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 0.5,
+      "hallucinations": 0,
+      "matched": 7,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Taylor Anderson",
+          "status": "correct",
+          "expected": "Taylor Anderson",
+          "actual": "ANDERSON, TAYLOR"
+        },
+        {
+          "path": "student_id:Taylor Anderson",
+          "status": "missing",
+          "expected": "44001",
+          "actual": null
+        },
+        {
+          "path": "name:Jordan Brown",
+          "status": "correct",
+          "expected": "Jordan Brown",
+          "actual": "BROWN, JORDAN"
+        },
+        {
+          "path": "student_id:Jordan Brown",
+          "status": "missing",
+          "expected": "44002",
+          "actual": null
+        },
+        {
+          "path": "name:Riley Clark",
+          "status": "correct",
+          "expected": "Riley Clark",
+          "actual": "CLARK, RILEY"
+        },
+        {
+          "path": "student_id:Riley Clark",
+          "status": "missing",
+          "expected": "44003",
+          "actual": null
+        },
+        {
+          "path": "name:Avery Davis",
+          "status": "correct",
+          "expected": "Avery Davis",
+          "actual": "DAVIS, AVERY"
+        },
+        {
+          "path": "student_id:Avery Davis",
+          "status": "missing",
+          "expected": "44004",
+          "actual": null
+        },
+        {
+          "path": "name:Casey Evans",
+          "status": "correct",
+          "expected": "Casey Evans",
+          "actual": "EVANS, CASEY"
+        },
+        {
+          "path": "student_id:Casey Evans",
+          "status": "missing",
+          "expected": "44005",
+          "actual": null
+        },
+        {
+          "path": "name:Morgan Flores",
+          "status": "correct",
+          "expected": "Morgan Flores",
+          "actual": "FLORES, MORGAN"
+        },
+        {
+          "path": "student_id:Morgan Flores",
+          "status": "missing",
+          "expected": "44006",
+          "actual": null
+        },
+        {
+          "path": "name:Quinn Green",
+          "status": "correct",
+          "expected": "Quinn Green",
+          "actual": "GREEN, QUINN"
+        },
+        {
+          "path": "student_id:Quinn Green",
+          "status": "missing",
+          "expected": "44007",
+          "actual": null
+        }
+      ],
+      "actual_count": 7,
+      "rejected": false
+    },
+    {
+      "id": "R15",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.9583333333333333,
+      "name_recall": 0.9583333333333334,
+      "name_precision": 0.9583333333333334,
+      "record_f1": 0.9583333333333334,
+      "field_accuracy": 0.9583333333333334,
+      "hallucinations": 1,
+      "matched": 23,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Alex Rivera",
+          "status": "correct",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera"
+        },
+        {
+          "path": "name:Blake Nguyen",
+          "status": "correct",
+          "expected": "Blake Nguyen",
+          "actual": "Blake Nguyen"
+        },
+        {
+          "path": "name:Casey Ortiz",
+          "status": "correct",
+          "expected": "Casey Ortiz",
+          "actual": "Casey Ortiz"
+        },
+        {
+          "path": "name:Dana Patel",
+          "status": "correct",
+          "expected": "Dana Patel",
+          "actual": "Dana Patel"
+        },
+        {
+          "path": "name:Eden Quinn",
+          "status": "correct",
+          "expected": "Eden Quinn",
+          "actual": "Eden Quinn"
+        },
+        {
+          "path": "name:Finn Ramos",
+          "status": "correct",
+          "expected": "Finn Ramos",
+          "actual": "Finn Ramos"
+        },
+        {
+          "path": "name:Gray Santos",
+          "status": "correct",
+          "expected": "Gray Santos",
+          "actual": "Gray Santos"
+        },
+        {
+          "path": "name:Harper Tao",
+          "status": "correct",
+          "expected": "Harper Tao",
+          "actual": "Harper Tao"
+        },
+        {
+          "path": "name:Indie Ulrich",
+          "status": "correct",
+          "expected": "Indie Ulrich",
+          "actual": "Indie Ulrich"
+        },
+        {
+          "path": "name:Jules Vega",
+          "status": "correct",
+          "expected": "Jules Vega",
+          "actual": "Jules Vega"
+        },
+        {
+          "path": "name:Kai West",
+          "status": "correct",
+          "expected": "Kai West",
+          "actual": "Kai West"
+        },
+        {
+          "path": "name:Lane Xu",
+          "status": "correct",
+          "expected": "Lane Xu",
+          "actual": "Lane Xu"
+        },
+        {
+          "path": "name:Morgan Young",
+          "status": "correct",
+          "expected": "Morgan Young",
+          "actual": "Morgan Young"
+        },
+        {
+          "path": "name:Noa Zuniga",
+          "status": "missing",
+          "expected": "Noa Zuniga",
+          "actual": null
+        },
+        {
+          "path": "name:Oakley Ames",
+          "status": "correct",
+          "expected": "Oakley Ames",
+          "actual": "Oakley Ames"
+        },
+        {
+          "path": "name:Parker Bell",
+          "status": "correct",
+          "expected": "Parker Bell",
+          "actual": "Parker Bell"
+        },
+        {
+          "path": "name:Reese Cole",
+          "status": "correct",
+          "expected": "Reese Cole",
+          "actual": "Reese Cole"
+        },
+        {
+          "path": "name:Sage Dunn",
+          "status": "correct",
+          "expected": "Sage Dunn",
+          "actual": "Sage Dunn"
+        },
+        {
+          "path": "name:Tatum Ellis",
+          "status": "correct",
+          "expected": "Tatum Ellis",
+          "actual": "Tatum Ellis"
+        },
+        {
+          "path": "name:Unity Ford",
+          "status": "correct",
+          "expected": "Unity Ford",
+          "actual": "Unity Ford"
+        },
+        {
+          "path": "name:Vale Gross",
+          "status": "correct",
+          "expected": "Vale Gross",
+          "actual": "Vale Gross"
+        },
+        {
+          "path": "name:Wynn Hart",
+          "status": "correct",
+          "expected": "Wynn Hart",
+          "actual": "Wynn Hart"
+        },
+        {
+          "path": "name:Yael Ives",
+          "status": "correct",
+          "expected": "Yael Ives",
+          "actual": "Yael Ives"
+        },
+        {
+          "path": "name:Zion James",
+          "status": "correct",
+          "expected": "Zion James",
+          "actual": "Zion James"
+        },
+        {
+          "path": "extra:Nia Zuniga",
+          "status": "extra",
+          "expected": null,
+          "actual": "Nia Zuniga"
+        }
+      ],
+      "actual_count": 24,
+      "rejected": false
+    },
+    {
+      "id": "R16",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.5672727272727272,
+      "name_recall": 0.6,
+      "name_precision": 0.5,
+      "record_f1": 0.5454545454545454,
+      "field_accuracy": 0.6,
+      "hallucinations": 3,
+      "matched": 3,
+      "missing": 2,
+      "extra": 3,
+      "fields": [
+        {
+          "path": "name:Arlo Beckett",
+          "status": "correct",
+          "expected": "Arlo Beckett",
+          "actual": "Arlo Beckett"
+        },
+        {
+          "path": "name:Blair Chen",
+          "status": "missing",
+          "expected": "Blair Chen",
+          "actual": null
+        },
+        {
+          "path": "name:Cody Diaz",
+          "status": "correct",
+          "expected": "Cody Diaz",
+          "actual": "Cody Diaz"
+        },
+        {
+          "path": "name:Demi Ellis",
+          "status": "missing",
+          "expected": "Demi Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Ezra Frost",
+          "status": "correct",
+          "expected": "Ezra Frost",
+          "actual": "Ezra Frost"
+        },
+        {
+          "path": "extra:Claire Chen",
+          "status": "extra",
+          "expected": null,
+          "actual": "Claire Chen"
+        },
+        {
+          "path": "extra:Denali Ellis",
+          "status": "extra",
+          "expected": null,
+          "actual": "Denali Ellis"
+        },
+        {
+          "path": "extra:Mr. Stern",
+          "status": "extra",
+          "expected": null,
+          "actual": "Mr. Stern"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R17",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.8,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 0.5,
+      "hallucinations": 0,
+      "matched": 8,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Faye Alvarez",
+          "status": "correct",
+          "expected": "Faye Alvarez",
+          "actual": "Faye Alvarez"
+        },
+        {
+          "path": "student_id:Faye Alvarez",
+          "status": "missing",
+          "expected": "G301",
+          "actual": null
+        },
+        {
+          "path": "name:Gus Benton",
+          "status": "correct",
+          "expected": "Gus Benton",
+          "actual": "Gus Benton"
+        },
+        {
+          "path": "student_id:Gus Benton",
+          "status": "missing",
+          "expected": "G302",
+          "actual": null
+        },
+        {
+          "path": "name:Holly Cho",
+          "status": "correct",
+          "expected": "Holly Cho",
+          "actual": "Holly Cho"
+        },
+        {
+          "path": "student_id:Holly Cho",
+          "status": "missing",
+          "expected": "G303",
+          "actual": null
+        },
+        {
+          "path": "name:Ian Drake",
+          "status": "correct",
+          "expected": "Ian Drake",
+          "actual": "Ian Drake"
+        },
+        {
+          "path": "student_id:Ian Drake",
+          "status": "missing",
+          "expected": "G304",
+          "actual": null
+        },
+        {
+          "path": "name:Jade Ellis",
+          "status": "correct",
+          "expected": "Jade Ellis",
+          "actual": "Jade Ellis"
+        },
+        {
+          "path": "student_id:Jade Ellis",
+          "status": "missing",
+          "expected": "G305",
+          "actual": null
+        },
+        {
+          "path": "name:Kyle Ford",
+          "status": "correct",
+          "expected": "Kyle Ford",
+          "actual": "Kyle Ford"
+        },
+        {
+          "path": "student_id:Kyle Ford",
+          "status": "missing",
+          "expected": "G306",
+          "actual": null
+        },
+        {
+          "path": "name:Lena Gross",
+          "status": "correct",
+          "expected": "Lena Gross",
+          "actual": "Lena Gross"
+        },
+        {
+          "path": "student_id:Lena Gross",
+          "status": "missing",
+          "expected": "G307",
+          "actual": null
+        },
+        {
+          "path": "name:Miles Hart",
+          "status": "correct",
+          "expected": "Miles Hart",
+          "actual": "Miles Hart"
+        },
+        {
+          "path": "student_id:Miles Hart",
+          "status": "missing",
+          "expected": "G308",
+          "actual": null
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R17",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 0.7116666666666667,
+      "name_recall": 0.875,
+      "name_precision": 0.875,
+      "record_f1": 0.875,
+      "field_accuracy": 0.4666666666666667,
+      "hallucinations": 1,
+      "matched": 7,
+      "missing": 1,
+      "extra": 1,
+      "fields": [
+        {
+          "path": "name:Faye Alvarez",
+          "status": "correct",
+          "expected": "Faye Alvarez",
+          "actual": "Faye Alvarez"
+        },
+        {
+          "path": "student_id:Faye Alvarez",
+          "status": "missing",
+          "expected": "G301",
+          "actual": null
+        },
+        {
+          "path": "name:Gus Benton",
+          "status": "correct",
+          "expected": "Gus Benton",
+          "actual": "Gus Benton"
+        },
+        {
+          "path": "student_id:Gus Benton",
+          "status": "missing",
+          "expected": "G302",
+          "actual": null
+        },
+        {
+          "path": "name:Holly Cho",
+          "status": "correct",
+          "expected": "Holly Cho",
+          "actual": "Holly Cho"
+        },
+        {
+          "path": "student_id:Holly Cho",
+          "status": "missing",
+          "expected": "G303",
+          "actual": null
+        },
+        {
+          "path": "name:Ian Drake",
+          "status": "correct",
+          "expected": "Ian Drake",
+          "actual": "Ian Drake"
+        },
+        {
+          "path": "student_id:Ian Drake",
+          "status": "missing",
+          "expected": "G304",
+          "actual": null
+        },
+        {
+          "path": "name:Jade Ellis",
+          "status": "correct",
+          "expected": "Jade Ellis",
+          "actual": "Jade Ellis"
+        },
+        {
+          "path": "student_id:Jade Ellis",
+          "status": "missing",
+          "expected": "G305",
+          "actual": null
+        },
+        {
+          "path": "name:Kyle Ford",
+          "status": "correct",
+          "expected": "Kyle Ford",
+          "actual": "Kyle Ford"
+        },
+        {
+          "path": "student_id:Kyle Ford",
+          "status": "missing",
+          "expected": "G306",
+          "actual": null
+        },
+        {
+          "path": "name:Lena Gross",
+          "status": "missing",
+          "expected": "Lena Gross",
+          "actual": null
+        },
+        {
+          "path": "name:Miles Hart",
+          "status": "correct",
+          "expected": "Miles Hart",
+          "actual": "Miles Hart"
+        },
+        {
+          "path": "student_id:Miles Hart",
+          "status": "missing",
+          "expected": "G308",
+          "actual": null
+        },
+        {
+          "path": "extra:Lane Gross",
+          "status": "extra",
+          "expected": null,
+          "actual": "Lane Gross"
+        }
+      ],
+      "actual_count": 8,
+      "rejected": false
+    },
+    {
+      "id": "R18",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 0.7563636363636363,
+      "name_recall": 0.8,
+      "name_precision": 0.6666666666666666,
+      "record_f1": 0.7272727272727272,
+      "field_accuracy": 0.8,
+      "hallucinations": 2,
+      "matched": 4,
+      "missing": 1,
+      "extra": 2,
+      "fields": [
+        {
+          "path": "name:Nina Ortega",
+          "status": "correct",
+          "expected": "Nina Ortega",
+          "actual": "Nina Ortega"
+        },
+        {
+          "path": "name:Owen Price",
+          "status": "missing",
+          "expected": "Owen Price",
+          "actual": null
+        },
+        {
+          "path": "name:Piper Quinn",
+          "status": "correct",
+          "expected": "Piper Quinn",
+          "actual": "Piper Quinn"
+        },
+        {
+          "path": "name:Rory Santos",
+          "status": "correct",
+          "expected": "Rory Santos",
+          "actual": "Rory Santos"
+        },
+        {
+          "path": "name:Skye Turner",
+          "status": "correct",
+          "expected": "Skye Turner",
+          "actual": "Skye Turner"
+        },
+        {
+          "path": "extra:Owen Prior",
+          "status": "extra",
+          "expected": null,
+          "actual": "Owen Prior"
+        },
+        {
+          "path": "extra:Uma V",
+          "status": "extra",
+          "expected": null,
+          "actual": "Uma V"
+        }
+      ],
+      "actual_count": 6,
+      "rejected": false
+    },
+    {
+      "id": "R18",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 5,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Nina Ortega",
+          "status": "correct",
+          "expected": "Nina Ortega",
+          "actual": "Nina Ortega"
+        },
+        {
+          "path": "name:Owen Price",
+          "status": "correct",
+          "expected": "Owen Price",
+          "actual": "Owen Price"
+        },
+        {
+          "path": "name:Piper Quinn",
+          "status": "correct",
+          "expected": "Piper Quinn",
+          "actual": "Piper Quinn"
+        },
+        {
+          "path": "name:Rory Santos",
+          "status": "correct",
+          "expected": "Rory Santos",
+          "actual": "Rory Santos"
+        },
+        {
+          "path": "name:Skye Turner",
+          "status": "correct",
+          "expected": "Skye Turner",
+          "actual": "Skye Turner"
+        }
+      ],
+      "actual_count": 5,
+      "rejected": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    }
+  ]
+}

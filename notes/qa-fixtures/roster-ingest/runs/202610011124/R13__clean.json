@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Amy Barlow",
+        "confident": true
+      },
+      {
+        "name": "Ben Carter",
+        "confident": true
+      },
+      {
+        "name": "Chloe Dunn",
+        "confident": true
+      },
+      {
+        "name": "Death Fox",
+        "confident": true
+      },
+      {
+        "name": "Eva Green",
+        "confident": true
+      },
+      {
+        "name": "Finn Hayes",
+        "confident": true
+      }
+    ]
+  }
+}

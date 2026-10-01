@@ -1,0 +1,1954 @@
+{
+  "stamp": "202610011119",
+  "overall_accuracy": 0.15625,
+  "roster_accuracy": 0,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.14285714285714285,
+  "photo_accuracy": 0.18181818181818182,
+  "name_recall": 0,
+  "name_precision": 0,
+  "record_f1": 0,
+  "hallucinations_total": 0,
+  "documents": [
+    {
+      "id": "R01",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ava Brooks",
+          "status": "missing",
+          "expected": "Ava Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Diego Morales",
+          "status": "missing",
+          "expected": "Diego Morales",
+          "actual": null
+        },
+        {
+          "path": "name:Harper Nguyen",
+          "status": "missing",
+          "expected": "Harper Nguyen",
+          "actual": null
+        },
+        {
+          "path": "name:Jonah Patel",
+          "status": "missing",
+          "expected": "Jonah Patel",
+          "actual": null
+        },
+        {
+          "path": "name:Lila Okonkwo",
+          "status": "missing",
+          "expected": "Lila Okonkwo",
+          "actual": null
+        },
+        {
+          "path": "name:Mateo Ruiz",
+          "status": "missing",
+          "expected": "Mateo Ruiz",
+          "actual": null
+        },
+        {
+          "path": "name:Nora Singh",
+          "status": "missing",
+          "expected": "Nora Singh",
+          "actual": null
+        },
+        {
+          "path": "name:Owen Blake",
+          "status": "missing",
+          "expected": "Owen Blake",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R01",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ava Brooks",
+          "status": "missing",
+          "expected": "Ava Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Diego Morales",
+          "status": "missing",
+          "expected": "Diego Morales",
+          "actual": null
+        },
+        {
+          "path": "name:Harper Nguyen",
+          "status": "missing",
+          "expected": "Harper Nguyen",
+          "actual": null
+        },
+        {
+          "path": "name:Jonah Patel",
+          "status": "missing",
+          "expected": "Jonah Patel",
+          "actual": null
+        },
+        {
+          "path": "name:Lila Okonkwo",
+          "status": "missing",
+          "expected": "Lila Okonkwo",
+          "actual": null
+        },
+        {
+          "path": "name:Mateo Ruiz",
+          "status": "missing",
+          "expected": "Mateo Ruiz",
+          "actual": null
+        },
+        {
+          "path": "name:Nora Singh",
+          "status": "missing",
+          "expected": "Nora Singh",
+          "actual": null
+        },
+        {
+          "path": "name:Owen Blake",
+          "status": "missing",
+          "expected": "Owen Blake",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R02",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 6,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Maya Chen",
+          "status": "missing",
+          "expected": "Maya Chen",
+          "actual": null
+        },
+        {
+          "path": "name:Eli Foster",
+          "status": "missing",
+          "expected": "Eli Foster",
+          "actual": null
+        },
+        {
+          "path": "name:Sofia Garcia",
+          "status": "missing",
+          "expected": "Sofia Garcia",
+          "actual": null
+        },
+        {
+          "path": "name:Jordan Kim",
+          "status": "missing",
+          "expected": "Jordan Kim",
+          "actual": null
+        },
+        {
+          "path": "name:Camila Lopez",
+          "status": "missing",
+          "expected": "Camila Lopez",
+          "actual": null
+        },
+        {
+          "path": "name:Noah Wright",
+          "status": "missing",
+          "expected": "Noah Wright",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R03",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 12,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Priya Shah",
+          "status": "missing",
+          "expected": "Priya Shah",
+          "actual": null
+        },
+        {
+          "path": "name:Leo Anders",
+          "status": "missing",
+          "expected": "Leo Anders",
+          "actual": null
+        },
+        {
+          "path": "name:Mila Torres",
+          "status": "missing",
+          "expected": "Mila Torres",
+          "actual": null
+        },
+        {
+          "path": "name:Sam Quinn",
+          "status": "missing",
+          "expected": "Sam Quinn",
+          "actual": null
+        },
+        {
+          "path": "name:Zoe Hart",
+          "status": "missing",
+          "expected": "Zoe Hart",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Cole",
+          "status": "missing",
+          "expected": "Ben Cole",
+          "actual": null
+        },
+        {
+          "path": "name:Iris Moon",
+          "status": "missing",
+          "expected": "Iris Moon",
+          "actual": null
+        },
+        {
+          "path": "name:Kai Brooks",
+          "status": "missing",
+          "expected": "Kai Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Ella Voss",
+          "status": "missing",
+          "expected": "Ella Voss",
+          "actual": null
+        },
+        {
+          "path": "name:Max Reed",
+          "status": "missing",
+          "expected": "Max Reed",
+          "actual": null
+        },
+        {
+          "path": "name:Nina Park",
+          "status": "missing",
+          "expected": "Nina Park",
+          "actual": null
+        },
+        {
+          "path": "name:Omar Diaz",
+          "status": "missing",
+          "expected": "Omar Diaz",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R03",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 12,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Priya Shah",
+          "status": "missing",
+          "expected": "Priya Shah",
+          "actual": null
+        },
+        {
+          "path": "name:Leo Anders",
+          "status": "missing",
+          "expected": "Leo Anders",
+          "actual": null
+        },
+        {
+          "path": "name:Mila Torres",
+          "status": "missing",
+          "expected": "Mila Torres",
+          "actual": null
+        },
+        {
+          "path": "name:Sam Quinn",
+          "status": "missing",
+          "expected": "Sam Quinn",
+          "actual": null
+        },
+        {
+          "path": "name:Zoe Hart",
+          "status": "missing",
+          "expected": "Zoe Hart",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Cole",
+          "status": "missing",
+          "expected": "Ben Cole",
+          "actual": null
+        },
+        {
+          "path": "name:Iris Moon",
+          "status": "missing",
+          "expected": "Iris Moon",
+          "actual": null
+        },
+        {
+          "path": "name:Kai Brooks",
+          "status": "missing",
+          "expected": "Kai Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Ella Voss",
+          "status": "missing",
+          "expected": "Ella Voss",
+          "actual": null
+        },
+        {
+          "path": "name:Max Reed",
+          "status": "missing",
+          "expected": "Max Reed",
+          "actual": null
+        },
+        {
+          "path": "name:Nina Park",
+          "status": "missing",
+          "expected": "Nina Park",
+          "actual": null
+        },
+        {
+          "path": "name:Omar Diaz",
+          "status": "missing",
+          "expected": "Omar Diaz",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R04",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 7,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Amelia Crowe",
+          "status": "missing",
+          "expected": "Amelia Crowe",
+          "actual": null
+        },
+        {
+          "path": "name:Caleb Orth",
+          "status": "missing",
+          "expected": "Caleb Orth",
+          "actual": null
+        },
+        {
+          "path": "name:Daisy Fen",
+          "status": "missing",
+          "expected": "Daisy Fen",
+          "actual": null
+        },
+        {
+          "path": "name:Ethan Vale",
+          "status": "missing",
+          "expected": "Ethan Vale",
+          "actual": null
+        },
+        {
+          "path": "name:Freya Moss",
+          "status": "missing",
+          "expected": "Freya Moss",
+          "actual": null
+        },
+        {
+          "path": "name:Gavin Shore",
+          "status": "missing",
+          "expected": "Gavin Shore",
+          "actual": null
+        },
+        {
+          "path": "name:Hannah Pike",
+          "status": "missing",
+          "expected": "Hannah Pike",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R05",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 9,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Isla Brennan",
+          "status": "missing",
+          "expected": "Isla Brennan",
+          "actual": null
+        },
+        {
+          "path": "name:Jamal Washington",
+          "status": "missing",
+          "expected": "Jamal Washington",
+          "actual": null
+        },
+        {
+          "path": "name:Keira Santos",
+          "status": "missing",
+          "expected": "Keira Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Liam Okafor",
+          "status": "missing",
+          "expected": "Liam Okafor",
+          "actual": null
+        },
+        {
+          "path": "name:Mina Cho",
+          "status": "missing",
+          "expected": "Mina Cho",
+          "actual": null
+        },
+        {
+          "path": "name:Nolan Berg",
+          "status": "missing",
+          "expected": "Nolan Berg",
+          "actual": null
+        },
+        {
+          "path": "name:Olive Tran",
+          "status": "missing",
+          "expected": "Olive Tran",
+          "actual": null
+        },
+        {
+          "path": "name:Parker Ellis",
+          "status": "missing",
+          "expected": "Parker Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Quinn Adler",
+          "status": "missing",
+          "expected": "Quinn Adler",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R05",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 9,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Isla Brennan",
+          "status": "missing",
+          "expected": "Isla Brennan",
+          "actual": null
+        },
+        {
+          "path": "name:Jamal Washington",
+          "status": "missing",
+          "expected": "Jamal Washington",
+          "actual": null
+        },
+        {
+          "path": "name:Keira Santos",
+          "status": "missing",
+          "expected": "Keira Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Liam Okafor",
+          "status": "missing",
+          "expected": "Liam Okafor",
+          "actual": null
+        },
+        {
+          "path": "name:Mina Cho",
+          "status": "missing",
+          "expected": "Mina Cho",
+          "actual": null
+        },
+        {
+          "path": "name:Nolan Berg",
+          "status": "missing",
+          "expected": "Nolan Berg",
+          "actual": null
+        },
+        {
+          "path": "name:Olive Tran",
+          "status": "missing",
+          "expected": "Olive Tran",
+          "actual": null
+        },
+        {
+          "path": "name:Parker Ellis",
+          "status": "missing",
+          "expected": "Parker Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Quinn Adler",
+          "status": "missing",
+          "expected": "Quinn Adler",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R06",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 6,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ravi Mehta",
+          "status": "missing",
+          "expected": "Ravi Mehta",
+          "actual": null
+        },
+        {
+          "path": "name:Sienna Holt",
+          "status": "missing",
+          "expected": "Sienna Holt",
+          "actual": null
+        },
+        {
+          "path": "name:Theo Grant",
+          "status": "missing",
+          "expected": "Theo Grant",
+          "actual": null
+        },
+        {
+          "path": "name:Uma Desai",
+          "status": "missing",
+          "expected": "Uma Desai",
+          "actual": null
+        },
+        {
+          "path": "name:Victor Lang",
+          "status": "missing",
+          "expected": "Victor Lang",
+          "actual": null
+        },
+        {
+          "path": "name:Willa Cross",
+          "status": "missing",
+          "expected": "Willa Cross",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R06",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 6,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ravi Mehta",
+          "status": "missing",
+          "expected": "Ravi Mehta",
+          "actual": null
+        },
+        {
+          "path": "name:Sienna Holt",
+          "status": "missing",
+          "expected": "Sienna Holt",
+          "actual": null
+        },
+        {
+          "path": "name:Theo Grant",
+          "status": "missing",
+          "expected": "Theo Grant",
+          "actual": null
+        },
+        {
+          "path": "name:Uma Desai",
+          "status": "missing",
+          "expected": "Uma Desai",
+          "actual": null
+        },
+        {
+          "path": "name:Victor Lang",
+          "status": "missing",
+          "expected": "Victor Lang",
+          "actual": null
+        },
+        {
+          "path": "name:Willa Cross",
+          "status": "missing",
+          "expected": "Willa Cross",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R07",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Yasmin Ortiz",
+          "status": "missing",
+          "expected": "Yasmin Ortiz",
+          "actual": null
+        },
+        {
+          "path": "name:Brody Klein",
+          "status": "missing",
+          "expected": "Brody Klein",
+          "actual": null
+        },
+        {
+          "path": "name:Cora Ellis",
+          "status": "missing",
+          "expected": "Cora Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Drew Nakamura",
+          "status": "missing",
+          "expected": "Drew Nakamura",
+          "actual": null
+        },
+        {
+          "path": "name:Elise Fontaine",
+          "status": "missing",
+          "expected": "Elise Fontaine",
+          "actual": null
+        },
+        {
+          "path": "name:Felix Huang",
+          "status": "missing",
+          "expected": "Felix Huang",
+          "actual": null
+        },
+        {
+          "path": "name:Greta Lind",
+          "status": "missing",
+          "expected": "Greta Lind",
+          "actual": null
+        },
+        {
+          "path": "name:Hugo Marquez",
+          "status": "missing",
+          "expected": "Hugo Marquez",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R07",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Yasmin Ortiz",
+          "status": "missing",
+          "expected": "Yasmin Ortiz",
+          "actual": null
+        },
+        {
+          "path": "name:Brody Klein",
+          "status": "missing",
+          "expected": "Brody Klein",
+          "actual": null
+        },
+        {
+          "path": "name:Cora Ellis",
+          "status": "missing",
+          "expected": "Cora Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Drew Nakamura",
+          "status": "missing",
+          "expected": "Drew Nakamura",
+          "actual": null
+        },
+        {
+          "path": "name:Elise Fontaine",
+          "status": "missing",
+          "expected": "Elise Fontaine",
+          "actual": null
+        },
+        {
+          "path": "name:Felix Huang",
+          "status": "missing",
+          "expected": "Felix Huang",
+          "actual": null
+        },
+        {
+          "path": "name:Greta Lind",
+          "status": "missing",
+          "expected": "Greta Lind",
+          "actual": null
+        },
+        {
+          "path": "name:Hugo Marquez",
+          "status": "missing",
+          "expected": "Hugo Marquez",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R08",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Aiden Brooks",
+          "status": "missing",
+          "expected": "Aiden Brooks",
+          "actual": null
+        },
+        {
+          "path": "name:Bella Cruz",
+          "status": "missing",
+          "expected": "Bella Cruz",
+          "actual": null
+        },
+        {
+          "path": "name:Carter Dunn",
+          "status": "missing",
+          "expected": "Carter Dunn",
+          "actual": null
+        },
+        {
+          "path": "name:Delia Fox",
+          "status": "missing",
+          "expected": "Delia Fox",
+          "actual": null
+        },
+        {
+          "path": "name:Evan Goh",
+          "status": "missing",
+          "expected": "Evan Goh",
+          "actual": null
+        },
+        {
+          "path": "name:Faye Ito",
+          "status": "missing",
+          "expected": "Faye Ito",
+          "actual": null
+        },
+        {
+          "path": "name:Gabe Jung",
+          "status": "missing",
+          "expected": "Gabe Jung",
+          "actual": null
+        },
+        {
+          "path": "name:Hana Kim",
+          "status": "missing",
+          "expected": "Hana Kim",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R09",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 5,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ivy Navarro",
+          "status": "missing",
+          "expected": "Ivy Navarro",
+          "actual": null
+        },
+        {
+          "path": "name:Jude Palmer",
+          "status": "missing",
+          "expected": "Jude Palmer",
+          "actual": null
+        },
+        {
+          "path": "name:Kira Solis",
+          "status": "missing",
+          "expected": "Kira Solis",
+          "actual": null
+        },
+        {
+          "path": "name:Luca Bianchi",
+          "status": "missing",
+          "expected": "Luca Bianchi",
+          "actual": null
+        },
+        {
+          "path": "name:Mara Quinn",
+          "status": "missing",
+          "expected": "Mara Quinn",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R10",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 4,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ava",
+          "status": "missing",
+          "expected": "Ava",
+          "actual": null
+        },
+        {
+          "path": "name:Diego",
+          "status": "missing",
+          "expected": "Diego",
+          "actual": null
+        },
+        {
+          "path": "name:Jonah",
+          "status": "missing",
+          "expected": "Jonah",
+          "actual": null
+        },
+        {
+          "path": "name:Lila",
+          "status": "missing",
+          "expected": "Lila",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R10",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 4,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Ava",
+          "status": "missing",
+          "expected": "Ava",
+          "actual": null
+        },
+        {
+          "path": "name:Diego",
+          "status": "missing",
+          "expected": "Diego",
+          "actual": null
+        },
+        {
+          "path": "name:Jonah",
+          "status": "missing",
+          "expected": "Jonah",
+          "actual": null
+        },
+        {
+          "path": "name:Lila",
+          "status": "missing",
+          "expected": "Lila",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R11",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 12,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Adrian Bell",
+          "status": "missing",
+          "expected": "Adrian Bell",
+          "actual": null
+        },
+        {
+          "path": "name:Bianca Cruz",
+          "status": "missing",
+          "expected": "Bianca Cruz",
+          "actual": null
+        },
+        {
+          "path": "name:Colin Drake",
+          "status": "missing",
+          "expected": "Colin Drake",
+          "actual": null
+        },
+        {
+          "path": "name:Dana Espinoza",
+          "status": "missing",
+          "expected": "Dana Espinoza",
+          "actual": null
+        },
+        {
+          "path": "name:Elena Frost",
+          "status": "missing",
+          "expected": "Elena Frost",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Garza",
+          "status": "missing",
+          "expected": "Finn Garza",
+          "actual": null
+        },
+        {
+          "path": "name:Gina Hale",
+          "status": "missing",
+          "expected": "Gina Hale",
+          "actual": null
+        },
+        {
+          "path": "name:Hector Ines",
+          "status": "missing",
+          "expected": "Hector Ines",
+          "actual": null
+        },
+        {
+          "path": "name:Ingrid Jost",
+          "status": "missing",
+          "expected": "Ingrid Jost",
+          "actual": null
+        },
+        {
+          "path": "name:Jules Kwon",
+          "status": "missing",
+          "expected": "Jules Kwon",
+          "actual": null
+        },
+        {
+          "path": "name:Kara Lane",
+          "status": "missing",
+          "expected": "Kara Lane",
+          "actual": null
+        },
+        {
+          "path": "name:Luis Mendez",
+          "status": "missing",
+          "expected": "Luis Mendez",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R12",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 11,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Nora Ortiz",
+          "status": "missing",
+          "expected": "Nora Ortiz",
+          "actual": null
+        },
+        {
+          "path": "name:Oscar Price",
+          "status": "missing",
+          "expected": "Oscar Price",
+          "actual": null
+        },
+        {
+          "path": "name:Pia Quill",
+          "status": "missing",
+          "expected": "Pia Quill",
+          "actual": null
+        },
+        {
+          "path": "name:Rafael Soto",
+          "status": "missing",
+          "expected": "Rafael Soto",
+          "actual": null
+        },
+        {
+          "path": "name:Sasha Tran",
+          "status": "missing",
+          "expected": "Sasha Tran",
+          "actual": null
+        },
+        {
+          "path": "name:Talia Upton",
+          "status": "missing",
+          "expected": "Talia Upton",
+          "actual": null
+        },
+        {
+          "path": "name:Uri Vargas",
+          "status": "missing",
+          "expected": "Uri Vargas",
+          "actual": null
+        },
+        {
+          "path": "name:Vera Walsh",
+          "status": "missing",
+          "expected": "Vera Walsh",
+          "actual": null
+        },
+        {
+          "path": "name:Wyatt Xu",
+          "status": "missing",
+          "expected": "Wyatt Xu",
+          "actual": null
+        },
+        {
+          "path": "name:Xena Young",
+          "status": "missing",
+          "expected": "Xena Young",
+          "actual": null
+        },
+        {
+          "path": "name:Yuri Zhao",
+          "status": "missing",
+          "expected": "Yuri Zhao",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R13",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 6,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Amy Barlow",
+          "status": "missing",
+          "expected": "Amy Barlow",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Carter",
+          "status": "missing",
+          "expected": "Ben Carter",
+          "actual": null
+        },
+        {
+          "path": "name:Chloe Dunn",
+          "status": "missing",
+          "expected": "Chloe Dunn",
+          "actual": null
+        },
+        {
+          "path": "name:Devin Fox",
+          "status": "missing",
+          "expected": "Devin Fox",
+          "actual": null
+        },
+        {
+          "path": "name:Eva Green",
+          "status": "missing",
+          "expected": "Eva Green",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Hayes",
+          "status": "missing",
+          "expected": "Finn Hayes",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R13",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 6,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Amy Barlow",
+          "status": "missing",
+          "expected": "Amy Barlow",
+          "actual": null
+        },
+        {
+          "path": "name:Ben Carter",
+          "status": "missing",
+          "expected": "Ben Carter",
+          "actual": null
+        },
+        {
+          "path": "name:Chloe Dunn",
+          "status": "missing",
+          "expected": "Chloe Dunn",
+          "actual": null
+        },
+        {
+          "path": "name:Devin Fox",
+          "status": "missing",
+          "expected": "Devin Fox",
+          "actual": null
+        },
+        {
+          "path": "name:Eva Green",
+          "status": "missing",
+          "expected": "Eva Green",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Hayes",
+          "status": "missing",
+          "expected": "Finn Hayes",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R14",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 7,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Taylor Anderson",
+          "status": "missing",
+          "expected": "Taylor Anderson",
+          "actual": null
+        },
+        {
+          "path": "name:Jordan Brown",
+          "status": "missing",
+          "expected": "Jordan Brown",
+          "actual": null
+        },
+        {
+          "path": "name:Riley Clark",
+          "status": "missing",
+          "expected": "Riley Clark",
+          "actual": null
+        },
+        {
+          "path": "name:Avery Davis",
+          "status": "missing",
+          "expected": "Avery Davis",
+          "actual": null
+        },
+        {
+          "path": "name:Casey Evans",
+          "status": "missing",
+          "expected": "Casey Evans",
+          "actual": null
+        },
+        {
+          "path": "name:Morgan Flores",
+          "status": "missing",
+          "expected": "Morgan Flores",
+          "actual": null
+        },
+        {
+          "path": "name:Quinn Green",
+          "status": "missing",
+          "expected": "Quinn Green",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R15",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 24,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Alex Rivera",
+          "status": "missing",
+          "expected": "Alex Rivera",
+          "actual": null
+        },
+        {
+          "path": "name:Blake Nguyen",
+          "status": "missing",
+          "expected": "Blake Nguyen",
+          "actual": null
+        },
+        {
+          "path": "name:Casey Ortiz",
+          "status": "missing",
+          "expected": "Casey Ortiz",
+          "actual": null
+        },
+        {
+          "path": "name:Dana Patel",
+          "status": "missing",
+          "expected": "Dana Patel",
+          "actual": null
+        },
+        {
+          "path": "name:Eden Quinn",
+          "status": "missing",
+          "expected": "Eden Quinn",
+          "actual": null
+        },
+        {
+          "path": "name:Finn Ramos",
+          "status": "missing",
+          "expected": "Finn Ramos",
+          "actual": null
+        },
+        {
+          "path": "name:Gray Santos",
+          "status": "missing",
+          "expected": "Gray Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Harper Tao",
+          "status": "missing",
+          "expected": "Harper Tao",
+          "actual": null
+        },
+        {
+          "path": "name:Indie Ulrich",
+          "status": "missing",
+          "expected": "Indie Ulrich",
+          "actual": null
+        },
+        {
+          "path": "name:Jules Vega",
+          "status": "missing",
+          "expected": "Jules Vega",
+          "actual": null
+        },
+        {
+          "path": "name:Kai West",
+          "status": "missing",
+          "expected": "Kai West",
+          "actual": null
+        },
+        {
+          "path": "name:Lane Xu",
+          "status": "missing",
+          "expected": "Lane Xu",
+          "actual": null
+        },
+        {
+          "path": "name:Morgan Young",
+          "status": "missing",
+          "expected": "Morgan Young",
+          "actual": null
+        },
+        {
+          "path": "name:Noa Zuniga",
+          "status": "missing",
+          "expected": "Noa Zuniga",
+          "actual": null
+        },
+        {
+          "path": "name:Oakley Ames",
+          "status": "missing",
+          "expected": "Oakley Ames",
+          "actual": null
+        },
+        {
+          "path": "name:Parker Bell",
+          "status": "missing",
+          "expected": "Parker Bell",
+          "actual": null
+        },
+        {
+          "path": "name:Reese Cole",
+          "status": "missing",
+          "expected": "Reese Cole",
+          "actual": null
+        },
+        {
+          "path": "name:Sage Dunn",
+          "status": "missing",
+          "expected": "Sage Dunn",
+          "actual": null
+        },
+        {
+          "path": "name:Tatum Ellis",
+          "status": "missing",
+          "expected": "Tatum Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Unity Ford",
+          "status": "missing",
+          "expected": "Unity Ford",
+          "actual": null
+        },
+        {
+          "path": "name:Vale Gross",
+          "status": "missing",
+          "expected": "Vale Gross",
+          "actual": null
+        },
+        {
+          "path": "name:Wynn Hart",
+          "status": "missing",
+          "expected": "Wynn Hart",
+          "actual": null
+        },
+        {
+          "path": "name:Yael Ives",
+          "status": "missing",
+          "expected": "Yael Ives",
+          "actual": null
+        },
+        {
+          "path": "name:Zion James",
+          "status": "missing",
+          "expected": "Zion James",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R16",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 5,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Arlo Beckett",
+          "status": "missing",
+          "expected": "Arlo Beckett",
+          "actual": null
+        },
+        {
+          "path": "name:Blair Chen",
+          "status": "missing",
+          "expected": "Blair Chen",
+          "actual": null
+        },
+        {
+          "path": "name:Cody Diaz",
+          "status": "missing",
+          "expected": "Cody Diaz",
+          "actual": null
+        },
+        {
+          "path": "name:Demi Ellis",
+          "status": "missing",
+          "expected": "Demi Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Ezra Frost",
+          "status": "missing",
+          "expected": "Ezra Frost",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R17",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Faye Alvarez",
+          "status": "missing",
+          "expected": "Faye Alvarez",
+          "actual": null
+        },
+        {
+          "path": "name:Gus Benton",
+          "status": "missing",
+          "expected": "Gus Benton",
+          "actual": null
+        },
+        {
+          "path": "name:Holly Cho",
+          "status": "missing",
+          "expected": "Holly Cho",
+          "actual": null
+        },
+        {
+          "path": "name:Ian Drake",
+          "status": "missing",
+          "expected": "Ian Drake",
+          "actual": null
+        },
+        {
+          "path": "name:Jade Ellis",
+          "status": "missing",
+          "expected": "Jade Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Kyle Ford",
+          "status": "missing",
+          "expected": "Kyle Ford",
+          "actual": null
+        },
+        {
+          "path": "name:Lena Gross",
+          "status": "missing",
+          "expected": "Lena Gross",
+          "actual": null
+        },
+        {
+          "path": "name:Miles Hart",
+          "status": "missing",
+          "expected": "Miles Hart",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R17",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 8,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Faye Alvarez",
+          "status": "missing",
+          "expected": "Faye Alvarez",
+          "actual": null
+        },
+        {
+          "path": "name:Gus Benton",
+          "status": "missing",
+          "expected": "Gus Benton",
+          "actual": null
+        },
+        {
+          "path": "name:Holly Cho",
+          "status": "missing",
+          "expected": "Holly Cho",
+          "actual": null
+        },
+        {
+          "path": "name:Ian Drake",
+          "status": "missing",
+          "expected": "Ian Drake",
+          "actual": null
+        },
+        {
+          "path": "name:Jade Ellis",
+          "status": "missing",
+          "expected": "Jade Ellis",
+          "actual": null
+        },
+        {
+          "path": "name:Kyle Ford",
+          "status": "missing",
+          "expected": "Kyle Ford",
+          "actual": null
+        },
+        {
+          "path": "name:Lena Gross",
+          "status": "missing",
+          "expected": "Lena Gross",
+          "actual": null
+        },
+        {
+          "path": "name:Miles Hart",
+          "status": "missing",
+          "expected": "Miles Hart",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R18",
+      "kind": "roster",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 5,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Nina Ortega",
+          "status": "missing",
+          "expected": "Nina Ortega",
+          "actual": null
+        },
+        {
+          "path": "name:Owen Price",
+          "status": "missing",
+          "expected": "Owen Price",
+          "actual": null
+        },
+        {
+          "path": "name:Piper Quinn",
+          "status": "missing",
+          "expected": "Piper Quinn",
+          "actual": null
+        },
+        {
+          "path": "name:Rory Santos",
+          "status": "missing",
+          "expected": "Rory Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Skye Turner",
+          "status": "missing",
+          "expected": "Skye Turner",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "R18",
+      "kind": "roster",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 0,
+      "name_recall": 0,
+      "name_precision": 0,
+      "record_f1": 0,
+      "field_accuracy": 0,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 5,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "name:Nina Ortega",
+          "status": "missing",
+          "expected": "Nina Ortega",
+          "actual": null
+        },
+        {
+          "path": "name:Owen Price",
+          "status": "missing",
+          "expected": "Owen Price",
+          "actual": null
+        },
+        {
+          "path": "name:Piper Quinn",
+          "status": "missing",
+          "expected": "Piper Quinn",
+          "actual": null
+        },
+        {
+          "path": "name:Rory Santos",
+          "status": "missing",
+          "expected": "Rory Santos",
+          "actual": null
+        },
+        {
+          "path": "name:Skye Turner",
+          "status": "missing",
+          "expected": "Skye Turner",
+          "actual": null
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 401,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 401,
+      "accuracy": 1,
+      "name_recall": 1,
+      "name_precision": 1,
+      "record_f1": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "matched": 0,
+      "missing": 0,
+      "extra": 0,
+      "fields": [
+        {
+          "path": "negative.reject",
+          "status": "correct",
+          "expected": "empty+rejected",
+          "actual": "0 names rejected=false"
+        }
+      ],
+      "actual_count": 0,
+      "rejected": false
+    }
+  ]
+}

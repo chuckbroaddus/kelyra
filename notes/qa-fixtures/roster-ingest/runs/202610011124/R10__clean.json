@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Ara",
+        "confident": true
+      },
+      {
+        "name": "Diego",
+        "confident": true
+      },
+      {
+        "name": "Isaac",
+        "confident": true
+      },
+      {
+        "name": "Jonah",
+        "confident": true
+      },
+      {
+        "name": "Lila",
+        "confident": true
+      }
+    ]
+  }
+}

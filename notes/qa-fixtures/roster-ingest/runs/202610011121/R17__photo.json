@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Faye Avante",
+        "confident": true
+      },
+      {
+        "name": "Gus Benton",
+        "confident": true
+      },
+      {
+        "name": "Holly Cho",
+        "confident": true
+      },
+      {
+        "name": "Ian Drake",
+        "confident": true
+      },
+      {
+        "name": "Jade Ellis",
+        "confident": true
+      },
+      {
+        "name": "Kyle Ford",
+        "confident": true
+      },
+      {
+        "name": "Lane Gross",
+        "confident": true
+      },
+      {
+        "name": "Miles Hart",
+        "confident": true
+      }
+    ]
+  }
+}

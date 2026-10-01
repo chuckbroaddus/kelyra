@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Aiden Brooks",
+        "confident": true
+      },
+      {
+        "name": "Bella Cruz",
+        "confident": true
+      },
+      {
+        "name": "Carter Dunn",
+        "confident": true
+      },
+      {
+        "name": "Della Fox",
+        "confident": true
+      },
+      {
+        "name": "Evan Gobi",
+        "confident": true
+      },
+      {
+        "name": "Page Ito",
+        "confident": true
+      },
+      {
+        "name": "Gabe Jung",
+        "confident": true
+      },
+      {
+        "name": "Hana Kim",
+        "confident": true
+      }
+    ]
+  }
+}
