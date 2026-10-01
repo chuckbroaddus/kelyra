@@ -7,6 +7,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
+import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
 import { type } from '@/constants/theme';
 import { DEFAULT_CONDUCT_MARKS } from '@/lib/grade/posting';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
@@ -40,12 +41,15 @@ export function ConductEntryPanel({
 
   return (
     <View style={[styles.wrap, { borderColor: colors.line }]}>
-      <Text style={[type.meta, { color: colors.ink, fontWeight: '700' }]}>
-        Conduct{periodLabel ? ` · ${periodLabel}` : ''}
-      </Text>
-      {help ? (
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 6 }]}>{help.meaning}</Text>
-      ) : null}
+      {/* Title + help leave with swipe-up and return on swipe-down, like the tab rows above. */}
+      <CollapsingPageChrome>
+        <View style={styles.head}>
+          <Text style={[type.meta, { color: colors.ink, fontWeight: '700' }]}>
+            Conduct{periodLabel ? ` · ${periodLabel}` : ''}
+          </Text>
+          {help ? <Text style={[type.meta, { color: colors.mute }]}>{help.meaning}</Text> : null}
+        </View>
+      </CollapsingPageChrome>
       {students.map((s) => {
         const cur = marks[s.id] ?? null;
         return (
@@ -77,6 +81,10 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 8,
     gap: 6,
+  },
+  head: {
+    gap: 6,
+    paddingBottom: 6,
   },
   row: {
     flexDirection: 'row',
