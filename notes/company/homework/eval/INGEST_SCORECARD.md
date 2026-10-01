@@ -107,3 +107,35 @@ npm run eval:homework
 EVAL_RESUME_STAMP=<stamp> EVAL_HW_PACE_MS=5000 node scripts/eval-homework-ingest.mjs
 node scripts/rescore-homework-ingest-run.mjs <stamp>
 ```
+
+## UI proof @375 px (real, 2026-10-01): replaces the Capture/Inbox shots above
+
+Harness: `scripts/ingest-ui-proof.mjs` (CDP on QA Chrome :9223, one tab, closed after). Worktree Expo web on **:8121**
+with a **private Metro cache** (local uncommitted `metro.config.js` FileStore + private `TMPDIR`, `--clear`); the served
+bundle was checked to resolve `src/app/*` from this worktree. `EXPO_PUBLIC_AI_DEV_URL` → worktree ai-dev :8798.
+Sign-in: splash form with the persona from `~/.kelyra/ui-personas.json` (persona inject CORS only allows :8081), and the
+harness waits out "Finishing sign-in…" before driving. Fixture files go in through the real picker
+(`Page.setInterceptFileChooserDialog` + `DOM.setFileInputFiles`): no camera, no OS dialog. Viewport 375×812 @2x.
+Every PNG was opened and checked by eye. The earlier Hermes shots (Capture "Finishing sign-in…", blank New Assignment form, none
+for homework) are in `/tmp/<slug>-ingest-eval/invalid-old/` and are **not** proof.
+
+Path: **teacher** → `/capture` → *Photo or Video* (fixture) → *Ask AI to process* → classify-capture review card.
+
+| Case | Shot (`notes/qa-fixtures/homework-ingest/ui-proof-2026-10-01/`, copy in `/tmp/homework-ingest-eval/`) | What it shows |
+|------|------|------|
+| H01 clean | `H01-clean-review-375.png` | "This will be student work / a grade draft". "Read on the page: Alex Rivers. Pick the student — we will not invent one." Roster chips with **Unknown** selected (name not on dev roster; GT "Alex Rivera", the known Rivera→Rivers misread) |
+| H04 photo (messy) | `H04-photo-review-375.png` | Homework intent; "Read on the page: Casey Nguyen"; Unknown selected |
+| H07 photo (misspelled) | `H07-photo-review-375.png` | Homework intent; "Read on the page: Alexx Rivera" (spelling kept as written); Unknown selected |
+| N01 negative (syllabus) | `N01-negative-review-375.png` | Routed to "This will be a class syllabus / grading policy" → "Parse syllabus for ditl-Math Period 3". Not treated as homework |
+
+**What web does not reach (and why):** the per-item **responses + score review** (Pack B review sheet / "Draft score")
+only opens when the class has a **keyed assignment that `match-key` links to the page** (`capture.tsx` ~L972–1023). The dev
+class `d1715000-…0301` has two keyed assignments ("ditl-Math Quiz", "ditl-Math HW S1 / Addition Word Problems KEY"), and no
+corpus page matches them, so correctly no key is matched and only the name/roster-match card shows. To reach the
+responses screen you need an assignment keyed to the H-fixture (DB write, not done here). `/proposal` runs
+`evaluate-homework` without a key, but on web it is only reached from the header **camera**, not a file picker.
+
+### Remaining gaps (updated)
+
+- Multi-page packets only exercise **page 1** fixtures.
+- `evaluate-homework` is ai-dev only (no Edge Function).

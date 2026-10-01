@@ -106,3 +106,105 @@ So the GT is legible; the loss is input resolution, not illegible fixtures.
    suggestions unchecked.
 
 Rerun: `AI_DEV_PORT=8799 npm run ai:dev` then `AI_DEV_URL=http://127.0.0.1:8799 node scripts/eval-roster-ingest.mjs`.
+
+## Round 3 + rough fix (R4/R5) — `extract-roster` high detail, no-guess rules (branch `cos/ingest-ui-proof`)
+
+**Runs:** legacy 21-case corpus `202610011154` (pre-fix rerun) → `202610011205` / `202610011208` (R3);
+full 38-case / 65-variant corpus (after #337) `202610011221` (origin/main, before) → `202610011235` (R4) → **`202610011243` (R5)**.
+All via local ai-dev on a private port (8798), committed fixtures (no regen).
+
+### Legacy corpus (R01–R18, N01–N03)
+
+| Metric | R2 202610011128 | rerun 202610011154 | **R3 202610011205** | R3 confirm 202610011208 |
+|--------|---:|---:|---:|---:|
+| overall | 94.0% | 94.5% | **100%** | 100% |
+| hallucinations | 6 | 7 | **0** | 0 |
+| negatives | 100% | 100% | 100% | 100% |
+
+The 6–7 residual hallucinations were all **extra names** (no GT row): OCR ghosts (Lila Qureshi, Kari Melton,
+Celia Peralta), first-name swaps on R10 (Ava→Ara, Jonah→Josiah, smudged `H###r`→George/Harper), and the R18
+cut-off `Uma V`. Cause: same as the rough corpus — `detail: low` at 1280px.
+
+### Full corpus by bucket (65 variants)
+
+| Bucket | n | before acc (`…1221`) | before hallu | R4 acc (`…1235`) | R4 hallu | **R5 acc (`…1243`)** | **R5 hallu** |
+|--------|--:|---:|---:|---:|---:|---:|---:|
+| **all** | 65 | 87.2% | 69 | 98.4% | 3 | **98.5%** | **0** |
+| clean printed | 27 | 95.7% | 13 | 100% | 0 | **100%** | **0** |
+| mild photo | 9 | 92.4% | 3 | 100% | 0 | **100%** | **0** |
+| **rough printed** | 10 | **41.3%** | **50** | 93.3% | 1 | **91.7%** | **0** |
+| handwritten (all) | 11 | 94.7% | 3 | 96.5% | 2 | **98.7%** | **0** |
+| handwritten clean | 7 | 97.8% | 0 | 98.8% | 0 | **98.8%** | **0** |
+| handwritten rough | 4 | 89.3% | 3 | 92.5% | 2 | **98.5%** | **0** |
+| negatives | 9 | 100% | 0 | 100% | 0 | **100% (9/9)** | **0** |
+| negatives rough | 2 | 100% | 0 | 100% | 0 | **100% (2/2)** | **0** |
+
+Rough printed: record F1 43.9% → **100%** (recall 100%, precision 100%). The rest of the rough-printed loss is
+optional fields (field acc 79.2%): grade/period misreads under dim light (R22) and IDs/periods left null on
+glare rows (R20/R23). Those are misses, not inventions.
+
+### Changes (`scripts/ai-dev-server.mjs` → `extractRoster`, client)
+
+1. **Input resolution:** roster image prepared at **2048px max edge** (was the shared 1280 cap) and sent with
+   **`detail: 'high'`** (was `low`). `prepareImageForGrok`/`loadImageForGrok` take `{ maxEdge }` (cache keyed by it).
+   No crop step was needed: with high detail the oracle-crop gap closed (rough printed 41.3% → 91.7–93.3%, oracle crop was 92.5%).
+2. **Prompt:** read letter by letter, never swap in a similar common name; skip smudged / masked (`###`) / illegible
+   rows; skip crossed-out names; partial rows (cut-off last line, initial-only surname) only with `confident:false`;
+   never pad to the row count; rough-photo rule ("return fewer names"); **`#`/No. column = row index, not student_id**.
+3. **Post-filter:** drop names containing masking symbols or digits; initial-only surname → `confident:false`;
+   `dropRowIndexIds` clears a sequential small-integer `student_id` run starting at 1–2 (row numbers);
+   strip a leading `#` from IDs (`#4471` → `4471`).
+4. **Response:** adds `low_confidence` (≥40% of rows not confident).
+5. **Client:** `src/lib/students/rosterSuggest.ts` (pure, tested): suggestions start **unchecked** when the read is
+   low-confidence (`low_confidence` or ≥40% unsure rows); unsure rows are always unchecked. `suggestRosterFromPhoto` uses it.
+   Class setup: a not-a-roster photo now shows "No student names found on that photo…" **inside the Add card**
+   (was a page-bottom generic error) and no longer tries to park an empty import.
+6. **Eval:** retries Grok 429 / capacity errors (4× backoff) so a busy model is not scored as a miss.
+
+Residual (R5): no hallucinations. Known softs: R22 rough grade/period off by one; R20 rough leaves IDs on glare rows null.
+
+### Rerun
+
+```bash
+AI_DEV_PORT=8798 npm run ai:dev
+AI_DEV_URL=http://127.0.0.1:8798 node scripts/eval-roster-ingest.mjs     # committed fixtures
+# full regen + eval (re-renders photo.jpg noise, so numbers drift a little): AI_DEV_URL=… npm run eval:roster
+```
+
+Deploy: `extract-roster` still has **no Edge Function** (`supabase/functions/` has none); the app reaches it only
+through `EXPO_PUBLIC_AI_DEV_URL`. Nothing was deployed.
+
+## UI proof @375 px (real, 2026-10-01): replaces the invalid Capture/home shots above
+
+Harness: `scripts/ingest-ui-proof.mjs` (CDP on QA Chrome :9223, one tab, closed after). Worktree Expo web on **:8121**
+with a **private Metro cache** (local uncommitted `metro.config.js` FileStore + private `TMPDIR`, `--clear`); the served
+bundle was checked to resolve `src/app/*` from this worktree. `EXPO_PUBLIC_AI_DEV_URL` → worktree ai-dev :8798.
+Sign-in: splash form with the persona from `~/.kelyra/ui-personas.json` (persona inject CORS only allows :8081), and the
+harness waits out "Finishing sign-in…" before driving. Fixture files go in through the real picker
+(`Page.setInterceptFileChooserDialog` + `DOM.setFileInputFiles`): no camera, no OS dialog. Viewport 375×812 @2x.
+Every PNG was opened and checked by eye. The earlier Hermes shots (Capture "Finishing sign-in…", blank New Assignment form, none
+for homework) are in `/tmp/<slug>-ingest-eval/invalid-old/` and are **not** proof.
+
+Path: **office** persona → `/class/d1715000-…0301/setup` → *Choose list photo* → roster review checklist
+("Confirm every name. Nothing is added until you tap Add."). Teacher seat has no Add-students card, and Capture refuses
+roster intent for teacher ("This seat cannot create a class or roster from a photo"), so office is the only web seat that reaches it.
+
+| Case | Shot (`notes/qa-fixtures/roster-ingest/ui-proof-2026-10-01/`, copy in `/tmp/roster-ingest-eval/`) | What it shows |
+|------|------|------|
+| R01 clean | `R01-clean-review-375.png` | 8 checked names Ava Brooks … Owen Blake, "Add 8 students" (matches GT) |
+| R20 rough (14° + glare) | `R20-rough-review-375.png` | 7 names (Kenji Ortiz-baird, Liesl Vargas, Orion Falk, Paloma Reyes, Quincy Adebayo, Rosalind Teague, Silas Ferreira). Glare-hidden rows were **not** invented (before: 9 invented names) |
+| R29 handwritten | `R29-handwritten-review-375.png` | 12 handwritten names (Adaeze Nwosu … Honor Pemberton), struck-out name not listed |
+| R32 rough handwritten | `R32-rough-handwritten-review-375.png` | 7 names Imogen Ravel … Philippa Grey, no "Jane" ghost |
+| N01 negative | `N01-negative-review-375.png` | No checklist; in-card "No student names found on that photo…" (new copy) |
+
+**Finding (not fixed: needs a migration):** after the checklist shows, `createRosterImport` fails for office with RLS.
+`roster_imports_via_class` only allows `classes.teacher_id = auth.uid()`, so the page bottom also shows "Could not read that list".
+The suggestions still render and nothing gets added. Proposed fix (not applied): add an office/`teaches_class` policy on
+`public.roster_imports`, matching the enrollments policies.
+
+### Remaining gaps (updated)
+
+- Optional fields (student_id / grade / period / parent_contact) are extracted and scored but **not persisted** on student
+  create (the confirm flow is name-only).
+- `extract-roster` is ai-dev only (no Edge Function to deploy).
+- Rough printed optional-field accuracy 79%: off-by-one grade/period under dim light.

@@ -1,0 +1,58 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Amy Barlow",
+        "student_id": null,
+        "grade": "9",
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ben Carter",
+        "student_id": null,
+        "grade": "9",
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Chloe Dunn",
+        "student_id": null,
+        "grade": "9",
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Devin Fox",
+        "student_id": null,
+        "grade": "10",
+        "period": "3",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Eva Green",
+        "student_id": null,
+        "grade": "10",
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Finn Hayes",
+        "student_id": null,
+        "grade": "9",
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

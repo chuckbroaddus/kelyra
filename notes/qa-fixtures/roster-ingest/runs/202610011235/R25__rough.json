@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Amara Oyelowo",
+        "student_id": "55101",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Erik Brandvold",
+        "student_id": "55102",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Noor Chaudhry",
+        "student_id": "55103",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Remy Delacroix",
+        "student_id": "55104",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Liv Engstrom",
+        "student_id": "55105",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Cole Fairweather",
+        "student_id": "55106",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Isabel Gutierrez",
+        "student_id": "55107",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Holloway",
+        "student_id": "55108",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Ren Iwasaki",
+        "student_id": "55109",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

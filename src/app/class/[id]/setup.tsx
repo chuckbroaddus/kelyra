@@ -80,6 +80,8 @@ export default function SetupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [readingList, setReadingList] = useState(false);
+  // Shown inside the Add card: page-bottom status is off-screen at phone width.
+  const [listNote, setListNote] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedRosterName[]>([]);
   const [recording, setRecording] = useState<LiveRecording | null>(null);
   const [micId, setMicId] = useState<string | null>(null);
@@ -250,6 +252,7 @@ export default function SetupScreen() {
     if (!id || !teacher) return;
     setReadingList(true);
     setError(null);
+    setListNote(null);
     setStatus('Reading names from the list…');
     try {
       const prepared = await normalizePhoto(uri, mimeType);
@@ -266,6 +269,12 @@ export default function SetupScreen() {
         roster.map((student) => student.display_name),
       );
       setSuggestions(next);
+      if (!next.length) {
+        // Not a roster (or nothing legible): nothing to park for review — say so plainly.
+        setStatus(null);
+        setListNote('No student names found on that photo. Try a clearer photo of the class list, or type names below.');
+        return;
+      }
       const parked = await createRosterImport({
         classId: id,
         photoAssetId: asset.id,
@@ -604,6 +613,7 @@ export default function SetupScreen() {
                 label="Choose list photo"
                 onPress={() => void onPickList(false)}
               />
+              {listNote ? <Text style={[type.meta, { color: colors.mute }]}>{listNote}</Text> : null}
               <DevicePicker
                 kind="audio"
                 selectedId={micId}

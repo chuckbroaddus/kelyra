@@ -1,0 +1,49 @@
+[
+  {
+    "signIn": "existing-session"
+  },
+  {
+    "id": "H01-clean",
+    "postClick": "Ask AI to process",
+    "ok": true
+  },
+  {
+    "id": "H01-clean",
+    "shot": "/tmp/homework-ingest-eval/H01-clean-review-375.png",
+    "settled": true,
+    "text": "Capture Capture 5 Remove page Upload class stack This will be student work / a grade draft Read on the page: Alex Rivers. Pick the student — we will not invent one. Jordan Jamie Riley Samira Unknown Save as note Clear AI result Save to Inbox 4"
+  },
+  {
+    "id": "H04-photo",
+    "postClick": "Ask AI to process",
+    "ok": true
+  },
+  {
+    "id": "H04-photo",
+    "shot": "/tmp/homework-ingest-eval/H04-photo-review-375.png",
+    "settled": true,
+    "text": "Capture Capture 5 Remove page Upload class stack This will be student work / a grade draft Read on the page: Casey Nguyen. Pick the student — we will not invent one. Jordan Jamie Riley Samira Unknown Save as note Clear AI result Save to Inbox 4"
+  },
+  {
+    "id": "H07-photo",
+    "postClick": "Ask AI to process",
+    "ok": true
+  },
+  {
+    "id": "H07-photo",
+    "shot": "/tmp/homework-ingest-eval/H07-photo-review-375.png",
+    "settled": true,
+    "text": "Capture Capture 5 Remove page Upload class stack This will be student work / a grade draft Read on the page: Alexx Rivera. Pick the student — we will not invent one. Jordan Jamie Riley Samira Unknown Save as note Clear AI result Save to Inbox 4"
+  },
+  {
+    "id": "N01-negative",
+    "postClick": "Ask AI to process",
+    "ok": true
+  },
+  {
+    "id": "N01-negative",
+    "shot": "/tmp/homework-ingest-eval/N01-negative-review-375.png",
+    "settled": true,
+    "text": "Capture Capture 5 Remove page Upload class stack This will be a class syllabus / grading policy Parses grading policy / category weights for ditl-Math Period 3. Opens the Syllabus screen to review — no auto-publish. ditl-Math Period 3 Clear AI result Parse syllabus for ditl-Math Period 3 4"
+  }
+]

@@ -47,3 +47,30 @@ AI_DEV_PORT=8791 npm run ai:dev
 # terminal 2
 ANSKEY_AI_URL=http://127.0.0.1:8791 npm run eval:anskey
 ```
+
+## UI proof @375 px (real, 2026-10-01): replaces the blank-form / capture shots above
+
+Harness: `scripts/ingest-ui-proof.mjs` (CDP on QA Chrome :9223, one tab, closed after). Worktree Expo web on **:8121**
+with a **private Metro cache** (local uncommitted `metro.config.js` FileStore + private `TMPDIR`, `--clear`); the served
+bundle was checked to resolve `src/app/*` from this worktree. `EXPO_PUBLIC_AI_DEV_URL` → worktree ai-dev :8798.
+Sign-in: splash form with the persona from `~/.kelyra/ui-personas.json` (persona inject CORS only allows :8081), and the
+harness waits out "Finishing sign-in…" before driving. Fixture files go in through the real picker
+(`Page.setInterceptFileChooserDialog` + `DOM.setFileInputFiles`): no camera, no OS dialog. Viewport 375×812 @2x.
+Every PNG was opened and checked by eye. The earlier Hermes shots (Capture "Finishing sign-in…", blank New Assignment form, none
+for homework) are in `/tmp/<slug>-ingest-eval/invalid-old/` and are **not** proof.
+
+Path: **teacher** → `/class/d1715000-…0301/assignment/new` → Answer key **Photo** → *Take photo* → *Choose from library*
+(fixture) → `analyze-answer-key` → key review (stem / Answer / Points per item). Nothing was saved (no *Assign* tap).
+
+| Case | Shot (`notes/qa-fixtures/anskey-ingest/ui-proof-2026-10-01/`, copy in `/tmp/anskey-ingest-eval/`) | What it shows |
+|------|------|------|
+| K01 clean MC | `K01-clean-review-375.png` | "Read from your key — edit if needed." 1. "Which is a linear function?" → **B**; 2. "Slope of y=2x+1 is" → **2** (matches GT) |
+| K03 bubble photo | `K03-photo-review-375.png` | Filled key read: 1 → **B** (GT B); 2 → **B** (GT **A**, a bubble swap). Stems shown as "12 + 9 =" are **invented** (the bubble sheet prints only numbers). This is the known K03 weakness |
+| K05 handwritten | `K05-handwritten-review-375.png` | 1 → **16**, 2 → **5** (answers match GT 9+7, 20÷4). Stems misread as "9-7 =", "20-4 =" (operator OCR) |
+| N01 negative | `N01-negative-review-375.png` | No items; red "Not an answer key. Graded student packet." under the form |
+
+### Remaining gaps (updated)
+
+- Bubble-sheet stems: the model writes a stem when the sheet has only item numbers (K03 UI). It should leave the stem as the item number. Answers still swap under photo noise.
+- Handwritten operators (+ → -, ÷ → -) are misread in stems. Answers are unaffected.
+- `analyze-answer-key` is ai-dev only (no Edge Function).

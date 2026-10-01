@@ -125,6 +125,10 @@ try {
   await send('Page.setInterceptFileChooserDialog', { enabled: true });
 
   // ---- sign in (wait for hydration first; only use the form if truly signed out)
+  if (process.env.FRESH_SIGNIN === '1') {
+    // Switch persona on this private origin without tapping Sign out.
+    await send('Storage.clearDataForOrigin', { origin: BASE, storageTypes: 'local_storage,indexeddb,cookies' });
+  }
   await goto('/capture');
   let t = await waitFor(/Drop photos|Image Preview|Sign in first|Sign in/i, 90000);
   for (let i = 0; i < 30 && /Finishing sign-in/.test(t || ''); i++) {
@@ -214,6 +218,16 @@ try {
       if (await click(label)) await sleep(4000);
     }
     if (process.env.AFTER_WAIT) await waitFor(new RegExp(process.env.AFTER_WAIT, 'i'), 180000);
+    if (process.env.SCROLL_TO) {
+      // Bring the review card above the sticky composer before the shot.
+      await evaluate(`(() => {
+        const re = new RegExp(${JSON.stringify(process.env.SCROLL_TO)});
+        const all = [...document.querySelectorAll('div,span')].filter((e) => re.test(e.innerText || '') && e.children.length < 3);
+        const el = all[all.length - 1];
+        if (el) el.scrollIntoView({ block: 'start' });
+        return Boolean(el);
+      })()`);
+    }
     await sleep(1500);
     const out = path.join(outDir, `${id}-review-375.png`);
     await shot(out);

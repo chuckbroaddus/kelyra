@@ -5,49 +5,21 @@ import { hydratePhotoUrls } from '@/lib/people/photos';
 import { provisionStudentLogin, writeAudit, type ProvisionedLogin } from '@/lib/school/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { RosterImportRow, StudentCreatedVia, StudentRow } from '@/lib/supabase/types';
+import {
+  buildRosterSuggestions,
+  normalizeRosterName,
+  type RosterExtractPayload,
+  type SuggestedRosterName,
+} from '@/lib/students/rosterSuggest';
 
-export type SuggestedRosterName = {
-  key: string;
-  name: string;
-  selected: boolean;
-  alreadyHere: boolean;
-};
+export type { SuggestedRosterName } from '@/lib/students/rosterSuggest';
 
 export async function suggestRosterFromPhoto(
   imageUrl: string,
   existingNames: string[],
 ): Promise<SuggestedRosterName[]> {
-  const data = await invokeAi<{
-    names?: Array<{ name?: string; confident?: boolean }>;
-    rejected?: boolean;
-    document_kind_guess?: string;
-  }>('extract-roster', { imageUrl });
-  if (data.rejected || data.document_kind_guess === 'not_roster') {
-    return [];
-  }
-  const existing = new Set(existingNames.map((name) => normalizeRosterName(name)));
-  const seen = new Set<string>();
-  const suggestions: SuggestedRosterName[] = [];
-  for (const row of data.names ?? []) {
-    const name = String(row.name ?? '').replace(/\s+/g, ' ').trim();
-    const key = normalizeRosterName(name);
-    if (!name || !key || seen.has(key)) continue;
-    // Drop obvious header/junk lines the model sometimes returns.
-    if (
-      /^(present|absent|period\s*\d+|room\s*\d+|mr\.?\s|ms\.?\s|mrs\.?\s|dr\.?\s)/i.test(name)
-    ) {
-      continue;
-    }
-    seen.add(key);
-    const alreadyHere = existing.has(key);
-    suggestions.push({
-      key,
-      name,
-      selected: !alreadyHere && row.confident !== false,
-      alreadyHere,
-    });
-  }
-  return suggestions;
+  const data = await invokeAi<RosterExtractPayload>('extract-roster', { imageUrl });
+  return buildRosterSuggestions(data, existingNames);
 }
 
 export type RosterStudent = StudentRow & {
@@ -264,10 +236,6 @@ export async function getStudent(studentId: string): Promise<StudentRow> {
     .single();
   if (error) throw error;
   return data;
-}
-
-function normalizeRosterName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 export async function addConfirmedStudents(input: {
