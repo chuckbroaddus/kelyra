@@ -151,7 +151,7 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
     /This syllabus is already published\. Tap Publish to save your changes\./,
   );
   const saveDraft = ui.slice(ui.indexOf('const onSaveDraft = async'));
-  const saveBody = saveDraft.slice(0, saveDraft.indexOf('const applyTemplateCopy'));
+  const saveBody = saveDraft.slice(0, saveDraft.indexOf('const doPublish'));
   assert.match(saveBody, /draft\.syllabus_status === 'published'/);
   assert.match(saveBody, /Tap Publish to save your changes/);
   assert.match(saveBody, /canFinishReview\(draft\)/);
@@ -166,7 +166,7 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   // Published → confirm kind live_edit before publishClassSyllabus; not a silent save.
   assert.match(ui, /kind: 'live_edit'/);
   const onPublish = ui.slice(ui.indexOf('const onPublishPress'));
-  const onPublishBody = onPublish.slice(0, onPublish.indexOf('const parsePhoto'));
+  const onPublishBody = onPublish.slice(0, onPublish.indexOf('const runIngestDoc'));
   assert.match(onPublishBody, /draft\.syllabus_status === 'published'/);
   assert.match(onPublishBody, /setConfirm\(\{ kind: 'live_edit' \}\)/);
   assert.match(ui, /confirm\?\.kind === 'publish' \|\| confirm\?\.kind === 'live_edit'/);

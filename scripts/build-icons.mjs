@@ -877,6 +877,20 @@ const RECIPES = {
     line(p, 11.0, 13.6, 15.4, 8.8, ST);
     poly(p, [[9.6, 17.2], [8.0, 20.4], [12.0, 19.0], [16.0, 20.4], [14.4, 17.2]], ST, false);
   },
+  /**
+   * School syllabus template picker (tpl-stack).
+   * Stacked pages + content ticks — ready-made layout, not camera or open book.
+   */
+  syllabusTemplate: (p) => {
+    // Back page (offset up-left).
+    roundRect(p, 4.0, 3.6, 13.2, 15.0, 1.4, ST, false);
+    // Front page.
+    roundRect(p, 6.8, 5.8, 13.2, 15.0, 1.4, ST, false);
+    // Template content ticks on the front page.
+    line(p, 9.4, 10.0, 17.2, 10.0, ST);
+    line(p, 9.4, 13.2, 15.8, 13.2, ST);
+    line(p, 9.4, 16.4, 14.2, 16.4, ST);
+  },
 };
 
 function bbox(png) {
