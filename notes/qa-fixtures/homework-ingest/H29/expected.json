@@ -1,0 +1,157 @@
+{
+  "source_id": "H29",
+  "kind": "homework",
+  "document_kind_guess": "student_work",
+  "intent": "homework",
+  "negative": false,
+  "overall_confidence": 0.85,
+  "fields": [
+    {
+      "path": "intent",
+      "value": "homework",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "homework",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "studentName",
+      "value": "Riley Brooks",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Riley Brooks",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "assignmentTitle",
+      "value": "Elapsed Time",
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "Elapsed Time",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "draftScore",
+      "value": 75,
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "75",
+        "page": 1,
+        "region": null
+      },
+      "status": "uncertain",
+      "source_doc_id": null
+    },
+    {
+      "path": "maxScore",
+      "value": null,
+      "confidence": 0.5,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "gaps",
+      "value": [
+        "elapsed time crossing the hour"
+      ],
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "elapsed time crossing the hour",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "itemCount",
+      "value": 4,
+      "confidence": 0.6,
+      "evidence": {
+        "quote": "4",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "pageCount",
+      "value": 1,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "1",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "multiStudent",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "nameMissing",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "reject",
+      "value": false,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "roster_hint": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis"
+  ],
+  "warnings": [],
+  "ambiguities": [
+    "Q4 has an erased earlier answer ghosting under the final 6:40"
+  ],
+  "_eval": {}
+}

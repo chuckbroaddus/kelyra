@@ -1,10 +1,58 @@
 # Homework ingest scorecard
 
 **Baseline:** `notes/qa-fixtures/homework-ingest/runs/202610011118` (live; raw overall **68.8%** before scorer soft + percent normalize)  
+**Round 2 (rough corpus):** `notes/qa-fixtures/homework-ingest/runs/202610011220` — see next section  
 **Round 1:** `notes/qa-fixtures/homework-ingest/runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
 **Corpus:** 20 cases (H01–H17 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
 
-## Verdict
+## Rough + handwritten corpus — run `202610011220` (2026-10-01 07:20 CT)
+
+**Corpus:** 37 cases / 49 documents. Added H18–H34: **14 rough phone photos** (H18–H29, H32, H34) + **6 fully handwritten** (H24, H30–H34; H24/H32/H34 also rough). Rough cases send only `rough.jpg` (seeded, `scripts/degrade-homework-fixtures.mjs`); GT marks cropped/glared/erased values `absent` / `uncertain`.
+**Functions:** origin/main `b46d73a` ai-dev (`scripts/ai-dev-server.mjs` on :8813 from this worktree) for classify-capture + evaluate-homework. No prompt/function/client changes.
+
+| Bucket | n | field acc | record match | studentName | draftScore (±25 scorer) | draftScore strict ±12 | 100% when GT <90 | draftScore null | halluc. |
+|--------|--:|----------:|-------------:|------------:|------------------------:|----------------------:|-----------------:|----------------:|--------:|
+| **overall** | 49 | **94.3%** | 96% | – | – | – | – | – | **1** |
+| clean (typed, clean.png) | 14 | 95.7% | 100% | 100% | 79% | 64% | 2 | 1 | 0 |
+| photo_mild (old photo.jpg) | 10 | 94.0% | 100% | 100% | 70% | 50% | 3 | 1 | 0 |
+| **rough** (rough.jpg) | 14 | **92.9%** | 93% | 93% | 71% | **21%** | 6 | 3 | 1 |
+| handwritten (all hand) | 11 | 94.5% | 91% | 91% | 82% | 36% | 5 | 0 | 0 |
+| handwritten_new (H24,H30–H34) | 6 | 93.3% | 100% | 100% | 67% | **17%** | 3 | 0 | 0 |
+| negatives | 5 | 100% | 100% | – | 100% (null) | 100% | 0 | 5 | 0 |
+
+multiStudent detected (classify `names` >1): **2/3** (H09 clean+photo yes, **H23 rough no** — only Taylor Kim listed though Jordan Chen's sheet is in frame).
+
+**Read:** student identification survives rough capture well (13/14 rough, incl. correct `null` on the cropped/blown-out names H21, H27). The headline field accuracy is inflated by the scorer's ±25 draftScore band + optional gaps; on a strict ±12 band rough drafts are right only 3/14 times.
+
+### Worst cases
+
+| Case | Acc | What happened |
+|------|----:|---------------|
+| H20 rough (name erased, faint pencil) | 60% | classify returned literal **`"Name: [redacted]"`** as studentGuessName (hallucination); evaluate returned **no items / no score** although all 4 answers are legible |
+| H21 rough (name cropped) | 80% | name correctly null, but evaluate returned **empty draft** (no items, score null) |
+| H27 rough (flash glare on name) | 80% | same: name null (good) → empty draft |
+| H28 rough (low light, −18°) | 80% | graded the **printed misspelled prompts** (`becuase`, `freind`…) as the student's answers → 0/6 (GT 67) |
+| H31 / H33 handwritten (clean) | 80% | H31: sentence answers ("…is called melting") marked wrong vs one-word key → 33 (GT 100). H33: all 4 items credited 1/1 (incl. wrong 1/3=2/9) yet draftScore 25 — score inconsistent with items |
+
+### Failure patterns
+
+1. **No name ⇒ no draft.** Every nameless page (H06 clean, H20, H21, H27) gets the empty reject payload. The evaluate prompt ties rejects to "teacher ANSWER KEY (no student name …)", so a student page with an unreadable name looks like a reject. This is the "occasional missing draft score" gap.
+2. **Rubber-stamp grading without a key.** With no teacher key the model writes `expected = seen` and credits the student's own wrong answer (H23 8×7=54 ✓, H24 3(2b−1)=6b−1 ✓, H33 1/3=2/9 ✓); 11 docs score 100 where GT is 67–83.
+3. **draftScore ≠ items.** H19 items 3/4 → draftScore 100; H13 photo items 4/4 → 8; H33 4/4 → 25. The scorer only recomputes from items when draftScore ≤ Σof.
+4. **Wrong region read under low light/rotation.** H28 read the printed prompt column instead of the handwritten corrections; H23 misread "36" as "96".
+5. **Second student ignored.** H23 lists one name; H09 clean picked Jamie instead of the left-desk Taylor.
+6. **Placeholder as name.** H20 `"Name: [redacted]"` leaks through as a student guess.
+
+### Suggested fixes (not applied — prompts/functions out of scope for this PR)
+
+- evaluate/analyze prompt: decouple "no visible name" from reject; grade the work, return `studentName:null`, keep items/draftScore.
+- When there's no key: ask the model to solve each item itself (`expected` = its own answer, never copied from `seen`), or return `draftScore:null` + `needsKey` rather than 100.
+- Server-side: always derive draftScore from items when items exist (drop the `≤ Σof` guard), or flag disagreement > 15 pts.
+- Prompt: "the student's answer is the handwriting, not the printed prompt"; accept answers embedded in a full sentence.
+- classify: drop name strings matching `/^name\s*:|\[redacted\]|^first last$/i`; set multiStudent when >1 header with a name is visible.
+- Scorer: report strict ±12 next to the ±25 band (now in `buckets.*.score_strict`) and consider making strict the gate.
+
+## Verdict (R1, 20-case corpus)
 
 | Gate | Baseline | R1 |
 |------|----------|----|

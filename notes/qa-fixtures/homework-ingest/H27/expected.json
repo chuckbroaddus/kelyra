@@ -1,0 +1,160 @@
+{
+  "source_id": "H27",
+  "kind": "homework",
+  "document_kind_guess": "student_work",
+  "intent": "homework",
+  "negative": false,
+  "overall_confidence": 0.85,
+  "fields": [
+    {
+      "path": "intent",
+      "value": "homework",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "homework",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "studentName",
+      "value": null,
+      "confidence": 0.2,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "uncertain",
+      "source_doc_id": null,
+      "accept": [
+        "Taylor Kim"
+      ]
+    },
+    {
+      "path": "assignmentTitle",
+      "value": "Weather Words",
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "Weather Words",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "draftScore",
+      "value": 67,
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "67",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "maxScore",
+      "value": null,
+      "confidence": 0.5,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "gaps",
+      "value": [
+        "weather instruments"
+      ],
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "weather instruments",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "itemCount",
+      "value": 3,
+      "confidence": 0.6,
+      "evidence": {
+        "quote": "3",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "pageCount",
+      "value": 1,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "1",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "multiStudent",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "nameMissing",
+      "value": true,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "true",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "reject",
+      "value": false,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "roster_hint": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis"
+  ],
+  "warnings": [
+    "flash glare over name line — only a faint ghost of the first letters; null preferred, Taylor tolerated"
+  ],
+  "ambiguities": [],
+  "_eval": {}
+}

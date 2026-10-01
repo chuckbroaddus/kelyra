@@ -1,0 +1,103 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "riley brooks"
+        },
+        {
+          "label": "date",
+          "value": "9/23"
+        },
+        {
+          "label": "period",
+          "value": "P2"
+        },
+        {
+          "label": "1",
+          "value": "45 min"
+        },
+        {
+          "label": "2",
+          "value": "9:50"
+        },
+        {
+          "label": "3",
+          "value": "12:10"
+        },
+        {
+          "label": "4",
+          "value": "6:40"
+        }
+      ],
+      "names": [
+        {
+          "name": "Riley",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "time subtraction",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 50,
+      "teacherNote": "Needs work on elapsed time calculations",
+      "studentName": "Riley",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "2:45",
+          "seen": "2:45 is how long? 45 min",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "9:50",
+          "seen": "9:50",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "12:10",
+          "seen": "12:10",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "6:40",
+          "seen": "6:40",
+          "credit": 0,
+          "of": 1,
+          "gap": "time subtraction"
+        }
+      ],
+      "costUsd": 0.0015,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

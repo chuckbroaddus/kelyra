@@ -1,0 +1,56 @@
+{
+  "id": "H25",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 25,
+    "desk": "carpet",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.88,
+      "rot": 2,
+      "keyTop": 0.1
+    },
+    "folds": [
+      {
+        "axis": "v",
+        "pos": 0.5,
+        "kink": 2
+      },
+      {
+        "axis": "h",
+        "pos": 0.5,
+        "kink": 2
+      }
+    ],
+    "glare": [
+      {
+        "pcx": 330,
+        "pcy": 560,
+        "rx": 0.15,
+        "ry": 0.05,
+        "strength": 0.85,
+        "core": 0.45
+      }
+    ],
+    "jpeg": {
+      "quality": 34,
+      "double": 22
+    },
+    "effects": [
+      "folded-creases",
+      "glare",
+      "heavy-jpeg"
+    ]
+  },
+  "effects": [
+    "folded-creases",
+    "glare",
+    "heavy-jpeg"
+  ]
+}

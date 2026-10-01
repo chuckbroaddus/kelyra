@@ -1,0 +1,1 @@
+ROUGH + HANDWRITTEN: notebook page, everything handwritten (Bradley Hand, slanted), right edge curling up + perspective + shadow from phone. Alex Rivera, Simplify pg 112, 5/6 (distributive sign slip).

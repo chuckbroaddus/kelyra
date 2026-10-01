@@ -1,0 +1,51 @@
+{
+  "id": "H24",
+  "photo": false,
+  "hand": true,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 24,
+    "desk": "wood",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.82,
+      "rot": 3,
+      "keyTop": 0.2,
+      "keySide": 0.08
+    },
+    "curl": {
+      "start": 0.6,
+      "squeeze": 60,
+      "fan": 45,
+      "bow": 14,
+      "dark": 0.38
+    },
+    "handShadow": {
+      "x": 0.18,
+      "y": 0,
+      "r": 0.24,
+      "rot": 160,
+      "opacity": 0.4,
+      "blur": 60
+    },
+    "jpeg": {
+      "quality": 62
+    },
+    "effects": [
+      "curled-page",
+      "perspective",
+      "hand-shadow",
+      "handwritten"
+    ]
+  },
+  "effects": [
+    "curled-page",
+    "perspective",
+    "hand-shadow",
+    "handwritten"
+  ]
+}

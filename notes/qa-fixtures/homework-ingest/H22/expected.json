@@ -1,0 +1,157 @@
+{
+  "source_id": "H22",
+  "kind": "homework",
+  "document_kind_guess": "student_work",
+  "intent": "homework",
+  "negative": false,
+  "overall_confidence": 0.85,
+  "fields": [
+    {
+      "path": "intent",
+      "value": "homework",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "homework",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "studentName",
+      "value": "Sam Patel",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Sam Patel",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "assignmentTitle",
+      "value": "Exponents",
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "Exponents",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "draftScore",
+      "value": 75,
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "75",
+        "page": 1,
+        "region": null
+      },
+      "status": "uncertain",
+      "source_doc_id": null
+    },
+    {
+      "path": "maxScore",
+      "value": null,
+      "confidence": 0.5,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "gaps",
+      "value": [
+        "zero exponent"
+      ],
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "zero exponent",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "itemCount",
+      "value": 4,
+      "confidence": 0.6,
+      "evidence": {
+        "quote": "4",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "pageCount",
+      "value": 1,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "1",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "multiStudent",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "nameMissing",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "reject",
+      "value": false,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "roster_hint": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis"
+  ],
+  "warnings": [
+    "bottom of page cropped; Q5 not visible — score on visible Q1-Q4 (or null)"
+  ],
+  "ambiguities": [],
+  "_eval": {}
+}

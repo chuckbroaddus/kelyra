@@ -1,0 +1,91 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Morgan Ellis",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Morgan Ellis"
+        },
+        {
+          "label": "subject",
+          "value": "Science"
+        },
+        {
+          "label": "title",
+          "value": "States of Matter"
+        },
+        {
+          "label": "question_1",
+          "value": "Name the 3 states: solid, liquid, gas"
+        },
+        {
+          "label": "question_2",
+          "value": "Ice turning to water is called melting"
+        },
+        {
+          "label": "question_3",
+          "value": "Water vapor is a gas"
+        }
+      ],
+      "names": [
+        {
+          "name": "Morgan",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "states of matter",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 33,
+      "teacherNote": "Incomplete work with only first question attempted.",
+      "studentName": "Morgan Ellis",
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "expected": "solid, liquid, gas",
+          "seen": "solid, liquid, gas",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "melting",
+          "seen": "Ice turning to water is called melting",
+          "credit": 0,
+          "of": 1,
+          "gap": "phase change terminology"
+        },
+        {
+          "n": 3,
+          "expected": "gas",
+          "seen": "Water vapor is a gas",
+          "credit": 0,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

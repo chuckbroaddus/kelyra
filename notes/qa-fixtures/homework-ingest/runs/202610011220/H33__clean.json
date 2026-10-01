@@ -1,0 +1,73 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie O.",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "equivalent_fractions"
+        }
+      ],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "equivalent fractions",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 25,
+      "teacherNote": "Needs review of equivalent fractions.",
+      "studentName": "Jamie",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "2/4",
+          "seen": "2/4",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "4/6",
+          "seen": "4/6",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "6/8",
+          "seen": "6/8",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "2/9",
+          "seen": "2/9",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0015,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

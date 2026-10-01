@@ -94,6 +94,13 @@ function fieldMap(expected) {
   return m;
 }
 
+/** per-field status ("absent" | "uncertain" | "proposed" | "unknown") + accept lists (rough corpus H18+) */
+function fieldMeta(expected) {
+  const m = {};
+  for (const f of expected.fields || []) m[f.path] = { status: f.status, accept: f.accept || [] };
+  return m;
+}
+
 function normalizeEvaluateJson(ejson) {
   if (!ejson || typeof ejson !== 'object' || ejson.skipped || ejson.error) return ejson;
   const items = Array.isArray(ejson.items) ? ejson.items : [];
@@ -114,6 +121,7 @@ function normalizeEvaluateJson(ejson) {
 function scoreCase(expected, classify, evaluate, meta = {}) {
   evaluate = normalizeEvaluateJson(evaluate);
   const exp = fieldMap(expected);
+  const fm = fieldMeta(expected);
   const tol = Number(meta.soft_score_tol ?? 12);
   const rows = [];
   const actIntent = classify?.intent ?? evaluate?.intent ?? null;
@@ -132,7 +140,10 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
     const expEmpty = expVal == null || expVal === '' || (Array.isArray(expVal) && !expVal.length);
     const actPresent =
       actVal != null && actVal !== '' && !(Array.isArray(actVal) && !actVal.length);
-    const hallucinated = expEmpty && actPresent && (pathKey === 'studentName' || pathKey === 'draftScore');
+    let hallucinated = expEmpty && actPresent && (pathKey === 'studentName' || pathKey === 'draftScore');
+    // uncertain + accept: a value matching an accepted reading (e.g. faint ghost of the real name) is not invented
+    if (hallucinated && extra.accepted) hallucinated = false;
+    delete extra.accepted;
     rows.push({
       path: pathKey,
       expected: expVal,
@@ -170,7 +181,15 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
     studentOk = actStudent == null || actStudent === '';
   }
   if (meta.soft_student && exp.studentName && actStudent) studentOk = namesMatch(exp.studentName, actStudent);
-  push('studentName', exp.studentName, actStudent, studentOk);
+  const nameStatus = fm.studentName?.status;
+  const nameAccepted =
+    Boolean(actStudent) && (fm.studentName?.accept || []).some((n) => namesMatch(n, actStudent));
+  // uncertain (degraded but partly legible): null is fine; the true/accepted reading is fine
+  if (nameStatus === 'uncertain' && (!actStudent || nameAccepted)) studentOk = true;
+  push('studentName', exp.studentName, actStudent, studentOk, {
+    status: nameStatus,
+    accepted: nameAccepted,
+  });
 
   // draftScore — percent 0-100 preferred; raw point totals softened
   let scoreOk = false;
@@ -193,7 +212,9 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
       scoreOk = Math.abs(actN - expN) <= Math.max(tol, 25);
     }
   }
-  push('draftScore', exp.draftScore, actScore, scoreOk);
+  // uncertain (part of the answers glared/cropped/smudged): null is acceptable; a number is scored normally
+  if (!neg && fm.draftScore?.status === 'uncertain' && actScore == null) scoreOk = true;
+  push('draftScore', exp.draftScore, actScore, scoreOk, { status: fm.draftScore?.status });
 
   // gaps — labels are free-form; require presence only when GT lists skills and act has any, else soft
   let gapOk = true;
@@ -219,8 +240,15 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
   const recordMatch = neg
     ? rejected
     : exp.nameMissing || exp.studentName == null
-      ? !actStudent
-      : namesMatch(exp.studentName, actStudent);
+      ? !actStudent || (nameStatus === 'uncertain' && nameAccepted)
+      : namesMatch(exp.studentName, actStudent) || (nameStatus === 'uncertain' && !actStudent);
+  // diagnostics only (not in field accuracy, keeps R1 comparability)
+  const actNames = Array.isArray(classify?.names) ? classify.names.map((n) => n?.name).filter(Boolean) : [];
+  const diag = {
+    multiStudent_expected: Boolean(exp.multiStudent),
+    multiStudent_detected: new Set(actNames.map(normName)).size > 1 || Boolean(evaluate?.multiStudent),
+    names_seen: actNames,
+  };
   return {
     rows,
     accuracy: rows.length ? correct / rows.length : 0,
@@ -231,6 +259,7 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
       hallucinated,
     },
     record_match: Boolean(recordMatch),
+    diag,
   };
 }
 
@@ -281,6 +310,11 @@ async function signIn(env, personaName) {
   }
   if (error || !data.session) throw new Error(`sign-in failed for persona ${personaName}`);
   return { sb, session: data.session, url, anon };
+}
+
+function pickRough(caseDir) {
+  const rough = path.join(caseDir, 'rough.jpg');
+  return fs.existsSync(rough) ? { file: rough, variant: 'rough' } : null;
 }
 
 function pickImage(caseDir, preferPhoto) {
@@ -398,8 +432,8 @@ async function main() {
     JSON.stringify(
       {
         stamp,
-        classify_base: classifyBase.includes('127.') ? 'ai-dev' : 'edge',
-        evaluate_base: evaluateBase ? (evaluateBase.includes('127.') ? 'ai-dev' : 'edge') : null,
+        classify_base: /127\.|localhost/.test(classifyBase) ? 'ai-dev' : 'edge',
+        evaluate_base: evaluateBase ? (/127\.|localhost/.test(evaluateBase) ? 'ai-dev' : 'edge') : null,
         case_count: manifest.cases.length,
       },
       null,
@@ -416,7 +450,10 @@ async function main() {
   const perDoc = [];
   const allRows = [];
 
+  // EVAL_ONLY=H18,H20 → quick sanity subset (buckets then only cover those docs)
+  const only = (process.env.EVAL_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
   for (const entry of manifest.cases) {
+    if (only.length && !only.includes(entry.id)) continue;
     const caseDir = path.join(CORPUS, entry.id);
     const expected = JSON.parse(fs.readFileSync(path.join(caseDir, 'expected.json'), 'utf8'));
     let meta = {};
@@ -424,10 +461,17 @@ async function main() {
     if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
 
     const variants = [];
-    const clean = pickImage(caseDir, false);
-    if (clean) variants.push(clean);
-    const photo = pickImage(caseDir, true);
-    if (photo && photo.file !== clean?.file) variants.push(photo);
+    if (meta.rough) {
+      // rough cases: ground truth describes rough.jpg (cropped/glared values marked absent), so only send that
+      const rough = pickRough(caseDir);
+      if (rough) variants.push(rough);
+      else console.warn('rough.jpg missing (run scripts/degrade-homework-fixtures.mjs)', entry.id);
+    } else {
+      const clean = pickImage(caseDir, false);
+      if (clean) variants.push(clean);
+      const photo = pickImage(caseDir, true);
+      if (photo && photo.file !== clean?.file) variants.push(photo);
+    }
     if (!variants.length) {
       console.warn('skip no image', entry.id);
       continue;
@@ -490,6 +534,10 @@ async function main() {
         id: entry.id,
         kind: entry.kind,
         variant: v.variant,
+        hand: Boolean(meta.hand),
+        rough: Boolean(meta.rough),
+        effects: meta.effects || [],
+        diag: scored.diag,
         field_accuracy: scored.accuracy,
         record_match: scored.record_match,
         counts: scored.counts,
@@ -503,6 +551,47 @@ async function main() {
 
   const avg = (rows) => (rows.length ? rows.reduce((s, r) => s + r.field_accuracy, 0) / rows.length : 0);
   const hallTotal = allRows.filter((r) => r.hallucinated).length;
+  const bucket = (docs) => {
+    const keys = new Set(docs.map((d) => `${d.id}__${d.variant}`));
+    const rows = allRows.filter((r) => keys.has(`${r.doc}__${r.variant}`));
+    const fieldAcc = (p) => {
+      const rr = rows.filter((r) => r.path === p);
+      return rr.length ? rr.filter((r) => r.ok).length / rr.length : null;
+    };
+    return {
+      n: docs.length,
+      field_accuracy: avg(docs),
+      record_match_rate: docs.length ? docs.filter((d) => d.record_match).length / docs.length : null,
+      hallucinations: rows.filter((r) => r.hallucinated).length,
+      student_ok: fieldAcc('studentName'),
+      score_ok: fieldAcc('draftScore'),
+      score_null: rows.filter((r) => r.path === 'draftScore' && r.actual == null).length,
+      // diagnostic: draftScore within ±12 (the ±25 band in field accuracy hides rubber-stamped 100s)
+      score_strict: (() => {
+        const rr = rows.filter((r) => r.path === 'draftScore');
+        const ok = (r) =>
+          r.expected == null
+            ? r.actual == null
+            : r.actual == null
+              ? r.status === 'uncertain'
+              : Math.abs(Number(r.actual) - Number(r.expected)) <= 12;
+        return rr.length ? rr.filter(ok).length / rr.length : null;
+      })(),
+      score_100_when_lower: rows.filter(
+        (r) => r.path === 'draftScore' && r.actual === 100 && r.expected != null && r.expected < 90,
+      ).length,
+    };
+  };
+  const hw = perDoc.filter((d) => d.kind === 'homework');
+  const buckets = {
+    clean: bucket(hw.filter((d) => d.variant === 'clean' && !d.hand)),
+    photo_mild: bucket(hw.filter((d) => d.variant === 'photo')),
+    rough: bucket(hw.filter((d) => d.variant === 'rough')),
+    handwritten: bucket(hw.filter((d) => d.hand)),
+    handwritten_new: bucket(hw.filter((d) => d.hand && Number(d.id.slice(1)) >= 18)),
+    negatives: bucket(perDoc.filter((d) => d.kind === 'negative')),
+  };
+  const multi = perDoc.filter((d) => d.diag?.multiStudent_expected);
   const score = {
     stamp,
     overall_accuracy: avg(perDoc),
@@ -513,6 +602,8 @@ async function main() {
     record_match_rate:
       perDoc.length ? perDoc.filter((d) => d.record_match).length / perDoc.length : 0,
     hallucinations: hallTotal,
+    buckets,
+    multi_student_detected: `${multi.filter((d) => d.diag.multiStudent_detected).length}/${multi.length}`,
     field_totals: {
       correct: allRows.filter((r) => r.ok).length,
       wrong: allRows.filter((r) => !r.ok && !r.hallucinated).length,
@@ -535,6 +626,12 @@ async function main() {
     'rec',
     (score.record_match_rate * 100).toFixed(0) + '%',
   );
+  for (const [k, b] of Object.entries(buckets)) {
+    console.log(
+      `  ${k.padEnd(16)} n=${String(b.n).padStart(2)} acc ${(b.field_accuracy * 100).toFixed(1)}% rec ${b.record_match_rate == null ? '-' : (b.record_match_rate * 100).toFixed(0) + '%'} student ${b.student_ok == null ? '-' : (b.student_ok * 100).toFixed(0) + '%'} score ${b.score_ok == null ? '-' : (b.score_ok * 100).toFixed(0) + '%'} (null ${b.score_null}) strict ${b.score_strict == null ? '-' : (b.score_strict * 100).toFixed(0) + '%'} stamp100 ${b.score_100_when_lower} hall ${b.hallucinations}`,
+    );
+  }
+  console.log('  multiStudent detected', score.multi_student_detected);
 }
 
 main().catch((err) => {

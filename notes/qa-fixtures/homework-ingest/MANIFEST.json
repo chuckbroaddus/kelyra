@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T11:17:44.683Z",
+  "generated_at": "2026-10-01T12:17:29.982Z",
   "roster": [
     "Alex Rivera",
     "Jordan Chen",
@@ -16,6 +16,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -23,6 +24,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -30,6 +32,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -37,6 +40,7 @@
       "kind": "homework",
       "photo": true,
       "hand": true,
+      "rough": false,
       "negative": false
     },
     {
@@ -44,6 +48,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -51,6 +56,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -58,6 +64,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -65,6 +72,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -72,6 +80,7 @@
       "kind": "homework",
       "photo": true,
       "hand": true,
+      "rough": false,
       "negative": false
     },
     {
@@ -79,6 +88,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -86,6 +96,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -93,6 +104,7 @@
       "kind": "homework",
       "photo": false,
       "hand": true,
+      "rough": false,
       "negative": false
     },
     {
@@ -100,6 +112,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -107,6 +120,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -114,6 +128,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -121,6 +136,7 @@
       "kind": "homework",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -128,6 +144,7 @@
       "kind": "homework",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": false
     },
     {
@@ -135,6 +152,7 @@
       "kind": "negative",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": true
     },
     {
@@ -142,6 +160,7 @@
       "kind": "negative",
       "photo": false,
       "hand": false,
+      "rough": false,
       "negative": true
     },
     {
@@ -149,7 +168,231 @@
       "kind": "negative",
       "photo": true,
       "hand": false,
+      "rough": false,
       "negative": true
+    },
+    {
+      "id": "H18",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "perspective",
+        "glare",
+        "clutter"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H19",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "rotation",
+        "motion-blur",
+        "low-light-noise-jpeg"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H20",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "faint-pencil",
+        "eraser-smudge",
+        "defocus",
+        "hand-shadow"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H21",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "crop-top",
+        "rotation",
+        "clutter"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H22",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "crumpled-creases",
+        "low-light-noise-jpeg",
+        "crop-bottom"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H23",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "overlap-two-students",
+        "perspective",
+        "hand-shadow"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H24",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "curled-page",
+        "perspective",
+        "hand-shadow",
+        "handwritten"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H25",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "folded-creases",
+        "glare",
+        "heavy-jpeg"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H26",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "defocus",
+        "low-light-noise-jpeg"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H27",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "flash-glare",
+        "vignette",
+        "perspective"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H28",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "rotation",
+        "low-light-noise-jpeg",
+        "pen-marks"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H29",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "eraser-smudge",
+        "faint-pencil",
+        "perspective",
+        "hand-shadow"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H30",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "cross-outs",
+        "margin-answer-arrow"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H31",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "slant"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H32",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "handwritten",
+        "rotation",
+        "low-light-noise-jpeg"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H33",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "cross-outs",
+        "abbrev-name"
+      ],
+      "negative": false
+    },
+    {
+      "id": "H34",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "handwritten",
+        "crumpled-creases",
+        "glare",
+        "perspective"
+      ],
+      "negative": false
     }
   ]
 }

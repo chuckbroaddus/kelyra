@@ -1,0 +1,13 @@
+{
+  "id": "H31",
+  "photo": false,
+  "hand": true,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "effects": [
+    "handwritten",
+    "slant"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "H21",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 21,
+    "desk": "grey",
+    "place": {
+      "cx": 0.52,
+      "cy": 0.2,
+      "width": 0.98,
+      "rot": 5,
+      "keyTop": 0.06
+    },
+    "clutter": [
+      {
+        "type": "mug",
+        "x": 0.12,
+        "y": 0.93,
+        "rot": 0,
+        "s": 0.9
+      },
+      {
+        "type": "eraser",
+        "x": 0.86,
+        "y": 0.9,
+        "rot": 30,
+        "s": 1.1,
+        "over": true
+      }
+    ],
+    "jpeg": {
+      "quality": 64
+    },
+    "effects": [
+      "crop-top",
+      "rotation",
+      "clutter"
+    ]
+  },
+  "effects": [
+    "crop-top",
+    "rotation",
+    "clutter"
+  ]
+}

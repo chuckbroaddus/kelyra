@@ -1,0 +1,55 @@
+{
+  "id": "H20",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false,
+  "rough": {
+    "seed": 20,
+    "desk": "wood",
+    "place": {
+      "cx": 0.5,
+      "cy": 0.5,
+      "width": 0.84,
+      "rot": -4,
+      "keyTop": 0.1
+    },
+    "smudges": [
+      {
+        "cx": 243,
+        "cy": 68,
+        "cw": 250,
+        "ch": 40,
+        "rot": -3,
+        "opacity": 0.6,
+        "pill": true
+      }
+    ],
+    "fadeInk": 0.92,
+    "defocus": 1.8,
+    "handShadow": {
+      "x": 0.9,
+      "y": 0.86,
+      "r": 0.2,
+      "rot": -35,
+      "opacity": 0.55
+    },
+    "jpeg": {
+      "quality": 58
+    },
+    "effects": [
+      "faint-pencil",
+      "eraser-smudge",
+      "defocus",
+      "hand-shadow"
+    ]
+  },
+  "effects": [
+    "faint-pencil",
+    "eraser-smudge",
+    "defocus",
+    "hand-shadow"
+  ]
+}
