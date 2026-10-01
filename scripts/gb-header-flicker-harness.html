@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StickyTable H-scroll proof</title>
+<style>
+  :root { color-scheme: light; --ink:#1a1a1a; --mute:#6b6b6b; --line:#d9d4cc; --wash:#f4f1ec; --card:#fff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.35 -apple-system, system-ui, sans-serif; color: var(--ink); background: #e8e4de; }
+  .shell { max-width: 960px; margin: 0 auto; padding: 12px; }
+  h1 { font-size: 16px; margin: 0 0 8px; }
+  .meta { color: var(--mute); font-size: 12px; margin-bottom: 12px; }
+  .table { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+  .head-wrap { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: 120px 1fr; background: var(--wash); border-bottom: 1px solid var(--line); height: 56px; }
+  .frozen { display:flex; align-items:center; padding: 8px; font-weight: 600; border-right: 1px solid var(--line); background: var(--wash); }
+  .h-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  .row { display: flex; height: 44px; }
+  .cell { flex: 0 0 88px; width: 88px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 11px; font-weight: 600; }
+  .body-wrap { display: grid; grid-template-columns: 120px 1fr; }
+  .name { justify-content: flex-start; padding: 0 8px; font-weight: 500; font-size: 13px; background: var(--card); }
+  .stripe { background: #faf8f5; }
+  .status { margin-top: 10px; font-size: 12px; color: var(--mute); white-space: pre-wrap; }
+  .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; background: #e7f6ea; color: #146c2e; font-weight: 600; }
+  .badge.bad { background: #fde8e8; color: #9b1c1c; }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <h1>Gradebook header · H-scroll sync</h1>
+    <div class="meta">t_2338d5d5 — driver lock without 80ms unlock timer. Drag either scroller.</div>
+    <div class="table" id="table">
+      <div class="head-wrap">
+        <div class="frozen">Student</div>
+        <div class="h-scroll" id="head"></div>
+      </div>
+      <div class="body-wrap">
+        <div id="names"></div>
+        <div class="h-scroll" id="body"></div>
+      </div>
+    </div>
+    <div class="status" id="status">ready</div>
+  </div>
+<script src="./gb-header-flicker-harness.js"></script>
+</body>
+</html>
