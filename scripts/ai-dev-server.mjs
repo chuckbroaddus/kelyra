@@ -1595,11 +1595,15 @@ async function evaluateHomework(body) {
     typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(bodyMaxScore) ? bodyMaxScore : null;
   // No teacher key: the score is ALWAYS the item credits (never the model's free-floating number).
   // Items present but none gradable → null (no rubber-stamped 100). Keyed scoring stays in keygrade.
+  // Empty items (reject / answer key / not student work) → null, never a bare 0 from the model.
   if (!keyItems.length && items.length) {
     // Settle items in code: arithmetic re-checked, exact matches full credit, all-unread → null score.
     items = settleHomeworkItems(items);
     draftScore = percentFromItemCredits(items);
     outMaxScore = draftScore == null ? null : 100;
+  } else if (!keyItems.length && !items.length) {
+    draftScore = null;
+    outMaxScore = null;
   }
   return {
     ...draft,
@@ -1714,7 +1718,8 @@ async function draftFromPhotos(imageUrls, pass = 'cheap', supabase = null, captu
   return {
     ...base,
     // Score from item credits whenever items exist (mirrors Edge analyze-homework).
-    draftScore: items.length ? percentFromItemCredits(items) : base.draftScore,
+    // Empty items → null (reject / answer key), never keep a bare model 0.
+    draftScore: items.length ? percentFromItemCredits(items) : null,
     costUsd: payload.__kelyraUsd ?? null,
     model: payload.__kelyraModel ?? null,
     pass,

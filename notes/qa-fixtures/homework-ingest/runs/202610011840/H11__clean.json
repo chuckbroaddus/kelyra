@@ -1,0 +1,76 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 38,
+      "teacherNote": "Missing the third state of matter and freezing point of water.",
+      "studentName": "Jordan Chen",
+      "students": [
+        "Jordan Chen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "States of matter: solid, liquid, ___",
+          "expected": "gas",
+          "seen": "solid, liquid, ___",
+          "credit": 0.5,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Water freezes at:",
+          "expected": "0",
+          "seen": "",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Boiling point C:",
+          "expected": "100",
+          "seen": "",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "Gas particles: far apart",
+          "expected": "far apart",
+          "seen": "far apart",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0044,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

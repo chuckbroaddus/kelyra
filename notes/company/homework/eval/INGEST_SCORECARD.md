@@ -1,12 +1,43 @@
 # Homework ingest scorecard
 
+**Round 5 (rough ≥90%):** `notes/qa-fixtures/homework-ingest/runs/202610011840` — see next section  
 **Round 4 (rough ≥85%):** `notes/qa-fixtures/homework-ingest/runs/202610011748` — see next section  
 **Round 3 (rough accuracy):** `notes/qa-fixtures/homework-ingest/runs/202610011647` — see next section  
 **Baseline:** `notes/qa-fixtures/homework-ingest/runs/202610011118` (live; raw overall **68.8%** before scorer soft + percent normalize)  
 **Grading fix:** before `runs/202610011241` → after `runs/202610011321` — see next section  
 **Round 2 (rough corpus):** `notes/qa-fixtures/homework-ingest/runs/202610011220` — see next section  
-**Round 1:** `notes/qa-fixtures/homework-ingest/runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
-**Corpus:** 20 cases (H01–H17 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
+**Round 1:** `runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
+**Corpus:** 37 cases / 49 docs (H01–H34 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
+
+## Round 5 (`kelyra/t_3d6d75e7`) — before `202610011748` (R4) vs after `202610011840`
+
+**Gate:** draftScore ±12. Target rough ≥90%; missing drafts 0; no invented scores; clean/photo/negatives must not regress.
+
+| Bucket | n | field acc | student | **score ±12** | missing | 100 when GT&lt;90 | hall |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| clean | 14 | 98.6% → **98.6%** | 100% → 100% | 93% → **93%** | 0 → 0 | 0 → 0 | 0 |
+| photo_mild | 10 | 98.0% → **98.0%** | 100% → 100% | 90% → **90%** | 0 → 0 | 1 → 0 | 0 |
+| rough | 14 | 97.1% → **98.6%** | 100% → 100% | 86% → **93%** | 0 → 0 | 2 → 0 | 0 |
+| handwritten | 11 | 98.2% → **98.2%** | 100% → 100% | 91% → **91%** | 0 → 0 | 1 → 0 | 0 |
+| handwritten_new | 6 | 96.7% → **96.7%** | 100% → 100% | 83% → **83%** | 0 → 0 | 1 → 0 | 0 |
+| negatives | 5 | 100% → **100%** | 100% → 100% | 100% → **100%** | 0 → 0 | 0 → 0 | 0 |
+
+Overall field accuracy 98.0% → **98.4%**. Rough ±12 **12/14 → 13/14 (93%)** — meets ≥90% target. Missing drafts 0; hallucinations 0.
+
+### Failure classes fixed (R5)
+1. **Ratio simplify (H18):** code-solves `12:18 → 2:3` and `5:20 as fraction → 1/4` so wrong `1/5` cannot rubber-stamp.
+2. **Unit rates (H18):** cost-of-one / mph / unit-price stems solved in code (`$1.50/3 → $0.50`, `60 mi / 2 h → 30 mph`).
+3. **Elapsed time (H29 class):** clock ± minutes and start-to-end duration solved; multi-clock blobs prefer the first (darker final) over a later ghost.
+4. **Ghost clocks (prompt):** darker final wins over a mathematically-correct faint ghost.
+5. **Partial fill-in lists (H11):** recover `solid, liquid, ___` stuffed into the question; half credit for incomplete lists.
+6. **Blank `?` (H14):** blank/`?` stays zero on percent-of items (prompt + existing blank net).
+7. **Empty-items score (N03):** no-key evaluate/analyze with zero items forces `draftScore: null` (never bare model `0` on answer keys).
+
+### Remaining misses
+- H03 photo 67 vs GT 100; H10 clean 67 vs 100; H19 rough (triangle area) 25 vs 75; H30 hand 88 vs 75 (margin/cross-out). All outside the rough ±12 miss set except H19 (1/14).
+
+### Deploy (do not deploy from this seat)
+`supabase functions deploy analyze-homework classify-capture` (both import `_shared/homeworkGrading.ts`). evaluate-homework is ai-dev only.
 
 ## Round 4 (`kelyra/t_847e7e1f`) — before `202610011647` (R3) vs after `202610011748`
 

@@ -1,0 +1,81 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "subtraction",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 88,
+      "teacherNote": "Needs review on subtraction with borrowing.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Mia has 3 bags of 8 marbles. How many?",
+          "expected": "24",
+          "seen": "3 x 8 = 24 marbles",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "45 cookies shared by 5 friends. Each gets?",
+          "expected": "9",
+          "seen": "45 ÷ 5 = 9",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "18 kids + 27 kids. Total?",
+          "expected": "45",
+          "seen": "18 + 27 = 35 45",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "100 pages, read 37. How many left?",
+          "expected": "63",
+          "seen": "100 - 37 =",
+          "credit": 0.5,
+          "of": 1,
+          "gap": "subtraction",
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0042,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

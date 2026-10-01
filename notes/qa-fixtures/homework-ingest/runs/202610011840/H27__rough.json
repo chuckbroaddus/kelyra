@@ -1,0 +1,69 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "weather instrument identification",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 67,
+      "teacherNote": "Two of three weather terms incorrect.",
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Tool that measures temperature:",
+          "expected": "thermometer",
+          "seen": "thermometer",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Water falling from clouds:",
+          "expected": "precipitation",
+          "seen": "precipitation",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Tool that measures wind speed:",
+          "expected": "anemometer",
+          "seen": "barometer",
+          "credit": 0,
+          "of": 1,
+          "gap": "weather instrument identification",
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0046,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

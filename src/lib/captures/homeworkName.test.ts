@@ -10,6 +10,9 @@ import {
   verifyArithmeticItems,
   answersMatch,
   answerCandidates,
+  solveRatioSimplify,
+  solveUnitRate,
+  solveElapsedTime,
 } from '../../../supabase/functions/_shared/homeworkGrading.ts';
 import { cleanHomeworkStudentName, otherHomeworkStudents } from './homeworkName.ts';
 
@@ -257,4 +260,63 @@ test('HW-SCORE-06 R4: thousands misread, cross-out candidates, rubric open respo
   ]);
   assert.equal(h10[0]?.credit, 2);
   assert.equal(h10[1]?.credit, 2);
+});
+
+test('HW-SCORE-07 R5: ratios, unit rates, elapsed time, ghost clocks, partial lists', () => {
+  assert.equal(solveRatioSimplify('Simplify the ratio 12 : 18'), '2:3');
+  assert.equal(solveRatioSimplify('Write 5 : 20 as a fraction in lowest terms'), '1/4');
+  assert.equal(solveUnitRate('3 apples cost $1.50. Cost of 1 apple?'), '$0.50');
+  assert.equal(solveUnitRate('60 miles in 2 hours. Rate?'), '30 mph');
+  assert.equal(solveUnitRate('Unit price: $4.80 for 6 pens'), '$0.80');
+  assert.equal(solveElapsedTime('2:00 to 2:45 is how long?'), '45 min');
+  assert.equal(solveElapsedTime('9:30 + 20 minutes ='), '9:50');
+  assert.equal(solveElapsedTime('11:40 + 30 minutes ='), '12:10');
+  assert.equal(solveElapsedTime('7:15 − 25 minutes ='), '6:50');
+
+  // H18: wrong simplified ratio 1/5 must not rubber-stamp
+  const h18 = settleHomeworkItems([
+    { question: 'Simplify the ratio 12 : 18', expected: '2:3', seen: '2:3', credit: 1, of: 1 },
+    { question: '3 apples cost $1.50. Cost of 1 apple?', expected: '$0.50', seen: '$0.50', credit: 1, of: 1 },
+    { question: '60 miles in 2 hours. Rate?', expected: '30 mph', seen: '30 mph', credit: 1, of: 1 },
+    { question: 'Unit price: $4.80 for 6 pens', expected: '$0.80 each', seen: '$0.80 each', credit: 1, of: 1 },
+    { question: 'Write 5 : 20 as a fraction in lowest terms', expected: '1/5', seen: '1/5', credit: 1, of: 1 },
+  ]);
+  assert.equal(h18[4]?.expected, '1/4');
+  assert.equal(h18[4]?.credit, 0);
+  assert.equal(percentFromItemCredits(h18), 80);
+
+  // H29: final 6:40 with ghost 6:50 — first clock wins; truth is 6:50 so credit 0
+  const h29 = settleHomeworkItems([
+    { question: '2:00 to 2:45 is how long?', expected: '45 min', seen: '45 min', credit: 1, of: 1 },
+    { question: '9:30 + 20 minutes =', expected: '9:50', seen: '9:50', credit: 1, of: 1 },
+    { question: '11:40 + 30 minutes =', expected: '12:10', seen: '12:10', credit: 1, of: 1 },
+    { question: '7:15 − 25 minutes =', expected: '6:50', seen: '6:40 6:50', credit: 1, of: 1 },
+  ]);
+  assert.equal(h29[3]?.expected, '6:50');
+  assert.equal(h29[3]?.credit, 0);
+  assert.equal(percentFromItemCredits(h29), 75);
+
+  // H14: "?" blank must stay zero even if model expected is correct
+  const h14 = settleHomeworkItems([
+    { question: '10% of 50 =', expected: '5', seen: '5', credit: 1, of: 1 },
+    { question: '25% of 80 =', expected: '20', seen: '20', credit: 1, of: 1 },
+    { question: '50% of 12 =', expected: '6', seen: '?', credit: 1, of: 1 },
+  ]);
+  assert.equal(percentFromItemCredits(h14), 67);
+
+  // H11: partial list stuffed into question
+  const h11 = settleHomeworkItems([
+    {
+      question: 'States of matter: solid, liquid, ___',
+      expected: 'gas',
+      seen: '',
+      credit: 0,
+      of: 2,
+    },
+    { question: 'Water freezes at:', expected: '0', seen: '', credit: 0, of: 2 },
+    { question: 'Boiling point C:', expected: '100', seen: '', credit: 0, of: 2 },
+    { question: 'Gas particles:', expected: 'far apart', seen: 'far apart', credit: 2, of: 2 },
+  ]);
+  assert.equal(h11[0]?.credit, 1);
+  assert.equal(percentFromItemCredits(h11), 38);
 });

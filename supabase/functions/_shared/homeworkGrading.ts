@@ -138,6 +138,14 @@ export function answerCandidates(seen: unknown): string[] {
   for (const m of s.matchAll(/[+-]?\d+\/\d+|[+-]?\d+(?:\.\d+)?/g)) {
     out.push(m[0]!);
   }
+  // clock times (6:40, 12:10) — keep ordered so callers can prefer final vs ghost
+  for (const m of s.matchAll(/\b\d{1,2}\s*:\s*\d{2}\b/g)) {
+    out.push(m[0]!.replace(/\s+/g, ''));
+  }
+  // ratio forms 2:3
+  for (const m of s.matchAll(/\b\d+\s*:\s*\d+\b/g)) {
+    out.push(m[0]!.replace(/\s+/g, ''));
+  }
   // last whitespace-separated token often is the final rewrite
   const parts = s.split(' ').map((p) => p.replace(/,/g, '').trim()).filter(Boolean);
   if (parts.length > 1) {
@@ -408,6 +416,147 @@ function expandDistribute(expr: string): string | null {
   return `${a}${v}${bPart}`.replace(/\+-/, '-');
 }
 
+/** Parse "h:mm" / "hh:mm" clock times into minutes-from-midnight. */
+function parseClockToMinutes(raw: string): number | null {
+  const m = raw.trim().match(/^(\d{1,2})\s*:\s*(\d{2})\s*(am|pm)?$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(min) || min < 0 || min > 59 || h < 0 || h > 23) return null;
+  const ap = m[3]?.toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function formatClock(totalMin: number): string {
+  let m = ((totalMin % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${h}:${String(min).padStart(2, '0')}`;
+}
+
+/**
+ * Elapsed-time arithmetic: "2:00 to 2:45 is how long?", "9:30 + 20 minutes =", "7:15 − 25 minutes =".
+ */
+export function solveElapsedTime(question: unknown): string | null {
+  const q = stripQuestionNoise(question)
+    .replace(/[−–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!q) return null;
+  // start to end duration
+  let m = q.match(
+    /^(\d{1,2}\s*:\s*\d{2})\s*(?:to|-|–|until)\s*(\d{1,2}\s*:\s*\d{2})\s*(?:is\s+)?(?:how\s+long)?\??$/i,
+  );
+  if (m) {
+    const a = parseClockToMinutes(m[1]!);
+    const b = parseClockToMinutes(m[2]!);
+    if (a == null || b == null) return null;
+    let diff = b - a;
+    if (diff < 0) diff += 24 * 60;
+    return `${diff} min`;
+  }
+  // clock ± N minutes
+  m = q.match(/^(\d{1,2}\s*:\s*\d{2})\s*([+-])\s*(\d+)\s*(?:minutes?|mins?)?$/i);
+  if (m) {
+    const base = parseClockToMinutes(m[1]!);
+    const n = Number(m[3]);
+    if (base == null || !Number.isFinite(n)) return null;
+    const delta = m[2] === '-' ? -n : n;
+    return formatClock(base + delta);
+  }
+  return null;
+}
+
+/** Simplify ratios / write ratio as fraction: "12 : 18" → "2:3"; "5 : 20 as a fraction" → "1/4". */
+export function solveRatioSimplify(question: unknown): string | null {
+  const q = stripQuestionNoise(question).replace(/\s+/g, ' ').trim();
+  if (!q) return null;
+  const asFraction = /fraction|lowest\s+terms|simplest\s+form/i.test(q);
+  // a : b  or  a/b  ratio pair in the stem
+  let m = q.match(/(\d+)\s*:\s*(\d+)/);
+  if (!m) m = q.match(/(?:ratio|fraction)\s+(\d+)\s*\/\s*(\d+)/i);
+  if (!m) m = q.match(/\b(\d+)\s*\/\s*(\d+)\b/);
+  if (!m) return null;
+  // Avoid hijacking pure fraction arithmetic already handled elsewhere ("2/3 − 1/6")
+  if (/[+\-×*÷]|of\b|percent|%/i.test(q) && !/ratio|fraction in lowest|as a fraction/i.test(q)) return null;
+  if (!/ratio|simplify|lowest\s+terms|as a fraction|write\s+\d/i.test(q) && !/^\d+\s*:\s*\d+$/.test(q)) {
+    // only act when the stem is clearly a ratio prompt
+    if (!/simplify|ratio|lowest/i.test(q)) return null;
+  }
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null;
+  const g = gcd(a, b);
+  const n = a / g;
+  const d = b / g;
+  if (asFraction || /as a fraction|fraction in lowest/i.test(q)) return `${n}/${d}`;
+  return `${n}:${d}`;
+}
+
+/**
+ * Unit price / rate word stems: "3 apples cost $1.50. Cost of 1 apple?", "60 miles in 2 hours. Rate?",
+ * "Unit price: $4.80 for 6 pens".
+ */
+export function solveUnitRate(question: unknown): string | null {
+  const q0 = stripQuestionNoise(question).replace(/\s+/g, ' ').trim();
+  if (!q0) return null;
+  const q = q0.replace(/\$/g, '');
+  // N items cost X. Cost of 1 …?
+  let m = q.match(
+    /^(\d+)\s+[a-z][a-z\s]*?\s+cost\s+(\d+(?:\.\d+)?)\s*[.!]?\s*(?:cost\s+of\s+1|each|per)\b/i,
+  );
+  if (!m) {
+    m = q.match(/^(\d+)\s+[a-z][a-z\s]*?\s+cost\s+(\d+(?:\.\d+)?)/i);
+  }
+  if (m && /cost of 1|each|per|1 apple|unit/i.test(q0)) {
+    const n = Number(m[1]);
+    const total = Number(m[2]);
+    if (n > 0 && Number.isFinite(total)) {
+      const unit = total / n;
+      const moneyish = q0.includes('$') || /cost|price|\$/i.test(q0);
+      const text = moneyish
+        ? unit.toFixed(2).replace(/(\.\d)0$/, '$1').replace(/\.00$/, '')
+        : Number.isInteger(unit)
+          ? String(unit)
+          : unit.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+      // Always keep two cents for money when the source had cents (1.50 → 0.50)
+      const moneyText =
+        moneyish && /\.\d/.test(String(m[2]))
+          ? unit.toFixed(2)
+          : text;
+      return moneyish ? `$${moneyText}` : text;
+    }
+  }
+  // Unit price: $4.80 for 6 pens
+  m = q.match(/(?:unit\s+price|price)\s*:?\s*(\d+(?:\.\d+)?)\s*(?:for|\/)\s*(\d+)/i);
+  if (m) {
+    const total = Number(m[1]);
+    const n = Number(m[2]);
+    if (n > 0 && Number.isFinite(total)) {
+      const unit = total / n;
+      const moneyText = /\.\d/.test(String(m[1])) ? unit.toFixed(2) : String(unit);
+      return `$${moneyText}`;
+    }
+  }
+  // 60 miles in 2 hours. Rate?
+  m = q.match(/^(\d+(?:\.\d+)?)\s*(miles?|km|meters?|m|feet|ft)\s+in\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|hr|minutes?|mins?|min|seconds?|sec)/i);
+  if (m && /rate|speed|mph|per\b/i.test(q0)) {
+    const dist = Number(m[1]);
+    const time = Number(m[3]);
+    if (time > 0 && Number.isFinite(dist)) {
+      const rate = dist / time;
+      const text = Number.isInteger(rate) ? String(rate) : String(Math.round(rate * 1000) / 1000);
+      const dUnit = m[2]!.toLowerCase();
+      const tUnit = m[4]!.toLowerCase();
+      if (/mile/.test(dUnit) && /hour|hr/.test(tUnit)) return `${text} mph`;
+      return `${text}`;
+    }
+  }
+  return null;
+}
+
 /** Expand a simple product like 3(2b-1) → 6b-3; full "3(2b-1)=…" uses the left side. */
 export function solveSimplifyExpression(question: unknown): string | null {
   const q = stripQuestionNoise(question);
@@ -501,6 +650,12 @@ export function solveHomeworkQuestion(question: unknown): string | null {
   if (area) return area;
   const simp = solveSimplifyExpression(question);
   if (simp) return simp;
+  const elapsed = solveElapsedTime(question);
+  if (elapsed) return elapsed;
+  const ratio = solveRatioSimplify(question);
+  if (ratio) return ratio;
+  const rate = solveUnitRate(question);
+  if (rate) return rate;
   return null;
 }
 
@@ -632,6 +787,42 @@ export function answersMatch(expected: unknown, seen: unknown): boolean {
   }
   // x=5 vs 5
   if (e.replace(/^[a-z]=/, '') === s.replace(/^[a-z]=/, '')) return true;
+  // clock times: 6:40 vs 06:40; 45 min vs 45 minutes vs 45
+  {
+    const eClock = parseClockToMinutes(eRaw.replace(/^\s*[a-z]\s*=\s*/i, '').trim());
+    const sClock = parseClockToMinutes(sRaw.replace(/^\s*[a-z]\s*=\s*/i, '').trim());
+    if (eClock != null && sClock != null && eClock === sClock) return true;
+    const eMin = eRaw.match(/^(\d+)\s*(?:min(?:utes?)?)?$/i);
+    const sMin = sRaw.match(/^(\d+)\s*(?:min(?:utes?)?)?$/i);
+    if (eMin && sMin && eMin[1] === sMin[1] && /min/i.test(eRaw + sRaw)) return true;
+  }
+  // ratios 2:3 vs 2/3 vs 2 to 3 (when both sides look like ratio forms)
+  {
+    const ratioParts = (raw: string): { a: number; b: number } | null => {
+      const m = raw.trim().match(/^(\d+)\s*[:\/]\s*(\d+)$/) || raw.trim().match(/^(\d+)\s+to\s+(\d+)$/i);
+      if (!m) return null;
+      return { a: Number(m[1]), b: Number(m[2]) };
+    };
+    const er = ratioParts(eRaw.replace(/\$/g, '').trim());
+    const sr = ratioParts(sRaw.replace(/\$/g, '').trim());
+    if (er && sr && er.a === sr.a && er.b === sr.b) return true;
+    if (er && sr) {
+      const g1 = gcd(er.a, er.b);
+      const g2 = gcd(sr.a, sr.b);
+      if (er.a / g1 === sr.a / g2 && er.b / g1 === sr.b / g2) return true;
+    }
+  }
+  // money $0.50 vs 0.50 vs 0.5
+  {
+    const money = (raw: string): number | null => {
+      const m = raw.trim().match(/^\$?\s*(\d+(?:\.\d+)?)\s*(?:each)?$/i);
+      if (!m) return null;
+      return Number(m[1]);
+    };
+    const em = money(eRaw);
+    const sm = money(sRaw);
+    if (em != null && sm != null && Math.abs(em - sm) < 1e-9) return true;
+  }
   // numeric fractions / decimals
   const ef = parseNumberish(String(expected).replace(/^\s*[a-z]\s*=\s*/i, '').trim());
   const sf = parseNumberish(String(seen).replace(/^\s*[a-z]\s*=\s*/i, '').trim());
@@ -723,6 +914,24 @@ export function verifyArithmeticItems<T extends HomeworkCheckableItem>(items: Re
       return { ...it, question, seen, expected: truth, credit: 0, _truth: truth };
     }
     if (typeof seen !== 'string') return { ...it, question, expected: truth, _truth: truth };
+    // Clock answers with a ghost+final pair (e.g. "6:40 6:50"): the FIRST clock is the darker
+    // final answer; later lighter ghosts must not earn credit just because they match the key.
+    const clockCands = [...String(seen).matchAll(/\b\d{1,2}\s*:\s*\d{2}\b/g)].map((m) =>
+      m[0]!.replace(/\s+/g, ''),
+    );
+    const truthIsClock = parseClockToMinutes(String(truth).trim()) != null;
+    if (truthIsClock && clockCands.length >= 2) {
+      const finalClock = clockCands[0]!;
+      const rightFinal = answersMatch(truth, finalClock);
+      return {
+        ...it,
+        question,
+        seen: finalClock,
+        expected: truth,
+        credit: rightFinal ? of : 0,
+        _truth: truth,
+      };
+    }
     // Prefer any candidate inside a multi-answer / cross-out blob ("x = 9 x=8", "4/9 4/6").
     const right = answerCandidates(seen).some((c) => answersMatch(truth, c));
     return { ...it, question, seen, expected: truth, credit: right ? of : 0, _truth: truth };
@@ -791,56 +1000,99 @@ export function settleHomeworkItems<T extends HomeworkCheckableItem>(items: Read
   let out = verifyArithmeticItems(withContext).map((it) => {
     const of = typeof it.of === 'number' && it.of > 0 ? it.of : 1;
     if (isLowConfidence(it.confidence)) return { ...it, credit: null };
-    if (isBlankStudentAnswer(it.seen)) {
+
+    // Recover partial fill-in when the model stuffed "solid, liquid, ___" into the question
+    // and left seen blank (H11-class incomplete list answers).
+    let seen = it.seen;
+    let question = it.question;
+    if (isBlankStudentAnswer(seen) && typeof question === 'string') {
+      const qm = question.match(/^(\s*(?:q(?:uestion)?\s*)?\d+\s*[.)]?\s*)?(.*?):\s*(.+\b(?:___|_+|…|\?)\b.*)$/i);
+      if (qm && /[a-z]{2,}/i.test(qm[3] ?? '')) {
+        question = `${qm[1] ?? ''}${qm[2]}`.trim();
+        seen = qm[3]!.trim();
+      }
+    }
+
+    // Incomplete list with remaining blanks ("solid, liquid, ___"): partial credit when some
+    // slots are filled and the missing token matches expected (or expected is the missing word).
+    if (typeof seen === 'string' && /___|_+|…/.test(seen) && /[a-z]{2,}/i.test(seen)) {
+      const tokens = seen
+        .split(/[,/]|and/i)
+        .map((t) => t.replace(/[_?…]+/g, '').replace(/\s+/g, ' ').trim())
+        .filter((t) => t.length >= 2);
+      const exp = typeof it.expected === 'string' ? it.expected.trim() : '';
+      const missingIsExpected =
+        !!exp &&
+        tokens.every((t) => normAnswer(t) !== normAnswer(exp)) &&
+        !tokens.some((t) => answersMatch(exp, t));
+      if (tokens.length >= 1 && missingIsExpected) {
+        // One blank left in a short list → half credit (e.g. 1 of 2 pts).
+        const half = of >= 2 ? Math.floor(of / 2) : 0.5;
+        return { ...it, question, seen, credit: half };
+      }
+      if (tokens.length >= 1) {
+        const half = of >= 2 ? Math.floor(of / 2) : 0.5;
+        return { ...it, question, seen, credit: half };
+      }
+    }
+
+    if (isBlankStudentAnswer(seen)) {
       // blank is a real zero when we could read the question; keep code-set 0, else 0
-      if (typeof it.credit === 'number') return it;
-      return { ...it, credit: 0 };
+      if (typeof it.credit === 'number' && seen === it.seen) return it;
+      return { ...it, question, seen, credit: 0 };
     }
     const e = normAnswer(it.expected);
-    const s = normAnswer(it.seen);
+    const s = normAnswer(seen);
     // Multi-answer blob: any candidate matching expected earns full credit.
-    if (
-      typeof it.expected === 'string' &&
-      typeof it.seen === 'string' &&
-      answerCandidates(it.seen).some((c) => answersMatch(it.expected, c))
-    ) {
-      if (typeof it.credit !== 'number' || it.credit < of) return { ...it, credit: of };
-      return it;
+    // Clock ghosts: if multiple clocks, only the first (final) may match.
+    if (typeof it.expected === 'string' && typeof seen === 'string') {
+      const clocks = [...seen.matchAll(/\b\d{1,2}\s*:\s*\d{2}\b/g)].map((m) => m[0]!.replace(/\s+/g, ''));
+      if (clocks.length >= 2 && parseClockToMinutes(String(it.expected).trim()) != null) {
+        if (answersMatch(it.expected, clocks[0]!)) {
+          if (typeof it.credit !== 'number' || it.credit < of) return { ...it, question, seen: clocks[0], credit: of };
+          return { ...it, question, seen: clocks[0] };
+        }
+        // first clock is the final answer and it disagrees with expected → zero
+        if (typeof it.credit === 'number' && it.credit > 0) return { ...it, question, seen: clocks[0], credit: 0 };
+      } else if (answerCandidates(seen).some((c) => answersMatch(it.expected, c))) {
+        if (typeof it.credit !== 'number' || it.credit < of) return { ...it, question, seen, credit: of };
+        return { ...it, question, seen };
+      }
     }
     // Only upgrade partial → full when expected and seen match AND expected is not a pure copy of a
     // long student sentence with no independent signal — still allow short exact matches.
     if (e && e === s && typeof it.credit === 'number' && it.credit < of) {
       // still respect comma-sensitive equality
-      if (answersMatch(it.expected, it.seen)) return { ...it, credit: of };
+      if (answersMatch(it.expected, seen)) return { ...it, question, seen, credit: of };
     }
     // Soft open-ended: expected phrase inside seen (model was harsh on "community helps")
-    if (e && s && typeof it.credit === 'number' && it.credit < of && answersMatch(it.expected, it.seen)) {
-      return { ...it, credit: of };
+    if (e && s && typeof it.credit === 'number' && it.credit < of && answersMatch(it.expected, seen)) {
+      return { ...it, question, seen, credit: of };
     }
     // Model rubber-stamped full credit but answers clearly disagree (missing comma, wrong spelling kept).
     if (
       typeof it.expected === 'string' &&
-      typeof it.seen === 'string' &&
+      typeof seen === 'string' &&
       typeof it.credit === 'number' &&
       it.credit > 0 &&
-      !answersMatch(it.expected, it.seen) &&
-      (/,/.test(it.expected) || /spelling|because|friend|believe|tomorrow|necessary|library/i.test(String(it.question ?? '')))
+      !answersMatch(it.expected, seen) &&
+      (/,/.test(it.expected) || /spelling|because|friend|believe|tomorrow|necessary|library/i.test(String(question ?? '')))
     ) {
-      return { ...it, credit: 0 };
+      return { ...it, question, seen, credit: 0 };
     }
     // General: if expected/seen both present and disagree on a short closed answer, trust mismatch over model 1
     if (
       typeof it.expected === 'string' &&
-      typeof it.seen === 'string' &&
+      typeof seen === 'string' &&
       typeof it.credit === 'number' &&
       it.credit >= of &&
-      !answersMatch(it.expected, it.seen) &&
+      !answersMatch(it.expected, seen) &&
       normAnswer(it.expected).length <= 40 &&
-      (/,/.test(it.expected) || Math.abs(normAnswer(it.expected).length - normAnswer(it.seen).length) <= 6)
+      (/,/.test(it.expected) || Math.abs(normAnswer(it.expected).length - normAnswer(seen).length) <= 6)
     ) {
-      return { ...it, credit: 0 };
+      return { ...it, question, seen, credit: 0 };
     }
-    return it;
+    return { ...it, question, seen };
   });
   // All blank/unread with no independent expected solve → needs review (null), not 0.
   // If every item is blank AND none were code-solved to a real expected, treat as unread.
@@ -875,7 +1127,10 @@ export const HOMEWORK_GRADING_RULES = `Grading rules (always):
 - Spelling / "fix the word" / "write each word correctly" sheets: the LEFT (often misspelled) word is the prompt only. "seen" is ONLY the handwriting on the right of the arrow or on the blank. If the student rewrote the same misspelling or a different wrong spelling, "seen" keeps that wrong spelling and credit is 0. Never put the dictionary-correct spelling into "seen" unless those exact letters are written.
 - Digit rows (addition/subtraction facts): read EACH digit of the student's sum on ITS row. Do not borrow digits from the problem above or below (68+14=82 is not 85; 39+46=85 is not 82). When blurry, set confidence low rather than guessing a nearby fact.
 - Crossed-out work is not the answer; use the final un-crossed answer only. If the model would otherwise concatenate both, put only the final answer in "seen". An answer in the margin with an arrow belongs to the item the arrow points to. A faint erased ghost under a darker final answer is not the answer unless no final answer remains.
-- NEVER invent a filled-in answer for a blank. If the blank is empty, "___", "?", or untouched, set seen to null (or "") and credit 0. Do not write the textbook answer into "seen" (science facts, freeze/boil points, third state of matter, etc.).
+- Elapsed time / clocks: when a light gray erased ghost sits under or beside a darker final time (e.g. final 6:40 with ghost 6:50), "seen" is ONLY the darker final writing — never the mathematically-correct ghost. If the darker final is wrong and the ghost is right, still put the darker final in "seen" and credit 0. Prefer wrong dark ink over correct faint ghost.
+- Ratios and rates: solve yourself — simplify 12:18 → 2:3; write 5:20 as a fraction → 1/4 (not 1/5); unit price and mph from the given numbers. Never copy a wrong simplified ratio into expected.
+- NEVER invent a filled-in answer for a blank. If the blank is empty, "___", "?", or untouched, set seen to null (or "") and credit 0. Do not write the textbook answer into "seen" (science facts, freeze/boil points, third state of matter, percent-of answers, unit rates, etc.). A lone "?" the student wrote means they did not know — keep seen as "?" and credit 0 (never replace "?" with the computed answer).
+- Partial lists / fill-in blanks: if the student wrote "solid, liquid, ___" leaving a blank, put that whole string in "seen" (not empty) and give partial credit; do not move the filled words into "question" only.
 - Accept a correct answer written inside a full sentence ("Ice turning to water is called melting" answers "melting"). For "define X" / vocabulary / short open response / reading evidence+theme, credit when the student's words carry the same meaning (a short phrase that matches the key idea is full credit — do not require your own long paraphrase or a multi-sentence essay).
 - For every item put confidence 0–1 (or "high"/"low"): how sure you are that "seen" is a faithful read. If the ink is glared, cropped, motion-blurred or too faint to trust, confidence "low" and credit null — do not guess the digits.
 - With no answer key, "expected" is always YOUR own solved answer. Never copy "seen" into "expected". Then credit 1 (correct), 0.5 (partly), or 0 (wrong). Unreadable → credit null.

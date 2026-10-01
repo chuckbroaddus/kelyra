@@ -1,0 +1,66 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Student shows basic understanding but has multiple errors in solving equations.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "x + 5 = 12",
+          "expected": "x = 7",
+          "seen": "x = 7",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "2x = 18",
+          "expected": "x = 9",
+          "seen": "x = 9 x ≠ 8",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "x/3 = 4",
+          "expected": "x = 12",
+          "seen": "x = 12",
+          "credit": 3,
+          "of": 3,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.004,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
