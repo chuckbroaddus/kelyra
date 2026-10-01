@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-10-01T11:16:12.434Z",
+  "cases": [
+    {
+      "id": "V01",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "V02",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "V03",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V04",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V05",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V06",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V07",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V08",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "V09",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "V10",
+      "kind": "vehicle_photo",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "T01",
+      "kind": "hang_tag",
+      "photo": true,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "T02",
+      "kind": "hang_tag",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "T03",
+      "kind": "hang_tag",
+      "photo": false,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "F01",
+      "kind": "check_in_sheet",
+      "photo": false,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "F02",
+      "kind": "authorized_pickup",
+      "photo": true,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "F03",
+      "kind": "check_in_sheet",
+      "photo": true,
+      "negative": false,
+      "hard": true
+    },
+    {
+      "id": "F04",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "photo": true,
+      "negative": true,
+      "hard": false
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "photo": false,
+      "negative": true,
+      "hard": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "photo": true,
+      "negative": true,
+      "hard": false
+    }
+  ]
+}

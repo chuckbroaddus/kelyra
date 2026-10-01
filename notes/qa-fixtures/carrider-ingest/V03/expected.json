@@ -1,0 +1,16 @@
+{
+  "source_id": "V03",
+  "document_kind": "vehicle_photo",
+  "plate": "NGT5520",
+  "plateFront": null,
+  "plateBack": "NGT5520",
+  "make": "Ford",
+  "model": "F-150",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.7,
+  "reject_reason": null
+}

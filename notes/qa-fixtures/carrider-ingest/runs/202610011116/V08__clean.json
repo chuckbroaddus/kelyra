@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "FRN1001",
+    "plateFront": "FRN1001",
+    "plateBack": "BCK2002",
+    "make": "Kia",
+    "model": "Sorento",
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 1
+  }
+}

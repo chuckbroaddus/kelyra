@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "BL0OM42",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Hyundai",
+    "model": "Tucson",
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 0
+  }
+}

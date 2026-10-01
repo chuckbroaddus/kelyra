@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "ANG3140",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Nissan",
+    "model": "Rogue",
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 0.9
+  }
+}

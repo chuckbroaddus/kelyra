@@ -1,0 +1,11 @@
+{
+  "negative": true,
+  "photo": true,
+  "kind": "negative",
+  "hard": false,
+  "fields": [
+    "document_kind",
+    "plate",
+    "unreadable"
+  ]
+}

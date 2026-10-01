@@ -1,0 +1,16 @@
+{
+  "source_id": "V06",
+  "document_kind": "vehicle_photo",
+  "plate": "TMP9944",
+  "plateFront": null,
+  "plateBack": "TMP9944",
+  "make": "Chevrolet",
+  "model": "Malibu",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.8,
+  "reject_reason": null
+}

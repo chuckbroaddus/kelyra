@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "TMP9944",
+    "plateFront": null,
+    "plateBack": "TMP9944",
+    "make": "Chevrolet",
+    "model": "Malibu",
+    "side": "back",
+    "unreadable": false,
+    "confidence": 0.9
+  }
+}

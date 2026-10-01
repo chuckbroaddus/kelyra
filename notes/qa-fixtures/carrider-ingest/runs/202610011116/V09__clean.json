@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "SHD6677",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Mazda",
+    "model": "CX-5",
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 0.8
+  }
+}

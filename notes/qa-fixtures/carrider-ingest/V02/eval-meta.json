@@ -1,0 +1,13 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": false,
+  "fields": [
+    "plate",
+    "plateFront",
+    "make",
+    "model",
+    "side"
+  ]
+}

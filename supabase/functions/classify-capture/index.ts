@@ -25,7 +25,7 @@ function intentFromTeacherNote(teacherNote: string): CaptureIntent | null {
   if (/\b(answer\s*keys?|answer\s*sheet|key\s*for\s*(this\s+)?(quiz|test|homework|assignment)|keyed\s+assignment)\b/i.test(teacherNote)) {
     return 'answer_key';
   }
-  if (/\b(license\s*plates?|number\s*plates?|car\s*plates?|vehicle|make\s*(and|&)\s*model|front\s*(and|&|\/)\s*back\s*plate|rider\s*check[- ]?in)\b/i.test(teacherNote)) {
+  if (/\b(license\s*plates?|number\s*plates?|car\s*plates?|vehicle|make\s*(and|&)\s*model|front\s*(and|&|\/)\s*back\s*plate|rider\s*check[- ]?in|hang\s*tags?|car\s*tags?|authorized\s*pickup)\b/i.test(teacherNote)) {
     return 'vehicle';
   }
   if (/\b(lesson\s*plans?)\b/i.test(teacherNote)) return 'lesson_plan';
@@ -96,7 +96,7 @@ parent_card: parent/guardian contact card, family info form, directory contact r
 student_card: student emergency card, student data/information sheet, health card. studentGuessName = student. fields labels: preferred name|nickname, date of birth|birthday|dob, grade|age|grade or age, phone, email, address, emergency contact|emergency name, emergency phone, allergies, health conditions, notes. Leave fields empty when the cell is blank. Do not invent allergies/DOB/phone. Emergency contact: separate fields "emergency contact" (name only) and "emergency phone". A nickname in quotes or parentheses (Benjamin "Ben" Park) → preferred name field.
 syllabus: class grading policy / category-weight sheet / "how this class grades" (not a student's filled worksheet). Prefer syllabus over homework when the page is policy weights. Assignment rubrics without class weights stay homework or unsure — not syllabus.
 answer_key: teacher answer key / keyed worksheet answers for an assignment (filled or blank key), not a student's graded work to score.
-vehicle: car / license plate photo(s) for Ride check-in — front and/or back plate; may include make/model visible on the vehicle.
+vehicle: car / license plate photo(s), car-rider hang tag, rider check-in sheet, or authorized-pickup form for Ride — front and/or back plate; may include make/model, tag #, rider names.
 lesson_plan: teacher lesson plan document (recognize only; surface may not ship yet).
 lesson_materials: education lesson materials for a class landing (recognize only; surface may not ship yet).
 feed_photo: class/event photograph meant for a feed post (recognize only; do not auto-post).

@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "8KGM204",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Subaru",
+    "model": "Outback",
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 0.8
+  }
+}

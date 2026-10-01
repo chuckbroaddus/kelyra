@@ -1,0 +1,16 @@
+{
+  "source_id": "V01",
+  "document_kind": "vehicle_photo",
+  "plate": "KLY4219",
+  "plateFront": null,
+  "plateBack": "KLY4219",
+  "make": "Honda",
+  "model": "Civic",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.95,
+  "reject_reason": null
+}

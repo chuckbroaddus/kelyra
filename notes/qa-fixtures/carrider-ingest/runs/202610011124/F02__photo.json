@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": "JRD4410",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Honda",
+    "model": "CR-V",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Jordan Lee"
+    ],
+    "authorized_pickups": [
+      "Priya Lee",
+      "Marcus Lee"
+    ],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "KLY4219",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "unreadable": false,
+    "confidence": 0.9
+  }
+}

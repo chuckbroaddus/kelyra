@@ -215,7 +215,7 @@ const INTENT_COPY: Record<CaptureIntent, string> = {
   student_card: 'This will be a student card',
   roster: 'This will be a roster list',
   answer_key: 'This will be an answer key for an assignment',
-  vehicle: 'This will be a Ride vehicle / license plate',
+  vehicle: 'This will be a Ride vehicle / plate / hang tag / rider form',
   lesson_plan: 'This will be a lesson plan (recognized — surface not shipping yet)',
   lesson_materials: 'This will be lesson materials (recognized — surface not shipping yet)',
   feed_photo: 'This will be a feed photo (recognized — no auto-post yet)',
@@ -2321,7 +2321,7 @@ export default function CaptureScreen() {
           {intent === 'vehicle' ? (
             <>
               <Text style={[type.meta, { color: colors.mute }]}>
-                Front and/or back plate plus make and model. Match an existing parent vehicle when the plate matches; otherwise keep the draft for Ride. We will not invent a parent.
+                Front and/or back plate plus make and model. Hang tags and pickup forms also work. Match an existing parent vehicle when the plate matches; otherwise keep the draft for Ride. We will not invent a parent.
               </Text>
               <TextField
                 label="Front plate"

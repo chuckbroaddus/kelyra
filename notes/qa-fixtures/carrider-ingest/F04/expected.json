@@ -1,0 +1,20 @@
+{
+  "source_id": "F04",
+  "document_kind": "authorized_pickup",
+  "plate": null,
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Chris Kim"
+  ],
+  "authorized_pickups": [
+    "Mina Kim"
+  ],
+  "unreadable": true,
+  "confidence": 0.8,
+  "reject_reason": null
+}

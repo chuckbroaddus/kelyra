@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind": "check_in_sheet",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Maya Chen",
+      "Sam Ortiz",
+      "Ava Brooks"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null
+  }
+}
