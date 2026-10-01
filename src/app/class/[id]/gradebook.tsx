@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Heatmap } from '@/components/Heatmap';
 import { GradebookViewTabs } from '@/components/ui/ClassTabs';
@@ -23,6 +25,7 @@ import { studentHead } from '@/constants/table';
 import { chrome, radius, shadows, type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
+import { isNativePhone } from '@/lib/theme/screenOrientation';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { loadClassOverview, type ClassOverview } from '@/lib/classes/overview';
 import {
@@ -159,6 +162,15 @@ export default function GradebookScreen() {
   const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const heatmap = paneRaw === 'heatmap';
   const conduct = paneRaw === 'conduct';
+  // Phone turned sideways on the Gradebook view: full screen, period row + table only.
+  const win = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const landscapeFull = !heatmap && !conduct && isNativePhone(win.width, win.height) && win.width > win.height;
+  const { setImmersive } = useChrome();
+  useEffect(() => {
+    setImmersive(landscapeFull);
+    return () => setImmersive(false);
+  }, [landscapeFull, setImmersive]);
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
   const colWidth = studentHead.colWidth;
   const assignments = useMemo(
@@ -339,7 +351,7 @@ export default function GradebookScreen() {
     ) : null;
   const periodLabel = periodFilterLabel(termFilter, calendar);
 
-  const collapsing = (
+  const collapsing = landscapeFull ? null : (
     <>
       {id ? (
         <View style={styles.chipShelf}>
@@ -367,7 +379,14 @@ export default function GradebookScreen() {
 
   return (
     <View style={styles.shell}>
-    <Screen maxWidth={1100} scroll={false} pageChromeHosted collapse={collapsing}>
+    {landscapeFull ? <StatusBar hidden /> : null}
+    <Screen
+      maxWidth={landscapeFull ? undefined : 1100}
+      scroll={false}
+      pageChromeHosted
+      collapse={collapsing}
+    >
+      {landscapeFull ? <View style={{ height: Math.max(insets.top, 6), paddingLeft: insets.left }} /> : null}
       {termTabs}
       {conduct && book && book.students.length > 0 ? (
         termFilter === 'all' ? (
@@ -636,7 +655,7 @@ export default function GradebookScreen() {
         />
       ) : null}
     </Screen>
-    {exportBar}
+    {landscapeFull ? null : exportBar}
     </View>
   );
 }

@@ -19,7 +19,7 @@ export function ContextMenuRow() {
   const height = landscape ? chrome.contextHeightLandscape : chrome.contextHeight;
 
   // contextReserve gates Screen pad only — row may be in-flow under web tray (reserve 0).
-  if (chromeState.role === 'none') return null;
+  if (chromeState.role === 'none' || chromeState.immersive) return null;
 
   const chips = chipsFor({
     pathname,
