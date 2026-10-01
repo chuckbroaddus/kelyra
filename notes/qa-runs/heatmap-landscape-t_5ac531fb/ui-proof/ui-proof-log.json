@@ -1,0 +1,15 @@
+{
+  "task": "t_5ac531fb",
+  "verdict": "PASS_STRUCTURAL",
+  "notes": [
+    "Portrait 375: view tabs + legend + avatar heads (96px).",
+    "Landscape 812x375: immersive chrome collapsed; names-only 36px head; no legend.",
+    "Live device dogfood still owned by CoS/Chuck; structural chrome proof only."
+  ],
+  "files": [
+    "notes/qa-runs/heatmap-landscape-t_5ac531fb/ui-proof/heatmap-portrait-375.png",
+    "notes/qa-runs/heatmap-landscape-t_5ac531fb/ui-proof/heatmap-landscape-812x375.png",
+    "notes/qa-runs/heatmap-landscape-t_5ac531fb/ui-proof/frames/01-portrait-full-chrome.png",
+    "notes/qa-runs/heatmap-landscape-t_5ac531fb/ui-proof/frames/02-landscape-collapsed.png"
+  ]
+}

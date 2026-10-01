@@ -22,19 +22,21 @@ type Props = {
 export function Heatmap({ classId, skills, students, marks, leading, trailing }: Props) {
   const { colors } = useTheme();
   const layout = useLayout();
-  const frozen = layout.breakpoint === 'tablet' ? 168 : layout.breakpoint === 'phone-landscape' ? 148 : 132;
-  const headMetrics = studentHeadFor(layout.breakpoint);
+  const head = studentHeadFor(layout.breakpoint);
   const compactHead = studentHeadCompact(layout.breakpoint);
-  const size = headMetrics.colWidth;
+  const frozen = layout.breakpoint === 'tablet' ? 168 : layout.breakpoint === 'phone-landscape' ? 148 : 132;
+  const size = head.colWidth;
   const rowHeight = layout.breakpoint === 'phone-portrait' ? 44 : 48;
-  const headHeight = headMetrics.height;
-  const legend = (
-    <View style={styles.legend}>
-      <LegendSwatch fill={colors.brandSoft} stroke={colors.brand} label="Focus" />
-      <LegendSwatch fill={colors.goodSoft} stroke={colors.good} label="Approved gap" />
-      <LegendSwatch fill={colors.wash} stroke={colors.line} label="None" />
-    </View>
-  );
+  const headHeight = head.height;
+  // Landscape already collapses chrome; drop the legend strip so only the grid remains.
+  const legend =
+    compactHead ? null : (
+      <View style={styles.legend}>
+        <LegendSwatch fill={colors.brandSoft} stroke={colors.brand} label="Focus" />
+        <LegendSwatch fill={colors.goodSoft} stroke={colors.good} label="Approved gap" />
+        <LegendSwatch fill={colors.wash} stroke={colors.line} label="None" />
+      </View>
+    );
 
   return (
     <View style={styles.wrap}>
