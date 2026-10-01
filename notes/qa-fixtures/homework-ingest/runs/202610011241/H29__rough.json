@@ -1,0 +1,69 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "riley brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "time subtraction",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 50,
+      "teacherNote": "Needs review on subtracting time across hours.",
+      "studentName": "Riley",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "2:45",
+          "seen": "2:45",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "9:50",
+          "seen": "9:50",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "12:10",
+          "seen": "12:10",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "6:40",
+          "seen": "6:40",
+          "credit": 0,
+          "of": 1,
+          "gap": "time subtraction"
+        }
+      ],
+      "costUsd": 0.0015,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

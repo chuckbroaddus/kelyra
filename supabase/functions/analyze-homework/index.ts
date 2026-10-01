@@ -9,15 +9,21 @@ import {
   mergePreservedPageAssetIds,
   pageAssetIdsFromDraft,
 } from '../_shared/homeworkPages.ts';
+import {
+  HOMEWORK_GRADING_RULES,
+  percentFromItemCredits,
+  settleHomeworkItems,
+} from '../_shared/homeworkGrading.ts';
 
 const prompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
+{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1}]}
 Rules:
 - 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
-- draftScore MUST be a percentage 0-100 when you can fairly estimate (not raw item counts). Otherwise null.
-- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
-- Do not invent a student name or extra biography.`;
+- items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
+- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
+- Do not invent a student name or extra biography.
+${HOMEWORK_GRADING_RULES}`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -190,10 +196,26 @@ async function draftFromPhotos(
         .filter((gap) => gap.label)
         .slice(0, 3)
     : [];
+  // Settle items in code: arithmetic re-checked, exact matches get full credit, all-unread → null score.
+  const items = settleHomeworkItems(
+    (Array.isArray(parsed.items) ? parsed.items : [])
+      .map((row) => {
+        const r = row as { credit?: unknown; of?: unknown; question?: unknown; expected?: unknown; seen?: unknown };
+        return {
+          question: typeof r?.question === 'string' ? r.question : null,
+          expected: typeof r?.expected === 'string' ? r.expected : null,
+          seen: typeof r?.seen === 'string' ? r.seen : null,
+          credit: typeof r?.credit === 'number' && Number.isFinite(r.credit) ? r.credit : null,
+          of: typeof r?.of === 'number' && r.of > 0 ? r.of : 1,
+        };
+      })
+      .slice(0, 40),
+  );
+  const modelScore = typeof parsed.draftScore === 'number' ? parsed.draftScore : null;
   return {
     gaps,
-    draftScore:
-      typeof parsed.draftScore === 'number' ? parsed.draftScore : null,
+    // Always derive from item credits when items exist; null when none are gradable (no rubber-stamp 100).
+    draftScore: items.length ? percentFromItemCredits(items) : modelScore,
     teacherNote:
       typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
     costUsd: typeof payload.__kelyraUsd === 'number' ? payload.__kelyraUsd : null,

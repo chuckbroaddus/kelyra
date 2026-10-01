@@ -54,6 +54,13 @@ import {
   mergePreservedPageAssetIds,
   pageAssetIdsFromDraft,
 } from '../supabase/functions/_shared/homeworkPages.ts';
+import {
+  cleanHomeworkNameList,
+  cleanHomeworkStudentName,
+  HOMEWORK_GRADING_RULES,
+  percentFromItemCredits,
+  settleHomeworkItems,
+} from '../supabase/functions/_shared/homeworkGrading.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -70,12 +77,13 @@ const tokenUrl = 'https://auth.x.ai/oauth2/token';
 
 const homeworkPrompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
+{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1}]}
 Rules:
 - 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
-- draftScore MUST be a percentage 0-100 when you can fairly estimate (not raw item counts). Otherwise null.
-- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
-- Do not invent a student name or extra biography.`;
+- items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
+- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
+- Do not invent a student name or extra biography.
+${HOMEWORK_GRADING_RULES}`;
 
 function practicePrompt(skillLabel) {
   return `You write short paper practice items for one K-12 skill: ${skillLabel}.
@@ -1131,15 +1139,16 @@ async function rosterKeyterms(supabase, classId) {
 
 const evaluatePrompt = `You are helping a K-12 teacher review one student's work.
 The images are pages of one assignment, in order. Look at all pages together. Return JSON only, no markdown:
-{"studentName":null,"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"maxScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"expected":"answer","seen":"what they wrote","credit":1,"of":1,"gap":null}]}
+{"studentName":null,"students":[],"multiStudent":false,"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"maxScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"correct answer (from key, or solved by you)","seen":"what the student wrote","credit":1,"of":1,"gap":null}]}
 Rules:
-- studentName is required whenever a name is visible. Look at the top of the page first (header, Name:, printed label, handwriting). Copy the name as written. Do not invent a name. Prefer a roster spelling if it clearly matches. If the Name line is blank, studentName must be null.
+- studentName is required whenever a name is visible. Look at the top of the page first (header, Name:, printed label, handwriting). Copy the name as written. Do not invent a name. Prefer a roster spelling if it clearly matches. If the Name line is blank, erased, cropped, or unreadable, studentName must be null (and keep grading).
 - 1 to 3 gaps for the whole assignment ONLY when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". If work looks complete and correct, gaps may be [].
 - If an answer key is provided, score ONLY against that key. draftScore is points earned, maxScore is points possible. Do not invent items. If a blank cannot be read, credit=null and do not fail it.
-- If no key is provided, draftScore MUST be a percentage 0-100 (not raw item counts, not points out of N). Estimate fairness from visible answers. maxScore null.
-- items is required when a key is provided. expected is the key answer. seen is what is on the page. gap is a short skill or null.
-- If the images are blank, unreadable, a syllabus/grading-policy sheet, a teacher ANSWER KEY (no student name / "teacher use only"), a ceiling/wall, or otherwise not one student's completed work, return {"studentName":null,"gaps":[],"draftScore":null,"maxScore":null,"teacherNote":null,"items":[]}
-- Do not invent extra biography. Never invent a student name that is not on the page.`;
+- If no key is provided, draftScore is a percentage 0-100 recomputed from your item credits. maxScore null.
+- items is ALWAYS required for student work (one row per visible question). With a key, expected is the key answer; without a key, expected is the answer YOU worked out. seen is what the student wrote. gap is a short skill or null.
+- Reject ONLY when the images are blank, a syllabus/grading-policy sheet, a teacher answer key (answers printed/filled with "ANSWER KEY" / "teacher use only" and no student work), a ceiling/wall, or otherwise not student work. Then return {"studentName":null,"students":[],"multiStudent":false,"gaps":[],"draftScore":null,"maxScore":null,"teacherNote":null,"items":[]}. A student page with no name is NOT a reject.
+- Do not invent extra biography. Never invent a student name that is not on the page.
+${HOMEWORK_GRADING_RULES}`;
 
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
@@ -1159,10 +1168,11 @@ Rules:
 - roster: a printed class list or seating chart of many names.
 - unsure ONLY if the image is black, blur, ceiling, or truly not a school paper or person (e.g. an empty desk with no paper).
 - Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework (unless it is clearly a syllabus / answer key / vehicle / hold intent).
-- For homework, always try to read the student name at the top of the page into studentGuessName (as written). Never invent a student.
+- For homework, always try to read the student name at the top of the page into studentGuessName (as written). Never invent a student. If the name is blank, erased, cropped or unreadable, studentGuessName is null — never placeholder text like "Name:", "[redacted]", "First Last", "unknown".
+- For homework with more than one student's paper or name in frame, put every readable student name in names[] (front/primary paper first); studentGuessName is the primary.
 - gaps: 0-3 short skill labels for homework only; else [].
 - fields: real extracted pairs only — never placeholder label "field" or value "value".
-- names: roster or multi-card names only, 0-40.
+- names: roster or multi-card names, 0-40 — AND for homework, every student name when two or more students' papers/names are in frame ("Left desk: … Right desk: …", two Name: lines, a second sheet underneath with its name showing). One student → names [].
 - confidence: 0.6+ when you pick homework/syllabus/roster/portrait/answer_key/vehicle/parent_card/student_card.
 - Do not approve, file, or create a student.
 - If the teacher note clearly names an intent (syllabus, answer key, license plate / vehicle, lesson plan, lesson materials, feed photo, parent card, student card), that intent MUST win even when the photo is ambiguous.`;
@@ -1233,8 +1243,7 @@ async function classifyCapture(body) {
       .map((row) => (typeof row === 'object' && row ? String(row.id ?? '') : ''))
       .filter(Boolean),
   );
-  const guessName =
-    typeof parsed.studentGuessName === 'string' ? parsed.studentGuessName.replace(/\s+/g, ' ').trim() : '';
+  const guessName = cleanHomeworkStudentName(parsed.studentGuessName) ?? '';
   const guessIdRaw = typeof parsed.studentGuessId === 'string' ? parsed.studentGuessId : null;
   const studentGuessId = guessIdRaw && rosterIds.has(guessIdRaw) ? guessIdRaw : null;
   return {
@@ -1272,7 +1281,7 @@ async function classifyCapture(body) {
     names: Array.isArray(parsed.names)
       ? parsed.names
           .map((row) => ({
-            name: String(row?.name ?? '').replace(/\s+/g, ' ').trim(),
+            name: cleanHomeworkStudentName(String(row?.name ?? '')) ?? '',
             confidence: typeof row?.confidence === 'number' ? row.confidence : 0,
           }))
           .filter((row) => row.name)
@@ -1531,28 +1540,28 @@ async function evaluateHomework(body) {
   ], {}, { pass, functionName: 'evaluate-homework' });
   const parsed = extractJson(outputText(payload));
   const draft = parseHomeworkDraft(parsed);
-  const studentName =
-    typeof parsed.studentName === 'string' ? parsed.studentName.replace(/\s+/g, ' ').trim() : '';
-  const items = parseScoredItems(parsed.items, keyItems);
-  // No teacher key: if the model returned per-item credit, convert to 0–100 percent.
+  // Placeholder names ("Name:", "[redacted]", "First Last") → null; two-student frames keep every name.
+  const studentName = cleanHomeworkStudentName(parsed.studentName);
+  const students = cleanHomeworkNameList([studentName, ...(Array.isArray(parsed.students) ? parsed.students : [])]);
+  const multiStudent = parsed.multiStudent === true || students.length > 1;
+  let items = parseScoredItems(parsed.items, keyItems);
   let draftScore = draft.draftScore;
   let outMaxScore =
     typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(bodyMaxScore) ? bodyMaxScore : null;
+  // No teacher key: the score is ALWAYS the item credits (never the model's free-floating number).
+  // Items present but none gradable → null (no rubber-stamped 100). Keyed scoring stays in keygrade.
   if (!keyItems.length && items.length) {
-    const of = items.reduce((s, it) => s + (typeof it.of === 'number' && it.of > 0 ? it.of : 1), 0);
-    const cr = items.reduce(
-      (s, it) => s + (typeof it.credit === 'number' && Number.isFinite(it.credit) ? it.credit : 0),
-      0,
-    );
-    if (of > 0 && (draftScore == null || draftScore <= of + 0.01)) {
-      draftScore = Math.round((cr / of) * 100);
-      outMaxScore = 100;
-    }
+    // Settle items in code: arithmetic re-checked, exact matches full credit, all-unread → null score.
+    items = settleHomeworkItems(items);
+    draftScore = percentFromItemCredits(items);
+    outMaxScore = draftScore == null ? null : 100;
   }
   return {
     ...draft,
     draftScore,
-    studentName: studentName || null,
+    studentName,
+    students,
+    multiStudent,
     maxScore: outMaxScore,
     items,
     costUsd: payload.__kelyraUsd ?? null,
@@ -1591,6 +1600,7 @@ function parseScoredItems(raw, keyItems) {
   return rows
     .map((row, index) => ({
       n: Number(row?.n ?? index + 1),
+      question: typeof row?.question === 'string' ? row.question : null,
       expected: row?.expected != null ? String(row.expected) : null,
       seen: row?.seen != null ? String(row.seen) : null,
       credit: typeof row?.credit === 'number' ? row.credit : null,
@@ -1649,8 +1659,13 @@ async function draftFromPhotos(imageUrls, pass = 'cheap', supabase = null, captu
     {},
     { pass, supabase, functionName: 'analyze-homework', captureId },
   );
+  const parsedDraft = extractJson(outputText(payload));
+  const base = parseHomeworkDraft(parsedDraft);
+  const items = settleHomeworkItems(parseScoredItems(parsedDraft.items, []));
   return {
-    ...parseHomeworkDraft(extractJson(outputText(payload))),
+    ...base,
+    // Score from item credits whenever items exist (mirrors Edge analyze-homework).
+    draftScore: items.length ? percentFromItemCredits(items) : base.draftScore,
     costUsd: payload.__kelyraUsd ?? null,
     model: payload.__kelyraModel ?? null,
     pass,

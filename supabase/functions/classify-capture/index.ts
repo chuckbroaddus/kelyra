@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { firstNameOnly, imageDetailFor } from '../_shared/aiPolicy.ts';
+import { cleanHomeworkStudentName } from '../_shared/homeworkGrading.ts';
 
 const ALLOWED = [
   'homework',
@@ -100,7 +101,7 @@ vehicle: car / license plate photo(s), car-rider hang tag, rider check-in sheet,
 lesson_plan: teacher lesson plan document (recognize only; surface may not ship yet).
 lesson_materials: education lesson materials for a class landing (recognize only; surface may not ship yet).
 feed_photo: class/event photograph meant for a feed post (recognize only; do not auto-post).
-homework: student worksheets/quizzes/packets — not contact cards. No paper, document, or person in frame (empty desk, floor, wall) → unsure, confidence ≤0.3.
+homework: student worksheets/quizzes/packets — not contact cards. No paper, document, or person in frame (empty desk, floor, wall) → unsure, confidence ≤0.3. A messy, cropped or nameless student page is still homework. studentGuessName is the name as written, or null when the name is blank/erased/cropped/unreadable — never placeholder text ("Name:", "[redacted]", "First Last", "unknown"). If more than one student's paper or name is in frame, put every readable student name in names[] (primary/front paper first).
 fields must be real extracted pairs only. Never return placeholder label "field" or value "value". gaps only for homework skills (0-3); else [].
 ${noteBlock}
 Roster first names only (id + first name). Guess only from this list:
@@ -140,11 +141,19 @@ ${rosterText || '(none)'}`,
       parentGuessName: typeof parsed.parentGuessName === 'string' ? parsed.parentGuessName.replace(/\s+/g, ' ').trim() || null : null,
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
       studentGuessId: typeof parsed.studentGuessId === 'string' ? parsed.studentGuessId : null,
-      studentGuessName: typeof parsed.studentGuessName === 'string' ? parsed.studentGuessName.replace(/\s+/g, ' ').trim() || null : null,
+      studentGuessName: cleanHomeworkStudentName(parsed.studentGuessName),
       draftScore: typeof parsed.draftScore === 'number' ? parsed.draftScore : null,
       gaps: intent === 'homework' ? gaps.slice(0, 3) : [],
       fields,
-      names: Array.isArray(parsed.names) ? parsed.names : [],
+      names: Array.isArray(parsed.names)
+        ? parsed.names
+            .map((row: { name?: unknown; confidence?: unknown }) => ({
+              name: cleanHomeworkStudentName(row?.name) ?? '',
+              confidence: typeof row?.confidence === 'number' ? row.confidence : 0,
+            }))
+            .filter((row: { name: string }) => row.name)
+            .slice(0, 40)
+        : [],
       note: typeof parsed.note === 'string' ? parsed.note : null,
     });
   } catch (err) {

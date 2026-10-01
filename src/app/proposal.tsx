@@ -14,6 +14,7 @@ import { invokeAi } from '@/lib/ai/invoke';
 import { formatUsd } from '@/lib/ai/policy';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { attachCapture, createCapture, saveCaptureEvaluation } from '@/lib/captures/api';
+import { cleanHomeworkStudentName } from '@/lib/captures/homeworkName';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { approveCapture, markNoteOnly } from '@/lib/gaps/api';
 import {
@@ -419,8 +420,8 @@ export default function ProposalScreen() {
         const paperName =
           spokenMatch?.displayName ||
           spoken?.studentName?.trim() ||
-          vision?.studentName?.trim() ||
-          result.studentGuessName?.trim() ||
+          cleanHomeworkStudentName(vision?.studentName) ||
+          cleanHomeworkStudentName(result.studentGuessName) ||
           null;
         const paperGaps = vision?.gaps?.length ? vision.gaps.slice(0, 3) : result.gaps?.slice(0, 3) ?? [];
         const paperScore = vision?.draftScore ?? result.draftScore ?? null;

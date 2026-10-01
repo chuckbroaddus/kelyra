@@ -6,6 +6,7 @@
  * Speech-to-text stays on xAI (transcribe/); do not route STT here.
  */
 
+import { HOMEWORK_GRADING_RULES } from './homeworkGrading.ts';
 import {
   DEFAULT_MONTHLY_CAP_USD,
   FLAGSHIP_MODEL,
@@ -37,12 +38,13 @@ export function resolveAiProvider(): AiProvider {
 
 export const homeworkPrompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
+{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1}]}
 Rules:
 - 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
-- draftScore MUST be a percentage 0-100 when you can fairly estimate (not raw item counts). Otherwise null.
-- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
-- Do not invent a student name or extra biography.`;
+- items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
+- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
+- Do not invent a student name or extra biography.
+${HOMEWORK_GRADING_RULES}`;
 
 export function practicePrompt(skillLabel: string): string {
   return `You write short paper practice items for one K-12 skill: ${skillLabel}.

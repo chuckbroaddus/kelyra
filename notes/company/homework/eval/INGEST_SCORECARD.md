@@ -1,9 +1,48 @@
 # Homework ingest scorecard
 
 **Baseline:** `notes/qa-fixtures/homework-ingest/runs/202610011118` (live; raw overall **68.8%** before scorer soft + percent normalize)  
+**Grading fix:** before `runs/202610011241` → after `runs/202610011321` — see next section  
 **Round 2 (rough corpus):** `notes/qa-fixtures/homework-ingest/runs/202610011220` — see next section  
 **Round 1:** `notes/qa-fixtures/homework-ingest/runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
 **Corpus:** 20 cases (H01–H17 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
+
+## Grading fix (`cos/homework-grading-fix`) — before `202610011241` vs after `202610011321`
+
+**Gate:** a homework draft **passes only if |draftScore − GT| ≤ 12** percentage points (`fields[].ok` for `draftScore`, bucket `score_ok`). A null score where GT has one is a fail and counts as a *missing draft*. The old ±25 band (and the points→percent guess) is gone from the gate; it is still printed as `score_loose_25` for comparison only.
+**Setup:** same 37 cases / 49 docs, same images (photo.jpg md5 identical across runs), ai-dev on :8814 from this worktree, `EVAL_HW_PACE_MS=5000`. Before = old prompts + new strict scorer; after = this branch.
+
+| Bucket | n | field acc | student match | **score ±12 (gate)** | hallucinations | missing drafts | 100 when GT <90 |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| clean | 14 | 91.4% → **92.9%** | 100% → 100% | 57% → **64%** | 0 → 0 | 4 → **0** | 2 → 3 |
+| photo_mild | 10 | 90.0% → **92.0%** | 90% → 90% | 60% → **70%** | 0 → 0 | 0 → 0 | 3 → 2 |
+| rough | 14 | 81.4% → **91.4%** | 100% → 100% | 7% → **57%** | 0 → 0 | 3 → **0** | 8 → **4** |
+| handwritten | 11 | 85.5% → **87.3%** | 82% → 82% | 45% → **55%** | 0 → 0 | 0 → 0 | 6 → **3** |
+| handwritten_new | 6 | 86.7% → 86.7% | 100% → 100% | 33% → 33% | 0 → 0 | 0 → 0 | 4 → 3 |
+| negatives | 5 | 100% → 100% | 100% → 100% | 100% → 100% | 0 → 0 | 0 → 0 | 0 → 0 |
+
+Overall field accuracy 89.0% → **92.7%**; homework draftScore ±12 **19/44 → 28/44**; hallucinations 0 → 0; multiStudent detected **0/3 → 2/3** (H09 clean + photo via evaluate `multiStudent`; H23 rough still missed). Single live run each — the model is not deterministic, so ±1–2 docs per bucket is noise.
+
+### What changed
+1. **No name ≠ reject** — evaluate/analyze prompts decouple "no visible name" from the reject rule; grade and return `studentName: null` (H06, H08, H20, H21, H27 now get drafts; missing drafts 7 → 0).
+2. **No key ⇒ model solves each item** — items carry `question` → `expected` (model's own answer) → `seen`; never copy `seen` into `expected`; unreadable item → `credit: null`; nothing gradable → `draftScore: null`, never a default 100. Code safety net in `_shared/homeworkGrading.ts` `settleHomeworkItems`: bare arithmetic (`8 × 7 =`, `2/3 − 1/6`) re-checked exactly; exact `seen == expected` gets full credit; all-empty `seen` ⇒ null score (unread, not a 0).
+3. **Score from items always** — `percentFromItemCredits` (null credits skipped) whenever items exist (ai-dev evaluate no-key path, ai-dev analyze mirror, Edge analyze-homework). Keyed grading (keygrade) unchanged.
+4. **Handwriting is the answer** — prompt: the student's writing, not the printed prompt/misspelled word; copy `seen` letter-for-letter (H28 now reads `beleive`/`freind`, 0 → 50, GT 67); accept answers inside full sentences; definition items credit the meaning.
+5. **Names** — `cleanHomeworkStudentName` drops `Name:`, `[redacted]`, `First Last`, `unknown`, `____`… (Edge classify-capture, ai-dev classify/evaluate, client capture/proposal/evaluate). Two-student frames: evaluate returns `students[]` + `multiStudent`; classify `names[]` allowed for homework; client shows "Another paper is in the photo (…)".
+6. **Scorer** — ±12 is the gate (above).
+
+### Worst remaining (after run)
+| Case | GT | After | Why |
+|---|--:|--:|---|
+| H11 clean (mostly blank) | 40 | 100 | model filled the blanks with its own answers as `seen` (reverse rubber-stamp) |
+| H10 clean (reading response) | 100 | 33 | open-ended answers ("community helps") judged too vague vs model's own long answer |
+| H19 rough (motion blur) | 75 | 25 | blur: Q2/Q3 `seen` misread (`15 cm²`, `16 cm`) |
+| H04 photo | 75 | 25 | printed questions misread (`12 + (−4)`), so model's expected is wrong |
+| H24 / H25 / H34 rough, H30/H14 | 75–83 | 100 | still rubber-stamped where the item is not bare arithmetic (algebra, commas, units) |
+| H23 rough | — | 83 ✓ score | second sheet (Jordan Chen) still not listed in `students` |
+| H33 handwritten | 75 | 50 | crossed-out `4/5 4/6` final answer marked wrong |
+
+### Deploy (not done — no Supabase token on this Mac)
+`supabase functions deploy analyze-homework classify-capture` (both import the new `_shared/homeworkGrading.ts`). `_shared/ai.ts` `homeworkPrompt` changed too but no deployed function calls it. evaluate-homework is ai-dev only (no Edge function).
 
 ## Rough + handwritten corpus — run `202610011220` (2026-10-01 07:20 CT)
 
@@ -43,7 +82,7 @@ multiStudent detected (classify `names` >1): **2/3** (H09 clean+photo yes, **H23
 5. **Second student ignored.** H23 lists one name; H09 clean picked Jamie instead of the left-desk Taylor.
 6. **Placeholder as name.** H20 `"Name: [redacted]"` leaks through as a student guess.
 
-### Suggested fixes (not applied — prompts/functions out of scope for this PR)
+### Suggested fixes (applied in `cos/homework-grading-fix` — see section above)
 
 - evaluate/analyze prompt: decouple "no visible name" from reject; grade the work, return `studentName:null`, keep items/draftScore.
 - When there's no key: ask the model to solve each item itself (`expected` = its own answer, never copied from `seen`), or return `draftScore:null` + `needsKey` rather than 100.
