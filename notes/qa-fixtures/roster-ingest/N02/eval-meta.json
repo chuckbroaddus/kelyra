@@ -1,0 +1,13 @@
+{
+  "id": "N02",
+  "kind": "negative",
+  "photo": false,
+  "handwritten": false,
+  "negative": true,
+  "low_light": false,
+  "multi_page": false,
+  "fields": [
+    "names"
+  ],
+  "srs": []
+}

@@ -1,0 +1,16 @@
+{
+  "id": "R02",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "fields": [
+    "names",
+    "student_id",
+    "grade",
+    "period"
+  ],
+  "srs": []
+}

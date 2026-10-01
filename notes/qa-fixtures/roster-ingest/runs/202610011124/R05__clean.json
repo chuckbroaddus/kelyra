@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Isla Brennan",
+        "student_id": "T-110",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jamal Washington",
+        "student_id": "T-111",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kaira Santos",
+        "student_id": "T-112",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Liam Oskur",
+        "student_id": "T-113",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Mina Cho",
+        "student_id": "T-114",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Nolan Berg",
+        "student_id": "T-115",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Olive Tran",
+        "student_id": "T-116",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Parker Ellis",
+        "student_id": "T-117",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Quinn Adler",
+        "student_id": "T-118",
+        "grade": "10",
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

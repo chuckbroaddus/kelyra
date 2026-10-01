@@ -1,0 +1,75 @@
+{
+  "source_id": "R01",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Ava Brooks",
+      "student_id": "A2401",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Diego Morales",
+      "student_id": "A2402",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Harper Nguyen",
+      "student_id": "A2403",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Jonah Patel",
+      "student_id": "A2404",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Lila Okonkwo",
+      "student_id": "A2405",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Mateo Ruiz",
+      "student_id": "A2406",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Nora Singh",
+      "student_id": "A2407",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Owen Blake",
+      "student_id": "A2408",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {}
+}

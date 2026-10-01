@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Nora Ortiz",
+        "confident": true
+      },
+      {
+        "name": "Oscar Prior",
+        "confident": true
+      },
+      {
+        "name": "Pia Quill",
+        "confident": true
+      },
+      {
+        "name": "Rafael Soto",
+        "confident": true
+      },
+      {
+        "name": "Sasha Tran",
+        "confident": true
+      },
+      {
+        "name": "Talia Upton",
+        "confident": true
+      },
+      {
+        "name": "Uri Vargas",
+        "confident": true
+      },
+      {
+        "name": "Vera Walsh",
+        "confident": true
+      },
+      {
+        "name": "Wyatt Xu",
+        "confident": true
+      },
+      {
+        "name": "Xena Young",
+        "confident": true
+      },
+      {
+        "name": "Yuri Zhao",
+        "confident": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "source_id": "R18",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Nina Ortega",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Owen Price",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Piper Quinn",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Rory Santos",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Skye Turner",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [
+    "cropped_footer"
+  ],
+  "_eval": {
+    "allow_extra_partial": true
+  }
+}

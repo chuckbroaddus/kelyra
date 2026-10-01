@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "names": [
+      {
+        "name": "Isla Brennan",
+        "confident": true
+      },
+      {
+        "name": "Jamal Washington",
+        "confident": true
+      },
+      {
+        "name": "Kaira Santos",
+        "confident": true
+      },
+      {
+        "name": "Liam Oskov",
+        "confident": true
+      },
+      {
+        "name": "Mina Cho",
+        "confident": true
+      },
+      {
+        "name": "Nolan Berg",
+        "confident": true
+      },
+      {
+        "name": "Olive Tran",
+        "confident": true
+      },
+      {
+        "name": "Parker Ellis",
+        "confident": true
+      },
+      {
+        "name": "Quinn Adler",
+        "confident": true
+      }
+    ]
+  }
+}
