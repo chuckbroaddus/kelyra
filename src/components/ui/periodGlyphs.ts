@@ -63,13 +63,14 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
   const out: GlyphSpec[] = [all];
 
   // FR-UI-GLYPH-03/04/05 geometry tables.
-  // Year-family (quarters/semesters/trimesters): compass convention unchanged.
+  // Every model: solid wedges clockwise from 12 o'clock (Chuck 9/30).
   // Six-weeks (CEO): solid 60° sixths clockwise from 12 o'clock;
   // S1 = right half (0–180), S2 = left half (180–360). No 120° thirds.
   const G: Record<string, {s:number, w:number}> = {
-    year: {s:0, w:360}, s1:{s:180,w:180}, s2:{s:0,w:180},
-    q1:{s:180,w:90}, q2:{s:270,w:90}, q3:{s:0,w:90}, q4:{s:90,w:90},
-    t1:{s:180,w:120}, t2:{s:300,w:120}, t3:{s:60,w:120},
+    // All angles: degrees clockwise from 12 o'clock (matches legacy termQ1–Q4/S1/S2 icons).
+    year: {s:0, w:360}, s1:{s:0,w:180}, s2:{s:180,w:180},
+    q1:{s:0,w:90}, q2:{s:90,w:90}, q3:{s:180,w:90}, q4:{s:270,w:90},
+    t1:{s:0,w:120}, t2:{s:120,w:120}, t3:{s:240,w:120},
     // six-weeks marking periods: 1/6 of the year disk
     '6w1':{s:0,w:60}, '6w2':{s:60,w:60}, '6w3':{s:120,w:60},
     '6w4':{s:180,w:60}, '6w5':{s:240,w:60}, '6w6':{s:300,w:60},
@@ -111,7 +112,7 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
     if (model === 'custom' && codes.length) {
       const i = codes.indexOf(code);
       const sw = 360 / codes.length;
-      g = { s: 180 + i * sw, w: sw };
+      g = { s: i * sw, w: sw };
     }
     const kind = p?.kind || 'marking_period';
     const filled = kind !== 'exam' && kind !== 'progress' && g.w > 0;

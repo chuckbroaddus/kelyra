@@ -22,8 +22,8 @@ export type PeriodGlyphProps = {
 };
 
 const CREAM = '#E8DCC8';
-/** Idle wedge: solid cream at ~38% so the ring still reads behind/around it. */
-const CREAM_WEDGE = 'rgba(232, 220, 200, 0.38)';
+/** Idle wedge: fully solid cream (Chuck: solid pie slices, like the legacy term icons). */
+const CREAM_WEDGE = CREAM;
 const CREAM_RING = 'rgba(232, 220, 200, 0.55)';
 const R = 9;
 const CX = 12;
@@ -50,8 +50,8 @@ function arcPath(start: number, sweep: number, r = R): string {
   const x1 = CX + r * Math.sin(a1);
   const y1 = CY - r * Math.cos(a1);
   const large = sweep > 180 ? 1 : 0;
-  // Match GB-04: sweep-flag 0 with y-up polar → clockwise on screen.
-  return `M ${CX} ${CY} L ${x0} ${y0} A ${r} ${r} 0 ${large} 0 ${x1} ${y1} Z`;
+  // Screen coords are y-down, so sweep-flag 1 draws clockwise (12 → 3 → 6 → 9).
+  return `M ${CX} ${CY} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
 }
 
 export function PeriodGlyph({
