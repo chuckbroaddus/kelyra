@@ -77,8 +77,9 @@ logs/
 .expo/
 dist/
 web-build/
-ios/
-android/
+# Expo — generated native projects at repo root only (keep modules/*/ios|android)
+/ios/
+/android/
 *.jks
 *.p8
 *.p12
