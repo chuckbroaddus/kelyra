@@ -141,7 +141,7 @@ returned plate also appears there or when `other_plates_seen` is non-empty and c
 
 ### Rough images checked by eye
 
-All 16 `rough.jpg` and all 6 multi-car frames were opened and compared with GT before scoring, e.g.
+All 15 `rough.jpg` and all 6 multi-car frames were opened and compared with GT before scoring, e.g.
 `notes/qa-fixtures/carrider-ingest/R06/rough.jpg` (thumb clips the first plate char → uncertain),
 `notes/qa-fixtures/carrider-ingest/R09/rough.jpg` ("Arjun Patel" surname washed out → uncertain),
 `notes/qa-fixtures/carrider-ingest/M06/rough.jpg` (foreground SNT 5742 readable; GVL 3816 and MKD 2479 readable behind it).
