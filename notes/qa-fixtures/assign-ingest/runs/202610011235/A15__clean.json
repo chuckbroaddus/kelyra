@@ -1,0 +1,138 @@
+{
+  "key": {
+    "status": 200,
+    "json": {
+      "pageState": "filled",
+      "header": "Spanish I — Cognates Quiz",
+      "items": [
+        {
+          "n": 1,
+          "stem": "\"Familia\" means",
+          "answer": "A",
+          "points": 1,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "family",
+            "famous",
+            "farm",
+            "finish"
+          ]
+        },
+        {
+          "n": 2,
+          "stem": "\"Información\" means",
+          "answer": "B",
+          "points": 1,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "informal",
+            "information",
+            "formation",
+            "informer"
+          ]
+        },
+        {
+          "n": 3,
+          "stem": "\"Hospital\" means",
+          "answer": "C",
+          "points": 1,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "hospitality",
+            "hostile",
+            "hospital",
+            "host"
+          ]
+        }
+      ],
+      "maxScore": 3,
+      "teacherNote": null,
+      "reject": false,
+      "phash": "07ffffffffffffff",
+      "layout": [
+        0.9492647058823529,
+        0.9323529411764706,
+        0.9389705882352941,
+        0.9541666666666667,
+        0.9740196078431372,
+        0.9973039215686275,
+        1,
+        1,
+        1,
+        0.9997549019607843,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  }
+}
