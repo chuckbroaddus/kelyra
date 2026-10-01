@@ -164,10 +164,11 @@ export default function GradebookScreen() {
   const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const heatmap = paneRaw === 'heatmap';
   const conduct = paneRaw === 'conduct';
-  // Phone turned sideways on the Gradebook view: full screen, period row + table only.
+  // Phone landscape: immersive chrome for Gradebook + Heat map (period/table only).
+  // Conduct stays portrait chrome — its form needs the full header stack.
   const win = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const landscapeFull = !heatmap && !conduct && isNativePhone(win.width, win.height) && win.width > win.height;
+  const landscapeFull = !conduct && isNativePhone(win.width, win.height) && win.width > win.height;
   const { setImmersive } = useChrome();
   useEffect(() => {
     setImmersive(landscapeFull);

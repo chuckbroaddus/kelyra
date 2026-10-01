@@ -34,7 +34,6 @@ export const GradebookStudentHead = memo(function GradebookStudentHead({
     <View
       style={[styles.headStudent, compact && styles.headStudentCompact]}
       pointerEvents="none"
-      // test hooks for UI proof / unit-adjacent queries
       accessibilityLabel={compact ? `Student ${label}` : undefined}
       testID={compact ? 'gradebook-student-head-compact' : 'gradebook-student-head'}
     >
