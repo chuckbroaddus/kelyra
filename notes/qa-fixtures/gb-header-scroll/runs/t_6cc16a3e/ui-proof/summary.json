@@ -1,0 +1,95 @@
+{
+  "shots": [
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-rest.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-frame-0-x0.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-frame-1-x40.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-frame-2-x120.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-frame-3-x746.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-frame-4-x1491.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/portrait-375-end.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-rest.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-frame-0-x0.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-frame-1-x40.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-frame-2-x120.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-frame-3-x527.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-frame-4-x1054.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_6cc16a3e/repo/notes/qa-fixtures/gb-header-scroll/runs/t_6cc16a3e/ui-proof/landscape-812x375-end.png"
+  ],
+  "samples": [
+    {
+      "view": "portrait-375",
+      "offset": 0,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "portrait-375",
+      "offset": 40,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "portrait-375",
+      "offset": 120,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "portrait-375",
+      "offset": 746,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "portrait-375",
+      "offset": 1491,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "portrait-375",
+      "end": true,
+      "offset": 1491,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "offset": 0,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "offset": 40,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "offset": 120,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "offset": 527,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "offset": 1054,
+      "drift": 0,
+      "synced": true
+    },
+    {
+      "view": "landscape-812x375",
+      "end": true,
+      "offset": 1054,
+      "drift": 0,
+      "synced": true
+    }
+  ],
+  "ok": true
+}
