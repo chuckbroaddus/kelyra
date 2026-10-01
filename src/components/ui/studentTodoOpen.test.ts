@@ -34,6 +34,12 @@ test('Assignments /todo and class open paths use studentTodoOpenPath (phone + we
   assert.match(klass, /if \(path\) router\.push\(path as never\)/);
 });
 
+test('WorkRow web title/Open use pointer cursor when pressable', () => {
+  const src = read('src/components/ui/WorkRow.tsx');
+  assert.match(src, /Platform\.OS === 'web' \? styles\.clickable/);
+  assert.match(src, /clickable:\s*\{\s*cursor:\s*'pointer'/);
+});
+
 test('studentTodoOpenPath encodes practice/planned → /todo/[id] and lesson → /lesson/[id]', () => {
   const src = read('src/lib/student-session/work.ts');
   assert.match(src, /export function studentTodoOpenPath/);

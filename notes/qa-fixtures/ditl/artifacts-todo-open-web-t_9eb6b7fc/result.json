@@ -1,0 +1,30 @@
+{
+  "case": "AC-TODO-OPEN-web",
+  "card": "t_9eb6b7fc",
+  "viewport": "375x812",
+  "user": "ditl-student-s1@ditl.test",
+  "evidence": [
+    "signin url=http://localhost:8081/todo",
+    "assignments open via open-pill → http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481 ownish=true",
+    "class open via open-pill → http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481",
+    "title also navigated → http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481",
+    "bothLists=true"
+  ],
+  "ac": {
+    "AC-TODO-OPEN-1": true,
+    "AC-TODO-OPEN-2": true
+  },
+  "opens": {
+    "assignments": {
+      "how": "open-pill",
+      "url": "http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481"
+    },
+    "assignmentsId": "c045a52d-47e2-48a9-8d60-1520007f3481",
+    "class": {
+      "how": "open-pill",
+      "url": "http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481"
+    },
+    "titleAlso": "http://localhost:8081/todo/c045a52d-47e2-48a9-8d60-1520007f3481"
+  },
+  "result": "PASS"
+}
