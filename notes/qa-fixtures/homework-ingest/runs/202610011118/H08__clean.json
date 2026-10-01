@@ -1,0 +1,62 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Morgan Ellis",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [
+        {
+          "name": "Morgan Ellis",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "decimal subtraction",
+          "sortOrder": 1
+        },
+        {
+          "label": "making change",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": "Morgan",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "$2.75",
+          "seen": "$2.00",
+          "credit": 0,
+          "of": 1,
+          "gap": "decimal subtraction"
+        },
+        {
+          "n": 2,
+          "expected": "$3.00",
+          "seen": "$2.00",
+          "credit": 0,
+          "of": 1,
+          "gap": "making change"
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

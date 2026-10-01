@@ -1,0 +1,153 @@
+{
+  "source_id": "N02",
+  "kind": "negative",
+  "document_kind_guess": "not_student_work",
+  "intent": "unsure",
+  "negative": true,
+  "overall_confidence": 0.85,
+  "fields": [
+    {
+      "path": "intent",
+      "value": "unsure",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "unsure",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "studentName",
+      "value": null,
+      "confidence": 0.2,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "assignmentTitle",
+      "value": null,
+      "confidence": 0.3,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "draftScore",
+      "value": null,
+      "confidence": 0.3,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "maxScore",
+      "value": null,
+      "confidence": 0.5,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "gaps",
+      "value": [],
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "itemCount",
+      "value": null,
+      "confidence": 0.6,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "pageCount",
+      "value": 1,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "1",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "multiStudent",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "nameMissing",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "reject",
+      "value": true,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "true",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "roster_hint": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis"
+  ],
+  "warnings": [],
+  "ambiguities": [],
+  "_eval": {}
+}

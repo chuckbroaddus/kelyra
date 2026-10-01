@@ -1,0 +1,65 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "slope of a line",
+          "sortOrder": 1
+        },
+        {
+          "label": "y-intercept",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": "Student left all questions blank.",
+      "studentName": "Riley Brooks",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "2",
+          "seen": "",
+          "credit": null,
+          "of": 1,
+          "gap": "slope of a line"
+        },
+        {
+          "n": 2,
+          "expected": "1",
+          "seen": "",
+          "credit": null,
+          "of": 1,
+          "gap": "y-intercept"
+        },
+        {
+          "n": 3,
+          "expected": "2",
+          "seen": "",
+          "credit": null,
+          "of": 1,
+          "gap": "slope of a line"
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
