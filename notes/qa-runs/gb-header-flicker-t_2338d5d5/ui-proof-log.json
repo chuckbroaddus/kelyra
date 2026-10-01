@@ -1,0 +1,406 @@
+{
+  "task": "t_2338d5d5",
+  "pass": true,
+  "root_cause": "StickyTable two-way H-scroll used an 80ms unlock timer; lagging follower onScroll became driver and scrollTo-fought the header (rapid flicker).",
+  "fix": "Driver claimed on begin-drag, held until that scroller ends; peer events ignored; sub-pixel epsilon skips no-op scrollTo; no short unlock timer.",
+  "sweep": {
+    "reverseAttempts": 0,
+    "followCount": 31,
+    "ignoreCount": 41,
+    "finalHead": 1355,
+    "finalBody": 1355,
+    "delta": 0,
+    "log": [
+      {
+        "t": 886.7999999970198,
+        "msg": "follow body -> peer x=632.0",
+        "driving": "body",
+        "lastX": 632,
+        "reverseAttempts": 0,
+        "followCount": 15,
+        "ignoreCount": 18
+      },
+      {
+        "t": 886.7999999970198,
+        "msg": "blocked peer onScroll from head at x=632.0",
+        "driving": "body",
+        "lastX": 632,
+        "reverseAttempts": 0,
+        "followCount": 15,
+        "ignoreCount": 19
+      },
+      {
+        "t": 897.0999999940395,
+        "msg": "follow body -> peer x=678.0",
+        "driving": "body",
+        "lastX": 678,
+        "reverseAttempts": 0,
+        "followCount": 16,
+        "ignoreCount": 19
+      },
+      {
+        "t": 897.2000000029802,
+        "msg": "blocked peer onScroll from head at x=678.0",
+        "driving": "body",
+        "lastX": 678,
+        "reverseAttempts": 0,
+        "followCount": 16,
+        "ignoreCount": 20
+      },
+      {
+        "t": 897.2000000029802,
+        "msg": "blocked peer onScroll from head at x=678.0",
+        "driving": "body",
+        "lastX": 678,
+        "reverseAttempts": 0,
+        "followCount": 16,
+        "ignoreCount": 21
+      },
+      {
+        "t": 907.2000000029802,
+        "msg": "follow body -> peer x=723.0",
+        "driving": "body",
+        "lastX": 723,
+        "reverseAttempts": 0,
+        "followCount": 17,
+        "ignoreCount": 21
+      },
+      {
+        "t": 907.2999999970198,
+        "msg": "blocked peer onScroll from head at x=723.0",
+        "driving": "body",
+        "lastX": 723,
+        "reverseAttempts": 0,
+        "followCount": 17,
+        "ignoreCount": 22
+      },
+      {
+        "t": 917.2999999970198,
+        "msg": "follow body -> peer x=768.0",
+        "driving": "body",
+        "lastX": 768,
+        "reverseAttempts": 0,
+        "followCount": 18,
+        "ignoreCount": 22
+      },
+      {
+        "t": 917.3999999910593,
+        "msg": "blocked peer onScroll from head at x=768.0",
+        "driving": "body",
+        "lastX": 768,
+        "reverseAttempts": 0,
+        "followCount": 18,
+        "ignoreCount": 23
+      },
+      {
+        "t": 927.2999999970198,
+        "msg": "follow body -> peer x=813.0",
+        "driving": "body",
+        "lastX": 813,
+        "reverseAttempts": 0,
+        "followCount": 19,
+        "ignoreCount": 23
+      },
+      {
+        "t": 927.3999999910593,
+        "msg": "blocked peer onScroll from head at x=813.0",
+        "driving": "body",
+        "lastX": 813,
+        "reverseAttempts": 0,
+        "followCount": 19,
+        "ignoreCount": 24
+      },
+      {
+        "t": 927.5,
+        "msg": "blocked peer onScroll from head at x=813.0",
+        "driving": "body",
+        "lastX": 813,
+        "reverseAttempts": 0,
+        "followCount": 19,
+        "ignoreCount": 25
+      },
+      {
+        "t": 937.2000000029802,
+        "msg": "follow body -> peer x=858.0",
+        "driving": "body",
+        "lastX": 858,
+        "reverseAttempts": 0,
+        "followCount": 20,
+        "ignoreCount": 25
+      },
+      {
+        "t": 937.2000000029802,
+        "msg": "blocked peer onScroll from head at x=858.0",
+        "driving": "body",
+        "lastX": 858,
+        "reverseAttempts": 0,
+        "followCount": 20,
+        "ignoreCount": 26
+      },
+      {
+        "t": 947.0999999940395,
+        "msg": "follow body -> peer x=903.0",
+        "driving": "body",
+        "lastX": 903,
+        "reverseAttempts": 0,
+        "followCount": 21,
+        "ignoreCount": 26
+      },
+      {
+        "t": 947.0999999940395,
+        "msg": "blocked peer onScroll from head at x=903.0",
+        "driving": "body",
+        "lastX": 903,
+        "reverseAttempts": 0,
+        "followCount": 21,
+        "ignoreCount": 27
+      },
+      {
+        "t": 956.8999999910593,
+        "msg": "follow body -> peer x=949.0",
+        "driving": "body",
+        "lastX": 949,
+        "reverseAttempts": 0,
+        "followCount": 22,
+        "ignoreCount": 27
+      },
+      {
+        "t": 956.8999999910593,
+        "msg": "blocked peer onScroll from head at x=949.0",
+        "driving": "body",
+        "lastX": 949,
+        "reverseAttempts": 0,
+        "followCount": 22,
+        "ignoreCount": 28
+      },
+      {
+        "t": 957,
+        "msg": "blocked peer onScroll from head at x=949.0",
+        "driving": "body",
+        "lastX": 949,
+        "reverseAttempts": 0,
+        "followCount": 22,
+        "ignoreCount": 29
+      },
+      {
+        "t": 966.5999999940395,
+        "msg": "follow body -> peer x=994.0",
+        "driving": "body",
+        "lastX": 994,
+        "reverseAttempts": 0,
+        "followCount": 23,
+        "ignoreCount": 29
+      },
+      {
+        "t": 966.5999999940395,
+        "msg": "blocked peer onScroll from head at x=994.0",
+        "driving": "body",
+        "lastX": 994,
+        "reverseAttempts": 0,
+        "followCount": 23,
+        "ignoreCount": 30
+      },
+      {
+        "t": 976.2999999970198,
+        "msg": "follow body -> peer x=1039.0",
+        "driving": "body",
+        "lastX": 1039,
+        "reverseAttempts": 0,
+        "followCount": 24,
+        "ignoreCount": 30
+      },
+      {
+        "t": 976.2999999970198,
+        "msg": "blocked peer onScroll from head at x=1039.0",
+        "driving": "body",
+        "lastX": 1039,
+        "reverseAttempts": 0,
+        "followCount": 24,
+        "ignoreCount": 31
+      },
+      {
+        "t": 984.3999999910593,
+        "msg": "follow body -> peer x=1084.0",
+        "driving": "body",
+        "lastX": 1084,
+        "reverseAttempts": 0,
+        "followCount": 25,
+        "ignoreCount": 31
+      },
+      {
+        "t": 984.5,
+        "msg": "blocked peer onScroll from head at x=1084.0",
+        "driving": "body",
+        "lastX": 1084,
+        "reverseAttempts": 0,
+        "followCount": 25,
+        "ignoreCount": 32
+      },
+      {
+        "t": 984.5,
+        "msg": "blocked peer onScroll from head at x=1084.0",
+        "driving": "body",
+        "lastX": 1084,
+        "reverseAttempts": 0,
+        "followCount": 25,
+        "ignoreCount": 33
+      },
+      {
+        "t": 1011.7000000029802,
+        "msg": "follow body -> peer x=1129.0",
+        "driving": "body",
+        "lastX": 1129,
+        "reverseAttempts": 0,
+        "followCount": 26,
+        "ignoreCount": 33
+      },
+      {
+        "t": 1011.7000000029802,
+        "msg": "blocked peer onScroll from head at x=1129.0",
+        "driving": "body",
+        "lastX": 1129,
+        "reverseAttempts": 0,
+        "followCount": 26,
+        "ignoreCount": 34
+      },
+      {
+        "t": 1028.2999999970198,
+        "msg": "follow body -> peer x=1174.0",
+        "driving": "body",
+        "lastX": 1174,
+        "reverseAttempts": 0,
+        "followCount": 27,
+        "ignoreCount": 34
+      },
+      {
+        "t": 1028.3999999910593,
+        "msg": "blocked peer onScroll from head at x=1174.0",
+        "driving": "body",
+        "lastX": 1174,
+        "reverseAttempts": 0,
+        "followCount": 27,
+        "ignoreCount": 35
+      },
+      {
+        "t": 1040.0999999940395,
+        "msg": "follow body -> peer x=1220.0",
+        "driving": "body",
+        "lastX": 1220,
+        "reverseAttempts": 0,
+        "followCount": 28,
+        "ignoreCount": 35
+      },
+      {
+        "t": 1040.2999999970198,
+        "msg": "blocked peer onScroll from head at x=1220.0",
+        "driving": "body",
+        "lastX": 1220,
+        "reverseAttempts": 0,
+        "followCount": 28,
+        "ignoreCount": 36
+      },
+      {
+        "t": 1040.2999999970198,
+        "msg": "blocked peer onScroll from head at x=1220.0",
+        "driving": "body",
+        "lastX": 1220,
+        "reverseAttempts": 0,
+        "followCount": 28,
+        "ignoreCount": 37
+      },
+      {
+        "t": 1055.2000000029802,
+        "msg": "follow body -> peer x=1265.0",
+        "driving": "body",
+        "lastX": 1265,
+        "reverseAttempts": 0,
+        "followCount": 29,
+        "ignoreCount": 37
+      },
+      {
+        "t": 1055.2000000029802,
+        "msg": "blocked peer onScroll from head at x=1265.0",
+        "driving": "body",
+        "lastX": 1265,
+        "reverseAttempts": 0,
+        "followCount": 29,
+        "ignoreCount": 38
+      },
+      {
+        "t": 1066.2000000029802,
+        "msg": "follow body -> peer x=1310.0",
+        "driving": "body",
+        "lastX": 1310,
+        "reverseAttempts": 0,
+        "followCount": 30,
+        "ignoreCount": 38
+      },
+      {
+        "t": 1066.2999999970198,
+        "msg": "blocked peer onScroll from head at x=1310.0",
+        "driving": "body",
+        "lastX": 1310,
+        "reverseAttempts": 0,
+        "followCount": 30,
+        "ignoreCount": 39
+      },
+      {
+        "t": 1079.7999999970198,
+        "msg": "follow body -> peer x=1355.0",
+        "driving": "body",
+        "lastX": 1355,
+        "reverseAttempts": 0,
+        "followCount": 31,
+        "ignoreCount": 39
+      },
+      {
+        "t": 1079.8999999910593,
+        "msg": "blocked peer onScroll from head at x=1355.0",
+        "driving": "body",
+        "lastX": 1355,
+        "reverseAttempts": 0,
+        "followCount": 31,
+        "ignoreCount": 40
+      },
+      {
+        "t": 1080,
+        "msg": "blocked peer onScroll from head at x=1355.0",
+        "driving": "body",
+        "lastX": 1355,
+        "reverseAttempts": 0,
+        "followCount": 31,
+        "ignoreCount": 41
+      }
+    ]
+  },
+  "shots": [
+    {
+      "name": "01-portrait-375.png",
+      "file": "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/01-portrait-375.png",
+      "width": 375,
+      "height": 812
+    },
+    {
+      "name": "02-landscape-812x375.png",
+      "file": "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/02-landscape-812x375.png",
+      "width": 812,
+      "height": 375
+    },
+    {
+      "name": "03-scroll-mid-375.png",
+      "file": "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/03-scroll-mid-375.png"
+    }
+  ],
+  "frames": [
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-00.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-01.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-02.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-03.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-04.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-05.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-06.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-07.png",
+    "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5/scroll-frames/frame-08.png"
+  ],
+  "out": "/Users/chuckbroaddus/.hermes/kanban/boards/kelyra/workspaces/t_2338d5d5/repo/notes/qa-runs/gb-header-flicker-t_2338d5d5"
+}

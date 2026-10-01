@@ -11,6 +11,12 @@ import {
 } from 'react-native';
 
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
+import {
+  decideStickyHScroll,
+  stickyHScrollBeginDrag,
+  stickyHScrollRelease,
+  type StickyHDriver,
+} from '@/components/ui/stickyTableHScroll';
 import { type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -60,23 +66,44 @@ export function StickyTable<T>({
   const { scrollHandlers } = useMarqueeScroll();
   const headRef = useRef<ScrollView>(null);
   const bodyRef = useRef<ScrollView>(null);
-  const driving = useRef<'none' | 'head' | 'body'>('none');
-  const unlock = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Active horizontal driver — never cleared by a short timer (that caused flicker). */
+  const driving = useRef<StickyHDriver>('none');
+  const lastSyncedX = useRef(0);
 
   const follow = (who: 'head' | 'body', x: number) => {
-    if (driving.current === (who === 'head' ? 'body' : 'head')) return;
-    driving.current = who;
+    const decision = decideStickyHScroll({
+      driving: driving.current,
+      who,
+      x,
+      lastSyncedX: lastSyncedX.current,
+    });
+    if (decision.action === 'ignore') return;
+    driving.current = decision.nextDriving;
+    lastSyncedX.current = decision.nextLastX;
     if (who === 'head') bodyRef.current?.scrollTo({ x, y: 0, animated: false });
     else headRef.current?.scrollTo({ x, y: 0, animated: false });
-    if (unlock.current) clearTimeout(unlock.current);
-    unlock.current = setTimeout(() => {
-      driving.current = 'none';
-    }, 80);
   };
 
-  const endH = () => {
-    driving.current = 'none';
-    if (unlock.current) clearTimeout(unlock.current);
+  const beginH = (who: 'head' | 'body') => {
+    driving.current = stickyHScrollBeginDrag(driving.current, who);
+  };
+
+  /** Drop lock when this scroller is done. Ignore peer end events. */
+  const endH = (who: 'head' | 'body') => {
+    driving.current = stickyHScrollRelease(driving.current, who);
+  };
+
+  /**
+   * End-drag may still have momentum — only release early when velocity is
+   * known and ~0. If velocity is missing (common on web), wait for
+   * onMomentumScrollEnd so a lagging follower cannot reverse-drive.
+   */
+  const endHAfterDrag = (
+    who: 'head' | 'body',
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
+    const vx = event.nativeEvent.velocity?.x;
+    if (vx != null && Math.abs(vx) < 0.05) endH(who);
   };
 
   const onHead = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -152,13 +179,16 @@ export function StickyTable<T>({
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
         onScroll={onHead}
-        onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
+        onScrollBeginDrag={(event) => {
+          beginH('head');
+          scrollHandlers.onScrollBeginDrag?.(event);
+        }}
         onScrollEndDrag={(event) => {
-          endH();
+          endHAfterDrag('head', event);
           scrollHandlers.onScrollEndDrag?.(event);
         }}
         onMomentumScrollEnd={(event) => {
-          endH();
+          endH('head');
           scrollHandlers.onMomentumScrollEnd?.(event);
         }}
         style={[styles.headScroll, panX]}
@@ -248,13 +278,16 @@ export function StickyTable<T>({
                 scrollEventThrottle={16}
                 keyboardShouldPersistTaps="handled"
                 onScroll={onBodyH}
-                onScrollBeginDrag={scrollHandlers.onScrollBeginDrag}
+                onScrollBeginDrag={(event) => {
+                  beginH('body');
+                  scrollHandlers.onScrollBeginDrag?.(event);
+                }}
                 onScrollEndDrag={(event) => {
-                  endH();
+                  endHAfterDrag('body', event);
                   scrollHandlers.onScrollEndDrag?.(event);
                 }}
                 onMomentumScrollEnd={(event) => {
-                  endH();
+                  endH('body');
                   scrollHandlers.onMomentumScrollEnd?.(event);
                 }}
                 style={[styles.bodyScroll, panX, { height: bodyHeight }]}
