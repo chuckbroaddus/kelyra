@@ -1,0 +1,17 @@
+{
+  "source_id": "N02",
+  "kind": "negative",
+  "reject": true,
+  "reject_reason": "syllabus_not_assignment",
+  "pageState": "unsure",
+  "header": "Course Syllabus — Biology",
+  "items": [],
+  "maxScore": null,
+  "document_kind_guess": "syllabus_policy",
+  "intent_not": [
+    "answer_key"
+  ],
+  "_eval": {
+    "negative": true
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "source_id": "A03",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Unit 4 Test — Fractions",
+  "category": "test",
+  "maxScore": 20,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "Which equals 1/2?",
+      "answer": "B",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "3/4 + 1/4 =",
+      "answer": "B",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "Simplify 6/9.",
+      "answer": "B",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "1/5 of 20 is",
+      "answer": "A",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 5,
+      "stem": "Explain how to add 1/3 + 1/6. Write two sentences.",
+      "answer": "",
+      "points": 6,
+      "type": "short",
+      "needsTeacher": true
+    },
+    {
+      "n": 6,
+      "stem": "Draw a model of 3/4.",
+      "answer": "",
+      "points": 6,
+      "type": "work",
+      "needsTeacher": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "A",
+      "title": "Part A — Multiple choice",
+      "itemNs": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "B",
+      "title": "Part B — Show your work",
+      "itemNs": [
+        5,
+        6
+      ]
+    }
+  ],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "test",
+  "_eval": {}
+}

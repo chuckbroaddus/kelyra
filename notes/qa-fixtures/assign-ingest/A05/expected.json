@@ -1,0 +1,51 @@
+{
+  "source_id": "A05",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Friday Check — Place Value",
+  "category": "quiz",
+  "maxScore": 4,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "What is the value of 7 in 3,752?",
+      "answer": "700",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "Write 405 in expanded form:",
+      "answer": "400+5",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "10 tens = ________ ones",
+      "answer": "100",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "Explain why 399 is less than 401:",
+      "answer": "",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": true
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {
+    "handwriting": true
+  }
+}

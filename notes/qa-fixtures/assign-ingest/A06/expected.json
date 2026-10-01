@@ -1,0 +1,55 @@
+{
+  "source_id": "A06",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Homework 12 — Ratios",
+  "category": "homework",
+  "maxScore": 8,
+  "due": "2026-10-10",
+  "standards": [
+    "TEKS 6.4B",
+    "TEKS 6.5A"
+  ],
+  "items": [
+    {
+      "n": 1,
+      "stem": "Simplify the ratio 12:18 →",
+      "answer": "2:3",
+      "points": 2,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "If 3 apples cost $2, 6 apples cost $",
+      "answer": "4",
+      "points": 2,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "Write 5/20 as a unit rate (per 1):",
+      "answer": "1/4",
+      "points": 2,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "True or false: 2:3 = 4:6",
+      "answer": "true",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {
+    "soft_due": true,
+    "soft_standards": true
+  }
+}

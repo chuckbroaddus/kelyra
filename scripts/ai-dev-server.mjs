@@ -2243,20 +2243,26 @@ function clamp01(value) {
 
 const analyzeKeyPrompt = `You read one K-12 worksheet photo that a teacher is attaching as an ANSWER KEY.
 Return JSON only, no markdown:
-{"pageState":"blank","header":"printed title","items":[{"n":1,"stem":"12 + 9 =","answer":"21","points":1,"needsTeacher":false,"note":null}],"maxScore":21,"teacherNote":null,"reject":false}
+{"pageState":"blank","header":"printed title","items":[{"n":1,"stem":"12 + 9 =","answer":"21","points":1,"type":"numeric","needsTeacher":false,"note":null,"choices":null}],"maxScore":21,"teacherNote":null,"reject":false}
 Rules:
 - FIRST classify the document. If it is NOT an answer key (student homework with a student name, syllabus/weights, roster, car rider list, random notes), set reject=true, items=[], pageState="unsure", teacherNote="Not an answer key", maxScore=null. Do NOT invent answers.
 - pageState is blank (no answers written/printed/circled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
 - Answer keys often PRINT the correct answers in bold/color next to each item. That is pageState=filled. EXTRACT those printed answers. Do NOT re-solve and replace them.
 - Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled.
-- header is the printed title / first direction line, or null.
-- Only items that are actually on the page. Do not invent questions or answers for missing numbers.
+- header is the printed title / first direction line, or null. Do not invent a student name as header.
+- Only items that are actually on the page. Do not invent questions or answers for missing numbers. Do not invent items past a "continue on back" / cut-off edge.
+- STEM HYGIENE: Never glue the printed item number into the math. Item "1. 7 + 8 =" has stem "7 + 8 =" and n=1 — NOT "1 + 7 + 8 =". Same for 2., 3., circled numbers, and photo skew.
+- Multiple choice: when choices A/B/C/D (or T/F) are printed, answer MUST be the letter (or True/False), NOT the choice text. Set type "mc". Put choice letters in choices when visible.
 - If the title says N questions but only fewer answers appear, extract only what is visible. teacherNote may say the key is partial. Never invent the rest.
-- If pageState is blank: SOLVE each keyed item when it is objectively answerable (math fact, multiple choice, word-bank, short factual blank). If it is opinion, explain, or open writing, set needsTeacher=true and answer="".
+- If pageState is blank: SOLVE each keyed item when objectively answerable (math fact, MC letter, word-bank, short factual fill-ins like organism/ecosystem/sunlight). Opinion/explain/draw/open writing → needsTeacher=true and answer="". Still EMIT the item row with stem even when needsTeacher.
+- Partial pages ("continue on back"): still emit the visible blanks as items (needsTeacher if unanswerable). Never return items:[].
 - If pageState is filled: EXTRACT the written/circled/printed answers exactly. Prefer the key's printed answer over your own solution.
+- STUDENT WORK vs KEY: if the page shows a student name + filled blanks and says "student work" / draft score / "grade this child", set pageState "filled", teacherNote "student work — not a blank key", reject=true preferred, and still extract seen answers only if needed (do not re-solve as if blank).
+- ANSWER KEY title / "KEY" / teacher-annotated red answers → pageState "filled" and extract those answers.
 - points: use printed point values if present, else 1. maxScore is the sum of points.
-- teacherNote is one short sentence or null.
-- Never invent a student. This is not grading a child.
+- teacherNote is one short sentence or null (margin notes OK).
+- Never invent a student. This is not grading a child as the primary task.
+- Blurry/skewed phone photos: read digits carefully; prefer empty + needsTeacher over garbled invented equations.
 - MC answers should be a single letter A–E (or T/F) when that is what the key shows.`;
 
 const syllabusParsePrompt = `You extract a CLASS GRADING POLICY (syllabus weights) from a photo for a teacher.
@@ -2801,14 +2807,41 @@ function tokenOverlap(a, b) {
 function parseKeyItemsFromModel(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
-    .map((row, index) => ({
-      n: Number(row?.n ?? index + 1),
-      stem: String(row?.stem ?? '').trim(),
-      answer: String(row?.answer ?? '').trim(),
-      points: Number.isFinite(Number(row?.points)) ? Number(row.points) : 1,
-      needsTeacher: row?.needsTeacher === true || !String(row?.answer ?? '').trim(),
-      note: typeof row?.note === 'string' && row.note.trim() ? row.note.trim() : undefined,
-    }))
+    .map((row, index) => {
+      let stem = String(row?.stem ?? '').trim();
+      const n = Number(row?.n ?? index + 1);
+      // Drop glued list-number prefixes from OCR: 1. 7+8 or 1 + 7 + 8
+      const nStr = String(n);
+      if (stem.startsWith(nStr + '. ')) stem = stem.slice(nStr.length + 2);
+      else if (stem.startsWith(nStr + ') ')) stem = stem.slice(nStr.length + 2);
+      else if (stem.startsWith(nStr + ' + ')) stem = stem.slice(nStr.length + 3);
+      else if (stem.startsWith(nStr + ' ')) {
+        const rest = stem.slice(nStr.length + 1);
+        if (/^[+\-×÷=]/.test(rest) || /^\d/.test(rest)) stem = rest;
+      }
+      let answer = String(row?.answer ?? row?.expected ?? '').trim();
+      const typeRaw = row?.type;
+      const type =
+        typeRaw === 'mc' || typeRaw === 'numeric' || typeRaw === 'short' || typeRaw === 'work'
+          ? typeRaw
+          : undefined;
+      const choices = Array.isArray(row?.choices)
+        ? row.choices.map((c) => String(c)).filter(Boolean)
+        : undefined;
+      // Prefer MC letter when answer is full choice text with leading letter
+      const letterLead = answer.match(/^([A-Ea-e])[).:\s]/);
+      if (letterLead && (type === 'mc' || choices?.length)) answer = letterLead[1].toUpperCase();
+      return {
+        n: Number.isFinite(n) ? n : index + 1,
+        stem,
+        answer,
+        points: Number.isFinite(Number(row?.points)) ? Number(row.points) : 1,
+        needsTeacher: row?.needsTeacher === true || !answer,
+        note: typeof row?.note === 'string' && row.note.trim() ? row.note.trim() : undefined,
+        type,
+        choices,
+      };
+    })
     .filter((row) => row.stem || row.answer || row.needsTeacher)
     .slice(0, 40);
 }

@@ -1,0 +1,41 @@
+{
+  "source_id": "A15",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Spanish I — Cognates Quiz",
+  "category": "quiz",
+  "maxScore": 3,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "\"Familia\" means",
+      "answer": "A",
+      "points": 1,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "\"Información\" means",
+      "answer": "B",
+      "points": 1,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "\"Hospital\" means",
+      "answer": "C",
+      "points": 1,
+      "type": "mc",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "quiz",
+  "_eval": {}
+}

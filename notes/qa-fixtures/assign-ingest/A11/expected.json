@@ -1,0 +1,51 @@
+{
+  "source_id": "A11",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Warm-Up — Forces",
+  "category": "homework",
+  "maxScore": 6,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "T/F: Friction always slows motion.",
+      "answer": "true",
+      "points": 1,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "T/F: Mass and weight are the same.",
+      "answer": "false",
+      "points": 1,
+      "type": "mc",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "A 2 kg object accelerates at 3 m/s². Net force =",
+      "answer": "6",
+      "points": 3,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "Unit of force:",
+      "answer": "newton",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {
+    "soft_answers": true
+  }
+}
