@@ -9,7 +9,7 @@
  * Stdout is one line: PACKET <path>
  * Stderr is status codes only. Tokens and passwords are never printed.
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -370,6 +370,27 @@ export function redact(text) {
 }
 
 let stopPersona = () => {};
+// Every drive opens one Chrome tab. Close it on every exit path, or the QE
+// Chrome piles up tabs (each holding a full Metro bundle) until macOS runs out
+// of application memory.
+let openTargetId = '';
+function closeOpenTab() {
+  if (!openTargetId) return;
+  const id = openTargetId;
+  openTargetId = '';
+  try {
+    spawnSync('curl', ['-s', '-m', '3', `http://127.0.0.1:${CHROME_PORT}/json/close/${id}`], { stdio: 'ignore' });
+  } catch {
+    // Best effort.
+  }
+}
+process.on('exit', closeOpenTab);
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    closeOpenTab();
+    process.exit(130);
+  });
+}
 
 function fail(code) {
   try {
@@ -668,6 +689,7 @@ async function openTab() {
   }
   if (!created.ok) fail('CHROME_NOT_READY');
   const target = JSON.parse(created.body);
+  if (target.id) openTargetId = target.id;
   if (!target.webSocketDebuggerUrl) fail('CHROME_NOT_READY');
   return target.webSocketDebuggerUrl;
 }
@@ -857,6 +879,7 @@ async function driveWeb(url, args, dir, expectInject) {
   const afterFile = path.join(dir, 'web-after.png');
   await shot(cdp.send, afterFile);
   cdp.close();
+  closeOpenTab();
   return {
     widths,
     interaction: {
