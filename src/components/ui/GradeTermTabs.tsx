@@ -29,10 +29,12 @@ type Props = {
    *  With no calendar, must emit exactly same keys+look as today (legacy path kept for compat).
    */
   calendar?: GradingCalendar;
+  /** Phone landscape gradebook: equal-width period tabs span the full row. */
+  distribute?: boolean;
 };
 
 /** All + Counts toward. When calendar, uses SVG glyphs; else legacy PNG icons via PersonTabs. */
-export function GradeTermTabs({ value, onChange, stacked, calendar }: Props) {
+export function GradeTermTabs({ value, onChange, stacked, calendar, distribute }: Props) {
   if (calendar) {
     return (
       <PeriodFilterBar
@@ -40,8 +42,9 @@ export function GradeTermTabs({ value, onChange, stacked, calendar }: Props) {
         selectedPeriodId={value}
         onSelect={onChange}
         stacked={stacked}
+        distribute={distribute}
       />
     );
   }
-  return <PersonTabs tabs={TABS} value={value} onChange={onChange} stacked={stacked} />;
+  return <PersonTabs tabs={TABS} value={value} onChange={onChange} stacked={stacked} distribute={distribute} />;
 }

@@ -9,9 +9,17 @@ test('marqueeMetrics: fit clip → not overflowing (zero crawl)', () => {
   assert.equal(distance, 0);
 });
 
-test('marqueeMetrics: text within slack of clip → not overflowing', () => {
-  const { overflowing } = marqueeMetrics(100, 105);
+test('marqueeMetrics: hairline over clip stays static (epsilon)', () => {
+  // Sub-pixel / rounding noise under slack must not crawl.
+  const { overflowing } = marqueeMetrics(100, 100.5);
   assert.equal(overflowing, false);
+});
+
+test('marqueeMetrics: small real overflow marquees (Jamal-class clip)', () => {
+  // Prior slack of 8 left ~4–6 pt overflow clipped without crawl ("Jama").
+  const { overflowing, distance } = marqueeMetrics(44, 48);
+  assert.equal(overflowing, true);
+  assert.equal(distance, 4);
 });
 
 test('marqueeMetrics: clear overflow → overflowing (marquee after ready)', () => {

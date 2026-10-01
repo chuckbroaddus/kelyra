@@ -196,7 +196,10 @@ function WebMarquee({
 
   const takeText = useCallback((width: number) => {
     if (width <= 1) return;
-    setTextWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+    setTextWidth((current) => {
+      const next = Math.max(current, width);
+      return Math.abs(current - next) < 0.5 ? current : next;
+    });
   }, []);
 
   useLayoutEffect(() => {
@@ -511,7 +514,11 @@ function NativeMarquee({
 
   const takeText = (width: number) => {
     if (width <= 0) return;
-    setTextWidth((current) => (Math.abs(current - width) < 0.5 ? current : width));
+    // Prefer the max sample so a clipped/ellipsized layout cannot under-report ink.
+    setTextWidth((current) => {
+      const next = Math.max(current, width);
+      return Math.abs(current - next) < 0.5 ? current : next;
+    });
   };
 
   useEffect(() => {
@@ -557,6 +564,17 @@ function NativeMarquee({
       if (width > 0) takeClip(width);
     });
   }, [paused, parentPaused, takeClip]);
+
+  // Re-measure ink after clip settles / font paint — avoid clipped-but-static names.
+  useLayoutEffect(() => {
+    const node = measureRef.current as unknown as {
+      measure?: (cb: (x: number, y: number, width: number, height: number) => void) => void;
+    } | null;
+    if (!node?.measure) return;
+    node.measure((_x, _y, width) => {
+      if (width > 0) takeText(width);
+    });
+  }, [resetKey, ready, clipWidth, text, type.fontFamily, type.fontSize, type.fontWeight, type.letterSpacing]);
 
   useEffect(() => {
     setVisible(true);
@@ -677,8 +695,11 @@ function NativeMarquee({
           accessible={false}
           importantForAccessibility="no"
           key={layoutEpoch}
-          numberOfLines={Platform.OS === 'web' ? undefined : 1}
-          ellipsizeMode={Platform.OS === 'web' ? undefined : 'clip'}
+          // Unconstrained measure copy — never ellipsize, or ink under-reports and names clip without crawl.
+          onLayout={(event) => {
+            const width = event.nativeEvent.layout.width;
+            if (width > 0 && width <= 3600) takeText(width);
+          }}
           onTextLayout={
             Platform.OS === 'web'
               ? undefined

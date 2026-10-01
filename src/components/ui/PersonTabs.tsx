@@ -78,6 +78,11 @@ type Props = {
    * Pass `current` only for a documented cubic opt-out — never on destination rows.
    */
   motionPack?: PersonTabMotionPack;
+  /**
+   * Landscape gradebook period row: equal-width tabs span the full device width
+   * (no horizontal strip / scroll). Portrait stays hug + scroll.
+   */
+  distribute?: boolean;
 };
 
 /** Icon-only hit (styles.hit minWidth / minHeight). */
@@ -98,6 +103,7 @@ type PillProps = {
   colors: ThemeColors;
   reduce: boolean;
   motionPack: PersonTabMotionPack;
+  distribute?: boolean;
   onChange: (key: string) => void;
   onLayoutX: (x: number, width: number) => void;
 };
@@ -111,6 +117,7 @@ function PersonTabPill({
   colors,
   reduce,
   motionPack,
+  distribute = false,
   onChange,
   onLayoutX,
 }: PillProps) {
@@ -173,16 +180,18 @@ function PersonTabPill({
         onLayout={(event) => {
           onLayoutX(event.nativeEvent.layout.x, event.nativeEvent.layout.width);
         }}
-        style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+        style={({ pressed }) => [distribute && styles.distributeHit, pressed && { opacity: 0.85 }]}
       >
         <Animated.View
           style={[
             styles.hit,
             !hasGlyph && styles.labelHit,
+            distribute && styles.distributePill,
             {
               // Width alone drives the morph. Animated maxWidth + leading-pill
               // reflow was snapping labels shut on first-tab transitions.
-              width: pillWidth,
+              // Distribute mode: equal flex slots — fixed width, label still morphs.
+              width: distribute ? ('100%' as unknown as number) : pillWidth,
               overflow: 'hidden',
             },
           ]}
@@ -249,7 +258,7 @@ function PersonTabPill({
 }
 
 /** Icon-first section tabs. Selected tab shows its name next to the left-pinned glyph. */
-export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve', motionPack = 'cm-linear' }: Props) {
+export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, labelPolicy = 'visibilityReserve', motionPack = 'cm-linear', distribute = false }: Props) {
   const { colors } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [rowWidth, setRowWidth] = useState(0);
@@ -268,7 +277,18 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   /** Last value we applied a scroll policy for (blocks layout-only re-scroll). */
   const scrolledValueRef = useRef<string | null>(null);
   const hasGlyph = personTabRowHasGlyph(tabs);
-  const labelMax = rowWidth > 0 ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy) : 0;
+  const gapTotal = Math.max(0, tabs.length - 1) * 4;
+  const equalSlot =
+    distribute && rowWidth > 0 && tabs.length > 0 ? Math.max(0, (rowWidth - gapTotal) / tabs.length) : 0;
+  const distributeLabelMax =
+    equalSlot > 0
+      ? Math.max(0, equalSlot - PERSON_TAB_HIT_PAD_X * 2 - (hasGlyph ? PERSON_TAB_GLYPH + PERSON_TAB_GAP : 0))
+      : 0;
+  const labelMax = distribute
+    ? distributeLabelMax
+    : rowWidth > 0
+      ? personTabLabelMax(rowWidth, tabs.length, hasGlyph, labelPolicy)
+      : 0;
 
   useEffect(() => {
     let live = true;
@@ -298,6 +318,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
   };
 
   useEffect(() => {
+    if (distribute) return;
     const row = tabsRef.current;
     const x = xOf.current[value];
     if (x == null || rowWidth <= 0) return;
@@ -375,7 +396,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     };
     // Deps: value + rowWidth + reduce only. contentWidth / tabs[] / title metrics
     // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
-  }, [value, rowWidth, reduce]);
+  }, [value, rowWidth, reduce, distribute]);
 
   return (
     <View
@@ -414,10 +435,11 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
       <ScrollView
         ref={scroller}
         horizontal
+        scrollEnabled={!distribute}
         showsHorizontalScrollIndicator={false}
         // Animating child widths + clipped subviews snaps leading labels on iOS.
         removeClippedSubviews={false}
-        contentContainerStyle={styles.row}
+        contentContainerStyle={[styles.row, distribute ? styles.rowDistribute : null]}
         style={styles.scroller}
         scrollEventThrottle={16}
         onScroll={(event) => {
@@ -439,6 +461,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
             colors={colors}
             reduce={reduce}
             motionPack={motionPack}
+            distribute={distribute}
             onChange={onChange}
             onLayoutX={(x, width) => {
               xOf.current[tab.key] = x;
@@ -484,6 +507,21 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 6,
     paddingRight: PERSON_TAB_ROW_PAD_END,
+  },
+  rowDistribute: {
+    flexGrow: 1,
+    width: '100%',
+    paddingRight: 0,
+    justifyContent: 'space-between',
+  },
+  distributeHit: {
+    flex: 1,
+    minWidth: 0,
+  },
+  distributePill: {
+    minWidth: 0,
+    width: '100%',
+    justifyContent: 'center',
   },
   hit: {
     minWidth: PERSON_TAB_ICON_HIT,

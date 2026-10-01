@@ -4,7 +4,7 @@ import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { type } from '@/constants/theme';
 import type { ReactNode } from 'react';
-import { studentHeadCompact, studentHeadFor } from '@/constants/table';
+import { studentHeadCompact, studentHeadFor, tableRowHeight } from '@/constants/table';
 import { firstName } from '@/lib/format';
 import type { HeatmapCell } from '@/lib/classes/overview';
 import { useLayout } from '@/lib/theme/layout';
@@ -26,7 +26,7 @@ export function Heatmap({ classId, skills, students, marks, leading, trailing }:
   const compactHead = studentHeadCompact(layout.breakpoint);
   const frozen = layout.breakpoint === 'tablet' ? 168 : layout.breakpoint === 'phone-landscape' ? 148 : 132;
   const size = head.colWidth;
-  const rowHeight = layout.breakpoint === 'phone-portrait' ? 44 : 48;
+  const rowHeight = tableRowHeight(layout.breakpoint);
   const headHeight = head.height;
   // Landscape already collapses chrome; drop the legend strip so only the grid remains.
   const legend =
