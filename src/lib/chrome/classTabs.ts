@@ -111,3 +111,14 @@ export function isClassDeskTabsRoute(pathname: string): boolean {
   return true;
 }
 
+
+/**
+ * True when the class pane renders its own secondary tab row right under ClassTabs
+ * (Gradebook views; Desk Today/Week span). ClassTabs then drops its bottom gap +
+ * hairline so the two rows sit at the same even spacing as tabs within a row.
+ */
+export function classTabsStacked(pathname: string, tab?: string | null): boolean {
+  if (pathname.includes('/gradebook')) return true;
+  const desk = /\/class\/[^/]+\/?$/.test(pathname);
+  return desk && tab !== 'needs';
+}

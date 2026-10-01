@@ -1,9 +1,9 @@
-import { Stack, useLocalSearchParams, usePathname } from 'expo-router';
+import { Stack, useGlobalSearchParams, useLocalSearchParams, usePathname } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ClassTabs } from '@/components/ui/ClassTabs';
 import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
-import { isClassDeskTabsRoute } from '@/lib/chrome/classTabs';
+import { classTabsStacked, isClassDeskTabsRoute } from '@/lib/chrome/classTabs';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -22,7 +22,9 @@ export default function ClassStackLayout() {
   const topReserve = chrome?.contextReserve ?? 0;
   const classId = Array.isArray(id) ? id[0] : id;
   const showTabs = Boolean(classId) && isClassDeskTabsRoute(pathname);
-  const stacked = pathname.includes('/gradebook');
+  const params = useGlobalSearchParams<{ tab?: string | string[] }>();
+  const tabParam = Array.isArray(params.tab) ? params.tab[0] : params.tab;
+  const stacked = classTabsStacked(pathname, tabParam);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
