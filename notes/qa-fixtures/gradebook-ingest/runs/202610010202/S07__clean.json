@@ -1,0 +1,143 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "41f8d772-cbc8-4be3-bcff-c566cae62259",
+    "proposal": {
+      "source_id": "S07-clean-202610010202",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Spanish II",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Spanish II",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202610010202"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Category\t%\tNotes\nTests\t25\nQuizzes\t20\nSpeaking\t15\nWriting\t15\nHomework\t10\nProjects\t10\nParticipation\t5",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S07-clean-202610010202"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 25
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20,
+              "drop_lowest": 2
+            },
+            {
+              "key": "speaking",
+              "label": "Speaking",
+              "weight_percent": 15
+            },
+            {
+              "key": "writing",
+              "label": "Writing",
+              "weight_percent": 15
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 10
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 10
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 5
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests\t25\tnever drop\nQuizzes\t20\tdrop lowest 2\nSpeaking\t15\t\nWriting\t15\t\nHomework\t10\t\nProjects\t10\t\nParticipation\t5",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202610010202"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late: -5% per day.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202610010202"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "value": "A",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Extra credit Method A",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202610010202"
+        },
+        {
+          "path": "syllabus.ec_cap",
+          "value": 5,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "cap +5 points on the period.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S07-clean-202610010202"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category weight distribution is present, but within-category calculation method (points vs percent) is not explicitly specified.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9183333333333334
+    }
+  }
+}

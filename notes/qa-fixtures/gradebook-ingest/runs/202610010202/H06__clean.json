@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "29cec5cd-4455-4216-8505-96392095bd6b",
+    "proposal": {
+      "source_id": "H06-clean-202610010202",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "nine_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Nine-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H06-clean-202610010202"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "nine_weeks",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Nine-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H06-clean-202610010202"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.85
+    }
+  }
+}

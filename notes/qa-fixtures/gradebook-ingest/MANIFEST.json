@@ -1,16 +1,13 @@
 {
-  "generated_at": "2026-09-30T22:10:27.867Z",
+  "generated_at": "2026-10-01T02:16:04.929Z",
   "count": 25,
   "cases": [
     {
       "id": "S01",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -30,8 +27,6 @@
       "id": "S02",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -51,11 +46,8 @@
       "id": "S03",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -74,8 +66,6 @@
       "id": "S04",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -96,11 +86,8 @@
       "id": "S05",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -116,11 +103,8 @@
       "id": "S06",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -140,8 +124,6 @@
       "id": "S07",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -161,11 +143,8 @@
       "id": "S08",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -182,11 +161,8 @@
       "id": "S09",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -203,8 +179,6 @@
       "id": "S10",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -225,11 +199,8 @@
       "id": "H01",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -249,8 +220,6 @@
       "id": "H02",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -269,11 +238,8 @@
       "id": "H03",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -291,8 +257,6 @@
       "id": "H04",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -312,11 +276,8 @@
       "id": "H05",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -333,8 +294,6 @@
       "id": "H06",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -353,8 +312,6 @@
       "id": "H07",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -374,8 +331,6 @@
       "id": "H08",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -394,11 +349,8 @@
       "id": "H09",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -416,8 +368,6 @@
       "id": "H10",
       "kind": "handbook",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -436,11 +386,8 @@
       "id": "N01",
       "kind": "negative",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [],
@@ -455,8 +402,6 @@
       "id": "N02",
       "kind": "negative",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -472,11 +417,8 @@
       "id": "N03",
       "kind": "negative",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [],
@@ -489,11 +431,10 @@
       "id": "S11",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg"
+        "photo.jpg",
+        "clean.png"
       ],
       "fields_exercised": [
         "syllabus.categories"
@@ -502,17 +443,16 @@
         "§11.19",
         "real-photo"
       ],
-      "photo": true
+      "photo": false
     },
     {
       "id": "S12",
       "kind": "syllabus",
       "files": [
-        "clean.png",
-        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg"
+        "photo.jpg",
+        "clean.png"
       ],
       "fields_exercised": [
         "syllabus.categories"
@@ -520,7 +460,7 @@
       "srs_refs": [
         "real-photo"
       ],
-      "photo": true
+      "photo": false
     }
   ]
 }

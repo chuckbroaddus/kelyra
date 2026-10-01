@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "ad40d8ba-2cb6-48dd-b46b-5c30265485fb",
+    "proposal": {
+      "source_id": "H03-clean-202610010202",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "semester",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Credit terms are semesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610010202"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "45/45/10",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610010202"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.95
+    }
+  }
+}

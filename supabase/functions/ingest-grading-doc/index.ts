@@ -293,10 +293,10 @@ Deno.serve(async (req) => {
         ];
       }
 
-      // Syllabus weak / handwriting: one more pass if almost empty and we have images
+      // Syllabus weak / handwriting: retry when thin extract and we have images
       if (
         kind === 'syllabus' &&
-        proposal.fields.filter((f) => f.value != null).length < 2 &&
+        proposal.fields.filter((f) => f.value != null).length < 4 &&
         imageContent.length > 0 &&
         transcriptNote
       ) {
@@ -309,11 +309,12 @@ Deno.serve(async (req) => {
               '\n' +
               pathNote +
               transcriptNote +
-              '\nSTRICT: Use the transcript. Emit every category/late/missing fact the transcript supports with verbatim quotes.',
+              '\nSTRICT handwriting pass: Use the transcript. Emit every category/late/missing/retake/narrative fact the transcript supports with verbatim quotes. Map missing-work floor → syllabus.missing_rule. Map "replaces the old" → syllabus.retake method replace.',
           },
         ]);
         const retryProp = skeletonProposal(kind, sourceId, parsed);
-        if (retryProp.fields.length > proposal.fields.length) {
+        const filled = (p: IngestProposal) => p.fields.filter((f) => f.value != null).length;
+        if (filled(retryProp) >= filled(proposal)) {
           proposal = retryProp;
           proposal.warnings = [
             ...proposal.warnings,

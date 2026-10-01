@@ -1,0 +1,103 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "c5b7df36-7dda-4ac9-9307-b60c5661db87",
+    "proposal": {
+      "source_id": "S12-photo-202610010202",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "ENGLISH 8 - COURSE SYLLABUS 2026-27",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "ENGLISH 8 - COURSE SYLLABUS 2026-27",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202610010202"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Homework & Classwork: 30% | Quizzes: 25% | Tests/Projects: 30% | Participation: 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S12-photo-202610010202"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "homework_classwork",
+              "label": "Homework & Classwork",
+              "weight_percent": 30
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 25
+            },
+            {
+              "key": "tests_projects",
+              "label": "Tests/Projects",
+              "weight_percent": 30
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Homework & Classwork: 30% | Quizzes: 25% | Tests/Projects: 30% | Participation: 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202610010202"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work: -10% per day.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S12-photo-202610010202"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Within-category calculation method is not explicitly stated in the text.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.8999999999999999
+    }
+  }
+}

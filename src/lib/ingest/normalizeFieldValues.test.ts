@@ -483,6 +483,109 @@ test('qp.method alone without tables is dropped', () => {
   assert.ok(!p.fields.some((f) => f.path === 'qp.method'));
 });
 
+test('qp.method letter_map without tables is dropped', () => {
+  const p = parseIngestProposal(
+    {
+      wizard: 'school',
+      fields: [
+        {
+          path: 'qp.method',
+          value: 'letter_map',
+          confidence: 0.95,
+          evidence: ev('Regular A = 4.0'),
+        },
+      ],
+    },
+    { expected_kind: 'school_policy' },
+  );
+  assert.ok(!p.fields.some((f) => f.path === 'qp.method'));
+});
+
+test('missing-work floor remaps to missing_rule; title prefers fuller quote', () => {
+  const p = parseIngestProposal(
+    {
+      wizard: 'syllabus',
+      fields: [
+        {
+          path: 'syllabus.title',
+          value: 'Algebra I',
+          confidence: 0.95,
+          evidence: ev('Algebra I — Course Syllabus'),
+        },
+        {
+          path: 'syllabus.floor',
+          value: 50,
+          confidence: 0.95,
+          evidence: ev('Missing work uses a floor of 50 (not zero).'),
+        },
+        {
+          path: 'syllabus.categories',
+          value: [
+            { label: 'Major grades', weight_percent: 60 },
+            { label: 'Daily', weight_percent: 40 },
+          ],
+          confidence: 0.95,
+          evidence: ev('Major grades 60% · Daily 40%'),
+        },
+      ],
+    },
+    { expected_kind: 'syllabus' },
+  );
+  assert.equal(p.fields.find((f) => f.path === 'syllabus.title')?.value, 'Algebra I — Course Syllabus');
+  assert.ok(!p.fields.some((f) => f.path === 'syllabus.floor' && f.value != null));
+  const miss = p.fields.find((f) => f.path === 'syllabus.missing_rule')?.value as {
+    type?: string;
+    floor?: number;
+  };
+  assert.equal(miss?.type, 'floor');
+  assert.equal(miss?.floor, 50);
+  const cats = p.fields.find((f) => f.path === 'syllabus.categories')?.value as Array<{ key: string }>;
+  assert.equal(cats?.[0]?.key, 'major');
+});
+
+test('H10 levels/repeat/include coerce + ambiguous message null-safe', () => {
+  const p = parseIngestProposal(
+    {
+      wizard: 'school',
+      fields: [
+        {
+          path: 'levels.list',
+          value: [
+            { key: 'honors', label: 'Honors', weighted_bonus: 0.5 },
+            { key: 'ap', label: 'AP', weighted_bonus: 1 },
+            { key: 'onramps', label: 'OnRamps', weighted_bonus: 1 },
+          ],
+          confidence: 0.9,
+          evidence: ev('OnRamps'),
+        },
+        {
+          path: 'gpa.repeat',
+          value: 'higher grade replaces',
+          confidence: 0.9,
+          evidence: ev('higher grade replaces'),
+        },
+        {
+          path: 'gpa.include',
+          value: 'recovery and pre-grade-9 excluded',
+          confidence: 0.88,
+          evidence: ev('recovery and pre-grade-9'),
+        },
+      ],
+      ambiguities: [{ code: 'x', message: undefined as unknown as string, paths: [] }],
+      warnings: [{ code: 'y', message: undefined as unknown as string, severity: 'info' }],
+    },
+    { expected_kind: 'school_policy' },
+  );
+  assert.ok(p.fields.some((f) => f.path === 'levels.list'));
+  assert.deepEqual(p.fields.find((f) => f.path === 'gpa.repeat')?.value, {
+    policy: 'forgive_higher',
+  });
+  assert.deepEqual(p.fields.find((f) => f.path === 'gpa.include')?.value, {
+    recovery: false,
+    pre_9: false,
+  });
+});
+
 test('UI labels cover every emit path + friendly calendar value', async () => {
   const { pathsMissingLabels, labelForIngestPath, labelForIngestValue } = await import(
     './fieldLabels.ts'

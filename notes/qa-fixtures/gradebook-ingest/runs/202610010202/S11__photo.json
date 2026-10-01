@@ -1,0 +1,93 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "f56f1d6e-0ad4-48dd-b003-2ac2adf7dc80",
+    "proposal": {
+      "source_id": "S11-photo-202610010202",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Math Syllabus",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Math Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-photo-202610010202"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S11-photo-202610010202"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 40
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 25
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40%\nQuizzes 20%\nHomework 25%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S11-photo-202610010202"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category weights are provided, but the within-category calculation method is not specified.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.8833333333333333
+    }
+  }
+}

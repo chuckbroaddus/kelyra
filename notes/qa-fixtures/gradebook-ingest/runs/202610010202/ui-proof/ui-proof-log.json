@@ -1,0 +1,23 @@
+{
+  "run": "202610010202",
+  "metro": "http://127.0.0.1:8081",
+  "cdp": "9223",
+  "edge": "https://aohibokgilxhqwmupdfv.supabase.co/functions/v1/ingest-grading-doc",
+  "overall": "87.8%",
+  "hallucinated": 0,
+  "shots": [
+    "notes/qa-fixtures/gradebook-ingest/runs/202610010202/ui-proof/S01-photo-review-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202610010202/ui-proof/H01-policy-prefill-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202610010202/ui-proof/H10-levels-repeat-include-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202610010202/ui-proof/S08-handwritten-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202610010202/ui-proof/N03-mixed-doc-warning-375.png"
+  ],
+  "tmp_copies": "/tmp/gb-ingest-eval-r3/",
+  "verdicts": {
+    "s01": { "api": 1.0, "ui": "gradebook_route" },
+    "h01": { "api": 1.0, "ui": "start_from_document" },
+    "h10": { "api": 1.0, "ui": "policy_route" },
+    "s08": { "api": 0.8, "ui": "gradebook_route" },
+    "n03": { "api": 1.0, "ui": "gradebook_route" }
+  }
+}

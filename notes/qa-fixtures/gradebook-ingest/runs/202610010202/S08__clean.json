@@ -1,0 +1,112 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "a735448c-5a24-4f91-b4e6-e2e714f137ee",
+    "proposal": {
+      "source_id": "S08-clean-202610010202",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "PE / Athletics — Ms. Brooks",
+          "confidence": 1,
+          "evidence": {
+            "quote": "PE / Athletics — Ms. Brooks",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-clean-202610010202"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S08-clean-202610010202"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major_grades",
+              "label": "Major grades",
+              "weight_percent": 60
+            },
+            {
+              "key": "daily",
+              "label": "Daily",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades 60% · Daily 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-clean-202610010202"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": {
+            "type": "floor",
+            "floor": 50
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Missing work uses a floor of 50 (not zero).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-clean-202610010202"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [],
+            "attempts": 1,
+            "method": "replace",
+            "cap": null,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Retakes: new score replaces the old one (one attempt).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-clean-202610010202"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "No late work accepted.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S08-clean-202610010202"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.92
+    }
+  }
+}
