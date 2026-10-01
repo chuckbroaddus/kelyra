@@ -92,6 +92,7 @@ public final class VolumeShutterModule: Module {
     return nil
   }
 
+  @available(iOS 17.2, *)
   private func emitPress(_ event: AVCaptureEvent, source: String) {
     // Fire once per physical press on began (snappy, like Camera.app).
     guard event.phase == .began else {
