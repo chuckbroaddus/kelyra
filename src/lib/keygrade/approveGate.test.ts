@@ -42,6 +42,7 @@ test('AC-PACKB: saved keyed draft review shows Pack B Accept; parent seat hides 
   const student = readFileSync(join(root, 'src/app/class/[id]/student/[studentId].tsx'), 'utf8');
   assert.match(student, /KeygradePackBReview/);
   assert.match(student, /keyScoreItemsFromDraft/);
+  assert.match(student, /packItemsFromAssignmentKey/);
   assert.match(student, /canApproveKeygrade/);
   assert.match(student, /showPackB/);
   assert.match(student, /onPackBApprove/);
@@ -49,6 +50,7 @@ test('AC-PACKB: saved keyed draft review shows Pack B Accept; parent seat hides 
   assert.match(student, /storeCaptureDraft/);
   // Teach-only mount — parent seat must not render Accept on this review.
   assert.match(student, /showPackB = keyedDraftOpen && allowKeygradeApprove/);
+  assert.match(student, /draftKeyItems\.length > 0 \|\| packAssignmentHasKey/);
   assert.match(student, /Teach seat required to Approve keyed work/);
   // Persist before approve; no rollback after committed approve.
   const approveFn = student.slice(student.indexOf('const onPackBApprove'));
@@ -71,6 +73,8 @@ test('AC-PACKB: saved keyed draft review shows Pack B Accept; parent seat hides 
 
   const capture = readFileSync(join(root, 'src/app/capture.tsx'), 'utf8');
   assert.match(capture, /match-key/);
+  assert.match(capture, /buildKeyedHomeworkPersistDraft/);
+  assert.match(capture, /packItemsFromAssignmentKey/);
 });
 
 test('Office/superintendent KEYGRADE Approve chrome OUT of v1 (CEO lock)', () => {

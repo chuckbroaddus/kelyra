@@ -32,6 +32,8 @@ import { WorkRow } from '@/components/ui/WorkRow';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import type { ScoredKeyItem } from '@/lib/assignments/scoreKey';
+import { assignmentHasKey, getAssignment } from '@/lib/assignments/api';
+import { parseKeyItems } from '@/lib/assignments/keys';
 import { listProfiles, setStudentLink } from '@/lib/school/api';
 import { formatHandle, isAdminRole, isOfficeRole } from '@/lib/school/roles';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
@@ -67,6 +69,7 @@ import { canApproveKeygrade } from '@/lib/keygrade/approveGate';
 import {
   keyScoreAssignmentIdFromDraft,
   keyScoreItemsFromDraft,
+  packItemsFromAssignmentKey,
 } from '@/lib/keygrade/draft';
 import { buildSkillHistory, focusSkillLabel, loadFocusSkillLabel } from '@/lib/gaps/history';
 import {
@@ -111,7 +114,7 @@ import { formatHelpUsedRowSummary, formatItemHelpUsed, parseHelpUsed } from '@/l
 import { answerText, submissionReviewPath } from '@/lib/practice/review';
 import { closeFocusSkill, getStudent, patchStudentMetadata, renameStudent, updateStudentMetadata } from '@/lib/students/api';
 import { deleteStudent, listStudentEnrollments, removeEnrollment } from '@/lib/students/delete';
-import type { PracticeItem, ProfileRow, SkillGapRow, StudentRow } from '@/lib/supabase/types';
+import type { AssignmentRow, PracticeItem, ProfileRow, SkillGapRow, StudentRow } from '@/lib/supabase/types';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 type ConfirmKind =
@@ -180,6 +183,7 @@ export default function StudentScreen() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [tab, setTab] = useState(() => studentTabFromParam(chrome.role, tabParam));
   const [packItems, setPackItems] = useState<ScoredKeyItem[]>([]);
+  const [packAssignment, setPackAssignment] = useState<AssignmentRow | null>(null);
   const allowKeygradeApprove = canApproveKeygrade(chrome.role);
 
   useEffect(() => {
@@ -253,18 +257,24 @@ export default function StudentScreen() {
   const latest =
     captures.find((item) => item.id === captureParam) ??
     captures[0];
+  const draftKeyItems = keyScoreItemsFromDraft(latest?.model_draft);
+  const packAssignmentHasKey =
+    Boolean(packAssignment) &&
+    assignmentHasKey(packAssignment!) &&
+    parseKeyItems(packAssignment!.key_items).length > 0;
   const keyedDraftOpen =
     Boolean(latest) &&
     (latest?.status === 'draft' || latest?.status === 'attached') &&
-    keyScoreItemsFromDraft(latest?.model_draft).length > 0;
+    (draftKeyItems.length > 0 || packAssignmentHasKey);
   /** Pack B on saved keyed draft — Teach seat only (AC-PACKB-1/3). */
   const showPackB = keyedDraftOpen && allowKeygradeApprove;
   const packAssignmentId = useMemo(
     () =>
       keyScoreAssignmentIdFromDraft(latest?.model_draft) ||
       latest?.assignment_id ||
+      packAssignment?.id ||
       null,
-    [latest?.model_draft, latest?.assignment_id],
+    [latest?.model_draft, latest?.assignment_id, packAssignment?.id],
   );
 
   useEffect(() => {
@@ -280,8 +290,43 @@ export default function StudentScreen() {
   }, [latest?.id]);
 
   useEffect(() => {
-    setPackItems(keyScoreItemsFromDraft(latest?.model_draft));
-  }, [latest?.id, latest?.model_draft]);
+    let live = true;
+    const id =
+      keyScoreAssignmentIdFromDraft(latest?.model_draft) || latest?.assignment_id || null;
+    if (!id) {
+      setPackAssignment(null);
+      return;
+    }
+    void getAssignment(id)
+      .then((row) => {
+        if (live) setPackAssignment(row);
+      })
+      .catch(() => {
+        if (live) setPackAssignment(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [latest?.id, latest?.model_draft, latest?.assignment_id]);
+
+  useEffect(() => {
+    const fromDraft = keyScoreItemsFromDraft(latest?.model_draft);
+    if (fromDraft.length) {
+      setPackItems(fromDraft);
+      return;
+    }
+    if (packAssignment && assignmentHasKey(packAssignment)) {
+      const seeded = packItemsFromAssignmentKey({
+        keyItems: parseKeyItems(packAssignment.key_items),
+        assignmentId: packAssignment.id,
+        maxScore: packAssignment.max_score,
+        modelTotal: latest?.draft_score ?? null,
+      });
+      setPackItems(seeded);
+      return;
+    }
+    setPackItems([]);
+  }, [latest?.id, latest?.model_draft, latest?.draft_score, packAssignment]);
 
   const editedGaps = () =>
     (latest?.gaps ?? []).map((gap) => ({
@@ -926,7 +971,8 @@ export default function StudentScreen() {
                 <KeygradePackBReview
                   chromeRole={chrome.role}
                   items={packItems}
-                  maxScore={null}
+                  assignmentTitle={packAssignment?.title}
+                  maxScore={packAssignment?.max_score ?? null}
                   studentId={studentId ?? null}
                   twinCandidates={[]}
                   roster={[]}
