@@ -17,6 +17,7 @@ import {
   parseGradeTerm,
   type GradeTerm,
 } from '../../lib/grade/marks.ts';
+import { sixWeeksLabel } from '../ui/periodGlyphs.ts';
 
 export type ScopeAssignment = {
   id?: string;
@@ -184,5 +185,5 @@ export function periodFilterLabel(
   if (!filterId || filterId === 'all') return 'All';
   if (!calendar) return gradeTermLabel(filterId);
   const p = resolveFilterPeriod(calendar, filterId);
-  return p?.name ?? filterId.toUpperCase();
+  return sixWeeksLabel(p?.code ?? filterId) ?? p?.name ?? filterId.toUpperCase();
 }
