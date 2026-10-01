@@ -1,0 +1,49 @@
+{
+  "source_id": "A04",
+  "kind": "assignment_key",
+  "pageState": "filled",
+  "header": "ANSWER KEY — Decimal Practice",
+  "category": "homework",
+  "maxScore": 5,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "0.5 + 0.25 =",
+      "answer": "0.75",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "1.2 × 3 =",
+      "answer": "3.6",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "Round 4.678 to tenths:",
+      "answer": "4.7",
+      "points": 2,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "Which is larger? 0.09 or 0.1 →",
+      "answer": "0.1",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "answer_key",
+  "_eval": {}
+}

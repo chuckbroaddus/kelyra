@@ -1,0 +1,151 @@
+{
+  "key": {
+    "status": 200,
+    "json": {
+      "pageState": "filled",
+      "header": "Life Science Quiz — Cells",
+      "items": [
+        {
+          "n": 1,
+          "stem": "The control center of the cell is the",
+          "answer": "B",
+          "points": 2,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "cell wall",
+            "nucleus",
+            "vacuole",
+            "ribosome"
+          ]
+        },
+        {
+          "n": 2,
+          "stem": "Plant cells have a rigid",
+          "answer": "C",
+          "points": 2,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "nucleus",
+            "cytoplasm",
+            "cell wall",
+            "lysosome"
+          ]
+        },
+        {
+          "n": 3,
+          "stem": "Energy is released in the",
+          "answer": "A",
+          "points": 3,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "mitochondria",
+            "Golgi",
+            "chloroplast only",
+            "nucleus"
+          ]
+        },
+        {
+          "n": 4,
+          "stem": "Photosynthesis occurs mainly in the",
+          "answer": "B",
+          "points": 3,
+          "needsTeacher": false,
+          "type": "mc",
+          "choices": [
+            "root hair",
+            "chloroplast",
+            "mitochondria",
+            "vacuole"
+          ]
+        }
+      ],
+      "maxScore": 10,
+      "teacherNote": null,
+      "phash": "0f0fffffffffffff",
+      "layout": [
+        0.9553921568627451,
+        0.9321078431372549,
+        0.9605392156862745,
+        0.9909313725490196,
+        1,
+        1,
+        1,
+        1,
+        0.9647058823529412,
+        0.9149509803921568,
+        0.9450980392156862,
+        0.9678921568627451,
+        1,
+        1,
+        1,
+        1,
+        0.9997549019607843,
+        0.9990196078431373,
+        0.9990196078431373,
+        0.9992647058823529,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  }
+}

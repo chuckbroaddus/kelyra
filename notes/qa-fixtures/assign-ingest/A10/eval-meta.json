@@ -1,0 +1,8 @@
+{
+  "id": "A10",
+  "kind": "assignment_key",
+  "photo": true,
+  "negative": false,
+  "no_invent_extra_items": true,
+  "max_items": 3
+}

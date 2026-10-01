@@ -1,0 +1,11 @@
+{
+  "source_id": "L01",
+  "kind": "lesson_plan",
+  "intent": "lesson_plan",
+  "header": "Lesson Plan — Day 12: Equivalent Fractions",
+  "reject": false,
+  "document_kind_guess": "lesson_plan",
+  "standards": [
+    "TEKS 4.3C"
+  ]
+}

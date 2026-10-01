@@ -1,0 +1,49 @@
+{
+  "source_id": "A07",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Skill Check — Integers",
+  "category": "quiz",
+  "maxScore": 10,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "−3 + 5 =",
+      "answer": "2",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "|−8| =",
+      "answer": "8",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "−2 × −6 =",
+      "answer": "12",
+      "points": 3,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "Order from least to greatest: 0, −4, 2, −1 →",
+      "answer": "-4, -1, 0, 2",
+      "points": 5,
+      "type": "short",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {}
+}

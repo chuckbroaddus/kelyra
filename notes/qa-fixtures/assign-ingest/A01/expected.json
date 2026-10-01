@@ -1,0 +1,57 @@
+{
+  "source_id": "A01",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Math Facts Warm-Up",
+  "category": "homework",
+  "maxScore": 5,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "7 + 8 =",
+      "answer": "15",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "12 − 5 =",
+      "answer": "7",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "6 × 4 =",
+      "answer": "24",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "36 ÷ 6 =",
+      "answer": "6",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 5,
+      "stem": "9 + 11 =",
+      "answer": "20",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {}
+}

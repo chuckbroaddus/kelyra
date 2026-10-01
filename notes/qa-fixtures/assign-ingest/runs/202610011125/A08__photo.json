@@ -1,0 +1,144 @@
+{
+  "key": {
+    "status": 200,
+    "json": {
+      "pageState": "filled",
+      "header": "Exit Ticket — Photosynthesis (KEY)",
+      "items": [
+        {
+          "n": 1,
+          "stem": "Gas plants take in:",
+          "answer": "carbon dioxide / CO2",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 2,
+          "stem": "Gas plants release:",
+          "answer": "oxygen / O2",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 3,
+          "stem": "Energy source:",
+          "answer": "sunlight",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 4,
+          "stem": "Where in the cell?",
+          "answer": "chloroplast — remind class chlorophyll ≠ organelle",
+          "points": 1,
+          "needsTeacher": false
+        }
+      ],
+      "maxScore": 4,
+      "teacherNote": "Teacher annotated",
+      "phash": "00067e7e7f7f7f7f",
+      "layout": [
+        0.5306372549019608,
+        0.6610294117647059,
+        0.6723039215686275,
+        0.7120098039215687,
+        0.7365196078431373,
+        0.7411764705882353,
+        0.7463235294117647,
+        0.7100490196078432,
+        0.6723039215686275,
+        0.8267156862745098,
+        0.8404411764705882,
+        0.8561274509803921,
+        0.8561274509803921,
+        0.8693627450980392,
+        0.8693627450980392,
+        0.8203431372549019,
+        0.7144607843137255,
+        0.8823529411764706,
+        0.8823529411764706,
+        0.8823529411764706,
+        0.8823529411764706,
+        0.8825980392156862,
+        0.8823529411764706,
+        0.8321078431372549,
+        0.7470588235294118,
+        0.8970588235294118,
+        0.8970588235294118,
+        0.8968137254901961,
+        0.8970588235294118,
+        0.8970588235294118,
+        0.8970588235294118,
+        0.845343137254902,
+        0.7816176470588235,
+        0.9134803921568627,
+        0.9134803921568627,
+        0.9129901960784313,
+        0.913235294117647,
+        0.913235294117647,
+        0.9137254901960784,
+        0.8615196078431373,
+        0.8127450980392157,
+        0.9264705882352942,
+        0.9264705882352942,
+        0.9264705882352942,
+        0.9264705882352942,
+        0.9264705882352942,
+        0.9264705882352942,
+        0.8735294117647059,
+        0.8448529411764706,
+        0.9416666666666667,
+        0.941421568627451,
+        0.9411764705882353,
+        0.9419117647058823,
+        0.942156862745098,
+        0.941421568627451,
+        0.8879901960784313,
+        0.8544117647058823,
+        0.9362745098039216,
+        0.9367647058823529,
+        0.9362745098039216,
+        0.9362745098039216,
+        0.9362745098039216,
+        0.9362745098039216,
+        0.8806372549019608
+      ]
+    }
+  },
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "title",
+          "value": "Exit Ticket — Photosynthesis (KEY)"
+        },
+        {
+          "label": "question1",
+          "value": "Gas plants take in: carbon dioxide / CO2"
+        },
+        {
+          "label": "question2",
+          "value": "Gas plants release: oxygen / O2"
+        },
+        {
+          "label": "question3",
+          "value": "Energy source: sunlight"
+        },
+        {
+          "label": "question4",
+          "value": "Where in the cell? chloroplast — remind class chlorophyll ≠ organelle"
+        }
+      ],
+      "names": [],
+      "note": "Teacher annotated answer key for photosynthesis exit ticket"
+    }
+  }
+}

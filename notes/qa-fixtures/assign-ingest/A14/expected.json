@@ -1,0 +1,25 @@
+{
+  "source_id": "A14",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Essay Prompt — Character Change",
+  "category": "project",
+  "maxScore": 20,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "In two paragraphs, describe how the main character changes from chapter 1 to chapter 8. Use two text details.",
+      "answer": "",
+      "points": 20,
+      "type": "work",
+      "needsTeacher": true
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {}
+}

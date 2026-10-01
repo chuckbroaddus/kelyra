@@ -1,0 +1,57 @@
+{
+  "source_id": "A09",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Vocabulary Match — Government",
+  "category": "homework",
+  "maxScore": 5,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "Two-house legislature:",
+      "answer": "bicameral",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "Power split between national and state:",
+      "answer": "federalism",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "Change to the Constitution:",
+      "answer": "amendment",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "President rejects a bill:",
+      "answer": "veto",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 5,
+      "stem": "Citizens elect representatives:",
+      "answer": "republic",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {}
+}

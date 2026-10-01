@@ -1,0 +1,7 @@
+{
+  "id": "N03",
+  "kind": "negative",
+  "photo": true,
+  "negative": true,
+  "allow_filled_extract_but_flag": true
+}

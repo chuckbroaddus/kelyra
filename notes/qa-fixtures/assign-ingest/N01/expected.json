@@ -1,0 +1,17 @@
+{
+  "source_id": "N01",
+  "kind": "negative",
+  "reject": true,
+  "reject_reason": "roster_not_assignment",
+  "pageState": "unsure",
+  "header": "Period 3 Roster",
+  "items": [],
+  "maxScore": null,
+  "document_kind_guess": "roster",
+  "intent_not": [
+    "answer_key"
+  ],
+  "_eval": {
+    "negative": true
+  }
+}

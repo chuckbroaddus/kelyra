@@ -1,0 +1,327 @@
+{
+  "generated_at": "2026-10-01T11:15:36.963Z",
+  "count": 21,
+  "cases": [
+    {
+      "id": "A01",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "header",
+        "items",
+        "maxScore",
+        "pageState"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A02",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "header",
+        "items",
+        "choices",
+        "pageState"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A03",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "header",
+        "items",
+        "sections",
+        "maxScore"
+      ],
+      "photo": false
+    },
+    {
+      "id": "A04",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "pageState",
+        "items",
+        "header"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A05",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "pageState",
+        "header"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A06",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "header",
+        "due",
+        "standards",
+        "items"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A07",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "maxScore"
+      ],
+      "photo": false
+    },
+    {
+      "id": "A08",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "pageState"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A09",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "header"
+      ],
+      "photo": false
+    },
+    {
+      "id": "A10",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "pageState"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A11",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "type"
+      ],
+      "photo": false
+    },
+    {
+      "id": "A12",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "sections"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A13",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "pageState"
+      ],
+      "photo": true
+    },
+    {
+      "id": "A14",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "needsTeacher"
+      ],
+      "photo": false
+    },
+    {
+      "id": "A15",
+      "kind": "assignment_key",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "items",
+        "choices"
+      ],
+      "photo": false
+    },
+    {
+      "id": "L01",
+      "kind": "lesson_plan",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "intent",
+        "header"
+      ],
+      "photo": true
+    },
+    {
+      "id": "L02",
+      "kind": "lesson_materials",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "intent",
+        "header"
+      ],
+      "photo": false
+    },
+    {
+      "id": "L03",
+      "kind": "lesson_plan",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "intent"
+      ],
+      "photo": true
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "reject"
+      ],
+      "photo": true
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "reject"
+      ],
+      "photo": false
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ],
+      "fields_exercised": [
+        "reject"
+      ],
+      "photo": true
+    }
+  ]
+}
