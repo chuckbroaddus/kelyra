@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Maya Thompson",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Parent 1",
+        "value": "Dana Thompson (Mother)"
+      },
+      {
+        "label": "Phone",
+        "value": "555-301-1001"
+      },
+      {
+        "label": "Email",
+        "value": "dana.t@example.com"
+      },
+      {
+        "label": "Parent 2",
+        "value": "Chris Thompson (Father)"
+      },
+      {
+        "label": "Phone",
+        "value": "555-301-1002"
+      },
+      {
+        "label": "Email",
+        "value": "chris.t@example.com"
+      }
+    ],
+    "names": [
+      "Maya Thompson"
+    ],
+    "note": null
+  }
+}

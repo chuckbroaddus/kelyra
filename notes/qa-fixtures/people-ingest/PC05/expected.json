@@ -1,0 +1,25 @@
+{
+  "source_id": "PC05",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.75,
+  "parentGuessName": "Taylor Brooks",
+  "studentGuessName": null,
+  "fields": [
+    {
+      "label": "phone",
+      "value": "555-404-2211"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "phone",
+      "value": "555-404-2211"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

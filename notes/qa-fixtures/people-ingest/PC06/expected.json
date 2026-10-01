@@ -1,0 +1,41 @@
+{
+  "source_id": "PC06",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Nina Patel",
+  "studentGuessName": "Arjun Patel",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "telephone",
+      "value": "555-441-7766"
+    },
+    {
+      "label": "email",
+      "value": "nina.patel.home@example.com"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-441-7766"
+    },
+    {
+      "key": "email",
+      "value": "nina.patel.home@example.com"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

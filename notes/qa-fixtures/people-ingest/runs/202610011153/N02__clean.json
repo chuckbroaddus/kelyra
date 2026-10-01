@@ -1,0 +1,15 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "syllabus",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [],
+    "names": [],
+    "note": null
+  }
+}

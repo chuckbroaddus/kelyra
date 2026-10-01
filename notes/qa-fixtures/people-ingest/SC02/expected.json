@@ -1,0 +1,49 @@
+{
+  "source_id": "SC02",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Jamal Okonkwo",
+  "fields": [
+    {
+      "label": "grade or age",
+      "value": "Grade 7 · age 12"
+    },
+    {
+      "label": "phone",
+      "value": "555-100-7788"
+    },
+    {
+      "label": "email",
+      "value": "jamal.o.student@example.com"
+    },
+    {
+      "label": "address",
+      "value": "88 Cedar Court, Unit 4"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "grade_or_age",
+      "value": "Grade 7 · age 12"
+    },
+    {
+      "key": "phone",
+      "value": "555-100-7788"
+    },
+    {
+      "key": "email",
+      "value": "jamal.o.student@example.com"
+    },
+    {
+      "key": "address",
+      "value": "88 Cedar Court, Unit 4"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

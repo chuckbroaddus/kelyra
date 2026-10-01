@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Marcus Chen",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Lily Chen",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Name",
+        "value": "Marcus Chen"
+      },
+      {
+        "label": "Relationship to student",
+        "value": "Father"
+      },
+      {
+        "label": "Home phone",
+        "value": "555.318.9022"
+      },
+      {
+        "label": "Email",
+        "value": "m.chen.family@example.net"
+      },
+      {
+        "label": "Child",
+        "value": "Lily Chen"
+      }
+    ],
+    "names": [
+      "Marcus Chen",
+      "Lily Chen"
+    ],
+    "note": null
+  }
+}

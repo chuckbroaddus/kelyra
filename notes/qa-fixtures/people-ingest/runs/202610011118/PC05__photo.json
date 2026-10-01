@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Taylor Brooks",
+    "confidence": 0.7,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Parent",
+        "value": "Taylor Brooks"
+      },
+      {
+        "label": "Phone",
+        "value": "555-404-2211"
+      }
+    ],
+    "names": [
+      "Taylor Brooks"
+    ],
+    "note": null
+  }
+}

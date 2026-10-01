@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Zoe Martins",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Grade",
+        "value": "6"
+      },
+      {
+        "label": "Notes",
+        "value": "Needs glasses for board work"
+      }
+    ],
+    "names": [
+      {
+        "name": "Zoe Martins",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

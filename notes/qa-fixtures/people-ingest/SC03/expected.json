@@ -1,0 +1,49 @@
+{
+  "source_id": "SC03",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Benjamin Park",
+  "fields": [
+    {
+      "label": "preferred name",
+      "value": "Ben"
+    },
+    {
+      "label": "allergies",
+      "value": "shellfish"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Min Park"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-222-0199"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "preferred_name",
+      "value": "Ben"
+    },
+    {
+      "key": "allergies",
+      "value": "shellfish"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Min Park"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-222-0199"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

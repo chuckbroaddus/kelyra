@@ -1,0 +1,53 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Elena Vargas",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "preferred name",
+        "value": "Ellie"
+      },
+      {
+        "label": "date of birth",
+        "value": "March 14, 2012"
+      },
+      {
+        "label": "grade",
+        "value": "9"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Sofia Vargas"
+      },
+      {
+        "label": "emergency phone",
+        "value": "555-612-8890"
+      },
+      {
+        "label": "allergies",
+        "value": "Peanuts"
+      },
+      {
+        "label": "health conditions",
+        "value": "Asthma - inhaler in backpack"
+      }
+    ],
+    "names": [
+      {
+        "name": "Elena Vargas",
+        "confidence": 0.99
+      },
+      {
+        "name": "Sofia Vargas",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

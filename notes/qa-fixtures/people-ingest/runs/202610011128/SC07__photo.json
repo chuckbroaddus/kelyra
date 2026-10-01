@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Grace Okafor",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Birthday",
+        "value": "07/22/2013"
+      },
+      {
+        "label": "Emergency name",
+        "value": "Chinedu Okafor"
+      },
+      {
+        "label": "Emergency phone",
+        "value": "(555) 333-1212"
+      }
+    ],
+    "names": [],
+    "note": null
+  }
+}

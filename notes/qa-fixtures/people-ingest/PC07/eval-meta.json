@@ -1,0 +1,7 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "no_hallucinate_empty": [
+    "email"
+  ]
+}

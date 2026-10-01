@@ -1,0 +1,19 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "homework",
+    "parentGuessName": null,
+    "confidence": 0.95,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [
+      {
+        "label": "skill"
+      }
+    ],
+    "fields": [],
+    "names": [],
+    "note": null
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "roster",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [],
+    "names": [
+      {
+        "name": "Aiden Cole",
+        "confidence": 0.99
+      },
+      {
+        "name": "Morgan Cole",
+        "confidence": 0.99
+      },
+      {
+        "name": "Bella Diaz",
+        "confidence": 0.99
+      },
+      {
+        "name": "Jordan Diaz",
+        "confidence": 0.99
+      },
+      {
+        "name": "Owen Kim",
+        "confidence": 0.99
+      },
+      {
+        "name": "Sasha Kim",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

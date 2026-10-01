@@ -1,0 +1,33 @@
+{
+  "source_id": "SC06",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Christopher Nguyen",
+  "fields": [
+    {
+      "label": "nickname",
+      "value": "Chris"
+    },
+    {
+      "label": "age",
+      "value": "10"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "preferred_name",
+      "value": "Chris"
+    },
+    {
+      "key": "grade_or_age",
+      "value": "10"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

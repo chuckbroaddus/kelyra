@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": "Min Park",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Benjamin Park",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Student",
+        "value": "Benjamin Park (Ben)"
+      },
+      {
+        "label": "Allergy",
+        "value": "shellfish"
+      },
+      {
+        "label": "Emergency",
+        "value": "Min Park - 555-222-0199"
+      }
+    ],
+    "names": [
+      "Benjamin Park",
+      "Min Park"
+    ],
+    "note": null
+  }
+}

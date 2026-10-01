@@ -1,0 +1,73 @@
+{
+  "source_id": "SC01",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Elena Vargas",
+  "fields": [
+    {
+      "label": "preferred name",
+      "value": "Ellie"
+    },
+    {
+      "label": "date of birth",
+      "value": "2012-03-14"
+    },
+    {
+      "label": "grade",
+      "value": "9"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Sofia Vargas"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-612-8890"
+    },
+    {
+      "label": "allergies",
+      "value": "Peanuts"
+    },
+    {
+      "label": "health conditions",
+      "value": "Asthma — inhaler in backpack"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "preferred_name",
+      "value": "Ellie"
+    },
+    {
+      "key": "birthday",
+      "value": "2012-03-14"
+    },
+    {
+      "key": "grade_or_age",
+      "value": "9"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Sofia Vargas"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-612-8890"
+    },
+    {
+      "key": "allergies",
+      "value": "Peanuts"
+    },
+    {
+      "key": "health_conditions",
+      "value": "Asthma — inhaler in backpack"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

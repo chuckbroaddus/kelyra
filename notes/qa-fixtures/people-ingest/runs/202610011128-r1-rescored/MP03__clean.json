@@ -1,0 +1,45 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Morgan Cole",
+    "confidence": 0.9,
+    "studentGuessId": null,
+    "studentGuessName": "Aiden Cole",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "phone",
+        "value": "555-800-0101"
+      }
+    ],
+    "names": [
+      {
+        "name": "Aiden Cole",
+        "confidence": 1
+      },
+      {
+        "name": "Morgan Cole",
+        "confidence": 1
+      },
+      {
+        "name": "Bella Diaz",
+        "confidence": 1
+      },
+      {
+        "name": "Jordan Diaz",
+        "confidence": 1
+      },
+      {
+        "name": "Owen Kim",
+        "confidence": 1
+      },
+      {
+        "name": "Sasha Kim",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

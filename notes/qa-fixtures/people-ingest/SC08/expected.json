@@ -1,0 +1,33 @@
+{
+  "source_id": "SC08",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Zoe Martins",
+  "fields": [
+    {
+      "label": "grade",
+      "value": "6"
+    },
+    {
+      "label": "notes",
+      "value": "Needs glasses for board work"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "grade_or_age",
+      "value": "6"
+    },
+    {
+      "key": "notes",
+      "value": "Needs glasses for board work"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

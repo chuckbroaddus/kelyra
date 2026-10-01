@@ -1,0 +1,49 @@
+{
+  "source_id": "SC05",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": "Priya Nair",
+  "fields": [
+    {
+      "label": "birthday",
+      "value": "2014-11-02"
+    },
+    {
+      "label": "phone",
+      "value": "555-909-3344"
+    },
+    {
+      "label": "health conditions",
+      "value": "Type 1 diabetes — nurse has care plan"
+    },
+    {
+      "label": "allergies",
+      "value": "None known"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "birthday",
+      "value": "2014-11-02"
+    },
+    {
+      "key": "phone",
+      "value": "555-909-3344"
+    },
+    {
+      "key": "health_conditions",
+      "value": "Type 1 diabetes — nurse has care plan"
+    },
+    {
+      "key": "allergies",
+      "value": "None known"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

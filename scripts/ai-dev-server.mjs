@@ -1143,7 +1143,7 @@ Rules:
 
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
-{"intent":"homework","confidence":0.8,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[{"label":"skill"}],"fields":[{"label":"field","value":"value"}],"names":[{"name":"First Last","confidence":0.8}],"note":null}
+{"intent":"homework","confidence":0.8,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[],"fields":[],"names":[],"note":null}
 intent MUST be one of: homework, syllabus, portrait, parent_card, student_card, roster, answer_key, vehicle, lesson_plan, lesson_materials, feed_photo, unsure.
 Rules:
 - Prefer homework for student worksheets, quizzes, packets, lined paper, math, writing, desk photos of student work.
@@ -1154,17 +1154,18 @@ Rules:
 - lesson_materials: education lesson materials for a class landing (recognize only; surface may not ship yet).
 - feed_photo: class/event photograph meant for a feed post (recognize only; do not auto-post).
 - portrait: a face filling most of the frame, meant as a profile photo. Not a kid in the corner of a worksheet.
-- parent_card: a parent / guardian contact card.
-- student_card: student emergency card or printed student details.
+- parent_card: parent/guardian contact card, family info form, household directory adult row. parentGuessName = adult. studentGuessName = child if shown. fields labels: relationship, phone, email, address, preferred contact, notes. relationship mother|father|guardian|other. Multi-person sheets / family directories with phone or email columns are parent_card, not roster: names[] every person; primary adult parentGuessName; never invent blank phones.
+- student_card: student emergency card or printed student details / health card. studentGuessName required when visible. fields: preferred name|nickname, birthday|dob|date of birth, grade|age, phone, email, address, emergency contact, emergency phone, allergies, health conditions, notes. Emergency contact = separate "emergency contact" (name) and "emergency phone" fields. Nickname in quotes/parens → preferred name. Never invent blank cells.
 - roster: a printed class list or seating chart of many names.
-- unsure ONLY if the image is black, blur, ceiling, or truly not a school paper or person.
+- unsure ONLY if the image is black, blur, ceiling, or truly not a school paper or person (e.g. an empty desk with no paper).
 - Do not pick unsure just because the photo is messy, cropped, or the name is hard to read. That is still homework (unless it is clearly a syllabus / answer key / vehicle / hold intent).
 - For homework, always try to read the student name at the top of the page into studentGuessName (as written). Never invent a student.
-- gaps: 0-3 short skill labels for homework.
-- names: roster names only, 0-40.
-- confidence: 0.6+ when you pick homework/syllabus/roster/portrait/answer_key/vehicle.
+- gaps: 0-3 short skill labels for homework only; else [].
+- fields: real extracted pairs only — never placeholder label "field" or value "value".
+- names: roster or multi-card names only, 0-40.
+- confidence: 0.6+ when you pick homework/syllabus/roster/portrait/answer_key/vehicle/parent_card/student_card.
 - Do not approve, file, or create a student.
-- If the teacher note clearly names an intent (syllabus, answer key, license plate / vehicle, lesson plan, lesson materials, feed photo), that intent MUST win even when the photo is ambiguous.`;
+- If the teacher note clearly names an intent (syllabus, answer key, license plate / vehicle, lesson plan, lesson materials, feed photo, parent card, student card), that intent MUST win even when the photo is ambiguous.`;
 
 async function classifyCapture(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -1260,7 +1261,13 @@ async function classifyCapture(body) {
             label: String(field?.label ?? '').trim(),
             value: String(field?.value ?? '').trim(),
           }))
-          .filter((field) => field.label)
+          .filter((field) => {
+            if (!field.label) return false;
+            const ll = field.label.toLowerCase();
+            const vv = field.value.toLowerCase();
+            if (ll === 'field' && (vv === 'value' || !vv)) return false;
+            return true;
+          })
       : [],
     names: Array.isArray(parsed.names)
       ? parsed.names

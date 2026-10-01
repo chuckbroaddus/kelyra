@@ -1,0 +1,33 @@
+{
+  "source_id": "SC04",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.7,
+  "parentGuessName": null,
+  "studentGuessName": "Harper Lee",
+  "fields": [
+    {
+      "label": "grade",
+      "value": "4"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Alex Lee"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "grade_or_age",
+      "value": "4"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Alex Lee"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

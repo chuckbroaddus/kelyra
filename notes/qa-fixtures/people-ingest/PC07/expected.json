@@ -1,0 +1,41 @@
+{
+  "source_id": "PC07",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.88,
+  "parentGuessName": "Olivia Grant",
+  "studentGuessName": null,
+  "fields": [
+    {
+      "label": "phone",
+      "value": "555-217-6500"
+    },
+    {
+      "label": "address",
+      "value": "250 Harbor Road"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Phone call"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "phone",
+      "value": "555-217-6500"
+    },
+    {
+      "key": "address",
+      "value": "250 Harbor Road"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Phone call"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

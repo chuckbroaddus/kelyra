@@ -1,0 +1,8 @@
+{
+  "kind": "multi",
+  "photo": true,
+  "multi_record": true,
+  "no_hallucinate_empty": [
+    "phone_owen"
+  ]
+}

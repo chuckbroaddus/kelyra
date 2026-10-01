@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Nina Patel",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Arjun Patel",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Guardian",
+        "value": "Nina Patel"
+      },
+      {
+        "label": "Rel",
+        "value": "Mother"
+      },
+      {
+        "label": "Tel",
+        "value": "555-441-7766"
+      },
+      {
+        "label": "E-mail",
+        "value": "nina.patel.home@example.com"
+      },
+      {
+        "label": "Student",
+        "value": "Arjun Patel"
+      }
+    ],
+    "names": [
+      "Nina Patel",
+      "Arjun Patel"
+    ],
+    "note": null
+  }
+}

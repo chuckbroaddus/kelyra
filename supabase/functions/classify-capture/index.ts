@@ -88,16 +88,20 @@ ${teacherNote}`
           { type: 'input_image', image_url: imageUrl, detail: imageDetailFor('cheap') },
           {
             type: 'input_text',
-            text: `Classify this photo for a teacher. JSON only:
-{"intent":"homework","confidence":0.0,"studentGuessId":null,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[{"label":"skill"}],"fields":[{"label":"field","value":"value"}],"names":[],"note":null}
+            text: `Classify this photo for a teacher. JSON only (no markdown):
+{"intent":"homework","confidence":0.0,"studentGuessId":null,"studentGuessName":null,"parentGuessName":null,"draftScore":null,"gaps":[],"fields":[],"names":[],"note":null}
 intent is homework, syllabus, portrait, parent_card, student_card, roster, answer_key, vehicle, lesson_plan, lesson_materials, feed_photo, or unsure. metadata aliases to student_card.
-Never invent a student. Portrait is a face for a profile photo. parent_card / student_card are contact or emergency cards.
+Never invent a student. Never invent missing blank fields. Portrait is a face for a profile photo.
+parent_card: parent/guardian contact card, family info form, directory contact row for an adult. Put the adult name in parentGuessName. Child name (if shown) in studentGuessName. fields = contact facts actually printed (use short labels): relationship, phone, email, address, preferred contact, notes. relationship values: mother|father|guardian|other. Copy phone digits as written. Multi-parent/sibling sheets and family/household directories with phone or email columns: parent_card, NOT roster (roster = a class name list with no contact columns); put every readable person in names[{name,confidence}]; primary adult still parentGuessName; do not invent phones for blank cells.
+student_card: student emergency card, student data/information sheet, health card. studentGuessName = student. fields labels: preferred name|nickname, date of birth|birthday|dob, grade|age|grade or age, phone, email, address, emergency contact|emergency name, emergency phone, allergies, health conditions, notes. Leave fields empty when the cell is blank. Do not invent allergies/DOB/phone. Emergency contact: separate fields "emergency contact" (name only) and "emergency phone". A nickname in quotes or parentheses (Benjamin "Ben" Park) → preferred name field.
 syllabus: class grading policy / category-weight sheet / "how this class grades" (not a student's filled worksheet). Prefer syllabus over homework when the page is policy weights. Assignment rubrics without class weights stay homework or unsure — not syllabus.
 answer_key: teacher answer key / keyed worksheet answers for an assignment (filled or blank key), not a student's graded work to score.
 vehicle: car / license plate photo(s) for Ride check-in — front and/or back plate; may include make/model visible on the vehicle.
 lesson_plan: teacher lesson plan document (recognize only; surface may not ship yet).
 lesson_materials: education lesson materials for a class landing (recognize only; surface may not ship yet).
 feed_photo: class/event photograph meant for a feed post (recognize only; do not auto-post).
+homework: student worksheets/quizzes/packets — not contact cards. No paper, document, or person in frame (empty desk, floor, wall) → unsure, confidence ≤0.3.
+fields must be real extracted pairs only. Never return placeholder label "field" or value "value". gaps only for homework skills (0-3); else [].
 ${noteBlock}
 Roster first names only (id + first name). Guess only from this list:
 ${rosterText || '(none)'}`,
@@ -113,15 +117,33 @@ ${rosterText || '(none)'}`,
       : 'unsure';
     const fromNote = intentFromTeacherNote(teacherNote);
     if (fromNote) intent = fromNote;
+    const rawFields = Array.isArray(parsed.fields) ? parsed.fields : [];
+    const fields = rawFields
+      .map((field: { label?: unknown; value?: unknown }) => ({
+        label: String(field?.label ?? '').trim(),
+        value: String(field?.value ?? '').trim(),
+      }))
+      .filter((field: { label: string; value: string }) => {
+        if (!field.label) return false;
+        const ll = field.label.toLowerCase();
+        const vv = field.value.toLowerCase();
+        if (ll === 'field' && (vv === 'value' || !vv)) return false;
+        if (ll === 'label' && vv === 'value') return false;
+        return true;
+      });
+    const rawGaps = Array.isArray(parsed.gaps) ? parsed.gaps : [];
+    const gaps = rawGaps
+      .map((gap: { label?: unknown }) => ({ label: String(gap?.label ?? '').trim() }))
+      .filter((gap: { label: string }) => gap.label && gap.label.toLowerCase() !== 'skill');
     return Response.json({
       intent,
-      parentGuessName: typeof parsed.parentGuessName === 'string' ? parsed.parentGuessName : null,
+      parentGuessName: typeof parsed.parentGuessName === 'string' ? parsed.parentGuessName.replace(/\s+/g, ' ').trim() || null : null,
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
       studentGuessId: typeof parsed.studentGuessId === 'string' ? parsed.studentGuessId : null,
-      studentGuessName: typeof parsed.studentGuessName === 'string' ? parsed.studentGuessName : null,
+      studentGuessName: typeof parsed.studentGuessName === 'string' ? parsed.studentGuessName.replace(/\s+/g, ' ').trim() || null : null,
       draftScore: typeof parsed.draftScore === 'number' ? parsed.draftScore : null,
-      gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
-      fields: Array.isArray(parsed.fields) ? parsed.fields : [],
+      gaps: intent === 'homework' ? gaps.slice(0, 3) : [],
+      fields,
       names: Array.isArray(parsed.names) ? parsed.names : [],
       note: typeof parsed.note === 'string' ? parsed.note : null,
     });
