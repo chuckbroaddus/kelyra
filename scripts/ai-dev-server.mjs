@@ -413,7 +413,11 @@ Rules:
 - student_id / grade / period / parent_contact: copy only if clearly printed on that row. Otherwise null. Never invent IDs or contacts.
 - parent_contact format when present: "Guardian Name <email-or-phone>".
 - confident=false if the line is unclear, partial, first-name-only, or might not be a student name.
-- 0 to 40 names. Prefer fewer high-quality names over junk.`;
+- 0 to 40 names. Prefer fewer high-quality names over junk.
+- Read each name letter by letter from the image. Never substitute a more common name that looks similar.
+- Smudged, crossed-out, masked with symbols (###, ???), or illegible lines: SKIP them entirely. Do not guess what they might say.
+- A last line cut off by the page edge, or a surname given only as an initial ("Sam K"): include it only with confident=false.
+- Count the rows you can actually read. names.length must never exceed that count. Never add names that are not printed (no names from a "page 2", footer, or your own guess).`;
 
 async function extractRoster(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -423,7 +427,8 @@ async function extractRoster(body) {
     {
       role: 'user',
       content: [
-        { type: 'input_image', image_url: prepared, detail: imageDetailFor('cheap') },
+        // Roster names are dense small text; low detail invents OCR ghosts (eval R3).
+        { type: 'input_image', image_url: prepared, detail: 'high' },
         { type: 'input_text', text: rosterPrompt },
       ],
     },
@@ -449,6 +454,9 @@ async function extractRoster(body) {
     if (/^room\s*\d+/i.test(n)) return true;
     if (/^(mr|ms|mrs|dr|sra|sr|coach)\.?\s+/i.test(n) && n.split(/\s+/).length <= 3) return true;
     if (/^page\s*\d+(\s+of\s+\d+)?$/i.test(n)) return true;
+    // Masked / smudged OCR (symbols, digits) is never a real name.
+    if (/[#?*_\[\]{}<>|\\\/0-9@]/.test(n)) return true;
+    if (/^(continued|cut|smudged|illegible|unknown|n\/a)\b/i.test(lower)) return true;
     if (/^(page|total|totals|continued)\b/i.test(lower) && n.split(/\s+/).length <= 2) return true;
     return false;
   };
@@ -495,7 +503,11 @@ async function extractRoster(body) {
               grade: emptyToNull(row?.grade ?? row?.grade_level),
               period: emptyToNull(row?.period),
               parent_contact: emptyToNull(row?.parent_contact ?? row?.parentContact),
-              confident: row?.confident !== false && name.split(/\s+/).length >= 2,
+              confident:
+                row?.confident !== false &&
+                name.split(/\s+/).length >= 2 &&
+                // Initial-only surname ("Sam K") = partial row.
+                !/\s[A-Za-z]\.?$/.test(name),
             };
           })
           .filter(Boolean)

@@ -1,0 +1,49 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Ara",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Diego",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "George",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Josiah",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Lila",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      }
+    ]
+  }
+}

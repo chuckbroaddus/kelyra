@@ -506,10 +506,18 @@ async function main() {
         result = JSON.parse(fs.readFileSync(outPath, 'utf8'));
       } else {
         process.stdout.write(`… ${entry.id} ${v.variant} `);
-        try {
-          result = await invokeExtract(toDataUrl(v.file), auth.access_token);
-        } catch (err) {
-          result = { status: 0, json: { error: String(err.message || err) } };
+        // Grok capacity 429s surface as ai-dev 500s; retry so a busy model is not scored as a miss.
+        for (let attempt = 0; attempt < 4; attempt++) {
+          try {
+            result = await invokeExtract(toDataUrl(v.file), auth.access_token);
+          } catch (err) {
+            result = { status: 0, json: { error: String(err.message || err) } };
+          }
+          const transient =
+            result.status === 0 ||
+            (result.status >= 500 && /429|capacity|resource-exhausted|timeout|fetch failed/i.test(String(result.json?.error || '')));
+          if (!transient) break;
+          await sleep(8000 * (attempt + 1));
         }
         fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
         if (paceMs > 0) await sleep(paceMs);

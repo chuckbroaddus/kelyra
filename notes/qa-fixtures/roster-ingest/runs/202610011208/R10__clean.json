@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "attendance",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Ava",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Diego",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Jonah",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      },
+      {
+        "name": "Lila",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      }
+    ]
+  }
+}
