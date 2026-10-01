@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(here, '../../..');
+
+function read(rel: string): string {
+  return fs.readFileSync(path.join(root, rel), 'utf8');
+}
+
+test('pickNormalizedPhotos enables multi-select and 20-cap; single pick kept', () => {
+  const src = read('src/lib/media/pickPhoto.ts');
+  assert.match(src, /export async function pickNormalizedPhoto\b/);
+  assert.match(src, /export async function pickNormalizedPhotos\b/);
+  assert.match(src, /allowsMultipleSelection:\s*true/);
+  assert.match(src, /selectionLimit:\s*max/);
+  assert.match(src, /MAX_GRADING_DOC_PAGES/);
+});
+
+test('syllabus + school policy ingest send all pages in one invoke', () => {
+  const syllabus = read('src/app/class/[id]/syllabus.tsx');
+  const school = read('src/app/school/grading-policy/index.tsx');
+  for (const src of [syllabus, school]) {
+    assert.match(src, /uploadGradingDocPages/);
+    assert.match(src, /pickNormalizedPhotos/);
+    assert.match(src, /storage_paths:\s*uploaded\.storage_paths/);
+    assert.match(src, /image_urls:\s*uploaded\.image_urls/);
+    assert.match(src, /readingStatusForPages/);
+    assert.match(src, /MAX_GRADING_DOC_PAGES/);
+  }
+  assert.match(syllabus, /IngestPendingPagesCard/);
+  assert.match(school, /IngestPendingPagesCard/);
+});
+
+test('web fixture hook exposes multi-page __kelyraIngestFromUris', () => {
+  const hook = read('src/lib/ingest/webIngestFixtureHook.ts');
+  assert.match(hook, /__kelyraIngestFromUris/);
+  assert.match(hook, /__kelyraIngestFromUri/);
+});
+
+test('S13 multipage fixture keeps weights on page 2', () => {
+  const expected = JSON.parse(
+    fs.readFileSync(
+      path.join(root, 'notes/qa-fixtures/gradebook-ingest/S13/expected.json'),
+      'utf8',
+    ),
+  );
+  const cats = expected.fields.find((f: { path: string }) => f.path === 'syllabus.categories');
+  assert.ok(cats);
+  assert.equal(cats.evidence.page, 2);
+  assert.equal(cats.value.length, 3);
+  const meta = JSON.parse(
+    fs.readFileSync(
+      path.join(root, 'notes/qa-fixtures/gradebook-ingest/S13/eval-meta.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(meta.multi_page, true);
+  assert.deepEqual(meta.pages, ['page-1.png', 'page-2.png']);
+  for (const name of meta.pages) {
+    assert.ok(
+      fs.existsSync(path.join(root, 'notes/qa-fixtures/gradebook-ingest/S13', name)),
+      name,
+    );
+  }
+});
+
+test('server prompt notes page order; vision uses image_urls only (no PDF rasterize)', () => {
+  const edge = read('supabase/functions/ingest-grading-doc/index.ts');
+  assert.match(edge, /Max 20 pages or images per ingest/);
+  assert.match(edge, /Storage paths \(page order\)/);
+  assert.match(edge, /input_image/);
+  // PDF is mentioned in header comment only — no server-side PDF decode.
+  assert.doesNotMatch(edge, /pdfjs|pdftoppm|rasterizePdf|application\/pdf/);
+  const clientDoc = read('src/lib/ingest/gradingDocPages.ts');
+  assert.match(clientDoc, /multi-page PDF is NOT rasterized/i);
+});

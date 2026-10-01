@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-10-01T02:16:04.929Z",
-  "count": 25,
+  "count": 26,
   "cases": [
     {
       "id": "S01",
@@ -461,6 +461,30 @@
         "real-photo"
       ],
       "photo": false
+    },
+    {
+      "id": "S13",
+      "kind": "syllabus",
+      "files": [
+        "expected.json",
+        "notes.md",
+        "eval-meta.json",
+        "source.html",
+        "page-1.png",
+        "page-2.png"
+      ],
+      "fields_exercised": [
+        "syllabus.title",
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.floor"
+      ],
+      "srs_refs": [
+        "multi-page",
+        "FR-AI-24"
+      ],
+      "photo": false,
+      "multi_page": true
     }
   ]
 }
