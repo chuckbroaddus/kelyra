@@ -1,0 +1,51 @@
+{
+  "rough": true,
+  "rough_kind": "annotated",
+  "weights_sum": 100,
+  "stale_printed": {
+    "syllabus.categories": {
+      "Tests": 40,
+      "Labs": 30
+    },
+    "syllabus.late_rule": {
+      "amount": 10
+    }
+  },
+  "effects": [
+    "pen_strikeouts",
+    "pen_overrides",
+    "mild_keystone",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {},
+  "degrade": {
+    "seed": 5101,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "white_desk",
+    "scale": 0.88,
+    "rotate": 2.5,
+    "keystone": {
+      "top": 0.94,
+      "bottom": 1
+    },
+    "jitter": 0.003,
+    "light": {
+      "gradient": [
+        0.3,
+        -0.3
+      ],
+      "amount": 0.12,
+      "vignette": 0.25
+    },
+    "noise": 4,
+    "jpeg": 70
+  }
+}

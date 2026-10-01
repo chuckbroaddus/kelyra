@@ -57,8 +57,36 @@ async function main() {
     const notes = fs.readFileSync(path.join(dir, 'notes.md'), 'utf8');
     const wantPhoto = /photo/i.test(notes) || fs.existsSync(path.join(dir, 'photo.jpg'));
     // Always re-render for consistency unless SKIP_EXISTING=1 and clean exists
+    const only = (process.env.RENDER_ONLY || '').split(',').filter(Boolean);
+    if (only.length && !only.includes(id)) continue;
     if (process.env.SKIP_EXISTING === '1' && fs.existsSync(png)) {
       console.log('skip', id);
+      continue;
+    }
+    const metaPath0 = path.join(dir, 'eval-meta.json');
+    const meta0 = fs.existsSync(metaPath0) ? JSON.parse(fs.readFileSync(metaPath0, 'utf8')) : {};
+    if (meta0.rough) {
+      // Rough cases: own viewport + DPR, GT boxes → layout.json for degrade-gradebook-fixtures.mjs.
+      const vp = meta0.viewport || { w: 840, h: 1100 };
+      const rp = await browser.newPage({ viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: meta0.dsf || 1.5 });
+      await rp.goto(pathToFileURL(html).href, { waitUntil: 'load', timeout: 15000 });
+      await rp.screenshot({ path: png, type: 'png', fullPage: false });
+      const layout = await rp.evaluate(() => {
+        const items = [];
+        document.querySelectorAll('[data-gt-field]').forEach((el) => {
+          const b = el.getBoundingClientRect();
+          items.push({
+            kind: 'field',
+            name: el.dataset.gtFor || el.dataset.gtField,
+            field: el.dataset.gtField,
+            box: [b.left, b.top, b.width, b.height].map((v) => Math.round(v * 10) / 10),
+          });
+        });
+        return { viewport: { w: window.innerWidth, h: window.innerHeight }, items };
+      });
+      fs.writeFileSync(path.join(dir, 'layout.json'), JSON.stringify(layout, null, 2) + '\n');
+      await rp.close();
+      console.log('ok rough', id, fs.statSync(png).size);
       continue;
     }
     await page.goto(pathToFileURL(html).href, { waitUntil: 'load', timeout: 15000 });

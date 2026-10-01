@@ -1,0 +1,65 @@
+{
+  "source_id": "P05",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "syllabus_policy",
+  "overall_confidence": 0.88,
+  "fields": [
+    {
+      "path": "syllabus.categories",
+      "value": [
+        {
+          "key": "major",
+          "label": "Major",
+          "weight_percent": 60
+        },
+        {
+          "key": "minor",
+          "label": "Minor",
+          "weight_percent": 40
+        }
+      ],
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Major grades 60%",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.late_rule",
+      "value": {
+        "type": "flat",
+        "amount": 20,
+        "unit": "points"
+      },
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "flat 20 points",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "syllabus.retake",
+      "value": {
+        "method": "higher_of",
+        "cap": 80
+      },
+      "confidence": 0.85,
+      "evidence": {
+        "quote": "higher score counts, capped at 80",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "ambiguities": [],
+  "warnings": []
+}

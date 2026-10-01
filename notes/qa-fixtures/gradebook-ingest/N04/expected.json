@@ -1,0 +1,16 @@
+{
+  "source_id": "N04",
+  "wizard": "syllabus",
+  "kind": "syllabus",
+  "document_kind_guess": "not_a_policy",
+  "overall_confidence": 0.2,
+  "fields": [],
+  "ambiguities": [],
+  "warnings": [
+    {
+      "code": "not_a_grading_document",
+      "message": "Fundraiser flyer, not a grading policy.",
+      "severity": "block"
+    }
+  ]
+}
