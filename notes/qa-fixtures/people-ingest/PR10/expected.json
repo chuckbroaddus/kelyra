@@ -1,0 +1,70 @@
+{
+  "source_id": "PR10",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Gabriel Fontaine",
+  "studentGuessName": "Elise Fontaine",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "father"
+    },
+    {
+      "label": "phone",
+      "value": "555-725-0063"
+    },
+    {
+      "label": "email",
+      "value": "gfontaine@example.com"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Email"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "father"
+    },
+    {
+      "key": "phone",
+      "value": "555-725-0063"
+    },
+    {
+      "key": "email",
+      "value": "gfontaine@example.com"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Email"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Gabriel Fontaine",
+      "relationship": "father",
+      "phone": "555-725-0063",
+      "email": "gfontaine@example.com"
+    },
+    {
+      "role": "student",
+      "name": "Elise Fontaine"
+    }
+  ],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [
+        "email"
+      ],
+      "eye": "glare washes email after gfontaine@ex"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Nathaniel Osei-Bonsu",
+      "field": null,
+      "box": [
+        122.1,
+        124.6,
+        213.4,
+        41.9
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "preferred_name",
+      "box": [
+        587.7,
+        125,
+        46.7,
+        41.1
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "box": [
+        124.8,
+        177.6,
+        122.1,
+        40.8
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "box": [
+        585,
+        175.9,
+        19.6,
+        42.2
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "box": [
+        91.5,
+        272.1,
+        193,
+        43.8
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "box": [
+        535.8,
+        272.8,
+        189.6,
+        43.4
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "box": [
+        105.2,
+        370.6,
+        124.8,
+        41.7
+      ]
+    }
+  ]
+}

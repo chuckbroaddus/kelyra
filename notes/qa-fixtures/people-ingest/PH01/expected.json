@@ -1,0 +1,80 @@
+{
+  "source_id": "PH01",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Carmen Ibarra",
+  "studentGuessName": "Sofia Ibarra",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-208-4471"
+    },
+    {
+      "label": "email",
+      "value": "carmen.ibarra@example.com"
+    },
+    {
+      "label": "address",
+      "value": "77 Poplar Ct"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-208-4471"
+    },
+    {
+      "key": "email",
+      "value": "carmen.ibarra@example.com"
+    },
+    {
+      "key": "address",
+      "value": "77 Poplar Ct"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Carmen Ibarra",
+      "relationship": "mother",
+      "phone": "555-208-4471",
+      "email": "carmen.ibarra@example.com"
+    },
+    {
+      "role": "parent",
+      "name": "Luis Ibarra",
+      "relationship": "father",
+      "phone": "555-208-4490"
+    },
+    {
+      "role": "student",
+      "name": "Sofia Ibarra"
+    }
+  ],
+  "names": [
+    {
+      "name": "Carmen Ibarra",
+      "confidence": 0.85
+    },
+    {
+      "name": "Luis Ibarra",
+      "confidence": 0.85
+    },
+    {
+      "name": "Sofia Ibarra",
+      "confidence": 0.85
+    }
+  ],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "rotation_12deg",
+    "glare_hotspot",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3202,
+    "background": "wood",
+    "scale": 0.8,
+    "rotate": 12,
+    "keystone": {
+      "top": 0.94
+    },
+    "jitter": 0.004,
+    "glare": [
+      {
+        "target": "primary",
+        "field": "allergies",
+        "fx": 0.35,
+        "fy": 0.5,
+        "rx": 0.1,
+        "ry": 0.032,
+        "angle": 12,
+        "strength": 2.1
+      }
+    ],
+    "light": {
+      "gradient": [
+        -0.3,
+        0.5
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 5,
+    "jpeg": 55
+  }
+}

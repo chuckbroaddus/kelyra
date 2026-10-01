@@ -1,0 +1,205 @@
+{
+  "id": "PR02",
+  "frame": [
+    1500,
+    2000
+  ],
+  "page": [
+    840,
+    1100
+  ],
+  "page_corners": [
+    [
+      359,
+      121
+    ],
+    [
+      1466,
+      345
+    ],
+    [
+      1171,
+      1889
+    ],
+    [
+      2,
+      1644
+    ]
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Imani Brooks-Hale",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        699,
+        334,
+        845,
+        378
+      ],
+      "page_box": [
+        277,
+        101,
+        123,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "preferred_name",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        681,
+        383,
+        722,
+        406
+      ],
+      "page_box": [
+        277,
+        139,
+        33,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        673,
+        435,
+        763,
+        468
+      ],
+      "page_box": [
+        277,
+        177,
+        75,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        656,
+        484,
+        669,
+        502
+      ],
+      "page_box": [
+        277,
+        215,
+        8,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        652,
+        537,
+        764,
+        574
+      ],
+      "page_box": [
+        277,
+        253,
+        93,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "inframe": 1,
+      "visible": 0.75,
+      "suggest": "uncertain",
+      "frame_box": [
+        641,
+        588,
+        753,
+        626
+      ],
+      "page_box": [
+        277,
+        291,
+        93,
+        17
+      ],
+      "reasons": {
+        "glare": 6
+      }
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "inframe": 1,
+      "visible": 0,
+      "suggest": "absent",
+      "frame_box": [
+        637,
+        641,
+        860,
+        702
+      ],
+      "page_box": [
+        277,
+        329,
+        188,
+        17
+      ],
+      "reasons": {
+        "glare": 24
+      }
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "health_conditions",
+      "inframe": 1,
+      "visible": 0.75,
+      "suggest": "uncertain",
+      "frame_box": [
+        617,
+        691,
+        715,
+        726
+      ],
+      "page_box": [
+        277,
+        367,
+        81,
+        17
+      ],
+      "reasons": {
+        "glare": 6
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "handwritten": true,
+  "multi_adult": true,
+  "multi_record": true,
+  "rough": true,
+  "effects": [
+    "handwritten_fill",
+    "keystone",
+    "hand_phone_shadow",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 5303,
+    "background": "laminate",
+    "scale": 0.86,
+    "rotate": 2,
+    "keystone": {
+      "top": 0.86,
+      "bottom": 1.02
+    },
+    "jitter": 0.006,
+    "shadow": {
+      "cx": 0.74,
+      "cy": 0.3,
+      "rx": 0.13,
+      "ry": 0.2,
+      "angle": 10,
+      "armTo": [
+        1.2,
+        0.35
+      ],
+      "armWidth": 0.22,
+      "strength": 0.55,
+      "soft": 0.03
+    },
+    "light": {
+      "gradient": [
+        0.3,
+        0.3
+      ],
+      "amount": 0.14,
+      "vignette": 0.3
+    },
+    "noise": 7,
+    "jpeg": 50
+  }
+}

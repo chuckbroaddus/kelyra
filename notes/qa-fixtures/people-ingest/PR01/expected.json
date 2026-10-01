@@ -1,0 +1,76 @@
+{
+  "source_id": "PR01",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Renata Silva",
+  "studentGuessName": "Mateo Silva",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-274-3190"
+    },
+    {
+      "label": "email",
+      "value": "renata.silva@example.com"
+    },
+    {
+      "label": "address",
+      "value": "1187 Juniper St, Apt 4"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Text message"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-274-3190"
+    },
+    {
+      "key": "email",
+      "value": "renata.silva@example.com"
+    },
+    {
+      "key": "address",
+      "value": "1187 Juniper St, Apt 4"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Text message"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Renata Silva",
+      "relationship": "mother",
+      "phone": "555-274-3190",
+      "email": "renata.silva@example.com"
+    },
+    {
+      "role": "student",
+      "name": "Mateo Silva"
+    }
+  ],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [],
+      "eye": "dim and blurred but every value legible"
+    }
+  }
+}

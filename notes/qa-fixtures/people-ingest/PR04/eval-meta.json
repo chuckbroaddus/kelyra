@@ -1,0 +1,53 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "trifold_creases",
+    "cut_off_right_edge",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3404,
+    "background": "laminate",
+    "scale": 1.02,
+    "rotate": 1.5,
+    "offset": [
+      0.5,
+      0.01
+    ],
+    "jitter": 0.003,
+    "creases": [
+      {
+        "at": [
+          0.5,
+          0.34
+        ],
+        "angle": 0.5,
+        "shift": 1.6,
+        "dark": 0.4,
+        "panel": 0.95
+      },
+      {
+        "at": [
+          0.5,
+          0.67
+        ],
+        "angle": -0.4,
+        "shift": 1.4,
+        "dark": 0.38,
+        "panel": 0.97
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.3
+      ],
+      "amount": 0.12,
+      "vignette": 0.25
+    },
+    "noise": 5,
+    "jpeg": 58
+  }
+}

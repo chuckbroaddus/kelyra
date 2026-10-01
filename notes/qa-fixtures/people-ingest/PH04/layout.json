@@ -1,0 +1,74 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Isabella Thornton",
+      "field": null,
+      "box": [
+        101,
+        91.9,
+        209.1,
+        41.1
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "box": [
+        660.6,
+        93.8,
+        16.8,
+        38.3
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "box": [
+        103.8,
+        144.1,
+        139.8,
+        40.7
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "box": [
+        91.7,
+        242.3,
+        164.5,
+        39.3
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "box": [
+        280.7,
+        297.8,
+        162.9,
+        35.2
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "box": [
+        105.8,
+        392.3,
+        117.7,
+        37.5
+      ]
+    }
+  ]
+}

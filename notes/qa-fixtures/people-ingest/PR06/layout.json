@@ -1,0 +1,85 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Hana Yoshida",
+      "field": null,
+      "box": [
+        276.7,
+        101,
+        92.6,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "box": [
+        276.7,
+        139,
+        75.1,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "box": [
+        276.7,
+        177,
+        8.3,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "box": [
+        276.7,
+        215,
+        102.8,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "health_conditions",
+      "box": [
+        276.7,
+        253,
+        195.1,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "box": [
+        276.7,
+        291,
+        90.1,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "box": [
+        276.7,
+        329,
+        93.4,
+        17
+      ]
+    }
+  ]
+}

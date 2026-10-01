@@ -1,0 +1,72 @@
+{
+  "source_id": "PR09",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.85,
+  "parentGuessName": null,
+  "studentGuessName": "Tobias Lindgren",
+  "fields": [
+    {
+      "label": "preferred name",
+      "value": "Toby"
+    },
+    {
+      "label": "date of birth",
+      "value": "2012-11-30"
+    },
+    {
+      "label": "grade",
+      "value": "8"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Astrid Lindgren-Moe"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-390-7751"
+    },
+    {
+      "label": "allergies",
+      "value": "Dairy"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "preferred_name",
+      "value": "Toby"
+    },
+    {
+      "key": "birthday",
+      "value": "2012-11-30"
+    },
+    {
+      "key": "grade_or_age",
+      "value": "8"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Astrid Lindgren-Moe"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-390-7751"
+    },
+    {
+      "key": "allergies",
+      "value": "Dairy"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [],
+      "eye": "visibility.json flagged birthday absent(0.17) under the coffee ring, but by eye 11/30/2012 reads through the stain so kept certain"
+    }
+  }
+}

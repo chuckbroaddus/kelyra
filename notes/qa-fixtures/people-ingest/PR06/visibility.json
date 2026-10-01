@@ -1,0 +1,178 @@
+{
+  "id": "PR06",
+  "frame": [
+    1500,
+    2000
+  ],
+  "page": [
+    840,
+    1100
+  ],
+  "page_corners": [
+    [
+      95,
+      202
+    ],
+    [
+      1355,
+      156
+    ],
+    [
+      1409,
+      1800
+    ],
+    [
+      145,
+      1844
+    ]
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Hana Yoshida",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        523,
+        337,
+        645,
+        358
+      ],
+      "page_box": [
+        277,
+        101,
+        93,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        523,
+        394,
+        623,
+        415
+      ],
+      "page_box": [
+        277,
+        139,
+        75,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        519,
+        454,
+        530,
+        472
+      ],
+      "page_box": [
+        277,
+        177,
+        8,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        530,
+        506,
+        665,
+        528
+      ],
+      "page_box": [
+        277,
+        215,
+        103,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "health_conditions",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        540,
+        558,
+        797,
+        584
+      ],
+      "page_box": [
+        277,
+        253,
+        195,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        532,
+        620,
+        651,
+        641
+      ],
+      "page_box": [
+        277,
+        291,
+        90,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        534,
+        677,
+        657,
+        698
+      ],
+      "page_box": [
+        277,
+        329,
+        93,
+        17
+      ],
+      "reasons": {}
+    }
+  ]
+}

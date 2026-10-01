@@ -2,6 +2,24 @@
 /**
  * Live people-ingest eval against classify-capture.
  *   node scripts/eval-people-ingest.mjs
+ *
+ * Variants per case: clean.png, photo.jpg (mild), rough.jpg (degrade-people-fixtures.mjs) and
+ * rough-crop.jpg (crop-people-rough.mjs resolution probe, variant `rough_crop`).
+ *   EVAL_ONLY=PR01,PH03   limit cases        EVAL_SKIP_ROUGH=1   skip rough + rough_crop
+ *   EVAL_RESUME_STAMP=…   reuse cached responses in an existing run dir (only HTTP 200, no `error`)
+ *
+ * Quota: a 429 / RESOURCE_EXHAUSTED (e.g. Gemini free-tier daily cap) STOPS the run (exit 3) instead of
+ * being scored as misses; it prints the exact resume command. 503 "high demand" is retried
+ * (EVAL_PEOPLE_MAX_ATTEMPTS, default 3). Error responses are never cached as `<case>__<variant>.json`
+ * (they go to `<case>__<variant>.error.json`, which resume ignores).
+ *   AI_DEV_URL=http://127.0.0.1:<port>   score the local `npm run ai:dev` classify route (Grok OAuth,
+ *                         scripts/ai-dev-server.mjs prompt) instead of the deployed classify-capture Edge
+ *
+ * Honest GT for degraded images (expected._eval.rough_gt, rough/rough_crop variants only):
+ *   absent    → not scored; any value read anyway = hallucinated (absent_in_rough)
+ *   uncertain → missing = uncertain_skipped (not scored); wrong = hallucinated (uncertain_wrong)
+ * Multi-adult (eval-meta.multi_adult): adult2+ name / phone / email must appear somewhere in the
+ * response (names[], fields[], note) — scores the known "only the first adult gets filled" gap.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -134,8 +152,60 @@ function valuesMatch(key, exp, act) {
   return false;
 }
 
-function scoreCase(expected, actual, meta = {}) {
+/** adult2+ coverage rows: does the response carry the non-primary adults at all? */
+function adultRows(expected, actual) {
+  const adults = (expected.records || []).filter((r) => r.role === 'parent');
+  if (adults.length < 2) return [];
+  const actNames = (actual?.names || []).map((n) => (typeof n === 'string' ? n : n?.name)).filter(Boolean);
+  const texts = [
+    ...(actual?.fields || []).map((f) => `${f?.label ?? ''} ${f?.value ?? ''}`),
+    ...actNames,
+    actual?.parentGuessName || '',
+    actual?.note || '',
+  ];
+  const blob = texts.map(normText).join(' | ');
+  const digits = texts.map(normPhone);
+  const out = [];
+  adults.slice(1).forEach((a, i) => {
+    const k = `adult${i + 2}`;
+    const nameHit = actNames.some((n) => namesMatch(a.name, n)) || blob.includes(normText(a.name));
+    out.push({ key: `${k}.name`, path: `${k}.name`, verdict: nameHit ? 'correct' : 'missing', expected: a.name, actual: nameHit ? a.name : null });
+    if (a.phone) {
+      const d = normPhone(a.phone).slice(-7);
+      const hit = digits.some((x) => x.includes(d));
+      out.push({ key: `${k}.phone`, path: `${k}.phone`, verdict: hit ? 'correct' : 'missing', expected: a.phone, actual: hit ? a.phone : null });
+    }
+    if (a.email) {
+      const hit = blob.includes(normText(a.email));
+      out.push({ key: `${k}.email`, path: `${k}.email`, verdict: hit ? 'correct' : 'missing', expected: a.email, actual: hit ? a.email : null });
+    }
+  });
+  return out;
+}
+
+function scoreCase(expected, actual, meta = {}, variant = 'clean') {
   const rows = [];
+  const roughVariant = variant === 'rough' || variant === 'rough_crop';
+  const rg = roughVariant ? meta.rough_gt || {} : {};
+  const absent = new Set(rg.absent || []);
+  const uncertain = new Set(rg.uncertain || []);
+  const crossed = (meta.crossed_out || []).map(normPhone);
+  /** route one scored row through the rough-GT gate (absent / uncertain) */
+  const gate = (key, row) => {
+    const hasAct = row.actual != null && String(row.actual).trim() !== '';
+    if (absent.has(key)) {
+      if (hasAct) rows.push({ ...row, verdict: 'hallucinated', expected: null, detail: 'absent_in_rough' });
+      return;
+    }
+    if (uncertain.has(key)) {
+      if (row.verdict === 'missing') return rows.push({ ...row, verdict: 'uncertain_skipped' });
+      if (row.verdict === 'wrong') return rows.push({ ...row, verdict: 'hallucinated', detail: 'uncertain_wrong' });
+    }
+    if (row.verdict === 'wrong' && crossed.length && crossed.some((c) => c && normPhone(row.actual).includes(c.slice(-7)))) {
+      return rows.push({ ...row, detail: 'took_crossed_out_value' });
+    }
+    rows.push(row);
+  };
   const actIntent = actual?.intent === 'metadata' ? 'student_card' : actual?.intent;
   const accept = expected.accept_intents || (expected.reject ? expected.accept_intents : null);
 
@@ -165,7 +235,7 @@ function scoreCase(expected, actual, meta = {}) {
   });
 
   if (expected.parentGuessName) {
-    rows.push({
+    gate('parentGuessName', {
       path: 'parentGuessName',
       verdict: namesMatch(expected.parentGuessName, actual?.parentGuessName) ? 'correct' : actual?.parentGuessName ? 'wrong' : 'missing',
       expected: expected.parentGuessName,
@@ -173,7 +243,7 @@ function scoreCase(expected, actual, meta = {}) {
     });
   }
   if (expected.studentGuessName) {
-    rows.push({
+    gate('studentGuessName', {
       path: 'studentGuessName',
       verdict: namesMatch(expected.studentGuessName, actual?.studentGuessName)
         ? 'correct'
@@ -198,11 +268,11 @@ function scoreCase(expected, actual, meta = {}) {
   for (const [key, expVal] of Object.entries(expMapped)) {
     const actVal = actMapped[key];
     if (valuesMatch(key, expVal, actVal)) {
-      rows.push({ path: `field.${key}`, verdict: 'correct', expected: expVal, actual: actVal });
+      gate(key, { path: `field.${key}`, verdict: 'correct', expected: expVal, actual: actVal });
     } else if (actVal == null || actVal === '') {
-      rows.push({ path: `field.${key}`, verdict: 'missing', expected: expVal, actual: null });
+      gate(key, { path: `field.${key}`, verdict: 'missing', expected: expVal, actual: null });
     } else {
-      rows.push({ path: `field.${key}`, verdict: 'wrong', expected: expVal, actual: actVal });
+      gate(key, { path: `field.${key}`, verdict: 'wrong', expected: expVal, actual: actVal });
     }
   }
 
@@ -257,6 +327,10 @@ function scoreCase(expected, actual, meta = {}) {
       actual: actNames,
       detail: `${hit}/${expected.names.length}`,
     });
+  }
+
+  if (meta.multi_adult) {
+    for (const r of adultRows(expected, actual)) gate(r.key, r);
   }
 
   return rows;
@@ -365,6 +439,24 @@ async function signIn(env, personaName) {
   return { sb, session: data.session, url, anon };
 }
 
+class QuotaExhaustedError extends Error {}
+
+/** hard quota (429 / RESOURCE_EXHAUSTED / "exceeded your current quota") — stop, never retry-spin */
+function isHardQuota(result) {
+  const t = JSON.stringify(result || {}).toLowerCase();
+  return (
+    result?.status === 429 ||
+    t.includes('resource_exhausted') ||
+    t.includes('exceeded your current quota') ||
+    t.includes(' 429 ') ||
+    t.includes('failed: 429')
+  );
+}
+
+function isOkResponse(result) {
+  return result?.status === 200 && result.json && typeof result.json === 'object' && !result.json.error;
+}
+
 function isQuotaExhausted(result) {
   const t = JSON.stringify(result || {}).toLowerCase();
   return (
@@ -379,8 +471,10 @@ function isQuotaExhausted(result) {
   );
 }
 
+const AI_DEV_URL = (process.env.AI_DEV_URL || '').trim().replace(/\/$/, '');
+
 async function invokeClassifyOnce({ url, anon, session, imageUrl, teacherNote }) {
-  const endpoint = `${url.replace(/\/$/, '')}/functions/v1/classify-capture`;
+  const endpoint = AI_DEV_URL ? `${AI_DEV_URL}/classify-capture` : `${url.replace(/\/$/, '')}/functions/v1/classify-capture`;
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -405,7 +499,7 @@ async function invokeClassifyOnce({ url, anon, session, imageUrl, teacherNote })
 }
 
 async function invokeClassify(args) {
-  const maxAttempts = Number(process.env.EVAL_PEOPLE_MAX_ATTEMPTS || 5);
+  const maxAttempts = Number(process.env.EVAL_PEOPLE_MAX_ATTEMPTS || 3);
   const paceMs = Number(process.env.EVAL_PEOPLE_PACE_MS || 4000);
   const baseBackoffMs = Number(process.env.EVAL_PEOPLE_BACKOFF_MS || 45000);
   let last;
@@ -415,17 +509,27 @@ async function invokeClassify(args) {
     } catch (err) {
       last = { status: 0, json: { error: String(err.message || err) } };
     }
+    if (isHardQuota(last)) throw new QuotaExhaustedError(String(last.json?.error || 'quota exhausted').slice(0, 300));
     if (!isQuotaExhausted(last)) {
       if (paceMs > 0) await sleep(paceMs);
       return last;
     }
     if (attempt >= maxAttempts) break;
     const wait = baseBackoffMs * attempt;
-    process.stdout.write(`(429 retry ${attempt}/${maxAttempts} wait ${Math.round(wait / 1000)}s) `);
+    process.stdout.write(`(503 retry ${attempt}/${maxAttempts} wait ${Math.round(wait / 1000)}s) `);
     await sleep(wait);
   }
   if (paceMs > 0) await sleep(paceMs);
   return last;
+}
+
+function roughImage(caseDir) {
+  const p = path.join(caseDir, 'rough.jpg');
+  return fs.existsSync(p) ? { file: p, variant: 'rough' } : null;
+}
+function cropImage(caseDir) {
+  const p = path.join(caseDir, 'rough-crop.jpg');
+  return fs.existsSync(p) ? { file: p, variant: 'rough_crop' } : null;
 }
 
 function pickImage(caseDir, preferPhoto) {
@@ -454,24 +558,43 @@ async function main() {
   console.log('run', stamp, 'cases', manifest.cases.length);
   fs.writeFileSync(
     path.join(runDir, 'context.json'),
-    JSON.stringify({ stamp, case_count: manifest.cases.length, persona: 'office|teacher' }, null, 2),
+    JSON.stringify(
+      {
+        stamp,
+        case_count: manifest.cases.length,
+        persona: 'office|teacher',
+        target: AI_DEV_URL ? 'ai-dev (scripts/ai-dev-server.mjs classify route, Grok OAuth)' : 'edge classify-capture',
+        only: (process.env.EVAL_ONLY || '') || null,
+      },
+      null,
+      2,
+    ),
   );
 
   const perDoc = [];
   const allFieldRows = [];
 
+  const only = (process.env.EVAL_ONLY || '').split(',').filter(Boolean);
   for (const entry of manifest.cases) {
+    if (only.length && !only.includes(entry.id)) continue;
     const caseDir = path.join(CORPUS, entry.id);
     const expected = JSON.parse(fs.readFileSync(path.join(caseDir, 'expected.json'), 'utf8'));
     let meta = {};
     const metaPath = path.join(caseDir, 'eval-meta.json');
     if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    if (expected._eval) meta = { ...meta, ...expected._eval };
 
     const variants = [];
     const clean = pickImage(caseDir, false);
     if (clean) variants.push(clean);
     const photo = pickImage(caseDir, true);
     if (photo && photo.file !== clean?.file) variants.push(photo);
+    if (process.env.EVAL_SKIP_ROUGH !== '1') {
+      const rough = roughImage(caseDir);
+      if (rough) variants.push(rough);
+      const crop = cropImage(caseDir);
+      if (crop) variants.push(crop);
+    }
     if (!variants.length) {
       console.warn('skip no image', entry.id);
       continue;
@@ -485,10 +608,7 @@ async function main() {
         fs.existsSync(outPath) &&
         (() => {
           try {
-            const prev = JSON.parse(fs.readFileSync(outPath, 'utf8'));
-            if (isQuotaExhausted(prev)) return false;
-            if (!prev.json || typeof prev.json !== 'object') return false;
-            return true;
+            return isOkResponse(JSON.parse(fs.readFileSync(outPath, 'utf8')));
           } catch {
             return false;
           }
@@ -506,25 +626,64 @@ async function main() {
             imageUrl: toDataUrl(v.file),
           });
         } catch (err) {
+          if (err instanceof QuotaExhaustedError) {
+            const env = [
+              AI_DEV_URL ? `AI_DEV_URL=${AI_DEV_URL}` : '',
+              process.env.EVAL_ONLY ? `EVAL_ONLY=${process.env.EVAL_ONLY}` : '',
+              process.env.EVAL_SKIP_ROUGH ? `EVAL_SKIP_ROUGH=${process.env.EVAL_SKIP_ROUGH}` : '',
+              `EVAL_RESUME_STAMP=${stamp}`,
+            ]
+              .filter(Boolean)
+              .join(' ');
+            console.log(`\nQUOTA EXHAUSTED at ${entry.id} ${v.variant} — stopping (not scored).`);
+            console.log('  ', err.message.split('\n')[0]);
+            console.log(`resume: ${env} node scripts/eval-people-ingest.mjs`);
+            fs.writeFileSync(
+              path.join(runDir, 'STOPPED_QUOTA.json'),
+              JSON.stringify({ at: `${entry.id}__${v.variant}`, done: perDoc.length, error: err.message, resume: `${env} node scripts/eval-people-ingest.mjs` }, null, 2),
+            );
+            process.exit(3);
+          }
           result = { status: 0, json: { error: String(err.message || err) } };
         }
-        fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
+        // never cache an error response under the cache name (resume re-asks it)
+        if (isOkResponse(result)) {
+          fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
+          const stale = outPath.replace(/\.json$/, '.error.json');
+          if (fs.existsSync(stale)) fs.renameSync(stale, path.join(runDir, `.${path.basename(stale)}.resolved`));
+        } else {
+          fs.writeFileSync(outPath.replace(/\.json$/, '.error.json'), JSON.stringify(result, null, 2));
+        }
       }
       const actual = result.json?.error && !result.json?.intent ? result.json : result.json;
-      const fieldScores = scoreCase(expected, actual, meta);
+      const fieldScores = scoreCase(expected, actual, meta, v.variant);
       const sum = summarize(fieldScores);
       allFieldRows.push(...fieldScores.map((r) => ({ ...r, doc: entry.id, variant: v.variant })));
+      // adult2+ coverage is scored only on multi_adult cases; legacy MP01-style sheets get it as info
+      const adults = adultRows(expected, actual);
+      const adultScored = fieldScores.filter((r) => /^adult\d+\./.test(r.path) && r.verdict !== 'uncertain_skipped');
+      const adultBasis = meta.multi_adult ? adultScored : adults;
       perDoc.push({
         id: entry.id,
         kind: entry.kind,
         variant: v.variant,
+        handwritten: Boolean(meta.handwritten),
+        rough_case: Boolean(meta.rough),
+        multi_adult: Boolean(meta.multi_adult),
+        negative: entry.kind === 'negative' || Boolean(meta.negative),
+        effects: meta.effects || [],
         http_status: result.status,
         intent: actual?.intent ?? null,
+        intent_ok: fieldScores[0]?.verdict === 'correct',
+        doc_exact: sum.scored > 0 && sum.counts.correct === sum.scored,
         field_accuracy: sum.accuracy,
+        hallucinations: sum.counts.hallucinated,
+        adult_rows: adultBasis.length,
+        adult_hits: adultBasis.filter((r) => r.verdict === 'correct').length,
         counts: sum.counts,
         fields: fieldScores,
       });
-      console.log((sum.accuracy * 100).toFixed(0) + '%');
+      console.log((sum.accuracy * 100).toFixed(0) + '%', sum.counts.hallucinated ? `h=${sum.counts.hallucinated}` : '');
     }
   }
 
@@ -540,9 +699,14 @@ async function main() {
     clean_accuracy: avg(perDoc.filter((d) => d.variant === 'clean')),
     photo_accuracy: avg(perDoc.filter((d) => d.variant === 'photo')),
     hallucinations: hall,
+    buckets: bucketize(perDoc),
+    worst: worstDocs(perDoc, 8),
     documents: perDoc,
     field_totals: summarize(allFieldRows).counts,
   };
+  const stoppedMarker = path.join(runDir, 'STOPPED_QUOTA.json');
+  if (fs.existsSync(stoppedMarker)) fs.renameSync(stoppedMarker, path.join(runDir, 'resumed-after-quota.json'));
+  score.errors = perDoc.filter((d) => d.http_status !== 200).map((d) => `${d.id}:${d.variant}:${d.http_status}`);
   fs.writeFileSync(path.join(runDir, 'score.json'), JSON.stringify(score, null, 2));
   console.log('score', path.join(runDir, 'score.json'));
   console.log(
@@ -557,6 +721,76 @@ async function main() {
     'hallucinations',
     hall,
   );
+  printBuckets(score.buckets);
+  console.log('worst');
+  for (const w of score.worst) console.log(' ', w.id, w.variant, (w.field_accuracy * 100).toFixed(0) + '%', `h=${w.hallucinations}`, w.misses.join('; '));
+}
+
+/** clean / mild photo / rough / handwritten / multi-adult / negative breakdown (+ crop probe). */
+function bucketize(docs) {
+  const cropIds = new Set(docs.filter((d) => d.variant === 'rough_crop').map((d) => d.id));
+  const legacy = (d) => !d.rough_case && !d.handwritten && !d.multi_adult && !/^N0[45]$/.test(d.id);
+  const pos = (d) => !d.negative;
+  const defs = {
+    all_scored: (d) => d.variant !== 'rough_crop',
+    legacy_clean_photo: (d) => legacy(d) && (d.variant === 'clean' || d.variant === 'photo'),
+    clean: (d) => pos(d) && d.variant === 'clean' && !d.handwritten,
+    mild_photo: (d) => pos(d) && d.variant === 'photo',
+    rough: (d) => pos(d) && d.variant === 'rough' && !d.handwritten,
+    handwritten: (d) => pos(d) && d.handwritten && d.variant !== 'rough_crop',
+    handwritten_clean: (d) => pos(d) && d.handwritten && d.variant === 'clean',
+    handwritten_rough: (d) => pos(d) && d.handwritten && d.variant === 'rough',
+    multi_adult: (d) => d.multi_adult && d.variant !== 'rough_crop',
+    multi_adult_clean: (d) => d.multi_adult && d.variant === 'clean',
+    multi_adult_rough: (d) => d.multi_adult && d.variant === 'rough',
+    negative: (d) => d.negative && d.variant !== 'rough_crop',
+    negative_rough: (d) => d.negative && d.variant === 'rough',
+    rough_crop_same_cases: (d) => d.variant === 'rough' && cropIds.has(d.id),
+    rough_crop: (d) => d.variant === 'rough_crop',
+  };
+  const avg = (rows, f) => (rows.length ? rows.reduce((s, r) => s + f(r), 0) / rows.length : null);
+  const out = {};
+  for (const [k, f] of Object.entries(defs)) {
+    const rows = docs.filter(f);
+    if (!rows.length) continue;
+    const adultRowsN = rows.reduce((s, r) => s + (r.adult_rows || 0), 0);
+    out[k] = {
+      n: rows.length,
+      intent_accuracy: avg(rows, (r) => (r.intent_ok ? 1 : 0)),
+      doc_accuracy: avg(rows, (r) => (r.doc_exact ? 1 : 0)),
+      field_accuracy: avg(rows, (r) => r.field_accuracy),
+      hallucinations: rows.reduce((s, r) => s + (r.hallucinations || 0), 0),
+      adult2_coverage: adultRowsN ? rows.reduce((s, r) => s + (r.adult_hits || 0), 0) / adultRowsN : null,
+      ids: rows.map((r) => `${r.id}:${r.variant}`),
+    };
+  }
+  return out;
+}
+
+function printBuckets(buckets) {
+  const pct = (x) => (x == null ? '    -  ' : ((x * 100).toFixed(1) + '%').padStart(7));
+  console.log('bucket                  n  intent   docAcc  fieldAcc  hallu  adult2+');
+  for (const [k, b] of Object.entries(buckets)) {
+    console.log(k.padEnd(22), String(b.n).padStart(3), pct(b.intent_accuracy), pct(b.doc_accuracy), ' ' + pct(b.field_accuracy), String(b.hallucinations).padStart(5), ' ' + pct(b.adult2_coverage));
+  }
+}
+
+function worstDocs(docs, n) {
+  return docs
+    .filter((d) => d.variant !== 'rough_crop')
+    .slice()
+    .sort((a, b) => a.field_accuracy - b.field_accuracy || b.hallucinations - a.hallucinations)
+    .slice(0, n)
+    .map((d) => ({
+      id: d.id,
+      variant: d.variant,
+      intent: d.intent,
+      field_accuracy: d.field_accuracy,
+      hallucinations: d.hallucinations,
+      misses: d.fields
+        .filter((r) => r.verdict !== 'correct' && r.verdict !== 'uncertain_skipped')
+        .map((r) => `${r.path}=${r.verdict}${r.detail ? `(${r.detail})` : ''}${r.actual != null && typeof r.actual !== 'object' ? ` got "${String(r.actual).slice(0, 40)}"` : ''}`),
+    }));
 }
 
 

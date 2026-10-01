@@ -1,0 +1,45 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "handwritten": true,
+  "rough": true,
+  "effects": [
+    "handwritten_fill",
+    "pencil",
+    "crossed_out_number",
+    "crumple",
+    "low_light_noise"
+  ],
+  "degrade": {
+    "seed": 5404,
+    "background": "dark_desk",
+    "scale": 0.86,
+    "rotate": -4,
+    "jitter": 0.006,
+    "crumple": {
+      "amp": 6,
+      "cell": 110,
+      "shade": 0.16,
+      "creases": 5
+    },
+    "lowlight": {
+      "exposure": 0.6,
+      "gamma": 1.2,
+      "cast": [
+        1.04,
+        0.97,
+        0.85
+      ]
+    },
+    "noise": 10,
+    "light": {
+      "gradient": [
+        0.5,
+        -0.3
+      ],
+      "amount": 0.2,
+      "vignette": 0.4
+    },
+    "jpeg": 50
+  }
+}

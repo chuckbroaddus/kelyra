@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-01T11:18:36.021Z",
-  "count": 21,
+  "generated_at": "2026-10-01T13:26:57.979Z",
+  "count": 37,
   "cases": [
     {
       "id": "PC01",
@@ -314,6 +314,383 @@
       "id": "N03",
       "kind": "negative",
       "photo": true,
+      "fields_exercised": [],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR01",
+      "kind": "parent_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "strong_keystone",
+        "motion_blur",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "address",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR02",
+      "kind": "student_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "rotation_12deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "preferred_name",
+        "birthday",
+        "grade_or_age",
+        "emergency_name",
+        "emergency_phone",
+        "allergies",
+        "health_conditions"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR03",
+      "kind": "parent_card",
+      "photo": false,
+      "multi_adult": true,
+      "rough": true,
+      "effects": [
+        "crumple",
+        "creases",
+        "rotation_5deg",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "address"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR04",
+      "kind": "student_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "trifold_creases",
+        "cut_off_right_edge",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "birthday",
+        "grade_or_age",
+        "address",
+        "emergency_name",
+        "emergency_phone",
+        "allergies"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR05",
+      "kind": "parent_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "hand_phone_shadow",
+        "background_clutter",
+        "defocus_blur"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR06",
+      "kind": "student_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "heavy_jpeg_x2",
+        "downscale_820",
+        "defocus_blur"
+      ],
+      "fields_exercised": [
+        "birthday",
+        "grade_or_age",
+        "allergies",
+        "health_conditions",
+        "emergency_name",
+        "emergency_phone"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR07",
+      "kind": "parent_card",
+      "photo": false,
+      "multi_adult": true,
+      "rough": true,
+      "effects": [
+        "keystone_side",
+        "cut_off_right_edge",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR08",
+      "kind": "parent_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "heavy_low_light",
+        "warm_cast",
+        "sensor_noise",
+        "defocus_blur"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "address"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR09",
+      "kind": "student_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "coffee_stain",
+        "pen_marks",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "preferred_name",
+        "birthday",
+        "grade_or_age",
+        "emergency_name",
+        "emergency_phone",
+        "allergies"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PR10",
+      "kind": "parent_card",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "page_curl",
+        "rotation_8deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PH01",
+      "kind": "parent_card",
+      "photo": false,
+      "handwritten": true,
+      "multi_adult": true,
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "address"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PH02",
+      "kind": "student_card",
+      "photo": false,
+      "handwritten": true,
+      "fields_exercised": [
+        "preferred_name",
+        "birthday",
+        "grade_or_age",
+        "emergency_name",
+        "emergency_phone",
+        "allergies"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PH03",
+      "kind": "parent_card",
+      "photo": false,
+      "handwritten": true,
+      "multi_adult": true,
+      "rough": true,
+      "effects": [
+        "handwritten_fill",
+        "keystone",
+        "hand_phone_shadow",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "relationship",
+        "phone",
+        "email",
+        "preferred_contact"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "PH04",
+      "kind": "student_card",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_fill",
+        "pencil",
+        "crossed_out_number",
+        "crumple",
+        "low_light_noise"
+      ],
+      "fields_exercised": [
+        "birthday",
+        "grade_or_age",
+        "emergency_name",
+        "emergency_phone",
+        "allergies"
+      ],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "rotation_9deg",
+        "glare_hotspot",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [],
+      "files": [
+        "source.html",
+        "expected.json",
+        "notes.md",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "photo": false,
+      "rough": true,
+      "effects": [
+        "crumple",
+        "low_light_noise",
+        "rotation_6deg",
+        "jpeg_artifacts"
+      ],
       "fields_exercised": [],
       "files": [
         "source.html",

@@ -1,0 +1,68 @@
+{
+  "source_id": "PR05",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Deshawn Porter",
+  "studentGuessName": "Kiara Porter",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "guardian"
+    },
+    {
+      "label": "phone",
+      "value": "555-503-8816"
+    },
+    {
+      "label": "email",
+      "value": "d.porter.home@example.org"
+    },
+    {
+      "label": "preferred contact",
+      "value": "Phone call"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "guardian"
+    },
+    {
+      "key": "phone",
+      "value": "555-503-8816"
+    },
+    {
+      "key": "email",
+      "value": "d.porter.home@example.org"
+    },
+    {
+      "key": "preferred_contact",
+      "value": "Phone call"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Deshawn Porter",
+      "relationship": "guardian",
+      "phone": "555-503-8816",
+      "email": "d.porter.home@example.org"
+    },
+    {
+      "role": "student",
+      "name": "Kiara Porter"
+    }
+  ],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [],
+      "eye": "hand shadow darkens email/preferred/student rows; still legible"
+    }
+  }
+}
