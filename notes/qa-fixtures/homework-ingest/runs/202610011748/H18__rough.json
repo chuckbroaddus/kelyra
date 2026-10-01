@@ -1,0 +1,76 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Jordan Chen",
+      "students": [
+        "Jordan Chen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "Simplify the ratio 12 : 18",
+          "expected": "2:3",
+          "seen": "2:3",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "3 apples cost $1.50. Cost of 1 apple?",
+          "expected": "$0.50",
+          "seen": "$0.50",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "60 miles in 2 hours. Rate?",
+          "expected": "30 mph",
+          "seen": "30 mph",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Unit price: $4.80 for 6 pens",
+          "expected": "$0.80 each",
+          "seen": "$0.80 each",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Write 5 : 20 as a fraction in lowest terms",
+          "expected": "1/5",
+          "seen": "1/5",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0043,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

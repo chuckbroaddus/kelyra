@@ -1,0 +1,89 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "spelling common words",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 67,
+      "teacherNote": "Several common words still misspelled.",
+      "studentName": "Casey",
+      "students": [
+        "Casey"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "becuase",
+          "expected": "because",
+          "seen": "because",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "freind",
+          "expected": "friend",
+          "seen": "freind",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "beleive",
+          "expected": "believe",
+          "seen": "beleive",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "tommorow",
+          "expected": "tomorrow",
+          "seen": "tomorrow",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "neccessary",
+          "expected": "necessary",
+          "seen": "necessary",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "library",
+          "expected": "library",
+          "seen": "library",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0047,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

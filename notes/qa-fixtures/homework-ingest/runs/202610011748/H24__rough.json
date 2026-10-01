@@ -1,0 +1,84 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 83,
+      "teacherNote": "All simplifications correct.",
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "3x + 2x",
+          "expected": "5x",
+          "seen": "5x",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "4y - y",
+          "expected": "3y",
+          "seen": "3y",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "2(a + 3) = 2a + 6",
+          "expected": "2a+6",
+          "seen": "2a + 6",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "5m + 3 - 2m",
+          "expected": "3m + 3",
+          "seen": "3m + 3",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "6k - 6k = 0",
+          "expected": "0",
+          "seen": "0",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "3(2b - 1) = 6b - 3",
+          "expected": "6b-3",
+          "seen": "6b - 1",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0049,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

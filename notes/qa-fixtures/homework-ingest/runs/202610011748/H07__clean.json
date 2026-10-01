@@ -1,0 +1,60 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Alexx Riviera",
+      "students": [
+        "Alexx Riviera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "A triangle has 3 ________ sides",
+          "expected": "3",
+          "seen": "3",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "A square has 4 ________ right angles",
+          "expected": "4",
+          "seen": "4",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Sum of triangle angles 180 ________",
+          "expected": "180",
+          "seen": "180",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0039,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

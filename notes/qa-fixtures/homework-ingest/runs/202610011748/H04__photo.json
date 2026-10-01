@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": "All four problems show incorrect integer operation results.",
+      "studentName": "Casey Nguyen",
+      "students": [
+        "Casey Nguyen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "-3 + 8 = 5",
+          "expected": "5",
+          "seen": "5",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "4 - (-2) = 6",
+          "expected": "6",
+          "seen": "6",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "(-5)(-3) = -15",
+          "expected": "15",
+          "seen": "-15",
+          "credit": 0,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "12 ÷ (-4) = -3",
+          "expected": "-3",
+          "seen": "-3",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0041,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

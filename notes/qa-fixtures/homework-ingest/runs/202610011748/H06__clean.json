@@ -1,0 +1,58 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "3 + 4 × 2 =",
+          "expected": "11",
+          "seen": "11",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "(3 + 4) × 2 =",
+          "expected": "14",
+          "seen": "14",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "10 − 6 ÷ 2 =",
+          "expected": "7",
+          "seen": "7",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0039,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

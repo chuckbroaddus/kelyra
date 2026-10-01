@@ -1,0 +1,60 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivers",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Good understanding of main idea and theme; evidence is too vague.",
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "1. Main idea:",
+          "expected": "The river flooded the town",
+          "seen": "The river flooded the town",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "2. Evidence:",
+          "expected": "water rose overnight",
+          "seen": "water rose overnight",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "3. Theme:",
+          "expected": "community helps",
+          "seen": "community helps",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0039,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

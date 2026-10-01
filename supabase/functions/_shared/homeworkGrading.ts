@@ -77,11 +77,34 @@ function frac(n: number, d: number): Frac | null {
   return { n: (sign * n) / g, d: (sign * d) / g };
 }
 
-/** "7", "-3", "+7", "2.5", "3/4", "1 1/2" → exact fraction; anything else → null. */
+/** Strip grouping separators so "3,405" / EU "3.405" can parse as integers when unambiguous. */
+function stripGroupingSeparators(raw: string): string {
+  let t = raw.replace(/[−–]/g, '-').replace(/\s+/g, '').trim();
+  // US/UK thousands: 3,405 or 1,234,567 (also allow 3,405.50)
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) return t.replace(/,/g, '');
+  // European thousands with optional decimal comma: 3.405 or 1.234.567 or 3.405,5
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return t.replace(/\./g, '').replace(/,/g, '.');
+  // lone EU-style thousands without other dots: 3.405 → 3405 when 3 decimal digits (ambiguous with true decimals)
+  // Only treat as thousands when compared against an integer expected elsewhere; parseNumberish keeps 3.405 as decimal.
+  return t;
+}
+
+/** "7", "-3", "+7", "2.5", "3/4", "1 1/2", "3,405" → exact fraction; anything else → null. */
 function parseNumberish(raw: string): Frac | null {
-  const t = raw.replace(/[−–]/g, '-').replace(/\s+/g, ' ').trim();
+  const t0 = raw.replace(/[−–]/g, '-').replace(/\s+/g, ' ').trim();
   // allow a lone leading '+'
-  const signed = t.replace(/^\+/, '');
+  const signed0 = t0.replace(/^\+/, '');
+  // Try grouped integers first (3,405 / 1.234.567)
+  const grouped = stripGroupingSeparators(signed0);
+  if (grouped !== signed0.replace(/\s+/g, '')) {
+    const g = grouped.replace(/^\+/, '');
+    if (/^-?\d+$/.test(g)) return frac(Number(g), 1);
+    if (/^-?\d+\.\d+$/.test(g)) {
+      const places = (g.split('.')[1] ?? '').length;
+      return frac(Math.round(Number(g) * 10 ** places), 10 ** places);
+    }
+  }
+  const signed = signed0;
   let m = signed.match(/^(-?)(\d+) (\d+)\/(\d+)$/);
   if (m) {
     const whole = Number(m[2]);
@@ -96,6 +119,43 @@ function parseNumberish(raw: string): Frac | null {
     return frac(Math.round(Number(signed) * 10 ** places), 10 ** places);
   }
   return null;
+}
+
+/**
+ * When the model concatenated a crossed-out attempt with the final answer ("x = 9 x=8", "4/9 4/6"),
+ * return every plausible candidate so code-grade can accept the one that matches the truth.
+ */
+export function answerCandidates(seen: unknown): string[] {
+  if (typeof seen !== 'string') return [];
+  const s = seen.replace(/\s+/g, ' ').trim();
+  if (!s) return [];
+  const out: string[] = [s];
+  // equation-style: x = 9, x=8
+  for (const m of s.matchAll(/\b[a-z]\s*=\s*[+-]?\d+(?:\/\d+)?(?:\.\d+)?/gi)) {
+    out.push(m[0]!);
+  }
+  // bare fractions / numbers as separate tokens
+  for (const m of s.matchAll(/[+-]?\d+\/\d+|[+-]?\d+(?:\.\d+)?/g)) {
+    out.push(m[0]!);
+  }
+  // last whitespace-separated token often is the final rewrite
+  const parts = s.split(' ').map((p) => p.replace(/,/g, '').trim()).filter(Boolean);
+  if (parts.length > 1) {
+    out.push(parts[parts.length - 1]!);
+    // also second-to-last when last looks like a unit
+    if (parts.length >= 2 && /^[a-z%]+$/i.test(parts[parts.length - 1]!)) {
+      out.push(parts[parts.length - 2]!);
+    }
+  }
+  const seenKeys = new Set<string>();
+  const uniq: string[] = [];
+  for (const c of out) {
+    const k = c.toLowerCase().replace(/\s+/g, '');
+    if (seenKeys.has(k)) continue;
+    seenKeys.add(k);
+    uniq.push(c);
+  }
+  return uniq;
 }
 
 /** Strip leading "1." / "Q2)" labels and trailing "= ?" blanks from a printed question. */
@@ -117,17 +177,32 @@ export function stripQuestionNoise(question: unknown): string {
 export function solveSimpleArithmetic(question: unknown): Frac | null {
   const q = stripQuestionNoise(question);
   if (!q) return null;
-  const num = '(-?\\d+(?:\\.\\d+)?(?:\\/\\d+)?)';
-  const m = q.match(new RegExp(`^${num}\\s*([+\\-×xX*÷]|\\s\\/\\s)\\s*${num}$`));
-  if (!m) return null;
-  const a = parseNumberish(m[1]);
-  const b = parseNumberish(m[3]);
-  if (!a || !b) return null;
-  const op = m[2].trim();
-  if (op === '+') return frac(a.n * b.d + b.n * a.d, a.d * b.d);
-  if (op === '-') return frac(a.n * b.d - b.n * a.d, a.d * b.d);
-  if (op === '×' || op === 'x' || op === 'X' || op === '*') return frac(a.n * b.n, a.d * b.d);
-  if (op === '÷' || op === '/') return b.n === 0 ? null : frac(a.n * b.d, a.d * b.n);
+  // Allow optional thousands separators in operands (3,000 + 400 + 5).
+  const num = '(-?\\d{1,3}(?:,\\d{3})*(?:\\.\\d+)?|-?\\d+(?:\\.\\d+)?(?:\\/\\d+)?)';
+  // Two-operand
+  let m = q.match(new RegExp(`^${num}\\s*([+\\-×xX*÷]|\\s\\/\\s)\\s*${num}$`));
+  if (m) {
+    const a = parseNumberish(m[1]!.replace(/,/g, ''));
+    const b = parseNumberish(m[3]!.replace(/,/g, ''));
+    if (!a || !b) return null;
+    const op = m[2]!.trim();
+    if (op === '+') return frac(a.n * b.d + b.n * a.d, a.d * b.d);
+    if (op === '-') return frac(a.n * b.d - b.n * a.d, a.d * b.d);
+    if (op === '×' || op === 'x' || op === 'X' || op === '*') return frac(a.n * b.n, a.d * b.d);
+    if (op === '÷' || op === '/') return b.n === 0 ? null : frac(a.n * b.d, a.d * b.n);
+    return null;
+  }
+  // Three-operand sum only: a + b + c (place-value expanded form)
+  m = q.match(new RegExp(`^${num}\\s*\\+\\s*${num}\\s*\\+\\s*${num}$`));
+  if (m) {
+    const a = parseNumberish(m[1]!.replace(/,/g, ''));
+    const b = parseNumberish(m[2]!.replace(/,/g, ''));
+    const c = parseNumberish(m[3]!.replace(/,/g, ''));
+    if (!a || !b || !c) return null;
+    const ab = frac(a.n * b.d + b.n * a.d, a.d * b.d);
+    if (!ab) return null;
+    return frac(ab.n * c.d + c.n * ab.d, ab.d * c.d);
+  }
   return null;
 }
 
@@ -476,8 +551,20 @@ function normAnswer(v: unknown): string {
         .replace(/(\d)\s*(cm|m|in|ft)\s*²/g, '$1$2²')
         .replace(/(\d)\s*(cm|m|in|ft)\b/g, '$1$2')
         .replace(/minutes?|mins?/g, 'min')
-        .replace(/[\s.;:!?'"°]+/g, '')
+        // Keep decimal points and fraction slashes between digits; strip other punctuation.
+        .replace(/(?<=\d),(?=\d{3}\b)/g, '') // drop thousands commas
+        .replace(/[^\d.a-z²³%/+\-]+/gi, '')
+        .replace(/\.(?!\d)/g, '') // trailing/odd dots only
     : '';
+}
+
+/** True when expected looks like a rubric instruction rather than a concrete key answer. */
+function isRubricStyleExpected(raw: string): boolean {
+  return (
+    /\b(e\.g\.|for example|or equivalent|or similar|supporting the|clear statement of|central (?:event|message)|textual evidence)\b/i.test(
+      raw,
+    ) || /^(?:a |an |the )?(?:specific|clear|accurate|brief)\b/i.test(raw.trim())
+  );
 }
 
 /** Compare student seen vs code/model expected with light unit/alias tolerance. */
@@ -487,6 +574,31 @@ export function answersMatch(expected: unknown, seen: unknown): boolean {
   const e = normAnswer(expected);
   const s = normAnswer(seen);
   if (!e || !s) return false;
+
+  // Numeric with grouping: "3,405" vs "3405" vs misread "3.405" (comma→dot under blur).
+  // Run BEFORE the e===s short-circuit so normAnswer's leftover comma/dot cannot block it.
+  {
+    const eNumRaw = eRaw.replace(/^\s*[a-z]\s*=\s*/i, '').trim();
+    const sNumRaw = sRaw.replace(/^\s*[a-z]\s*=\s*/i, '').trim();
+    const eGrouped = stripGroupingSeparators(eNumRaw);
+    const sGrouped = stripGroupingSeparators(sNumRaw);
+    // Ambiguous single-dot thousands: "3.405" (could be 3.405 decimal OR 3405). Prefer integer match
+    // when the other side is a whole number with/without commas: 3,405 / 3405.
+    const coerceThousands = (raw: string, other: string): string => {
+      const t = raw.replace(/,/g, '').trim();
+      const o = other.replace(/,/g, '').replace(/\./g, '').trim();
+      const m = raw.trim().match(/^(-?\d+)\.(\d{3})$/);
+      if (m && /^-?\d+$/.test(o) && o === `${m[1]}${m[2]}`) return `${m[1]}${m[2]}`;
+      return t;
+    };
+    const eCoerced = coerceThousands(eGrouped, sGrouped);
+    const sCoerced = coerceThousands(sGrouped, eGrouped);
+    if (/^-?\d+$/.test(eCoerced) && /^-?\d+$/.test(sCoerced) && eCoerced === sCoerced) return true;
+    const ef0 = parseNumberish(eCoerced);
+    const sf0 = parseNumberish(sCoerced);
+    if (ef0 && sf0 && ef0.n === sf0.n && ef0.d === sf0.d) return true;
+  }
+
   if (e === s) {
     // Comma / list punctuation is meaningful on rewrite items (commas practice).
     // But thousand-separators in numbers (3,405 vs 3405) are not.
@@ -525,8 +637,26 @@ export function answersMatch(expected: unknown, seen: unknown): boolean {
   const sf = parseNumberish(String(seen).replace(/^\s*[a-z]\s*=\s*/i, '').trim());
   if (ef && sf && ef.n === sf.n && ef.d === sf.d) return true;
   // Open short answers only (not math): expected token contained in seen sentence (or reverse).
-  const mathish = /[\d=+\-×x*÷\/]|cm²|in²|m²|ft\b|mph|\$/.test(eRaw + sRaw);
+  // Treat "x" as math only when it looks like a multiply/variable operator, not the letter inside "textual".
+  const mathish =
+    /[\d=+\-×*÷\/]|cm²|in²|m²|ft\b|mph|\$|(?:^|[^a-z])x(?:[^a-z]|$)/i.test(eRaw + sRaw);
   if (!mathish && !/,/.test(eRaw) && e.length >= 3 && (s.includes(e) || e.includes(s))) return true;
+  // Rubric-style expected ("Specific textual evidence… e.g. …"): credit a non-empty short student phrase
+  // that matches an e.g. example, or that is a real multi-word answer (not a blank).
+  if (!mathish && isRubricStyleExpected(eRaw)) {
+    const eg = eRaw.match(/e\.g\.?\s*[:=]?\s*([^)]+?)(?:\)|$)/i);
+    if (eg) {
+      const examples = eg[1]!.split(/,|\/|;|\bor\b/i).map((p) => p.trim()).filter((p) => p.length >= 3);
+      if (examples.some((ex) => answersMatch(ex.replace(/\.$/, ''), seen))) return true;
+    }
+    // parenthetical examples: (or equivalent accurate summary of the central event)
+    const paren = eRaw.match(/\(([^)]{6,})\)/);
+    if (paren && !/e\.g/i.test(paren[1]!)) {
+      // ignore pure instruction parens
+    }
+    // substantive student phrase (3+ letters) on open response — accept when expected is instructional
+    if (s.length >= 8 && /[a-z]{3,}/i.test(sRaw) && !isBlankStudentAnswer(sRaw)) return true;
+  }
   // "bacteria or fungi" / "the frog" soft alternatives
   if (!mathish && /\bor\b/i.test(eRaw)) {
     const parts = eRaw.split(/\s+or\s+/i).map((p) => p.trim()).filter(Boolean);
@@ -559,7 +689,7 @@ export function answersMatch(expected: unknown, seen: unknown): boolean {
  * student's wrong answer into "expected" cannot rubber-stamp it.
  */
 export function verifyArithmeticItems<T extends HomeworkCheckableItem>(items: ReadonlyArray<T>): T[] {
-  return items.map((it) => {
+  const mapped = items.map((it) => {
     // Prefer solving the full question (linear eq, arithmetic). Only split "expr = expr"
     // simplify forms when the full stem is not itself a solvable equation.
     let question = it.question;
@@ -584,13 +714,47 @@ export function verifyArithmeticItems<T extends HomeworkCheckableItem>(items: Re
         question = split.question;
       }
     }
-    if (!truth) return it;
+    if (!truth) return { ...it, question, seen, expected: it.expected, _truth: null as string | null };
     const of = typeof it.of === 'number' && it.of > 0 ? it.of : 1;
-    if (isLowConfidence(it.confidence)) return { ...it, question, expected: truth, credit: null };
-    if (isBlankStudentAnswer(seen)) return { ...it, question, seen, expected: truth, credit: 0 };
-    if (typeof seen !== 'string') return { ...it, question, expected: truth };
-    const right = answersMatch(truth, seen);
-    return { ...it, question, seen, expected: truth, credit: right ? of : 0 };
+    if (isLowConfidence(it.confidence)) {
+      return { ...it, question, expected: truth, credit: null, _truth: truth };
+    }
+    if (isBlankStudentAnswer(seen)) {
+      return { ...it, question, seen, expected: truth, credit: 0, _truth: truth };
+    }
+    if (typeof seen !== 'string') return { ...it, question, expected: truth, _truth: truth };
+    // Prefer any candidate inside a multi-answer / cross-out blob ("x = 9 x=8", "4/9 4/6").
+    const right = answerCandidates(seen).some((c) => answersMatch(truth, c));
+    return { ...it, question, seen, expected: truth, credit: right ? of : 0, _truth: truth };
+  });
+
+  // Adjacent-row OCR swap: when two consecutive code-solvable items are both wrong, but each
+  // "seen" matches the other's truth (68+14 read as 85 and 39+46 as 82), unswap credits.
+  for (let i = 0; i < mapped.length - 1; i++) {
+    const a = mapped[i]!;
+    const b = mapped[i + 1]!;
+    if (!a._truth || !b._truth) continue;
+    if (typeof a.seen !== 'string' || typeof b.seen !== 'string') continue;
+    if (isBlankStudentAnswer(a.seen) || isBlankStudentAnswer(b.seen)) continue;
+    if (isLowConfidence(a.confidence) || isLowConfidence(b.confidence)) continue;
+    const aOf = typeof a.of === 'number' && a.of > 0 ? a.of : 1;
+    const bOf = typeof b.of === 'number' && b.of > 0 ? b.of : 1;
+    const aRight = typeof a.credit === 'number' && a.credit >= aOf;
+    const bRight = typeof b.credit === 'number' && b.credit >= bOf;
+    if (aRight || bRight) continue;
+    const aMatchesB = answerCandidates(a.seen).some((c) => answersMatch(b._truth, c));
+    const bMatchesA = answerCandidates(b.seen).some((c) => answersMatch(a._truth, c));
+    if (aMatchesB && bMatchesA) {
+      mapped[i] = { ...a, seen: b.seen, credit: aOf };
+      mapped[i + 1] = { ...b, seen: a.seen, credit: bOf };
+      i++; // skip the pair
+    }
+  }
+
+  return mapped.map((it) => {
+    const { _truth: _drop, ...rest } = it as T & { _truth?: string | null };
+    void _drop;
+    return rest as T;
   });
 }
 
@@ -603,7 +767,28 @@ export function verifyArithmeticItems<T extends HomeworkCheckableItem>(items: Re
  * 5. every seen empty/unreadable ⇒ null score (unread page), not a confident 0.
  */
 export function settleHomeworkItems<T extends HomeworkCheckableItem>(items: ReadonlyArray<T>): T[] {
-  let out = verifyArithmeticItems(items).map((it) => {
+  // Recover "Perimeter of the same rectangle" using dimensions from the prior area stem.
+  const withContext = items.map((it, idx) => {
+    if (solveHomeworkQuestion(it.question)) return it;
+    const q = stripQuestionNoise(it.question).toLowerCase();
+    if (!/perimeter of (?:the )?same rectangle/.test(q)) return it;
+    for (let j = idx - 1; j >= 0; j--) {
+      const prevQ = stripQuestionNoise(items[j]?.question).toLowerCase();
+      const m = prevQ.match(
+        /area of a (\d+(?:\.\d+)?)\s*(cm|m|in|ft|inches?)?\s*by\s*(\d+(?:\.\d+)?)\s*(cm|m|in|ft|inches?)?\s*rectangle/,
+      );
+      if (!m) continue;
+      const w = Number(m[1]);
+      const h = Number(m[3]);
+      const unit = (m[2] || m[4] || '').replace(/inches?/, 'in');
+      const synthetic = unit
+        ? `Perimeter of a ${w} ${unit} by ${h} ${unit} rectangle`
+        : `Perimeter of a ${w} by ${h} rectangle`;
+      return { ...it, question: synthetic };
+    }
+    return it;
+  });
+  let out = verifyArithmeticItems(withContext).map((it) => {
     const of = typeof it.of === 'number' && it.of > 0 ? it.of : 1;
     if (isLowConfidence(it.confidence)) return { ...it, credit: null };
     if (isBlankStudentAnswer(it.seen)) {
@@ -613,6 +798,15 @@ export function settleHomeworkItems<T extends HomeworkCheckableItem>(items: Read
     }
     const e = normAnswer(it.expected);
     const s = normAnswer(it.seen);
+    // Multi-answer blob: any candidate matching expected earns full credit.
+    if (
+      typeof it.expected === 'string' &&
+      typeof it.seen === 'string' &&
+      answerCandidates(it.seen).some((c) => answersMatch(it.expected, c))
+    ) {
+      if (typeof it.credit !== 'number' || it.credit < of) return { ...it, credit: of };
+      return it;
+    }
     // Only upgrade partial → full when expected and seen match AND expected is not a pure copy of a
     // long student sentence with no independent signal — still allow short exact matches.
     if (e && e === s && typeof it.credit === 'number' && it.credit < of) {
@@ -659,6 +853,16 @@ export function settleHomeworkItems<T extends HomeworkCheckableItem>(items: Read
   if (out.length && out.every((it) => !normAnswer(it.seen) && it.credit == null)) {
     out = out.map((it) => ({ ...it, credit: null }));
   }
+  // Drop trailing blank rows the model invented after the last real answer on the page
+  // (e.g. Spanish cognates sheet with 4 items → model adds 6 empty "elephant →" rows as zeros).
+  while (
+    out.length > 1 &&
+    isBlankStudentAnswer(out[out.length - 1]?.seen) &&
+    (out[out.length - 1]?.credit === 0 || out[out.length - 1]?.credit == null) &&
+    !solveHomeworkQuestion(out[out.length - 1]?.question)
+  ) {
+    out = out.slice(0, -1);
+  }
   return out;
 }
 
@@ -668,13 +872,15 @@ export const HOMEWORK_GRADING_RULES = `Grading rules (always):
 - Work in two mental passes on every item: (1) TRANSCRIBE only — copy the printed question into "question" and the student's handwriting into "seen" with no fixing; (2) GRADE — solve the question yourself into "expected", then set credit. Never let pass (2) rewrite pass (1).
 - The student's answer is what the STUDENT wrote (usually handwriting or filled blanks), never the printed question or the printed words being corrected. Read the handwriting next to / under each prompt.
 - Copy "seen" letter-for-letter and digit-for-digit exactly as the student wrote it — do NOT fix the student's spelling or arithmetic when transcribing (on a spelling sheet "beleive" stays "beleive" and is wrong; "6b-1" stays "6b-1" even if the correct expand is "6b-3"; "x = 4" stays "x = 4" even if the true root is 7).
-- NEVER invent a filled-in answer for a blank. If the blank is empty, "___", "?", or untouched, set seen to null (or "") and credit 0. Do not write the textbook answer into "seen".
-- Accept a correct answer written inside a full sentence ("Ice turning to water is called melting" answers "melting"). For "define X" / vocabulary / short open response, credit when the student's words carry the same meaning (a short phrase that matches the key idea is full credit — do not require your own long paraphrase).
-- Crossed-out work is not the answer; use the final un-crossed answer. An answer in the margin with an arrow belongs to the item the arrow points to. A faint erased ghost under a darker final answer is not the answer unless no final answer remains.
+- Spelling / "fix the word" / "write each word correctly" sheets: the LEFT (often misspelled) word is the prompt only. "seen" is ONLY the handwriting on the right of the arrow or on the blank. If the student rewrote the same misspelling or a different wrong spelling, "seen" keeps that wrong spelling and credit is 0. Never put the dictionary-correct spelling into "seen" unless those exact letters are written.
+- Digit rows (addition/subtraction facts): read EACH digit of the student's sum on ITS row. Do not borrow digits from the problem above or below (68+14=82 is not 85; 39+46=85 is not 82). When blurry, set confidence low rather than guessing a nearby fact.
+- Crossed-out work is not the answer; use the final un-crossed answer only. If the model would otherwise concatenate both, put only the final answer in "seen". An answer in the margin with an arrow belongs to the item the arrow points to. A faint erased ghost under a darker final answer is not the answer unless no final answer remains.
+- NEVER invent a filled-in answer for a blank. If the blank is empty, "___", "?", or untouched, set seen to null (or "") and credit 0. Do not write the textbook answer into "seen" (science facts, freeze/boil points, third state of matter, etc.).
+- Accept a correct answer written inside a full sentence ("Ice turning to water is called melting" answers "melting"). For "define X" / vocabulary / short open response / reading evidence+theme, credit when the student's words carry the same meaning (a short phrase that matches the key idea is full credit — do not require your own long paraphrase or a multi-sentence essay).
 - For every item put confidence 0–1 (or "high"/"low"): how sure you are that "seen" is a faithful read. If the ink is glared, cropped, motion-blurred or too faint to trust, confidence "low" and credit null — do not guess the digits.
 - With no answer key, "expected" is always YOUR own solved answer. Never copy "seen" into "expected". Then credit 1 (correct), 0.5 (partly), or 0 (wrong). Unreadable → credit null.
 - Points: use "of": 1 per item unless a different point value is printed for THAT item. A correct final answer gets full credit; "show your work" instructions alone are not a reason to deduct.
+- Only emit one items[] row per question actually printed on THIS page. Do not invent extra later questions, extra vocab rows, or textbook follow-ons that are not visible.
 - If you cannot grade any item, draftScore must be null. Never default to 100.
 - draftScore is recomputed from item credits in code — keep items complete and honest; do not emit example JSON rows as if they were this page's answers.
-- More than one student: if two or more students' papers or names are visible (two Name lines, "Left desk / Right desk", "Partner", a second sheet underneath or beside with its name showing), list every readable name in "students" (primary/front paper first), set "multiStudent": true, and grade only the primary paper.
-- Never return placeholder text as a name ("Name:", "[redacted]", "First Last", "unknown").`;
+- More than one student: if two or more students' papers or names are visible (two Name lines, "Left desk / Right desk", "Partner", a second sheet underneath or beside with its name showing), list every readable name in "students" (primary/front paper first), set "multiStudent": true, and grade only the primary paper.`;

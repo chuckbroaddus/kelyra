@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Incomplete work on last problem; subtraction setup is correct but answer is missing.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "Mia has 3 bags of 8 marbles. How many?",
+          "expected": "24",
+          "seen": "24",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "45 cookies shared by 5 friends. Each gets?",
+          "expected": "9",
+          "seen": "9",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "18 kids + 27 kids. Total?",
+          "expected": "45",
+          "seen": "45",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "100 pages, read 37. How many left?",
+          "expected": "63",
+          "seen": "63",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0041,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

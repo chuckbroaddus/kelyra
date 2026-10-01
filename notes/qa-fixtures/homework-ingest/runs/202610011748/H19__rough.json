@@ -1,0 +1,73 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "units consistency",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 75,
+      "teacherNote": "Units are mixed up between cm, in, m², and cm².",
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "Area of a 5 cm by 3 cm rectangle",
+          "expected": "15 cm²",
+          "seen": "15 cm²",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Perimeter of a 5 cm by 3 cm rectangle",
+          "expected": "16 cm",
+          "seen": "16 cm",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Area of a square with side 4 in",
+          "expected": "16 in²",
+          "seen": "16 in²",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Area of a triangle, base 6 m, height 4 m",
+          "expected": "12 m²",
+          "seen": "24 m²",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0042,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

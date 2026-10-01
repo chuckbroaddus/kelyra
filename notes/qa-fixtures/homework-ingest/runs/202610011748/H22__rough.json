@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": "Incorrect use of zero exponent and one calculation error.",
+      "studentName": "Sam Patel",
+      "students": [
+        "Sam Patel"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "2^3 =",
+          "expected": "8",
+          "seen": "8",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "5^2 =",
+          "expected": "25",
+          "seen": "25",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "10^0 =",
+          "expected": "1",
+          "seen": "0",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "3^4 =",
+          "expected": "81",
+          "seen": "81",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.004,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

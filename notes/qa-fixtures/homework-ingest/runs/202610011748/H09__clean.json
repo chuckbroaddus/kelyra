@@ -1,0 +1,61 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Taylor",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Taylor Kim",
+      "students": [
+        "Taylor Kim",
+        "Jamie Ortiz"
+      ],
+      "multiStudent": true,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "6 x 7",
+          "expected": "42",
+          "seen": "42",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "8 x 9",
+          "expected": "72",
+          "seen": "72",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "42 + 72",
+          "expected": "114",
+          "seen": "114",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0036,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

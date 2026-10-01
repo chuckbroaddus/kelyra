@@ -1,0 +1,60 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 67,
+      "teacherNote": "Needs to show work for percent calculations.",
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "10% of 50 =",
+          "expected": "5",
+          "seen": "5",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "25% of 80 =",
+          "expected": "20",
+          "seen": "20",
+          "credit": 2,
+          "of": 2,
+          "confidence": "high"
+        },
+        {
+          "question": "50% of 12 =",
+          "expected": "6",
+          "seen": "?",
+          "credit": 0,
+          "of": 2,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0039,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

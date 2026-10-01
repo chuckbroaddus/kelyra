@@ -8,6 +8,8 @@ import {
   solveSimpleArithmetic,
   settleHomeworkItems,
   verifyArithmeticItems,
+  answersMatch,
+  answerCandidates,
 } from '../../../supabase/functions/_shared/homeworkGrading.ts';
 import { cleanHomeworkStudentName, otherHomeworkStudents } from './homeworkName.ts';
 
@@ -191,4 +193,68 @@ test('HW-SCORE-05 decimals survive stripQuestionNoise; missing commas fail', () 
     },
   ]);
   assert.equal(commas[0]?.credit, 0);
+});
+
+test('HW-SCORE-06 R4: thousands misread, cross-out candidates, rubric open response', () => {
+  assert.equal(answersMatch('3,405', '3.405'), true);
+  assert.equal(answersMatch('3,405', '3405'), true);
+  assert.equal(answersMatch('3405', '3.405'), true);
+  assert.equal(answersMatch('0.75', '0.75'), true);
+  // true decimal must not collapse to thousands against a different integer
+  assert.equal(answersMatch('3.5', '35'), false);
+
+  assert.ok(answerCandidates('x = 9 x=8').some((c) => /9/.test(c)));
+  assert.ok(answerCandidates('4/9 4/6').includes('4/6'));
+
+  const h26 = settleHomeworkItems([
+    { question: '3,000 + 400 + 5 =', expected: '3,405', seen: '3.405', credit: 0, of: 1 },
+    { question: 'Value of the 7 in 4,732:', expected: '700', seen: '700', credit: 1, of: 1 },
+  ]);
+  assert.equal(h26[0]?.credit, 1);
+  assert.equal(percentFromItemCredits(h26), 100);
+
+  const h12 = settleHomeworkItems([
+    { question: 'x + 5 = 12', expected: 'x = 7', seen: 'x = 7', credit: 1, of: 1 },
+    { question: '2x = 18', expected: 'x = 9', seen: 'x = 9 x=8', credit: 0, of: 2 },
+    { question: 'x/3 = 4', expected: 'x = 12', seen: 'x = 12', credit: 1, of: 1 },
+  ]);
+  assert.equal(h12[1]?.credit, 2);
+  assert.equal(percentFromItemCredits(h12), 100);
+
+  // H32-class adjacent OCR swap of two sums
+  const h32 = settleHomeworkItems([
+    { question: '47 + 38', expected: '85', seen: '85', credit: 1, of: 1 },
+    { question: '56 + 29', expected: '85', seen: '85', credit: 1, of: 1 },
+    { question: '68 + 14', expected: '82', seen: '85', credit: 0, of: 1 },
+    { question: '39 + 46', expected: '85', seen: '82', credit: 0, of: 1 },
+    { question: '75 + 18', expected: '93', seen: '83', credit: 0, of: 1 },
+  ]);
+  assert.equal(h32[2]?.credit, 1);
+  assert.equal(h32[3]?.credit, 1);
+  assert.equal(percentFromItemCredits(h32), 80);
+
+  const h33 = settleHomeworkItems([
+    { question: '2/3 =', expected: '4/6', seen: '4/9 4/6', credit: 0, of: 1 },
+  ]);
+  // not code-solvable bare arithmetic as equation; settle still upgrades via candidates vs expected
+  assert.equal(h33[0]?.credit, 1);
+
+  const h10 = settleHomeworkItems([
+    {
+      question: '2. Evidence:',
+      expected: 'Specific textual evidence supporting the main idea (e.g., details about the flood\'s impact or timing from the passage)',
+      seen: 'water rose overnight',
+      credit: 0,
+      of: 2,
+    },
+    {
+      question: '3. Theme:',
+      expected: 'A clear statement of the story\'s theme (e.g., community coming together in crisis, or similar central message)',
+      seen: 'community helps',
+      credit: 0,
+      of: 2,
+    },
+  ]);
+  assert.equal(h10[0]?.credit, 2);
+  assert.equal(h10[1]?.credit, 2);
 });

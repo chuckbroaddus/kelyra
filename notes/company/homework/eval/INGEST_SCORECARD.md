@@ -1,11 +1,42 @@
 # Homework ingest scorecard
 
+**Round 4 (rough ≥85%):** `notes/qa-fixtures/homework-ingest/runs/202610011748` — see next section  
 **Round 3 (rough accuracy):** `notes/qa-fixtures/homework-ingest/runs/202610011647` — see next section  
 **Baseline:** `notes/qa-fixtures/homework-ingest/runs/202610011118` (live; raw overall **68.8%** before scorer soft + percent normalize)  
 **Grading fix:** before `runs/202610011241` → after `runs/202610011321` — see next section  
 **Round 2 (rough corpus):** `notes/qa-fixtures/homework-ingest/runs/202610011220` — see next section  
 **Round 1:** `notes/qa-fixtures/homework-ingest/runs/202610011125` (prompt + percent-from-items + gap soft; resume after fetch drops)  
 **Corpus:** 20 cases (H01–H17 + N01–N03) · classify-capture + evaluate-homework via ai-dev  
+
+## Round 4 (`kelyra/t_847e7e1f`) — before `202610011647` (R3) vs after `202610011748`
+
+**Gate:** draftScore ±12. Target rough ≥85%; missing drafts 0; no invented scores; clean/photo/negatives must not regress.
+
+| Bucket | n | field acc | student | **score ±12** | missing | 100 when GT&lt;90 | hall |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| clean | 14 | 98.6% → **98.6%** | 100% → 100% | 93% → **93%** | 0 → 0 | 1 → 0 | 0 |
+| photo_mild | 10 | 98.0% → **98.0%** | 100% → 100% | 90% → **90%** | 0 → 0 | 0 → 1 | 0 |
+| rough | 14 | 95.7% → **97.1%** | 100% → 100% | 79% → **86%** | 0 → 0 | 1 → 2 | 0 |
+| handwritten | 11 | 94.5% → **98.2%** | 100% → 100% | 73% → **91%** | 0 → 0 | 1 → 1 | 0 |
+| handwritten_new | 6 | 93.3% → **96.7%** | 100% → 100% | 67% → **83%** | 0 → 0 | 1 → 1 | 0 |
+| negatives | 5 | 100% → 100% | 100% → 100% | 100% → 100% | 0 → 0 | 0 → 0 | 0 |
+
+Overall field accuracy 97.1% → **98.0%**. Rough ±12 **11/14 → 12/14 (86%)** — meets ≥85% target. Handwritten ±12 **8/11 → 10/11 (91%)**. Missing drafts 0; hallucinations 0.
+
+### Failure classes fixed (R4)
+1. **Thousands misread (H26):** `3,405` vs blur-as-`3.405` — grouping-aware numeric match + 3-operand place-value sum.
+2. **Spelling sheet (H28):** stronger “left is prompt / right is handwriting” rules; model no longer dictionary-corrects every row.
+3. **Cross-out double answers (H12/H33):** `answerCandidates` accepts any token matching truth (`x = 9 x=8`, `4/9 4/6`).
+4. **Adjacent OCR row-swap (H32):** when two consecutive code-solvable items each match the other’s truth, unswap credits.
+5. **Open reading response (H10):** rubric-style expected (`e.g.` / “supporting the…”) soft-credits substantive student phrases; `mathish` no longer treats letter `x` inside words as multiply.
+6. **Invented trailing items (H13):** drop trailing blank model-invented rows after the last real answer.
+7. **Perimeter of same rectangle:** recover dimensions from the prior area stem.
+
+### Remaining misses (acceptable under ±12 gate)
+- H18 rough (ratios under glare) 100 vs GT 80; H29 rough (erased ghost 6:50 vs final 6:40) 100 vs 75; H11 clean blanks 25 vs 40; H14 photo blank invention 100 vs 67; H30 hand margin/cross-out 100 vs 75 (all answers mathematically correct on page).
+
+### Deploy (do not deploy from this seat)
+`supabase functions deploy analyze-homework classify-capture` (both import `_shared/homeworkGrading.ts`). evaluate-homework is ai-dev only.
 
 ## Round 3 (`kelyra/t_5f54a056`) — before `202610011321` vs after `202610011647`
 

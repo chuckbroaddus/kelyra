@@ -1,0 +1,74 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 80,
+      "teacherNote": "All problems show incorrect decimal calculations.",
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "0.4 + 0.35 =",
+          "expected": "0.75",
+          "seen": "0.75",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "2.5 × 4 =",
+          "expected": "10",
+          "seen": "10",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "6.3 - 2.8 =",
+          "expected": "3.5",
+          "seen": "3.5",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "1.2 ÷ 0.3 =",
+          "expected": "4",
+          "seen": "0.4",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "Round 3.476 to the nearest tenth",
+          "expected": "3.5",
+          "seen": "3.5",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0046,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

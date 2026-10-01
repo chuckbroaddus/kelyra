@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": "Several conversion errors; review ft/in and yd/ft relationships.",
+      "studentName": "Casey Nguyen",
+      "students": [
+        "Casey Nguyen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "question": "1) 1 ft = __ in",
+          "expected": "12",
+          "seen": "12",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "2) 3 ft = __ in",
+          "expected": "36",
+          "seen": "36",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "3) 2 yd = __ ft",
+          "expected": "6",
+          "seen": "6",
+          "credit": 1,
+          "of": 1,
+          "confidence": "high"
+        },
+        {
+          "question": "4) 24 in = __ ft",
+          "expected": "2",
+          "seen": "3",
+          "credit": 0,
+          "of": 1,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0044,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
