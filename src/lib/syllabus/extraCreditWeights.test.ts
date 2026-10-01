@@ -28,7 +28,9 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
-const MIGRATION = 'supabase/migrations/20261002100000_gb_syllabus_ec_over_100.sql';
+const EC_HELPERS = 'supabase/migrations/20261002100000_gb_syllabus_ec_over_100.sql';
+// Newest publish_class_syllabus (qualified locals) must still call the EC weight helper.
+const MIGRATION = 'supabase/migrations/20261002110000_gb_syllabus_publish_qualify.sql';
 
 const cat = (label: string, w: number, key = label.toLowerCase().replace(/[^a-z0-9]+/g, '_')) => ({
   key,
@@ -121,20 +123,21 @@ test('form: Extra credit on top with method B is blocked and points to the extra
 
 test('migration: publish uses the extra-credit-aware weight rule (not applied here; goes to Hermes)', () => {
   const sql = fs.readFileSync(path.join(ROOT, MIGRATION), 'utf8');
+  const helpers = fs.readFileSync(path.join(ROOT, EC_HELPERS), 'utf8');
   const publish = sql.slice(sql.indexOf('create or replace function public.publish_class_syllabus'));
   assert.match(publish, /weights_error := public\.syllabus_publish_weights_error\(row\.id, row\.extra_credit_method\);/);
   assert.doesNotMatch(publish, /if abs\(weight_sum - 100\) > 0\.01 then raise exception/);
   assert.match(publish, /syllabus version conflict/);
   assert.match(publish, /not public\.class_teacher_of\(p_class_id\)/);
   assert.match(publish, /gb_assert_syllabus_locked_fields/);
-  const fn = sql.slice(sql.indexOf('create or replace function public.syllabus_publish_weights_error'));
+  const fn = helpers.slice(helpers.indexOf('create or replace function public.syllabus_publish_weights_error'));
   assert.match(fn, /if p_extra_credit_method = 'C' then/);
   assert.match(fn, /abs\(\(total - ec_total\) - 100\) > 0\.01/);
   assert.match(fn, /if abs\(total - 100\) > 0\.01 then return 'active weights must sum to 100'/);
   // Same key/label patterns as isExtraCreditCategory().
-  assert.match(sql, /~ '\^\(extra_\?credit\|bonus\)\(_\|\$\)'/);
-  assert.match(sql, /~\* '\^\[\[:space:\]\]\*\(extra\[\[:space:\]_-\]\*credit\|bonus\)\\M'/);
-  assert.match(sql, /\(p_rules->>'extra_credit'\) = 'true'/);
+  assert.match(helpers, /~ '\^\(extra_\?credit\|bonus\)\(_\|\$\)'/);
+  assert.match(helpers, /~\* '\^\[\[:space:\]\]\*\(extra\[\[:space:\]_-\]\*credit\|bonus\)\\M'/);
+  assert.match(helpers, /\(p_rules->>'extra_credit'\) = 'true'/);
   // Newest migration redefining publish_class_syllabus, so it wins on apply.
   const later = fs
     .readdirSync(path.join(ROOT, 'supabase/migrations'))
