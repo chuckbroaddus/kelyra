@@ -1,0 +1,13 @@
+{
+  "name": "volume-shutter",
+  "version": "1.0.0",
+  "description": "Hardware volume buttons as camera shutter (AVCaptureEventInteraction on iOS).",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

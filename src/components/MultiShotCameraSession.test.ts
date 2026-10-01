@@ -32,3 +32,11 @@ test('multi-shot shutter path fires takePictureAsync with visible feedback', () 
   assert.match(source, /styles\.flash/);
   assert.match(source, /addShot\(/);
 });
+
+test('multi-shot arms hardware volume shutter only while session is visible', () => {
+  assert.match(source, /import \{ startVolumeShutter \} from 'volume-shutter'/);
+  assert.match(source, /startVolumeShutter\(/);
+  assert.match(source, /onShutterRef\.current/);
+  // Gated on visible so presses outside the session never capture.
+  assert.match(source, /if \(!visible\) return;\s*return startVolumeShutter/s);
+});

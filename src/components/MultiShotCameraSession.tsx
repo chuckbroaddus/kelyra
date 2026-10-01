@@ -26,6 +26,7 @@ import {
   shutterDisabledMessage,
   type MultiShot,
 } from '@/lib/media/multiShotBatch';
+import { startVolumeShutter } from 'volume-shutter';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
 export type MultiShotCameraSessionProps = {
@@ -80,6 +81,8 @@ export function MultiShotCameraSession({
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [flashOpaque, setFlashOpaque] = useState(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Latest shutter handler for hardware volume / camera-control events. */
+  const onShutterRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!visible) {
@@ -143,7 +146,7 @@ export function MultiShotCameraSession({
     );
   }, [finishCancel, shots.length]);
 
-  const onShutter = async () => {
+  const onShutter = useCallback(async () => {
     if (busy || !ready) return;
     if (!canAddShot(shots.length, max)) {
       setCapHint(shutterDisabledMessage(shots.length, max));
@@ -190,7 +193,21 @@ export function MultiShotCameraSession({
     } finally {
       setBusy(false);
     }
+  }, [busy, ready, shots.length, max, pulseFlash]);
+
+  onShutterRef.current = () => {
+    void onShutter();
   };
+
+  // Hardware volume / Camera Control → same path as on-screen shutter.
+  // Native module uses AVCaptureEventInteraction (iOS 17.2+) so volume does not change.
+  // No-op in Expo Go / web; only armed while this session Modal is visible.
+  useEffect(() => {
+    if (!visible) return;
+    return startVolumeShutter(() => {
+      onShutterRef.current();
+    });
+  }, [visible]);
 
   const onDeleteReviewed = () => {
     if (!reviewId) return;
@@ -284,7 +301,7 @@ export function MultiShotCameraSession({
         {/*
           iOS-style bottom bar: flip | big round shutter | count.
           Do not use SecondaryButton here — its base width is 100% and steals the row.
-          Hardware volume/side buttons are not wired by expo-camera; leave them alone.
+          Hardware volume buttons: local volume-shutter module (AVCaptureEventInteraction).
         */}
         <View style={[styles.controls, { paddingBottom: Math.max(16, insets.bottom + 4) }]}>
           <View style={styles.sideSlot}>
