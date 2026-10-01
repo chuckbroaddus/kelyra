@@ -93,8 +93,8 @@ export function personTabSelectedMaxWidth(labelMax: number, glyph = true): numbe
   return PERSON_TAB_HIT_PAD_X * 2 + (glyph ? PERSON_TAB_GLYPH + PERSON_TAB_GAP : 0) + labelMax;
 }
 
-export function personTabRowHasGlyph(tabs: ReadonlyArray<{ icon?: unknown; photoUrl?: string | null; photoName?: string | null }>): boolean {
-  return tabs.some((tab) => Boolean(tab.icon || tab.photoUrl || tab.photoName));
+export function personTabRowHasGlyph(tabs: ReadonlyArray<{ icon?: unknown; glyph?: unknown; photoUrl?: string | null; photoName?: string | null }>): boolean {
+  return tabs.some((tab) => Boolean(tab.glyph || tab.icon || tab.photoUrl || tab.photoName));
 }
 
 /** Teacher avatars only when every tab in the row is a class. Feeds, All, People extras use icons. */
