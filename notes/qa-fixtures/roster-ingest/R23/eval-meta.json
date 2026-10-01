@@ -1,0 +1,65 @@
+{
+  "id": "R23",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "cropped_off_edge",
+    "keystone",
+    "background_clutter"
+  ],
+  "fields": [
+    "names",
+    "student_id",
+    "period"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2305,
+    "background": "wood",
+    "scale": 1,
+    "rotate": 2.5,
+    "offset": [
+      0.33,
+      -0.165
+    ],
+    "keystone": {
+      "left": 0.9,
+      "right": 1.06,
+      "top": 0.97
+    },
+    "jitter": 0.005,
+    "clutter": [
+      {
+        "kind": "phone",
+        "cx": 0.08,
+        "cy": 0.18,
+        "w": 0.17,
+        "h": 0.17,
+        "angle": -8
+      },
+      {
+        "kind": "sticky",
+        "cx": 0.1,
+        "cy": 0.5,
+        "w": 0.13,
+        "h": 0.1,
+        "angle": 9
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.4,
+        0.4
+      ],
+      "amount": 0.18,
+      "vignette": 0.35
+    },
+    "noise": 5,
+    "jpeg": 60
+  }
+}

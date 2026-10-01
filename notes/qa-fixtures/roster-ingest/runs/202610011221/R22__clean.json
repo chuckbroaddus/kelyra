@@ -1,0 +1,73 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Cyrus Albrecht",
+        "student_id": "1",
+        "grade": "11",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Delphine Mbeki",
+        "student_id": "2",
+        "grade": "11",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Emerik Thome",
+        "student_id": "3",
+        "grade": "12",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Fiona Gallagher",
+        "student_id": "4",
+        "grade": "12",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gideon Rask",
+        "student_id": "5",
+        "grade": "12",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hazel Gumaro",
+        "student_id": "6",
+        "grade": "11",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Idris Nowak",
+        "student_id": "7",
+        "grade": "12",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Juniper Sloane",
+        "student_id": "8",
+        "grade": "11",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "id": "R25",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "coffee_stain",
+    "pen_marks",
+    "keystone"
+  ],
+  "fields": [
+    "names",
+    "student_id"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2507,
+    "background": "white_desk",
+    "scale": 0.86,
+    "rotate": -3,
+    "keystone": {
+      "top": 0.82,
+      "bottom": 1.02
+    },
+    "jitter": 0.006,
+    "stains": [
+      {
+        "target": "Liv Engstrom",
+        "fx": 0.75,
+        "fy": 0.3,
+        "r": 70,
+        "strength": 1.15,
+        "fill": 0.36
+      },
+      {
+        "at": [
+          0.82,
+          0.12
+        ],
+        "r": 30,
+        "strength": 0.6
+      }
+    ],
+    "pen": [
+      {
+        "type": "scribble",
+        "target": "Tristan Holloway",
+        "from": 0.45,
+        "to": 1.05,
+        "width": 3,
+        "color": [
+          25,
+          45,
+          160
+        ],
+        "density": 2.6
+      },
+      {
+        "type": "check",
+        "target": "Amara Oyelowo",
+        "width": 3,
+        "color": [
+          25,
+          45,
+          160
+        ]
+      },
+      {
+        "type": "check",
+        "target": "Noor Chaudhry",
+        "width": 3,
+        "color": [
+          25,
+          45,
+          160
+        ]
+      },
+      {
+        "type": "check",
+        "target": "Remy Delacroix",
+        "width": 3,
+        "color": [
+          25,
+          45,
+          160
+        ]
+      },
+      {
+        "type": "circle",
+        "target": "Cole Fairweather",
+        "width": 2.5,
+        "color": [
+          190,
+          30,
+          30
+        ]
+      },
+      {
+        "type": "doodle",
+        "at": [
+          0.8,
+          0.82
+        ],
+        "width": 2.5,
+        "color": [
+          25,
+          45,
+          160
+        ]
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        -0.5
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 5,
+    "jpeg": 60
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Aria Castellano",
+        "student_id": "Ag001",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Brody Ramirez",
+        "student_id": "Ag002",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Celeste Choi",
+        "student_id": "Ag003",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Dashiell Grant",
+        "student_id": "Ag004",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Emma Lindqvist",
+        "student_id": "Ag005",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Felix Hadid",
+        "student_id": "Ag006",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Greta Moreau",
+        "student_id": "Ag007",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hugo Adlerberg",
+        "student_id": "Ag008",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Inez Valcourt",
+        "student_id": "Ag009",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jasper Nakamura",
+        "student_id": "Ag010",
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

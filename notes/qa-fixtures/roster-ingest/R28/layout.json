@@ -1,0 +1,162 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Beckett Lowry",
+      "field": null,
+      "box": [
+        33,
+        108,
+        82.2,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Beckett Lowry",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        108,
+        110,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Camille Ostrowski",
+      "field": null,
+      "box": [
+        33,
+        134,
+        105.1,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Camille Ostrowski",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        134,
+        128.2,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Desmond Achebe",
+      "field": null,
+      "box": [
+        33,
+        160,
+        100.4,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Desmond Achebe",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        160,
+        124.6,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Eloise Fairfax",
+      "field": null,
+      "box": [
+        33,
+        186,
+        78.9,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Eloise Fairfax",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        186,
+        112.4,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Gunnar Halvorsen",
+      "field": null,
+      "box": [
+        33,
+        212,
+        106.5,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Gunnar Halvorsen",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        212,
+        131.3,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Leona Marchetti",
+      "field": null,
+      "box": [
+        33,
+        238,
+        95,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Leona Marchetti",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        238,
+        127.9,
+        15
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Rafael Quiroga",
+      "field": null,
+      "box": [
+        33,
+        264,
+        86.1,
+        15
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Rafael Quiroga",
+      "field": "parent_contact",
+      "box": [
+        330.7,
+        264,
+        116.5,
+        15
+      ]
+    }
+  ]
+}

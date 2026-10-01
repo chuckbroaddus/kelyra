@@ -1,0 +1,166 @@
+{
+  "source_id": "R26",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Abel Durant",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Beatrix Holm",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Cassius Wren",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Dalia Farouk",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Emmett Szabo",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Flora Inglis",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Gage Mercer",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Hollis Penn",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Ivy Castellanos",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Jett Morrow",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Kalina Petrova",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Lazlo Imre",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Maren Vik",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Nico Saldana",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Opal Hendry",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Pierce Lyle",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Rumi Takeda",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Saoirse Dolan",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {
+    "rough_gt": {
+      "absent": [
+        "Lazlo Imre"
+      ],
+      "uncertain": [
+        "Jett Morrow",
+        "Kalina Petrova",
+        "Maren Vik"
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "R29",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": true,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": false,
+  "effects": [
+    "handwritten_print",
+    "cross_out",
+    "inserted_name"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": []
+}

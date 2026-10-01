@@ -1,0 +1,285 @@
+{
+  "id": "R26",
+  "frame": [
+    1500,
+    2000
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Abel Durant",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        334,
+        365,
+        418,
+        394
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Beatrix Holm",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        341,
+        404,
+        432,
+        433
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Cassius Wren",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        348,
+        442,
+        447,
+        473
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Dalia Farouk",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        354,
+        484,
+        445,
+        514
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Emmett Szabo",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        361,
+        522,
+        466,
+        554
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Flora Inglis",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        366,
+        567,
+        445,
+        595
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Gage Mercer",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        374,
+        605,
+        468,
+        635
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Hollis Penn",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        379,
+        648,
+        461,
+        676
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Ivy Castellanos",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        388,
+        684,
+        497,
+        717
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Jett Morrow",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        393,
+        729,
+        478,
+        758
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Kalina Petrova",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.13,
+      "suggest": "absent",
+      "frame_box": [
+        401,
+        767,
+        506,
+        799
+      ],
+      "reasons": {
+        "glare": 21
+      }
+    },
+    {
+      "kind": "name",
+      "name": "Lazlo Imre",
+      "field": null,
+      "inframe": 1,
+      "visible": 0,
+      "suggest": "absent",
+      "frame_box": [
+        405,
+        814,
+        482,
+        841
+      ],
+      "reasons": {
+        "glare": 24
+      }
+    },
+    {
+      "kind": "name",
+      "name": "Maren Vik",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.58,
+      "suggest": "uncertain",
+      "frame_box": [
+        412,
+        856,
+        485,
+        883
+      ],
+      "reasons": {
+        "glare": 10
+      }
+    },
+    {
+      "kind": "name",
+      "name": "Nico Saldana",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        420,
+        893,
+        517,
+        924
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Opal Hendry",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        426,
+        936,
+        519,
+        966
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Pierce Lyle",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        432,
+        980,
+        513,
+        1009
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Rumi Takeda",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        440,
+        1020,
+        536,
+        1051
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Saoirse Dolan",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        448,
+        1061,
+        551,
+        1093
+      ],
+      "reasons": {}
+    }
+  ]
+}

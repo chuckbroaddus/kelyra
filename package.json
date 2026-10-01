@@ -18,7 +18,7 @@
     "pptx:lesson": "node scripts/lesson-from-pptx.mjs",
     "eval:ingest": "SKIP_RENDER=1 node scripts/gen-gradebook-ingest-fixtures.mjs && node scripts/render-gradebook-ingest-pngs.mjs && node scripts/eval-gradebook-ingest.mjs",
     "eval:anskey": "node scripts/gen-anskey-ingest-fixtures.mjs && node scripts/render-anskey-ingest-pngs.mjs && node scripts/eval-anskey-ingest.mjs",
-    "eval:roster": "node scripts/gen-roster-ingest-fixtures.mjs && node scripts/render-roster-ingest-pngs.mjs && node scripts/eval-roster-ingest.mjs",
+    "eval:roster": "node scripts/gen-roster-ingest-fixtures.mjs && node scripts/render-roster-ingest-pngs.mjs && node scripts/degrade-roster-fixtures.mjs && node scripts/eval-roster-ingest.mjs",
     "eval:homework": "node scripts/gen-homework-ingest-fixtures.mjs && node scripts/render-homework-ingest-pngs.mjs && node scripts/eval-homework-ingest.mjs",
     "eval:assign": "node scripts/gen-assign-ingest-fixtures.mjs && node scripts/render-assign-ingest-pngs.mjs && node scripts/eval-assign-ingest.mjs",
     "eval:people": "node scripts/gen-people-ingest-fixtures.mjs && node scripts/render-people-ingest-pngs.mjs && node scripts/eval-people-ingest.mjs",

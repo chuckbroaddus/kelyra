@@ -1,0 +1,57 @@
+{
+  "id": "R22",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "crumpled_paper",
+    "crease_lines",
+    "low_light_noise",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names",
+    "grade",
+    "period"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2204,
+    "background": "fabric",
+    "scale": 0.86,
+    "rotate": -5,
+    "keystone": {
+      "top": 0.92
+    },
+    "jitter": 0.01,
+    "crumple": {
+      "amp": 7,
+      "cell": 95,
+      "shade": 0.22,
+      "creases": 6
+    },
+    "lowlight": {
+      "exposure": 0.58,
+      "gamma": 1.2,
+      "cast": [
+        1.06,
+        0.96,
+        0.8
+      ]
+    },
+    "noise": 13,
+    "light": {
+      "gradient": [
+        -0.5,
+        -0.2
+      ],
+      "amount": 0.3,
+      "vignette": 0.4
+    },
+    "jpeg": 40
+  }
+}

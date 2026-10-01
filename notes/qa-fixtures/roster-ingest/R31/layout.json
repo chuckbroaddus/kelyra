@@ -1,0 +1,129 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Wilder Haines",
+      "field": null,
+      "box": [
+        107.7,
+        72.9,
+        173.5,
+        48.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Xena Paulsen",
+      "field": null,
+      "box": [
+        108.3,
+        120,
+        186.8,
+        46.2
+      ]
+    },
+    {
+      "kind": "crossed",
+      "name": "Fenella Royce",
+      "field": null,
+      "box": [
+        100.1,
+        167.7,
+        152.7,
+        44.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Yosef Abramov",
+      "field": null,
+      "box": [
+        108.4,
+        209.9,
+        170.2,
+        45.9
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Zinnia Coles",
+      "field": null,
+      "box": [
+        97.5,
+        248.5,
+        163.7,
+        44.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Arturo Bellini",
+      "field": null,
+      "box": [
+        96.8,
+        282.7,
+        159.8,
+        47.2
+      ]
+    },
+    {
+      "kind": "crossed",
+      "name": "Gus Mattingly",
+      "field": null,
+      "box": [
+        109,
+        326.9,
+        206.7,
+        48.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Briony Tate",
+      "field": null,
+      "box": [
+        106.4,
+        373,
+        138.7,
+        44.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Cosmo Fairley",
+      "field": null,
+      "box": [
+        100.9,
+        419.8,
+        183.3,
+        46
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Dove Ainsworth",
+      "field": null,
+      "box": [
+        100.4,
+        459.3,
+        187.4,
+        44.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Halle Brisbane",
+      "field": null,
+      "box": [
+        468.5,
+        290.1,
+        147.9,
+        50.9
+      ]
+    }
+  ]
+}

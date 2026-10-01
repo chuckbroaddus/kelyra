@@ -1,0 +1,206 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Mabel Ferraro",
+      "field": null,
+      "box": [
+        108.2,
+        120.6,
+        194.5,
+        43.8
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Mabel Ferraro",
+      "field": "student_id",
+      "box": [
+        525.1,
+        117.3,
+        97,
+        54.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Niall Corrigan",
+      "field": null,
+      "box": [
+        108.9,
+        159.7,
+        147.7,
+        45.9
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Niall Corrigan",
+      "field": "student_id",
+      "box": [
+        525.9,
+        164,
+        90.7,
+        45.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Olympia Kostas",
+      "field": null,
+      "box": [
+        106.8,
+        203.9,
+        206.9,
+        44.3
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Olympia Kostas",
+      "field": "student_id",
+      "box": [
+        524.5,
+        200.5,
+        120.5,
+        55.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Ptolemy Ward",
+      "field": null,
+      "box": [
+        95.3,
+        250.2,
+        144.5,
+        44.5
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Ptolemy Ward",
+      "field": "student_id",
+      "box": [
+        525.3,
+        246.2,
+        92.7,
+        44
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Raina Bose",
+      "field": null,
+      "box": [
+        100.9,
+        284.6,
+        157.2,
+        44.4
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Raina Bose",
+      "field": "student_id",
+      "box": [
+        524.6,
+        288.2,
+        107.9,
+        51.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Soren Ekdahl",
+      "field": null,
+      "box": [
+        100.2,
+        327.2,
+        139.6,
+        45.9
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Soren Ekdahl",
+      "field": "student_id",
+      "box": [
+        525.1,
+        332.1,
+        90.4,
+        45.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Tova Lindell",
+      "field": null,
+      "box": [
+        109.2,
+        375,
+        165.7,
+        42.9
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Tova Lindell",
+      "field": "student_id",
+      "box": [
+        525,
+        367.9,
+        111,
+        54.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Uriel Mendes",
+      "field": null,
+      "box": [
+        96.5,
+        415,
+        147.1,
+        43.4
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Uriel Mendes",
+      "field": "student_id",
+      "box": [
+        524.3,
+        414.2,
+        100,
+        46.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Vida Kerr",
+      "field": null,
+      "box": [
+        99.8,
+        454.5,
+        133,
+        43.3
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "Vida Kerr",
+      "field": "student_id",
+      "box": [
+        525.7,
+        452.8,
+        112.4,
+        55.1
+      ]
+    }
+  ]
+}

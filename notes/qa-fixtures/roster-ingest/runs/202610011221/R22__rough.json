@@ -1,0 +1,73 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "names": [
+      {
+        "name": "Cindy Abbott",
+        "student_id": null,
+        "grade": "10",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Caroline Noble",
+        "student_id": null,
+        "grade": "11",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Joseph George",
+        "student_id": null,
+        "grade": "9",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Maria Gonzalez",
+        "student_id": null,
+        "grade": "12",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Steven Patel",
+        "student_id": null,
+        "grade": "11",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "David Nguyen",
+        "student_id": null,
+        "grade": "12",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Lily Harris",
+        "student_id": null,
+        "grade": "11",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Victoria Torres",
+        "student_id": null,
+        "grade": "10",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      }
+    ]
+  }
+}

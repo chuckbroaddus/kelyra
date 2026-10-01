@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const CORPUS = path.join(ROOT, 'notes/qa-fixtures/roster-ingest');
+const CORPUS = process.env.EVAL_CORPUS ? path.resolve(process.env.EVAL_CORPUS) : path.join(ROOT, 'notes/qa-fixtures/roster-ingest');
 const AI_URL = (process.env.AI_DEV_URL || 'http://127.0.0.1:8787').replace(/\/$/, '');
 
 function loadEnv() {
@@ -202,8 +202,24 @@ function extractActual(payload) {
   };
 }
 
-function scoreCase(expected, actual, meta = {}) {
-  const expNames = (expected.names || []).map(normalizeRow).filter(Boolean);
+function scoreCase(expected, actual, meta = {}, variant = 'clean') {
+  // Honest GT for degraded images (expected._eval.rough_gt, rough variant only):
+  //   absent → removed from GT (reading it anyway = invented); uncertain → not penalised if
+  //   missing; uncertain_fields → null OK, a wrong value counts as a hallucination.
+  // Crossed-out names (expected._eval.excluded_names) → extra (precision) but not hallucination.
+  const rg = variant === 'rough' ? meta.rough_gt || {} : {};
+  const absentSet = new Set((rg.absent || []).map(normName));
+  const uncSet = new Set((rg.uncertain || []).map(normName));
+  const uncFields = rg.uncertain_fields || {};
+  const excluded = meta.excluded_names || [];
+  const expAll = (expected.names || [])
+    .map((r) => {
+      const n = normalizeRow(r);
+      return n ? { ...n, uncertain: r.uncertain === true || uncSet.has(normName(n.name)) } : null;
+    })
+    .filter((r) => r && !absentSet.has(normName(r.name)));
+  const expNames = [...expAll.filter((r) => !r.uncertain), ...expAll.filter((r) => r.uncertain)];
+  const certainCount = expAll.filter((r) => !r.uncertain).length;
   const actNames = actual.names || [];
   const negative = expected.kind === 'negative' || meta.negative;
 
@@ -236,6 +252,7 @@ function scoreCase(expected, actual, meta = {}) {
 
   const used = new Set();
   let matched = 0;
+  let matchedUncertain = 0;
   let fieldCorrect = 0;
   let fieldTotal = 0;
   let hallucinations = 0;
@@ -280,13 +297,28 @@ function scoreCase(expected, actual, meta = {}) {
   for (const exp of expNames) {
     const bestIdx = bestMatchIndex(exp.name, used);
     if (bestIdx < 0) {
+      if (exp.uncertain) {
+        fields.push({ path: `name:${exp.name}`, status: 'uncertain_skipped', expected: exp.name, actual: null });
+        continue;
+      }
       fields.push({ path: `name:${exp.name}`, status: 'missing', expected: exp.name, actual: null });
       fieldTotal += 1;
       continue;
     }
     used.add(bestIdx);
-    matched += 1;
     const act = actNames[bestIdx];
+    if (exp.uncertain) {
+      matchedUncertain += 1;
+      fields.push({ path: `name:${exp.name}`, status: 'uncertain_read', expected: exp.name, actual: act.name });
+      for (const key of ['student_id', 'grade', 'period', 'parent_contact']) {
+        if (!fieldPresent(exp[key]) && fieldPresent(act[key])) {
+          hallucinations += 1;
+          fields.push({ path: `${key}:${exp.name}`, status: 'hallucinated', expected: null, actual: act[key] });
+        }
+      }
+      continue;
+    }
+    matched += 1;
     fields.push({ path: `name:${exp.name}`, status: 'correct', expected: exp.name, actual: act.name });
     fieldTotal += 1;
     fieldCorrect += 1;
@@ -295,6 +327,19 @@ function scoreCase(expected, actual, meta = {}) {
       const ev = exp[key];
       const av = act[key];
       if (!fieldPresent(ev) && !fieldPresent(av)) continue;
+      if ((uncFields[exp.name] || []).includes(key)) {
+        if (!fieldPresent(av)) continue;
+        const same =
+          key === 'parent_contact' ? softContact(ev, av) : key === 'student_id' ? softId(ev, av) : String(ev).trim() === String(av).trim();
+        if (same) {
+          fields.push({ path: `${key}:${exp.name}`, status: 'uncertain_read', expected: ev, actual: av });
+        } else {
+          fieldTotal += 1;
+          hallucinations += 1;
+          fields.push({ path: `${key}:${exp.name}`, status: 'guessed', expected: ev, actual: av });
+        }
+        continue;
+      }
       fieldTotal += 1;
       if (!fieldPresent(ev) && fieldPresent(av)) {
         hallucinations += 1;
@@ -323,13 +368,19 @@ function scoreCase(expected, actual, meta = {}) {
     if (used.has(i)) continue;
     if (meta.allow_extra_partial && actNames[i].confident === false) continue;
     extra += 1;
+    if (excluded.some((x) => namesMatch(x, actNames[i].name))) {
+      fields.push({ path: `extra:${actNames[i].name}`, status: 'crossed_out', expected: null, actual: actNames[i].name });
+      continue;
+    }
     hallucinations += 1;
-    fields.push({ path: `extra:${actNames[i].name}`, status: 'extra', expected: null, actual: actNames[i].name });
+    const hidden = [...absentSet].some((x) => namesMatch(x, actNames[i].name));
+    fields.push({ path: `extra:${actNames[i].name}`, status: hidden ? 'invented_hidden' : 'extra', expected: null, actual: actNames[i].name });
   }
 
-  const missing = expNames.length - matched;
-  const precision = actNames.length ? matched / (matched + extra || 1) : expNames.length === 0 ? 1 : 0;
-  const recall = expNames.length ? matched / expNames.length : 1;
+  const missing = certainCount - matched;
+  const okCount = matched + matchedUncertain;
+  const precision = actNames.length ? okCount / (okCount + extra || 1) : certainCount === 0 ? 1 : 0;
+  const recall = certainCount ? matched / certainCount : 1;
   const record_f1 = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
   const field_accuracy = fieldTotal ? fieldCorrect / fieldTotal : recall;
   const accuracy = 0.6 * record_f1 + 0.4 * field_accuracy;
@@ -343,6 +394,7 @@ function scoreCase(expected, actual, meta = {}) {
     field_accuracy,
     hallucinations,
     matched,
+    matched_uncertain: matchedUncertain,
     missing,
     extra,
     fields,
@@ -350,6 +402,11 @@ function scoreCase(expected, actual, meta = {}) {
 }
 
 // --- invoke + main ---
+
+function roughImage(caseDir) {
+  const rough = path.join(caseDir, 'rough.jpg');
+  return fs.existsSync(rough) ? { file: rough, variant: 'rough' } : null;
+}
 
 function pickImage(caseDir, preferPhoto) {
   const photo = path.join(caseDir, 'photo.jpg');
@@ -408,7 +465,9 @@ async function main() {
   const perDoc = [];
   let halluTotal = 0;
 
+  const only = (process.env.EVAL_ONLY || '').split(',').filter(Boolean);
   for (const entry of manifest.cases) {
+    if (only.length && !only.includes(entry.id)) continue;
     const caseDir = path.join(CORPUS, entry.id);
     const expected = JSON.parse(fs.readFileSync(path.join(caseDir, 'expected.json'), 'utf8'));
     let meta = {};
@@ -421,6 +480,8 @@ async function main() {
     if (clean) variants.push(clean);
     const photo = pickImage(caseDir, true);
     if (photo && photo.file !== clean?.file) variants.push(photo);
+    const rough = roughImage(caseDir);
+    if (rough && process.env.EVAL_SKIP_ROUGH !== '1') variants.push(rough);
     if (!variants.length) {
       console.warn('skip no image', entry.id);
       continue;
@@ -454,12 +515,15 @@ async function main() {
         if (paceMs > 0) await sleep(paceMs);
       }
       const actual = extractActual(result.json);
-      const scored = scoreCase(expected, actual, meta);
+      const scored = scoreCase(expected, actual, meta, v.variant);
       halluTotal += scored.hallucinations || 0;
       perDoc.push({
         id: entry.id,
         kind: entry.kind,
         variant: v.variant,
+        handwritten: Boolean(meta.handwritten),
+        rough_case: Boolean(meta.rough),
+        effects: meta.effects || [],
         http_status: result.status,
         accuracy: scored.accuracy,
         name_recall: scored.name_recall,
@@ -468,6 +532,7 @@ async function main() {
         field_accuracy: scored.field_accuracy,
         hallucinations: scored.hallucinations,
         matched: scored.matched,
+        matched_uncertain: scored.matched_uncertain || 0,
         missing: scored.missing,
         extra: scored.extra,
         fields: scored.fields,
@@ -501,6 +566,7 @@ async function main() {
       'record_f1',
     ),
     hallucinations_total: halluTotal,
+    buckets: bucketize(perDoc),
     documents: perDoc,
   };
   fs.writeFileSync(path.join(runDir, 'score.json'), JSON.stringify(score, null, 2));
@@ -515,6 +581,55 @@ async function main() {
     'hallu',
     halluTotal,
   );
+  console.log('bucket                n   acc    fieldAcc recF1  recall prec   hallu negPass');
+  for (const [k, b] of Object.entries(score.buckets)) {
+    const pct = (x) => (x == null ? '   -  ' : (x * 100).toFixed(1).padStart(5) + '%');
+    console.log(
+      k.padEnd(20),
+      String(b.n).padStart(3),
+      pct(b.accuracy),
+      pct(b.field_accuracy),
+      pct(b.record_f1),
+      pct(b.name_recall),
+      pct(b.name_precision),
+      String(b.hallucinations).padStart(5),
+      b.negative_pass == null ? '   -' : `${b.negative_pass}/${b.n}`,
+    );
+  }
+}
+
+/** clean vs mild photo vs rough vs handwritten breakdown (rosters) + negatives. */
+function bucketize(docs) {
+  const defs = {
+    all: () => true,
+    clean_print: (d) => d.kind === 'roster' && d.variant === 'clean' && !d.handwritten,
+    photo_mild: (d) => d.kind === 'roster' && d.variant === 'photo',
+    rough_print: (d) => d.kind === 'roster' && d.variant === 'rough' && !d.handwritten,
+    handwritten_all: (d) => d.kind === 'roster' && d.handwritten,
+    handwritten_clean: (d) => d.kind === 'roster' && d.handwritten && d.variant !== 'rough',
+    handwritten_rough: (d) => d.kind === 'roster' && d.handwritten && d.variant === 'rough',
+    rough_all: (d) => d.kind === 'roster' && d.variant === 'rough',
+    negatives: (d) => d.kind === 'negative',
+    negatives_rough: (d) => d.kind === 'negative' && d.variant === 'rough',
+  };
+  const avg = (rows, key) => (rows.length ? rows.reduce((s, r) => s + (r[key] || 0), 0) / rows.length : null);
+  const out = {};
+  for (const [k, f] of Object.entries(defs)) {
+    const rows = docs.filter(f);
+    if (!rows.length) continue;
+    const neg = rows.every((r) => r.kind === 'negative');
+    out[k] = {
+      n: rows.length,
+      accuracy: avg(rows, 'accuracy'),
+      field_accuracy: neg ? null : avg(rows, 'field_accuracy'),
+      record_f1: neg ? null : avg(rows, 'record_f1'),
+      name_recall: neg ? null : avg(rows, 'name_recall'),
+      name_precision: neg ? null : avg(rows, 'name_precision'),
+      hallucinations: rows.reduce((s, r) => s + (r.hallucinations || 0), 0),
+      negative_pass: neg ? rows.filter((r) => r.accuracy === 1).length : null,
+    };
+  }
+  return out;
 }
 
 main().catch((err) => {

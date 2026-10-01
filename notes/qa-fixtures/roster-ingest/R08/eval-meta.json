@@ -6,6 +6,8 @@
   "negative": false,
   "low_light": false,
   "multi_page": false,
+  "rough": false,
+  "effects": [],
   "fields": [
     "names",
     "period"

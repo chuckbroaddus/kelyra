@@ -1,0 +1,249 @@
+{
+  "id": "R27",
+  "frame": [
+    1500,
+    2000
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Thea Lockhart",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        49,
+        402,
+        168,
+        434
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Thea Lockhart",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        812,
+        330,
+        825,
+        353
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Ulysses Kane",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        60,
+        455,
+        167,
+        486
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Ulysses Kane",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        817,
+        385,
+        829,
+        407
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Valentina Rossi",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        72,
+        505,
+        198,
+        537
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Valentina Rossi",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        821,
+        439,
+        833,
+        460
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Wren Galloway",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        82,
+        556,
+        205,
+        588
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Wren Galloway",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        826,
+        491,
+        838,
+        512
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Xavier Lund",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        91,
+        609,
+        190,
+        637
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Xavier Lund",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        830,
+        543,
+        842,
+        564
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Yara Nasser",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        101,
+        658,
+        196,
+        686
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Yara Nasser",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        834,
+        594,
+        846,
+        614
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Zeke Marlow",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        112,
+        706,
+        214,
+        734
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Zeke Marlow",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        838,
+        644,
+        850,
+        664
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "Amos Whitaker",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        123,
+        751,
+        244,
+        780
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "Amos Whitaker",
+      "field": "period",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        842,
+        693,
+        854,
+        713
+      ],
+      "reasons": {}
+    }
+  ]
+}

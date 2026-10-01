@@ -1,0 +1,96 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Imogen Ravel",
+      "field": null,
+      "box": [
+        133.8,
+        126.6,
+        172.3,
+        43.8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Jareth Bliss",
+      "field": null,
+      "box": [
+        126.7,
+        170.3,
+        167.2,
+        43.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Katya Orlova",
+      "field": null,
+      "box": [
+        137.9,
+        208.6,
+        194.9,
+        44.1
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Leopold Finch",
+      "field": null,
+      "box": [
+        129.9,
+        250.9,
+        178.2,
+        44.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Magnolia Reese",
+      "field": null,
+      "box": [
+        136,
+        338.1,
+        203.9,
+        42.1
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Nestor Pavlou",
+      "field": null,
+      "box": [
+        135.4,
+        379.1,
+        217.2,
+        43.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Octavia Prentiss",
+      "field": null,
+      "box": [
+        140.9,
+        423.1,
+        194.1,
+        44
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Philippa Grey",
+      "field": null,
+      "box": [
+        135.7,
+        461.3,
+        180.6,
+        44.6
+      ]
+    }
+  ]
+}

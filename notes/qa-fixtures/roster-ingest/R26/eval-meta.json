@@ -1,0 +1,80 @@
+{
+  "id": "R26",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "folded_in_thirds",
+    "glare_hotspot",
+    "rotation_10deg"
+  ],
+  "fields": [
+    "names"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2608,
+    "background": "laminate",
+    "scale": 0.86,
+    "rotate": -10,
+    "keystone": {
+      "top": 0.94
+    },
+    "jitter": 0.004,
+    "creases": [
+      {
+        "at": [
+          0.5,
+          0.333
+        ],
+        "angle": 0.6,
+        "shift": 2.5,
+        "dark": 0.45,
+        "panel": 0.93,
+        "width": 3
+      },
+      {
+        "at": [
+          0.5,
+          0.666
+        ],
+        "angle": -0.4,
+        "shift": -2,
+        "dark": 0.4,
+        "panel": 1.04,
+        "width": 3
+      }
+    ],
+    "crumple": {
+      "amp": 2.5,
+      "cell": 160,
+      "shade": 0.06,
+      "creases": 0
+    },
+    "glare": [
+      {
+        "target": "Lazlo Imre",
+        "fx": 0.9,
+        "fy": 0.5,
+        "rx": 0.08,
+        "ry": 0.035,
+        "angle": 20,
+        "strength": 1.9
+      }
+    ],
+    "light": {
+      "gradient": [
+        -0.4,
+        0.3
+      ],
+      "amount": 0.15,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 55
+  }
+}

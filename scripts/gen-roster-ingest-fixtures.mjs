@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRoughCases } from './lib/roster-rough-cases.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -750,6 +751,9 @@ ${[
   },
 ];
 
+// Rough phone-photo + handwritten cases (R19–R33, N04–N05): see scripts/lib/roster-rough-cases.mjs
+CASES.push(...buildRoughCases({ page, nameRow, expected }));
+
 function main() {
   ensureDir(OUT);
   const manifest = { generated_at: new Date().toISOString(), count: 0, cases: [] };
@@ -766,18 +770,23 @@ function main() {
       negative: c.kind === 'negative',
       low_light: Boolean(c.lowLight),
       multi_page: Boolean(c.multiPage),
+      rough: Boolean(c.rough),
+      effects: c.effects ?? [],
       fields: c.fields ?? ['names'],
       srs: c.srs ?? [],
+      ...(c.degrade ? { degrade: c.degrade } : {}),
     });
     write(
       path.join(dir, 'notes.md'),
-      `# ${c.id}\n\n${c.notes}\n\nFields: ${(c.fields || ['names']).join(', ')}\nPhoto: ${c.photo ? 'yes' : 'no'}\n`,
+      `# ${c.id}\n\n${c.notes}\n\nFields: ${(c.fields || ['names']).join(', ')}\nPhoto: ${c.photo ? 'yes' : 'no'}\n${c.rough ? `Rough: yes (rough.jpg) — effects: ${(c.effects || []).join(', ')}\n` : ''}${c.hand ? 'Handwritten: yes\n' : ''}`,
     );
     manifest.cases.push({
       id: c.id,
       kind: c.kind,
       photo: Boolean(c.photo),
       handwritten: Boolean(c.hand),
+      rough: Boolean(c.rough),
+      effects: c.effects ?? [],
       fields_exercised: c.fields ?? ['names'],
     });
   }

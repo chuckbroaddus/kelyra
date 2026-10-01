@@ -1,0 +1,82 @@
+{
+  "id": "R28",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "clutter_overlapping_page",
+    "rotation_18deg",
+    "defocus_blur"
+  ],
+  "fields": [
+    "names",
+    "parent_contact"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 2810,
+    "background": "wood",
+    "scale": 0.86,
+    "rotate": 18,
+    "offset": [
+      0.06,
+      0.05
+    ],
+    "jitter": 0.004,
+    "clutter": [
+      {
+        "kind": "paper",
+        "cx": 0.2,
+        "cy": 0.12,
+        "w": 0.5,
+        "h": 0.35,
+        "angle": -8
+      },
+      {
+        "kind": "folder",
+        "cx": 0.9,
+        "cy": 0.85,
+        "w": 0.5,
+        "h": 0.5,
+        "angle": 10
+      }
+    ],
+    "overlap": [
+      {
+        "kind": "paper",
+        "target": "Rafael Quiroga",
+        "tfx": 0.5,
+        "tfy": 0,
+        "dx": 0,
+        "dy": 0.142,
+        "w": 0.75,
+        "h": 0.3,
+        "angle": 16
+      },
+      {
+        "kind": "sticky",
+        "target": "Desmond Achebe",
+        "tfx": 2.2,
+        "tfy": 0.5,
+        "w": 0.15,
+        "h": 0.11,
+        "angle": 30
+      }
+    ],
+    "defocus": 1.1,
+    "light": {
+      "gradient": [
+        -0.3,
+        -0.4
+      ],
+      "amount": 0.2,
+      "vignette": 0.35
+    },
+    "noise": 6,
+    "jpeg": 58
+  }
+}

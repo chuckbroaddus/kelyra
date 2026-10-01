@@ -1,0 +1,81 @@
+{
+  "source_id": "R28",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Beckett Lowry",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "M. Lowry 555-0141",
+      "confident": true
+    },
+    {
+      "name": "Camille Ostrowski",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "J. Ostrowski 555-0142",
+      "confident": true
+    },
+    {
+      "name": "Desmond Achebe",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "Ada Achebe 555-0143",
+      "confident": true
+    },
+    {
+      "name": "Eloise Fairfax",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "T. Fairfax 555-0144",
+      "confident": true
+    },
+    {
+      "name": "Gunnar Halvorsen",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "K. Halvorsen 555-0145",
+      "confident": true
+    },
+    {
+      "name": "Leona Marchetti",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "P. Marchetti 555-0146",
+      "confident": true
+    },
+    {
+      "name": "Rafael Quiroga",
+      "student_id": null,
+      "grade": null,
+      "period": null,
+      "parent_contact": "S. Quiroga 555-0147",
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {
+    "rough_gt": {
+      "absent": [
+        "Rafael Quiroga"
+      ],
+      "uncertain": [
+        "Leona Marchetti"
+      ],
+      "uncertain_fields": {
+        "Leona Marchetti": [
+          "parent_contact"
+        ]
+      }
+    }
+  }
+}

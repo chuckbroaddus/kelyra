@@ -1,0 +1,91 @@
+{
+  "source_id": "R19",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Aria Castellano",
+      "student_id": "A3101",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Brody Kimura",
+      "student_id": "A3102",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Celeste Obi",
+      "student_id": "A3103",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Dashiell Grant",
+      "student_id": "A3104",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Esme Lindqvist",
+      "student_id": "A3105",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Felix Haddad",
+      "student_id": "A3106",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Greta Moreau",
+      "student_id": "A3107",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Hugo Achterberg",
+      "student_id": "A3108",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Ines Valcourt",
+      "student_id": "A3109",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Jasper Nakamura",
+      "student_id": "A3110",
+      "grade": null,
+      "period": null,
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {}
+}

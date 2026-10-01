@@ -1,0 +1,82 @@
+{
+  "source_id": "R32",
+  "kind": "roster",
+  "document_kind_guess": "class_roster",
+  "rejected": false,
+  "overall_confidence": 0.9,
+  "names": [
+    {
+      "name": "Imogen Ravel",
+      "student_id": null,
+      "grade": null,
+      "period": "2",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Jareth Bliss",
+      "student_id": null,
+      "grade": null,
+      "period": "2",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Katya Orlova",
+      "student_id": null,
+      "grade": null,
+      "period": "2",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Leopold Finch",
+      "student_id": null,
+      "grade": null,
+      "period": "2",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Magnolia Reese",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Nestor Pavlou",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Octavia Prentiss",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    },
+    {
+      "name": "Philippa Grey",
+      "student_id": null,
+      "grade": null,
+      "period": "3",
+      "parent_contact": null,
+      "confident": true
+    }
+  ],
+  "warnings": [],
+  "_eval": {
+    "rough_gt": {
+      "uncertain": [
+        "Imogen Ravel",
+        "Jareth Bliss"
+      ]
+    }
+  }
+}

@@ -1,12 +1,14 @@
 {
-  "generated_at": "2026-10-01T11:19:20.127Z",
-  "count": 21,
+  "generated_at": "2026-10-01T12:18:22.001Z",
+  "count": 38,
   "cases": [
     {
       "id": "R01",
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -17,6 +19,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id",
@@ -29,6 +33,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -38,6 +44,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -47,6 +55,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id",
@@ -58,6 +68,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -68,6 +80,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": true,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -77,6 +91,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "period"
@@ -87,6 +103,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "parent_contact"
@@ -97,6 +115,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -106,6 +126,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -116,6 +138,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -126,6 +150,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "grade",
@@ -137,6 +163,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -147,6 +175,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -156,6 +186,8 @@
       "kind": "roster",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -165,6 +197,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names",
         "student_id"
@@ -175,6 +209,8 @@
       "kind": "roster",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -184,6 +220,8 @@
       "kind": "negative",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -193,6 +231,8 @@
       "kind": "negative",
       "photo": false,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
       "fields_exercised": [
         "names"
       ]
@@ -202,6 +242,285 @@
       "kind": "negative",
       "photo": true,
       "handwritten": false,
+      "rough": false,
+      "effects": [],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R19",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "strong_keystone",
+        "motion_blur",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R20",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "rotation_14deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id",
+        "grade"
+      ]
+    },
+    {
+      "id": "R21",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "hand_phone_shadow",
+        "defocus_blur",
+        "background_clutter"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R22",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "crumpled_paper",
+        "crease_lines",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names",
+        "grade",
+        "period"
+      ]
+    },
+    {
+      "id": "R23",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "cropped_off_edge",
+        "keystone",
+        "background_clutter"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id",
+        "period"
+      ]
+    },
+    {
+      "id": "R24",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "page_curl_binding",
+        "shadow",
+        "rotation_7deg"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R25",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "coffee_stain",
+        "pen_marks",
+        "keystone"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R26",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "folded_in_thirds",
+        "glare_hotspot",
+        "rotation_10deg"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R27",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "strong_keystone",
+        "very_low_light_noise",
+        "motion_blur"
+      ],
+      "fields_exercised": [
+        "names",
+        "period"
+      ]
+    },
+    {
+      "id": "R28",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "clutter_overlapping_page",
+        "rotation_18deg",
+        "defocus_blur"
+      ],
+      "fields_exercised": [
+        "names",
+        "parent_contact"
+      ]
+    },
+    {
+      "id": "R29",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": true,
+      "rough": false,
+      "effects": [
+        "handwritten_print",
+        "cross_out",
+        "inserted_name"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R30",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_mixed_print_cursive",
+        "keystone",
+        "hand_phone_shadow",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "R31",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_pencil",
+        "cross_out_scribble",
+        "arrow_inserted_name",
+        "rotation_12deg",
+        "crumpled_paper",
+        "low_light_noise"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "R32",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_cursive",
+        "page_curl_binding",
+        "glare_hotspot"
+      ],
+      "fields_exercised": [
+        "names",
+        "period"
+      ]
+    },
+    {
+      "id": "R33",
+      "kind": "roster",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_many_hands",
+        "defocus_blur",
+        "background_clutter",
+        "rotation_5deg",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names",
+        "student_id"
+      ]
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "photo": false,
+      "handwritten": false,
+      "rough": true,
+      "effects": [
+        "rotation_9deg",
+        "glare_hotspot",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "fields_exercised": [
+        "names"
+      ]
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "photo": false,
+      "handwritten": true,
+      "rough": true,
+      "effects": [
+        "handwritten_print",
+        "crumpled_paper",
+        "hand_phone_shadow"
+      ],
       "fields_exercised": [
         "names"
       ]

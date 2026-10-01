@@ -1,0 +1,59 @@
+{
+  "id": "R19",
+  "kind": "roster",
+  "photo": false,
+  "handwritten": false,
+  "negative": false,
+  "low_light": false,
+  "multi_page": false,
+  "rough": true,
+  "effects": [
+    "strong_keystone",
+    "motion_blur",
+    "low_light_noise",
+    "jpeg_artifacts"
+  ],
+  "fields": [
+    "names",
+    "student_id"
+  ],
+  "srs": [],
+  "degrade": {
+    "seed": 1901,
+    "background": "dark_desk",
+    "scale": 0.92,
+    "rotate": 3,
+    "offset": [
+      0,
+      0.02
+    ],
+    "keystone": {
+      "top": 1.06,
+      "bottom": 0.74
+    },
+    "jitter": 0.008,
+    "motion": {
+      "len": 5,
+      "angle": 18
+    },
+    "lowlight": {
+      "exposure": 0.68,
+      "gamma": 1.2,
+      "cast": [
+        1.05,
+        0.95,
+        0.78
+      ]
+    },
+    "noise": 9,
+    "light": {
+      "gradient": [
+        0.6,
+        -0.4
+      ],
+      "amount": 0.25,
+      "vignette": 0.45
+    },
+    "jpeg": 45
+  }
+}
