@@ -21,7 +21,7 @@ import {
 } from '@/components/gradebook/periodScope';
 import { Screen } from '@/components/ui/Screen';
 import { StickyTable } from '@/components/ui/StickyTable';
-import { studentHead } from '@/constants/table';
+import { studentHeadCompact, studentHeadFor } from '@/constants/table';
 import { chrome, radius, shadows, type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
@@ -172,7 +172,9 @@ export default function GradebookScreen() {
     return () => setImmersive(false);
   }, [landscapeFull, setImmersive]);
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
-  const colWidth = studentHead.colWidth;
+  const headMetrics = studentHeadFor(layout.breakpoint);
+  const compactHead = studentHeadCompact(layout.breakpoint);
+  const colWidth = headMetrics.colWidth;
   const assignments = useMemo(
     () => (book ? filterAssignmentsByPeriod(book.assignments, termFilter, calendar) : []),
     [book, termFilter, calendar],
@@ -215,6 +217,7 @@ export default function GradebookScreen() {
           name={student.display_name}
           photoUrl={student.photoUrl}
           href={id ? `/class/${id}/student/${student.id}` : undefined}
+          compact={compactHead}
         />
       ),
       render: (row: BookNode) => {
@@ -262,7 +265,7 @@ export default function GradebookScreen() {
         );
       },
     }));
-  }, [book, colWidth, colors.ink, id, overallByStudent, router]);
+  }, [book, colWidth, colors.ink, compactHead, id, overallByStudent, router]);
 
   useEffect(() => {
     if (!tree.length) return;
@@ -476,7 +479,7 @@ export default function GradebookScreen() {
             rowKey={(row) => row.id}
             frozenTitle="Assignment"
             frozenWidth={frozenWidth}
-            headHeight={studentHead.height}
+            headHeight={headMetrics.height}
             empty="No students yet."
             rowTone={(row) => (row.kind === 'assignment' ? 'stripe' : 'group')}
             renderFrozen={(row) => (
