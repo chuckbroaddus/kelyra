@@ -1,0 +1,57 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "authorized_pickup",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model",
+    "riders",
+    "authorized_pickups"
+  ],
+  "rough": true,
+  "effects": [
+    "outdoor_on_hood",
+    "keystone",
+    "glare_hotspot",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 4707,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "dark_desk",
+    "scale": 0.86,
+    "rotate": -7,
+    "keystone": {
+      "top": 0.84,
+      "bottom": 1.04
+    },
+    "jitter": 0.005,
+    "glare": [
+      {
+        "target": "adult:Daniel Whitfield",
+        "fx": 1.6,
+        "fy": 0.3,
+        "rx": 0.12,
+        "ry": 0.05,
+        "angle": -10,
+        "strength": 1.7
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.4,
+        -0.3
+      ],
+      "amount": 0.25,
+      "vignette": 0.3
+    },
+    "noise": 5,
+    "jpeg": 50
+  }
+}

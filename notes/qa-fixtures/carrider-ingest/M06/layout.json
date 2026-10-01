@@ -1,0 +1,74 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "plate:bg1:badge",
+      "field": null,
+      "box": [
+        142.2,
+        382.8,
+        75.5,
+        12
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg1",
+      "field": null,
+      "box": [
+        126.8,
+        423.5,
+        106.4,
+        22
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg2:badge",
+      "field": null,
+      "box": [
+        645.4,
+        354.8,
+        49.2,
+        8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg2",
+      "field": null,
+      "box": [
+        628,
+        387.7,
+        84,
+        17
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg:badge",
+      "field": null,
+      "box": [
+        313.3,
+        652.9,
+        273.5,
+        24
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        332.4,
+        744.5,
+        235.2,
+        48
+      ]
+    }
+  ]
+}

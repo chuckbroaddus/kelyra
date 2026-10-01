@@ -1,0 +1,30 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "plate:fg:badge",
+      "field": null,
+      "box": [
+        333.6,
+        582.9,
+        172.8,
+        24
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        302.4,
+        674.5,
+        235.2,
+        48
+      ]
+    }
+  ]
+}

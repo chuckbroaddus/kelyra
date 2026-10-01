@@ -1,0 +1,22 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": false,
+  "effects": [
+    "adjacent_lanes_similar_distance"
+  ],
+  "background_plates": [
+    "DWN3471"
+  ],
+  "rough_gt": {},
+  "gt_rule": "nearest of two side-by-side cars (larger, lower in frame)"
+}

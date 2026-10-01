@@ -1,0 +1,16 @@
+{
+  "source_id": "M02",
+  "document_kind": "vehicle_photo",
+  "plate": "MXH7342",
+  "plateFront": null,
+  "plateBack": "MXH7342",
+  "make": "Honda",
+  "model": "Accord",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

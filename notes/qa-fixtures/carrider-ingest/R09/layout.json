@@ -1,0 +1,52 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "tag",
+      "field": null,
+      "box": [
+        454.9,
+        235.1,
+        146.1,
+        81.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        402.9,
+        314.3,
+        215,
+        52.1
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rider:Ivy Patel",
+      "field": null,
+      "box": [
+        391.9,
+        371.8,
+        81.7,
+        28.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rider:Arjun Patel",
+      "field": null,
+      "box": [
+        382.5,
+        402.7,
+        103.8,
+        29.3
+      ]
+    }
+  ]
+}

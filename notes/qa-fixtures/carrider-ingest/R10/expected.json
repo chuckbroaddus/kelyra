@@ -1,0 +1,16 @@
+{
+  "source_id": "R10",
+  "document_kind": "vehicle_photo",
+  "plate": "PXM853",
+  "plateFront": null,
+  "plateBack": "PXM853",
+  "make": "Jeep",
+  "model": "Wrangler",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

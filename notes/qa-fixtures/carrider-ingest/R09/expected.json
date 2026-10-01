@@ -1,0 +1,19 @@
+{
+  "source_id": "R09",
+  "document_kind": "hang_tag",
+  "plate": "FNR6624",
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "unknown",
+  "tag_number": "2087",
+  "riders": [
+    "Ivy Patel",
+    "Arjun Patel"
+  ],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

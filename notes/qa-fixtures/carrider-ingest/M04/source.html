@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>*{box-sizing:border-box}
+html,body{margin:0;width:840px;height:1100px;overflow:hidden}
+body{position:relative;font-family:Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#9fb6ca 0%,#d7dfe5 27%,#8a8e92 28%,#64686c 55%,#45484b 100%)}
+.lane{position:absolute;left:0;right:0;height:6px;background:#e9e3c9;opacity:.6}
+.tree{position:absolute;border-radius:50%;background:radial-gradient(#5d7a4a,#3e5632)}
+.bldg{position:absolute;background:#b9a68f;border:2px solid #9c8a74}
+.car{position:absolute}
+.car .body{position:absolute;inset:0;border-radius:14% 14% 6% 6%/20% 20% 8% 8%}
+.car .win{position:absolute;left:13%;right:13%;top:5%;height:29%;background:linear-gradient(170deg,#25303d,#46546a 70%,#2b3542);border-radius:24% 24% 4% 4%/40% 40% 6% 6%;overflow:hidden}
+.car .tl{position:absolute;top:39%;width:17%;height:11%;background:linear-gradient(#d31c27,#8e0f17);border-radius:6px}
+.car .badge{position:absolute;left:0;right:0;top:41%;text-align:center;color:#eef1f3;font-weight:700;letter-spacing:.12em;text-shadow:0 1px 1px rgba(0,0,0,.5)}
+.car .plate{position:absolute;left:50%;top:56%;transform:translateX(-50%);background:#f5f7f8;border:4px solid #1f2328;border-radius:8px;text-align:center;line-height:1.05}
+.car .plate .st{color:#2b5ea8;font-weight:700;letter-spacing:.28em}
+.car .plate .num{font-family:"Courier New",monospace;font-weight:800;color:#121212;letter-spacing:.1em;white-space:nowrap}
+.car .plate.temp{background:#fbf6dc;border-style:dashed;border-color:#555}
+.car .plate .exp{color:#444;font-size:.8em;letter-spacing:.05em}
+.car .bumper{position:absolute;left:-2%;right:-2%;bottom:7%;height:13%;background:linear-gradient(#2c3035,#1b1e21);border-radius:10px}
+.car .tire{position:absolute;bottom:-3%;width:17%;height:13%;background:#101112;border-radius:8px}
+.thumb{position:absolute;background:radial-gradient(ellipse at 40% 35%,#e7b996,#c98c68 70%,#a96f50);border-radius:48% 48% 40% 40%/60% 60% 35% 35%;box-shadow:-6px 8px 18px rgba(0,0,0,.35)}</style></head><body>
+<div class="bldg" style="left:520px;top:120px;width:300px;height:190px"></div>
+<div class="tree" style="left:40px;top:150px;width:170px;height:150px"></div>
+<div class="tree" style="left:230px;top:180px;width:120px;height:110px"></div>
+<div class="lane" style="top:640px;transform:rotate(-8deg);width:500px;left:-60px"></div>
+<div class="lane" style="top:640px;transform:rotate(8deg);width:500px;left:420px"></div>
+<div class="car" style="left:60px;top:340px;width:250px;height:180px;">
+<div class="body" style="background:linear-gradient(180deg,#f1f2f3 0%,#b9bec3 100%)"></div>
+<div class="win"></div>
+<div class="tl" style="left:5%"></div><div class="tl" style="right:5%"></div>
+<div class="badge" style="font-size:9px"><span data-gt-name="plate:bg1:badge">MAZDA CX-9</span></div>
+<div class="plate" style="width:120px;padding:3px 5px;border-width:2px"><div class="st" style="font-size:6px">TEXAS</div>
+<div class="num" style="font-size:17px"><span data-gt-name="plate:bg1">CLP 7639</span></div></div>
+<div class="bumper"></div>
+<div class="tire" style="left:8%"></div><div class="tire" style="right:8%"></div>
+</div>
+<div class="car" style="left:300px;top:620px;width:700px;height:504px;">
+<div class="body" style="background:linear-gradient(180deg,#3f6b52 0%,#21402f 100%)"></div>
+<div class="win"></div>
+<div class="tl" style="left:5%"></div><div class="tl" style="right:5%"></div>
+<div class="badge" style="font-size:24px"><span data-gt-name="plate:fg:badge">SUBARU FORESTER</span></div>
+<div class="plate" style="width:336px;padding:8px 14px;border-width:5px"><div class="st" style="font-size:17px">TEXAS</div>
+<div class="num" style="font-size:48px"><span data-gt-name="plate:fg">YRV 4825</span></div></div>
+<div class="bumper"></div>
+<div class="tire" style="left:8%"></div><div class="tire" style="right:8%"></div>
+</div>
+</body></html>

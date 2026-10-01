@@ -1,0 +1,96 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Nora Whitfield",
+      "field": null,
+      "box": [
+        159.3,
+        104,
+        151.2,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "box": [
+        710,
+        104,
+        10.8,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        200.9,
+        150,
+        86.4,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "box": [
+        710,
+        150,
+        21.6,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "box": [
+        210.8,
+        196,
+        140.4,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "box": [
+        670,
+        196,
+        64.8,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Grace Whitfield",
+      "field": null,
+      "box": [
+        57,
+        336.5,
+        162,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Daniel Whitfield",
+      "field": null,
+      "box": [
+        57,
+        382.5,
+        172.8,
+        20
+      ]
+    }
+  ]
+}

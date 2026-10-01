@@ -1,0 +1,48 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "dusk_low_light",
+    "sensor_noise",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4202,
+    "rotate": 2,
+    "lowlight": {
+      "exposure": 0.42,
+      "gamma": 1.35,
+      "cast": [
+        0.85,
+        0.92,
+        1.12
+      ]
+    },
+    "noise": 15,
+    "light": {
+      "gradient": [
+        0.2,
+        0.6
+      ],
+      "amount": 0.3,
+      "vignette": 0.5
+    },
+    "jpeg": 40
+  },
+  "rough_gt": {}
+}

@@ -1,0 +1,21 @@
+{
+  "source_id": "R07",
+  "document_kind": "authorized_pickup",
+  "plate": "LTV5832",
+  "plateFront": null,
+  "plateBack": null,
+  "make": "Honda",
+  "model": "Odyssey",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Nora Whitfield"
+  ],
+  "authorized_pickups": [
+    "Grace Whitfield",
+    "Daniel Whitfield"
+  ],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

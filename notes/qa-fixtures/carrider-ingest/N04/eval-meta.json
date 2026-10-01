@@ -1,0 +1,53 @@
+{
+  "negative": true,
+  "photo": false,
+  "kind": "negative",
+  "hard": false,
+  "fields": [
+    "document_kind",
+    "plate"
+  ],
+  "rough": true,
+  "effects": [
+    "dusk_low_light",
+    "keystone",
+    "jpeg_artifacts"
+  ],
+  "forbid_names": [
+    "Ava Lindqvist",
+    "Sofia Lindqvist"
+  ],
+  "degrade": {
+    "seed": 5707,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "fabric",
+    "scale": 0.86,
+    "rotate": -6,
+    "keystone": {
+      "top": 0.9
+    },
+    "jitter": 0.005,
+    "lowlight": {
+      "exposure": 0.55,
+      "gamma": 1.25,
+      "cast": [
+        1.06,
+        0.95,
+        0.8
+      ]
+    },
+    "noise": 11,
+    "light": {
+      "gradient": [
+        0.4,
+        0.3
+      ],
+      "amount": 0.3,
+      "vignette": 0.45
+    },
+    "jpeg": 45
+  }
+}

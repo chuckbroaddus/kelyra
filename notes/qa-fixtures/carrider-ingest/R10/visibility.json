@@ -1,0 +1,39 @@
+{
+  "id": "R10",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "plate:fg:badge",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        472,
+        708,
+        713,
+        751
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        483,
+        851,
+        730,
+        922
+      ],
+      "reasons": {}
+    }
+  ]
+}

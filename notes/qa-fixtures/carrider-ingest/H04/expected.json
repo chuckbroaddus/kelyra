@@ -1,0 +1,22 @@
+{
+  "source_id": "H04",
+  "document_kind": "authorized_pickup",
+  "plate": "VDC2843",
+  "plateFront": null,
+  "plateBack": null,
+  "make": "Chevrolet",
+  "model": "Tahoe",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Liam Brooks"
+  ],
+  "authorized_pickups": [
+    "Rachel Brooks",
+    "Kevin Brooks",
+    "Joy Martin"
+  ],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

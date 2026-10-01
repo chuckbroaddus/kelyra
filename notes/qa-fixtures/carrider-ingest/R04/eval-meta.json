@@ -1,0 +1,71 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "dirty_plate_occlusion",
+    "uneven_light",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4404,
+    "rotate": -2,
+    "stains": [
+      {
+        "target": "plate:fg",
+        "fx": 0.82,
+        "fy": 0.5,
+        "r": 30,
+        "strength": 1.6,
+        "fill": 0.85,
+        "color": [
+          92,
+          70,
+          44
+        ]
+      },
+      {
+        "target": "plate:fg",
+        "fx": 0.15,
+        "fy": 1.2,
+        "r": 18,
+        "strength": 0.9,
+        "fill": 0.5,
+        "color": [
+          92,
+          70,
+          44
+        ]
+      }
+    ],
+    "light": {
+      "gradient": [
+        -0.4,
+        0.3
+      ],
+      "amount": 0.2,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 55
+  },
+  "rough_gt": {
+    "uncertain": [
+      "plate"
+    ]
+  }
+}

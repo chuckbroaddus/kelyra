@@ -1,0 +1,24 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "authorized_pickup",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model",
+    "riders",
+    "authorized_pickups"
+  ],
+  "handwritten": true,
+  "rough": false,
+  "effects": [
+    "handwritten_print",
+    "crossed_out_adult"
+  ],
+  "rough_gt": {},
+  "excluded_names": [
+    "Chris Doyle"
+  ]
+}

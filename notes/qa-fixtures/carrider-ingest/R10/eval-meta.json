@@ -1,0 +1,38 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "strong_keystone",
+    "defocus_blur",
+    "heavy_jpeg",
+    "out_of_state"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 5010,
+    "rotate": -5,
+    "keystone": {
+      "top": 0.72,
+      "bottom": 1.08
+    },
+    "jitter": 0.004,
+    "defocus": 1.5,
+    "noise": 5,
+    "jpeg": 18
+  },
+  "rough_gt": {}
+}

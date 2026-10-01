@@ -1,0 +1,63 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "authorized_pickup",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model",
+    "riders",
+    "authorized_pickups"
+  ],
+  "handwritten": true,
+  "rough": true,
+  "effects": [
+    "handwritten_marker",
+    "crumpled_paper",
+    "low_light_noise",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 5303,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "fabric",
+    "scale": 0.86,
+    "rotate": -4,
+    "keystone": {
+      "top": 0.94
+    },
+    "jitter": 0.008,
+    "crumple": {
+      "amp": 6,
+      "cell": 100,
+      "shade": 0.2,
+      "creases": 5
+    },
+    "lowlight": {
+      "exposure": 0.6,
+      "gamma": 1.2,
+      "cast": [
+        1.05,
+        0.96,
+        0.82
+      ]
+    },
+    "noise": 11,
+    "light": {
+      "gradient": [
+        -0.3,
+        0.4
+      ],
+      "amount": 0.25,
+      "vignette": 0.4
+    },
+    "jpeg": 45
+  },
+  "rough_gt": {},
+  "excluded_names": []
+}

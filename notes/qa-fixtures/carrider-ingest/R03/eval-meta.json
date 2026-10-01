@@ -1,0 +1,36 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "motion_blur",
+    "defocus_blur",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4303,
+    "rotate": 1.5,
+    "motion": {
+      "len": 11,
+      "angle": 3
+    },
+    "defocus": 1.2,
+    "noise": 5,
+    "jpeg": 55
+  },
+  "rough_gt": {}
+}

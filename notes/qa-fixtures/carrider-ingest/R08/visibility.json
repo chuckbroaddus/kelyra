@@ -1,0 +1,144 @@
+{
+  "id": "R08",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Elias Romero",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        352,
+        212,
+        489,
+        241
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1004,
+        275,
+        1016,
+        292
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        392,
+        271,
+        484,
+        295
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        1000,
+        329,
+        1024,
+        348
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        402,
+        327,
+        551,
+        357
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        948,
+        380,
+        995,
+        400
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Lucia Romero",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        196,
+        477,
+        335,
+        507
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Tomas Romero",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        189,
+        533,
+        328,
+        563
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Ana Vega",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        179,
+        589,
+        272,
+        614
+      ],
+      "reasons": {}
+    }
+  ]
+}

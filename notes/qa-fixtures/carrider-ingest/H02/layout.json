@@ -1,0 +1,195 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Owen Fitzgerald",
+      "field": null,
+      "box": [
+        159,
+        102.7,
+        146.2,
+        41.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "box": [
+        709.7,
+        103.9,
+        15.4,
+        39.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        200.5,
+        161,
+        115.9,
+        41
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "box": [
+        709.7,
+        161.7,
+        31.7,
+        39.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "box": [
+        210.5,
+        219.1,
+        105.7,
+        40.8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "box": [
+        669.7,
+        219.7,
+        37.7,
+        39.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Megan Fitzgerald",
+      "field": null,
+      "box": [
+        56.4,
+        366.3,
+        155.7,
+        44.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rel:Megan Fitzgerald",
+      "field": null,
+      "box": [
+        385.3,
+        371.8,
+        55,
+        33.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "ph:Megan Fitzgerald",
+      "field": null,
+      "box": [
+        551.3,
+        371.3,
+        141.2,
+        34.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "x:Chris Doyle",
+      "field": null,
+      "box": [
+        56.5,
+        425.7,
+        104.3,
+        41.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rel:Chris Doyle",
+      "field": null,
+      "box": [
+        385.1,
+        429.8,
+        42.3,
+        33.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "ph:Chris Doyle",
+      "field": null,
+      "box": [
+        551.3,
+        429.3,
+        141.8,
+        34.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Pat Doyle",
+      "field": null,
+      "box": [
+        56.3,
+        483.5,
+        90.8,
+        42.1
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rel:Pat Doyle",
+      "field": null,
+      "box": [
+        385.3,
+        487.6,
+        67.8,
+        33.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "ph:Pat Doyle",
+      "field": null,
+      "box": [
+        551.3,
+        487.3,
+        137.7,
+        34.4
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "sig",
+      "field": null,
+      "box": [
+        205.7,
+        608.9,
+        125.7,
+        43.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "date",
+      "field": null,
+      "box": [
+        377.6,
+        616.4,
+        71.7,
+        33.2
+      ]
+    }
+  ]
+}

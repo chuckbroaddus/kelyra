@@ -1,0 +1,23 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": false,
+  "effects": [
+    "foreground_cut_by_frame",
+    "background_car_readable"
+  ],
+  "background_plates": [
+    "CLP7639"
+  ],
+  "rough_gt": {},
+  "gt_rule": "foreground car even though it runs off the right/bottom edge"
+}

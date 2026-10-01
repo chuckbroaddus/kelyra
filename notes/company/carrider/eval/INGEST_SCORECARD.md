@@ -74,3 +74,74 @@ CORS headers (bodies unchanged). Persona session server only allows the 8081 ori
 npm run eval:carrider
 node scripts/carrider-ui-proof.mjs <stamp> --port 8097   # needs worktree Expo web on 8097 + QA Chrome :9223
 ```
+
+## Rough / handwritten / multi-car corpus — strict eval (2026-10-01)
+
+Eval only: no prompt, function or client changes. Corpus is now 42 cases (22 new; see
+`notes/qa-fixtures/carrider-ingest/README.md`). Strict scorer: `scripts/eval-carrider-strict.mjs`.
+
+### Status: live run blocked by the provider's daily quota
+
+The first strict run (08:30 CT) got `429 RESOURCE_EXHAUSTED` from Gemini on every call:
+`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, limit **500/day** for `gemini-3.5-flash-lite`. `ai_usage`
+for today (Pacific day): ride-lpr 141, ingest-grading-doc 126, classify-capture 123, setup-interview 91
+(≈480 logged, last success 08:12 CT); a single probe at 08:34 CT was still rejected. ride-lpr returns HTTP 200 with
+`unreadable:true` + an `error` string in this state, so the script now **stops on a quota error** (exit 2) instead of
+scoring the outage as misses, and never caches an `error` response. The quota resets at midnight PT (02:00 CT).
+Note that this also means a busy school day on the free tier would show unreadable for every plate after ~500 calls
+across all AI features.
+
+| Bucket | Docs | Field acc | Doc pass | Plate exact | Halluc. | Picked wrong car | O/0-only |
+|--------|------|-----------|----------|-------------|---------|------------------|----------|
+| clean | 27 | pending | | | | | |
+| mild (`photo.jpg`) | 12 | pending | | | | | |
+| rough | 10 | pending | | | | | |
+| handwritten | 4 | pending | | | | | |
+| handwritten_rough | 2 | pending | | | | | |
+| multi_car | 6 | pending | | | | | |
+| multi_car_rough | 1 | pending | | | | | |
+| negatives | 7 | pending | | | | | |
+| negatives_rough | 2 | pending | | | | | |
+| crop (R03, R10, H03) | 3 | pending | | | | | |
+
+71 documents per full run (42 cases) + 3 crops.
+
+Rerun after the reset: `npm run eval:carrider:strict` then
+`EVAL_RESUME_STAMP=<same stamp> EVAL_CROP=R03,R10,H03 node scripts/eval-carrider-strict.mjs`.
+
+### Multi-car: the prompt has no closest-car rule
+
+Neither the repo `supabase/functions/ride-lpr/index.ts` nor the deployed ride-lpr **v9** (checked via the Supabase
+MCP) says anything about which car to read when several are in frame: no "closest", "nearest", "foreground",
+"largest", "background", "reflection" or "multiple" wording. The model is free to return the sharpest plate, which is
+exactly M02 (the background plate is sharper than the foreground plate), and the mirrored plate in M05.
+
+Suggested fix (prompt rule, next to the existing "If only part of a plate is visible…" line):
+
+> - The photo may show several vehicles. Read ONLY the closest vehicle: the one whose plate is largest and lowest in
+>   the frame (the car directly in front of the camera). Ignore every other car, even if its plate is sharper.
+>   Ignore plates seen in reflections (windows, bumpers, mirrors) and mirrored text. If two cars are about equally
+>   close and you cannot tell which is the target, set plate null, unreadable true and reject_reason "multiple
+>   vehicles". make/model must come from the same vehicle as the plate.
+
+Plus a cheap server-side guard: ask for `other_plates_seen: string[]` and drop the result to `unreadable` when the
+returned plate also appears there or when `other_plates_seen` is non-empty and confidence < 0.8.
+
+### Image detail / size (ride-lpr, classify-capture vehicle path)
+
+- ride-lpr asks for `detail: 'high'`; classify-capture's vehicle path uses `imageDetailFor('cheap')` = `'low'`.
+- But with `GEMINI_API_KEY` set (dev today: every `ai_usage` row is `gemini-3.5-flash-lite`), `_shared/ai.ts`
+  `inlineImagePart` downloads the full image and sends `inlineData`; `detail` is ignored and no `mediaResolution`
+  is set in `generationConfig`, so Gemini uses its default resolution for both functions. The classify-capture
+  "low" setting only bites on the OpenAI path.
+- Client cap: `uploadRidePhoto` → `uploadPhotoPair` → `normalizePhoto` resizes to the 1600 px long edge at JPEG 0.82
+  (`src/lib/media/photo.ts`); ImagePicker quality 0.7. Rough frames here are 1200×1600, i.e. at the client cap.
+- The `crop` bucket (rough.jpg cropped to the plate/text boxes and upscaled to 1200 px wide) is the test for whether
+  resolution is the cause; pending with the run above.
+
+### Rough images checked by eye
+
+All 16 `rough.jpg` and all 6 multi-car frames were opened and compared with GT before scoring, e.g.
+`notes/qa-fixtures/carrider-ingest/R06/rough.jpg` (thumb clips the first plate char → uncertain),
+`notes/qa-fixtures/carrider-ingest/R09/rough.jpg` ("Arjun Patel" surname washed out → uncertain),
+`notes/qa-fixtures/carrider-ingest/M06/rough.jpg` (foreground SNT 5742 readable; GVL 3816 and MKD 2479 readable behind it).
