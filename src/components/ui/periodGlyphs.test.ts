@@ -120,12 +120,12 @@ test('acc 3: 6W1 selected only first 60° sixth', () => {
   assertWedge(glyphsForCalendar(makeCal('six_weeks')).find(g=>g.id==='6w1'), 0, 60, '6w1');
 });
 
-test('acc 4: labels from calendar or upper', () => {
+test('acc 4: six-week chips use standard "1st Six Weeks" label (Chuck 9/30), dates from calendar', () => {
   const c = makeCal('six_weeks', 'semester', [
     {code:'6W1', name:'First six weeks', kind:'marking_period', sort_order:1, start_date:'2026-08-12', end_date:'2026-09-19', parent_id:null, id:'1'},
   ]);
   const w1 = glyphsForCalendar(c).find(g=>g.id==='6w1')!;
-  assert.equal(w1.label, 'First six weeks');
+  assert.equal(w1.label, '1st Six Weeks');
   assert.match(w1.dateRange, /08-12–09-19/);
 });
 
@@ -142,4 +142,14 @@ test('progress only when show_interims; not filled', () => {
   assert.equal(prog.kind, 'progress');
   assert.equal(prog.filled, false);
   assert.equal(prog.sweepDeg, 0);
+});
+
+test('six weeks labels: "1st Six Weeks" / short "1st Six Wks."', async () => {
+  const { sixWeeksLabel } = await import('./periodGlyphs.ts');
+  assert.equal(sixWeeksLabel('6W1'), '1st Six Weeks');
+  assert.equal(sixWeeksLabel('6wy3', true), '3rd Six Wks.');
+  assert.equal(sixWeeksLabel('6w6'), '6th Six Weeks');
+  assert.equal(sixWeeksLabel('q1'), null);
+  const gs = glyphsForCalendar(makeCal('six_weeks'));
+  assert.equal(gs.find((g) => g.id === '6w2')!.label, '2nd Six Weeks');
 });
