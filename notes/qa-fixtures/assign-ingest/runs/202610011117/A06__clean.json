@@ -1,0 +1,123 @@
+{
+  "key": {
+    "status": 200,
+    "json": {
+      "pageState": "blank",
+      "header": "Homework 12 — Ratios",
+      "items": [
+        {
+          "n": 1,
+          "stem": "Simplify the ratio 12:18 →",
+          "answer": "2:3",
+          "points": 2,
+          "needsTeacher": false
+        },
+        {
+          "n": 2,
+          "stem": "If 3 apples cost $2, 6 apples cost $",
+          "answer": "4",
+          "points": 2,
+          "needsTeacher": false
+        },
+        {
+          "n": 3,
+          "stem": "Write $20 as a unit rate (per 1):",
+          "answer": "$20/1 or $20 per 1",
+          "points": 2,
+          "needsTeacher": false
+        },
+        {
+          "n": 4,
+          "stem": "True or false: 2:3 = 4:6",
+          "answer": "True",
+          "points": 2,
+          "needsTeacher": false
+        }
+      ],
+      "maxScore": 8,
+      "teacherNote": null,
+      "phash": "0f1fffffffffffff",
+      "layout": [
+        0.9448529411764706,
+        0.9276960784313726,
+        0.9681372549019608,
+        0.9926470588235294,
+        1,
+        1,
+        1,
+        1,
+        0.9882352941176471,
+        0.9774509803921568,
+        0.9933823529411765,
+        0.9985294117647059,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  }
+}

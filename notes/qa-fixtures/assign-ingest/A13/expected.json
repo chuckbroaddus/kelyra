@@ -1,0 +1,43 @@
+{
+  "source_id": "A13",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Mini Quiz",
+  "category": "quiz",
+  "maxScore": 3,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "2³ =",
+      "answer": "8",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "√49 =",
+      "answer": "7",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "5² − 4² =",
+      "answer": "9",
+      "points": 1,
+      "type": "numeric",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "quiz",
+  "_eval": {
+    "photo_hard": true
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "source_id": "A08",
+  "kind": "assignment_key",
+  "pageState": "filled",
+  "header": "Exit Ticket — Photosynthesis (KEY)",
+  "category": "quiz",
+  "maxScore": 4,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "Gas plants take in:",
+      "answer": "carbon dioxide",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 2,
+      "stem": "Gas plants release:",
+      "answer": "oxygen",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 3,
+      "stem": "Energy source:",
+      "answer": "sunlight",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    },
+    {
+      "n": 4,
+      "stem": "Where in the cell?",
+      "answer": "chloroplast",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": false
+    }
+  ],
+  "sections": [],
+  "teacherNote": "remind class chlorophyll ≠ organelle",
+  "reject": false,
+  "document_kind_guess": "answer_key",
+  "_eval": {
+    "soft_answers": true
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "key": {
+    "status": 200,
+    "json": {
+      "pageState": "filled",
+      "header": "Exit Ticket — Photosynthesis (KEY)",
+      "items": [
+        {
+          "n": 1,
+          "stem": "Gas plants take in:",
+          "answer": "carbon dioxide / CO2",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 2,
+          "stem": "Gas plants release:",
+          "answer": "oxygen / O2",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 3,
+          "stem": "Energy source:",
+          "answer": "sunlight",
+          "points": 1,
+          "needsTeacher": false
+        },
+        {
+          "n": 4,
+          "stem": "Where in the cell?",
+          "answer": "chloroplast — remind class chlorophyll ≠ organelle",
+          "points": 1,
+          "needsTeacher": false
+        }
+      ],
+      "maxScore": 4,
+      "teacherNote": null,
+      "phash": "0f07ffffffffffff",
+      "layout": [
+        0.9448529411764706,
+        0.9237745098039216,
+        0.9355392156862745,
+        0.9919117647058824,
+        0.9992647058823529,
+        1,
+        1,
+        1,
+        0.9855392156862746,
+        0.9732843137254902,
+        0.9862745098039216,
+        0.9892156862745098,
+        0.9919117647058824,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "skill"
+        }
+      ],
+      "fields": [
+        {
+          "label": "field",
+          "value": "value"
+        }
+      ],
+      "names": [],
+      "note": null
+    }
+  }
+}

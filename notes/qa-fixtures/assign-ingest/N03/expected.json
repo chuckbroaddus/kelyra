@@ -1,0 +1,19 @@
+{
+  "source_id": "N03",
+  "kind": "negative",
+  "reject": true,
+  "reject_reason": "student_work_not_key",
+  "pageState": "unsure",
+  "header": "HW 4 — Student work",
+  "items": [],
+  "maxScore": null,
+  "document_kind_guess": "homework_student",
+  "intent_not": [
+    "answer_key",
+    "lesson_plan"
+  ],
+  "_eval": {
+    "negative": true,
+    "allow_filled_extract_but_flag": true
+  }
+}

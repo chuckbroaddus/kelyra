@@ -1,0 +1,36 @@
+{
+  "source_id": "A10",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Reading Response (partial page)",
+  "category": "homework",
+  "maxScore": 2,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "Protagonist name:",
+      "answer": "",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": true
+    },
+    {
+      "n": 2,
+      "stem": "Setting (place):",
+      "answer": "",
+      "points": 1,
+      "type": "short",
+      "needsTeacher": true
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "worksheet",
+  "_eval": {
+    "no_invent_extra_items": true,
+    "max_items": 3
+  }
+}

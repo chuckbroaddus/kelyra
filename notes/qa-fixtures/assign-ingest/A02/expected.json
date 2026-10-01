@@ -1,0 +1,73 @@
+{
+  "source_id": "A02",
+  "kind": "assignment_key",
+  "pageState": "blank",
+  "header": "Life Science Quiz — Cells",
+  "category": "quiz",
+  "maxScore": 10,
+  "due": null,
+  "standards": [],
+  "items": [
+    {
+      "n": 1,
+      "stem": "The control center of the cell is the",
+      "answer": "B",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false,
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "n": 2,
+      "stem": "Plant cells have a rigid",
+      "answer": "C",
+      "points": 2,
+      "type": "mc",
+      "needsTeacher": false,
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "n": 3,
+      "stem": "Energy is released in the",
+      "answer": "A",
+      "points": 3,
+      "type": "mc",
+      "needsTeacher": false,
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "n": 4,
+      "stem": "Photosynthesis occurs mainly in the",
+      "answer": "B",
+      "points": 3,
+      "type": "mc",
+      "needsTeacher": false,
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    }
+  ],
+  "sections": [],
+  "teacherNote": null,
+  "reject": false,
+  "document_kind_guess": "quiz",
+  "_eval": {}
+}
