@@ -12,7 +12,6 @@ import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { type } from '@/constants/theme';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { useTheme } from '@/lib/theme/ThemeProvider';
-import { formatPct, runLivePreview } from '@/components/syllabus/livePreview';
 import {
   STEP_HELP_KEYS,
   STEP_ICONS,
@@ -76,29 +75,6 @@ function HelpCard({ step, colors }: { step: WizardStepId; colors: Colors }) {
   );
 }
 
-function LivePreviewCard({ draft, colors }: { draft: SyllabusWizardDraft; colors: Colors }) {
-  const preview = useMemo(() => runLivePreview(draft), [draft]);
-  return (
-    <Card>
-      <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>What the rules do</Text>
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Three made-up students. Their grades update as you make choices.
-      </Text>
-      {preview.students.map((s) => (
-        <View key={s.id} style={[styles.previewRow, { borderColor: colors.line }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[type.body, { color: colors.ink }]}>{s.name}</Text>
-            <Text style={[type.meta, { color: colors.mute }]}>{s.note}</Text>
-          </View>
-          <Text style={[type.title, { color: s.pct == null ? colors.mute : colors.brand }]}>
-            {formatPct(s.pct)}
-          </Text>
-        </View>
-      ))}
-    </Card>
-  );
-}
-
 export function SyllabusWizard({
   draft,
   onChange,
@@ -145,8 +121,6 @@ export function SyllabusWizard({
       ) : null}
 
       <HelpCard step={step} colors={c} />
-      {/* Live preview stays on every step (existing behavior); Review also shows the samples. */}
-      <LivePreviewCard draft={draft} colors={c} />
       <Card>
         <Text style={[type.title, { color: c.ink, marginBottom: 12 }]}>{STEP_LABELS[step]}</Text>
         <WizardStepBody draft={draft} step={step} colors={c} onChange={onChange} />
@@ -199,13 +173,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   helpHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 },
-  previewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
   nav: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 12, marginBottom: 8 },
   navCell: { flex: 1, minWidth: 0 },
 });

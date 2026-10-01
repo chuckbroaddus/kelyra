@@ -79,6 +79,7 @@ export type IconName =
   | 'syllabusExtraCredit'
   | 'syllabusBookRollup'
   | 'syllabusReview'
+  | 'syllabusTemplate'
   | FeedIconName;
 
 type Props = {

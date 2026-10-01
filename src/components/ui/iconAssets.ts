@@ -111,6 +111,7 @@ import syllabusStatusLate from '../../../assets/icons/syllabusStatusLate.png';
 import syllabusExtraCredit from '../../../assets/icons/syllabusExtraCredit.png';
 import syllabusBookRollup from '../../../assets/icons/syllabusBookRollup.png';
 import syllabusReview from '../../../assets/icons/syllabusReview.png';
+import syllabusTemplate from '../../../assets/icons/syllabusTemplate.png';
 
 export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'menu': menu,
@@ -223,4 +224,5 @@ export const ICON_ASSETS: Record<string, ImageSourcePropType> = {
   'syllabusExtraCredit': syllabusExtraCredit,
   'syllabusBookRollup': syllabusBookRollup,
   'syllabusReview': syllabusReview,
+  'syllabusTemplate': syllabusTemplate,
 };

@@ -4,7 +4,7 @@
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -53,6 +53,7 @@ import {
   buildSchoolLockPolicy,
 } from '@/lib/syllabus/locks';
 import { applyCopyToDraftBag, copySyllabusFromTemplate } from '@/lib/syllabus/copy';
+import { takeSyllabusTemplateHandoff } from '@/lib/syllabus/templateHandoff';
 import { listSchoolSyllabusTemplates } from '@/lib/syllabus/templates';
 import {
   loadLatestPublished,
@@ -61,8 +62,6 @@ import {
 } from '@/lib/school/gradingPolicy';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import type { ClassRow } from '@/lib/supabase/types';
-import { Chip } from '@/components/ui/Chip';
-import { ChipRow } from '@/components/ui/ChipRow';
 
 type ConfirmKind =
   | { kind: 'publish' }
@@ -137,12 +136,22 @@ export default function SyllabusScreen() {
       // GB-12 interview hand-off: same mapper as document ingest, then review + Save/Publish here.
       if (from === 'interview' && !interviewRef.current) interviewRef.current = takeInterviewHandoff('syllabus', id);
       const interview = from === 'interview' ? interviewRef.current : null;
+      // School template picker handoff (same runtime) — apply onto the loaded bag.
+      const templateKey = takeSyllabusTemplateHandoff(id);
+      let nextDraft = loaded;
+      let nextStatus: string | null = null;
       if (interview) {
-        setDraft(setWizardStep(applyInterviewToSyllabusDraft(loaded, interview), 'review'));
-        setStatus('Your answers are filled in below. Check them, then Save draft or Publish.');
-      } else {
-        setDraft(loaded);
+        nextDraft = setWizardStep(applyInterviewToSyllabusDraft(loaded, interview), 'review');
+        nextStatus = 'Your answers are filled in below. Check them, then Save draft or Publish.';
+      } else if (templateKey) {
+        const applied = applyTemplateToDraft(loaded, templateKey);
+        if (applied) {
+          nextDraft = applied.draft;
+          nextStatus = applied.status;
+        }
       }
+      setDraft(nextDraft);
+      if (nextStatus) setStatus(nextStatus);
       setAskDraft(bundle.syllabus?.ask_draft ?? null);
       // Capture syllabus Import multipage handoff (same runtime).
       const fromCapture = takeSyllabusIngestHandoff(id);
@@ -185,52 +194,6 @@ export default function SyllabusScreen() {
       setError(err instanceof Error ? err.message : 'Could not save draft');
     } finally {
       setBusy(false);
-    }
-  };
-
-  const applyTemplateCopy = (templateKey: string) => {
-    if (!draft) return;
-    const policy = buildSchoolLockPolicy({
-      locks: draft.locks,
-      lock_reasons: draft.lock_reasons,
-    });
-    try {
-      const copy = copySyllabusFromTemplate(templateKey, policy, {
-        title: draft.title || undefined,
-      });
-      const bag = applyCopyToDraftBag(
-        {
-          engine: draft.engine,
-          categories: draft.categories,
-          late_rule: draft.late_rule,
-          missing_rule: draft.missing_rule,
-          floor: draft.floor,
-          book_mode: draft.book_mode,
-          extra_credit_method: draft.extra_credit_method,
-          title: draft.title,
-          rollup_preset: draft.rollup_preset,
-          exam_weight: draft.exam_weight,
-        },
-        copy,
-      );
-      setDraft({
-        ...draft,
-        engine: (bag.engine as typeof draft.engine) ?? draft.engine,
-        categories: (bag.categories as typeof draft.categories) ?? draft.categories,
-        late_rule: (bag.late_rule as typeof draft.late_rule) ?? draft.late_rule,
-        missing_rule: (bag.missing_rule as typeof draft.missing_rule) ?? draft.missing_rule,
-        floor: (bag.floor as number | null | undefined) ?? draft.floor,
-        book_mode: (bag.book_mode as typeof draft.book_mode) ?? draft.book_mode,
-        extra_credit_method:
-          (bag.extra_credit_method as typeof draft.extra_credit_method) ?? draft.extra_credit_method,
-        title: typeof bag.title === 'string' ? bag.title : draft.title,
-        source: 'copied',
-      });
-      setStatus(
-        `Copied “${listSchoolSyllabusTemplates().find((t) => t.key === templateKey)?.name ?? templateKey}”. Settings your school controls were left as they are.`,
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not copy template');
     }
   };
 
@@ -355,19 +318,10 @@ export default function SyllabusScreen() {
 
   return (
     <Screen keyboard pageChromeHosted collapse={collapsing}>
-      <View style={[styles.titleHeader, styles.titleHeaderFirst, { backgroundColor: colors.bg }]}>
-        <Text style={[type.section, styles.titleHeaderLabel, { color: colors.mute }]} numberOfLines={1}>
-          Grading Syllabus
-        </Text>
-        <GhostButton
-          label="Back to settings"
-          onPress={() => router.replace(`/class/${id}/settings`)}
-        />
-      </View>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
-          Step through each choice below. The sample grades update as you go. Nothing affects real grades until you publish.
+          Step through each choice below. Nothing affects real grades until you publish.
         </Text>
       </Card>
 
@@ -399,36 +353,39 @@ export default function SyllabusScreen() {
         />
       ) : null}
 
-      <View style={styles.row}>
-        <GhostButton
-          align="left"
-          label="Answer a few questions instead"
-          onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
-        />
-        <IconButton
-          name="capture"
-          size="lg"
-          tone="brand"
-          label="Import syllabus with Capture"
-          disabled={busy || !id}
-          onPress={() => {
-            if (!id) return;
-            router.push(`/capture?preset=syllabus&classId=${encodeURIComponent(id)}` as never);
-          }}
-        />
+      <View style={styles.importRow}>
+        <View style={styles.importLead}>
+          <GhostButton
+            align="left"
+            label="Answer a few questions instead"
+            onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
+          />
+        </View>
+        <View style={styles.iconPair}>
+          <IconButton
+            name="capture"
+            size="lg"
+            tone="brand"
+            label="Import syllabus with Capture"
+            disabled={busy || !id}
+            onPress={() => {
+              if (!id) return;
+              router.push(`/capture?preset=syllabus&classId=${encodeURIComponent(id)}` as never);
+            }}
+          />
+          <IconButton
+            name="syllabusTemplate"
+            size="lg"
+            tone="brand"
+            label="Start from a school template"
+            disabled={busy || !id}
+            onPress={() => {
+              if (!id) return;
+              router.push(`/class/${id}/syllabus-templates` as never);
+            }}
+          />
+        </View>
       </View>
-
-      <Card>
-        <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>Start from a school template</Text>
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-          Copies the settings you’re allowed to change. Settings your school controls stay as they are.
-        </Text>
-        <ChipRow>
-          {listSchoolSyllabusTemplates().map((t) => (
-            <Chip key={t.key} label={t.name} selected={false} onPress={() => applyTemplateCopy(t.key)} />
-          ))}
-        </ChipRow>
-      </Card>
 
       <SyllabusWizard
         draft={draft}
@@ -519,24 +476,66 @@ export default function SyllabusScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleHeader: {
-    marginTop: 24,
-    marginBottom: 8,
+  actions: { gap: 10, marginTop: 8, marginBottom: 24 },
+  importRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    paddingVertical: 6,
-    zIndex: 4,
-    ...Platform.select({
-      web: { position: 'sticky', top: 0 },
-      default: {},
-    }),
+    gap: 10,
+    marginBottom: 8,
+    flexWrap: 'wrap',
   },
-  titleHeaderFirst: { marginTop: 0 },
-  titleHeaderLabel: { flexShrink: 1, textTransform: 'none' },
-  actions: { gap: 10, marginTop: 8, marginBottom: 24 },
-  row: { gap: 8, marginBottom: 8 },
+  importLead: { flexGrow: 1, flexShrink: 1, minWidth: 140 },
+  iconPair: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
   error: { ...type.meta, marginTop: 8 },
 });
+
+/** Apply a school template onto a wizard draft (respects school locks). */
+function applyTemplateToDraft(
+  draft: SyllabusWizardDraft,
+  templateKey: string,
+): { draft: SyllabusWizardDraft; status: string } | null {
+  const policy = buildSchoolLockPolicy({
+    locks: draft.locks,
+    lock_reasons: draft.lock_reasons,
+  });
+  try {
+    const copy = copySyllabusFromTemplate(templateKey, policy, {
+      title: draft.title || undefined,
+    });
+    const bag = applyCopyToDraftBag(
+      {
+        engine: draft.engine,
+        categories: draft.categories,
+        late_rule: draft.late_rule,
+        missing_rule: draft.missing_rule,
+        floor: draft.floor,
+        book_mode: draft.book_mode,
+        extra_credit_method: draft.extra_credit_method,
+        title: draft.title,
+        rollup_preset: draft.rollup_preset,
+        exam_weight: draft.exam_weight,
+      },
+      copy,
+    );
+    return {
+      draft: {
+        ...draft,
+        engine: (bag.engine as typeof draft.engine) ?? draft.engine,
+        categories: (bag.categories as typeof draft.categories) ?? draft.categories,
+        late_rule: (bag.late_rule as typeof draft.late_rule) ?? draft.late_rule,
+        missing_rule: (bag.missing_rule as typeof draft.missing_rule) ?? draft.missing_rule,
+        floor: (bag.floor as number | null | undefined) ?? draft.floor,
+        book_mode: (bag.book_mode as typeof draft.book_mode) ?? draft.book_mode,
+        extra_credit_method:
+          (bag.extra_credit_method as typeof draft.extra_credit_method) ?? draft.extra_credit_method,
+        title: typeof bag.title === 'string' ? bag.title : draft.title,
+        source: 'copied',
+      },
+      status: `Copied “${listSchoolSyllabusTemplates().find((t) => t.key === templateKey)?.name ?? templateKey}”. Settings your school controls were left as they are.`,
+    };
+  } catch {
+    return null;
+  }
+}
 

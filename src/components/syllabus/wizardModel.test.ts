@@ -27,7 +27,6 @@ import {
   weightsOk,
   type WizardStepId,
 } from './wizardModel.ts';
-import { formatPct, runLivePreview } from './livePreview.ts';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -180,23 +179,6 @@ test('parent paragraph is generated from structured fields', () => {
   assert.match(p, /How the average is calculated/);
   assert.match(p, /Categories:/);
   assert.match(p, /Excused/);
-});
-
-test('live preview returns 3 sample students; missing rule moves Blake', () => {
-  const d = createEmptyWizardDraft('c');
-  const preview = runLivePreview(d);
-  assert.equal(preview.students.length, 3);
-  for (const s of preview.students) {
-    assert.ok(s.name.length > 0);
-    if (s.pct != null) assert.ok(Number.isFinite(s.pct));
-    assert.ok(formatPct(s.pct).length >= 2);
-  }
-  const asZero = runLivePreview(patchDraft(d, { missing_rule: 'zero' }));
-  const asOmit = runLivePreview(patchDraft(d, { missing_rule: 'omit' }));
-  const blakeZero = asZero.students.find((s) => s.id === 'blake')!.pct;
-  const blakeOmit = asOmit.students.find((s) => s.id === 'blake')!.pct;
-  assert.ok(blakeZero != null && blakeOmit != null);
-  assert.ok((blakeOmit as number) >= (blakeZero as number));
 });
 
 test('addCategory respects lock', () => {
