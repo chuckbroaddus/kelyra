@@ -49,6 +49,14 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Kelyra uses the camera to photograph class lists and student work.",
+          "microphonePermission": "Kelyra uses the microphone to record the student name.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-media-library",
         {
           "photosPermission": "Kelyra saves photos from school messages to your Photos.",

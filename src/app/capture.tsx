@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { DevicePicker } from '@/components/DevicePicker';
-import { WebCameraCapture } from '@/components/WebCameraCapture';
+import { MultiShotCameraSession } from '@/components/MultiShotCameraSession';
+import { MULTI_SHOT_BATCH_CAP } from '@/lib/media/multiShotBatch';
 import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Chip } from '@/components/ui/Chip';
@@ -520,15 +521,24 @@ export default function CaptureScreen() {
   };
 
   const applyPhoto = async (uri: string, mimeType?: string | null) => {
+    await applyPhotos([{ uri, mimeType }]);
+  };
+
+  /** Ordered batch from multi-shot camera Done (or a single library/file image). */
+  const applyPhotos = async (items: Array<{ uri: string; mimeType?: string | null }>) => {
+    if (!items.length) return;
     try {
-      const prepared = await normalizePhoto(uri, mimeType);
+      const prepared: Array<{ uri: string; mimeType: string }> = [];
+      for (const item of items) {
+        prepared.push(await normalizePhoto(item.uri, item.mimeType));
+      }
       setPages((current) => [
         ...current,
-        {
-          key: `${Date.now()}-${current.length}`,
-          uri: prepared.uri,
-          mimeType: prepared.mimeType,
-        },
+        ...prepared.map((page, index) => ({
+          key: `${Date.now()}-${current.length + index}`,
+          uri: page.uri,
+          mimeType: page.mimeType,
+        })),
       ]);
       setEvaluation(null);
       setPackItems([]);
@@ -561,19 +571,15 @@ export default function CaptureScreen() {
     setSelectedSource('camera');
     setStatus(null);
     setError(null);
-    if (Platform.OS === 'web') {
-      setCameraOpen(true);
-      return;
+    // Existing permission path (same as before multi-shot). Session stays open.
+    if (Platform.OS !== 'web') {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        setError('Camera permission is required.');
+        return;
+      }
     }
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      setError('Camera permission is required.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    await applyPhoto(asset.uri, asset.mimeType);
+    setCameraOpen(true);
   };
 
   const pickLibrary = async () => {
@@ -2167,16 +2173,16 @@ export default function CaptureScreen() {
           ))}
         </View>
       ) : null}
-      {cameraOpen ? (
-        <WebCameraCapture
-          deviceId={cameraId}
-          onCapture={(uri, mimeType) => {
-            setCameraOpen(false);
-            void applyPhoto(uri, mimeType);
-          }}
-          onCancel={() => setCameraOpen(false)}
-        />
-      ) : (
+      <MultiShotCameraSession
+        visible={cameraOpen}
+        max={MULTI_SHOT_BATCH_CAP}
+        onDone={(photos) => {
+          setCameraOpen(false);
+          void applyPhotos(photos);
+        }}
+        onCancel={() => setCameraOpen(false)}
+      />
+      {!cameraOpen ? (
         <>
           <DevicePicker
             kind="video"
@@ -2227,7 +2233,7 @@ export default function CaptureScreen() {
             />
           ) : null}
         </>
-      )}
+      ) : null}
     </View>
   );
 
