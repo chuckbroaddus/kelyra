@@ -1,0 +1,80 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Alex Rivera",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "5x",
+          "seen": "5x",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "3y",
+          "seen": "3y",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "2(a + 3)",
+          "seen": "2(a + 3)",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "3m + 3",
+          "seen": "3m + 3",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 5,
+          "expected": "6k = 0",
+          "seen": "6k = 0",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 6,
+          "expected": "3(2b - 1) = 6b - 3",
+          "seen": "3(2b - 1) = 6b - 3",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

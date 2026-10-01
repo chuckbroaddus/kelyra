@@ -1,0 +1,90 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "3x + 2x = 5x",
+          "expected": "3x + 2x = 5x",
+          "seen": "3x + 2x = 5x",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "question": "4y - y = 3y",
+          "expected": "4y - y = 3y",
+          "seen": "4y - y = 3y",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "question": "2(a + 3) = 2a + 6",
+          "expected": "2(a + 3) = 2a + 6",
+          "seen": "2(a + 3) = 2a + 6",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "question": "5m + 3 - 2m = 3m + 3",
+          "expected": "5m + 3 - 2m = 3m + 3",
+          "seen": "5m + 3 - 2m = 3m + 3",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 5,
+          "question": "6k - 6k = 0",
+          "expected": "6k - 6k = 0",
+          "seen": "6k - 6k = 0",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 6,
+          "question": "3(2b - 1) = 6b - 3",
+          "expected": "3(2b - 1) = 6b - 3",
+          "seen": "3(2b - 1) = 6b - 3",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0033,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

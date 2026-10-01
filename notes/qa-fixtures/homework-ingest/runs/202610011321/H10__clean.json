@@ -1,0 +1,72 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivers",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "text evidence",
+          "sortOrder": 1
+        },
+        {
+          "label": "identifying theme",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": 33,
+      "teacherNote": "Evidence is too vague; theme is underdeveloped.",
+      "studentName": "Alex Rivers",
+      "students": [
+        "Alex Rivers"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "1. Main idea:",
+          "expected": "The river flooded the town",
+          "seen": "The river flooded the town",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "question": "2. Evidence:",
+          "expected": "Specific details from the text showing the river flooding the town (e.g. \"water rose overnight\")",
+          "seen": "water rose overnight",
+          "credit": 0,
+          "of": 1,
+          "gap": "text evidence"
+        },
+        {
+          "n": 3,
+          "question": "3. Theme:",
+          "expected": "community helps (or similar statement about people helping each other after a disaster)",
+          "seen": "community helps",
+          "credit": 0,
+          "of": 1,
+          "gap": "identifying theme"
+        }
+      ],
+      "costUsd": 0.0024,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

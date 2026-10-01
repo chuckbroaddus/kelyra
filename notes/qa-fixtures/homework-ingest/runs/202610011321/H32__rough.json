@@ -1,0 +1,86 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Taylor K.",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "two-digit addition with regrouping",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 80,
+      "teacherNote": "Multiple regrouping errors in 2-digit addition.",
+      "studentName": "Taylor K.",
+      "students": [
+        "Taylor K."
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "47 + 38",
+          "expected": "85",
+          "seen": "85",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "question": "56 + 29",
+          "expected": "85",
+          "seen": "85",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "question": "68 + 14",
+          "expected": "82",
+          "seen": "82",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "question": "39 + 46",
+          "expected": "85",
+          "seen": "85",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 5,
+          "question": "75 + 18",
+          "expected": "93",
+          "seen": "83",
+          "credit": 0,
+          "of": 1,
+          "gap": "two-digit addition with regrouping"
+        }
+      ],
+      "costUsd": 0.0028,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

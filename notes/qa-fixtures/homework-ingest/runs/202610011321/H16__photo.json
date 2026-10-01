@@ -1,0 +1,45 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Excellent paragraph with clear topic sentence and supporting details.",
+      "studentName": "Jamie Ortiz",
+      "students": [
+        "Jamie Ortiz"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Write 3-4 sentences about a helpful neighbor.",
+          "expected": "Any well-written 3-4 sentence paragraph describing a helpful neighbor with a clear topic sentence and supporting details (example matches the provided model text).",
+          "seen": "My neighbor Ms. Lee brings extra vegetables from her garden. She waved when I moved in last June. Last week she helped carry boxes up the stairs. I want to thank her with cookies.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0024,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

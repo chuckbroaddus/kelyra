@@ -1,0 +1,72 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Jamie Ortiz",
+      "students": [
+        "Jamie Ortiz"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Rewrite each sentence with commas. 1. I bought apples pears and grapes.",
+          "expected": "I bought apples, pears, and grapes.",
+          "seen": "I bought apples, pears, and grapes.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "question": "Rewrite each sentence with commas. 2. After lunch we went outside.",
+          "expected": "After lunch, we went outside.",
+          "seen": "After lunch, we went outside.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "question": "Rewrite each sentence with commas. 3. My dog Max likes the park.",
+          "expected": "My dog, Max, likes the park.",
+          "seen": "My dog, Max, likes the park.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "question": "Rewrite each sentence with commas. 4. Yes I will come to the party.",
+          "expected": "Yes, I will come to the party.",
+          "seen": "Yes, I will come to the party.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0028,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

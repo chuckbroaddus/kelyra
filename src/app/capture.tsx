@@ -40,6 +40,7 @@ import {
   transcribeCaptureAudio,
 } from '@/lib/captures/api';
 import { evaluateCaptureMedia, type CaptureEvaluation } from '@/lib/captures/evaluate';
+import { cleanHomeworkStudentName } from '@/lib/captures/homeworkName';
 import {
   directoryPersonKindLabel,
   seatMayCreatePersonFromPhoto,
@@ -731,7 +732,7 @@ export default function CaptureScreen() {
       maxScore: assigned.max_score,
       modelTotal: vision.draftScore,
       teacherNote: vision.teacherNote ?? null,
-      studentName: vision.studentName ?? null,
+      studentName: cleanHomeworkStudentName(vision.studentName),
       gaps: vision.gaps ?? [],
       pageAssetIds: photoAssets.map((asset) => asset.id),
       costUsd: vision.costUsd ?? null,
@@ -855,7 +856,7 @@ export default function CaptureScreen() {
         displayName: student.display_name,
         aliases: student.name_aliases,
       }));
-      const paperName = result.studentGuessName?.trim() || null;
+      const paperName = cleanHomeworkStudentName(result.studentGuessName);
       const fromId = roster.some((student) => student.id === result.studentGuessId)
         ? result.studentGuessId
         : null;
@@ -863,8 +864,8 @@ export default function CaptureScreen() {
       const guessOnRoster = fromId ?? matched.guessedStudentId;
       if (guessOnRoster && !personPhotoChoiceOpen) setStudentId(guessOnRoster);
       if (result.parentGuessName) setParentName(result.parentGuessName);
-      if (!spokenName.trim() && (result.studentGuessName || result.note)) {
-        setSpokenName(result.studentGuessName || result.note || '');
+      if (!spokenName.trim() && (paperName || result.note)) {
+        setSpokenName(paperName || result.note || '');
       }
 
       let mapped = mapClassifierFields(
@@ -2693,6 +2694,12 @@ export default function CaptureScreen() {
             <Text style={[type.meta, { color: colors.mute }]}>{evaluation.teacherNote}</Text>
           ) : null}
         </Card>
+      ) : null}
+
+      {evaluation?.otherStudentNames?.length && intent === 'homework' ? (
+        <Text style={[type.meta, { color: colors.mute }]}>
+          Another paper is in the photo ({evaluation.otherStudentNames.join(', ')}). The draft is for the front paper.
+        </Text>
       ) : null}
 
       {asking ? <WorkingLine text="Asking AI…" /> : null}

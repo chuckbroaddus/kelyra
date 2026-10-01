@@ -4,6 +4,8 @@ import { interpretSpokenStudentName } from '@/lib/matching/spokenName';
 import { signedUrlForAsset, uploadTeacherAsset } from '@/lib/media/upload';
 import type { AssetRow } from '@/lib/supabase/types';
 
+import { cleanHomeworkStudentName, otherHomeworkStudents } from './homeworkName';
+
 export type CapturePageInput = {
   uri: string;
   mimeType: string;
@@ -13,6 +15,8 @@ export type CapturePageInput = {
 export type CaptureEvaluation = StoredHomeworkDraft & {
   transcript: string | null;
   studentName: string | null;
+  /** Other readable student names when two papers are in frame (draft is for the primary). */
+  otherStudentNames?: string[];
   photoAssets: AssetRow[];
   audioAsset: AssetRow | null;
 };
@@ -67,6 +71,7 @@ export async function evaluateCaptureMedia(input: {
   let draftScore: number | null = null;
   let teacherNote: string | null = null;
   let costUsd: number | null = null;
+  let otherStudentNames: string[] = [];
   if (photoAssets.length) {
     const imageUrls: string[] = [];
     for (const asset of photoAssets) {
@@ -76,12 +81,15 @@ export async function evaluateCaptureMedia(input: {
     if (!imageUrls.length) throw new Error('Could not open those photos.');
     const vision = await invokeAi<{
       studentName?: string | null;
+      students?: Array<string | { name?: string }>;
       gaps?: StoredHomeworkDraft['gaps'];
       draftScore?: number | null;
       teacherNote?: string | null;
       costUsd?: number | null;
     }>('evaluate-homework', { imageUrls, imageUrl: imageUrls[0] });
-    paperName = vision.studentName?.trim() || null;
+    // Placeholder reads ("Name:", "[redacted]") never become a paper name.
+    paperName = cleanHomeworkStudentName(vision.studentName);
+    otherStudentNames = otherHomeworkStudents(paperName, vision.students);
     gaps = vision.gaps ?? [];
     draftScore = typeof vision.draftScore === 'number' ? vision.draftScore : null;
     teacherNote = vision.teacherNote ?? null;
@@ -93,6 +101,7 @@ export async function evaluateCaptureMedia(input: {
     audioAsset,
     transcript,
     studentName: spokenName || paperName,
+    otherStudentNames,
     gaps,
     draftScore,
     teacherNote,

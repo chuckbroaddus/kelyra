@@ -1,0 +1,81 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "perimeter vs area confusion",
+          "sortOrder": 1
+        },
+        {
+          "label": "units consistency",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": 25,
+      "teacherNote": "Major confusion between area and perimeter concepts.",
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Area of a 5 cm by 3 cm rectangle",
+          "expected": "15 cm²",
+          "seen": "15 cm²",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "question": "Perimeter of the same rectangle",
+          "expected": "16 cm",
+          "seen": "15 cm²",
+          "credit": 0,
+          "of": 1,
+          "gap": "perimeter vs area confusion"
+        },
+        {
+          "n": 3,
+          "question": "Area of a square with side 4 in",
+          "expected": "16 in²",
+          "seen": "16 cm",
+          "credit": 0,
+          "of": 1,
+          "gap": "units consistency"
+        },
+        {
+          "n": 4,
+          "question": "Area of a triangle, base 6 m, height 4 m",
+          "expected": "12 m²",
+          "seen": "24 m²",
+          "credit": 0,
+          "of": 1,
+          "gap": "triangle area formula"
+        }
+      ],
+      "costUsd": 0.0024,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
