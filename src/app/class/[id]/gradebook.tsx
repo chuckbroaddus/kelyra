@@ -146,6 +146,7 @@ export default function GradebookScreen() {
 
   const paneRaw = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const heatmap = paneRaw === 'heatmap';
+  const conduct = paneRaw === 'conduct';
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
   const colWidth = studentHead.colWidth;
   const assignments = useMemo(
@@ -270,7 +271,7 @@ export default function GradebookScreen() {
     inputRange: [0, Math.max(trayHideDistance, 1)],
     outputRange: [1, 0],
   });
-  const showExport = Boolean(book && book.assignments.length > 0 && !heatmap) || Boolean(exportMessage);
+  const showExport = Boolean(book && book.assignments.length > 0 && !heatmap && !conduct) || Boolean(exportMessage);
   const exportBar = showExport ? (
     <Animated.View
       pointerEvents={chromeVisible ? 'box-none' : 'none'}
@@ -317,7 +318,7 @@ export default function GradebookScreen() {
   ) : null;
 
   const termTabs =
-    !heatmap && book && book.assignments.length > 0 ? (
+    !heatmap && book && (book.assignments.length > 0 || conduct) ? (
       <GradeTermTabs
         value={termFilter}
         onChange={setTermFilter}
@@ -331,17 +332,18 @@ export default function GradebookScreen() {
       {id ? (
         <View style={styles.chipShelf}>
           <GradebookViewTabs
-            value={heatmap ? 'heatmap' : 'gradebook'}
+            value={heatmap ? 'heatmap' : conduct ? 'conduct' : 'gradebook'}
             compact
             onChange={(key) => {
-              const next = key === 'heatmap' ? 'heatmap' : '';
-              if ((heatmap ? 'heatmap' : '') === next) return;
+              const next = key === 'heatmap' ? 'heatmap' : key === 'conduct' ? 'conduct' : '';
+              const cur = heatmap ? 'heatmap' : conduct ? 'conduct' : '';
+              if (cur === next) return;
               router.setParams({ tab: next });
             }}
           />
         </View>
       ) : null}
-      {syllabusBanner !== 'published' && id && !heatmap ? (
+      {syllabusBanner !== 'published' && id && !heatmap && !conduct ? (
         <View style={styles.syllabusBanner}>
           <Text style={[type.meta, { color: colors.mute }]}>
             Warning - Grade weights not set in Syllabus
@@ -355,7 +357,7 @@ export default function GradebookScreen() {
     <View style={styles.shell}>
     <Screen maxWidth={1100} scroll={false} pageChromeHosted collapse={collapsing}>
       {termTabs}
-      {!heatmap && book && book.students.length > 0 ? (
+      {conduct && book && book.students.length > 0 ? (
         <ConductEntryPanel
           students={book.students}
           marks={conductMarks}
@@ -377,6 +379,16 @@ export default function GradebookScreen() {
         ) : (
           <Text style={[styles.empty, { color: colors.mute }]}>Approve a gap to see who else has it.</Text>
         )
+      ) : conduct ? (
+        !book ? (
+          status ? (
+            <Text style={[type.meta, { color: colors.danger }]}>{status}</Text>
+          ) : (
+            <WorkingLine />
+          )
+        ) : book.students.length === 0 ? (
+          <Text style={[styles.empty, { color: colors.mute }]}>No students yet.</Text>
+        ) : null
       ) : !book ? (
         status ? (
           <Text style={[type.meta, { color: colors.danger }]}>{status}</Text>

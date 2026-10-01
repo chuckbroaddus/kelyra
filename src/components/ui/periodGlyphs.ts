@@ -29,6 +29,8 @@ export type GlyphSpec = {
   id: string;
   startDeg: number;
   sweepDeg: number;
+  /** True when the chip draws a solid pie wedge/disc (not exam/progress outline-only). */
+  filled: boolean;
   label: string;
   storeCode: string;
   dateRange: string;
@@ -54,23 +56,33 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
   const ps = c.periods || [];
   const find = (code: string) => ps.find(p => (p.code || '').toLowerCase() === code.toLowerCase());
 
-  const all: GlyphSpec = { id: 'all', startDeg: 0, sweepDeg: 360, label: 'All', storeCode: 'ALL', dateRange: '', kind: 'all' };
+  const all: GlyphSpec = {
+    id: 'all', startDeg: 0, sweepDeg: 360, filled: true,
+    label: 'All', storeCode: 'ALL', dateRange: '', kind: 'all',
+  };
   const out: GlyphSpec[] = [all];
 
-  // exact tables FR-UI-GLYPH-03/04/05
+  // FR-UI-GLYPH-03/04/05 geometry tables.
+  // Year-family (quarters/semesters/trimesters): compass convention unchanged.
+  // Six-weeks (CEO): solid 60° sixths clockwise from 12 o'clock;
+  // S1 = right half (0–180), S2 = left half (180–360). No 120° thirds.
   const G: Record<string, {s:number, w:number}> = {
     year: {s:0, w:360}, s1:{s:180,w:180}, s2:{s:0,w:180},
     q1:{s:180,w:90}, q2:{s:270,w:90}, q3:{s:0,w:90}, q4:{s:90,w:90},
     t1:{s:180,w:120}, t2:{s:300,w:120}, t3:{s:60,w:120},
-    '6w1':{s:180,w:120}, '6w2':{s:300,w:120}, '6w3':{s:60,w:120},
-    '6w4':{s:180,w:120}, '6w5':{s:300,w:120}, '6w6':{s:60,w:120},
-    '6wy1':{s:180,w:60}, '6wy2':{s:240,w:60}, '6wy3':{s:300,w:60},
-    '6wy4':{s:0,w:60}, '6wy5':{s:60,w:60}, '6wy6':{s:120,w:60},
+    // six-weeks marking periods: 1/6 of the year disk
+    '6w1':{s:0,w:60}, '6w2':{s:60,w:60}, '6w3':{s:120,w:60},
+    '6w4':{s:180,w:60}, '6w5':{s:240,w:60}, '6w6':{s:300,w:60},
+    '6wy1':{s:0,w:60}, '6wy2':{s:60,w:60}, '6wy3':{s:120,w:60},
+    '6wy4':{s:180,w:60}, '6wy5':{s:240,w:60}, '6wy6':{s:300,w:60},
+    // six-week semester halves (right then left) — applied when model is six_weeks
+    '6w_s1':{s:0,w:180}, '6w_s2':{s:180,w:180},
     progress: {s:0,w:0}, 'exam_s1':{s:0,w:360}, 'exam_s2':{s:0,w:360},
   };
 
   let codes: string[] = [];
   if (model === 'six_weeks') {
+    // Chip order: All, P1–P3, S1, P4–P6, S2 (year-scope ids still 6wy*)
     codes = scope === 'year'
       ? ['6wy1','6wy2','6wy3','s1','6wy4','6wy5','6wy6','s2']
       : ['6w1','6w2','6w3','s1','6w4','6w5','6w6','s2'];
@@ -92,19 +104,26 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
   for (const code of codes) {
     const p = find(code);
     let g = G[code] || G[code.toLowerCase()] || {s:0, w:360};
+    // Six-week calendar: semester chips are right/left halves matching P1–P3 / P4–P6.
+    if (model === 'six_weeks' && (code === 's1' || code === 's2')) {
+      g = code === 's1' ? G['6w_s1'] : G['6w_s2'];
+    }
     if (model === 'custom' && codes.length) {
       const i = codes.indexOf(code);
       const sw = 360 / codes.length;
       g = { s: 180 + i * sw, w: sw };
     }
+    const kind = p?.kind || 'marking_period';
+    const filled = kind !== 'exam' && kind !== 'progress' && g.w > 0;
     out.push({
       id: code.toLowerCase(),
       startDeg: g.s,
       sweepDeg: g.w,
+      filled,
       label: p?.name || code.toUpperCase(),
       storeCode: p?.code || code.toUpperCase(),
       dateRange: fmtRange(p?.start_date || null, p?.end_date || null),
-      kind: p?.kind || 'marking_period',
+      kind,
     });
   }
 
@@ -116,6 +135,7 @@ export function glyphsForCalendar(c: GradingCalendar | null | undefined): GlyphS
         id: 'progress',
         startDeg: 0,
         sweepDeg: 0,
+        filled: false,
         label: prog.name || 'Progress',
         storeCode: prog.code || 'PROG',
         dateRange: fmtRange(prog.start_date, prog.end_date),

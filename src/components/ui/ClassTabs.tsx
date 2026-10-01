@@ -81,6 +81,7 @@ const DESK_SPAN_TABS: PersonTab[] = [
 
 const GRADEBOOK_VIEW_TABS: PersonTab[] = [
   { key: 'gradebook', label: 'Gradebook', icon: 'records' },
+  { key: 'conduct', label: 'Conduct', icon: 'person' },
   { key: 'heatmap', label: 'Heatmap', icon: 'grades' },
 ];
 
@@ -104,7 +105,7 @@ export function DeskSpanTabs({ value, onChange, stacked, compact }: ShelfProps) 
   );
 }
 
-/** Gradebook · Heatmap under ClassTabs — FoM PersonTabs default. */
+/** Gradebook · Conduct · Heatmap under ClassTabs — FoM PersonTabs default. */
 export function GradebookViewTabs({ value, onChange, stacked, compact }: ShelfProps) {
   return (
     <PersonTabs
