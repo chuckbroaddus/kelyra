@@ -399,7 +399,7 @@ That set is only valid for a four-quarter / two-semester year. Six-weeks, trimes
 Parent containers:
 
 - Year disk = 360° (six-weeks live on this disk as solid sixths)
-- Semester disk = 360° only for year-family semester halves on nine-week / semester calendars (compass convention below)
+- Semester halves on every calendar: S1 = right half, S2 = left half (clockwise from 12)
 - Marking-period disk = 360° (progress windows)
 
 **FR-UI-GLYPH-01** The period filter shall render `[All]` plus one chip per official marking period and each visible credit-term rollup on the bound calendar. Icons that do not exist on that calendar shall not appear.
@@ -410,27 +410,27 @@ Parent containers:
 polar(deg) → (12 + 9*sin(deg°), 12 − 9*cos(deg°))
 ```
 
-Unselected: cream stroke `#E8DCC8`, wedge fill 35–40% cream, remainder transparent.  
+Unselected: cream stroke `#E8DCC8`, wedge fill **solid** cream (100%), faint cream ring behind, remainder transparent. Arc drawn with SVG sweep-flag 1 (clockwise in y-down screen coords).    
 Selected: accent fill + stroke (screenshot orange ≈ `#E08A3C`) and the filled-pill treatment All already uses.  
 Do not use color to encode period number.
 
-**FR-UI-GLYPH-03 — Year family** (parent = year). Keep the existing compass convention so current quarter/semester users are not retrained.
+**FR-UI-GLYPH-03 — Year family** (parent = year). Solid wedges clockwise from 12 o’clock, matching the legacy `termQ1–Q4/S1/S2` PNG icons (CEO 2026-09-30).
 
 | id | Meaning | start° | sweep° |
 |---|---|---|---|
 | `all` | Whole book | 0 | 360 solid disc + “All” label |
 | `year` | Official year mark | 0 | 360 disc with a thin inner ring so it ≠ All |
-| `s1` | Semester 1 (nine-week / semester calendars) | 180 | 180 (left half) |
-| `s2` | Semester 2 (nine-week / semester calendars) | 0 | 180 (right half) |
-| `q1` | Quarter / 9-weeks 1 | 180 | 90 (bottom-left) |
-| `q2` | Quarter 2 | 270 | 90 (top-left) |
-| `q3` | Quarter 3 | 0 | 90 (top-right) |
-| `q4` | Quarter 4 | 90 | 90 (bottom-right) |
-| `t1` | Trimester 1 | 180 | 120 |
-| `t2` | Trimester 2 | 300 | 120 |
-| `t3` | Trimester 3 | 60 | 120 |
+| `s1` | Semester 1 (nine-week / semester calendars) | 0 | 180 (right half) |
+| `s2` | Semester 2 (nine-week / semester calendars) | 180 | 180 (left half) |
+| `q1` | Quarter / 9-weeks 1 | 0 | 90 (upper right) |
+| `q2` | Quarter 2 | 90 | 90 (lower right) |
+| `q3` | Quarter 3 | 180 | 90 (lower left) |
+| `q4` | Quarter 4 | 270 | 90 (upper left) |
+| `t1` | Trimester 1 | 0 | 120 |
+| `t2` | Trimester 2 | 120 | 120 |
+| `t3` | Trimester 3 | 240 | 120 |
 
-**FR-UI-GLYPH-04 — Six-weeks as solid sixths (required, CEO 2026-09-30).** On a `six_weeks` calendar every marking period is a **solid filled 60° sixth of the year circle**, clockwise from 12 o’clock. Semester chips on this calendar are the matching halves of that same year disk (not the year-family left/right flip).
+**FR-UI-GLYPH-04 — Six-weeks as solid sixths (required, CEO 2026-09-30).** On a `six_weeks` calendar every marking period is a **solid filled 60° sixth of the year circle**, clockwise from 12 o’clock. Semester chips on this calendar are the matching halves of that same year disk.
 
 | id | Meaning | start° | sweep° | Clock region |
 |---|---|---|---|---|
@@ -452,7 +452,7 @@ Chip order: `All, 6W1, 6W2, 6W3, S1, 6W4, 6W5, 6W6, S2` (then Year/exam if the c
 | `progress` | 3-week / mid-period snapshot | Parent wedge, **dashed** 2-2 stroke, no solid fill |
 | `exam_s1` / `exam_s2` | Term exam | Hollow ring + 3pt center dot. Not a pie — exam is a component, not a time slice |
 | `college_term` | Single college term | Full disc; hide sibling wedges |
-| `custom_i_of_n` | Admin N equal periods | start = 180 + (i−1)×(360/N), sweep = 360/N |
+| `custom_i_of_n` | Admin N equal periods | start = (i−1)×(360/N), sweep = 360/N |
 
 **FR-UI-GLYPH-06** Asset catalog agents shall ship (SVG, dark + light). Do not invent extra shapes.
 
@@ -523,7 +523,7 @@ Implementation notes:
 Acceptance:
 
 1. Texas six-week calendar shows All + six solid 60° sixths + two semester halves (S1 right 0–180, S2 left 180–360).
-2. Nine-week calendar shows All + four 90° pies + two halves (year-family compass). No 6W icons.
+2. Nine-week calendar shows All + four 90° pies + two halves (S1 right, S2 left). No 6W icons.
 3. 6W1 selected fills only the first 60° wedge (0–60).
 4. VoiceOver on 6W2 says “Second six weeks, Sep 22–Oct 31,” not “quarter 2.”
 5. All selected still matches the current screenshot (solid orange disc + All label).

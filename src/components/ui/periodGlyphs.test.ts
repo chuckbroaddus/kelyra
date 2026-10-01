@@ -35,16 +35,16 @@ test('glyphsForCalendar returns All first always as solid disc', () => {
   assert.equal(gs[0].filled, true);
 });
 
-test('nine_weeks Q/S solid 90/180 compass FR-03', () => {
+test('nine_weeks solid quarters clockwise from 12 (Q1 upper right), S1 right / S2 left', () => {
   const c = makeCal('nine_weeks');
   const gs = glyphsForCalendar(c);
   assert.deepEqual(gs.map(g => g.id), ['all','q1','q2','s1','q3','q4','s2']);
-  assertWedge(gs.find(g=>g.id==='q1'), 180, 90, 'q1');
-  assertWedge(gs.find(g=>g.id==='q2'), 270, 90, 'q2');
-  assertWedge(gs.find(g=>g.id==='q3'), 0, 90, 'q3');
-  assertWedge(gs.find(g=>g.id==='q4'), 90, 90, 'q4');
-  assertWedge(gs.find(g=>g.id==='s1'), 180, 180, 's1');
-  assertWedge(gs.find(g=>g.id==='s2'), 0, 180, 's2');
+  assertWedge(gs.find(g=>g.id==='q1'), 0, 90, 'q1');
+  assertWedge(gs.find(g=>g.id==='q2'), 90, 90, 'q2');
+  assertWedge(gs.find(g=>g.id==='q3'), 180, 90, 'q3');
+  assertWedge(gs.find(g=>g.id==='q4'), 270, 90, 'q4');
+  assertWedge(gs.find(g=>g.id==='s1'), 0, 180, 's1');
+  assertWedge(gs.find(g=>g.id==='s2'), 180, 180, 's2');
 });
 
 test('six_weeks solid sixths clockwise from 12 o’clock + S1 right / S2 left', () => {
@@ -79,16 +79,16 @@ test('six_weeks year scope uses same 60° sixths (6wy ids)', () => {
 test('trimester solid 120° wedges', () => {
   const gs = glyphsForCalendar(makeCal('trimester'));
   assert.deepEqual(gs.map(g=>g.id), ['all','t1','t2','t3']);
-  assertWedge(gs.find(g=>g.id==='t1'), 180, 120, 't1');
-  assertWedge(gs.find(g=>g.id==='t2'), 300, 120, 't2');
-  assertWedge(gs.find(g=>g.id==='t3'), 60, 120, 't3');
+  assertWedge(gs.find(g=>g.id==='t1'), 0, 120, 't1');
+  assertWedge(gs.find(g=>g.id==='t2'), 120, 120, 't2');
+  assertWedge(gs.find(g=>g.id==='t3'), 240, 120, 't3');
 });
 
-test('semester solid halves compass (S1 left, S2 right)', () => {
+test('semester solid halves (S1 right, S2 left)', () => {
   const gs = glyphsForCalendar(makeCal('semester'));
   assert.deepEqual(gs.map(g=>g.id), ['all','s1','s2']);
-  assertWedge(gs.find(g=>g.id==='s1'), 180, 180, 's1');
-  assertWedge(gs.find(g=>g.id==='s2'), 0, 180, 's2');
+  assertWedge(gs.find(g=>g.id==='s1'), 0, 180, 's1');
+  assertWedge(gs.find(g=>g.id==='s2'), 180, 180, 's2');
 });
 
 test('year solid full disc with year chip', () => {
