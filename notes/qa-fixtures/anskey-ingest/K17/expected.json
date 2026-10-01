@@ -1,0 +1,44 @@
+{
+  "source_id": "K17",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Spanish 1 — Vocab Quiz KEY",
+  "maxScore": 4,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "hello →",
+      "answer": "hola",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "goodbye →",
+      "answer": "adiós",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "please →",
+      "answer": "por favor",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "thank you →",
+      "answer": "gracias",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

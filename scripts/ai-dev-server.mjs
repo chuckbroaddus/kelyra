@@ -2142,17 +2142,21 @@ function clamp01(value) {
 
 const analyzeKeyPrompt = `You read one K-12 worksheet photo that a teacher is attaching as an ANSWER KEY.
 Return JSON only, no markdown:
-{"pageState":"blank","header":"printed title","items":[{"n":1,"stem":"12 + 9 =","answer":"21","points":1,"needsTeacher":false,"note":null}],"maxScore":21,"teacherNote":null}
+{"pageState":"blank","header":"printed title","items":[{"n":1,"stem":"12 + 9 =","answer":"21","points":1,"needsTeacher":false,"note":null}],"maxScore":21,"teacherNote":null,"reject":false}
 Rules:
-- pageState is blank (no student/teacher fills in the blanks), filled (answers already written), or unsure.
+- FIRST classify the document. If it is NOT an answer key (student homework with a student name, syllabus/weights, roster, car rider list, random notes), set reject=true, items=[], pageState="unsure", teacherNote="Not an answer key", maxScore=null. Do NOT invent answers.
+- pageState is blank (no answers written/printed/circled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
+- Answer keys often PRINT the correct answers in bold/color next to each item. That is pageState=filled. EXTRACT those printed answers. Do NOT re-solve and replace them.
+- Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled.
 - header is the printed title / first direction line, or null.
-- Only items that are actually on the page. Do not invent questions.
+- Only items that are actually on the page. Do not invent questions or answers for missing numbers.
+- If the title says N questions but only fewer answers appear, extract only what is visible. teacherNote may say the key is partial. Never invent the rest.
 - If pageState is blank: SOLVE each keyed item when it is objectively answerable (math fact, multiple choice, word-bank, short factual blank). If it is opinion, explain, or open writing, set needsTeacher=true and answer="".
-- If pageState is filled: EXTRACT the written/circled answers. Do not replace them with what you think is correct.
-- points: use printed point values if present, else 1.
-- maxScore is the sum of points.
+- If pageState is filled: EXTRACT the written/circled/printed answers exactly. Prefer the key's printed answer over your own solution.
+- points: use printed point values if present, else 1. maxScore is the sum of points.
 - teacherNote is one short sentence or null.
-- Never invent a student. This is not grading a child.`;
+- Never invent a student. This is not grading a child.
+- MC answers should be a single letter A–E (or T/F) when that is what the key shows.`;
 
 const syllabusParsePrompt = `You extract a CLASS GRADING POLICY (syllabus weights) from a photo for a teacher.
 Return JSON only, no markdown, schema_version 1:
@@ -2477,18 +2481,64 @@ async function analyzeAnswerKey(body) {
     },
   ], {}, { functionName: 'analyze-answer-key' });
   const parsed = extractJson(outputText(payload));
-  const pageState = ['blank', 'filled', 'unsure'].includes(parsed.pageState) ? parsed.pageState : 'unsure';
-  const items = parseKeyItemsFromModel(parsed.items);
+  let pageState = ['blank', 'filled', 'unsure'].includes(parsed.pageState) ? parsed.pageState : 'unsure';
+  let items = parseKeyItemsFromModel(parsed.items);
+  const header =
+    typeof parsed.header === 'string' ? parsed.header.replace(/\s+/g, ' ').trim() : signature.header;
+  const teacherNote = typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null;
+  const reject =
+    parsed.reject === true ||
+    /not an answer key|not a key|wrong document|student work|syllabus|roster/i.test(
+      String(teacherNote || '') + ' ' + String(header || ''),
+    );
+
+  // Reject non-keys: empty items
+  if (reject) {
+    return {
+      pageState: 'unsure',
+      header: header || null,
+      items: [],
+      maxScore: null,
+      teacherNote: teacherNote || 'Not an answer key',
+      reject: true,
+      phash: signature.phash,
+      layout: signature.layout,
+    };
+  }
+
+  // If model marked blank but extracted/printed answers exist and header looks like a key, prefer filled.
+  const answered = items.filter((it) => String(it.answer || '').trim()).length;
+  if (pageState === 'blank' && answered >= 2 && /key|answer/i.test(String(header || ''))) {
+    pageState = 'filled';
+  }
+
+  // Soft-normalize common MC letter answers "A) Paris" -> keep full but also ok
+  items = items.map((it) => {
+    let answer = String(it.answer || '').trim();
+    const m = answer.match(/^([A-Ea-e])\s*[).:\-]\s*(.+)$/);
+    if (m && m[2] && m[2].length <= 40) {
+      // Keep letter for MC keys when stem implies choice
+      if (/which|true\/false|\bmc\b|capital|choose/i.test(String(it.stem || ''))) {
+        answer = m[1].toUpperCase();
+      }
+    }
+    if (/^(true|false)$/i.test(answer)) {
+      answer = answer.toLowerCase() === 'true' ? 'True' : 'False';
+    }
+    return { ...it, answer };
+  });
+
   const maxScore =
     typeof parsed.maxScore === 'number'
       ? parsed.maxScore
       : items.reduce((sum, item) => sum + (item.points ?? 1), 0) || null;
   return {
     pageState,
-    header: typeof parsed.header === 'string' ? parsed.header.replace(/\s+/g, ' ').trim() : signature.header,
+    header: header || null,
     items,
     maxScore,
-    teacherNote: typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
+    teacherNote,
+    reject: false,
     phash: signature.phash,
     layout: signature.layout,
   };

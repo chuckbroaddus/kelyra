@@ -1627,8 +1627,12 @@ export default function CaptureScreen() {
         phash?: string | null;
         layout?: number[] | null;
         error?: string;
+        reject?: boolean;
       }>('analyze-answer-key', { imageUrl });
       if (analysis.error) throw new Error(String(analysis.error));
+      if (analysis.reject) {
+        throw new Error(analysis.teacherNote || 'That photo does not look like an answer key.');
+      }
       const items = parseKeyItems(analysis.items) as AnswerKeyItem[];
       if (!items.length) throw new Error('No key items found — check the photo and try again.');
       await updateAssignment(assigned.id, {

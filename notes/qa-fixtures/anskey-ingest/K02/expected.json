@@ -1,0 +1,44 @@
+{
+  "source_id": "K02",
+  "kind": "answer_key",
+  "pageState": "blank",
+  "header": "Warm-up 12",
+  "maxScore": 4,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "7 + 8 =",
+      "answer": "15",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "15 − 6 =",
+      "answer": "9",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "4 × 5 =",
+      "answer": "20",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "Write one sentence about your weekend.",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

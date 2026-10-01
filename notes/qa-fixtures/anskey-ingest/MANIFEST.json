@@ -1,0 +1,333 @@
+{
+  "generated_at": "2026-10-01T11:16:37.527Z",
+  "count": 20,
+  "cases": [
+    {
+      "id": "K01",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "pageState",
+        "header",
+        "items.answer",
+        "maxScore"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K02",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "pageState",
+        "items.answer",
+        "needsTeacher"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K03",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "pageState",
+        "items.answer",
+        "type"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K04",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "points",
+        "note",
+        "maxScore"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K05",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "pageState",
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K06",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer",
+        "photo"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K07",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer",
+        "item_count"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K08",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "item_count",
+        "warnings",
+        "no_hallucinate"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K09",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "points",
+        "type",
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K10",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "pageState",
+        "needsTeacher",
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K11",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "item_count",
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K12",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "needsTeacher",
+        "points",
+        "note"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K13",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer",
+        "type"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K14",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "needsTeacher",
+        "no_hallucinate"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K15",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K16",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "K17",
+      "kind": "answer_key",
+      "photo": true,
+      "negative": false,
+      "fields_exercised": [
+        "items.answer",
+        "header"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "photo": true,
+      "negative": true,
+      "fields_exercised": [
+        "reject",
+        "negative"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "photo": false,
+      "negative": true,
+      "fields_exercised": [
+        "reject",
+        "negative"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "photo": true,
+      "negative": true,
+      "fields_exercised": [
+        "reject",
+        "negative"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json"
+      ]
+    }
+  ]
+}

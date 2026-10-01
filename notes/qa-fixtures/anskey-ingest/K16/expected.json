@@ -1,0 +1,44 @@
+{
+  "source_id": "K16",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Cell Biology Word Bank KEY",
+  "maxScore": 4,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Control center of the cell:",
+      "answer": "nucleus",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "Powerhouse of the cell:",
+      "answer": "mitochondria",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "Outer boundary:",
+      "answer": "membrane",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "Jelly-like interior:",
+      "answer": "cytoplasm",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

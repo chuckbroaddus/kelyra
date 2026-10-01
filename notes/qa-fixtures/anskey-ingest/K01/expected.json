@@ -1,0 +1,52 @@
+{
+  "source_id": "K01",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Quiz 3 — Answer Key",
+  "maxScore": 5,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Which is a linear function?",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "Slope of y=2x+1 is",
+      "answer": "2",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "y-intercept of y=−x+4 is",
+      "answer": "4",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "True/False: parallel lines have equal slopes.",
+      "answer": "True",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 5,
+      "stem": "Solve 3x=12.",
+      "answer": "4",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

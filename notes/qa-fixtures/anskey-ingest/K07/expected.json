@@ -1,0 +1,76 @@
+{
+  "source_id": "K07",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Reading Quiz Key",
+  "maxScore": 8,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "1",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "2",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "3",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 4,
+      "stem": "4",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 5,
+      "stem": "5",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 6,
+      "stem": "6",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 7,
+      "stem": "7",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 8,
+      "stem": "8",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "capture-start-375",
+    "code": 2,
+    "out": "",
+    "err": "WEB_READY\nCHROME_READY\nPERSONA_READY\nINTERACTION_MISSING\n"
+  },
+  {
+    "name": "class-works-375",
+    "code": 2,
+    "out": "",
+    "err": "CHROME_READY\nWEB_READY\nPERSONA_READY\nINTERACTION_MISSING\n"
+  },
+  {
+    "name": "assignment-new-375",
+    "code": 2,
+    "out": "",
+    "err": "CHROME_READY\nWEB_READY\nPERSONA_READY\nINTERACTION_MISSING\n"
+  }
+]
