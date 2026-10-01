@@ -1,0 +1,155 @@
+{
+  "generated_at": "2026-10-01T11:17:44.683Z",
+  "roster": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis",
+    "Taylor Kim",
+    "Jamie Ortiz"
+  ],
+  "cases": [
+    {
+      "id": "H01",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H02",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H03",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H04",
+      "kind": "homework",
+      "photo": true,
+      "hand": true,
+      "negative": false
+    },
+    {
+      "id": "H05",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H06",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H07",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H08",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H09",
+      "kind": "homework",
+      "photo": true,
+      "hand": true,
+      "negative": false
+    },
+    {
+      "id": "H10",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H11",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H12",
+      "kind": "homework",
+      "photo": false,
+      "hand": true,
+      "negative": false
+    },
+    {
+      "id": "H13",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H14",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H15",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H16",
+      "kind": "homework",
+      "photo": true,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "H17",
+      "kind": "homework",
+      "photo": false,
+      "hand": false,
+      "negative": false
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "photo": true,
+      "hand": false,
+      "negative": true
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "photo": false,
+      "hand": false,
+      "negative": true
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "photo": true,
+      "hand": false,
+      "negative": true
+    }
+  ]
+}

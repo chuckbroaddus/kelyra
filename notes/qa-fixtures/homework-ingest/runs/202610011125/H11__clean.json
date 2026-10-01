@@ -1,0 +1,75 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "states_of_matter"
+        }
+      ],
+      "fields": [
+        {
+          "label": "1. States of matter",
+          "value": "solid, liquid, gas"
+        },
+        {
+          "label": "2. Water freezes at",
+          "value": ""
+        },
+        {
+          "label": "3. Boiling point C",
+          "value": ""
+        },
+        {
+          "label": "4. Gas particles",
+          "value": "far apart"
+        }
+      ],
+      "names": [
+        {
+          "name": "Jordan Chen",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "states of matter",
+          "sortOrder": 1
+        },
+        {
+          "label": "phase changes",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": "Incomplete work; only first question attempted.",
+      "studentName": "Jordan Chen",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "solid, liquid, gas",
+          "seen": "solid, liquid, ___",
+          "credit": null,
+          "of": 1,
+          "gap": "states of matter"
+        }
+      ],
+      "costUsd": 0.0012,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

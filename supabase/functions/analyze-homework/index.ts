@@ -14,8 +14,9 @@ const prompt = `You are helping a K-12 teacher review one student's work.
 Look only at the photo. Return JSON only, no markdown:
 {"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
 Rules:
-- 1 to 3 gaps. Labels are short, like "two-digit regrouping" or "thesis clarity".
-- If the image is blank, unreadable, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
+- 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
+- draftScore MUST be a percentage 0-100 when you can fairly estimate (not raw item counts). Otherwise null.
+- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
 - Do not invent a student name or extra biography.`;
 
 Deno.serve(async (req) => {

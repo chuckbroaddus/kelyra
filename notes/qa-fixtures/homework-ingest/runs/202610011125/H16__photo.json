@@ -1,0 +1,67 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Jamie Ortiz"
+        },
+        {
+          "label": "date",
+          "value": "9/30/2025"
+        },
+        {
+          "label": "period",
+          "value": "P3"
+        }
+      ],
+      "names": [
+        {
+          "name": "Jamie Ortiz",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "paragraph structure",
+          "sortOrder": 1
+        },
+        {
+          "label": "sentence capitalization",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": "Needs work on organizing into proper paragraphs and capitalizing sentence starts.",
+      "studentName": "Jamie",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "Write 3-4 sentences about a helpful neighbor.",
+          "seen": "My neighbor Ms. Lee brings extra vegetables from her garden. She waved when I moved in last June. Last week she helped carry boxes up the stairs. I want to thank her with cookies.",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

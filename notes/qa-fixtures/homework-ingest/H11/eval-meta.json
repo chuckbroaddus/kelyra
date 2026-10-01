@@ -1,0 +1,9 @@
+{
+  "id": "H11",
+  "photo": false,
+  "hand": false,
+  "negative": false,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false
+}

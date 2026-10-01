@@ -1,0 +1,87 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "vocabulary"
+        }
+      ],
+      "fields": [
+        {
+          "label": "1. photosynthesis",
+          "value": "plants make food from light"
+        },
+        {
+          "label": "2. cell",
+          "value": "basic unit of life"
+        },
+        {
+          "label": "3. nucleus",
+          "value": "central center"
+        }
+      ],
+      "names": [
+        {
+          "name": "Sam Patel",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "photosynthesis definition",
+          "sortOrder": 1
+        },
+        {
+          "label": "cell and nucleus definitions",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": "Incomplete work with only partial definitions provided.",
+      "studentName": "Sam Patel",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "plants make food from light",
+          "seen": "plants make food from light",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "basic unit of life",
+          "seen": "basic unit of life",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "central center",
+          "seen": "central center",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

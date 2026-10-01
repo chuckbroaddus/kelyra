@@ -1,0 +1,87 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "slope"
+        }
+      ],
+      "fields": [
+        {
+          "label": "Slope of y=2x+1",
+          "value": "2"
+        },
+        {
+          "label": "y-intercept of y=2x+1",
+          "value": "1"
+        },
+        {
+          "label": "Parallel to y=2x has slope",
+          "value": "2"
+        }
+      ],
+      "names": [
+        {
+          "name": "Riley Brooks",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "slope of line",
+          "sortOrder": 1
+        },
+        {
+          "label": "y-intercept",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "2",
+          "seen": "2",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "1",
+          "seen": "1",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "2",
+          "seen": "2",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

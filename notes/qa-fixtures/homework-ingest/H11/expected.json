@@ -1,0 +1,155 @@
+{
+  "source_id": "H11",
+  "kind": "homework",
+  "document_kind_guess": "student_work",
+  "intent": "homework",
+  "negative": false,
+  "overall_confidence": 0.85,
+  "fields": [
+    {
+      "path": "intent",
+      "value": "homework",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "homework",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "studentName",
+      "value": "Jordan Chen",
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "Jordan Chen",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "assignmentTitle",
+      "value": "Science Checkpoint",
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "Science Checkpoint",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "draftScore",
+      "value": 40,
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "40",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "maxScore",
+      "value": null,
+      "confidence": 0.5,
+      "evidence": {
+        "quote": "",
+        "page": 1,
+        "region": null
+      },
+      "status": "unknown",
+      "source_doc_id": null
+    },
+    {
+      "path": "gaps",
+      "value": [
+        "states of matter completeness"
+      ],
+      "confidence": 0.7,
+      "evidence": {
+        "quote": "states of matter completeness",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "itemCount",
+      "value": 4,
+      "confidence": 0.6,
+      "evidence": {
+        "quote": "4",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "pageCount",
+      "value": 1,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "1",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "multiStudent",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "nameMissing",
+      "value": false,
+      "confidence": 0.8,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    },
+    {
+      "path": "reject",
+      "value": false,
+      "confidence": 0.9,
+      "evidence": {
+        "quote": "false",
+        "page": 1,
+        "region": null
+      },
+      "status": "proposed",
+      "source_doc_id": null
+    }
+  ],
+  "roster_hint": [
+    "Alex Rivera",
+    "Jordan Chen",
+    "Sam Patel",
+    "Casey Nguyen",
+    "Riley Brooks",
+    "Morgan Ellis"
+  ],
+  "warnings": [],
+  "ambiguities": [],
+  "_eval": {}
+}
