@@ -1,0 +1,76 @@
+{
+  "source_id": "K27",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Math 6 — Exit Ticket KEY",
+  "maxScore": 8,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "3/4 of 24",
+      "answer": "18",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "0.6 × 5",
+      "answer": "3",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "Ratio 6:8 simplified",
+      "answer": "3:4",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "25% of 60",
+      "answer": "15",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 5,
+      "stem": "2.4 + 3.75",
+      "answer": "6.15",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 6,
+      "stem": "Unit rate: $12 for 4",
+      "answer": "3",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 7,
+      "stem": "−7 + 10",
+      "answer": "3",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 8,
+      "stem": "Area of triangle b=6 h=5",
+      "answer": "15",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

@@ -1,0 +1,16 @@
+{
+  "handwritten": true,
+  "hand": {
+    "hand": "Bradley Hand",
+    "ink": "blue",
+    "features": [
+      "circled_letters",
+      "cross_out_correction",
+      "margin_note",
+      "lined_paper"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

@@ -1,0 +1,76 @@
+{
+  "source_id": "K21",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Physical Science — Lab Safety Quiz KEY",
+  "maxScore": 9,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "PPE worn over eyes during labs",
+      "answer": "safety goggles",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "Used to smother a clothing fire",
+      "answer": "fire blanket",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "Rinse chemical splash in eyes at the",
+      "answer": "eyewash station",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "T/F: taste chemicals to identify them",
+      "answer": "False",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 5,
+      "stem": "Glassware for measuring volume precisely",
+      "answer": "graduated cylinder",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 6,
+      "stem": "Heat source with adjustable flame",
+      "answer": "Bunsen burner",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 7,
+      "stem": "First thing to do after any spill",
+      "answer": "tell the teacher",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 8,
+      "stem": "Explain why long hair is tied back (2 pts)",
+      "answer": "",
+      "points": 2,
+      "needsTeacher": true,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

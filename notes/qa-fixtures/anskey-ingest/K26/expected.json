@@ -1,0 +1,94 @@
+{
+  "source_id": "K26",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Chemistry Unit 2 — Key",
+  "maxScore": 10,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Atomic number is the number of (A neutrons B electrons C protons)",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "Group 18 elements are (A metals B noble gases)",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "Formula for table salt",
+      "answer": "NaCl",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "Bond formed by sharing electrons",
+      "answer": "covalent",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 5,
+      "stem": "Valence electrons in neon",
+      "answer": "8",
+      "points": 1,
+      "needsTeacher": false,
+      "note": "also accept \"eight\"",
+      "type": "short"
+    },
+    {
+      "n": 6,
+      "stem": "Most reactive metal group (A 1 B 2 C 17)",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 7,
+      "stem": "Reaction that releases heat",
+      "answer": "exothermic",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 8,
+      "stem": "pH of a strong base (A 2 B 7 C 9 D 13)",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc",
+      "accept_absent": true
+    },
+    {
+      "n": 9,
+      "stem": "Molar mass of water (g/mol)",
+      "answer": "18",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 10,
+      "stem": "Bond between Na and Cl",
+      "answer": "ionic",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

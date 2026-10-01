@@ -1,0 +1,80 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "low_light",
+    "heavy_noise",
+    "jpeg_heavy",
+    "blur"
+  ],
+  "rough_recipe": {
+    "seed": 1022,
+    "effects": [
+      "low_light",
+      "heavy_noise",
+      "jpeg_heavy",
+      "blur"
+    ],
+    "background": {
+      "kind": "table",
+      "tone": [
+        40,
+        36,
+        34
+      ]
+    },
+    "place": {
+      "rot": -3,
+      "scale": 0.9,
+      "corners": [
+        [
+          0,
+          0.02
+        ],
+        [
+          0,
+          -0.01
+        ],
+        [
+          -0.02,
+          0
+        ],
+        [
+          0.01,
+          0
+        ]
+      ]
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "blur",
+        "sigma": 1
+      },
+      {
+        "type": "lowlight",
+        "gain": 0.42,
+        "gamma": 1.35,
+        "cast": [
+          1.08,
+          0.96,
+          0.78
+        ],
+        "vignette": 0.6
+      },
+      {
+        "type": "noise",
+        "sigma": 22
+      },
+      {
+        "type": "jpeg",
+        "quality": 26
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

@@ -1,0 +1,85 @@
+{
+  "eval_variants": [
+    "clean",
+    "rough"
+  ],
+  "rough": true,
+  "rough_effects": [
+    "rotation_14deg",
+    "hand_phone_shadow",
+    "low_light"
+  ],
+  "rough_recipe": {
+    "seed": 1032,
+    "effects": [
+      "rotation_14deg",
+      "hand_phone_shadow",
+      "low_light"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": true
+    },
+    "place": {
+      "rot": 14,
+      "scale": 0.78
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "shadow",
+        "shapes": [
+          {
+            "kind": "ellipse",
+            "cx": 0.12,
+            "cy": 0.42,
+            "rx": 0.3,
+            "ry": 0.2,
+            "rot": 25
+          },
+          {
+            "kind": "rect",
+            "x": -0.1,
+            "y": 0.45,
+            "w": 0.4,
+            "h": 0.5,
+            "rot": 20
+          }
+        ],
+        "blur": 0.05,
+        "strength": 0.5
+      },
+      {
+        "type": "lowlight",
+        "gain": 0.6,
+        "gamma": 1.2,
+        "cast": [
+          1.05,
+          0.98,
+          0.85
+        ],
+        "vignette": 0.5
+      },
+      {
+        "type": "noise",
+        "sigma": 14
+      },
+      {
+        "type": "jpeg",
+        "quality": 45
+      }
+    ]
+  },
+  "handwritten": true,
+  "hand": {
+    "hand": "Marker Felt",
+    "ink": "black marker",
+    "features": [
+      "tf_letters",
+      "messy_jitter"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

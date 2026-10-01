@@ -1,0 +1,4823 @@
+{
+  "stamp": "202610011217",
+  "ai_url": "http://127.0.0.1:8803",
+  "overall_accuracy": 0.9202860088580676,
+  "answer_key_accuracy": 0.9119824681141164,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.9509751307322157,
+  "photo_accuracy": 0.9726213180758635,
+  "documents": [
+    {
+      "id": "K01",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.7692307692307693,
+      "counts": {
+        "correct": 10,
+        "wrong": 3,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "2",
+          "actual": "True"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "4",
+          "actual": "True"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "4",
+          "actual": "x=-8/3"
+        }
+      ],
+      "item_count_actual": 5
+    },
+    {
+      "id": "K01",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 0.9230769230769231,
+      "counts": {
+        "correct": 12,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "4",
+          "actual": "x=-8/3"
+        }
+      ],
+      "item_count_actual": 5
+    },
+    {
+      "id": "K02",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.8181818181818182,
+      "counts": {
+        "correct": 9,
+        "wrong": 2,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "wrong",
+          "expected": "blank",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "20",
+          "actual": "9"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K03",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.8,
+      "counts": {
+        "correct": 12,
+        "wrong": 3,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "A"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "C"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "C"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 6
+    },
+    {
+      "id": "K03",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 0.8666666666666667,
+      "counts": {
+        "correct": 13,
+        "wrong": 2,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "D"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "C"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 6
+    },
+    {
+      "id": "K04",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 12,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.3.points",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K05",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K05",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K06",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K06",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K07",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 19,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K07",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 19,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K08",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K09",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 13,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K10",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.9090909090909091,
+      "counts": {
+        "correct": 10,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "missing"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K10",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 0.9090909090909091,
+      "counts": {
+        "correct": 10,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct",
+          "detail": "soft"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "missing"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K11",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.9259259259259259,
+      "counts": {
+        "correct": 25,
+        "wrong": 2,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "C"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 12
+    },
+    {
+      "id": "K12",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.2.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K12",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.2.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K13",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 13,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 5
+    },
+    {
+      "id": "K14",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.8888888888888888,
+      "counts": {
+        "correct": 8,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "wrong",
+          "expected": "blank",
+          "actual": "filled"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K15",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K15",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 3
+    },
+    {
+      "id": "K16",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K17",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "K17",
+      "kind": "answer_key",
+      "variant": "photo",
+      "category": "clean_photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 4
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "category": "negative",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "negative.handled",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 0
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "category": "negative",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "negative.handled",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 0
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "category": "negative",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "negative.handled",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 0
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "category": "negative",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "negative.handled",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 0
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "category": "negative",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "negative.handled",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 0
+    },
+    {
+      "id": "K18",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.5348837209302325,
+      "counts": {
+        "correct": 23,
+        "wrong": 20,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "15"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "15"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "16"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "16"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "E",
+          "actual": "13"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "18"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "14"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "16"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "15"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "15"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "wrong",
+          "expected": "E",
+          "actual": "9"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "6"
+        },
+        {
+          "path": "item.13.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "8"
+        },
+        {
+          "path": "item.14.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "8"
+        },
+        {
+          "path": "item.15.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.15.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "3"
+        },
+        {
+          "path": "item.16.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.16.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "6"
+        },
+        {
+          "path": "item.17.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.17.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "5"
+        },
+        {
+          "path": "item.18.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.18.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "8"
+        },
+        {
+          "path": "item.19.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.19.answer",
+          "verdict": "wrong",
+          "expected": "E",
+          "actual": "7"
+        },
+        {
+          "path": "item.20.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.20.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "6"
+        }
+      ],
+      "item_count_actual": 20
+    },
+    {
+      "id": "K19",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.5454545454545454,
+      "counts": {
+        "correct": 18,
+        "wrong": 15,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "21"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "21"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "17"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "22"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "23"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "21"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "22"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "25"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "25"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "27"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "26"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "31"
+        },
+        {
+          "path": "item.13.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "31"
+        },
+        {
+          "path": "item.14.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "30"
+        },
+        {
+          "path": "item.15.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.15.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "32"
+        }
+      ],
+      "item_count_actual": 15
+    },
+    {
+      "id": "K20",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.9069767441860465,
+      "counts": {
+        "correct": 39,
+        "wrong": 2,
+        "missing": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.answer",
+          "verdict": "hallucinated",
+          "actual": "C"
+        },
+        {
+          "path": "item.15.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.15.answer",
+          "verdict": "hallucinated",
+          "actual": "C"
+        },
+        {
+          "path": "item.16.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.16.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.17.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.17.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.18.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.18.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.19.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.19.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.20.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.20.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 20
+    },
+    {
+      "id": "K21",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.95,
+      "counts": {
+        "correct": 19,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "hallucinated",
+          "actual": "see rubric"
+        },
+        {
+          "path": "item.8.points",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K22",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.6666666666666666,
+      "counts": {
+        "correct": 18,
+        "wrong": 9,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "38",
+          "actual": "21"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "7",
+          "actual": "49"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "-12",
+          "actual": "4"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "3/8",
+          "actual": "-30"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "wrong",
+          "expected": "81",
+          "actual": "64"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "wrong",
+          "expected": "16",
+          "actual": "-6"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "wrong",
+          "expected": "2.5",
+          "actual": "6"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "wrong",
+          "expected": "13",
+          "actual": "30"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "wrong",
+          "expected": "1/6",
+          "actual": "2"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 12
+    },
+    {
+      "id": "K23",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 23,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 10
+    },
+    {
+      "id": "K24",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.9655172413793104,
+      "counts": {
+        "correct": 28,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "wrong",
+          "expected": 15,
+          "actual": 13
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 13
+    },
+    {
+      "id": "K25",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 27,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 12
+    },
+    {
+      "id": "K26",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 23,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 10
+    },
+    {
+      "id": "K27",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.6842105263157895,
+      "counts": {
+        "correct": 13,
+        "wrong": 6,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "18",
+          "actual": "9"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "3",
+          "actual": "4"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "3:4",
+          "actual": "3/4"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "15",
+          "actual": "12"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "6.15",
+          "actual": "-15"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "wrong",
+          "expected": "3",
+          "actual": "-70"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K28",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.7037037037037037,
+      "counts": {
+        "correct": 19,
+        "wrong": 6,
+        "missing": 0,
+        "hallucinated": 2
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "C"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "B"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "C"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "C"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "hallucinated",
+          "actual": "B"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "hallucinated",
+          "actual": "D"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "D"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "C"
+        }
+      ],
+      "item_count_actual": 12
+    },
+    {
+      "id": "K29",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "rough",
+      "http_status": 200,
+      "field_accuracy": 0.6078431372549019,
+      "counts": {
+        "correct": 31,
+        "wrong": 20,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "C"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "D"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "A"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "B"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "C"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "D"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "A"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "C"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "A"
+        },
+        {
+          "path": "item.13.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.13.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.14.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "C"
+        },
+        {
+          "path": "item.15.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.15.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "D"
+        },
+        {
+          "path": "item.16.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.16.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "A"
+        },
+        {
+          "path": "item.17.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.17.answer",
+          "verdict": "wrong",
+          "expected": "C",
+          "actual": "B"
+        },
+        {
+          "path": "item.18.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.18.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "C"
+        },
+        {
+          "path": "item.19.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.19.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "D"
+        },
+        {
+          "path": "item.20.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.20.answer",
+          "verdict": "wrong",
+          "expected": "D",
+          "actual": "A"
+        },
+        {
+          "path": "item.21.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.21.answer",
+          "verdict": "wrong",
+          "expected": "A",
+          "actual": "B"
+        },
+        {
+          "path": "item.22.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.22.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.23.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.23.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.24.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.24.answer",
+          "verdict": "wrong",
+          "expected": "B",
+          "actual": "A"
+        }
+      ],
+      "item_count_actual": 24
+    },
+    {
+      "id": "K30",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 23,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 10
+    },
+    {
+      "id": "K31",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 0.7142857142857143,
+      "counts": {
+        "correct": 15,
+        "wrong": 6,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "wrong",
+          "expected": "x = 5",
+          "actual": "1"
+        },
+        {
+          "path": "item.1.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "wrong",
+          "expected": "x = -3",
+          "actual": "2"
+        },
+        {
+          "path": "item.2.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "wrong",
+          "expected": "18",
+          "actual": "3"
+        },
+        {
+          "path": "item.3.points",
+          "verdict": "wrong",
+          "expected": 3,
+          "actual": 2
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "wrong",
+          "expected": "y = 2x + 1",
+          "actual": "4"
+        },
+        {
+          "path": "item.4.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "wrong",
+          "expected": "(3, -2)",
+          "actual": "5"
+        },
+        {
+          "path": "item.5.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.points",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 6
+    },
+    {
+      "id": "K32",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 0.9523809523809523,
+      "counts": {
+        "correct": 20,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "wrong",
+          "expected": "Earth Sci vocab check KEY",
+          "actual": "Earth Science check KEY"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 9
+    },
+    {
+      "id": "K32",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "handwritten_rough",
+      "http_status": 200,
+      "field_accuracy": 0.8571428571428571,
+      "counts": {
+        "correct": 18,
+        "wrong": 3,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "wrong",
+          "expected": "Earth Sci vocab check KEY",
+          "actual": "Earth Solvable check KEY"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "wrong",
+          "expected": "magma",
+          "actual": "Magnets"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "wrong",
+          "expected": "humus",
+          "actual": "9 yrs"
+        }
+      ],
+      "item_count_actual": 9
+    },
+    {
+      "id": "K33",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 0.9473684210526315,
+      "counts": {
+        "correct": 18,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "wrong",
+          "expected": "Español 1 — Vocab Quiz KEY",
+          "actual": "Español - Vocab Quiz KEY"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K33",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "handwritten_rough",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 19,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 8
+    },
+    {
+      "id": "K34",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 14,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct",
+          "detail": "needsTeacher"
+        },
+        {
+          "path": "item.4.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 5
+    },
+    {
+      "id": "K34",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "handwritten_rough",
+      "http_status": 200,
+      "field_accuracy": 0.9285714285714286,
+      "counts": {
+        "correct": 13,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "hallucinated",
+          "actual": "see notes - 2 pts each cause"
+        },
+        {
+          "path": "item.4.points",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 5
+    },
+    {
+      "id": "K35",
+      "kind": "answer_key",
+      "variant": "clean",
+      "category": "handwritten_clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 27,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 12
+    },
+    {
+      "id": "K35",
+      "kind": "answer_key",
+      "variant": "rough",
+      "category": "handwritten_rough",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 27,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "pageState",
+          "verdict": "correct"
+        },
+        {
+          "path": "header",
+          "verdict": "correct"
+        },
+        {
+          "path": "maxScore",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.1.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.2.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.3.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.4.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.5.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.6.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.7.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.8.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.9.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.10.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.11.answer",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.present",
+          "verdict": "correct"
+        },
+        {
+          "path": "item.12.answer",
+          "verdict": "correct"
+        }
+      ],
+      "item_count_actual": 12
+    }
+  ],
+  "field_totals": {
+    "correct": 789,
+    "wrong": 104,
+    "missing": 2,
+    "hallucinated": 6
+  },
+  "by_category": {
+    "clean": {
+      "docs": 26,
+      "field_accuracy": 0.9542366465443389,
+      "item_answer_correct": 105,
+      "item_answer_total": 119,
+      "item_answer_accuracy": 0.8823529411764706,
+      "hallucinated": 0,
+      "wrong": 14,
+      "missing": 2
+    },
+    "rough": {
+      "docs": 12,
+      "field_accuracy": 0.797104690490933,
+      "item_answer_correct": 81,
+      "item_answer_total": 164,
+      "item_answer_accuracy": 0.49390243902439024,
+      "hallucinated": 5,
+      "wrong": 79,
+      "missing": 0
+    },
+    "handwritten": {
+      "docs": 10,
+      "field_accuracy": 0.9399749373433585,
+      "item_answer_correct": 76,
+      "item_answer_total": 84,
+      "item_answer_accuracy": 0.9047619047619048,
+      "hallucinated": 1,
+      "wrong": 11,
+      "missing": 0
+    },
+    "negative": {
+      "docs": 5,
+      "field_accuracy": 1,
+      "item_answer_correct": 0,
+      "item_answer_total": 0,
+      "item_answer_accuracy": 0,
+      "hallucinated": 0,
+      "wrong": 0,
+      "missing": 0
+    },
+    "clean_photo": {
+      "docs": 9,
+      "field_accuracy": 0.9665371665371665,
+      "item_answer_correct": 36,
+      "item_answer_total": 40,
+      "item_answer_accuracy": 0.9,
+      "hallucinated": 0,
+      "wrong": 3,
+      "missing": 1
+    },
+    "handwritten_clean": {
+      "docs": 6,
+      "field_accuracy": 0.935672514619883,
+      "item_answer_correct": 45,
+      "item_answer_total": 50,
+      "item_answer_accuracy": 0.9,
+      "hallucinated": 0,
+      "wrong": 8,
+      "missing": 0
+    },
+    "handwritten_rough": {
+      "docs": 4,
+      "field_accuracy": 0.9464285714285714,
+      "item_answer_correct": 31,
+      "item_answer_total": 34,
+      "item_answer_accuracy": 0.9117647058823529,
+      "hallucinated": 1,
+      "wrong": 3,
+      "missing": 0
+    }
+  }
+}

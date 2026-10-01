@@ -1,0 +1,92 @@
+{
+  "source_id": "K23",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "English 10 — Vocabulary Unit 4 Key",
+  "maxScore": 10,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "kind and generous",
+      "answer": "benevolent",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "truthful and straightforward",
+      "answer": "candid",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "careful and hardworking",
+      "answer": "diligent",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "fluent, persuasive",
+      "answer": "eloquent",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 5,
+      "stem": "sparing with money",
+      "answer": "frugal",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 6,
+      "stem": "fond of company",
+      "answer": "gregarious",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 7,
+      "stem": "showing great attention to detail",
+      "answer": "meticulous",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 8,
+      "stem": "stubbornly refusing to change",
+      "answer": "obstinate",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 9,
+      "stem": "practical, realistic",
+      "answer": "pragmatic",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 10,
+      "stem": "holding firmly; persistent",
+      "answer": "tenacious",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

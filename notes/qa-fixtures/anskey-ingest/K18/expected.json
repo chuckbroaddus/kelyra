@@ -1,0 +1,172 @@
+{
+  "source_id": "K18",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "UNIT 5 TEST — ANSWER KEY",
+  "maxScore": 20,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "1",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "2",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "3",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 4,
+      "stem": "4",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 5,
+      "stem": "5",
+      "answer": "E",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 6,
+      "stem": "6",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 7,
+      "stem": "7",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 8,
+      "stem": "8",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 9,
+      "stem": "9",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 10,
+      "stem": "10",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 11,
+      "stem": "11",
+      "answer": "E",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 12,
+      "stem": "12",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 13,
+      "stem": "13",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 14,
+      "stem": "14",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 15,
+      "stem": "15",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 16,
+      "stem": "16",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 17,
+      "stem": "17",
+      "answer": "D",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 18,
+      "stem": "18",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 19,
+      "stem": "19",
+      "answer": "E",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 20,
+      "stem": "20",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

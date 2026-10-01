@@ -1,0 +1,111 @@
+{
+  "no_hallucinate_answers": true,
+  "rough": true,
+  "rough_effects": [
+    "glare_over_bubbles",
+    "red_pen",
+    "jpeg"
+  ],
+  "rough_recipe": {
+    "seed": 1028,
+    "effects": [
+      "glare_over_bubbles",
+      "red_pen",
+      "jpeg"
+    ],
+    "background": {
+      "kind": "table",
+      "tone": [
+        70,
+        72,
+        78
+      ]
+    },
+    "place": {
+      "rot": -5,
+      "scale": 0.86,
+      "corners": [
+        [
+          0.02,
+          0
+        ],
+        [
+          0,
+          0.03
+        ],
+        [
+          -0.02,
+          0
+        ],
+        [
+          0,
+          -0.02
+        ]
+      ]
+    },
+    "page": [
+      {
+        "type": "pen",
+        "color": [
+          200,
+          25,
+          35
+        ],
+        "marks": [
+          {
+            "kind": "text",
+            "x": 470,
+            "y": 205,
+            "text": "KEY - all periods",
+            "size": 30
+          },
+          {
+            "kind": "circle",
+            "x": 520,
+            "y": 195,
+            "rx": 120,
+            "ry": 32
+          },
+          {
+            "kind": "text",
+            "x": 300,
+            "y": 690,
+            "text": "<- #11 no curve",
+            "size": 22
+          }
+        ]
+      },
+      {
+        "type": "glare",
+        "cx": 160,
+        "cy": 415,
+        "rx": 150,
+        "ry": 48,
+        "core": 0.62,
+        "strength": 1
+      }
+    ],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.82,
+        "gamma": 1.1,
+        "vignette": 0.3
+      },
+      {
+        "type": "noise",
+        "sigma": 10
+      },
+      {
+        "type": "jpeg",
+        "quality": 44
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

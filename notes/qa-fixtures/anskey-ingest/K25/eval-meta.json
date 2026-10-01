@@ -1,0 +1,78 @@
+{
+  "no_hallucinate_answers": true,
+  "rough": true,
+  "rough_effects": [
+    "desk_clutter",
+    "sticky_note_occlusion",
+    "perspective"
+  ],
+  "rough_recipe": {
+    "seed": 1025,
+    "effects": [
+      "desk_clutter",
+      "sticky_note_occlusion",
+      "perspective"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": true,
+      "busy": true
+    },
+    "place": {
+      "rot": -4,
+      "scale": 0.74,
+      "corners": [
+        [
+          0.04,
+          0.02
+        ],
+        [
+          -0.03,
+          0.03
+        ],
+        [
+          0,
+          -0.02
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    "page": [
+      {
+        "type": "sticky",
+        "x": 560,
+        "y": 327,
+        "w": 240,
+        "h": 94,
+        "rot": -3,
+        "color": "#ffe873",
+        "text": "copies for 3rd + 5th!!"
+      }
+    ],
+    "photo": [
+      {
+        "type": "lowlight",
+        "gain": 0.93,
+        "gamma": 1.05,
+        "vignette": 0.35
+      },
+      {
+        "type": "noise",
+        "sigma": 9
+      },
+      {
+        "type": "jpeg",
+        "quality": 58
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

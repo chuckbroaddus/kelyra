@@ -111,7 +111,11 @@ function headersMatch(exp, act) {
   const e = String(exp).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const a = String(act).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   if (!e) return true;
-  return e === a || e.includes(a) || a.includes(e);
+  if (e === a || e.includes(a) || a.includes(e)) return true;
+  // handwritten headers: word spacing is ambiguous ("Bio Ch." vs "BIOCH.")
+  const es = e.replace(/ /g, '');
+  const as = a.replace(/ /g, '');
+  return Boolean(as) && (es === as || es.includes(as) || as.includes(es));
 }
 
 // scoreCase + main below
@@ -176,13 +180,21 @@ function scoreCase(expected, actual, meta) {
   for (const ei of expItems) {
     const ai = actByN.get(Number(ei.n));
     if (!ai) {
-      results.push({ path: `item.${ei.n}`, verdict: 'missing' });
+      // optional: item cut at crop edge; accept_absent: borderline legible; legibility: obscured
+      // (glare/occlusion) — omitting these is not penalized (reader should not guess).
+      if (ei.optional || ei.accept_absent || ei.legibility) {
+        results.push({ path: `item.${ei.n}`, verdict: 'correct', detail: 'absent-ok' });
+      } else {
+        results.push({ path: `item.${ei.n}`, verdict: 'missing' });
+      }
       continue;
     }
     results.push({ path: `item.${ei.n}.present`, verdict: 'correct' });
     const expAns = String(ei.answer ?? '').trim();
     const actAns = String(ai.answer ?? '').trim();
-    if (ei.needsTeacher || meta.no_hallucinate_answers) {
+    if (ei.accept_absent && expAns && (!actAns || ai.needsTeacher === true) && !answersMatch(expAns, actAns)) {
+      results.push({ path: `item.${ei.n}.answer`, verdict: 'correct', detail: 'abstain-ok' });
+    } else if (ei.needsTeacher || meta.no_hallucinate_answers) {
       if (!expAns) {
         if (!actAns || ai.needsTeacher) {
           results.push({ path: `item.${ei.n}.answer`, verdict: 'correct', detail: 'needsTeacher' });
@@ -225,6 +237,38 @@ function summarize(rows) {
   }
   const scored = Object.values(counts).reduce((a, b) => a + b, 0);
   return { counts, scored, accuracy: scored ? counts.correct / scored : 0 };
+}
+
+/** Category rollup: field accuracy (mean per doc), item-level answer accuracy, hallucinations. */
+function byCategory(perDoc, rows) {
+  const groups = {
+    clean: (c) => c === 'clean' || c === 'clean_photo',
+    rough: (c) => c === 'rough',
+    handwritten: (c) => c === 'handwritten_clean' || c === 'handwritten_rough',
+    negative: (c) => c === 'negative',
+    clean_photo: (c) => c === 'clean_photo',
+    handwritten_clean: (c) => c === 'handwritten_clean',
+    handwritten_rough: (c) => c === 'handwritten_rough',
+  };
+  const out = {};
+  for (const [name, test] of Object.entries(groups)) {
+    const docs = perDoc.filter((d) => test(d.category));
+    if (!docs.length) continue;
+    const rr = rows.filter((r) => test(r.category));
+    const itemRows = rr.filter((r) => /^item\.\d+(\.answer)?$/.test(r.path));
+    const correct = itemRows.filter((r) => r.verdict === 'correct').length;
+    out[name] = {
+      docs: docs.length,
+      field_accuracy: docs.reduce((s, d) => s + d.field_accuracy, 0) / docs.length,
+      item_answer_correct: correct,
+      item_answer_total: itemRows.length,
+      item_answer_accuracy: itemRows.length ? correct / itemRows.length : 0,
+      hallucinated: rr.filter((r) => r.verdict === 'hallucinated').length,
+      wrong: rr.filter((r) => r.verdict === 'wrong').length,
+      missing: rr.filter((r) => r.verdict === 'missing').length,
+    };
+  }
+  return out;
 }
 
 // auth + main below
@@ -271,6 +315,18 @@ async function invokeAnalyze({ aiUrl, token, imageUrl }) {
   return { status: res.status, json };
 }
 
+function variantImage(caseDir, variant) {
+  const file = path.join(caseDir, { clean: 'clean.png', photo: 'photo.jpg', rough: 'rough.jpg' }[variant] || '');
+  return fs.existsSync(file) ? { file, variant } : null;
+}
+
+function caseCategory(entry, meta, variant) {
+  if (meta.negative || entry.negative) return 'negative';
+  if (meta.handwritten || entry.handwritten) return variant === 'rough' ? 'handwritten_rough' : 'handwritten_clean';
+  if (variant === 'rough') return 'rough';
+  return variant === 'photo' ? 'clean_photo' : 'clean';
+}
+
 function pickImage(caseDir, preferPhoto) {
   const photo = path.join(caseDir, 'photo.jpg');
   const clean = path.join(caseDir, 'clean.png');
@@ -289,6 +345,8 @@ async function main() {
   fs.mkdirSync(runDir, { recursive: true });
   const resume = Boolean((process.env.EVAL_RESUME_STAMP || '').trim());
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
+  const only = (process.env.EVAL_ANSKEY_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (only.length) manifest.cases = manifest.cases.filter((c) => only.includes(c.id));
   const auth = await signIn(env);
   const aiUrl = aiBase(env);
   try {
@@ -310,11 +368,19 @@ async function main() {
       const metaPath = path.join(caseDir, 'eval-meta.json');
       if (fs.existsSync(metaPath)) meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
       const variants = [];
-      const clean = pickImage(caseDir, false);
-      if (clean) variants.push(clean);
-      if (meta.photo || entry.photo) {
-        const photo = pickImage(caseDir, true);
-        if (photo && photo.file !== clean?.file) variants.push(photo);
+      if (Array.isArray(meta.eval_variants) && meta.eval_variants.length) {
+        for (const vName of meta.eval_variants) {
+          const v = variantImage(caseDir, vName);
+          if (v) variants.push(v);
+          else console.warn('missing variant image', entry.id, vName);
+        }
+      } else {
+        const clean = pickImage(caseDir, false);
+        if (clean) variants.push(clean);
+        if (meta.photo || entry.photo) {
+          const photo = pickImage(caseDir, true);
+          if (photo && photo.file !== clean?.file) variants.push(photo);
+        }
       }
       if (!variants.length) {
         console.warn('skip no image', entry.id);
@@ -354,13 +420,22 @@ async function main() {
           if (paceMs > 0) await sleep(paceMs);
         }
         const actual = result.json || {};
-        const fieldScores = scoreCase(expected, actual, meta);
+        // clean variant of a rough handwritten case may have fuller truth (nothing obscured)
+        const cleanExpPath = path.join(caseDir, 'expected.clean.json');
+        const exp =
+          v.variant === 'clean' && fs.existsSync(cleanExpPath)
+            ? JSON.parse(fs.readFileSync(cleanExpPath, 'utf8'))
+            : expected;
+        const fieldScores = scoreCase(exp, actual, meta);
         const sum = summarize(fieldScores);
-        allFieldRows.push(...fieldScores.map((r) => ({ ...r, doc: entry.id, variant: v.variant })));
+        allFieldRows.push(
+          ...fieldScores.map((r) => ({ ...r, doc: entry.id, variant: v.variant, category: caseCategory(entry, meta, v.variant) })),
+        );
         perDoc.push({
           id: entry.id,
           kind: entry.kind || meta.kind,
           variant: v.variant,
+          category: caseCategory(entry, meta, v.variant),
           http_status: result.status,
           field_accuracy: sum.accuracy,
           counts: sum.counts,
@@ -384,6 +459,7 @@ async function main() {
     photo_accuracy: avg(perDoc.filter((d) => d.variant === 'photo')),
     documents: perDoc,
     field_totals: summarize(allFieldRows).counts,
+    by_category: byCategory(perDoc, allFieldRows),
   };
   fs.writeFileSync(path.join(runDir, 'score.json'), JSON.stringify(score, null, 2));
   const mirror = path.join('/tmp/anskey-ingest-eval', stamp);
@@ -400,6 +476,11 @@ async function main() {
     'halluc',
     score.field_totals.hallucinated,
   );
+  for (const [cat, c] of Object.entries(score.by_category)) {
+    console.log(
+      `  ${cat.padEnd(18)} docs ${String(c.docs).padStart(2)}  field ${(c.field_accuracy * 100).toFixed(1)}%  items ${(c.item_answer_accuracy * 100).toFixed(1)}% (${c.item_answer_correct}/${c.item_answer_total})  halluc ${c.hallucinated}`,
+    );
+  }
 }
 
 main().catch((err) => {

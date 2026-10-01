@@ -1,12 +1,14 @@
 {
-  "generated_at": "2026-10-01T11:16:37.527Z",
-  "count": 20,
+  "generated_at": "2026-10-01T12:17:13.873Z",
+  "count": 38,
   "cases": [
     {
       "id": "K01",
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "pageState",
         "header",
@@ -17,7 +19,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -25,6 +29,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "pageState",
         "items.answer",
@@ -34,7 +40,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -42,6 +49,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "pageState",
         "items.answer",
@@ -51,7 +60,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -59,6 +70,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "points",
         "note",
@@ -68,7 +81,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -76,6 +90,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "pageState",
         "items.answer"
@@ -84,7 +100,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -92,6 +110,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer",
         "photo"
@@ -100,7 +120,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -108,6 +130,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer",
         "item_count"
@@ -116,7 +140,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -124,6 +150,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "item_count",
         "warnings",
@@ -133,7 +161,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -141,6 +170,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "points",
         "type",
@@ -150,7 +181,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -158,6 +190,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "pageState",
         "needsTeacher",
@@ -167,7 +201,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -175,6 +211,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "item_count",
         "items.answer"
@@ -183,7 +221,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -191,6 +230,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "needsTeacher",
         "points",
@@ -200,7 +241,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -208,6 +251,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer",
         "type"
@@ -216,7 +261,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -224,6 +270,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "needsTeacher",
         "no_hallucinate"
@@ -232,7 +280,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -240,6 +289,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer"
       ],
@@ -247,7 +298,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -255,6 +308,8 @@
       "kind": "answer_key",
       "photo": false,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer"
       ],
@@ -262,7 +317,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -270,6 +326,8 @@
       "kind": "answer_key",
       "photo": true,
       "negative": false,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "items.answer",
         "header"
@@ -278,7 +336,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -286,6 +346,8 @@
       "kind": "negative",
       "photo": true,
       "negative": true,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "reject",
         "negative"
@@ -294,7 +356,9 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
       ]
     },
     {
@@ -302,6 +366,8 @@
       "kind": "negative",
       "photo": false,
       "negative": true,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "reject",
         "negative"
@@ -310,7 +376,8 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png"
       ]
     },
     {
@@ -318,6 +385,8 @@
       "kind": "negative",
       "photo": true,
       "negative": true,
+      "rough": false,
+      "handwritten": false,
       "fields_exercised": [
         "reject",
         "negative"
@@ -326,7 +395,588 @@
         "expected.json",
         "notes.md",
         "source.html",
-        "eval-meta.json"
+        "eval-meta.json",
+        "clean.png",
+        "photo.jpg"
+      ]
+    },
+    {
+      "id": "K18",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "perspective",
+        "motion_blur",
+        "sensor_noise",
+        "jpeg"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "maxScore",
+        "bubble"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K19",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "rotation_16deg",
+        "low_light",
+        "sensor_noise",
+        "jpeg_heavy"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "bubble",
+        "rotation"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K20",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "glare_hotspot_right_column",
+        "perspective",
+        "jpeg"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "glare",
+        "needsTeacher"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K21",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "hand_phone_shadow",
+        "rotation_6deg",
+        "sensor_noise"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "points",
+        "needsTeacher",
+        "shadow"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K22",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "low_light",
+        "heavy_noise",
+        "jpeg_heavy",
+        "blur"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "numeric",
+        "low_light"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K23",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "folded_creases",
+        "crumpled",
+        "rotation_9deg"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "crease"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K24",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "cropped_bottom",
+        "rotation_3deg",
+        "perspective"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "crop",
+        "no_hallucinate_extra_items"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K25",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "desk_clutter",
+        "sticky_note_occlusion",
+        "perspective"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "occlusion",
+        "needsTeacher"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K26",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "highlighter_over_answers",
+        "red_pen_marks",
+        "blur"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "markup",
+        "note"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K27",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "on_top_of_student_paper",
+        "rotation_7deg",
+        "shadow"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "distractor_underlay",
+        "no_hallucinate_extra_items"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K28",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "glare_over_bubbles",
+        "red_pen",
+        "jpeg"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "bubble",
+        "glare",
+        "needsTeacher"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K29",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": false,
+      "effects": [
+        "perspective_strong",
+        "crumpled",
+        "low_light"
+      ],
+      "eval_variants": [
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "bubble",
+        "perspective",
+        "crease"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K30",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": false,
+      "handwritten": true,
+      "hand": "Bradley Hand",
+      "hand_features": [
+        "circled_letters",
+        "cross_out_correction",
+        "margin_note",
+        "lined_paper"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "handwritten",
+        "cross_out",
+        "maxScore"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png"
+      ]
+    },
+    {
+      "id": "K31",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": false,
+      "handwritten": true,
+      "hand": "Noteworthy",
+      "hand_features": [
+        "point_values_in_margin",
+        "partial_credit_notes",
+        "cross_out_correction",
+        "circled_total"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "points",
+        "note",
+        "maxScore",
+        "handwritten",
+        "cross_out"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png"
+      ]
+    },
+    {
+      "id": "K32",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": true,
+      "effects": [
+        "rotation_14deg",
+        "hand_phone_shadow",
+        "low_light"
+      ],
+      "hand": "Marker Felt",
+      "hand_features": [
+        "tf_letters",
+        "messy_jitter"
+      ],
+      "eval_variants": [
+        "clean",
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "handwritten",
+        "rotation",
+        "low_light"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K33",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": true,
+      "effects": [
+        "perspective",
+        "glare_hotspot",
+        "jpeg"
+      ],
+      "hand": "Bradley Hand",
+      "hand_features": [
+        "slanted_10deg",
+        "margin_note"
+      ],
+      "eval_variants": [
+        "clean",
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "handwritten",
+        "glare",
+        "needsTeacher",
+        "note"
+      ],
+      "files": [
+        "expected.json",
+        "expected.clean.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K34",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": true,
+      "effects": [
+        "crumpled",
+        "low_light",
+        "rotation_8deg"
+      ],
+      "hand": "Noteworthy",
+      "hand_features": [
+        "answers_in_blanks",
+        "cross_out_correction",
+        "rubric_note"
+      ],
+      "eval_variants": [
+        "clean",
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "points",
+        "needsTeacher",
+        "handwritten",
+        "cross_out",
+        "crease"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
+      ]
+    },
+    {
+      "id": "K35",
+      "kind": "answer_key",
+      "photo": false,
+      "negative": false,
+      "rough": true,
+      "handwritten": true,
+      "effects": [
+        "desk_clutter",
+        "rotation_11deg",
+        "motion_blur"
+      ],
+      "hand": "Chalkboard SE",
+      "hand_features": [
+        "two_columns",
+        "cross_out_correction",
+        "quick_key"
+      ],
+      "eval_variants": [
+        "clean",
+        "rough"
+      ],
+      "fields_exercised": [
+        "header",
+        "items.answer",
+        "handwritten",
+        "cross_out",
+        "two_columns"
+      ],
+      "files": [
+        "expected.json",
+        "notes.md",
+        "source.html",
+        "eval-meta.json",
+        "clean.png",
+        "rough.jpg"
       ]
     }
   ]

@@ -1,0 +1,16 @@
+{
+  "handwritten": true,
+  "hand": {
+    "hand": "Noteworthy",
+    "ink": "black + red",
+    "features": [
+      "point_values_in_margin",
+      "partial_credit_notes",
+      "cross_out_correction",
+      "circled_total"
+    ]
+  },
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

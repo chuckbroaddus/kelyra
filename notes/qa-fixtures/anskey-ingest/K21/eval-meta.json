@@ -1,0 +1,70 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "hand_phone_shadow",
+    "rotation_6deg",
+    "sensor_noise"
+  ],
+  "rough_recipe": {
+    "seed": 1021,
+    "effects": [
+      "hand_phone_shadow",
+      "rotation_6deg",
+      "sensor_noise"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": true
+    },
+    "place": {
+      "rot": 6,
+      "scale": 0.84
+    },
+    "page": [],
+    "photo": [
+      {
+        "type": "shadow",
+        "shapes": [
+          {
+            "kind": "ellipse",
+            "cx": 0.9,
+            "cy": 0.5,
+            "rx": 0.3,
+            "ry": 0.2,
+            "rot": -30
+          },
+          {
+            "kind": "rect",
+            "x": 0.62,
+            "y": 0.52,
+            "w": 0.5,
+            "h": 0.22,
+            "rot": -24
+          }
+        ],
+        "blur": 0.04,
+        "strength": 0.6
+      },
+      {
+        "type": "lowlight",
+        "gain": 0.92,
+        "gamma": 1.05,
+        "vignette": 0.3
+      },
+      {
+        "type": "noise",
+        "sigma": 10
+      },
+      {
+        "type": "jpeg",
+        "quality": 62
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

@@ -1,0 +1,118 @@
+{
+  "source_id": "K24",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "World History Quiz 11 — Answer Key",
+  "maxScore": 15,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Capital of the Byzantine Empire",
+      "answer": "Constantinople",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 2,
+      "stem": "Year Rome fell (West)",
+      "answer": "476",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 3,
+      "stem": "Founder of Islam",
+      "answer": "Muhammad",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "Charlemagne crowned in",
+      "answer": "800",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 5,
+      "stem": "Feudal oath of loyalty",
+      "answer": "fealty",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 6,
+      "stem": "Black Death spread by",
+      "answer": "fleas",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 7,
+      "stem": "Magna Carta signed in",
+      "answer": "1215",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 8,
+      "stem": "Mongol leader",
+      "answer": "Genghis Khan",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 9,
+      "stem": "Silk Road linked China and",
+      "answer": "Europe",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 10,
+      "stem": "MC: Crusades began in (A 1066 B 1095 C 1215)",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 11,
+      "stem": "MC: Hundred Years’ War: England vs (A Spain B France)",
+      "answer": "B",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 12,
+      "stem": "Printing press inventor",
+      "answer": "Gutenberg",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 13,
+      "stem": "Renaissance began in",
+      "answer": "Italy",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short",
+      "optional": true,
+      "accept_absent": true
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

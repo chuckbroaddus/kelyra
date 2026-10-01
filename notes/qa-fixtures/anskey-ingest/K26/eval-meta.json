@@ -1,0 +1,161 @@
+{
+  "rough": true,
+  "rough_effects": [
+    "highlighter_over_answers",
+    "red_pen_marks",
+    "blur"
+  ],
+  "rough_recipe": {
+    "seed": 1026,
+    "effects": [
+      "highlighter_over_answers",
+      "red_pen_marks",
+      "blur"
+    ],
+    "background": {
+      "kind": "desk",
+      "clutter": false
+    },
+    "place": {
+      "rot": 3,
+      "scale": 0.86
+    },
+    "page": [
+      {
+        "type": "highlighter",
+        "color": [
+          255,
+          236,
+          60
+        ],
+        "rects": [
+          [
+            580,
+            202,
+            120,
+            30
+          ],
+          [
+            580,
+            245,
+            130,
+            32
+          ],
+          [
+            580,
+            381,
+            150,
+            30
+          ],
+          [
+            580,
+            517,
+            110,
+            30
+          ]
+        ]
+      },
+      {
+        "type": "highlighter",
+        "color": [
+          140,
+          245,
+          140
+        ],
+        "rects": [
+          [
+            580,
+            112,
+            40,
+            30
+          ],
+          [
+            580,
+            337,
+            40,
+            30
+          ]
+        ]
+      },
+      {
+        "type": "pen",
+        "color": [
+          205,
+          30,
+          40
+        ],
+        "marks": [
+          {
+            "kind": "check",
+            "x": 548,
+            "y": 126
+          },
+          {
+            "kind": "check",
+            "x": 548,
+            "y": 171
+          },
+          {
+            "kind": "check",
+            "x": 548,
+            "y": 261
+          },
+          {
+            "kind": "circle",
+            "x": 600,
+            "y": 306,
+            "rx": 24,
+            "ry": 18
+          },
+          {
+            "kind": "text",
+            "x": 640,
+            "y": 314,
+            "text": "or \"eight\"",
+            "size": 20
+          },
+          {
+            "kind": "underline",
+            "x": 582,
+            "y": 498,
+            "w": 40
+          },
+          {
+            "kind": "text",
+            "x": 600,
+            "y": 60,
+            "text": "KEY – P3",
+            "size": 30
+          },
+          {
+            "kind": "scribble",
+            "x": 590,
+            "y": 431,
+            "w": 50,
+            "h": 26
+          }
+        ]
+      }
+    ],
+    "photo": [
+      {
+        "type": "blur",
+        "sigma": 1.2
+      },
+      {
+        "type": "noise",
+        "sigma": 7
+      },
+      {
+        "type": "jpeg",
+        "quality": 62
+      }
+    ]
+  },
+  "eval_variants": [
+    "rough"
+  ],
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}
