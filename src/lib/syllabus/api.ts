@@ -1,4 +1,5 @@
 import { requireSupabase } from '@/lib/supabase/client';
+import { weightsTotalOk } from '@/lib/syllabus/extraCreditWeights';
 import {
   computeSyllabusAverage,
   partitionMissingUpcoming,
@@ -226,13 +227,20 @@ export function activeWeightSum(categories: SyllabusCategoryDraft[]): number {
   return categories.filter((c) => c.active).reduce((sum, c) => sum + Number(c.weight_percent || 0), 0);
 }
 
-export function weightsValidForPublish(categories: SyllabusCategoryDraft[]): boolean {
+/**
+ * Same rule as publish_class_syllabus: regular weights total 100%; with extra credit as its
+ * own category (method C) only that category may push the total over 100%.
+ */
+export function weightsValidForPublish(
+  categories: SyllabusCategoryDraft[],
+  extraCreditMethod?: ExtraCreditMethod | null,
+): boolean {
   const active = categories.filter((c) => c.active);
   if (!active.length) return false;
   if (active.some((c) => !c.label.trim() || !KEY_RE.test(c.key))) return false;
   const keys = new Set(active.map((c) => c.key));
   if (keys.size !== active.length) return false;
-  return Math.abs(activeWeightSum(categories) - 100) <= 0.01;
+  return weightsTotalOk(categories, extraCreditMethod ?? null);
 }
 
 function asSyllabus(row: Record<string, unknown> | null | undefined, classId: string): ClassSyllabusDraft | null {
@@ -454,8 +462,12 @@ export async function publishClassSyllabus(
   rowVersion: number,
   input: SyllabusEditorInput,
 ): Promise<SyllabusVersionSnapshot> {
-  if (!weightsValidForPublish(input.categories)) {
-    throw new Error('Active category weights must sum to 100% before publish.');
+  if (!weightsValidForPublish(input.categories, input.extra_credit_method)) {
+    throw new Error(
+      input.extra_credit_method === 'C'
+        ? 'Regular category weights must add up to 100% before publish. Extra credit is added on top.'
+        : 'Active category weights must sum to 100% before publish.',
+    );
   }
   const payload = payloadFromEditor(input);
   // Pure snapshot for callers/tests; server also inserts syllabus_versions.

@@ -138,19 +138,6 @@ test('numbers that look like points get an honest points message, not a percent 
   );
 });
 
-test('an Extra credit row that pushes the total over 100 is called out', () => {
-  const issue = categoryWeightIssue(
-    [
-      { label: 'Tests', weight_percent: 60 },
-      { label: 'Quizzes', weight_percent: 40 },
-      { label: 'Extra credit', weight_percent: 10 },
-    ],
-    'weighted_percent_inside',
-  )!;
-  assert.equal(issue.kind, 'off');
-  assert.match(issue.note, /Without Extra credit they total 100%\.$/);
-});
-
 test('fraction weights (0.5 / 0.3 / 0.2) still become percents and pass', () => {
   const p = doc([
     { label: 'Tests', weight_percent: 0.5 },
@@ -165,4 +152,47 @@ test('form message for one category stays short', () => {
   const d = createEmptyWizardDraft();
   const one = { ...d, categories: d.categories.map((c, i) => ({ ...c, active: i === 0, weight_percent: 80 })) };
   assert.match(weightsTotalMessage(one), /^Your category weights add up to 80%\. Change them/);
+});
+
+test('extra credit on top of 100%: no weight warning; method C filled in when the document doesn’t say', () => {
+  const cats = [
+    { label: 'Tests', weight_percent: 60 },
+    { label: 'Quizzes', weight_percent: 40 },
+    { label: 'Extra credit', weight_percent: 10 },
+  ];
+  const p = doc(cats, { engine: 'weighted_percent_inside', warnings: [{ code: 'weights_sum_mismatch', message: 'Weights total 110%', severity: 'warn' }] });
+  assert.equal(catsField(p).status, 'proposed');
+  assert.equal(catsField(p).note, undefined);
+  assert.equal(p.warnings.some((w) => /110/.test(w.message) || w.code === 'weights_total'), false);
+  const ecm = p.fields.find((f) => f.path === 'syllabus.extra_credit_method');
+  assert.equal(ecm?.value, 'C');
+  const d = applyProposalToSyllabusDraft(createEmptyWizardDraft(), p);
+  assert.equal(d.extra_credit_method, 'C');
+  assert.equal(canFinishReview(d), true);
+  assert.equal(categoryWeightIssue(cats, 'weighted_percent_inside', 'C'), null);
+});
+
+test('extra credit on top but the document picks method B: flagged, pointing at the extra-credit choice', () => {
+  const issue = categoryWeightIssue(
+    [
+      { label: 'Tests', weight_percent: 60 },
+      { label: 'Quizzes', weight_percent: 40 },
+      { label: 'Extra credit', weight_percent: 10 },
+    ],
+    'weighted_percent_inside',
+    'B',
+  )!;
+  assert.match(issue.message, /^These weights add up to 110% because Extra credit \(10%\) is listed as a category\. To count it on top of 100%, choose “Extra credit has its own category”/);
+  assert.match(issue.note, /Without Extra credit they total 100%\.$/);
+  // Overage that is not the extra-credit category is still the plain 110% warning.
+  const off = categoryWeightIssue(
+    [
+      { label: 'Tests', weight_percent: 50 },
+      { label: 'Quizzes', weight_percent: 40 },
+      { label: 'Extra credit', weight_percent: 20 },
+    ],
+    'weighted_percent_inside',
+    'C',
+  )!;
+  assert.equal(off.message, 'These weights add up to 110%. Fix them so they total 100% before publishing.');
 });

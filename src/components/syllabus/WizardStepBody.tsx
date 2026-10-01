@@ -12,6 +12,7 @@ import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
+import { splitWeights } from '@/lib/syllabus/extraCreditWeights';
 import {
   ENGINE_OPTIONS,
   activeWeightSum,
@@ -141,14 +142,25 @@ function CategoryCard({
   );
 }
 
+/** Category total; with extra credit as its own category, that weight is shown on top of 100%. */
+function WeightTotalLine({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors: StepColors; sum: number }) {
+  const split = splitWeights(draft.categories, draft.extra_credit_method);
+  const base = split.extraCredit > 0 ? split.regular : Math.round(sum * 1000) / 1000;
+  const r = (n: number) => Math.round(n * 1000) / 1000;
+  return (
+    <Text style={[type.meta, { color: Math.abs(base - 100) <= 0.01 ? colors.good : colors.warn }]}>
+      {split.extraCredit > 0 ? 'Regular categories' : 'Total'} {base}%
+      {base < 100 ? ` · ${r(100 - base)}% left to assign` : base > 100 ? ' · over 100%' : ' · adds up to 100%'}
+      {split.extraCredit > 0 ? ` · Extra credit ${split.extraCredit}% on top` : ''}
+    </Text>
+  );
+}
+
 function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & { sum: number }) {
   const locked = isFieldLocked(draft, 'categories');
   return (
     <>
-      <Text style={[type.meta, { color: sum === 100 ? colors.good : colors.warn }]}>
-        Total {Math.round(sum * 1000) / 1000}%
-        {sum < 100 ? ` · ${Math.round((100 - sum) * 1000) / 1000}% left to assign` : sum > 100 ? ' · over 100%' : ' · adds up to 100%'}
-      </Text>
+      <WeightTotalLine draft={draft} colors={colors} sum={sum} />
       <LockNote draft={draft} field="categories" colors={colors} />
       <Text style={[type.meta, { color: colors.mute, marginVertical: 8 }]}>
         If a category has no grades yet:
@@ -585,6 +597,13 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
     </>
   );
 }
+function weightTotalText(draft: SyllabusWizardDraft, sum: number): string {
+  const split = splitWeights(draft.categories, draft.extra_credit_method);
+  return split.extraCredit > 0
+    ? `${split.regular}% + ${split.extraCredit}% extra credit`
+    : `${Math.round(sum * 1000) / 1000}%`;
+}
+
 function ReviewStep({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors: StepColors; sum: number }) {
   const paragraph = parentFacingParagraph(draft);
   return (
@@ -595,7 +614,7 @@ function ReviewStep({ draft, colors, sum }: { draft: SyllabusWizardDraft; colors
       <Text style={[type.body, { color: colors.ink }]}>{paragraph}</Text>
       <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
         How grades add up: {engineOption(draft.engine).label}
-        {isWeightedEngine(draft.engine) ? ` · weights total ${Math.round(sum * 1000) / 1000}%` : ''}
+        {isWeightedEngine(draft.engine) ? ` · weights total ${weightTotalText(draft, sum)}` : ''}
         {' · '}{syllabusStatusLabel(draft.syllabus_status)}
       </Text>
       <Text style={[type.meta, { color: canFinishReview(draft) ? colors.good : colors.danger, marginTop: 8 }]}>

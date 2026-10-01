@@ -14,6 +14,12 @@ import type {
   WithinCategory,
 } from '../../lib/syllabus/types.ts';
 import { rollupPresetLabel } from '../../lib/grade/plainLabels.ts';
+import {
+  extraCreditOnTopSentence,
+  isExtraCreditCategory,
+  splitWeights,
+  weightsTotalOk,
+} from '../../lib/syllabus/extraCreditWeights.ts';
 
 export type { BookMode, ExtraCreditMethod, MissingRule, SyllabusEngine, SyllabusRounding, WithinCategory };
 
@@ -492,9 +498,11 @@ export function visibleSteps(draft: SyllabusWizardDraft): WizardStepId[] {
 
 export function soFarSummary(draft: SyllabusWizardDraft): string {
   const eng = engineOption(draft.engine).label;
-  const sum = Math.round(activeWeightSum(draft.categories) * 1000) / 1000;
+  const split = splitWeights(draft.categories, draft.extra_credit_method);
   const cats = isWeightedEngine(draft.engine)
-    ? `${draft.categories.filter((c) => c.active).length} categories adding to ${sum}%`
+    ? `${draft.categories.filter((c) => c.active).length} categories adding to ${split.regular}%${
+        split.extraCredit > 0 ? ` + ${split.extraCredit}% extra credit` : ''
+      }`
     : 'no category weights';
   const miss =
     draft.missing_rule === 'zero'
@@ -634,24 +642,40 @@ export function setEmptyCategoryPolicy(
   };
 }
 
-/** FR-FORM-T02: weights 100±0.01 unless method-C EC, or non-weighted engines. */
+/**
+ * FR-FORM-T02: regular weights total 100±0.01 (non-weighted engines skip this).
+ * With extra credit as its own category (method C), only that category may push the
+ * total over 100%. Same rule as the client publish check and the publish RPC.
+ */
 export function weightsOk(draft: SyllabusWizardDraft): boolean {
   if (!isWeightedEngine(draft.engine)) return true;
-  if (draft.extra_credit_method === 'C') return true;
   const active = draft.categories.filter((c) => c.active);
   if (!active.length) return false;
   if (active.some((c) => !c.label.trim())) return false;
-  return Math.abs(activeWeightSum(draft.categories) - 100) <= 0.01;
+  return weightsTotalOk(draft.categories, draft.extra_credit_method);
 }
+
+const pct = (n: number) => `${Math.round(Number(n || 0) * 1000) / 1000}%`;
 
 /** Plain words for a weight total that isn't 100%, naming each active category. */
 export function weightsTotalMessage(draft: SyllabusWizardDraft, sum = activeWeightSum(draft.categories)): string {
   const total = Math.round(sum * 1000) / 1000;
   const active = draft.categories.filter((c) => c.active);
-  const parts = active
-    .map((c) => `${c.label.trim() || 'Unnamed'} ${Math.round(Number(c.weight_percent || 0) * 1000) / 1000}%`)
-    .join(' + ');
+  const name = (c: SyllabusCategoryDraft) => c.label.trim() || 'Unnamed';
+  const split = splitWeights(draft.categories, draft.extra_credit_method);
+  if (split.extraCredit > 0) {
+    const regular = active.filter((c) => !isExtraCreditCategory(c));
+    const parts = regular.map((c) => `${name(c)} ${pct(c.weight_percent)}`).join(' + ');
+    const detail = regular.length > 1 ? ` (${parts})` : '';
+    return `Your regular category weights add up to ${split.regular}%${detail}. Change them so they total 100% before you publish. Extra credit (${split.extraCredit}%) is added on top.`;
+  }
+  const parts = active.map((c) => `${name(c)} ${pct(c.weight_percent)}`).join(' + ');
   const detail = active.length > 1 ? ` (${parts})` : '';
+  const ec = active.filter((c) => isExtraCreditCategory(c));
+  const ecSum = ec.reduce((s2, c) => s2 + Number(c.weight_percent || 0), 0);
+  if (ec.length && Math.abs(total - ecSum - 100) <= 0.01) {
+    return `Your category weights add up to ${total}%${detail}. To count ${ec.map(name).join(' and ')} on top of 100%, choose “Extra credit has its own category” on the Extra credit & retakes step. Otherwise change the weights so they total 100% before you publish.`;
+  }
   return `Your category weights add up to ${total}%${detail}. Change them so they total 100% before you publish.`;
 }
 
@@ -824,6 +848,8 @@ export function parentFacingParagraph(draft: SyllabusWizardDraft): string {
     lines.push('Extra credit adds to earned points without penalizing students who skip it.');
   } else if (draft.extra_credit_method === 'C') {
     lines.push('Extra credit has its own category.');
+    const onTop = extraCreditOnTopSentence(draft.categories, draft.extra_credit_method);
+    if (onTop) lines.push(onTop);
   } else {
     lines.push('Extra credit can raise or replace a score on existing work.');
   }

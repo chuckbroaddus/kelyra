@@ -36,14 +36,15 @@ test('total_points hides category steps', () => {
   assert.equal(canFinishReview(d), true);
 });
 
-test('weights must sum 100 unless EC method C', () => {
+test('weights must sum 100; EC method C only lets the extra-credit category go on top', () => {
   let d = createEmptyWizardDraft('c');
   d = patchCategory(d, 'tests', { weight_percent: 40 });
   assert.equal(weightsOk(d), false);
   assert.ok(validateWizard(d).some((i) => i.severity === 'error'));
+  // Method C no longer skips the check: regular categories still have to total 100%.
   d = patchDraft(d, { extra_credit_method: 'C' });
-  assert.equal(weightsOk(d), true);
-  assert.equal(canFinishReview(d), true);
+  assert.equal(weightsOk(d), false);
+  assert.equal(canFinishReview(d), false);
 });
 
 test('locked engine cannot change without force', () => {

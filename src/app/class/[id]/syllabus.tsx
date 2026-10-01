@@ -266,9 +266,11 @@ export default function SyllabusScreen() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not publish';
       setError(
-        /active weights must sum to 100/i.test(msg)
-          ? 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.'
-          : msg,
+        /not counting the extra credit|besides extra credit/i.test(msg)
+          ? 'Your regular category weights need to add up to 100% before you can publish. Extra credit is added on top. Tap Categories to change them.'
+          : /active weights must sum to 100/i.test(msg)
+            ? 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.'
+            : msg,
       );
     } finally {
       setBusy(false);

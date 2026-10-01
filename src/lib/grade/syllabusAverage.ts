@@ -53,6 +53,8 @@ export type ReplaceLowestWithMakeup = {
 export type CategoryRules = {
   drop_lowest_n?: number;
   replace_lowest_with_makeup?: ReplaceLowestWithMakeup;
+  /** This category is the extra-credit category (method C: its weight is added on top of 100%). */
+  extra_credit?: boolean;
 };
 
 export type SyllabusCategoryInput = {
