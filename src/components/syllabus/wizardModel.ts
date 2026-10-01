@@ -171,16 +171,19 @@ export const STEP_LABELS: Record<WizardStepId, string> = {
   review: 'Review & publish',
 };
 
-/** Icons for PersonTabs on the syllabus setup row (shared IconName strings). */
+/**
+ * Icons for PersonTabs on the syllabus setup row (shared IconName strings).
+ * Dedicated syllabus* glyphs from notes/company/syllabus-tab-glyphs (t_804eee4c).
+ */
 export const STEP_ICONS: Record<WizardStepId, string> = {
-  engine: 'grades',
-  categories: 'records',
-  within: 'grades',
-  drops: 'filter',
-  status_late: 'alert',
-  extra_credit: 'plus',
-  book_rollup: 'calendar',
-  review: 'check',
+  engine: 'syllabusEngine',
+  categories: 'syllabusCategories',
+  within: 'syllabusWithin',
+  drops: 'syllabusDrops',
+  status_late: 'syllabusStatusLate',
+  extra_credit: 'syllabusExtraCredit',
+  book_rollup: 'syllabusBookRollup',
+  review: 'syllabusReview',
 };
 
 export const STEP_HELP_KEYS: Record<WizardStepId, string> = {

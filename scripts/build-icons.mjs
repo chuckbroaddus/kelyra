@@ -135,6 +135,33 @@ function line(png, x1, y1, x2, y2, stroke) {
   stamp(png, (x, y) => sdfSegment(x, y, x1, y1, x2, y2), stroke, false);
 }
 
+/**
+ * Stroke arc on circle (cx,cy,r). Angles are atan2-space (y down):
+ * 12 o'clock = -π/2, 3 o'clock = 0. Sweep is clockwise when positive.
+ */
+function arc(png, cx, cy, r, start, sweep, stroke) {
+  const sw = Math.abs(sweep);
+  const a0 = start;
+  const a1 = start + sweep;
+  const startAng = sweep >= 0 ? a0 : a1;
+  stamp(
+    png,
+    (x, y) => {
+      const dx = x - U(cx);
+      const dy = y - U(cy);
+      const ang = Math.atan2(dy, dx);
+      const circleD = Math.abs(Math.hypot(dx, dy) - U(r));
+      if (inSweep(ang, startAng, sw)) return circleD;
+      return Math.min(
+        Math.hypot(dx - Math.cos(a0) * U(r), dy - Math.sin(a0) * U(r)),
+        Math.hypot(dx - Math.cos(a1) * U(r), dy - Math.sin(a1) * U(r)),
+      );
+    },
+    stroke,
+    false,
+  );
+}
+
 function roundRect(png, x, y, w, h, r, stroke, fill) {
   stamp(png, (px, py) => sdfRoundRect(px, py, x, y, w, h, r), stroke, fill);
 }
@@ -749,6 +776,106 @@ const RECIPES = {
     line(p, 12, 18.6, 12, 21.2, ST);
     line(p, 2.8, 12, 5.4, 12, ST);
     line(p, 18.6, 12, 21.2, 12, ST);
+  },
+  /**
+   * Syllabus setup — How grades add up (eng-pie).
+   * Unequal 3-slice pie: rim + two radial dividers (weights → whole).
+   * Distinct from termQ* filled wedges.
+   */
+  syllabusEngine: (p) => {
+    circle(p, 12, 12, 7.4, ST, false);
+    line(p, 12, 4.6, 12, 12, ST);
+    line(p, 12, 12, 18.4, 15.7, ST);
+    line(p, 12, 12, 5.8, 16.2, ST);
+  },
+  /**
+   * Syllabus setup — Categories (cat-bars).
+   * Three weight bars of different lengths with end caps.
+   * Distinct from filter funnel taper and details left-aligned rules.
+   */
+  syllabusCategories: (p) => {
+    line(p, 4.2, 7.2, 19.4, 7.2, ST);
+    circle(p, 19.4, 7.2, 1.1, 0, true);
+    line(p, 4.2, 12, 15.4, 12, ST);
+    circle(p, 15.4, 12, 1.1, 0, true);
+    line(p, 4.2, 16.8, 11.4, 16.8, ST);
+    circle(p, 11.4, 16.8, 1.1, 0, true);
+  },
+  /**
+   * Syllabus setup — Inside a category (win-nested).
+   * Outer frame + three inner item ticks. Type-only on live 7-tab chrome.
+   */
+  syllabusWithin: (p) => {
+    roundRect(p, 4.2, 4.2, 15.6, 15.6, 2.0, ST, false);
+    line(p, 7.4, 9.2, 16.6, 9.2, ST);
+    line(p, 7.4, 12.4, 14.6, 12.4, ST);
+    line(p, 7.4, 15.6, 12.6, 15.6, ST);
+  },
+  /**
+   * Syllabus setup — Drop lowest (drop-strike).
+   * Three score ticks; lowest struck with X.
+   */
+  syllabusDrops: (p) => {
+    line(p, 5.2, 6.8, 15.6, 6.8, ST);
+    line(p, 5.2, 12, 15.6, 12, ST);
+    line(p, 5.2, 17.2, 12.4, 17.2, ST);
+    line(p, 14.2, 15.2, 19.4, 20.4, ST);
+    line(p, 19.4, 15.2, 14.2, 20.4, ST);
+  },
+  /**
+   * Syllabus setup — Missing & late (late-clock).
+   * Clock face + bang (time policy), not bare alert triangle.
+   */
+  syllabusStatusLate: (p) => {
+    circle(p, 10.8, 12.2, 7.0, ST, false);
+    line(p, 10.8, 8.4, 10.8, 12.4, ST);
+    line(p, 10.8, 12.4, 13.8, 14.2, ST);
+    line(p, 18.2, 4.8, 18.2, 8.4, ST);
+    circle(p, 18.2, 11.0, 1.05, 0, true);
+  },
+  /**
+   * Syllabus setup — Extra credit & retakes (ec-retake).
+   * Dual circular arrows + small plus (retake + bonus).
+   */
+  syllabusExtraCredit: (p) => {
+    // Top arc (CCW-ish from right-upper toward left) + arrow head.
+    arc(p, 12, 12, 6.4, -Math.PI * 0.72, -Math.PI * 0.95, ST);
+    line(p, 7.2, 6.4, 7.2, 9.6, ST);
+    line(p, 7.2, 9.6, 10.4, 9.6, ST);
+    // Bottom arc + arrow head.
+    arc(p, 12, 12, 6.4, Math.PI * 0.28, -Math.PI * 0.95, ST);
+    line(p, 16.8, 17.6, 16.8, 14.4, ST);
+    line(p, 16.8, 14.4, 13.6, 14.4, ST);
+    // Plus notch.
+    line(p, 12, 10.2, 12, 13.8, ST);
+    line(p, 10.2, 12, 13.8, 12, ST);
+  },
+  /**
+   * Syllabus setup — Periods & rounding (book-periods).
+   * Open gradebook + period ticks + small round-off mark.
+   * Distinct from tray calendar and closed diary cover.
+   */
+  syllabusBookRollup: (p) => {
+    // Open spread (two pages + spine).
+    roundRect(p, 3.4, 5.2, 8.4, 13.6, 1.2, ST, false);
+    roundRect(p, 12.2, 5.2, 8.4, 13.6, 1.2, ST, false);
+    line(p, 12, 5.4, 12, 18.6, ST);
+    // Period ticks on left page.
+    line(p, 5.4, 9.2, 9.0, 9.2, ST);
+    line(p, 5.4, 12.2, 9.0, 12.2, ST);
+    line(p, 5.4, 15.2, 9.0, 15.2, ST);
+    // Round-off tick at lower right.
+    arc(p, 19.0, 19.2, 2.4, -Math.PI * 0.15, Math.PI * 0.85, ST);
+  },
+  /**
+   * Syllabus setup — Review & publish (rev-seal).
+   * Seal / badge check with ribbon feet — official publish, not bare check.
+   */
+  syllabusReview: (p) => {
+    circle(p, 12, 11.2, 6.4, ST, false);
+    line(p, 8.8, 11.2, 11.0, 13.6, ST);
+    line(p, 11.0, 13.6, 15.4, 8.8, ST);
+    poly(p, [[9.6, 17.2], [8.0, 20.4], [12.0, 19.0], [16.0, 20.4], [14.4, 17.2]], ST, false);
   },
 };
 
