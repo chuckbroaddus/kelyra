@@ -1,0 +1,16 @@
+{
+  "source_id": "R06",
+  "document_kind": "vehicle_photo",
+  "plate": "JCW472",
+  "plateFront": null,
+  "plateBack": "JCW472",
+  "make": "Subaru",
+  "model": "Outback",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

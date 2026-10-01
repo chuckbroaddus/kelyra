@@ -1,0 +1,73 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": true,
+  "effects": [
+    "background_cars_readable",
+    "dusk_low_light",
+    "glare_hotspot",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 5606,
+    "rotate": -2,
+    "lowlight": {
+      "exposure": 0.5,
+      "gamma": 1.3,
+      "cast": [
+        0.9,
+        0.93,
+        1.1
+      ]
+    },
+    "noise": 12,
+    "glare": [
+      {
+        "cx": 0.12,
+        "cy": 0.33,
+        "rx": 0.08,
+        "ry": 0.06,
+        "angle": 0,
+        "strength": 1.8
+      },
+      {
+        "cx": 0.3,
+        "cy": 0.34,
+        "rx": 0.06,
+        "ry": 0.05,
+        "angle": 0,
+        "strength": 1.4
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.5
+      ],
+      "amount": 0.3,
+      "vignette": 0.5
+    },
+    "jpeg": 45
+  },
+  "background_plates": [
+    "GVL3816",
+    "MKD2479"
+  ],
+  "rough_gt": {},
+  "gt_rule": "foreground car at dusk with glare; two readable background cars"
+}

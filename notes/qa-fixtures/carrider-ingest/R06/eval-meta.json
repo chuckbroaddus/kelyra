@@ -1,0 +1,55 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "out_of_state",
+    "hand_in_frame",
+    "hand_shadow",
+    "defocus_blur"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4606,
+    "rotate": -3,
+    "shadow": {
+      "cx": 0.25,
+      "cy": 0.62,
+      "rx": 0.25,
+      "ry": 0.1,
+      "angle": 20,
+      "armTo": [
+        -0.1,
+        0.9
+      ],
+      "armWidth": 0.22,
+      "strength": 0.45,
+      "soft": 0.03
+    },
+    "defocus": 1.1,
+    "noise": 6,
+    "jpeg": 58
+  },
+  "rough_gt": {
+    "absent": [
+      "make",
+      "model"
+    ],
+    "uncertain": [
+      "plate"
+    ]
+  }
+}

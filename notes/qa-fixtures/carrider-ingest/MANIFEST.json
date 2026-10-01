@@ -1,145 +1,425 @@
 {
-  "generated_at": "2026-10-01T11:16:12.434Z",
+  "generated_at": "2026-10-01T13:24:29.254Z",
   "cases": [
     {
       "id": "V01",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V02",
       "kind": "vehicle_photo",
       "photo": false,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V03",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V04",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V05",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V06",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V07",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V08",
       "kind": "vehicle_photo",
       "photo": false,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V09",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "V10",
       "kind": "vehicle_photo",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "T01",
       "kind": "hang_tag",
       "photo": true,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "T02",
       "kind": "hang_tag",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "T03",
       "kind": "hang_tag",
       "photo": false,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "F01",
       "kind": "check_in_sheet",
       "photo": false,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "F02",
       "kind": "authorized_pickup",
       "photo": true,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "F03",
       "kind": "check_in_sheet",
       "photo": true,
       "negative": false,
-      "hard": true
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "F04",
       "kind": "authorized_pickup",
       "photo": false,
       "negative": false,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "N01",
       "kind": "negative",
       "photo": true,
       "negative": true,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "N02",
       "kind": "negative",
       "photo": false,
       "negative": true,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
     },
     {
       "id": "N03",
       "kind": "negative",
       "photo": true,
       "negative": true,
-      "hard": false
+      "hard": false,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R01",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R02",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R03",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R04",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R05",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R06",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R07",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R08",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R09",
+      "kind": "hang_tag",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "R10",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "H01",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": true,
+      "multi_car": false
+    },
+    {
+      "id": "H02",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": true,
+      "multi_car": false
+    },
+    {
+      "id": "H03",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": true,
+      "multi_car": false
+    },
+    {
+      "id": "H04",
+      "kind": "authorized_pickup",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": true,
+      "multi_car": false
+    },
+    {
+      "id": "M01",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "M02",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "M03",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "M04",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "M05",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": false,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "M06",
+      "kind": "vehicle_photo",
+      "photo": false,
+      "negative": false,
+      "hard": true,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": true
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "photo": false,
+      "negative": true,
+      "hard": false,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "photo": false,
+      "negative": true,
+      "hard": false,
+      "rough": true,
+      "handwritten": false,
+      "multi_car": false
     }
   ]
 }

@@ -1,0 +1,16 @@
+{
+  "source_id": "R01",
+  "document_kind": "vehicle_photo",
+  "plate": "HVK3827",
+  "plateFront": null,
+  "plateBack": "HVK3827",
+  "make": "Toyota",
+  "model": "RAV4",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

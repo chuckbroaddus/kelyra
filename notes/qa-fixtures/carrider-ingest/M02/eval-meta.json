@@ -1,0 +1,23 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": false,
+  "effects": [
+    "background_sharper_than_foreground",
+    "foreground_defocus"
+  ],
+  "background_plates": [
+    "TRC5186"
+  ],
+  "rough_gt": {},
+  "gt_rule": "foreground car even though its plate is slightly blurry"
+}

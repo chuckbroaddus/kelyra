@@ -1,0 +1,22 @@
+{
+  "source_id": "R08",
+  "document_kind": "authorized_pickup",
+  "plate": "KZD4176",
+  "plateFront": null,
+  "plateBack": null,
+  "make": "Toyota",
+  "model": "Sienna",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Elias Romero"
+  ],
+  "authorized_pickups": [
+    "Lucia Romero",
+    "Tomas Romero",
+    "Ana Vega"
+  ],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

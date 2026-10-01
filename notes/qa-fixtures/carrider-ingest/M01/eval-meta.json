@@ -1,0 +1,22 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": false,
+  "effects": [
+    "background_car_readable"
+  ],
+  "background_plates": [
+    "PLR2957"
+  ],
+  "rough_gt": {},
+  "gt_rule": "foreground (largest, nearest) car"
+}

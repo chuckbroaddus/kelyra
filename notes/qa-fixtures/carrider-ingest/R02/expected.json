@@ -1,0 +1,16 @@
+{
+  "source_id": "R02",
+  "document_kind": "vehicle_photo",
+  "plate": "MPW6142",
+  "plateFront": null,
+  "plateBack": "MPW6142",
+  "make": "Ford",
+  "model": "Explorer",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

@@ -1,0 +1,131 @@
+{
+  "id": "R07",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Nora Whitfield",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        271,
+        258,
+        409,
+        291
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        834,
+        196,
+        846,
+        211
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        313,
+        308,
+        393,
+        333
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        842,
+        241,
+        865,
+        258
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        331,
+        347,
+        461,
+        379
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        811,
+        288,
+        874,
+        311
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Grace Whitfield",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        179,
+        517,
+        332,
+        553
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Daniel Whitfield",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.88,
+      "suggest": "uncertain",
+      "frame_box": [
+        183,
+        566,
+        347,
+        604
+      ],
+      "reasons": {
+        "glare": 3
+      }
+    }
+  ]
+}

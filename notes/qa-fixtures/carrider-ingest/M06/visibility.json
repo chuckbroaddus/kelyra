@@ -1,0 +1,101 @@
+{
+  "id": "M06",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "plate:bg1:badge",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.58,
+      "suggest": "uncertain",
+      "frame_box": [
+        178,
+        561,
+        278,
+        577
+      ],
+      "reasons": {
+        "glare": 10
+      }
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg1",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        160,
+        624,
+        302,
+        651
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg2:badge",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        936,
+        492,
+        1001,
+        503
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg2",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        914,
+        544,
+        1026,
+        565
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg:badge",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        470,
+        954,
+        833,
+        991
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        500,
+        1099,
+        814,
+        1159
+      ],
+      "reasons": {}
+    }
+  ]
+}

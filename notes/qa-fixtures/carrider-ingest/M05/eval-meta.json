@@ -1,0 +1,25 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "multi_car": true,
+  "rough": false,
+  "effects": [
+    "reflection_in_rear_window"
+  ],
+  "background_plates": [
+    "WZK8153",
+    "3518KZW",
+    "KZW3518",
+    "8153WZK"
+  ],
+  "rough_gt": {},
+  "gt_rule": "foreground car; ignore the mirrored plate reflected in its rear window"
+}

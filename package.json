@@ -22,7 +22,8 @@
     "eval:homework": "node scripts/gen-homework-ingest-fixtures.mjs && node scripts/render-homework-ingest-pngs.mjs && node scripts/degrade-homework-fixtures.mjs && node scripts/eval-homework-ingest.mjs",
     "eval:assign": "node scripts/gen-assign-ingest-fixtures.mjs && node scripts/render-assign-ingest-pngs.mjs && node scripts/eval-assign-ingest.mjs",
     "eval:people": "node scripts/gen-people-ingest-fixtures.mjs && node scripts/render-people-ingest-pngs.mjs && node scripts/eval-people-ingest.mjs",
-    "eval:carrider": "node scripts/gen-carrider-ingest-fixtures.mjs && node scripts/render-carrider-ingest-pngs.mjs && node scripts/eval-carrider-ingest.mjs"
+    "eval:carrider": "node scripts/gen-carrider-ingest-fixtures.mjs && node scripts/render-carrider-ingest-pngs.mjs && node scripts/eval-carrider-ingest.mjs",
+    "eval:carrider:strict": "node scripts/gen-carrider-ingest-fixtures.mjs && node scripts/degrade-carrider-fixtures.mjs && node scripts/eval-carrider-strict.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

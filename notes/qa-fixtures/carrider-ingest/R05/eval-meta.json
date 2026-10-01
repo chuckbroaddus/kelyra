@@ -1,0 +1,37 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "vehicle_photo",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "make",
+    "model"
+  ],
+  "rough": true,
+  "effects": [
+    "temporary_paper_tag",
+    "keystone",
+    "heavy_jpeg_double"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4505,
+    "rotate": 4,
+    "keystone": {
+      "top": 1.05,
+      "bottom": 0.8
+    },
+    "jitter": 0.004,
+    "noise": 6,
+    "jpeg": 22,
+    "jpeg2": 30
+  },
+  "rough_gt": {}
+}

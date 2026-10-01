@@ -1,0 +1,73 @@
+{
+  "id": "R09",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "tag",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        687,
+        304,
+        870,
+        391
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        615,
+        405,
+        884,
+        470
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "rider:Ivy Patel",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.67,
+      "suggest": "uncertain",
+      "frame_box": [
+        585,
+        481,
+        688,
+        514
+      ],
+      "reasons": {
+        "glare": 8
+      }
+    },
+    {
+      "kind": "name",
+      "name": "rider:Arjun Patel",
+      "field": null,
+      "inframe": 1,
+      "visible": 0.42,
+      "suggest": "uncertain",
+      "frame_box": [
+        571,
+        525,
+        702,
+        561
+      ],
+      "reasons": {
+        "glare": 14
+      }
+    }
+  ]
+}

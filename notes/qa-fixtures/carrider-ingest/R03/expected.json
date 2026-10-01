@@ -1,0 +1,16 @@
+{
+  "source_id": "R03",
+  "document_kind": "vehicle_photo",
+  "plate": "DGT7395",
+  "plateFront": null,
+  "plateBack": "DGT7395",
+  "make": "Chevrolet",
+  "model": "Malibu",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

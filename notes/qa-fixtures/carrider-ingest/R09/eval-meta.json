@@ -1,0 +1,70 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "hang_tag",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "plate",
+    "tag_number",
+    "riders"
+  ],
+  "rough": true,
+  "effects": [
+    "through_windshield",
+    "glare_hotspot",
+    "keystone",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "carpet",
+    "scale": 1.06,
+    "seed": 4909,
+    "rotate": 3,
+    "keystone": {
+      "top": 0.9,
+      "bottom": 1.05
+    },
+    "jitter": 0.004,
+    "glare": [
+      {
+        "target": "rider:Arjun Patel",
+        "fx": 0.9,
+        "fy": 0.5,
+        "rx": 0.09,
+        "ry": 0.04,
+        "angle": 25,
+        "strength": 1.4
+      },
+      {
+        "cx": 0.15,
+        "cy": 0.2,
+        "rx": 0.2,
+        "ry": 0.08,
+        "angle": 30,
+        "strength": 0.6
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.3
+      ],
+      "amount": 0.2,
+      "vignette": 0.35
+    },
+    "noise": 6,
+    "jpeg": 45
+  },
+  "rough_gt": {
+    "uncertain_names": {
+      "riders": [
+        "Arjun Patel"
+      ]
+    }
+  }
+}

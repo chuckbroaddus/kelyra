@@ -1,0 +1,16 @@
+{
+  "source_id": "M05",
+  "document_kind": "vehicle_photo",
+  "plate": "BFT2694",
+  "plateFront": null,
+  "plateBack": "BFT2694",
+  "make": "Volkswagen",
+  "model": "Jetta",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

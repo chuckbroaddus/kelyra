@@ -1,0 +1,52 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "plate:bg1:badge",
+      "field": null,
+      "box": [
+        566.5,
+        379.5,
+        76.9,
+        10
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:bg1",
+      "field": null,
+      "box": [
+        554.6,
+        418.9,
+        100.8,
+        20
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg:badge",
+      "field": null,
+      "box": [
+        306.8,
+        649,
+        206.5,
+        25
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        286.8,
+        743.9,
+        246.4,
+        50
+      ]
+    }
+  ]
+}

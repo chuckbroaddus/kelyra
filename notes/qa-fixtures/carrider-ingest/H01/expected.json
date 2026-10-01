@@ -1,0 +1,21 @@
+{
+  "source_id": "H01",
+  "document_kind": "authorized_pickup",
+  "plate": "RWK4729",
+  "plateFront": null,
+  "plateBack": null,
+  "make": "Honda",
+  "model": "Pilot",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Mila Torres"
+  ],
+  "authorized_pickups": [
+    "Elena Torres",
+    "Victor Torres"
+  ],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

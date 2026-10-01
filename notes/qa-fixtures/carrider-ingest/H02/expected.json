@@ -1,0 +1,21 @@
+{
+  "source_id": "H02",
+  "document_kind": "authorized_pickup",
+  "plate": "GHY3758",
+  "plateFront": null,
+  "plateBack": null,
+  "make": "Ford",
+  "model": "F-150",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Owen Fitzgerald"
+  ],
+  "authorized_pickups": [
+    "Megan Fitzgerald",
+    "Pat Doyle"
+  ],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

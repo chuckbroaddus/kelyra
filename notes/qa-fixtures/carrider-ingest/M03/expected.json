@@ -1,0 +1,16 @@
+{
+  "source_id": "M03",
+  "document_kind": "vehicle_photo",
+  "plate": "HGM6258",
+  "plateFront": null,
+  "plateBack": "HGM6258",
+  "make": "Kia",
+  "model": "Sorento",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

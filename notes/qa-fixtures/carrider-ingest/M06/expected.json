@@ -1,0 +1,16 @@
+{
+  "source_id": "M06",
+  "document_kind": "vehicle_photo",
+  "plate": "SNT5742",
+  "plateFront": null,
+  "plateBack": "SNT5742",
+  "make": "Toyota",
+  "model": "Highlander",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

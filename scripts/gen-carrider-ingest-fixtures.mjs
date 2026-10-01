@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { roughCases } from './lib/carrider-rough-cases.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -570,6 +571,9 @@ const CASES = [
   },
 ];
 
+// Rough phone-photo / handwritten / multi-car / rough-negative cases (R01–R10, H01–H04, M01–M06, N04–N05).
+CASES.push(...roughCases());
+
 function main() {
   if (!CASES.length) {
     console.error('CASES empty — generator incomplete');
@@ -591,6 +595,7 @@ function main() {
           kind: c.kind,
           hard: Boolean(c.hard),
           fields: c.score_fields || [],
+          ...(c.meta || {}),
         },
         null,
         2,
@@ -603,6 +608,9 @@ function main() {
       photo: Boolean(c.photo),
       negative: Boolean(c.negative),
       hard: Boolean(c.hard),
+      rough: Boolean(c.meta?.rough),
+      handwritten: Boolean(c.meta?.handwritten),
+      multi_car: Boolean(c.meta?.multi_car),
     });
   }
   write(path.join(OUT, 'MANIFEST.json'), JSON.stringify(manifest, null, 2) + '\n');

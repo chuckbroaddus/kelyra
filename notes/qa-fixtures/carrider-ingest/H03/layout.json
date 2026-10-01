@@ -1,0 +1,162 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Zoe Kim",
+      "field": null,
+      "box": [
+        158.8,
+        102.6,
+        84.4,
+        31.9
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "box": [
+        709.5,
+        103.8,
+        15.8,
+        29.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "box": [
+        200.4,
+        150,
+        115.1,
+        33
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "box": [
+        709.5,
+        151.5,
+        30.2,
+        30
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "box": [
+        210.4,
+        197.7,
+        130.6,
+        33.5
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "box": [
+        669.5,
+        198.9,
+        65.4,
+        31.2
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Hana Kim",
+      "field": null,
+      "box": [
+        56.8,
+        338.1,
+        100.9,
+        30.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rel:Hana Kim",
+      "field": null,
+      "box": [
+        385.1,
+        339.7,
+        70.7,
+        27.6
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "ph:Hana Kim",
+      "field": null,
+      "box": [
+        553.3,
+        339.1,
+        138.7,
+        28.8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "adult:Daniel Kim",
+      "field": null,
+      "box": [
+        56.3,
+        384.2,
+        110.5,
+        34.7
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "rel:Daniel Kim",
+      "field": null,
+      "box": [
+        385.5,
+        389,
+        58.9,
+        25
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "ph:Daniel Kim",
+      "field": null,
+      "box": [
+        553.3,
+        387.1,
+        138.7,
+        28.8
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "sig",
+      "field": null,
+      "box": [
+        205.5,
+        546.9,
+        66.7,
+        31.3
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "date",
+      "field": null,
+      "box": [
+        318.2,
+        553,
+        61.2,
+        23.1
+      ]
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "id": "H03",
+  "frame": [
+    1200,
+    1600
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "rider:Zoe Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        270,
+        271,
+        358,
+        302
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "grade",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        906,
+        233,
+        924,
+        257
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "plate:fg",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        324,
+        321,
+        443,
+        355
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "state",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        912,
+        287,
+        944,
+        313
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "makemodel",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        340,
+        375,
+        476,
+        411
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "color",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        872,
+        344,
+        941,
+        373
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Hana Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        166,
+        556,
+        272,
+        588
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "rel:Hana Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        551,
+        533,
+        626,
+        560
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "ph:Hana Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        755,
+        513,
+        899,
+        546
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "adult:Daniel Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        169,
+        612,
+        285,
+        648
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "rel:Daniel Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        555,
+        592,
+        617,
+        617
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "ph:Daniel Kim",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        759,
+        570,
+        904,
+        604
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "sig",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        354,
+        800,
+        425,
+        830
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "name",
+      "name": "date",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        488,
+        796,
+        553,
+        820
+      ],
+      "reasons": {}
+    }
+  ]
+}
