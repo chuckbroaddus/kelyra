@@ -264,7 +264,12 @@ export default function SyllabusScreen() {
       setConfirm(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not publish');
+      const msg = err instanceof Error ? err.message : 'Could not publish';
+      setError(
+        /active weights must sum to 100/i.test(msg)
+          ? 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.'
+          : msg,
+      );
     } finally {
       setBusy(false);
     }

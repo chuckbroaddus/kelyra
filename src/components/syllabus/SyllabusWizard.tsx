@@ -122,23 +122,38 @@ export function SyllabusWizard({ draft, onChange, busy, onSaveDraft, onPublish, 
       {issues.length ? (
         <Card>
           {issues.map((iss, i) => (
-            <Text key={`${iss.path}-${i}`} style={[type.meta, { color: iss.severity === 'error' ? c.danger : c.warn }]}>
-              {iss.severity === 'error' ? 'Fix this' : 'Heads up'}: {iss.message}
-            </Text>
+            <View key={`${iss.path}-${i}`}>
+              <Text style={[type.meta, { color: iss.severity === 'error' ? c.danger : c.warn }]}>
+                {iss.severity === 'error' ? 'Fix this' : 'Heads up'}: {iss.message}
+              </Text>
+              {iss.step && iss.step !== step && steps.includes(iss.step) ? (
+                <GhostButton
+                  align="left"
+                  label={iss.path.startsWith('categories') ? 'Edit weights' : `Go to ${STEP_LABELS[iss.step]}`}
+                  onPress={() => go(iss.step!)}
+                  disabled={Boolean(busy)}
+                />
+              ) : null}
+            </View>
           ))}
         </Card>
       ) : null}
       <View style={styles.nav}>
-        <SecondaryButton label="Back" onPress={back} disabled={stepIndex <= 0 || Boolean(busy)} />
-        {step !== 'review' ? (
-          <PrimaryButton label="Continue" onPress={next} disabled={Boolean(busy)} />
-        ) : (
-          <PrimaryButton
-            label={busy ? 'Publishing…' : 'Publish syllabus'}
-            onPress={onPublish}
-            disabled={Boolean(busy) || !canFinishReview(draft)}
-          />
-        )}
+        {/* Each button takes half the row (full-width buttons pushed Publish off a 375px screen). */}
+        <View style={styles.navCell}>
+          <SecondaryButton label="Back" onPress={back} disabled={stepIndex <= 0 || Boolean(busy)} />
+        </View>
+        <View style={styles.navCell}>
+          {step !== 'review' ? (
+            <PrimaryButton label="Continue" onPress={next} disabled={Boolean(busy)} />
+          ) : (
+            <PrimaryButton
+              label={busy ? 'Publishing…' : 'Publish syllabus'}
+              onPress={onPublish}
+              disabled={Boolean(busy) || !canFinishReview(draft)}
+            />
+          )}
+        </View>
       </View>
       <GhostButton
         label={busy ? 'Saving…' : 'Save draft'}
@@ -160,4 +175,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   nav: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 12, marginBottom: 8 },
+  navCell: { flex: 1, minWidth: 0 },
 });
