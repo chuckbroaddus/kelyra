@@ -38,6 +38,7 @@ import {
   chromePathnameForSeatNav,
   chromeSeatRootHref,
   loadChromeSeatPreference,
+  effectiveChromeSeatPreference,
   readSessionParentSeat,
   resolveStaffChromeRole,
   saveChromeSeatPreference,
@@ -371,7 +372,11 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const role: ChromeRole = useMemo(() => {
     if (pathname === '/sign-in' || pathname === '/join' || pathname === '/password') return 'none';
     // Explicit seat for dual-hat staff (office/teacher/parent). Do not let also_* force a tray merge.
-    const staffRole = resolveStaffChromeRole(profile, seatPreference);
+    // Session Parent must resolve on this paint (bare /ask) — do not wait for seatPreference useEffect.
+    const staffRole = resolveStaffChromeRole(
+      profile,
+      effectiveChromeSeatPreference(profile?.id, seatPreference),
+    );
     if (staffRole) return staffRole;
     if (profile?.role === 'parent') return 'parent';
     if (profile?.role === 'student') return 'student';

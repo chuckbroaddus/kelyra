@@ -41,14 +41,15 @@ export async function listAskMessages(seat: AskTranscriptSeat): Promise<AskMessa
 export async function appendAskMessage(
   role: 'user' | 'assistant',
   body: string,
-  payload?: MessagePayload | null,
-  seat?: AskTranscriptSeat,
+  payload: MessagePayload | null | undefined,
+  seat: AskTranscriptSeat,
 ): Promise<string> {
+  // Seat is required — never default to teacher (dual-hat parent must not write teach thread).
   const { data, error } = await requireSupabase().rpc('ask_append_message', {
     p_role: role,
     p_body: body,
     p_payload: payload ?? null,
-    p_seat: seat ?? 'teacher',
+    p_seat: seat,
   });
   if (error) throw new Error(error.message || 'Could not save this chat');
   return data;

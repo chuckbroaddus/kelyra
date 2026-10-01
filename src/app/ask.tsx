@@ -230,7 +230,7 @@ export default function AskScreen() {
           <AskAssignmentGroundChrome
             key={`${groundTick}:${boundStudentId ?? ''}`}
             role={askRole}
-            classId={chrome.classId}
+            classId={askClassId}
             studentId={boundStudentId}
             packProbe={messages.length}
             onGroundChange={onGroundChange}
