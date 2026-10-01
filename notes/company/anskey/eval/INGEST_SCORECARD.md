@@ -34,19 +34,9 @@ Field totals r1: correct majority · hallucinated **0** · negatives all handled
 **Run:** `notes/qa-fixtures/anskey-ingest/runs/202610011217` (full corpus) · stability re-run of new cases: `runs/202610011217-r2new`
 **Runtime:** worktree `ai:dev` on :8803 (origin/main `b46d73a`, prompts/server unchanged)
 
-> **⚠ Stale — rerun needed.** These 202610011217 numbers (and `-r2new`) were measured **before #340**, which switched
-> `analyze-answer-key` to `detail: 'high'` and added new prompt rules. That change targets failure patterns 1–2 below
-> (prompt-example leakage, low-detail misreads), so treat the rough and handwritten figures as a pre-#340 baseline only. No live rerun yet:
-> dev Gemini quota was exhausted until ~2 AM CT on 2026-10-02. Rerun:
->
-> ```bash
-> # terminal 1 (worktree ../kelyra-wt-anskey-rough)
-> AI_DEV_PORT=8803 npm run ai:dev
-> # terminal 2: full corpus, fresh stamp
-> ANSKEY_AI_URL=http://127.0.0.1:8803 npm run eval:anskey
-> # if it stops on quota/429, resume the same stamp (finished cases are cached):
-> EVAL_RESUME_STAMP=<stamp printed as "run <stamp>"> ANSKEY_AI_URL=http://127.0.0.1:8803 node scripts/eval-anskey-ingest.mjs
-> ```
+> **⚠ Stale baseline — superseded by Round 3 below.** These 202610011217 numbers (and `-r2new`) were measured **before #340**, which switched
+> `analyze-answer-key` to `detail: 'high'`. Round 3 re-baselined on main after #340 and shipped the accuracy fixes.
+
 **New cases:** 12 rough photo (K18–K29) + 6 handwritten (K30–K35, 4 of them also rough). Recipes: `scripts/lib/anskey-rough-cases.mjs`; degradation: `scripts/degrade-anskey-fixtures.mjs` (seeded, sharp only).
 
 Item-level = per expected item: correct answer, honest abstain where allowed, or the item missing. Field = mean per-doc accuracy over pageState/header/maxScore/items/points. Field accuracy runs high on rough cases because header/maxScore/present rows still pass, so **item accuracy is the number to watch**.
@@ -61,6 +51,42 @@ Item-level = per expected item: correct answer, honest abstain where allowed, or
 | ↳ handwritten clean | 6 | 93.6% | 90.0% | 0 |
 | ↳ handwritten rough | 4 | 94.6% | 91.2% | 1 |
 | negatives | 5 | 100% (5/5 rejected) | — | 0 |
+
+## Round 3 — rough accuracy (Hermes t_71485780)
+
+**Run:** `notes/qa-fixtures/anskey-ingest/runs/202610011640`  
+**Runtime:** worktree `ai:dev` on :8811 (Grok OAuth; not Gemini). Branch `cos/anskey-rough-r3-t_71485780`.
+
+| Category | Docs | Field acc | Item acc | Halluc |
+|---|---:|---:|---:|---:|
+| **overall** | 53 | **98.0%** | — | **0** |
+| clean | 26 | 98.3% | **96.6% (115/119)** | 0 |
+| **rough photo (K18–K29)** | 12 | **97.2%** | **93.9% (154/164)** | **0** |
+| handwritten (all) | 10 | 97.4% | **94.0% (79/84)** | 0 |
+| negatives | 5 | 100% | — | 0 |
+
+Before (r2 pre-#340 baseline 202610011217) → after (r3):
+
+| Bucket | Item acc before | Item acc after | Halluc before → after |
+|---|---:|---:|---:|
+| rough | 49.4% | **93.9%** | 5 → **0** |
+| clean | 88.2% | **96.6%** | 0 → 0 |
+| handwritten | 90.5% | **94.0%** | 1 → **0** |
+
+### What changed (round 3)
+
+1. **Prompt** — placeholder JSON schema (no concrete `12 + 9 =` / `21` example rows); bubble stems = item numbers; unreadable/glare → empty + needsTeacher; never invent arithmetic demos; rubric notes → needsTeacher.
+2. **`scripts/lib/anskey-sanitize.mjs`** — post-filter: drop prompt-example leaks, collapse trivial solved-arithmetic clusters on filled keys, rubric placeholders, item-number-as-answer clusters, T/F + MC normalize, dedupe by `n`. Unit tests: `scripts/anskey-sanitize.test.mjs`.
+3. **Image prep** — `loadImageForGrok({ keyPrep: true })`: EXIF rotate + mild normalize/sharpen before the key read.
+4. **Look-again** — dense filled keys (≥10 items) get a second high-detail pass focused on glare/sticky-note row alignment (K20/K25 halls closed).
+5. **Eval** — tighter `answersMatch` (T/F before short-substring guard; `x=5`≈`5`; no `"8"`⊆`"18"`); offline `EVAL_RESCORE_STAMP` / `EVAL_RESCORE_SANITIZE=1`.
+
+### Remaining gaps
+
+- Occasional bubble letter swaps under heavy noise (K19/K29).
+- K31 still soft on algebraic form (`5` vs `x = 5` is accepted; `2x+8` vs `18` still wrong).
+- `analyze-answer-key` remains ai-dev only (no Edge Function) — list for devops-release if/when edge parity ships.
+- Look-again doubles model calls on dense keys (acceptable: one key per assignment).
 
 Re-run (new cases only): rough 79.0% field / 48.2% items / 7 halluc. Handwritten 96.9% / 96.4% / 1. Rough is stable-bad. Handwritten is good: K31 swings 1/6 → 6/6 between runs.
 

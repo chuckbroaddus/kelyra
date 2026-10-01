@@ -34,6 +34,7 @@ import {
   reasoningEffortFor,
 } from './lib/ai-policy.mjs';
 import { isAllowedAskImageUrl } from './lib/ask-image-url.mjs';
+import { finalizeAnswerKeyAnalysis } from './lib/anskey-sanitize.mjs';
 import {
   askActorSystemLine,
   filterAskToolDefs,
@@ -2308,29 +2309,32 @@ function clamp01(value) {
 
 const analyzeKeyPrompt = `You read one K-12 worksheet photo that a teacher is attaching as an ANSWER KEY.
 Return JSON only, no markdown:
-{"pageState":"blank","header":"printed title","items":[{"n":1,"stem":"12 + 9 =","answer":"21","points":1,"type":"numeric","needsTeacher":false,"note":null,"choices":null}],"maxScore":21,"teacherNote":null,"reject":false}
+{"pageState":"blank|filled|unsure","header":"<printed title or null>","items":[{"n":1,"stem":"<question text or item number>","answer":"<extracted or solved answer, or empty>","points":1,"type":"mc|numeric|short|work","needsTeacher":false,"unreadable":false,"confidence":0.0,"note":null,"choices":null}],"maxScore":null,"teacherNote":null,"reject":false}
 Rules:
 - FIRST classify the document. If it is NOT an answer key (student homework with a student name, syllabus/weights, roster, car rider list, random notes), set reject=true, items=[], pageState="unsure", teacherNote="Not an answer key", maxScore=null. Do NOT invent answers.
-- pageState is blank (no answers written/printed/circled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
-- pageState describes the PAPER as photographed, before you solve anything. Empty answer lines = blank, even though you then fill in proposed answers. Only use filled when answers are visibly written/printed/circled on the page.
+- pageState is blank (no answers written/printed/bubbled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
+- pageState describes the PAPER as photographed, before you solve anything. Empty answer lines = blank, even though you then fill in proposed answers. Only use filled when answers are visibly written/printed/bubbled on the page.
 - Read operators and exponents exactly: × vs +, − vs +, ÷, superscripts (2³ means 2 cubed), √. Read printed point values ("3 pts") per item.
 - Answer keys often PRINT the correct answers in bold/color next to each item. That is pageState=filled. EXTRACT those printed answers. Do NOT re-solve and replace them.
-- Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled.
+- Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled. For bubble/scan sheets that only print item numbers, stem MUST be the item number string (e.g. "1"), never invent a math equation as the stem.
 - header is the printed title / first direction line, or null. Do not invent a student name as header.
 - Only items that are actually on the page. Do not invent questions or answers for missing numbers. Do not invent items past a "continue on back" / cut-off edge.
-- STEM HYGIENE: Never glue the printed item number into the math. Item "1. 7 + 8 =" has stem "7 + 8 =" and n=1 — NOT "1 + 7 + 8 =". Same for 2., 3., circled numbers, and photo skew.
+- STEM HYGIENE: Never glue the printed item number into the math. Item "1. <math>" has stem "<math>" and n=1. Same for 2., 3., circled numbers, and photo skew.
 - Multiple choice: when choices A/B/C/D (or T/F) are printed, answer MUST be the letter (or True/False), NOT the choice text. Set type "mc". Put choice letters in choices when visible.
 - If the title says N questions but only fewer answers appear, extract only what is visible. teacherNote may say the key is partial. Never invent the rest.
-- If pageState is blank: SOLVE each keyed item when objectively answerable (math fact, MC letter, word-bank, short factual fill-ins like organism/ecosystem/sunlight). Opinion/explain/draw/open writing → needsTeacher=true and answer="". Still EMIT the item row with stem even when needsTeacher.
+- If pageState is blank: SOLVE each keyed item when objectively answerable (math fact, MC letter, word-bank, short factual fill-ins). Opinion/explain/draw/open writing → needsTeacher=true and answer="". Still EMIT the item row with stem even when needsTeacher.
 - Partial pages ("continue on back"): still emit the visible blanks as items (needsTeacher if unanswerable). Never return items:[].
-- If pageState is filled: EXTRACT the written/circled/printed answers exactly. Prefer the key's printed answer over your own solution.
-- STEM vs ANSWER: stem is the printed question only. Never copy the written/printed answer into stem. "Round 4.678 to the tenths: 4.7" → stem "Round 4.678 to the tenths:", answer "4.7". "0.5 + 0.25 = 0.75" → stem "0.5 + 0.25 =", answer "0.75".
+- If pageState is filled: EXTRACT the written/bubbled/printed answers exactly. Prefer the key's printed answer over your own solution. Never compute a replacement when the printed answer is hard to read — set unreadable=true, answer="", needsTeacher=true.
+- STEM vs ANSWER: stem is the printed question only. Never copy the written/printed answer into stem.
 - STUDENT WORK vs KEY: if the page shows a student name + filled blanks and says "student work" / draft score / "grade this child", set pageState "filled", teacherNote "student work — not a blank key", reject=true preferred, and still extract seen answers only if needed (do not re-solve as if blank).
 - ANSWER KEY title / "KEY" / teacher-annotated red answers → pageState "filled" and extract those answers.
 - points: use printed point values if present, else 1. maxScore is the sum of points.
 - teacherNote is one short sentence or null (margin notes OK).
 - Never invent a student. This is not grading a child as the primary task.
-- Blurry/skewed phone photos: read digits carefully; prefer empty + needsTeacher over garbled invented equations.
+- Blurry/skewed/glared phone photos: if a row is washed out, covered, or unreadable, set unreadable=true, answer="", needsTeacher=true. NEVER guess a letter or number through glare. NEVER invent arithmetic example problems to fill the sheet.
+- NEVER emit placeholder/example rows from this prompt. Do not use sample stems/answers like tutorial arithmetic demos. Only what is on the page.
+- Rubric / open response: if the key says "see rubric", "teacher judgment", or similar, answer must be "" with needsTeacher=true; put the note text in note, not answer.
+- confidence is 0–1 per item. Below ~0.45 prefer needsTeacher. Sticky notes and overlays are not answers — keep row alignment to printed item numbers.
 - MC answers should be a single letter A–E (or T/F) when that is what the key shows.`;
 
 const syllabusParsePrompt = `You extract a CLASS GRADING POLICY (syllabus weights) from a photo for a teacher.
@@ -2644,7 +2648,8 @@ function normalizeSyllabusDraft(parsed, classId) {
 async function analyzeAnswerKey(body) {
   const imageUrl = String(body.imageUrl ?? '');
   if (!imageUrl) throw new Error('imageUrl required');
-  const loaded = await loadImageForGrok(imageUrl);
+  // Key pages: EXIF upright + mild contrast/sharpen so rough phone photos keep bubble letters readable.
+  const loaded = await loadImageForGrok(imageUrl, { keyPrep: true });
   const signature = await pageSignature(loaded.bytes);
   // Keys are small print (×/+, superscripts, "3 pts"). Low detail misread operators
   // and point values in the assign-ingest eval; one key per assignment, so read it at high detail.
@@ -2657,68 +2662,48 @@ async function analyzeAnswerKey(body) {
       ],
     },
   ], {}, { functionName: 'analyze-answer-key' });
-  const parsed = extractJson(outputText(payload));
-  let pageState = ['blank', 'filled', 'unsure'].includes(parsed.pageState) ? parsed.pageState : 'unsure';
-  let items = parseKeyItemsFromModel(parsed.items);
-  const header =
-    typeof parsed.header === 'string' ? parsed.header.replace(/\s+/g, ' ').trim() : signature.header;
-  const teacherNote = typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null;
-  const reject =
-    parsed.reject === true ||
-    /not an answer key|not a key|wrong document|student work|syllabus|roster/i.test(
-      String(teacherNote || '') + ' ' + String(header || ''),
-    );
+  let parsed = extractJson(outputText(payload));
+  let finalized = finalizeAnswerKeyAnalysis(parsed, signature);
 
-  // Reject non-keys: empty items
-  if (reject) {
-    return {
-      pageState: 'unsure',
-      header: header || null,
-      items: [],
-      maxScore: null,
-      teacherNote: teacherNote || 'Not an answer key',
-      reject: true,
-      phash: signature.phash,
-      layout: signature.layout,
-    };
-  }
+  // Second pass on dense keys: catch glare guesses and sticky-note row shifts.
+  const itemCount = Array.isArray(finalized.items) ? finalized.items.length : 0;
+  const needsLook =
+    !finalized.reject &&
+    itemCount >= 10 &&
+    finalized.pageState === 'filled';
+  if (needsLook) {
+    try {
+      const lookPrompt = `${analyzeKeyPrompt}
 
-  // If model marked blank but extracted/printed answers exist and header looks like a key, prefer filled.
-  const answered = items.filter((it) => String(it.answer || '').trim()).length;
-  if (pageState === 'blank' && answered >= 2 && /key|answer/i.test(String(header || ''))) {
-    pageState = 'filled';
-  }
-
-  // Soft-normalize common MC letter answers "A) Paris" -> keep full but also ok
-  items = items.map((it) => {
-    let answer = String(it.answer || '').trim();
-    const m = answer.match(/^([A-Ea-e])\s*[).:\-]\s*(.+)$/);
-    if (m && m[2] && m[2].length <= 40) {
-      // Keep letter for MC keys when stem implies choice
-      if (/which|true\/false|\bmc\b|capital|choose/i.test(String(it.stem || ''))) {
-        answer = m[1].toUpperCase();
+LOOK-AGAIN pass for this filled key photo:
+- Re-check every row against the printed item number. Do NOT shift answers up/down when a middle row is covered by a sticky note, finger, glare, or desk clutter.
+- Covered/glared rows: answer="", needsTeacher=true, unreadable=true. Never guess a letter or word for those rows.
+- Sticky-note text and margin scribbles are never answers.
+- Keep the same item count and numbering as the page.`;
+      const look = await grokCall(
+        'key',
+        [
+          {
+            role: 'user',
+            content: [
+              { type: 'input_image', image_url: loaded.dataUrl, detail: 'high' },
+              { type: 'input_text', text: lookPrompt },
+            ],
+          },
+        ],
+        {},
+        { functionName: 'analyze-answer-key', pass: 'look-again' },
+      );
+      const looked = extractJson(outputText(look));
+      const second = finalizeAnswerKeyAnalysis(looked, signature);
+      if (!second.reject && Array.isArray(second.items) && second.items.length) {
+        finalized = second;
       }
+    } catch {
+      // Keep first pass.
     }
-    if (/^(true|false)$/i.test(answer)) {
-      answer = answer.toLowerCase() === 'true' ? 'True' : 'False';
-    }
-    return { ...it, answer };
-  });
-
-  const maxScore =
-    typeof parsed.maxScore === 'number'
-      ? parsed.maxScore
-      : items.reduce((sum, item) => sum + (item.points ?? 1), 0) || null;
-  return {
-    pageState,
-    header: header || null,
-    items,
-    maxScore,
-    teacherNote,
-    reject: false,
-    phash: signature.phash,
-    layout: signature.layout,
-  };
+  }
+  return finalized;
 }
 
 const matchKeyPrompt = `You compare one student's worksheet photo to answer-key photos of printed worksheets.
@@ -2874,54 +2859,6 @@ function tokenOverlap(a, b) {
   return hit / Math.max(left.size, right.size);
 }
 
-function parseKeyItemsFromModel(raw) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((row, index) => {
-      let stem = String(row?.stem ?? '').trim();
-      const n = Number(row?.n ?? index + 1);
-      // Drop glued list-number prefixes from OCR: 1. 7+8 or 1 + 7 + 8
-      const nStr = String(n);
-      if (stem.startsWith(nStr + '. ')) stem = stem.slice(nStr.length + 2);
-      else if (stem.startsWith(nStr + ') ')) stem = stem.slice(nStr.length + 2);
-      else if (stem.startsWith(nStr + ' + ')) stem = stem.slice(nStr.length + 3);
-      else if (stem.startsWith(nStr + ' ')) {
-        const rest = stem.slice(nStr.length + 1);
-        if (/^[+\-×÷=]/.test(rest) || /^\d/.test(rest)) stem = rest;
-      }
-      let answer = String(row?.answer ?? row?.expected ?? '').trim();
-      const typeRaw = row?.type;
-      const type =
-        typeRaw === 'mc' || typeRaw === 'numeric' || typeRaw === 'short' || typeRaw === 'work'
-          ? typeRaw
-          : undefined;
-      const choices = Array.isArray(row?.choices)
-        ? row.choices.map((c) => String(c)).filter(Boolean)
-        : undefined;
-      // Prefer MC letter when answer is full choice text with leading letter
-      const letterLead = answer.match(/^([A-Ea-e])[).:\s]/);
-      if (letterLead && (type === 'mc' || choices?.length)) answer = letterLead[1].toUpperCase();
-      // Filled keys: the model sometimes echoes the written answer onto the stem
-      // ("Round 4.678 to the tenths: 4.7"). Drop that trailing copy after = or :.
-      if (answer && stem.length > answer.length + 1 && stem.endsWith(answer)) {
-        const head = stem.slice(0, stem.length - answer.length).trimEnd();
-        if (/[=:]$/.test(head)) stem = head;
-      }
-      return {
-        n: Number.isFinite(n) ? n : index + 1,
-        stem,
-        answer,
-        points: Number.isFinite(Number(row?.points)) ? Number(row.points) : 1,
-        needsTeacher: row?.needsTeacher === true || !answer,
-        note: typeof row?.note === 'string' && row.note.trim() ? row.note.trim() : undefined,
-        type,
-        choices,
-      };
-    })
-    .filter((row) => row.stem || row.answer || row.needsTeacher)
-    .slice(0, 40);
-}
-
 const imagePrepCache = new Map();
 
 async function prepareImageForGrok(imageUrl, opts = {}) {
@@ -2972,8 +2909,13 @@ async function loadImageForGrok(imageUrl, opts = {}) {
 
   try {
     const sharp = require('sharp');
-    body = await sharp(body)
-      .rotate()
+    let pipeline = sharp(body).rotate();
+    if (opts.keyPrep) {
+      // Mild local contrast + light sharpen for bubble sheets / rough phone photos.
+      // Avoid aggressive thresholding that destroys handwriting.
+      pipeline = pipeline.normalize().sharpen({ sigma: 0.8, m1: 0.8, m2: 0.4 });
+    }
+    body = await pipeline
       .resize({
         width: maxEdge,
         height: maxEdge,

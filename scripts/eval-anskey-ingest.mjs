@@ -99,9 +99,18 @@ function answersMatch(exp, act) {
   if (!e && !a) return true;
   if (!e || !a) return false;
   if (e === a) return true;
-  if (e.includes(a) || a.includes(e)) return true;
   const tf = { true: 't', t: 't', yes: 't', y: 't', false: 'f', f: 'f', no: 'f', n: 'f' };
   if (tf[e] && tf[a] && tf[e] === tf[a]) return true;
+  // x=5 vs 5, answer:2 vs 2
+  const stripEq = (s) => s.replace(/^(?:x|y|n|ans|answer)[=:]/i, '');
+  if (stripEq(e) && stripEq(e) === stripEq(a)) return true;
+  // Avoid substring false friends on short numeric answers ("8" ⊆ "18").
+  if (e.length >= 3 && a.length >= 3 && (e.includes(a) || a.includes(e))) return true;
+  if ((e.length < 3 || a.length < 3) && e.length !== a.length) {
+    // allow only when longer fully equals shorter after light strip, not bare digit containment
+    return false;
+  }
+  if (e.includes(a) || a.includes(e)) return true;
   return false;
 }
 
@@ -338,24 +347,35 @@ function pickImage(caseDir, preferPhoto) {
 
 async function main() {
   const env = loadEnv();
+  const rescoreStamp = (process.env.EVAL_RESCORE_STAMP || '').trim();
   const stamp =
+    rescoreStamp ||
     (process.env.EVAL_RESUME_STAMP || '').trim() ||
     new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 12);
   const runDir = path.join(CORPUS, 'runs', stamp);
   fs.mkdirSync(runDir, { recursive: true });
-  const resume = Boolean((process.env.EVAL_RESUME_STAMP || '').trim());
+  const resume = Boolean((process.env.EVAL_RESUME_STAMP || '').trim()) || Boolean(rescoreStamp);
+  const rescoreOnly = Boolean(rescoreStamp);
+  const reapplySanitize = process.env.EVAL_RESCORE_SANITIZE === '1';
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
   const only = (process.env.EVAL_ANSKEY_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
   if (only.length) manifest.cases = manifest.cases.filter((c) => only.includes(c.id));
-  const auth = await signIn(env);
-  const aiUrl = aiBase(env);
-  try {
-    const probe = await fetch(aiUrl + '/');
-    console.log('ai', aiUrl, 'probe', probe.status);
-  } catch (err) {
-    throw new Error(`ai:dev not reachable at ${aiUrl}: ${err.message}`);
+  let auth = null;
+  let aiUrl = aiBase(env);
+  let files = { close: async () => {} };
+  if (!rescoreOnly) {
+    auth = await signIn(env);
+    try {
+      const probe = await fetch(aiUrl + '/');
+      console.log('ai', aiUrl, 'probe', probe.status);
+    } catch (err) {
+      throw new Error(`ai:dev not reachable at ${aiUrl}: ${err.message}`);
+    }
+    files = await startFileServer(CORPUS);
+  } else {
+    console.log('rescore-only', stamp, reapplySanitize ? '+sanitize' : 'raw-cached');
+    aiUrl = 'rescore-local';
   }
-  const files = await startFileServer(CORPUS);
   console.log('run', stamp, 'cases', manifest.cases.length, 'ai', aiUrl);
   const paceMs = Number(process.env.EVAL_ANSKEY_PACE_MS || 2500);
   const perDoc = [];
@@ -403,6 +423,21 @@ async function main() {
         if (existingOk) {
           process.stdout.write(`... ${entry.id} ${v.variant} (cached) `);
           result = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+          if (reapplySanitize) {
+            const { finalizeAnswerKeyAnalysis } = await import('./lib/anskey-sanitize.mjs');
+            const prev = result.json || {};
+            result = {
+              ...result,
+              json: finalizeAnswerKeyAnalysis(prev, {
+                phash: prev.phash,
+                layout: prev.layout,
+                header: prev.header,
+              }),
+            };
+          }
+        } else if (rescoreOnly) {
+          console.warn('skip missing cache', entry.id, v.variant);
+          continue;
         } else {
           process.stdout.write(`... ${entry.id} ${v.variant} `);
           const buf = fs.readFileSync(v.file);
