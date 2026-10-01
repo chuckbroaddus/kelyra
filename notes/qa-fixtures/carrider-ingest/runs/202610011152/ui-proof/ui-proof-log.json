@@ -1,0 +1,93 @@
+{
+  "stamp": "202610011152",
+  "port": 8097,
+  "shots": [
+    {
+      "id": "V01",
+      "file": "V01/photo.jpg",
+      "path": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof/V01-plate-photo-review-375.png",
+      "settled": true,
+      "inputs": [
+        "KLY4219",
+        "Honda",
+        "Civic"
+      ],
+      "net": [
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857350054-6048ec.jpg",
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857350054-6048ec_thumb.jpg",
+        "200 sign/photos",
+        "200 v1/classify-capture",
+        "200 ride/1790857353893-qn9y57.jpg",
+        "200 v1/ride-lpr"
+      ]
+    },
+    {
+      "id": "V05",
+      "file": "V05/photo.jpg",
+      "path": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof/V05-partial-plate-375.png",
+      "settled": true,
+      "inputs": [],
+      "net": [
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857362930-xier2j.jpg",
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857362930-xier2j_thumb.jpg",
+        "200 sign/photos",
+        "200 v1/classify-capture",
+        "200 ride/1790857365997-l5l1wi.jpg",
+        "200 v1/ride-lpr"
+      ]
+    },
+    {
+      "id": "T01",
+      "file": "T01/photo.jpg",
+      "path": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof/T01-hang-tag-375.png",
+      "settled": true,
+      "inputs": [
+        "KLY4219"
+      ],
+      "net": [
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857374962-eguu3d.jpg",
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857374962-eguu3d_thumb.jpg",
+        "200 sign/photos",
+        "200 v1/classify-capture",
+        "200 ride/1790857377975-ro4k7r.jpg",
+        "200 v1/ride-lpr"
+      ]
+    },
+    {
+      "id": "F02",
+      "file": "F02/clean.png",
+      "path": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof/F02-authorized-pickup-375.png",
+      "settled": true,
+      "inputs": [
+        "JRD4410",
+        "Honda",
+        "CR-V"
+      ],
+      "net": [
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857386962-juvld9.png",
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857386962-juvld9_thumb.jpg",
+        "200 sign/photos",
+        "200 v1/classify-capture",
+        "200 ride/1790857390144-ajhbge.png",
+        "200 v1/ride-lpr"
+      ]
+    },
+    {
+      "id": "N01",
+      "file": "N01/clean.png",
+      "path": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof/N01-negative-homework-375.png",
+      "settled": false,
+      "inputs": [],
+      "net": [
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857398860-db47rz.png",
+        "200 bf2c0770-c854-433d-9291-dd704e75307e/1790857398860-db47rz_thumb.jpg",
+        "200 sign/photos",
+        "200 v1/classify-capture",
+        "404 v1/match-key",
+        "console: Failed to load resource: the server responded with a status of 404 ()"
+      ]
+    }
+  ],
+  "out": "/Users/chuckbroaddus/projects/kelyra/.worktrees/t_40ca8e21/notes/qa-fixtures/carrider-ingest/runs/202610011152/ui-proof",
+  "tmp": "/tmp/carrider-ingest-eval"
+}

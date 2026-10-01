@@ -207,6 +207,12 @@ type ClassifyResult = {
 
 type CaptureFile = { key: string; uri: string; mimeType: string; name: string };
 
+const CARRIDER_KIND_LABEL: Record<string, string> = {
+  hang_tag: 'car-rider hang tag',
+  check_in_sheet: 'rider check-in sheet',
+  authorized_pickup: 'authorized-pickup form',
+};
+
 const INTENT_COPY: Record<CaptureIntent, string> = {
   homework: 'This will be student work / a grade draft',
   syllabus: 'This will be a class syllabus / grading policy',
@@ -302,6 +308,15 @@ export default function CaptureScreen() {
   const [vehiclePlateBack, setVehiclePlateBack] = useState('');
   const [vehicleMake, setVehicleMake] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
+  // Car-rider extras from ride-lpr (hang tag #, riders, authorized pickups, reject reason).
+  const [vehicleRead, setVehicleRead] = useState<{
+    kind: string | null;
+    tag: string | null;
+    riders: string[];
+    pickups: string[];
+    reject: string | null;
+    unreadable: boolean;
+  } | null>(null);
   const [answerKeyPreview, setAnswerKeyPreview] = useState<{
     itemCount: number;
     maxScore: number | null;
@@ -470,6 +485,7 @@ export default function CaptureScreen() {
     setVehiclePlateBack('');
     setVehicleMake('');
     setVehicleModel('');
+    setVehicleRead(null);
     setAnswerKeyPreview(null);
     setPersonPhotoChoice(null);
     setDirectoryPersonId(null);
@@ -890,9 +906,21 @@ export default function CaptureScreen() {
           let back = '';
           let make = '';
           let model = '';
+          let readKind: string | null = null;
+          let readTag: string | null = null;
+          let readReject: string | null = null;
+          let readUnreadable = false;
+          const readRiders: string[] = [];
+          const readPickups: string[] = [];
           for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
             const storagePath = await uploadRidePhoto(assetOwnerId, page.uri, page.mimeType);
             const lpr = await invokeRideLpr(storagePath);
+            readKind = lpr.document_kind ?? readKind;
+            readTag = lpr.tag_number || readTag;
+            readReject = lpr.reject_reason || readReject;
+            readUnreadable = readUnreadable || lpr.unreadable;
+            for (const name of lpr.riders ?? []) if (!readRiders.includes(name)) readRiders.push(name);
+            for (const name of lpr.authorized_pickups ?? []) if (!readPickups.includes(name)) readPickups.push(name);
             if (lpr.plateFront) front = lpr.plateFront;
             if (lpr.plateBack) back = lpr.plateBack;
             if (lpr.side === 'front' && lpr.plate) front = front || lpr.plate;
@@ -908,6 +936,15 @@ export default function CaptureScreen() {
           setVehiclePlateBack(back);
           setVehicleMake(make);
           setVehicleModel(model);
+          setVehicleRead({
+            kind: readKind,
+            tag: readTag,
+            riders: readRiders,
+            pickups: readPickups,
+            reject: readReject,
+            unreadable: readUnreadable && !front && !back,
+          });
+          setStatus(null);
         } catch {
           // Confirm strip still lets the teacher type plate / make / model.
         }
@@ -2337,6 +2374,31 @@ export default function CaptureScreen() {
               />
               <TextField label="Make" value={vehicleMake} onChangeText={setVehicleMake} />
               <TextField label="Model" value={vehicleModel} onChangeText={setVehicleModel} />
+              {vehicleRead?.reject ? (
+                <Text style={[type.meta, { color: colors.danger }]}>
+                  {`Not a car-rider document: ${vehicleRead.reject}. Nothing was read into Ride.`}
+                </Text>
+              ) : vehicleRead?.unreadable ? (
+                <Text style={[type.meta, { color: colors.danger }]}>
+                  Plate not readable — type it from the car, or retake the photo. We did not guess.
+                </Text>
+              ) : null}
+              {vehicleRead?.kind && vehicleRead.kind !== 'vehicle_photo' && vehicleRead.kind !== 'rejected' ? (
+                <Text style={[type.meta, { color: colors.mute }]}>
+                  {`Read as: ${CARRIDER_KIND_LABEL[vehicleRead.kind] ?? vehicleRead.kind}`}
+                </Text>
+              ) : null}
+              {vehicleRead?.tag ? (
+                <Text style={[type.body, { color: colors.ink }]}>{`Car tag #: ${vehicleRead.tag}`}</Text>
+              ) : null}
+              {vehicleRead?.riders.length ? (
+                <Text style={[type.body, { color: colors.ink }]}>{`Riders: ${vehicleRead.riders.join(', ')}`}</Text>
+              ) : null}
+              {vehicleRead?.pickups.length ? (
+                <Text style={[type.body, { color: colors.ink }]}>
+                  {`Authorized pickup: ${vehicleRead.pickups.join(', ')}`}
+                </Text>
+              ) : null}
               <Text style={[type.meta, { color: colors.mute }]}>Parent (optional — required to attach now)</Text>
               {parents.slice(0, 12).map((person) => (
                 <ListRow

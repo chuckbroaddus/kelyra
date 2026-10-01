@@ -100,8 +100,22 @@ Rules:
 - Never invent a person, parent, student, plate, make, or model that is not clearly on the page.
 - Night, glare, angle, shadow: still try; if not confident enough to read the full plate, unreadable true and plate null.`;
 
+// Capture web calls ride-lpr straight from the browser (supabase.functions.invoke),
+// so the preflight and every reply need CORS headers or the plate read silently fails.
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204 });
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+  const res = await handleRideLpr(req);
+  for (const [key, value] of Object.entries(CORS_HEADERS)) res.headers.set(key, value);
+  return res;
+});
+
+async function handleRideLpr(req: Request): Promise<Response> {
   try {
     const authorization = req.headers.get('Authorization') ?? '';
     if (!authorization.startsWith('Bearer ')) {
@@ -229,4 +243,4 @@ Deno.serve(async (req) => {
       { status: 200 },
     );
   }
-});
+}
