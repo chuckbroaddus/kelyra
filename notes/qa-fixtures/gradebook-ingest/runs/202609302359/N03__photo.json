@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "c16c9b60-d44f-43a0-8556-67b05513916c",
+    "proposal": {
+      "source_id": "N03-photo-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [
+        {
+          "code": "mixed_document",
+          "message": "Separate the documents and scan again.",
+          "paths": [],
+          "choices": [
+            "retake_separate_pages"
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "code": "multiple_syllabi_detected",
+          "message": "Photo captured both class syllabi on the desk. Please retake each document separately.",
+          "severity": "block"
+        },
+        {
+          "code": "mixed_document",
+          "message": "This image looks like two documents or two class policies on one page. Retake: photograph each syllabus or handbook page separately.",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": "mixed",
+      "overall_confidence": 0
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "ebc0afc1-d66c-4a2e-9ce5-53b4c69dd7c0",
+    "proposal": {
+      "source_id": "H04-clean-202609302359",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "trimester",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "The year is three trimesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202609302359"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "50/50",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "rollup is 50/50",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202609302359"
+        },
+        {
+          "path": "credit.year_link",
+          "value": true,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Year-link: fall and spring must both be passed for full credit (paired).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202609302359"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9499999999999998
+    }
+  }
+}

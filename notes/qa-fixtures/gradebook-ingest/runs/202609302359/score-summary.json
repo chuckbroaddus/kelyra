@@ -1,0 +1,607 @@
+{
+  "baseline": {
+    "stamp": "202609302204",
+    "overall": "36.0%",
+    "syllabus": "42.2%",
+    "handbook": "18.5%",
+    "negatives": "60.0%",
+    "clean": "34.1%",
+    "photo": "39.3%",
+    "totals": {
+      "correct": 54,
+      "wrong": 44,
+      "missing": 38,
+      "correctly-flagged-for-review": 2,
+      "hallucinated": 38
+    }
+  },
+  "round1": {
+    "stamp": "202609302227",
+    "overall": "61.1%",
+    "syllabus": "60.8%",
+    "handbook": "47.7%",
+    "negatives": "100.0%",
+    "clean": "60.3%",
+    "photo": "62.6%",
+    "totals": {
+      "correct": 97,
+      "wrong": 10,
+      "missing": 32,
+      "correctly-flagged-for-review": 2,
+      "hallucinated": 28
+    }
+  },
+  "round2": {
+    "stamp": "202609302359",
+    "overall": "73.7%",
+    "syllabus": "72.6%",
+    "handbook": "65.8%",
+    "negatives": "100.0%",
+    "clean": "70.9%",
+    "photo": "78.7%",
+    "totals": {
+      "correct": 107,
+      "wrong": 11,
+      "missing": 21,
+      "correctly-flagged-for-review": 2,
+      "hallucinated": 9
+    },
+    "s11_19_clean": {
+      "id": "S01",
+      "kind": "syllabus",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.8925000000000001,
+      "field_accuracy": 0.8,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "verdict": "wrong",
+          "expected": "Algebra I — Course Syllabus",
+          "actual": "Algebra I"
+        },
+        {
+          "path": "syllabus.engine",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.within_category",
+          "verdict": "correctly-flagged-for-review"
+        },
+        {
+          "path": "syllabus.categories",
+          "verdict": "correct"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "verdict": "correct"
+        }
+      ],
+      "rule_violations": []
+    },
+    "s11_20_clean": {
+      "id": "H01",
+      "kind": "handbook",
+      "variant": "clean",
+      "http_status": 200,
+      "overall_confidence": 0.9028571428571429,
+      "field_accuracy": 0.8571428571428571,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "calendar.template",
+          "verdict": "correct"
+        },
+        {
+          "path": "calendar.period_model",
+          "verdict": "correct"
+        },
+        {
+          "path": "rollup.preset",
+          "verdict": "correct"
+        },
+        {
+          "path": "credit.passing_threshold",
+          "verdict": "correct"
+        },
+        {
+          "path": "gpa.mode",
+          "verdict": "correct"
+        },
+        {
+          "path": "levels.list",
+          "verdict": "correct"
+        },
+        {
+          "path": "qp.method",
+          "verdict": "hallucinated",
+          "actual": "letter_map"
+        }
+      ],
+      "rule_violations": []
+    },
+    "per_doc": [
+      {
+        "id": "S01/clean",
+        "acc": 80,
+        "counts": {
+          "correct": 3,
+          "wrong": 1,
+          "missing": 0,
+          "correctly-flagged-for-review": 1,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S01/photo",
+        "acc": 80,
+        "counts": {
+          "correct": 3,
+          "wrong": 1,
+          "missing": 0,
+          "correctly-flagged-for-review": 1,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S02/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S03/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 5,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S03/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 5,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S04/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 5,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S05/clean",
+        "acc": 75,
+        "counts": {
+          "correct": 3,
+          "wrong": 1,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S05/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S06/clean",
+        "acc": 71,
+        "counts": {
+          "correct": 5,
+          "wrong": 1,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S06/photo",
+        "acc": 71,
+        "counts": {
+          "correct": 5,
+          "wrong": 1,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S07/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S08/clean",
+        "acc": 17,
+        "counts": {
+          "correct": 1,
+          "wrong": 1,
+          "missing": 3,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 1
+        },
+        "rules": []
+      },
+      {
+        "id": "S08/photo",
+        "acc": 17,
+        "counts": {
+          "correct": 1,
+          "wrong": 1,
+          "missing": 3,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 1
+        },
+        "rules": []
+      },
+      {
+        "id": "S09/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S09/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S10/clean",
+        "acc": 75,
+        "counts": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H01/clean",
+        "acc": 86,
+        "counts": {
+          "correct": 6,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 1
+        },
+        "rules": []
+      },
+      {
+        "id": "H01/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 6,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H02/clean",
+        "acc": 60,
+        "counts": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 2,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H03/clean",
+        "acc": 50,
+        "counts": {
+          "correct": 2,
+          "wrong": 0,
+          "missing": 2,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H03/photo",
+        "acc": 50,
+        "counts": {
+          "correct": 2,
+          "wrong": 0,
+          "missing": 2,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H04/clean",
+        "acc": 75,
+        "counts": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H05/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H05/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 3,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H06/clean",
+        "acc": 33,
+        "counts": {
+          "correct": 1,
+          "wrong": 1,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H07/clean",
+        "acc": 67,
+        "counts": {
+          "correct": 2,
+          "wrong": 1,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H08/clean",
+        "acc": 0,
+        "counts": {
+          "correct": 0,
+          "wrong": 2,
+          "missing": 1,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H09/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H09/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 4,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "H10/clean",
+        "acc": 0,
+        "counts": {
+          "correct": 0,
+          "wrong": 0,
+          "missing": 3,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "N01/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "N01/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "N02/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "N03/clean",
+        "acc": 100,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "N03/photo",
+        "acc": 100,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 0
+        },
+        "rules": []
+      },
+      {
+        "id": "S11/clean",
+        "acc": 50,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 1
+        },
+        "rules": []
+      },
+      {
+        "id": "S11/photo",
+        "acc": 50,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 1
+        },
+        "rules": []
+      },
+      {
+        "id": "S12/clean",
+        "acc": 33,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 2
+        },
+        "rules": []
+      },
+      {
+        "id": "S12/photo",
+        "acc": 33,
+        "counts": {
+          "correct": 1,
+          "wrong": 0,
+          "missing": 0,
+          "correctly-flagged-for-review": 0,
+          "hallucinated": 2
+        },
+        "rules": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "0a6c5aea-9ccc-4c9b-b6eb-d2dcbeb629be",
+    "proposal": {
+      "source_id": "H08-clean-202609302359",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "scale.bands",
+          "value": [
+            {
+              "letter": "A",
+              "min_pct": 93,
+              "max_pct": 100
+            },
+            {
+              "letter": "A-",
+              "min_pct": 90,
+              "max_pct": 92
+            },
+            {
+              "letter": "B+",
+              "min_pct": 87,
+              "max_pct": 89
+            },
+            {
+              "letter": "B",
+              "min_pct": 83,
+              "max_pct": 86
+            },
+            {
+              "letter": "B-",
+              "min_pct": 80,
+              "max_pct": 82
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "A 93-100\nA- 90-92\nB+ 87-89\nB 83-86\nB- 80-82",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H08-clean-202609302359"
+        },
+        {
+          "path": "school.notes",
+          "value": "Class rank uses the weighted GPA profile only. Transfer grades: incoming letter A maps to 95%, B to 85%, C to 75%, D to 65%, F to 50%.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Transfer grades: incoming letter A maps to 95%, B to 85%, C to 75%, D to 65%, F to 50%.\nClass rank uses the weighted GPA profile only.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H08-clean-202609302359"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "school_core_retry",
+          "message": "Retried school policy extract with stricter core-field prompt.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "gpa_chart",
+      "overall_confidence": 0.95
+    }
+  }
+}

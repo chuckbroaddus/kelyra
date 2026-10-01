@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "3b6edcca-b9a7-4b21-a1cc-50a9968ee4cb",
+    "proposal": {
+      "source_id": "N01-clean-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "unreadable_document",
+          "message": "The provided image is blank, extremely blurry, or contains no readable syllabus text to extract.",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "f5fb94db-f436-457c-bc43-ee6926d9a099",
+    "proposal": {
+      "source_id": "H10-clean-202609302359",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "low_ocr",
+          "message": "Cannot read properties of undefined (reading 'toLowerCase')",
+          "severity": "block"
+        }
+      ],
+      "document_kind_guess": null,
+      "overall_confidence": 0
+    }
+  }
+}

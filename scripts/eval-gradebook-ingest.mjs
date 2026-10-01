@@ -400,7 +400,22 @@ async function resolveIds(sb, kind) {
   return { class_id: rows[0].class_id };
 }
 
-async function invokeIngest({ url, anon, session, kind, ids, imageUrl, sourceId }) {
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isQuotaExhausted(result) {
+  const proposal = result?.json?.proposal || result?.json;
+  const blob = JSON.stringify({
+    status: result?.status,
+    error: result?.json?.error,
+    warnings: proposal?.warnings,
+    message: result?.json?.message,
+  });
+  return /429|RESOURCE_EXHAUSTED|Quota exceeded|rate.?limit/i.test(blob);
+}
+
+async function invokeIngestOnce({ url, anon, session, kind, ids, imageUrl, sourceId }) {
   const endpoint = `${url.replace(/\/$/, '')}/functions/v1/ingest-grading-doc`;
   const body = {
     kind,
@@ -428,6 +443,31 @@ async function invokeIngest({ url, anon, session, kind, ids, imageUrl, sourceId 
   return { status: res.status, json };
 }
 
+/** Live Gemini free-tier is ~15 RPM; handwriting can be multi-call. Pace + retry 429. */
+async function invokeIngest(args) {
+  const maxAttempts = Number(process.env.EVAL_INGEST_MAX_ATTEMPTS || 6);
+  const paceMs = Number(process.env.EVAL_INGEST_PACE_MS || 9000);
+  const baseBackoffMs = Number(process.env.EVAL_INGEST_BACKOFF_MS || 55000);
+  let last;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      last = await invokeIngestOnce(args);
+    } catch (err) {
+      last = { status: 0, json: { error: String(err.message || err) } };
+    }
+    if (!isQuotaExhausted(last)) {
+      if (paceMs > 0) await sleep(paceMs);
+      return last;
+    }
+    if (attempt >= maxAttempts) break;
+    const wait = baseBackoffMs * attempt;
+    process.stdout.write(`(429 retry ${attempt}/${maxAttempts} wait ${Math.round(wait / 1000)}s) `);
+    await sleep(wait);
+  }
+  if (paceMs > 0) await sleep(paceMs);
+  return last;
+}
+
 function pickImage(caseDir, preferPhoto) {
   const photo = path.join(caseDir, 'photo.jpg');
   const clean = path.join(caseDir, 'clean.png');
@@ -439,9 +479,13 @@ function pickImage(caseDir, preferPhoto) {
 
 async function main() {
   const env = loadEnv();
-  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 12);
+  const stamp =
+    (process.env.EVAL_RESUME_STAMP || '').trim() ||
+    new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 12);
   const runDir = path.join(CORPUS, 'runs', stamp);
   fs.mkdirSync(runDir, { recursive: true });
+  const resume = Boolean((process.env.EVAL_RESUME_STAMP || '').trim());
+  if (resume) console.log('resume mode', stamp);
 
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
   const teacher = await signIn(env, 'teacher');
@@ -490,25 +534,44 @@ async function main() {
 
     for (const v of variants) {
       const sourceId = `${entry.id}-${v.variant}-${stamp}`;
-      process.stdout.write(`… ${entry.id} ${v.variant} `);
+      const outPath = path.join(runDir, `${entry.id}__${v.variant}.json`);
       let result;
-      try {
-        result = await invokeIngest({
-          url: auth.url,
-          anon: auth.anon,
-          session: auth.session,
-          kind,
-          ids,
-          imageUrl: toDataUrl(v.file),
-          sourceId,
-        });
-      } catch (err) {
-        result = { status: 0, json: { error: String(err.message || err) } };
+      const existingOk =
+        resume &&
+        fs.existsSync(outPath) &&
+        (() => {
+          try {
+            const prev = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+            // Re-fetch quota empties and incomplete kills (0-byte / missing proposal).
+            if (isQuotaExhausted(prev)) return false;
+            const prop = prev.json?.proposal || prev.json;
+            if (!prop || typeof prop !== 'object') return false;
+            // Keep real results (including legitimate empty negatives).
+            return true;
+          } catch {
+            return false;
+          }
+        })();
+      if (existingOk) {
+        process.stdout.write(`… ${entry.id} ${v.variant} (cached) `);
+        result = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+      } else {
+        process.stdout.write(`… ${entry.id} ${v.variant} `);
+        try {
+          result = await invokeIngest({
+            url: auth.url,
+            anon: auth.anon,
+            session: auth.session,
+            kind,
+            ids,
+            imageUrl: toDataUrl(v.file),
+            sourceId,
+          });
+        } catch (err) {
+          result = { status: 0, json: { error: String(err.message || err) } };
+        }
+        fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
       }
-      fs.writeFileSync(
-        path.join(runDir, `${entry.id}__${v.variant}.json`),
-        JSON.stringify(result, null, 2),
-      );
       const proposal = result.json?.proposal || result.json;
       const fieldScores = scoreProposal(expected, proposal, meta);
       const sum = summarize(fieldScores);

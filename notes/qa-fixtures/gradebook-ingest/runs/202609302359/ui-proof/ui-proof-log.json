@@ -1,0 +1,40 @@
+{
+  "run": "202609302359",
+  "metro": "http://127.0.0.1:8091",
+  "cdp": "9223",
+  "edge": "https://aohibokgilxhqwmupdfv.supabase.co/functions/v1/ingest-grading-doc",
+  "function": { "name": "ingest-grading-doc", "version": 3, "status": "ACTIVE" },
+  "class_id": "d1715000-0000-4000-a000-000000000301",
+  "steps": ["teacher_syllabus_ready", "s01_done", "office_policy_ready", "h01_done", "h09_done", "n03_attempt"],
+  "shots": [
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302359/ui-proof/S01-photo-review-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302359/ui-proof/H01-policy-prefill-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302359/ui-proof/H09-qp-table-levels-375.png",
+    "notes/qa-fixtures/gradebook-ingest/runs/202609302359/ui-proof/N03-mixed-doc-warning-375.png"
+  ],
+  "tmp_copies": "/tmp/gb-ingest-eval-r2/",
+  "verdicts": {
+    "s01": {
+      "has_review_ui": true,
+      "friendly_labels": ["Course title", "Grade categories", "Late penalty", "Grading engine", "Inside a category"],
+      "label_counts": {
+        "Course title": 1,
+        "Grade categories": 1,
+        "Late penalty": 1,
+        "Grading engine": 1,
+        "Inside a category": 1
+      },
+      "warning_once": true,
+      "save_manual": true
+    },
+    "h01": { "api_field_accuracy": 0.86, "ui": "partial_could_not_read", "publish_manual": true },
+    "h09": { "api_field_accuracy": 1.0, "ui": "partial" },
+    "n03": { "api_field_accuracy": 1.0, "ui": "partial_harness" },
+    "s08": { "api_field_accuracy": 0.17, "ui": "missing_camera_settle" }
+  },
+  "failures": [
+    "S08 UI camera harness did not settle proposal",
+    "H01/H09 UI live ingest intermittently Could not read (API scores OK)",
+    "ui-personas office handle is teacher role"
+  ]
+}

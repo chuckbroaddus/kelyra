@@ -1,0 +1,126 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "a52ca583-8640-46c8-af32-e6df6d5949fd",
+    "proposal": {
+      "source_id": "S06-photo-202609302359",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Geometry",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Geometry",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S06-photo-202609302359"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Tests 50\nQuizzes 40\nHomework 20",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S06-photo-202609302359"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 50
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 40
+            },
+            {
+              "key": "homework",
+              "label": "Homework",
+              "weight_percent": 20
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests\t50\nQuizzes\t40\nHomework\t20",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S06-photo-202609302359"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "none"
+          },
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Hard deadline: no work accepted after the unit ends.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S06-photo-202609302359"
+        },
+        {
+          "path": "syllabus.floor",
+          "value": 50,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Period floor 50 / ceiling 100.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S06-photo-202609302359"
+        },
+        {
+          "path": "syllabus.ceiling",
+          "value": 100,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Period floor 50 / ceiling 100.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S06-photo-202609302359"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category weights are specified, but the within-category combination method (points or percent) is not explicitly stated on the document.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [
+        {
+          "code": "weights_total",
+          "message": "Category weights currently total 110%.",
+          "severity": "warn"
+        }
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9033333333333333
+    }
+  }
+}
