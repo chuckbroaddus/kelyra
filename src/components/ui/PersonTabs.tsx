@@ -48,6 +48,8 @@ export type PersonTab = {
   /** Class tabs: the class teacher’s face. Wins over `icon`. */
   photoUrl?: string | null;
   photoName?: string | null;
+  /** Custom glyph (e.g. gradebook period pie). Wins over `icon`; gets selected state. */
+  glyph?: (selected: boolean) => ReactNode;
   badge?: number;
 };
 
@@ -198,7 +200,9 @@ function PersonTabPill({
           />
           {hasGlyph ? (
             <View style={styles.glyph}>
-              {tab.photoName || tab.photoUrl ? (
+              {tab.glyph ? (
+                tab.glyph(selected)
+              ) : tab.photoName || tab.photoUrl ? (
                 <Avatar
                   name={tab.photoName || tab.label}
                   photoUrl={tab.photoUrl}
