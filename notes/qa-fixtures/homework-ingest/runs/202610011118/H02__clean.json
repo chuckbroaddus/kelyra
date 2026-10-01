@@ -1,0 +1,69 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Jordan Chen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "names": [],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "mixed number multiplication",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 2,
+      "teacherNote": "Only #4 correct; others show errors in mixed number conversion and multiplication.",
+      "studentName": "Jordan Chen",
+      "maxScore": 8,
+      "items": [
+        {
+          "n": 1,
+          "expected": "3 3/4",
+          "seen": "3 3/4",
+          "credit": 0,
+          "of": 2,
+          "gap": "mixed number multiplication"
+        },
+        {
+          "n": 2,
+          "expected": "1 1/2",
+          "seen": "1 1/2",
+          "credit": 0,
+          "of": 2,
+          "gap": "mixed number multiplication"
+        },
+        {
+          "n": 3,
+          "expected": "8 3/4",
+          "seen": "8 3/4",
+          "credit": 0,
+          "of": 2,
+          "gap": "mixed number multiplication"
+        },
+        {
+          "n": 4,
+          "expected": "2",
+          "seen": "2",
+          "credit": 2,
+          "of": 2,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

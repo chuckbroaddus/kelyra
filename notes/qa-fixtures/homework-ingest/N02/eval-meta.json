@@ -1,0 +1,9 @@
+{
+  "id": "N02",
+  "photo": false,
+  "hand": false,
+  "negative": true,
+  "soft_student": true,
+  "soft_score_tol": 12,
+  "multi_page": false
+}

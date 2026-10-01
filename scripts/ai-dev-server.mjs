@@ -72,8 +72,9 @@ const homeworkPrompt = `You are helping a K-12 teacher review one student's work
 Look only at the photo. Return JSON only, no markdown:
 {"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null"}
 Rules:
-- 1 to 3 gaps. Labels are short, like "two-digit regrouping" or "thesis clarity".
-- If the image is blank, unreadable, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
+- 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
+- draftScore MUST be a percentage 0-100 when you can fairly estimate (not raw item counts). Otherwise null.
+- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null}
 - Do not invent a student name or extra biography.`;
 
 function practicePrompt(skillLabel) {
@@ -1132,13 +1133,13 @@ const evaluatePrompt = `You are helping a K-12 teacher review one student's work
 The images are pages of one assignment, in order. Look at all pages together. Return JSON only, no markdown:
 {"studentName":null,"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"maxScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"expected":"answer","seen":"what they wrote","credit":1,"of":1,"gap":null}]}
 Rules:
-- studentName is required whenever a name is visible. Look at the top of the page first (header, Name:, printed label, handwriting). Copy the name as written. Do not invent a name. Prefer a roster spelling if it clearly matches.
-- 1 to 3 gaps for the whole assignment. Labels are short, like "two-digit regrouping" or "thesis clarity".
+- studentName is required whenever a name is visible. Look at the top of the page first (header, Name:, printed label, handwriting). Copy the name as written. Do not invent a name. Prefer a roster spelling if it clearly matches. If the Name line is blank, studentName must be null.
+- 1 to 3 gaps for the whole assignment ONLY when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". If work looks complete and correct, gaps may be [].
 - If an answer key is provided, score ONLY against that key. draftScore is points earned, maxScore is points possible. Do not invent items. If a blank cannot be read, credit=null and do not fail it.
-- If no key is provided, draftScore is a number 0-100 if you can fairly estimate, otherwise null. maxScore null.
+- If no key is provided, draftScore MUST be a percentage 0-100 (not raw item counts, not points out of N). Estimate fairness from visible answers. maxScore null.
 - items is required when a key is provided. expected is the key answer. seen is what is on the page. gap is a short skill or null.
-- If the images are blank, unreadable, or not student work, return {"studentName":null,"gaps":[],"draftScore":null,"maxScore":null,"teacherNote":null,"items":[]}
-- Do not invent extra biography.`;
+- If the images are blank, unreadable, a syllabus/grading-policy sheet, a teacher ANSWER KEY (no student name / "teacher use only"), a ceiling/wall, or otherwise not one student's completed work, return {"studentName":null,"gaps":[],"draftScore":null,"maxScore":null,"teacherNote":null,"items":[]}
+- Do not invent extra biography. Never invent a student name that is not on the page.`;
 
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
@@ -1501,8 +1502,8 @@ async function evaluateHomework(body) {
   const keyItems = Array.isArray(body.keyItems) ? body.keyItems : [];
   const keyNotes = String(body.keyNotes ?? '').trim();
   const scoreScheme = String(body.scoreScheme ?? 'numeric');
-  const maxScore = Number(body.maxScore);
-  const keyBlock = formatKeyForPrompt(keyItems, keyNotes, scoreScheme, Number.isFinite(maxScore) ? maxScore : null);
+  const bodyMaxScore = Number(body.maxScore);
+  const keyBlock = formatKeyForPrompt(keyItems, keyNotes, scoreScheme, Number.isFinite(bodyMaxScore) ? bodyMaxScore : null);
   const payload = await grokCall('homework', [
     {
       role: 'user',
@@ -1525,11 +1526,28 @@ async function evaluateHomework(body) {
   const draft = parseHomeworkDraft(parsed);
   const studentName =
     typeof parsed.studentName === 'string' ? parsed.studentName.replace(/\s+/g, ' ').trim() : '';
+  const items = parseScoredItems(parsed.items, keyItems);
+  // No teacher key: if the model returned per-item credit, convert to 0–100 percent.
+  let draftScore = draft.draftScore;
+  let outMaxScore =
+    typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(bodyMaxScore) ? bodyMaxScore : null;
+  if (!keyItems.length && items.length) {
+    const of = items.reduce((s, it) => s + (typeof it.of === 'number' && it.of > 0 ? it.of : 1), 0);
+    const cr = items.reduce(
+      (s, it) => s + (typeof it.credit === 'number' && Number.isFinite(it.credit) ? it.credit : 0),
+      0,
+    );
+    if (of > 0 && (draftScore == null || draftScore <= of + 0.01)) {
+      draftScore = Math.round((cr / of) * 100);
+      outMaxScore = 100;
+    }
+  }
   return {
     ...draft,
+    draftScore,
     studentName: studentName || null,
-    maxScore: typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(maxScore) ? maxScore : null,
-    items: parseScoredItems(parsed.items, keyItems),
+    maxScore: outMaxScore,
+    items,
     costUsd: payload.__kelyraUsd ?? null,
     model: payload.__kelyraModel ?? null,
     pass,
@@ -1585,9 +1603,16 @@ function parseHomeworkDraft(parsed) {
         .filter((gap) => gap.label)
         .slice(0, 3)
     : [];
+  let draftScore = typeof parsed.draftScore === 'number' ? parsed.draftScore : null;
+  // Without a key, coerce obvious point-counts (1–20) is left to the model;
+  // clamp absurd values only.
+  if (typeof draftScore === 'number' && Number.isFinite(draftScore)) {
+    if (draftScore < 0) draftScore = 0;
+    if (draftScore > 100) draftScore = 100;
+  }
   return {
     gaps,
-    draftScore: typeof parsed.draftScore === 'number' ? parsed.draftScore : null,
+    draftScore,
     teacherNote: typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
   };
 }

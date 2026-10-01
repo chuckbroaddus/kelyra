@@ -1,0 +1,83 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Riley Brooks",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "percentages"
+        }
+      ],
+      "fields": [
+        {
+          "label": "problem1",
+          "value": "10% of 50 = 5"
+        },
+        {
+          "label": "problem2",
+          "value": "25% of 80 = 20"
+        },
+        {
+          "label": "problem3",
+          "value": "90% of 12 = ?"
+        }
+      ],
+      "names": [
+        {
+          "name": "Riley Brooks",
+          "confidence": 0.95
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "percent of a number",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "5",
+          "seen": "5",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "15",
+          "seen": "20",
+          "credit": 0,
+          "of": 1,
+          "gap": "percent of a number"
+        },
+        {
+          "n": 3,
+          "expected": "6",
+          "seen": "7",
+          "credit": 0,
+          "of": 1,
+          "gap": "percent of a number"
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.9,
+      "studentGuessId": null,
+      "studentGuessName": "Sam Patel",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "vocabulary"
+        },
+        {
+          "label": "biology"
+        }
+      ],
+      "fields": [
+        {
+          "label": "photosynthesis",
+          "value": "plants make food from light"
+        },
+        {
+          "label": "cell",
+          "value": "basic unit of life"
+        },
+        {
+          "label": "nucleus",
+          "value": "control center"
+        }
+      ],
+      "names": [
+        {
+          "name": "Sam Patel",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 3,
+      "teacherNote": "Incomplete work; only filled in the provided word bank phrases without own definitions.",
+      "studentName": "Sam",
+      "maxScore": 6,
+      "items": [
+        {
+          "n": 1,
+          "expected": "process by which plants make food from light",
+          "seen": "plants make food from light",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 2,
+          "expected": "basic unit of life",
+          "seen": "basic unit of life",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        },
+        {
+          "n": 3,
+          "expected": "control center",
+          "seen": "control center",
+          "credit": 1,
+          "of": 1,
+          "gap": null
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}

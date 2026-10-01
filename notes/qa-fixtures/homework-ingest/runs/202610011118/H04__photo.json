@@ -1,0 +1,95 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Casey Nguyen",
+      "parentGuessName": null,
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "integer operations"
+        }
+      ],
+      "fields": [
+        {
+          "label": "name",
+          "value": "Casey Nguyen"
+        },
+        {
+          "label": "date",
+          "value": "9/30/2026"
+        },
+        {
+          "label": "period",
+          "value": "P3"
+        }
+      ],
+      "names": [
+        {
+          "name": "Casey Nguyen",
+          "confidence": 0.9
+        }
+      ],
+      "note": null
+    }
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "integer subtraction",
+          "sortOrder": 1
+        },
+        {
+          "label": "signed number multiplication",
+          "sortOrder": 2
+        }
+      ],
+      "draftScore": null,
+      "teacherNote": "multiple sign errors on integer ops",
+      "studentName": "Casey Nguyen",
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "expected": "-11",
+          "seen": "5",
+          "credit": 0,
+          "of": 2,
+          "gap": "integer subtraction"
+        },
+        {
+          "n": 2,
+          "expected": "14",
+          "seen": "6",
+          "credit": 0,
+          "of": 2,
+          "gap": "signed number multiplication"
+        },
+        {
+          "n": 3,
+          "expected": "-15",
+          "seen": "-15",
+          "credit": 2,
+          "of": 2,
+          "gap": null
+        },
+        {
+          "n": 4,
+          "expected": "-8",
+          "seen": "-3",
+          "credit": 0,
+          "of": 2,
+          "gap": "integer subtraction"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "grok-4.20-0309-non-reasoning",
+      "pass": "cheap"
+    }
+  }
+}
