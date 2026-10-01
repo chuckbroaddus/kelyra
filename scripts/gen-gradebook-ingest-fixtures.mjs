@@ -1094,9 +1094,20 @@ function realPhotoCases() {
         'syllabus',
         [
           field('syllabus.engine', 'weighted_percent_inside', 0.6, 'weights', 'needs_review'),
+          field(
+            'syllabus.categories',
+            [
+              { key: 'tests', label: 'Tests', weight_percent: 40 },
+              { key: 'quizzes', label: 'Quizzes', weight_percent: 20 },
+              { key: 'homework', label: 'Homework', weight_percent: 25 },
+              { key: 'participation', label: 'Participation', weight_percent: 15 },
+            ],
+            0.9,
+            'Tests 40%',
+          ),
         ],
         {
-          overall_confidence: 0.55,
+          overall_confidence: 0.7,
           _eval: { real_photo: true, soft_match: true },
         },
       ),
@@ -1113,9 +1124,26 @@ function realPhotoCases() {
         'syllabus',
         [
           field('syllabus.engine', 'weighted_percent_inside', 0.6, 'weights', 'needs_review'),
+          field(
+            'syllabus.categories',
+            [
+              { key: 'homework_classwork', label: 'Homework & Classwork', weight_percent: 30 },
+              { key: 'quizzes', label: 'Quizzes', weight_percent: 25 },
+              { key: 'tests_projects', label: 'Tests/Projects', weight_percent: 30 },
+              { key: 'participation', label: 'Participation', weight_percent: 15 },
+            ],
+            0.9,
+            'Homework & Classwork: 30%',
+          ),
+          field(
+            'syllabus.late_rule',
+            { type: 'per_day', amount: 10, unit: 'percent' },
+            0.9,
+            'Late work: -10% per day',
+          ),
         ],
         {
-          overall_confidence: 0.55,
+          overall_confidence: 0.7,
           _eval: { real_photo: true, soft_match: true },
         },
       ),

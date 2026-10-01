@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "89883ec0-ab92-4375-84c5-624747691078",
+    "proposal": {
+      "source_id": "H02-clean-202610010202",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "nine_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Marking periods are nine weeks.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610010202"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "40/40/20",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Semester = Q1 40% + Q2 40% + Exam 20%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H02-clean-202610010202"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "nine_weeks",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Marking periods are nine weeks.",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H02-clean-202610010202"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.8833333333333333
+    }
+  }
+}

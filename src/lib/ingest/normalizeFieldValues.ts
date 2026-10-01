@@ -22,13 +22,14 @@ function num(v: unknown): number | null {
 }
 
 function slugKey(label: string, i: number): string {
-  return (
-    label
-      .toLowerCase()
-      .replace(/[^a-z0-9_]+/g, '_')
-      .replace(/^_|_$/g, '')
-      .slice(0, 32) || `cat_${i + 1}`
-  );
+  const base = String(label ?? '')
+    .toLowerCase()
+    .replace(/\b(grades?|work|assignments?)\b/g, ' ')
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .replace(/_+/g, '_')
+    .slice(0, 32);
+  return base || `cat_${i + 1}`;
 }
 
 function evidenceOk(ev: IngestEvidence | undefined | null): boolean {
@@ -634,8 +635,9 @@ function looksMixedDocument(proposal: {
 }): boolean {
   const guess = (proposal.document_kind_guess || '').toLowerCase();
   if (guess === 'mixed' || guess.includes('two_doc') || guess.includes('multi')) return true;
-  for (const w of proposal.warnings) {
-    const m = `${w.code} ${w.message}`.toLowerCase();
+  for (const w of proposal.warnings || []) {
+    if (!w || typeof w !== 'object') continue;
+    const m = `${w.code ?? ''} ${w.message ?? ''}`.toLowerCase();
     if (/mixed|two\s+(syllabi|documents|policies)|multiple\s+documents|two\s+classes/.test(m)) {
       return true;
     }
@@ -690,6 +692,9 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   let pendingLateFloor: number | null = null;
   let pendingLateFloorEv: IngestEvidence | null = null;
   let pendingLateFloorSrc: string | null = null;
+  let pendingMissingFloor: number | null = null;
+  let pendingMissingFloorEv: IngestEvidence | null = null;
+  let pendingMissingFloorSrc: string | null = null;
 
   for (const f of fields) {
     const path = f.path;
@@ -711,7 +716,17 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       case 'syllabus.late_rule': {
         const lr = coerceLateRule(value);
         if (lr) value = lr;
-        else if (value != null) {
+        else if (value != null && typeof value === 'object' && !Array.isArray(value)) {
+          const o = value as Record<string, unknown>;
+          // floor-only objects from model
+          const fl = num(o.floor_pct ?? o.floor);
+          if (fl != null && o.type == null) {
+            value = { type: 'none', floor_pct: fl };
+          } else {
+            status = 'needs_review';
+            confidence = Math.min(confidence, 0.6);
+          }
+        } else if (value != null) {
           status = 'needs_review';
           confidence = Math.min(confidence, 0.6);
         }
@@ -799,7 +814,37 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
           confidence = Math.min(confidence, 0.4);
           break;
         }
+        // "Missing work uses a floor of 50" is missing_rule, not period floor
+        if (
+          /missing/.test(q) &&
+          /floor/.test(q) &&
+          !/period|average|marking|six-?week|report|semester/.test(q)
+        ) {
+          const fl = num(value);
+          if (fl != null) {
+            (f as IngestField & { _missing_floor?: number })._missing_floor = fl;
+          }
+          value = null;
+          status = 'unknown';
+          confidence = Math.min(confidence, 0.4);
+          break;
+        }
         value = num(value);
+        break;
+      }
+      case 'syllabus.title': {
+        if (typeof value === 'string') {
+          const quote = quoteText(ev).trim();
+          // Prefer the fuller verbatim title from evidence when the model truncated it
+          if (
+            quote &&
+            quote.length > value.length &&
+            !isPlaceholderQuote(quote) &&
+            quote.toLowerCase().includes(value.toLowerCase().slice(0, 8))
+          ) {
+            value = quote.replace(/\s+/g, ' ').trim().slice(0, 160);
+          }
+        }
         break;
       }
       case 'syllabus.ceiling':
@@ -808,6 +853,18 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       case 'credit.passing_threshold':
       case 'scale.passing_pct': {
         value = num(value);
+        break;
+      }
+      case 'credit.year_link': {
+        if (typeof value === 'string') {
+          const s = value.toLowerCase().trim();
+          if (/^(true|yes|1|paired|required|both|year.?link)$/.test(s) || /pair|both\s+must|fall and spring/.test(s)) {
+            value = true;
+          } else if (/^(false|no|0|independent|separate)$/.test(s)) {
+            value = false;
+          }
+        } else if (value === 1) value = true;
+        else if (value === 0) value = false;
         break;
       }
       case 'syllabus.extra_credit_method': {
@@ -879,11 +936,31 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         break;
       }
       case 'gpa.include': {
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (typeof value === 'string') {
+          const s = value.toLowerCase();
+          if (/exclud|not\s+(counted|included)|omit/.test(s)) {
+            if (/recovery/.test(s) && /pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) {
+              value = { recovery: false, pre_9: false };
+            } else {
+              const cleaned: Record<string, boolean> = {};
+              if (/recovery/.test(s)) cleaned.recovery = false;
+              if (/pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s)) cleaned.pre_9 = false;
+              value = Object.keys(cleaned).length ? cleaned : { recovery: false, pre_9: false };
+            }
+          } else {
+            value = {
+              recovery: /recovery/.test(s) ? true : false,
+              pre_9: /pre[-_\s]?9|pre[-_\s]?grade|before\s+grade\s*9/.test(s) ? true : false,
+            };
+          }
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
           const o = value as Record<string, unknown>;
-          const outInc: Record<string, unknown> = { ...o };
-          if ('pre_9' in o && !('pre9' in o)) outInc.pre9 = o.pre_9;
-          value = outInc;
+          const outInc: Record<string, unknown> = {};
+          if ('recovery' in o) outInc.recovery = Boolean(o.recovery);
+          if ('pre_9' in o) outInc.pre_9 = Boolean(o.pre_9);
+          else if ('pre9' in o) outInc.pre_9 = Boolean(o.pre9);
+          if ('summer' in o) outInc.summer = Boolean(o.summer);
+          value = Object.keys(outInc).length ? outInc : o;
         }
         break;
       }
@@ -893,6 +970,20 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
           if (/forgive|higher|replace/.test(s)) value = { policy: 'forgive_higher' };
           else if (/both|include_both/.test(s)) value = { policy: 'include_both' };
           else if (/average/.test(s)) value = { policy: 'average' };
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+          const o = value as Record<string, unknown>;
+          if (typeof o.policy === 'string') {
+            const s = o.policy.toLowerCase();
+            if (/forgive|higher|replace/.test(s)) value = { policy: 'forgive_higher' };
+            else if (/both|include_both/.test(s)) value = { policy: 'include_both' };
+            else if (/average/.test(s)) value = { policy: 'average' };
+            else value = { policy: o.policy };
+          } else {
+            const blob = JSON.stringify(o).toLowerCase();
+            if (/forgive|higher|replace/.test(blob)) value = { policy: 'forgive_higher' };
+            else if (/both/.test(blob)) value = { policy: 'include_both' };
+            else if (/average/.test(blob)) value = { policy: 'average' };
+          }
         }
         break;
       }
@@ -919,6 +1010,24 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
           status: 'needs_review',
           source_doc_id: f.source_doc_id,
         };
+      } else if (value === 'trimester') {
+        derivedPeriod = {
+          path: 'calendar.period_model',
+          value: 'trimester',
+          confidence: Math.min(confidence, 0.75),
+          evidence: ev,
+          status: 'needs_review',
+          source_doc_id: f.source_doc_id,
+        };
+      } else if (value === 'semester') {
+        derivedPeriod = {
+          path: 'calendar.period_model',
+          value: 'semester',
+          confidence: Math.min(confidence, 0.75),
+          evidence: ev,
+          status: 'needs_review',
+          source_doc_id: f.source_doc_id,
+        };
       }
     }
 
@@ -928,6 +1037,12 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       pendingLateFloor = lateFloor;
       pendingLateFloorEv = ev;
       pendingLateFloorSrc = f.source_doc_id;
+    }
+    const missingFloor = (f as IngestField & { _missing_floor?: number })._missing_floor;
+    if (missingFloor != null) {
+      pendingMissingFloor = missingFloor;
+      pendingMissingFloorEv = ev;
+      pendingMissingFloorSrc = f.source_doc_id;
     }
 
     if (value == null && f.value != null) {
@@ -982,6 +1097,23 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
     }
   }
 
+  // Missing-work floor mis-mapped to syllabus.floor → missing_rule
+  if (pendingMissingFloor != null && !byPath.has('syllabus.missing_rule')) {
+    byPath.set('syllabus.missing_rule', {
+      path: 'syllabus.missing_rule',
+      value: { type: 'floor', floor: pendingMissingFloor },
+      confidence: 0.88,
+      evidence:
+        pendingMissingFloorEv ?? {
+          quote: `floor of ${pendingMissingFloor}`,
+          page: 1,
+          region: null,
+        },
+      status: 'proposed',
+      source_doc_id: pendingMissingFloorSrc,
+    });
+  }
+
   // Drop zero-weight "categories" when engine is total_points (assignment point lists)
   const engField = byPath.get('syllabus.engine');
   const catField = byPath.get('syllabus.categories');
@@ -994,10 +1126,9 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
     byPath.delete('syllabus.categories');
   }
 
-  // qp.method without tables → drop (bonus-guess pattern)
+  // qp.method without tables → drop (letter_map / bonus-guess noise)
   if (byPath.has('qp.method') && !byPath.has('qp.tables')) {
-    const m = byPath.get('qp.method');
-    if (m?.value === 'numeric_band') byPath.delete('qp.method');
+    byPath.delete('qp.method');
   }
   // qp.tables without method → add numeric_band
   if (byPath.has('qp.tables') && !byPath.has('qp.method')) {
@@ -1081,8 +1212,8 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
   };
 }
 
-function normMsg(s: string): string {
-  return s
+function normMsg(s: unknown): string {
+  return String(s ?? '')
     .toLowerCase()
     .replace(/^ambiguity:\s*/i, '')
     .replace(/[^a-z0-9]+/g, ' ')
@@ -1095,8 +1226,9 @@ export function dedupeWarningsAndAmbiguities(
 ): { warnings: IngestWarning[]; ambiguities: IngestAmbiguity[] } {
   const seen = new Set<string>();
   const outA: IngestAmbiguity[] = [];
-  for (const a of ambiguities) {
-    const k = `${a.code}|${normMsg(a.message)}`;
+  for (const a of ambiguities || []) {
+    if (!a || typeof a !== 'object') continue;
+    const k = `${a.code ?? ''}|${normMsg(a.message)}`;
     if (seen.has(k)) continue;
     seen.add(k);
     // Also reserve message-only so warning with same meaning drops
@@ -1104,13 +1236,16 @@ export function dedupeWarningsAndAmbiguities(
     outA.push(a);
   }
   const outW: IngestWarning[] = [];
-  for (const w of warnings) {
+  for (const w of warnings || []) {
+    if (!w || typeof w !== 'object') continue;
     const msgKey = `msg|${normMsg(w.message)}`;
-    const codeKey = `${w.code}|${normMsg(w.message)}`;
+    const codeKey = `${w.code ?? ''}|${normMsg(w.message)}`;
     if (seen.has(msgKey) || seen.has(codeKey)) continue;
     // near-dup: within_category warnings when ambiguity exists
     if (
-      /within_category|items (inside|within) a category|combine inside/i.test(w.code + w.message) &&
+      /within_category|items (inside|within) a category|combine inside/i.test(
+        `${w.code ?? ''} ${w.message ?? ''}`,
+      ) &&
       outA.some((a) => a.code === 'within_category')
     ) {
       continue;
@@ -1127,5 +1262,14 @@ export function schoolProposalHasCore(proposal: IngestProposal): boolean {
   const paths = new Set(proposal.fields.filter((f) => f.value != null).map((f) => f.path));
   const hasCal = paths.has('calendar.template') || paths.has('calendar.period_model');
   const hasRoll = paths.has('rollup.preset') || paths.has('rollup.custom_weights');
-  return proposal.fields.length > 0 && (hasCal || hasRoll || paths.has('credit.passing_threshold'));
+  const hasGpa =
+    paths.has('levels.list') ||
+    paths.has('gpa.mode') ||
+    paths.has('gpa.repeat') ||
+    paths.has('gpa.include') ||
+    paths.has('qp.tables');
+  return (
+    proposal.fields.length > 0 &&
+    (hasCal || hasRoll || paths.has('credit.passing_threshold') || hasGpa)
+  );
 }

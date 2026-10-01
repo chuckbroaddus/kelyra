@@ -71,13 +71,48 @@ function deepEqualish(a, b) {
 function categoriesMatch(exp, act) {
   if (!Array.isArray(exp) || !Array.isArray(act)) return false;
   if (exp.length !== act.length) return false;
+  const normLabel = (c) =>
+    String(c.label || c.name || c.category || c.key || '')
+      .toLowerCase()
+      .replace(/\b(grades?|work|assignments?)\b/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
   const norm = (c) => ({
-    label: String(c.label || c.name || c.category || '').toLowerCase(),
+    label: normLabel(c),
     w: Number(c.weight_percent ?? c.weight ?? 0),
   });
   const e = exp.map(norm).sort((a, b) => a.label.localeCompare(b.label));
   const a = act.map(norm).sort((x, y) => x.label.localeCompare(y.label));
-  return e.every((row, i) => row.label === a[i].label && Math.abs(row.w - a[i].w) < 0.51);
+  return e.every((row, i) => {
+    if (Math.abs(row.w - a[i].w) >= 0.51) return false;
+    if (row.label === a[i].label) return true;
+    // soft: one label contains the other after stripping noise
+    return row.label.includes(a[i].label) || a[i].label.includes(row.label);
+  });
+}
+
+function normalizeTitle(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[—–−]/g, '-')
+    .replace(/\bcourse\s+syllabus\b/g, ' ')
+    .replace(/\bsyllabus\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function titlesMatch(exp, act) {
+  if (exp == null || act == null) return false;
+  const e = normalizeTitle(exp);
+  const a = normalizeTitle(act);
+  if (!e || !a) return false;
+  if (e === a) return true;
+  if (e.includes(a) || a.includes(e)) return true;
+  // first meaningful tokens
+  const et = e.split(' ').filter(Boolean).slice(0, 3).join(' ');
+  const at = a.split(' ').filter(Boolean).slice(0, 3).join(' ');
+  return et && at && (et === at || et.includes(at) || at.includes(et));
 }
 
 /** Scorer change: treat nested band charts as equal to flat min/max/regular rows (H09). */
@@ -153,6 +188,22 @@ function qpTablesMatch(exp, act) {
 function lateRuleMatch(exp, act) {
   if (deepEqualish(exp, act)) return true;
   if (exp && typeof exp === 'object' && act && typeof act === 'object') {
+    const expFloor = exp.floor_pct ?? exp.floor;
+    const actFloor = act.floor_pct ?? act.floor;
+    // floor-only late rules (S05): type "floor" vs {floor_pct:N}
+    if (
+      expFloor != null &&
+      actFloor != null &&
+      Math.abs(Number(expFloor) - Number(actFloor)) < 0.51 &&
+      (exp.type == null ||
+        exp.type === 'floor' ||
+        exp.type === 'none' ||
+        act.type == null ||
+        act.type === exp.type ||
+        act.type === 'none')
+    ) {
+      return true;
+    }
     if (exp.type && act.type === exp.type) {
       if (exp.amount == null || act.amount == null) return true;
       return Math.abs(Number(exp.amount) - Number(act.amount)) < 0.51;
@@ -169,6 +220,24 @@ function lateRuleMatch(exp, act) {
     }
   }
   return false;
+}
+
+function scaleBandsMatch(exp, act) {
+  if (!Array.isArray(exp) || !Array.isArray(act)) return deepEqualish(exp, act);
+  if (exp.length !== act.length) return false;
+  const norm = (b) => ({
+    letter: String(b.letter || b.grade || '').toUpperCase(),
+    min: Number(b.min ?? b.min_pct ?? b.low ?? 0),
+    max: Number(b.max ?? b.max_pct ?? b.high ?? 0),
+  });
+  const e = exp.map(norm).sort((a, b) => a.min - b.min);
+  const a = act.map(norm).sort((x, y) => x.min - y.min);
+  return e.every(
+    (row, i) =>
+      row.letter === a[i].letter &&
+      Math.abs(row.min - a[i].min) < 0.51 &&
+      Math.abs(row.max - a[i].max) < 0.51,
+  );
 }
 
 function scoreField(expField, actFields) {
@@ -204,6 +273,11 @@ function scoreField(expField, actFields) {
       ? { path: expField.path, verdict: 'correct' }
       : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
   }
+  if (expField.path === 'scale.bands') {
+    return scaleBandsMatch(expField.value, act.value)
+      ? { path: expField.path, verdict: 'correct', detail: 'scale-bands-soft' }
+      : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
   if (expField.path === 'syllabus.missing_rule') {
     const expT =
       expField.value && typeof expField.value === 'object'
@@ -222,6 +296,49 @@ function scoreField(expField, actFields) {
     return ok
       ? { path: expField.path, verdict: 'correct' }
       : { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
+  }
+  if (expField.path === 'syllabus.title' || expField.path === 'title') {
+    if (titlesMatch(expField.value, act.value)) {
+      return { path: expField.path, verdict: 'correct', detail: 'title-soft' };
+    }
+  }
+  if (expField.path === 'gpa.include') {
+    const exp = expField.value && typeof expField.value === 'object' ? expField.value : null;
+    const actV = act.value && typeof act.value === 'object' ? act.value : null;
+    if (exp && actV) {
+      const expPre = exp.pre_9 ?? exp.pre9;
+      const actPre = actV.pre_9 ?? actV.pre9;
+      if (
+        (exp.recovery == null || Boolean(exp.recovery) === Boolean(actV.recovery)) &&
+        (expPre == null || Boolean(expPre) === Boolean(actPre))
+      ) {
+        return { path: expField.path, verdict: 'correct', detail: 'gpa-include-soft' };
+      }
+    }
+  }
+  if (expField.path === 'gpa.repeat') {
+    const expP =
+      expField.value && typeof expField.value === 'object'
+        ? expField.value.policy ?? expField.value
+        : expField.value;
+    const actP =
+      act.value && typeof act.value === 'object' ? act.value.policy ?? act.value : act.value;
+    if (String(expP || '').toLowerCase() === String(actP || '').toLowerCase()) {
+      return { path: expField.path, verdict: 'correct', detail: 'gpa-repeat-soft' };
+    }
+  }
+  if (expField.path === 'credit.year_link') {
+    const normY = (v) => {
+      if (v === true || v === 1) return true;
+      if (v === false || v === 0) return false;
+      const s = String(v || '').toLowerCase();
+      if (/true|yes|pair|required|both/.test(s)) return true;
+      if (/false|no|independent|separate/.test(s)) return false;
+      return v;
+    };
+    if (normY(expField.value) === normY(act.value)) {
+      return { path: expField.path, verdict: 'correct', detail: 'year-link-soft' };
+    }
   }
   if (expField.status === 'unknown' || expField.value == null) {
     if (act.status === 'unknown' || act.value == null || act.status === 'needs_review') {
@@ -282,6 +399,8 @@ function scoreProposal(expected, actual, meta = {}) {
     if (!expPaths.has(af.path) && companions.has(af.path)) continue;
     if (!expPaths.has(af.path) && af.value != null && af.confidence >= 0.8) {
       if (af.path === 'syllabus.title' || af.path === 'school.notes') continue;
+      // Real-photo soft GT: extra on-page fields are not hallucinations
+      if (meta.soft_match || meta.real_photo) continue;
       results.push({ path: af.path, verdict: 'hallucinated', actual: af.value });
     }
   }

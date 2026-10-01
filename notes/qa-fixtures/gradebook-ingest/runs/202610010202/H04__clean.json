@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "14345b77-b3a6-414c-bb10-dfc26a501953",
+    "proposal": {
+      "source_id": "H04-clean-202610010202",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "trimester",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "The year is three trimesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202610010202"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "50/50",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "For two-term courses, rollup is 50/50 (no separate exam).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202610010202"
+        },
+        {
+          "path": "credit.year_link",
+          "value": "paired",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Year-link: fall and spring must both be passed for full credit (paired).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H04-clean-202610010202"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9700000000000001
+    }
+  }
+}

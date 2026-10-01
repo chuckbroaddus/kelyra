@@ -26,10 +26,13 @@ Hard rules:
 - If the image shows TWO syllabi / two handbooks / two classes on one page: set document_kind_guess to "mixed", empty fields[], and a block warning asking the teacher to retake each document separately (FR-AI-13).
 - Handwritten or blurry photos: first silently transcribe readable lines into a working transcript, then extract ONLY facts the transcript supports. Low OCR → empty + warning, do not invent policy.
 - Candidates (Texas 6-week, 70-pass, 2/7 rollup, Honors +0.5 / AP +1.0) are MATCH options, not forced facts (FR-AI-17).
-- Do NOT invent defaults (engine, floor, missing_rule, categories, qp.method) when the page is silent.
+- Do NOT invent defaults (engine, floor, missing_rule, categories, qp.method, late_rule) when the page is silent.
+- Never emit qp.method without a full qp.tables chart on the page. Bonus-only / letter-scale language is levels.list + gpa.mode — not letter_map method.
 - Letter scale / passing threshold is NOT a rollup.preset.
 - Late-work floor is late_rule.floor_pct — not syllabus.floor (period floor only when the page says period/average floor).
+- "Missing work uses a floor of N" → syllabus.missing_rule {type:floor, floor:N} — never syllabus.floor alone.
 - Hard deadline / "no work after unit ends" → late_rule type none — never missing_rule zero.
+- Title: keep the full heading text from the page (do not strip "Course Syllabus" / year suffixes).
 `.trim();
 
 const SYLLABUS_FEW_SHOT = `
@@ -64,6 +67,13 @@ Text: "97–100: Regular 4.0 · Honors 5.0 · AP 6.0. 93–96: 3.8 / 4.8 / 5.8."
 {"path":"qp.tables","value":[{"min_pct":97,"max_pct":100,"points_by_level":{"regular":4,"honors":5,"ap":6}},{"min_pct":93,"max_pct":96,"points_by_level":{"regular":3.8,"honors":4.8,"ap":5.8}}],"confidence":0.95,"evidence":{"quote":"97–100: Regular 4.0 · Honors 5.0 · AP 6.0","page":1},"status":"proposed"}
 {"path":"levels.list","value":[{"key":"regular","label":"Regular","weighted_bonus":0},{"key":"honors","label":"Honors","weighted_bonus":0.5},{"key":"ap","label":"AP","weighted_bonus":1}],"confidence":0.9,"evidence":{"quote":"Regular 4.0 · Honors 5.0 · AP 6.0","page":1},"status":"proposed"}
 Never emit qp.method without qp.tables rows. Map level synonyms: Pre-AP→preap, DC/Dual→dual_credit, IB Higher Level→ib_hl, IB SL→ib_sl, OnRamps→onramps, on-level/Regular→regular.
+
+Levels / repeat / include example (GPA rules page without calendar):
+Text: "Levels include Honors (+0.5), AP (+1.0), and OnRamps (weighted like Dual Credit). Repeat/forgive: higher grade replaces the lower. Credit recovery and pre-grade-9 courses are excluded from cumulative GPA."
+{"path":"levels.list","value":[{"key":"honors","label":"Honors","weighted_bonus":0.5},{"key":"ap","label":"AP","weighted_bonus":1},{"key":"onramps","label":"OnRamps","weighted_bonus":1}],"confidence":0.9,"evidence":{"quote":"Honors (+0.5), AP (+1.0), and OnRamps","page":1},"status":"proposed"}
+{"path":"gpa.repeat","value":{"policy":"forgive_higher"},"confidence":0.9,"evidence":{"quote":"higher grade replaces the lower","page":1},"status":"proposed"}
+{"path":"gpa.include","value":{"recovery":false,"pre_9":false},"confidence":0.88,"evidence":{"quote":"Credit recovery and pre-grade-9 courses are excluded","page":1},"status":"proposed"}
+When the page is only levels/GPA rules, emit those fields — do not invent calendar/rollup just to fill the schema.
 `.trim();
 
 export function buildIngestSystemPreamble(kind: PromptKind): string {
@@ -75,9 +85,10 @@ Allowed paths: ${paths}`;
 }
 
 export function buildHandwritingTranscribePrompt(): string {
-  return `You are a careful OCR assistant for teacher documents.
+  return `You are a careful OCR assistant for teacher documents (typed OR handwritten).
 Return JSON only: {"transcript":"full readable text in reading order","quality":"typed"|"handwritten"|"mixed"|"unreadable","notes":"optional"}.
-Copy letters and numbers you can see. Do not invent policy. If unreadable, transcript="" and quality="unreadable".`;
+Copy letters and numbers you can see, including category weights (e.g. 60/40), floors, late rules, and retake language.
+Do not invent policy. If unreadable, transcript="" and quality="unreadable".`;
 }
 
 export function buildSyllabusIngestPrompt(opts?: { class_id?: string; source_id?: string }): string {
@@ -110,6 +121,9 @@ Mapping targets (FR-AI-05 syllabus):
 - floor/ceiling, book_mode, exam_weight, rollup_preset, title, narrative for unmapped philosophy
 Ambiguity rules (FR-AI-06): weights without how items combine → within_category unknown + ambiguity card.
 "No late work" → late.type none. "10% per day" → per_day 10 percent.
+"Missing work uses a floor of 50" → missing_rule {type:floor, floor:50} (not syllabus.floor).
+"Retake replaces the old score" → retake {method:replace, attempts:1}.
+"Method B" / "extra credit method B" → syllabus.extra_credit_method "B" (A|B|C only).
 "Lowest quiz dropped" → drop_lowest on that category. SBG/ungrading → engine none, do not coerce.
 Only a letter scale → do not invent categories; leave engine unknown.
 Exam as category → warning, do not invent term grades.
@@ -158,8 +172,9 @@ Mapping targets (FR-AI-05 school policy):
 - rollup.preset (${ROLLUP_PRESETS.join(', ')}) — FORCE preset selection when 2/7+1/7 or 40/40/20 language appears; do not leave only custom_weights
 - credit.policy {unit, year_link, attendance_gate}, credit.passing_threshold
 - scale.bands / scale.list / scale.passing_pct / scale.rounding
-- gpa.mode off|unweighted|unweighted_and_weighted; gpa.profiles; levels.list (Honors/AP/IB/Dual)
-- qp.tables / qp.method (letter_map|numeric_band|percent_map) — full numeric charts as rows {min_pct,max_pct,points_by_level}; never flatten to +1.0 bonus only
+- gpa.mode off|unweighted|unweighted_and_weighted; gpa.profiles; levels.list (Honors/AP/IB/Dual/OnRamps)
+- gpa.repeat {policy: forgive_higher|include_both|average}; gpa.include {recovery, pre_9} when the page states exclusions
+- qp.tables / qp.method (letter_map|numeric_band|percent_map) — full numeric charts as rows {min_pct,max_pct,points_by_level}; never flatten to +1.0 bonus only; never invent qp.method alone
 - levels.list keys: regular, honors, preap, ap, ib_hl, ib_sl, dual_credit, onramps, modified, local (with weighted_bonus or table column)
 - locks.map if who-may-edit is stated; school.notes for unmapped philosophy
 "Six weeks" + "exam 1/7" → tx_six_weeks + 2/7+1/7.

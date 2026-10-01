@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "d1480d7e-62d9-46a9-8f92-b69726e9c11e",
+    "proposal": {
+      "source_id": "N01-clean-202610010202",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "unreadable_document",
+          "message": "The provided image is blank, extremely blurry, or contains no readable text to extract a syllabus grading contract. Please provide a clear, legible syllabus document.",
+          "severity": "block"
+        },
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}
