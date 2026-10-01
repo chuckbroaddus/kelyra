@@ -1,0 +1,190 @@
+{
+  "status": 200,
+  "json": {
+    "pageState": "filled",
+    "header": "Chemistry Unit 2 — Key",
+    "items": [
+      {
+        "n": 1,
+        "stem": "Atomic number is the number of (A neutrons B electrons C protons)",
+        "answer": "C",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "n": 2,
+        "stem": "Group 18 elements are (A metals B noble gases)",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "n": 3,
+        "stem": "Formula for table salt",
+        "answer": "NaCl",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 0.95
+      },
+      {
+        "n": 4,
+        "stem": "Bond formed by sharing electrons",
+        "answer": "covalent",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 0.95
+      },
+      {
+        "n": 5,
+        "stem": "Valence electrons in neon",
+        "answer": "8",
+        "points": 1,
+        "needsTeacher": false,
+        "note": "or \"eight\"",
+        "type": "numeric",
+        "confidence": 0.9
+      },
+      {
+        "n": 6,
+        "stem": "Most reactive metal group (A 1 B 2 C 17)",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "n": 7,
+        "stem": "Reaction that releases heat",
+        "answer": "exothermic",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 0.95
+      },
+      {
+        "n": 8,
+        "stem": "pH of a strong base (A 2 B 7 C 9 D 13)",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "n": 9,
+        "stem": "Molar mass of water (g/mol)",
+        "answer": "18",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "numeric",
+        "confidence": 0.95
+      },
+      {
+        "n": 10,
+        "stem": "Bond between Na and Cl",
+        "answer": "ionic",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 0.95
+      }
+    ],
+    "maxScore": 10,
+    "teacherNote": null,
+    "reject": false,
+    "phash": "007e7e7e7e7e7e00",
+    "layout": [
+      0.26053921568627453,
+      0.5127450980392156,
+      0.495343137254902,
+      0.48970588235294116,
+      0.46568627450980393,
+      0.43504901960784315,
+      0.4053921568627451,
+      0.3058823529411765,
+      0.3879901960784314,
+      0.921078431372549,
+      0.9164215686274509,
+      0.9186274509803921,
+      0.9458333333333333,
+      0.9174019607843137,
+      0.9598039215686275,
+      0.6360294117647058,
+      0.43651960784313726,
+      0.9063725490196078,
+      0.9122549019607843,
+      0.9730392156862745,
+      0.984313725490196,
+      0.8933823529411765,
+      0.9553921568627451,
+      0.5909313725490196,
+      0.49730392156862746,
+      0.9080882352941176,
+      0.9232843137254902,
+      0.9781862745098039,
+      0.983578431372549,
+      0.8872549019607843,
+      0.9637254901960784,
+      0.5355392156862745,
+      0.5598039215686275,
+      0.9865196078431373,
+      0.9860294117647059,
+      0.9865196078431373,
+      0.986764705882353,
+      0.9789215686274509,
+      0.9813725490196078,
+      0.47377450980392155,
+      0.6191176470588236,
+      0.9857843137254902,
+      0.9877450980392157,
+      0.9870098039215687,
+      0.986764705882353,
+      0.9860294117647059,
+      0.9845588235294118,
+      0.4235294117647059,
+      0.6605392156862745,
+      0.9872549019607844,
+      0.9852941176470589,
+      0.9833333333333333,
+      0.9823529411764705,
+      0.9833333333333333,
+      0.9870098039215687,
+      0.3622549019607843,
+      0.2901960784313726,
+      0.3786764705882353,
+      0.40808823529411764,
+      0.43676470588235294,
+      0.46715686274509804,
+      0.5029411764705882,
+      0.5392156862745098,
+      0.23848039215686276
+    ]
+  }
+}
