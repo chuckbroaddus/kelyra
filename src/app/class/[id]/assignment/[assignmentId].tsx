@@ -64,6 +64,7 @@ type KeyAnalysis = {
   teacherNote?: string | null;
   phash?: string | null;
   layout?: number[] | null;
+  reject?: boolean;
 };
 
 export default function AssignmentEditScreen() {
@@ -338,7 +339,13 @@ export default function AssignmentEditScreen() {
       if (url) {
         analysis = await invokeAi<KeyAnalysis>('analyze-answer-key', { imageUrl: url });
       }
+      if ((analysis as { reject?: boolean }).reject) {
+        throw new Error(analysis.teacherNote || 'That photo does not look like an answer key.');
+      }
       const items = parseKeyItems(analysis.items);
+      if (!items.length) {
+        throw new Error('No key items found — check the photo and try again.');
+      }
       const previous = value.keyAssetId;
       setValue((current) => ({
         ...current,

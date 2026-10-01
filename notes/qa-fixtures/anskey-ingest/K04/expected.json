@@ -1,0 +1,38 @@
+{
+  "source_id": "K04",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Chapter 4 Check — KEY",
+  "maxScore": 7,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Area of a 3×4 rectangle.",
+      "answer": "12",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "Perimeter of same rectangle.",
+      "answer": "14",
+      "points": 2,
+      "needsTeacher": false,
+      "note": "Partial: 1 pt if only length+width without ×2.",
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "Explain why units are cm².",
+      "answer": "",
+      "points": 3,
+      "needsTeacher": true,
+      "note": "Award 1–3 for reasoning quality.",
+      "type": "work"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

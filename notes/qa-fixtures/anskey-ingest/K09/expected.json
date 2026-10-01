@@ -1,0 +1,44 @@
+{
+  "source_id": "K09",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "Mixed Practice KEY",
+  "maxScore": 6,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Capital of France?",
+      "answer": "A",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "6² =",
+      "answer": "36",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "Antonym of hot:",
+      "answer": "cold",
+      "points": 2,
+      "needsTeacher": false,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "2+2?",
+      "answer": "C",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

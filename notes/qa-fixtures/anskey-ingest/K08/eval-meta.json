@@ -1,0 +1,7 @@
+{
+  "no_hallucinate_extra_items": true,
+  "stated_count": 10,
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

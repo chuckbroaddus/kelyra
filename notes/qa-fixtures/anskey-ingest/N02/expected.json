@@ -1,0 +1,16 @@
+{
+  "source_id": "N02",
+  "kind": "negative",
+  "pageState": "unsure",
+  "header": null,
+  "maxScore": null,
+  "teacherNote": null,
+  "items": [],
+  "reject": true,
+  "warnings": [
+    {
+      "code": "not_answer_key",
+      "message": "Syllabus / grading policy"
+    }
+  ]
+}

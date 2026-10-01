@@ -1,0 +1,6 @@
+{
+  "no_hallucinate_answers": true,
+  "photo": false,
+  "kind": "answer_key",
+  "negative": false
+}

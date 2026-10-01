@@ -1,0 +1,16 @@
+{
+  "source_id": "N03",
+  "kind": "negative",
+  "pageState": "unsure",
+  "header": null,
+  "maxScore": null,
+  "teacherNote": null,
+  "items": [],
+  "reject": true,
+  "warnings": [
+    {
+      "code": "not_answer_key",
+      "message": "Roster"
+    }
+  ]
+}

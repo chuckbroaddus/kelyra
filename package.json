@@ -16,7 +16,8 @@
     "thumbs": "node scripts/backfill-photo-thumbs.mjs",
     "pptx:extract": "node scripts/extract-pptx.mjs",
     "pptx:lesson": "node scripts/lesson-from-pptx.mjs",
-    "eval:ingest": "SKIP_RENDER=1 node scripts/gen-gradebook-ingest-fixtures.mjs && node scripts/render-gradebook-ingest-pngs.mjs && node scripts/eval-gradebook-ingest.mjs"
+    "eval:ingest": "SKIP_RENDER=1 node scripts/gen-gradebook-ingest-fixtures.mjs && node scripts/render-gradebook-ingest-pngs.mjs && node scripts/eval-gradebook-ingest.mjs",
+    "eval:anskey": "node scripts/gen-anskey-ingest-fixtures.mjs && node scripts/render-anskey-ingest-pngs.mjs && node scripts/eval-anskey-ingest.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

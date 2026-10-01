@@ -1,0 +1,36 @@
+{
+  "source_id": "K14",
+  "kind": "answer_key",
+  "pageState": "blank",
+  "header": "Reflection Journal Rubric Key",
+  "maxScore": 3,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Describe a challenge you faced this week.",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "work"
+    },
+    {
+      "n": 2,
+      "stem": "What will you try differently?",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "work"
+    },
+    {
+      "n": 3,
+      "stem": "How did a classmate help you?",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "work"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

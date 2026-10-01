@@ -1,0 +1,44 @@
+{
+  "source_id": "K10",
+  "kind": "answer_key",
+  "pageState": "unsure",
+  "header": "Lab Safety KEY (draft)",
+  "maxScore": 4,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "Wear goggles?",
+      "answer": "Yes",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 2,
+      "stem": "Eat in lab?",
+      "answer": "No",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "mc"
+    },
+    {
+      "n": 3,
+      "stem": "Spill acid — first step:",
+      "answer": "",
+      "points": 1,
+      "needsTeacher": true,
+      "type": "short"
+    },
+    {
+      "n": 4,
+      "stem": "Fire exit is on the",
+      "answer": "left",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "short"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}

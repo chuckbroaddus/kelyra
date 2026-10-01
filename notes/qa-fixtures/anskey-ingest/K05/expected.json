@@ -1,0 +1,44 @@
+{
+  "source_id": "K05",
+  "kind": "answer_key",
+  "pageState": "filled",
+  "header": "HW 8 key (hand)",
+  "maxScore": 4,
+  "teacherNote": null,
+  "items": [
+    {
+      "n": 1,
+      "stem": "9+7 =",
+      "answer": "16",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 2,
+      "stem": "20÷4 =",
+      "answer": "5",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 3,
+      "stem": "half of 18 =",
+      "answer": "9",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    },
+    {
+      "n": 4,
+      "stem": "2³ =",
+      "answer": "8",
+      "points": 1,
+      "needsTeacher": false,
+      "type": "numeric"
+    }
+  ],
+  "reject": false,
+  "warnings": []
+}
