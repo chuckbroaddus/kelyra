@@ -85,6 +85,8 @@ type ClassifyResult = {
   fields: { label: string; value: string }[];
   names: { name: string; confidence: number }[];
   note: string | null;
+  other_plates_seen?: string[];
+  vehicle_reject_reason?: string | null;
 };
 
 type HomeworkVision = {

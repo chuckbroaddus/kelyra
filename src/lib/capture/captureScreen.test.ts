@@ -141,7 +141,8 @@ test('ride-lpr returns make/model and front/back plates', () => {
   assert.match(edge, /"make"/);
   assert.match(edge, /"model"/);
   assert.match(edge, /document_kind/);
-  assert.match(edge, /Access-Control-Allow-Origin/);
+  assert.match(edge, /Deno\.serve\(withCors\(handleRideLpr\)\)/);
+  assert.match(readFileSync(join(process.cwd(), 'supabase/functions/_shared/cors.ts'), 'utf8'), /Access-Control-Allow-Origin/);
   assert.match(edge, /Never invent a person/);
 });
 
