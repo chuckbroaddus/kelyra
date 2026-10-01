@@ -1,0 +1,85 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "coffee_stain",
+    "pen_marks",
+    "background_clutter",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3909,
+    "background": "wood",
+    "scale": 0.8,
+    "rotate": -6,
+    "jitter": 0.005,
+    "stains": [
+      {
+        "target": "primary",
+        "field": "birthday",
+        "fx": 0.45,
+        "fy": 0.5,
+        "r": 42,
+        "fill": 0.62,
+        "strength": 1.25
+      }
+    ],
+    "pen": [
+      {
+        "type": "line",
+        "pts": [
+          [
+            0.05,
+            0.75
+          ],
+          [
+            0.2,
+            0.78
+          ],
+          [
+            0.3,
+            0.74
+          ]
+        ],
+        "width": 3
+      },
+      {
+        "type": "doodle",
+        "at": [
+          0.88,
+          0.85
+        ],
+        "width": 2.5
+      }
+    ],
+    "clutter": [
+      {
+        "kind": "paper",
+        "cx": 0.88,
+        "cy": 0.1,
+        "w": 0.4,
+        "h": 0.32,
+        "angle": 14
+      },
+      {
+        "kind": "pen",
+        "cx": 0.08,
+        "cy": 0.5,
+        "w": 0.025,
+        "h": 0.28,
+        "angle": -20
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.2,
+        -0.3
+      ],
+      "amount": 0.12,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 60
+  }
+}

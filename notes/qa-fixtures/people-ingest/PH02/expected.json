@@ -1,0 +1,65 @@
+{
+  "source_id": "PH02",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.85,
+  "parentGuessName": null,
+  "studentGuessName": "Nathaniel Osei-Bonsu",
+  "fields": [
+    {
+      "label": "preferred name",
+      "value": "Nate"
+    },
+    {
+      "label": "date of birth",
+      "value": "2014-06-02"
+    },
+    {
+      "label": "grade",
+      "value": "6"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Abena Osei-Bonsu"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-417-9038"
+    },
+    {
+      "label": "allergies",
+      "value": "strawberries"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "preferred_name",
+      "value": "Nate"
+    },
+    {
+      "key": "birthday",
+      "value": "2014-06-02"
+    },
+    {
+      "key": "grade_or_age",
+      "value": "6"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Abena Osei-Bonsu"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-417-9038"
+    },
+    {
+      "key": "allergies",
+      "value": "strawberries"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null
+}

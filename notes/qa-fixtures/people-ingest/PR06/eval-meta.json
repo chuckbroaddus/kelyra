@@ -1,0 +1,30 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "heavy_jpeg_x2",
+    "downscale_820",
+    "defocus_blur"
+  ],
+  "degrade": {
+    "seed": 3606,
+    "background": "white_desk",
+    "scale": 0.84,
+    "rotate": -2,
+    "jitter": 0.004,
+    "defocus": 1,
+    "light": {
+      "gradient": [
+        0.2,
+        0.2
+      ],
+      "amount": 0.1,
+      "vignette": 0.2
+    },
+    "noise": 4,
+    "outWidth": 820,
+    "jpeg": 28,
+    "jpeg2": 22
+  }
+}

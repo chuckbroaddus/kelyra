@@ -1,0 +1,85 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Tobias Lindgren",
+      "field": null,
+      "box": [
+        276.7,
+        101,
+        105.9,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "preferred_name",
+      "box": [
+        276.7,
+        139,
+        31.7,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "box": [
+        276.7,
+        177,
+        74,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "box": [
+        276.7,
+        215,
+        8.3,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "box": [
+        276.7,
+        253,
+        135.1,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "box": [
+        276.7,
+        291,
+        93.4,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "box": [
+        276.7,
+        329,
+        35,
+        17
+      ]
+    }
+  ]
+}

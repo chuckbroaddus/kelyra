@@ -54,12 +54,30 @@ async function main() {
     const dir = path.join(CORPUS, id);
     const html = path.join(dir, 'source.html');
     const png = path.join(dir, 'clean.png');
+    const only = (process.env.RENDER_ONLY || '').split(',').filter(Boolean);
+    if (only.length && !only.includes(id)) continue;
     if (process.env.SKIP_EXISTING === '1' && fs.existsSync(png)) {
       console.log('skip', id);
       continue;
     }
     await page.goto(pathToFileURL(html).href, { waitUntil: 'load', timeout: 15000 });
     await page.screenshot({ path: png, type: 'png', fullPage: false });
+    // GT boxes (data-gt-name / data-gt-field + data-gt-for) → layout.json for degrade-people-fixtures.mjs
+    const layout = await page.evaluate(() => {
+      const items = [];
+      document.querySelectorAll('[data-gt-name],[data-gt-field]').forEach((el) => {
+        const b = el.getBoundingClientRect();
+        const d = el.dataset;
+        items.push({
+          kind: d.gtName ? 'name' : 'field',
+          name: d.gtName || d.gtFor || 'primary',
+          field: d.gtField || null,
+          box: [b.left, b.top, b.width, b.height].map((v) => Math.round(v * 10) / 10),
+        });
+      });
+      return { viewport: { w: window.innerWidth, h: window.innerHeight }, items };
+    });
+    if (layout.items.length) fs.writeFileSync(path.join(dir, 'layout.json'), JSON.stringify(layout, null, 2) + '\n');
     try {
       const st = fs.statSync(png);
       if (st.size > 380000) spawnSync('sips', ['-Z', '1000', png], { timeout: 10000 });

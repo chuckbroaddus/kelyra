@@ -1,0 +1,85 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Leo Marchetti",
+      "field": null,
+      "box": [
+        276.7,
+        101,
+        90.9,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "box": [
+        276.7,
+        139,
+        115.9,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "box": [
+        276.7,
+        177,
+        8.3,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "address",
+      "box": [
+        276.7,
+        215,
+        175.7,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "box": [
+        276.7,
+        253,
+        140.9,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "box": [
+        276.7,
+        291,
+        93.4,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "box": [
+        276.7,
+        329,
+        59.2,
+        17
+      ]
+    }
+  ]
+}

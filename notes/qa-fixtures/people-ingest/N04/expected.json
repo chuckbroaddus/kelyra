@@ -1,0 +1,23 @@
+{
+  "source_id": "N04",
+  "kind": "negative",
+  "intent": "unsure",
+  "confidence": 0.88,
+  "parentGuessName": null,
+  "studentGuessName": null,
+  "fields": [],
+  "mapped": [],
+  "records": [],
+  "names": [],
+  "reject": true,
+  "accept_intents": [
+    "unsure",
+    "feed_photo",
+    "lesson_materials",
+    "lesson_plan",
+    "homework",
+    "syllabus",
+    "answer_key"
+  ],
+  "note": null
+}

@@ -1,0 +1,47 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "page_curl",
+    "rotation_8deg",
+    "glare_hotspot",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 4010,
+    "background": "dark_desk",
+    "scale": 0.84,
+    "rotate": -8,
+    "jitter": 0.004,
+    "curl": {
+      "side": "right",
+      "width": 0.2,
+      "angle": 75,
+      "depth": 0.55,
+      "lift": 16
+    },
+    "glare": [
+      {
+        "target": "primary",
+        "field": "email",
+        "fx": 0.85,
+        "fy": 0.5,
+        "rx": 0.06,
+        "ry": 0.025,
+        "angle": -8,
+        "strength": 1.7
+      }
+    ],
+    "light": {
+      "gradient": [
+        -0.3,
+        0.3
+      ],
+      "amount": 0.14,
+      "vignette": 0.35
+    },
+    "noise": 6,
+    "jpeg": 55
+  }
+}

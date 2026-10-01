@@ -1,0 +1,44 @@
+{
+  "kind": "negative",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "crumple",
+    "low_light_noise",
+    "rotation_6deg",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 6205,
+    "background": "carpet",
+    "scale": 0.82,
+    "rotate": -6,
+    "jitter": 0.006,
+    "crumple": {
+      "amp": 7,
+      "cell": 120,
+      "shade": 0.18,
+      "creases": 6
+    },
+    "lowlight": {
+      "exposure": 0.6,
+      "gamma": 1.2,
+      "cast": [
+        1.05,
+        0.95,
+        0.8
+      ]
+    },
+    "noise": 10,
+    "light": {
+      "gradient": [
+        0.4,
+        0.3
+      ],
+      "amount": 0.2,
+      "vignette": 0.4
+    },
+    "jpeg": 48
+  },
+  "negative": true
+}

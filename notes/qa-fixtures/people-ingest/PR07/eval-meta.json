@@ -1,0 +1,56 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "multi_adult": true,
+  "multi_record": true,
+  "rough": true,
+  "effects": [
+    "keystone_side",
+    "cut_off_right_edge",
+    "background_clutter",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3707,
+    "background": "fabric",
+    "scale": 0.98,
+    "rotate": 3,
+    "offset": [
+      0.12,
+      -0.02
+    ],
+    "keystone": {
+      "left": 1.04,
+      "right": 0.88
+    },
+    "jitter": 0.004,
+    "clutter": [
+      {
+        "kind": "folder",
+        "cx": 0.15,
+        "cy": 0.9,
+        "w": 0.5,
+        "h": 0.3,
+        "angle": -6
+      },
+      {
+        "kind": "sticky",
+        "cx": 0.1,
+        "cy": 0.08,
+        "w": 0.16,
+        "h": 0.12,
+        "angle": 9
+      }
+    ],
+    "light": {
+      "gradient": [
+        0.3,
+        0.2
+      ],
+      "amount": 0.14,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 52
+  }
+}

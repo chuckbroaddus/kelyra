@@ -1,0 +1,92 @@
+{
+  "source_id": "PR07",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Adaeze Okonjo",
+  "studentGuessName": "Ruby Okonjo-Starr",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-288-6104"
+    },
+    {
+      "label": "email",
+      "value": "adaeze.okonjo@example.com"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-288-6104"
+    },
+    {
+      "key": "email",
+      "value": "adaeze.okonjo@example.com"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Adaeze Okonjo",
+      "relationship": "mother",
+      "phone": "555-288-6104",
+      "email": "adaeze.okonjo@example.com"
+    },
+    {
+      "role": "parent",
+      "name": "Martin Starr",
+      "relationship": "stepfather",
+      "phone": "555-288-6190",
+      "email": "m.starr@example.net"
+    },
+    {
+      "role": "parent",
+      "name": "Florence Okonjo",
+      "relationship": "grandmother",
+      "phone": "555-731-4425"
+    },
+    {
+      "role": "student",
+      "name": "Ruby Okonjo-Starr"
+    }
+  ],
+  "names": [
+    {
+      "name": "Adaeze Okonjo",
+      "confidence": 0.85
+    },
+    {
+      "name": "Martin Starr",
+      "confidence": 0.85
+    },
+    {
+      "name": "Florence Okonjo",
+      "confidence": 0.85
+    },
+    {
+      "name": "Ruby Okonjo-Starr",
+      "confidence": 0.85
+    }
+  ],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [
+        "email"
+      ],
+      "eye": "adult 1 email cut at frame edge after adaeze.okonjo@example; adult 2 email and all phones fully visible"
+    }
+  }
+}

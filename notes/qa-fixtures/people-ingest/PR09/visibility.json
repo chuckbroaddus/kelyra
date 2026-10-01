@@ -1,0 +1,184 @@
+{
+  "id": "PR09",
+  "frame": [
+    1500,
+    2000
+  ],
+  "page": [
+    840,
+    1100
+  ],
+  "page_corners": [
+    [
+      66,
+      288
+    ],
+    [
+      1264,
+      160
+    ],
+    [
+      1435,
+      1713
+    ],
+    [
+      222,
+      1840
+    ]
+  ],
+  "items": [
+    {
+      "kind": "name",
+      "name": "Tobias Lindgren",
+      "field": null,
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        485,
+        376,
+        619,
+        406
+      ],
+      "page_box": [
+        277,
+        101,
+        106,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "preferred_name",
+      "inframe": 1,
+      "visible": 0.58,
+      "suggest": "uncertain",
+      "frame_box": [
+        484,
+        440,
+        525,
+        460
+      ],
+      "page_box": [
+        277,
+        139,
+        32,
+        17
+      ],
+      "reasons": {
+        "stain": 10
+      }
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "birthday",
+      "inframe": 1,
+      "visible": 0.17,
+      "suggest": "absent",
+      "frame_box": [
+        493,
+        487,
+        587,
+        512
+      ],
+      "page_box": [
+        277,
+        177,
+        74,
+        17
+      ],
+      "reasons": {
+        "stain": 20
+      }
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "grade_or_age",
+      "inframe": 1,
+      "visible": 0.67,
+      "suggest": "uncertain",
+      "frame_box": [
+        493,
+        549,
+        505,
+        566
+      ],
+      "page_box": [
+        277,
+        215,
+        8,
+        17
+      ],
+      "reasons": {
+        "stain": 8
+      }
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_name",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        509,
+        584,
+        680,
+        618
+      ],
+      "page_box": [
+        277,
+        253,
+        135,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "emergency_phone",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        511,
+        644,
+        630,
+        672
+      ],
+      "page_box": [
+        277,
+        291,
+        93,
+        17
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "allergies",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        511,
+        705,
+        557,
+        726
+      ],
+      "page_box": [
+        277,
+        329,
+        35,
+        17
+      ],
+      "reasons": {}
+    }
+  ]
+}

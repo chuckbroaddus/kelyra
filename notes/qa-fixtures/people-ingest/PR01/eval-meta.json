@@ -1,0 +1,49 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "rough": true,
+  "effects": [
+    "strong_keystone",
+    "motion_blur",
+    "low_light_noise",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3101,
+    "background": "dark_desk",
+    "scale": 0.9,
+    "rotate": 2,
+    "offset": [
+      0,
+      0.02
+    ],
+    "keystone": {
+      "top": 1.06,
+      "bottom": 0.72
+    },
+    "jitter": 0.008,
+    "motion": {
+      "len": 6,
+      "angle": 20
+    },
+    "lowlight": {
+      "exposure": 0.62,
+      "gamma": 1.2,
+      "cast": [
+        1.05,
+        0.95,
+        0.8
+      ]
+    },
+    "noise": 10,
+    "light": {
+      "gradient": [
+        0.6,
+        -0.4
+      ],
+      "amount": 0.25,
+      "vignette": 0.45
+    },
+    "jpeg": 42
+  }
+}

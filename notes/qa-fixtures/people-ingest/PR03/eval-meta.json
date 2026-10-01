@@ -1,0 +1,36 @@
+{
+  "kind": "parent_card",
+  "photo": false,
+  "multi_adult": true,
+  "multi_record": true,
+  "rough": true,
+  "effects": [
+    "crumple",
+    "creases",
+    "rotation_5deg",
+    "jpeg_artifacts"
+  ],
+  "degrade": {
+    "seed": 3303,
+    "background": "wood",
+    "scale": 0.86,
+    "rotate": -5,
+    "jitter": 0.006,
+    "crumple": {
+      "amp": 7,
+      "cell": 120,
+      "shade": 0.18,
+      "creases": 7
+    },
+    "light": {
+      "gradient": [
+        0.4,
+        0.2
+      ],
+      "amount": 0.14,
+      "vignette": 0.3
+    },
+    "noise": 6,
+    "jpeg": 50
+  }
+}

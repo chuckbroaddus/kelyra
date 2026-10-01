@@ -1,0 +1,74 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "name",
+      "name": "Gabriel Fontaine",
+      "field": null,
+      "box": [
+        276.7,
+        101,
+        110.9,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "relationship",
+      "box": [
+        276.7,
+        139,
+        43.4,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "phone",
+      "box": [
+        276.7,
+        177,
+        93.4,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "email",
+      "box": [
+        276.7,
+        215,
+        166.2,
+        17
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "primary",
+      "field": "preferred_contact",
+      "box": [
+        276.7,
+        253,
+        37.5,
+        17
+      ]
+    },
+    {
+      "kind": "name",
+      "name": "Elise Fontaine",
+      "field": null,
+      "box": [
+        276.7,
+        291,
+        95.1,
+        17
+      ]
+    }
+  ]
+}

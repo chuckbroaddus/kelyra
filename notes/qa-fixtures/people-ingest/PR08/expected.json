@@ -1,0 +1,72 @@
+{
+  "source_id": "PR08",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Priyanka Raman",
+  "studentGuessName": "Dev Raman",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-614-2289"
+    },
+    {
+      "label": "email",
+      "value": "praman.family@example.com"
+    },
+    {
+      "label": "address",
+      "value": "45 Orchard Hill Rd"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-614-2289"
+    },
+    {
+      "key": "email",
+      "value": "praman.family@example.com"
+    },
+    {
+      "key": "address",
+      "value": "45 Orchard Hill Rd"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Priyanka Raman",
+      "relationship": "mother",
+      "phone": "555-614-2289",
+      "email": "praman.family@example.com"
+    },
+    {
+      "role": "student",
+      "name": "Dev Raman"
+    }
+  ],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [
+        "phone",
+        "email",
+        "address"
+      ],
+      "eye": "very dark and soft: names and Mother readable, digits/email/address only barely"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "source_id": "PH04",
+  "kind": "student_card",
+  "intent": "student_card",
+  "confidence": 0.85,
+  "parentGuessName": null,
+  "studentGuessName": "Isabella Thornton",
+  "fields": [
+    {
+      "label": "grade",
+      "value": "4"
+    },
+    {
+      "label": "date of birth",
+      "value": "2015-03-15"
+    },
+    {
+      "label": "emergency contact",
+      "value": "Ruth Thornton"
+    },
+    {
+      "label": "emergency phone",
+      "value": "555-240-1736"
+    },
+    {
+      "label": "allergies",
+      "value": "amoxicillin"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "grade_or_age",
+      "value": "4"
+    },
+    {
+      "key": "birthday",
+      "value": "2015-03-15"
+    },
+    {
+      "key": "emergency_name",
+      "value": "Ruth Thornton"
+    },
+    {
+      "key": "emergency_phone",
+      "value": "555-240-1736"
+    },
+    {
+      "key": "allergies",
+      "value": "amoxicillin"
+    }
+  ],
+  "records": [],
+  "names": [],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [],
+      "eye": "crumpled dim pencil, all legible; old number visibly scribbled"
+    },
+    "crossed_out": [
+      "555-240-1188"
+    ]
+  }
+}

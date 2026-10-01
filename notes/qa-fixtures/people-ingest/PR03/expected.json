@@ -1,0 +1,88 @@
+{
+  "source_id": "PR03",
+  "kind": "parent_card",
+  "intent": "parent_card",
+  "confidence": 0.85,
+  "parentGuessName": "Simone Delacroix",
+  "studentGuessName": "Owen Delacroix",
+  "fields": [
+    {
+      "label": "relationship",
+      "value": "mother"
+    },
+    {
+      "label": "phone",
+      "value": "555-419-7720"
+    },
+    {
+      "label": "email",
+      "value": "simone.d@example.com"
+    },
+    {
+      "label": "address",
+      "value": "62 Brookside Dr"
+    }
+  ],
+  "mapped": [
+    {
+      "key": "relationship",
+      "value": "mother"
+    },
+    {
+      "key": "phone",
+      "value": "555-419-7720"
+    },
+    {
+      "key": "email",
+      "value": "simone.d@example.com"
+    },
+    {
+      "key": "address",
+      "value": "62 Brookside Dr"
+    }
+  ],
+  "records": [
+    {
+      "role": "parent",
+      "name": "Simone Delacroix",
+      "relationship": "mother",
+      "phone": "555-419-7720",
+      "email": "simone.d@example.com"
+    },
+    {
+      "role": "parent",
+      "name": "Julien Delacroix",
+      "relationship": "father",
+      "phone": "555-419-7735",
+      "email": "julien.delacroix@example.net"
+    },
+    {
+      "role": "student",
+      "name": "Owen Delacroix"
+    }
+  ],
+  "names": [
+    {
+      "name": "Simone Delacroix",
+      "confidence": 0.85
+    },
+    {
+      "name": "Julien Delacroix",
+      "confidence": 0.85
+    },
+    {
+      "name": "Owen Delacroix",
+      "confidence": 0.85
+    }
+  ],
+  "reject": false,
+  "accept_intents": null,
+  "note": null,
+  "_eval": {
+    "rough_gt": {
+      "absent": [],
+      "uncertain": [],
+      "eye": "crumple/creases cross rows but both guardians fully legible"
+    }
+  }
+}

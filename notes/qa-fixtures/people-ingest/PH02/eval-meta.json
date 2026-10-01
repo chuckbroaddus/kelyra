@@ -1,0 +1,8 @@
+{
+  "kind": "student_card",
+  "photo": false,
+  "handwritten": true,
+  "no_hallucinate_empty": [
+    "health_conditions"
+  ]
+}

@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRoughCases } from './lib/people-rough-cases.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -789,6 +790,9 @@ CASES.push({
   meta: { negative: true },
 });
 
+// Rough phone-photo + handwritten parent-filled cases (PR01–PR10, PH01–PH04, N04–N05):
+// see scripts/lib/people-rough-cases.mjs
+CASES.push(...buildRoughCases({ expected }));
 
 function main() {
   ensureDir(OUT);
@@ -800,13 +804,26 @@ function main() {
     write(path.join(dir, 'expected.json'), c.expected);
     write(
       path.join(dir, 'notes.md'),
-      `# ${c.id}\n\n${c.notes}\n\nKind: ${c.kind}\nPhoto: ${c.photo ? 'yes' : 'no'}\nFields: ${(c.fields || []).join(', ')}\n`,
+      `# ${c.id}\n\n${c.notes}\n\nKind: ${c.kind}\nPhoto: ${c.photo ? 'yes' : 'no'}\nFields: ${(c.fields || []).join(', ')}\n` +
+        (c.rough ? `Rough: yes (rough.jpg) — effects: ${(c.effects || []).join(', ')}\n` : '') +
+        (c.hand ? 'Handwritten: yes (parent-filled)\n' : '') +
+        (c.multiAdult ? 'Multi-adult: yes\n' : ''),
     );
-    write(path.join(dir, 'eval-meta.json'), { kind: c.kind, photo: Boolean(c.photo), ...(c.meta || {}) });
+    write(path.join(dir, 'eval-meta.json'), {
+      kind: c.kind,
+      photo: Boolean(c.photo),
+      ...(c.hand ? { handwritten: true } : {}),
+      ...(c.multiAdult ? { multi_adult: true, multi_record: true } : {}),
+      ...(c.rough ? { rough: true, effects: c.effects ?? [], degrade: c.degrade } : {}),
+      ...(c.meta || {}),
+    });
     manifest.cases.push({
       id: c.id,
       kind: c.kind,
       photo: Boolean(c.photo),
+      ...(c.hand ? { handwritten: true } : {}),
+      ...(c.multiAdult ? { multi_adult: true } : {}),
+      ...(c.rough ? { rough: true, effects: c.effects ?? [] } : {}),
       fields_exercised: c.fields || [],
       files: ['source.html', 'expected.json', 'notes.md', 'eval-meta.json'],
     });
