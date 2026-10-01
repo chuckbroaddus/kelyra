@@ -1,12 +1,17 @@
 /**
  * AC-ASK-INBOX-1..3 — teacher who can open /inbox can list_inbox from Ask.
- * Source + policy assertions (no live network).
+ * Behavioral (mocked listInbox) + source/policy walls. No live model calls.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
+import {
+  isListInboxTeachSeat,
+  runAskListInbox,
+  type AskListInboxCapture,
+} from './askListInbox.ts';
 import {
   ASK_TOOL_POLICY,
   grantsFromAskDefaults,
@@ -20,7 +25,7 @@ function read(rel: string): string {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-function listInboxRunBlock(): string {
+function listInboxWiring(): string {
   const ask = read('src/lib/ai/askTools.ts');
   const start = ask.indexOf('  list_inbox: {');
   assert.ok(start >= 0, 'list_inbox tool missing');
@@ -29,24 +34,119 @@ function listInboxRunBlock(): string {
   return ask.slice(start, end);
 }
 
-test('AC-ASK-INBOX-1 list_inbox stays; calls listInbox; empty list is success path', () => {
-  const block = listInboxRunBlock();
-  assert.match(block, /name:\s*["']list_inbox["']/);
-  assert.match(block, /listInbox\(/);
-  assert.match(block, /items\.slice\(0,\s*40\)/);
-  // No Approve / delete / send from this tool.
-  assert.doesNotMatch(block, /approveCapture|deleteCapture|sendMessage|send_message/);
+const sampleItems: AskListInboxCapture[] = [
+  {
+    id: 'cap-1',
+    status: 'draft',
+    ai_status: 'ready',
+    student_id: 'stu-1',
+    matchedName: 'Jordan Lee',
+  },
+];
+
+test('AC-ASK-INBOX-1 Teach seat lists inbox even when teacherId is null', async () => {
+  let calledWith: string | null = null;
+  const result = await runAskListInbox(
+    {},
+    { live: { role: 'teacher' }, classId: 'class-math-3' },
+    {
+      listInbox: async (classId) => {
+        calledWith = classId;
+        return sampleItems;
+      },
+    },
+  );
+  assert.equal(calledWith, 'class-math-3');
+  assert.equal(result.class_id, 'class-math-3');
+  assert.deepEqual(result.items, [
+    {
+      id: 'cap-1',
+      status: 'draft',
+      ai_status: 'ready',
+      student_id: 'stu-1',
+      matched_name: 'Jordan Lee',
+    },
+  ]);
+  assert.equal('error' in result, false);
+  assert.doesNotMatch(JSON.stringify(result), /teacher seat required/i);
 });
 
-test('AC-ASK-INBOX-1/2 Teach seat lists without teacherId / Teacher seat required refusal', () => {
-  const block = listInboxRunBlock();
-  // DITL finding: !teacherId returned "Teacher seat required." while /inbox worked.
+test('AC-ASK-INBOX-1 empty capture list is success, not refusal', async () => {
+  const result = await runAskListInbox(
+    { class_id: 'class-empty' },
+    { live: { role: 'teacher' }, classId: null },
+    { listInbox: async () => [] },
+  );
+  assert.equal(result.class_id, 'class-empty');
+  assert.deepEqual(result.items, []);
+  assert.equal('error' in result, false);
+});
+
+test('AC-ASK-INBOX-1 passed class_id wins over open class', async () => {
+  let calledWith: string | null = null;
+  await runAskListInbox(
+    { class_id: 'class-b' },
+    { live: { role: 'teacher' }, classId: 'class-a' },
+    {
+      listInbox: async (classId) => {
+        calledWith = classId;
+        return [];
+      },
+    },
+  );
+  assert.equal(calledWith, 'class-b');
+});
+
+test('AC-ASK-INBOX-2 never returns Teacher seat required', async () => {
+  const result = await runAskListInbox(
+    {},
+    { live: { role: 'teacher' }, classId: 'c1' },
+    { listInbox: async () => sampleItems },
+  );
+  const blob = JSON.stringify(result);
+  assert.doesNotMatch(blob, /Teacher seat required/i);
+  assert.doesNotMatch(blob, /teacher seat required/i);
+  assert.doesNotMatch(blob, /Teacher sign-in is required/i);
+});
+
+test('AC-ASK-INBOX-3 parent / student / office seats cannot list', async () => {
+  for (const role of ['parent', 'student', 'administrator', 'superintendent'] as const) {
+    const result = await runAskListInbox(
+      { class_id: 'class-math-3' },
+      { live: { role }, classId: 'class-math-3' },
+      {
+        listInbox: async () => {
+          throw new Error(`listInbox must not run for ${role}`);
+        },
+      },
+    );
+    assert.equal(result.error, 'Needs inbox is only on the Teach seat.');
+    assert.equal('items' in result, false);
+  }
+});
+
+test('AC-ASK-INBOX-3 dual-hat: Teach seat may list; parent/office seat wall', () => {
+  assert.equal(isListInboxTeachSeat('teacher'), true);
+  assert.equal(isListInboxTeachSeat('parent'), false);
+  assert.equal(isListInboxTeachSeat('administrator'), false);
+  assert.equal(isListInboxTeachSeat('student'), false);
+  assert.equal(isListInboxTeachSeat(null), false);
+});
+
+test('AC-ASK-INBOX wiring: askTools uses runAskListInbox; no teacherId refuse', () => {
+  const block = listInboxWiring();
+  assert.match(block, /name:\s*["']list_inbox["']/);
+  assert.match(block, /runAskListInbox/);
+  assert.match(block, /listInbox/);
   assert.doesNotMatch(block, /Teacher seat required/i);
-  assert.doesNotMatch(block, /teacher seat required/i);
   assert.doesNotMatch(block, /if\s*\(\s*!ctx\.teacherId\s*\)/);
-  // Active chrome Teach seat is the wall (same as /inbox tray). Empty list still calls listInbox.
-  assert.match(block, /ctx\.live\.role\s*!==\s*['"]teacher['"]/);
-  assert.match(block, /listInbox\(/);
+  assert.doesNotMatch(block, /approveCapture|deleteCapture|sendMessage|send_message/);
+
+  const ask = read('src/lib/ai/askTools.ts');
+  const allowedFn = ask.slice(ask.indexOf('function allowed('), ask.indexOf('function labelFor('));
+  assert.match(allowedFn, /list_inbox/);
+  assert.match(allowedFn, /isListInboxTeachSeat/);
+
   const askScreen = read('src/app/ask.tsx');
   assert.match(
     askScreen,
@@ -54,17 +154,15 @@ test('AC-ASK-INBOX-1/2 Teach seat lists without teacherId / Teacher seat require
   );
 });
 
-test('AC-ASK-INBOX-3 student and parent cannot list; office-only stays out; also_teacher may', () => {
+test('AC-ASK-INBOX-3 policy: student/parent/office-only out; also_teacher may be offered', () => {
   assert.equal(ASK_TOOL_POLICY.list_inbox?.capability, 'capture.use');
   assert.equal(ASK_TOOL_POLICY.list_inbox?.teacherSeatOnly, undefined);
 
   assert.equal(isAskToolAllowed('list_inbox', { role: 'teacher' }, grants), true);
   assert.equal(isAskToolAllowed('list_inbox', { role: 'student' }, grants), false);
   assert.equal(isAskToolAllowed('list_inbox', { role: 'parent' }, grants), false);
-  // Office-only: capture.use none.
   assert.equal(isAskToolAllowed('list_inbox', { role: 'administrator' }, grants), false);
   assert.equal(isAskToolAllowed('list_inbox', { role: 'superintendent' }, grants), false);
-  // Dual-hat: policy may offer via also_teacher / teacher job; live.role enforces Teach seat.
   assert.equal(
     isAskToolAllowed('list_inbox', { role: 'administrator', also_teacher: true }, grants),
     true,
@@ -78,13 +176,10 @@ test('AC-ASK-INBOX-3 student and parent cannot list; office-only stays out; also
     true,
   );
 
-  const ask = read('src/lib/ai/askTools.ts');
-  const allowedFn = ask.slice(ask.indexOf('function allowed('), ask.indexOf('function labelFor('));
-  assert.match(allowedFn, /list_inbox/);
-  assert.match(allowedFn, /ctx\.live\.role\s*!==\s*['"]teacher['"]/);
-  // run() also refuses non-Teach seats (parent/office active seat stay out).
-  const block = listInboxRunBlock();
-  assert.match(block, /Needs inbox is only on the Teach seat/);
+  const client = read('src/lib/ai/askToolPolicy.ts');
+  const edge = read('supabase/functions/_shared/askToolPolicy.ts');
+  assert.match(client, /list_inbox:\s*\{\s*capability:\s*'capture\.use',\s*need:\s*null\s*\}/);
+  assert.match(edge, /list_inbox:\s*\{\s*capability:\s*'capture\.use',\s*need:\s*null\s*\}/);
 });
 
 test('AC-ASK-INBOX do not weaken teacherSeatOnly on other Ask tools', () => {
@@ -100,11 +195,22 @@ test('AC-ASK-INBOX do not weaken teacherSeatOnly on other Ask tools', () => {
     assert.equal(isAskToolAllowed(name, { role: 'administrator' }, grants), false, name);
     assert.equal(isAskToolAllowed(name, { role: 'student' }, grants), false, name);
   }
-  // Client + Edge twins keep list_inbox without teacherSeatOnly; others unchanged.
   const client = read('src/lib/ai/askToolPolicy.ts');
   const edge = read('supabase/functions/_shared/askToolPolicy.ts');
-  assert.match(client, /list_inbox:\s*\{\s*capability:\s*'capture\.use',\s*need:\s*null\s*\}/);
-  assert.match(edge, /list_inbox:\s*\{\s*capability:\s*'capture\.use',\s*need:\s*null\s*\}/);
   assert.match(client, /scan_class_syllabus:[\s\S]*?teacherSeatOnly:\s*true/);
   assert.match(edge, /scan_class_syllabus:[\s\S]*?teacherSeatOnly:\s*true/);
+});
+
+test('AC-ASK-INBOX missing class needs class_id (not seat refusal)', async () => {
+  const result = await runAskListInbox(
+    {},
+    { live: { role: 'teacher' }, classId: null },
+    {
+      listInbox: async () => {
+        throw new Error('listInbox must not run without class');
+      },
+    },
+  );
+  assert.equal(result.error, 'Need class_id.');
+  assert.doesNotMatch(String(result.error), /teacher seat required/i);
 });

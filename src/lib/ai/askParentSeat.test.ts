@@ -77,7 +77,8 @@ test('AC-DUAL-ASK-3 teacher job still allowed by policy; Teach live.role keeps l
   assert.equal(isAskToolAllowed('summarize_class_desk', teacher, grants), true);
   const ask = read('src/lib/ai/askTools.ts');
   const allowedFn = ask.slice(ask.indexOf('function allowed('), ask.indexOf('function labelFor('));
-  assert.match(allowedFn, /list_inbox.*ctx\.live\.role\s*!==\s*'teacher'|ctx\.live\.role\s*!==\s*'teacher'/);
+  assert.match(allowedFn, /list_inbox/);
+  assert.match(allowedFn, /isListInboxTeachSeat\(ctx\.live\.role\)/);
 });
 
 test('AC-DUAL-ASK-2 ask.tsx hides class chip and roster chips off teacher seat', () => {
