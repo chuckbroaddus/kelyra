@@ -30,10 +30,14 @@ test('heatmap landscape reuses gradebook landscapeFull collapse (not excluded)',
 
 test('Heatmap hides legend + uses compact student heads on phone-landscape', () => {
   const heat = read('src/components/Heatmap.tsx');
+  const head = read('src/components/ui/GradebookStudentHead.tsx');
   assert.match(heat, /studentHeadFor\(layout\.breakpoint\)/);
   assert.match(heat, /studentHeadCompact\(layout\.breakpoint\)/);
   assert.match(heat, /compact=\{compactHead\}/);
   // Legend is an extra header strip — drop it when compact (landscape).
   assert.match(heat, /compactHead\s*\?\s*null\s*:/);
   assert.match(heat, /LegendSwatch/);
+  // Compact head keeps half-size avatars (does not hide faces).
+  assert.match(head, /studentHeadLandscape\.avatar/);
+  assert.doesNotMatch(head, /compact\s*\?\s*null\s*:/);
 });

@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 /**
  * Native handset only (not web / not tablet).
  * Uses shortest side so a phone already in landscape still counts as a phone
- * (unlike layout.isPhone, which keys off current width alone).
+ * (same idea as layout.isPhone / isPhoneFormFactor; platform checks stay here).
  */
 export function isNativePhone(width: number, height: number): boolean {
   if (Platform.OS === 'web') return false;
