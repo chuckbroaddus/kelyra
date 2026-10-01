@@ -99,7 +99,7 @@ test('WK §4.1 owners register useGlobalProcessingActive / begin-end; §4.2 Open
   assert.doesNotMatch(ask, /useGlobalProcessingActive\(aiWait\)/);
 
   // Screens with WorkingLine rely on driveChromeK SoT (no duplicate job hooks).
-  assert.doesNotMatch(read('src/app/capture.tsx'), /useGlobalProcessingActive/);
+  assert.doesNotMatch(read('src/components/capture/CaptureSurface.tsx'), /useGlobalProcessingActive/);
   assert.doesNotMatch(read('src/app/proposal.tsx'), /useGlobalProcessingActive/);
   assert.doesNotMatch(read('src/app/class/[id]/setup.tsx'), /useGlobalProcessingActive/);
   // Waiting UI without WorkingLine still registers the slot.

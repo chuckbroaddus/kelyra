@@ -30,7 +30,7 @@ test('Pack B capture review gates Approve on canApproveKeygrade', () => {
   assert.match(ui, /Confirm & next/);
   assert.match(ui, /twinsNeedConfirm|twinCandidates/);
   assert.match(ui, /Unassigned/);
-  const capture = readFileSync(join(root, 'src/app/capture.tsx'), 'utf8');
+  const capture = readFileSync(join(root, 'src/components/capture/CaptureSurface.tsx'), 'utf8');
   assert.match(capture, /KeygradePackBReview/);
   assert.match(capture, /canApproveKeygrade/);
   assert.match(capture, /persistCapture\('approve'/);
@@ -71,7 +71,7 @@ test('AC-PACKB: saved keyed draft review shows Pack B Accept; parent seat hides 
   assert.match(proposal, /buildKeyScoreDraft/);
   assert.match(proposal, /method: 'key_score'|buildKeyScoreDraft/);
 
-  const capture = readFileSync(join(root, 'src/app/capture.tsx'), 'utf8');
+  const capture = readFileSync(join(root, 'src/components/capture/CaptureSurface.tsx'), 'utf8');
   assert.match(capture, /match-key/);
   assert.match(capture, /buildKeyedHomeworkPersistDraft/);
   assert.match(capture, /packItemsFromAssignmentKey/);

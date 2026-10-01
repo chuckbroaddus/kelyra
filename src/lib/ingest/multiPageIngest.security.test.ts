@@ -23,15 +23,21 @@ test('pickNormalizedPhotos enables multi-select and 20-cap; single pick kept', (
 test('syllabus + school policy ingest send all pages in one invoke', () => {
   const syllabus = read('src/app/class/[id]/syllabus.tsx');
   const school = read('src/app/school/grading-policy/index.tsx');
-  for (const src of [syllabus, school]) {
-    assert.match(src, /uploadGradingDocPages/);
-    assert.match(src, /pickNormalizedPhotos/);
-    assert.match(src, /storage_paths:\s*uploaded\.storage_paths/);
-    assert.match(src, /image_urls:\s*uploaded\.image_urls/);
-    assert.match(src, /readingStatusForPages/);
-    assert.match(src, /MAX_GRADING_DOC_PAGES/);
-  }
-  assert.match(syllabus, /IngestPendingPagesCard/);
+  const syllabusPreset = read('src/lib/capture/presets/syllabus.ts');
+  assert.match(syllabus, /uploadGradingDocPages/);
+  assert.match(syllabus, /storage_paths:\s*uploaded\.storage_paths/);
+  assert.match(syllabus, /image_urls:\s*uploaded\.image_urls/);
+  assert.match(syllabus, /readingStatusForPages/);
+  assert.match(syllabus, /capture\?preset=syllabus/);
+  assert.match(syllabusPreset, /MAX_GRADING_DOC_PAGES/);
+  assert.match(syllabusPreset, /uploadGradingDocPages/);
+  assert.match(syllabusPreset, /putSyllabusIngestHandoff/);
+  assert.match(school, /uploadGradingDocPages/);
+  assert.match(school, /pickNormalizedPhotos/);
+  assert.match(school, /storage_paths:\s*uploaded\.storage_paths/);
+  assert.match(school, /image_urls:\s*uploaded\.image_urls/);
+  assert.match(school, /readingStatusForPages/);
+  assert.match(school, /MAX_GRADING_DOC_PAGES/);
   assert.match(school, /IngestPendingPagesCard/);
 });
 

@@ -44,7 +44,7 @@ test('I1-SEC TUS used when over 6 MB; chunk size locked to 6 MiB', () => {
 });
 
 test('I1-SEC CE-A entry gated to Teach seat; Parent/Office/Student get no chrome', () => {
-  const capture = read('src/app/capture.tsx');
+  const capture = read('src/components/capture/CaptureSurface.tsx');
   assert.match(capture, /ClassStackBinder/);
   assert.match(capture, /chromeRole === 'teacher'/);
 

@@ -96,7 +96,7 @@ test('AC-SC-12: create class/roster/person refused off office; office person cre
   assert.equal(seatRefusesCreateFromPhoto('administrator', 'roster'), false);
   assert.equal(seatRefusesCreateFromPhoto('administrator', 'person'), false);
 
-  const capture = read('src/app/capture.tsx');
+  const capture = read('src/components/capture/CaptureSurface.tsx');
   assert.match(capture, /personPhotoChoice|seatSeesPersonPhotoChoice|seatMayCreatePersonFromPhoto/);
   assert.match(capture, /Cancel before the choice|personPhotoChoice === 'choose'|setPersonPhotoChoice/);
   // No silent office person insert before choice — null or choose both block Confirm.
@@ -133,21 +133,22 @@ test('AC-SC-32: office and Teach show Photo or Video and Files; parent/student d
   assert.equal(seatShowsCaptureComposerExtras('parent'), false);
   assert.equal(seatShowsCaptureComposerExtras('student'), false);
 
-  const capture = read('src/app/capture.tsx');
+  const capture = read('src/components/capture/CaptureSurface.tsx');
   assert.match(capture, /photoFileIcons \? \(/);
   assert.match(capture, /label="Photo or Video"/);
   assert.match(capture, /label="Files"/);
   assert.match(capture, /composerExtras \? \(/);
-  assert.match(capture, /Platform\.OS === 'web' && composerExtras/);
+  assert.match(capture, /allowWebDrop/);
+  assert.match(capture, /composerExtras \|\| externalSubmit/);
   assert.match(capture, /seatShowsCapturePhotoFileIcons/);
   assert.match(capture, /seatShowsCaptureComposerExtras/);
-  // Upload class stack stays teachSeat, not office photo/file gate.
-  assert.match(capture, /teachSeat \? \(/);
+  // Upload class stack stays teachSeat + showClassStack, not office photo/file gate.
+  assert.match(capture, /teachSeat && showClassStack \? \(/);
   assert.match(capture, /Upload class stack/);
 });
 
 test('capture screen wires seat jobs and Open Capture route; no tray Capture tab', () => {
-  const capture = read('src/app/capture.tsx');
+  const capture = read('src/components/capture/CaptureSurface.tsx');
   assert.match(capture, /seatUnsureIntentOptions/);
   assert.match(capture, /seatShowsCaptureComposerExtras/);
   assert.match(capture, /seatShowsCapturePhotoFileIcons/);
