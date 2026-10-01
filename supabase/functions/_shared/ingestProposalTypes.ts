@@ -20,6 +20,8 @@ export type IngestField = {
   evidence: IngestEvidence;
   status: IngestFieldStatus;
   source_doc_id: string | null;
+  /** Plain-language reason this field needs a look (e.g. weights that don't total 100%). */
+  note?: string;
 };
 
 export type IngestAmbiguity = {

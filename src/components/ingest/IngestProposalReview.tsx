@@ -125,6 +125,9 @@ export function IngestProposalReview({
             )}
             <Text style={[type.meta, { color: colors.mute }]}>{evidence}</Text>
             <Text style={[type.body, { color: colors.ink, marginTop: 6 }]}>{preview}</Text>
+            {f.note ? (
+              <Text style={[type.meta, { color: colors.warn, marginTop: 4 }]}>{f.note}</Text>
+            ) : null}
             {decision === 'edit' ? (
               <TextField
                 label="Your value"

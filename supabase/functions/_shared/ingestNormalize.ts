@@ -277,6 +277,64 @@ export function coerceCategories(raw: unknown): CoercedCategory[] | null {
   return out;
 }
 
+export type CategoryWeightIssue = {
+  sum: number;
+  /** 'off' = percent weights that miss 100; 'points' = numbers look like points, not percentages. */
+  kind: 'off' | 'points';
+  message: string;
+  note: string;
+};
+
+function fmtNum(n: number): string {
+  return String(Math.round(n * 100) / 100);
+}
+
+/**
+ * FR-AI-21: category weights that don't total 100% are kept exactly as written (never scaled)
+ * and flagged in plain words. Points-based engines ('total_points', 'none') have no weights to check.
+ */
+export function categoryWeightIssue(
+  cats: Array<{ label?: string; key?: string; weight_percent?: number | null }>,
+  engine: string | null,
+): CategoryWeightIssue | null {
+  if (engine === 'total_points' || engine === 'none') return null;
+  const weighted = cats.filter((c) => typeof c.weight_percent === 'number' && c.weight_percent > 0);
+  if (!weighted.length) return null;
+  const sum = Math.round(weighted.reduce((s, c) => s + (c.weight_percent as number), 0) * 1000) / 1000;
+  if (Math.abs(sum - 100) <= 0.01) return null;
+  const name = (c: { label?: string; key?: string }) => String(c.label || c.key || 'Category');
+  if (sum > 200) {
+    const parts = weighted.map((c) => `${name(c)} ${fmtNum(c.weight_percent as number)}`).join(' + ');
+    return {
+      sum,
+      kind: 'points',
+      message: `These numbers add up to ${fmtNum(sum)}, not 100%. They look like points, not percentages. If this class adds up points, choose “Total points”. Otherwise change them to percentages that total 100% before publishing.`,
+      note: `${parts} = ${fmtNum(sum)}. We kept the numbers as written.`,
+    };
+  }
+  const parts = weighted.map((c) => `${name(c)} ${fmtNum(c.weight_percent as number)}%`).join(' + ');
+  const ec = weighted.filter((c) => /extra\s*credit|bonus/i.test(name(c)));
+  const ecSum = ec.reduce((s, c) => s + (c.weight_percent as number), 0);
+  const ecHint =
+    ec.length && Math.abs(sum - ecSum - 100) <= 0.01
+      ? ` Without ${ec.map(name).join(' and ')} they total 100%.`
+      : '';
+  return {
+    sum,
+    kind: 'off',
+    message: `These weights add up to ${fmtNum(sum)}%. Fix them so they total 100% before publishing.`,
+    note: `${parts} = ${fmtNum(sum)}%. We kept the numbers as written.${ecHint}`,
+  };
+}
+
+/** Model-written notes about the weight total (e.g. “Weights currently total 110% — do not auto-fix”). */
+function isModelWeightTotalWarning(w: IngestWarning): boolean {
+  if (w.code === 'weights_total') return false;
+  const code = String(w.code || '').toLowerCase();
+  if (/weight/.test(code) && /(sum|total|mismatch|100)/.test(code)) return true;
+  return /weights?\b[^.]*\b(total|sum|add)/i.test(String(w.message || '')) && /\d+(\.\d+)?\s*%/.test(String(w.message || ''));
+}
+
 /** True when retake text names more than one way to count the retake (replace / higher / average). */
 export function retakeTextConflicts(text: string): boolean {
   const t = text.toLowerCase();
@@ -1276,6 +1334,29 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
     (catField.value as { weight_percent?: number }[]).every((c) => !c.weight_percent)
   ) {
     byPath.delete('syllabus.categories');
+  }
+
+  // FR-AI-21: weights that don't total 100% stay as written; mark for review with plain words.
+  const weightCat = byPath.get('syllabus.categories');
+  if (weightCat && Array.isArray(weightCat.value)) {
+    const engVal = byPath.get('syllabus.engine')?.value;
+    const issue = categoryWeightIssue(
+      weightCat.value as CoercedCategory[],
+      typeof engVal === 'string' ? engVal : null,
+    );
+    if (issue) {
+      byPath.set('syllabus.categories', {
+        ...weightCat,
+        status: weightCat.status === 'conflict' ? 'conflict' : 'needs_review',
+        note: issue.note,
+      });
+      for (let i = warnings.length - 1; i >= 0; i -= 1) {
+        if (isModelWeightTotalWarning(warnings[i]!)) warnings.splice(i, 1);
+      }
+      if (!warnings.some((w) => w.code === 'weights_total')) {
+        warnings.push({ code: 'weights_total', message: issue.message, severity: 'warn' });
+      }
+    }
   }
 
   // qp.method without tables → drop (letter_map / bonus-guess noise)

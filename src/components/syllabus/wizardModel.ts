@@ -644,6 +644,17 @@ export function weightsOk(draft: SyllabusWizardDraft): boolean {
   return Math.abs(activeWeightSum(draft.categories) - 100) <= 0.01;
 }
 
+/** Plain words for a weight total that isn't 100%, naming each active category. */
+export function weightsTotalMessage(draft: SyllabusWizardDraft, sum = activeWeightSum(draft.categories)): string {
+  const total = Math.round(sum * 1000) / 1000;
+  const active = draft.categories.filter((c) => c.active);
+  const parts = active
+    .map((c) => `${c.label.trim() || 'Unnamed'} ${Math.round(Number(c.weight_percent || 0) * 1000) / 1000}%`)
+    .join(' + ');
+  const detail = active.length > 1 ? ` (${parts})` : '';
+  return `Your category weights add up to ${total}%${detail}. Change them so they total 100% before you publish.`;
+}
+
 export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
   const issues: WizardIssue[] = [];
   if (!draft.engine) {
@@ -655,7 +666,7 @@ export function validateWizard(draft: SyllabusWizardDraft): WizardIssue[] {
       issues.push({
         path: 'categories.weight_percent',
         severity: 'error',
-        message: `Your category weights add up to ${Math.round(sum * 1000) / 1000}%. They need to add up to 100%.`,
+        message: weightsTotalMessage(draft, sum),
         step: 'categories',
       });
     }
