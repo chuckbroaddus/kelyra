@@ -23,6 +23,10 @@ import {
   splashStillSources,
   type SplashAspectKey,
 } from '@/components/ui/splashBrand';
+import {
+  isSplashSessionCompleted,
+  markSplashSessionCompleted,
+} from '@/components/ui/splashSession';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -36,13 +40,15 @@ export {
   type SplashAspectKey,
 } from '@/components/ui/splashBrand';
 export { splashCtaGradient, splashCtaLabel } from '@/components/ui/SplashSignInButton';
+export { resetSplashSession } from '@/components/ui/splashSession';
 
 export const splashOfficeFooter =
   "Account creation is performed by the school office. Please contact your school's administration for access.";
 
 /**
- * Shipped still intrinsics + neon letter-box X offset from image center (source px).
+ * Shipped still/video intrinsics + neon letter-box X offset from image center (source px).
  * Y is cover-centered; do not chase the +4 px source Y (AC-SPLASH-CENTER-1).
+ * MP4 and CEO still share this box so crossfade has no horizontal jump.
  */
 export const SPLASH_STILL_LETTERBOX = {
   landscape: { width: 1920, height: 1080, offsetX: 18.5 },
@@ -52,6 +58,7 @@ export const SPLASH_STILL_LETTERBOX = {
 /**
  * Cover crop that parks the letter-box center on the viewport horizontal center
  * (Sign in centerline). Bumps scale only when cover has no horizontal slack.
+ * Used for BOTH the settled still and the SplashVideo frame (same box).
  */
 export function splashStillCropLayout(
   viewportWidth: number,
@@ -91,9 +98,6 @@ type Props = {
   /** Deep-link /sign-in: skip animation and show credential fields immediately. */
   initialRevealForm?: boolean;
 };
-
-/** Survives remounts within the signed-out session so rotate / return never replays. */
-let splashSessionCompleted = false;
 
 async function enableSplashAudioMode() {
   await setAudioModeAsync({
@@ -136,7 +140,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const playbackEndedRef = useRef(false);
   const soundHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const startCompleted = initialRevealForm || splashSessionCompleted;
+  const startCompleted = initialRevealForm || isSplashSessionCompleted();
   const [hasCompletedSplash, setHasCompletedSplash] = useState(() => startCompleted);
   /** Video mounts only while animating / crossfading — never after session complete. */
   const [showVideo, setShowVideo] = useState(() => !startCompleted);
@@ -167,11 +171,11 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   const videoSourceKey = lockedVideoSourceKeyRef.current ?? sourceKey;
   const videoSource = splashSources[videoSourceKey];
   const stillSource = splashStillSources[sourceKey];
-  // Letter-box crop on the settled still — not a shared JPG-center anchor.
-  const stillCrop =
-    width > 0 && height > 0
-      ? splashStillCropLayout(width, height, sourceKey)
-      : null;
+  // Shared letter-box crop for still + video so crossfade does not jump horizontally.
+  // While video is up, both layers use the frozen video aspect; after unmount, still follows live sourceKey.
+  const mediaAspect = showVideo ? videoSourceKey : sourceKey;
+  const mediaCrop =
+    width > 0 && height > 0 ? splashStillCropLayout(width, height, mediaAspect) : null;
 
   const videoOpacity = useRef(new Animated.Value(startCompleted ? 0 : 1)).current;
   const ctaOpacity = useRef(new Animated.Value(startCompleted ? 1 : 0)).current;
@@ -188,7 +192,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
   useEffect(() => {
     if (!initialRevealForm) return;
-    splashSessionCompleted = true;
+    markSplashSessionCompleted();
   }, [initialRevealForm]);
 
   useEffect(() => {
@@ -198,7 +202,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
   }, []);
 
   const markCompleted = useCallback(() => {
-    splashSessionCompleted = true;
+    markSplashSessionCompleted();
     setHasCompletedSplash(true);
     // Do not clear awaitingGesture here — isMuted={awaitingGesture} and the player may
     // still be mounted for post-fade AAC drain. Clearing would unmute without a gesture.
@@ -325,7 +329,7 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
       // Already-finished session (or /sign-in): no player. This branch is for mount /
       // sourceKey / blur-refocus — not for visual-complete during audio drain (effect
       // identity must not change then; see completeNaturalRef above).
-      if (splashSessionCompleted) {
+      if (isSplashSessionCompleted()) {
         setHasCompletedSplash(true);
         setShowVideo(false);
         return;
@@ -495,13 +499,13 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
 
   return (
     <View style={styles.root} accessibilityLabel="Kelyra">
-      {/* CEO JPG still — ALWAYS mounted under video; cover crop parks letter-box on Sign in X. */}
+      {/* CEO JPG still — ALWAYS mounted under video; same mediaCrop box as SplashVideo. */}
       <Image
         source={stillSource}
         accessibilityLabel={hasCompletedSplash ? 'Kelyra' : undefined}
         accessible={hasCompletedSplash}
         resizeMode="cover"
-        style={stillCrop ? [styles.still, stillCrop] : styles.stillFallback}
+        style={mediaCrop ? [styles.still, mediaCrop] : styles.stillFallback}
       />
       {showVideo ? (
         <Pressable
@@ -512,7 +516,11 @@ export function SplashLanding({ error, initialRevealForm = false }: Props) {
         >
           <Animated.View
             pointerEvents={isFadingOut ? 'none' : 'auto'}
-            style={[styles.videoLayer, { opacity: videoOpacity }]}
+            style={[
+              styles.videoLayer,
+              mediaCrop ?? styles.videoLayerFallback,
+              { opacity: videoOpacity },
+            ]}
           >
             <SplashVideo
               key={videoSourceKey}
@@ -674,11 +682,16 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 2,
   },
+  /** Positioned via mediaCrop (same box as still); fallback absoluteFill pre-measure. */
   videoLayer: {
+    position: 'absolute',
+    zIndex: 2,
+    overflow: 'hidden',
+  },
+  videoLayerFallback: {
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
-    zIndex: 2,
   },
   video: {
     ...StyleSheet.absoluteFill,
