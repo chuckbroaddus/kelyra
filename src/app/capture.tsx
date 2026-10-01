@@ -594,10 +594,22 @@ export default function CaptureScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       quality: 0.7,
+      allowsMultipleSelection: true,
+      selectionLimit: MULTI_SHOT_BATCH_CAP,
+      orderedSelection: true,
     });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    await applyLibraryAsset(asset.uri, asset.mimeType, asset.fileName);
+    if (result.canceled || !result.assets?.length) return;
+    const assets = result.assets.slice(0, MULTI_SHOT_BATCH_CAP);
+    const images: Array<{ uri: string; mimeType?: string | null }> = [];
+    for (const asset of assets) {
+      const mime = asset.mimeType || 'application/octet-stream';
+      if (mime.startsWith('image/')) {
+        images.push({ uri: asset.uri, mimeType: mime });
+      } else {
+        await applyLibraryAsset(asset.uri, mime, asset.fileName);
+      }
+    }
+    if (images.length) await applyPhotos(images);
   };
 
   const pickFiles = async () => {

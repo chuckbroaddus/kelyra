@@ -174,6 +174,19 @@ test('Capture camera icon opens multi-shot session (no single-shot dismiss)', ()
   assert.doesNotMatch(source, /Take another/);
 });
 
+test('Capture library picker is multi-select into the same batch path', () => {
+  assert.match(source, /allowsMultipleSelection:\s*true/);
+  assert.match(source, /selectionLimit:\s*MULTI_SHOT_BATCH_CAP/);
+  assert.match(source, /orderedSelection:\s*true/);
+  assert.match(source, /result\.assets\.slice\(0,\s*MULTI_SHOT_BATCH_CAP\)/);
+  assert.match(source, /if \(images\.length\) await applyPhotos\(images\)/);
+  // Single-asset-only path must not remain as the only library finish.
+  assert.doesNotMatch(
+    source,
+    /launchImageLibraryAsync\(\{[\s\S]*?\}\);\s*if \(result\.canceled \|\| !result\.assets\[0\]\) return;\s*const asset = result\.assets\[0\];\s*await applyLibraryAsset/,
+  );
+});
+
 test('Capture scrolls progress above sticky CTA when Ask AI / busy', () => {
   assert.match(source, /scrollRef = useRef<ScrollView>\(null\)/);
   assert.match(source, /scrollRef=\{scrollRef\}/);
