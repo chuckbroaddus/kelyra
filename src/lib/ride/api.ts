@@ -150,6 +150,12 @@ export type RideLprResult = {
   model: string | null;
   side: 'front' | 'back' | 'unknown';
   unreadable: boolean;
+  document_kind?: string | null;
+  tag_number?: string | null;
+  riders?: string[];
+  authorized_pickups?: string[];
+  confidence?: number;
+  reject_reason?: string | null;
 };
 
 export async function invokeRideLpr(storagePath: string): Promise<RideLprResult> {
@@ -182,6 +188,14 @@ export async function invokeRideLpr(storagePath: string): Promise<RideLprResult>
     model,
     side,
     unreadable,
+    document_kind: typeof data.document_kind === 'string' ? data.document_kind : null,
+    tag_number: typeof data.tag_number === 'string' ? data.tag_number : null,
+    riders: Array.isArray(data.riders) ? data.riders.filter((x: unknown) => typeof x === 'string') : [],
+    authorized_pickups: Array.isArray(data.authorized_pickups)
+      ? data.authorized_pickups.filter((x: unknown) => typeof x === 'string')
+      : [],
+    confidence: typeof data.confidence === 'number' ? data.confidence : undefined,
+    reject_reason: typeof data.reject_reason === 'string' ? data.reject_reason : null,
   };
 }
 

@@ -1,0 +1,16 @@
+{
+  "source_id": "V08",
+  "document_kind": "vehicle_photo",
+  "plate": "BCK2002",
+  "plateFront": "FRN1001",
+  "plateBack": "BCK2002",
+  "make": "Kia",
+  "model": "Sorento",
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

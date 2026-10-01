@@ -101,7 +101,7 @@ test('Capture classifies answer_key / vehicle / hold intents and wires confirms'
   assert.match(source, /'lesson_materials'/);
   assert.match(source, /'feed_photo'/);
   assert.match(source, /This will be an answer key for an assignment/);
-  assert.match(source, /This will be a Ride vehicle \/ license plate/);
+  assert.match(source, /This will be a Ride vehicle \/ plate \/ hang tag \/ rider form/);
   assert.match(source, /Recognized — lesson plan surface not shipping yet/);
   assert.match(source, /Recognized — feed photo post not shipping yet/);
   // Stamp 7: unsure strip options live in seatJobs (Teach keeps these chips).
@@ -140,6 +140,8 @@ test('ride-lpr returns make/model and front/back plates', () => {
   assert.match(edge, /plateBack/);
   assert.match(edge, /"make"/);
   assert.match(edge, /"model"/);
+  assert.match(edge, /document_kind/);
+  assert.match(edge, /Access-Control-Allow-Origin/);
   assert.match(edge, /Never invent a person/);
 });
 

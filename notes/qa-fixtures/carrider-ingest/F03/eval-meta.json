@@ -1,0 +1,10 @@
+{
+  "negative": false,
+  "photo": true,
+  "kind": "check_in_sheet",
+  "hard": true,
+  "fields": [
+    "document_kind",
+    "riders"
+  ]
+}

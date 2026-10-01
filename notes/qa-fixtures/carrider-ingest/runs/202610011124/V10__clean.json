@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "BL00M42",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Hyundai",
+    "model": "Tucson",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null
+  }
+}

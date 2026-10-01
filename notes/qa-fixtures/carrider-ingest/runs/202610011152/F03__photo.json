@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind": "check_in_sheet",
+    "plate": "ELL2099",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Ellie Nguyen"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.99,
+    "reject_reason": null
+  }
+}

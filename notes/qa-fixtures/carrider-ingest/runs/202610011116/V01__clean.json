@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "KLY4219",
+    "plateFront": null,
+    "plateBack": "KLY4219",
+    "make": "Honda",
+    "model": "Civic",
+    "side": "back",
+    "unreadable": false,
+    "confidence": 1
+  }
+}

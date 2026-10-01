@@ -1,0 +1,16 @@
+{
+  "source_id": "V04",
+  "document_kind": "vehicle_photo",
+  "plate": "ANG3140",
+  "plateFront": null,
+  "plateBack": "ANG3140",
+  "make": "Nissan",
+  "model": "Rogue",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.75,
+  "reject_reason": null
+}

@@ -1,0 +1,20 @@
+{
+  "source_id": "F01",
+  "document_kind": "check_in_sheet",
+  "plate": null,
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [
+    "Maya Chen",
+    "Sam Ortiz",
+    "Ava Brooks"
+  ],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

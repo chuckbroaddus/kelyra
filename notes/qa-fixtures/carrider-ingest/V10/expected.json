@@ -1,0 +1,16 @@
+{
+  "source_id": "V10",
+  "document_kind": "vehicle_photo",
+  "plate": "BL0OM42",
+  "plateFront": null,
+  "plateBack": "BL0OM42",
+  "make": "Hyundai",
+  "model": "Tucson",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.7,
+  "reject_reason": null
+}

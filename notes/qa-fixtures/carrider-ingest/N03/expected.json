@@ -1,0 +1,16 @@
+{
+  "source_id": "N03",
+  "document_kind": "rejected",
+  "plate": null,
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "unknown",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": true,
+  "confidence": 0.85,
+  "reject_reason": "unrelated document"
+}

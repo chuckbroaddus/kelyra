@@ -1,0 +1,1497 @@
+{
+  "stamp": "202610011124",
+  "overall_accuracy": 0.8431372549019607,
+  "vehicle_accuracy": 0.7314814814814814,
+  "hang_tag_accuracy": 0.9,
+  "form_accuracy": 1,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.8708333333333333,
+  "photo_accuracy": 0.8035714285714286,
+  "hallucinations": 0,
+  "field_totals": {
+    "correct": 96,
+    "wrong": 6,
+    "missing": 4,
+    "hallucinated": 0
+  },
+  "documents": [
+    {
+      "id": "V01",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Civic",
+          "act": "Civic"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "back",
+          "act": "back"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "KLY4219",
+        "make": "Honda",
+        "model": "Civic",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V01",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Civic",
+          "act": "Civic"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "back",
+          "act": "back"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "KLY4219",
+        "make": "Honda",
+        "model": "Civic",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V02",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "RDE8801",
+          "act": "RDE8801"
+        },
+        {
+          "path": "plateFront",
+          "result": "correct",
+          "exp": "RDE8801",
+          "act": "RDE8801"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Camry",
+          "act": "Camry"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "front",
+          "act": "front"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "RDE8801",
+        "make": "Toyota",
+        "model": "Camry",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V03",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "NGT5520",
+          "act": "NGT5520"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "NGT5520",
+        "make": "Ford",
+        "model": "F-150",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V03",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "NGT5520",
+          "act": "NGT5520"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "NGT5520",
+        "make": "Ford",
+        "model": "F-150",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V04",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "ANG3140",
+          "act": "ANG3140"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "back",
+          "act": "back"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "ANG3140",
+        "make": "Nissan",
+        "model": "Rogue",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V04",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 0.5,
+      "counts": {
+        "correct": 1,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "ANG3140",
+          "act": "ANG3140"
+        },
+        {
+          "path": "side",
+          "result": "wrong",
+          "exp": "back",
+          "act": "unknown"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "ANG3140",
+        "make": "Nissan",
+        "model": "Rogue",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V05",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "V05",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "unknown",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "V06",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 1,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "TMP9944",
+          "act": null
+        },
+        {
+          "path": "document_kind",
+          "result": "wrong",
+          "exp": "vehicle_photo",
+          "act": "unknown"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "unknown",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "V06",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 2,
+        "missing": 1,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "TMP9944",
+          "act": null
+        },
+        {
+          "path": "document_kind",
+          "result": "wrong",
+          "exp": "vehicle_photo",
+          "act": "unknown"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "unknown",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "V07",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "8KGM204",
+          "act": "8KGM204"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Subaru",
+          "act": "Subaru"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Outback",
+          "act": "Outback"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "8KGM204",
+        "make": "Subaru",
+        "model": "Outback",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V07",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "8KGM204",
+          "act": "8KGM204"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Subaru",
+          "act": "Subaru"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Outback",
+          "act": "Outback"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "8KGM204",
+        "make": "Subaru",
+        "model": "Outback",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V08",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.6666666666666666,
+      "counts": {
+        "correct": 2,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "wrong",
+          "exp": "BCK2002",
+          "act": "FRN1001"
+        },
+        {
+          "path": "plateFront",
+          "result": "correct",
+          "exp": "FRN1001",
+          "act": "FRN1001"
+        },
+        {
+          "path": "plateBack",
+          "result": "correct",
+          "exp": "BCK2002",
+          "act": "BCK2002"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "FRN1001",
+        "make": "Kia",
+        "model": "Sorento",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V09",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SHD6677",
+          "act": "SHD6677"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "SHD6677",
+        "make": "Mazda",
+        "model": "CX-5",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V09",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SHD6677",
+          "act": "SHD6677"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "SHD6677",
+        "make": "Mazda",
+        "model": "CX-5",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V10",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 1
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "wrong",
+          "exp": "BL0OM42",
+          "act": "BL00M42"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "BL00M42",
+        "make": "Hyundai",
+        "model": "Tucson",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "V10",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 0,
+      "counts": {
+        "correct": 0,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 1
+      },
+      "fields": [
+        {
+          "path": "plate",
+          "result": "wrong",
+          "exp": "BL0OM42",
+          "act": "BLOOM42"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "vehicle_photo",
+        "plate": "BLOOM42",
+        "make": "Hyundai",
+        "model": "Tucson",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "T01",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "1042",
+          "act": "1042"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Maya Chen",
+            "Leo Chen"
+          ],
+          "act": [
+            "Maya Chen",
+            "Leo Chen"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "hang_tag",
+        "plate": "KLY4219",
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "T01",
+      "kind": "hang_tag",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "1042",
+          "act": "1042"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Maya Chen",
+            "Leo Chen"
+          ],
+          "act": [
+            "Maya Chen",
+            "Leo Chen"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "hang_tag",
+        "plate": "KLY4219",
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "T02",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 0.75,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 1,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "QWZ3390",
+          "act": null
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "77",
+          "act": "77"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Ava Brooks"
+          ],
+          "act": [
+            "Ava Brooks"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "hang_tag",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "T02",
+      "kind": "hang_tag",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 0.75,
+      "counts": {
+        "correct": 3,
+        "wrong": 1,
+        "missing": 1,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "QWZ3390",
+          "act": null
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "77",
+          "act": "77"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Ava Brooks"
+          ],
+          "act": [
+            "Ava Brooks"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "hang_tag",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "T03",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "2201",
+          "act": "2201"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "hang_tag",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F01",
+      "kind": "check_in_sheet",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Maya Chen",
+            "Sam Ortiz",
+            "Ava Brooks"
+          ],
+          "act": [
+            "Maya Chen",
+            "Sam Ortiz",
+            "Ava Brooks"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "check_in_sheet",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F02",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Jordan Lee"
+          ],
+          "act": [
+            "Jordan Lee"
+          ]
+        },
+        {
+          "path": "authorized_pickups",
+          "result": "correct",
+          "exp": [
+            "Priya Lee",
+            "Marcus Lee"
+          ],
+          "act": [
+            "Priya Lee",
+            "Marcus Lee"
+          ]
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "JRD4410",
+          "act": "JRD4410"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "authorized_pickup",
+        "plate": "JRD4410",
+        "make": "Honda",
+        "model": "CR-V",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F02",
+      "kind": "authorized_pickup",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Jordan Lee"
+          ],
+          "act": [
+            "Jordan Lee"
+          ]
+        },
+        {
+          "path": "authorized_pickups",
+          "result": "correct",
+          "exp": [
+            "Priya Lee",
+            "Marcus Lee"
+          ],
+          "act": [
+            "Priya Lee",
+            "Marcus Lee"
+          ]
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "JRD4410",
+          "act": "JRD4410"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "authorized_pickup",
+        "plate": "JRD4410",
+        "make": "Honda",
+        "model": "CR-V",
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F03",
+      "kind": "check_in_sheet",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Ellie Nguyen"
+          ],
+          "act": [
+            "Ellie Nguyen"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "check_in_sheet",
+        "plate": "ELL2099",
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F03",
+      "kind": "check_in_sheet",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 2
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders",
+          "result": "correct",
+          "exp": [
+            "Ellie Nguyen"
+          ],
+          "act": [
+            "Ellie Nguyen"
+          ]
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "check_in_sheet",
+        "plate": "ELL2099",
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "F04",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 3
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "authorized_pickups",
+          "result": "correct",
+          "exp": [
+            "Mina Kim"
+          ],
+          "act": [
+            "Mina Kim"
+          ]
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": false
+      }
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 4
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "http_status": 200,
+      "field_accuracy": 1,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0,
+        "total": 5
+      },
+      "fields": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "actual_summary": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "unreadable": true
+      }
+    }
+  ]
+}

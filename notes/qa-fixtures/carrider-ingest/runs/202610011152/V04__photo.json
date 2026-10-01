@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "ANG3140",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Nissan",
+    "model": "Rogue",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "source_id": "V05",
+  "document_kind": "vehicle_photo",
+  "plate": null,
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": true,
+  "confidence": 0.4,
+  "reject_reason": null
+}

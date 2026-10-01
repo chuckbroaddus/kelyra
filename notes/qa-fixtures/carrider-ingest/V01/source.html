@@ -1,0 +1,22 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:40px;background:#2d3748;font-family:Helvetica,Arial,sans-serif;width:800px;box-sizing:border-box}
+.car{background:linear-gradient(180deg,#4a5568,#2d3748);border-radius:12px;padding:48px 32px;min-height:420px}
+.plate{margin:0 auto;width:420px;background:#f7fafc;border:6px solid #1a202c;border-radius:10px;padding:18px 24px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.plate .state{font-size:14px;letter-spacing:.35em;color:#2b6cb0;font-weight:700;margin-bottom:6px}
+.plate .num{font-size:54px;letter-spacing:.18em;font-weight:800;color:#111;font-family:"Courier New",monospace}
+.badge{margin-top:28px;text-align:center;color:#e2e8f0;font-size:22px;font-weight:700}
+.sub{text-align:center;color:#a0aec0;font-size:14px;margin-top:8px}
+.night .plate{filter:brightness(.55) contrast(1.2);box-shadow:0 0 40px rgba(255,255,200,.15)}
+.glare .plate{position:relative}
+.glare .plate::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%)}
+.angle{transform:perspective(600px) rotateY(-28deg) rotateX(8deg);transform-origin:center}
+.partial .num{letter-spacing:.12em}
+.partial .num span.hide{color:transparent;text-shadow:0 0 8px #111}
+.temp{background:#fffde7;border-style:dashed}
+.temp .state{color:#b7791f}</style></head><body>
+<div class="car"><div class="plate">
+<div class="state">TEXAS</div>
+<div class="num">KLY-4219</div>
+</div>
+<div class="badge">HONDA CIVIC</div>
+<div class="sub">Rear bumper · school dismissal lane</div>
+</div></body></html>

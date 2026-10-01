@@ -1,0 +1,11 @@
+{
+  "negative": false,
+  "photo": false,
+  "kind": "hang_tag",
+  "hard": false,
+  "fields": [
+    "document_kind",
+    "tag_number",
+    "plate"
+  ]
+}

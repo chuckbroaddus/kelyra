@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": "RDE8801",
+    "plateFront": "RDE8801",
+    "plateBack": null,
+    "make": "Toyota",
+    "model": "Camry",
+    "side": "front",
+    "unreadable": false,
+    "confidence": 1
+  }
+}

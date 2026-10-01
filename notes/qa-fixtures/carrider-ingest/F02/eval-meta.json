@@ -1,0 +1,12 @@
+{
+  "negative": false,
+  "photo": true,
+  "kind": "authorized_pickup",
+  "hard": false,
+  "fields": [
+    "document_kind",
+    "riders",
+    "authorized_pickups",
+    "plate"
+  ]
+}

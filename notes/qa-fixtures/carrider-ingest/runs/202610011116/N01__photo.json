@@ -1,0 +1,13 @@
+{
+  "status": 200,
+  "json": {
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "unreadable": true,
+    "confidence": 0
+  }
+}

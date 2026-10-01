@@ -1,0 +1,16 @@
+{
+  "source_id": "V07",
+  "document_kind": "vehicle_photo",
+  "plate": "8KGM204",
+  "plateFront": null,
+  "plateBack": "8KGM204",
+  "make": "Subaru",
+  "model": "Outback",
+  "side": "back",
+  "tag_number": null,
+  "riders": [],
+  "authorized_pickups": [],
+  "unreadable": false,
+  "confidence": 0.85,
+  "reject_reason": null
+}

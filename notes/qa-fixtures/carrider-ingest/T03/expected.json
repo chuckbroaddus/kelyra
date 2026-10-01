@@ -1,0 +1,18 @@
+{
+  "source_id": "T03",
+  "document_kind": "hang_tag",
+  "plate": null,
+  "plateFront": null,
+  "plateBack": null,
+  "make": null,
+  "model": null,
+  "side": "unknown",
+  "tag_number": "2201",
+  "riders": [
+    "Noah Patel"
+  ],
+  "authorized_pickups": [],
+  "unreadable": true,
+  "confidence": 0.75,
+  "reject_reason": null
+}
