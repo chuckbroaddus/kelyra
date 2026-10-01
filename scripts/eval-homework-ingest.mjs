@@ -200,21 +200,19 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
   } else if (actScore == null) {
     scoreOk = false;
   } else {
-    const expN = Number(exp.draftScore);
-    const actN = Number(actScore);
-    if (Math.abs(actN - expN) <= tol) scoreOk = true;
-    // model sometimes returns points-earned (small int) instead of percent
-    else if (actN >= 0 && actN <= 20 && expN >= 40) {
-      const approxPct = Math.round((actN / Math.max(1, Number(exp.itemCount) || 5)) * 100);
-      scoreOk = Math.abs(approxPct - expN) <= tol + 15;
-    } else if (actN >= 0 && actN <= 100 && expN >= 0 && expN <= 100) {
-      // within a band of 25 for rough vision grades
-      scoreOk = Math.abs(actN - expN) <= Math.max(tol, 25);
-    }
+    // GATE (2026-10-01): strict ±12 percentage points. The old ±25 band / points→percent guess
+    // hid rubber-stamped 100s; it survives only as the `loose` diagnostic on the row.
+    scoreOk = Math.abs(Number(actScore) - Number(exp.draftScore)) <= tol;
   }
+  const scoreLoose =
+    exp.draftScore != null && actScore != null && Math.abs(Number(actScore) - Number(exp.draftScore)) <= 25;
   // uncertain (part of the answers glared/cropped/smudged): null is acceptable; a number is scored normally
   if (!neg && fm.draftScore?.status === 'uncertain' && actScore == null) scoreOk = true;
-  push('draftScore', exp.draftScore, actScore, scoreOk, { status: fm.draftScore?.status });
+  push('draftScore', exp.draftScore, actScore, scoreOk, {
+    status: fm.draftScore?.status,
+    loose: scoreLoose || scoreOk,
+    missing: !neg && exp.draftScore != null && actScore == null,
+  });
 
   // gaps — labels are free-form; require presence only when GT lists skills and act has any, else soft
   let gapOk = true;
@@ -243,7 +241,10 @@ function scoreCase(expected, classify, evaluate, meta = {}) {
       ? !actStudent || (nameStatus === 'uncertain' && nameAccepted)
       : namesMatch(exp.studentName, actStudent) || (nameStatus === 'uncertain' && !actStudent);
   // diagnostics only (not in field accuracy, keeps R1 comparability)
-  const actNames = Array.isArray(classify?.names) ? classify.names.map((n) => n?.name).filter(Boolean) : [];
+  const actNames = [
+    ...(Array.isArray(classify?.names) ? classify.names.map((n) => n?.name) : []),
+    ...(Array.isArray(evaluate?.students) ? evaluate.students.map((n) => (typeof n === 'string' ? n : n?.name)) : []),
+  ].filter(Boolean);
   const diag = {
     multiStudent_expected: Boolean(exp.multiStudent),
     multiStudent_detected: new Set(actNames.map(normName)).size > 1 || Boolean(evaluate?.multiStudent),
@@ -566,17 +567,13 @@ async function main() {
       student_ok: fieldAcc('studentName'),
       score_ok: fieldAcc('draftScore'),
       score_null: rows.filter((r) => r.path === 'draftScore' && r.actual == null).length,
-      // diagnostic: draftScore within ±12 (the ±25 band in field accuracy hides rubber-stamped 100s)
-      score_strict: (() => {
+      // score_ok above IS the ±12 gate; score_loose_25 is the old band, kept for comparison only
+      score_strict: fieldAcc('draftScore'),
+      score_loose_25: (() => {
         const rr = rows.filter((r) => r.path === 'draftScore');
-        const ok = (r) =>
-          r.expected == null
-            ? r.actual == null
-            : r.actual == null
-              ? r.status === 'uncertain'
-              : Math.abs(Number(r.actual) - Number(r.expected)) <= 12;
-        return rr.length ? rr.filter(ok).length / rr.length : null;
+        return rr.length ? rr.filter((r) => r.ok || r.loose).length / rr.length : null;
       })(),
+      missing_drafts: rows.filter((r) => r.path === 'draftScore' && r.missing).length,
       score_100_when_lower: rows.filter(
         (r) => r.path === 'draftScore' && r.actual === 100 && r.expected != null && r.expected < 90,
       ).length,
@@ -628,7 +625,7 @@ async function main() {
   );
   for (const [k, b] of Object.entries(buckets)) {
     console.log(
-      `  ${k.padEnd(16)} n=${String(b.n).padStart(2)} acc ${(b.field_accuracy * 100).toFixed(1)}% rec ${b.record_match_rate == null ? '-' : (b.record_match_rate * 100).toFixed(0) + '%'} student ${b.student_ok == null ? '-' : (b.student_ok * 100).toFixed(0) + '%'} score ${b.score_ok == null ? '-' : (b.score_ok * 100).toFixed(0) + '%'} (null ${b.score_null}) strict ${b.score_strict == null ? '-' : (b.score_strict * 100).toFixed(0) + '%'} stamp100 ${b.score_100_when_lower} hall ${b.hallucinations}`,
+      `  ${k.padEnd(16)} n=${String(b.n).padStart(2)} acc ${(b.field_accuracy * 100).toFixed(1)}% rec ${b.record_match_rate == null ? '-' : (b.record_match_rate * 100).toFixed(0) + '%'} student ${b.student_ok == null ? '-' : (b.student_ok * 100).toFixed(0) + '%'} score±12 ${b.score_ok == null ? '-' : (b.score_ok * 100).toFixed(0) + '%'} (±25 ${b.score_loose_25 == null ? '-' : (b.score_loose_25 * 100).toFixed(0) + '%'}) missing ${b.missing_drafts} stamp100 ${b.score_100_when_lower} hall ${b.hallucinations}`,
     );
   }
   console.log('  multiStudent detected', score.multi_student_detected);
