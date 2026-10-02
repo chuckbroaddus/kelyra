@@ -57,6 +57,7 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   const body = read('src/components/syllabus/WizardStepBody.tsx');
   const person = read('src/components/ui/PersonTabs.tsx');
   const chromeProv = read('src/lib/chrome/ChromeProvider.tsx');
+  const screen = read('src/components/ui/Screen.tsx');
   assert.match(ui, /pin=\{stepTabs\}/);
   assert.doesNotMatch(ui, /sticky=\{stickyNav\}/);
   assert.match(ui, /classId=\{id\}/);
@@ -101,6 +102,18 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   // #389 separate action tray: Save draft is no longer under a tray bump overlay.
   assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 8 : 0/);
   assert.match(wiz, /zIndex: 17/);
+  // Floating trays: scroll content pads bottom; FlushBody outer pad is 0 on scroll
+  // so no opaque band clips content above the action + system trays.
+  assert.match(screen, /flushBottomPad = scroll \? 0 : padStyle\.paddingBottom/);
+  assert.match(screen, /paddingBottom=\{flushBottomPad\}/);
+  assert.match(screen, /Math\.min\(16, paddingBottom\)/);
+  // Tray wrappers stay transparent; only the rounded cards paint elevated fill.
+  assert.match(wiz, /styles\.float/);
+  assert.match(wiz, /styles\.actionTray/);
+  assert.doesNotMatch(wiz, /float:[^}]*backgroundColor/);
+  assert.match(tray, /styles\.float/);
+  assert.match(tray, /styles\.frame/);
+  assert.doesNotMatch(tray, /float:[^}]*backgroundColor/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
