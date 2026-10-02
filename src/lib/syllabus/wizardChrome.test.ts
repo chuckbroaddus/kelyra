@@ -81,6 +81,20 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(wiz, /styles\.actionTray/);
   assert.match(wiz, /chevronBg/);
   assert.match(wiz, /accessibilityLabel=\"Continue\"/);
+  // Nav circles: primary brand fill (PrimaryButton token); identical when both enabled.
+  assert.match(wiz, /chevronBg = c\.brand/);
+  assert.match(wiz, /chevronBorder = c\.brand/);
+  assert.match(wiz, /chevronInk = c\.brandInk/);
+  assert.doesNotMatch(wiz, /chevronBg = c\.elevated/);
+  // Stack on measured system tray height + safe bottom — never trayRestLift
+  // (chrome.trayRest already includes syllabusActionTrayHeight when bump is on).
+  assert.match(wiz, /systemTrayBottom/);
+  assert.match(wiz, /systemTrayHeight/);
+  assert.match(wiz, /systemTrayBottom \+ systemTrayHeight \+ stackGap/);
+  assert.match(wiz, /slideIntoTraySpot = stacked \? systemTrayHeight \+ stackGap/);
+  // Positioning must not read the lifted trayRest (comment may still name it).
+  assert.doesNotMatch(wiz, /bottom = stacked \? chromeState\.trayRest/);
+  assert.doesNotMatch(wiz, /chromeState\.trayRest \+/);
   assert.match(wiz, /status\?: string \| null/);
   assert.match(wiz, /error\?: string \| null/);
   assert.match(chromeProv, /syllabusActionTrayHeight/);
