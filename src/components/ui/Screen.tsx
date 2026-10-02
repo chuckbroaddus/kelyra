@@ -128,11 +128,15 @@ export function Screen({
   };
 
   // When ClassTabs (etc.) sit in CollapsingPageChrome above the scroller, FlushBody
-  // owns horizontal + top pad — the scroller only needs bottom tray reserve.
+  // owns horizontal + top pad — the scroller only needs bottom tray reserve on the
+  // *content*, never as outer layout pad (that would clip scroll above the trays).
   const pinnedContentStyle = {
     maxWidth,
     paddingBottom: padStyle.paddingBottom,
   };
+  // Scroll path: outer bottom pad stays 0 so trays float over full-height content.
+  // Non-scroll path still reserves tray space on the layout box (Diary etc.).
+  const flushBottomPad = scroll ? 0 : padStyle.paddingBottom;
 
   const scroller = (content: ReactNode, contentStyle: object) => (
     <ScrollView
@@ -167,7 +171,7 @@ export function Screen({
         pad={pad}
         topGap={pageChromeHosted ? 0 : pad + topReserve}
         maxWidth={maxWidth}
-        paddingBottom={padStyle.paddingBottom}
+        paddingBottom={flushBottomPad}
         centered={centered}
       >
         <CollapsingPageChrome>{collapse}</CollapsingPageChrome>
@@ -261,8 +265,11 @@ function FlushBody({
   }, [gap, openGap, visible]);
 
   useEffect(() => {
+    // When chrome hides, shrink outer reserve — but never invent pad when the
+    // scroll path already uses 0 (trays float; content pad owns clearance).
+    const hiddenPad = Math.min(16, paddingBottom);
     Animated.timing(bottomPad, {
-      toValue: visible ? paddingBottom : 16,
+      toValue: visible ? paddingBottom : hiddenPad,
       duration: chromeTokens.motion.tray,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
