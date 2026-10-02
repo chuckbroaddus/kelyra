@@ -64,6 +64,11 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(ui, /\{stickyNav\}/);
   assert.match(ui, /status=\{status\}/);
   assert.match(ui, /error=\{error\}/);
+  // Step change (< > tray + tabs) snaps body ScrollView to top — no animated fight.
+  assert.match(ui, /stepScrollRef = useRef<ScrollView>\(null\)/);
+  assert.match(ui, /scrollRef=\{stepScrollRef\}/);
+  assert.match(ui, /scrollTo\(\{\s*y:\s*0,\s*animated:\s*false\s*\}\)/);
+  assert.match(ui, /\[draft\?\.step\]/);
   // id may arrive as string[] from expo-router — coerce before RPC.
   assert.match(ui, /Array\.isArray\(idParam\) \? idParam\[0\] : idParam/);
   assert.match(ui, /plainSyllabusWriteError/);
