@@ -52,8 +52,8 @@ export type PersonTab = {
   glyph?: (selected: boolean) => ReactNode;
   badge?: number;
   /**
-   * Syllabus wizard step mark: numbered wash pip (light red → light green).
-   * Independent of `badge` count pips used on Needs / tray tabs.
+   * Syllabus wizard step mark: same CountBadge alert pip as Messages/Needs,
+   * toned light red → light green. Independent of `badge` unread counts.
    */
   stepMark?: { n: number; done: boolean };
 };
@@ -99,20 +99,9 @@ type ThemeColors = {
   mute: string;
 };
 
+/** Reuses Messages/Needs CountBadge geometry; only the soft red/green tone differs. */
 function StepMarkBadge({ mark }: { mark: { n: number; done: boolean } }) {
-  const { colors } = useTheme();
-  const fill = mark.done ? colors.goodSoft : colors.dangerSoft;
-  const ink = mark.done ? colors.good : colors.danger;
-  return (
-    <View
-      pointerEvents="none"
-      style={[styles.stepMark, { backgroundColor: fill }]}
-      accessibilityElementsHidden
-      importantForAccessibility="no"
-    >
-      <Text style={[styles.stepMarkText, { color: ink }]}>{mark.n}</Text>
-    </View>
-  );
+  return <CountBadge count={mark.n} tone={mark.done ? 'goodSoft' : 'dangerSoft'} />;
 }
 
 type PillProps = {
@@ -235,7 +224,12 @@ function PersonTabPill({
             ]}
           />
           {hasGlyph ? (
-            <View style={styles.glyph}>
+            <View
+              style={[
+                styles.glyph,
+                (tab.stepMark || (tab.badge ?? 0) > 0) && styles.glyphBadgeHost,
+              ]}
+            >
               {tab.glyph ? (
                 tab.glyph(selected)
               ) : tab.photoName || tab.photoUrl ? (
@@ -253,10 +247,13 @@ function PersonTabPill({
                   size={PERSON_TAB_GLYPH}
                 />
               ) : null}
-              {!tab.stepMark ? <CountBadge count={tab.badge ?? 0} /> : null}
+              {tab.stepMark ? (
+                <StepMarkBadge mark={tab.stepMark} />
+              ) : (
+                <CountBadge count={tab.badge ?? 0} />
+              )}
             </View>
           ) : null}
-          {tab.stepMark ? <StepMarkBadge mark={tab.stepMark} /> : null}
           {showLabel && slot > 0 ? (
             <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: slot }]}>
               <MarqueeText
@@ -588,22 +585,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: PERSON_TAB_GLYPH / 2,
   },
-  stepMark: {
-    position: 'absolute',
-    top: 0,
-    right: 2,
-    minWidth: 14,
-    height: 14,
-    paddingHorizontal: 3,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  stepMarkText: {
-    ...type.badge,
-    fontSize: 9,
-    fontWeight: '700',
-    lineHeight: 12,
+  /** Let CountBadge (Messages-style alert pip) overhang the icon corner. */
+  glyphBadgeHost: {
+    overflow: 'visible',
   },
 });

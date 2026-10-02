@@ -65,8 +65,14 @@ test('screen pins step row + sticky nav; body lost import row; tray bump on', ()
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
-  assert.match(person, /goodSoft/);
-  assert.match(person, /dangerSoft/);
+  // Step marks reuse CountBadge (Messages/Needs alert pip), not a private wash style.
+  assert.match(person, /CountBadge count=\{mark\.n\} tone=\{mark\.done \? 'goodSoft' : 'dangerSoft'\}/);
+  assert.match(person, /glyphBadgeHost/);
+  assert.doesNotMatch(person, /styles\.stepMark/);
+  const badge = read('src/components/ui/CountBadge.tsx');
+  assert.match(badge, /CountBadgeTone/);
+  assert.match(badge, /dangerSoft/);
+  assert.match(badge, /goodSoft/);
 });
 
 test('interview glyph recipe exists and is registered', () => {
