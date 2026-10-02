@@ -1,7 +1,7 @@
 /**
  * GB-08 Syllabus wizard shell — step body + floating action tray.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,6 @@ import { HoverTip } from '@/components/ui/HoverTip';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { type PersonTab } from '@/components/ui/PersonTabs';
 import { chrome, shadows, type } from '@/constants/theme';
-import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { isStepContinued, type StepBadgeMap } from '@/lib/syllabus/stepBadgeStore';
 import { useLayout } from '@/lib/theme/layout';
@@ -30,6 +29,7 @@ import {
   type SyllabusWizardDraft,
   type WizardStepId,
 } from '@/components/syllabus/wizardModel';
+import { TopicHelpHit, TopicHelpPop, useTopicHelp } from '@/components/syllabus/TopicHelp';
 import { WizardStepBody } from '@/components/syllabus/WizardStepBody';
 
 type Colors = {
@@ -68,13 +68,7 @@ export function SyllabusWizard({ draft, onChange, busy, footer, tabsHostedOutsid
   const steps = visibleSteps(draft);
   const step = resolveWizardStep(draft);
   const issues = validateWizard(draft);
-  const [helpOpen, setHelpOpen] = useState(false);
-
-  useEffect(() => {
-    setHelpOpen(false);
-  }, [step]);
-
-  const help = getBundledHelpTopic(STEP_HELP_KEYS[step]);
+  const stepHelp = useTopicHelp(STEP_HELP_KEYS[step], step);
   const go = (id: WizardStepId) => onChange(setWizardStep(draft, id));
 
   return (
@@ -83,30 +77,16 @@ export function SyllabusWizard({ draft, onChange, busy, footer, tabsHostedOutsid
       <Card>
         <View style={styles.titleRow}>
           <Text style={[type.title, { color: c.ink, flex: 1 }]}>{STEP_LABELS[step]}</Text>
-          {help ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Help for ${STEP_LABELS[step]}`}
-              accessibilityState={{ expanded: helpOpen }}
-              onPress={() => setHelpOpen((v) => !v)}
-              style={({ pressed }) => [
-                styles.helpHit,
-                { borderColor: c.line, opacity: pressed ? 0.75 : 1 },
-              ]}
-            >
-              <Text style={[styles.helpGlyph, { color: c.mute }]}>?</Text>
-            </Pressable>
+          {stepHelp.help ? (
+            <TopicHelpHit
+              open={stepHelp.open}
+              label={STEP_LABELS[step]}
+              colors={c}
+              onPress={stepHelp.toggle}
+            />
           ) : null}
         </View>
-        {helpOpen && help ? (
-          <View style={[styles.helpPop, { backgroundColor: c.elevated, borderColor: c.line }]}>
-            <Text style={[type.body, { color: c.ink, fontWeight: '700' }]}>{help.title}</Text>
-            <Text style={[type.meta, { color: c.mute, marginTop: 4 }]}>{help.meaning}</Text>
-            {help.example ? (
-              <Text style={[type.meta, { color: c.ink, marginTop: 6 }]}>Example: {help.example}</Text>
-            ) : null}
-          </View>
-        ) : null}
+        {stepHelp.open && stepHelp.help ? <TopicHelpPop help={stepHelp.help} colors={c} /> : null}
         <WizardStepBody draft={draft} step={step} colors={c} onChange={onChange} />
       </Card>
       {issues.length ? (
@@ -365,16 +345,6 @@ export function SyllabusWizardNav({
 
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  helpHit: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  helpGlyph: { fontSize: 13, fontWeight: '700', lineHeight: 16 },
-  helpPop: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12 },
   float: {
     position: 'absolute',
     zIndex: 17,
