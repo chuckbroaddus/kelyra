@@ -891,6 +891,18 @@ const RECIPES = {
     line(p, 9.4, 13.2, 15.8, 13.2, ST);
     line(p, 9.4, 16.4, 14.2, 16.4, ST);
   },
+  /**
+   * Syllabus interview entry (chat bubble + list lines).
+   * Not '?', not Ask mark — tray bump for Answer a few questions.
+   */
+  syllabusInterview: (p) => {
+    roundRect(p, 3.6, 4.2, 16.8, 12.4, 2.2, ST, false);
+    line(p, 7.2, 16.4, 7.2, 19.4, ST);
+    line(p, 7.2, 19.4, 10.6, 16.4, ST);
+    line(p, 7.0, 8.0, 16.4, 8.0, ST);
+    line(p, 7.0, 10.8, 14.8, 10.8, ST);
+    line(p, 7.0, 13.6, 12.8, 13.6, ST);
+  },
 };
 
 function bbox(png) {

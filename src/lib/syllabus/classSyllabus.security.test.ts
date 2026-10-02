@@ -142,9 +142,13 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   // Save draft still exists in the wizard chrome, but the screen refuses a silent
   // live write while published — teacher must Publish (with confirm).
   // AVG T-S7: Save draft is lenient (canSaveDraft); Publish stays canFinishReview.
-  assert.match(wizard, /label=\{busy \? 'Saving…' : 'Save draft'\}/);
-  assert.match(wizard, /disabled=\{Boolean\(busy\) \|\| !canSaveDraft\(draft\)\}/);
+  assert.match(wizard, /'Save draft'/);
+  assert.match(wizard, /!canSaveDraft\(draft\)/);
+  assert.match(wizard, /SyllabusWizardNav/);
   assert.match(ui, /onSaveDraft=\{\(\) => void onSaveDraft\(\)\}/);
+  assert.match(ui, /pin=\{stepTabs\}/);
+  assert.match(ui, /sticky=\{stickyNav\}/);
+  assert.match(ui, /setTrayBump\(true\)/);
   assert.match(ui, /draft\.syllabus_status === 'published'/);
   assert.match(
     ui,

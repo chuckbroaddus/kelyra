@@ -51,6 +51,11 @@ export type PersonTab = {
   /** Custom glyph (e.g. gradebook period pie). Wins over `icon`; gets selected state. */
   glyph?: (selected: boolean) => ReactNode;
   badge?: number;
+  /**
+   * Syllabus wizard step mark: numbered wash pip (light red → light green).
+   * Independent of `badge` count pips used on Needs / tray tabs.
+   */
+  stepMark?: { n: number; done: boolean };
 };
 
 function easingForKind(kind: ReturnType<typeof personTabExpandEasingKind>) {
@@ -93,6 +98,22 @@ type ThemeColors = {
   brandSoft: string;
   mute: string;
 };
+
+function StepMarkBadge({ mark }: { mark: { n: number; done: boolean } }) {
+  const { colors } = useTheme();
+  const fill = mark.done ? colors.goodSoft : colors.dangerSoft;
+  const ink = mark.done ? colors.good : colors.danger;
+  return (
+    <View
+      pointerEvents="none"
+      style={[styles.stepMark, { backgroundColor: fill }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+    >
+      <Text style={[styles.stepMarkText, { color: ink }]}>{mark.n}</Text>
+    </View>
+  );
+}
 
 type PillProps = {
   tab: PersonTab;
@@ -175,7 +196,13 @@ function PersonTabPill({
       <Pressable
         accessibilityRole="tab"
         accessibilityState={{ selected }}
-        accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
+        accessibilityLabel={
+          tab.stepMark
+            ? `${tab.label}, step ${tab.stepMark.n}, ${tab.stepMark.done ? 'continued' : 'not continued'}`
+            : tab.badge
+              ? `${tab.label}, ${tab.badge} waiting`
+              : tab.label
+        }
         onPress={() => onChange(tab.key)}
         onLayout={(event) => {
           onLayoutX(event.nativeEvent.layout.x, event.nativeEvent.layout.width);
@@ -192,7 +219,7 @@ function PersonTabPill({
               // reflow was snapping labels shut on first-tab transitions.
               // Distribute mode: equal flex slots — fixed width, label still morphs.
               width: distribute ? ('100%' as unknown as number) : pillWidth,
-              overflow: 'hidden',
+              overflow: tab.stepMark ? 'visible' : 'hidden',
             },
           ]}
         >
@@ -226,9 +253,10 @@ function PersonTabPill({
                   size={PERSON_TAB_GLYPH}
                 />
               ) : null}
-              <CountBadge count={tab.badge ?? 0} />
+              {!tab.stepMark ? <CountBadge count={tab.badge ?? 0} /> : null}
             </View>
           ) : null}
+          {tab.stepMark ? <StepMarkBadge mark={tab.stepMark} /> : null}
           {showLabel && slot > 0 ? (
             <Animated.View style={[styles.labelClip, { width: labelWidth, maxWidth: slot }]}>
               <MarqueeText
@@ -559,5 +587,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     borderRadius: PERSON_TAB_GLYPH / 2,
+  },
+  stepMark: {
+    position: 'absolute',
+    top: 0,
+    right: 2,
+    minWidth: 14,
+    height: 14,
+    paddingHorizontal: 3,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  stepMarkText: {
+    ...type.badge,
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
   },
 });

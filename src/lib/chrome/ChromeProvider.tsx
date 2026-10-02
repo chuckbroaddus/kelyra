@@ -123,6 +123,9 @@ type ChromeValue = {
   setLocalTray: (on: boolean) => void;
   keepLocalTray: boolean;
   setKeepLocalTray: (on: boolean) => void;
+  /** Syllabus wizard tray bump height reserved above the floating tray. */
+  trayBump: boolean;
+  setTrayBump: (on: boolean) => void;
   keyboardHeight: number;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -260,6 +263,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [localTray, setLocalTrayState] = useState(false);
+  const [trayBump, setTrayBumpState] = useState(false);
   const [keepLocalTray, setKeepLocalTrayState] = useState(false);
   const localTrayRef = useRef(false);
   const keepLocalRef = useRef(false);
@@ -354,7 +358,9 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       : 8 + Math.max(insets.bottom, 8);
   const trayRest = layout.showTopBar ? 12 : trayHeight + bottomInset;
   const localExtra = localTray ? trayHeight + 8 : 0;
-  const trayPadding = trayRest + localExtra + 12;
+  const bumpExtra = trayBump ? 48 : 0;
+  const trayPadding = trayRest + localExtra + bumpExtra + 12;
+  const trayRestLift = trayRest + bumpExtra;
 
   const setLocalTray = useCallback((on: boolean) => {
     localTrayRef.current = on;
@@ -363,6 +369,9 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       keepLocalRef.current = false;
       setKeepLocalTrayState(false);
     }
+  }, []);
+  const setTrayBump = useCallback((on: boolean) => {
+    setTrayBumpState(on);
   }, []);
   const setKeepLocalTray = useCallback((on: boolean) => {
     keepLocalRef.current = on;
@@ -427,7 +436,11 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const hideDistance =
-    (layout.showTopBar ? 0 : trayHeight) + (localTray ? trayHeight + 8 : 0) + bottomInset + 28;
+    (layout.showTopBar ? 0 : trayHeight) +
+    (localTray ? trayHeight + 8 : 0) +
+    (trayBump ? 48 : 0) +
+    bottomInset +
+    28;
 
   const animate = useCallback(
     (show: boolean, opts?: { system?: boolean; local?: boolean }) => {
@@ -1010,11 +1023,13 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       trayPadding: role === 'none' ? 24 : trayPadding,
       contextReserve: role === 'none' ? 0 : contextReserve,
       headerHeight,
-      trayRest: role === 'none' ? Math.max(insets.bottom, 12) : trayRest,
+      trayRest: role === 'none' ? Math.max(insets.bottom, 12) : trayRestLift,
       localTray,
       setLocalTray,
       keepLocalTray,
       setKeepLocalTray,
+      trayBump,
+      setTrayBump,
       keyboardHeight,
       searchQuery,
       setSearchQuery,
@@ -1078,6 +1093,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       contextReserve,
       headerHeight,
       trayRest,
+      trayRestLift,
       insets.bottom,
       searchQuery,
       searchFrom,
@@ -1116,6 +1132,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       setLocalTray,
       keepLocalTray,
       setKeepLocalTray,
+      trayBump,
+      setTrayBump,
       keyboardHeight,
     ],
   );
