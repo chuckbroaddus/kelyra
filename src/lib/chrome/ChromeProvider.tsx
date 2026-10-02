@@ -123,7 +123,7 @@ type ChromeValue = {
   setLocalTray: (on: boolean) => void;
   keepLocalTray: boolean;
   setKeepLocalTray: (on: boolean) => void;
-  /** Syllabus wizard tray bump height reserved above the floating tray. */
+  /** Syllabus action tray reserve above the floating system tray. */
   trayBump: boolean;
   setTrayBump: (on: boolean) => void;
   keyboardHeight: number;
@@ -358,7 +358,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       : 8 + Math.max(insets.bottom, 8);
   const trayRest = layout.showTopBar ? 12 : trayHeight + bottomInset;
   const localExtra = localTray ? trayHeight + 8 : 0;
-  const bumpExtra = trayBump ? 48 : 0;
+  // Separate syllabus action tray sits above the system tray (gap 8).
+  const bumpExtra = trayBump ? chrome.syllabusActionTrayHeight + 8 : 0;
   const trayPadding = trayRest + localExtra + bumpExtra + 12;
   const trayRestLift = trayRest + bumpExtra;
 
@@ -435,10 +436,11 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
     setContextByPath((current) => (current[key] === tab ? current : { ...current, [key]: tab }));
   }, [pathname]);
 
+  // System tray hide travel only — syllabus action tray slides into the system
+  // tray spot on its own interpolate (does not leave with this distance).
   const hideDistance =
     (layout.showTopBar ? 0 : trayHeight) +
     (localTray ? trayHeight + 8 : 0) +
-    (trayBump ? 48 : 0) +
     bottomInset +
     28;
 

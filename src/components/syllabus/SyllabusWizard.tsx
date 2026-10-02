@@ -1,16 +1,21 @@
 /**
- * GB-08 Syllabus wizard shell — step body + pinned footer nav chrome.
+ * GB-08 Syllabus wizard shell — step body + floating action tray.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import type { IconName } from '@/components/ui/Icon';
+import { HoverTip } from '@/components/ui/HoverTip';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { type PersonTab } from '@/components/ui/PersonTabs';
-import { type } from '@/constants/theme';
+import { chrome, shadows, type } from '@/constants/theme';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import { useChrome } from '@/lib/chrome/ChromeProvider';
 import { isStepContinued, type StepBadgeMap } from '@/lib/syllabus/stepBadgeStore';
+import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import {
   STEP_HELP_KEYS,
@@ -130,6 +135,7 @@ export function SyllabusWizard({ draft, onChange, busy, footer, tabsHostedOutsid
 
 type NavProps = {
   draft: SyllabusWizardDraft;
+  classId: string;
   busy?: boolean;
   onBack: () => void;
   onContinue: () => void;
@@ -137,17 +143,40 @@ type NavProps = {
   onPublish: () => void;
 };
 
-/** Pinned footer: "{n} of {M} — {title}" + circle nav + Save draft / Publish. */
+/**
+ * Separate syllabus action tray above the system tray.
+ * Swipe-up hides the system tray; this tray slides down into that spot.
+ * Swipe-down restores both stacked (this tray above the system tray).
+ */
 export function SyllabusWizardNav({
   draft,
+  classId,
   busy,
   onBack,
   onContinue,
   onSaveDraft,
   onPublish,
 }: NavProps) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const c = colors as Colors;
+  const chromeState = useChrome();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const layout = useLayout();
+  const landscape = layout.orientation === 'landscape' && layout.isPhone;
+  const iconSize = landscape ? 22 : 24;
+  const hit = landscape ? 44 : 48;
+  const hInset = Math.max(insets.left, insets.right, 12);
+  const bottomInset = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
+  const stacked = !layout.showTopBar;
+  const bottom = stacked ? chromeState.trayRest + 8 : 8 + Math.max(insets.bottom, 8);
+  const slideIntoTraySpot = stacked ? Math.max(chromeState.trayRest + 8 - bottomInset, 0) : 0;
+  const hideDist = Math.max(chromeState.trayHideDistance, 1);
+  const actionTranslate = chromeState.trayTranslate.interpolate({
+    inputRange: [0, hideDist],
+    outputRange: [0, slideIntoTraySpot],
+  });
+
   const steps = useMemo(() => visibleSteps(draft), [draft.engine, draft.categories.length]);
   const step = resolveWizardStep(draft);
   const stepIndex = steps.indexOf(step);
@@ -159,92 +188,153 @@ export function SyllabusWizardNav({
   const showPublish = last;
   const saveDisabled = Boolean(busy) || !canSaveDraft(draft);
   const publishDisabled = Boolean(busy) || !canFinishReview(draft);
+  // Same plate whenever a chevron is enabled; only disabled opacity differs.
+  const chevronBg = c.elevated;
+  const chevronBorder = c.line;
 
   return (
-    <View style={styles.navWrap}>
-      <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginBottom: 8 }]}>
-        {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
-      </Text>
-      <View style={styles.navRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          disabled={!canBack}
-          onPress={onBack}
-          style={({ pressed }) => [
-            styles.circle,
-            {
-              backgroundColor: c.elevated,
-              borderColor: c.line,
-              opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.circleGlyph, { color: c.ink }]}>‹</Text>
-        </Pressable>
-
-        {showSave ? (
+    <Animated.View
+      pointerEvents="box-none"
+      style={[
+        styles.float,
+        {
+          left: hInset,
+          right: hInset,
+          bottom,
+          transform: [{ translateY: actionTranslate }],
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.actionTray,
+          {
+            backgroundColor: c.elevated,
+            borderColor: c.line,
+            ...(scheme === 'light' ? shadows.light : null),
+          },
+        ]}
+      >
+        <View style={styles.navRow}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={busy ? 'Saving…' : 'Save draft'}
-            disabled={saveDisabled}
-            onPress={onSaveDraft}
-            style={({ pressed }) => [
-              styles.mid,
-              {
-                backgroundColor: c.elevated,
-                borderColor: c.line,
-                opacity: saveDisabled ? 0.4 : pressed ? 0.78 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.midLabel, { color: c.ink }]}>{busy ? 'Saving…' : 'Save draft'}</Text>
-          </Pressable>
-        ) : showPublish ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={busy ? 'Publishing…' : 'Publish'}
-            disabled={publishDisabled}
-            onPress={onPublish}
-            style={({ pressed }) => [
-              styles.mid,
-              {
-                backgroundColor: c.brand,
-                borderColor: c.brand,
-                opacity: publishDisabled ? 0.4 : pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.midLabel, { color: c.brandInk }]}>
-              {busy ? 'Publishing…' : 'Publish'}
-            </Text>
-          </Pressable>
-        ) : (
-          <View style={styles.midSpacer} />
-        )}
-
-        {!last ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Continue"
-            disabled={!canNext}
-            onPress={onContinue}
+            accessibilityLabel="Back"
+            disabled={!canBack}
+            onPress={onBack}
             style={({ pressed }) => [
               styles.circle,
               {
-                backgroundColor: c.brand,
-                borderColor: c.brand,
-                opacity: !canNext ? 0.35 : pressed ? 0.85 : 1,
+                backgroundColor: chevronBg,
+                borderColor: chevronBorder,
+                opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
               },
             ]}
           >
-            <Text style={[styles.circleGlyph, { color: c.brandInk }]}>›</Text>
+            <Text style={[styles.circleGlyph, { color: c.ink }]}>‹</Text>
           </Pressable>
-        ) : (
-          <View style={styles.circleGhost} />
-        )}
+
+          <View style={styles.midIcons}>
+            <HoverTip label="Answer a few questions">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Answer a few questions"
+                onPress={() => router.push(`/class/${classId}/syllabus-interview` as never)}
+                style={({ pressed }) => [styles.iconHit, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
+              >
+                <Icon name="syllabusInterview" color={c.mute} size={iconSize} />
+              </Pressable>
+            </HoverTip>
+            <HoverTip label="Import syllabus with Capture">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Import syllabus with Capture"
+                onPress={() =>
+                  router.push(
+                    `/capture?preset=syllabus&classId=${encodeURIComponent(classId)}` as never,
+                  )
+                }
+                style={({ pressed }) => [styles.iconHit, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
+              >
+                <Icon name="capture" color={c.mute} size={iconSize} />
+              </Pressable>
+            </HoverTip>
+            <HoverTip label="Start from a school template">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Start from a school template"
+                onPress={() => router.push(`/class/${classId}/syllabus-templates` as never)}
+                style={({ pressed }) => [styles.iconHit, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
+              >
+                <Icon name="syllabusTemplate" color={c.mute} size={iconSize} />
+              </Pressable>
+            </HoverTip>
+          </View>
+
+          <View style={styles.rightCluster}>
+            {showSave ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={busy ? 'Saving…' : 'Save draft'}
+                disabled={saveDisabled}
+                onPress={onSaveDraft}
+                style={({ pressed }) => [
+                  styles.mid,
+                  {
+                    backgroundColor: c.elevated,
+                    borderColor: c.line,
+                    opacity: saveDisabled ? 0.4 : pressed ? 0.78 : 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.midLabel, { color: c.ink }]}>{busy ? 'Saving…' : 'Save draft'}</Text>
+              </Pressable>
+            ) : showPublish ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={busy ? 'Publishing…' : 'Publish'}
+                disabled={publishDisabled}
+                onPress={onPublish}
+                style={({ pressed }) => [
+                  styles.mid,
+                  {
+                    backgroundColor: c.brand,
+                    borderColor: c.brand,
+                    opacity: publishDisabled ? 0.4 : pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.midLabel, { color: c.brandInk }]}>
+                  {busy ? 'Publishing…' : 'Publish'}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.midSpacer} />
+            )}
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Continue"
+              disabled={!canNext}
+              onPress={onContinue}
+              style={({ pressed }) => [
+                styles.circle,
+                {
+                  backgroundColor: chevronBg,
+                  borderColor: chevronBorder,
+                  opacity: !canNext ? 0.35 : pressed ? 0.75 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.circleGlyph, { color: c.ink }]}>›</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginTop: 2 }]}>
+          {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
+        </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -260,27 +350,54 @@ const styles = StyleSheet.create({
   },
   helpGlyph: { fontSize: 13, fontWeight: '700', lineHeight: 16 },
   helpPop: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12 },
-  navWrap: { paddingTop: 4, paddingBottom: 4 },
-  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
+  float: {
+    position: 'absolute',
+    zIndex: 17,
+  },
+  actionTray: {
+    borderRadius: chrome.trayRadius,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingTop: 6,
+    paddingBottom: 8,
+    alignSelf: 'stretch',
+  },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  midIcons: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    minWidth: 0,
+  },
+  iconHit: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rightCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   circle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleGhost: { width: 44, height: 44 },
-  circleGlyph: { fontSize: 28, fontWeight: '600', lineHeight: 30, marginTop: -2 },
+  circleGlyph: { fontSize: 26, fontWeight: '600', lineHeight: 28, marginTop: -2 },
   mid: {
-    minWidth: 132,
-    height: 44,
-    borderRadius: 22,
+    minWidth: 104,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  midSpacer: { minWidth: 132, height: 44 },
-  midLabel: { ...type.body, fontWeight: '600' },
+  midSpacer: { minWidth: 104, height: 40 },
+  midLabel: { ...type.body, fontWeight: '600', fontSize: 14 },
 });

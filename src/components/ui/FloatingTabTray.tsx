@@ -84,12 +84,6 @@ export function FloatingTabTray() {
   const hit = landscape ? 44 : 48;
   const hInset = Math.max(insets.left, insets.right, 12);
   const bottom = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
-  const showSyllabusBump =
-    chromeState.trayBump &&
-    chromeState.role === 'teacher' &&
-    Boolean(chromeState.classId) &&
-    !layout.showTopBar;
-  const bumpClassId = chromeState.classId;
 
   return (
     <Animated.View
@@ -106,84 +100,35 @@ export function FloatingTabTray() {
         },
       ]}
     >
-      <View style={styles.stack} pointerEvents="box-none">
-        {showSyllabusBump && bumpClassId ? (
-          <View
-            style={[
-              styles.bump,
-              {
-                backgroundColor: colors.elevated,
-                borderColor: colors.line,
-                ...(scheme === 'light' ? shadows.light : null),
-              },
-            ]}
+      <View
+        style={[
+          styles.frame,
+          {
+            height: frameH,
+            backgroundColor: colors.elevated,
+            borderColor: colors.line,
+            ...(scheme === 'light' ? shadows.light : null),
+          },
+        ]}
+      >
+        {tabs.map((tab) => (
+          <HoverTip key={tab.key} label={tabTip(tab)}>
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab.active, ...(tab.icon === 'ask' && chromeKWorking ? { busy: true } : null) }}
+            accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
+            onPress={() => router.push(tab.href as never)}
+            style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
           >
-            <HoverTip label="Answer a few questions">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Answer a few questions"
-                onPress={() => router.push(`/class/${bumpClassId}/syllabus-interview` as never)}
-                style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
-              >
-                <Icon name="syllabusInterview" color={colors.mute} size={iconSize} />
-              </Pressable>
-            </HoverTip>
-            <HoverTip label="Import syllabus with Capture">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Import syllabus with Capture"
-                onPress={() =>
-                  router.push(
-                    `/capture?preset=syllabus&classId=${encodeURIComponent(bumpClassId)}` as never,
-                  )
-                }
-                style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
-              >
-                <Icon name="capture" color={colors.mute} size={iconSize} />
-              </Pressable>
-            </HoverTip>
-            <HoverTip label="Start from a school template">
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Start from a school template"
-                onPress={() => router.push(`/class/${bumpClassId}/syllabus-templates` as never)}
-                style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
-              >
-                <Icon name="syllabusTemplate" color={colors.mute} size={iconSize} />
-              </Pressable>
-            </HoverTip>
-          </View>
-        ) : null}
-        <View
-          style={[
-            styles.frame,
-            {
-              height: frameH,
-              backgroundColor: colors.elevated,
-              borderColor: colors.line,
-              ...(scheme === 'light' ? shadows.light : null),
-            },
-          ]}
-        >
-          {tabs.map((tab) => (
-            <HoverTip key={tab.key} label={tabTip(tab)}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab.active, ...(tab.icon === 'ask' && chromeKWorking ? { busy: true } : null) }}
-              accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} waiting` : tab.label}
-              onPress={() => router.push(tab.href as never)}
-              style={({ pressed }) => [styles.tab, { width: hit, height: hit }, pressed && { opacity: 0.7 }]}
-            >
-              <View collapsable={false} style={{ width: glyphSize(tab, iconSize), height: glyphSize(tab, iconSize), alignItems: 'center', justifyContent: 'center', overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }}>
-                <TabGlyph tab={tab} active={tab.active} size={glyphSize(tab, iconSize)} colors={colors} />
-                {tab.badge ? (
-                  <CountBadge count={tab.badge} danger={colors.danger} ink={scheme === 'dark' ? '#1A120C' : colors.brandInk} />
-                ) : null}
-              </View>
-            </Pressable>
-            </HoverTip>
-          ))}
-        </View>
+            <View collapsable={false} style={{ width: glyphSize(tab, iconSize), height: glyphSize(tab, iconSize), alignItems: 'center', justifyContent: 'center', overflow: Platform.OS === 'web' ? 'visible' : 'hidden' }}>
+              <TabGlyph tab={tab} active={tab.active} size={glyphSize(tab, iconSize)} colors={colors} />
+              {tab.badge ? (
+                <CountBadge count={tab.badge} danger={colors.danger} ink={scheme === 'dark' ? '#1A120C' : colors.brandInk} />
+              ) : null}
+            </View>
+          </Pressable>
+          </HoverTip>
+        ))}
       </View>
     </Animated.View>
   );
@@ -246,20 +191,6 @@ const styles = StyleSheet.create({
   float: {
     position: 'absolute',
     zIndex: 16,
-  },
-  stack: {
-    alignItems: 'center',
-  },
-  bump: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 52,
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    marginBottom: -1,
   },
   frame: {
     borderRadius: chrome.trayRadius,
