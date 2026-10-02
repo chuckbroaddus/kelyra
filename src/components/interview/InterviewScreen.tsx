@@ -218,7 +218,7 @@ export function InterviewScreen({
             >
               <Text style={[type.body, { color: c.ink, flex: 1 }]}>{l.text}</Text>
               <Text style={[type.meta, { color: l.tag === 'default' ? c.danger : c.mute }]}>
-                {l.tag === 'school' ? 'Set by your school' : l.tag === 'default' ? 'Usual choice · check' : 'Change'}
+                {l.tag === 'school' ? 'Locked by school' : l.tag === 'default' ? 'Usual choice · check' : 'Change'}
               </Text>
             </Pressable>
           ))}

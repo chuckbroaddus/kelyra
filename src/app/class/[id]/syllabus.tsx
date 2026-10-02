@@ -154,6 +154,8 @@ export default function SyllabusScreen() {
                 book_mode?: 'reset_each_marking_period' | 'rolling_year' | null;
                 calendar?: NonNullable<SyllabusSchoolPolicyInput['calendar']> | null;
                 calendar_template?: string | null;
+                scales?: NonNullable<SyllabusSchoolPolicyInput['scales']> | null;
+                default_scale_id?: string | null;
               }
             | null;
           if (payload || classCalendar) {
@@ -167,6 +169,8 @@ export default function SyllabusScreen() {
               book_mode: payload?.book_mode ?? null,
               calendar: classCalendar ?? payload?.calendar ?? null,
               calendar_template: payload?.calendar_template ?? null,
+              scales: payload?.scales ?? null,
+              default_scale_id: payload?.default_scale_id ?? null,
             };
           }
         } catch {

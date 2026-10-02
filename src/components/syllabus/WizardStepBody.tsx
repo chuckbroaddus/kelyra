@@ -2,7 +2,7 @@
  * Step bodies for GB-08 syllabus wizard.
  * Radios (full label + help under selected), steppers, switches — no choice ChipRows.
  */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, Switch, Text, View, StyleSheet } from 'react-native';
 
 import { GhostButton, SecondaryButton } from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
-import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
+import { rollupPresetLabel, syllabusStatusLabel } from '@/lib/grade/plainLabels';
 import { splitWeights } from '@/lib/syllabus/extraCreditWeights';
 import { TopicHelpLabel } from '@/components/syllabus/TopicHelp';
 import {
@@ -57,22 +57,43 @@ type Props = {
   onChange: (d: SyllabusWizardDraft) => void;
 };
 
-export function LockNote({
-  draft,
-  field,
+/** Shared caption under every school-locked control. */
+export const LOCKED_BY_SCHOOL = 'This value is locked by your school.';
+
+/**
+ * Real control (selected/filled), dimmed, no taps, lock + one muted line.
+ * No orange “set by your school” callouts.
+ */
+export function LockedField({
+  locked,
   colors,
+  children,
 }: {
+  locked: boolean;
+  colors: StepColors;
+  children: ReactNode;
+}) {
+  if (!locked) return <>{children}</>;
+  return (
+    <View pointerEvents="none" accessibilityState={{ disabled: true }} style={styles.lockedWrap}>
+      <View style={styles.lockedDim}>{children}</View>
+      <View style={styles.lockedCaptionRow}>
+        <Text accessibilityLabel="Locked" style={[styles.lockGlyph, { color: colors.mute }]}>
+          {'\u{1F512}'}
+        </Text>
+        <Text style={[type.meta, { color: colors.mute, flex: 1 }]}>{LOCKED_BY_SCHOOL}</Text>
+      </View>
+    </View>
+  );
+}
+
+/** @deprecated Prefer LockedField. Kept for stable imports; always null. */
+export function LockNote(_props: {
   draft: SyllabusWizardDraft;
   field: Parameters<typeof isFieldLocked>[1];
   colors: StepColors;
 }) {
-  if (!isFieldLocked(draft, field)) return null;
-  const why = draft.lock_reasons[field] ?? 'Your school sets this.';
-  return (
-    <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
-      <Text style={[type.meta, { color: colors.warn }]}>Set by your school — {why}</Text>
-    </View>
-  );
+  return null;
 }
 
 function RadioOption({
@@ -101,7 +122,6 @@ function RadioOption({
         {
           borderColor: selected ? colors.brand : colors.line,
           backgroundColor: selected ? colors.brand + '18' : 'transparent',
-          opacity: disabled ? 0.55 : 1,
         },
       ]}
     >
@@ -153,7 +173,7 @@ function DropStepper({
               accessibilityState={{ selected: on }}
               style={[
                 styles.pill,
-                { backgroundColor: on ? colors.brand : colors.line, opacity: disabled ? 0.5 : 1 },
+                { backgroundColor: on ? colors.brand : colors.line },
               ]}
             >
               <Text style={{ color: on ? '#1a120c' : colors.mute, fontWeight: '700', fontSize: 13 }}>{n}</Text>
@@ -213,18 +233,19 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const locked = isFieldLocked(draft, 'engine');
   return (
     <>
-      <LockNote draft={draft} field="engine" colors={colors} />
-      {ENGINE_OPTIONS.map((opt) => (
-        <RadioOption
-          key={opt.id}
-          label={opt.label}
-          plain={opt.plain}
-          selected={draft.engine === opt.id}
-          disabled={locked}
-          colors={colors}
-          onPress={() => onChange(patchDraft(draft, { engine: opt.id }))}
-        />
-      ))}
+      <LockedField locked={locked} colors={colors}>
+        {ENGINE_OPTIONS.map((opt) => (
+          <RadioOption
+            key={opt.id}
+            label={opt.label}
+            plain={opt.plain}
+            selected={draft.engine === opt.id}
+            disabled={locked}
+            colors={colors}
+            onPress={() => onChange(patchDraft(draft, { engine: opt.id }))}
+          />
+        ))}
+      </LockedField>
       <TextField
         label="Syllabus name"
         placeholder="Room 14 Math — Fall 2026"
@@ -251,12 +272,19 @@ function CategoryCard({
 }) {
   return (
     <View style={[styles.catCard, { borderColor: colors.line }]}>
-      <TextField label="Category name" value={row.label} onChangeText={(label) => onPatch({ label })} />
+      <TextField
+        label="Category name"
+        value={row.label}
+        editable={!locked}
+        onChangeText={(label) => onPatch({ label })}
+      />
       <TextField
         label="Weight (%)"
         keyboardType="numeric"
+        editable={!locked}
         value={String(row.weight_percent)}
         onChangeText={(text) => {
+          if (locked) return;
           const n = Number(text);
           onPatch({ weight_percent: Number.isFinite(n) ? n : 0 });
         }}
@@ -277,7 +305,6 @@ function CategoryCard({
         onValueChange={(default_include_in_average) => onPatch({ default_include_in_average })}
       />
       {!locked ? <GhostButton align="left" label="Delete category" onPress={onDelete} /> : null}
-      {locked ? <Text style={[type.meta, { color: colors.mute }]}>Set by your school</Text> : null}
     </View>
   );
 }
@@ -304,32 +331,33 @@ function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & 
   return (
     <>
       <WeightTotalLine draft={draft} colors={colors} sum={sum} />
-      <LockNote draft={draft} field="categories" colors={colors} />
       <TopicHelpLabel title="If a category has no grades yet" topicKey="help.empty_category" colors={colors} marginTop={8} />
-      <RadioOption
-        label="Skip it until it has grades"
-        selected={draft.empty_category === 'renormalize'}
-        disabled={locked}
-        colors={colors}
-        onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
-      />
-      <RadioOption
-        label="Count it as zero"
-        selected={draft.empty_category === 'zero'}
-        disabled={locked}
-        colors={colors}
-        onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
-      />
-      {draft.categories.map((row) => (
-        <CategoryCard
-          key={row.key}
-          row={row}
+      <LockedField locked={locked} colors={colors}>
+        <RadioOption
+          label="Skip it until it has grades"
+          selected={draft.empty_category === 'renormalize'}
+          disabled={locked}
           colors={colors}
-          locked={locked}
-          onPatch={(partial) => onChange(patchCategory(draft, row.key, partial))}
-          onDelete={() => onChange(removeCategory(draft, row.key))}
+          onPress={() => onChange(setEmptyCategoryPolicy(draft, 'renormalize'))}
         />
-      ))}
+        <RadioOption
+          label="Count it as zero"
+          selected={draft.empty_category === 'zero'}
+          disabled={locked}
+          colors={colors}
+          onPress={() => onChange(setEmptyCategoryPolicy(draft, 'zero'))}
+        />
+        {draft.categories.map((row) => (
+          <CategoryCard
+            key={row.key}
+            row={row}
+            colors={colors}
+            locked={locked}
+            onPatch={(partial) => onChange(patchCategory(draft, row.key, partial))}
+            onDelete={() => onChange(removeCategory(draft, row.key))}
+          />
+        ))}
+      </LockedField>
       {!locked ? <SecondaryButton label="Add category" onPress={() => setAddOpen(true)} fullWidth /> : null}
       <FormSheet visible={addOpen} title="Add category" onClose={() => setAddOpen(false)}>
         {available.map((k) => (
@@ -387,35 +415,40 @@ function WithinStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 
 function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const dropLocked = isFieldLocked(draft, 'drop_lowest');
+  const floorLocked = isFieldLocked(draft, 'floor');
   return (
     <>
-      <LockNote draft={draft} field="drop_lowest" colors={colors} />
       <TopicHelpLabel title="Drop lowest scores" topicKey="help.drop_lowest" colors={colors} marginTop={0} />
       <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>0 means drop nothing.</Text>
-      {dropLowestCategories(draft.categories).map((row) => (
-        <DropStepper
-          key={row.key}
-          label={row.label}
-          value={row.rules?.drop_lowest_n ?? 0}
-          disabled={dropLocked}
-          colors={colors}
-          onChange={(n) =>
-            onChange(
-              patchCategory(draft, row.key, { rules: { ...row.rules, drop_lowest_n: clampDropLowest(n) } }),
-            )
-          }
+      <LockedField locked={dropLocked} colors={colors}>
+        {dropLowestCategories(draft.categories).map((row) => (
+          <DropStepper
+            key={row.key}
+            label={row.label}
+            value={row.rules?.drop_lowest_n ?? 0}
+            disabled={dropLocked}
+            colors={colors}
+            onChange={(n) =>
+              onChange(
+                patchCategory(draft, row.key, { rules: { ...row.rules, drop_lowest_n: clampDropLowest(n) } }),
+              )
+            }
+          />
+        ))}
+      </LockedField>
+      <LockedField locked={floorLocked} colors={colors}>
+        <TextField
+          label="Lowest grade allowed for the period, % (optional)"
+          keyboardType="numeric"
+          editable={!floorLocked}
+          value={draft.floor == null ? '' : String(draft.floor)}
+          onChangeText={(text) => {
+            if (floorLocked) return;
+            const n = text.trim() === '' ? null : Number(text);
+            onChange(patchDraft(draft, { floor: n == null || !Number.isFinite(n) ? null : n }));
+          }}
         />
-      ))}
-      <LockNote draft={draft} field="floor" colors={colors} />
-      <TextField
-        label="Lowest grade allowed for the period, % (optional)"
-        keyboardType="numeric"
-        value={draft.floor == null ? '' : String(draft.floor)}
-        onChangeText={(text) => {
-          const n = text.trim() === '' ? null : Number(text);
-          onChange(patchDraft(draft, { floor: n == null || !Number.isFinite(n) ? null : n }));
-        }}
-      />
+      </LockedField>
     </>
   );
 }
@@ -458,75 +491,76 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         />
       ) : null}
       <TopicHelpLabel title="Excused" topicKey="help.excused" colors={colors} />
-      <LockNote draft={draft} field="late" colors={colors} />
       <TopicHelpLabel title="Late penalty" topicKey="help.late" colors={colors} />
-      {(
-        [
-          ['none', 'None, I adjust by hand'],
-          ['flat', 'One time'],
-          ['per_day', 'Per day'],
-          ['per_hour', 'Per hour'],
-        ] as const
-      ).map(([id, label]) => (
-        <RadioOption
-          key={id}
-          label={label}
-          selected={draft.late_rule.type === id}
-          disabled={lateLocked}
-          colors={colors}
-          onPress={() =>
-            onChange(
-              patchDraft(draft, {
-                late_rule:
-                  id === 'none'
-                    ? { type: 'none' }
-                    : {
-                        type: id,
-                        amount: draft.late_rule.amount ?? 10,
-                        unit: draft.late_rule.unit ?? 'percent',
-                      },
-              }),
-            )
-          }
-        />
-      ))}
-      {showLateAmountFields(draft) ? (
-        <>
-          <TextField
-            label="Amount"
-            keyboardType="numeric"
-            editable={!lateLocked}
-            value={draft.late_rule.amount == null ? '' : String(draft.late_rule.amount)}
-            onChangeText={(text) => {
-              if (lateLocked) return;
-              const n = Number(text);
+      <LockedField locked={lateLocked} colors={colors}>
+        {(
+          [
+            ['none', 'None, I adjust by hand'],
+            ['flat', 'One time'],
+            ['per_day', 'Per day'],
+            ['per_hour', 'Per hour'],
+          ] as const
+        ).map(([id, label]) => (
+          <RadioOption
+            key={id}
+            label={label}
+            selected={draft.late_rule.type === id}
+            disabled={lateLocked}
+            colors={colors}
+            onPress={() =>
               onChange(
                 patchDraft(draft, {
-                  late_rule: { ...draft.late_rule, amount: Number.isFinite(n) ? n : 0 },
+                  late_rule:
+                    id === 'none'
+                      ? { type: 'none' }
+                      : {
+                          type: id,
+                          amount: draft.late_rule.amount ?? 10,
+                          unit: draft.late_rule.unit ?? 'percent',
+                        },
                 }),
-              );
-            }}
-          />
-          <RadioOption
-            label="Percent"
-            selected={draft.late_rule.unit !== 'points'}
-            disabled={lateLocked}
-            colors={colors}
-            onPress={() =>
-              onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'percent' } }))
+              )
             }
           />
-          <RadioOption
-            label="Points"
-            selected={draft.late_rule.unit === 'points'}
-            disabled={lateLocked}
-            colors={colors}
-            onPress={() =>
-              onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'points' } }))
-            }
-          />
-        </>
-      ) : null}
+        ))}
+        {showLateAmountFields(draft) ? (
+          <>
+            <TextField
+              label="Amount"
+              keyboardType="numeric"
+              editable={!lateLocked}
+              value={draft.late_rule.amount == null ? '' : String(draft.late_rule.amount)}
+              onChangeText={(text) => {
+                if (lateLocked) return;
+                const n = Number(text);
+                onChange(
+                  patchDraft(draft, {
+                    late_rule: { ...draft.late_rule, amount: Number.isFinite(n) ? n : 0 },
+                  }),
+                );
+              }}
+            />
+            <RadioOption
+              label="Percent"
+              selected={draft.late_rule.unit !== 'points'}
+              disabled={lateLocked}
+              colors={colors}
+              onPress={() =>
+                onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'percent' } }))
+              }
+            />
+            <RadioOption
+              label="Points"
+              selected={draft.late_rule.unit === 'points'}
+              disabled={lateLocked}
+              colors={colors}
+              onPress={() =>
+                onChange(patchDraft(draft, { late_rule: { ...draft.late_rule, unit: 'points' } }))
+              }
+            />
+          </>
+        ) : null}
+      </LockedField>
     </>
   );
 }
@@ -670,109 +704,107 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const bookLocked = isFieldLocked(draft, 'book_mode');
   const rollupLocked = isFieldLocked(draft, 'rollup');
+  const scaleLocked = isFieldLocked(draft, 'scale');
   const schoolSplit = draft.school_period_split;
+  const periodLocked = Boolean(schoolSplit);
+  const rollupDisplay =
+    draft.rollup_preset != null && draft.rollup_preset !== ''
+      ? `${draft.rollup_preset}${rollupPresetLabel(draft.rollup_preset) ? ` · ${rollupPresetLabel(draft.rollup_preset)}` : ''}`
+      : '';
+  const scale = draft.school_scale;
   return (
     <>
-      <LockNote draft={draft} field="book_mode" colors={colors} />
       <TopicHelpLabel title="Fresh start or running average" topicKey="help.book_mode" colors={colors} marginTop={0} />
-      {bookLocked ? (
-        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
-          <Text style={[type.meta, { color: colors.warn }]}>
-            Set by your school —{' '}
-            {draft.book_mode === 'rolling_year'
-              ? 'one running average all year'
-              : 'start fresh each grading period'}
-            . Not editable.
-          </Text>
-        </View>
-      ) : (
-        <>
-          <RadioOption
-            label="Start fresh each grading period"
-            selected={draft.book_mode === 'reset_each_marking_period'}
-            disabled={bookLocked}
-            colors={colors}
-            onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
-          />
-          <RadioOption
-            label="One running average all year"
-            selected={draft.book_mode === 'rolling_year'}
-            disabled={bookLocked}
-            colors={colors}
-            onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
-          />
-        </>
-      )}
-      <LockNote draft={draft} field="rollup" colors={colors} />
+      <LockedField locked={bookLocked} colors={colors}>
+        <RadioOption
+          label="Start fresh each grading period"
+          selected={draft.book_mode === 'reset_each_marking_period'}
+          disabled={bookLocked}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
+        />
+        <RadioOption
+          label="One running average all year"
+          selected={draft.book_mode === 'rolling_year'}
+          disabled={bookLocked}
+          colors={colors}
+          onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
+        />
+      </LockedField>
       <TopicHelpLabel title="Semester grade formula" topicKey="help.rollup.2_7" colors={colors} />
-      {rollupLocked ? (
-        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
-          <Text style={[type.meta, { color: colors.warn }]}>
-            Set by your school. Semester grade is the school formula
-            {draft.rollup_preset ? ` (${draft.rollup_preset})` : ''}. Exam weight
-            {draft.exam_weight != null ? ` is ${draft.exam_weight}` : ' is set'}. Not editable.
-          </Text>
-        </View>
-      ) : (
-        <>
-          <TextField
-            label="Semester grade formula (e.g. 2/7+1/7)"
-            value={draft.rollup_preset ?? ''}
-            onChangeText={(text) => onChange(patchDraft(draft, { rollup_preset: text.trim() || null }))}
-          />
-          <TextField
-            label="Exam weight (optional)"
-            keyboardType="numeric"
-            value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
-            onChangeText={(text) => {
-              const n = text.trim() === '' ? null : Number(text);
-              onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
-            }}
-          />
-        </>
-      )}
+      <LockedField locked={rollupLocked} colors={colors}>
+        <TextField
+          label="Semester grade formula (e.g. 2/7+1/7)"
+          value={rollupLocked && rollupDisplay ? rollupDisplay : (draft.rollup_preset ?? '')}
+          editable={!rollupLocked}
+          onChangeText={(text) => onChange(patchDraft(draft, { rollup_preset: text.trim() || null }))}
+        />
+        <TextField
+          label="Exam weight (optional)"
+          keyboardType="numeric"
+          editable={!rollupLocked}
+          value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
+          onChangeText={(text) => {
+            if (rollupLocked) return;
+            const n = text.trim() === '' ? null : Number(text);
+            onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
+          }}
+        />
+      </LockedField>
       <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>How the year is split</Text>
-      {schoolSplit ? (
-        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
-          <Text style={[type.meta, { color: colors.warn }]}>
-            Set by your school — {schoolSplit.summary_label}. Not editable.
-          </Text>
-          {schoolSplit.period_names.length > 0 ? (
-            <Text style={[type.meta, { color: colors.mute, marginTop: 6 }]}>
-              {schoolSplit.period_names.join(' · ')}
-            </Text>
-          ) : null}
-        </View>
-      ) : (
-        (
-          [
-            ['quarters', 'Quarters'],
-            ['semesters', 'Semesters'],
-            ['year', 'Year'],
-            ['custom', 'Custom'],
-          ] as const
-        ).map(([key, label]) => (
+      <LockedField locked={periodLocked} colors={colors}>
+        {periodLocked && schoolSplit ? (
           <RadioOption
-            key={key}
-            label={label}
-            selected={draft.term_structure === key}
+            label={schoolSplit.summary_label}
+            plain={schoolSplit.period_names.length ? schoolSplit.period_names.join(' · ') : undefined}
+            selected
+            disabled
             colors={colors}
-            onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
+            onPress={() => {}}
           />
-        ))
-      )}
-      <LockNote draft={draft} field="scale" colors={colors} />
-      {isFieldLocked(draft, 'scale') ? (
-        <View style={[styles.lock, { backgroundColor: colors.warn + '22', marginTop: 4 }]}>
-          <Text style={[type.meta, { color: colors.warn }]}>
-            Set by your school — letter scale. Not editable here.
+        ) : (
+          (
+            [
+              ['quarters', 'Quarters'],
+              ['semesters', 'Semesters'],
+              ['year', 'Year'],
+              ['custom', 'Custom'],
+            ] as const
+          ).map(([key, label]) => (
+            <RadioOption
+              key={key}
+              label={label}
+              selected={draft.term_structure === key}
+              colors={colors}
+              onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
+            />
+          ))
+        )}
+      </LockedField>
+      <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>Letter grade scale</Text>
+      <LockedField locked={scaleLocked} colors={colors}>
+        {scale ? (
+          <View style={[styles.scaleTable, { borderColor: colors.line }]}>
+            <Text style={[type.meta, { color: colors.ink, fontWeight: '600', marginBottom: 6 }]}>
+              {scale.name}
+              {Number.isFinite(scale.passing_pct) ? ` · ${scale.passing_pct} is passing` : ''}
+            </Text>
+            {scale.bands.map((b, i) => (
+              <View key={`${b.letter}-${i}`} style={[styles.scaleRow, { borderBottomColor: colors.line }]}>
+                <Text style={[type.body, { color: colors.ink, fontWeight: '600', width: 40 }]}>{b.letter}</Text>
+                <Text style={[type.meta, { color: colors.mute, flex: 1 }]}>
+                  {Math.round(b.min_pct)}–{Math.round(b.max_pct)}%
+                  {b.passing ? '' : ' · not passing'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
+            Letter grade scale from your school.
           </Text>
-        </View>
-      ) : (
-        <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
-          Rounding (the letter scale comes from your school when it is set there).
-        </Text>
-      )}
+        )}
+      </LockedField>
       <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>Rounding</Text>
       {(
         [
@@ -943,6 +975,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   lock: { borderRadius: 10, padding: 8, marginVertical: 6 },
+  lockedWrap: { marginBottom: 4 },
+  lockedDim: { opacity: 0.55 },
+  lockedCaptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  lockGlyph: { fontSize: 13, lineHeight: 16 },
+  scaleTable: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 4,
+  },
+  scaleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   family: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10, marginBottom: 10 },
   check: {
     flexDirection: 'row',

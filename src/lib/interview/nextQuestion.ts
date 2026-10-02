@@ -117,7 +117,7 @@ export function readBackSummary(session: InterviewSession): string {
   const lines = summaryLines(session);
   if (lines.length === 0) return 'Nothing answered yet.';
   const body = lines
-    .map((l) => `• ${l.text}${l.tag === 'school' ? ' (set by your school)' : l.tag === 'default' ? ' (usual choice — please check)' : ''}`)
+    .map((l) => `• ${l.text}${l.tag === 'school' ? ' (locked by your school)' : l.tag === 'default' ? ' (usual choice — please check)' : ''}`)
     .join('\n');
   return `Here's what I have:\n${body}`;
 }

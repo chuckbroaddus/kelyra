@@ -5,4 +5,4 @@ export {
   toEditorInput,
   isFieldLocked,
 } from './wizardModel.ts';
-export { LockNote, WizardStepBody } from './WizardStepBody.tsx';
+export { LockNote, LockedField, LOCKED_BY_SCHOOL, WizardStepBody } from './WizardStepBody.tsx';
