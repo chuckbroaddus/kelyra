@@ -58,6 +58,7 @@ import {
   upsertClassConductMark,
   type ConductMarksByPeriod,
 } from '@/lib/grade/posting';
+import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 
 export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
@@ -363,6 +364,7 @@ export default function GradebookScreen() {
     [calendar, conduct, termFilter],
   );
 
+  const conductHelp = conduct ? getBundledHelpTopic('help.conduct_mark') : null;
   const collapsing = landscapeFull ? null : (
     <>
       {id ? (
@@ -377,6 +379,12 @@ export default function GradebookScreen() {
               router.setParams({ tab: next });
             }}
           />
+        </View>
+      ) : null}
+      {/* Conduct help sits above the period filter; collapses with view tabs on swipe-up. */}
+      {conduct && conductHelp ? (
+        <View style={styles.conductHelp} testID="conduct-help-line">
+          <Text style={[type.meta, { color: colors.mute }]}>{conductHelp.meaning}</Text>
         </View>
       ) : null}
       {syllabusBanner !== 'published' && id && !heatmap && !conduct ? (
@@ -400,6 +408,16 @@ export default function GradebookScreen() {
     >
       {landscapeFull ? <View style={{ height: Math.max(insets.top, 6), paddingLeft: insets.left }} /> : null}
       {termTabs}
+      {/* Single-period term name stays with the filter row (does not scroll or collapse). */}
+      {conduct && conductColumns.length === 1 && conductColumns[0]?.label ? (
+        <Text
+          style={[type.meta, styles.conductPinnedTerm, { color: colors.ink }]}
+          testID="conduct-pinned-term"
+          accessibilityRole="header"
+        >
+          {conductColumns[0].label}
+        </Text>
+      ) : null}
       {conduct && book && book.students.length > 0 ? (
         conductColumns.length === 0 ? (
           <Text style={[styles.empty, { color: colors.mute }]}>
@@ -435,7 +453,8 @@ export default function GradebookScreen() {
                   <ConductEntryPanel
                     students={book.students}
                     marks={marksForPeriod(conductMarks, col.key)}
-                    periodLabel={col.label}
+                    // Multi-period (All): label each column. Single period: label is pinned above.
+                    periodLabel={conductColumns.length > 1 ? col.label : null}
                     onChange={(studentId, mark) => {
                       if (!id) return;
                       const periodKey = col.key;
@@ -715,6 +734,17 @@ const styles = StyleSheet.create({
   chipShelf: {
     marginTop: 0,
     marginBottom: 4,
+  },
+  /** Above period filter; collapses with Gradebook view tabs. */
+  conductHelp: {
+    marginBottom: 8,
+    paddingRight: 4,
+  },
+  /** Pinned under period filter; not inside the student list scroller. */
+  conductPinnedTerm: {
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 2,
   },
   syllabusBanner: {
     marginBottom: 8,
