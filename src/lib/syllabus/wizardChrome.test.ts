@@ -87,18 +87,21 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(wiz, /styles\.actionTray/);
   assert.match(wiz, /chevronBg/);
   assert.match(wiz, /accessibilityLabel=\"Continue\"/);
-  // Even outer gaps: equal-width side slots + centered mid cluster (Save/Publish inside mid).
-  assert.match(wiz, /styles\.sideSlot/);
-  assert.match(wiz, /styles\.midCluster/);
+  // Even tray peers: space-evenly row; no sideSlot/midCluster re-clustering.
+  assert.match(wiz, /justifyContent:\s*'space-evenly'/);
+  assert.doesNotMatch(wiz, /styles\.sideSlot/);
+  assert.doesNotMatch(wiz, /styles\.midCluster/);
   assert.doesNotMatch(wiz, /styles\.rightCluster/);
   assert.doesNotMatch(wiz, /styles\.midIcons/);
-  assert.match(wiz, /sideSlot:\s*\{[^}]*width:\s*40/s);
-  assert.match(wiz, /midCluster:\s*\{[^}]*justifyContent:\s*'center'/s);
-  // Save draft / Publish live in midCluster (between chevrons), not glued to ›.
-  const midIdx = wiz.indexOf('styles.midCluster');
+  // Pill shrinks before gaps (no fixed minWidth crowding ›).
+  assert.match(wiz, /mid:\s*\{[^}]*flexShrink:\s*1/s);
+  assert.match(wiz, /mid:\s*\{[^}]*paddingHorizontal:\s*8/s);
+  assert.doesNotMatch(wiz, /mid:\s*\{[^}]*minWidth:\s*104/s);
+  // Save draft / Publish sit between icons and › as peers.
+  const backIdx = wiz.indexOf('accessibilityLabel="Back"');
   const saveIdx = wiz.indexOf("accessibilityLabel={busy ? 'Saving…' : 'Save draft'}");
   const continueIdx = wiz.indexOf('accessibilityLabel="Continue"');
-  assert.ok(midIdx > 0 && saveIdx > midIdx && saveIdx < continueIdx);
+  assert.ok(backIdx > 0 && saveIdx > backIdx && saveIdx < continueIdx);
   // Nav circles: primary brand fill (PrimaryButton token); identical when both enabled.
   assert.match(wiz, /chevronBg = c\.brand/);
   assert.match(wiz, /chevronBorder = c\.brand/);
