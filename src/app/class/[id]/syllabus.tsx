@@ -80,7 +80,8 @@ type ConfirmKind =
 
 export default function SyllabusScreen() {
   const { colors } = useTheme();
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const { id: idParam, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const { teacher, setActiveClassId, profile } = useAuth();
   const chrome = useChrome();
   usePushedTitle(chrome.className ?? 'Syllabus');
@@ -371,6 +372,8 @@ export default function SyllabusScreen() {
       draft={draft}
       classId={id}
       busy={busy}
+      status={status}
+      error={error}
       onBack={onBack}
       onContinue={onContinue}
       onSaveDraft={() => void onSaveDraft()}
@@ -512,7 +515,13 @@ const styles = StyleSheet.create({
 
 /** Map RPC/SQL noise to teacher-facing copy (ambiguous title, weight sum, locks). */
 function plainSyllabusWriteError(err: unknown, fallback: string): string {
-  const msg = err instanceof Error ? err.message : fallback;
+  // Supabase rpc() returns a plain { message, details, hint, code } unless throwOnError.
+  let msg = fallback;
+  if (err instanceof Error && err.message) msg = err.message;
+  else if (err && typeof err === 'object' && 'message' in err) {
+    const m = String((err as { message: unknown }).message ?? '').trim();
+    if (m) msg = m;
+  }
   if (/column reference .* is ambiguous|ambiguous/i.test(msg)) {
     return 'Could not save this syllabus on the server (a database update needs a fix). Try again after the latest syllabus migration is applied, or contact support if this keeps happening.';
   }
@@ -524,6 +533,15 @@ function plainSyllabusWriteError(err: unknown, fallback: string): string {
   }
   if (/syllabus version conflict/i.test(msg)) {
     return 'Someone else saved this syllabus. Pull to refresh, then try again.';
+  }
+  if (/not authenticated|JWT|session/i.test(msg)) {
+    return 'You were signed out. Sign in again, then tap Save draft.';
+  }
+  if (/not allowed/i.test(msg)) {
+    return 'You can only save the syllabus for a class you teach.';
+  }
+  if (/category label required/i.test(msg)) {
+    return 'Every category in use needs a name before you can save.';
   }
   if (/Locked field/i.test(msg)) {
     return msg.replace(/^Locked field "[^"]+" cannot be edited by the teacher\.\s*/i, 'Your school locks this setting. ');

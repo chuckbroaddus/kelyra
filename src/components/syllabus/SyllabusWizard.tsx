@@ -137,6 +137,10 @@ type NavProps = {
   draft: SyllabusWizardDraft;
   classId: string;
   busy?: boolean;
+  /** Success line pinned on the action tray (scroll body is under the fold). */
+  status?: string | null;
+  /** Error line pinned on the action tray — never only at page bottom. */
+  error?: string | null;
   onBack: () => void;
   onContinue: () => void;
   onSaveDraft: () => void;
@@ -152,6 +156,8 @@ export function SyllabusWizardNav({
   draft,
   classId,
   busy,
+  status,
+  error,
   onBack,
   onContinue,
   onSaveDraft,
@@ -330,6 +336,11 @@ export function SyllabusWizardNav({
           </View>
         </View>
 
+        {error ? (
+          <Text style={[type.meta, { color: c.danger, textAlign: 'center', marginTop: 4 }]}>{error}</Text>
+        ) : status ? (
+          <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginTop: 4 }]}>{status}</Text>
+        ) : null}
         <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginTop: 2 }]}>
           {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
         </Text>

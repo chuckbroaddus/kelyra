@@ -45,6 +45,9 @@ test('wizardPersonTabs wires numbered stepMark from map', () => {
   assert.match(wiz, /!canFinishReview\(draft\)/);
   assert.match(wiz, /showSave = !published && !last/);
   assert.match(wiz, /showPublish = last/);
+  // Feedback must live on the action tray — scroll body is under the fold on phone.
+  assert.match(wiz, /status\?: string \| null/);
+  assert.match(wiz, /error\?: string \| null/);
 });
 
 test('screen pins step row; separate action tray hosts nav + import icons', () => {
@@ -58,6 +61,11 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.doesNotMatch(ui, /sticky=\{stickyNav\}/);
   assert.match(ui, /classId=\{id\}/);
   assert.match(ui, /\{stickyNav\}/);
+  assert.match(ui, /status=\{status\}/);
+  assert.match(ui, /error=\{error\}/);
+  // id may arrive as string[] from expo-router — coerce before RPC.
+  assert.match(ui, /Array\.isArray\(idParam\) \? idParam\[0\] : idParam/);
+  assert.match(ui, /plainSyllabusWriteError/);
   assert.doesNotMatch(ui, /collapse=\{/);
   assert.doesNotMatch(ui, /Answer a few questions instead/);
   assert.match(ui, /setTrayBump\(true\)/);
@@ -73,7 +81,12 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(wiz, /styles\.actionTray/);
   assert.match(wiz, /chevronBg/);
   assert.match(wiz, /accessibilityLabel=\"Continue\"/);
+  assert.match(wiz, /status\?: string \| null/);
+  assert.match(wiz, /error\?: string \| null/);
   assert.match(chromeProv, /syllabusActionTrayHeight/);
+  // #389 separate action tray: Save draft is no longer under a tray bump overlay.
+  assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 8 : 0/);
+  assert.match(wiz, /zIndex: 17/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
