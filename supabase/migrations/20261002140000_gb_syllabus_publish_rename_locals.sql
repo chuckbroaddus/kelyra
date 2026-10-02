@@ -1,0 +1,186 @@
+-- Fix publish_class_syllabus: prior qualify migrations (02110000–02130000) used
+-- publish_class_syllabus.<local> to disambiguate locals vs class_syllabi columns.
+-- That only works for FUNCTION PARAMETERS in plpgsql; these were DECLARE locals,
+-- so Postgres treated them as table refs → missing FROM-clause entry for table
+-- "publish_class_syllabus" at runtime (Chuck iPhone 2026-10-01).
+-- Fix: rename colliding locals (v_title, v_policies, …) and use bare names.
+-- Carries locked-field preserve + retake + EC weights from 20261002130000.
+-- Idempotent. Do not edit older migrations. devops-release: apply this file.
+
+create or replace function public.publish_class_syllabus(
+  p_class_id uuid,
+  p_payload jsonb,
+  p_row_version int
+)
+returns public.class_syllabi
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  row public.class_syllabi;
+  payload jsonb := coalesce(p_payload, '{}'::jsonb);
+  v_policies jsonb;
+  v_term_structure text;
+  v_active_term text;
+  v_title text;
+  v_terms jsonb;
+  v_categories jsonb;
+  weight_sum numeric;
+  weights_error text;
+  active_count int;
+  old_asset uuid;
+  v2 jsonb;
+  next_ver int;
+  snap jsonb;
+  cats_snap jsonb;
+  retake_val jsonb;
+  existing public.class_syllabi;
+begin
+  if auth.uid() is null then raise exception 'not authenticated'; end if;
+  if not public.class_teacher_of(p_class_id) then raise exception 'not allowed'; end if;
+
+  select * into row from public.class_syllabi where class_id = p_class_id for update;
+  if found and row.row_version is distinct from p_row_version then
+    raise exception 'syllabus version conflict';
+  end if;
+  if found then
+    existing := row;
+  else
+    existing := null;
+  end if;
+  perform public.gb_assert_syllabus_locked_fields(p_class_id, payload, existing);
+  old_asset := case when found then row.source_asset_id else null end;
+  if payload ? 'rubric_draft' then payload := payload - 'rubric_draft'; end if;
+  if payload ? 'source_asset_id_to_delete' then payload := payload - 'source_asset_id_to_delete'; end if;
+
+  v_policies := public.syllabus_normalize_policies(payload->'policies');
+  v_term_structure := coalesce(nullif(payload->>'term_structure', ''), 'year');
+  if v_term_structure not in ('quarters', 'semesters', 'year', 'custom') then
+    raise exception 'invalid term_structure';
+  end if;
+  v_active_term := nullif(payload->>'active_term', '');
+  if v_active_term is not null and v_active_term not in ('q1','q2','q3','q4','s1','s2','year') then
+    raise exception 'invalid active_term';
+  end if;
+  v_title := nullif(trim(coalesce(payload->>'title', '')), '');
+  v_terms := coalesce(payload->'terms', '[]'::jsonb);
+  v_categories := coalesce(payload->'categories', '[]'::jsonb);
+  if jsonb_typeof(v_categories) <> 'array' or jsonb_array_length(v_categories) < 1 then
+    raise exception 'at least one category required';
+  end if;
+  v2 := public.syllabus_normalize_v2_fields(payload);
+  v2 := public.gb_force_locked_syllabus_v2(p_class_id, v2, existing);
+  retake_val := case when v2->'retake' = 'null'::jsonb then null else v2->'retake' end;
+  v2 := jsonb_set(
+    v2,
+    '{locks}',
+    public.gb_latest_school_locks(public.gb_class_school_id(p_class_id))
+      || coalesce(v2->'locks', '{}'::jsonb)
+      || public.gb_latest_school_locks(public.gb_class_school_id(p_class_id)),
+    true
+  );
+
+  if not found then
+    insert into public.class_syllabi (
+      class_id, status, title, calc_mode, term_structure, active_term,
+      policies, terms, publish_to_family, source, published_at, row_version, updated_at,
+      engine, within_category, book_mode, extra_credit_method, ec_cap,
+      late_rule, missing_rule, rounding, floor, ceiling, exam_weight,
+      rollup_preset, locks, marking_period_scope, syllabus_version, retake
+    ) values (
+      p_class_id, 'published', v_title, 'category_weight',
+      v_term_structure, v_active_term,
+      v_policies, v_terms,
+      coalesce((v_policies->>'publish_to_family')::boolean, true),
+      coalesce(nullif(payload->>'source', ''), 'manual'), now(), 1, now(),
+      v2->>'engine', v2->>'within_category', v2->>'book_mode', v2->>'extra_credit_method',
+      case when v2->'ec_cap' = 'null'::jsonb then null else (v2->>'ec_cap')::numeric end,
+      coalesce(v2->'late_rule', '{"type":"none"}'::jsonb),
+      v2->>'missing_rule', v2->>'rounding',
+      case when v2->'floor' = 'null'::jsonb then null else (v2->>'floor')::numeric end,
+      case when v2->'ceiling' = 'null'::jsonb then null else (v2->>'ceiling')::numeric end,
+      case when v2->'exam_weight' = 'null'::jsonb then null else (v2->>'exam_weight')::numeric end,
+      case when v2->'rollup_preset' = 'null'::jsonb then null else v2->>'rollup_preset' end,
+      coalesce(v2->'locks', '{}'::jsonb),
+      v2->>'marking_period_scope', 1, retake_val
+    ) returning * into row;
+  else
+    next_ver := coalesce(row.syllabus_version, 1) + 1;
+    update public.class_syllabi set
+      title = v_title,
+      term_structure = v_term_structure,
+      active_term = v_active_term,
+      policies = v_policies,
+      terms = v_terms,
+      publish_to_family = coalesce((v_policies->>'publish_to_family')::boolean, true),
+      status = 'published', published_at = now(), ask_draft = null, source_asset_id = null,
+      source = coalesce(nullif(payload->>'source', ''), source),
+      engine = v2->>'engine', within_category = v2->>'within_category',
+      book_mode = v2->>'book_mode', extra_credit_method = v2->>'extra_credit_method',
+      ec_cap = case when v2->'ec_cap' = 'null'::jsonb then null else (v2->>'ec_cap')::numeric end,
+      late_rule = coalesce(v2->'late_rule', '{"type":"none"}'::jsonb),
+      missing_rule = v2->>'missing_rule', rounding = v2->>'rounding',
+      floor = case when v2->'floor' = 'null'::jsonb then null else (v2->>'floor')::numeric end,
+      ceiling = case when v2->'ceiling' = 'null'::jsonb then null else (v2->>'ceiling')::numeric end,
+      exam_weight = case when v2->'exam_weight' = 'null'::jsonb then null else (v2->>'exam_weight')::numeric end,
+      rollup_preset = case when v2->'rollup_preset' = 'null'::jsonb then null else v2->>'rollup_preset' end,
+      locks = coalesce(v2->'locks', '{}'::jsonb),
+      marking_period_scope = v2->>'marking_period_scope',
+      retake = retake_val,
+      syllabus_version = next_ver, row_version = row.row_version + 1, updated_at = now()
+    where id = row.id returning * into row;
+  end if;
+  perform public.syllabus_replace_categories(row.id, v_categories);
+
+  select count(*)::int, coalesce(sum(weight_percent), 0)
+    into active_count, weight_sum
+  from public.syllabus_categories
+  where syllabus_id = row.id and active;
+  weights_error := public.syllabus_publish_weights_error(row.id, row.extra_credit_method);
+  if weights_error is not null then raise exception '%', weights_error; end if;
+
+  select coalesce(jsonb_agg(to_jsonb(c) order by c.sort_order, c.label), '[]'::jsonb)
+    into cats_snap
+  from public.syllabus_categories c
+  where c.syllabus_id = row.id;
+
+  snap := jsonb_build_object(
+    'syllabus', to_jsonb(row),
+    'categories', cats_snap,
+    'published_at', row.published_at
+  );
+
+  insert into public.syllabus_versions (syllabus_id, version, snapshot, published_at, published_by)
+  values (row.id, row.syllabus_version, snap, coalesce(row.published_at, now()), auth.uid())
+  on conflict (syllabus_id, version) do update
+    set snapshot = excluded.snapshot,
+        published_at = excluded.published_at,
+        published_by = excluded.published_by;
+
+  if old_asset is not null
+     and exists (
+       select 1 from public.assets a
+       where a.id = old_asset and a.teacher_id = auth.uid()
+     ) then
+    perform public._unref_delete_asset(old_asset);
+  end if;
+
+  perform public.write_audit(
+    'publish_class_syllabus', 'class_syllabus', row.id::text, null, p_class_id, null,
+    jsonb_build_object(
+      'status', 'published',
+      'publish_to_family', row.publish_to_family,
+      'weight_sum', weight_sum,
+      'extra_credit_method', row.extra_credit_method,
+      'row_version', row.row_version,
+      'syllabus_version', row.syllabus_version,
+      'engine', row.engine
+    )
+  );
+  return row;
+end;
+$$;
+
+revoke all on function public.publish_class_syllabus(uuid, jsonb, int) from public, anon;
+grant execute on function public.publish_class_syllabus(uuid, jsonb, int) to authenticated;

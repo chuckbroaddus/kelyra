@@ -20,7 +20,8 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
-const MIGRATION = 'supabase/migrations/20261002130000_gb_syllabus_locked_fields_preserve.sql';
+const MIGRATION = 'supabase/migrations/20261002140000_gb_syllabus_publish_rename_locals.sql';
+const LOCKED_PRESERVE = 'supabase/migrations/20261002130000_gb_syllabus_locked_fields_preserve.sql';
 const PRIOR_SAVE = 'supabase/migrations/20261002120000_gb_syllabus_save_publish_fix.sql';
 
 test('canSaveDraft allows incomplete weights; canFinishReview does not', () => {
@@ -166,9 +167,11 @@ test('UI wires Save draft + Publish to RPCs with feedback', () => {
   assert.match(ui, /canSaveDraft/);
   assert.match(ui, /plainSyllabusWriteError/);
   assert.match(ui, /Draft saved/);
-  assert.match(ui, /Syllabus published/);
+  assert.match(ui, /Syllabus published\. Status: Published/);
   assert.match(ui, /status=\{status\}/);
   assert.match(ui, /error=\{error\}/);
+  assert.match(ui, /missing FROM-clause entry/);
+  assert.match(ui, /ConfirmSheet[\s\S]*error=\{/);
   assert.match(ui, /Array\.isArray\(idParam\)/);
   assert.match(wiz, /!canSaveDraft\(draft\)/);
   assert.match(wiz, /!canFinishReview\(draft\)/);
@@ -176,12 +179,13 @@ test('UI wires Save draft + Publish to RPCs with feedback', () => {
   assert.match(wiz, /error\?: string \| null/);
 });
 
-test('newest migration: locked null payload preserved; save keeps retake; publish qualifies', () => {
+test('newest migration: renamed publish locals; locked preserve still on disk; save keeps retake', () => {
   const sql = fs.readFileSync(path.join(ROOT, MIGRATION), 'utf8');
-  assert.match(sql, /gb_force_locked_syllabus_v2/);
-  assert.match(sql, /null\/absent locked scalars are not edits/i);
+  const locked = fs.readFileSync(path.join(ROOT, LOCKED_PRESERVE), 'utf8');
+  assert.match(locked, /gb_force_locked_syllabus_v2/);
+  assert.match(locked, /null\/absent locked scalars are not edits/i);
 
-  const save = sql.slice(sql.indexOf('create or replace function public.save_class_syllabus_draft'));
+  const save = locked.slice(locked.indexOf('create or replace function public.save_class_syllabus_draft'));
   const saveBody = save.slice(0, save.indexOf('create or replace function public.publish_class_syllabus'));
   assert.match(saveBody, /retake = excluded\.retake/);
   assert.match(saveBody, /status = 'draft'/);
@@ -190,17 +194,18 @@ test('newest migration: locked null payload preserved; save keeps retake; publis
   assert.doesNotMatch(saveBody, /title = title/);
 
   const publish = sql.slice(sql.indexOf('create or replace function public.publish_class_syllabus'));
-  assert.match(publish, /title = publish_class_syllabus\.title/);
-  assert.match(publish, /term_structure = publish_class_syllabus\.term_structure/);
+  assert.doesNotMatch(publish, /publish_class_syllabus\.(title|categories)\b/);
+  assert.match(publish, /title = v_title/);
+  assert.match(publish, /term_structure = v_term_structure/);
   assert.match(publish, /retake = retake_val/);
   assert.match(publish, /weights_error := public\.syllabus_publish_weights_error/);
   assert.match(publish, /gb_force_locked_syllabus_v2/);
   assert.doesNotMatch(publish, /title = title,/);
 
-  assert.match(sql, /grant execute on function public\.save_class_syllabus_draft/);
   assert.match(sql, /grant execute on function public\.publish_class_syllabus/);
+  assert.match(locked, /grant execute on function public\.save_class_syllabus_draft/);
 
-  // Prior save/publish form still present for history; this file supersedes it.
+  // Prior save/publish form still present for history; this file supersedes publish.
   assert.ok(fs.existsSync(path.join(ROOT, PRIOR_SAVE)));
 
   const later = fs
