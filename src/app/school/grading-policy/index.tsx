@@ -1,25 +1,31 @@
 /**
  * GB-07 School Grading and Reporting Policy wizard (office admin).
+ * Chrome parity with Syllabus: pinned step tabs, action tray, badges, TopicHelp.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { FormSheet } from '@/components/ui/FormSheet';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ListRow } from '@/components/ui/ListRow';
+import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
 import { Screen } from '@/components/ui/Screen';
 import { TextField } from '@/components/ui/TextField';
+import { WorkingLine } from '@/components/ui/WorkingMark';
+import { type IconName } from '@/components/ui/Icon';
+import { WizardActionTray } from '@/components/wizard/WizardActionTray';
+import { LockedField } from '@/components/syllabus/WizardStepBody';
+import { TopicHelpHit, TopicHelpPop, TopicHelpLabel, useTopicHelp } from '@/components/syllabus/TopicHelp';
+import { formatRollupFormulaDisplay } from '@/components/syllabus/schoolPeriodSplit';
 import { IngestPendingPagesCard } from '@/components/ingest/IngestPendingPagesCard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
-import { StartFromDocumentButton } from '@/components/ingest/StartFromDocumentButton';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
-import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import {
   MAX_GRADING_DOC_PAGES,
   maxPagesCopy,
@@ -35,24 +41,32 @@ import { pickNormalizedPhotos, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { WebCameraCapture } from '@/components/WebCameraCapture';
 import { isOfficeRole } from '@/lib/school/roles';
 import {
-  WIZARD_STEPS,
   STEP_LABELS,
   STEP_HELP_KEYS,
+  STEP_ICONS,
   applyLevelDefaults,
   applyTemplateNotSure,
   canPublish,
   createEmptyDraft,
   defaultGpaProfiles,
   draftToPayload,
+  draftFromStoredPayload,
   getFieldValue,
   hardErrors,
+  loadLatestDraft,
+  loadLatestPublished,
   publishPolicy,
   rebuildCalendarFromDraft,
+  resolvePolicyStep,
   saveDraftPayload,
   setField,
+  setPolicyStep,
   soFarSummary,
   validatePolicyPayload,
   qualityTablesForMethod,
+  visiblePolicySteps,
+  templatesForLevel,
+  periodSplitSummary,
   type CreditPolicy,
   type GpaMode,
   type QpMethodChoice,
@@ -64,9 +78,16 @@ import {
   DEFAULT_LOCK_REASON_COPY,
 } from '@/lib/school/gradingPolicy';
 import type { GpaProfile } from '@/lib/grade/gpa/gpa';
-import type { TemplateKey } from '@/lib/grade/calendar/types';
 import { ROLLUP_PRESET_KEYS, presetsForChildCount } from '@/lib/grade/calendar/index';
 import { listScaleTemplates, makeScaleFromTemplate } from '@/lib/grade/scale/scale';
+import {
+  isStepContinued,
+  markStepContinued,
+  mergeBadgeMaps,
+  loadStepBadges,
+  saveStepBadges,
+  type StepBadgeMap,
+} from '@/lib/syllabus/stepBadgeStore';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import {
   calendarNameLabel,
@@ -75,44 +96,50 @@ import {
   gpaModeLabel,
   lockFieldLabel,
   qpMethodLabel,
-  rollupPresetLabel,
   scaleLabel,
   schoolLevelLabel,
 } from '@/lib/grade/plainLabels';
 
 const LEVELS: SchoolLevelChoice[] = ['elementary', 'middle', 'high', 'college', 'mixed'];
-const TEMPLATES: TemplateKey[] = [
-  'tx_six_weeks',
-  'nine_weeks',
-  'trimester',
-  'college_term',
-  'elementary_year_4',
-  'elementary_year_6',
-  'semester',
-];
 
+function policyBadgeKey(schoolId: string) {
+  return `policy:${schoolId}`;
+}
+
+function policyPersonTabs(draft: SetupDraft, continued: StepBadgeMap): PersonTab[] {
+  return visiblePolicySteps(draft).map((id, i) => ({
+    key: id,
+    label: STEP_LABELS[id],
+    icon: STEP_ICONS[id] as IconName,
+    stepMark: { n: i + 1, done: isStepContinued(continued, id) },
+  }));
+}
 export default function GradingPolicyWizardScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const chrome = useChrome();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { profile } = useAuth();
   const office = isOfficeRole(profile);
   const schoolId = profile?.school_id ?? '';
-  const { width } = useWindowDimensions();
-  const narrow = width <= 400;
   usePushedTitle('Grading policy');
 
   const [draft, setDraft] = useState<SetupDraft | null>(null);
-  const [step, setStep] = useState<WizardStepId>('level');
+  const [draftRowId, setDraftRowId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [confirmPublish, setConfirmPublish] = useState(false);
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   const [ingestCamera, setIngestCamera] = useState(false);
   const [pendingIngestPages, setPendingIngestPages] = useState<
     Array<{ key: string; uri: string; mimeType: string }>
   >([]);
+  const [savedBadges, setSavedBadges] = useState<StepBadgeMap>({});
+  const [visitBadges, setVisitBadges] = useState<StepBadgeMap>({});
+  const stepScrollRef = useRef<ScrollView>(null);
+  const interviewRef = useRef<ReturnType<typeof takeInterviewHandoff>>(null);
 
   const appendIngestPages = useCallback((pages: Array<{ uri: string; mimeType: string }>) => {
     if (!pages.length) return;
@@ -129,38 +156,93 @@ export default function GradingPolicyWizardScreen() {
     if (pages.length > MAX_GRADING_DOC_PAGES) setStatus(maxPagesCopy());
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+      chrome.setTrayBump(true);
+      return () => {
+        chrome.setTrayBump(false);
+        setVisitBadges({});
+      };
+    }, [chrome.setTrayBump]),
+  );
+
+  const load = useCallback(async () => {
     if (!schoolId) return;
-    const empty = createEmptyDraft(schoolId, 'high');
-    // GB-12 interview hand-off: merged with the same mergeIntoSetupDraft as document ingest.
-    const interview = from === 'interview' ? takeInterviewHandoff('school', schoolId) : null;
-    if (interview) {
-      setDraft({ ...applyInterviewToSetupDraft(empty, interview), current_step: 'review' });
-      setStep('review');
-      setStatus('Your answers are filled in. Check each step, then publish.');
-    } else {
-      setDraft(empty);
+    setLoading(true);
+    setError(null);
+    try {
+      if (from === 'interview' && !interviewRef.current) {
+        interviewRef.current = takeInterviewHandoff('school', schoolId);
+      }
+      const interview = from === 'interview' ? interviewRef.current : null;
+      const [draftRow, pubRow, badges] = await Promise.all([
+        loadLatestDraft(schoolId).catch(() => null),
+        loadLatestPublished(schoolId).catch(() => null),
+        loadStepBadges(policyBadgeKey(schoolId)),
+      ]);
+      setSavedBadges(badges);
+      setVisitBadges({});
+      let next = createEmptyDraft(schoolId, 'high');
+      let nextStatus: string | null = null;
+      if (draftRow?.payload) {
+        next = draftFromStoredPayload(schoolId, draftRow.payload as never, 'level');
+        setDraftRowId(draftRow.id);
+        nextStatus = 'Loaded your saved draft.';
+      } else if (pubRow?.payload) {
+        next = draftFromStoredPayload(schoolId, pubRow.payload as never, 'level');
+        setDraftRowId(null);
+        nextStatus = 'Starting from the published policy. Save draft to keep edits.';
+      } else {
+        setDraftRowId(null);
+      }
+      if (interview) {
+        next = setPolicyStep(applyInterviewToSetupDraft(next, interview), 'review');
+        nextStatus = 'Your answers are filled in. Check each step, then publish.';
+      }
+      setDraft(next);
+      if (nextStatus) setStatus(nextStatus);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load grading policy');
+      setDraft(createEmptyDraft(schoolId, 'high'));
+    } finally {
+      setLoading(false);
     }
   }, [schoolId, from]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+
+  useEffect(() => {
+    if (!draft) return;
+    stepScrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [draft?.current_step]);
 
   const payload = useMemo(() => (draft ? draftToPayload(draft) : null), [draft]);
   const issues = useMemo(() => (payload ? validatePolicyPayload(payload) : []), [payload]);
   const errors = useMemo(() => hardErrors(issues), [issues]);
-  const help = getBundledHelpTopic(STEP_HELP_KEYS[step]);
-  const stepIndex = WIZARD_STEPS.indexOf(step);
+  const step = draft ? resolvePolicyStep(draft) : 'level';
+  const steps = draft ? visiblePolicySteps(draft) : [];
+  const stepIndex = steps.indexOf(step);
+  const stepHelp = useTopicHelp(STEP_HELP_KEYS[step], step);
+  const continued = mergeBadgeMaps(savedBadges, visitBadges);
+  const last = stepIndex >= 0 && stepIndex === steps.length - 1;
 
   const go = useCallback((id: WizardStepId) => {
-    setStep(id);
-    setDraft((d) => (d ? { ...d, current_step: id } : d));
+    stepScrollRef.current?.scrollTo({ y: 0, animated: false });
+    setDraft((d) => (d ? setPolicyStep(d, id) : d));
   }, []);
 
-  const next = () => {
-    const i = stepIndex + 1;
-    if (i < WIZARD_STEPS.length) go(WIZARD_STEPS[i]!);
+  const onBack = () => {
+    if (stepIndex <= 0) return;
+    go(steps[stepIndex - 1]!);
   };
-  const back = () => {
-    const i = stepIndex - 1;
-    if (i >= 0) go(WIZARD_STEPS[i]!);
+  const onContinue = () => {
+    if (stepIndex < 0 || stepIndex >= steps.length - 1 || !draft) return;
+    setVisitBadges((prev) => markStepContinued(prev, step));
+    go(steps[stepIndex + 1]!);
   };
 
   const runSchoolIngest = useCallback(async (pages: Array<{ uri: string; mimeType: string }>) => {
@@ -229,6 +311,59 @@ export default function GradingPolicyWizardScreen() {
     setStatus('Settings added. Look over each step, then publish.');
   };
 
+  const onSaveDraft = async () => {
+    if (!schoolId || !draft || !payload) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const row = await saveDraftPayload(schoolId, payload, draftRowId);
+      setDraftRowId(row.id);
+      const nextMap = mergeBadgeMaps(savedBadges, visitBadges);
+      await saveStepBadges(policyBadgeKey(schoolId), nextMap);
+      setSavedBadges(nextMap);
+      setVisitBadges({});
+      setStatus(
+        canPublish(payload)
+          ? 'Draft saved. It won’t change class calendars until you publish.'
+          : 'Draft saved. Fix the items under Review before you can publish.',
+      );
+      interviewRef.current = null;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save draft');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doPublish = async () => {
+    if (!schoolId || !draft || !payload) return;
+    if (!canPublish(payload)) {
+      setError('Fix the validation items on Review before you can publish.');
+      setConfirmPublish(false);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await saveDraftPayload(schoolId, payload, draftRowId);
+      const result = await publishPolicy(schoolId, payload);
+      const withReview = markStepContinued(mergeBadgeMaps(savedBadges, visitBadges), 'review');
+      await saveStepBadges(policyBadgeKey(schoolId), withReview);
+      setSavedBadges(withReview);
+      setVisitBadges({});
+      setConfirmPublish(false);
+      setDraftRowId(null);
+      setStatus(
+        `Published (version ${result.plan.next_version}). ${result.binding?.class_ids.length ?? 0} classes now use this grading calendar.`,
+      );
+      interviewRef.current = null;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not publish');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!office) {
     return (
       <Screen maxWidth={640}>
@@ -239,155 +374,155 @@ export default function GradingPolicyWizardScreen() {
     );
   }
 
-  if (!draft || !payload) {
+  if (loading || !draft || !payload) {
     return (
       <Screen maxWidth={640}>
-        <Text style={[type.body, { color: colors.mute }]}>Loading…</Text>
+        {error ? <Text style={[type.body, { color: colors.danger }]}>{error}</Text> : <WorkingLine />}
       </Screen>
     );
   }
 
   const summary = soFarSummary(draft);
+  const stepTabs = (
+    <PersonTabs
+      tabs={policyPersonTabs(draft, continued)}
+      value={step}
+      compact
+      stacked
+      onChange={(key) => go(key as WizardStepId)}
+    />
+  );
+
+  const stickyNav = (
+    <WizardActionTray
+      stepIndex={Math.max(0, stepIndex)}
+      stepCount={steps.length}
+      stepLabel={STEP_LABELS[step]}
+      busy={busy}
+      status={status}
+      error={error}
+      canBack={stepIndex > 0 && !busy}
+      canNext={!last && !busy}
+      showSave={!last}
+      showPublish={last}
+      saveDisabled={false}
+      publishDisabled={!canPublish(payload) || !schoolId}
+      onBack={onBack}
+      onContinue={onContinue}
+      onSaveDraft={() => void onSaveDraft()}
+      onPublish={() => {
+        setError(null);
+        setStatus(null);
+        setConfirmPublish(true);
+      }}
+      icons={[
+        {
+          key: 'questions',
+          label: 'Answer a few questions',
+          icon: 'syllabusInterview',
+          onPress: () => router.push('/school/grading-policy/interview' as never),
+        },
+        {
+          key: 'capture',
+          label: 'Import policy with Capture',
+          icon: 'capture',
+          onPress: () => void onStartFromDocument(),
+        },
+        {
+          key: 'template',
+          label: "I'm not sure — use the usual choice",
+          icon: 'syllabusTemplate',
+          onPress: () => setDraft(applyTemplateNotSure(draft)),
+        },
+      ]}
+    />
+  );
 
   return (
-    <Screen maxWidth={720} keyboard>
-      <GhostButton
-        label="Answer a few questions instead"
-        onPress={() => router.push('/school/grading-policy/interview' as never)}
-      />
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>{summary}</Text>
-      <StartFromDocumentButton onPress={() => void onStartFromDocument()} disabled={busy} />
-      <GhostButton
-        label="Photograph policy pages"
-        onPress={onAddIngestCameraPage}
-        disabled={busy}
-      />
-      {pendingIngestPages.length ? (
-        <IngestPendingPagesCard
-          pages={pendingIngestPages}
-          busy={busy}
-          canAddMore={pendingIngestPages.length < MAX_GRADING_DOC_PAGES}
-          onRemove={(key) => setPendingIngestPages((cur) => cur.filter((p) => p.key !== key))}
-          onAddAnother={onAddIngestCameraPage}
-          onRead={() =>
-            void runSchoolIngest(pendingIngestPages.map((p) => ({ uri: p.uri, mimeType: p.mimeType })))
-          }
-          onClear={() => setPendingIngestPages([])}
-        />
-      ) : null}
-      {ingestCamera ? (
-        <WebCameraCapture
-          onCapture={(uri, mimeType) => {
-            setIngestCamera(false);
-            appendIngestPages([{ uri, mimeType }]);
-          }}
-          onCancel={() => setIngestCamera(false)}
-        />
-      ) : null}
-      {ingestProposal ? (
-        <IngestProposalReview
-          proposal={ingestProposal}
-          sourceLabel="your policy document"
-          onApply={applyIngestFields}
-          onDiscard={() => {
-            setIngestProposal(null);
-            setStatus('Thrown away. Your published policy did not change.');
-          }}
-        />
-      ) : null}
-      <ChipRow>
-        {WIZARD_STEPS.map((id) => (
-          <Chip
-            key={id}
-            label={STEP_LABELS[id]}
-            selected={id === step}
-            quiet={id !== step}
-            onPress={() => go(id)}
-          />
-        ))}
-      </ChipRow>
-
-      {/* §11.18: on phone-width, help opens as a sheet (not an inline card that steals vertical space). */}
-      <GhostButton
-        label={helpOpen ? 'Hide help' : 'Show help'}
-        onPress={() => setHelpOpen((v) => !v)}
-      />
-      {narrow ? (
-        <FormSheet
-          visible={Boolean(helpOpen && help)}
-          title={help?.title ?? 'Help'}
-          onClose={() => setHelpOpen(false)}
-        >
-          {help ? (
-            <>
-              <Text style={[type.meta, { color: colors.mute }]}>{help.meaning}</Text>
-              {help.example ? (
-                <Text style={[type.meta, { color: colors.ink, marginTop: 6 }]}>
-                  Example: {help.example}
-                </Text>
-              ) : null}
-            </>
-          ) : null}
-        </FormSheet>
-      ) : helpOpen && help ? (
+    <View style={styles.shell} pointerEvents="box-none">
+      <Screen keyboard pageChromeHosted pin={stepTabs} scrollRef={stepScrollRef} maxWidth={720}>
         <Card>
-          <View style={styles.helpHead}>
-            <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>{help.title}</Text>
-            <GhostButton label="Hide help" onPress={() => setHelpOpen(false)} />
-          </View>
-          <Text style={[type.meta, { color: colors.mute }]}>{help.meaning}</Text>
-          {help.example ? (
-            <Text style={[type.meta, { color: colors.ink, marginTop: 6 }]}>Example: {help.example}</Text>
-          ) : null}
+          <Text style={[type.meta, { color: colors.mute }]}>{summary}</Text>
+          <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
+            Step through each choice. Nothing changes class calendars until you publish.
+          </Text>
         </Card>
-      ) : null}
 
-      <Card>
-        <Text style={[type.title, { color: colors.ink, marginBottom: 12 }]}>{STEP_LABELS[step]}</Text>
-        <WizardStepBody
-          step={step}
-          draft={draft}
-          payload={payload}
-          colors={colors}
-          setDraft={setDraft}
-          errors={errors}
-        />
-      </Card>
-
-      {error ? <Text style={[styles.flash, { color: colors.danger }]}>{error}</Text> : null}
-      {status ? <Text style={[styles.flash, { color: colors.mute }]}>{status}</Text> : null}
-
-      <View style={styles.nav}>
-        <SecondaryButton label="Back" onPress={back} disabled={stepIndex === 0 || busy} />
-        {step !== 'review' ? (
-          <PrimaryButton label="Continue" onPress={next} disabled={busy} />
-        ) : (
-          <PrimaryButton
-            label={busy ? 'Publishing…' : 'Publish'}
-            disabled={busy || !canPublish(payload) || !schoolId}
-            onPress={() => {
-              void (async () => {
-                setBusy(true);
-                setError(null);
-                setStatus(null);
-                try {
-                  await saveDraftPayload(schoolId, payload);
-                  const result = await publishPolicy(schoolId, payload);
-                  setStatus(
-                    `Published (version ${result.plan.next_version}). ${result.binding?.class_ids.length ?? 0} classes now use this grading calendar.`,
-                  );
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Could not publish');
-                } finally {
-                  setBusy(false);
-                }
-              })();
+        {pendingIngestPages.length ? (
+          <IngestPendingPagesCard
+            pages={pendingIngestPages}
+            busy={busy}
+            canAddMore={pendingIngestPages.length < MAX_GRADING_DOC_PAGES}
+            onRemove={(key) => setPendingIngestPages((cur) => cur.filter((p) => p.key !== key))}
+            onAddAnother={onAddIngestCameraPage}
+            onRead={() =>
+              void runSchoolIngest(pendingIngestPages.map((p) => ({ uri: p.uri, mimeType: p.mimeType })))
+            }
+            onClear={() => setPendingIngestPages([])}
+          />
+        ) : null}
+        {ingestCamera ? (
+          <WebCameraCapture
+            onCapture={(uri, mimeType) => {
+              setIngestCamera(false);
+              appendIngestPages([{ uri, mimeType }]);
+            }}
+            onCancel={() => setIngestCamera(false)}
+          />
+        ) : null}
+        {ingestProposal ? (
+          <IngestProposalReview
+            proposal={ingestProposal}
+            sourceLabel="your policy document"
+            onApply={applyIngestFields}
+            onDiscard={() => {
+              setIngestProposal(null);
+              setStatus('Thrown away. Your published policy did not change.');
             }}
           />
-        )}
+        ) : null}
+
+        <Card>
+          <View style={styles.titleRow}>
+            <Text style={[type.title, { color: colors.ink, flex: 1 }]}>{STEP_LABELS[step]}</Text>
+            {stepHelp.help ? (
+              <TopicHelpHit
+                open={stepHelp.open}
+                label={STEP_LABELS[step]}
+                colors={colors}
+                onPress={stepHelp.toggle}
+              />
+            ) : null}
+          </View>
+          {stepHelp.open && stepHelp.help ? <TopicHelpPop help={stepHelp.help} colors={colors} /> : null}
+          <WizardStepBody
+            step={step}
+            draft={draft}
+            payload={payload}
+            colors={colors}
+            setDraft={setDraft}
+            errors={errors}
+          />
+        </Card>
+
+        {busy ? <WorkingLine /> : null}
+        <GhostButton label="Close" onPress={() => router.back()} />
+
+        <ConfirmSheet
+          visible={confirmPublish}
+          title="Publish grading policy?"
+          body="All classes at this school will use this grading calendar. Teachers keep settings you did not lock."
+          confirmLabel="Publish"
+          busy={busy}
+          error={error}
+          onCancel={() => setConfirmPublish(false)}
+          onConfirm={() => void doPublish()}
+        />
+      </Screen>
+      <View pointerEvents="box-none" style={styles.navHost}>
+        {stickyNav}
       </View>
-      <GhostButton label="Close" onPress={() => router.back()} />
-    </Screen>
+    </View>
   );
 }
 
@@ -395,7 +530,15 @@ type BodyProps = {
   step: WizardStepId;
   draft: SetupDraft;
   payload: ReturnType<typeof draftToPayload>;
-  colors: { ink: string; mute: string; brand: string; danger: string; line: string };
+  colors: {
+    ink: string;
+    mute: string;
+    brand: string;
+    danger: string;
+    line: string;
+    good: string;
+    warn: string;
+  };
   setDraft: (d: SetupDraft) => void;
   errors: ReturnType<typeof hardErrors>;
 };
@@ -416,11 +559,14 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
     );
   }
   if (step === 'calendar') {
+    const level = getFieldValue<SchoolLevelChoice>(draft, 'level', 'high');
+    const templates = templatesForLevel(level);
+    const split = periodSplitSummary(payload);
     return (
       <>
-        <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>How often grades are posted</Text>
+        <TopicHelpLabel title="How often grades are posted" topicKey="help.glyphs.6w" colors={colors} />
         <ChipRow>
-          {TEMPLATES.map((t) => (
+          {templates.map((t) => (
             <Chip
               key={t}
               label={calendarTemplateLabel(t)}
@@ -435,13 +581,16 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
         </ChipRow>
         <View style={{ height: 8 }} />
         <GhostButton label="I'm not sure — use the usual choice" onPress={() => setDraft(applyTemplateNotSure(draft))} />
-        <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-          Grading periods:{' '}
-          {payload.calendar.periods
-            .filter((p) => p.kind === 'marking_period')
-            .map((p) => p.name)
-            .join(', ')}
-        </Text>
+        <LockedField locked colors={colors}>
+          <TextField label="Period split from this calendar" value={split} editable={false} />
+          <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>
+            Grading periods:{' '}
+            {payload.calendar.periods
+              .filter((p) => p.kind === 'marking_period')
+              .map((p) => p.name)
+              .join(', ')}
+          </Text>
+        </LockedField>
       </>
     );
   }
@@ -648,31 +797,46 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
   }
   if (step === 'rollup') {
     // Only offer presets that fit how many marking periods each credit term has.
-    const cal = getFieldValue<{ periods?: { id: string; kind: string; parent_id: string | null }[] } | null>(
-      draft,
-      'calendar.model',
-      null,
-    );
+    const cal = getFieldValue<{
+      period_model?: string;
+      periods?: { id: string; kind: string; parent_id: string | null }[];
+    } | null>(draft, 'calendar.model', null);
     const firstTerm = cal?.periods?.find((p) => p.kind === 'credit_term');
     const childCount = firstTerm
       ? (cal?.periods ?? []).filter((p) => p.kind === 'marking_period' && p.parent_id === firstTerm.id).length
       : (cal?.periods ?? []).filter((p) => p.kind === 'marking_period').length;
     const presetKeys = childCount > 0 ? presetsForChildCount(childCount) : ROLLUP_PRESET_KEYS;
+    const selected = getFieldValue(draft, 'rollup.preset', '2/7+1/7');
+    const formula = formatRollupFormulaDisplay(selected, {
+      period_model: cal?.period_model ?? payload.calendar.period_model,
+      child_count: childCount > 0 ? childCount : null,
+    });
     return (
-      <ChipRow>
-        {presetKeys.map((key) => (
-          <Chip
-            key={key}
-            label={rollupPresetLabel(key)}
-            selected={getFieldValue(draft, 'rollup.preset', '2/7+1/7') === key}
-            onPress={() => {
-              let d = setField(draft, 'rollup.preset', key, 'user');
-              d = rebuildCalendarFromDraft(d);
-              setDraft(d);
-            }}
-          />
-        ))}
-      </ChipRow>
+      <>
+        <TopicHelpLabel title="Semester grade formula" topicKey="help.rollup.2_7" colors={colors} />
+        <ChipRow>
+          {presetKeys.map((key) => (
+            <Chip
+              key={key}
+              label={formatRollupFormulaDisplay(key, {
+                period_model: cal?.period_model ?? payload.calendar.period_model,
+                child_count: childCount > 0 ? childCount : null,
+              }) || key}
+              selected={selected === key}
+              onPress={() => {
+                let d = setField(draft, 'rollup.preset', key, 'user');
+                d = rebuildCalendarFromDraft(d);
+                setDraft(d);
+              }}
+            />
+          ))}
+        </ChipRow>
+        {formula ? (
+          <Text style={[type.meta, { color: colors.ink, marginTop: 12 }]} accessibilityLabel="rollup-formula">
+            {formula}
+          </Text>
+        ) : null}
+      </>
     );
   }
   if (step === 'scale') {
@@ -914,9 +1078,13 @@ function WizardStepBody({ step, draft, payload, colors, setDraft, errors }: Body
 }
 
 const styles = StyleSheet.create({
-  helpHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  nav: { flexDirection: 'row', gap: 12, marginTop: 16, marginBottom: 8 },
-  flash: { marginTop: 8 },
+  shell: { flex: 1, minHeight: 0, backgroundColor: 'transparent' },
+  navHost: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'transparent',
+    zIndex: 17,
+  },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   lockRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

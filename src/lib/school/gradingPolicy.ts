@@ -205,6 +205,90 @@ export const STEP_HELP_KEYS: Record<WizardStepId, string> = {
   review: 'help.wizard.review',
 };
 
+/** Existing IconName glyphs for PersonTabs (no new View-stroke recipes). */
+export const STEP_ICONS: Record<WizardStepId, string> = {
+  level: 'feedSchool',
+  calendar: 'calendar',
+  dates: 'calDay',
+  credit: 'grades',
+  rollup: 'syllabusBookRollup',
+  scale: 'grades',
+  quality_points: 'syllabusEngine',
+  course_levels: 'classes',
+  gpa: 'records',
+  locks: 'manage',
+  review: 'syllabusReview',
+};
+
+/** Level-appropriate calendar templates (config-driven, not one global hardcoded list). */
+export function templatesForLevel(level: SchoolLevelChoice): TemplateKey[] {
+  if (level === 'elementary') return ['elementary_year_4', 'elementary_year_6', 'semester'];
+  if (level === 'college') return ['college_term', 'semester', 'trimester'];
+  if (level === 'middle') return ['nine_weeks', 'tx_six_weeks', 'trimester', 'semester'];
+  if (level === 'high') return ['tx_six_weeks', 'nine_weeks', 'trimester', 'semester'];
+  // mixed / unknown: full library
+  return [
+    'tx_six_weeks',
+    'nine_weeks',
+    'trimester',
+    'college_term',
+    'elementary_year_4',
+    'elementary_year_6',
+    'semester',
+  ];
+}
+
+/**
+ * Steps shown for the current draft. Elementary hides credit + GPA stack
+ * (like Syllabus hiding Categories for total_points).
+ */
+export function visiblePolicySteps(draft: SetupDraft): WizardStepId[] {
+  const level = getFieldValue<SchoolLevelChoice>(draft, 'level', 'high');
+  if (level === 'elementary') {
+    return WIZARD_STEPS.filter(
+      (id) =>
+        id !== 'credit' &&
+        id !== 'quality_points' &&
+        id !== 'course_levels' &&
+        id !== 'gpa',
+    );
+  }
+  return [...WIZARD_STEPS];
+}
+
+export function resolvePolicyStep(draft: SetupDraft): WizardStepId {
+  const steps = visiblePolicySteps(draft);
+  const cur = draft.current_step;
+  if (steps.includes(cur)) return cur;
+  return steps[0] ?? 'level';
+}
+
+export function setPolicyStep(draft: SetupDraft, step: WizardStepId): SetupDraft {
+  const steps = visiblePolicySteps(draft);
+  const next = steps.includes(step) ? step : steps[0] ?? 'level';
+  return { ...draft, current_step: next, updated_at: new Date().toISOString() };
+}
+
+export function markingPeriodCount(payload: { calendar?: { periods?: { kind: string }[] } } | null): number {
+  return (payload?.calendar?.periods ?? []).filter((p) => p.kind === 'marking_period').length;
+}
+
+export function periodSplitSummary(payload: {
+  calendar?: { period_model?: string; periods?: { kind: string }[] };
+  calendar_template?: string;
+} | null): string {
+  if (!payload?.calendar) return '';
+  const n = markingPeriodCount(payload);
+  const model = payload.calendar.period_model ?? '';
+  if (model === 'six_weeks') return `Six weeks (${n} periods)`;
+  if (model === 'nine_weeks') return `Nine weeks / quarters (${n} periods)`;
+  if (model === 'trimester') return `Trimesters (${n} periods)`;
+  if (model === 'college') return `College terms (${n} periods)`;
+  if (model === 'semester') return `Semesters (${n} periods)`;
+  if (model === 'year') return `Year (${n} periods)`;
+  return `${n} grading period${n === 1 ? '' : 's'}`;
+}
+
 function field<T>(
   value: T,
   source: FieldSource = 'default',

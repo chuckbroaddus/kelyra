@@ -2,19 +2,16 @@
  * GB-08 Syllabus wizard shell — step body + floating action tray.
  */
 import { useMemo } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { HoverTip } from '@/components/ui/HoverTip';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { type IconName } from '@/components/ui/Icon';
 import { type PersonTab } from '@/components/ui/PersonTabs';
-import { chrome, shadows, type } from '@/constants/theme';
-import { useChrome } from '@/lib/chrome/ChromeProvider';
+import { WizardActionTray } from '@/components/wizard/WizardActionTray';
+import { type } from '@/constants/theme';
 import { isStepContinued, type StepBadgeMap } from '@/lib/syllabus/stepBadgeStore';
-import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import {
   STEP_HELP_KEYS,
@@ -128,9 +125,7 @@ type NavProps = {
 };
 
 /**
- * Separate syllabus action tray above the system tray.
- * Swipe-up hides the system tray; this tray slides down into that spot.
- * Swipe-down restores both stacked (this tray above the system tray).
+ * Syllabus action tray — shared WizardActionTray + class-scoped mid icons.
  */
 export function SyllabusWizardNav({
   draft,
@@ -143,35 +138,7 @@ export function SyllabusWizardNav({
   onSaveDraft,
   onPublish,
 }: NavProps) {
-  const { colors, scheme } = useTheme();
-  const c = colors as Colors;
-  const chromeState = useChrome();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const layout = useLayout();
-  const landscape = layout.orientation === 'landscape' && layout.isPhone;
-  const iconSize = landscape ? 22 : 24;
-  // Match circle footprint so space-evenly gaps stay even; hitSlop keeps the target.
-  const hInset = Math.max(insets.left, insets.right, 12);
-  // Match FloatingTabTray measured system-tray rest (safe area + tray height).
-  // Do NOT use chromeState.trayRest — that value is trayRestLift and already
-  // includes syllabusActionTrayHeight when trayBump is on (would double-stack).
-  const systemTrayBottom = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
-  const systemTrayHeight = landscape ? chrome.trayHeightLandscape : chrome.trayHeight;
-  const stacked = !layout.showTopBar;
-  // True air gap between rounded cards — wide enough that scroll text reads through
-  // and light tray shadows do not visually weld the two plates into one band.
-  const stackGap = 12;
-  // Stacked: sit just above the system tray. Unstacked (web top bar): safe bottom only.
-  const bottom = stacked ? systemTrayBottom + systemTrayHeight + stackGap : systemTrayBottom;
-  // Swipe-up: drop into the system tray's bottom slot (same bottomInset as FloatingTabTray).
-  const slideIntoTraySpot = stacked ? systemTrayHeight + stackGap : 0;
-  const hideDist = Math.max(chromeState.trayHideDistance, 1);
-  const actionTranslate = chromeState.trayTranslate.interpolate({
-    inputRange: [0, hideDist],
-    outputRange: [0, slideIntoTraySpot],
-  });
-
   const steps = useMemo(() => visibleSteps(draft), [draft.engine, draft.categories.length]);
   const step = resolveWizardStep(draft);
   const stepIndex = steps.indexOf(step);
@@ -181,231 +148,52 @@ export function SyllabusWizardNav({
   const canNext = !last && !busy;
   const showSave = !published && !last;
   const showPublish = last;
-  const saveDisabled = Boolean(busy) || !canSaveDraft(draft);
-  const publishDisabled = Boolean(busy) || !canFinishReview(draft);
-  // Primary filled circles (same brand token as PrimaryButton); disabled only via opacity.
-  const chevronBg = c.brand;
-  const chevronBorder = c.brand;
-  const chevronInk = c.brandInk;
 
   return (
-    <Animated.View
-      pointerEvents="box-none"
-      // Wrapper stays fully transparent — only the rounded actionTray card paints fill.
-      style={[
-        styles.float,
+    <WizardActionTray
+      stepIndex={Math.max(0, stepIndex)}
+      stepCount={steps.length}
+      stepLabel={STEP_LABELS[step]}
+      busy={busy}
+      status={status}
+      error={error}
+      canBack={canBack}
+      canNext={canNext}
+      showSave={showSave}
+      showPublish={showPublish}
+      saveDisabled={!canSaveDraft(draft)}
+      publishDisabled={!canFinishReview(draft)}
+      onBack={onBack}
+      onContinue={onContinue}
+      onSaveDraft={onSaveDraft}
+      onPublish={onPublish}
+      icons={[
         {
-          left: hInset,
-          right: hInset,
-          bottom,
-          backgroundColor: 'transparent',
-          transform: [{ translateY: actionTranslate }],
+          key: 'questions',
+          label: 'Answer a few questions',
+          icon: 'syllabusInterview',
+          onPress: () => router.push(`/class/${classId}/syllabus-interview` as never),
+        },
+        {
+          key: 'capture',
+          label: 'Import syllabus with Capture',
+          icon: 'capture',
+          onPress: () =>
+            router.push(
+              `/capture?preset=syllabus&classId=${encodeURIComponent(classId)}` as never,
+            ),
+        },
+        {
+          key: 'template',
+          label: 'Start from a school template',
+          icon: 'syllabusTemplate',
+          onPress: () => router.push(`/class/${classId}/syllabus-templates` as never),
         },
       ]}
-    >
-      <View
-        style={[
-          styles.actionTray,
-          {
-            backgroundColor: c.elevated,
-            borderColor: c.line,
-            ...(scheme === 'light' ? shadows.light : null),
-          },
-        ]}
-      >
-        <View style={styles.navRow}>
-          {/* Six peers + space-evenly: equal gaps + matching edge insets; pill shrinks first. */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            disabled={!canBack}
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.circle,
-              {
-                backgroundColor: chevronBg,
-                borderColor: chevronBorder,
-                opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.circleGlyph, { color: chevronInk }]}>‹</Text>
-          </Pressable>
-
-          <HoverTip label="Answer a few questions">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Answer a few questions"
-              onPress={() => router.push(`/class/${classId}/syllabus-interview` as never)}
-              hitSlop={6}
-              style={({ pressed }) => [styles.iconHit, pressed && { opacity: 0.7 }]}
-            >
-              <Icon name="syllabusInterview" color={c.mute} size={iconSize} />
-            </Pressable>
-          </HoverTip>
-          <HoverTip label="Import syllabus with Capture">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Import syllabus with Capture"
-              onPress={() =>
-                router.push(
-                  `/capture?preset=syllabus&classId=${encodeURIComponent(classId)}` as never,
-                )
-              }
-              hitSlop={6}
-              style={({ pressed }) => [styles.iconHit, pressed && { opacity: 0.7 }]}
-            >
-              <Icon name="capture" color={c.mute} size={iconSize} />
-            </Pressable>
-          </HoverTip>
-          <HoverTip label="Start from a school template">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Start from a school template"
-              onPress={() => router.push(`/class/${classId}/syllabus-templates` as never)}
-              hitSlop={6}
-              style={({ pressed }) => [styles.iconHit, pressed && { opacity: 0.7 }]}
-            >
-              <Icon name="syllabusTemplate" color={c.mute} size={iconSize} />
-            </Pressable>
-          </HoverTip>
-
-          {showSave ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={busy ? 'Saving…' : 'Save draft'}
-              disabled={saveDisabled}
-              onPress={onSaveDraft}
-              style={({ pressed }) => [
-                styles.mid,
-                {
-                  backgroundColor: c.elevated,
-                  borderColor: c.line,
-                  opacity: saveDisabled ? 0.4 : pressed ? 0.78 : 1,
-                },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-                style={[styles.midLabel, { color: c.ink }]}
-              >
-                {busy ? 'Saving…' : 'Save draft'}
-              </Text>
-            </Pressable>
-          ) : showPublish ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={busy ? 'Publishing…' : 'Publish'}
-              disabled={publishDisabled}
-              onPress={onPublish}
-              style={({ pressed }) => [
-                styles.mid,
-                {
-                  backgroundColor: c.brand,
-                  borderColor: c.brand,
-                  opacity: publishDisabled ? 0.4 : pressed ? 0.85 : 1,
-                },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-                style={[styles.midLabel, { color: c.brandInk }]}
-              >
-                {busy ? 'Publishing…' : 'Publish'}
-              </Text>
-            </Pressable>
-          ) : (
-            <View style={styles.midSpacer} />
-          )}
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Continue"
-            disabled={!canNext}
-            onPress={onContinue}
-            style={({ pressed }) => [
-              styles.circle,
-              {
-                backgroundColor: chevronBg,
-                borderColor: chevronBorder,
-                opacity: !canNext ? 0.35 : pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.circleGlyph, { color: chevronInk }]}>›</Text>
-          </Pressable>
-        </View>
-
-        {error ? (
-          <Text style={[type.meta, { color: c.danger, textAlign: 'center', marginTop: 4 }]}>{error}</Text>
-        ) : status ? (
-          <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginTop: 4 }]}>{status}</Text>
-        ) : null}
-        <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginTop: 2 }]}>
-          {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
-        </Text>
-      </View>
-    </Animated.View>
+    />
   );
 }
 
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  float: {
-    position: 'absolute',
-    zIndex: 17,
-    backgroundColor: 'transparent',
-  },
-  actionTray: {
-    borderRadius: chrome.trayRadius,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 8,
-    alignSelf: 'stretch',
-  },
-  // Peers only — no sideSlot/midCluster wrappers (those re-clustered and crowded ›).
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    flexWrap: 'nowrap',
-    minWidth: 0,
-  },
-  iconHit: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  circle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  circleGlyph: { fontSize: 26, fontWeight: '600', lineHeight: 28, marginTop: -2 },
-  // Pill shrinks before gaps: no fixed minWidth, tight pad, flexShrink.
-  mid: {
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 1,
-    minWidth: 0,
-    maxWidth: 112,
-  },
-  midSpacer: { width: 72, height: 40, flexShrink: 1, minWidth: 0 },
-  midLabel: { ...type.body, fontWeight: '600', fontSize: 13 },
 });

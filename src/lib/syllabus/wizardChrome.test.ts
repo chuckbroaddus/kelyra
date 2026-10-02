@@ -40,7 +40,7 @@ test('wizardPersonTabs wires numbered stepMark from map', () => {
   const wiz = read('src/components/syllabus/SyllabusWizard.tsx');
   assert.match(wiz, /stepMark: \{ n: i \+ 1, done: isStepContinued\(continued, id\) \}/);
   assert.match(wiz, /export function SyllabusWizardNav/);
-  assert.match(wiz, /of \{steps\.length\} —/);
+  assert.match(wiz, /WizardActionTray/);
   assert.match(wiz, /!canSaveDraft\(draft\)/);
   assert.match(wiz, /!canFinishReview\(draft\)/);
   assert.match(wiz, /showSave = !published && !last/);
@@ -54,6 +54,7 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   const ui = read('src/app/class/[id]/syllabus.tsx');
   const tray = read('src/components/ui/FloatingTabTray.tsx');
   const wiz = read('src/components/syllabus/SyllabusWizard.tsx');
+  const action = read('src/components/wizard/WizardActionTray.tsx');
   const body = read('src/components/syllabus/WizardStepBody.tsx');
   const person = read('src/components/ui/PersonTabs.tsx');
   const chromeProv = read('src/lib/chrome/ChromeProvider.tsx');
@@ -81,47 +82,48 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.doesNotMatch(tray, /styles\.bump/);
   assert.doesNotMatch(tray, /showSyllabusBump/);
   assert.doesNotMatch(tray, /syllabusInterview/);
-  // Action tray owns icons + slide-into-system-tray-spot motion.
+  // Shared action tray owns icons + slide-into-system-tray-spot motion.
   assert.match(wiz, /syllabusInterview/);
-  assert.match(wiz, /slideIntoTraySpot/);
-  assert.match(wiz, /styles\.actionTray/);
-  assert.match(wiz, /chevronBg/);
-  assert.match(wiz, /accessibilityLabel=\"Continue\"/);
+  assert.match(wiz, /WizardActionTray/);
+  assert.match(action, /slideIntoTraySpot/);
+  assert.match(action, /styles\.actionTray/);
+  assert.match(action, /chevronBg/);
+  assert.match(action, /accessibilityLabel="Continue"/);
   // Even tray peers: space-evenly row; no sideSlot/midCluster re-clustering.
-  assert.match(wiz, /justifyContent:\s*'space-evenly'/);
-  assert.doesNotMatch(wiz, /styles\.sideSlot/);
-  assert.doesNotMatch(wiz, /styles\.midCluster/);
-  assert.doesNotMatch(wiz, /styles\.rightCluster/);
-  assert.doesNotMatch(wiz, /styles\.midIcons/);
+  assert.match(action, /justifyContent:\s*'space-evenly'/);
+  assert.doesNotMatch(action, /styles\.sideSlot/);
+  assert.doesNotMatch(action, /styles\.midCluster/);
+  assert.doesNotMatch(action, /styles\.rightCluster/);
+  assert.doesNotMatch(action, /styles\.midIcons/);
   // Pill shrinks before gaps (no fixed minWidth crowding ›).
-  assert.match(wiz, /mid:\s*\{[^}]*flexShrink:\s*1/s);
-  assert.match(wiz, /mid:\s*\{[^}]*paddingHorizontal:\s*8/s);
-  assert.doesNotMatch(wiz, /mid:\s*\{[^}]*minWidth:\s*104/s);
+  assert.match(action, /mid:\s*\{[^}]*flexShrink:\s*1/s);
+  assert.match(action, /mid:\s*\{[^}]*paddingHorizontal:\s*8/s);
+  assert.doesNotMatch(action, /mid:\s*\{[^}]*minWidth:\s*104/s);
   // Save draft / Publish sit between icons and › as peers.
-  const backIdx = wiz.indexOf('accessibilityLabel="Back"');
-  const saveIdx = wiz.indexOf("accessibilityLabel={busy ? 'Saving…' : 'Save draft'}");
-  const continueIdx = wiz.indexOf('accessibilityLabel="Continue"');
+  const backIdx = action.indexOf('accessibilityLabel="Back"');
+  const saveIdx = action.indexOf("accessibilityLabel={busy ? 'Saving…' : 'Save draft'}");
+  const continueIdx = action.indexOf('accessibilityLabel="Continue"');
   assert.ok(backIdx > 0 && saveIdx > backIdx && saveIdx < continueIdx);
   // Nav circles: primary brand fill (PrimaryButton token); identical when both enabled.
-  assert.match(wiz, /chevronBg = c\.brand/);
-  assert.match(wiz, /chevronBorder = c\.brand/);
-  assert.match(wiz, /chevronInk = c\.brandInk/);
-  assert.doesNotMatch(wiz, /chevronBg = c\.elevated/);
+  assert.match(action, /chevronBg = c\.brand/);
+  assert.match(action, /chevronBorder = c\.brand/);
+  assert.match(action, /chevronInk = c\.brandInk/);
+  assert.doesNotMatch(action, /chevronBg = c\.elevated/);
   // Stack on measured system tray height + safe bottom — never trayRestLift
   // (chrome.trayRest already includes syllabusActionTrayHeight when bump is on).
-  assert.match(wiz, /systemTrayBottom/);
-  assert.match(wiz, /systemTrayHeight/);
-  assert.match(wiz, /systemTrayBottom \+ systemTrayHeight \+ stackGap/);
-  assert.match(wiz, /slideIntoTraySpot = stacked \? systemTrayHeight \+ stackGap/);
+  assert.match(action, /systemTrayBottom/);
+  assert.match(action, /systemTrayHeight/);
+  assert.match(action, /systemTrayBottom \+ systemTrayHeight \+ stackGap/);
+  assert.match(action, /slideIntoTraySpot = stacked \? systemTrayHeight \+ stackGap/);
   // Positioning must not read the lifted trayRest (comment may still name it).
-  assert.doesNotMatch(wiz, /bottom = stacked \? chromeState\.trayRest/);
-  assert.doesNotMatch(wiz, /chromeState\.trayRest \+/);
-  assert.match(wiz, /status\?: string \| null/);
-  assert.match(wiz, /error\?: string \| null/);
+  assert.doesNotMatch(action, /bottom = stacked \? chromeState\.trayRest/);
+  assert.doesNotMatch(action, /chromeState\.trayRest \+/);
+  assert.match(action, /status\?: string \| null/);
+  assert.match(action, /error\?: string \| null/);
   assert.match(chromeProv, /syllabusActionTrayHeight/);
   // #389 separate action tray: Save draft is no longer under a tray bump overlay.
   assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 12 : 0/);
-  assert.match(wiz, /zIndex: 17/);
+  assert.match(action, /zIndex: 17/);
   // Floating trays: scroll content pads bottom; FlushBody outer pad is always 0
   // so no opaque band clips content above action/system trays app-wide.
   assert.match(screen, /flushBottomPad = 0/);
@@ -135,11 +137,11 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(screen, /enabled=\{keyboardUp\}/);
   assert.match(screen, /backgroundColor: 'transparent'/);
   // Floating trays: wrappers transparent; only rounded cards paint elevated fill.
-  assert.match(wiz, /styles\.float/);
-  assert.match(wiz, /styles\.actionTray/);
-  assert.match(wiz, /stackGap = 12/);
-  assert.match(wiz, /backgroundColor: 'transparent'/);
-  assert.doesNotMatch(wiz, /float:[^}]*backgroundColor:\s*c\./);
+  assert.match(action, /styles\.float/);
+  assert.match(action, /styles\.actionTray/);
+  assert.match(action, /stackGap = 12/);
+  assert.match(action, /backgroundColor: 'transparent'/);
+  assert.doesNotMatch(action, /float:[^}]*backgroundColor:\s*c\./);
   assert.match(tray, /styles\.float/);
   assert.match(tray, /styles\.frame/);
   assert.match(tray, /backgroundColor: 'transparent'/);
