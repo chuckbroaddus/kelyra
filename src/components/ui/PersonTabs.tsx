@@ -52,8 +52,9 @@ export type PersonTab = {
   glyph?: (selected: boolean) => ReactNode;
   badge?: number;
   /**
-   * Syllabus wizard step mark: same CountBadge alert pip as Messages/Needs,
-   * toned light red → light green. Independent of `badge` unread counts.
+   * Syllabus wizard step mark: same CountBadge geometry as Messages/Needs.
+   * Circle fill is the state color (Messages red → light green); numeral is black.
+   * Independent of `badge` unread counts.
    */
   stepMark?: { n: number; done: boolean };
 };
@@ -99,9 +100,14 @@ type ThemeColors = {
   mute: string;
 };
 
-/** Reuses Messages/Needs CountBadge geometry; only the soft red/green tone differs. */
+/**
+ * Messages/Needs CountBadge geometry.
+ * Pending = solid Messages danger red + black numeral; continued = goodSoft fill + black numeral.
+ */
 function StepMarkBadge({ mark }: { mark: { n: number; done: boolean } }) {
-  return <CountBadge count={mark.n} tone={mark.done ? 'goodSoft' : 'dangerSoft'} />;
+  return (
+    <CountBadge count={mark.n} tone={mark.done ? 'goodSoft' : 'danger'} blackInk />
+  );
 }
 
 type PillProps = {

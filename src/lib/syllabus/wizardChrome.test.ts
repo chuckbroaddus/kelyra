@@ -77,14 +77,20 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
-  // Step marks reuse CountBadge (Messages/Needs alert pip), not a private wash style.
-  assert.match(person, /CountBadge count=\{mark\.n\} tone=\{mark\.done \? 'goodSoft' : 'dangerSoft'\}/);
+  // Step marks: Messages danger red / goodSoft fills, black numeral (not soft wash + colored ink).
+  assert.match(
+    person,
+    /CountBadge count=\{mark\.n\} tone=\{mark\.done \? 'goodSoft' : 'danger'\} blackInk/,
+  );
   assert.match(person, /glyphBadgeHost/);
   assert.doesNotMatch(person, /styles\.stepMark/);
   const badge = read('src/components/ui/CountBadge.tsx');
   assert.match(badge, /CountBadgeTone/);
-  assert.match(badge, /dangerSoft/);
+  assert.match(badge, /blackInk/);
+  assert.match(badge, /STEP_MARK_INK/);
   assert.match(badge, /goodSoft/);
+  // Default Messages pip stays solid danger (same red step marks use when pending).
+  assert.match(badge, /let backgroundColor = colors\.danger/);
 });
 
 test('interview glyph recipe exists and is registered', () => {
