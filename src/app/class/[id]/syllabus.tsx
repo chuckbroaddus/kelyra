@@ -126,6 +126,7 @@ export default function SyllabusScreen() {
         locks?: Partial<SyllabusLocks> | null;
         lock_reasons?: Partial<SyllabusLockReasons> | null;
         rollup_preset?: string | null;
+        exam_weight?: number | null;
       } | null = null;
       const schoolId = profile?.school_id ?? null;
       if (schoolId) {
@@ -136,13 +137,17 @@ export default function SyllabusScreen() {
                 locks?: SyllabusLocks;
                 lock_reasons?: SyllabusLockReasons;
                 rollup_preset?: string | null;
+                exam_weight?: number | null;
               }
             | null;
           if (payload) {
+            // Carry school rollup into the wizard so locked Save draft does not send null
+            // and trip gb_assert_syllabus_locked_fields vs a stored/school value.
             schoolPolicy = {
               locks: payload.locks ?? null,
               lock_reasons: payload.lock_reasons ?? null,
               rollup_preset: payload.rollup_preset ?? null,
+              exam_weight: payload.exam_weight ?? null,
             };
           }
         } catch {

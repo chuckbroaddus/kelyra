@@ -214,6 +214,7 @@ export type LockedEditRejection = {
 
 /**
  * Pure save-path guard: proposed edits that touch locked fields vs baseline are rejected.
+ * Missing keys (undefined) are not edits — callers should carry those forward first.
  */
 export function rejectLockedFieldEdits(
   baseline: SyllabusFieldBag,
@@ -257,6 +258,78 @@ export function rejectLockedFieldEdits(
     }
   }
   return rejections;
+}
+
+/**
+ * Prefer baseline, then school policy values, then proposed (for unlocked / missing baseline).
+ * Used so Save draft never wipes school-locked rollup/scale/etc. with wizard defaults.
+ */
+function lockedValuePrefer(
+  baseline: unknown,
+  school: unknown,
+  proposed: unknown,
+): unknown {
+  if (baseline !== undefined) return baseline;
+  if (school !== undefined) return school;
+  return proposed;
+}
+
+/**
+ * Force locked keys on a save/publish bag to stored or school values.
+ * Unlocked keys keep `proposed`. Does not delete keys — always carries a concrete value
+ * so RPC normalize cannot turn "omit" into null and trip the lock assert.
+ */
+export function carryForwardLockedFields<T extends SyllabusFieldBag>(
+  proposed: T,
+  baseline: SyllabusFieldBag,
+  policy: SchoolLockPolicy,
+): T {
+  const next: SyllabusFieldBag = { ...proposed };
+  const v = policy.values ?? {};
+  if (policy.locks.engine) {
+    next.engine = lockedValuePrefer(baseline.engine, v.engine, next.engine);
+  }
+  if (policy.locks.categories) {
+    next.categories = lockedValuePrefer(baseline.categories, v.categories, next.categories);
+  }
+  if (policy.locks.scale) {
+    next.scale_id = lockedValuePrefer(baseline.scale_id, v.scale_id, next.scale_id);
+  }
+  if (policy.locks.floor) {
+    next.floor = lockedValuePrefer(baseline.floor, v.floor, next.floor);
+  }
+  if (policy.locks.late) {
+    next.late_rule = lockedValuePrefer(baseline.late_rule, v.late_rule, next.late_rule);
+  }
+  if (policy.locks.drop_lowest) {
+    next.drop_lowest = lockedValuePrefer(baseline.drop_lowest, v.drop_lowest, next.drop_lowest);
+  }
+  if (policy.locks.retake) {
+    next.retake = lockedValuePrefer(baseline.retake, v.retake, next.retake);
+  }
+  if (policy.locks.assignment_max) {
+    next.assignment_max = lockedValuePrefer(
+      baseline.assignment_max,
+      v.assignment_max,
+      next.assignment_max,
+    );
+  }
+  if (policy.locks.book_mode) {
+    next.book_mode = lockedValuePrefer(baseline.book_mode, v.book_mode, next.book_mode);
+  }
+  if (policy.locks.rollup) {
+    next.rollup_preset = lockedValuePrefer(
+      baseline.rollup_preset,
+      v.rollup_preset,
+      next.rollup_preset,
+    ) as string | null | undefined;
+    next.exam_weight = lockedValuePrefer(
+      baseline.exam_weight,
+      v.exam_weight,
+      next.exam_weight,
+    ) as number | null | undefined;
+  }
+  return next as T;
 }
 
 /** §11 item 9: locked late-work policy cannot be edited by the teacher. */

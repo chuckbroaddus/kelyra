@@ -27,6 +27,11 @@ import {
   type WithinCategory,
 } from '@/lib/syllabus/types';
 import type { RetakeRule } from '@/lib/grade/engine/types';
+import {
+  buildSchoolLockPolicy,
+  carryForwardLockedFields,
+  parseLocks,
+} from '@/lib/syllabus/locks';
 
 export type SyllabusStatus = 'draft' | 'published' | 'archived';
 
@@ -375,19 +380,34 @@ function payloadFromEditor(input: {
   rollup_preset?: string | null;
   locks?: Record<string, unknown>;
   marking_period_scope?: string | null;
+  /** When set, locked scalars are forced to this snapshot (class row / school). */
+  locked_baseline?: {
+    engine?: SyllabusEngine | null;
+    book_mode?: BookMode | null;
+    floor?: number | null;
+    late_rule?: SyllabusV2Fields['late_rule'] | null;
+    retake?: RetakeRule | null;
+    exam_weight?: number | null;
+    rollup_preset?: string | null;
+    categories?: SyllabusCategoryDraft[];
+  } | null;
 }) {
   const d = defaultSyllabusV2Fields();
-  return {
-    title: input.title,
-    term_structure: input.term_structure,
-    active_term: input.active_term,
-    policies: {
-      ...defaultPolicies(),
-      ...input.policies,
-      publish_to_family: input.policies.publish_to_family !== false,
+  const locks = parseLocks(input.locks);
+  const policy = buildSchoolLockPolicy({
+    locks,
+    values: {
+      engine: input.locked_baseline?.engine ?? input.engine ?? null,
+      book_mode: input.locked_baseline?.book_mode ?? input.book_mode ?? null,
+      floor: input.locked_baseline?.floor ?? input.floor ?? null,
+      late_rule: input.locked_baseline?.late_rule ?? input.late_rule ?? null,
+      retake: input.locked_baseline?.retake ?? input.retake ?? null,
+      exam_weight: input.locked_baseline?.exam_weight ?? input.exam_weight ?? null,
+      rollup_preset: input.locked_baseline?.rollup_preset ?? input.rollup_preset ?? null,
+      categories: input.locked_baseline?.categories ?? input.categories,
     },
-    terms: input.terms ?? [],
-    source: input.source ?? 'manual',
+  });
+  const proposed = {
     engine: input.engine ?? d.engine,
     within_category: input.within_category ?? d.within_category,
     book_mode: input.book_mode ?? d.book_mode,
@@ -401,24 +421,63 @@ function payloadFromEditor(input: {
     retake: input.retake ?? null,
     exam_weight: input.exam_weight ?? null,
     rollup_preset: input.rollup_preset ?? null,
+    categories: input.categories,
+  };
+  const baseline = {
+    engine: input.locked_baseline?.engine ?? input.engine ?? d.engine,
+    book_mode: input.locked_baseline?.book_mode ?? input.book_mode ?? d.book_mode,
+    floor: input.locked_baseline?.floor ?? input.floor ?? null,
+    late_rule: input.locked_baseline?.late_rule ?? input.late_rule ?? d.late_rule,
+    retake: input.locked_baseline?.retake ?? input.retake ?? null,
+    exam_weight: input.locked_baseline?.exam_weight ?? input.exam_weight ?? null,
+    rollup_preset: input.locked_baseline?.rollup_preset ?? input.rollup_preset ?? null,
+    categories: input.locked_baseline?.categories ?? input.categories,
+  };
+  const carried = carryForwardLockedFields(proposed, baseline, policy);
+  return {
+    title: input.title,
+    term_structure: input.term_structure,
+    active_term: input.active_term,
+    policies: {
+      ...defaultPolicies(),
+      ...input.policies,
+      publish_to_family: input.policies.publish_to_family !== false,
+    },
+    terms: input.terms ?? [],
+    source: input.source ?? 'manual',
+    engine: carried.engine ?? d.engine,
+    within_category: proposed.within_category,
+    book_mode: (carried.book_mode as BookMode) ?? d.book_mode,
+    extra_credit_method: proposed.extra_credit_method,
+    ec_cap: proposed.ec_cap,
+    late_rule: (carried.late_rule as SyllabusV2Fields['late_rule']) ?? d.late_rule,
+    missing_rule: proposed.missing_rule,
+    rounding: proposed.rounding,
+    floor: (carried.floor as number | null) ?? null,
+    ceiling: proposed.ceiling,
+    retake: (carried.retake as RetakeRule | null) ?? null,
+    exam_weight: (carried.exam_weight as number | null) ?? null,
+    rollup_preset: (carried.rollup_preset as string | null) ?? null,
     locks: input.locks ?? {},
     marking_period_scope: input.marking_period_scope ?? null,
-    categories: input.categories.map((c, index) => ({
-      key: c.key,
-      label: c.label.trim(),
-      weight_percent: Number(c.weight_percent),
-      sort_order: c.sort_order ?? index,
-      active: c.active !== false,
-      group: c.group ?? null,
-      default_include_in_average: c.default_include_in_average === true,
-      min_grades_per_term: c.min_grades_per_term ?? null,
-      rules: c.rules ?? {},
-      drop_highest_n: Math.max(0, Number(c.drop_highest_n ?? 0)),
-      keep_highest_n: c.keep_highest_n ?? null,
-      droppable: c.droppable !== false,
-      never_drop_flags: Array.isArray(c.never_drop_flags) ? c.never_drop_flags : [],
-      empty_policy: c.empty_policy ?? null,
-    })),
+    categories: (Array.isArray(carried.categories) ? carried.categories : input.categories).map(
+      (c, index) => ({
+        key: c.key,
+        label: c.label.trim(),
+        weight_percent: Number(c.weight_percent),
+        sort_order: c.sort_order ?? index,
+        active: c.active !== false,
+        group: c.group ?? null,
+        default_include_in_average: c.default_include_in_average === true,
+        min_grades_per_term: c.min_grades_per_term ?? null,
+        rules: c.rules ?? {},
+        drop_highest_n: Math.max(0, Number(c.drop_highest_n ?? 0)),
+        keep_highest_n: c.keep_highest_n ?? null,
+        droppable: c.droppable !== false,
+        never_drop_flags: Array.isArray(c.never_drop_flags) ? c.never_drop_flags : [],
+        empty_policy: c.empty_policy ?? null,
+      }),
+    ),
   };
 }
 

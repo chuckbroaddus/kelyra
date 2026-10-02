@@ -20,7 +20,8 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
-const MIGRATION = 'supabase/migrations/20261002120000_gb_syllabus_save_publish_fix.sql';
+const MIGRATION = 'supabase/migrations/20261002130000_gb_syllabus_locked_fields_preserve.sql';
+const PRIOR_SAVE = 'supabase/migrations/20261002120000_gb_syllabus_save_publish_fix.sql';
 
 test('canSaveDraft allows incomplete weights; canFinishReview does not', () => {
   let d = createEmptyWizardDraft('c1');
@@ -175,13 +176,17 @@ test('UI wires Save draft + Publish to RPCs with feedback', () => {
   assert.match(wiz, /error\?: string \| null/);
 });
 
-test('newest migration: save keeps retake; publish qualifies locals + retake + EC', () => {
+test('newest migration: locked null payload preserved; save keeps retake; publish qualifies', () => {
   const sql = fs.readFileSync(path.join(ROOT, MIGRATION), 'utf8');
+  assert.match(sql, /gb_force_locked_syllabus_v2/);
+  assert.match(sql, /null\/absent locked scalars are not edits/i);
+
   const save = sql.slice(sql.indexOf('create or replace function public.save_class_syllabus_draft'));
   const saveBody = save.slice(0, save.indexOf('create or replace function public.publish_class_syllabus'));
   assert.match(saveBody, /retake = excluded\.retake/);
   assert.match(saveBody, /status = 'draft'/);
   assert.match(saveBody, /gb_assert_syllabus_locked_fields/);
+  assert.match(saveBody, /gb_force_locked_syllabus_v2/);
   assert.doesNotMatch(saveBody, /title = title/);
 
   const publish = sql.slice(sql.indexOf('create or replace function public.publish_class_syllabus'));
@@ -189,10 +194,14 @@ test('newest migration: save keeps retake; publish qualifies locals + retake + E
   assert.match(publish, /term_structure = publish_class_syllabus\.term_structure/);
   assert.match(publish, /retake = retake_val/);
   assert.match(publish, /weights_error := public\.syllabus_publish_weights_error/);
+  assert.match(publish, /gb_force_locked_syllabus_v2/);
   assert.doesNotMatch(publish, /title = title,/);
 
   assert.match(sql, /grant execute on function public\.save_class_syllabus_draft/);
   assert.match(sql, /grant execute on function public\.publish_class_syllabus/);
+
+  // Prior save/publish form still present for history; this file supersedes it.
+  assert.ok(fs.existsSync(path.join(ROOT, PRIOR_SAVE)));
 
   const later = fs
     .readdirSync(path.join(ROOT, 'supabase/migrations'))
@@ -203,4 +212,24 @@ test('newest migration: save keeps retake; publish qualifies locals + retake + E
       ),
     );
   assert.deepEqual(later, []);
+});
+
+test('save draft with locked rollup null does not reject vs stored non-null (client model)', () => {
+  let d = createEmptyWizardDraft('c-lock');
+  d = patchDraft(d, {
+    locks: { ...d.locks, rollup: true, scale: true },
+    rollup_preset: '2/7+1/7',
+    exam_weight: 14.3,
+    engine: 'weighted_percent_inside',
+  });
+  // Simulate a bad client that cleared locked rollup before save:
+  const bad = { ...d, rollup_preset: null as string | null, exam_weight: null as number | null };
+  const input = toEditorInput(bad, {
+    rollup_preset: '2/7+1/7',
+    exam_weight: 14.3,
+  });
+  assert.equal(input.rollup_preset, '2/7+1/7');
+  assert.equal(input.exam_weight, 14.3);
+  // Engine step-only edit still saves.
+  assert.equal(input.engine, 'weighted_percent_inside');
 });
