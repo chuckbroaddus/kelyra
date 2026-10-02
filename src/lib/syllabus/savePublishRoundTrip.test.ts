@@ -166,8 +166,13 @@ test('UI wires Save draft + Publish to RPCs with feedback', () => {
   assert.match(ui, /plainSyllabusWriteError/);
   assert.match(ui, /Draft saved/);
   assert.match(ui, /Syllabus published/);
+  assert.match(ui, /status=\{status\}/);
+  assert.match(ui, /error=\{error\}/);
+  assert.match(ui, /Array\.isArray\(idParam\)/);
   assert.match(wiz, /!canSaveDraft\(draft\)/);
   assert.match(wiz, /!canFinishReview\(draft\)/);
+  assert.match(wiz, /status\?: string \| null/);
+  assert.match(wiz, /error\?: string \| null/);
 });
 
 test('newest migration: save keeps retake; publish qualifies locals + retake + EC', () => {
