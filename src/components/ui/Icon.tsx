@@ -80,6 +80,7 @@ export type IconName =
   | 'syllabusBookRollup'
   | 'syllabusReview'
   | 'syllabusTemplate'
+  | 'syllabusInterview'
   | FeedIconName;
 
 type Props = {

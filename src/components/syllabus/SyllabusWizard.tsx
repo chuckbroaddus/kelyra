@@ -1,16 +1,16 @@
 /**
- * GB-08 Syllabus wizard shell — PersonTabs chrome + step bodies.
- * Choice rows are radios / steppers / switches (no ChipRow).
+ * GB-08 Syllabus wizard shell — step body + pinned footer nav chrome.
  */
-import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { GhostButton, PrimaryButton, SecondaryButton } from '@/components/ui/Button';
+import { GhostButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { IconName } from '@/components/ui/Icon';
-import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
+import { type PersonTab } from '@/components/ui/PersonTabs';
 import { type } from '@/constants/theme';
 import { getBundledHelpTopic } from '@/lib/help/helpTopics';
+import { isStepContinued, type StepBadgeMap } from '@/lib/syllabus/stepBadgeStore';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import {
   STEP_HELP_KEYS,
@@ -20,7 +20,6 @@ import {
   canSaveDraft,
   resolveWizardStep,
   setWizardStep,
-  soFarSummary,
   validateWizard,
   visibleSteps,
   type SyllabusWizardDraft,
@@ -32,98 +31,77 @@ type Colors = {
   ink: string;
   mute: string;
   brand: string;
+  brandInk: string;
   danger: string;
   line: string;
   good: string;
   warn: string;
+  elevated: string;
+  bg: string;
 };
 
 type Props = {
   draft: SyllabusWizardDraft;
   onChange: (next: SyllabusWizardDraft) => void;
   busy?: boolean;
-  onSaveDraft: () => void;
-  onPublish: () => void;
   footer?: React.ReactNode;
-  /** Parent hosts PersonTabs in Screen.collapse when true. */
   tabsHostedOutside?: boolean;
 };
 
-export function wizardPersonTabs(draft: SyllabusWizardDraft): PersonTab[] {
-  return visibleSteps(draft).map((id) => ({
+export function wizardPersonTabs(draft: SyllabusWizardDraft, continued: StepBadgeMap = {}): PersonTab[] {
+  return visibleSteps(draft).map((id, i) => ({
     key: id,
     label: STEP_LABELS[id],
     icon: STEP_ICONS[id] as IconName,
+    stepMark: { n: i + 1, done: isStepContinued(continued, id) },
   }));
 }
 
-function HelpCard({ step, colors }: { step: WizardStepId; colors: Colors }) {
-  const [open, setOpen] = useState(true);
-  const help = getBundledHelpTopic(STEP_HELP_KEYS[step]);
-  if (!help) return null;
-  if (!open) return <GhostButton label="Show help" onPress={() => setOpen(true)} />;
-  return (
-    <Card>
-      <View style={styles.helpHead}>
-        <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>{help.title}</Text>
-        <GhostButton label="Hide" onPress={() => setOpen(false)} />
-      </View>
-      <Text style={[type.meta, { color: colors.mute }]}>{help.meaning}</Text>
-      {help.example ? (
-        <Text style={[type.meta, { color: colors.ink, marginTop: 6 }]}>Example: {help.example}</Text>
-      ) : null}
-    </Card>
-  );
-}
-
-export function SyllabusWizard({
-  draft,
-  onChange,
-  busy,
-  onSaveDraft,
-  onPublish,
-  footer,
-  tabsHostedOutside,
-}: Props) {
+export function SyllabusWizard({ draft, onChange, busy, footer, tabsHostedOutside }: Props) {
   const { colors } = useTheme();
   const c = colors as Colors;
   const steps = visibleSteps(draft);
   const step = resolveWizardStep(draft);
-  const stepIndex = steps.indexOf(step);
   const issues = validateWizard(draft);
-  const summary = soFarSummary(draft);
-  const tabs = useMemo(() => wizardPersonTabs(draft), [draft.engine, draft.categories.length]);
+  const [helpOpen, setHelpOpen] = useState(false);
 
+  useEffect(() => {
+    setHelpOpen(false);
+  }, [step]);
+
+  const help = getBundledHelpTopic(STEP_HELP_KEYS[step]);
   const go = (id: WizardStepId) => onChange(setWizardStep(draft, id));
-  const next = () => {
-    const i = stepIndex + 1;
-    if (i < steps.length) go(steps[i]!);
-  };
-  const back = () => {
-    const i = stepIndex - 1;
-    if (i >= 0) go(steps[i]!);
-  };
 
   return (
     <View>
-      <View style={styles.headerRow}>
-        <Text style={[type.meta, { color: c.mute, flex: 1 }]}>
-          {stepIndex + 1} of {steps.length} · {summary}
-        </Text>
-        <GhostButton
-          label={busy ? 'Saving…' : 'Save draft'}
-          onPress={onSaveDraft}
-          disabled={Boolean(busy) || !canSaveDraft(draft)}
-        />
-      </View>
-
-      {!tabsHostedOutside ? (
-        <PersonTabs tabs={tabs} value={step} onChange={(key) => go(key as WizardStepId)} compact />
-      ) : null}
-
-      <HelpCard step={step} colors={c} />
+      {tabsHostedOutside ? null : null}
       <Card>
-        <Text style={[type.title, { color: c.ink, marginBottom: 12 }]}>{STEP_LABELS[step]}</Text>
+        <View style={styles.titleRow}>
+          <Text style={[type.title, { color: c.ink, flex: 1 }]}>{STEP_LABELS[step]}</Text>
+          {help ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Help for ${STEP_LABELS[step]}`}
+              accessibilityState={{ expanded: helpOpen }}
+              onPress={() => setHelpOpen((v) => !v)}
+              style={({ pressed }) => [
+                styles.helpHit,
+                { borderColor: c.line, opacity: pressed ? 0.75 : 1 },
+              ]}
+            >
+              <Text style={[styles.helpGlyph, { color: c.mute }]}>?</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {helpOpen && help ? (
+          <View style={[styles.helpPop, { backgroundColor: c.elevated, borderColor: c.line }]}>
+            <Text style={[type.body, { color: c.ink, fontWeight: '700' }]}>{help.title}</Text>
+            <Text style={[type.meta, { color: c.mute, marginTop: 4 }]}>{help.meaning}</Text>
+            {help.example ? (
+              <Text style={[type.meta, { color: c.ink, marginTop: 6 }]}>Example: {help.example}</Text>
+            ) : null}
+          </View>
+        ) : null}
         <WizardStepBody draft={draft} step={step} colors={c} onChange={onChange} />
       </Card>
       {issues.length ? (
@@ -145,35 +123,164 @@ export function SyllabusWizard({
           ))}
         </Card>
       ) : null}
-      <View style={styles.nav}>
-        <View style={styles.navCell}>
-          <SecondaryButton label="Back" onPress={back} disabled={stepIndex <= 0 || Boolean(busy)} />
-        </View>
-        <View style={styles.navCell}>
-          {step !== 'review' ? (
-            <PrimaryButton label="Continue" onPress={next} disabled={Boolean(busy)} />
-          ) : (
-            <PrimaryButton
-              label={busy ? 'Publishing…' : 'Publish'}
-              onPress={onPublish}
-              disabled={Boolean(busy) || !canFinishReview(draft)}
-            />
-          )}
-        </View>
-      </View>
       {footer}
     </View>
   );
 }
 
+type NavProps = {
+  draft: SyllabusWizardDraft;
+  busy?: boolean;
+  onBack: () => void;
+  onContinue: () => void;
+  onSaveDraft: () => void;
+  onPublish: () => void;
+};
+
+/** Pinned footer: "{n} of {M} — {title}" + circle nav + Save draft / Publish. */
+export function SyllabusWizardNav({
+  draft,
+  busy,
+  onBack,
+  onContinue,
+  onSaveDraft,
+  onPublish,
+}: NavProps) {
+  const { colors } = useTheme();
+  const c = colors as Colors;
+  const steps = useMemo(() => visibleSteps(draft), [draft.engine, draft.categories.length]);
+  const step = resolveWizardStep(draft);
+  const stepIndex = steps.indexOf(step);
+  const last = stepIndex >= 0 && stepIndex === steps.length - 1;
+  const published = draft.syllabus_status === 'published';
+  const canBack = stepIndex > 0 && !busy;
+  const canNext = !last && !busy;
+  const showSave = !published && !last;
+  const showPublish = last;
+  const saveDisabled = Boolean(busy) || !canSaveDraft(draft);
+  const publishDisabled = Boolean(busy) || !canFinishReview(draft);
+
+  return (
+    <View style={styles.navWrap}>
+      <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginBottom: 8 }]}>
+        {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
+      </Text>
+      <View style={styles.navRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          disabled={!canBack}
+          onPress={onBack}
+          style={({ pressed }) => [
+            styles.circle,
+            {
+              backgroundColor: c.elevated,
+              borderColor: c.line,
+              opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
+            },
+          ]}
+        >
+          <Text style={[styles.circleGlyph, { color: c.ink }]}>‹</Text>
+        </Pressable>
+
+        {showSave ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={busy ? 'Saving…' : 'Save draft'}
+            disabled={saveDisabled}
+            onPress={onSaveDraft}
+            style={({ pressed }) => [
+              styles.mid,
+              {
+                backgroundColor: c.elevated,
+                borderColor: c.line,
+                opacity: saveDisabled ? 0.4 : pressed ? 0.78 : 1,
+              },
+            ]}
+          >
+            <Text style={[styles.midLabel, { color: c.ink }]}>{busy ? 'Saving…' : 'Save draft'}</Text>
+          </Pressable>
+        ) : showPublish ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={busy ? 'Publishing…' : 'Publish'}
+            disabled={publishDisabled}
+            onPress={onPublish}
+            style={({ pressed }) => [
+              styles.mid,
+              {
+                backgroundColor: c.brand,
+                borderColor: c.brand,
+                opacity: publishDisabled ? 0.4 : pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Text style={[styles.midLabel, { color: c.brandInk }]}>
+              {busy ? 'Publishing…' : 'Publish'}
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={styles.midSpacer} />
+        )}
+
+        {!last ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Continue"
+            disabled={!canNext}
+            onPress={onContinue}
+            style={({ pressed }) => [
+              styles.circle,
+              {
+                backgroundColor: c.brand,
+                borderColor: c.brand,
+                opacity: !canNext ? 0.35 : pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Text style={[styles.circleGlyph, { color: c.brandInk }]}>›</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.circleGhost} />
+        )}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  helpHit: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    justifyContent: 'center',
   },
-  helpHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 },
-  nav: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 12, marginBottom: 8 },
-  navCell: { flex: 1, minWidth: 0 },
+  helpGlyph: { fontSize: 13, fontWeight: '700', lineHeight: 16 },
+  helpPop: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12 },
+  navWrap: { paddingTop: 4, paddingBottom: 4 },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
+  circle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleGhost: { width: 44, height: 44 },
+  circleGlyph: { fontSize: 28, fontWeight: '600', lineHeight: 30, marginTop: -2 },
+  mid: {
+    minWidth: 132,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  midSpacer: { minWidth: 132, height: 44 },
+  midLabel: { ...type.body, fontWeight: '600' },
 });

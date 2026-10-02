@@ -212,9 +212,6 @@ function EngineStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const locked = isFieldLocked(draft, 'engine');
   return (
     <>
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        One choice. The line under it is the only help.
-      </Text>
       <LockNote draft={draft} field="engine" colors={colors} />
       {ENGINE_OPTIONS.map((opt) => (
         <RadioOption

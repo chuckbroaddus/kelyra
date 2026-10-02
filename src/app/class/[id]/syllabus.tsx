@@ -2,7 +2,7 @@
  * Class syllabus entry → GB-08 T1–T8 wizard.
  * Photo import (parse-class-syllabus / ask_draft) still applies into wizard fields.
  */
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -10,10 +10,9 @@ import { useFocusEffect } from 'expo-router';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { IconButton } from '@/components/ui/IconButton';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { SyllabusWizard, wizardPersonTabs } from '@/components/syllabus/SyllabusWizard';
+import { SyllabusWizard, SyllabusWizardNav, wizardPersonTabs } from '@/components/syllabus/SyllabusWizard';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import {
   applyAskImport,
@@ -23,6 +22,7 @@ import {
   resolveWizardStep,
   setWizardStep,
   toEditorInput,
+  visibleSteps,
   type SyllabusWizardDraft,
   type WizardStepId,
 } from '@/components/syllabus/wizardModel';
@@ -54,6 +54,13 @@ import {
   buildSchoolLockPolicy,
 } from '@/lib/syllabus/locks';
 import { applyCopyToDraftBag, copySyllabusFromTemplate } from '@/lib/syllabus/copy';
+import {
+  loadStepBadges,
+  markStepContinued,
+  mergeBadgeMaps,
+  saveStepBadges,
+  type StepBadgeMap,
+} from '@/lib/syllabus/stepBadgeStore';
 import { takeSyllabusTemplateHandoff } from '@/lib/syllabus/templateHandoff';
 import { listSchoolSyllabusTemplates } from '@/lib/syllabus/templates';
 import {
@@ -74,7 +81,6 @@ type ConfirmKind =
 export default function SyllabusScreen() {
   const { colors } = useTheme();
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
-  const router = useRouter();
   const { teacher, setActiveClassId, profile } = useAuth();
   const chrome = useChrome();
   usePushedTitle(chrome.className ?? 'Syllabus');
@@ -90,6 +96,20 @@ export default function SyllabusScreen() {
   const [ingestProposal, setIngestProposal] = useState<IngestProposal | null>(null);
   // Interview hand-off is one-shot; keep it so a focus reload before Save does not drop the answers.
   const interviewRef = useRef<ReturnType<typeof takeInterviewHandoff>>(null);
+  /** Durable greens (last Save draft / Publish). */
+  const [savedBadges, setSavedBadges] = useState<StepBadgeMap>({});
+  /** Visit-only greens (Continue); dropped on leave without save. */
+  const [visitBadges, setVisitBadges] = useState<StepBadgeMap>({});
+
+  useFocusEffect(
+    useCallback(() => {
+      chrome.setTrayBump(true);
+      return () => {
+        chrome.setTrayBump(false);
+        setVisitBadges({});
+      };
+    }, [chrome.setTrayBump]),
+  );
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -154,6 +174,9 @@ export default function SyllabusScreen() {
       setDraft(nextDraft);
       if (nextStatus) setStatus(nextStatus);
       setAskDraft(bundle.syllabus?.ask_draft ?? null);
+      const badges = await loadStepBadges(id);
+      setSavedBadges(badges);
+      setVisitBadges({});
       // Capture syllabus Import multipage handoff (same runtime).
       const fromCapture = takeSyllabusIngestHandoff(id);
       if (fromCapture) {
@@ -188,6 +211,10 @@ export default function SyllabusScreen() {
     setError(null);
     try {
       await saveClassSyllabusDraft(id, toEditorInput(draft));
+      const nextMap = mergeBadgeMaps(savedBadges, visitBadges);
+      await saveStepBadges(id, nextMap);
+      setSavedBadges(nextMap);
+      setVisitBadges({});
       setStatus(
         canFinishReview(draft)
           ? 'Draft saved. It won’t change any grades until you publish.'
@@ -213,6 +240,10 @@ export default function SyllabusScreen() {
     setError(null);
     try {
       await publishClassSyllabus(id, draft.row_version, toEditorInput(draft));
+      const withReview = markStepContinued(mergeBadgeMaps(savedBadges, visitBadges), 'review');
+      await saveStepBadges(id, withReview);
+      setSavedBadges(withReview);
+      setVisitBadges({});
       setStatus('Syllabus published.');
       interviewRef.current = null;
       setConfirm(null);
@@ -310,17 +341,44 @@ export default function SyllabusScreen() {
         : 'Not set up yet';
 
   const step = resolveWizardStep(draft);
-  const collapsing = (
+  const continued = mergeBadgeMaps(savedBadges, visitBadges);
+  const steps = visibleSteps(draft);
+  const stepIndex = steps.indexOf(step);
+
+  const goStep = (id: WizardStepId) => setDraft(setWizardStep(draft, id));
+  const onBack = () => {
+    if (stepIndex <= 0) return;
+    goStep(steps[stepIndex - 1]!);
+  };
+  const onContinue = () => {
+    if (stepIndex < 0 || stepIndex >= steps.length - 1) return;
+    setVisitBadges((prev) => markStepContinued(prev, step));
+    goStep(steps[stepIndex + 1]!);
+  };
+
+  const stepTabs = (
     <PersonTabs
-      tabs={wizardPersonTabs(draft)}
+      tabs={wizardPersonTabs(draft, continued)}
       value={step}
       compact
-      onChange={(key) => setDraft(setWizardStep(draft, key as WizardStepId))}
+      stacked
+      onChange={(key) => goStep(key as WizardStepId)}
+    />
+  );
+
+  const stickyNav = (
+    <SyllabusWizardNav
+      draft={draft}
+      busy={busy}
+      onBack={onBack}
+      onContinue={onContinue}
+      onSaveDraft={() => void onSaveDraft()}
+      onPublish={onPublishPress}
     />
   );
 
   return (
-    <Screen keyboard pageChromeHosted collapse={collapsing}>
+    <Screen keyboard pageChromeHosted pin={stepTabs} sticky={stickyNav}>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
@@ -356,46 +414,10 @@ export default function SyllabusScreen() {
         />
       ) : null}
 
-      <View style={styles.importRow}>
-        <View style={styles.importLead}>
-          <GhostButton
-            align="left"
-            label="Answer a few questions instead"
-            onPress={() => id && router.push(`/class/${id}/syllabus-interview` as never)}
-          />
-        </View>
-        <View style={styles.iconPair}>
-          <IconButton
-            name="capture"
-            size="lg"
-            tone="brand"
-            label="Import syllabus with Capture"
-            disabled={busy || !id}
-            onPress={() => {
-              if (!id) return;
-              router.push(`/capture?preset=syllabus&classId=${encodeURIComponent(id)}` as never);
-            }}
-          />
-          <IconButton
-            name="syllabusTemplate"
-            size="lg"
-            tone="brand"
-            label="Start from a school template"
-            disabled={busy || !id}
-            onPress={() => {
-              if (!id) return;
-              router.push(`/class/${id}/syllabus-templates` as never);
-            }}
-          />
-        </View>
-      </View>
-
       <SyllabusWizard
         draft={draft}
         onChange={setDraft}
         busy={busy}
-        onSaveDraft={() => void onSaveDraft()}
-        onPublish={onPublishPress}
         tabsHostedOutside
         footer={
           <View style={styles.actions}>
@@ -480,16 +502,6 @@ export default function SyllabusScreen() {
 
 const styles = StyleSheet.create({
   actions: { gap: 10, marginTop: 8, marginBottom: 24 },
-  importRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginBottom: 8,
-    flexWrap: 'wrap',
-  },
-  importLead: { flexGrow: 1, flexShrink: 1, minWidth: 140 },
-  iconPair: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
   error: { ...type.meta, marginTop: 8 },
 });
 
