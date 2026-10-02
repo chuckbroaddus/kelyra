@@ -2,9 +2,10 @@
  * GradeBreakdownSheet — NFR-08 breakdown from engine v2 (GB-10).
  */
 import { useMemo } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GhostButton } from '@/components/ui/Button';
+import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { radius, type } from '@/constants/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { isGraded } from '@/lib/assignments/status';
@@ -93,7 +94,7 @@ export function GradeBreakdownSheet({
   const letter = letterForPct(vm?.overall_pct ?? null);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ScreenOverlay visible={visible} onRequestClose={onClose}>
       <View
         style={[
           styles.scrim,
@@ -124,7 +125,7 @@ export function GradeBreakdownSheet({
           </ScrollView>
         </View>
       </View>
-    </Modal>
+    </ScreenOverlay>
   );
 }
 
