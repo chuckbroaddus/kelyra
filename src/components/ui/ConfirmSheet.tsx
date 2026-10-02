@@ -34,6 +34,8 @@ type Props = {
   tone?: 'danger' | 'primary';
   /** Optional a11y on the confirm control (e.g. Leave line + child names). */
   confirmAccessibilityLabel?: string;
+  /** Plain-language failure shown in the sheet (publish/save errors). */
+  error?: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -53,6 +55,7 @@ export function ConfirmSheet({
   busy,
   tone = 'danger',
   confirmAccessibilityLabel,
+  error,
   onCancel,
   onConfirm,
 }: Props) {
@@ -113,6 +116,11 @@ export function ConfirmSheet({
           ) : null}
           <Text style={[styles.title, { color: colors.ink }]}>{title}</Text>
           <Text style={[styles.body, { color: colors.mute }]}>{copy}</Text>
+          {error ? (
+            <Text style={[styles.body, { color: colors.danger }]} accessibilityRole="alert">
+              {error}
+            </Text>
+          ) : null}
           {needsName ? (
             <TextField
               placeholder={`Type ${typeName}`}

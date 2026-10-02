@@ -250,7 +250,7 @@ export default function SyllabusScreen() {
       await saveStepBadges(id, withReview);
       setSavedBadges(withReview);
       setVisitBadges({});
-      setStatus('Syllabus published.');
+      setStatus('Syllabus published. Status: Published.');
       interviewRef.current = null;
       setConfirm(null);
       await load();
@@ -263,6 +263,8 @@ export default function SyllabusScreen() {
 
   const onPublishPress = () => {
     if (!draft) return;
+    setError(null);
+    setStatus(null);
     if (draft.syllabus_status === 'published') setConfirm({ kind: 'live_edit' });
     else setConfirm({ kind: 'publish' });
   };
@@ -472,6 +474,11 @@ export default function SyllabusScreen() {
           confirm?.kind === 'unpublish' ? 'Unpublish' : confirm?.kind === 'discard_ask' ? 'Throw away' : 'Publish'
         }
         busy={busy}
+        error={
+          confirm?.kind === 'publish' || confirm?.kind === 'live_edit' || confirm?.kind === 'unpublish'
+            ? error
+            : null
+        }
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
           if (confirm?.kind === 'publish' || confirm?.kind === 'live_edit') void doPublish();
@@ -479,12 +486,14 @@ export default function SyllabusScreen() {
             void (async () => {
               if (!id || !draft) return;
               setBusy(true);
+              setError(null);
               try {
                 await unpublishClassSyllabus(id, draft.row_version);
                 setConfirm(null);
+                setStatus('Syllabus unpublished.');
                 await load();
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Could not unpublish');
+                setError(plainSyllabusWriteError(err, 'Could not unpublish'));
               } finally {
                 setBusy(false);
               }
@@ -538,23 +547,35 @@ function plainSyllabusWriteError(err: unknown, fallback: string): string {
   if (/column reference .* is ambiguous|ambiguous/i.test(msg)) {
     return 'Could not save this syllabus on the server (a database update needs a fix). Try again after the latest syllabus migration is applied, or contact support if this keeps happening.';
   }
+  if (/missing FROM-clause entry for table ["']?publish_class_syllabus/i.test(msg)) {
+    return 'Could not publish this syllabus on the server (a database publish fix is waiting to be applied). Try again after the latest syllabus migration lands, or contact support if this keeps happening.';
+  }
+  if (/missing FROM-clause entry/i.test(msg)) {
+    return 'Could not save this syllabus on the server (a database update needs a fix). Try again after the latest syllabus migration is applied, or contact support if this keeps happening.';
+  }
   if (/not counting the extra credit|besides extra credit/i.test(msg)) {
     return 'Your regular category weights need to add up to 100% before you can publish. Extra credit is added on top. Tap Categories to change them.';
   }
   if (/active weights must sum to 100/i.test(msg)) {
     return 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.';
   }
+  if (/at least one category required/i.test(msg)) {
+    return 'Add at least one category on the Categories step before you publish.';
+  }
+  if (/invalid term_structure|invalid active_term/i.test(msg)) {
+    return 'A term setting is invalid. Open the Terms step, pick a valid option, then try Publish again.';
+  }
   if (/syllabus version conflict/i.test(msg)) {
     return 'Someone else saved this syllabus. Pull to refresh, then try again.';
   }
   if (/not authenticated|JWT|session/i.test(msg)) {
-    return 'You were signed out. Sign in again, then tap Save draft.';
+    return 'You were signed out. Sign in again, then try again.';
   }
   if (/not allowed/i.test(msg)) {
     return 'You can only save the syllabus for a class you teach.';
   }
   if (/category label required/i.test(msg)) {
-    return 'Every category in use needs a name before you can save.';
+    return 'Every category in use needs a name before you can save. Tap Categories to fix names.';
   }
   if (/Locked field/i.test(msg)) {
     return msg.replace(/^Locked field "[^"]+" cannot be edited by the teacher\.\s*/i, 'Your school locks this setting. ');
