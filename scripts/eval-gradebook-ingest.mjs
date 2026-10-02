@@ -554,7 +554,15 @@ function scoreProposal(expected, actual, meta = {}, variant = 'clean') {
   // Companion fields derived from expected parents are not hallucinations
   const companions = new Set(meta.companions || []);
   for (const ef of expFields) {
-    if (ef.path === 'calendar.template') companions.add('calendar.period_model');
+    if (ef.path === 'calendar.template') {
+      companions.add('calendar.period_model');
+      companions.add('credit.policy');
+      companions.add('credit.unit');
+    }
+    if (ef.path === 'calendar.period_model') {
+      companions.add('calendar.template');
+      companions.add('credit.policy');
+    }
     if (ef.path === 'levels.list') companions.add('gpa.mode');
     if (ef.path === 'qp.tables') companions.add('qp.method');
     if (ef.path === 'qp.method') companions.add('qp.tables');
@@ -562,6 +570,8 @@ function scoreProposal(expected, actual, meta = {}, variant = 'clean') {
       companions.add('rollup.custom_weights');
       companions.add('rollup.exam_enabled');
     }
+    if (ef.path === 'scale.bands') companions.add('scale.passing_pct');
+    if (ef.path === 'credit.passing_threshold') companions.add('scale.passing_pct');
   }
   for (const af of actFields) {
     if (!expPaths.has(af.path) && companions.has(af.path)) continue;

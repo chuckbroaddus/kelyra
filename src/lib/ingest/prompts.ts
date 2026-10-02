@@ -23,6 +23,8 @@ Hard rules:
 - confidence is 0..1. status is proposed | needs_review | unknown | conflict.
 - EVERY filled field MUST include evidence.quote copied VERBATIM from the page. No quote → omit the field entirely. Never use meta quotes like "(not stated)" or "does not say".
 - evidence.page is 1-based or null.
+- If the image is NOT a course syllabus / class grading contract (cafeteria menu, fundraiser flyer, seating chart, blank page, random worksheet): set document_kind_guess to "unknown", empty fields[], and ONE block warning with code "not_a_syllabus" (FR-AI-13). Do not fill title or late_rule from non-syllabus text.
+- If the image is NOT a school grading / reporting policy (cafeteria menu, fundraiser flyer, seating chart, blank page): set document_kind_guess to "unknown", empty fields[], and ONE block warning with code "not_a_handbook". Do not invent calendar or scale fields.
 - If the image shows TWO syllabi / two handbooks / two classes on one page: set document_kind_guess to "mixed", empty fields[], and a block warning asking the teacher to retake each document separately (FR-AI-13).
 - Handwritten or blurry photos: first silently transcribe readable lines into a working transcript, then extract ONLY facts the transcript supports. Low OCR → empty + warning, do not invent policy.
 - Candidates (Texas 6-week, 70-pass, 2/7 rollup, Honors +0.5 / AP +1.0) are MATCH options, not forced facts (FR-AI-17).

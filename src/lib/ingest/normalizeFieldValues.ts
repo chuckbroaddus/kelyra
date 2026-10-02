@@ -798,15 +798,92 @@ function looksMixedDocument(proposal: {
   return false;
 }
 
+/** True when the model (or guess) says this is not a syllabus / grading handbook. */
+export function looksWrongGradingDocument(proposal: {
+  kind?: string | null;
+  wizard?: string | null;
+  document_kind_guess?: string | null;
+  fields?: IngestField[];
+  warnings?: IngestWarning[];
+  ambiguities?: IngestAmbiguity[];
+}): { hit: boolean; code: string; message: string } {
+  const kind = proposal.kind === 'school_policy' || proposal.wizard === 'school' ? 'school_policy' : 'syllabus';
+  const guess = String(proposal.document_kind_guess || '').toLowerCase();
+  const blobs = [
+    guess,
+    ...(proposal.warnings || []).map((w) => `${w?.code ?? ''} ${w?.message ?? ''}`),
+    ...(proposal.ambiguities || []).map((a) => `${a?.code ?? ''} ${a?.message ?? ''}`),
+  ]
+    .join('\n')
+    .toLowerCase();
+
+  const codeHit =
+    /not_a_syllabus|non_syllabus|not_a_handbook|non_handbook|wrong_document|not_grading|not_policy/.test(
+      blobs,
+    );
+  const msgHit =
+    /not a (course |class )?syllabus|not a (grading |school )?policy|not a handbook|cafeteria|weekly menu|fundraiser|pto flyer|not grading|menu,? not|flyer,? not|announcement,? not/.test(
+      blobs,
+    );
+  if (!codeHit && !msgHit) return { hit: false, code: '', message: '' };
+
+  if (kind === 'school_policy') {
+    return {
+      hit: true,
+      code: 'not_a_handbook',
+      message:
+        'This image is not a school grading or reporting policy. Photograph the handbook grading pages instead.',
+    };
+  }
+  return {
+    hit: true,
+    code: 'not_a_syllabus',
+    message:
+      'This image is not a course syllabus or class grading contract. Photograph the syllabus instead.',
+  };
+}
+
 /**
  * Coerce every field value; drop filled values with no evidence;
  * mixed-doc → empty fields + block warning (FR-AI-13).
+ * Wrong-document (menu/flyer/etc.) → empty fields + block warning.
  */
 export function normalizeProposalFields(proposal: IngestProposal): IngestProposal {
   const warnings = [...proposal.warnings];
   const ambiguities = [...proposal.ambiguities];
   const fields = [...proposal.fields];
   const document_kind_guess = proposal.document_kind_guess;
+
+  const wrongDoc = looksWrongGradingDocument({
+    kind: proposal.kind,
+    wizard: proposal.wizard,
+    document_kind_guess,
+    fields,
+    warnings,
+    ambiguities,
+  });
+  if (wrongDoc.hit) {
+    const kept = warnings.filter((w) => {
+      if (!w || typeof w !== 'object') return false;
+      const blob = `${w.code ?? ''} ${w.message ?? ''}`.toLowerCase();
+      return !/not_a_syllabus|non_syllabus|not_a_handbook|non_handbook|wrong_document|not_grading|not_policy|cafeteria|fundraiser|weekly menu/.test(
+        blob,
+      );
+    });
+    kept.push({
+      code: wrongDoc.code,
+      message: wrongDoc.message,
+      severity: 'block',
+    });
+    return {
+      ...proposal,
+      fields: [],
+      ambiguities: [],
+      warnings: kept,
+      document_kind_guess: document_kind_guess || 'unknown',
+      overall_confidence: 0,
+    };
+  }
 
   if (looksMixedDocument({ document_kind_guess, fields, warnings, ambiguities })) {
     const filledCount = fields.filter((f) => f.value != null && f.value !== '').length;
@@ -1457,7 +1534,8 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
     }
   }
 
-  // Lift sparse policy facts from any evidence quote already on the page
+  // Lift sparse policy facts from any evidence quote already on the page.
+  // School-only paths must never land on a syllabus proposal (S05 homework-lock note ≠ locks.map).
   {
     const blobs = [...byPath.values()]
       .map((f) => `${quoteText(f.evidence)} ${typeof f.value === 'string' ? f.value : ''}`)
@@ -1468,7 +1546,8 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
       page: 1,
       region: null,
     });
-    if (!byPath.has('locks.map')) {
+    const isSchool = proposal.wizard === 'school' || proposal.kind === 'school_policy';
+    if (isSchool && !byPath.has('locks.map')) {
       const hw =
         blobs.match(
           /homework[^\n.]{0,40}?(?:max(?:imum)?|cap(?:ped)?|no more than|not exceed|at most|≤|<=)\s*(\d{1,2})\s*%/i,
@@ -1488,7 +1567,7 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         });
       }
     }
-    if (!byPath.has('gpa.include')) {
+    if (isSchool && !byPath.has('gpa.include')) {
       const pe = /PE is excluded|exclude[sd]?\s+from\s+(cumulative\s+)?GPA[^\n.]{0,40}PE|\bPE\b[^\n.]{0,30}exclud/i.test(
         blobs,
       );
@@ -1509,7 +1588,7 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         });
       }
     }
-    if (!byPath.has('school.notes')) {
+    if (isSchool && !byPath.has('school.notes')) {
       const note =
         blobs.match(/[^\n.]{0,20}exam exemption[^\n.]{0,80}/i)?.[0] ||
         blobs.match(/[^\n.]{0,20}UIL eligibility[^\n.]{0,80}/i)?.[0] ||
@@ -1526,7 +1605,7 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
         });
       }
     }
-    if (!byPath.has('syllabus.narrative')) {
+    if (!isSchool && !byPath.has('syllabus.narrative')) {
       const note =
         blobs.match(/[^\n.]{0,10}Conduct mark[^\n.]{0,80}/i)?.[0] ||
         blobs.match(/[^\n.]{0,20}plus\s*\/\s*minus[^\n.]{0,60}/i)?.[0] ||
@@ -1539,6 +1618,24 @@ export function normalizeProposalFields(proposal: IngestProposal): IngestProposa
           evidence: liftEv(note.trim()),
           status: 'needs_review',
           source_doc_id: anySrc?.source_doc_id ?? null,
+        });
+      }
+    }
+    // Category weights on the page imply a weighted engine when the model omitted it.
+    if (!isSchool && !byPath.has('syllabus.engine') && byPath.has('syllabus.categories')) {
+      const cats = byPath.get('syllabus.categories')!;
+      const rows = Array.isArray(cats.value) ? cats.value : [];
+      const hasWeights = rows.some(
+        (c) => c && typeof c === 'object' && Number((c as { weight_percent?: number }).weight_percent) > 0,
+      );
+      if (hasWeights && evidenceOk(cats.evidence)) {
+        byPath.set('syllabus.engine', {
+          path: 'syllabus.engine',
+          value: 'weighted_percent_inside',
+          confidence: Math.min(cats.confidence, 0.72),
+          evidence: cats.evidence,
+          status: 'needs_review',
+          source_doc_id: cats.source_doc_id,
         });
       }
     }
