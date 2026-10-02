@@ -173,10 +173,17 @@ export function SyllabusWizardNav({
   const iconSize = landscape ? 22 : 24;
   const hit = landscape ? 44 : 48;
   const hInset = Math.max(insets.left, insets.right, 12);
-  const bottomInset = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
+  // Match FloatingTabTray measured system-tray rest (safe area + tray height).
+  // Do NOT use chromeState.trayRest — that value is trayRestLift and already
+  // includes syllabusActionTrayHeight when trayBump is on (would double-stack).
+  const systemTrayBottom = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
+  const systemTrayHeight = landscape ? chrome.trayHeightLandscape : chrome.trayHeight;
   const stacked = !layout.showTopBar;
-  const bottom = stacked ? chromeState.trayRest + 8 : 8 + Math.max(insets.bottom, 8);
-  const slideIntoTraySpot = stacked ? Math.max(chromeState.trayRest + 8 - bottomInset, 0) : 0;
+  const stackGap = 8;
+  // Stacked: sit just above the system tray. Unstacked (web top bar): safe bottom only.
+  const bottom = stacked ? systemTrayBottom + systemTrayHeight + stackGap : systemTrayBottom;
+  // Swipe-up: drop into the system tray's bottom slot (same bottomInset as FloatingTabTray).
+  const slideIntoTraySpot = stacked ? systemTrayHeight + stackGap : 0;
   const hideDist = Math.max(chromeState.trayHideDistance, 1);
   const actionTranslate = chromeState.trayTranslate.interpolate({
     inputRange: [0, hideDist],
@@ -194,9 +201,10 @@ export function SyllabusWizardNav({
   const showPublish = last;
   const saveDisabled = Boolean(busy) || !canSaveDraft(draft);
   const publishDisabled = Boolean(busy) || !canFinishReview(draft);
-  // Same plate whenever a chevron is enabled; only disabled opacity differs.
-  const chevronBg = c.elevated;
-  const chevronBorder = c.line;
+  // Primary filled circles (same brand token as PrimaryButton); disabled only via opacity.
+  const chevronBg = c.brand;
+  const chevronBorder = c.brand;
+  const chevronInk = c.brandInk;
 
   return (
     <Animated.View
@@ -236,7 +244,7 @@ export function SyllabusWizardNav({
               },
             ]}
           >
-            <Text style={[styles.circleGlyph, { color: c.ink }]}>‹</Text>
+            <Text style={[styles.circleGlyph, { color: chevronInk }]}>‹</Text>
           </Pressable>
 
           <View style={styles.midIcons}>
@@ -331,7 +339,7 @@ export function SyllabusWizardNav({
                 },
               ]}
             >
-              <Text style={[styles.circleGlyph, { color: c.ink }]}>›</Text>
+              <Text style={[styles.circleGlyph, { color: chevronInk }]}>›</Text>
             </Pressable>
           </View>
         </View>
