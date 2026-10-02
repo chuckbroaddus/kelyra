@@ -20,6 +20,12 @@ import {
   splitWeights,
   weightsTotalOk,
 } from '../../lib/syllabus/extraCreditWeights.ts';
+import {
+  examWeightPercentFromPreset,
+  schoolPeriodSplitFromCalendar,
+  type SchoolPeriodSplit,
+} from './schoolPeriodSplit.ts';
+import type { GradingCalendar } from '../../lib/grade/calendar/types.ts';
 
 export type { BookMode, ExtraCreditMethod, MissingRule, SyllabusEngine, SyllabusRounding, WithinCategory };
 
@@ -346,6 +352,11 @@ export type SyllabusWizardDraft = {
   row_version: number;
   syllabus_status: ClassSyllabusDraft['status'] | 'none';
   publish_to_family: boolean;
+  /**
+   * When the school grading calendar defines how the year is split, the teacher
+   * cannot pick Quarters/Semesters/Year — UI is read-only and saves this term_structure.
+   */
+  school_period_split: SchoolPeriodSplit | null;
 };
 
 export type WizardIssue = {
@@ -401,6 +412,7 @@ export function createEmptyWizardDraft(classId: string): SyllabusWizardDraft {
     row_version: 1,
     syllabus_status: 'none',
     publish_to_family: true,
+    school_period_split: null,
   };
 }
 
@@ -414,20 +426,25 @@ export function parseLocks(raw: unknown): SyllabusLocks {
   return base;
 }
 
+export type SyllabusSchoolPolicyInput = {
+  locks?: Partial<SyllabusLocks> | null;
+  lock_reasons?: Partial<Record<keyof SyllabusLocks, string>> | null;
+  rollup_preset?: string | null;
+  exam_weight?: number | null;
+  book_mode?: BookMode | null;
+  floor?: number | null;
+  late_rule?: LateRule | null;
+  missing_rule?: MissingRule | null;
+  engine?: SyllabusEngine | null;
+  extra_credit_method?: ExtraCreditMethod | null;
+  /** GB-02 calendar (class binding or school policy payload). */
+  calendar?: Pick<GradingCalendar, 'period_model' | 'periods'> | null;
+  calendar_template?: string | null;
+};
+
 export function applySchoolPolicyDefaults(
   draft: SyllabusWizardDraft,
-  policy: {
-    locks?: Partial<SyllabusLocks> | null;
-    lock_reasons?: Partial<Record<keyof SyllabusLocks, string>> | null;
-    rollup_preset?: string | null;
-    exam_weight?: number | null;
-    book_mode?: BookMode | null;
-    floor?: number | null;
-    late_rule?: LateRule | null;
-    missing_rule?: MissingRule | null;
-    engine?: SyllabusEngine | null;
-    extra_credit_method?: ExtraCreditMethod | null;
-  } | null,
+  policy: SyllabusSchoolPolicyInput | null,
 ): SyllabusWizardDraft {
   if (!policy) return draft;
   const locks = parseLocks({ ...DEFAULT_LOCKS, ...(policy.locks ?? {}) });
@@ -446,10 +463,15 @@ export function applySchoolPolicyDefaults(
     if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
     if (policy.exam_weight !== undefined && policy.exam_weight !== null) {
       next.exam_weight = policy.exam_weight;
+    } else if (policy.rollup_preset != null && next.exam_weight == null) {
+      next.exam_weight = examWeightPercentFromPreset(policy.rollup_preset);
     }
   } else {
     if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
     if (policy.exam_weight != null) next.exam_weight = policy.exam_weight;
+    else if (policy.rollup_preset != null && next.exam_weight == null) {
+      next.exam_weight = examWeightPercentFromPreset(policy.rollup_preset);
+    }
   }
   if (locks.book_mode && policy.book_mode) next.book_mode = policy.book_mode;
   else if (!locks.book_mode && policy.book_mode) next.book_mode = policy.book_mode;
@@ -461,6 +483,12 @@ export function applySchoolPolicyDefaults(
   if (locks.engine && policy.engine) next.engine = policy.engine;
   else if (!locks.engine && policy.engine) next.engine = policy.engine;
   if (policy.extra_credit_method) next.extra_credit_method = policy.extra_credit_method;
+
+  const split = schoolPeriodSplitFromCalendar(policy.calendar ?? null, policy.calendar_template ?? null);
+  if (split) {
+    next.school_period_split = split;
+    next.term_structure = split.term_structure;
+  }
   return next;
 }
 
@@ -470,13 +498,15 @@ export function applySchoolPolicyDefaults(
  */
 export function applyLockedFieldValues(
   draft: SyllabusWizardDraft,
-  schoolPolicy?: Parameters<typeof applySchoolPolicyDefaults>[1],
+  schoolPolicy?: SyllabusSchoolPolicyInput | null,
 ): SyllabusWizardDraft {
   const locks = draft.locks;
   let next = draft;
   if (locks.rollup) {
     const schoolPreset = schoolPolicy?.rollup_preset;
-    const schoolExam = schoolPolicy?.exam_weight;
+    const schoolExam =
+      schoolPolicy?.exam_weight ??
+      (schoolPreset ? examWeightPercentFromPreset(schoolPreset) : null);
     next = {
       ...next,
       rollup_preset: next.rollup_preset ?? schoolPreset ?? null,
@@ -498,6 +528,13 @@ export function applyLockedFieldValues(
       next = { ...next, late_rule: schoolPolicy.late_rule };
     }
   }
+  // School calendar always wins for term_structure so Save draft never stores a stale picker value.
+  const split =
+    next.school_period_split ??
+    schoolPeriodSplitFromCalendar(schoolPolicy?.calendar ?? null, schoolPolicy?.calendar_template ?? null);
+  if (split) {
+    next = { ...next, school_period_split: split, term_structure: split.term_structure };
+  }
   return next;
 }
 
@@ -505,7 +542,7 @@ export function draftFromBundle(input: {
   classId: string;
   syllabus: ClassSyllabusDraft | null;
   categories: SyllabusCategoryDraft[];
-  schoolPolicy?: Parameters<typeof applySchoolPolicyDefaults>[1];
+  schoolPolicy?: SyllabusSchoolPolicyInput | null;
 }): SyllabusWizardDraft {
   const base = createEmptyWizardDraft(input.classId);
   const withPolicy = applySchoolPolicyDefaults(base, input.schoolPolicy ?? null);
@@ -518,6 +555,7 @@ export function draftFromBundle(input: {
   const merged: SyllabusWizardDraft = {
     ...withPolicy,
     title: s.title ?? '',
+    // Prefer class row until applyLockedFieldValues re-asserts school calendar split.
     term_structure: s.term_structure,
     active_term: s.active_term,
     policies: { ...defaultPolicies(), ...s.policies },
@@ -570,7 +608,11 @@ export function applyAskImport(
 ): SyllabusWizardDraft {
   const next = { ...draft, source: 'ask_import' as const };
   if (applied.title) next.title = applied.title;
-  next.term_structure = applied.term_structure;
+  if (!draft.school_period_split) {
+    next.term_structure = applied.term_structure;
+  } else {
+    next.term_structure = draft.school_period_split.term_structure;
+  }
   next.active_term = applied.active_term;
   next.policies = { ...draft.policies, ...applied.policies };
   if (applied.categories.length) next.categories = applied.categories;
@@ -656,6 +698,11 @@ export function patchDraft(
     }
     if (isFieldLocked(draft, 'book_mode') && partial.book_mode !== undefined) {
       next.book_mode = draft.book_mode;
+    }
+    // School grading calendar owns how the year is split — picker cannot override.
+    if (draft.school_period_split && partial.term_structure !== undefined) {
+      next.term_structure = draft.school_period_split.term_structure;
+      next.school_period_split = draft.school_period_split;
     }
     // scale has no teacher-editable draft field; lock is display-only here
     if (
