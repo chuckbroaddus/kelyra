@@ -1,0 +1,41 @@
+{
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "box": [
+        28,
+        121,
+        744,
+        85
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "box": [
+        28,
+        256,
+        355,
+        14
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "retake",
+      "field": "syllabus.retake",
+      "box": [
+        28,
+        320,
+        319.8,
+        14
+      ]
+    }
+  ]
+}

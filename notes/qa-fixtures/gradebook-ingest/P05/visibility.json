@@ -1,0 +1,74 @@
+{
+  "id": "P05",
+  "frame": [
+    1200,
+    1600
+  ],
+  "fields": {
+    "syllabus.categories": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "syllabus.late_rule": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "syllabus.retake": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    }
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        173,
+        242,
+        901,
+        374
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        153,
+        420,
+        501,
+        463
+      ],
+      "reasons": {}
+    },
+    {
+      "kind": "field",
+      "name": "retake",
+      "field": "syllabus.retake",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain",
+      "frame_box": [
+        154,
+        497,
+        469,
+        537
+      ],
+      "reasons": {}
+    }
+  ]
+}

@@ -2,6 +2,12 @@
 /**
  * Live GB ingest evaluation against deployed ingest-grading-doc.
  *   node scripts/eval-gradebook-ingest.mjs
+ *   EVAL_ONLY=P01,C02 node scripts/eval-gradebook-ingest.mjs   # subset
+ *   EVAL_SKIP_ROUGH=1 …                                       # original clean/photo corpus only
+ *
+ * Rough cases (eval-meta.rough; P01–P05, C01–C02, A01, N04 — scripts/lib/gradebook-rough-cases.mjs):
+ * sends clean.png (same-content control, full GT) AND rough.jpg (scored against eval-meta.rough_gt:
+ * absent paths must not be filled, uncertain paths may be flagged). Buckets clean vs rough in score.json.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -475,8 +481,54 @@ function scoreField(expField, actFields) {
   return { path: expField.path, verdict: 'wrong', expected: expField.value, actual: act.value };
 }
 
-function scoreProposal(expected, actual, meta = {}) {
+const FLAG_STATUSES = new Set(['needs_review', 'unknown', 'conflict']);
+const isFlagged = (act) => !act || act.value == null || FLAG_STATUSES.has(act.status) || Number(act.confidence ?? 1) < 0.6;
+
+/** Honest GT for degraded images: rough_gt[path] = absent | uncertain (rough variant only). */
+function scoreFieldRough(expField, actFields, roughGt) {
+  const mode = roughGt?.[expField.path];
+  if (!mode) return scoreField(expField, actFields);
+  const act = actFields.find((f) => f.path === expField.path);
+  if (mode === 'absent') {
+    if (!act || act.value == null || act.status === 'unknown') {
+      return { path: expField.path, verdict: 'correctly-flagged-for-review', detail: 'absent-left-empty' };
+    }
+    // Any value for a field that is not legible in the photo is invented, even when flagged.
+    return {
+      path: expField.path,
+      verdict: 'hallucinated',
+      detail: `absent-but-filled (${act.status ?? 'proposed'}, conf ${act.confidence ?? '?'})`,
+      actual: act.value,
+      flagged: isFlagged(act),
+    };
+  }
+  const r = scoreField(expField, actFields);
+  if (r.verdict === 'missing') return { ...r, verdict: 'correctly-flagged-for-review', detail: 'uncertain-left-empty' };
+  if (r.verdict === 'wrong' && isFlagged(act)) return { ...r, verdict: 'correctly-flagged-for-review', detail: 'uncertain-wrong-but-flagged' };
+  return r;
+}
+
+function staleCheck(meta, actFields) {
+  const sp = meta.stale_printed;
+  if (!sp) return [];
+  const out = [];
+  const cats = actFields.find((f) => f.path === 'syllabus.categories');
+  if (sp['syllabus.categories'] && Array.isArray(cats?.value)) {
+    for (const [label, w] of Object.entries(sp['syllabus.categories'])) {
+      const hit = cats.value.find((c) => String(c.label || c.key || '').toLowerCase().includes(label.toLowerCase()) && Math.abs(Number(c.weight_percent ?? c.weight) - w) < 0.51);
+      if (hit) out.push(`${label} ${w}% (printed, crossed out)`);
+    }
+  }
+  const late = actFields.find((f) => f.path === 'syllabus.late_rule');
+  if (sp['syllabus.late_rule'] && late?.value && typeof late.value === 'object') {
+    if (Math.abs(Number(late.value.amount) - sp['syllabus.late_rule'].amount) < 0.51) out.push(`late ${sp['syllabus.late_rule'].amount} (printed, crossed out)`);
+  }
+  return out;
+}
+
+function scoreProposal(expected, actual, meta = {}, variant = 'clean') {
   const results = [];
+  const roughGt = variant === 'rough' ? meta.rough_gt || {} : null;
   const actFields = Array.isArray(actual?.fields) ? actual.fields : [];
   const expFields = Array.isArray(expected?.fields) ? expected.fields : [];
 
@@ -496,13 +548,21 @@ function scoreProposal(expected, actual, meta = {}) {
     return results;
   }
 
-  for (const ef of expFields) results.push(scoreField(ef, actFields));
+  for (const ef of expFields) results.push(roughGt ? scoreFieldRough(ef, actFields, roughGt) : scoreField(ef, actFields));
 
   const expPaths = new Set(expFields.map((f) => f.path));
   // Companion fields derived from expected parents are not hallucinations
-  const companions = new Set();
+  const companions = new Set(meta.companions || []);
   for (const ef of expFields) {
-    if (ef.path === 'calendar.template') companions.add('calendar.period_model');
+    if (ef.path === 'calendar.template') {
+      companions.add('calendar.period_model');
+      companions.add('credit.policy');
+      companions.add('credit.unit');
+    }
+    if (ef.path === 'calendar.period_model') {
+      companions.add('calendar.template');
+      companions.add('credit.policy');
+    }
     if (ef.path === 'levels.list') companions.add('gpa.mode');
     if (ef.path === 'qp.tables') companions.add('qp.method');
     if (ef.path === 'qp.method') companions.add('qp.tables');
@@ -510,6 +570,8 @@ function scoreProposal(expected, actual, meta = {}) {
       companions.add('rollup.custom_weights');
       companions.add('rollup.exam_enabled');
     }
+    if (ef.path === 'scale.bands') companions.add('scale.passing_pct');
+    if (ef.path === 'credit.passing_threshold') companions.add('scale.passing_pct');
   }
   for (const af of actFields) {
     if (!expPaths.has(af.path) && companions.has(af.path)) continue;
@@ -700,6 +762,13 @@ async function invokeIngestOnce({ url, anon, session, kind, ids, imageUrl, image
   return { status: res.status, json };
 }
 
+class QuotaStop extends Error {
+  constructor(result) {
+    super('model quota exhausted (429 RESOURCE_EXHAUSTED)');
+    this.result = result;
+  }
+}
+
 /** Live Gemini free-tier is ~15 RPM; handwriting can be multi-call. Pace + retry 429. */
 async function invokeIngest(args) {
   const maxAttempts = Number(process.env.EVAL_INGEST_MAX_ATTEMPTS || 6);
@@ -716,6 +785,8 @@ async function invokeIngest(args) {
       if (paceMs > 0) await sleep(paceMs);
       return last;
     }
+    // Daily quota (429 RESOURCE_EXHAUSTED) will not clear in minutes: stop instead of spinning.
+    if (isQuotaExhausted(last) && process.env.EVAL_RETRY_QUOTA !== '1') throw new QuotaStop(last);
     if (attempt >= maxAttempts) break;
     const wait = baseBackoffMs * attempt;
     const kindLabel = isQuotaExhausted(last) ? '429' : '503';
@@ -781,7 +852,10 @@ async function main() {
   const perDoc = [];
   const allFieldRows = [];
 
+  const only = (process.env.EVAL_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
   for (const entry of manifest.cases) {
+    if (only.length && !only.includes(entry.id)) continue;
+    if (process.env.EVAL_SKIP_ROUGH === '1' && entry.rough) continue;
     const caseDir = path.join(CORPUS, entry.id);
     const expected = JSON.parse(fs.readFileSync(path.join(caseDir, 'expected.json'), 'utf8'));
     let meta = {};
@@ -801,6 +875,11 @@ async function main() {
       if (clean) variants.push(clean);
       const photo = pickImage(caseDir, true);
       if (photo && photo.file !== clean?.file) variants.push(photo);
+      if (meta.rough) {
+        const rough = path.join(caseDir, 'rough.jpg');
+        if (fs.existsSync(rough)) variants.push({ file: rough, variant: 'rough' });
+        else console.warn('rough.jpg missing (run scripts/degrade-gradebook-fixtures.mjs)', entry.id);
+      }
     }
     if (!variants.length) {
       console.warn('skip no image', entry.id);
@@ -846,12 +925,30 @@ async function main() {
             sourceId,
           });
         } catch (err) {
+          if (err instanceof QuotaStop) {
+            console.log('\nSTOP: model quota exhausted — nothing scored or cached for', entry.id, v.variant);
+            console.log(`Resume later (cached good responses are reused):\n  EVAL_RESUME_STAMP=${stamp} node scripts/eval-gradebook-ingest.mjs`);
+            process.exit(3);
+          }
           result = { status: 0, json: { error: String(err.message || err) } };
         }
-        fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
+        // Never cache error / quota / transient responses — a resume must re-fetch them.
+        const proposalNow = result.json?.proposal || result.json;
+        const isError = !result.status || result.status >= 400 || !proposalNow || typeof proposalNow !== 'object' || result.json?.error;
+        if (isQuotaExhausted(result)) {
+          console.log('\nSTOP: model quota exhausted for', entry.id, v.variant, '— not scored, not cached.');
+          console.log(`Resume later:\n  EVAL_RESUME_STAMP=${stamp} node scripts/eval-gradebook-ingest.mjs`);
+          process.exit(3);
+        }
+        if (isTransientModelFailure(result) || isError) {
+          fs.writeFileSync(outPath.replace(/\.json$/, '.error.json'), JSON.stringify(result, null, 2));
+        } else {
+          fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
+        }
       }
       const proposal = result.json?.proposal || result.json;
-      const fieldScores = scoreProposal(expected, proposal, meta);
+      const fieldScores = scoreProposal(expected, proposal, meta, v.variant);
+      const stale = v.variant === 'clean' && !meta.rough ? [] : staleCheck(meta, Array.isArray(proposal?.fields) ? proposal.fields : []);
       const sum = summarize(fieldScores);
       allFieldRows.push(...fieldScores.map((r) => ({ ...r, doc: entry.id, variant: v.variant })));
       perDoc.push({
@@ -864,6 +961,10 @@ async function main() {
         counts: sum.counts,
         fields: fieldScores,
         rule_violations: fieldScores.filter((f) => f.rule_violation).map((f) => f.rule_violation),
+        rough_case: Boolean(meta.rough),
+        rough_kind: meta.rough_kind || null,
+        stale_printed: stale,
+        warnings: (proposal?.warnings || []).map((w) => `${w.severity}:${w.code}`),
       });
       console.log((sum.accuracy * 100).toFixed(0) + '%');
     }
@@ -883,8 +984,10 @@ async function main() {
     field_totals: summarize(allFieldRows).counts,
     s11_19: perDoc.find((d) => d.id === 'S01' && d.variant === 'clean') || null,
     s11_20: perDoc.find((d) => d.id === 'H01' && d.variant === 'clean') || null,
+    buckets: bucketize(perDoc),
   };
   fs.writeFileSync(path.join(runDir, 'score.json'), JSON.stringify(score, null, 2));
+  printBuckets(score.buckets);
   console.log('score', path.join(runDir, 'score.json'));
   console.log(
     'overall',
@@ -894,6 +997,72 @@ async function main() {
     'hb',
     (score.handbook_accuracy * 100).toFixed(1) + '%',
   );
+}
+
+const KEY_GROUPS = {
+  weights: ['syllabus.categories'],
+  scale: ['scale.bands', 'scale.passing_pct'],
+  late_missing: ['syllabus.late_rule', 'syllabus.missing_rule'],
+  retake: ['syllabus.retake'],
+};
+
+/** clean vs rough buckets (+ per key-field group accuracy and hallucinations). */
+function bucketize(docs) {
+  const defs = {
+    clean: (d) => !d.rough_case && d.kind !== 'negative' && d.variant === 'clean',
+    photo_mild: (d) => !d.rough_case && d.kind !== 'negative' && d.variant === 'photo',
+    rough_src_clean: (d) => d.rough_case && d.kind !== 'negative' && d.variant === 'clean',
+    rough_all: (d) => d.rough_case && d.kind !== 'negative' && d.variant === 'rough',
+    rough_phone: (d) => d.rough_kind === 'phone' && d.variant === 'rough',
+    rough_scan: (d) => d.rough_kind === 'scan' && d.variant === 'rough',
+    rough_annotated: (d) => d.rough_kind === 'annotated' && d.variant === 'rough',
+    negatives_clean: (d) => d.kind === 'negative' && !d.rough_case,
+    negative_rough: (d) => d.kind === 'negative' && d.rough_case && d.variant === 'rough',
+  };
+  const out = {};
+  for (const [k, f] of Object.entries(defs)) {
+    const ds = docs.filter(f);
+    const rows = ds.flatMap((d) => d.fields.map((r) => ({ ...r, doc: d.id })));
+    const sum = summarize(rows);
+    const groups = {};
+    for (const [g, paths] of Object.entries(KEY_GROUPS)) {
+      const gr = rows.filter((r) => paths.includes(r.path));
+      if (!gr.length) continue;
+      const gs = summarize(gr);
+      groups[g] = { n: gs.scored, acc: +gs.accuracy.toFixed(3), wrong: gs.counts.wrong, missing: gs.counts.missing, hallucinated: gs.counts.hallucinated, flagged: gs.counts['correctly-flagged-for-review'] };
+    }
+    out[k] = {
+      docs: ds.length,
+      doc_avg_accuracy: ds.length ? +(ds.reduce((a, d) => a + d.field_accuracy, 0) / ds.length).toFixed(3) : null,
+      field_accuracy: +sum.accuracy.toFixed(3),
+      fields_scored: sum.scored,
+      counts: sum.counts,
+      hallucinations: rows.filter((r) => r.verdict === 'hallucinated').map((r) => `${r.doc}:${r.path}${r.detail ? ` (${r.detail})` : ''}`),
+      stale_printed: ds.filter((d) => d.stale_printed?.length).map((d) => `${d.id}: ${d.stale_printed.join(', ')}`),
+      groups,
+    };
+  }
+  return out;
+}
+
+function printBuckets(b) {
+  console.log('\nbucket            docs docAvg fieldAcc  n  wrong miss hallu | weights  scale  late/miss retake');
+  const g = (x) => (x ? `${(x.acc * 100).toFixed(0)}%/${x.n}`.padEnd(8) : '-'.padEnd(8));
+  for (const [k, v] of Object.entries(b)) {
+    if (!v.docs) continue;
+    console.log(
+      k.padEnd(17),
+      String(v.docs).padStart(4),
+      `${(v.doc_avg_accuracy * 100).toFixed(1)}%`.padStart(6),
+      `${(v.field_accuracy * 100).toFixed(1)}%`.padStart(8),
+      String(v.fields_scored).padStart(3),
+      String(v.counts.wrong).padStart(5),
+      String(v.counts.missing).padStart(4),
+      String(v.counts.hallucinated).padStart(5),
+      '|',
+      g(v.groups.weights), g(v.groups.scale), g(v.groups.late_missing), g(v.groups.retake),
+    );
+  }
 }
 
 main().catch((err) => {

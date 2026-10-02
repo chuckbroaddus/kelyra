@@ -1,0 +1,56 @@
+{
+  "rough": true,
+  "rough_kind": "phone",
+  "effects": [
+    "page_curl_right",
+    "binding_shadow",
+    "keystone",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {
+    "scale.bands": "uncertain"
+  },
+  "companions": [
+    "credit.passing_threshold"
+  ],
+  "degrade": {
+    "seed": 3303,
+    "frame": [
+      1200,
+      1600
+    ],
+    "background": "dark_desk",
+    "scale": 0.9,
+    "rotate": 2,
+    "keystone": {
+      "top": 0.95,
+      "bottom": 1.02,
+      "left": 1,
+      "right": 0.96
+    },
+    "curl": {
+      "side": "right",
+      "width": 0.2,
+      "angle": 84,
+      "depth": 0.6,
+      "lift": 22,
+      "bulge": 0.08,
+      "occlude": 0.7
+    },
+    "light": {
+      "gradient": [
+        0.5,
+        0.1
+      ],
+      "amount": 0.2,
+      "vignette": 0.3
+    },
+    "noise": 4,
+    "jpeg": 66
+  }
+}

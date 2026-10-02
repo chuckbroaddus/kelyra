@@ -1,13 +1,16 @@
 {
-  "generated_at": "2026-10-01T02:16:04.929Z",
-  "count": 26,
+  "generated_at": "2026-10-02T18:42:35.436Z",
+  "count": 35,
   "cases": [
     {
       "id": "S01",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -27,6 +30,8 @@
       "id": "S02",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -46,8 +51,11 @@
       "id": "S03",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -66,6 +74,8 @@
       "id": "S04",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -86,8 +96,11 @@
       "id": "S05",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -103,8 +116,11 @@
       "id": "S06",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -124,6 +140,8 @@
       "id": "S07",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -143,8 +161,11 @@
       "id": "S08",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -161,8 +182,11 @@
       "id": "S09",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -179,6 +203,8 @@
       "id": "S10",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -199,8 +225,11 @@
       "id": "H01",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -220,6 +249,8 @@
       "id": "H02",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -238,8 +269,11 @@
       "id": "H03",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -257,6 +291,8 @@
       "id": "H04",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -276,8 +312,11 @@
       "id": "H05",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -294,6 +333,8 @@
       "id": "H06",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -312,6 +353,8 @@
       "id": "H07",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -331,6 +374,8 @@
       "id": "H08",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -349,8 +394,11 @@
       "id": "H09",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [
@@ -368,6 +416,8 @@
       "id": "H10",
       "kind": "handbook",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -386,8 +436,11 @@
       "id": "N01",
       "kind": "negative",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [],
@@ -402,6 +455,8 @@
       "id": "N02",
       "kind": "negative",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
         "source.html"
@@ -417,8 +472,11 @@
       "id": "N03",
       "kind": "negative",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
+        "photo.jpg",
         "source.html"
       ],
       "fields_exercised": [],
@@ -431,10 +489,11 @@
       "id": "S11",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
-        "clean.png"
+        "photo.jpg"
       ],
       "fields_exercised": [
         "syllabus.categories"
@@ -443,16 +502,17 @@
         "§11.19",
         "real-photo"
       ],
-      "photo": false
+      "photo": true
     },
     {
       "id": "S12",
       "kind": "syllabus",
       "files": [
+        "clean.png",
+        "eval-meta.json",
         "expected.json",
         "notes.md",
-        "photo.jpg",
-        "clean.png"
+        "photo.jpg"
       ],
       "fields_exercised": [
         "syllabus.categories"
@@ -460,7 +520,7 @@
       "srs_refs": [
         "real-photo"
       ],
-      "photo": false
+      "photo": true
     },
     {
       "id": "S13",
@@ -485,6 +545,247 @@
       ],
       "photo": false,
       "multi_page": true
+    },
+    {
+      "id": "P01",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.missing_rule"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "phone"
+    },
+    {
+      "id": "P02",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.missing_rule",
+        "syllabus.retake"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "phone"
+    },
+    {
+      "id": "P03",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "scale.bands",
+        "scale.passing_pct"
+      ],
+      "srs_refs": [
+        "§11.20",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "phone"
+    },
+    {
+      "id": "P04",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.missing_rule",
+        "syllabus.retake"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "FR-AI-13",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "phone"
+    },
+    {
+      "id": "P05",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.retake"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "phone"
+    },
+    {
+      "id": "C01",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule",
+        "syllabus.missing_rule"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "scan"
+    },
+    {
+      "id": "C02",
+      "kind": "handbook",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "calendar.template",
+        "rollup.preset",
+        "scale.bands",
+        "scale.passing_pct"
+      ],
+      "srs_refs": [
+        "§11.20",
+        "FR-AI-05",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "scan"
+    },
+    {
+      "id": "A01",
+      "kind": "syllabus",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [
+        "syllabus.categories",
+        "syllabus.late_rule"
+      ],
+      "srs_refs": [
+        "§11.19",
+        "FR-AI-05",
+        "FR-AI-21",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "annotated"
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "files": [
+        "clean.png",
+        "eval-meta.json",
+        "expected.json",
+        "layout.json",
+        "notes.md",
+        "rough.jpg",
+        "source.html",
+        "visibility.json"
+      ],
+      "fields_exercised": [],
+      "srs_refs": [
+        "FR-AI-13",
+        "rough"
+      ],
+      "photo": false,
+      "rough": true,
+      "rough_kind": "negative"
     }
   ]
 }

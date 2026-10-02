@@ -184,7 +184,27 @@ test('H01-shaped custom_weights lifts to rollup.preset + period_model', () => {
   assert.ok(!p.fields.some((f) => f.path === 'rollup.custom_weights' && f.value != null));
 });
 
-test('mixed document empties fields with block warning', () => {
+test('mixed document with thin extract empties fields with block warning', () => {
+  const p = parseIngestProposal(
+    {
+      wizard: 'syllabus',
+      document_kind_guess: 'mixed',
+      fields: [
+        {
+          path: 'syllabus.title',
+          value: 'Math — Ms. A / English — Mr. B',
+          confidence: 0.9,
+          evidence: ev('Math / English'),
+        },
+      ],
+    },
+    { expected_kind: 'syllabus' },
+  );
+  assert.equal(p.fields.length, 0);
+  assert.ok(p.warnings.some((w) => w.code === 'mixed_document' && w.severity === 'block'));
+});
+
+test('mixed document with substantial extract keeps fields + review warn', () => {
   const p = parseIngestProposal(
     {
       wizard: 'syllabus',
@@ -206,8 +226,113 @@ test('mixed document empties fields with block warning', () => {
     },
     { expected_kind: 'syllabus' },
   );
+  assert.ok(p.fields.length >= 2);
+  assert.ok(p.warnings.some((w) => w.code === 'mixed_document_review' && w.severity === 'warn'));
+});
+
+test('non-syllabus menu/flyer empties fields with block warning', () => {
+  const p = normalizeProposalFields({
+    source_id: 'n02',
+    wizard: 'syllabus',
+    kind: 'syllabus',
+    fields: [
+      {
+        path: 'syllabus.title',
+        value: 'Cafeteria Weekly Menu',
+        confidence: 1,
+        evidence: ev('Cafeteria Weekly Menu'),
+        status: 'proposed',
+        source_doc_id: 'n02',
+      },
+    ],
+    ambiguities: [],
+    warnings: [
+      {
+        code: 'not_a_syllabus',
+        message: 'The provided document is a cafeteria menu, not a course syllabus.',
+        severity: 'block',
+      },
+    ],
+    document_kind_guess: 'unknown',
+    overall_confidence: 1,
+  });
   assert.equal(p.fields.length, 0);
-  assert.ok(p.warnings.some((w) => w.code === 'mixed_document' && w.severity === 'block'));
+  assert.equal(p.overall_confidence, 0);
+  assert.ok(p.warnings.some((w) => w.code === 'not_a_syllabus' && w.severity === 'block'));
+});
+
+test('non_syllabus_document warn escalates to block empty', () => {
+  const p = normalizeProposalFields({
+    source_id: 'n04',
+    wizard: 'syllabus',
+    kind: 'syllabus',
+    fields: [
+      {
+        path: 'syllabus.title',
+        value: 'Fall Fundraiser',
+        confidence: 0.95,
+        evidence: ev('Fall Fundraiser'),
+        status: 'proposed',
+        source_doc_id: 'n04',
+      },
+      {
+        path: 'syllabus.late_rule',
+        value: { type: 'flat', amount: 10 },
+        confidence: 0.8,
+        evidence: ev('Late order forms: 10%'),
+        status: 'needs_review',
+        source_doc_id: 'n04',
+      },
+    ],
+    ambiguities: [],
+    warnings: [
+      {
+        code: 'non_syllabus_document',
+        message: 'The provided document is a fundraiser announcement, not a class syllabus.',
+        severity: 'warn',
+      },
+    ],
+    document_kind_guess: 'unknown',
+    overall_confidence: 0.875,
+  });
+  assert.equal(p.fields.length, 0);
+  assert.ok(p.warnings.some((w) => w.code === 'not_a_syllabus' && w.severity === 'block'));
+});
+
+test('syllabus homework-lock narrative does not invent locks.map', () => {
+  const p = normalizeProposalFields({
+    source_id: 's05',
+    wizard: 'syllabus',
+    kind: 'syllabus',
+    fields: [
+      {
+        path: 'syllabus.categories',
+        value: [
+          { key: 'essays', label: 'Essays', weight_percent: 40 },
+          { key: 'quizzes', label: 'Quizzes', weight_percent: 30 },
+          { key: 'homework', label: 'Homework', weight_percent: 20 },
+        ],
+        confidence: 0.9,
+        evidence: ev('Essays 40% Quizzes 30% Homework 20%'),
+        status: 'proposed',
+        source_doc_id: 's05',
+      },
+      {
+        path: 'syllabus.narrative',
+        value: 'School policy may lock homework <= 10%; this syllabus still lists 20%.',
+        confidence: 0.9,
+        evidence: ev('School policy may lock homework <= 10%'),
+        status: 'proposed',
+        source_doc_id: 's05',
+      },
+    ],
+    ambiguities: [],
+    warnings: [],
+    document_kind_guess: 'syllabus_policy',
+    overall_confidence: 0.9,
+  });
+  assert.ok(!p.fields.some((f) => f.path === 'locks.map'));
+  assert.equal(p.fields.find((f) => f.path === 'syllabus.engine')?.value, 'weighted_percent_inside');
 });
 
 test('no-evidence filled field is dropped', () => {

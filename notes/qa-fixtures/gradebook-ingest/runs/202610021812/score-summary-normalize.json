@@ -1,0 +1,740 @@
+{
+  "stamp": "202610021812",
+  "overall": "95.0%",
+  "syllabus": "96.3%",
+  "handbook": "92.6%",
+  "negatives": "100.0%",
+  "totals": {
+    "correct": 185,
+    "wrong": 1,
+    "missing": 6,
+    "correctly-flagged-for-review": 7,
+    "hallucinated": 3
+  },
+  "regressions": [],
+  "per_doc": [
+    {
+      "id": "S01/clean",
+      "acc": 100,
+      "base": 80,
+      "delta": 20,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S01/photo",
+      "acc": 100,
+      "base": 80,
+      "delta": 20,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S02/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S03/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S03/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S04/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S05/clean",
+      "acc": 80,
+      "base": 75,
+      "delta": 5,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      }
+    },
+    {
+      "id": "S05/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S06/clean",
+      "acc": 100,
+      "base": 71,
+      "delta": 29,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S06/photo",
+      "acc": 100,
+      "base": 71,
+      "delta": 29,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S07/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S08/clean",
+      "acc": 100,
+      "base": 17,
+      "delta": 83,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S08/photo",
+      "acc": 100,
+      "base": 17,
+      "delta": 83,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S09/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S09/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S10/clean",
+      "acc": 100,
+      "base": 75,
+      "delta": 25,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H01/clean",
+      "acc": 100,
+      "base": 86,
+      "delta": 14,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H01/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H02/clean",
+      "acc": 100,
+      "base": 60,
+      "delta": 40,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H03/clean",
+      "acc": 100,
+      "base": 50,
+      "delta": 50,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H03/photo",
+      "acc": 50,
+      "base": 50,
+      "delta": 0,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H04/clean",
+      "acc": 100,
+      "base": 75,
+      "delta": 25,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H05/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H05/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H06/clean",
+      "acc": 100,
+      "base": 33,
+      "delta": 67,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H07/clean",
+      "acc": 100,
+      "base": 67,
+      "delta": 33,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H08/clean",
+      "acc": 67,
+      "base": 0,
+      "delta": 67,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H09/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H09/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "H10/clean",
+      "acc": 100,
+      "base": 0,
+      "delta": 100,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N01/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N01/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N02/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N03/clean",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N03/photo",
+      "acc": 100,
+      "base": 100,
+      "delta": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S11/clean",
+      "acc": 100,
+      "base": 50,
+      "delta": 50,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S11/photo",
+      "acc": 100,
+      "base": 50,
+      "delta": 50,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S12/clean",
+      "acc": 100,
+      "base": 33,
+      "delta": 67,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "S12/photo",
+      "acc": 100,
+      "base": 33,
+      "delta": 67,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P01/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P01/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P02/clean",
+      "acc": 80,
+      "delta": null,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 1
+      }
+    },
+    {
+      "id": "P02/rough",
+      "acc": 80,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 1
+      }
+    },
+    {
+      "id": "P03/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P03/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P04/clean",
+      "acc": 75,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 1,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P04/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 3,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P05/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "P05/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "C01/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "C01/rough",
+      "acc": 67,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 1,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "C02/clean",
+      "acc": 50,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 2,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "C02/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 1,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "A01/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "A01/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 2,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N04/clean",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    },
+    {
+      "id": "N04/rough",
+      "acc": 100,
+      "delta": null,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "correctly-flagged-for-review": 0,
+        "hallucinated": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "rough": true,
+  "rough_kind": "scan",
+  "weights_sum": 100,
+  "effects": [
+    "skew",
+    "faint_toner",
+    "photocopy_speckle",
+    "lid_shadow",
+    "grayscale",
+    "jpeg"
+  ],
+  "viewport": {
+    "w": 840,
+    "h": 1100
+  },
+  "dsf": 1.5,
+  "rough_gt": {
+    "syllabus.late_rule": "uncertain"
+  },
+  "degrade": {
+    "seed": 4101,
+    "scan": {
+      "dpi_scale": 1,
+      "skew": 3.5,
+      "faint": 0.4,
+      "gamma": 0.85,
+      "toner": 0.1,
+      "speckle": 0.0035,
+      "streaks": 2,
+      "edge_shadow": "left",
+      "blur": 0.8,
+      "gray": true,
+      "crop": [
+        0,
+        0,
+        0.02,
+        0
+      ]
+    },
+    "noise": 6,
+    "jpeg": 60
+  }
+}

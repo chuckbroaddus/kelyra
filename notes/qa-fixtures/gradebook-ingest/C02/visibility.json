@@ -1,0 +1,53 @@
+{
+  "id": "C02",
+  "frame": [
+    1260,
+    1633
+  ],
+  "fields": {
+    "rollup.preset": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "scale.bands": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    },
+    "scale.passing_pct": {
+      "boxes": 1,
+      "visible_min": 1,
+      "visible_mean": 1,
+      "suggest": "certain"
+    }
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "rollup",
+      "field": "rollup.preset",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain"
+    },
+    {
+      "kind": "field",
+      "name": "scale",
+      "field": "scale.bands",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain"
+    },
+    {
+      "kind": "field",
+      "name": "passing",
+      "field": "scale.passing_pct",
+      "inframe": 1,
+      "visible": 1,
+      "suggest": "certain"
+    }
+  ]
+}

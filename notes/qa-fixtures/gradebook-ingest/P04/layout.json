@@ -1,0 +1,52 @@
+{
+  "viewport": {
+    "w": 1680,
+    "h": 1100
+  },
+  "items": [
+    {
+      "kind": "field",
+      "name": "cats",
+      "field": "syllabus.categories",
+      "box": [
+        48,
+        140,
+        744,
+        156
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "late",
+      "field": "syllabus.late_rule",
+      "box": [
+        888,
+        148,
+        508.1,
+        16
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "missing",
+      "field": "syllabus.missing_rule",
+      "box": [
+        888,
+        227,
+        319.3,
+        16
+      ]
+    },
+    {
+      "kind": "field",
+      "name": "retake",
+      "field": "syllabus.retake",
+      "box": [
+        888,
+        306,
+        380.9,
+        16
+      ]
+    }
+  ]
+}

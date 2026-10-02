@@ -293,9 +293,22 @@ Deno.serve(async (req) => {
         ];
       }
 
-      // Syllabus weak / handwriting: retry when thin extract and we have images
+      // Syllabus weak / handwriting: retry when thin extract and we have images.
+      // Never retry over a blocked wrong-document / mixed empty proposal — the
+      // second pass tends to invent title/late_rule from menus and flyers (N02/N04).
+      const blockedEmpty =
+        proposal.fields.filter((f) => f.value != null && f.value !== '').length === 0 &&
+        (proposal.warnings || []).some(
+          (w) =>
+            w &&
+            w.severity === 'block' &&
+            /not_a_syllabus|not_a_handbook|mixed_document|low_ocr|wrong_document/i.test(
+              `${w.code ?? ''} ${w.message ?? ''}`,
+            ),
+        );
       if (
         kind === 'syllabus' &&
+        !blockedEmpty &&
         proposal.fields.filter((f) => f.value != null).length < 4 &&
         imageContent.length > 0 &&
         transcriptNote
@@ -309,12 +322,25 @@ Deno.serve(async (req) => {
               '\n' +
               pathNote +
               transcriptNote +
-              '\nSTRICT handwriting pass: Use the transcript. Emit every category/late/missing/retake/narrative fact the transcript supports with verbatim quotes. Map missing-work floor → syllabus.missing_rule. Map "replaces the old" → syllabus.retake method replace.',
+              '\nSTRICT handwriting pass: Use the transcript. Emit every category/late/missing/retake/narrative fact the transcript supports with verbatim quotes. Map missing-work floor → syllabus.missing_rule. Map "replaces the old" → syllabus.retake method replace. If the transcript is clearly not a syllabus, empty fields[] + block not_a_syllabus — do not invent.',
           },
         ]);
         const retryProp = skeletonProposal(kind, sourceId, parsed);
         const filled = (p: IngestProposal) => p.fields.filter((f) => f.value != null).length;
-        if (filled(retryProp) >= filled(proposal)) {
+        const retryBlocked = (retryProp.warnings || []).some(
+          (w) => w?.severity === 'block' && /not_a_syllabus|mixed_document/i.test(`${w.code ?? ''}`),
+        );
+        if (retryBlocked && filled(retryProp) === 0) {
+          proposal = retryProp;
+          proposal.warnings = [
+            ...proposal.warnings,
+            {
+              code: 'handwriting_retry',
+              message: 'Retried extract using page transcription.',
+              severity: 'info',
+            },
+          ];
+        } else if (!retryBlocked && filled(retryProp) >= filled(proposal)) {
           proposal = retryProp;
           proposal.warnings = [
             ...proposal.warnings,
