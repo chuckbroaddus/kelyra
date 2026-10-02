@@ -29,8 +29,8 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
 const EC_HELPERS = 'supabase/migrations/20261002100000_gb_syllabus_ec_over_100.sql';
-// Newest publish_class_syllabus (qualified locals + retake) must still call the EC weight helper.
-const MIGRATION = 'supabase/migrations/20261002120000_gb_syllabus_save_publish_fix.sql';
+// Newest publish_class_syllabus (locked-field preserve + qualified locals + retake) must still call the EC weight helper.
+const MIGRATION = 'supabase/migrations/20261002130000_gb_syllabus_locked_fields_preserve.sql';
 
 const cat = (label: string, w: number, key = label.toLowerCase().replace(/[^a-z0-9]+/g, '_')) => ({
   key,

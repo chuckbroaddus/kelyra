@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   assertLatePolicyEditable,
   buildSchoolLockPolicy,
+  carryForwardLockedFields,
   lockedPathsFromLocks,
   parseLocks,
   rejectLockedFieldEdits,
@@ -21,6 +22,38 @@ test('parseLocks defaults scale+rollup on; retake/assignment_max off', () => {
   assert.equal(L.late, false);
   assert.equal(L.retake, false);
   assert.equal(L.assignment_max, false);
+});
+
+test('carryForwardLockedFields restores rollup when proposed null vs baseline', () => {
+  const policy = buildSchoolLockPolicy({
+    locks: { rollup: true, scale: true },
+    values: { rollup_preset: '2/7+1/7', exam_weight: 14.3 },
+  });
+  const out = carryForwardLockedFields(
+    { engine: 'weighted_percent_inside', rollup_preset: null, exam_weight: null },
+    { rollup_preset: '2/7+1/7', exam_weight: 14.3 },
+    policy,
+  );
+  assert.equal(out.rollup_preset, '2/7+1/7');
+  assert.equal(out.exam_weight, 14.3);
+  assert.equal(out.engine, 'weighted_percent_inside');
+  // Deliberate baseline match → no reject
+  assert.equal(
+    rejectLockedFieldEdits(
+      { rollup_preset: '2/7+1/7', exam_weight: 14.3 },
+      { rollup_preset: '2/7+1/7', exam_weight: 14.3 },
+      policy,
+    ).length,
+    0,
+  );
+  // Null proposed is an edit vs non-null baseline when key is present
+  assert.ok(
+    rejectLockedFieldEdits(
+      { rollup_preset: '2/7+1/7', exam_weight: 14.3 },
+      { rollup_preset: null, exam_weight: null },
+      policy,
+    ).length >= 1,
+  );
 });
 
 test('resolveInheritedSyllabus applies locked late + engine', () => {

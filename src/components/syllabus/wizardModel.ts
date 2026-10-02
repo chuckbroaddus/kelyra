@@ -441,14 +441,63 @@ export function applySchoolPolicyDefaults(
       next.lock_reasons[k] = policy.lock_reasons?.[k] ?? LOCK_REASONS[k];
     }
   });
-  if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
-  if (policy.exam_weight != null) next.exam_weight = policy.exam_weight;
-  if (policy.book_mode) next.book_mode = policy.book_mode;
-  if (policy.floor != null) next.floor = policy.floor;
-  if (policy.late_rule) next.late_rule = policy.late_rule;
+  // Locked values from school win when provided (including when class row is still empty).
+  if (locks.rollup) {
+    if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
+    if (policy.exam_weight !== undefined && policy.exam_weight !== null) {
+      next.exam_weight = policy.exam_weight;
+    }
+  } else {
+    if (policy.rollup_preset != null) next.rollup_preset = policy.rollup_preset;
+    if (policy.exam_weight != null) next.exam_weight = policy.exam_weight;
+  }
+  if (locks.book_mode && policy.book_mode) next.book_mode = policy.book_mode;
+  else if (!locks.book_mode && policy.book_mode) next.book_mode = policy.book_mode;
+  if (locks.floor && policy.floor != null) next.floor = policy.floor;
+  else if (!locks.floor && policy.floor != null) next.floor = policy.floor;
+  if (locks.late && policy.late_rule) next.late_rule = policy.late_rule;
+  else if (!locks.late && policy.late_rule) next.late_rule = policy.late_rule;
   if (policy.missing_rule) next.missing_rule = policy.missing_rule;
-  if (policy.engine) next.engine = policy.engine;
+  if (locks.engine && policy.engine) next.engine = policy.engine;
+  else if (!locks.engine && policy.engine) next.engine = policy.engine;
   if (policy.extra_credit_method) next.extra_credit_method = policy.extra_credit_method;
+  return next;
+}
+
+/**
+ * After merging class row + school policy, re-assert locked scalars so a null class
+ * column cannot wipe the school rollup/exam (or other locked) value on load or save.
+ */
+export function applyLockedFieldValues(
+  draft: SyllabusWizardDraft,
+  schoolPolicy?: Parameters<typeof applySchoolPolicyDefaults>[1],
+): SyllabusWizardDraft {
+  const locks = draft.locks;
+  let next = draft;
+  if (locks.rollup) {
+    const schoolPreset = schoolPolicy?.rollup_preset;
+    const schoolExam = schoolPolicy?.exam_weight;
+    next = {
+      ...next,
+      rollup_preset: next.rollup_preset ?? schoolPreset ?? null,
+      exam_weight: next.exam_weight ?? schoolExam ?? null,
+    };
+  }
+  if (locks.engine && schoolPolicy?.engine) {
+    next = { ...next, engine: next.engine || schoolPolicy.engine };
+  }
+  if (locks.book_mode && schoolPolicy?.book_mode) {
+    next = { ...next, book_mode: next.book_mode || schoolPolicy.book_mode };
+  }
+  if (locks.floor && next.floor == null && schoolPolicy?.floor != null) {
+    next = { ...next, floor: schoolPolicy.floor };
+  }
+  if (locks.late && schoolPolicy?.late_rule && (!next.late_rule || next.late_rule.type === 'none')) {
+    // only fill when class still has the default "none" and school provided a rule
+    if (!draft.late_rule || draft.late_rule.type === 'none') {
+      next = { ...next, late_rule: schoolPolicy.late_rule };
+    }
+  }
   return next;
 }
 
@@ -462,11 +511,11 @@ export function draftFromBundle(input: {
   const withPolicy = applySchoolPolicyDefaults(base, input.schoolPolicy ?? null);
   if (!input.syllabus) {
     if (input.categories.length) withPolicy.categories = input.categories;
-    return withPolicy;
+    return applyLockedFieldValues(withPolicy, input.schoolPolicy ?? null);
   }
   const s = input.syllabus;
   const locks = parseLocks({ ...withPolicy.locks, ...(s.locks ?? {}) });
-  return {
+  const merged: SyllabusWizardDraft = {
     ...withPolicy,
     title: s.title ?? '',
     term_structure: s.term_structure,
@@ -484,6 +533,7 @@ export function draftFromBundle(input: {
     floor: s.floor,
     ceiling: s.ceiling,
     retake: s.retake ?? null,
+    // Prefer stored; locked nulls fall back to school in applyLockedFieldValues.
     exam_weight: s.exam_weight,
     rollup_preset: s.rollup_preset,
     locks,
@@ -505,6 +555,7 @@ export function draftFromBundle(input: {
     syllabus_status: s.status,
     publish_to_family: s.policies?.publish_to_family !== false && s.publish_to_family !== false,
   };
+  return applyLockedFieldValues(merged, input.schoolPolicy ?? null);
 }
 
 export function applyAskImport(
@@ -593,16 +644,24 @@ export function patchDraft(
 ): SyllabusWizardDraft {
   const next = { ...draft, ...partial };
   if (!opts?.force) {
-    if (isFieldLocked(draft, 'engine') && partial.engine != null) next.engine = draft.engine;
-    if (isFieldLocked(draft, 'categories') && partial.categories != null) next.categories = draft.categories;
-    if (isFieldLocked(draft, 'late') && partial.late_rule != null) next.late_rule = draft.late_rule;
+    if (isFieldLocked(draft, 'engine') && partial.engine !== undefined) next.engine = draft.engine;
+    if (isFieldLocked(draft, 'categories') && partial.categories !== undefined) {
+      next.categories = draft.categories;
+    }
+    if (isFieldLocked(draft, 'late') && partial.late_rule !== undefined) next.late_rule = draft.late_rule;
     if (isFieldLocked(draft, 'floor') && partial.floor !== undefined) next.floor = draft.floor;
-    if (isFieldLocked(draft, 'drop_lowest') && partial.categories != null) {
+    if (isFieldLocked(draft, 'drop_lowest') && partial.categories !== undefined) {
       // keep drop_lowest_n from locked cats
       next.categories = draft.categories;
     }
-    if (isFieldLocked(draft, 'book_mode') && partial.book_mode != null) next.book_mode = draft.book_mode;
-    if (isFieldLocked(draft, 'rollup') && (partial.rollup_preset != null || partial.exam_weight !== undefined)) {
+    if (isFieldLocked(draft, 'book_mode') && partial.book_mode !== undefined) {
+      next.book_mode = draft.book_mode;
+    }
+    // scale has no teacher-editable draft field; lock is display-only here
+    if (
+      isFieldLocked(draft, 'rollup') &&
+      (partial.rollup_preset !== undefined || partial.exam_weight !== undefined)
+    ) {
       next.rollup_preset = draft.rollup_preset;
       next.exam_weight = draft.exam_weight;
     }
@@ -811,12 +870,63 @@ export function canSaveDraft(draft: SyllabusWizardDraft): boolean {
   return !draft.categories.some((c) => c.active && !c.label.trim());
 }
 
-export function toEditorInput(draft: SyllabusWizardDraft) {
+/**
+ * Build the save/publish editor bag. Locked scalars are carried from the draft as-is
+ * (load path already merged school + stored). Optional `baseline` forces locked keys
+ * back to a prior stored snapshot when the teacher never edited them.
+ */
+export function toEditorInput(
+  draft: SyllabusWizardDraft,
+  baseline?: {
+    engine?: SyllabusEngine | null;
+    book_mode?: BookMode | null;
+    floor?: number | null;
+    late_rule?: LateRule | null;
+    retake?: RetakeRule | null;
+    exam_weight?: number | null;
+    rollup_preset?: string | null;
+    categories?: SyllabusCategoryDraft[];
+  } | null,
+) {
   const cats = draft.categories.map((c, i) => ({
     ...c,
     sort_order: c.sort_order ?? i,
     empty_policy: c.empty_policy ?? draft.empty_category,
   }));
+  // Local import-free carry-forward: when locked, prefer baseline then draft.
+  const pick = <T,>(locked: boolean, base: T | undefined, cur: T): T => {
+    if (!locked) return cur;
+    if (base !== undefined) return base;
+    return cur;
+  };
+  const engine = pick(isFieldLocked(draft, 'engine'), baseline?.engine ?? undefined, draft.engine);
+  const book_mode = pick(
+    isFieldLocked(draft, 'book_mode'),
+    baseline?.book_mode ?? undefined,
+    draft.book_mode,
+  );
+  const floor = pick(isFieldLocked(draft, 'floor'), baseline?.floor ?? undefined, draft.floor);
+  const late_rule = pick(
+    isFieldLocked(draft, 'late'),
+    baseline?.late_rule ?? undefined,
+    draft.late_rule,
+  );
+  const retake = pick(isFieldLocked(draft, 'retake'), baseline?.retake ?? undefined, draft.retake);
+  const exam_weight = pick(
+    isFieldLocked(draft, 'rollup'),
+    baseline?.exam_weight ?? undefined,
+    draft.exam_weight,
+  );
+  const rollup_preset = pick(
+    isFieldLocked(draft, 'rollup'),
+    baseline?.rollup_preset ?? undefined,
+    draft.rollup_preset,
+  );
+  const categories = pick(
+    isFieldLocked(draft, 'categories'),
+    baseline?.categories ?? undefined,
+    cats,
+  );
   return {
     title: draft.title.trim() || null,
     term_structure: draft.term_structure,
@@ -824,30 +934,30 @@ export function toEditorInput(draft: SyllabusWizardDraft) {
     policies: {
       ...draft.policies,
       missing_as_zero: draft.missing_rule === 'zero',
-      min_floor_percent: draft.floor,
+      min_floor_percent: floor,
       publish_to_family: draft.publish_to_family,
       extra_credit_allowed: draft.extra_credit_method !== 'A' ? true : Boolean(draft.policies.extra_credit_allowed),
     },
-    categories: cats,
+    categories,
     source: draft.source,
-    engine: draft.engine,
+    engine,
     within_category:
-      draft.engine === 'weighted_points_inside'
+      engine === 'weighted_points_inside'
         ? ('points_inside' as WithinCategory)
-        : draft.engine === 'weighted_percent_inside'
+        : engine === 'weighted_percent_inside'
           ? ('percent_inside' as WithinCategory)
           : draft.within_category,
-    book_mode: draft.book_mode,
+    book_mode,
     extra_credit_method: draft.extra_credit_method,
     ec_cap: draft.ec_cap,
-    late_rule: draft.late_rule,
+    late_rule,
     missing_rule: draft.missing_rule,
     rounding: draft.rounding,
-    floor: draft.floor,
+    floor,
     ceiling: draft.ceiling,
-    retake: draft.retake,
-    exam_weight: draft.exam_weight,
-    rollup_preset: draft.rollup_preset,
+    retake,
+    exam_weight,
+    rollup_preset,
     locks: draft.locks as unknown as Record<string, unknown>,
     marking_period_scope: draft.marking_period_scope,
   };

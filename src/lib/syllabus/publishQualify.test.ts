@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
-const MIGRATION = 'supabase/migrations/20261002120000_gb_syllabus_save_publish_fix.sql';
+const MIGRATION = 'supabase/migrations/20261002130000_gb_syllabus_locked_fields_preserve.sql';
 const OLD_PUBLISH = 'supabase/migrations/20261002100000_gb_syllabus_ec_over_100.sql';
 
 test('bug is older than EC migration: bare title = title on UPDATE', () => {

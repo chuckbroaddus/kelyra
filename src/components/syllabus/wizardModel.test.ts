@@ -242,6 +242,60 @@ test('draftFromBundle restores published syllabus', () => {
   assert.equal(d.title, 'Alg 1');
 });
 
+test('draftFromBundle keeps school rollup when class row has null and lock is on', () => {
+  const d = draftFromBundle({
+    classId: 'c1',
+    syllabus: {
+      class_id: 'c1',
+      status: 'draft',
+      title: 'Alg',
+      calc_mode: 'category_weight',
+      term_structure: 'year',
+      active_term: null,
+      policies: { missing_as_zero: false, publish_to_family: true },
+      terms: [],
+      source: 'manual',
+      source_asset_id: null,
+      ask_draft: null,
+      publish_to_family: true,
+      published_at: null,
+      row_version: 1,
+      engine: 'weighted_percent_inside',
+      within_category: 'percent_inside',
+      book_mode: 'reset_each_marking_period',
+      extra_credit_method: 'B',
+      ec_cap: null,
+      late_rule: { type: 'none' },
+      missing_rule: 'omit',
+      rounding: 'nearest_whole',
+      floor: null,
+      ceiling: null,
+      retake: null,
+      exam_weight: null,
+      rollup_preset: null,
+      syllabus_version: 1,
+      locks: { rollup: true, scale: true },
+      marking_period_scope: null,
+    },
+    categories: [],
+    schoolPolicy: {
+      locks: { rollup: true, scale: true },
+      rollup_preset: '2/7+1/7',
+      exam_weight: 14.3,
+    },
+  });
+  assert.equal(d.rollup_preset, '2/7+1/7');
+  assert.equal(d.exam_weight, 14.3);
+  assert.equal(isFieldLocked(d, 'rollup'), true);
+  // locked null patch is ignored
+  const blocked = patchDraft(d, { rollup_preset: null, exam_weight: null });
+  assert.equal(blocked.rollup_preset, '2/7+1/7');
+  assert.equal(blocked.exam_weight, 14.3);
+  const input = toEditorInput(d);
+  assert.equal(input.rollup_preset, '2/7+1/7');
+  assert.equal(input.exam_weight, 14.3);
+});
+
 test('STEP_ICONS maps every wizard step to a unique dedicated syllabus glyph', () => {
   const expected: Record<WizardStepId, string> = {
     engine: 'syllabusEngine',
