@@ -1,0 +1,91 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "88f30817-7588-4f0c-bc13-bece814ac057",
+    "proposal": {
+      "source_id": "A01-rough-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Biology — Grading",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Biology — Grading",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-rough-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Category weights",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "A01-rough-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 50
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "labs",
+              "label": "Labs",
+              "weight_percent": 20
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 10
+            }
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Tests 50% / Quizzes 20% / Labs 20% / Participation 10%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-rough-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "-5% / day",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-rough-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.8775
+    }
+  }
+}

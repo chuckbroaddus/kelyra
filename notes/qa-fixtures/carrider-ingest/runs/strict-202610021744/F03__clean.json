@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "ms": 3224,
+  "bytes": 16382,
+  "json": {
+    "document_kind": "check_in_sheet",
+    "plate": "ELL2099",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Ellie Nguyen"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

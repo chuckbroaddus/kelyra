@@ -1,0 +1,103 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "b83dea4a-8298-4cb9-b089-00bb0c621676",
+    "proposal": {
+      "source_id": "A01-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Biology — Grading",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Biology — Grading",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-clean-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Category weights\n\nCategory\tWeight\nTests\t40% 50%\nQuizzes\t20%\nLabs\t30% 20%\nParticipation\t10%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "A01-clean-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "tests",
+              "label": "Tests",
+              "weight_percent": 50
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "labs",
+              "label": "Labs",
+              "weight_percent": 20
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 10
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Tests 40% 50%\nQuizzes 20%\nLabs 30% 20%\nParticipation 10%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-clean-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 5,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work: -10% per day -5% / day",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "A01-clean-202610021812"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Within-category scoring method (points vs. percentages) is not specified on the syllabus page.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.8925000000000001
+    }
+  }
+}

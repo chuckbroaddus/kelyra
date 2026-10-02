@@ -1,0 +1,75 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "66b18913-0a0a-43e2-88c9-4f5bf9c053aa",
+    "proposal": {
+      "source_id": "H07-clean-202610021812",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "credit.passing_threshold",
+          "value": 60,
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Passing mark is 60.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202610021812"
+        },
+        {
+          "path": "scale.passing_pct",
+          "value": 60,
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Passing mark is 60.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202610021812"
+        },
+        {
+          "path": "scale.bands",
+          "value": [
+            {
+              "letter": "A",
+              "min_pct": 90,
+              "max_pct": 100
+            },
+            {
+              "letter": "B",
+              "min_pct": 80,
+              "max_pct": 89
+            },
+            {
+              "letter": "C",
+              "min_pct": 70,
+              "max_pct": 79
+            },
+            {
+              "letter": "F",
+              "min_pct": 0,
+              "max_pct": 59
+            }
+          ],
+          "confidence": 0.96,
+          "evidence": {
+            "quote": "A | 90-100\nB | 80-89\nC | 70-79\nF | 0-59",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H07-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9733333333333333
+    }
+  }
+}

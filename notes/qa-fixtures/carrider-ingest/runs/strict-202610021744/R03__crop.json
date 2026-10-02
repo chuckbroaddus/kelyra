@@ -1,0 +1,29 @@
+{
+  "crop": {
+    "box": [
+      375,
+      813,
+      820,
+      1127
+    ]
+  },
+  "status": 200,
+  "ms": 2818,
+  "bytes": 85988,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "DGT7395",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Chevrolet",
+    "model": "Malibu",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

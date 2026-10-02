@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "ms": 2973,
+  "bytes": 20559,
+  "json": {
+    "document_kind": "hang_tag",
+    "plate": "QWZ3390",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": "77",
+    "riders": [
+      "Ava Brooks"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3251,
+  "bytes": 18194,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "SHD6677",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Mazda",
+    "model": "CX-5",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

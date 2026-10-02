@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Riley Quinn",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Casey Quinn",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Other — family friend / emergency pickup"
+      },
+      {
+        "label": "email",
+        "value": "riley.q.pickup@example.org"
+      },
+      {
+        "label": "preferred contact",
+        "value": "Email"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Casey Quinn",
+        "confidence": 1
+      },
+      {
+        "name": "Riley Quinn",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

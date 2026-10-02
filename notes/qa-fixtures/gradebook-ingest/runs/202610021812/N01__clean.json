@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "9faf2f25-5be9-43c6-a917-0f867b1239b6",
+    "proposal": {
+      "source_id": "N01-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "unreadable_page",
+          "message": "The uploaded document image contains only glare and noise, with no syllabus text or grading policies present.",
+          "severity": "block"
+        },
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

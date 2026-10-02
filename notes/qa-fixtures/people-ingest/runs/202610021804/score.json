@@ -1,0 +1,5203 @@
+{
+  "stamp": "202610021804",
+  "overall_accuracy": 0.9705308781395736,
+  "parent_accuracy": 0.951093446783102,
+  "student_accuracy": 0.9763431013431014,
+  "multi_accuracy": 1,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.9858858858858858,
+  "photo_accuracy": 1,
+  "hallucinations": 4,
+  "buckets": {
+    "all_scored": {
+      "n": 66,
+      "intent_accuracy": 0.9848484848484849,
+      "doc_accuracy": 0.8484848484848485,
+      "field_accuracy": 0.9732498141589048,
+      "hallucinations": 3,
+      "adult2_coverage": 0.7307692307692307,
+      "ids": [
+        "PC01:clean",
+        "PC01:photo",
+        "PC02:clean",
+        "PC02:photo",
+        "PC03:clean",
+        "PC03:photo",
+        "PC04:clean",
+        "PC05:clean",
+        "PC05:photo",
+        "PC06:clean",
+        "PC06:photo",
+        "PC07:clean",
+        "SC01:clean",
+        "SC01:photo",
+        "SC02:clean",
+        "SC02:photo",
+        "SC03:clean",
+        "SC03:photo",
+        "SC04:clean",
+        "SC05:clean",
+        "SC05:photo",
+        "SC06:clean",
+        "SC07:clean",
+        "SC07:photo",
+        "SC08:clean",
+        "SC08:photo",
+        "MP01:clean",
+        "MP01:photo",
+        "MP02:clean",
+        "MP03:clean",
+        "MP03:photo",
+        "N01:clean",
+        "N01:photo",
+        "N02:clean",
+        "N03:clean",
+        "N03:photo",
+        "PR01:clean",
+        "PR01:rough",
+        "PR02:clean",
+        "PR02:rough",
+        "PR03:clean",
+        "PR03:rough",
+        "PR04:clean",
+        "PR04:rough",
+        "PR05:clean",
+        "PR05:rough",
+        "PR06:clean",
+        "PR06:rough",
+        "PR07:clean",
+        "PR07:rough",
+        "PR08:clean",
+        "PR08:rough",
+        "PR09:clean",
+        "PR09:rough",
+        "PR10:clean",
+        "PR10:rough",
+        "PH01:clean",
+        "PH02:clean",
+        "PH03:clean",
+        "PH03:rough",
+        "PH04:clean",
+        "PH04:rough",
+        "N04:clean",
+        "N04:rough",
+        "N05:clean",
+        "N05:rough"
+      ]
+    },
+    "legacy_clean_photo": {
+      "n": 36,
+      "intent_accuracy": 1,
+      "doc_accuracy": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult2_coverage": 0.75,
+      "ids": [
+        "PC01:clean",
+        "PC01:photo",
+        "PC02:clean",
+        "PC02:photo",
+        "PC03:clean",
+        "PC03:photo",
+        "PC04:clean",
+        "PC05:clean",
+        "PC05:photo",
+        "PC06:clean",
+        "PC06:photo",
+        "PC07:clean",
+        "SC01:clean",
+        "SC01:photo",
+        "SC02:clean",
+        "SC02:photo",
+        "SC03:clean",
+        "SC03:photo",
+        "SC04:clean",
+        "SC05:clean",
+        "SC05:photo",
+        "SC06:clean",
+        "SC07:clean",
+        "SC07:photo",
+        "SC08:clean",
+        "SC08:photo",
+        "MP01:clean",
+        "MP01:photo",
+        "MP02:clean",
+        "MP03:clean",
+        "MP03:photo",
+        "N01:clean",
+        "N01:photo",
+        "N02:clean",
+        "N03:clean",
+        "N03:photo"
+      ]
+    },
+    "clean": {
+      "n": 28,
+      "intent_accuracy": 1,
+      "doc_accuracy": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult2_coverage": 0.9,
+      "ids": [
+        "PC01:clean",
+        "PC02:clean",
+        "PC03:clean",
+        "PC04:clean",
+        "PC05:clean",
+        "PC06:clean",
+        "PC07:clean",
+        "SC01:clean",
+        "SC02:clean",
+        "SC03:clean",
+        "SC04:clean",
+        "SC05:clean",
+        "SC06:clean",
+        "SC07:clean",
+        "SC08:clean",
+        "MP01:clean",
+        "MP02:clean",
+        "MP03:clean",
+        "PR01:clean",
+        "PR02:clean",
+        "PR03:clean",
+        "PR04:clean",
+        "PR05:clean",
+        "PR06:clean",
+        "PR07:clean",
+        "PR08:clean",
+        "PR09:clean",
+        "PR10:clean"
+      ]
+    },
+    "mild_photo": {
+      "n": 13,
+      "intent_accuracy": 1,
+      "doc_accuracy": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult2_coverage": 1,
+      "ids": [
+        "PC01:photo",
+        "PC02:photo",
+        "PC03:photo",
+        "PC05:photo",
+        "PC06:photo",
+        "SC01:photo",
+        "SC02:photo",
+        "SC03:photo",
+        "SC05:photo",
+        "SC07:photo",
+        "SC08:photo",
+        "MP01:photo",
+        "MP03:photo"
+      ]
+    },
+    "rough": {
+      "n": 10,
+      "intent_accuracy": 0.9,
+      "doc_accuracy": 0.5,
+      "field_accuracy": 0.90995670995671,
+      "hallucinations": 2,
+      "adult2_coverage": 0.5,
+      "ids": [
+        "PR01:rough",
+        "PR02:rough",
+        "PR03:rough",
+        "PR04:rough",
+        "PR05:rough",
+        "PR06:rough",
+        "PR07:rough",
+        "PR08:rough",
+        "PR09:rough",
+        "PR10:rough"
+      ]
+    },
+    "handwritten": {
+      "n": 6,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0.16666666666666666,
+      "field_accuracy": 0.8558201058201057,
+      "hallucinations": 1,
+      "adult2_coverage": 0.6666666666666666,
+      "ids": [
+        "PH01:clean",
+        "PH02:clean",
+        "PH03:clean",
+        "PH03:rough",
+        "PH04:clean",
+        "PH04:rough"
+      ]
+    },
+    "handwritten_clean": {
+      "n": 4,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0.25,
+      "field_accuracy": 0.8694444444444445,
+      "hallucinations": 1,
+      "adult2_coverage": 0.75,
+      "ids": [
+        "PH01:clean",
+        "PH02:clean",
+        "PH03:clean",
+        "PH04:clean"
+      ]
+    },
+    "handwritten_rough": {
+      "n": 2,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0,
+      "field_accuracy": 0.8285714285714285,
+      "hallucinations": 0,
+      "adult2_coverage": 0.5,
+      "ids": [
+        "PH03:rough",
+        "PH04:rough"
+      ]
+    },
+    "multi_adult": {
+      "n": 7,
+      "intent_accuracy": 0.8571428571428571,
+      "doc_accuracy": 0.2857142857142857,
+      "field_accuracy": 0.8560606060606061,
+      "hallucinations": 1,
+      "adult2_coverage": 0.7272727272727273,
+      "ids": [
+        "PR03:clean",
+        "PR03:rough",
+        "PR07:clean",
+        "PR07:rough",
+        "PH01:clean",
+        "PH03:clean",
+        "PH03:rough"
+      ]
+    },
+    "multi_adult_clean": {
+      "n": 4,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0.5,
+      "field_accuracy": 0.925,
+      "hallucinations": 0,
+      "adult2_coverage": 0.9166666666666666,
+      "ids": [
+        "PR03:clean",
+        "PR07:clean",
+        "PH01:clean",
+        "PH03:clean"
+      ]
+    },
+    "multi_adult_rough": {
+      "n": 3,
+      "intent_accuracy": 0.6666666666666666,
+      "doc_accuracy": 0,
+      "field_accuracy": 0.7641414141414141,
+      "hallucinations": 1,
+      "adult2_coverage": 0.5,
+      "ids": [
+        "PR03:rough",
+        "PR07:rough",
+        "PH03:rough"
+      ]
+    },
+    "negative": {
+      "n": 9,
+      "intent_accuracy": 1,
+      "doc_accuracy": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult2_coverage": null,
+      "ids": [
+        "N01:clean",
+        "N01:photo",
+        "N02:clean",
+        "N03:clean",
+        "N03:photo",
+        "N04:clean",
+        "N04:rough",
+        "N05:clean",
+        "N05:rough"
+      ]
+    },
+    "negative_rough": {
+      "n": 2,
+      "intent_accuracy": 1,
+      "doc_accuracy": 1,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult2_coverage": null,
+      "ids": [
+        "N04:rough",
+        "N05:rough"
+      ]
+    },
+    "rough_crop_same_cases": {
+      "n": 3,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0.3333333333333333,
+      "field_accuracy": 0.9107142857142857,
+      "hallucinations": 1,
+      "adult2_coverage": null,
+      "ids": [
+        "PR01:rough",
+        "PR06:rough",
+        "PR08:rough"
+      ]
+    },
+    "rough_crop": {
+      "n": 3,
+      "intent_accuracy": 1,
+      "doc_accuracy": 0.3333333333333333,
+      "field_accuracy": 0.9107142857142857,
+      "hallucinations": 1,
+      "adult2_coverage": null,
+      "ids": [
+        "PR01:rough_crop",
+        "PR06:rough_crop",
+        "PR08:rough_crop"
+      ]
+    }
+  },
+  "worst": [
+    {
+      "id": "PR07",
+      "variant": "rough",
+      "intent": "student_card",
+      "field_accuracy": 0.5833333333333334,
+      "hallucinations": 1,
+      "misses": [
+        "intent=wrong got \"student_card\"",
+        "field.email=hallucinated(uncertain_wrong) got \"adaeze.okohjo@example.com\"",
+        "adult2.phone=missing",
+        "adult2.email=missing",
+        "adult3.phone=missing"
+      ]
+    },
+    {
+      "id": "PH02",
+      "variant": "clean",
+      "intent": "student_card",
+      "field_accuracy": 0.7777777777777778,
+      "hallucinations": 1,
+      "misses": [
+        "field.emergency_phone=missing",
+        "field.phone=hallucinated got \"555-417-9038\""
+      ]
+    },
+    {
+      "id": "PH03",
+      "variant": "clean",
+      "intent": "parent_card",
+      "field_accuracy": 0.8,
+      "hallucinations": 0,
+      "misses": [
+        "field.preferred_contact=missing",
+        "adult2.phone=missing"
+      ]
+    },
+    {
+      "id": "PH03",
+      "variant": "rough",
+      "intent": "parent_card",
+      "field_accuracy": 0.8,
+      "hallucinations": 0,
+      "misses": [
+        "field.preferred_contact=missing",
+        "adult2.phone=missing"
+      ]
+    },
+    {
+      "id": "PR08",
+      "variant": "rough",
+      "intent": "parent_card",
+      "field_accuracy": 0.8571428571428571,
+      "hallucinations": 1,
+      "misses": [
+        "field.phone=hallucinated(uncertain_wrong) got \"555-014-2289\""
+      ]
+    },
+    {
+      "id": "PH04",
+      "variant": "rough",
+      "intent": "student_card",
+      "field_accuracy": 0.8571428571428571,
+      "hallucinations": 0,
+      "misses": [
+        "field.emergency_phone=missing"
+      ]
+    },
+    {
+      "id": "PR04",
+      "variant": "rough",
+      "intent": "student_card",
+      "field_accuracy": 0.875,
+      "hallucinations": 0,
+      "misses": [
+        "field.emergency_name=missing"
+      ]
+    },
+    {
+      "id": "PR06",
+      "variant": "rough",
+      "intent": "student_card",
+      "field_accuracy": 0.875,
+      "hallucinations": 0,
+      "misses": [
+        "field.birthday=missing"
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": "PC01",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Jordan Blake",
+          "actual": "Jordan Blake"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Avery Blake",
+          "actual": "Avery Blake"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-201-4401",
+          "actual": "(555) 201-4401"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "jordan.blake@example.com",
+          "actual": "jordan.blake@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "412 Willow Lane, Apt 2B, Springfield",
+          "actual": "412 Willow Lane, Apt 2B, Springfield"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Text message",
+          "actual": "Text message"
+        }
+      ]
+    },
+    {
+      "id": "PC01",
+      "kind": "parent_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Jordan Blake",
+          "actual": "Jordan Blake"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Avery Blake",
+          "actual": "Avery Blake"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-201-4401",
+          "actual": "(555) 201-4401"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "jordan.blake@example.com",
+          "actual": "jordan.blake@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "412 Willow Lane, Apt 2B, Springfield",
+          "actual": "412 Willow Lane, Apt 2B, Springfield"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Text message",
+          "actual": "Text message"
+        }
+      ]
+    },
+    {
+      "id": "PC02",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Marcus Chen",
+          "actual": "Marcus Chen"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Lily Chen",
+          "actual": "Lily Chen"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "father",
+          "actual": "Father"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-318-9022",
+          "actual": "555.318.9022"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "m.chen.family@example.net",
+          "actual": "m.chen.family@example.net"
+        }
+      ]
+    },
+    {
+      "id": "PC02",
+      "kind": "parent_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Marcus Chen",
+          "actual": "Marcus Chen"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Lily Chen",
+          "actual": "Lily Chen"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "father",
+          "actual": "Father"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-318-9022",
+          "actual": "555.318.9022"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "m.chen.family@example.net",
+          "actual": "m.chen.family@example.net"
+        }
+      ]
+    },
+    {
+      "id": "PC03",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Samira Ortiz",
+          "actual": "Samira Ortiz"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Noah Ortiz",
+          "actual": "Noah Ortiz"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "guardian",
+          "actual": "guardian"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-770-1133",
+          "actual": "555-770-1133"
+        },
+        {
+          "path": "field.notes",
+          "verdict": "correct",
+          "expected": "Please call after 4pm",
+          "actual": "Please call after 4pm"
+        }
+      ]
+    },
+    {
+      "id": "PC03",
+      "kind": "parent_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Samira Ortiz",
+          "actual": "Samira Ortiz"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Noah Ortiz",
+          "actual": "Noah Ortiz"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "guardian",
+          "actual": "guardian"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-770-1133",
+          "actual": "555-770-1133"
+        },
+        {
+          "path": "field.notes",
+          "verdict": "correct",
+          "expected": "Please call after 4pm",
+          "actual": "Please call after 4pm"
+        }
+      ]
+    },
+    {
+      "id": "PC04",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Riley Quinn",
+          "actual": "Riley Quinn"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Casey Quinn",
+          "actual": "Casey Quinn"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "other",
+          "actual": "Other — family friend / emergency pickup"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "riley.q.pickup@example.org",
+          "actual": "riley.q.pickup@example.org"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Email",
+          "actual": "Email"
+        }
+      ]
+    },
+    {
+      "id": "PC05",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Taylor Brooks",
+          "actual": "Taylor Brooks"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-404-2211",
+          "actual": "555-404-2211"
+        }
+      ]
+    },
+    {
+      "id": "PC05",
+      "kind": "parent_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 3,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Taylor Brooks",
+          "actual": "Taylor Brooks"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-404-2211",
+          "actual": "555-404-2211"
+        }
+      ]
+    },
+    {
+      "id": "PC06",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Nina Patel",
+          "actual": "Nina Patel"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Arjun Patel",
+          "actual": "Arjun Patel"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-441-7766",
+          "actual": "555-441-7766"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "nina.patel.home@example.com",
+          "actual": "nina.patel.home@example.com"
+        }
+      ]
+    },
+    {
+      "id": "PC06",
+      "kind": "parent_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Nina Patel",
+          "actual": "Nina Patel"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Arjun Patel",
+          "actual": "Arjun Patel"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-441-7766",
+          "actual": "555-441-7766"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "nina.patel.home@example.com",
+          "actual": "nina.patel.home@example.com"
+        }
+      ]
+    },
+    {
+      "id": "PC07",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Olivia Grant",
+          "actual": "Olivia Grant"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-217-6500",
+          "actual": "555-217-6500"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "250 Harbor Road",
+          "actual": "250 Harbor Road"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Phone call",
+          "actual": "Phone call"
+        }
+      ]
+    },
+    {
+      "id": "SC01",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Elena Vargas",
+          "actual": "Elena Vargas"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Ellie",
+          "actual": "Ellie"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2012-03-14",
+          "actual": "March 14, 2012"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Sofia Vargas",
+          "actual": "Sofia Vargas"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-612-8890",
+          "actual": "555-612-8890"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Peanuts",
+          "actual": "Peanuts"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Asthma — inhaler in backpack",
+          "actual": "Asthma — inhaler in backpack"
+        }
+      ]
+    },
+    {
+      "id": "SC01",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Elena Vargas",
+          "actual": "Elena Vargas"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Ellie",
+          "actual": "Ellie"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2012-03-14",
+          "actual": "March 14, 2012"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "9",
+          "actual": "9"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Sofia Vargas",
+          "actual": "Sofia Vargas"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-612-8890",
+          "actual": "555-612-8890"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Peanuts",
+          "actual": "Peanuts"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Asthma — inhaler in backpack",
+          "actual": "Asthma - inhaler in backpack"
+        }
+      ]
+    },
+    {
+      "id": "SC02",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Jamal Okonkwo",
+          "actual": "Jamal Okonkwo"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "Grade 7 · age 12",
+          "actual": "Grade 7 · age 12"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-100-7788",
+          "actual": "555-100-7788"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "jamal.o.student@example.com",
+          "actual": "jamal.o.student@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "88 Cedar Court, Unit 4",
+          "actual": "88 Cedar Court, Unit 4"
+        }
+      ]
+    },
+    {
+      "id": "SC02",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Jamal Okonkwo",
+          "actual": "Jamal Okonkwo"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "Grade 7 · age 12",
+          "actual": "Grade 7 · age 12"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-100-7788",
+          "actual": "555-100-7788"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "jamal.o.student@example.com",
+          "actual": "jamal.o.student@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "88 Cedar Court, Unit 4",
+          "actual": "88 Cedar Court, Unit 4"
+        }
+      ]
+    },
+    {
+      "id": "SC03",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Benjamin Park",
+          "actual": "Benjamin Park"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Ben",
+          "actual": "Ben"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "shellfish",
+          "actual": "shellfish"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Min Park",
+          "actual": "Min Park"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-222-0199",
+          "actual": "555-222-0199"
+        }
+      ]
+    },
+    {
+      "id": "SC03",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Benjamin Park",
+          "actual": "Benjamin Park"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Ben",
+          "actual": "Ben"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "shellfish",
+          "actual": "shellfish"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Min Park",
+          "actual": "Min Park"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-222-0199",
+          "actual": "555-222-0199"
+        }
+      ]
+    },
+    {
+      "id": "SC04",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Harper Lee",
+          "actual": "Harper Lee"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "4",
+          "actual": "4"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Alex Lee",
+          "actual": "Alex Lee"
+        }
+      ]
+    },
+    {
+      "id": "SC05",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Priya Nair",
+          "actual": "Priya Nair"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2014-11-02",
+          "actual": "2014-11-02"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-909-3344",
+          "actual": "555-909-3344"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Type 1 diabetes — nurse has care plan",
+          "actual": "Type 1 diabetes — nurse has care plan"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "None known",
+          "actual": "None known"
+        }
+      ]
+    },
+    {
+      "id": "SC05",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Priya Nair",
+          "actual": "Priya Nair"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2014-11-02",
+          "actual": "2014-11-02"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-909-3344",
+          "actual": "555-909-3344"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Type 1 diabetes — nurse has care plan",
+          "actual": "Type 1 diabetes - nurse has care plan"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "None known",
+          "actual": "None known"
+        }
+      ]
+    },
+    {
+      "id": "SC06",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Christopher Nguyen",
+          "actual": "Christopher Nguyen"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Chris",
+          "actual": "Chris"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "10",
+          "actual": "10"
+        }
+      ]
+    },
+    {
+      "id": "SC07",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Grace Okafor",
+          "actual": "Grace Okafor"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2013-07-22",
+          "actual": "07/22/2013"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Chinedu Okafor",
+          "actual": "Chinedu Okafor"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-333-1212",
+          "actual": "(555) 333-1212"
+        }
+      ]
+    },
+    {
+      "id": "SC07",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Grace Okafor",
+          "actual": "Grace Okafor"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2013-07-22",
+          "actual": "07/22/2013"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Chinedu Okafor",
+          "actual": "Chinedu Okafor"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-333-1212",
+          "actual": "(555) 333-1212"
+        }
+      ]
+    },
+    {
+      "id": "SC08",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Zoe Martins",
+          "actual": "Zoe Martins"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.notes",
+          "verdict": "correct",
+          "expected": "Needs glasses for board work",
+          "actual": "Needs glasses for board work"
+        }
+      ]
+    },
+    {
+      "id": "SC08",
+      "kind": "student_card",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 4,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Zoe Martins",
+          "actual": "Zoe Martins"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.notes",
+          "verdict": "correct",
+          "expected": "Needs glasses for board work",
+          "actual": "Needs glasses for board work"
+        }
+      ]
+    },
+    {
+      "id": "MP01",
+      "kind": "multi",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 2,
+      "adult_hits": 1,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Dana Thompson",
+          "actual": "Dana Thompson"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Maya Thompson",
+          "actual": "Maya Thompson"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-301-1001",
+          "actual": "555-301-1001"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "dana.t@example.com",
+          "actual": "dana.t@example.com"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Dana Thompson",
+            "Chris Thompson",
+            "Maya Thompson"
+          ],
+          "actual": [
+            "Maya Thompson",
+            "Dana Thompson",
+            "Chris Thompson"
+          ],
+          "detail": "3/3"
+        }
+      ]
+    },
+    {
+      "id": "MP01",
+      "kind": "multi",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 2,
+      "adult_hits": 2,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Dana Thompson",
+          "actual": "Dana Thompson"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Maya Thompson",
+          "actual": "Maya Thompson"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-301-1001",
+          "actual": "555-301-1001"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "dana.t@example.com",
+          "actual": "dana.t@example.com"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Dana Thompson",
+            "Chris Thompson",
+            "Maya Thompson"
+          ],
+          "actual": [
+            "Maya Thompson",
+            "Dana Thompson",
+            "Chris Thompson"
+          ],
+          "detail": "3/3"
+        }
+      ]
+    },
+    {
+      "id": "MP02",
+      "kind": "multi",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Pat Rivera",
+          "actual": "Pat Rivera"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Sofia Rivera",
+          "actual": "Sofia Rivera"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-555-0180",
+          "actual": "555-555-0180"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "19 Maple Ave",
+          "actual": "19 Maple Ave"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Pat Rivera",
+            "Sofia Rivera",
+            "Luis Rivera",
+            "Amelia Rivera"
+          ],
+          "actual": [
+            "Sofia Rivera",
+            "Luis Rivera",
+            "Amelia Rivera"
+          ],
+          "detail": "4/4"
+        }
+      ]
+    },
+    {
+      "id": "MP03",
+      "kind": "multi",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Morgan Cole",
+          "actual": "Morgan Cole"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Aiden Cole",
+          "actual": "Aiden Cole"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-800-0101",
+          "actual": "555-800-0101"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Aiden Cole",
+            "Bella Diaz",
+            "Owen Kim",
+            "Morgan Cole",
+            "Jordan Diaz",
+            "Sasha Kim"
+          ],
+          "actual": [
+            "Aiden Cole",
+            "Morgan Cole",
+            "Bella Diaz",
+            "Jordan Diaz",
+            "Owen Kim",
+            "Sasha Kim"
+          ],
+          "detail": "6/6"
+        }
+      ]
+    },
+    {
+      "id": "MP03",
+      "kind": "multi",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 5,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Morgan Cole",
+          "actual": "Morgan Cole"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Aiden Cole",
+          "actual": "Aiden Cole"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-800-0101",
+          "actual": "555-800-0101"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Aiden Cole",
+            "Bella Diaz",
+            "Owen Kim",
+            "Morgan Cole",
+            "Jordan Diaz",
+            "Sasha Kim"
+          ],
+          "actual": [
+            "Aiden Cole",
+            "Morgan Cole",
+            "Bella Diaz",
+            "Jordan Diaz",
+            "Owen Kim",
+            "Sasha Kim"
+          ],
+          "detail": "6/6"
+        }
+      ]
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [],
+      "http_status": 200,
+      "intent": "homework",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "homework",
+            "unsure",
+            "answer_key"
+          ],
+          "actual": "homework"
+        }
+      ]
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [],
+      "http_status": 200,
+      "intent": "homework",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "homework",
+            "unsure",
+            "answer_key"
+          ],
+          "actual": "homework"
+        }
+      ]
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [],
+      "http_status": 200,
+      "intent": "syllabus",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "syllabus",
+            "unsure"
+          ],
+          "actual": "syllabus"
+        }
+      ]
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [],
+      "http_status": 200,
+      "intent": "unsure",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "portrait"
+          ],
+          "actual": "unsure"
+        }
+      ]
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "handwritten": false,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [],
+      "http_status": 200,
+      "intent": "unsure",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "portrait"
+          ],
+          "actual": "unsure"
+        }
+      ]
+    },
+    {
+      "id": "PR01",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "strong_keystone",
+        "motion_blur",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Renata Silva",
+          "actual": "Renata Silva"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Mateo Silva",
+          "actual": "Mateo Silva"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-274-3190",
+          "actual": "(555) 274-3190"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "renata.silva@example.com",
+          "actual": "renata.silva@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "1187 Juniper St, Apt 4",
+          "actual": "1187 Juniper St, Apt 4"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Text message",
+          "actual": "Text message"
+        }
+      ]
+    },
+    {
+      "id": "PR01",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "strong_keystone",
+        "motion_blur",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Renata Silva",
+          "actual": "Renata Silva"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Mateo Silva",
+          "actual": "Mateo Silva"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-274-3190",
+          "actual": "(555) 274-3190"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "renata.silva@example.com",
+          "actual": "renata.silva@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "1187 Juniper St, Apt 4",
+          "actual": "1187 Juniper St, Apt 4"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Text message",
+          "actual": "Text message"
+        }
+      ]
+    },
+    {
+      "id": "PR01",
+      "kind": "parent_card",
+      "variant": "rough_crop",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "strong_keystone",
+        "motion_blur",
+        "low_light_noise",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.875,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Renata Silva",
+          "actual": "Renata Silva"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "missing",
+          "expected": "Mateo Silva",
+          "actual": null
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-274-3190",
+          "actual": "(555) 274-3190"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "renata.silva@example.com",
+          "actual": "renata.silva@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "1187 Juniper St, Apt 4",
+          "actual": "1187 Juniper St, Apt 4"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Text message",
+          "actual": "Text message"
+        }
+      ]
+    },
+    {
+      "id": "PR02",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "rotation_12deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 9,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Imani Brooks-Hale",
+          "actual": "Imani Brooks-Hale"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Mani",
+          "actual": "Mani"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2013-09-03",
+          "actual": "09/03/2013"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "7",
+          "actual": "7"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Terrence Hale",
+          "actual": "Terrence Hale"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-836-2047",
+          "actual": "555-836-2047"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Bee stings - EpiPen in office",
+          "actual": "Bee stings - EpiPen in office"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Mild asthma",
+          "actual": "Mild asthma"
+        }
+      ]
+    },
+    {
+      "id": "PR02",
+      "kind": "student_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "rotation_12deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Imani Brooks-Hale",
+          "actual": "Imani Brooks-Hale"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Mani",
+          "actual": "Mani"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2013-09-03",
+          "actual": "09/03/2013"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "7",
+          "actual": "7"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Terrence Hale",
+          "actual": "Terrence Hale"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-836-2047",
+          "actual": "555-836-2047"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Mild asthma",
+          "actual": "Mild asthma"
+        }
+      ]
+    },
+    {
+      "id": "PR03",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "crumple",
+        "creases",
+        "rotation_5deg",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 3,
+      "adult_hits": 3,
+      "counts": {
+        "correct": 11,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Simone Delacroix",
+          "actual": "Simone Delacroix"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Owen Delacroix",
+          "actual": "Owen Delacroix"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-419-7720",
+          "actual": "555-419-7720"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "simone.d@example.com",
+          "actual": "simone.d@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "62 Brookside Dr",
+          "actual": "62 Brookside Dr"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Simone Delacroix",
+            "Julien Delacroix",
+            "Owen Delacroix"
+          ],
+          "actual": [
+            "Simone Delacroix",
+            "Julien Delacroix"
+          ],
+          "detail": "3/3"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Julien Delacroix",
+          "actual": "Julien Delacroix"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "correct",
+          "expected": "555-419-7735",
+          "actual": "555-419-7735"
+        },
+        {
+          "key": "adult2.email",
+          "path": "adult2.email",
+          "verdict": "correct",
+          "expected": "julien.delacroix@example.net",
+          "actual": "julien.delacroix@example.net"
+        }
+      ]
+    },
+    {
+      "id": "PR03",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "crumple",
+        "creases",
+        "rotation_5deg",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.9090909090909091,
+      "hallucinations": 0,
+      "adult_rows": 3,
+      "adult_hits": 2,
+      "counts": {
+        "correct": 10,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Simone Delacroix",
+          "actual": "Simone Delacroix"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Owen Delacroix",
+          "actual": "Owen Delacroix"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-419-7720",
+          "actual": "555-419-7720"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "simone.d@example.com",
+          "actual": "simone.d@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "62 Brookside Dr",
+          "actual": "62 Brookside Dr"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Simone Delacroix",
+            "Julien Delacroix",
+            "Owen Delacroix"
+          ],
+          "actual": [
+            "Simone Delacroix",
+            "Julien Delacroix",
+            "Owen Delacroix"
+          ],
+          "detail": "3/3"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Julien Delacroix",
+          "actual": "Julien Delacroix"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "correct",
+          "expected": "555-419-7735",
+          "actual": "555-419-7735"
+        },
+        {
+          "key": "adult2.email",
+          "path": "adult2.email",
+          "verdict": "missing",
+          "expected": "julien.delacroix@example.net",
+          "actual": null
+        }
+      ]
+    },
+    {
+      "id": "PR04",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "trifold_creases",
+        "cut_off_right_edge",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Leo Marchetti",
+          "actual": "Leo Marchetti"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2015-01-27",
+          "actual": "January 27, 2015"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "5",
+          "actual": "5"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "903 Alder Way, Westbrook",
+          "actual": "903 Alder Way, Westbrook"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Gina Marchetti",
+          "actual": "Gina Marchetti (aunt)"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-662-0418",
+          "actual": "555-662-0418"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Penicillin",
+          "actual": "Penicillin"
+        }
+      ]
+    },
+    {
+      "id": "PR04",
+      "kind": "student_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "trifold_creases",
+        "cut_off_right_edge",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.875,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Leo Marchetti",
+          "actual": "Leo Marchetti"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2015-01-27",
+          "actual": "January 27, 2015"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "5",
+          "actual": "5"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "903 Alder Way, Westbrook",
+          "actual": "903 Alder Way, Wes"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "missing",
+          "expected": "Gina Marchetti",
+          "actual": null
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-662-0418",
+          "actual": "555-662-0418"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Penicillin",
+          "actual": "Penicillin"
+        }
+      ]
+    },
+    {
+      "id": "PR05",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "hand_phone_shadow",
+        "background_clutter",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Deshawn Porter",
+          "actual": "Deshawn Porter"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Kiara Porter",
+          "actual": "Kiara Porter"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "guardian",
+          "actual": "Guardian (grandfather)"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-503-8816",
+          "actual": "555-503-8816"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "d.porter.home@example.org",
+          "actual": "d.porter.home@example.org"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Phone call",
+          "actual": "Phone call"
+        }
+      ]
+    },
+    {
+      "id": "PR05",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "hand_phone_shadow",
+        "background_clutter",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Deshawn Porter",
+          "actual": "Deshawn Porter"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Kiara Porter",
+          "actual": "Kiara Porter"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "guardian",
+          "actual": "Guardian (grandfather)"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-503-8816",
+          "actual": "555-503-8816"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "d.porter.home@example.org",
+          "actual": "d.porter.home@example.org"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Phone call",
+          "actual": "Phone call"
+        }
+      ]
+    },
+    {
+      "id": "PR06",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_jpeg_x2",
+        "downscale_820",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Hana Yoshida",
+          "actual": "Hana Yoshida"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2014-04-18",
+          "actual": "04/18/2014"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Tree nuts, latex",
+          "actual": "Tree nuts, latex"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Epilepsy - seizure plan on file",
+          "actual": "Epilepsy - seizure plan on file"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Kenji Yoshida",
+          "actual": "Kenji Yoshida"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-947-3302",
+          "actual": "555-947-3302"
+        }
+      ]
+    },
+    {
+      "id": "PR06",
+      "kind": "student_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_jpeg_x2",
+        "downscale_820",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.875,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Hana Yoshida",
+          "actual": "Hana Yoshida"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "missing",
+          "expected": "2014-04-18",
+          "actual": null
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Tree nuts, latex",
+          "actual": "Tree nuts, latex"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Epilepsy - seizure plan on file",
+          "actual": "Epilepsy - seizure plan on file"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Kenji Yoshida",
+          "actual": "Kenji Yoshida"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-947-3302",
+          "actual": "555-947-3302"
+        }
+      ]
+    },
+    {
+      "id": "PR06",
+      "kind": "student_card",
+      "variant": "rough_crop",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_jpeg_x2",
+        "downscale_820",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Hana Yoshida",
+          "actual": "Hana Yoshida"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2014-04-18",
+          "actual": "04/18/2014"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Tree nuts, latex",
+          "actual": "Tree nuts, latex"
+        },
+        {
+          "path": "field.health_conditions",
+          "verdict": "correct",
+          "expected": "Epilepsy - seizure plan on file",
+          "actual": "Epilepsy - seizure plan on file"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Kenji Yoshida",
+          "actual": "Kenji Yoshida"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-947-3302",
+          "actual": "555-947-3302"
+        }
+      ]
+    },
+    {
+      "id": "PR07",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "keystone_side",
+        "cut_off_right_edge",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 5,
+      "adult_hits": 5,
+      "counts": {
+        "correct": 12,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Adaeze Okonjo",
+          "actual": "Adaeze Okonjo"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Ruby Okonjo-Starr",
+          "actual": "Ruby Okonjo-Starr"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-288-6104",
+          "actual": "555-288-6104"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "adaeze.okonjo@example.com",
+          "actual": "adaeze.okonjo@example.com"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Adaeze Okonjo",
+            "Martin Starr",
+            "Florence Okonjo",
+            "Ruby Okonjo-Starr"
+          ],
+          "actual": [
+            "Ruby Okonjo-Starr",
+            "Adaeze Okonjo",
+            "Martin Starr",
+            "Florence Okonjo"
+          ],
+          "detail": "4/4"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Martin Starr",
+          "actual": "Martin Starr"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "correct",
+          "expected": "555-288-6190",
+          "actual": "555-288-6190"
+        },
+        {
+          "key": "adult2.email",
+          "path": "adult2.email",
+          "verdict": "correct",
+          "expected": "m.starr@example.net",
+          "actual": "m.starr@example.net"
+        },
+        {
+          "key": "adult3.name",
+          "path": "adult3.name",
+          "verdict": "correct",
+          "expected": "Florence Okonjo",
+          "actual": "Florence Okonjo"
+        },
+        {
+          "key": "adult3.phone",
+          "path": "adult3.phone",
+          "verdict": "correct",
+          "expected": "555-731-4425",
+          "actual": "555-731-4425"
+        }
+      ]
+    },
+    {
+      "id": "PR07",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "keystone_side",
+        "cut_off_right_edge",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": false,
+      "doc_exact": false,
+      "field_accuracy": 0.5833333333333334,
+      "hallucinations": 1,
+      "adult_rows": 5,
+      "adult_hits": 2,
+      "counts": {
+        "correct": 7,
+        "wrong": 1,
+        "missing": 3,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "wrong",
+          "expected": "parent_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Adaeze Okonjo",
+          "actual": "Adaeze Okonjo"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Ruby Okonjo-Starr",
+          "actual": "Ruby Okonjo-Starr"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-288-6104",
+          "actual": "555-288-6104"
+        },
+        {
+          "path": "field.email",
+          "verdict": "hallucinated",
+          "expected": "adaeze.okonjo@example.com",
+          "actual": "adaeze.okohjo@example.com",
+          "detail": "uncertain_wrong"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Adaeze Okonjo",
+            "Martin Starr",
+            "Florence Okonjo",
+            "Ruby Okonjo-Starr"
+          ],
+          "actual": [
+            "Ruby Okonjo-Starr",
+            "Adaeze Okonjo",
+            "Martin Starr",
+            "Florence Okonjo"
+          ],
+          "detail": "4/4"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Martin Starr",
+          "actual": "Martin Starr"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "missing",
+          "expected": "555-288-6190",
+          "actual": null
+        },
+        {
+          "key": "adult2.email",
+          "path": "adult2.email",
+          "verdict": "missing",
+          "expected": "m.starr@example.net",
+          "actual": null
+        },
+        {
+          "key": "adult3.name",
+          "path": "adult3.name",
+          "verdict": "correct",
+          "expected": "Florence Okonjo",
+          "actual": "Florence Okonjo"
+        },
+        {
+          "key": "adult3.phone",
+          "path": "adult3.phone",
+          "verdict": "missing",
+          "expected": "555-731-4425",
+          "actual": null
+        }
+      ]
+    },
+    {
+      "id": "PR08",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_low_light",
+        "warm_cast",
+        "sensor_noise",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Priyanka Raman",
+          "actual": "Priyanka Raman"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Dev Raman",
+          "actual": "Dev Raman"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-614-2289",
+          "actual": "555-614-2289"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "praman.family@example.com",
+          "actual": "praman.family@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "45 Orchard Hill Rd",
+          "actual": "45 Orchard Hill Rd"
+        }
+      ]
+    },
+    {
+      "id": "PR08",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_low_light",
+        "warm_cast",
+        "sensor_noise",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.8571428571428571,
+      "hallucinations": 1,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Priyanka Raman",
+          "actual": "Priyanka Raman"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Dev Raman",
+          "actual": "Dev Raman"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "hallucinated",
+          "expected": "555-614-2289",
+          "actual": "555-014-2289",
+          "detail": "uncertain_wrong"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "praman.family@example.com",
+          "actual": "praman.family@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "45 Orchard Hill Rd",
+          "actual": "45 Orchard Hill Rd"
+        }
+      ]
+    },
+    {
+      "id": "PR08",
+      "kind": "parent_card",
+      "variant": "rough_crop",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "heavy_low_light",
+        "warm_cast",
+        "sensor_noise",
+        "defocus_blur"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.8571428571428571,
+      "hallucinations": 1,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Priyanka Raman",
+          "actual": "Priyanka Raman"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Dev Raman",
+          "actual": "Dev Raman"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-614-2289",
+          "actual": "555-614-2289"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "praman.family@example.com",
+          "actual": "praman.family@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "hallucinated",
+          "expected": "45 Orchard Hill Rd",
+          "actual": "48 Orchard Hill Rd",
+          "detail": "uncertain_wrong"
+        }
+      ]
+    },
+    {
+      "id": "PR09",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "coffee_stain",
+        "pen_marks",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Tobias Lindgren",
+          "actual": "Tobias Lindgren"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Toby",
+          "actual": "Toby"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2012-11-30",
+          "actual": "11/30/2012"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "8",
+          "actual": "8"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Astrid Lindgren-Moe",
+          "actual": "Astrid Lindgren-Moe"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-390-7751",
+          "actual": "555-390-7751"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Dairy",
+          "actual": "Dairy"
+        }
+      ]
+    },
+    {
+      "id": "PR09",
+      "kind": "student_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "coffee_stain",
+        "pen_marks",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Tobias Lindgren",
+          "actual": "Tobias Lindgren"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Toby",
+          "actual": "Toby"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2012-11-30",
+          "actual": "11/30/2012"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "8",
+          "actual": "8"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Astrid Lindgren-Moe",
+          "actual": "Astrid Lindgren-Moe"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-390-7751",
+          "actual": "555-390-7751"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "Dairy",
+          "actual": "Dairy"
+        }
+      ]
+    },
+    {
+      "id": "PR10",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "page_curl",
+        "rotation_8deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Gabriel Fontaine",
+          "actual": "Gabriel Fontaine"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Elise Fontaine",
+          "actual": "Elise Fontaine"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "father",
+          "actual": "Father"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-725-0063",
+          "actual": "555-725-0063"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "gfontaine@example.com",
+          "actual": "gfontaine@example.com"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Email",
+          "actual": "Email"
+        }
+      ]
+    },
+    {
+      "id": "PR10",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "page_curl",
+        "rotation_8deg",
+        "glare_hotspot",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Gabriel Fontaine",
+          "actual": "Gabriel Fontaine"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Elise Fontaine",
+          "actual": "Elise Fontaine"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "father",
+          "actual": "Father"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-725-0063",
+          "actual": "555-725-0063"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "gfontaine@example.com",
+          "actual": "gfontaine@example.com"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "correct",
+          "expected": "Email",
+          "actual": "Email"
+        }
+      ]
+    },
+    {
+      "id": "PH01",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": true,
+      "rough_case": false,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.9,
+      "hallucinations": 0,
+      "adult_rows": 2,
+      "adult_hits": 2,
+      "counts": {
+        "correct": 9,
+        "wrong": 1,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Carmen Ibarra",
+          "actual": "Carmen Ibarra"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Sofia Ibarra",
+          "actual": "Sofia Ibarra"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "wrong",
+          "expected": "mother",
+          "actual": "Mom"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-208-4471",
+          "actual": "555-208-4471"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "carmen.ibarra@example.com",
+          "actual": "carmen.ibarra@example.com"
+        },
+        {
+          "path": "field.address",
+          "verdict": "correct",
+          "expected": "77 Poplar Ct",
+          "actual": "77 poplar ct"
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Carmen Ibarra",
+            "Luis Ibarra",
+            "Sofia Ibarra"
+          ],
+          "actual": [
+            "Carmen Ibarra",
+            "Luis Ibarra",
+            "Sofia Ibarra"
+          ],
+          "detail": "3/3"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Luis Ibarra",
+          "actual": "Luis Ibarra"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "correct",
+          "expected": "555-208-4490",
+          "actual": "555-208-4490"
+        }
+      ]
+    },
+    {
+      "id": "PH02",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": true,
+      "rough_case": false,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.7777777777777778,
+      "hallucinations": 1,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 1
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Nathaniel Osei-Bonsu",
+          "actual": "Nathaniel Osei-Bonsu"
+        },
+        {
+          "path": "field.preferred_name",
+          "verdict": "correct",
+          "expected": "Nate",
+          "actual": "Nate"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2014-06-02",
+          "actual": "6/2/2014"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "6",
+          "actual": "6"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Abena Osei-Bonsu",
+          "actual": "Abena Osei-Bonsu"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "missing",
+          "expected": "555-417-9038",
+          "actual": null
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "strawberries",
+          "actual": "strawberries"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "hallucinated",
+          "expected": null,
+          "actual": "555-417-9038"
+        }
+      ]
+    },
+    {
+      "id": "PH03",
+      "kind": "parent_card",
+      "variant": "clean",
+      "handwritten": true,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "handwritten_fill",
+        "keystone",
+        "hand_phone_shadow",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.8,
+      "hallucinations": 0,
+      "adult_rows": 2,
+      "adult_hits": 1,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 2,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Megan Kowalski",
+          "actual": "Megan Kowalski"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Ava Kowalski-Reyes",
+          "actual": "Ava Kowalski-Reyes"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-861-3027",
+          "actual": "555-861-3027"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "megkowalski@example.com",
+          "actual": "megkowalski@example.com"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "missing",
+          "expected": "text",
+          "actual": null
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Megan Kowalski",
+            "Daniel Reyes",
+            "Ava Kowalski-Reyes"
+          ],
+          "actual": [
+            "Ava Kowalski-Reyes",
+            "Megan Kowalski",
+            "Daniel Reyes"
+          ],
+          "detail": "3/3"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Daniel Reyes",
+          "actual": "Daniel Reyes"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "missing",
+          "expected": "555-861-3044",
+          "actual": null
+        }
+      ]
+    },
+    {
+      "id": "PH03",
+      "kind": "parent_card",
+      "variant": "rough",
+      "handwritten": true,
+      "rough_case": true,
+      "multi_adult": true,
+      "negative": false,
+      "effects": [
+        "handwritten_fill",
+        "keystone",
+        "hand_phone_shadow",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "parent_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.8,
+      "hallucinations": 0,
+      "adult_rows": 2,
+      "adult_hits": 1,
+      "counts": {
+        "correct": 8,
+        "wrong": 0,
+        "missing": 2,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "parent_card",
+          "actual": "parent_card"
+        },
+        {
+          "path": "parentGuessName",
+          "verdict": "correct",
+          "expected": "Megan Kowalski",
+          "actual": "Megan Kowalski"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Ava Kowalski-Reyes",
+          "actual": "Ava Kowalski-Reyes"
+        },
+        {
+          "path": "field.relationship",
+          "verdict": "correct",
+          "expected": "mother",
+          "actual": "Mother"
+        },
+        {
+          "path": "field.phone",
+          "verdict": "correct",
+          "expected": "555-861-3027",
+          "actual": "555-861-3027"
+        },
+        {
+          "path": "field.email",
+          "verdict": "correct",
+          "expected": "megkowalski@example.com",
+          "actual": "megkowalski@example.com"
+        },
+        {
+          "path": "field.preferred_contact",
+          "verdict": "missing",
+          "expected": "text",
+          "actual": null
+        },
+        {
+          "path": "record.names",
+          "verdict": "correct",
+          "expected": [
+            "Megan Kowalski",
+            "Daniel Reyes",
+            "Ava Kowalski-Reyes"
+          ],
+          "actual": [
+            "Ava Kowalski-Reyes",
+            "Megan Kowalski",
+            "Daniel Reyes"
+          ],
+          "detail": "3/3"
+        },
+        {
+          "key": "adult2.name",
+          "path": "adult2.name",
+          "verdict": "correct",
+          "expected": "Daniel Reyes",
+          "actual": "Daniel Reyes"
+        },
+        {
+          "key": "adult2.phone",
+          "path": "adult2.phone",
+          "verdict": "missing",
+          "expected": "555-861-3044",
+          "actual": null
+        }
+      ]
+    },
+    {
+      "id": "PH04",
+      "kind": "student_card",
+      "variant": "clean",
+      "handwritten": true,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "handwritten_fill",
+        "pencil",
+        "crossed_out_number",
+        "crumple",
+        "low_light_noise"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 7,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Isabella Thornton",
+          "actual": "Isabella Thornton"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "4",
+          "actual": "4"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2015-03-15",
+          "actual": "3/15/2015"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Ruth Thornton",
+          "actual": "Ruth Thornton"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "correct",
+          "expected": "555-240-1736",
+          "actual": "585-240-1188, 585-240-1736"
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "amoxicillin",
+          "actual": "amoxicillin"
+        }
+      ]
+    },
+    {
+      "id": "PH04",
+      "kind": "student_card",
+      "variant": "rough",
+      "handwritten": true,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": false,
+      "effects": [
+        "handwritten_fill",
+        "pencil",
+        "crossed_out_number",
+        "crumple",
+        "low_light_noise"
+      ],
+      "http_status": 200,
+      "intent": "student_card",
+      "intent_ok": true,
+      "doc_exact": false,
+      "field_accuracy": 0.8571428571428571,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 6,
+        "wrong": 0,
+        "missing": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": "student_card",
+          "actual": "student_card"
+        },
+        {
+          "path": "studentGuessName",
+          "verdict": "correct",
+          "expected": "Isabella Thornton",
+          "actual": "Isabella Thornton"
+        },
+        {
+          "path": "field.grade_or_age",
+          "verdict": "correct",
+          "expected": "4",
+          "actual": "4"
+        },
+        {
+          "path": "field.birthday",
+          "verdict": "correct",
+          "expected": "2015-03-15",
+          "actual": "3/15/2015"
+        },
+        {
+          "path": "field.emergency_name",
+          "verdict": "correct",
+          "expected": "Ruth Thornton",
+          "actual": "Ruth Thornton"
+        },
+        {
+          "path": "field.emergency_phone",
+          "verdict": "missing",
+          "expected": "555-240-1736",
+          "actual": null
+        },
+        {
+          "path": "field.allergies",
+          "verdict": "correct",
+          "expected": "amoxicillin",
+          "actual": "amoxicillin"
+        }
+      ]
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [
+        "rotation_9deg",
+        "glare_hotspot",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "homework",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "lesson_materials",
+            "lesson_plan",
+            "homework",
+            "syllabus",
+            "answer_key"
+          ],
+          "actual": "homework"
+        }
+      ]
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [
+        "rotation_9deg",
+        "glare_hotspot",
+        "background_clutter",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "unsure",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "lesson_materials",
+            "lesson_plan",
+            "homework",
+            "syllabus",
+            "answer_key"
+          ],
+          "actual": "unsure"
+        }
+      ]
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "variant": "clean",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [
+        "crumple",
+        "low_light_noise",
+        "rotation_6deg",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "homework",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "lesson_materials",
+            "lesson_plan",
+            "homework",
+            "syllabus",
+            "answer_key"
+          ],
+          "actual": "homework"
+        }
+      ]
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "variant": "rough",
+      "handwritten": false,
+      "rough_case": true,
+      "multi_adult": false,
+      "negative": true,
+      "effects": [
+        "crumple",
+        "low_light_noise",
+        "rotation_6deg",
+        "jpeg_artifacts"
+      ],
+      "http_status": 200,
+      "intent": "homework",
+      "intent_ok": true,
+      "doc_exact": true,
+      "field_accuracy": 1,
+      "hallucinations": 0,
+      "adult_rows": 0,
+      "adult_hits": 0,
+      "counts": {
+        "correct": 1,
+        "wrong": 0,
+        "missing": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "verdict": "correct",
+          "expected": [
+            "unsure",
+            "feed_photo",
+            "lesson_materials",
+            "lesson_plan",
+            "homework",
+            "syllabus",
+            "answer_key"
+          ],
+          "actual": "homework"
+        }
+      ]
+    }
+  ],
+  "field_totals": {
+    "correct": 415,
+    "wrong": 2,
+    "missing": 13,
+    "hallucinated": 4
+  },
+  "errors": []
+}

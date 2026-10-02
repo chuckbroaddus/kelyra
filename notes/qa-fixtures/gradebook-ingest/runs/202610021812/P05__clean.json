@@ -1,0 +1,99 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "bf9c096b-f118-444a-a45b-7b120c20d217",
+    "proposal": {
+      "source_id": "P05-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Spanish I — Syllabus",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Spanish I — Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-clean-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Major grades (exams, projects) | 60%\nMinor grades (practice, quizzes) | 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "P05-clean-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major_grades_exams_projects",
+              "label": "Major grades (exams, projects)",
+              "weight_percent": 60
+            },
+            {
+              "key": "minor_grades_practice_quizzes",
+              "label": "Minor grades (practice, quizzes)",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades (exams, projects) | 60%\nMinor grades (practice, quizzes) | 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-clean-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "flat",
+            "amount": 20,
+            "unit": "points"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work loses a flat 20 points and is accepted until the unit exam.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-clean-202610021812"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [],
+            "attempts": 1,
+            "method": "higher_of",
+            "cap": 80,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "One retake per exam. The higher score counts, capped at 80.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9120000000000001
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "542e017a-790f-46dd-aacc-f81209f0cd3c",
+    "proposal": {
+      "source_id": "H03-clean-202610021812",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "semester",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Credit terms are semesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610021812"
+        },
+        {
+          "path": "credit.policy",
+          "value": {
+            "unit": "semester"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Credit terms are semesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610021812"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "45/45/10",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610021812"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "value": true,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Term rollup: MP1 45%, MP2 45%, exam 10%.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610021812"
+        },
+        {
+          "path": "locks.map",
+          "value": {
+            "categories": true,
+            "homework_max_percent": 10
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "School lock: homework category weight may not exceed 10% in any class syllabus.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H03-clean-202610021812"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "semester",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Credit terms are semesters.",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H03-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "grading_policy",
+      "overall_confidence": 0.9166666666666666
+    }
+  }
+}

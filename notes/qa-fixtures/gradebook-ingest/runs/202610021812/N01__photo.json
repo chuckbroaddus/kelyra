@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "a62b3937-65bc-4b6e-98f8-58906f8b82ce",
+    "proposal": {
+      "source_id": "N01-photo-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "unreadable_document",
+          "message": "The provided image is blank or completely unreadable. No text could be transcribed or extracted.",
+          "severity": "block"
+        },
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 0
+    }
+  }
+}

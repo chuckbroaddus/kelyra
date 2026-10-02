@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Renata Silva",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "Cell phone",
+        "value": "(555) 274-3190"
+      },
+      {
+        "label": "Email",
+        "value": "renata.silva@example.com"
+      },
+      {
+        "label": "Home address",
+        "value": "1187 Juniper St, Apt 4"
+      },
+      {
+        "label": "Preferred contact",
+        "value": "Text message"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [],
+    "note": null
+  }
+}

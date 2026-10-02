@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Pat Rivera",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Sofia Rivera",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-555-0180"
+      },
+      {
+        "label": "address",
+        "value": "19 Maple Ave"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Sofia Rivera",
+        "confidence": 0.99
+      },
+      {
+        "name": "Luis Rivera",
+        "confidence": 0.99
+      },
+      {
+        "name": "Amelia Rivera",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

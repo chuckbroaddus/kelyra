@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "f7d73d26-f523-4a81-9212-8a6339ad7b6e",
+    "proposal": {
+      "source_id": "N02-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Cafeteria Weekly Menu",
+          "confidence": 1,
+          "evidence": {
+            "quote": "Cafeteria Weekly Menu",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "N02-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "not_a_syllabus",
+          "message": "The provided document is a cafeteria menu, not a course syllabus.",
+          "severity": "block"
+        },
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "unknown",
+      "overall_confidence": 1
+    }
+  }
+}

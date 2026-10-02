@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Grace Okafor",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "birthday",
+        "value": "07/22/2013"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Chinedu Okafor"
+      },
+      {
+        "label": "emergency phone",
+        "value": "(555) 333-1212"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Grace Okafor",
+        "confidence": 0.99
+      },
+      {
+        "name": "Chinedu Okafor",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

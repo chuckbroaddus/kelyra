@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": "Alex Lee",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Harper Lee",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "4"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Alex Lee"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Harper Lee",
+        "confidence": 0.99
+      },
+      {
+        "name": "Alex Lee",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

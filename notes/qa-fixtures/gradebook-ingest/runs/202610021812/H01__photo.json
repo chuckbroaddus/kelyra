@@ -1,0 +1,118 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "0deaaa08-4c96-4112-b270-6bccddb19f98",
+    "proposal": {
+      "source_id": "H01-photo-202610021812",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "calendar.template",
+          "value": "tx_six_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "The academic year uses six-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "calendar.period_model",
+          "value": "six_weeks",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "The academic year uses six-week grading periods.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "rollup.preset",
+          "value": "2/7+1/7",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Semester average: each six-weeks is 2/7 and the semester exam is 1/7.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "rollup.exam_enabled",
+          "value": true,
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Semester average: each six-weeks is 2/7 and the semester exam is 1/7.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "credit.passing_threshold",
+          "value": 70,
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Passing is 70.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "gpa.mode",
+          "value": "unweighted_and_weighted",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Regular A = 4.0. AP A = 5.0 (weighted). Honors receives +0.5 quality points.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "key": "regular",
+              "label": "On-level",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "honors",
+              "label": "Honors",
+              "weighted_bonus": 0.5
+            },
+            {
+              "key": "ap",
+              "label": "AP",
+              "weighted_bonus": 1
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Regular A = 4.0. AP A = 5.0 (weighted). Honors receives +0.5 quality points.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H01-photo-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "handbook",
+      "overall_confidence": 0.9542857142857143
+    }
+  }
+}

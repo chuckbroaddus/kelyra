@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "ms": 3288,
+  "bytes": 65509,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": "LTV5832",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Honda",
+    "model": "Odyssey",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Nora Whitfield"
+    ],
+    "authorized_pickups": [
+      "Grace Whitfield",
+      "Daniel Whitfield"
+    ],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

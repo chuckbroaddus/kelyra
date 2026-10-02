@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3273,
+  "bytes": 162132,
+  "json": {
+    "document_kind": "rejected",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": true,
+    "confidence": 0,
+    "reject_reason": "Field trip permission slip, not a ride-related document.",
+    "other_plates_seen": []
+  }
+}

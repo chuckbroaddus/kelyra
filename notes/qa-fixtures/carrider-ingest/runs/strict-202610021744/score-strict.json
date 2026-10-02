@@ -1,0 +1,4322 @@
+{
+  "stamp": "strict-202610021744",
+  "buckets": {
+    "clean": {
+      "docs": 27,
+      "field_accuracy": 0.88,
+      "doc_pass": 23,
+      "plate_exact": "22/25",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 1
+    },
+    "mild": {
+      "docs": 12,
+      "field_accuracy": 0.858,
+      "doc_pass": 9,
+      "plate_exact": "9/11",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 1
+    },
+    "negatives": {
+      "docs": 7,
+      "field_accuracy": 1,
+      "doc_pass": 7,
+      "plate_exact": "7/7",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "rough": {
+      "docs": 10,
+      "field_accuracy": 0.957,
+      "doc_pass": 9,
+      "plate_exact": "9/10",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "handwritten": {
+      "docs": 4,
+      "field_accuracy": 0.768,
+      "doc_pass": 1,
+      "plate_exact": "2/4",
+      "hallucinations": 1,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "handwritten_rough": {
+      "docs": 2,
+      "field_accuracy": 0.813,
+      "doc_pass": 1,
+      "plate_exact": "1/2",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "multi_car": {
+      "docs": 6,
+      "field_accuracy": 1,
+      "doc_pass": 6,
+      "plate_exact": "6/6",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "multi_car_rough": {
+      "docs": 1,
+      "field_accuracy": 1,
+      "doc_pass": 1,
+      "plate_exact": "1/1",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    },
+    "negatives_rough": {
+      "docs": 2,
+      "field_accuracy": 1,
+      "doc_pass": 2,
+      "plate_exact": "2/2",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    }
+  },
+  "overall": {
+    "docs": 71,
+    "field_accuracy": 0.906,
+    "doc_pass": 59,
+    "plate_exact": "59/68",
+    "hallucinations": 1,
+    "picked_wrong_car": 0,
+    "o0_soft": 2
+  },
+  "documents": [
+    {
+      "id": "V01",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 45923,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Civic",
+          "act": "Civic"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "back",
+          "act": "back"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "KLY4219",
+        "make": "Honda",
+        "model": "Civic",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V01",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 89826,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Civic",
+          "act": "Civic"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "back",
+          "act": "back"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "KLY4219",
+        "make": "Honda",
+        "model": "Civic",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V02",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3111,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "RDE8801",
+          "act": "RDE8801"
+        },
+        {
+          "path": "plateFront",
+          "result": "correct",
+          "exp": "RDE8801",
+          "act": "RDE8801"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Camry",
+          "act": "Camry"
+        },
+        {
+          "path": "side",
+          "result": "correct",
+          "exp": "front",
+          "act": "front"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "RDE8801",
+        "make": "Toyota",
+        "model": "Camry",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "V03",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 5270,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "NGT5520",
+          "act": "NGT5520"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "NGT5520",
+        "make": "Ford",
+        "model": "F-150",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "V03",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 3034,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "NGT5520",
+          "act": "NGT5520"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "NGT5520",
+        "make": "Ford",
+        "model": "F-150",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.9
+      }
+    },
+    {
+      "id": "V04",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3994,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "ANG3140",
+          "act": "ANG3140"
+        },
+        {
+          "path": "side",
+          "result": "wrong",
+          "exp": "back",
+          "act": "unknown",
+          "o0_soft": false
+        }
+      ],
+      "counts": {
+        "correct": 1,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 1,
+        "o0_soft": 0
+      },
+      "accuracy": 0.5,
+      "pass": false,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "ANG3140",
+        "make": "NISSAN",
+        "model": "ROGUE",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "V04",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 3425,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "ANG3140",
+          "act": "ANG3140"
+        },
+        {
+          "path": "side",
+          "result": "wrong",
+          "exp": "back",
+          "act": "unknown",
+          "o0_soft": false
+        }
+      ],
+      "counts": {
+        "correct": 1,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 1,
+        "o0_soft": 0
+      },
+      "accuracy": 0.5,
+      "pass": false,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "ANG3140",
+        "make": "Nissan",
+        "model": "Rogue",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V05",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 2779,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0
+      }
+    },
+    {
+      "id": "V05",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 3396,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "V06",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 120624,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "TMP9944",
+          "act": "TMP9944"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "TMP9944",
+        "make": "Chevrolet",
+        "model": "Malibu",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "V06",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 2914,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "TMP9944",
+          "act": "TMP9944"
+        },
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "TMP9944",
+        "make": "Chevrolet",
+        "model": "Malibu",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V07",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3272,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "8KGM204",
+          "act": "8KGM204"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Subaru",
+          "act": "Subaru"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Outback",
+          "act": "Outback"
+        }
+      ],
+      "counts": {
+        "correct": 3,
+        "total": 3,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "8KGM204",
+        "make": "Subaru",
+        "model": "Outback",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V07",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 2863,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "8KGM204",
+          "act": "8KGM204"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Subaru",
+          "act": "Subaru"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Outback",
+          "act": "Outback"
+        }
+      ],
+      "counts": {
+        "correct": 3,
+        "total": 3,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "8KGM204",
+        "make": "Subaru",
+        "model": "Outback",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V08",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 2705,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "BCK2002",
+          "act": null
+        },
+        {
+          "path": "plateFront",
+          "result": "missing",
+          "exp": "FRN1001",
+          "act": null
+        },
+        {
+          "path": "plateBack",
+          "result": "missing",
+          "exp": "BCK2002",
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 0,
+        "total": 3,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "V09",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3417,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SHD6677",
+          "act": "SHD6677"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "SHD6677",
+        "make": "Mazda",
+        "model": "CX-5",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "V09",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 3251,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SHD6677",
+          "act": "SHD6677"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": false,
+          "act": false
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "SHD6677",
+        "make": "Mazda",
+        "model": "CX-5",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "V10",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 2946,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "wrong",
+          "exp": "BL0OM42",
+          "act": "BLOOM42",
+          "o0_soft": true
+        }
+      ],
+      "counts": {
+        "correct": 0,
+        "total": 1,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 1,
+        "o0_soft": 1
+      },
+      "accuracy": 0,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "BLOOM42",
+        "make": "Hyundai",
+        "model": "Tucson",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "V10",
+      "kind": "vehicle_photo",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 4717,
+      "rows": [
+        {
+          "path": "plate",
+          "result": "wrong",
+          "exp": "BL0OM42",
+          "act": "BLOOM42",
+          "o0_soft": true
+        }
+      ],
+      "counts": {
+        "correct": 0,
+        "total": 1,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 1,
+        "o0_soft": 1
+      },
+      "accuracy": 0,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "BLOOM42",
+        "make": "Hyundai",
+        "model": "Tucson",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "T01",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3603,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "1042",
+          "act": "1042"
+        },
+        {
+          "path": "riders:maya chen",
+          "result": "correct",
+          "exp": "maya chen",
+          "act": "maya chen"
+        },
+        {
+          "path": "riders:leo chen",
+          "result": "correct",
+          "exp": "leo chen",
+          "act": "leo chen"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "KLY4219",
+        "make": null,
+        "model": null,
+        "tag_number": "1042",
+        "riders": [
+          "Maya Chen",
+          "Leo Chen"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "T01",
+      "kind": "hang_tag",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 2864,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KLY4219",
+          "act": "KLY4219"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "1042",
+          "act": "1042"
+        },
+        {
+          "path": "riders:maya chen",
+          "result": "correct",
+          "exp": "maya chen",
+          "act": "maya chen"
+        },
+        {
+          "path": "riders:leo chen",
+          "result": "correct",
+          "exp": "leo chen",
+          "act": "leo chen"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "KLY4219",
+        "make": null,
+        "model": null,
+        "tag_number": "1042",
+        "riders": [
+          "Maya Chen",
+          "Leo Chen"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "T02",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 37384,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "QWZ3390",
+          "act": "QWZ3390"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "77",
+          "act": "77"
+        },
+        {
+          "path": "riders:ava brooks",
+          "result": "correct",
+          "exp": "ava brooks",
+          "act": "ava brooks"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "QWZ3390",
+        "make": null,
+        "model": null,
+        "tag_number": "77",
+        "riders": [
+          "Ava Brooks"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "T02",
+      "kind": "hang_tag",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 2973,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "QWZ3390",
+          "act": "QWZ3390"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "77",
+          "act": "77"
+        },
+        {
+          "path": "riders:ava brooks",
+          "result": "correct",
+          "exp": "ava brooks",
+          "act": "ava brooks"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "QWZ3390",
+        "make": null,
+        "model": null,
+        "tag_number": "77",
+        "riders": [
+          "Ava Brooks"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "T03",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3046,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "2201",
+          "act": "2201"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 3,
+        "total": 3,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": "2201",
+        "riders": [
+          "Noah Patel"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F01",
+      "kind": "check_in_sheet",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3093,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders:maya chen",
+          "result": "correct",
+          "exp": "maya chen",
+          "act": "maya chen"
+        },
+        {
+          "path": "riders:sam ortiz",
+          "result": "correct",
+          "exp": "sam ortiz",
+          "act": "sam ortiz"
+        },
+        {
+          "path": "riders:ava brooks",
+          "result": "correct",
+          "exp": "ava brooks",
+          "act": "ava brooks"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": null,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "check_in_sheet",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Maya Chen",
+          "Sam Ortiz",
+          "Ava Brooks"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F02",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3381,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "riders:jordan lee",
+          "result": "correct",
+          "exp": "jordan lee",
+          "act": "jordan lee"
+        },
+        {
+          "path": "authorized_pickups:priya lee",
+          "result": "correct",
+          "exp": "priya lee",
+          "act": "priya lee"
+        },
+        {
+          "path": "authorized_pickups:marcus lee",
+          "result": "correct",
+          "exp": "marcus lee",
+          "act": "marcus lee"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "JRD4410",
+          "act": "JRD4410"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "JRD4410",
+        "make": "Honda",
+        "model": "CR-V",
+        "tag_number": null,
+        "riders": [
+          "Jordan Lee"
+        ],
+        "authorized_pickups": [
+          "Priya Lee",
+          "Marcus Lee"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F02",
+      "kind": "authorized_pickup",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 3243,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "riders:jordan lee",
+          "result": "correct",
+          "exp": "jordan lee",
+          "act": "jordan lee"
+        },
+        {
+          "path": "authorized_pickups:priya lee",
+          "result": "correct",
+          "exp": "priya lee",
+          "act": "priya lee"
+        },
+        {
+          "path": "authorized_pickups:marcus lee",
+          "result": "correct",
+          "exp": "marcus lee",
+          "act": "marcus lee"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "JRD4410",
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 1,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.8,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": "Honda",
+        "model": "CRV",
+        "tag_number": null,
+        "riders": [
+          "Jordan Lee"
+        ],
+        "authorized_pickups": [
+          "Priya Lee",
+          "Marcus Lee"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F03",
+      "kind": "check_in_sheet",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3224,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders:ellie nguyen",
+          "result": "correct",
+          "exp": "ellie nguyen",
+          "act": "ellie nguyen"
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": null,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "check_in_sheet",
+        "plate": "ELL2099",
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Ellie Nguyen"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F03",
+      "kind": "check_in_sheet",
+      "variant": "photo",
+      "bucket": "mild",
+      "http_status": 200,
+      "ms": 24560,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "check_in_sheet",
+          "act": "check_in_sheet"
+        },
+        {
+          "path": "riders:ellie nguyen",
+          "result": "correct",
+          "exp": "ellie nguyen",
+          "act": "ellie nguyen"
+        }
+      ],
+      "counts": {
+        "correct": 2,
+        "total": 2,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": null,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "check_in_sheet",
+        "plate": "ELL2099",
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Ellie Nguyen"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "F04",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 2843,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "authorized_pickups:mina kim",
+          "result": "correct",
+          "exp": "mina kim",
+          "act": "mina kim"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 3,
+        "total": 3,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Chris Kim"
+        ],
+        "authorized_pickups": [
+          "Mina Kim"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 30142,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 26747,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 27436,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 18718,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 3094,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "unreadable",
+          "result": "correct",
+          "exp": true,
+          "act": true
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "R01",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 10955,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "HVK3827",
+          "act": "HVK3827"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "RAV4",
+          "act": "RAV4"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "HVK3827",
+        "make": "Toyota",
+        "model": "RAV4",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "R01",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 9045,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "HVK3827",
+          "act": "HVK3827"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "RAV4",
+          "act": "RAV4"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "HVK3827",
+        "make": "Toyota",
+        "model": "RAV4",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "R02",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3949,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "MPW6142",
+          "act": "MPW6142"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Ford",
+          "act": "Ford"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Explorer",
+          "act": "Explorer"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "MPW6142",
+        "make": "Ford",
+        "model": "Explorer",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "R02",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 4073,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "MPW6142",
+          "act": "MPW6142"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Ford",
+          "act": "Ford"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Explorer",
+          "act": "Explorer"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "MPW6142",
+        "make": "Ford",
+        "model": "Explorer",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "R03",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 4542,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "DGT7395",
+          "act": "DGT7395"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Chevrolet",
+          "act": "Chevrolet"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Malibu",
+          "act": "Malibu"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "DGT7395",
+        "make": "Chevrolet",
+        "model": "Malibu",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "R03",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 4159,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "DGT7395",
+          "act": "DGT7395"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Chevrolet",
+          "act": "Chevrolet"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Malibu",
+          "act": "Malibu"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "DGT7395",
+        "make": "Chevrolet",
+        "model": "Malibu",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R04",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3701,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "CRX2467",
+          "act": "CRX2467"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Nissan",
+          "act": "Nissan"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Rogue",
+          "act": "Rogue"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "CRX2467",
+        "make": "Nissan",
+        "model": "Rogue",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "R04",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 2877,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "CRX2467",
+          "act": "CRX2467"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Nissan",
+          "act": "Nissan"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Rogue",
+          "act": "Rogue"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "CRX2467",
+        "make": "Nissan",
+        "model": "Rogue",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R05",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3098,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "5K28394",
+          "act": "5K28394"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Kia",
+          "act": "Kia"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Telluride",
+          "act": "Telluride"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "5K28394",
+        "make": "Kia",
+        "model": "Telluride",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "R05",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 2756,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "5K28394",
+          "act": "5K28394"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Kia",
+          "act": "Kia"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Telluride",
+          "act": "Telluride"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "5K28394",
+        "make": "Kia",
+        "model": "Telluride",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R06",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3619,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "JCW472",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Subaru",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "Outback",
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 1,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.25,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0.4
+      }
+    },
+    {
+      "id": "R06",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 3452,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": "JCW472",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0.4
+      }
+    },
+    {
+      "id": "R07",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3288,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "LTV5832",
+          "act": "LTV5832"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Odyssey",
+          "act": "Odyssey"
+        },
+        {
+          "path": "riders:nora whitfield",
+          "result": "correct",
+          "exp": "nora whitfield",
+          "act": "nora whitfield"
+        },
+        {
+          "path": "authorized_pickups:grace whitfield",
+          "result": "correct",
+          "exp": "grace whitfield",
+          "act": "grace whitfield"
+        },
+        {
+          "path": "authorized_pickups:daniel whitfield",
+          "result": "correct",
+          "exp": "daniel whitfield",
+          "act": "daniel whitfield"
+        }
+      ],
+      "counts": {
+        "correct": 7,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "LTV5832",
+        "make": "Honda",
+        "model": "Odyssey",
+        "tag_number": null,
+        "riders": [
+          "Nora Whitfield"
+        ],
+        "authorized_pickups": [
+          "Grace Whitfield",
+          "Daniel Whitfield"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "R07",
+      "kind": "authorized_pickup",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 3421,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "LTV5832",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Honda",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "Odyssey",
+          "act": null
+        },
+        {
+          "path": "riders:nora whitfield",
+          "result": "correct",
+          "exp": "nora whitfield",
+          "act": "nora whitfield"
+        },
+        {
+          "path": "authorized_pickups:grace whitfield",
+          "result": "correct",
+          "exp": "grace whitfield",
+          "act": "grace whitfield"
+        },
+        {
+          "path": "authorized_pickups:daniel whitfield",
+          "result": "correct",
+          "exp": "daniel whitfield",
+          "act": "daniel whitfield"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.5714285714285714,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Nora Whitfield"
+        ],
+        "authorized_pickups": [
+          "Grace Whitfield",
+          "Daniel Whitfield"
+        ],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R08",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 4277,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KZD4176",
+          "act": "KZD4176"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Sienna",
+          "act": "Sienna"
+        },
+        {
+          "path": "riders:elias romero",
+          "result": "correct",
+          "exp": "elias romero",
+          "act": "elias romero"
+        },
+        {
+          "path": "authorized_pickups:lucia romero",
+          "result": "correct",
+          "exp": "lucia romero",
+          "act": "lucia romero"
+        },
+        {
+          "path": "authorized_pickups:tomas romero",
+          "result": "correct",
+          "exp": "tomas romero",
+          "act": "tomas romero"
+        },
+        {
+          "path": "authorized_pickups:ana vega",
+          "result": "correct",
+          "exp": "ana vega",
+          "act": "ana vega"
+        }
+      ],
+      "counts": {
+        "correct": 8,
+        "total": 8,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "KZD4176",
+        "make": "Toyota",
+        "model": "Sienna",
+        "tag_number": null,
+        "riders": [
+          "Elias Romero"
+        ],
+        "authorized_pickups": [
+          "Lucia Romero",
+          "Tomas Romero",
+          "Ana Vega"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "R08",
+      "kind": "authorized_pickup",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 3557,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KZD4176",
+          "act": "KZD4176"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Sienna",
+          "act": "Sienna"
+        },
+        {
+          "path": "riders:elias romero",
+          "result": "correct",
+          "exp": "elias romero",
+          "act": "elias romero"
+        },
+        {
+          "path": "authorized_pickups:lucia romero",
+          "result": "correct",
+          "exp": "lucia romero",
+          "act": "lucia romero"
+        },
+        {
+          "path": "authorized_pickups:tomas romero",
+          "result": "correct",
+          "exp": "tomas romero",
+          "act": "tomas romero"
+        },
+        {
+          "path": "authorized_pickups:ana vega",
+          "result": "correct",
+          "exp": "ana vega",
+          "act": "ana vega"
+        }
+      ],
+      "counts": {
+        "correct": 8,
+        "total": 8,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "KZD4176",
+        "make": "Toyota",
+        "model": "Sienna",
+        "tag_number": null,
+        "riders": [
+          "Elias Romero"
+        ],
+        "authorized_pickups": [
+          "Lucia Romero",
+          "Tomas Romero",
+          "Ana Vega"
+        ],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R09",
+      "kind": "hang_tag",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3142,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "FNR6624",
+          "act": "FNR6624"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "2087",
+          "act": "2087"
+        },
+        {
+          "path": "riders:ivy patel",
+          "result": "correct",
+          "exp": "ivy patel",
+          "act": "ivy patel"
+        },
+        {
+          "path": "riders:arjun patel",
+          "result": "correct",
+          "exp": "arjun patel",
+          "act": "arjun patel"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "FNR6624",
+        "make": null,
+        "model": null,
+        "tag_number": "2087",
+        "riders": [
+          "Ivy Patel",
+          "Arjun Patel"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "R09",
+      "kind": "hang_tag",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 4365,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "hang_tag",
+          "act": "hang_tag"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "FNR6624",
+          "act": "FNR6624"
+        },
+        {
+          "path": "tag_number",
+          "result": "correct",
+          "exp": "2087",
+          "act": "2087"
+        },
+        {
+          "path": "riders:ivy patel",
+          "result": "correct",
+          "exp": "ivy patel",
+          "act": "ivy patel"
+        },
+        {
+          "path": "riders:arjun patel",
+          "result": "correct",
+          "exp": "arjun patel (uncertain)",
+          "act": "arjun"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "hang_tag",
+        "plate": "FNR6624",
+        "make": null,
+        "model": null,
+        "tag_number": "2087",
+        "riders": [
+          "Ivy Patel",
+          "Arjun"
+        ],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R10",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "clean",
+      "http_status": 200,
+      "ms": 3831,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "PXM853",
+          "act": "PXM853"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Jeep",
+          "act": "Jeep"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Wrangler",
+          "act": "Wrangler"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "PXM853",
+        "make": "Jeep",
+        "model": "Wrangler",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "R10",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "rough",
+      "http_status": 200,
+      "ms": 2982,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "PXM853",
+          "act": "PXM853"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Jeep",
+          "act": "Jeep"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Wrangler",
+          "act": "Wrangler"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "PXM853",
+        "make": "Jeep",
+        "model": "Wrangler",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "H01",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "handwritten",
+      "http_status": 200,
+      "ms": 2812,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "RWK4729",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Honda",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "Pilot",
+          "act": null
+        },
+        {
+          "path": "riders:mila torres",
+          "result": "correct",
+          "exp": "mila torres",
+          "act": "mila torres"
+        },
+        {
+          "path": "authorized_pickups:elena torres",
+          "result": "correct",
+          "exp": "elena torres",
+          "act": "elena torres"
+        },
+        {
+          "path": "authorized_pickups:victor torres",
+          "result": "correct",
+          "exp": "victor torres",
+          "act": "victor torres"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.5714285714285714,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Mila Torres"
+        ],
+        "authorized_pickups": [
+          "Elena Torres",
+          "Victor Torres"
+        ],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "H02",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "handwritten",
+      "http_status": 200,
+      "ms": 2690,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "GHY3758",
+          "act": "GHY3758"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Ford",
+          "act": "Ford"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "F-150",
+          "act": "F-150"
+        },
+        {
+          "path": "riders:owen fitzgerald",
+          "result": "correct",
+          "exp": "owen fitzgerald",
+          "act": "owen fitzgerald"
+        },
+        {
+          "path": "authorized_pickups:megan fitzgerald",
+          "result": "correct",
+          "exp": "megan fitzgerald",
+          "act": "megan fitzgerald"
+        },
+        {
+          "path": "authorized_pickups:pat doyle",
+          "result": "correct",
+          "exp": "pat doyle",
+          "act": "pat doyle"
+        },
+        {
+          "path": "authorized_pickups:extra",
+          "result": "hallucinated",
+          "exp": null,
+          "act": "chris doyle",
+          "note": "excluded/forbidden name"
+        }
+      ],
+      "counts": {
+        "correct": 7,
+        "total": 8,
+        "hallucinated": 1,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.875,
+      "pass": false,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "GHY3758",
+        "make": "Ford",
+        "model": "F-150",
+        "tag_number": null,
+        "riders": [
+          "Owen Fitzgerald"
+        ],
+        "authorized_pickups": [
+          "Megan Fitzgerald",
+          "Chris Doyle",
+          "Pat Doyle"
+        ],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "H03",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "handwritten",
+      "http_status": 200,
+      "ms": 3105,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "JMT6492",
+          "act": "JMT6492"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Mazda",
+          "act": "Mazda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "CX-5",
+          "act": "CX-5"
+        },
+        {
+          "path": "riders:zoe kim",
+          "result": "correct",
+          "exp": "zoe kim",
+          "act": "zoe kim"
+        },
+        {
+          "path": "authorized_pickups:hana kim",
+          "result": "correct",
+          "exp": "hana kim",
+          "act": "hana kim"
+        },
+        {
+          "path": "authorized_pickups:daniel kim",
+          "result": "correct",
+          "exp": "daniel kim",
+          "act": "daniel kim"
+        }
+      ],
+      "counts": {
+        "correct": 7,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "JMT6492",
+        "make": "Mazda",
+        "model": "CX-5",
+        "tag_number": null,
+        "riders": [
+          "Zoe Kim"
+        ],
+        "authorized_pickups": [
+          "Hana Kim",
+          "Daniel Kim"
+        ],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "H03",
+      "kind": "authorized_pickup",
+      "variant": "rough",
+      "bucket": "handwritten_rough",
+      "http_status": 200,
+      "ms": 4204,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "JMT6492",
+          "act": "JMT6492"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Mazda",
+          "act": "Mazda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "CX-5",
+          "act": "CX-5"
+        },
+        {
+          "path": "riders:zoe kim",
+          "result": "correct",
+          "exp": "zoe kim",
+          "act": "zoe kim"
+        },
+        {
+          "path": "authorized_pickups:hana kim",
+          "result": "correct",
+          "exp": "hana kim",
+          "act": "hana kim"
+        },
+        {
+          "path": "authorized_pickups:daniel kim",
+          "result": "correct",
+          "exp": "daniel kim",
+          "act": "daniel kim"
+        }
+      ],
+      "counts": {
+        "correct": 7,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": "JMT6492",
+        "make": "Mazda",
+        "model": "CX-5",
+        "tag_number": null,
+        "riders": [
+          "Zoe Kim"
+        ],
+        "authorized_pickups": [
+          "Hana Kim",
+          "Daniel Kim"
+        ],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "H04",
+      "kind": "authorized_pickup",
+      "variant": "clean",
+      "bucket": "handwritten",
+      "http_status": 200,
+      "ms": 2708,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "VDC2843",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Chevrolet",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "Tahoe",
+          "act": null
+        },
+        {
+          "path": "riders:liam brooks",
+          "result": "correct",
+          "exp": "liam brooks",
+          "act": "liam brooks"
+        },
+        {
+          "path": "authorized_pickups:rachel brooks",
+          "result": "correct",
+          "exp": "rachel brooks",
+          "act": "rachel brooks"
+        },
+        {
+          "path": "authorized_pickups:kevin brooks",
+          "result": "correct",
+          "exp": "kevin brooks",
+          "act": "kevin brooks"
+        },
+        {
+          "path": "authorized_pickups:joy martin",
+          "result": "correct",
+          "exp": "joy martin",
+          "act": "joy martin"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 8,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.625,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Liam Brooks"
+        ],
+        "authorized_pickups": [
+          "Rachel Brooks",
+          "Kevin Brooks",
+          "Joy Martin"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "H04",
+      "kind": "authorized_pickup",
+      "variant": "rough",
+      "bucket": "handwritten_rough",
+      "http_status": 200,
+      "ms": 3315,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "VDC2843",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Chevrolet",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "Tahoe",
+          "act": null
+        },
+        {
+          "path": "riders:liam brooks",
+          "result": "correct",
+          "exp": "liam brooks",
+          "act": "liam brooks"
+        },
+        {
+          "path": "authorized_pickups:rachel brooks",
+          "result": "correct",
+          "exp": "rachel brooks",
+          "act": "rachel brooks"
+        },
+        {
+          "path": "authorized_pickups:kevin brooks",
+          "result": "correct",
+          "exp": "kevin brooks",
+          "act": "kevin brooks"
+        },
+        {
+          "path": "authorized_pickups:joy martin",
+          "result": "correct",
+          "exp": "joy martin",
+          "act": "joy martin"
+        }
+      ],
+      "counts": {
+        "correct": 5,
+        "total": 8,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.625,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Liam Brooks"
+        ],
+        "authorized_pickups": [
+          "Rachel Brooks",
+          "Kevin Brooks",
+          "Joy Martin"
+        ],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "M01",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 3250,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "KTW4863",
+          "act": "KTW4863"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Camry",
+          "act": "Camry"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "KTW4863",
+        "make": "Toyota",
+        "model": "Camry",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "M02",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 3176,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "MXH7342",
+          "act": "MXH7342"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Honda",
+          "act": "Honda"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Accord",
+          "act": "Accord"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "MXH7342",
+        "make": "Honda",
+        "model": "Accord",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "M03",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 2897,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "HGM6258",
+          "act": "HGM6258"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Kia",
+          "act": "Kia"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Sorento",
+          "act": "Sorento"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "HGM6258",
+        "make": "Kia",
+        "model": "Sorento",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.99
+      }
+    },
+    {
+      "id": "M04",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 3290,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "YRV4825",
+          "act": "YRV4825"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Subaru",
+          "act": "Subaru"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Forester",
+          "act": "Forester"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "YRV4825",
+        "make": "Subaru",
+        "model": "Forester",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "M05",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 4333,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "BFT2694",
+          "act": "BFT2694"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Volkswagen",
+          "act": "Volkswagen"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Jetta",
+          "act": "Jetta"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "BFT2694",
+        "make": "Volkswagen",
+        "model": "Jetta",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "M06",
+      "kind": "vehicle_photo",
+      "variant": "clean",
+      "bucket": "multi_car",
+      "http_status": 200,
+      "ms": 3216,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SNT5742",
+          "act": "SNT5742"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Highlander",
+          "act": "Highlander"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "SNT5742",
+        "make": "Toyota",
+        "model": "Highlander",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "M06",
+      "kind": "vehicle_photo",
+      "variant": "rough",
+      "bucket": "multi_car_rough",
+      "http_status": 200,
+      "ms": 3577,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "SNT5742",
+          "act": "SNT5742"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Toyota",
+          "act": "Toyota"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Highlander",
+          "act": "Highlander"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "SNT5742",
+        "make": "Toyota",
+        "model": "Highlander",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "variant": "clean",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 3158,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N04",
+      "kind": "negative",
+      "variant": "rough",
+      "bucket": "negatives_rough",
+      "http_status": 200,
+      "ms": 3273,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 0
+      }
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "variant": "clean",
+      "bucket": "negatives",
+      "http_status": 200,
+      "ms": 3331,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    },
+    {
+      "id": "N05",
+      "kind": "negative",
+      "variant": "rough",
+      "bucket": "negatives_rough",
+      "http_status": 200,
+      "ms": 3434,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        },
+        {
+          "path": "plate",
+          "result": "correct_empty",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_no_invent",
+          "result": "correct",
+          "exp": null,
+          "act": null
+        },
+        {
+          "path": "_negative_reject",
+          "result": "correct",
+          "exp": "rejected",
+          "act": "rejected"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "rejected",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": true,
+        "confidence": 1
+      }
+    }
+  ]
+}

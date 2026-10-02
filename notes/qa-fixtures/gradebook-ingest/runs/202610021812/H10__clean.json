@@ -1,0 +1,87 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "0a10bce9-8786-4668-8241-604355dec4f4",
+    "proposal": {
+      "source_id": "H10-clean-202610021812",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "gpa.repeat",
+          "value": {
+            "policy": "forgive_higher"
+          },
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "when a course is repeated, the higher grade replaces the lower in GPA (forgiveness).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H10-clean-202610021812"
+        },
+        {
+          "path": "gpa.include",
+          "value": {
+            "recovery": false,
+            "pre_9": false
+          },
+          "confidence": 0.88,
+          "evidence": {
+            "quote": "Credit recovery and pre-grade-9 courses are excluded from cumulative GPA.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H10-clean-202610021812"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "key": "honors",
+              "label": "Honors",
+              "weighted_bonus": 0.5
+            },
+            {
+              "key": "ap",
+              "label": "AP",
+              "weighted_bonus": 1
+            },
+            {
+              "key": "onramps",
+              "label": "OnRamps",
+              "weighted_bonus": 1
+            }
+          ],
+          "confidence": 0.9,
+          "evidence": {
+            "quote": "Levels include Honors (+0.5), AP (+1.0), and OnRamps (weighted like Dual Credit).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H10-clean-202610021812"
+        },
+        {
+          "path": "gpa.mode",
+          "value": "unweighted_and_weighted",
+          "confidence": 0.75,
+          "evidence": {
+            "quote": "Levels include Honors (+0.5), AP (+1.0), and OnRamps (weighted like Dual Credit).",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "H10-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "gpa_chart",
+      "overall_confidence": 0.8575
+    }
+  }
+}

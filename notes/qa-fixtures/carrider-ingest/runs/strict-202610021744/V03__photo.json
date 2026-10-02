@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3034,
+  "bytes": 18256,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "NGT5520",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Ford",
+    "model": "F-150",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.9,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

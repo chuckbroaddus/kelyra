@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 10955,
+  "bytes": 98584,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "HVK3827",
+    "plateFront": null,
+    "plateBack": "HVK3827",
+    "make": "Toyota",
+    "model": "RAV4",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

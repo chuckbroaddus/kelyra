@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Priyanka Raman",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Dev Raman",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-614-2289"
+      },
+      {
+        "label": "email",
+        "value": "praman.family@example.com"
+      },
+      {
+        "label": "address",
+        "value": "48 Orchard Hill Rd"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Priyanka Raman",
+        "confidence": 0.99
+      },
+      {
+        "name": "Dev Raman",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

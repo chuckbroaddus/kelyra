@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Deshawn Porter",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Kiara Porter",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Guardian (grandfather)"
+      },
+      {
+        "label": "phone",
+        "value": "555-503-8816"
+      },
+      {
+        "label": "email",
+        "value": "d.porter.home@example.org"
+      },
+      {
+        "label": "preferred contact",
+        "value": "Phone call"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Deshawn Porter",
+        "confidence": 1
+      },
+      {
+        "name": "Kiara Porter",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

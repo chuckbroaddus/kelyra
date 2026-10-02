@@ -1,0 +1,81 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "1ff1a95f-4768-49e4-bd42-bbea2859d8d6",
+    "proposal": {
+      "source_id": "P04-rough-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "U.S. History — Course Syllabus",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "U.S. History — Course Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-rough-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "How your grade is calculated",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "P04-rough-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "unit_tests",
+              "label": "Unit Tests",
+              "weight_percent": 40
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 25
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "classwork",
+              "label": "Classwork",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Unit Tests 40%\nProjects 25%\nQuizzes 20%\nClasswork 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-rough-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [
+        {
+          "code": "handwriting_retry",
+          "message": "Retried extract using page transcription.",
+          "severity": "info"
+        }
+      ],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.8833333333333333
+    }
+  }
+}

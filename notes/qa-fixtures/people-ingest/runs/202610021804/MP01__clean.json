@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Dana Thompson",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Maya Thompson",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-301-1001"
+      },
+      {
+        "label": "email",
+        "value": "dana.t@example.com"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Maya Thompson",
+        "confidence": 1
+      },
+      {
+        "name": "Dana Thompson",
+        "confidence": 1
+      },
+      {
+        "name": "Chris Thompson",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

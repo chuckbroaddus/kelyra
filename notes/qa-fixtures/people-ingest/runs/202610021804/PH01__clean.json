@@ -1,0 +1,59 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Carmen Ibarra",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Sofia Ibarra",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "1"
+      },
+      {
+        "label": "relationship",
+        "value": "Mom"
+      },
+      {
+        "label": "phone",
+        "value": "555-208-4471"
+      },
+      {
+        "label": "email",
+        "value": "carmen.ibarra@example.com"
+      },
+      {
+        "label": "relationship",
+        "value": "Dad"
+      },
+      {
+        "label": "phone",
+        "value": "555-208-4490"
+      },
+      {
+        "label": "address",
+        "value": "77 poplar ct"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Carmen Ibarra",
+        "confidence": 0.99
+      },
+      {
+        "name": "Luis Ibarra",
+        "confidence": 0.99
+      },
+      {
+        "name": "Sofia Ibarra",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

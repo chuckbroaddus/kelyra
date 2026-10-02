@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Hana Yoshida",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "6"
+      },
+      {
+        "label": "allergies",
+        "value": "Tree nuts, latex"
+      },
+      {
+        "label": "health conditions",
+        "value": "Epilepsy - seizure plan on file"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Kenji Yoshida"
+      },
+      {
+        "label": "emergency phone",
+        "value": "555-947-3302"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [],
+    "note": null
+  }
+}

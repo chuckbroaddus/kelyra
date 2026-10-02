@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "homework",
+    "parentGuessName": null,
+    "confidence": 0.95,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [],
+    "note": null
+  }
+}

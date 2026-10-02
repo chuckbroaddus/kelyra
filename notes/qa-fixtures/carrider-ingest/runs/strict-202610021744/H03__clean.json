@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "ms": 3105,
+  "bytes": 78020,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": "JMT6492",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Mazda",
+    "model": "CX-5",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Zoe Kim"
+    ],
+    "authorized_pickups": [
+      "Hana Kim",
+      "Daniel Kim"
+    ],
+    "unreadable": false,
+    "confidence": 0.99,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

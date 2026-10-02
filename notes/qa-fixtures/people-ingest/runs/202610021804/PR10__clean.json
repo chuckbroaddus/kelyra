@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Gabriel Fontaine",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Elise Fontaine",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Relationship",
+        "value": "Father"
+      },
+      {
+        "label": "Phone",
+        "value": "555-725-0063"
+      },
+      {
+        "label": "Email",
+        "value": "gfontaine@example.com"
+      },
+      {
+        "label": "Preferred contact",
+        "value": "Email"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Gabriel Fontaine",
+        "confidence": 1
+      },
+      {
+        "name": "Elise Fontaine",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

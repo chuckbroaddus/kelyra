@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": "Ruth Thornton",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Isabella Thornton",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "4"
+      },
+      {
+        "label": "birthday",
+        "value": "3/15/2015"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Ruth Thornton"
+      },
+      {
+        "label": "phone",
+        "value": "555-240-1736"
+      },
+      {
+        "label": "allergies",
+        "value": "amoxicillin"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Isabella Thornton",
+        "confidence": 1
+      },
+      {
+        "name": "Ruth Thornton",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

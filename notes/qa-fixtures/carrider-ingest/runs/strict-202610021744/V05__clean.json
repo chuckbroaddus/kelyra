@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 2779,
+  "bytes": 37165,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": true,
+    "confidence": 0,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}
