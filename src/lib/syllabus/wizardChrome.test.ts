@@ -149,6 +149,11 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   // Syllabus hosts nav on a full-bleed transparent overlay (no band between trays).
   assert.match(ui, /styles\.navHost/);
   assert.match(ui, /backgroundColor: 'transparent'/);
+  // Shared step swipe (LTR/RTL) — same handlers as tray ‹ › + first-step stack pop.
+  assert.match(ui, /WizardStepSwipe/);
+  assert.match(ui, /onBackStep=\{onBack\}/);
+  assert.match(ui, /onNextStep=\{onContinue\}/);
+  assert.match(ui, /onPopStack/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
