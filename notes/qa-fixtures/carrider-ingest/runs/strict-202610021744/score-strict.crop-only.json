@@ -1,0 +1,219 @@
+{
+  "stamp": "strict-202610021744",
+  "buckets": {
+    "crop": {
+      "docs": 3,
+      "field_accuracy": 0.857,
+      "doc_pass": 2,
+      "plate_exact": "2/3",
+      "hallucinations": 0,
+      "picked_wrong_car": 0,
+      "o0_soft": 0
+    }
+  },
+  "overall": {
+    "docs": 0,
+    "field_accuracy": 0,
+    "doc_pass": 0,
+    "plate_exact": "0/0",
+    "hallucinations": 0,
+    "picked_wrong_car": 0,
+    "o0_soft": 0
+  },
+  "documents": [
+    {
+      "id": "R03",
+      "kind": "vehicle_photo",
+      "variant": "crop",
+      "bucket": "crop",
+      "http_status": 200,
+      "ms": 2818,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "DGT7395",
+          "act": "DGT7395"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Chevrolet",
+          "act": "Chevrolet"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Malibu",
+          "act": "Malibu"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "DGT7395",
+        "make": "Chevrolet",
+        "model": "Malibu",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "R10",
+      "kind": "vehicle_photo",
+      "variant": "crop",
+      "bucket": "crop",
+      "http_status": 200,
+      "ms": 3208,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "vehicle_photo",
+          "act": "vehicle_photo"
+        },
+        {
+          "path": "plate",
+          "result": "correct",
+          "exp": "PXM853",
+          "act": "PXM853"
+        },
+        {
+          "path": "make",
+          "result": "correct",
+          "exp": "Jeep",
+          "act": "Jeep"
+        },
+        {
+          "path": "model",
+          "result": "correct",
+          "exp": "Wrangler",
+          "act": "Wrangler"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 4,
+        "hallucinated": 0,
+        "missing": 0,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 1,
+      "pass": true,
+      "plate_exact": true,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "vehicle_photo",
+        "plate": "PXM853",
+        "make": "Jeep",
+        "model": "Wrangler",
+        "tag_number": null,
+        "riders": [],
+        "authorized_pickups": [],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "H03",
+      "kind": "authorized_pickup",
+      "variant": "crop",
+      "bucket": "crop",
+      "http_status": 200,
+      "ms": 3102,
+      "rows": [
+        {
+          "path": "document_kind",
+          "result": "correct",
+          "exp": "authorized_pickup",
+          "act": "authorized_pickup"
+        },
+        {
+          "path": "plate",
+          "result": "missing",
+          "exp": "JMT6492",
+          "act": null
+        },
+        {
+          "path": "make",
+          "result": "missing",
+          "exp": "Mazda",
+          "act": null
+        },
+        {
+          "path": "model",
+          "result": "missing",
+          "exp": "CX-5",
+          "act": null
+        },
+        {
+          "path": "riders:zoe kim",
+          "result": "correct",
+          "exp": "zoe kim",
+          "act": "zoe kim"
+        },
+        {
+          "path": "authorized_pickups:hana kim",
+          "result": "correct",
+          "exp": "hana kim",
+          "act": "hana kim"
+        },
+        {
+          "path": "authorized_pickups:daniel kim",
+          "result": "correct",
+          "exp": "daniel kim",
+          "act": "daniel kim"
+        }
+      ],
+      "counts": {
+        "correct": 4,
+        "total": 7,
+        "hallucinated": 0,
+        "missing": 3,
+        "wrong": 0,
+        "o0_soft": 0
+      },
+      "accuracy": 0.5714285714285714,
+      "pass": false,
+      "plate_exact": false,
+      "picked_wrong_car": false,
+      "actual": {
+        "document_kind": "authorized_pickup",
+        "plate": null,
+        "make": null,
+        "model": null,
+        "tag_number": null,
+        "riders": [
+          "Zoe Kim"
+        ],
+        "authorized_pickups": [
+          "Hana Kim",
+          "Daniel Kim"
+        ],
+        "unreadable": false,
+        "confidence": 0.95
+      }
+    }
+  ]
+}

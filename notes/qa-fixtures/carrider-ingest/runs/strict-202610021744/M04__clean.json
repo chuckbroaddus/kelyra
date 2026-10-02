@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "ms": 3290,
+  "bytes": 111226,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "YRV4825",
+    "plateFront": null,
+    "plateBack": "YRV4825",
+    "make": "Subaru",
+    "model": "Forester",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": [
+      "CLP7639"
+    ]
+  }
+}

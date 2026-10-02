@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "ms": 4277,
+  "bytes": 67500,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": "KZD4176",
+    "plateFront": null,
+    "plateBack": null,
+    "make": "Toyota",
+    "model": "Sienna",
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Elias Romero"
+    ],
+    "authorized_pickups": [
+      "Lucia Romero",
+      "Tomas Romero",
+      "Ana Vega"
+    ],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

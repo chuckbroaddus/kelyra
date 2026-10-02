@@ -1,0 +1,126 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "a105ebb7-9aac-4c5c-a751-bd0d43839c17",
+    "proposal": {
+      "source_id": "P02-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "English 10",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "English 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "How grades are weighted\nCategory | Weight\nEssays | 40%\nReading Quizzes | 25%\nClasswork | 20%\nParticipation | 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "essays",
+              "label": "Essays",
+              "weight_percent": 40
+            },
+            {
+              "key": "reading_quizzes",
+              "label": "Reading Quizzes",
+              "weight_percent": 25
+            },
+            {
+              "key": "classwork",
+              "label": "Classwork",
+              "weight_percent": 20
+            },
+            {
+              "key": "participation",
+              "label": "Participation",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Essays 40%\nReading Quizzes 25%\nClasswork 20%\nParticipation 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Late essays lose 10% per day.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        },
+        {
+          "path": "syllabus.missing_rule",
+          "value": {
+            "type": "floor",
+            "floor": 50
+          },
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "Missing work is recorded as a 50 until it is turned in.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [
+              "reading_quizzes"
+            ],
+            "attempts": 1,
+            "method": "replace",
+            "cap": null,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Reading quiz retakes: the new score replaces the old score.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P02-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9716666666666667
+    }
+  }
+}

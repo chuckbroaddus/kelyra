@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Imani Brooks-Hale",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "preferred name",
+        "value": "Mani"
+      },
+      {
+        "label": "date of birth",
+        "value": "09/03/2013"
+      },
+      {
+        "label": "grade",
+        "value": "7"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Terrence Hale"
+      },
+      {
+        "label": "emergency phone",
+        "value": "555-836-2047"
+      },
+      {
+        "label": "health conditions",
+        "value": "Mild asthma"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Imani Brooks-Hale",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

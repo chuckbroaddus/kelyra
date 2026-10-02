@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "ms": 2812,
+  "bytes": 74517,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Mila Torres"
+    ],
+    "authorized_pickups": [
+      "Elena Torres",
+      "Victor Torres"
+    ],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Tobias Lindgren",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "nickname",
+        "value": "Toby"
+      },
+      {
+        "label": "date of birth",
+        "value": "11/30/2012"
+      },
+      {
+        "label": "grade",
+        "value": "8"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Astrid Lindgren-Moe"
+      },
+      {
+        "label": "emergency phone",
+        "value": "555-390-7751"
+      },
+      {
+        "label": "allergies",
+        "value": "Dairy"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Tobias Lindgren",
+        "confidence": 1
+      },
+      {
+        "name": "Astrid Lindgren-Moe",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

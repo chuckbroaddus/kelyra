@@ -1,0 +1,111 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "c4c28287-761d-4f74-aa51-7ff195b49611",
+    "proposal": {
+      "source_id": "P05-rough-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Spanish I - Syllabus",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Spanish I - Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-rough-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Cómo se calcula tu nota / How your grade works\nCategory\nWeight\nMajor grades (exams, projects)\n60%\nMinor grades (practice, quizzes)\n40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "P05-rough-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "major_grades",
+              "label": "Major grades (exams, projects)",
+              "weight_percent": 60
+            },
+            {
+              "key": "minor_grades",
+              "label": "Minor grades (practice, quizzes)",
+              "weight_percent": 40
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Major grades (exams, projects) 60%\nMinor grades (practice, quizzes) 40%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-rough-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "flat",
+            "amount": 20,
+            "unit": "points"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work loses a flat 20 points and is accepted until the unit exam.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-rough-202610021812"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [],
+            "attempts": 1,
+            "method": "higher_of",
+            "cap": 80,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "One retake per exam. The higher score counts, capped at 80.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-rough-202610021812"
+        },
+        {
+          "path": "syllabus.narrative",
+          "value": "• Vocabulary quizzes every Friday\n• Bring your cuaderno daily",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "• Vocabulary quizzes every Friday\n• Bring your cuaderno daily",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P05-rough-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9116666666666667
+    }
+  }
+}

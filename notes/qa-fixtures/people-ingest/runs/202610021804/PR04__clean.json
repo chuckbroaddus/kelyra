@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Leo Marchetti",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Student name",
+        "value": "Leo Marchetti"
+      },
+      {
+        "label": "Date of birth",
+        "value": "January 27, 2015"
+      },
+      {
+        "label": "Grade",
+        "value": "5"
+      },
+      {
+        "label": "Home address",
+        "value": "903 Alder Way, Westbrook"
+      },
+      {
+        "label": "Emergency contact",
+        "value": "Gina Marchetti (aunt)"
+      },
+      {
+        "label": "Emergency phone",
+        "value": "555-662-0418"
+      },
+      {
+        "label": "Allergies",
+        "value": "Penicillin"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Leo Marchetti",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "5967e09f-d463-48d7-ae77-e143ba959ace",
+    "proposal": {
+      "source_id": "S09-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "Art I",
+          "confidence": 0.99,
+          "evidence": {
+            "quote": "Art I",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Studio 30 · Critique 20 · Sketchbook 20 · Projects 20 · Final 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "S09-clean-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "studio",
+              "label": "Studio",
+              "weight_percent": 30
+            },
+            {
+              "key": "critique",
+              "label": "Critique",
+              "weight_percent": 20
+            },
+            {
+              "key": "sketchbook",
+              "label": "Sketchbook",
+              "weight_percent": 20
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 20
+            },
+            {
+              "key": "final",
+              "label": "Final",
+              "weight_percent": 10
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Studio 30 · Critique 20 · Sketchbook 20 · Projects 20 · Final 10",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "flat",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late: flat -10% once.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202610021812"
+        },
+        {
+          "path": "syllabus.extra_credit_method",
+          "value": "C",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Extra credit Method C (separate bucket).",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202610021812"
+        },
+        {
+          "path": "syllabus.narrative",
+          "value": "Grading philosophy: growth over perfection — narrative only, not a category.",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Grading philosophy: growth over perfection — narrative only, not a category.",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "S09-clean-202610021812"
+        }
+      ],
+      "ambiguities": [
+        {
+          "code": "within_category",
+          "message": "Category weights are listed, but the calculation method (points inside vs percent inside) is not explicitly stated.",
+          "paths": [
+            "syllabus.within_category"
+          ],
+          "choices": [
+            "points_inside",
+            "percent_inside"
+          ]
+        }
+      ],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9183333333333334
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "ms": 4365,
+  "bytes": 117683,
+  "json": {
+    "document_kind": "hang_tag",
+    "plate": "FNR6624",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": "2087",
+    "riders": [
+      "Ivy Patel",
+      "Arjun"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

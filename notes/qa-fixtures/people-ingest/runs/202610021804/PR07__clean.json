@@ -1,0 +1,71 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Adaeze Okonjo",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Ruby Okonjo-Starr",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-288-6104"
+      },
+      {
+        "label": "email",
+        "value": "adaeze.okonjo@example.com"
+      },
+      {
+        "label": "relationship",
+        "value": "Stepfather"
+      },
+      {
+        "label": "phone",
+        "value": "555-288-6190"
+      },
+      {
+        "label": "email",
+        "value": "m.starr@example.net"
+      },
+      {
+        "label": "relationship",
+        "value": "Grandmother"
+      },
+      {
+        "label": "phone",
+        "value": "555-731-4425"
+      },
+      {
+        "label": "email",
+        "value": "—"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Ruby Okonjo-Starr",
+        "confidence": 1
+      },
+      {
+        "name": "Adaeze Okonjo",
+        "confidence": 1
+      },
+      {
+        "name": "Martin Starr",
+        "confidence": 1
+      },
+      {
+        "name": "Florence Okonjo",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

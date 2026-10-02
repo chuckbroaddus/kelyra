@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 120624,
+  "bytes": 40225,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "TMP9944",
+    "plateFront": null,
+    "plateBack": "TMP9944",
+    "make": "Chevrolet",
+    "model": "Malibu",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.99,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

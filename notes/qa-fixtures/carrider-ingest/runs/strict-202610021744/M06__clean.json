@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "ms": 3216,
+  "bytes": 128945,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "SNT5742",
+    "plateFront": null,
+    "plateBack": "SNT5742",
+    "make": "Toyota",
+    "model": "Highlander",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": [
+      "GVL3816",
+      "MKD2479"
+    ]
+  }
+}

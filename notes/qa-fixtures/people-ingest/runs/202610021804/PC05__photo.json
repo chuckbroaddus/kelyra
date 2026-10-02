@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Taylor Brooks",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "phone",
+        "value": "555-404-2211"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [],
+    "note": null
+  }
+}

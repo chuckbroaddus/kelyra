@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": "Adaeze Okonjo",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Ruby Okonjo-Starr",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "grade",
+        "value": "Grade 2"
+      },
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-288-6104"
+      },
+      {
+        "label": "email",
+        "value": "adaeze.okohjo@example.com"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Ruby Okonjo-Starr",
+        "confidence": 1
+      },
+      {
+        "name": "Adaeze Okonjo",
+        "confidence": 1
+      },
+      {
+        "name": "Martin Starr",
+        "confidence": 1
+      },
+      {
+        "name": "Florence Okonjo",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

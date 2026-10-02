@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 2982,
+  "bytes": 24103,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "PXM853",
+    "plateFront": null,
+    "plateBack": "PXM853",
+    "make": "Jeep",
+    "model": "Wrangler",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.98,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

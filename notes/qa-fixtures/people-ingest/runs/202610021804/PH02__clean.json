@@ -1,0 +1,46 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Nathaniel Osei-Bonsu",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Legal name",
+        "value": "Nathaniel Osei-Bonsu"
+      },
+      {
+        "label": "Goes by",
+        "value": "Nate"
+      },
+      {
+        "label": "Date of birth",
+        "value": "6/2/2014"
+      },
+      {
+        "label": "Grade",
+        "value": "6"
+      },
+      {
+        "label": "Emergency contact",
+        "value": "Abena Osei-Bonsu"
+      },
+      {
+        "label": "Phone",
+        "value": "555-417-9038"
+      },
+      {
+        "label": "Allergies",
+        "value": "strawberries"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [],
+    "note": null
+  }
+}

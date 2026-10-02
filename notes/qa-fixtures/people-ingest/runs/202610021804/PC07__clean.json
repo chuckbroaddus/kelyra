@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Olivia Grant",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": null,
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "Phone",
+        "value": "555-217-6500"
+      },
+      {
+        "label": "Address",
+        "value": "250 Harbor Road"
+      },
+      {
+        "label": "Preferred contact",
+        "value": "Phone call"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Olivia Grant",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

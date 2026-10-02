@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "ms": 2864,
+  "bytes": 22541,
+  "json": {
+    "document_kind": "hang_tag",
+    "plate": "KLY4219",
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": "1042",
+    "riders": [
+      "Maya Chen",
+      "Leo Chen"
+    ],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

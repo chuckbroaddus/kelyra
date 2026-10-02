@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3111,
+  "bytes": 35371,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "RDE8801",
+    "plateFront": "RDE8801",
+    "plateBack": null,
+    "make": "Toyota",
+    "model": "Camry",
+    "side": "front",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.99,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

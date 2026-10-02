@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Simone Delacroix",
+    "confidence": 1,
+    "studentGuessId": null,
+    "studentGuessName": "Owen Delacroix",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-419-7720"
+      },
+      {
+        "label": "email",
+        "value": "simone.d@example.com"
+      },
+      {
+        "label": "relationship",
+        "value": "Father"
+      },
+      {
+        "label": "phone",
+        "value": "555-419-7735"
+      },
+      {
+        "label": "email",
+        "value": "julien.delacroix@example.net"
+      },
+      {
+        "label": "address",
+        "value": "62 Brookside Dr"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Simone Delacroix",
+        "confidence": 1
+      },
+      {
+        "name": "Julien Delacroix",
+        "confidence": 1
+      }
+    ],
+    "note": null
+  }
+}

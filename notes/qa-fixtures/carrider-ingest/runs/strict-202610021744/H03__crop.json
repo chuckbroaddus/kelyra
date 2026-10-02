@@ -1,0 +1,34 @@
+{
+  "crop": {
+    "box": [
+      106,
+      173,
+      1004,
+      890
+    ]
+  },
+  "status": 200,
+  "ms": 3102,
+  "bytes": 199450,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Zoe Kim"
+    ],
+    "authorized_pickups": [
+      "Hana Kim",
+      "Daniel Kim"
+    ],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

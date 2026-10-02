@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "ms": 2843,
+  "bytes": 21108,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Chris Kim"
+    ],
+    "authorized_pickups": [
+      "Mina Kim"
+    ],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

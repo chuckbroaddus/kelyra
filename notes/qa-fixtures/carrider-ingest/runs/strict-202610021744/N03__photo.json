@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3094,
+  "bytes": 18908,
+  "json": {
+    "document_kind": "rejected",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": true,
+    "confidence": 1,
+    "reject_reason": "Cafeteria menu, not a ride-related document.",
+    "other_plates_seen": []
+  }
+}

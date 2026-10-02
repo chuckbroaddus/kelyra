@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "ms": 3421,
+  "bytes": 115810,
+  "json": {
+    "document_kind": "authorized_pickup",
+    "plate": null,
+    "plateFront": null,
+    "plateBack": null,
+    "make": null,
+    "model": null,
+    "side": "unknown",
+    "tag_number": null,
+    "riders": [
+      "Nora Whitfield"
+    ],
+    "authorized_pickups": [
+      "Grace Whitfield",
+      "Daniel Whitfield"
+    ],
+    "unreadable": false,
+    "confidence": 0.95,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

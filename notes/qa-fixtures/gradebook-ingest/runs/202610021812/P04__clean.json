@@ -1,0 +1,111 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "ea4b20c1-5c33-4a7c-b889-8e638e1f448e",
+    "proposal": {
+      "source_id": "P04-clean-202610021812",
+      "wizard": "syllabus",
+      "kind": "syllabus",
+      "fields": [
+        {
+          "path": "syllabus.title",
+          "value": "U.S. History — Course Syllabus",
+          "confidence": 0.98,
+          "evidence": {
+            "quote": "U.S. History — Course Syllabus",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-clean-202610021812"
+        },
+        {
+          "path": "syllabus.engine",
+          "value": "weighted_percent_inside",
+          "confidence": 0.72,
+          "evidence": {
+            "quote": "Category | Weight\nUnit Tests | 40%\nProjects | 25%\nQuizzes | 20%\nClasswork | 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "needs_review",
+          "source_doc_id": "P04-clean-202610021812"
+        },
+        {
+          "path": "syllabus.categories",
+          "value": [
+            {
+              "key": "unit_tests",
+              "label": "Unit Tests",
+              "weight_percent": 40
+            },
+            {
+              "key": "projects",
+              "label": "Projects",
+              "weight_percent": 25
+            },
+            {
+              "key": "quizzes",
+              "label": "Quizzes",
+              "weight_percent": 20
+            },
+            {
+              "key": "classwork",
+              "label": "Classwork",
+              "weight_percent": 15
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Unit Tests | 40%\nProjects | 25%\nQuizzes | 20%\nClasswork | 15%",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-clean-202610021812"
+        },
+        {
+          "path": "syllabus.late_rule",
+          "value": {
+            "type": "per_day",
+            "amount": 10,
+            "unit": "percent"
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Late work is accepted up to 3 school days after the due date and loses 10% per day.",
+            "page": 2,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-clean-202610021812"
+        },
+        {
+          "path": "syllabus.retake",
+          "value": {
+            "eligible_category_ids": [
+              "unit_tests"
+            ],
+            "attempts": 1,
+            "method": "higher_of",
+            "cap": 85,
+            "window_days": null
+          },
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "One retake per unit test. The higher score counts, up to an 85.",
+            "page": 2,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "P04-clean-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "syllabus_policy",
+      "overall_confidence": 0.9099999999999999
+    }
+  }
+}

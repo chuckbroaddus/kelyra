@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "student_card",
+    "parentGuessName": null,
+    "confidence": 0.95,
+    "studentGuessId": null,
+    "studentGuessName": "Benjamin Park",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "preferred name",
+        "value": "Ben"
+      },
+      {
+        "label": "allergies",
+        "value": "shellfish"
+      },
+      {
+        "label": "emergency contact",
+        "value": "Min Park"
+      },
+      {
+        "label": "emergency phone",
+        "value": "555-222-0199"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Benjamin Park",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

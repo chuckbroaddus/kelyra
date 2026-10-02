@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "json": {
+    "intent": "parent_card",
+    "parentGuessName": "Megan Kowalski",
+    "confidence": 0.99,
+    "studentGuessId": null,
+    "studentGuessName": "Ava Kowalski-Reyes",
+    "draftScore": null,
+    "gaps": [],
+    "fields": [
+      {
+        "label": "relationship",
+        "value": "Mother"
+      },
+      {
+        "label": "phone",
+        "value": "555-861-3027"
+      },
+      {
+        "label": "email",
+        "value": "megkowalski@example.com"
+      }
+    ],
+    "other_plates_seen": [],
+    "vehicle_reject_reason": null,
+    "names": [
+      {
+        "name": "Ava Kowalski-Reyes",
+        "confidence": 0.99
+      },
+      {
+        "name": "Megan Kowalski",
+        "confidence": 0.99
+      },
+      {
+        "name": "Daniel Reyes",
+        "confidence": 0.99
+      }
+    ],
+    "note": null
+  }
+}

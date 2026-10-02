@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 4717,
+  "bytes": 19988,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "BLOOM42",
+    "plateFront": null,
+    "plateBack": "BLOOM42",
+    "make": "Hyundai",
+    "model": "Tucson",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.98,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

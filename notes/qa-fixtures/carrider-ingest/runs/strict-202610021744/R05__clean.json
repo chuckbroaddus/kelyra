@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 3098,
+  "bytes": 102967,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "5K28394",
+    "plateFront": null,
+    "plateBack": "5K28394",
+    "make": "Kia",
+    "model": "Telluride",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 1,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

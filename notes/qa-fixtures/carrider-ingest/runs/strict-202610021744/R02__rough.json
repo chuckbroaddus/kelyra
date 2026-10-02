@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "ms": 4073,
+  "bytes": 186232,
+  "json": {
+    "document_kind": "vehicle_photo",
+    "plate": "MPW6142",
+    "plateFront": null,
+    "plateBack": "MPW6142",
+    "make": "Ford",
+    "model": "Explorer",
+    "side": "back",
+    "tag_number": null,
+    "riders": [],
+    "authorized_pickups": [],
+    "unreadable": false,
+    "confidence": 0.98,
+    "reject_reason": null,
+    "other_plates_seen": []
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "status": 200,
+  "json": {
+    "ok": true,
+    "job_id": "0c64fa3a-ff9c-41a9-b5e5-97c851d05004",
+    "proposal": {
+      "source_id": "H09-photo-202610021812",
+      "wizard": "school",
+      "kind": "school_policy",
+      "fields": [
+        {
+          "path": "qp.method",
+          "value": "numeric_band",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "QUALITY POINTS (NUMERIC BAND)",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202610021812"
+        },
+        {
+          "path": "gpa.mode",
+          "value": "weighted",
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "GPA uses a numeric quality-point chart (not a simple +1.0 bonus):",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202610021812"
+        },
+        {
+          "path": "levels.list",
+          "value": [
+            {
+              "key": "regular",
+              "label": "Regular",
+              "weighted_bonus": 0
+            },
+            {
+              "key": "honors",
+              "label": "Honors",
+              "weighted_bonus": 0.5
+            },
+            {
+              "key": "ap",
+              "label": "AP",
+              "weighted_bonus": 1
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "Regular | Honors | AP",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202610021812"
+        },
+        {
+          "path": "qp.tables",
+          "value": [
+            {
+              "min_pct": 97,
+              "max_pct": 100,
+              "points_by_level": {
+                "regular": 4,
+                "honors": 5,
+                "ap": 6
+              }
+            },
+            {
+              "min_pct": 93,
+              "max_pct": 96,
+              "points_by_level": {
+                "regular": 3.8,
+                "honors": 4.8,
+                "ap": 5.8
+              }
+            },
+            {
+              "min_pct": 90,
+              "max_pct": 92,
+              "points_by_level": {
+                "regular": 3.6,
+                "honors": 4.6,
+                "ap": 5.6
+              }
+            },
+            {
+              "min_pct": 87,
+              "max_pct": 89,
+              "points_by_level": {
+                "regular": 3.3,
+                "honors": 4.3,
+                "ap": 5.3
+              }
+            },
+            {
+              "min_pct": 83,
+              "max_pct": 86,
+              "points_by_level": {
+                "regular": 3,
+                "honors": 4,
+                "ap": 5
+              }
+            }
+          ],
+          "confidence": 0.95,
+          "evidence": {
+            "quote": "97-100 | 4.0 | 5.0 | 6.0\n93-96 | 3.8 | 4.8 | 5.8\n90-92 | 3.6 | 4.6 | 5.6\n87-89 | 3.3 | 4.3 | 5.3\n83-86 | 3.0 | 4.0 | 5.0",
+            "page": 1,
+            "region": null
+          },
+          "status": "proposed",
+          "source_doc_id": "H09-photo-202610021812"
+        }
+      ],
+      "ambiguities": [],
+      "warnings": [],
+      "document_kind_guess": "gpa_chart",
+      "overall_confidence": 0.95
+    }
+  }
+}
