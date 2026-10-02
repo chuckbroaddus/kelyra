@@ -10,9 +10,14 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
-import { rollupPresetLabel, syllabusStatusLabel } from '@/lib/grade/plainLabels';
+import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
 import { splitWeights } from '@/lib/syllabus/extraCreditWeights';
 import { TopicHelpLabel } from '@/components/syllabus/TopicHelp';
+import {
+  formatExamWeightDisplay,
+  formatRollupFormulaDisplay,
+  parseExamWeightInput,
+} from '@/components/syllabus/schoolPeriodSplit';
 import {
   DROP_LOWEST_OPTIONS,
   ENGINE_OPTIONS,
@@ -707,10 +712,11 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const scaleLocked = isFieldLocked(draft, 'scale');
   const schoolSplit = draft.school_period_split;
   const periodLocked = Boolean(schoolSplit);
-  const rollupDisplay =
-    draft.rollup_preset != null && draft.rollup_preset !== ''
-      ? `${draft.rollup_preset}${rollupPresetLabel(draft.rollup_preset) ? ` · ${rollupPresetLabel(draft.rollup_preset)}` : ''}`
-      : '';
+  // Derive teacher-facing copy from preset weights (+ school period model), not "2/7+1/7 · …".
+  const rollupDisplay = formatRollupFormulaDisplay(draft.rollup_preset, {
+    period_model: schoolSplit?.period_model != null ? String(schoolSplit.period_model) : null,
+  });
+  const examWeightDisplay = formatExamWeightDisplay(draft.exam_weight);
   const scale = draft.school_scale;
   return (
     <>
@@ -734,20 +740,29 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
       <TopicHelpLabel title="Semester grade formula" topicKey="help.rollup.2_7" colors={colors} />
       <LockedField locked={rollupLocked} colors={colors}>
         <TextField
-          label="Semester grade formula (e.g. 2/7+1/7)"
-          value={rollupLocked && rollupDisplay ? rollupDisplay : (draft.rollup_preset ?? '')}
+          label={rollupLocked ? 'Semester grade formula' : 'Semester grade formula (e.g. 2/7+1/7)'}
+          value={
+            rollupLocked
+              ? rollupDisplay || (draft.rollup_preset ?? '')
+              : (draft.rollup_preset ?? '')
+          }
           editable={!rollupLocked}
           onChangeText={(text) => onChange(patchDraft(draft, { rollup_preset: text.trim() || null }))}
         />
         <TextField
-          label="Exam weight (optional)"
+          label={rollupLocked ? 'Exam weight' : 'Exam weight (%)'}
           keyboardType="numeric"
           editable={!rollupLocked}
-          value={draft.exam_weight == null ? '' : String(draft.exam_weight)}
+          value={
+            rollupLocked
+              ? examWeightDisplay || (draft.exam_weight == null ? 'None' : formatExamWeightDisplay(draft.exam_weight))
+              : draft.exam_weight == null
+                ? ''
+                : String(draft.exam_weight)
+          }
           onChangeText={(text) => {
             if (rollupLocked) return;
-            const n = text.trim() === '' ? null : Number(text);
-            onChange(patchDraft(draft, { exam_weight: n == null || !Number.isFinite(n) ? null : n }));
+            onChange(patchDraft(draft, { exam_weight: parseExamWeightInput(text) }));
           }}
         />
       </LockedField>

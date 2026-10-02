@@ -7,6 +7,9 @@ import { test } from 'node:test';
 import { buildTemplate } from '../../lib/grade/calendar/templates.ts';
 import {
   examWeightPercentFromPreset,
+  formatExamWeightDisplay,
+  formatRollupFormulaDisplay,
+  parseExamWeightInput,
   schoolPeriodSplitFromCalendar,
   termStructureFromPeriodModel,
   termStructureFromTemplate,
@@ -44,6 +47,37 @@ test('Spring Baptist / Texas six-weeks calendar → read-only split summary', ()
   assert.equal(split!.period_names[0], '1st Six Weeks');
   assert.equal(split!.period_names[5], '6th Six Weeks');
   assert.equal(examWeightPercentFromPreset('2/7+1/7'), 14.3);
+});
+
+test('formatRollupFormulaDisplay: 2/7+1/7 spells each six-weeks + exam with %', () => {
+  const label = formatRollupFormulaDisplay('2/7+1/7', { period_model: 'six_weeks' });
+  assert.equal(label, 'Each six-weeks 2/7 (28.6%), exam 1/7 (14.3%)');
+  // Without model, preset still implies six-weeks unit for the 3-child Texas rollup.
+  assert.equal(
+    formatRollupFormulaDisplay('2/7+1/7'),
+    'Each six-weeks 2/7 (28.6%), exam 1/7 (14.3%)',
+  );
+  assert.equal(formatExamWeightDisplay(14.3), '14.3%');
+  assert.equal(formatExamWeightDisplay('14.3%'), '14.3%');
+  assert.equal(parseExamWeightInput('14.3%'), 14.3);
+  assert.equal(parseExamWeightInput(''), null);
+});
+
+test('formatRollupFormulaDisplay covers quarters, no-exam, and mean presets', () => {
+  assert.equal(
+    formatRollupFormulaDisplay('40/40/20', { period_model: 'nine_weeks' }),
+    'Each quarter 40%, exam 20%',
+  );
+  assert.equal(formatRollupFormulaDisplay('50/50'), 'Each grading period 50%');
+  assert.equal(formatRollupFormulaDisplay('25x4'), 'Each quarter 25%');
+  assert.equal(formatRollupFormulaDisplay('year_mean'), 'Equal average of all grading periods');
+  assert.equal(
+    formatRollupFormulaDisplay('3/7+3/7+1/7'),
+    'Each grading period 3/7 (42.9%), exam 1/7 (14.3%)',
+  );
+  assert.match(formatRollupFormulaDisplay('85/15', { child_count: 2 }), /exam 15%/);
+  assert.equal(formatRollupFormulaDisplay(null), '');
+  assert.equal(formatRollupFormulaDisplay('custom'), 'Custom weights');
 });
 
 test('draftFromBundle overwrites stale Semesters pick with school six-weeks value', () => {
