@@ -1,5 +1,5 @@
 /**
- * Syllabus wizard chrome unit checks — badges, nav gates, tray bump wiring.
+ * Syllabus wizard chrome unit checks — badges, action tray, scroll slide.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -47,21 +47,33 @@ test('wizardPersonTabs wires numbered stepMark from map', () => {
   assert.match(wiz, /showPublish = last/);
 });
 
-test('screen pins step row + sticky nav; body lost import row; tray bump on', () => {
+test('screen pins step row; separate action tray hosts nav + import icons', () => {
   const ui = read('src/app/class/[id]/syllabus.tsx');
   const tray = read('src/components/ui/FloatingTabTray.tsx');
+  const wiz = read('src/components/syllabus/SyllabusWizard.tsx');
   const body = read('src/components/syllabus/WizardStepBody.tsx');
   const person = read('src/components/ui/PersonTabs.tsx');
+  const chromeProv = read('src/lib/chrome/ChromeProvider.tsx');
   assert.match(ui, /pin=\{stepTabs\}/);
-  assert.match(ui, /sticky=\{stickyNav\}/);
+  assert.doesNotMatch(ui, /sticky=\{stickyNav\}/);
+  assert.match(ui, /classId=\{id\}/);
+  assert.match(ui, /\{stickyNav\}/);
   assert.doesNotMatch(ui, /collapse=\{/);
   assert.doesNotMatch(ui, /Answer a few questions instead/);
-  assert.doesNotMatch(ui, /Import syllabus with Capture/);
   assert.match(ui, /setTrayBump\(true\)/);
   assert.match(ui, /markStepContinued/);
   assert.match(ui, /saveStepBadges/);
-  assert.match(tray, /syllabusInterview/);
-  assert.match(tray, /styles\.bump/);
+  // System tray no longer hosts the syllabus bump.
+  assert.doesNotMatch(tray, /styles\.bump/);
+  assert.doesNotMatch(tray, /showSyllabusBump/);
+  assert.doesNotMatch(tray, /syllabusInterview/);
+  // Action tray owns icons + slide-into-system-tray-spot motion.
+  assert.match(wiz, /syllabusInterview/);
+  assert.match(wiz, /slideIntoTraySpot/);
+  assert.match(wiz, /styles\.actionTray/);
+  assert.match(wiz, /chevronBg/);
+  assert.match(wiz, /accessibilityLabel=\"Continue\"/);
+  assert.match(chromeProv, /syllabusActionTrayHeight/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);

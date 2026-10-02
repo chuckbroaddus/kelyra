@@ -147,7 +147,8 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   assert.match(wizard, /SyllabusWizardNav/);
   assert.match(ui, /onSaveDraft=\{\(\) => void onSaveDraft\(\)\}/);
   assert.match(ui, /pin=\{stepTabs\}/);
-  assert.match(ui, /sticky=\{stickyNav\}/);
+  assert.doesNotMatch(ui, /sticky=\{stickyNav\}/);
+  assert.match(ui, /classId=\{id\}/);
   assert.match(ui, /setTrayBump\(true\)/);
   assert.match(ui, /draft\.syllabus_status === 'published'/);
   assert.match(

@@ -160,6 +160,8 @@ export const chrome = {
   trayHeight: 56,
   trayHeightLandscape: 44,
   trayRadius: 22,
+  /** Syllabus floating action tray (nav + import icons + step caption). */
+  syllabusActionTrayHeight: 88,
   trayInset: 12,
   drawerWidth: 304,
   topBarAt: 720,

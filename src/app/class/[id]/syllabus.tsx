@@ -366,19 +366,21 @@ export default function SyllabusScreen() {
     />
   );
 
-  const stickyNav = (
+  const stickyNav = id ? (
     <SyllabusWizardNav
       draft={draft}
+      classId={id}
       busy={busy}
       onBack={onBack}
       onContinue={onContinue}
       onSaveDraft={() => void onSaveDraft()}
       onPublish={onPublishPress}
     />
-  );
+  ) : null;
 
   return (
-    <Screen keyboard pageChromeHosted pin={stepTabs} sticky={stickyNav}>
+    <View style={styles.shell}>
+    <Screen keyboard pageChromeHosted pin={stepTabs}>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
@@ -497,10 +499,13 @@ export default function SyllabusScreen() {
         }}
       />
     </Screen>
+    {stickyNav}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: { flex: 1, minHeight: 0 },
   actions: { gap: 10, marginTop: 8, marginBottom: 24 },
   error: { ...type.meta, marginTop: 8 },
 });
