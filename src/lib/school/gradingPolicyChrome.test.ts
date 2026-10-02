@@ -77,6 +77,10 @@ test('policy screen uses shared wizard chrome', () => {
   assert.match(ui, /templatesForLevel/);
   assert.match(ui, /LockedField/);
   assert.match(ui, /styles\.navHost/);
+  assert.match(ui, /WizardStepSwipe/);
+  assert.match(ui, /onPopStack/);
+  assert.match(ui, /onBackStep=\{onBack\}/);
+  assert.match(ui, /onNextStep=\{onContinue\}/);
   assert.match(action, /slideIntoTraySpot/);
   assert.match(ui, /policyPersonTabs/);
 });

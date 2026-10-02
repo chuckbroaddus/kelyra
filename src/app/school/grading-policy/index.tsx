@@ -18,6 +18,7 @@ import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type IconName } from '@/components/ui/Icon';
 import { WizardActionTray } from '@/components/wizard/WizardActionTray';
+import { WizardStepSwipe } from '@/components/wizard/WizardStepSwipe';
 import { LockedField } from '@/components/syllabus/WizardStepBody';
 import { TopicHelpHit, TopicHelpPop, TopicHelpLabel, useTopicHelp } from '@/components/syllabus/TopicHelp';
 import { formatRollupFormulaDisplay } from '@/components/syllabus/schoolPeriodSplit';
@@ -439,7 +440,15 @@ export default function GradingPolicyWizardScreen() {
   );
 
   return (
-    <View style={styles.shell} pointerEvents="box-none">
+    <WizardStepSwipe
+      stepIndex={stepIndex}
+      stepCount={steps.length}
+      busy={busy}
+      onBackStep={onBack}
+      onNextStep={onContinue}
+      onPopStack={() => router.back()}
+      style={styles.shell}
+    >
       <Screen keyboard pageChromeHosted pin={stepTabs} scrollRef={stepScrollRef} maxWidth={720}>
         <Card>
           <Text style={[type.meta, { color: colors.mute }]}>{summary}</Text>
@@ -522,7 +531,7 @@ export default function GradingPolicyWizardScreen() {
       <View pointerEvents="box-none" style={styles.navHost}>
         {stickyNav}
       </View>
-    </View>
+    </WizardStepSwipe>
   );
 }
 

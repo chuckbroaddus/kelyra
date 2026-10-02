@@ -2,10 +2,9 @@
  * Class syllabus entry → GB-08 T1–T8 wizard.
  * Photo import (parse-class-syllabus / ask_draft) still applies into wizard fields.
  */
-import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { GhostButton, PrimaryButton } from '@/components/ui/Button';
@@ -13,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { SyllabusWizard, SyllabusWizardNav, wizardPersonTabs } from '@/components/syllabus/SyllabusWizard';
+import { WizardStepSwipe } from '@/components/wizard/WizardStepSwipe';
 import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import {
   applyAskImport,
@@ -82,6 +82,7 @@ type ConfirmKind =
 
 export default function SyllabusScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const { id: idParam, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const { teacher, setActiveClassId, profile } = useAuth();
@@ -427,7 +428,15 @@ export default function SyllabusScreen() {
   ) : null;
 
   return (
-    <View style={styles.shell} pointerEvents="box-none">
+    <WizardStepSwipe
+      stepIndex={stepIndex}
+      stepCount={steps.length}
+      busy={busy}
+      onBackStep={onBack}
+      onNextStep={onContinue}
+      onPopStack={() => router.back()}
+      style={styles.shell}
+    >
     <Screen keyboard pageChromeHosted pin={stepTabs} scrollRef={stepScrollRef}>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
@@ -558,7 +567,7 @@ export default function SyllabusScreen() {
     <View pointerEvents="box-none" style={styles.navHost}>
       {stickyNav}
     </View>
-    </View>
+    </WizardStepSwipe>
   );
 }
 
