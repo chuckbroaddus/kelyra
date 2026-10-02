@@ -22,6 +22,7 @@ import { Icon } from '@/components/ui/Icon';
 import { MessageComposer } from '@/components/ui/MessageComposer';
 import { MessagePayloadView } from '@/components/ui/MessageAttach';
 import { PersonTabs } from '@/components/ui/PersonTabs';
+import { useScrollBottomPad } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { chrome as chromeTokens, type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
@@ -59,6 +60,7 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
   const { colors } = useTheme();
   const { profile } = useAuth();
   const chrome = useChrome();
+  const scrollBottomPad = useScrollBottomPad(24);
   const [dockH, setDockH] = useState(0);
   const dockReveal = useRef(new Animated.Value(1)).current;
   const feedRef = useRef<ScrollView>(null);
@@ -364,7 +366,10 @@ export function FeedPane({ classId = null, scope, fill = false }: Props) {
           alwaysBounceVertical
           onScroll={onFeedScroll}
           onScrollBeginDrag={onFeedScrollBeginDrag}
-          contentContainerStyle={{ paddingBottom: 24 + (replyFocused ? Math.max(kb, 48) : 24) }}
+          contentContainerStyle={{
+            // Tray clearance on content — FlushBody outer pad is 0 so posts show under floating chrome.
+            paddingBottom: scrollBottomPad + (replyFocused ? Math.max(kb, 48) : 0),
+          }}
         >
           {list}
         </ScrollView>

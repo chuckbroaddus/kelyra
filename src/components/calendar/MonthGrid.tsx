@@ -19,6 +19,7 @@ import { ZOOM_HANDOFF_IN_MS } from '@/lib/calendar/zoomDrill';
 import { siblingBandOpacity } from '@/lib/calendar/zoomTransform';
 
 import { AgendaList } from '@/components/calendar/AgendaList';
+import { useScrollBottomPad } from '@/components/ui/Screen';
 import { radius, type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { buildMonthGrid, weekdayLabels } from '@/lib/date/iso';
@@ -91,6 +92,7 @@ export function MonthGrid({
   hideWeekdays = false,
 }: Props) {
   const { colors } = useTheme();
+  const scrollBottomPad = useScrollBottomPad(24);
   const chromeOpacity = useSharedValue(enterChromeAnim ? 0 : 1);
   useEffect(() => {
     if (!enterChromeAnim) {
@@ -199,7 +201,7 @@ export function MonthGrid({
           }}
           onScrollEndDrag={onListScrollEnd}
           onMomentumScrollEnd={onListScrollEnd}
-          contentContainerStyle={styles.listScrollContent}
+          contentContainerStyle={[styles.listScrollContent, { paddingBottom: scrollBottomPad }]}
           accessibilityLabel="Month activity list"
         >
           <AgendaList
@@ -400,6 +402,8 @@ const styles = StyleSheet.create({
   dot: { width: 4, height: 4, borderRadius: 2 },
   dotSpacer: { height: 5 },
   listBlock: { marginTop: 16, gap: 8 },
-  listScrollContent: { paddingBottom: 24 },
+  listScrollContent: {
+    // paddingBottom from useScrollBottomPad — tray clearance on content.
+  },
   empty: { ...type.body, marginVertical: 8 },
 });

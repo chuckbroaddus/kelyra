@@ -8,7 +8,7 @@ import { MessagesMenu } from '@/components/ui/MessagesMenu';
 import { MessagesTray } from '@/components/ui/MessagesTray';
 import { NotificationsPane } from '@/components/ui/NotificationsPane';
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, useScrollBottomPad } from '@/components/ui/Screen';
 import { ThreadAvatar } from '@/components/ui/ThreadAvatar';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -33,6 +33,7 @@ export default function MessagesScreen() {
   const router = useRouter();
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const chrome = useChrome();
+  const scrollBottomPad = useScrollBottomPad(24);
   const refreshChrome = chrome.refreshChrome;
   const { profile } = useAuth();
   const [threads, setThreads] = useState<ThreadPreview[] | null>(null);
@@ -161,7 +162,7 @@ export default function MessagesScreen() {
             styles.paneScroll,
             Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
           ]}
-          contentContainerStyle={styles.paneScrollContent}
+          contentContainerStyle={[styles.paneScrollContent, { paddingBottom: scrollBottomPad }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

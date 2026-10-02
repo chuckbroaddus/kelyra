@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, useScrollBottomPad } from '@/components/ui/Screen';
 import { StudentPersonSheet } from '@/components/ui/StudentPersonSheet';
 import { StudentGradeBook } from '@/components/ui/StudentGradeBook';
 import { StudentClassTabs, StudentWorkList } from '@/components/ui/StudentWorkList';
@@ -43,6 +43,7 @@ export default function StudentClassScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const chrome = useOptionalChrome();
+  const scrollBottomPad = useScrollBottomPad(24);
   const { profile } = useAuth();
   const params = useLocalSearchParams<{ class?: string; pane?: string; work?: string }>();
   const [classes, setClasses] = useState<StudentClass[]>(() => peekStudentClasses() ?? []);
@@ -186,7 +187,7 @@ export default function StudentClassScreen() {
       ) : pane !== 'feed' ? (
         <ScrollView
           style={styles.pane}
-          contentContainerStyle={styles.paneBody}
+          contentContainerStyle={[styles.paneBody, { paddingBottom: scrollBottomPad }]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={chrome?.onScroll}
@@ -257,6 +258,6 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   paneBody: {
-    paddingBottom: 24,
+    // paddingBottom from useScrollBottomPad
   },
 });

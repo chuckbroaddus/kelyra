@@ -44,7 +44,8 @@ export function ContextMenuRow() {
         flow ? styles.wrapFlow : styles.wrap,
         {
           height,
-          backgroundColor: colors.elevated,
+          // Transparent host — chips keep their own fills; no full-bleed elevated band.
+          backgroundColor: 'transparent',
           borderBottomColor: colors.line,
           // Phone /inbox stays absolute at body top but never fades/translates with tray.
           transform: flow || pinVisible ? undefined : [{ translateY: chromeState.contextTranslate }],
@@ -63,7 +64,11 @@ export function ContextMenuRow() {
             accessibilityRole="button"
             accessibilityState={{ selected: chip.selected }}
             onPress={chip.onPress}
-            style={[styles.chip, chip.selected && { backgroundColor: colors.brandSoft }]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.elevated, borderColor: colors.line },
+              chip.selected && { backgroundColor: colors.brandSoft, borderColor: colors.brandSoft },
+            ]}
           >
             <Text style={[styles.label, { color: chip.selected ? colors.brand : colors.ink }]} numberOfLines={1}>
               {chip.label}
@@ -148,6 +153,7 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 12,
     borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },

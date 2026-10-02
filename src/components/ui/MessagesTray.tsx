@@ -103,12 +103,14 @@ export function MessagesTray({ query, onQuery, onCompose, onMenu }: Props) {
     ) : null}
     <Animated.View
       pointerEvents="box-none"
+      // Transparent host — only styles.frame paints elevated fill.
       style={[
         styles.float,
         {
           left: hInset,
           right: hInset,
           bottom,
+          backgroundColor: 'transparent',
           transform: [{ translateY: chromeState.localTrayTranslate }],
           opacity: chromeState.localTrayOpacity,
         },
@@ -238,6 +240,7 @@ const styles = StyleSheet.create({
   float: {
     position: 'absolute',
     zIndex: 17,
+    backgroundColor: 'transparent',
   },
   frame: {
     borderRadius: chrome.trayRadius,

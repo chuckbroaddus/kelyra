@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
+import { useScrollBottomPad } from '@/components/ui/Screen';
 import { type } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -63,6 +64,7 @@ export function StickyTable<T>({
 }: Props<T>) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
+  const scrollBottomPad = useScrollBottomPad(28);
   const { scrollHandlers } = useMarqueeScroll();
   // Shared body→header offset (incl. rubber-band overscroll).
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -170,7 +172,7 @@ export function StickyTable<T>({
         nestedScrollEnabled
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.vContent}
+        contentContainerStyle={[styles.vContent, { paddingBottom: scrollBottomPad }]}
         onScroll={(event) => {
           chrome?.onScroll(event);
         }}
@@ -278,7 +280,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   vContent: {
-    paddingBottom: 28,
+    // paddingBottom comes from useScrollBottomPad (tray clearance on content).
     flexGrow: 0,
   },
   stickyHead: {

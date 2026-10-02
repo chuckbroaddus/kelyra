@@ -114,11 +114,15 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   // #389 separate action tray: Save draft is no longer under a tray bump overlay.
   assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 12 : 0/);
   assert.match(wiz, /zIndex: 17/);
-  // Floating trays: scroll content pads bottom; FlushBody outer pad is 0 on scroll
-  // so no opaque band clips content above the action + system trays.
-  assert.match(screen, /flushBottomPad = scroll \? 0 : padStyle\.paddingBottom/);
+  // Floating trays: scroll content pads bottom; FlushBody outer pad is always 0
+  // so no opaque band clips content above action/system trays app-wide.
+  assert.match(screen, /flushBottomPad = 0/);
   assert.match(screen, /paddingBottom=\{flushBottomPad\}/);
   assert.match(screen, /Math\.min\(16, paddingBottom\)/);
+  assert.match(screen, /useScrollBottomPad/);
+  assert.match(screen, /styles\.stickyHost/);
+  assert.match(screen, /styles\.stickyPlate/);
+  assert.doesNotMatch(screen, /styles\.bar\b/);
   // iOS KAV only while keyboard is up — residual padding was an opaque tray-gap band.
   assert.match(screen, /enabled=\{keyboardUp\}/);
   assert.match(screen, /backgroundColor: 'transparent'/);

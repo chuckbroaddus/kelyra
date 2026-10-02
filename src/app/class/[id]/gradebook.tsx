@@ -20,7 +20,7 @@ import {
   filterAssignmentsByPeriod,
   periodFilterLabel,
 } from '@/components/gradebook/periodScope';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, useScrollBottomPad } from '@/components/ui/Screen';
 import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { studentHeadLandscape, tableRowHeight } from '@/constants/table';
@@ -65,6 +65,7 @@ export default function GradebookScreen() {
   const { colors, scheme } = useTheme();
   const layout = useLayout();
   const router = useRouter();
+  const scrollBottomPad = useScrollBottomPad(24);
   const {
     className,
     trayTranslate,
@@ -312,6 +313,7 @@ export default function GradebookScreen() {
         styles.exportDock,
         {
           bottom: layout.showTopBar ? 16 : trayRest + 8,
+          backgroundColor: 'transparent',
           transform: [{ translateY: exportTranslate }],
           opacity: exportOpacity,
         },
@@ -427,7 +429,7 @@ export default function GradebookScreen() {
         ) : (
           <ScrollView
             style={styles.conductScroll}
-            contentContainerStyle={styles.conductScrollBody}
+            contentContainerStyle={[styles.conductScrollBody, { paddingBottom: scrollBottomPad + 48 }]}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
             // Same brain as Feed / Gradebook: swipe up collapses tab rows + help, swipe down reveals.
@@ -717,7 +719,9 @@ export default function GradebookScreen() {
 
 const styles = StyleSheet.create({
   conductScroll: { flex: 1, minHeight: 0 },
-  conductScrollBody: { paddingBottom: 120 },
+  conductScrollBody: {
+    // paddingBottom from useScrollBottomPad (+ FAB clearance)
+  },
   conductAllGrid: { gap: 10 },
   conductAllGridWide: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
   conductAllItem: { width: '100%' },
@@ -757,6 +761,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 20,
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   exportPlate: {
     flexDirection: 'row',
