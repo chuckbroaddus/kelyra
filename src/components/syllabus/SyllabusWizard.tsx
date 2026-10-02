@@ -131,6 +131,10 @@ export function SyllabusWizard({ draft, onChange, busy, footer, tabsHostedOutsid
 type NavProps = {
   draft: SyllabusWizardDraft;
   busy?: boolean;
+  /** Success line pinned above the nav (scroll body is under the fold). */
+  status?: string | null;
+  /** Error line pinned above the nav — never only at page bottom. */
+  error?: string | null;
   onBack: () => void;
   onContinue: () => void;
   onSaveDraft: () => void;
@@ -141,6 +145,8 @@ type NavProps = {
 export function SyllabusWizardNav({
   draft,
   busy,
+  status,
+  error,
   onBack,
   onContinue,
   onSaveDraft,
@@ -162,6 +168,11 @@ export function SyllabusWizardNav({
 
   return (
     <View style={styles.navWrap}>
+      {error ? (
+        <Text style={[type.meta, { color: c.danger, textAlign: 'center', marginBottom: 6 }]}>{error}</Text>
+      ) : status ? (
+        <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginBottom: 6 }]}>{status}</Text>
+      ) : null}
       <Text style={[type.meta, { color: c.mute, textAlign: 'center', marginBottom: 8 }]}>
         {stepIndex + 1} of {steps.length} — {STEP_LABELS[step]}
       </Text>

@@ -45,6 +45,9 @@ test('wizardPersonTabs wires numbered stepMark from map', () => {
   assert.match(wiz, /!canFinishReview\(draft\)/);
   assert.match(wiz, /showSave = !published && !last/);
   assert.match(wiz, /showPublish = last/);
+  // Feedback must live in the sticky nav — scroll body is under the fold on phone.
+  assert.match(wiz, /status\?: string \| null/);
+  assert.match(wiz, /error\?: string \| null/);
 });
 
 test('screen pins step row + sticky nav; body lost import row; tray bump on', () => {
@@ -52,16 +55,28 @@ test('screen pins step row + sticky nav; body lost import row; tray bump on', ()
   const tray = read('src/components/ui/FloatingTabTray.tsx');
   const body = read('src/components/syllabus/WizardStepBody.tsx');
   const person = read('src/components/ui/PersonTabs.tsx');
+  const chrome = read('src/lib/chrome/ChromeProvider.tsx');
+  const screen = read('src/components/ui/Screen.tsx');
   assert.match(ui, /pin=\{stepTabs\}/);
   assert.match(ui, /sticky=\{stickyNav\}/);
+  assert.match(ui, /status=\{status\}/);
+  assert.match(ui, /error=\{error\}/);
   assert.doesNotMatch(ui, /collapse=\{/);
   assert.doesNotMatch(ui, /Answer a few questions instead/);
   assert.doesNotMatch(ui, /Import syllabus with Capture/);
   assert.match(ui, /setTrayBump\(true\)/);
   assert.match(ui, /markStepContinued/);
   assert.match(ui, /saveStepBadges/);
+  // id may arrive as string[] from expo-router — coerce before RPC.
+  assert.match(ui, /Array\.isArray\(idParam\) \? idParam\[0\] : idParam/);
+  assert.match(ui, /plainSyllabusWriteError/);
   assert.match(tray, /syllabusInterview/);
   assert.match(tray, /styles\.bump/);
+  assert.match(tray, /height: 52/);
+  // Bump lift must clear the 52px pill (+ gap); 48 left Save draft under zIndex 16.
+  assert.match(chrome, /bumpExtra = trayBump \? 56 : 0/);
+  assert.match(chrome, /trayBump \? 56 : 0/);
+  assert.match(screen, /zIndex: 20/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);

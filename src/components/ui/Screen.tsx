@@ -197,6 +197,8 @@ export function Screen({
       {body}
       {sticky ? (
         <View
+          // Above FloatingTabTray (zIndex 16) so a short tray-bump lift cannot
+          // steal taps from Save draft / Publish in the centered sticky slot.
           style={[
             styles.bar,
             {
@@ -204,6 +206,8 @@ export function Screen({
               borderTopColor: colors.line,
               paddingHorizontal: pad,
               marginBottom: stickyBottom,
+              zIndex: 20,
+              elevation: 20,
             },
           ]}
         >

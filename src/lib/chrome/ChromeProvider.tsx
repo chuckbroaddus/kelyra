@@ -358,7 +358,9 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       : 8 + Math.max(insets.bottom, 8);
   const trayRest = layout.showTopBar ? 12 : trayHeight + bottomInset;
   const localExtra = localTray ? trayHeight + 8 : 0;
-  const bumpExtra = trayBump ? 48 : 0;
+  // FloatingTabTray bump is height 52 (+ hairline). Under-lifting leaves the
+  // centered Save draft under the bump (zIndex 16) — silent no-op taps.
+  const bumpExtra = trayBump ? 56 : 0;
   const trayPadding = trayRest + localExtra + bumpExtra + 12;
   const trayRestLift = trayRest + bumpExtra;
 
@@ -438,7 +440,7 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
   const hideDistance =
     (layout.showTopBar ? 0 : trayHeight) +
     (localTray ? trayHeight + 8 : 0) +
-    (trayBump ? 48 : 0) +
+    (trayBump ? 56 : 0) +
     bottomInset +
     28;
 
