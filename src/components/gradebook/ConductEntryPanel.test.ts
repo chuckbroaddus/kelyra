@@ -4,7 +4,11 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { studentHead, studentHeadLandscape } from '../../constants/table.ts';
+import {
+  gradebookStudentAvatarSize,
+  studentHead,
+  studentHeadLandscape,
+} from '../../constants/table.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
@@ -12,12 +16,13 @@ const root = path.resolve(here, '../..');
 test('landscape gradebook avatar size (shared #377 contract) is half portrait', () => {
   assert.equal(studentHeadLandscape.avatar, studentHead.avatar / 2);
   assert.equal(studentHeadLandscape.avatar, 28);
+  assert.equal(gradebookStudentAvatarSize, studentHeadLandscape.avatar);
 });
 
 test('ConductEntryPanel: term-only label, landscape avatar left of name, no collapsing help', () => {
   const src = fs.readFileSync(path.join(here, 'ConductEntryPanel.tsx'), 'utf8');
-  assert.match(src, /studentHeadLandscape/);
-  assert.match(src, /CONDUCT_STUDENT_AVATAR_SIZE\s*=\s*studentHeadLandscape\.avatar/);
+  assert.match(src, /gradebookStudentAvatarSize/);
+  assert.match(src, /CONDUCT_STUDENT_AVATAR_SIZE\s*=\s*gradebookStudentAvatarSize/);
   assert.match(src, /size=\{CONDUCT_STUDENT_AVATAR_SIZE\}/);
   assert.match(src, /photoUrl/);
   assert.match(src, /styles\.identity/);
@@ -29,6 +34,15 @@ test('ConductEntryPanel: term-only label, landscape avatar left of name, no coll
   assert.doesNotMatch(src, /CollapsingPageChrome/);
   assert.doesNotMatch(src, /getBundledHelpTopic/);
   assert.doesNotMatch(src, /help\.conduct_mark/);
+});
+
+test('GradebookStudentHead always uses shared Conduct/landscape avatar size', () => {
+  const head = fs.readFileSync(path.join(root, 'components/ui/GradebookStudentHead.tsx'), 'utf8');
+  assert.match(head, /gradebookStudentAvatarSize/);
+  assert.match(head, /GRADEBOOK_STUDENT_AVATAR_SIZE\s*=\s*gradebookStudentAvatarSize/);
+  assert.match(head, /avatarSize\s*=\s*GRADEBOOK_STUDENT_AVATAR_SIZE/);
+  assert.doesNotMatch(head, /compact\s*\?\s*studentHeadLandscape/);
+  assert.doesNotMatch(head, /studentHead\.avatar/);
 });
 
 test('gradebook Conduct: help above period filter (collapsing); term pinned; roster students', () => {

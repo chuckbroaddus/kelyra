@@ -28,18 +28,21 @@ test('heatmap landscape reuses gradebook landscapeFull collapse (not excluded)',
   assert.match(book, /const collapsing = landscapeFull \? null/);
 });
 
-test('Heatmap hides legend + uses compact student heads on phone-landscape', () => {
+test('Heatmap uses Conduct-size heads always; legend still collapses on phone-landscape', () => {
   const heat = read('src/components/Heatmap.tsx');
   const head = read('src/components/ui/GradebookStudentHead.tsx');
-  assert.match(heat, /studentHeadFor\(layout\.breakpoint\)/);
+  assert.match(heat, /studentHeadLandscape/);
+  assert.match(heat, /head\s*=\s*studentHeadLandscape/);
   assert.match(heat, /studentHeadCompact\(layout\.breakpoint\)/);
-  assert.match(heat, /compact=\{compactHead\}/);
-  // Legend is an extra header strip — drop it when compact (landscape).
+  assert.match(heat, /\bcompact\b/);
+  // Legend is an extra header strip — drop it when compact (landscape only).
   assert.match(heat, /compactHead\s*\?\s*null\s*:/);
   assert.match(heat, /LegendSwatch/);
-  // Compact head keeps half-size avatars (does not hide faces).
-  assert.match(head, /studentHeadLandscape\.avatar/);
+  // Heads always use shared gradebookStudentAvatarSize (Conduct / #377 landscape).
+  assert.match(head, /gradebookStudentAvatarSize/);
+  assert.match(head, /GRADEBOOK_STUDENT_AVATAR_SIZE/);
   assert.doesNotMatch(head, /compact\s*\?\s*null\s*:/);
+  assert.doesNotMatch(head, /studentHead\.avatar/);
   // Landscape body rows share tableRowHeight (~38), not the old 48.
   assert.match(heat, /tableRowHeight\(layout\.breakpoint\)/);
   assert.doesNotMatch(heat, /phone-portrait\s*\?\s*44\s*:\s*48/);

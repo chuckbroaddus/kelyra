@@ -16,6 +16,13 @@ export const studentHeadLandscape = {
   avatar: 28,
 } as const;
 
+/**
+ * Shared student avatar size for Gradebook + Heatmap column heads and Conduct list.
+ * Same px as landscape column-header avatars (PR #377); Conduct reuses via CONDUCT_STUDENT_AVATAR_SIZE.
+ * Portrait and landscape both use this — not a second magic number.
+ */
+export const gradebookStudentAvatarSize = studentHeadLandscape.avatar;
+
 /** StickyTable body row — portrait / tablet default (tap-friendly). */
 export const tableRowHeightDefault = 44;
 /**

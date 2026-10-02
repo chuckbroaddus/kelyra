@@ -4,7 +4,7 @@ import { GradebookStudentHead } from '@/components/ui/GradebookStudentHead';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { type } from '@/constants/theme';
 import type { ReactNode } from 'react';
-import { studentHeadCompact, studentHeadFor, tableRowHeight } from '@/constants/table';
+import { studentHeadCompact, studentHeadLandscape, tableRowHeight } from '@/constants/table';
 import { firstName } from '@/lib/format';
 import type { HeatmapCell } from '@/lib/classes/overview';
 import { useLayout } from '@/lib/theme/layout';
@@ -22,7 +22,8 @@ type Props = {
 export function Heatmap({ classId, skills, students, marks, leading, trailing }: Props) {
   const { colors } = useTheme();
   const layout = useLayout();
-  const head = studentHeadFor(layout.breakpoint);
+  // Always landscape/Conduct avatar column metrics (portrait + landscape).
+  const head = studentHeadLandscape;
   const compactHead = studentHeadCompact(layout.breakpoint);
   const frozen = layout.breakpoint === 'tablet' ? 168 : layout.breakpoint === 'phone-landscape' ? 148 : 132;
   const size = head.colWidth;
@@ -70,7 +71,7 @@ export function Heatmap({ classId, skills, students, marks, leading, trailing }:
               name={student.displayName}
               photoUrl={student.photoUrl}
               href={`/class/${classId}/student/${student.id}`}
-              compact={compactHead}
+              compact
             />
           ),
           render: (skill) => {

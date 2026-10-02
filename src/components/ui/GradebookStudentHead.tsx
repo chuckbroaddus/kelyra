@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { MarqueeText } from '@/components/ui/MarqueeText';
-import { studentHead, studentHeadLandscape } from '@/constants/table';
+import { gradebookStudentAvatarSize } from '@/constants/table';
 import { firstName } from '@/lib/format';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
@@ -13,30 +13,34 @@ type Props = {
   photoUrl?: string | null;
   href?: string;
   /**
-   * Phone landscape: half-size avatar + name — keeps the sticky header short.
-   * Portrait / tablet leave this false (full avatar).
+   * @deprecated Avatars always use gradebookStudentAvatarSize (Conduct / #377 landscape).
+   * Kept so call sites can still pass compact for sticky-header layout coupling; ignored for face size.
    */
   compact?: boolean;
 };
 
 const panX: ViewStyle | null = Platform.OS === 'web' ? ({ touchAction: 'pan-x', userSelect: 'none' } as ViewStyle) : null;
 
+/** Same size as Conduct list + landscape column heads (PR #377 / #385). */
+export const GRADEBOOK_STUDENT_AVATAR_SIZE = gradebookStudentAvatarSize;
+
 export const GradebookStudentHead = memo(function GradebookStudentHead({
   name,
   photoUrl,
   href,
-  compact = false,
+  compact: _compact = true,
 }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
   const label = firstName(name);
-  const avatarSize = compact ? studentHeadLandscape.avatar : studentHead.avatar;
+  // Always Conduct/landscape size — portrait and landscape (Chuck RAPID t_1a589df8).
+  const avatarSize = GRADEBOOK_STUDENT_AVATAR_SIZE;
   const face = (
     <View
-      style={[styles.headStudent, compact && styles.headStudentCompact]}
+      style={[styles.headStudent, styles.headStudentCompact]}
       pointerEvents="none"
-      accessibilityLabel={compact ? `Student ${label}` : undefined}
-      testID={compact ? 'gradebook-student-head-compact' : 'gradebook-student-head'}
+      accessibilityLabel={`Student ${label}`}
+      testID="gradebook-student-head-compact"
     >
       {avatarSize > 0 ? (
         <Avatar
@@ -50,7 +54,7 @@ export const GradebookStudentHead = memo(function GradebookStudentHead({
         text={label}
         align="center"
         fadeColor={colors.wash}
-        style={[styles.headName, compact && styles.headNameCompact, { color: colors.ink }]}
+        style={[styles.headName, styles.headNameCompact, { color: colors.ink }]}
       />
     </View>
   );
