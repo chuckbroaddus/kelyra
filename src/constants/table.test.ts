@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  gradebookStudentAvatarSize,
   studentHead,
   studentHeadCompact,
   studentHeadFor,
@@ -11,7 +12,7 @@ import {
   tableRowHeightLandscape,
 } from './table.ts';
 
-test('portrait and tablet keep full avatar header metrics', () => {
+test('portrait and tablet keep full avatar header metrics constants', () => {
   assert.deepEqual(studentHeadFor('phone-portrait'), studentHead);
   assert.deepEqual(studentHeadFor('tablet'), studentHead);
   assert.equal(studentHead.avatar > 0, true);
@@ -34,6 +35,12 @@ test('phone landscape keeps half-size avatars: shorter, narrower header', () => 
   assert.equal(studentHeadCompact('phone-landscape'), true);
 });
 
+test('gradebookStudentAvatarSize is landscape/Conduct size (no new magic number)', () => {
+  assert.equal(gradebookStudentAvatarSize, studentHeadLandscape.avatar);
+  assert.equal(gradebookStudentAvatarSize, 28);
+  assert.equal(gradebookStudentAvatarSize, studentHead.avatar / 2);
+});
+
 test('table row height: portrait/tablet 44, phone-landscape ~36–40', () => {
   assert.equal(tableRowHeight('phone-portrait'), tableRowHeightDefault);
   assert.equal(tableRowHeight('tablet'), tableRowHeightDefault);
@@ -43,23 +50,26 @@ test('table row height: portrait/tablet 44, phone-landscape ~36–40', () => {
   assert.ok(tableRowHeightLandscape < tableRowHeightDefault);
 });
 
-test('gradebook screen and heatmap import studentHeadFor for landscape', async () => {
+test('gradebook screen and heatmap always use landscape avatar head metrics', async () => {
   const fs = await import('node:fs');
   const path = await import('node:path');
   const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
   const gradebook = fs.readFileSync(path.join(root, 'app/class/[id]/gradebook.tsx'), 'utf8');
   const heatmap = fs.readFileSync(path.join(root, 'components/Heatmap.tsx'), 'utf8');
   const head = fs.readFileSync(path.join(root, 'components/ui/GradebookStudentHead.tsx'), 'utf8');
-  assert.match(gradebook, /studentHeadFor/);
-  assert.match(gradebook, /studentHeadCompact/);
-  assert.match(gradebook, /compact=\{compactHead\}/);
+  assert.match(gradebook, /studentHeadLandscape/);
+  assert.match(gradebook, /headMetrics\s*=\s*studentHeadLandscape/);
   assert.match(gradebook, /tableRowHeight/);
   assert.match(gradebook, /rowHeight=\{rowHeight\}/);
-  assert.match(heatmap, /studentHeadFor/);
-  assert.match(heatmap, /compact=\{compactHead\}/);
+  assert.match(gradebook, /\bcompact\b/);
+  assert.match(heatmap, /studentHeadLandscape/);
+  assert.match(heatmap, /head\s*=\s*studentHeadLandscape/);
+  assert.match(heatmap, /\bcompact\b/);
   assert.match(heatmap, /tableRowHeight/);
-  assert.match(head, /studentHeadLandscape\.avatar/);
+  // Shared size constant — always landscape/Conduct avatar, portrait + landscape.
+  assert.match(head, /gradebookStudentAvatarSize/);
+  assert.match(head, /GRADEBOOK_STUDENT_AVATAR_SIZE/);
   assert.match(head, /avatarSize\s*>\s*0/);
-  assert.match(head, /compact\s*=\s*false/);
+  assert.doesNotMatch(head, /compact\s*\?\s*studentHeadLandscape/);
   assert.doesNotMatch(head, /compact\s*\?\s*null\s*:/);
 });

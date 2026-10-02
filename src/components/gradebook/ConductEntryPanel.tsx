@@ -11,7 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Chip } from '@/components/ui/Chip';
 import { ChipRow } from '@/components/ui/ChipRow';
-import { studentHeadLandscape } from '@/constants/table';
+import { gradebookStudentAvatarSize } from '@/constants/table';
 import { type } from '@/constants/theme';
 import { DEFAULT_CONDUCT_MARKS } from '@/lib/grade/posting';
 import { firstName } from '@/lib/format';
@@ -34,8 +34,8 @@ type Props = {
   enabled?: boolean;
 };
 
-/** Landscape gradebook column-header avatar size (PR #377). */
-export const CONDUCT_STUDENT_AVATAR_SIZE = studentHeadLandscape.avatar;
+/** Landscape gradebook column-header avatar size (PR #377). Shared with Gradebook + Heatmap heads. */
+export const CONDUCT_STUDENT_AVATAR_SIZE = gradebookStudentAvatarSize;
 
 export function ConductEntryPanel({
   students,

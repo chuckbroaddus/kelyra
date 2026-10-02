@@ -22,7 +22,7 @@ import {
 } from '@/components/gradebook/periodScope';
 import { Screen } from '@/components/ui/Screen';
 import { StickyTable } from '@/components/ui/StickyTable';
-import { studentHeadCompact, studentHeadFor, tableRowHeight } from '@/constants/table';
+import { studentHeadLandscape, tableRowHeight } from '@/constants/table';
 import { chrome, radius, shadows, type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
@@ -176,8 +176,8 @@ export default function GradebookScreen() {
     return () => setImmersive(false);
   }, [landscapeFull, setImmersive]);
   const frozenWidth = layout.breakpoint === 'tablet' ? 200 : layout.breakpoint === 'phone-landscape' ? 176 : 156;
-  const headMetrics = studentHeadFor(layout.breakpoint);
-  const compactHead = studentHeadCompact(layout.breakpoint);
+  // Always landscape/Conduct avatar column metrics (portrait + landscape).
+  const headMetrics = studentHeadLandscape;
   const rowHeight = tableRowHeight(layout.breakpoint);
   const colWidth = headMetrics.colWidth;
   const assignments = useMemo(
@@ -222,7 +222,7 @@ export default function GradebookScreen() {
           name={student.display_name}
           photoUrl={student.photoUrl}
           href={id ? `/class/${id}/student/${student.id}` : undefined}
-          compact={compactHead}
+          compact
         />
       ),
       render: (row: BookNode) => {
@@ -270,7 +270,7 @@ export default function GradebookScreen() {
         );
       },
     }));
-  }, [book, colWidth, colors.ink, compactHead, id, overallByStudent, router]);
+  }, [book, colWidth, colors.ink, id, overallByStudent, router]);
 
   useEffect(() => {
     if (!tree.length) return;
