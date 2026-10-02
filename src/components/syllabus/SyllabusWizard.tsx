@@ -230,24 +230,27 @@ export function SyllabusWizardNav({
         ]}
       >
         <View style={styles.navRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            disabled={!canBack}
-            onPress={onBack}
-            style={({ pressed }) => [
-              styles.circle,
-              {
-                backgroundColor: chevronBg,
-                borderColor: chevronBorder,
-                opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.circleGlyph, { color: chevronInk }]}>‹</Text>
-          </Pressable>
+          {/* Equal-width end slots keep ‹ / › outer gaps identical; mid cluster centers. */}
+          <View style={styles.sideSlot}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              disabled={!canBack}
+              onPress={onBack}
+              style={({ pressed }) => [
+                styles.circle,
+                {
+                  backgroundColor: chevronBg,
+                  borderColor: chevronBorder,
+                  opacity: !canBack ? 0.35 : pressed ? 0.75 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.circleGlyph, { color: chevronInk }]}>‹</Text>
+            </Pressable>
+          </View>
 
-          <View style={styles.midIcons}>
+          <View style={styles.midCluster}>
             <HoverTip label="Answer a few questions">
               <Pressable
                 accessibilityRole="button"
@@ -282,9 +285,6 @@ export function SyllabusWizardNav({
                 <Icon name="syllabusTemplate" color={c.mute} size={iconSize} />
               </Pressable>
             </HoverTip>
-          </View>
-
-          <View style={styles.rightCluster}>
             {showSave ? (
               <Pressable
                 accessibilityRole="button"
@@ -324,7 +324,9 @@ export function SyllabusWizardNav({
             ) : (
               <View style={styles.midSpacer} />
             )}
+          </View>
 
+          <View style={styles.sideSlot}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Continue"
@@ -381,23 +383,28 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     alignSelf: 'stretch',
   },
-  navRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  midIcons: {
+  navRow: { flexDirection: 'row', alignItems: 'center' },
+  /** Fixed width matching circle so left/right outer gutters stay equal. */
+  sideSlot: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** Questions + Capture + Template + Save/Publish — centered between chevrons. */
+  midCluster: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    flexWrap: 'nowrap',
+    gap: 6,
     minWidth: 0,
+    paddingHorizontal: 6,
   },
   iconHit: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  rightCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   circle: {
     width: 40,
