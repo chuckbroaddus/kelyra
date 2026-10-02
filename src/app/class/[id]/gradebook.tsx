@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ import {
   periodFilterLabel,
 } from '@/components/gradebook/periodScope';
 import { Screen } from '@/components/ui/Screen';
+import { ScreenOverlay } from '@/components/ui/ScreenOverlay';
 import { StickyTable } from '@/components/ui/StickyTable';
 import { studentHeadLandscape, tableRowHeight } from '@/constants/table';
 import { chrome, radius, shadows, type } from '@/constants/theme';
@@ -551,7 +552,8 @@ export default function GradebookScreen() {
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
       </View>
 
-      <Modal visible={Boolean(headerMenu)} transparent animationType="fade" onRequestClose={() => setHeaderMenu(null)}>
+      {/* ScreenOverlay: RN Modal defaults to portrait-only on iPhone and fights landscapeFull. */}
+      <ScreenOverlay visible={Boolean(headerMenu)} onRequestClose={() => setHeaderMenu(null)}>
         <View
           style={[
             styles.cellRoot,
@@ -581,9 +583,9 @@ export default function GradebookScreen() {
             <GhostButton label="Cancel" onPress={() => setHeaderMenu(null)} />
           </View>
         </View>
-      </Modal>
+      </ScreenOverlay>
 
-      <Modal visible={Boolean(cellSheet)} transparent animationType="fade" onRequestClose={() => setCellSheet(null)}>
+      <ScreenOverlay visible={Boolean(cellSheet)} onRequestClose={() => setCellSheet(null)}>
         <View
           style={[
             styles.cellRoot,
@@ -638,7 +640,7 @@ export default function GradebookScreen() {
             <GhostButton label="Cancel" onPress={() => setCellSheet(null)} />
           </View>
         </View>
-      </Modal>
+      </ScreenOverlay>
 
       <ConfirmSheet
         visible={Boolean(pendingColumn)}
