@@ -3,8 +3,8 @@
  * Photo import (parse-class-syllabus / ask_draft) still applies into wizard fields.
  */
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
@@ -101,6 +101,8 @@ export default function SyllabusScreen() {
   const [savedBadges, setSavedBadges] = useState<StepBadgeMap>({});
   /** Visit-only greens (Continue); dropped on leave without save. */
   const [visitBadges, setVisitBadges] = useState<StepBadgeMap>({});
+  /** Screen body scroller — reset to y=0 on every wizard step change. */
+  const stepScrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -111,6 +113,13 @@ export default function SyllabusScreen() {
       };
     }, [chrome.setTrayBump]),
   );
+
+  // < > tray nav + step tabs must land at the TOP of the new step.
+  // animated:false avoids fighting collapsing header / tray slide.
+  useEffect(() => {
+    if (!draft) return;
+    stepScrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [draft?.step]);
 
   const load = useCallback(async () => {
     if (!id || !teacher) return;
@@ -353,7 +362,11 @@ export default function SyllabusScreen() {
   const steps = visibleSteps(draft);
   const stepIndex = steps.indexOf(step);
 
-  const goStep = (id: WizardStepId) => setDraft(setWizardStep(draft, id));
+  const goStep = (id: WizardStepId) => {
+    // Immediate snap (effect also covers internal wizard step jumps).
+    stepScrollRef.current?.scrollTo({ y: 0, animated: false });
+    setDraft(setWizardStep(draft, id));
+  };
   const onBack = () => {
     if (stepIndex <= 0) return;
     goStep(steps[stepIndex - 1]!);
@@ -390,7 +403,7 @@ export default function SyllabusScreen() {
 
   return (
     <View style={styles.shell} pointerEvents="box-none">
-    <Screen keyboard pageChromeHosted pin={stepTabs}>
+    <Screen keyboard pageChromeHosted pin={stepTabs} scrollRef={stepScrollRef}>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
         <Text style={[type.body, { color: colors.ink, marginTop: 4 }]}>
