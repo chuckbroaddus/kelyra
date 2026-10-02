@@ -387,7 +387,7 @@ export default function SyllabusScreen() {
   ) : null;
 
   return (
-    <View style={styles.shell}>
+    <View style={styles.shell} pointerEvents="box-none">
     <Screen keyboard pageChromeHosted pin={stepTabs}>
       <Card>
         <Text style={[type.meta, { color: colors.mute }]}>Status: {statusLabel}</Text>
@@ -507,13 +507,21 @@ export default function SyllabusScreen() {
         }}
       />
     </Screen>
-    {stickyNav}
+    {/* Full-bleed transparent host so nothing between the two rounded trays can paint a band. */}
+    <View pointerEvents="box-none" style={styles.navHost}>
+      {stickyNav}
+    </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  shell: { flex: 1, minHeight: 0 },
+  shell: { flex: 1, minHeight: 0, backgroundColor: 'transparent' },
+  navHost: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'transparent',
+    zIndex: 17,
+  },
   actions: { gap: 10, marginTop: 8, marginBottom: 24 },
   error: { ...type.meta, marginTop: 8 },
 });

@@ -358,8 +358,8 @@ export function ChromeProvider({ children }: { children: ReactNode }) {
       : 8 + Math.max(insets.bottom, 8);
   const trayRest = layout.showTopBar ? 12 : trayHeight + bottomInset;
   const localExtra = localTray ? trayHeight + 8 : 0;
-  // Separate syllabus action tray sits above the system tray (gap 8).
-  const bumpExtra = trayBump ? chrome.syllabusActionTrayHeight + 8 : 0;
+  // Separate syllabus action tray sits above the system tray (gap 12).
+  const bumpExtra = trayBump ? chrome.syllabusActionTrayHeight + 12 : 0;
   const trayPadding = trayRest + localExtra + bumpExtra + 12;
   const trayRestLift = trayRest + bumpExtra;
 

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Syllabus tray air gap</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1612; font: 14px/1.35 -apple-system, system-ui, sans-serif; color: #1a1612; padding: 24px; }
+  h1 { color: #f5efe6; font-size: 16px; margin-bottom: 12px; font-weight: 600; text-align: center; }
+  .phone {
+    width: 390px; height: 844px; margin: 0 auto; border-radius: 36px;
+    background: #f3ebe1; border: 3px solid #3a322a; position: relative; overflow: hidden;
+  }
+  .safe-top { height: 54px; }
+  .header { height: 56px; display: flex; align-items: center; padding: 0 16px; font-weight: 700; font-size: 18px; }
+  .tabs { display: flex; gap: 8px; padding: 8px 12px; position: relative; z-index: 2; background: transparent; }
+  .tab {
+    flex: 0 0 auto; min-width: 64px; height: 56px; border-radius: 14px;
+    background: #fff; border: 1px solid #e2d6c8; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; color: #6b5e52; font-size: 11px;
+  }
+  .badge {
+    width: 18px; height: 18px; border-radius: 9px; background: #c62828; color: #000;
+    font-size: 11px; font-weight: 700; display: grid; place-items: center;
+  }
+  .badge.done { background: #c8e6c9; }
+  .scroll {
+    position: absolute; left: 0; right: 0; top: 118px; bottom: 0;
+    overflow: hidden; padding: 0 16px 200px;
+  }
+  .card {
+    background: #fff; border: 1px solid #e2d6c8; border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  }
+  .card h2 { font-size: 18px; margin-bottom: 10px; }
+  .line { height: 10px; background: #efe6da; border-radius: 6px; margin: 8px 0; }
+  .line.w60 { width: 60%; } .line.w80 { width: 80%; }
+  .card.under {
+    background: #ffe8c8; border-color: #e0b06a;
+    margin-top: 200px;
+  }
+  .card.under strong { color: #8a4b12; font-size: 13px; }
+  /* Transparent hosts only — cards paint elevated */
+  .sys-wrap, .act-wrap {
+    position: absolute; left: 12px; right: 12px; background: transparent; pointer-events: none;
+  }
+  .sys-wrap { bottom: 34px; z-index: 16; }
+  /* stackGap 12: bottom = 34 + 56 + 12 = 102 */
+  .act-wrap { bottom: 102px; z-index: 17; }
+  .sys, .act {
+    background: #fff; border: 1px solid #e2d6c8; border-radius: 22px;
+    box-shadow: 0 4px 14px rgba(26,22,18,0.12);
+  }
+  .sys {
+    height: 56px; display: flex; align-items: center; justify-content: space-around;
+    color: #6b5e52; font-size: 11px;
+  }
+  .act { padding: 6px 8px 8px; }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .circ {
+    width: 40px; height: 40px; border-radius: 20px; background: #c45c26; color: #fff7ef;
+    display: grid; place-items: center; font-size: 26px; font-weight: 600; line-height: 1;
+  }
+  .circ.dim { opacity: 0.35; }
+  .mids { flex: 1; display: flex; justify-content: center; gap: 10px; color: #6b5e52; font-size: 18px; }
+  .save {
+    min-width: 104px; height: 40px; border-radius: 20px; border: 1px solid #e2d6c8;
+    display: grid; place-items: center; font-weight: 600; font-size: 14px; background: #fff;
+  }
+  .cap { text-align: center; color: #6b5e52; font-size: 12px; margin-top: 4px; }
+  .gap-label {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: 78px; z-index: 15; font-size: 10px; color: #8a4b12;
+    background: rgba(255,232,200,0.92); padding: 2px 8px; border-radius: 8px;
+    border: 1px dashed #e0b06a; white-space: nowrap;
+  }
+  .note { color: #cbbba8; text-align: center; margin-top: 14px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Syllabus — true air gap between trays</h1>
+  <div class="phone" id="phone">
+    <div class="safe-top"></div>
+    <div class="header">Syllabus</div>
+    <div class="tabs">
+      <div class="tab"><span class="badge done">1</span>Engine</div>
+      <div class="tab"><span class="badge">2</span>Weights</div>
+      <div class="tab"><span class="badge">3</span>Drops</div>
+      <div class="tab"><span class="badge">4</span>Retake</div>
+    </div>
+    <div class="scroll">
+      <div class="card">
+        <h2>Weights</h2>
+        <div class="line w80"></div>
+        <div class="line"></div>
+        <div class="line w60"></div>
+      </div>
+      <div class="card under">
+        <strong>Scroll text in the 12px air gap</strong>
+        <div class="line w80"></div>
+        <div class="line"></div>
+        <div class="line w60"></div>
+      </div>
+    </div>
+    <div class="gap-label">transparent air gap · no opaque band</div>
+    <div class="act-wrap">
+      <div class="act" aria-label="action tray">
+        <div class="row">
+          <div class="circ">‹</div>
+          <div class="mids">◎ ⊡ ⊞</div>
+          <div class="save">Save draft</div>
+          <div class="circ">›</div>
+        </div>
+        <div class="cap">2 of 6 — Weights</div>
+      </div>
+    </div>
+    <div class="sys-wrap">
+      <div class="sys" aria-label="system tray">
+        <span>Home</span><span>Class</span><span>Needs</span><span>Ask</span><span>More</span>
+      </div>
+    </div>
+  </div>
+  <p class="note">KAV enabled only with keyboard · transparent float hosts · stackGap 12</p>
+</body>
+</html>
