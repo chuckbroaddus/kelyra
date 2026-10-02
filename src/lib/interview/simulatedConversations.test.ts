@@ -20,7 +20,7 @@ test('summary marks school-locked and defaulted settings', async () => {
   const conv = SIM_CONVERSATIONS.find((c) => c.name.startsWith('C'))!;
   const r = await runConversation({ ...conv, turns: conv.turns.slice(0, -1) });
   const text = readBackSummary(r.session);
-  assert.match(text, /Late work: 10% off per day, no lower than 50% \(set by your school\)/);
+  assert.match(text, /Late work: 10% off per day, no lower than 50% \(locked by your school\)/);
   assert.match(text, /Missing work: .*\(usual choice — please check\)/);
   assert.match(text, /Syllabus name: World History/);
 });

@@ -26,6 +26,7 @@ import {
   type SchoolPeriodSplit,
 } from './schoolPeriodSplit.ts';
 import type { GradingCalendar } from '../../lib/grade/calendar/types.ts';
+import type { GradeScale } from '../../lib/grade/scale/scale.ts';
 
 export type { BookMode, ExtraCreditMethod, MissingRule, SyllabusEngine, SyllabusRounding, WithinCategory };
 
@@ -357,6 +358,8 @@ export type SyllabusWizardDraft = {
    * cannot pick Quarters/Semesters/Year — UI is read-only and saves this term_structure.
    */
   school_period_split: SchoolPeriodSplit | null;
+  /** School letter scale (display-only when scale lock is on). */
+  school_scale: GradeScale | null;
 };
 
 export type WizardIssue = {
@@ -413,6 +416,7 @@ export function createEmptyWizardDraft(classId: string): SyllabusWizardDraft {
     syllabus_status: 'none',
     publish_to_family: true,
     school_period_split: null,
+    school_scale: null,
   };
 }
 
@@ -440,7 +444,21 @@ export type SyllabusSchoolPolicyInput = {
   /** GB-02 calendar (class binding or school policy payload). */
   calendar?: Pick<GradingCalendar, 'period_model' | 'periods'> | null;
   calendar_template?: string | null;
+  scales?: GradeScale[] | null;
+  default_scale_id?: string | null;
 };
+
+function pickSchoolScale(
+  scales: GradeScale[] | null | undefined,
+  defaultId: string | null | undefined,
+): GradeScale | null {
+  if (!scales?.length) return null;
+  if (defaultId) {
+    const hit = scales.find((s) => s.id === defaultId);
+    if (hit) return hit;
+  }
+  return scales[0] ?? null;
+}
 
 export function applySchoolPolicyDefaults(
   draft: SyllabusWizardDraft,
@@ -489,6 +507,8 @@ export function applySchoolPolicyDefaults(
     next.school_period_split = split;
     next.term_structure = split.term_structure;
   }
+  const scale = pickSchoolScale(policy.scales, policy.default_scale_id);
+  if (scale) next.school_scale = scale;
   return next;
 }
 
