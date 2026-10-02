@@ -10,9 +10,9 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { TextField } from '@/components/ui/TextField';
 import { type } from '@/constants/theme';
 import { GRADE_KINDS } from '@/lib/grade/marks';
-import { getBundledHelpTopic } from '@/lib/help/helpTopics';
 import { syllabusStatusLabel } from '@/lib/grade/plainLabels';
 import { splitWeights } from '@/lib/syllabus/extraCreditWeights';
+import { TopicHelpLabel } from '@/components/syllabus/TopicHelp';
 import {
   DROP_LOWEST_OPTIONS,
   ENGINE_OPTIONS,
@@ -47,6 +47,7 @@ export type StepColors = {
   line: string;
   good: string;
   warn: string;
+  elevated?: string;
 };
 
 type Props = {
@@ -304,9 +305,7 @@ function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & 
     <>
       <WeightTotalLine draft={draft} colors={colors} sum={sum} />
       <LockNote draft={draft} field="categories" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginVertical: 8, fontWeight: '600' }]}>
-        If a category has no grades yet
-      </Text>
+      <TopicHelpLabel title="If a category has no grades yet" topicKey="help.empty_category" colors={colors} marginTop={8} />
       <RadioOption
         label="Skip it until it has grades"
         selected={draft.empty_category === 'renormalize'}
@@ -362,9 +361,12 @@ function CategoriesStep({ draft, colors, onChange, sum }: Omit<Props, 'step'> & 
 function WithinStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Example: a 20-point quiz and a 100-point test in the same category.
-      </Text>
+      <TopicHelpLabel
+        title="How assignments count inside a category"
+        topicKey="help.engine.weighted_percent"
+        colors={colors}
+        marginTop={0}
+      />
       <RadioOption
         label="Bigger assignments count more"
         plain="Points count: 80/100 and 16/20 are added up, so the category is 96/120 (80%)."
@@ -388,9 +390,8 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <LockNote draft={draft} field="drop_lowest" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Drops happen inside one grading period. 0 means drop nothing.
-      </Text>
+      <TopicHelpLabel title="Drop lowest scores" topicKey="help.drop_lowest" colors={colors} marginTop={0} />
+      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>0 means drop nothing.</Text>
       {dropLowestCategories(draft.categories).map((row) => (
         <DropStepper
           key={row.key}
@@ -421,8 +422,6 @@ function DropsStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 
 function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const lateLocked = isFieldLocked(draft, 'late');
-  const [excusedHelpOpen, setExcusedHelpOpen] = useState(false);
-  const excusedHelp = getBundledHelpTopic('help.excused');
   const missingPlains: Record<string, string> = {
     omit: 'Left out until a score is entered.',
     zero: 'Missing work counts as zero until a score is entered.',
@@ -430,7 +429,7 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   };
   return (
     <>
-      <Text style={[type.meta, { color: colors.mute, fontWeight: '600' }]}>Missing work</Text>
+      <TopicHelpLabel title="Missing work" topicKey="help.missing" colors={colors} marginTop={0} />
       {(
         [
           ['omit', "Doesn't count yet"],
@@ -458,24 +457,9 @@ function StatusLateStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
           }}
         />
       ) : null}
-      <Text style={[type.meta, { color: colors.mute, marginTop: 12 }]}>
-        Excused work is left out of the grade completely. It is never a zero.
-      </Text>
-      <GhostButton
-        label={excusedHelpOpen ? 'Hide Excused help' : 'Help on Excused'}
-        onPress={() => setExcusedHelpOpen((v) => !v)}
-      />
-      {excusedHelpOpen && excusedHelp ? (
-        <View style={{ marginTop: 8, gap: 4 }}>
-          <Text style={[type.body, { color: colors.ink, fontWeight: '700' }]}>{excusedHelp.title}</Text>
-          <Text style={[type.meta, { color: colors.mute }]}>{excusedHelp.meaning}</Text>
-          {excusedHelp.example ? (
-            <Text style={[type.meta, { color: colors.ink }]}>Example: {excusedHelp.example}</Text>
-          ) : null}
-        </View>
-      ) : null}
+      <TopicHelpLabel title="Excused" topicKey="help.excused" colors={colors} />
       <LockNote draft={draft} field="late" colors={colors} />
-      <Text style={[type.meta, { color: colors.mute, marginTop: 12, fontWeight: '600' }]}>Late penalty</Text>
+      <TopicHelpLabel title="Late penalty" topicKey="help.late" colors={colors} />
       {(
         [
           ['none', 'None, I adjust by hand'],
@@ -555,9 +539,7 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   };
   return (
     <>
-      <Text style={[type.meta, { color: colors.mute, marginBottom: 8 }]}>
-        Tip: “Adds bonus points” helps students who do extra credit without hurting students who skip it.
-      </Text>
+      <TopicHelpLabel title="Extra credit" topicKey="help.extra_credit_b" colors={colors} marginTop={0} />
       {(
         [
           ['A', 'Raises or replaces a score'],
@@ -691,6 +673,7 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   return (
     <>
       <LockNote draft={draft} field="book_mode" colors={colors} />
+      <TopicHelpLabel title="Fresh start or running average" topicKey="help.book_mode" colors={colors} marginTop={0} />
       <RadioOption
         label="Start fresh each grading period"
         selected={draft.book_mode === 'reset_each_marking_period'}
@@ -706,6 +689,7 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
       />
       <LockNote draft={draft} field="rollup" colors={colors} />
+      <TopicHelpLabel title="Semester grade formula" topicKey="help.rollup.2_7" colors={colors} />
       {rollupLocked ? (
         <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
           <Text style={[type.meta, { color: colors.warn }]}>

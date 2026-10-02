@@ -116,8 +116,11 @@ test('§11.16 Help on Excused shows 98/120 vs 98/130', () => {
   assert.match(t!.example ?? '', /98\/130/);
   assert.match(t!.meaning, /points earned and the points possible/i);
   const body = read('src/components/syllabus/WizardStepBody.tsx');
-  assert.match(body, /Help on Excused/);
-  assert.match(body, /help\.excused/);
+  // Inline "?" next to Excused label (same popover standard as step headings) — no text button.
+  assert.doesNotMatch(body, /Help on Excused/);
+  assert.match(body, /topicKey=\"help\.excused\"/);
+  assert.match(body, /title=\"Excused\"/);
+  assert.match(body, /TopicHelpLabel/);
 });
 
 test('§11.17 I\'m not sure → Texas 6-week editable', () => {
