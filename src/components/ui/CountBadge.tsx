@@ -4,8 +4,15 @@ import { type } from '@/constants/theme';
 import { formatCount } from '@/lib/format';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
-/** Soft fills for syllabus step marks (light red → light green). Default is the Messages/Needs alert pip. */
+/**
+ * Default `danger` = Messages/Needs alert pip (solid red + light ink).
+ * Syllabus step marks: `danger` / `goodSoft` fills with `blackInk` (black numeral).
+ * Soft colored numerals remain available via dangerSoft / goodSoft without blackInk.
+ */
 export type CountBadgeTone = 'danger' | 'dangerSoft' | 'goodSoft';
+
+/** Near-black numeral on colored step-mark fills (Chuck: number is black). */
+const STEP_MARK_INK = '#1A120C';
 
 /**
  * Tiny count pip on the upper-right of an icon (Messages tray / Needs / syllabus steps).
@@ -14,21 +21,28 @@ export type CountBadgeTone = 'danger' | 'dangerSoft' | 'goodSoft';
 export function CountBadge({
   count,
   tone = 'danger',
+  blackInk = false,
 }: {
   count: number;
   tone?: CountBadgeTone;
+  /** Force near-black numeral (syllabus step marks). */
+  blackInk?: boolean;
 }) {
   const { colors, scheme } = useTheme();
   if (count <= 0) return null;
 
   let backgroundColor = colors.danger;
-  let color = scheme === 'dark' ? '#1A120C' : colors.brandInk;
+  let color = scheme === 'dark' ? STEP_MARK_INK : colors.brandInk;
   if (tone === 'dangerSoft') {
     backgroundColor = colors.dangerSoft;
     color = colors.danger;
   } else if (tone === 'goodSoft') {
     backgroundColor = colors.goodSoft;
     color = colors.good;
+  }
+  if (blackInk) {
+    // Light green wash is dark in dark scheme — keep numeral readable there.
+    color = scheme === 'dark' && tone === 'goodSoft' ? colors.ink : STEP_MARK_INK;
   }
 
   return (
