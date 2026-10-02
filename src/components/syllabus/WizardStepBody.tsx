@@ -670,24 +670,39 @@ function EcStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
 function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
   const bookLocked = isFieldLocked(draft, 'book_mode');
   const rollupLocked = isFieldLocked(draft, 'rollup');
+  const schoolSplit = draft.school_period_split;
   return (
     <>
       <LockNote draft={draft} field="book_mode" colors={colors} />
       <TopicHelpLabel title="Fresh start or running average" topicKey="help.book_mode" colors={colors} marginTop={0} />
-      <RadioOption
-        label="Start fresh each grading period"
-        selected={draft.book_mode === 'reset_each_marking_period'}
-        disabled={bookLocked}
-        colors={colors}
-        onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
-      />
-      <RadioOption
-        label="One running average all year"
-        selected={draft.book_mode === 'rolling_year'}
-        disabled={bookLocked}
-        colors={colors}
-        onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
-      />
+      {bookLocked ? (
+        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
+          <Text style={[type.meta, { color: colors.warn }]}>
+            Set by your school —{' '}
+            {draft.book_mode === 'rolling_year'
+              ? 'one running average all year'
+              : 'start fresh each grading period'}
+            . Not editable.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <RadioOption
+            label="Start fresh each grading period"
+            selected={draft.book_mode === 'reset_each_marking_period'}
+            disabled={bookLocked}
+            colors={colors}
+            onPress={() => onChange(patchDraft(draft, { book_mode: 'reset_each_marking_period' }))}
+          />
+          <RadioOption
+            label="One running average all year"
+            selected={draft.book_mode === 'rolling_year'}
+            disabled={bookLocked}
+            colors={colors}
+            onPress={() => onChange(patchDraft(draft, { book_mode: 'rolling_year' }))}
+          />
+        </>
+      )}
       <LockNote draft={draft} field="rollup" colors={colors} />
       <TopicHelpLabel title="Semester grade formula" topicKey="help.rollup.2_7" colors={colors} />
       {rollupLocked ? (
@@ -717,27 +732,42 @@ function BookStep({ draft, colors, onChange }: Omit<Props, 'step'>) {
         </>
       )}
       <Text style={[type.meta, { color: colors.mute, marginTop: 8, fontWeight: '600' }]}>How the year is split</Text>
-      {(
-        [
-          ['quarters', 'Quarters'],
-          ['semesters', 'Semesters'],
-          ['year', 'Year'],
-          ['custom', 'Custom'],
-        ] as const
-      ).map(([key, label]) => (
-        <RadioOption
-          key={key}
-          label={label}
-          selected={draft.term_structure === key}
-          colors={colors}
-          onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
-        />
-      ))}
+      {schoolSplit ? (
+        <View style={[styles.lock, { backgroundColor: colors.warn + '22' }]}>
+          <Text style={[type.meta, { color: colors.warn }]}>
+            Set by your school — {schoolSplit.summary_label}. Not editable.
+          </Text>
+          {schoolSplit.period_names.length > 0 ? (
+            <Text style={[type.meta, { color: colors.mute, marginTop: 6 }]}>
+              {schoolSplit.period_names.join(' · ')}
+            </Text>
+          ) : null}
+        </View>
+      ) : (
+        (
+          [
+            ['quarters', 'Quarters'],
+            ['semesters', 'Semesters'],
+            ['year', 'Year'],
+            ['custom', 'Custom'],
+          ] as const
+        ).map(([key, label]) => (
+          <RadioOption
+            key={key}
+            label={label}
+            selected={draft.term_structure === key}
+            colors={colors}
+            onPress={() => onChange(patchDraft(draft, { term_structure: key }))}
+          />
+        ))
+      )}
       <LockNote draft={draft} field="scale" colors={colors} />
       {isFieldLocked(draft, 'scale') ? (
-        <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
-          Letter scale is set by your school. Not editable here.
-        </Text>
+        <View style={[styles.lock, { backgroundColor: colors.warn + '22', marginTop: 4 }]}>
+          <Text style={[type.meta, { color: colors.warn }]}>
+            Set by your school — letter scale. Not editable here.
+          </Text>
+        </View>
       ) : (
         <Text style={[type.meta, { color: colors.mute, marginTop: 4 }]}>
           Rounding (the letter scale comes from your school when it is set there).
@@ -827,7 +857,12 @@ function ReviewStep({
     {
       step: 'book_rollup',
       label: STEP_LABELS.book_rollup,
-      value: draft.book_mode === 'rolling_year' ? 'Running average' : 'Fresh each period',
+      value: [
+        draft.book_mode === 'rolling_year' ? 'Running average' : 'Fresh each period',
+        draft.school_period_split?.summary_label ?? null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
     },
   ];
   return (

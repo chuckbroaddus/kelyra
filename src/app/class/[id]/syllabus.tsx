@@ -23,6 +23,7 @@ import {
   setWizardStep,
   toEditorInput,
   visibleSteps,
+  type SyllabusSchoolPolicyInput,
   type SyllabusWizardDraft,
   type WizardStepId,
 } from '@/components/syllabus/wizardModel';
@@ -31,6 +32,7 @@ import { type } from '@/constants/theme';
 import { useChrome, usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass, setActiveClass } from '@/lib/classes/api';
 import { useAuth } from '@/lib/auth/AuthProvider';
+import { loadClassGradingCalendar } from '@/components/gradebook/loadCalendar';
 import {
   maxPagesCopy,
   readingStatusForPages,
@@ -131,13 +133,15 @@ export default function SyllabusScreen() {
       await setActiveClass(teacher.id, id);
       setActiveClassId(id);
       const bundle = await getClassSyllabus(id);
-      let schoolPolicy: {
-        locks?: Partial<SyllabusLocks> | null;
-        lock_reasons?: Partial<SyllabusLockReasons> | null;
-        rollup_preset?: string | null;
-        exam_weight?: number | null;
-      } | null = null;
+      let schoolPolicy: SyllabusSchoolPolicyInput | null = null;
       const schoolId = profile?.school_id ?? null;
+      // Prefer class-bound GB-02 calendar; fall back to school policy payload calendar.
+      let classCalendar: Awaited<ReturnType<typeof loadClassGradingCalendar>> = null;
+      try {
+        classCalendar = await loadClassGradingCalendar(id);
+      } catch {
+        classCalendar = null;
+      }
       if (schoolId) {
         try {
           const pub = await loadLatestPublished(schoolId);
@@ -147,21 +151,38 @@ export default function SyllabusScreen() {
                 lock_reasons?: SyllabusLockReasons;
                 rollup_preset?: string | null;
                 exam_weight?: number | null;
+                book_mode?: 'reset_each_marking_period' | 'rolling_year' | null;
+                calendar?: NonNullable<SyllabusSchoolPolicyInput['calendar']> | null;
+                calendar_template?: string | null;
               }
             | null;
-          if (payload) {
-            // Carry school rollup into the wizard so locked Save draft does not send null
-            // and trip gb_assert_syllabus_locked_fields vs a stored/school value.
+          if (payload || classCalendar) {
+            // Carry school rollup + calendar into the wizard so locked Save draft
+            // stores the school's period split (never a stale Quarters/Semesters pick).
             schoolPolicy = {
-              locks: payload.locks ?? null,
-              lock_reasons: payload.lock_reasons ?? null,
-              rollup_preset: payload.rollup_preset ?? null,
-              exam_weight: payload.exam_weight ?? null,
+              locks: payload?.locks ?? null,
+              lock_reasons: payload?.lock_reasons ?? null,
+              rollup_preset: payload?.rollup_preset ?? null,
+              exam_weight: payload?.exam_weight ?? null,
+              book_mode: payload?.book_mode ?? null,
+              calendar: classCalendar ?? payload?.calendar ?? null,
+              calendar_template: payload?.calendar_template ?? null,
             };
           }
         } catch {
-          // optional school defaults
+          // optional school defaults — still use class calendar if bound
+          if (classCalendar) {
+            schoolPolicy = {
+              calendar: classCalendar,
+              calendar_template: null,
+            };
+          }
         }
+      } else if (classCalendar) {
+        schoolPolicy = {
+          calendar: classCalendar,
+          calendar_template: null,
+        };
       }
       const loaded = draftFromBundle({
         classId: id,

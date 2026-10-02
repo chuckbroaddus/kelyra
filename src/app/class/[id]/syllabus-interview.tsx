@@ -11,12 +11,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { InterviewScreen } from '@/components/interview/InterviewScreen';
 import { Screen } from '@/components/ui/Screen';
 import { WorkingLine } from '@/components/ui/WorkingMark';
-import { draftFromBundle, type SyllabusWizardDraft } from '@/components/syllabus/wizardModel';
+import { draftFromBundle, type SyllabusSchoolPolicyInput, type SyllabusWizardDraft } from '@/components/syllabus/wizardModel';
 import { type } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { getClass } from '@/lib/classes/api';
 import { putInterviewHandoff, type InterviewSession } from '@/lib/interview';
+import { loadClassGradingCalendar } from '@/components/gradebook/loadCalendar';
 import { loadLatestPublished, type SyllabusLockReasons, type SyllabusLocks } from '@/lib/school/gradingPolicy';
 import { getClassSyllabus } from '@/lib/syllabus/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -36,17 +37,39 @@ export default function SyllabusInterviewScreen() {
     void (async () => {
       try {
         const [klass, bundle] = await Promise.all([getClass(id), getClassSyllabus(id)]);
-        let schoolPolicy: { locks?: Partial<SyllabusLocks> | null; lock_reasons?: Partial<SyllabusLockReasons> | null; rollup_preset?: string | null } | null = null;
+        let schoolPolicy: SyllabusSchoolPolicyInput | null = null;
+        let classCalendar: Awaited<ReturnType<typeof loadClassGradingCalendar>> = null;
+        try {
+          classCalendar = await loadClassGradingCalendar(id);
+        } catch {
+          classCalendar = null;
+        }
         if (profile?.school_id) {
           try {
             const pub = await loadLatestPublished(profile.school_id);
-            const payload = (pub?.payload ?? null) as { locks?: SyllabusLocks; lock_reasons?: SyllabusLockReasons; rollup_preset?: string | null } | null;
-            if (payload) {
-              schoolPolicy = { locks: payload.locks ?? null, lock_reasons: payload.lock_reasons ?? null, rollup_preset: payload.rollup_preset ?? null };
+            const payload = (pub?.payload ?? null) as {
+              locks?: SyllabusLocks;
+              lock_reasons?: SyllabusLockReasons;
+              rollup_preset?: string | null;
+              exam_weight?: number | null;
+              calendar?: NonNullable<SyllabusSchoolPolicyInput['calendar']> | null;
+              calendar_template?: string | null;
+            } | null;
+            if (payload || classCalendar) {
+              schoolPolicy = {
+                locks: payload?.locks ?? null,
+                lock_reasons: payload?.lock_reasons ?? null,
+                rollup_preset: payload?.rollup_preset ?? null,
+                exam_weight: payload?.exam_weight ?? null,
+                calendar: classCalendar ?? payload?.calendar ?? null,
+                calendar_template: payload?.calendar_template ?? null,
+              };
             }
           } catch {
-            // optional school defaults
+            if (classCalendar) schoolPolicy = { calendar: classCalendar };
           }
+        } else if (classCalendar) {
+          schoolPolicy = { calendar: classCalendar };
         }
         const draft = draftFromBundle({ classId: id, syllabus: bundle.syllabus, categories: bundle.categories, schoolPolicy });
         if (alive) setSeed({ draft, className: klass?.name ?? '' });
