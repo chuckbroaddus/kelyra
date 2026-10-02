@@ -800,6 +800,17 @@ export function canFinishReview(draft: SyllabusWizardDraft): boolean {
   return hardErrors(validateWizard(draft)).length === 0;
 }
 
+/**
+ * AVG T-S7 / teacher-ui §7.1: Save draft is lenient — incomplete weights are a
+ * warning, not a block. Publish still uses canFinishReview (strict sum = 100%).
+ * Only block empty labels on active weighted categories (server rejects those).
+ */
+export function canSaveDraft(draft: SyllabusWizardDraft): boolean {
+  if (draft.syllabus_status === 'published') return false;
+  if (!isWeightedEngine(draft.engine)) return true;
+  return !draft.categories.some((c) => c.active && !c.label.trim());
+}
+
 export function toEditorInput(draft: SyllabusWizardDraft) {
   const cats = draft.categories.map((c, i) => ({
     ...c,

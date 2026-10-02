@@ -90,7 +90,7 @@ test('§11.14 six-weeks dates = marking periods only; rollup chips include 2/7',
   assert.match(ui, /2\/7\+1\/7/);
 });
 
-test('§11.15 total points hides weights; weighted blocks Save until 100%', () => {
+test('§11.15 total points hides weights; weighted blocks Publish until 100% (Save draft lenient)', () => {
   let d = createEmptyWizardDraft('c1');
   d = patchDraft(d, { engine: 'total_points' });
   assert.ok(!visibleSteps(d).includes('categories'));
@@ -102,9 +102,11 @@ test('§11.15 total points hides weights; weighted blocks Save until 100%', () =
   assert.equal(weightsOk(d), false);
   assert.equal(canFinishReview(d), false);
   const wiz = read('src/components/syllabus/SyllabusWizard.tsx');
+  // Publish stays gated on canFinishReview; Save draft uses canSaveDraft (AVG T-S7).
   assert.match(wiz, /!canFinishReview\(draft\)/);
+  assert.match(wiz, /!canSaveDraft\(draft\)/);
   const screen = read('src/app/class/[id]/syllabus.tsx');
-  assert.match(screen, /category weights need to add up to 100%/);
+  assert.match(screen, /category weights need to add up to 100% before you can publish/);
 });
 
 test('§11.16 Help on Excused shows 98/120 vs 98/130', () => {
