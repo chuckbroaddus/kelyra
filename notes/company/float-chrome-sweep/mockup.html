@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>App-wide floating chrome — no opaque bands</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1612; font: 13px/1.35 -apple-system, system-ui, sans-serif; color: #1a1612; padding: 20px; }
+  h1 { color: #f5efe6; font-size: 15px; margin-bottom: 14px; text-align: center; font-weight: 600; }
+  .row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .phone {
+    width: 280px; height: 560px; border-radius: 28px; background: #f3ebe1;
+    border: 3px solid #3a322a; position: relative; overflow: hidden;
+  }
+  .cap { color: #cbbba8; text-align: center; font-size: 11px; margin-top: 8px; max-width: 280px; margin-left: auto; margin-right: auto; }
+  .note { color: #cbbba8; text-align: center; margin-top: 16px; font-size: 12px; max-width: 620px; margin-left: auto; margin-right: auto; }
+  .safe { height: 32px; }
+  .hdr { height: 36px; display: flex; align-items: center; padding: 0 12px; font-weight: 700; font-size: 14px; }
+  .scroll { position: absolute; left: 0; right: 0; top: 68px; bottom: 0; padding: 0 10px 110px; overflow: hidden; }
+  .card { background: #fff; border: 1px solid #e2d6c8; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+  .card.under { background: #ffe8c8; border-color: #e0b06a; margin-top: 140px; }
+  .card.under strong { color: #8a4b12; font-size: 10px; }
+  .line { height: 7px; background: #efe6da; border-radius: 4px; margin: 5px 0; }
+  .tray-host, .sticky-host, .ctx-host, .fab-host {
+    position: absolute; left: 10px; right: 10px; background: transparent; pointer-events: none;
+  }
+  .tray-host { bottom: 24px; z-index: 16; }
+  .sticky-host { bottom: 84px; z-index: 18; }
+  .fab-host { bottom: 84px; z-index: 18; left: 40px; right: 40px; }
+  .ctx-host { top: 68px; z-index: 12; height: 36px; display: flex; align-items: center; gap: 6px; }
+  .tray, .sticky, .fab {
+    background: #fff; border: 1px solid #e2d6c8; border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(26,22,18,0.12);
+  }
+  .tray { height: 44px; display: flex; align-items: center; justify-content: space-around; color: #6b5e52; font-size: 9px; }
+  .sticky { padding: 9px 10px; font-weight: 600; text-align: center; font-size: 12px; }
+  .fab { padding: 8px 12px; text-align: center; font-size: 12px; font-weight: 600; }
+  .chip { height: 26px; padding: 0 9px; border-radius: 13px; background: #fff; border: 1px solid #e2d6c8;
+    display: grid; place-items: center; font-size: 10px; color: #6b5e52; }
+  .chip.on { background: #f3d9c4; border-color: #f3d9c4; color: #c45c26; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Floating chrome — content shows through gaps</h1>
+<div class="row">
+  <div>
+    <div class="phone">
+      <div class="safe"></div>
+      <div class="hdr">Feed · Messages</div>
+      <div class="scroll">
+        <div class="card"><div class="line"></div><div class="line" style="width:70%"></div></div>
+        <div class="card"><div class="line" style="width:80%"></div><div class="line"></div></div>
+        <div class="card under"><strong>Scroll peeks under tray — no solid band</strong><div class="line"></div></div>
+      </div>
+      <div class="tray-host"><div class="tray"><span>Home</span><span>Class</span><span>Ask</span><span>More</span></div></div>
+    </div>
+    <p class="cap">System tray · FlushBody pad 0</p>
+  </div>
+  <div>
+    <div class="phone">
+      <div class="safe"></div>
+      <div class="hdr">Capture</div>
+      <div class="scroll">
+        <div class="card"><div class="line"></div><div class="line" style="width:55%"></div></div>
+        <div class="card under"><strong>Content under sticky plate + tray</strong><div class="line"></div></div>
+      </div>
+      <div class="sticky-host"><div class="sticky">Save · Retake</div></div>
+      <div class="tray-host"><div class="tray"><span>Home</span><span>Class</span><span>Ask</span><span>More</span></div></div>
+    </div>
+    <p class="cap">Sticky CTA is rounded plate</p>
+  </div>
+  <div>
+    <div class="phone">
+      <div class="safe"></div>
+      <div class="hdr">Gradebook · Conduct</div>
+      <div class="ctx-host"><span class="chip on">Grades</span><span class="chip">Conduct</span><span class="chip">Heat</span></div>
+      <div class="scroll" style="top:104px">
+        <div class="card"><div class="line"></div><div class="line" style="width:60%"></div></div>
+        <div class="card under"><strong>Export FAB floats; table pads content</strong><div class="line"></div></div>
+      </div>
+      <div class="fab-host"><div class="fab">Export CSV</div></div>
+      <div class="tray-host"><div class="tray"><span>Home</span><span>Class</span><span>Ask</span><span>More</span></div></div>
+    </div>
+    <p class="cap">Context chips + export plate</p>
+  </div>
+</div>
+<p class="note">FlushBody outer bottom pad is always 0. Nested lists use useScrollBottomPad. Only rounded plates paint elevated fill — tray, sticky, FAB, filter chips.</p>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CollapsingPageChrome } from '@/components/ui/CollapsingPageChrome';
 import { useMarqueeScroll } from '@/components/ui/MarqueeText';
-import { chrome as chromeTokens } from '@/constants/theme';
+import { chrome as chromeTokens, shadows } from '@/constants/theme';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import { useLayout } from '@/lib/theme/layout';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -63,6 +63,18 @@ export function useScreenPad() {
   };
 }
 
+/**
+ * Bottom pad for nested scroll content so the last row clears floating chrome
+ * (system tray, local trays, FABs). Prefer this over FlushBody outer pad — outer
+ * layout pad paints an opaque colors.bg band behind rounded tray cards.
+ */
+export function useScrollBottomPad(extra = 16) {
+  const chrome = useOptionalChrome();
+  const keyboardUp = Boolean(chrome?.keyboardVisible);
+  const bottomReserve = chrome?.trayPadding ?? 48;
+  return extra + (keyboardUp ? 12 : bottomReserve);
+}
+
 export { useLayout };
 
 export function Screen({
@@ -81,7 +93,7 @@ export function Screen({
   pin,
   pageChromeHosted,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { pad } = useScreenPad();
   const insets = useSafeAreaInsets();
   const chrome = useOptionalChrome();
@@ -99,8 +111,11 @@ export function Screen({
     sticky && keyboardUp && Platform.OS !== 'android' && keyboardHeight > 0
       ? keyboardHeight
       : stickyLift;
+  // Measured floating sticky plate height — content pad clears plate + tray lift.
+  const [stickyH, setStickyH] = useState(0);
   // CAL-P6-8A: pin-only still uses FlushBody pin band (drum stays visible).
   const pinChrome = collapse != null || pin != null;
+  const hInset = Math.max(pad, 12);
 
   useEffect(() => {
     if (!keyboard || !keyboardUp) return;
@@ -118,13 +133,17 @@ export function Screen({
     onScroll?.(event);
   };
 
+  // Content owns tray/sticky clearance. Never put this on FlushBody outer pad —
+  // that shrinks the scroller and leaves an opaque colors.bg band behind trays.
+  const contentBottom = sticky
+    ? 16 + stickyBottom + Math.max(stickyH, 52)
+    : 16 + (keyboardUp ? 12 : bottomReserve);
+
   const padStyle = {
     maxWidth,
     paddingHorizontal: pad,
     paddingTop: pageChromeHosted ? 0 : pad + topReserve,
-    // When a sticky CTA is in the layout flow, it already sits above the tray.
-    // Extra tray padding here would only push Throw away / Retake under the overlay.
-    paddingBottom: sticky ? 16 : 16 + (keyboardUp ? 12 : bottomReserve),
+    paddingBottom: contentBottom,
   };
 
   // When ClassTabs (etc.) sit in CollapsingPageChrome above the scroller, FlushBody
@@ -134,9 +153,9 @@ export function Screen({
     maxWidth,
     paddingBottom: padStyle.paddingBottom,
   };
-  // Scroll path: outer bottom pad stays 0 so trays float over full-height content.
-  // Non-scroll path still reserves tray space on the layout box (Diary etc.).
-  const flushBottomPad = scroll ? 0 : padStyle.paddingBottom;
+  // Always 0: floating system tray / sticky plates / FABs sit over full-height body.
+  // Nested lists use useScrollBottomPad (or Screen content pad) so last items clear.
+  const flushBottomPad = 0;
 
   const scroller = (content: ReactNode, contentStyle: object) => (
     <ScrollView
@@ -189,7 +208,7 @@ export function Screen({
         pad={pad}
         topGap={pageChromeHosted ? 0 : pad + topReserve}
         maxWidth={maxWidth}
-        paddingBottom={padStyle.paddingBottom}
+        paddingBottom={flushBottomPad}
         centered={centered}
       >
         {children}
@@ -202,23 +221,41 @@ export function Screen({
       {body}
       {sticky ? (
         <View
+          pointerEvents="box-none"
           style={[
-            styles.bar,
+            styles.stickyHost,
             {
-              backgroundColor: colors.elevated,
-              borderTopColor: colors.line,
-              paddingHorizontal: pad,
-              marginBottom: stickyBottom,
+              left: hInset,
+              right: hInset,
+              bottom: stickyBottom,
+              backgroundColor: 'transparent',
             },
           ]}
         >
-          <View style={[styles.barInner, { maxWidth }]}>{sticky}</View>
+          <View
+            onLayout={(event) => {
+              const next = Math.ceil(event.nativeEvent.layout.height);
+              if (next > 0 && next !== stickyH) setStickyH(next);
+            }}
+            style={[
+              styles.stickyPlate,
+              {
+                backgroundColor: colors.elevated,
+                borderColor: colors.line,
+                maxWidth,
+                ...(scheme === 'light' ? shadows.light : null),
+              },
+            ]}
+          >
+            {sticky}
+          </View>
         </View>
       ) : null}
     </View>
   );
 
   // Sticky composers lift via keyboardHeight. KeyboardAvoidingView would double that.
+  // Floating sticky is absolute — still skip KAV so we don't double the lift.
   if (Platform.OS === 'web' || !avoidKeyboard || sticky) return column;
 
   // Only pad while the keyboard is open. A always-on iOS KAV with behavior
@@ -325,13 +362,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   },
-  bar: {
-    borderTopWidth: 1,
-    paddingTop: 12,
-    paddingBottom: 12,
+  stickyHost: {
+    position: 'absolute',
+    zIndex: 18,
+    alignItems: 'center',
   },
-  barInner: {
+  stickyPlate: {
     width: '100%',
     alignSelf: 'center',
+    borderRadius: chromeTokens.trayRadius,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
 });

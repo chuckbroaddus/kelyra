@@ -28,6 +28,7 @@ import Reanimated, {
 } from 'react-native-reanimated';
 
 import { radius, type } from '@/constants/theme';
+import { useScrollBottomPad } from '@/components/ui/Screen';
 import { useOptionalChrome } from '@/lib/chrome/ChromeProvider';
 import {
   DAY_LIST_EMPTY_H,
@@ -171,6 +172,7 @@ export function DayListPane<T = CalendarItem>({
 }: Props<T>) {
   const { colors } = useTheme();
   const chrome = useOptionalChrome();
+  const scrollBottomPad = useScrollBottomPad(24);
   const listRef = useAnimatedRef<FlatList<DayListRow<T>>>();
   // Calendar rows use the CalendarItem defaults; Diary passes its own.
   const fnsRef = useRef<RowFns<T>>(null as unknown as RowFns<T>);
@@ -684,7 +686,7 @@ export function DayListPane<T = CalendarItem>({
         onMomentumScrollEnd={() => {
           if (!motionRef.current.dragging) settle();
         }}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPad }]}
         accessibilityLabel="Day activity list"
       />
       {error ? <Text style={[styles.errorBar, { color: colors.mute }]}>{error}</Text> : null}
@@ -695,7 +697,9 @@ export function DayListPane<T = CalendarItem>({
 const styles = StyleSheet.create({
   wrap: { flex: 1, minHeight: 0 },
   scroller: { flex: 1, minHeight: 0 },
-  scrollContent: { paddingBottom: 24 },
+  scrollContent: {
+    // paddingBottom from useScrollBottomPad — tray clearance on content.
+  },
   /** Same text as the Single Day title (CalendarPeriodTitle: type.title @ 22pt, ink). */
   header: {
     height: DAY_LIST_HEADER_H,

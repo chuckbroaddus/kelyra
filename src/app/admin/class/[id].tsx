@@ -12,7 +12,7 @@ import { FormSheet } from '@/components/ui/FormSheet';
 import { Icon } from '@/components/ui/Icon';
 import { ListRow } from '@/components/ui/ListRow';
 import { PersonTabs } from '@/components/ui/PersonTabs';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, useScrollBottomPad } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { WorkingLine } from '@/components/ui/WorkingMark';
 import { type } from '@/constants/theme';
@@ -41,6 +41,7 @@ export default function ClassOfficeScreen() {
   const router = useRouter();
   const { profile } = useAuth();
   const chrome = useChrome();
+  const scrollBottomPad = useScrollBottomPad(24);
   const admin = isAdminRole(profile);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -216,7 +217,7 @@ export default function ClassOfficeScreen() {
             styles.paneScroll,
             Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
           ]}
-          contentContainerStyle={styles.paneScrollContent}
+          contentContainerStyle={[styles.paneScrollContent, { paddingBottom: scrollBottomPad }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

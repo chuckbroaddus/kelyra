@@ -12,7 +12,7 @@ import { ListRow } from '@/components/ui/ListRow';
 import { NoticePopup } from '@/components/ui/NoticePopup';
 import { FeedPane } from '@/components/ui/FeedPane';
 import { PersonTabs, type PersonTab } from '@/components/ui/PersonTabs';
-import { Screen } from '@/components/ui/Screen';
+import { Screen, useScrollBottomPad } from '@/components/ui/Screen';
 import { SplashLanding } from '@/components/ui/SplashLanding';
 import { TextField } from '@/components/ui/TextField';
 import { WorkingLine } from '@/components/ui/WorkingMark';
@@ -41,10 +41,11 @@ export default function HomeScreen() {
   const { configured, loading, teacher, profile, grants, error } = useAuth();
   const chrome = useChrome();
   const officeSeat = isOfficeChromeRole(chrome.role);
-  // OFFICE-PANE-KEYBOARD-REACH: iOS sets the pane scroller's keyboard inset from its frame at
-  // keyboard-show time; Screen then drops the tray reserve (paddingBottom) and the scroller grows
-  // by that amount, so the inset comes up short and Create account stays under the keyboard when
-  // a top field (Display name) is focused. Pad the content by the lost reserve while it is up.
+  // OFFICE-PANE-KEYBOARD-REACH: content pad owns tray clearance (FlushBody outer
+  // pad is always 0). When the keyboard is up, useScrollBottomPad drops to 12 —
+  // keep the lost tray reserve as an explicit spacer so Create account stays
+  // reachable.
+  const scrollBottomPad = useScrollBottomPad(16);
   const paneKeyboardSpacer =
     Platform.OS === 'ios' && chrome.keyboardVisible ? Math.max(0, chrome.trayPadding - 12) : 0;
   const teacherSeat = chrome.role === 'teacher';
@@ -251,7 +252,7 @@ export default function HomeScreen() {
             // Web: reserve gutter so scrollbar presence does not recenter the 640 column.
             Platform.OS === 'web' ? ({ scrollbarGutter: 'stable' } as object) : null,
           ]}
-          contentContainerStyle={styles.paneScrollContent}
+          contentContainerStyle={[styles.paneScrollContent, { paddingBottom: scrollBottomPad }]}
           keyboardShouldPersistTaps="handled"
           // OFFICE-PANE-KEYBOARD: Screen is avoidKeyboard={false} here, so this scroller owns
           // the iOS keyboard inset — New person / Manage fields scroll above the keyboard.
