@@ -179,7 +179,9 @@ export function SyllabusWizardNav({
   const systemTrayBottom = landscape ? 6 + Math.max(insets.bottom, 6) : 8 + Math.max(insets.bottom, 8);
   const systemTrayHeight = landscape ? chrome.trayHeightLandscape : chrome.trayHeight;
   const stacked = !layout.showTopBar;
-  const stackGap = 8;
+  // True air gap between rounded cards — wide enough that scroll text reads through
+  // and light tray shadows do not visually weld the two plates into one band.
+  const stackGap = 12;
   // Stacked: sit just above the system tray. Unstacked (web top bar): safe bottom only.
   const bottom = stacked ? systemTrayBottom + systemTrayHeight + stackGap : systemTrayBottom;
   // Swipe-up: drop into the system tray's bottom slot (same bottomInset as FloatingTabTray).
@@ -209,12 +211,14 @@ export function SyllabusWizardNav({
   return (
     <Animated.View
       pointerEvents="box-none"
+      // Wrapper stays fully transparent — only the rounded actionTray card paints fill.
       style={[
         styles.float,
         {
           left: hInset,
           right: hInset,
           bottom,
+          backgroundColor: 'transparent',
           transform: [{ translateY: actionTranslate }],
         },
       ]}
@@ -372,6 +376,7 @@ const styles = StyleSheet.create({
   float: {
     position: 'absolute',
     zIndex: 17,
+    backgroundColor: 'transparent',
   },
   actionTray: {
     borderRadius: chrome.trayRadius,

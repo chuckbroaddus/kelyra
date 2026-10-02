@@ -141,7 +141,8 @@ export function Screen({
   const scroller = (content: ReactNode, contentStyle: object) => (
     <ScrollView
       ref={scrollRef}
-      style={styles.scroller}
+      // Transparent so floating tray air-gaps show scroll content, not a solid plate.
+      style={[styles.scroller, { backgroundColor: 'transparent' }]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode={keyboard ? 'interactive' : 'on-drag'}
       automaticallyAdjustKeyboardInsets={!sticky}
@@ -220,10 +221,15 @@ export function Screen({
   // Sticky composers lift via keyboardHeight. KeyboardAvoidingView would double that.
   if (Platform.OS === 'web' || !avoidKeyboard || sticky) return column;
 
+  // Only pad while the keyboard is open. A always-on iOS KAV with behavior
+  // "padding" can leave a bottom inset that shrinks the scroller and paints an
+  // opaque colors.bg band behind floating trays (visible in the air gap between
+  // the syllabus action tray and the system tray).
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      enabled={keyboardUp}
       // Screen sits in the shell body, already below the header. Offsetting by
       // headerHeight left the composer and last bubbles under the keyboard.
       keyboardVerticalOffset={0}

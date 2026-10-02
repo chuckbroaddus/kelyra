@@ -89,12 +89,14 @@ export function FloatingTabTray() {
     <Animated.View
       key={remountKey}
       pointerEvents="box-none"
+      // Transparent host — only styles.frame paints elevated so stacked tray air gaps stay clear.
       style={[
         styles.float,
         {
           left: hInset,
           right: hInset,
           bottom,
+          backgroundColor: 'transparent',
           transform: [{ translateY: chromeState.trayTranslate }],
           opacity: chromeState.trayOpacity,
         },
@@ -191,6 +193,7 @@ const styles = StyleSheet.create({
   float: {
     position: 'absolute',
     zIndex: 16,
+    backgroundColor: 'transparent',
   },
   frame: {
     borderRadius: chrome.trayRadius,

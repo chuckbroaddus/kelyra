@@ -100,20 +100,29 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(wiz, /error\?: string \| null/);
   assert.match(chromeProv, /syllabusActionTrayHeight/);
   // #389 separate action tray: Save draft is no longer under a tray bump overlay.
-  assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 8 : 0/);
+  assert.match(chromeProv, /bumpExtra = trayBump \? chrome\.syllabusActionTrayHeight \+ 12 : 0/);
   assert.match(wiz, /zIndex: 17/);
   // Floating trays: scroll content pads bottom; FlushBody outer pad is 0 on scroll
   // so no opaque band clips content above the action + system trays.
   assert.match(screen, /flushBottomPad = scroll \? 0 : padStyle\.paddingBottom/);
   assert.match(screen, /paddingBottom=\{flushBottomPad\}/);
   assert.match(screen, /Math\.min\(16, paddingBottom\)/);
-  // Tray wrappers stay transparent; only the rounded cards paint elevated fill.
+  // iOS KAV only while keyboard is up — residual padding was an opaque tray-gap band.
+  assert.match(screen, /enabled=\{keyboardUp\}/);
+  assert.match(screen, /backgroundColor: 'transparent'/);
+  // Floating trays: wrappers transparent; only rounded cards paint elevated fill.
   assert.match(wiz, /styles\.float/);
   assert.match(wiz, /styles\.actionTray/);
-  assert.doesNotMatch(wiz, /float:[^}]*backgroundColor/);
+  assert.match(wiz, /stackGap = 12/);
+  assert.match(wiz, /backgroundColor: 'transparent'/);
+  assert.doesNotMatch(wiz, /float:[^}]*backgroundColor:\s*c\./);
   assert.match(tray, /styles\.float/);
   assert.match(tray, /styles\.frame/);
-  assert.doesNotMatch(tray, /float:[^}]*backgroundColor/);
+  assert.match(tray, /backgroundColor: 'transparent'/);
+  assert.doesNotMatch(tray, /float:[^}]*backgroundColor:\s*colors\./);
+  // Syllabus hosts nav on a full-bleed transparent overlay (no band between trays).
+  assert.match(ui, /styles\.navHost/);
+  assert.match(ui, /backgroundColor: 'transparent'/);
   assert.doesNotMatch(body, /One choice\. The line under/);
   assert.match(person, /stepMark\?:/);
   assert.match(person, /StepMarkBadge/);
