@@ -141,9 +141,9 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
 
   // Save draft still exists in the wizard chrome, but the screen refuses a silent
   // live write while published — teacher must Publish (with confirm).
-  // §11.15 also disables Save when weighted weights ≠ 100% (canFinishReview).
+  // AVG T-S7: Save draft is lenient (canSaveDraft); Publish stays canFinishReview.
   assert.match(wizard, /label=\{busy \? 'Saving…' : 'Save draft'\}/);
-  assert.match(wizard, /disabled=\{Boolean\(busy\) \|\| !canFinishReview\(draft\)\}/);
+  assert.match(wizard, /disabled=\{Boolean\(busy\) \|\| !canSaveDraft\(draft\)\}/);
   assert.match(ui, /onSaveDraft=\{\(\) => void onSaveDraft\(\)\}/);
   assert.match(ui, /draft\.syllabus_status === 'published'/);
   assert.match(
@@ -154,8 +154,8 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   const saveBody = saveDraft.slice(0, saveDraft.indexOf('const doPublish'));
   assert.match(saveBody, /draft\.syllabus_status === 'published'/);
   assert.match(saveBody, /Tap Publish to save your changes/);
-  assert.match(saveBody, /canFinishReview\(draft\)/);
-  assert.match(saveBody, /category weights need to add up to 100%/);
+  assert.match(saveBody, /canSaveDraft\(draft\)/);
+  assert.match(saveBody, /Every category in use needs a name/);
   // Published path returns before any draft write; draft save only for non-published.
   const publishedGate = saveBody.indexOf("draft.syllabus_status === 'published'");
   const publishedReturn = saveBody.indexOf('return;', publishedGate);

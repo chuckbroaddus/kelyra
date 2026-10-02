@@ -17,6 +17,7 @@ import {
   STEP_ICONS,
   STEP_LABELS,
   canFinishReview,
+  canSaveDraft,
   resolveWizardStep,
   setWizardStep,
   soFarSummary,
@@ -112,7 +113,7 @@ export function SyllabusWizard({
         <GhostButton
           label={busy ? 'Saving…' : 'Save draft'}
           onPress={onSaveDraft}
-          disabled={Boolean(busy) || !canFinishReview(draft)}
+          disabled={Boolean(busy) || !canSaveDraft(draft)}
         />
       </View>
 

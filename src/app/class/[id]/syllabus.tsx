@@ -18,6 +18,7 @@ import { IngestProposalReview } from '@/components/ingest/IngestProposalReview';
 import {
   applyAskImport,
   canFinishReview,
+  canSaveDraft,
   draftFromBundle,
   resolveWizardStep,
   setWizardStep,
@@ -178,20 +179,24 @@ export default function SyllabusScreen() {
       setError('This syllabus is already published. Tap Publish to save your changes.');
       return;
     }
-    // §11.15: weighted engines block Save until active weights = 100%.
-    if (!canFinishReview(draft)) {
-      setError('Your category weights need to add up to 100% before you can save.');
+    // AVG T-S7 / §7.1: draft save is lenient (weights may be incomplete). Publish stays strict.
+    if (!canSaveDraft(draft)) {
+      setError('Every category in use needs a name before you can save.');
       return;
     }
     setBusy(true);
     setError(null);
     try {
       await saveClassSyllabusDraft(id, toEditorInput(draft));
-      setStatus('Draft saved. It won’t change any grades until you publish.');
+      setStatus(
+        canFinishReview(draft)
+          ? 'Draft saved. It won’t change any grades until you publish.'
+          : 'Draft saved. Category weights still need to add up to 100% before you can publish.',
+      );
       interviewRef.current = null;
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save draft');
+      setError(plainSyllabusWriteError(err, 'Could not save draft'));
     } finally {
       setBusy(false);
     }
@@ -199,6 +204,11 @@ export default function SyllabusScreen() {
 
   const doPublish = async () => {
     if (!id || !draft) return;
+    if (!canFinishReview(draft)) {
+      setError('Your category weights need to add up to 100% before you can publish. Tap Categories to change them.');
+      setConfirm(null);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -208,14 +218,7 @@ export default function SyllabusScreen() {
       setConfirm(null);
       await load();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not publish';
-      setError(
-        /not counting the extra credit|besides extra credit/i.test(msg)
-          ? 'Your regular category weights need to add up to 100% before you can publish. Extra credit is added on top. Tap Categories to change them.'
-          : /active weights must sum to 100/i.test(msg)
-            ? 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.'
-            : msg,
-      );
+      setError(plainSyllabusWriteError(err, 'Could not publish'));
     } finally {
       setBusy(false);
     }
@@ -489,6 +492,27 @@ const styles = StyleSheet.create({
   iconPair: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
   error: { ...type.meta, marginTop: 8 },
 });
+
+/** Map RPC/SQL noise to teacher-facing copy (ambiguous title, weight sum, locks). */
+function plainSyllabusWriteError(err: unknown, fallback: string): string {
+  const msg = err instanceof Error ? err.message : fallback;
+  if (/column reference .* is ambiguous|ambiguous/i.test(msg)) {
+    return 'Could not save this syllabus on the server (a database update needs a fix). Try again after the latest syllabus migration is applied, or contact support if this keeps happening.';
+  }
+  if (/not counting the extra credit|besides extra credit/i.test(msg)) {
+    return 'Your regular category weights need to add up to 100% before you can publish. Extra credit is added on top. Tap Categories to change them.';
+  }
+  if (/active weights must sum to 100/i.test(msg)) {
+    return 'Your category weights need to add up to 100% before you can publish. Tap Categories to change them.';
+  }
+  if (/syllabus version conflict/i.test(msg)) {
+    return 'Someone else saved this syllabus. Pull to refresh, then try again.';
+  }
+  if (/Locked field/i.test(msg)) {
+    return msg.replace(/^Locked field "[^"]+" cannot be edited by the teacher\.\s*/i, 'Your school locks this setting. ');
+  }
+  return msg || fallback;
+}
 
 /** Apply a school template onto a wizard draft (respects school locks). */
 function applyTemplateToDraft(
