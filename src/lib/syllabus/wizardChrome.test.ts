@@ -82,6 +82,18 @@ test('screen pins step row; separate action tray hosts nav + import icons', () =
   assert.match(wiz, /styles\.actionTray/);
   assert.match(wiz, /chevronBg/);
   assert.match(wiz, /accessibilityLabel=\"Continue\"/);
+  // Even outer gaps: equal-width side slots + centered mid cluster (Save/Publish inside mid).
+  assert.match(wiz, /styles\.sideSlot/);
+  assert.match(wiz, /styles\.midCluster/);
+  assert.doesNotMatch(wiz, /styles\.rightCluster/);
+  assert.doesNotMatch(wiz, /styles\.midIcons/);
+  assert.match(wiz, /sideSlot:\s*\{[^}]*width:\s*40/s);
+  assert.match(wiz, /midCluster:\s*\{[^}]*justifyContent:\s*'center'/s);
+  // Save draft / Publish live in midCluster (between chevrons), not glued to ›.
+  const midIdx = wiz.indexOf('styles.midCluster');
+  const saveIdx = wiz.indexOf("accessibilityLabel={busy ? 'Saving…' : 'Save draft'}");
+  const continueIdx = wiz.indexOf('accessibilityLabel="Continue"');
+  assert.ok(midIdx > 0 && saveIdx > midIdx && saveIdx < continueIdx);
   // Nav circles: primary brand fill (PrimaryButton token); identical when both enabled.
   assert.match(wiz, /chevronBg = c\.brand/);
   assert.match(wiz, /chevronBorder = c\.brand/);

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Syllabus action tray even spacing</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1612; font: 13px/1.35 -apple-system, system-ui, sans-serif; color: #1a1612; padding: 20px; }
+  h1 { color: #f5efe6; font-size: 15px; margin-bottom: 10px; text-align: center; font-weight: 600; }
+  .note { color: #cbbba8; font-size: 12px; text-align: center; margin-bottom: 16px; }
+  .row { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+  .phone {
+    width: 390px; height: 280px; border-radius: 28px; background: #f3ebe1;
+    border: 3px solid #3a322a; position: relative; overflow: hidden; padding: 16px 12px;
+  }
+  .label { color: #6b5e52; font-size: 11px; font-weight: 600; margin-bottom: 10px; text-align: center; }
+  .act {
+    background: #fff; border: 1px solid #e2d6c8; border-radius: 22px;
+    box-shadow: 0 4px 14px rgba(26,22,18,0.12); padding: 8px 8px 10px;
+  }
+  .nav { display: flex; align-items: center; }
+  .side { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; }
+  .circle {
+    width: 40px; height: 40px; border-radius: 20px; background: #c45c26; color: #fff;
+    display: grid; place-items: center; font-size: 26px; font-weight: 600; line-height: 1;
+  }
+  .mid {
+    flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 0 6px;
+  }
+  .icon {
+    width: 48px; height: 48px; display: grid; place-items: center; color: #6b5e52; font-size: 11px;
+  }
+  .icon span {
+    width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid #9a8b7c; display: block;
+  }
+  .save {
+    min-width: 104px; height: 40px; border-radius: 20px; border: 1px solid #e2d6c8;
+    background: #fff; display: grid; place-items: center; font-weight: 600; font-size: 14px;
+  }
+  .save.pub { background: #c45c26; color: #fff; border-color: #c45c26; }
+  .caption { text-align: center; color: #6b5e52; font-size: 11px; margin-top: 6px; }
+  .guide {
+    position: absolute; left: 20px; right: 20px; top: 118px; height: 2px;
+    background: repeating-linear-gradient(90deg, #c45c26 0 8px, transparent 8px 14px);
+    opacity: 0.55; pointer-events: none;
+  }
+  .marks { display: flex; justify-content: space-between; margin-top: 14px; padding: 0 8px; color: #8a4b12; font-size: 10px; }
+  .bad .mid { justify-content: flex-start; }
+  .bad .right-glue { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .bad .nav { gap: 6px; }
+  .x { color: #b00020; font-weight: 700; font-size: 11px; text-align: center; margin-top: 8px; }
+  .ok { color: #2e7d32; font-weight: 700; font-size: 11px; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>Syllabus action tray — even outer gaps</h1>
+  <p class="note">BEFORE: Save glued to › (uneven). AFTER: equal side slots + centered mid cluster.</p>
+  <div class="row">
+    <!-- BEFORE -->
+    <div>
+      <div class="phone">
+        <div class="label">BEFORE (rightCluster)</div>
+        <div class="act bad">
+          <div class="nav">
+            <div class="circle">‹</div>
+            <div class="mid" style="justify-content:center;flex:1">
+              <div class="icon"><span></span>Q</div>
+              <div class="icon"><span></span>C</div>
+              <div class="icon"><span></span>T</div>
+            </div>
+            <div class="right-glue">
+              <div class="save">Save draft</div>
+              <div class="circle">›</div>
+            </div>
+          </div>
+          <div class="caption">1 of 6 — Engine</div>
+        </div>
+        <div class="x">gap ‹→Q small · Save glued to ›</div>
+      </div>
+    </div>
+    <!-- AFTER Save -->
+    <div>
+      <div class="phone">
+        <div class="label">AFTER — Save draft step</div>
+        <div class="act">
+          <div class="nav">
+            <div class="side"><div class="circle">‹</div></div>
+            <div class="mid">
+              <div class="icon"><span></span></div>
+              <div class="icon"><span></span></div>
+              <div class="icon"><span></span></div>
+              <div class="save">Save draft</div>
+            </div>
+            <div class="side"><div class="circle">›</div></div>
+          </div>
+          <div class="caption">1 of 6 — Engine</div>
+        </div>
+        <div class="guide"></div>
+        <div class="marks"><span>‹ outer</span><span>outer ›</span></div>
+        <div class="ok">equal sideSlots · midCluster centered</div>
+      </div>
+    </div>
+    <!-- AFTER Publish -->
+    <div>
+      <div class="phone">
+        <div class="label">AFTER — Publish (last step)</div>
+        <div class="act">
+          <div class="nav">
+            <div class="side"><div class="circle">‹</div></div>
+            <div class="mid">
+              <div class="icon"><span></span></div>
+              <div class="icon"><span></span></div>
+              <div class="icon"><span></span></div>
+              <div class="save pub">Publish</div>
+            </div>
+            <div class="side"><div class="circle">›</div></div>
+          </div>
+          <div class="caption">6 of 6 — Review</div>
+        </div>
+        <div class="ok">balance holds when label becomes Publish</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
