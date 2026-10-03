@@ -55,12 +55,14 @@ test('PeriodPager wires drum stack gate on touch/grant and restores on release',
   const grantBlock = pager.slice(grantIdx, grantIdx + 900);
   assert.match(grantBlock, /holdStackGestures|hold\(/);
 
-  const releaseIdx = pager.indexOf('onPanEnd');
-  const releaseBlock = pager.slice(releaseIdx, releaseIdx + 900);
+  // Finger-up (UI onEnd → JS onPanRelease) restores.
+  const releaseIdx = pager.indexOf('const onPanRelease');
+  const releaseBlock = pager.slice(releaseIdx, releaseIdx + 400);
   assert.match(releaseBlock, /releaseStackGestures|release\(/);
 
-  const termIdx = pager.indexOf('onPanTerminate');
-  const termBlock = pager.slice(termIdx, termIdx + 400);
+  // Cancel / finalize path restores too.
+  const termIdx = pager.indexOf('.onFinalize(');
+  const termBlock = pager.slice(termIdx, termIdx + 600);
   assert.match(termBlock, /releaseStackGestures|release\(/);
 
   // CAL-P6-9A comment mentions the real gate.

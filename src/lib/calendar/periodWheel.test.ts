@@ -174,11 +174,11 @@ test('PeriodPager is 7-slot SlotPool: reanimated native+web; no translateZ; RM n
   assert.match(pager, /ROW\.pitch/);
   assert.match(pager, /66%|WHEEL_MOBILE_ROW_SCALE/);
   // P0: stable slot-${index} hosts — do NOT remount-key on tile.key mid-fling.
-  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey\(ringSlot\)/);
   assert.match(pager, /stableSlotHostKey/);
   assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
-  assert.match(pager, /Math\.trunc\(-/);
+  assert.match(pager, /drumSlotNorm\(index, centerShared\.value/);
   assert.doesNotMatch(pager, /Math\.round\(-dragShared/);
   assert.match(pager, /react-native-reanimated/);
   assert.match(pager, /willChange/);
@@ -203,7 +203,7 @@ test('PeriodPager is 7-slot SlotPool: reanimated native+web; no translateZ; RM n
   // RM path: scale only — no rotateY in reduceMotion branch of NativeSlotMotion
   assert.match(pager, /reduceMotion/);
   assert.match(pager, /rotateY/);
-  assert.match(pager, /WHEEL_LOCAL_SAMPLE_SLOTS|residualFromTotalDrag|visualShift/);
+  assert.match(pager, /drumRingSlot|windowCenter/);
   assert.match(pager, /shiftPeriodAnchor/);
   assert.match(pager, /useAnimatedReaction/);
 });
