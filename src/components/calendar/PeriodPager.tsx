@@ -54,6 +54,7 @@ import {
   drumCoastPlan,
   drumNearestSteps,
   drumRingSlot,
+  drumSnapSteps,
   drumSlotNorm,
   periodIndex,
   shiftPeriodAnchor,
@@ -63,8 +64,10 @@ import {
 } from '@/lib/calendar/periodPager';
 import { CAL_P6_1A_FULL_BAND, CAL_P6_1A_ON_DRUM_CARVE_PX } from '@/lib/calendar/p6Laws';
 import {
+  WHEEL_FLING_DECEL,
   WHEEL_HERO_HEIGHT,
   WHEEL_HERO_WIDTH,
+  WHEEL_MAX_FLING_SLOTS,
   WHEEL_MIN_HIT_PX,
   WHEEL_PERSPECTIVE,
   WHEEL_PERSPECTIVE_ORIGIN,
@@ -663,8 +666,17 @@ export function PeriodPager({
             return;
           }
           // Fling coasts with momentum; slow release springs (snapPeriodPage law).
-          const plan = drumCoastPlan({ releaseDragPx, velocityX: e.velocityX, pitch });
-          animateSnap(plan.steps, e.velocityX, plan.mode === 'coast' ? plan.durationMs : 0);
+          const steps = drumSnapSteps(
+            releaseDragPx,
+            pitch,
+            e.velocityX,
+            0.28,
+            600,
+            WHEEL_MAX_FLING_SLOTS,
+            WHEEL_FLING_DECEL,
+          );
+          const plan = drumCoastPlan({ releaseDragPx, velocityX: e.velocityX, pitch, steps });
+          animateSnap(steps, e.velocityX, plan.mode === 'coast' ? plan.durationMs : 0);
           runOnJS(onPanRelease)();
         })
         .onFinalize(() => {
