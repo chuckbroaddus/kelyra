@@ -335,6 +335,12 @@ export function PeriodPager({
   const onShiftRef = useRef(onShift);
   onShiftRef.current = onShift;
   const panningRef = useRef(false);
+  /**
+   * Last pan touch (ms). The pan owns taps (onPanTap); on web the card's Pressable
+   * also fires on mouse-up — and since cards now ride the finger, the press is
+   * never cancelled, so it would re-target the snap. Presses inside a pan no-op.
+   */
+  const panTouchAtRef = useRef(0);
   /** Stage width for start-claim micro-tap slot pick (CAL-P6-1A). */
   const stageWidthRef = useRef(390);
 
@@ -581,6 +587,7 @@ export function PeriodPager({
   /** JS side of pan grant — the UI worklet already grabbed the drum where it is. */
   const onPanBegin = useCallback(() => {
     panningRef.current = true;
+    panTouchAtRef.current = Date.now();
     // CAL-P6-9A: disable interactive pop for the drum gesture lifetime.
     holdStackGestures();
     setShowCenterExtras(false);
@@ -591,6 +598,7 @@ export function PeriodPager({
   /** JS side of finger-up — the coast already started on the UI thread. */
   const onPanRelease = useCallback(() => {
     panningRef.current = false;
+    panTouchAtRef.current = Date.now();
     // Finger up — restore stack pop (coast may continue; pop only races while down).
     releaseStackGestures();
   }, [releaseStackGestures]);
@@ -756,7 +764,12 @@ export function PeriodPager({
         : parked < 0
           ? accessibilityPrevLabel
           : accessibilityNextLabel,
-      onPress: () => (isCenter ? onJumpToday() : tapSide(parked)),
+      // VoiceOver / keyboard activation only — touches go through the pan (onPanTap).
+      onPress: () => {
+        if (panningRef.current || Date.now() - panTouchAtRef.current < 600) return;
+        if (isCenter) onJumpToday();
+        else tapSide(parked);
+      },
     };
     const leaf = (
       <PeriodLeaf
