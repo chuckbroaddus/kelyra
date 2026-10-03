@@ -7,9 +7,9 @@
 -- bodies of create_ingest_batch (7-arg), save_ingest_split, confirm_ingest_batch,
 -- ingest_mark_received, retry_ingest_remainder.
 --
--- Known remaining drift NOT captured here (live-only): ingest_agent_devices,
--- ingest_google_tokens, ingest_packet_name_suggestions, ingest_source_seen, and RPCs
--- such as upsert_ingest_source_binding, pair_ingest_agent_device, kick_ingest_drive.
+-- The remaining live-only ingest schema (ingest_agent_devices, ingest_google_tokens,
+-- ingest_packet_name_suggestions, ingest_source_seen, and their RPCs) is captured in
+-- 20261003020000 / 20261003020100.
 
 -- ---------------------------------------------------------------------------
 -- ingest_source_bindings
@@ -43,7 +43,8 @@ create table if not exists public.ingest_source_bindings (
   last_poll_at timestamptz
 );
 
--- agent_device_id FK only when the (live-only) ingest_agent_devices table exists.
+-- agent_device_id FK only when ingest_agent_devices exists. On a fresh DB that table is
+-- created later (20261003020000), which adds this FK itself; keep the guard.
 do $$
 begin
   if to_regclass('public.ingest_agent_devices') is not null
