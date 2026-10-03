@@ -533,6 +533,15 @@ test('CAL-DRUM-TRACK coast plan: fling = momentum at release speed; slow = sprin
   assert.equal(Object.is(drumNearestSteps(0.2 * P, P), -0), false);
 });
 
+test('CAL-DRUM-TRACK card Pressable never doubles a pan tap (web mouse-up)', () => {
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.match(pager, /if \(panningRef\.current \|\| Date\.now\(\) - panTouchAtRef\.current < 600\) return;/);
+  const beginIdx = pager.indexOf('const onPanBegin');
+  assert.match(pager.slice(beginIdx, beginIdx + 300), /panTouchAtRef\.current = Date\.now\(\)/);
+  const relIdx = pager.indexOf('const onPanRelease');
+  assert.match(pager.slice(relIdx, relIdx + 300), /panTouchAtRef\.current = Date\.now\(\)/);
+});
+
 test('CAL-DRUM-TRACK lib worklets are closure-free (periodWheel ⇄ periodPager import cycle)', () => {
   const src = read('src/lib/calendar/periodPager.ts');
   const fns = [...src.matchAll(/export function (\w+)\([\s\S]*?\n\}\n/g)];
