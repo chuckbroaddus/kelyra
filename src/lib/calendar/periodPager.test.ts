@@ -22,6 +22,7 @@ import {
   visualShiftForSlotPool,
   drumCoastPlan,
   drumNearestSteps,
+  drumSnapSteps,
   drumRingSlot,
   drumSlotNorm,
   periodIndex,
@@ -507,22 +508,45 @@ test('CAL-DRUM-TRACK ring hosts: window rebound keeps every retained value on it
 
 test('CAL-DRUM-TRACK coast plan: fling = momentum at release speed; slow = spring', () => {
   const P = 51;
-  const slow = drumCoastPlan({ releaseDragPx: -0.6 * P, velocityX: -200, pitch: P });
+  const plan = (releaseDragPx: number, velocityX: number) => {
+    const steps = drumSnapSteps(releaseDragPx, P, velocityX, 0.28, 600, WHEEL_MAX_FLING_SLOTS, WHEEL_FLING_DECEL);
+    return { steps, ...drumCoastPlan({ releaseDragPx, velocityX, pitch: P, steps }) };
+  };
+  // Worklet law == snapPeriodPage law.
+  for (const [dx, vx] of [[-30, 0], [-0.6 * P, -200], [-40, -2000], [120, 3100], [0, 9000], [-3, 40]]) {
+    assert.equal(drumSnapSteps(dx, P, vx, 0.28, 600, WHEEL_MAX_FLING_SLOTS, WHEEL_FLING_DECEL), snapPeriodPage(dx, P, vx));
+  }
+  const slow = plan(-0.6 * P, -200);
   assert.equal(slow.mode, 'spring');
   assert.equal(slow.steps, 1);
-  const fling = drumCoastPlan({ releaseDragPx: -40, velocityX: -2000, pitch: P });
+  const fling = plan(-40, -2000);
   assert.equal(fling.mode, 'coast');
-  assert.equal(fling.steps, snapPeriodPage(-40, P, -2000));
   assert.ok(fling.steps >= 15, `hard flick coasts many cards (${fling.steps})`);
   // Quad ease-out opening speed 2|D|/T equals the release speed (unless clamped).
   const remaining = Math.abs(-fling.steps * P - -40);
   assert.ok(Math.abs((2 * remaining * 1000) / fling.durationMs - 2000) < 1);
-  const capped = drumCoastPlan({ releaseDragPx: 0, velocityX: 9000, pitch: P });
+  const capped = plan(0, 9000);
   assert.equal(capped.steps, -WHEEL_MAX_FLING_SLOTS);
   assert.ok(capped.durationMs <= 1600);
   assert.equal(drumNearestSteps(-1.4 * P, P), 1);
   assert.equal(drumNearestSteps(0.2 * P, P), 0);
   assert.equal(Object.is(drumNearestSteps(0.2 * P, P), -0), false);
+});
+
+test('CAL-DRUM-TRACK lib worklets are closure-free (periodWheel ⇄ periodPager import cycle)', () => {
+  const src = read('src/lib/calendar/periodPager.ts');
+  const fns = [...src.matchAll(/export function (\w+)\([\s\S]*?\n\}\n/g)];
+  const worklets = fns.filter((m) => /'worklet';/.test(m[0]));
+  assert.ok(worklets.length >= 4, `expected drum worklets, got ${worklets.length}`);
+  for (const m of worklets) {
+    const body = m[0];
+    assert.doesNotMatch(body, /\b(WHEEL_[A-Z_]+|SLOT_PITCH|SLOT_POOL_[A-Z_]+)\b/, `${m[1]} captures a module constant`);
+    assert.doesNotMatch(body.replace(`export function ${m[1]}`, ''), /\b(snapPeriodPage|drum\w+|periodDistance)\(/, `${m[1]} calls another function`);
+  }
+  // Component release path uses the worklet law, not the defaulted JS wrapper.
+  const pager = read('src/components/calendar/PeriodPager.tsx');
+  assert.doesNotMatch(pager, /snapPeriodPage\(/);
+  assert.match(pager, /drumSnapSteps\(/);
 });
 
 test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG atlas', () => {
@@ -635,8 +659,8 @@ test('PeriodPager grab stops a coast where it is; cancelled rests no-op', () => 
   // Release coast starts on the UI thread (no JS round trip before momentum).
   const endIdx = pager.indexOf('.onEnd(');
   const endBlock = pager.slice(endIdx, pager.indexOf('.onFinalize(', endIdx));
-  assert.match(endBlock, /drumCoastPlan\(\{ releaseDragPx, velocityX: e\.velocityX, pitch \}\)/);
-  assert.match(endBlock, /animateSnap\(plan\.steps, e\.velocityX/);
+  assert.match(endBlock, /drumCoastPlan\(\{ releaseDragPx, velocityX: e\.velocityX, pitch, steps \}\)/);
+  assert.match(endBlock, /animateSnap\(steps, e\.velocityX/);
   // animateSnap stamps springGeneration for late-rest ignore (native+web).
   assert.match(pager, /runOnJS\(onSpringRest\)\(springGeneration, restIndex\)/);
 });

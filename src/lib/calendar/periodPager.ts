@@ -373,8 +373,34 @@ export function snapPeriodPage(
   maxSlots = WHEEL_MAX_FLING_SLOTS,
   decel = WHEEL_FLING_DECEL,
 ): number {
+  return drumSnapSteps(
+    translationX,
+    pitch > 0 ? pitch : SLOT_PITCH,
+    velocityX,
+    distanceRatio,
+    velocityThreshold,
+    maxSlots,
+    decel > 0 ? decel : WHEEL_FLING_DECEL,
+  );
+}
+
+/**
+ * snapPeriodPage law as a self-contained worklet (UI-thread release).
+ * Closure-free on purpose: a worklet that captures a module import snapshots it
+ * at module init, and periodWheel ⇄ periodPager import each other (TDZ on web,
+ * undefined on native). Callers pass every constant.
+ */
+export function drumSnapSteps(
+  translationX: number,
+  pitch: number,
+  velocityX: number,
+  distanceRatio: number,
+  velocityThreshold: number,
+  maxSlots: number,
+  decel: number,
+): number {
   'worklet';
-  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  const P = pitch > 0 ? pitch : 1;
   // Content follows finger: slots advanced ≈ −translationX / P
   const distanceSlots = -translationX / P;
   const speed = Math.abs(velocityX);
@@ -389,7 +415,7 @@ export function snapPeriodPage(
     }
   } else {
     // Inertial coast: |coastPx| = v² / (2·a); sign matches content direction (−vx).
-    const a = decel > 0 ? decel : WHEEL_FLING_DECEL;
+    const a = decel > 0 ? decel : 2000;
     const coastPx = (-velocityX * speed) / (2 * a);
     slots = Math.round((-translationX + coastPx) / P);
     if (slots === 0) {
@@ -399,7 +425,7 @@ export function snapPeriodPage(
 
   if (slots > maxSlots) return maxSlots;
   if (slots < -maxSlots) return -maxSlots;
-  return slots;
+  return slots === 0 ? 0 : slots;
 }
 
 /**
@@ -550,7 +576,6 @@ export function periodIndex(
  * host leaving one edge is relabeled with the value entering the other edge.
  */
 export function drumRingSlot(index: number, size: number = WHEEL_SLOT_OFFSETS.length): number {
-  'worklet';
   const n = size > 0 ? size : 7;
   const m = Math.round(index) % n;
   const slot = m < 0 ? m + n : m;
@@ -565,42 +590,43 @@ export function drumSlotNorm(
   pitch: number,
 ): number {
   'worklet';
-  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  // Closure-free worklet (see drumSnapSteps).
+  const P = pitch > 0 ? pitch : 1;
   return index - centerIndex + dragPx / P;
 }
 
 /**
- * Release coast plan. Fast flings coast with momentum (quad ease-out whose
- * opening speed equals the finger's release speed) to the slot snapPeriodPage
- * picks; slow releases spring to the nearest slot.
+ * Release coast plan for the `steps` drumSnapSteps picked. Fast flings coast
+ * with momentum (quad ease-out whose opening speed equals the release speed);
+ * slow releases spring. Closure-free worklet (see drumSnapSteps).
  */
 export function drumCoastPlan(args: {
   releaseDragPx: number;
   velocityX: number;
   pitch: number;
+  steps: number;
   minMs?: number;
   maxMs?: number;
-}): { steps: number; mode: 'coast' | 'spring'; durationMs: number } {
+}): { mode: 'coast' | 'spring'; durationMs: number } {
   'worklet';
-  const P = args.pitch > 0 ? args.pitch : SLOT_PITCH;
-  const steps = snapPeriodPage(args.releaseDragPx, P, args.velocityX);
-  const remaining = -steps * P - args.releaseDragPx;
+  const P = args.pitch > 0 ? args.pitch : 1;
+  const remaining = -args.steps * P - args.releaseDragPx;
   const speed = Math.abs(args.velocityX);
   const sameDirection = remaining === 0 || Math.sign(remaining) === Math.sign(args.velocityX);
   if (speed < 600 || !sameDirection || Math.abs(remaining) < P / 2) {
-    return { steps, mode: 'spring', durationMs: 0 };
+    return { mode: 'spring', durationMs: 0 };
   }
   // Quad ease-out x(t)=D(1-(1-t/T)^2) starts at 2D/T px/s → T = 2|D|/|v|.
   const raw = (2 * Math.abs(remaining) * 1000) / speed;
   const lo = args.minMs ?? 120;
   const hi = args.maxMs ?? 1600;
-  return { steps, mode: 'coast', durationMs: Math.min(hi, Math.max(lo, raw)) };
+  return { mode: 'coast', durationMs: Math.min(hi, Math.max(lo, raw)) };
 }
 
 /** Whole slots from the drag-zero frame to the card nearest center (settle target). */
 export function drumNearestSteps(dragPx: number, pitch: number): number {
   'worklet';
-  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  const P = pitch > 0 ? pitch : 1;
   const steps = Math.round(-dragPx / P);
   return steps === 0 ? 0 : steps;
 }
