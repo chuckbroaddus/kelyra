@@ -373,6 +373,7 @@ export function snapPeriodPage(
   maxSlots = WHEEL_MAX_FLING_SLOTS,
   decel = WHEEL_FLING_DECEL,
 ): number {
+  'worklet';
   const P = pitch > 0 ? pitch : SLOT_PITCH;
   // Content follows finger: slots advanced ≈ −translationX / P
   const distanceSlots = -translationX / P;
@@ -527,3 +528,79 @@ export function rolodexOpacityForOffset(
  * because system interactive-pop only starts outside this stage View.
  */
 export const PERIOD_PAGER_EDGE_GUARD_PX = 0;
+
+/**
+ * CAL-DRUM-TRACK: fixed origin for absolute period indices. Every drum card is
+ * placed by its own absolute index, so a value never changes cards mid-swipe.
+ */
+export const PERIOD_INDEX_ORIGIN = '1970-01-01';
+
+/** Absolute kind-aware period index of `anchor` (day kind = UTC day number). */
+export function periodIndex(
+  kind: PeriodKind,
+  anchor: string,
+  dayCount: MultidayCount = 3,
+): number {
+  return periodDistance(kind, PERIOD_INDEX_ORIGIN, anchor, dayCount);
+}
+
+/**
+ * Ring host for an absolute period index (N=7 SlotPool, circular buffer).
+ * A value keeps the same stable host while it stays in the window; only the
+ * host leaving one edge is relabeled with the value entering the other edge.
+ */
+export function drumRingSlot(index: number, size: number = WHEEL_SLOT_OFFSETS.length): number {
+  'worklet';
+  const n = size > 0 ? size : 7;
+  const m = Math.round(index) % n;
+  const slot = m < 0 ? m + n : m;
+  return slot === 0 ? 0 : slot;
+}
+
+/** Signed slot distance of a card from the stage center (worklet). */
+export function drumSlotNorm(
+  index: number,
+  centerIndex: number,
+  dragPx: number,
+  pitch: number,
+): number {
+  'worklet';
+  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  return index - centerIndex + dragPx / P;
+}
+
+/**
+ * Release coast plan. Fast flings coast with momentum (quad ease-out whose
+ * opening speed equals the finger's release speed) to the slot snapPeriodPage
+ * picks; slow releases spring to the nearest slot.
+ */
+export function drumCoastPlan(args: {
+  releaseDragPx: number;
+  velocityX: number;
+  pitch: number;
+  minMs?: number;
+  maxMs?: number;
+}): { steps: number; mode: 'coast' | 'spring'; durationMs: number } {
+  'worklet';
+  const P = args.pitch > 0 ? args.pitch : SLOT_PITCH;
+  const steps = snapPeriodPage(args.releaseDragPx, P, args.velocityX);
+  const remaining = -steps * P - args.releaseDragPx;
+  const speed = Math.abs(args.velocityX);
+  const sameDirection = remaining === 0 || Math.sign(remaining) === Math.sign(args.velocityX);
+  if (speed < 600 || !sameDirection || Math.abs(remaining) < P / 2) {
+    return { steps, mode: 'spring', durationMs: 0 };
+  }
+  // Quad ease-out x(t)=D(1-(1-t/T)^2) starts at 2D/T px/s → T = 2|D|/|v|.
+  const raw = (2 * Math.abs(remaining) * 1000) / speed;
+  const lo = args.minMs ?? 120;
+  const hi = args.maxMs ?? 1600;
+  return { steps, mode: 'coast', durationMs: Math.min(hi, Math.max(lo, raw)) };
+}
+
+/** Whole slots from the drag-zero frame to the card nearest center (settle target). */
+export function drumNearestSteps(dragPx: number, pitch: number): number {
+  'worklet';
+  const P = pitch > 0 ? pitch : SLOT_PITCH;
+  const steps = Math.round(-dragPx / P);
+  return steps === 0 ? 0 : steps;
+}

@@ -171,7 +171,8 @@ test('CAL-LIST-FOLLOW wiring: drum drive scrolls list live; reports held while d
   const screen = readFileSync('src/app/calendar.tsx', 'utf8');
   assert.match(pager, /drivePosition\?: SharedValue<number> \| null/);
   assert.match(pager, /anchorPosShared\.value - dragShared\.value \/ pitch/);
-  assert.match(pager, /hadInFlight \|\| followPosition \? visualBefore : 0/);
+  // Grab keeps the list-parked drum where it is (UI thread).
+  assert.match(pager, /grantDragShared\.value = dragShared\.value/);
   assert.match(pane, /scrollTo\(listRef, 0, y, false\)/);
   assert.match(pane, /if \(drivingRef\.current\) \{/);
   assert.match(screen, /drivePosition=\{dayListMode \? dayListDrive : null\}/);

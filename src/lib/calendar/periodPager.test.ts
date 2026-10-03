@@ -20,6 +20,11 @@ import {
   SLOT_POOL_SNAP_FREEZE_CRITICAL_STEPS,
   transformDragForSlotMotion,
   visualShiftForSlotPool,
+  drumCoastPlan,
+  drumNearestSteps,
+  drumRingSlot,
+  drumSlotNorm,
+  periodIndex,
 } from './periodPager.ts';
 import {
   WHEEL_FLING_DECEL,
@@ -419,41 +424,105 @@ test('transformDragForSlotMotion: freeze uses absolute drag; live uses trunc res
   );
 });
 
-test('PeriodPager freezes SlotPool only for short snaps; residual rebase when liveShift≠0', () => {
+test('CAL-DRUM-TRACK: each value rides its own card (absolute index + ring host, UI-thread pan)', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  // Freeze gated by abs steps (not always freeze on every programmed snap)
-  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
-  assert.match(pager, /pendingSnapStepsRef/);
-  assert.match(pager, /snapFreezeShared/);
-  // Freeze flag is SharedValue-only (web unified onto NativeSlotMotion).
-  assert.match(pager, /snapFreezeShared\.value = freeze \? 1 : 0/);
-  // Reaction must bail while snapFreezeShared === 1 (short freeze only)
-  assert.match(pager, /snapFreezeShared\.value === 1/);
-  const rxnIdx = pager.indexOf('useAnimatedReaction(');
-  assert.ok(rxnIdx > 0, 'useAnimatedReaction call site');
-  const rxnBlock = pager.slice(rxnIdx, rxnIdx + 450);
-  assert.match(rxnBlock, /snapFreezeShared/);
-  assert.match(rxnBlock, /return;/);
-  // animateSnap: freeze gated by steps; must not always zero the pool after live drag
-  const animIdx = pager.indexOf('const animateSnap');
-  const tapIdx = pager.indexOf('const tapSide');
-  assert.ok(animIdx > 0 && tapIdx > animIdx);
-  const animBlock = pager.slice(animIdx, tapIdx);
-  assert.match(animBlock, /snapFreezeShared\.value = freeze \? 1 : 0/);
-  assert.match(animBlock, /pendingSnapStepsRef\.current/);
-  assert.match(animBlock, /visualShiftForSlotPool/);
-  assert.match(animBlock, /frozenShift:\s*liveShift/);
-  assert.match(animBlock, /residualFromTotalDrag/);
-  assert.match(animBlock, /liveShift === 0/);
-  assert.match(animBlock, /withSpring/);
-  // Must not unconditionally force pool to origin (old #164 one-liner without frozenShift)
-  assert.doesNotMatch(
-    animBlock,
-    /visualShiftForSlotPool\(\{\s*freezeSlotPool:\s*true,\s*liveShift:\s*visualShiftRef\.current\s*\}\)/,
-  );
-  // Native absolute drag when frozen (residual already rebased, or 0→−steps·P)
-  assert.match(pager, /snapFreezeShared\.value === 1/);
+  // Card position comes from its own absolute index + UI-thread drum position only.
+  assert.match(pager, /drumSlotNorm\(index, centerShared\.value, dragPx, P\)/);
   assert.match(pager, /dragPx = totalDrag/);
+  // No residual wrap in the card worklet (the wrap re-labeled the card under the finger).
+  assert.doesNotMatch(pager, /Math\.trunc\(-totalDrag/);
+  assert.doesNotMatch(pager, /residualFromTotalDrag/);
+  // Hosts are ring slots of the absolute index, rendered in ring order.
+  assert.match(pager, /const ringSlot = drumRingSlot\(index\)/);
+  assert.match(pager, /stableSlotHostKey\(ringSlot\)/);
+  assert.match(pager, /hosts\[slot\.ringSlot\] = slot\.node/);
+  // Pan begin/update run on the UI thread — no runOnJS per move frame.
+  const panIdx = pager.indexOf('Gesture.Pan()');
+  const panBlock = pager.slice(panIdx, pager.indexOf('if (failed) {', panIdx));
+  const updateBlock = panBlock.slice(panBlock.indexOf('.onUpdate('), panBlock.indexOf('.onEnd('));
+  assert.match(updateBlock, /dragShared\.value = grantDragShared\.value \+ e\.translationX/);
+  assert.doesNotMatch(updateBlock, /runOnJS/);
+  assert.match(panBlock, /cancelAnimation\(dragShared\)/);
+  // Rest folds the landed drag into the center index in one UI step.
+  const animIdx = pager.indexOf('const animateSnap');
+  const animBlock = pager.slice(animIdx, pager.indexOf('const tapSide'));
+  assert.match(animBlock, /anchorPosShared\.value = restIndex;\s*dragShared\.value = 0;/);
+  assert.match(animBlock, /withTiming\(toValue, \{ duration: coastMs, easing: Easing\.out\(Easing\.quad\) \}/);
+  assert.match(animBlock, /withSpring/);
+  // Window center follows the UI-thread center (round), JS only picks mounted values.
+  assert.match(pager, /Math\.round\(anchorPosShared\.value - dragShared\.value \/ pitch\)/);
+});
+
+test('CAL-DRUM-TRACK periodIndex is consistent with shiftPeriodAnchor for every kind', () => {
+  const cases = [
+    ['year', '2026'],
+    ['month', '2026-10-02'],
+    ['week', '2026-10-02'],
+    ['multiday', '2026-09-29'],
+    ['day', '2026-10-02'],
+    ['agenda', '2026-10-02'],
+  ] as const;
+  for (const [kind, anchor] of cases) {
+    const base = periodIndex(kind, anchor);
+    for (const n of [-40, -7, -3, -1, 1, 2, 3, 12, 48]) {
+      assert.equal(
+        periodIndex(kind, shiftPeriodAnchor(kind, anchor, n)),
+        base + n,
+        `${kind} ${anchor} +${n}`,
+      );
+    }
+  }
+  // Day index is the UTC day number the Day List follow/drive positions use.
+  assert.equal(periodIndex('day', '1970-01-02'), 1);
+});
+
+test('CAL-DRUM-TRACK ring hosts: window rebound keeps every retained value on its card', () => {
+  assert.equal(drumRingSlot(0), 0);
+  assert.equal(drumRingSlot(7), 0);
+  assert.equal(drumRingSlot(-1), 6);
+  assert.equal(drumRingSlot(20366), 20366 % 7);
+  const P = 51;
+  const hostsFor = (center: number) =>
+    new Map(WHEEL_SLOT_OFFSETS.map((o) => [center + o, drumRingSlot(center + o)]));
+  for (const center of [20363, -5, 0]) {
+    const before = hostsFor(center);
+    const after = hostsFor(center + 1);
+    const ring = new Set(after.values());
+    assert.equal(ring.size, 7, 'seven distinct hosts');
+    let moved = 0;
+    for (const [value, host] of after) {
+      if (before.has(value)) assert.equal(before.get(value), host, `value ${value} stays on its host`);
+      else moved += 1;
+    }
+    assert.equal(moved, 1, 'only the entering value takes the leaving host');
+  }
+  // Same drum position → same screen slot regardless of which window is mounted.
+  const centerIndex = 100;
+  const drag = -1.4 * P;
+  assert.ok(Math.abs(drumSlotNorm(101, centerIndex, drag, P) - -0.4) < 1e-9);
+  assert.ok(Math.abs(drumSlotNorm(102, centerIndex, drag, P) - 0.6) < 1e-9);
+  // Finger 1:1: dragging one pitch moves every card exactly one slot.
+  assert.equal(drumSlotNorm(100, 100, -P, P), -1);
+});
+
+test('CAL-DRUM-TRACK coast plan: fling = momentum at release speed; slow = spring', () => {
+  const P = 51;
+  const slow = drumCoastPlan({ releaseDragPx: -0.6 * P, velocityX: -200, pitch: P });
+  assert.equal(slow.mode, 'spring');
+  assert.equal(slow.steps, 1);
+  const fling = drumCoastPlan({ releaseDragPx: -40, velocityX: -2000, pitch: P });
+  assert.equal(fling.mode, 'coast');
+  assert.equal(fling.steps, snapPeriodPage(-40, P, -2000));
+  assert.ok(fling.steps >= 15, `hard flick coasts many cards (${fling.steps})`);
+  // Quad ease-out opening speed 2|D|/T equals the release speed (unless clamped).
+  const remaining = Math.abs(-fling.steps * P - -40);
+  assert.ok(Math.abs((2 * remaining * 1000) / fling.durationMs - 2000) < 1);
+  const capped = drumCoastPlan({ releaseDragPx: 0, velocityX: 9000, pitch: P });
+  assert.equal(capped.steps, -WHEEL_MAX_FLING_SLOTS);
+  assert.ok(capped.durationMs <= 1600);
+  assert.equal(drumNearestSteps(-1.4 * P, P), 1);
+  assert.equal(drumNearestSteps(0.2 * P, P), 0);
+  assert.equal(Object.is(drumNearestSteps(0.2 * P, P), -0), false);
 });
 
 test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG atlas', () => {
@@ -478,17 +547,17 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.match(pager, /wheelRowLayout/);
   assert.match(pager, /ROW\.pitch/);
   assert.match(pager, /useLayoutEffect/);
-  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey\(ringSlot\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(kind,\s*slotIndex\)/);
-  assert.match(pager, /Math\.trunc\(-/);
+  assert.match(pager, /drumSlotNorm\(index, centerShared\.value/);
   assert.doesNotMatch(pager, /Math\.round\(-drag/);
   assert.doesNotMatch(pager, /Math\.round\(-totalDrag/);
   assert.doesNotMatch(pager, /Math\.round\(-dragShared/);
   assert.match(pager, /shiftPeriodAnchor|visualShift/);
-  assert.match(pager, /visualShiftRef/);
-  assert.match(pager, /commitShiftFromVisual/);
-  assert.match(pager, /updateVisualShift/);
+  assert.match(pager, /windowCenterRef/);
+  assert.match(pager, /restIndex - anchorIndexRef\.current/);
+  assert.match(pager, /updateWindowCenter/);
   assert.match(pager, /setFlinging\(false\)/);
   assert.match(pager, /setShowCenterExtras\(true\)/);
   // Spring velocity must be px/s (RNGH velocityX is already px/s).
@@ -501,14 +570,9 @@ test('calendar wires PeriodPager; day list included; Set B leaf identity; no PNG
   assert.doesNotMatch(animateBlock, /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setFlinging\(false\)/);
   assert.match(pager.slice(restIdx, animateIdx), /setShowCenterExtras\(true\)/);
-  // Settle commits pending + absorbedShift; short snaps freeze mid-spring.
-  assert.match(pager.slice(restIdx, animateIdx), /pendingSnapStepsRef\.current/);
-  assert.match(pager.slice(restIdx, animateIdx), /absorbedShiftRef\.current/);
-  assert.match(pager.slice(restIdx, animateIdx), /commitShiftFromVisual\(pending \+ absorbed\)/);
+  // Settle commits exactly the value that landed (UI rest index), never a prediction.
+  assert.match(pager.slice(restIdx, animateIdx), /const commit = restIndex - anchorIndexRef\.current/);
   assert.match(pager.slice(restIdx, animateIdx), /shouldIgnoreSpringRest/);
-  assert.match(pager, /shouldFreezeSlotPoolDuringSnap|snapFreezeShared/);
-  assert.match(pager, /snapFreezeShared\.value === 1/);
-  assert.match(pager, /shouldFreezeSlotPoolDuringSnap\(true,\s*absSteps\)/);
   assert.doesNotMatch(pager.slice(restIdx, animateIdx), /finishShift\(steps\)/);
 });
 
@@ -531,7 +595,7 @@ test('PeriodPager slot map never reads tile.key on undefined (guards + shared of
     0,
     `PeriodPager must not remount-key on tile.key mid-fling; got ${keyReads.length} tile.key reads`,
   );
-  assert.match(pager, /stableSlotHostKey\(slotIndex\)/);
+  assert.match(pager, /stableSlotHostKey\(ringSlot\)/);
   assert.doesNotMatch(pager, /slotPoolKey\(tile\.key,\s*slotIndex\)/);
   assert.match(pager, /slotIndexForOffset/);
   // packWindow length-guards so SlotPool never ships a short window to the slot map.
@@ -552,40 +616,29 @@ test('PeriodPager slot map never reads tile.key on undefined (guards + shared of
   }
 });
 
-test('PeriodPager grant absorbs in-flight snap (does not drop pending)', () => {
+test('PeriodPager grab stops a coast where it is; cancelled rests no-op', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  // Interrupt path folds owed steps into absorbedShift — never mid-gesture onShift.
-  assert.match(pager, /absorbInterruptShift/);
-  assert.match(pager, /absorbInFlightSnap/);
-  assert.match(pager, /absorbedShift/);
-  assert.match(pager, /updateAbsorbedShift/);
-  assert.match(pager, /snapGenerationRef/);
+  assert.match(pager, /snapGenerationShared/);
   assert.match(pager, /shouldIgnoreSpringRest/);
-  // Window applies absorbed + visual so SlotPool does not repeat cards on interrupt.
+  // Window follows the UI center (no absorbed/visual bookkeeping to drift).
   assert.match(
     pager,
-    /shiftPeriodAnchor\(kind,\s*anchor,\s*absorbedShift \+ visualShift,\s*dayCount\)/,
+    /shiftPeriodAnchor\(kind,\s*anchor,\s*windowCenter - anchorIndex,\s*dayCount\)/,
   );
-  // Layout effect clears absorbed with the other snap resets.
-  const layoutIdx = pager.indexOf('useLayoutEffect(');
-  assert.ok(layoutIdx > 0);
-  const layoutBlock = pager.slice(layoutIdx, layoutIdx + 700);
-  assert.match(layoutBlock, /updateAbsorbedShift\(0\)/);
-  // Grant/begin must absorb — not merely clear pending to 0 without folding.
-  const grantIdx = pager.indexOf('onPanBegin');
-  assert.ok(grantIdx > 0);
-  const grantBlock = pager.slice(grantIdx, grantIdx + 900);
-  assert.match(grantBlock, /absorbInFlightSnap\(\)/);
-  assert.doesNotMatch(
-    grantBlock,
-    /pendingSnapStepsRef\.current = 0;\s*\n\s*if \(!IS_WEB\)/,
-  );
-  // tapSide also absorbs when a snap is in flight.
-  const tapIdx = pager.indexOf('const tapSide');
-  const tapBlock = pager.slice(tapIdx, tapIdx + 500);
-  assert.match(tapBlock, /absorbInFlightSnap\(\)/);
-  // animateSnap stamps springGeneration for late-rest ignore (native+web withSpring).
-  assert.match(pager, /runOnJS\(onSpringRest\)\(springGeneration\)/);
+  // Grab: UI worklet cancels the coast and keeps the drum where it is.
+  const beginIdx = pager.indexOf('.onBegin(');
+  const beginBlock = pager.slice(beginIdx, pager.indexOf('.onUpdate(', beginIdx));
+  assert.match(beginBlock, /cancelAnimation\(dragShared\);\s*grantDragShared\.value = dragShared\.value;/);
+  assert.match(beginBlock, /followBlockShared\.value = 2/);
+  // Grab invalidates the caught snap's queued rest (UI thread, no JS race).
+  assert.match(beginBlock, /snapGenerationShared\.value \+= 1/);
+  // Release coast starts on the UI thread (no JS round trip before momentum).
+  const endIdx = pager.indexOf('.onEnd(');
+  const endBlock = pager.slice(endIdx, pager.indexOf('.onFinalize(', endIdx));
+  assert.match(endBlock, /drumCoastPlan\(\{ releaseDragPx, velocityX: e\.velocityX, pitch \}\)/);
+  assert.match(endBlock, /animateSnap\(plan\.steps, e\.velocityX/);
+  // animateSnap stamps springGeneration for late-rest ignore (native+web).
+  assert.match(pager, /runOnJS\(onSpringRest\)\(springGeneration, restIndex\)/);
 });
 
 test('existing shifters only — periodPager imports shiftWeek/Month/Day/Multiday', () => {
@@ -678,11 +731,11 @@ test('CAL-P6-1A start-claim full-band (t_80d16cbc)', () => {
 });
 
 
-test('CAL-3DW mid-spring interrupt rebases from visual drag (t_72512eeb)', () => {
+test('CAL-3DW mid-spring interrupt continues from visual drag (t_72512eeb)', () => {
   const pager = read('src/components/calendar/PeriodPager.tsx');
-  assert.match(pager, /grantDragBaseRef/);
-  assert.match(pager, /grantDragBaseRef\.current \+ translationX/);
-  const grantIdx = pager.indexOf('onPanBegin');
-  const grantBlock = pager.slice(grantIdx, grantIdx + 1200);
-  assert.match(grantBlock, /grantDragBaseRef\.current =/);
+  assert.match(pager, /grantDragShared/);
+  assert.match(pager, /grantDragShared\.value \+ e\.translationX/);
+  const grantIdx = pager.indexOf('.onBegin(');
+  const grantBlock = pager.slice(grantIdx, grantIdx + 600);
+  assert.match(grantBlock, /grantDragShared\.value =/);
 });
