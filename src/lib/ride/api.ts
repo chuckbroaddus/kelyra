@@ -159,7 +159,22 @@ export type RideLprResult = {
   reject_reason?: string | null;
   /** Plates of other vehicles / reflections the model saw (never this car's plate). */
   other_plates_seen?: string[];
+  /** Set when the read itself failed (quota, timeout, model error) — not "plate unreadable". */
+  error?: string | null;
 };
+
+/** ride-lpr now answers a failed read with a real 4xx/5xx; pull its `error` text for the UI. */
+async function rideLprErrorMessage(error: unknown): Promise<string> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context && typeof (context as Response).json === 'function') {
+    const body = (await (context as Response).json().catch(() => null)) as { error?: unknown } | null;
+    const status = (context as Response).status;
+    if (status === 429) return 'Plate reader is busy right now. Type the plate or try again in a bit.';
+    if (status === 504) return 'Plate read took too long. Type the plate or try again.';
+    if (typeof body?.error === 'string' && body.error) return 'Could not read the plate. Type it or try again.';
+  }
+  return 'Could not read the plate. Type it or try again.';
+}
 
 /** ride-lpr reject_reason when several cars were in frame and the closest one was not trusted. */
 export const RIDE_LPR_MULTIPLE_VEHICLES = 'multiple vehicles';
@@ -181,7 +196,11 @@ export async function invokeRideLpr(storagePath: string): Promise<RideLprResult>
   const { data, error } = await requireSupabase().functions.invoke('ride-lpr', {
     body: { storagePath },
   });
-  if (error || !data) return empty;
+  if (error) return { ...empty, error: await rideLprErrorMessage(error) };
+  if (!data) return empty;
+  if (typeof data.error === 'string' && data.error) {
+    return { ...empty, error: 'Could not read the plate. Type it or try again.' };
+  }
   const plate = typeof data.plate === 'string' ? data.plate : null;
   const plateFront = typeof data.plateFront === 'string' ? data.plateFront : null;
   const plateBack = typeof data.plateBack === 'string' ? data.plateBack : null;

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
+import { CLASSIFY_CAPTURE_SCHEMA } from '../_shared/aiSchemas.ts';
 import { firstNameOnly, imageDetailFor } from '../_shared/aiPolicy.ts';
 import { CLOSEST_VEHICLE_RULES, guardVehicleFields } from '../_shared/closestVehicle.ts';
 import { withCors } from '../_shared/cors.ts';
@@ -89,6 +90,8 @@ ${teacherNote}`
     const payload = await callMetered(supabase, apiKey, {
       job: 'classify',
       functionName: 'classify-capture',
+      schema: CLASSIFY_CAPTURE_SCHEMA as unknown as Record<string, unknown>,
+      extra: { max_output_tokens: 1536 },
       payload: [
       {
         role: 'user',

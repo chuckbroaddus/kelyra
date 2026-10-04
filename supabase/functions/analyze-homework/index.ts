@@ -96,20 +96,26 @@ Deno.serve(async (req) => {
     if (assetError || !assets?.length) return json({ error: 'Photo asset missing' }, 400);
 
     const byId = new Map(assets.map((row) => [row.id as string, row]));
-    const imageUrls: string[] = [];
+    const pageAssets = [];
     for (const id of pageIds) {
       const asset = byId.get(id);
       if (!asset?.storage_path) continue;
       if (!isHomeworkPageImageMime(asset.mime_type as string | null)) {
         return json({ error: 'Homework analyze accepts page images only' }, 400);
       }
-      // Sign from photos bucket only — never ingest/files PDF bytes.
-      const { data: signed, error: signedError } = await supabase.storage
-        .from('photos')
-        .createSignedUrl(asset.storage_path as string, 120);
+      pageAssets.push(asset);
+      if (pageAssets.length >= MAX_HOMEWORK_PAGE_IMAGES) break;
+    }
+    // Sign every page at once (order kept). Photos bucket only — never ingest/files PDF bytes.
+    const signedPages = await Promise.all(
+      pageAssets.map((asset) =>
+        supabase.storage.from('photos').createSignedUrl(asset.storage_path as string, 120),
+      ),
+    );
+    const imageUrls: string[] = [];
+    for (const { data: signed, error: signedError } of signedPages) {
       if (signedError || !signed?.signedUrl) return json({ error: 'Could not sign photo URL' }, 500);
       imageUrls.push(signed.signedUrl);
-      if (imageUrls.length >= MAX_HOMEWORK_PAGE_IMAGES) break;
     }
     if (!imageUrls.length) return json({ error: 'Photo asset missing' }, 400);
 
@@ -178,6 +184,7 @@ async function draftFromPhotos(
     pass,
     functionName: 'analyze-homework',
     captureId,
+    extra: { responseMimeType: 'application/json', max_output_tokens: 4096 },
     payload: [
       {
         role: 'user',
