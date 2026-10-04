@@ -25,6 +25,7 @@ import {
 } from './lib/eval-target.mjs';
 import { buildAskInstructions } from '../src/lib/ai/askPrompt.ts';
 import { submissionReviewPrompt } from '../supabase/functions/_shared/aiPrompts.ts';
+import { keyedScore, reconcileDraftScore } from '../supabase/functions/_shared/reviewScore.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'notes/qa-fixtures/ai-starter');
@@ -70,8 +71,28 @@ function replyText(suite, json) {
 const words = (t) => String(t).trim().split(/\s+/).filter(Boolean).length;
 const lower = (t) => String(t ?? '').toLowerCase();
 
+/** Items + answers back out of formatWork-shaped text ("1. prompt / Expected: k / Student: s"). */
+export function parseWorkText(work) {
+  const items = [];
+  const answers = {};
+  for (const line of String(work ?? '').split('\n')) {
+    const item = /^(\d+)\.\s/.exec(line);
+    if (item) {
+      items.push({ id: `item-${item[1]}` });
+      continue;
+    }
+    const cur = items[items.length - 1];
+    if (!cur) continue;
+    const exp = /^\s+Expected:\s*(.*)$/.exec(line);
+    if (exp) cur.answerKey = exp[1].trim();
+    const stu = /^\s+Student:\s*(.*)$/.exec(line);
+    if (stu) answers[cur.id] = stu[1].trim() === '(blank)' ? '' : stu[1].trim();
+  }
+  return { items, answers };
+}
+
 /** @returns {Array<{ name: string, pass: boolean, detail?: string }>} */
-export function runChecks(suite, checks, res) {
+export function runChecks(suite, checks, res, c = {}) {
   const out = [];
   const add = (name, pass, detail) => out.push({ name, pass: Boolean(pass), ...(detail ? { detail } : {}) });
   const json = res.json ?? {};
@@ -116,7 +137,10 @@ export function runChecks(suite, checks, res) {
     add('json reply', r != null);
     const gaps = Array.isArray(r?.gaps) ? r.gaps.filter((g) => String(g?.label ?? '').trim()) : [];
     const items = Array.isArray(r?.items) ? r.items : [];
-    const score = typeof r?.draftScore === 'number' ? r.draftScore : null;
+    const modelScore = typeof r?.draftScore === 'number' ? r.draftScore : null;
+    // Same post-processing review-submission applies before saving the draft.
+    const { items: keyed, answers } = parseWorkText(c.work);
+    const score = reconcileDraftScore(modelScore, keyedScore(keyed, answers));
     if (checks.gapsMin != null) add('gapsMin', gaps.length >= checks.gapsMin, `${gaps.length}`);
     if (checks.gapsMax != null) add('gapsMax', gaps.length <= checks.gapsMax, `${gaps.length}`);
     if (checks.itemsMin != null) add('itemsMin', items.length >= checks.itemsMin, `${items.length}`);
@@ -184,7 +208,7 @@ async function main() {
       const persona = c.persona || spec.persona || 'teacher';
       const auth = await session(persona);
       const res = await callAi(target, spec.fn, bodyFor(suite, spec, c), auth, { timeoutMs: 120000 });
-      const checks = runChecks(suite, c.checks ?? {}, res);
+      const checks = runChecks(suite, c.checks ?? {}, res, c);
       const passed = checks.filter((k) => k.pass).length;
       const row = {
         id: c.id,

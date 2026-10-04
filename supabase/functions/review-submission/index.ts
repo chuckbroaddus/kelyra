@@ -7,6 +7,7 @@ import {
   requireXaiKey,
 } from '../_shared/ai.ts';
 import { submissionReviewPrompt } from '../_shared/aiPrompts.ts';
+import { keyedScore, reconcileDraftScore } from '../_shared/reviewScore.ts';
 import {
   associationHasRubric,
   buildEdgeAiGradePrompt,
@@ -56,6 +57,8 @@ Deno.serve(async (req) => {
       extra: { max_output_tokens: 1024 },
     });
     const incoming = parseSubmissionReview(outputText(payload));
+    // Count exact-key items ourselves; a model score far from that count loses (eval V01: 75 for 1/4).
+    incoming.draftScore = reconcileDraftScore(incoming.draftScore, keyedScore(work.items, work.answers));
     if (!incoming.summary && !incoming.gaps.length && !incoming.items.length && incoming.draftScore == null) {
       return json({ error: 'Grok did not return a review. Your notes are still here. Try Ask AI again.' }, 502);
     }
@@ -97,6 +100,8 @@ async function loadWork(
       prior: ReturnType<typeof parseSubmissionReview>;
       status: string;
       kind: string;
+      items: Array<{ id?: string; prompt?: string; answerKey?: string }>;
+      answers: Record<string, unknown>;
       studentId: string;
       hasStruggle: boolean;
       assignmentId: string;
@@ -149,6 +154,8 @@ async function loadWork(
     prior,
     status: String(submission.status ?? 'completed'),
     kind,
+    items,
+    answers,
     studentId: String(submission.student_id),
     hasStruggle: kind === 'lesson' ? lessonHasStruggle(answers) : true,
     assignmentId: String(assignment.id),

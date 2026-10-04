@@ -41,6 +41,25 @@ export function dropRowIndexIds<T extends { student_id: string | null }>(rows: T
   return rows;
 }
 
+/**
+ * Flash-Lite copies a page header ("Period 2 Roster") into every row. When the model reports the
+ * value as a header and every row that carries it echoes exactly that value, the rows did not
+ * print it — clear them. A real per-row column (mixed values, or no header reported) is kept.
+ */
+export function dropHeaderEcho<T extends { period: string | null; grade: string | null }>(
+  rows: T[],
+  key: 'period' | 'grade',
+  header: unknown,
+): T[] {
+  const norm = (v: unknown) => String(v ?? '').toLowerCase().replace(/(st|nd|rd|th)$/,'').replace(/^(period|per\.?|grade|gr\.?)\s*/, '').trim();
+  const h = norm(emptyToNull(header));
+  if (!h) return rows;
+  const carried = rows.filter((r) => r[key] != null);
+  if (!carried.length) return rows;
+  if (carried.every((r) => norm(r[key]) === h)) for (const r of carried) r[key] = null;
+  return rows;
+}
+
 export function isJunkRosterName(name: unknown): boolean {
   const n = String(name || '').replace(/\s+/g, ' ').trim();
   if (n.length < 2) return true;
@@ -125,6 +144,8 @@ export function finalizeRosterExtract(parsed: Json): RosterResult {
           .slice(0, 40)
       : [];
   dropRowIndexIds(names);
+  dropHeaderEcho(names, 'period', parsed?.header_period);
+  dropHeaderEcho(names, 'grade', parsed?.header_grade);
 
   return {
     document_kind_guess: rejected
