@@ -30,7 +30,7 @@ Rules:
 /** extract-roster (class list / seating chart / attendance photo). */
 export const rosterPrompt = `You extract students from a class list, seating chart, attendance sheet, or roster photo/scan.
 Return JSON only, no markdown:
-{"document_kind_guess":"class_roster","rejected":false,"names":[{"name":"First Last","student_id":null,"grade":null,"period":null,"parent_contact":null,"confident":true}]}
+{"document_kind_guess":"class_roster","rejected":false,"header_period":null,"header_grade":null,"names":[{"name":"First Last","student_id":null,"grade":null,"period":null,"parent_contact":null,"confident":true}]}
 document_kind_guess is one of: class_roster, seating_chart, attendance, not_roster.
 rejected=true and names=[] when the image is NOT a student list (syllabus, homework, flyer, answer key, random photo).
 Rules:
@@ -38,6 +38,7 @@ Rules:
 - Keep the name as printed. If printed "LAST, FIRST" or "LAST FIRST" in all caps legal form, return "First Last" title case.
 - Do not invent a student who is not on the page. Do not invent surnames when only a first name is shown.
 - student_id / grade / period / parent_contact: copy only if clearly printed on that row. Otherwise null. Never invent IDs or contacts.
+- A period or grade printed only once in the page title or header ("Period 2 Roster", "Grade 5 — Room 12") goes in header_period / header_grade, NOT on each row. Row period/grade stay null unless that row has its own Period/Grade column value.
 - A "#" / "No." column of row numbers (1, 2, 3 …) is a row index, NOT student_id. Leave student_id null unless a real ID column is printed.
 - Photos may be rotated, crumpled, shadowed, glared, stained, or blurry. Only return names you can actually read on the paper. If part of the page is hidden or too blurry, return fewer names. Never fill missing rows with plausible-sounding names to match the row count.
 - confident=false for any name you are not sure you read letter-for-letter.
