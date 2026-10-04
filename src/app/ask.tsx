@@ -189,6 +189,8 @@ export default function AskScreen() {
         },
         messages: await Promise.all(forModel.map((item, index) => lineForAi(item, index === lastPhoto))),
         onStatus: setStatus,
+        onText: (partial) =>
+          setMessages(partial ? [...next, { from: 'assistant', text: partial }] : next),
       });
       const bot: Bubble = { from: 'assistant', text: reply.text };
       setMessages([...next, bot]);

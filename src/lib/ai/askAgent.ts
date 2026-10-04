@@ -2,6 +2,7 @@ import { invokeAi } from '@/lib/ai/invoke';
 import { ASK_FALLBACK, buildAskInstructions, type AskLiveContext } from '@/lib/ai/askPrompt';
 import { gauthRefusalCard, shouldRefuseAskBeforeVendor } from '@/lib/ai/askHomeworkRefuse';
 import { formatParentAskListToolReply } from '@/lib/ai/askParentAssignments';
+import { streamAskAssistant } from '@/lib/ai/askStream';
 import { askToolsFor, type AskToolContext } from '@/lib/ai/askTools';
 import { loadGrants } from '@/lib/school/matrixApi';
 import type { ProfileRow } from '@/lib/supabase/types';
@@ -99,6 +100,8 @@ export async function runAskAgent(input: {
   live: AskLiveContext;
   messages: AskChatLine[];
   onStatus?: (text: string) => void;
+  /** Answer text so far while the final round streams ('' = clear a partial that became a tool call). */
+  onText?: (textSoFar: string) => void;
 }): Promise<AskAgentTurn> {
   const grants = await loadGrants();
   const photoLine = [...input.messages].reverse().find((item) => item.imageUrl);
@@ -148,7 +151,7 @@ export async function runAskAgent(input: {
 
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
     input.onStatus?.(didWork ? 'Working…' : latestHasImage && round === 0 ? 'Looking at the photo…' : 'Asking AI…');
-    const reply = await invokeAi<AskAssistantReply>('ask-assistant', {
+    const roundBody = {
       role: input.live.role,
       classId: input.classId,
       studentId: input.live.studentId,
@@ -158,7 +161,12 @@ export async function runAskAgent(input: {
       input: history.length ? history : [{ role: 'user', content: 'Hello' }],
       tools: tools.defs,
       toolNames: tools.names,
-    });
+    };
+    // Stream on Edge so the answer appears as it is written; JSON round-trip otherwise.
+    const reply: AskAssistantReply =
+      (input.onText ? await streamAskAssistant(roundBody, input.onText) : null) ??
+      (await invokeAi<AskAssistantReply>('ask-assistant', roundBody));
+    if (reply.toolCalls?.length) input.onText?.('');
 
     if (reply.toolCalls?.length) {
       didWork = true;
