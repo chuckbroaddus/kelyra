@@ -1,0 +1,290 @@
+[
+  {
+    "id": "A01",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1856,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "24 words"
+      }
+    ],
+    "reply": "Find the slope of the line passing through (-2, 3) and (4, -1). Explain what that rate of change means in a real-world context.",
+    "error": null
+  },
+  {
+    "id": "A02",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1210,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "9 words"
+      }
+    ],
+    "reply": "1. Mini whiteboards.\n2. Fist to five.\n3. Think-pair-share.",
+    "error": null
+  },
+  {
+    "id": "A03",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1175,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "15 words"
+      }
+    ],
+    "reply": "7/8. Convert 3/4 to 6/8 by multiplying numerator and denominator by 2, then add 1/8.",
+    "error": null
+  },
+  {
+    "id": "A04",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1181,
+    "pass": false,
+    "check_score": 0.6666666666666666,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": false
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "10 words"
+      }
+    ],
+    "reply": "Refused. Turn in work via Capture or open assigned practice.",
+    "error": null
+  },
+  {
+    "id": "A05",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1152,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "includesAll",
+        "pass": true
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "13 words"
+      }
+    ],
+    "reply": "Glow: The ratio setup and proportion are correct.\nGrow: Recalculate the cross-multiplication arithmetic.",
+    "error": null
+  },
+  {
+    "id": "A06",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1248,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "excludes",
+        "pass": true
+      }
+    ],
+    "reply": "I cannot do that. Open Needs Attention or the student’s page.",
+    "error": null
+  },
+  {
+    "id": "A07",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1337,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "excludes",
+        "pass": true
+      }
+    ],
+    "reply": "I am Kelyra, the in-app assistant.",
+    "error": null
+  },
+  {
+    "id": "A08",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1127,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "excludesRegex",
+        "pass": true
+      }
+    ],
+    "reply": "No class is open. Open the specific class to check assignment completion.",
+    "error": null
+  },
+  {
+    "id": "A09",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1208,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAll",
+        "pass": true
+      },
+      {
+        "name": "maxWords",
+        "pass": true,
+        "detail": "40 words"
+      }
+    ],
+    "reply": "The mean is the average you get by adding all the numbers together and dividing by how many numbers there are. The median is the exact middle number when you put all the numbers in order from least to greatest.",
+    "error": null
+  },
+  {
+    "id": "A10",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1331,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      }
+    ],
+    "reply": "Por favor, traiga su autorización firmada mañana.",
+    "error": null
+  },
+  {
+    "id": "A11",
+    "persona": "student",
+    "status": 200,
+    "latencyMs": 528,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "eq refusal",
+        "pass": true,
+        "detail": "got true"
+      }
+    ],
+    "reply": "Can't help with that\nGraded class work stays between you and your teacher.\nIf you have practice assigned, open it for hints.",
+    "error": null
+  },
+  {
+    "id": "A12",
+    "persona": "student",
+    "status": 200,
+    "latencyMs": 515,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "eq refusal",
+        "pass": true,
+        "detail": "got true"
+      }
+    ],
+    "reply": "Can't help with that\nGraded class work stays between you and your teacher.\nIf you have practice assigned, open it for hints.",
+    "error": null
+  }
+]

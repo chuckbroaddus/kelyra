@@ -1,0 +1,362 @@
+[
+  {
+    "id": "P01",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1975,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Solve the addition problem on paper: 37 + 25 = ?\",\"answerKey\":\"62\"},{\"id\":\"item-2\",\"prompt\":\"Find the sum of 48 and 36 on your paper.\",\"answerKey\":\"84\"},{\"id\":\"item-3\",\"prompt\":\"What is 59 plus 28 written in vertical form?\",\"answerKey\":\"87\"},{\"id\":\"item-4\",\"prompt\":\"Add 64 and 19 on your paper to find the total.\",\"answerKey\":\"83\"},{\"id\":\"item-5\",\"prompt\":\"Solve the regrouping problem: 45 + 37 = ?\",\"answerKey\":\"82\"}]",
+    "error": null
+  },
+  {
+    "id": "P02",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1176,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Find the sum of 1/2 and 1/4. Write your answer in simplest form.\",\"answerKey\":\"3/4\"},{\"id\":\"item-2\",\"prompt\":\"Add 2/3 and 1/6. Express your answer as a fraction in simplest form.\",\"answerKey\":\"5/6\"},{\"id\":\"item-3\",\"prompt\":\"What is 1/3 plus 2/5? Write your answer as a fraction.\",\"answerKey\":\"11/15\"},{\"id\":\"item-4\",\"prompt\":\"Calculate the sum of 3/4 and 1/8. Show your answer in simplest form.\",\"answerKey\":\"7/8\"},{\"id\":\"item-5\",\"prompt\":\"Add 1/2 and 2/5. Write the final answer as a fraction.\",\"answerKey\":\"9/10\"}]",
+    "error": null
+  },
+  {
+    "id": "P03",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1047,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Solve the equation x + 7 = 15.\",\"answerKey\":\"x = 8\"},{\"id\":\"item-2\",\"prompt\":\"Find the value of y in the equation y - 4 = 11.\",\"answerKey\":\"y = 15\"},{\"id\":\"item-3\",\"prompt\":\"Solve for a: 6a = 42.\",\"answerKey\":\"a = 7\"},{\"id\":\"item-4\",\"prompt\":\"What is the solution to the equation b / 3 = 9?\",\"answerKey\":\"b = 27\"},{\"id\":\"item-5\",\"prompt\":\"Solve the equation 12 = m + 5.\",\"answerKey\":\"m = 7\"}]",
+    "error": null
+  },
+  {
+    "id": "P04",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1308,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "4"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Read this sentence: Dogs need fresh water every day to stay healthy. What is the main idea?\",\"answerKey\":\"Dogs need fresh water.\"},{\"id\":\"item-2\",\"prompt\":\"Read this sentence: Bees fly from flower to flower to collect sweet nectar. What is the main idea?\",\"answerKey\":\"Bees collect nectar from flowers.\"},{\"id\":\"item-3\",\"prompt\":\"Read this sentence: Winter brings cold wind and heavy snow to the mountains. What is the main idea?\",\"answerKey\":\"Winter brings cold weather to the mountains.\"},{\"id\":\"item-4\",\"prompt\":\"Read this sentence: Planting seeds in moist soil helps bright sunflowers grow tall. What is the main idea?\",\"answerKey\":\"Seeds grow into sunflowers.\"}]",
+    "error": null
+  },
+  {
+    "id": "P05",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1104,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Which rigid outer layer surrounds a plant cell to provide structure and support?\",\"answerKey\":\"Cell wall\"},{\"id\":\"item-2\",\"prompt\":\"Name the green organelle inside a plant cell where photosynthesis takes place.\",\"answerKey\":\"Chloroplast\"},{\"id\":\"item-3\",\"prompt\":\"What large, central organelle in a plant cell stores water and helps maintain cell pressure?\",\"answerKey\":\"Vacuole\"},{\"id\":\"item-4\",\"prompt\":\"Which jelly-like substance fills the inside of the cell and holds the organelles in place?\",\"answerKey\":\"Cytoplasm\"},{\"id\":\"item-5\",\"prompt\":\"Name the control center of the cell that contains genetic material like DNA.\",\"answerKey\":\"Nucleus\"}]",
+    "error": null
+  },
+  {
+    "id": "P06",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1157,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Convert 45% to a decimal.\",\"answerKey\":\"0.45\"},{\"id\":\"item-2\",\"prompt\":\"Write 0.82 as a percent.\",\"answerKey\":\"82%\"},{\"id\":\"item-3\",\"prompt\":\"Convert 7% to a decimal.\",\"answerKey\":\"0.07\"},{\"id\":\"item-4\",\"prompt\":\"Write 1.5 as a percent.\",\"answerKey\":\"150%\"},{\"id\":\"item-5\",\"prompt\":\"Convert 12.5% to a decimal.\",\"answerKey\":\"0.125\"}]",
+    "error": null
+  },
+  {
+    "id": "P07",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1315,
+    "pass": false,
+    "check_score": 0.75,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": false
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"The box of crayons (is, are) on the top shelf.\",\"answerKey\":\"is\"},{\"id\":\"item-2\",\"prompt\":\"Every dog in the neighborhood (bark, barks) at the mail carrier.\",\"answerKey\":\"barks\"},{\"id\":\"item-3\",\"prompt\":\"The students in the back row (was, were) talking during the lesson.\",\"answerKey\":\"were\"},{\"id\":\"item-4\",\"prompt\":\"Neither the teacher nor the students (likes, like) the cold weather.\",\"answerKey\":\"like\"},{\"id\":\"item-5\",\"prompt\":\"A flock of birds (fly, flies) across the bright blue sky.\",\"answerKey\":\"flies\"}]",
+    "error": null
+  },
+  {
+    "id": "P08",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1395,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"What is the area of a rectangle with a length of 5 inches and a width of 3 inches?\",\"answerKey\":\"15 square inches\"},{\"id\":\"item-2\",\"prompt\":\"Find the area of a playground that is 8 meters long and 4 meters wide.\",\"answerKey\":\"32 square meters\"},{\"id\":\"item-3\",\"prompt\":\"A rectangular garden has a length of 10 feet and a width of 6 feet. What is its total area?\",\"answerKey\":\"60 square feet\"},{\"id\":\"item-4\",\"prompt\":\"Calculate the area of a rug with a length of 7 centimeters and a width of 2 centimeters.\",\"answerKey\":\"14 square centimeters\"},{\"id\":\"item-5\",\"prompt\":\"What is the area of a book cover that measures 9 inches long and 5 inches wide?\",\"answerKey\":\"45 square inches\"}]",
+    "error": null
+  },
+  {
+    "id": "P09",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1394,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "4"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"A bar graph shows pet votes: Dogs has 8 bars, Cats has 6, and Fish has 3. How many votes did Cats get?\",\"answerKey\":\"6\"},{\"id\":\"item-2\",\"prompt\":\"A bar graph displays fruit picked: Apples has 5 bars, Bananas has 9, and Pears has 4. Which fruit has the tallest bar?\",\"answerKey\":\"Bananas\"},{\"id\":\"item-3\",\"prompt\":\"A bar graph shows favorite colors: Red has 7, Blue has 10, and Green has 5. How many more students like Blue than Green?\",\"answerKey\":\"5\"},{\"id\":\"item-4\",\"prompt\":\"A bar graph tracks books read: Room A read 12, Room B read 15, and Room C read 10. Which room read the fewest books?\",\"answerKey\":\"Room C\"}]",
+    "error": null
+  },
+  {
+    "id": "P10",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1185,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Evaluate the expression: 4 + (6 × 2).\",\"answerKey\":\"16\"},{\"id\":\"item-2\",\"prompt\":\"Find the value of (15 - 5) ÷ 2.\",\"answerKey\":\"5\"},{\"id\":\"item-3\",\"prompt\":\"Calculate: 3 × (8 + 4) - 5.\",\"answerKey\":\"31\"},{\"id\":\"item-4\",\"prompt\":\"Solve the problem: 24 ÷ (3 + 5) + 6.\",\"answerKey\":\"9\"},{\"id\":\"item-5\",\"prompt\":\"What is the answer to (9 - 3) × (2 + 4)?\",\"answerKey\":\"36\"}]",
+    "error": null
+  },
+  {
+    "id": "P11",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1108,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"What is 7 multiplied by 10 to the third power?\",\"answerKey\":\"7,000\"},{\"id\":\"item-2\",\"prompt\":\"Find the product of 45 and 100.\",\"answerKey\":\"4,500\"},{\"id\":\"item-3\",\"prompt\":\"Calculate 3.2 times 1,000.\",\"answerKey\":\"3,200\"},{\"id\":\"item-4\",\"prompt\":\"What is 560 multiplied by 10 to the first power?\",\"answerKey\":\"5,600\"},{\"id\":\"item-5\",\"prompt\":\"Find the value of 8.9 multiplied by 10 to the second power.\",\"answerKey\":\"890\"}]",
+    "error": null
+  },
+  {
+    "id": "P12",
+    "persona": "teacher",
+    "status": 200,
+    "latencyMs": 1210,
+    "pass": true,
+    "check_score": 1,
+    "checks": [
+      {
+        "name": "status",
+        "pass": true,
+        "detail": "got 200"
+      },
+      {
+        "name": "includesAny",
+        "pass": true
+      },
+      {
+        "name": "items count",
+        "pass": true,
+        "detail": "5"
+      },
+      {
+        "name": "items.prompt",
+        "pass": true
+      }
+    ],
+    "reply": "[{\"id\":\"item-1\",\"prompt\":\"Fill in the blank with the correct form of hablar: Yo ___ español con mi amiga.\",\"answerKey\":\"hablo\"},{\"id\":\"item-2\",\"prompt\":\"Fill in the blank with the correct form of cantar: Nosotros ___ en el coro de la escuela.\",\"answerKey\":\"cantamos\"},{\"id\":\"item-3\",\"prompt\":\"Fill in the blank with the correct form of bailar: ¿Tú ___ en la fiesta de cumpleaños?\"},{\"id\":\"item-4\",\"prompt\":\"Fill in the blank with the correct form of estudiar: Ellas ___ para el examen de matemáticas.\",\"answerKey\":\"estudian\"},{\"id\":\"item-5\",\"prompt\":\"Fill in the blank with the correct form of dibujar: El estudiante ___ un mapa en la clase de arte.\",\"answerKey\":\"dibuja\"}]",
+    "error": null
+  }
+]

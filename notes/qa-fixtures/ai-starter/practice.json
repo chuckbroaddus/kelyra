@@ -1,0 +1,213 @@
+{
+  "suite": "practice",
+  "fn": "generate-practice",
+  "job": "practice",
+  "cases": [
+    {
+      "id": "P01",
+      "skillLabel": "two-digit regrouping in addition",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "+",
+          "add",
+          "sum"
+        ]
+      }
+    },
+    {
+      "id": "P02",
+      "skillLabel": "adding fractions with unlike denominators",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "/"
+        ]
+      }
+    },
+    {
+      "id": "P03",
+      "skillLabel": "solving one-step equations",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "x",
+          "="
+        ]
+      }
+    },
+    {
+      "id": "P04",
+      "skillLabel": "finding the main idea of a paragraph",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "main idea",
+          "paragraph"
+        ]
+      }
+    },
+    {
+      "id": "P05",
+      "skillLabel": "identifying parts of a plant cell",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "cell",
+          "wall",
+          "chloroplast",
+          "nucleus"
+        ]
+      }
+    },
+    {
+      "id": "P06",
+      "skillLabel": "converting between percents and decimals",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "%",
+          "percent",
+          "decimal"
+        ]
+      }
+    },
+    {
+      "id": "P07",
+      "skillLabel": "subject-verb agreement",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "(is, are)",
+          "(was, were)",
+          "(has, have)",
+          "(do, does)",
+          "verb",
+          "subject",
+          " is ",
+          " are "
+        ]
+      }
+    },
+    {
+      "id": "P08",
+      "skillLabel": "area of rectangles",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "area",
+          "length",
+          "width",
+          "rectangle"
+        ]
+      }
+    },
+    {
+      "id": "P09",
+      "skillLabel": "reading a bar graph",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "graph",
+          "bar"
+        ]
+      }
+    },
+    {
+      "id": "P10",
+      "skillLabel": "order of operations with parentheses",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "("
+        ]
+      }
+    },
+    {
+      "id": "P11",
+      "skillLabel": "multiplying by powers of ten",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "10",
+          "100",
+          "1,000",
+          "1000"
+        ]
+      }
+    },
+    {
+      "id": "P12",
+      "skillLabel": "Spanish present tense -ar verbs",
+      "checks": {
+        "status": 200,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "itemsHave": [
+          "prompt"
+        ],
+        "textIncludesAny": [
+          "-ar",
+          "hablar",
+          "habl",
+          "ar "
+        ]
+      }
+    }
+  ]
+}

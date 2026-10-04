@@ -1,0 +1,72 @@
+{
+  "stamp": "202610040111",
+  "target": "edge",
+  "suites": {
+    "ask": {
+      "n": 12,
+      "passed": 11,
+      "pass_rate": 0.9166666666666666,
+      "check_rate": 0.9722222222222222,
+      "latency_ms": {
+        "n": 12,
+        "p50": 1208,
+        "p90": 1337,
+        "mean": 1156,
+        "max": 1856
+      }
+    },
+    "setup-interview": {
+      "n": 10,
+      "passed": 10,
+      "pass_rate": 1,
+      "check_rate": 1,
+      "latency_ms": {
+        "n": 10,
+        "p50": 1331,
+        "p90": 1796,
+        "mean": 1345,
+        "max": 1796
+      }
+    },
+    "explain": {
+      "n": 12,
+      "passed": 10,
+      "pass_rate": 0.8333333333333334,
+      "check_rate": 0.9722222222222223,
+      "latency_ms": {
+        "n": 12,
+        "p50": 1993,
+        "p90": 2772,
+        "mean": 2431,
+        "max": 6654
+      }
+    },
+    "practice": {
+      "n": 12,
+      "passed": 11,
+      "pass_rate": 0.9166666666666666,
+      "check_rate": 0.9791666666666666,
+      "latency_ms": {
+        "n": 12,
+        "p50": 1210,
+        "p90": 1395,
+        "mean": 1281,
+        "max": 1975
+      }
+    },
+    "review": {
+      "n": 10,
+      "passed": 9,
+      "pass_rate": 0.9,
+      "check_rate": 0.9166666666666666,
+      "latency_ms": {
+        "n": 10,
+        "p50": 1491,
+        "p90": 3699,
+        "mean": 1669,
+        "max": 3699
+      }
+    }
+  },
+  "partial_quota_stop": true
+}

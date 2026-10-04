@@ -1,0 +1,127 @@
+{
+  "suite": "review",
+  "fn": "ask-assistant",
+  "job": "review (strong tier, same chain as review-submission)",
+  "note": "review-submission only reads DB rows (no work text in the body) and writes drafts, so this suite sends the shared submissionReviewPrompt + formatWork-shaped text through Edge Ask and scores it with the review parser rules",
+  "cases": [
+    {
+      "id": "V01",
+      "work": "Assignment: Regrouping Practice\nKind: practice\n\n1. 47 + 38\n   Expected: 85\n   Student: 75\n2. 56 + 29\n   Expected: 85\n   Student: 75\n3. 64 + 27\n   Expected: 91\n   Student: 81\n4. 23 + 14\n   Expected: 37\n   Student: 37",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "itemsMax": 6,
+        "scoreMax": 60,
+        "gapAny": [
+          "regroup",
+          "carry",
+          "carrying"
+        ]
+      }
+    },
+    {
+      "id": "V02",
+      "work": "Assignment: Fractions Check\nKind: practice\n\n1. 1/2 + 1/3\n   Expected: 5/6\n   Student: 5/6\n2. 1/4 + 1/2\n   Expected: 3/4\n   Student: 3/4\n3. 2/3 + 1/6\n   Expected: 5/6\n   Student: 5/6\n4. 3/8 + 1/4\n   Expected: 5/8\n   Student: 5/8",
+      "checks": {
+        "gapsMax": 0,
+        "itemsMax": 0,
+        "scoreMin": 90
+      }
+    },
+    {
+      "id": "V03",
+      "work": "Assignment: Unlike Denominators\nKind: practice\n\n1. 1/2 + 1/3\n   Expected: 5/6\n   Student: 2/5\n2. 1/4 + 1/2\n   Expected: 3/4\n   Student: 2/6\n3. 2/3 + 1/6\n   Expected: 5/6\n   Student: 3/9\n4. 1/5 + 1/10\n   Expected: 3/10\n   Student: 2/15",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "scoreMax": 40,
+        "gapAny": [
+          "denominator",
+          "common",
+          "fraction"
+        ]
+      }
+    },
+    {
+      "id": "V04",
+      "work": "Assignment: One-Step Equations\nKind: practice\n\n1. x + 7 = 12\n   Expected: 5\n   Student: 5\n2. x - 3 = 9\n   Expected: 12\n   Student: 6\n3. 4x = 20\n   Expected: 5\n   Student: 5\n4. x / 2 = 8\n   Expected: 16\n   Student: 4",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "scoreMin": 30,
+        "scoreMax": 70
+      }
+    },
+    {
+      "id": "V05",
+      "work": "Assignment: Exit Ticket \u2014 Slope\nKind: practice\n\n1. Slope through (0,0) and (2,4)\n   Expected: 2\n   Student: 2\n2. Slope through (1,1) and (3,7)\n   Expected: 3\n   Student: 3",
+      "checks": {
+        "gapsMax": 0,
+        "itemsMax": 0,
+        "scoreMin": 90
+      }
+    },
+    {
+      "id": "V06",
+      "work": "Assignment: Area Review\nKind: practice\n\n1. Area of a 5 by 3 rectangle\n   Expected: 15\n   Student: 16\n2. Area of a 4 by 6 rectangle\n   Expected: 24\n   Student: 20\n3. Area of a 7 by 2 rectangle\n   Expected: 14\n   Student: 18",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "scoreMax": 40,
+        "gapAny": [
+          "area",
+          "multipl",
+          "perimeter"
+        ]
+      }
+    },
+    {
+      "id": "V07",
+      "work": "Assignment: Multiplying by 10s\nKind: practice\n\n1. 34 x 10\n   Expected: 340\n   Student: (blank)\n2. 5 x 100\n   Expected: 500\n   Student: (blank)\n3. 72 x 10\n   Expected: 720\n   Student: (blank)\n4. 8 x 1000\n   Expected: 8000\n   Student: (blank)",
+      "checks": {
+        "scoreMax": 30,
+        "noNames": true
+      }
+    },
+    {
+      "id": "V08",
+      "work": "Assignment: Integer Operations\nKind: practice\n\n1. -3 + 5\n   Expected: 2\n   Student: 2\n2. -4 - 6\n   Expected: -10\n   Student: -2\n3. 7 + (-9)\n   Expected: -2\n   Student: -2\n4. -5 - (-8)\n   Expected: 3\n   Student: -13",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "gapAny": [
+          "negative",
+          "integer",
+          "subtract",
+          "sign"
+        ]
+      }
+    },
+    {
+      "id": "V09",
+      "work": "Assignment: Vocabulary Week 4 \u2014 Alex Rivera\nKind: practice\n\n1. Define \"abundant\"\n   Expected: plentiful\n   Student: a lot of something\n2. Define \"scarce\"\n   Expected: rare\n   Student: not much of it\n3. Use \"reluctant\" in a sentence\n   Expected: unwilling\n   Student: He was reluctant to jump in the cold pool.",
+      "checks": {
+        "gapsMax": 0,
+        "scoreMin": 80,
+        "noNames": true,
+        "excludes": [
+          "Rivera"
+        ]
+      }
+    },
+    {
+      "id": "V10",
+      "work": "Assignment: Percent to Decimal\nKind: practice\n\n1. 25% as a decimal\n   Expected: 0.25\n   Student: 25\n2. 7% as a decimal\n   Expected: 0.07\n   Student: 0.7\n3. 150% as a decimal\n   Expected: 1.5\n   Student: 15\n4. 40% as a decimal\n   Expected: 0.4\n   Student: 0.4",
+      "checks": {
+        "gapsMin": 1,
+        "itemsMin": 4,
+        "scoreMax": 40,
+        "gapAny": [
+          "percent",
+          "decimal",
+          "place value"
+        ]
+      }
+    }
+  ]
+}
