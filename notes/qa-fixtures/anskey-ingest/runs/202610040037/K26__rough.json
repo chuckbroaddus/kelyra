@@ -1,0 +1,191 @@
+{
+  "status": 200,
+  "json": {
+    "pageState": "filled",
+    "header": "Chemistry Unit 2 — Key",
+    "items": [
+      {
+        "n": 1,
+        "stem": "Atomic number is the number of",
+        "answer": "C",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 2,
+        "stem": "Group 18 elements are",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 3,
+        "stem": "Formula for table salt",
+        "answer": "NaCl",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 1
+      },
+      {
+        "n": 4,
+        "stem": "Bond formed by sharing electrons",
+        "answer": "covalent",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 1
+      },
+      {
+        "n": 5,
+        "stem": "Valence electrons in neon",
+        "answer": "8",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 1
+      },
+      {
+        "n": 6,
+        "stem": "Most reactive metal group",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 7,
+        "stem": "Reaction that releases heat",
+        "answer": "exothermic",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 1
+      },
+      {
+        "n": 8,
+        "stem": "pH of a strong base",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 9,
+        "stem": "Molar mass of water (g/mol)",
+        "answer": "18",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "numeric",
+        "confidence": 1
+      },
+      {
+        "n": 10,
+        "stem": "Bond between Na and Cl",
+        "answer": "ionic",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "short",
+        "confidence": 1
+      }
+    ],
+    "maxScore": 10,
+    "teacherNote": "Answer key with handwritten red corrections and highlights.",
+    "reject": false,
+    "phash": "007f7f7e7e7e7e00",
+    "layout": [
+      0.36911764705882355,
+      0.5622549019607843,
+      0.5443627450980392,
+      0.5306372549019608,
+      0.5558823529411765,
+      0.5414215686274509,
+      0.5406862745098039,
+      0.4825980392156863,
+      0.4730392156862745,
+      0.9860294117647059,
+      0.9921568627450981,
+      0.984313725490196,
+      0.9897058823529412,
+      0.9389705882352941,
+      0.9075980392156863,
+      0.8132352941176471,
+      0.5264705882352941,
+      0.9838235294117647,
+      0.9473039215686274,
+      0.9620098039215687,
+      0.9848039215686275,
+      0.9323529411764706,
+      0.9568627450980393,
+      0.817156862745098,
+      0.5078431372549019,
+      0.8198529411764706,
+      0.8588235294117647,
+      0.9901960784313726,
+      0.9887254901960785,
+      0.9803921568627451,
+      0.9857843137254902,
+      0.717156862745098,
+      0.5480392156862746,
+      0.9850490196078432,
+      0.9928921568627451,
+      0.9884803921568628,
+      0.9870098039215687,
+      0.9745098039215686,
+      0.9825980392156862,
+      0.6625,
+      0.6674019607843137,
+      0.9850490196078432,
+      0.9870098039215687,
+      0.9865196078431373,
+      0.9904411764705883,
+      0.9899509803921569,
+      0.9889705882352942,
+      0.6732843137254902,
+      0.6926470588235294,
+      0.9870098039215687,
+      0.9882352941176471,
+      0.9865196078431373,
+      0.9882352941176471,
+      0.9904411764705883,
+      0.9879901960784314,
+      0.6443627450980393,
+      0.45931372549019606,
+      0.6509803921568628,
+      0.6676470588235294,
+      0.6715686274509803,
+      0.6593137254901961,
+      0.6590686274509804,
+      0.6245098039215686,
+      0.4198529411764706
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 6653
+}

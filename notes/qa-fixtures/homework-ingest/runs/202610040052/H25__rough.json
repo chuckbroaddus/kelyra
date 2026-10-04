@@ -1,0 +1,94 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.98,
+      "studentGuessId": null,
+      "studentGuessName": "Jamie Ortiz",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Date",
+          "value": "9/29"
+        },
+        {
+          "label": "Per",
+          "value": "P2"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Jamie",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2009
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": null,
+      "studentName": "Jamie Ortiz",
+      "students": [
+        "Jamie Ortiz"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "I bought apples pears and grapes.",
+          "expected": "I bought apples, pears, and grapes.",
+          "seen": "I bought apples, pears, and grapes.",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "After lunch we went outside.",
+          "expected": "After lunch, we went outside.",
+          "seen": "After lunch, we went outside.",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "My dog Max likes the park.",
+          "expected": "My dog, Max, likes the park.",
+          "seen": "My dog, Max, likes the park.",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "Yes I will come to the party.",
+          "expected": "Yes, I will come to the party.",
+          "seen": "Yes I will come to the party.",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2410
+  }
+}

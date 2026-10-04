@@ -1,0 +1,52 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Ivy Navarro",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Rosa Navarro <rosa.navarro@example.com>",
+        "confident": true
+      },
+      {
+        "name": "Jude Palmer",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Chris Palmer <555-0142>",
+        "confident": true
+      },
+      {
+        "name": "Kira Solis",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Elena Solis <elena.solis@example.com>",
+        "confident": true
+      },
+      {
+        "name": "Luca Bianchi",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Marco Bianchi <555-0199>",
+        "confident": true
+      },
+      {
+        "name": "Mara Quinn",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": "Pat Quinn <pat.quinn@example.com>",
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2637
+}

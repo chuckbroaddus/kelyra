@@ -1,0 +1,103 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Date",
+          "value": "9/29"
+        },
+        {
+          "label": "Period",
+          "value": "P2"
+        },
+        {
+          "label": "A producer in the pond",
+          "value": "algae"
+        },
+        {
+          "label": "Which animal eats the grasshopper?",
+          "value": "the frog"
+        },
+        {
+          "label": "Where does the energy start?",
+          "value": "the sun"
+        },
+        {
+          "label": "Name a decomposer",
+          "value": "mushrooms"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [],
+      "note": null
+    },
+    "latencyMs": 3179
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "A producer in the pond:",
+          "expected": "algae",
+          "seen": "algae",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Which animal eats the grasshopper?",
+          "expected": "the frog",
+          "seen": "the frog",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Where does the energy start?",
+          "expected": "the sun",
+          "seen": "the sun",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "Name a decomposer:",
+          "expected": "mushrooms",
+          "seen": "mushrooms",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0018,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3817
+  }
+}

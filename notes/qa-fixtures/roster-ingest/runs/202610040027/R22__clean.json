@@ -1,0 +1,76 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Cyrus Albrecht",
+        "student_id": null,
+        "grade": "11",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Delphine Mbeki",
+        "student_id": null,
+        "grade": "11",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Emeric Thorne",
+        "student_id": null,
+        "grade": "12",
+        "period": "5",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Fiona Gallagher",
+        "student_id": null,
+        "grade": "11",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gideon Rask",
+        "student_id": null,
+        "grade": "12",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hazel Quintero",
+        "student_id": null,
+        "grade": "11",
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Idris Nowak",
+        "student_id": null,
+        "grade": "12",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Juniper Sloane",
+        "student_id": null,
+        "grade": "11",
+        "period": "7",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2339
+}

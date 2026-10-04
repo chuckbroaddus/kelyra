@@ -1,0 +1,37 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "syllabus",
+      "parentGuessName": null,
+      "confidence": 1,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [],
+      "note": null
+    },
+    "latencyMs": 2531
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": null,
+      "items": [],
+      "costUsd": 0.001,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2051
+  }
+}

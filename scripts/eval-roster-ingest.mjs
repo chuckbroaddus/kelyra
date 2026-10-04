@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /**
- * Live roster extract evaluation against local extract-roster (ai:dev).
+ * Live roster extract evaluation against extract-roster.
+ *   EVAL_TARGET=edge (default) → Supabase Edge;  EVAL_TARGET=dev → local ai:dev (AI_DEV_URL).
  *   node scripts/eval-roster-ingest.mjs
+ * Records latencyMs per call; stops on a Gemini daily-quota error.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { resolveAiTarget, latencyStats, isDailyQuotaError } from './lib/eval-target.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const CORPUS = process.env.EVAL_CORPUS ? path.resolve(process.env.EVAL_CORPUS) : path.join(ROOT, 'notes/qa-fixtures/roster-ingest');
-const AI_URL = (process.env.AI_DEV_URL || 'http://127.0.0.1:8787').replace(/\/$/, '');
 
 function loadEnv() {
   const envPath = path.join(ROOT, '.env');
@@ -417,12 +419,14 @@ function pickImage(caseDir, preferPhoto) {
   return null;
 }
 
-async function invokeExtract(imageUrl, accessToken) {
-  const res = await fetch(`${AI_URL}/extract-roster`, {
+async function invokeExtract(target, imageUrl, auth) {
+  const t0 = performance.now();
+  const res = await fetch(`${target.base}/extract-roster`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${auth.access_token}`,
+      ...(target.kind === 'edge' ? { apikey: auth.anon } : {}),
     },
     body: JSON.stringify({ imageUrl }),
   });
@@ -433,7 +437,7 @@ async function invokeExtract(imageUrl, accessToken) {
   } catch {
     json = { error: 'non-json', raw: text.slice(0, 400) };
   }
-  return { status: res.status, json };
+  return { status: res.status, json, latencyMs: Math.round(performance.now() - t0) };
 }
 
 async function main() {
@@ -446,19 +450,24 @@ async function main() {
   fs.mkdirSync(runDir, { recursive: true });
   const resume = Boolean((process.env.EVAL_RESUME_STAMP || '').trim());
 
-  try {
-    await fetch(`${AI_URL}/health`);
-  } catch (err) {
-    console.error('ai-dev not reachable at', AI_URL, String(err.message || err));
-    console.error('Start with: npm run ai:dev');
-    process.exit(2);
+  const target = resolveAiTarget(env, { legacyUrl: process.env.AI_DEV_URL });
+  const AI_URL = target.label;
+  if (target.kind === 'dev') {
+    try {
+      await fetch(`${target.base}/health`);
+    } catch (err) {
+      console.error('ai-dev not reachable at', target.base, String(err.message || err));
+      console.error('Start with: npm run ai:dev');
+      process.exit(2);
+    }
   }
+  let quotaHit = false;
 
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
   console.log('run', stamp, 'cases', manifest.cases.length, 'ai', AI_URL);
   fs.writeFileSync(
     path.join(runDir, 'context.json'),
-    JSON.stringify({ stamp, ai_url: AI_URL, case_count: manifest.cases.length }, null, 2),
+    JSON.stringify({ stamp, target: target.kind, ai_url: target.base, case_count: manifest.cases.length }, null, 2),
   );
 
   const paceMs = Number(process.env.EVAL_ROSTER_PACE_MS || 2500);
@@ -509,13 +518,17 @@ async function main() {
         // Grok capacity 429s surface as ai-dev 500s; retry so a busy model is not scored as a miss.
         for (let attempt = 0; attempt < 4; attempt++) {
           try {
-            result = await invokeExtract(toDataUrl(v.file), auth.access_token);
+            result = await invokeExtract(target, toDataUrl(v.file), auth);
           } catch (err) {
             result = { status: 0, json: { error: String(err.message || err) } };
           }
           const transient =
             result.status === 0 ||
             (result.status >= 500 && /429|capacity|resource-exhausted|timeout|fetch failed/i.test(String(result.json?.error || '')));
+          if (isDailyQuotaError(result.json?.error)) {
+            quotaHit = true;
+            break;
+          }
           if (!transient) break;
           await sleep(8000 * (attempt + 1));
         }
@@ -533,6 +546,7 @@ async function main() {
         rough_case: Boolean(meta.rough),
         effects: meta.effects || [],
         http_status: result.status,
+        latency_ms: result.latencyMs ?? null,
         accuracy: scored.accuracy,
         name_recall: scored.name_recall,
         name_precision: scored.name_precision,
@@ -547,7 +561,12 @@ async function main() {
         actual_count: actual.names.length,
         rejected: actual.rejected,
       });
-      console.log((scored.accuracy * 100).toFixed(0) + '%', `h=${scored.hallucinations}`);
+      console.log((scored.accuracy * 100).toFixed(0) + '%', `h=${scored.hallucinations}`, `${result.latencyMs ?? '-'}ms`);
+      if (quotaHit) break;
+    }
+    if (quotaHit) {
+      console.warn('\nGemini daily quota hit — stopping (partial run). Resume later with EVAL_RESUME_STAMP=' + stamp);
+      break;
     }
   }
 
@@ -556,6 +575,9 @@ async function main() {
 
   const score = {
     stamp,
+    target: target.kind,
+    partial_quota_stop: quotaHit,
+    latency_ms: latencyStats(perDoc.map((d) => d.latency_ms)),
     overall_accuracy: avg(perDoc),
     roster_accuracy: avg(perDoc.filter((d) => d.kind === 'roster')),
     negative_accuracy: avg(perDoc.filter((d) => d.kind === 'negative')),
@@ -589,6 +611,7 @@ async function main() {
     'hallu',
     halluTotal,
   );
+  console.log('latency', JSON.stringify(score.latency_ms));
   console.log('bucket                n   acc    fieldAcc recF1  recall prec   hallu negPass');
   for (const [k, b] of Object.entries(score.buckets)) {
     const pct = (x) => (x == null ? '   -  ' : (x * 100).toFixed(1).padStart(5) + '%');

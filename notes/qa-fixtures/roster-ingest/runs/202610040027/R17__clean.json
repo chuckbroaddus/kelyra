@@ -1,0 +1,76 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Faye Alvarez",
+        "student_id": "G301",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gus Benton",
+        "student_id": "G302",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Holly Cho",
+        "student_id": "G303",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ian Drake",
+        "student_id": "G304",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jade Ellis",
+        "student_id": "G305",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kyle Ford",
+        "student_id": "G306",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Lena Gross",
+        "student_id": "G307",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Miles Hart",
+        "student_id": "G308",
+        "grade": null,
+        "period": "2",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2233
+}

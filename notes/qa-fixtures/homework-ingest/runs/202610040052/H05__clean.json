@@ -1,0 +1,55 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "riley",
+      "studentGuessName": "Riley Brooks",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Riley Brooks",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1824
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": null,
+      "items": [
+        {
+          "n": 1,
+          "question": "Slope of y",
+          "expected": "2",
+          "seen": null,
+          "credit": null,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2627
+  }
+}

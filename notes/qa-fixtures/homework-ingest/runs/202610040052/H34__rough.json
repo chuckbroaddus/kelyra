@@ -1,0 +1,90 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "casey",
+      "studentGuessName": "casey Nguyen",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Assignment Title",
+          "value": "Measurement Conversions"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "casey Nguyen",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2038
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": null,
+      "studentName": "Casey Nguyen",
+      "students": [
+        "Casey Nguyen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "1 ft = 12 in",
+          "expected": "1 ft = 12 in",
+          "seen": "1 ft = 12 in",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "3 ft = 36 in",
+          "expected": "3 ft = 36 in",
+          "seen": "3 ft = 36 in",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "2 yd = 6 ft",
+          "expected": "2 yd = 6 ft",
+          "seen": "2 yd = 6 ft",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "24 in = 3 ft",
+          "expected": "24 in = 2 ft",
+          "seen": "24 in = 3 ft",
+          "credit": 0,
+          "of": 1,
+          "gap": "Measurement Conversions",
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 5512
+  }
+}

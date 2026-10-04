@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 /**
  * Live homework ingest evaluation.
- * Calls classify-capture (Edge or ai-dev) + evaluate-homework (ai-dev preferred).
+ * Calls classify-capture + evaluate-homework on one target.
+ *   EVAL_TARGET=edge (default) → Supabase Edge;  EVAL_TARGET=dev → local ai:dev.
  *   node scripts/eval-homework-ingest.mjs
+ * Each call records latencyMs; score.json carries p50/p90 per route.
+ * A Gemini daily-quota error stops the run (no retries); per-minute 429s still back off.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { resolveAiTarget, latencyStats, isDailyQuotaError } from './lib/eval-target.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -333,6 +337,7 @@ function isQuotaExhausted(result) {
 }
 
 async function postJson(url, headers, body) {
+  const t0 = performance.now();
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -345,7 +350,7 @@ async function postJson(url, headers, body) {
   } catch {
     json = { error: 'non-json', raw: text.slice(0, 400) };
   }
-  return { status: res.status, json };
+  return { status: res.status, json, latencyMs: Math.round(performance.now() - t0) };
 }
 
 async function invokeClassify({ base, headers, imageUrl, roster, teacherNote }) {
@@ -367,6 +372,7 @@ async function invokeEvaluate({ base, headers, imageUrl, roster }) {
   });
 }
 
+let quotaHit = false;
 async function invokeWithRetry(fn, paceMs, maxAttempts = 5, backoffMs = 45000) {
   let last;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -378,6 +384,11 @@ async function invokeWithRetry(fn, paceMs, maxAttempts = 5, backoffMs = 45000) {
     if (!isQuotaExhausted(last)) {
       if (paceMs > 0) await sleep(paceMs);
       return last;
+    }
+    // Daily cap: retrying only burns the rest of the day's quota — stop the run instead.
+    if (isDailyQuotaError(JSON.stringify(last ?? {}))) {
+      quotaHit = true;
+      break;
     }
     if (attempt >= maxAttempts) break;
     process.stdout.write(`(429 retry ${attempt} wait ${Math.round((backoffMs * attempt) / 1000)}s) `);
@@ -398,8 +409,7 @@ async function main() {
 
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
   const teacher = await signIn(env, 'teacher');
-  const aiDev = (env.EXPO_PUBLIC_AI_DEV_URL || process.env.AI_DEV_URL || '').replace(/\/$/, '');
-  const edgeBase = `${teacher.url.replace(/\/$/, '')}/functions/v1`;
+  const target = resolveAiTarget(env, { legacyUrl: env.EXPO_PUBLIC_AI_DEV_URL || process.env.AI_DEV_URL });
   const headersEdge = {
     Authorization: `Bearer ${teacher.session.access_token}`,
     apikey: teacher.anon,
@@ -407,24 +417,9 @@ async function main() {
   const headersDev = {
     Authorization: `Bearer ${teacher.session.access_token}`,
   };
-
-  // Prefer ai-dev when up for evaluate-homework; classify works on both.
-  let classifyBase = edgeBase;
-  let evaluateBase = null;
-  if (aiDev) {
-    try {
-      const ping = await fetch(aiDev, { method: 'GET' }).catch(() => null);
-      // any response means host up
-      classifyBase = aiDev;
-      evaluateBase = aiDev;
-      void ping;
-    } catch {
-      /* edge only */
-    }
-    // force try ai-dev for evaluate even if GET fails (POST routes only)
-    evaluateBase = aiDev;
-    classifyBase = aiDev;
-  }
+  const classifyBase = target.base;
+  const evaluateBase = target.base;
+  const hdr = target.kind === 'edge' ? headersEdge : headersDev;
 
   const paceMs = Number(process.env.EVAL_HW_PACE_MS || process.env.EVAL_INGEST_PACE_MS || 8000);
   console.log('run', stamp, 'cases', manifest.cases.length, 'classify', classifyBase, 'eval', evaluateBase || '(skip)');
@@ -433,8 +428,9 @@ async function main() {
     JSON.stringify(
       {
         stamp,
-        classify_base: /127\.|localhost/.test(classifyBase) ? 'ai-dev' : 'edge',
-        evaluate_base: evaluateBase ? (/127\.|localhost/.test(evaluateBase) ? 'ai-dev' : 'edge') : null,
+        target: target.kind,
+        classify_base: target.kind === 'dev' ? 'ai-dev' : 'edge',
+        evaluate_base: target.kind === 'dev' ? 'ai-dev' : 'edge',
         case_count: manifest.cases.length,
       },
       null,
@@ -499,11 +495,10 @@ async function main() {
       } else {
         process.stdout.write(`… ${entry.id} ${v.variant} `);
         const imageUrl = toDataUrl(v.file);
-        const hdr = classifyBase.includes('functions') ? headersEdge : headersDev;
         const classify = await invokeWithRetry(
           () =>
             invokeClassify({
-              base: classifyBase.includes('functions') ? edgeBase : classifyBase,
+              base: classifyBase,
               headers: hdr,
               imageUrl,
               roster,
@@ -516,7 +511,7 @@ async function main() {
             () =>
               invokeEvaluate({
                 base: evaluateBase,
-                headers: headersDev,
+                headers: hdr,
                 imageUrl,
                 roster: rosterNames,
               }),
@@ -545,8 +540,15 @@ async function main() {
         fields: scored.rows,
         classify_status: result.classify?.status ?? null,
         evaluate_status: result.evaluate?.status ?? null,
+        classify_latency_ms: result.classify?.latencyMs ?? null,
+        evaluate_latency_ms: result.evaluate?.latencyMs ?? null,
       });
-      console.log((scored.accuracy * 100).toFixed(0) + '%', 'rec', scored.record_match ? 'Y' : 'N', 'hall', scored.counts.hallucinated);
+      console.log((scored.accuracy * 100).toFixed(0) + '%', 'rec', scored.record_match ? 'Y' : 'N', 'hall', scored.counts.hallucinated, `${result.classify?.latencyMs ?? '-'}ms/${result.evaluate?.latencyMs ?? '-'}ms`);
+      if (quotaHit) break;
+    }
+    if (quotaHit) {
+      console.warn('\nGemini quota hit — stopping (partial run). Resume later with EVAL_RESUME_STAMP=' + stamp);
+      break;
     }
   }
 
@@ -591,6 +593,12 @@ async function main() {
   const multi = perDoc.filter((d) => d.diag?.multiStudent_expected);
   const score = {
     stamp,
+    target: target.kind,
+    partial_quota_stop: quotaHit,
+    latency_ms: {
+      classify: latencyStats(perDoc.map((d) => d.classify_latency_ms)),
+      evaluate: latencyStats(perDoc.map((d) => d.evaluate_latency_ms)),
+    },
     overall_accuracy: avg(perDoc),
     homework_accuracy: avg(perDoc.filter((d) => d.kind === 'homework')),
     negative_accuracy: avg(perDoc.filter((d) => d.kind === 'negative')),
@@ -629,6 +637,7 @@ async function main() {
     );
   }
   console.log('  multiStudent detected', score.multi_student_detected);
+  console.log('  latency classify', JSON.stringify(score.latency_ms.classify), 'evaluate', JSON.stringify(score.latency_ms.evaluate));
 }
 
 main().catch((err) => {

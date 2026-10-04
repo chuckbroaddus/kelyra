@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Nina Ortega",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Owen Price",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Piper Quinn",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rory Santos",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Skye Turner",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Uma V",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": false
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 1961
+}

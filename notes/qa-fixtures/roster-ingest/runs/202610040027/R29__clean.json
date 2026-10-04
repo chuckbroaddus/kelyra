@@ -1,0 +1,100 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Adaeze Nwosu",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Bram Halloran",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Clío Bertrand",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Dmitrí Volkov",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Eden Strickland",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Kip Andersson",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gíl Ramos",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Honor Pemberton",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ike Larsen",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jolene Watts",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Lark Ellery",
+        "student_id": null,
+        "grade": null,
+        "period": "6",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 3892
+}

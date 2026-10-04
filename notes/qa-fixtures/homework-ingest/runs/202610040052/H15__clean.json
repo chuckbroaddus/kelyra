@@ -1,0 +1,88 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "taylor",
+      "studentGuessName": "Taylor",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "1. Whole note beats",
+          "value": "4"
+        },
+        {
+          "label": "2. Half note beats",
+          "value": "2"
+        },
+        {
+          "label": "3. Quarter note beats",
+          "value": "1"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Taylor",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1920
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Taylor",
+      "students": [
+        "Taylor"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Whole note beats:",
+          "expected": "4",
+          "seen": "4",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Half note beats:",
+          "expected": "2",
+          "seen": "2",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Quarter note beats:",
+          "expected": "1",
+          "seen": "1",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2170
+  }
+}

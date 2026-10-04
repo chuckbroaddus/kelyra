@@ -1,0 +1,100 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 1,
+      "studentGuessId": "jordan",
+      "studentGuessName": "Jordan Chen",
+      "draftScore": 5,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Jordan Chen",
+          "confidence": 1
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2010
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "simplifying fractions",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 80,
+      "teacherNote": "Good job overall, but check number 5.",
+      "studentName": "Jordan Chen",
+      "students": [
+        "Jordan Chen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Simplify the ratio 12 : 18",
+          "expected": "2:3",
+          "seen": "2:3",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "3 apples cost $1.50. Cost of 1 apple?",
+          "expected": "$0.50",
+          "seen": "$0.50",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "60 miles in 2 hours. Rate?",
+          "expected": "30 mph",
+          "seen": "30 mph",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "Unit price: $4.80 for 6 pens",
+          "expected": "$0.80",
+          "seen": "$0.80 each",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 5,
+          "question": "Write 5 : 20 as a fraction in lowest terms",
+          "expected": "1/4",
+          "seen": "1/5",
+          "credit": 0,
+          "of": 1,
+          "gap": "simplifying fractions",
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0022,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3788
+  }
+}

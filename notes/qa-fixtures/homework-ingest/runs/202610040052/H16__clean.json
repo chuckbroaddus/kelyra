@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "jamie",
+      "studentGuessName": "Jamie Ortiz",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Name",
+          "value": "Jamie Ortiz"
+        },
+        {
+          "label": "Date",
+          "value": "9/30/2026"
+        },
+        {
+          "label": "Period",
+          "value": "P3"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Jamie Ortiz",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1899
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Jamie Ortiz",
+      "students": [
+        "Jamie Ortiz"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Write 3-4 sentences about a helpful neighbor.",
+          "expected": "A paragraph of 3-4 sentences describing a helpful neighbor.",
+          "seen": "My neighbor Ms. Lee brings extra vegetables from her garden. She waved when I moved in last June. Last week she helped carry boxes up the stairs. I want to thank her with cookies.",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2313
+  }
+}

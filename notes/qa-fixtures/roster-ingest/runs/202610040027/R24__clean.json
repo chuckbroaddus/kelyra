@@ -1,0 +1,140 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "seating_chart",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Adele Fournier",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Bastian Kroll",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Coralie Mensah",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Dorian Platt",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Elodie Marsh",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Fitz Okoro",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Gwendolyn Ash",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hamish Tull",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Isolde Barros",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jude Kowalczyk",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Keziah Roman",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Linus Eberhardt",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Marisol Cruz",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Nils Haugen",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ottilie Sorensen",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Percy Lamb",
+        "student_id": null,
+        "grade": null,
+        "period": null,
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2821
+}

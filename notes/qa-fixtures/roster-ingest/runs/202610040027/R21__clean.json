@@ -1,0 +1,84 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "attendance",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Talia Brennan",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ulric Sato",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Vivian Okafor",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Wesley Dunmore",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Xiomara Leal",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Yusuf Karimi",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Zara Whitlock",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Anders Pruitt",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Bianca Soto",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2490
+}

@@ -1,0 +1,50 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "syllabus",
+      "parentGuessName": null,
+      "confidence": 1,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "grading",
+          "value": "Tests 50%, Daily 50%"
+        },
+        {
+          "label": "late policy",
+          "value": "-10% per day"
+        },
+        {
+          "label": "drop policy",
+          "value": "Drop 1 lowest Daily"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [],
+      "note": null
+    },
+    "latencyMs": 2058
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": null,
+      "teacherNote": "This image shows a course syllabus rather than student work.",
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": null,
+      "items": [],
+      "costUsd": 0.001,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2916
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "status": 200,
+  "json": {
+    "pageState": "filled",
+    "header": "SPANISH 2 – EXAMEN KEY",
+    "items": [
+      {
+        "n": 1,
+        "stem": "1",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 2,
+        "stem": "2",
+        "answer": "C",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 3,
+        "stem": "3",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 4,
+        "stem": "4",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 5,
+        "stem": "5",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 6,
+        "stem": "6",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 7,
+        "stem": "7",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 8,
+        "stem": "8",
+        "answer": "C",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 9,
+        "stem": "9",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 10,
+        "stem": "10",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 11,
+        "stem": "11",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 12,
+        "stem": "12",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 13,
+        "stem": "13",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 14,
+        "stem": "14",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 15,
+        "stem": "15",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 16,
+        "stem": "16",
+        "answer": "C",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 17,
+        "stem": "17",
+        "answer": "",
+        "points": 1,
+        "needsTeacher": true,
+        "note": "Unanswered on key",
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 0
+      },
+      {
+        "n": 18,
+        "stem": "18",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 19,
+        "stem": "19",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 20,
+        "stem": "20",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 21,
+        "stem": "21",
+        "answer": "A",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 22,
+        "stem": "22",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 23,
+        "stem": "23",
+        "answer": "D",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 24,
+        "stem": "24",
+        "answer": "B",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "confidence": 1
+      }
+    ],
+    "maxScore": 24,
+    "teacherNote": null,
+    "reject": false,
+    "phash": "003e7e7e7e7e7e00",
+    "layout": [
+      0.10269607843137254,
+      0.12230392156862745,
+      0.12279411764705882,
+      0.15073529411764705,
+      0.1821078431372549,
+      0.14607843137254903,
+      0.17034313725490197,
+      0.07622549019607844,
+      0.1377450980392157,
+      0.25049019607843137,
+      0.3801470588235294,
+      0.47230392156862744,
+      0.46887254901960784,
+      0.47794117647058826,
+      0.3821078431372549,
+      0.14313725490196078,
+      0.153921568627451,
+      0.3931372549019608,
+      0.4904411764705882,
+      0.43970588235294117,
+      0.4887254901960784,
+      0.5372549019607843,
+      0.48995098039215684,
+      0.12058823529411765,
+      0.16348039215686275,
+      0.4497549019607843,
+      0.5399509803921568,
+      0.5688725490196078,
+      0.5774509803921568,
+      0.5649509803921569,
+      0.5428921568627451,
+      0.20833333333333334,
+      0.15049019607843137,
+      0.528921568627451,
+      0.5551470588235294,
+      0.6019607843137255,
+      0.5629901960784314,
+      0.5703431372549019,
+      0.503921568627451,
+      0.2514705882352941,
+      0.1036764705882353,
+      0.48848039215686273,
+      0.4950980392156863,
+      0.5362745098039216,
+      0.5700980392156862,
+      0.5617647058823529,
+      0.5022058823529412,
+      0.32426470588235295,
+      0.1875,
+      0.44362745098039214,
+      0.4727941176470588,
+      0.5553921568627451,
+      0.5350490196078431,
+      0.4769607843137255,
+      0.4747549019607843,
+      0.3365196078431373,
+      0.14166666666666666,
+      0.2676470588235294,
+      0.283578431372549,
+      0.30686274509803924,
+      0.23431372549019608,
+      0.1840686274509804,
+      0.17573529411764705,
+      0.17034313725490197
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 10070
+}

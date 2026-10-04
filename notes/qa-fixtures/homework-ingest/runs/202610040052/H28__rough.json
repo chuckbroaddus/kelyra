@@ -1,0 +1,123 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "casey",
+      "studentGuessName": "Casey Nguyen",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Name",
+          "value": "Casey Nguyen"
+        },
+        {
+          "label": "Date",
+          "value": "9/29"
+        },
+        {
+          "label": "Per",
+          "value": "P2"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Casey Nguyen",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2080
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [
+        {
+          "label": "spelling correction",
+          "sortOrder": 1
+        }
+      ],
+      "draftScore": 67,
+      "teacherNote": "Good effort on spelling corrections, check items 2 and 5.",
+      "studentName": "Casey Nguyen",
+      "students": [
+        "Casey Nguyen"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "becuase",
+          "expected": "because",
+          "seen": "because",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "freind",
+          "expected": "friend",
+          "seen": "friend",
+          "credit": 1,
+          "of": 1,
+          "gap": "spelling correction",
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "beleive",
+          "expected": "believe",
+          "seen": "beleive",
+          "credit": 0,
+          "of": 1,
+          "gap": "spelling correction",
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "tommorow",
+          "expected": "tomorrow",
+          "seen": "tomorrow",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 5,
+          "question": "neccessary",
+          "expected": "necessary",
+          "seen": "necesary",
+          "credit": 0,
+          "of": 1,
+          "gap": "spelling correction",
+          "confidence": "high"
+        },
+        {
+          "n": 6,
+          "question": "libary",
+          "expected": "library",
+          "seen": "library",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0022,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3203
+  }
+}

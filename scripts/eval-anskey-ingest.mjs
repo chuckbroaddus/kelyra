@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * Live answer-key ingest eval against local ai:dev analyze-answer-key.
+ * Live answer-key ingest eval against analyze-answer-key.
+ *   EVAL_TARGET=edge (default) → Supabase Edge;  EVAL_TARGET=dev → local ai:dev (ANSKEY_AI_URL).
  *   node scripts/eval-anskey-ingest.mjs
+ * Records latencyMs per call; stops on a Gemini daily-quota error.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,6 +11,7 @@ import os from 'node:os';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { resolveAiTarget, latencyStats, isDailyQuotaError } from './lib/eval-target.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -301,16 +304,14 @@ async function signIn(env) {
   return { url, anon, access_token: handlePayload.access_token };
 }
 
-function aiBase(env) {
-  return (env.ANSKEY_AI_URL || env.EXPO_PUBLIC_AI_DEV_URL || 'http://127.0.0.1:8787').replace(/\/$/, '');
-}
-
-async function invokeAnalyze({ aiUrl, token, imageUrl }) {
-  const res = await fetch(`${aiUrl}/analyze-answer-key`, {
+async function invokeAnalyze({ target, auth, imageUrl }) {
+  const t0 = performance.now();
+  const res = await fetch(`${target.base}/analyze-answer-key`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${auth.access_token}`,
       'Content-Type': 'application/json',
+      ...(target.kind === 'edge' ? { apikey: auth.anon } : {}),
     },
     body: JSON.stringify({ imageUrl }),
   });
@@ -321,7 +322,7 @@ async function invokeAnalyze({ aiUrl, token, imageUrl }) {
   } catch {
     json = { error: 'non-json', raw: text.slice(0, 400) };
   }
-  return { status: res.status, json };
+  return { status: res.status, json, latencyMs: Math.round(performance.now() - t0) };
 }
 
 function variantImage(caseDir, variant) {
@@ -361,15 +362,19 @@ async function main() {
   const only = (process.env.EVAL_ANSKEY_ONLY || '').split(',').map((x) => x.trim()).filter(Boolean);
   if (only.length) manifest.cases = manifest.cases.filter((c) => only.includes(c.id));
   let auth = null;
-  let aiUrl = aiBase(env);
+  const target = resolveAiTarget(env, { legacyUrl: env.ANSKEY_AI_URL });
+  let aiUrl = target.base;
+  let quotaHit = false;
   let files = { close: async () => {} };
   if (!rescoreOnly) {
     auth = await signIn(env);
-    try {
-      const probe = await fetch(aiUrl + '/');
-      console.log('ai', aiUrl, 'probe', probe.status);
-    } catch (err) {
-      throw new Error(`ai:dev not reachable at ${aiUrl}: ${err.message}`);
+    if (target.kind === 'dev') {
+      try {
+        const probe = await fetch(aiUrl + '/');
+        console.log('ai', aiUrl, 'probe', probe.status);
+      } catch (err) {
+        throw new Error(`ai:dev not reachable at ${aiUrl}: ${err.message}`);
+      }
     }
     files = await startFileServer(CORPUS);
   } else {
@@ -443,16 +448,13 @@ async function main() {
           const buf = fs.readFileSync(v.file);
           const imageUrl = `data:${mimeFor(v.file)};base64,${buf.toString('base64')}`;
           try {
-            result = await invokeAnalyze({
-              aiUrl,
-              token: auth.access_token,
-              imageUrl,
-            });
+            result = await invokeAnalyze({ target, auth, imageUrl });
           } catch (err) {
             result = { status: 0, json: { error: String(err.message || err) } };
           }
           fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
-          if (paceMs > 0) await sleep(paceMs);
+          if (isDailyQuotaError(result.json?.error)) quotaHit = true;
+          if (paceMs > 0 && !quotaHit) await sleep(paceMs);
         }
         const actual = result.json || {};
         // clean variant of a rough handwritten case may have fuller truth (nothing obscured)
@@ -472,12 +474,18 @@ async function main() {
           variant: v.variant,
           category: caseCategory(entry, meta, v.variant),
           http_status: result.status,
+          latency_ms: result.latencyMs ?? null,
           field_accuracy: sum.accuracy,
           counts: sum.counts,
           fields: fieldScores,
           item_count_actual: Array.isArray(actual.items) ? actual.items.length : 0,
         });
-        console.log((sum.accuracy * 100).toFixed(0) + '%');
+        console.log((sum.accuracy * 100).toFixed(0) + '%', `${result.latencyMs ?? '-'}ms`);
+        if (quotaHit) break;
+      }
+      if (quotaHit) {
+        console.warn('\nGemini daily quota hit — stopping (partial run). Resume later with EVAL_RESUME_STAMP=' + stamp);
+        break;
       }
     }
   } finally {
@@ -487,6 +495,9 @@ async function main() {
   const score = {
     stamp,
     ai_url: aiUrl,
+    target: rescoreOnly ? 'rescore' : target.kind,
+    partial_quota_stop: quotaHit,
+    latency_ms: latencyStats(perDoc.map((d) => d.latency_ms)),
     overall_accuracy: avg(perDoc),
     answer_key_accuracy: avg(perDoc.filter((d) => d.kind !== 'negative')),
     negative_accuracy: avg(perDoc.filter((d) => d.kind === 'negative')),
@@ -511,6 +522,7 @@ async function main() {
     'halluc',
     score.field_totals.hallucinated,
   );
+  console.log('latency', JSON.stringify(score.latency_ms));
   for (const [cat, c] of Object.entries(score.by_category)) {
     console.log(
       `  ${cat.padEnd(18)} docs ${String(c.docs).padStart(2)}  field ${(c.field_accuracy * 100).toFixed(1)}%  items ${(c.item_answer_accuracy * 100).toFixed(1)}% (${c.item_answer_correct}/${c.item_answer_total})  halluc ${c.hallucinated}`,
