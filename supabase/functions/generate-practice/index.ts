@@ -3,10 +3,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import {
   callMetered,
   parsePracticeItems,
-  practicePrompt,
   requireXaiKey,
   outputText,
 } from '../_shared/ai.ts';
+import { practicePrompt } from '../_shared/aiPrompts.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

@@ -62,3 +62,18 @@ verify_jwt = true
 
 [functions.ride-lpr]
 verify_jwt = true
+
+[functions.extract-roster]
+verify_jwt = true
+
+[functions.interpret-speech]
+verify_jwt = true
+
+[functions.evaluate-homework]
+verify_jwt = true
+
+[functions.analyze-answer-key]
+verify_jwt = true
+
+[functions.match-key]
+verify_jwt = true

@@ -5,8 +5,8 @@ import {
   outputText,
   parseSubmissionReview,
   requireXaiKey,
-  submissionReviewPrompt,
 } from '../_shared/ai.ts';
+import { submissionReviewPrompt } from '../_shared/aiPrompts.ts';
 import {
   associationHasRubric,
   buildEdgeAiGradePrompt,

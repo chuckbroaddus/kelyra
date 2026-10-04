@@ -34,7 +34,33 @@ import {
   reasoningEffortFor,
 } from './lib/ai-policy.mjs';
 import { isAllowedAskImageUrl } from './lib/ask-image-url.mjs';
-import { finalizeAnswerKeyAnalysis } from './lib/anskey-sanitize.mjs';
+import { finalizeAnswerKeyAnalysis } from '../supabase/functions/_shared/anskeySanitize.mjs';
+import {
+  analyzeKeyLookAgainPrompt,
+  analyzeKeyPrompt,
+  matchKeyPrompt,
+  practicePrompt,
+  rosterPrompt,
+  speechPrompt,
+  submissionReviewPrompt,
+} from '../supabase/functions/_shared/aiPrompts.ts';
+import { homeworkPrompt } from '../supabase/functions/_shared/homeworkPrompts.ts';
+import { finalizeRosterExtract } from '../supabase/functions/_shared/rosterExtract.ts';
+import { finalizeSpeechIntent } from '../supabase/functions/_shared/speechIntent.ts';
+import {
+  evaluatePromptText,
+  finalizeEvaluateHomework,
+  homeworkDraftFromParsed,
+  parseScoredItems,
+} from '../supabase/functions/_shared/evaluateHomework.ts';
+import {
+  EMPTY_SIGNATURE,
+  finalizeKeyPick,
+  hashOnlyKeyMatch,
+  matchKeyCandidateText,
+  planKeyMatch,
+  signatureFromGrey32,
+} from '../supabase/functions/_shared/answerKeyMatch.ts';
 import {
   askActorSystemLine,
   filterAskToolDefs,
@@ -56,9 +82,7 @@ import {
   pageAssetIdsFromDraft,
 } from '../supabase/functions/_shared/homeworkPages.ts';
 import {
-  cleanHomeworkNameList,
   cleanHomeworkStudentName,
-  HOMEWORK_GRADING_RULES,
   percentFromItemCredits,
   settleHomeworkItems,
 } from '../supabase/functions/_shared/homeworkGrading.ts';
@@ -76,25 +100,7 @@ const flagshipModel = FLAGSHIP_MODEL;
 const authPath = join(homedir(), '.grok', 'auth.json');
 const tokenUrl = 'https://auth.x.ai/oauth2/token';
 
-const homeworkPrompt = `You are helping a K-12 teacher review one student's work.
-Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1,"confidence":"high"}]}
-Rules:
-- 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
-- items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
-- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
-- Do not invent a student name or extra biography. Do not emit the example row above as if it were this page.
-${HOMEWORK_GRADING_RULES}`;
 
-function practicePrompt(skillLabel) {
-  return `You write short paper practice items for one K-12 skill: ${skillLabel}.
-Return JSON only, no markdown:
-{"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"optional short key"}]}
-Rules:
-- 4 to 6 items.
-- Age-appropriate. No student names. No images.
-- Prompts are one or two sentences.`;
-}
 
 const server = createServer(async (req, res) => {
   cors(res);
@@ -412,44 +418,7 @@ async function analyzeHomework(supabase, body) {
 
 const ROSTER_MAX_EDGE = 2048;
 
-const rosterPrompt = `You extract students from a class list, seating chart, attendance sheet, or roster photo/scan.
-Return JSON only, no markdown:
-{"document_kind_guess":"class_roster","rejected":false,"names":[{"name":"First Last","student_id":null,"grade":null,"period":null,"parent_contact":null,"confident":true}]}
-document_kind_guess is one of: class_roster, seating_chart, attendance, not_roster.
-rejected=true and names=[] when the image is NOT a student list (syllabus, homework, flyer, answer key, random photo).
-Rules:
-- Only personal names of students. Skip headers, period labels ("Period 3"), Present/Absent, dates, room numbers, teacher names (Mr./Ms./Dr./Sra./Coach), page titles, "Student name", column letters, and totals.
-- Keep the name as printed. If printed "LAST, FIRST" or "LAST FIRST" in all caps legal form, return "First Last" title case.
-- Do not invent a student who is not on the page. Do not invent surnames when only a first name is shown.
-- student_id / grade / period / parent_contact: copy only if clearly printed on that row. Otherwise null. Never invent IDs or contacts.
-- A "#" / "No." column of row numbers (1, 2, 3 …) is a row index, NOT student_id. Leave student_id null unless a real ID column is printed.
-- Photos may be rotated, crumpled, shadowed, glared, stained, or blurry. Only return names you can actually read on the paper. If part of the page is hidden or too blurry, return fewer names. Never fill missing rows with plausible-sounding names to match the row count.
-- confident=false for any name you are not sure you read letter-for-letter.
-- A name that is struck through / crossed out / scribbled over has been removed from the list: do NOT return it.
-- If only part of a row's name is readable (e.g. just a surname, or a first name whose surname is blurred on a list that otherwise prints full names), skip that row instead of returning a fragment.
-- parent_contact format when present: "Guardian Name <email-or-phone>".
-- confident=false if the line is unclear, partial, first-name-only, or might not be a student name.
-- 0 to 40 names. Prefer fewer high-quality names over junk.
-- Read each name letter by letter from the image. Never substitute a more common name that looks similar.
-- Smudged, crossed-out, masked with symbols (###, ???), or illegible lines: SKIP them entirely. Do not guess what they might say.
-- A last line cut off by the page edge, or a surname given only as an initial ("Sam K"): include it only with confident=false.
-- Count the rows you can actually read. names.length must never exceed that count. Never add names that are not printed (no names from a "page 2", footer, or your own guess).`;
 
-/** A run of small sequential integers (1,2,3…) in student_id is the "#" row column, not an ID. */
-function dropRowIndexIds(rows) {
-  const ids = rows.map((r) => r.student_id).filter((v) => v != null);
-  if (ids.length < 2) {
-    for (const r of rows) if (r.student_id != null && /^#?\s*\d{1,2}\.?$/.test(String(r.student_id))) r.student_id = null;
-    return rows;
-  }
-  const nums = ids.map((v) => (/^#?\s*(\d{1,3})\.?$/.exec(String(v).trim()) || [])[1]).map((v) => (v == null ? NaN : Number(v)));
-  const allSmall = nums.every((n) => Number.isFinite(n) && n <= 200);
-  const sequential = allSmall && nums.every((n, i) => i === 0 || n === nums[i - 1] + 1);
-  if (allSmall && Math.min(...nums) <= 2 && (sequential || Math.max(...nums) <= rows.length + 1)) {
-    for (const r of rows) r.student_id = null;
-  }
-  return rows;
-}
 
 async function extractRoster(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -467,132 +436,9 @@ async function extractRoster(body) {
       ],
     },
   ]);
-  const parsed = extractJson(outputText(payload));
-  const rejected =
-    parsed?.rejected === true ||
-    parsed?.document_kind_guess === 'not_roster' ||
-    /not_roster|not a roster|not a (class )?list/i.test(String(parsed?.warning || ''));
-
-  const junkName = (name) => {
-    const n = String(name || '').replace(/\s+/g, ' ').trim();
-    if (n.length < 2) return true;
-    const lower = n.toLowerCase();
-    if (
-      /^(present|absent|tardy|excused|name|student|students|roster|period|room|date|total|page|class|section|grade|id|sid|teacher|homeroom|advisory)\b/i.test(
-        lower,
-      )
-    ) {
-      return true;
-    }
-    if (/^period\s*\d+/i.test(n)) return true;
-    if (/^room\s*\d+/i.test(n)) return true;
-    if (/^(mr|ms|mrs|dr|sra|sr|coach)\.?\s+/i.test(n) && n.split(/\s+/).length <= 3) return true;
-    if (/^page\s*\d+(\s+of\s+\d+)?$/i.test(n)) return true;
-    // Masked / smudged OCR (symbols, digits) is never a real name.
-    if (/[#?*_\[\]{}<>|\\\/0-9@]/.test(n)) return true;
-    if (/^(continued|cut|smudged|illegible|unknown|n\/a)\b/i.test(lower)) return true;
-    if (/^(page|total|totals|continued)\b/i.test(lower) && n.split(/\s+/).length <= 2) return true;
-    return false;
-  };
-
-  function titleCaseName(s) {
-    return String(s || '')
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-  }
-
-  const flipLastFirst = (name) => {
-    const raw = String(name || '').replace(/\s+/g, ' ').trim();
-    const m = raw.match(/^([A-Za-z][A-Za-z\-']+),\s*([A-Za-z][A-Za-z\-']+(?:\s+[A-Za-z][A-Za-z\-']+)?)$/);
-    if (m) return titleCaseName(`${m[2]} ${m[1]}`);
-    if (/^[A-Z][A-Z\-']+\s+[A-Z][A-Z\-']+$/.test(raw) && raw === raw.toUpperCase()) {
-      const [a, b] = raw.split(/\s+/);
-      return titleCaseName(`${b} ${a}`);
-    }
-    return titleCaseName(raw);
-  };
-
-  const emptyToNull = (v) => {
-    if (v == null) return null;
-    const s = String(v).trim();
-    if (!s || s === 'null' || s === 'undefined' || s === '-' || s === '—') return null;
-    return s;
-  };
-
-  const names = rejected
-    ? []
-    : Array.isArray(parsed.names)
-      ? parsed.names
-          .map((row) => {
-            const rawName = String(row?.name ?? '').replace(/\s+/g, ' ').trim();
-            if (!rawName || junkName(rawName)) return null;
-            const name = flipLastFirst(rawName);
-            if (junkName(name)) return null;
-            return {
-              name,
-              student_id: emptyToNull(
-                emptyToNull(row?.student_id ?? row?.studentId ?? row?.sid)?.replace(/^#\s*/, ''),
-              ),
-              grade: emptyToNull(row?.grade ?? row?.grade_level),
-              period: emptyToNull(row?.period),
-              parent_contact: emptyToNull(row?.parent_contact ?? row?.parentContact),
-              confident:
-                row?.confident !== false &&
-                name.split(/\s+/).length >= 2 &&
-                // Initial-only surname ("Sam K") = partial row.
-                !/\s[A-Za-z]\.?$/.test(name),
-            };
-          })
-          .filter(Boolean)
-          .filter((row, idx, arr) => arr.findIndex((x) => x.name.toLowerCase() === row.name.toLowerCase()) === idx)
-          .slice(0, 40)
-      : [];
-  dropRowIndexIds(names);
-
-  return {
-    document_kind_guess: rejected
-      ? 'not_roster'
-      : parsed?.document_kind_guess || (names.length ? 'class_roster' : 'not_roster'),
-    rejected: rejected || names.length === 0 && parsed?.document_kind_guess === 'not_roster',
-    // Client starts every suggestion unchecked when the read is shaky (rough phone photo).
-    low_confidence:
-      names.length > 0 && names.filter((row) => row.confident === false).length / names.length >= 0.4,
-    names,
-  };
+  return finalizeRosterExtract(extractJson(outputText(payload)));
 }
 
-const speechPrompt = `You interpret what a K-12 teacher just said.
-Return JSON only, no markdown:
-{"intent":"add_student","captureIntent":null,"studentName":"First Last","parentName":null,"skillLabel":null,"skipGrade":false,"scoreMark":null,"numericScore":null,"gradeKind":null}
-intent is add_student, note, capture, or unknown.
-captureIntent is homework, syllabus, roster, portrait, parent_card, student_card, answer_key, vehicle, lesson_plan, lesson_materials, feed_photo, or null.
-homework means a Grade (homework, participation, presentation, or behavior) — not only a worksheet.
-studentName is a person's name the teacher said, or null.
-parentName is a parent/guardian name if they said one, or null.
-skillLabel is a short skill/gap if they mentioned one, or null.
-skipGrade is true if they said not to grade / no grade / don't grade / forget grading.
-scoreMark is numeric, pass, fail, or null.
-numericScore is 0-100 if they spoke a number grade, else null.
-gradeKind is homework, participation, presentation, behavior, or null.
-Rules:
-- Do not invent a student name, parent name, score, or skill that was not spoken.
-- For add-a-student talk, ignore filler such as "I'd like to", "add another student named", "please".
-- "This is a homework sheet for Mateo" → captureIntent homework, studentName Mateo, gradeKind homework.
-- "Give Jamal an 88 for class participation today" → captureIntent homework, studentName Jamal, numericScore 88, scoreMark numeric, gradeKind participation.
-- "No need to grade this" / "Don't grade" / "Forget trying to grade" → skipGrade true, scoreMark pass.
-- "This is the class roster" → captureIntent roster.
-- "This is a syllabus" / "grading policy" / "category weights" → captureIntent syllabus.
-- "This is an answer key" / "key for the quiz" → captureIntent answer_key.
-- "License plate" / "vehicle" / "front and back plate" → captureIntent vehicle.
-- "Lesson plan" → captureIntent lesson_plan.
-- "Lesson materials" / "class materials" → captureIntent lesson_materials.
-- "Feed photo" / "photo for the feed" → captureIntent feed_photo.
-- "Profile picture for Priya" → captureIntent portrait, studentName Priya.
-- If they only named a student and no job, captureIntent is null.
-- If no name is clear, studentName is null.`;
 
 async function interpretSpeech(body) {
   const transcript = String(body.transcript ?? '').replace(/\s+/g, ' ').trim();
@@ -601,45 +447,7 @@ async function interpretSpeech(body) {
     'speech',
     `${speechPrompt}\n\nTeacher said:\n${transcript}`,
   );
-  const parsed = extractJson(outputText(payload));
-  const studentName =
-    typeof parsed.studentName === 'string' ? parsed.studentName.replace(/\s+/g, ' ').trim() : '';
-  const parentName =
-    typeof parsed.parentName === 'string' ? parsed.parentName.replace(/\s+/g, ' ').trim() : '';
-  const skillLabel =
-    typeof parsed.skillLabel === 'string' ? parsed.skillLabel.replace(/\s+/g, ' ').trim() : '';
-  const captureAllowed = new Set([
-    'homework',
-    'syllabus',
-    'roster',
-    'portrait',
-    'parent_card',
-    'student_card',
-    'answer_key',
-    'vehicle',
-    'lesson_plan',
-    'lesson_materials',
-    'feed_photo',
-  ]);
-  const captureIntent = captureAllowed.has(parsed.captureIntent) ? parsed.captureIntent : null;
-  const intent =
-    parsed.intent === 'add_student' ||
-    parsed.intent === 'note' ||
-    parsed.intent === 'unknown' ||
-    parsed.intent === 'capture'
-      ? parsed.intent
-      : captureIntent
-        ? 'capture'
-        : studentName
-          ? 'add_student'
-          : 'unknown';
-  return {
-    intent,
-    captureIntent,
-    studentName: studentName || null,
-    parentName: parentName || null,
-    skillLabel: skillLabel || null,
-  };
+  return finalizeSpeechIntent(extractJson(outputText(payload)));
 }
 
 async function generatePractice(body) {
@@ -662,18 +470,6 @@ async function generatePractice(body) {
   return { items };
 }
 
-const submissionReviewPrompt = `You are helping a K-12 teacher review one student's submitted work.
-Return JSON only, no markdown:
-{"summary":"one or two sentences","draftScore":null,"teacherNote":"short Glow/Grow or null","gaps":[{"label":"short skill name","sortOrder":1}],"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"short key"}]}
-Rules:
-- summary is what they turned in, not a biography.
-- draftScore is 0-100 when you can grade the work, otherwise null.
-- 0 to 3 gaps. Labels are short, like "two-digit regrouping". Empty if there is no skill gap worth follow-up.
-- If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
-- If there is no gap, items must be [].
-- Keep any teacher-typed gap labels and practice questions listed below. You may add more, not delete theirs.
-- Age-appropriate. No student names. No images.
-- For lessons, skipped items, extra tries, answers that were wrong first then corrected, and hints can show a skill gap even when the last answer is right. Prefer a gap when those cluster. Do not invent a gap from clean first-try work.`;
 
 async function reviewSubmission(supabase, body) {
   const submissionId = String(body.submissionId ?? '').trim();
@@ -1181,18 +977,6 @@ async function rosterKeyterms(supabase, classId) {
     .slice(0, 40);
 }
 
-const evaluatePrompt = `You are helping a K-12 teacher review one student's work.
-The images are pages of one assignment, in order. Look at all pages together. Return JSON only, no markdown:
-{"studentName":null,"students":[],"multiStudent":false,"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"maxScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"correct answer (from key, or solved by you)","seen":"what the student wrote","credit":1,"of":1,"gap":null,"confidence":"high"}]}
-Rules:
-- studentName is required whenever a name is visible. Look at the top of the page first (header, Name:, printed label, handwriting). Copy the name as written. Do not invent a name. Prefer a roster spelling if it clearly matches. If the Name line is blank, erased, cropped, or unreadable, studentName must be null (and keep grading).
-- 1 to 3 gaps for the whole assignment ONLY when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". If work looks complete and correct, gaps may be [].
-- If an answer key is provided, score ONLY against that key. draftScore is points earned, maxScore is points possible. Do not invent items. If a blank cannot be read, credit=null and do not fail it.
-- If no key is provided, draftScore is a percentage 0-100 recomputed from your item credits. maxScore null.
-- items is ALWAYS required for student work (one row per visible question). With a key, expected is the key answer; without a key, expected is the answer YOU worked out. seen is what the student wrote — never a corrected version. gap is a short skill or null. confidence is high/low (or 0–1) for the seen read.
-- Reject ONLY when the images are blank, a syllabus/grading-policy sheet, a teacher answer key (answers printed/filled with "ANSWER KEY" / "teacher use only" and no student work), a ceiling/wall, or otherwise not student work. Then return {"studentName":null,"students":[],"multiStudent":false,"gaps":[],"draftScore":null,"maxScore":null,"teacherNote":null,"items":[]}. A student page with no name is NOT a reject.
-- Do not invent extra biography. Never invent a student name that is not on the page. Do not emit the example JSON row as this page's answers.
-${HOMEWORK_GRADING_RULES}`;
 
 const classifyPrompt = `You look at one photo a K-12 teacher just took. Classify the job.
 Return JSON only, no markdown:
@@ -1537,155 +1321,29 @@ async function evaluateHomework(body) {
     ? body.imageUrls.map((url) => String(url)).filter(Boolean)
     : [String(body.imageUrl ?? '')].filter(Boolean);
   if (!urls.length) throw new Error('imageUrl required');
-  // Homework always uses high detail: rough phone photos lose digits/units at "low".
-  const hwDetail = 'high';
-  const images = [];
-  for (const url of urls.slice(0, 8)) {
-    images.push({
-      type: 'input_image',
-      image_url: await prepareImageForGrok(url),
-      detail: hwDetail,
-    });
-  }
   const keyUrls = Array.isArray(body.keyImageUrls)
     ? body.keyImageUrls.map((url) => String(url)).filter(Boolean).slice(0, 3)
     : [];
-  for (const url of keyUrls) {
-    images.push({
-      type: 'input_image',
-      image_url: await prepareImageForGrok(url),
-      detail,
-    });
-  }
-  const rosterHint = Array.isArray(body.rosterNames)
-    ? body.rosterNames.map((name) => firstNameOnly(String(name ?? ''))).filter(Boolean).join(', ')
-    : '';
-  const keyItems = Array.isArray(body.keyItems) ? body.keyItems : [];
-  const keyNotes = String(body.keyNotes ?? '').trim();
-  const scoreScheme = String(body.scoreScheme ?? 'numeric');
-  const bodyMaxScore = Number(body.maxScore);
-  const keyBlock = formatKeyForPrompt(keyItems, keyNotes, scoreScheme, Number.isFinite(bodyMaxScore) ? bodyMaxScore : null);
+  // Homework (and its key photos) always read at high detail: rough phone photos lose digits at "low".
+  const prepared = await Promise.all([...urls.slice(0, 8), ...keyUrls].map((url) => prepareImageForGrok(url)));
+  const images = prepared.map((image_url) => ({ type: 'input_image', image_url, detail: 'high' }));
   const payload = await grokCall('homework', [
     {
       role: 'user',
-      content: [
-        ...images,
-        {
-          type: 'input_text',
-          text: `${evaluatePrompt}${
-            rosterHint
-              ? `\n\nIf a name on the page matches this roster, return that roster spelling: ${rosterHint}`
-              : ''
-          }${keyBlock}${
-            keyUrls.length ? '\n\nThe last image(s) after the student work are the answer key photo(s).' : ''
-          }`,
-        },
-      ],
+      content: [...images, { type: 'input_text', text: evaluatePromptText(body, keyUrls.length > 0) }],
     },
   ], {}, { pass, functionName: 'evaluate-homework' });
-  const parsed = extractJson(outputText(payload));
-  const draft = parseHomeworkDraft(parsed);
-  // Placeholder names ("Name:", "[redacted]", "First Last") → null; two-student frames keep every name.
-  const studentName = cleanHomeworkStudentName(parsed.studentName);
-  const students = cleanHomeworkNameList([studentName, ...(Array.isArray(parsed.students) ? parsed.students : [])]);
-  const multiStudent = parsed.multiStudent === true || students.length > 1;
-  let items = parseScoredItems(parsed.items, keyItems);
-  let draftScore = draft.draftScore;
-  let outMaxScore =
-    typeof parsed.maxScore === 'number' ? parsed.maxScore : Number.isFinite(bodyMaxScore) ? bodyMaxScore : null;
-  // No teacher key: the score is ALWAYS the item credits (never the model's free-floating number).
-  // Items present but none gradable → null (no rubber-stamped 100). Keyed scoring stays in keygrade.
-  // Empty items (reject / answer key / not student work) → null, never a bare 0 from the model.
-  if (!keyItems.length && items.length) {
-    // Settle items in code: arithmetic re-checked, exact matches full credit, all-unread → null score.
-    items = settleHomeworkItems(items);
-    draftScore = percentFromItemCredits(items);
-    outMaxScore = draftScore == null ? null : 100;
-  } else if (!keyItems.length && !items.length) {
-    draftScore = null;
-    outMaxScore = null;
-  }
+  const result = finalizeEvaluateHomework(extractJson(outputText(payload)), body);
   return {
-    ...draft,
-    draftScore,
-    studentName,
-    students,
-    multiStudent,
-    maxScore: outMaxScore,
-    items,
+    ...result,
     costUsd: payload.__kelyraUsd ?? null,
     model: payload.__kelyraModel ?? null,
     pass,
   };
 }
 
-function formatKeyForPrompt(items, notes, scoreScheme, maxScore) {
-  if (!items.length && !notes) return '';
-  const lines = items.map((item, index) => {
-    const n = item?.n ?? index + 1;
-    const stem = String(item?.stem ?? '').trim();
-    const answer = String(item?.answer ?? item?.expected ?? '').trim();
-    const points = Number(item?.points ?? 1);
-    const extra = String(item?.note ?? '').trim();
-    return `${n}. ${stem ? `${stem} → ` : ''}${answer || '(needs teacher)'}${Number.isFinite(points) ? ` (${points} pt)` : ''}${extra ? ` — ${extra}` : ''}`;
-  });
-  return `\n\nANSWER KEY (score only against this):\nScheme: ${scoreScheme}${
-    maxScore != null ? `\nMax: ${maxScore}` : ''
-  }${notes ? `\nTeacher note: ${notes}` : ''}\n${lines.join('\n') || '(photo key only)'}`;
-}
 
-function parseScoredItems(raw, keyItems) {
-  const rows = Array.isArray(raw) ? raw : [];
-  if (!rows.length && keyItems.length) {
-    return keyItems.map((item, index) => ({
-      n: item?.n ?? index + 1,
-      expected: String(item?.answer ?? ''),
-      seen: null,
-      credit: null,
-      of: Number(item?.points ?? 1),
-      gap: null,
-    }));
-  }
-  return rows
-    .map((row, index) => ({
-      n: Number(row?.n ?? index + 1),
-      question: typeof row?.question === 'string' ? row.question : null,
-      expected: row?.expected != null ? String(row.expected) : null,
-      seen: row?.seen != null ? String(row.seen) : null,
-      credit: typeof row?.credit === 'number' ? row.credit : null,
-      of: typeof row?.of === 'number' ? row.of : 1,
-      gap: typeof row?.gap === 'string' && row.gap.trim() ? row.gap.trim() : null,
-      confidence:
-        typeof row?.confidence === 'number' || typeof row?.confidence === 'string'
-          ? row.confidence
-          : null,
-    }))
-    .slice(0, 40);
-}
 
-function parseHomeworkDraft(parsed) {
-  const gaps = Array.isArray(parsed.gaps)
-    ? parsed.gaps
-        .map((gap, index) => ({
-          label: String(gap.label ?? '').trim(),
-          sortOrder: Number(gap.sortOrder ?? index + 1),
-        }))
-        .filter((gap) => gap.label)
-        .slice(0, 3)
-    : [];
-  let draftScore = typeof parsed.draftScore === 'number' ? parsed.draftScore : null;
-  // Without a key, coerce obvious point-counts (1–20) is left to the model;
-  // clamp absurd values only.
-  if (typeof draftScore === 'number' && Number.isFinite(draftScore)) {
-    if (draftScore < 0) draftScore = 0;
-    if (draftScore > 100) draftScore = 100;
-  }
-  return {
-    gaps,
-    draftScore,
-    teacherNote: typeof parsed.teacherNote === 'string' ? parsed.teacherNote : null,
-  };
-}
 
 async function draftFromPhotos(imageUrls, pass = 'cheap', supabase = null, captureId = null) {
   const detail = 'high'; // always high for analyze-homework (rough photos need it)
@@ -1713,7 +1371,7 @@ async function draftFromPhotos(imageUrls, pass = 'cheap', supabase = null, captu
     { pass, supabase, functionName: 'analyze-homework', captureId },
   );
   const parsedDraft = extractJson(outputText(payload));
-  const base = parseHomeworkDraft(parsedDraft);
+  const base = homeworkDraftFromParsed(parsedDraft);
   const items = settleHomeworkItems(parseScoredItems(parsedDraft.items, []));
   return {
     ...base,
@@ -2317,35 +1975,6 @@ function clamp01(value) {
   return Math.min(1, Math.max(0, value));
 }
 
-const analyzeKeyPrompt = `You read one K-12 worksheet photo that a teacher is attaching as an ANSWER KEY.
-Return JSON only, no markdown:
-{"pageState":"blank|filled|unsure","header":"<printed title or null>","items":[{"n":1,"stem":"<question text or item number>","answer":"<extracted or solved answer, or empty>","points":1,"type":"mc|numeric|short|work","needsTeacher":false,"unreadable":false,"confidence":0.0,"note":null,"choices":null}],"maxScore":null,"teacherNote":null,"reject":false}
-Rules:
-- FIRST classify the document. If it is NOT an answer key (student homework with a student name, syllabus/weights, roster, car rider list, random notes), set reject=true, items=[], pageState="unsure", teacherNote="Not an answer key", maxScore=null. Do NOT invent answers.
-- pageState is blank (no answers written/printed/bubbled yet), filled (answers already on the page — handwritten, typed, bold, green, or bubbled), or unsure.
-- pageState describes the PAPER as photographed, before you solve anything. Empty answer lines = blank, even though you then fill in proposed answers. Only use filled when answers are visibly written/printed/bubbled on the page.
-- Read operators and exponents exactly: × vs +, − vs +, ÷, superscripts (2³ means 2 cubed), √. Read printed point values ("3 pts") per item.
-- Answer keys often PRINT the correct answers in bold/color next to each item. That is pageState=filled. EXTRACT those printed answers. Do NOT re-solve and replace them.
-- Bubble sheets with filled/blackened bubbles are pageState=filled. Read which letter is filled. For bubble/scan sheets that only print item numbers, stem MUST be the item number string (e.g. "1"), never invent a math equation as the stem.
-- header is the printed title / first direction line, or null. Do not invent a student name as header.
-- Only items that are actually on the page. Do not invent questions or answers for missing numbers. Do not invent items past a "continue on back" / cut-off edge.
-- STEM HYGIENE: Never glue the printed item number into the math. Item "1. <math>" has stem "<math>" and n=1. Same for 2., 3., circled numbers, and photo skew.
-- Multiple choice: when choices A/B/C/D (or T/F) are printed, answer MUST be the letter (or True/False), NOT the choice text. Set type "mc". Put choice letters in choices when visible.
-- If the title says N questions but only fewer answers appear, extract only what is visible. teacherNote may say the key is partial. Never invent the rest.
-- If pageState is blank: SOLVE each keyed item when objectively answerable (math fact, MC letter, word-bank, short factual fill-ins). Opinion/explain/draw/open writing → needsTeacher=true and answer="". Still EMIT the item row with stem even when needsTeacher.
-- Partial pages ("continue on back"): still emit the visible blanks as items (needsTeacher if unanswerable). Never return items:[].
-- If pageState is filled: EXTRACT the written/bubbled/printed answers exactly. Prefer the key's printed answer over your own solution. Never compute a replacement when the printed answer is hard to read — set unreadable=true, answer="", needsTeacher=true.
-- STEM vs ANSWER: stem is the printed question only. Never copy the written/printed answer into stem.
-- STUDENT WORK vs KEY: if the page shows a student name + filled blanks and says "student work" / draft score / "grade this child", set pageState "filled", teacherNote "student work — not a blank key", reject=true preferred, and still extract seen answers only if needed (do not re-solve as if blank).
-- ANSWER KEY title / "KEY" / teacher-annotated red answers → pageState "filled" and extract those answers.
-- points: use printed point values if present, else 1. maxScore is the sum of points.
-- teacherNote is one short sentence or null (margin notes OK).
-- Never invent a student. This is not grading a child as the primary task.
-- Blurry/skewed/glared phone photos: if a row is washed out, covered, or unreadable, set unreadable=true, answer="", needsTeacher=true. NEVER guess a letter or number through glare. NEVER invent arithmetic example problems to fill the sheet.
-- NEVER emit placeholder/example rows from this prompt. Do not use sample stems/answers like tutorial arithmetic demos. Only what is on the page.
-- Rubric / open response: if the key says "see rubric", "teacher judgment", or similar, answer must be "" with needsTeacher=true; put the note text in note, not answer.
-- confidence is 0–1 per item. Below ~0.45 prefer needsTeacher. Sticky notes and overlays are not answers — keep row alignment to printed item numbers.
-- MC answers should be a single letter A–E (or T/F) when that is what the key shows.`;
 
 const syllabusParsePrompt = `You extract a CLASS GRADING POLICY (syllabus weights) from a photo for a teacher.
 Return JSON only, no markdown, schema_version 1:
@@ -2683,13 +2312,7 @@ async function analyzeAnswerKey(body) {
     finalized.pageState === 'filled';
   if (needsLook) {
     try {
-      const lookPrompt = `${analyzeKeyPrompt}
-
-LOOK-AGAIN pass for this filled key photo:
-- Re-check every row against the printed item number. Do NOT shift answers up/down when a middle row is covered by a sticky note, finger, glare, or desk clutter.
-- Covered/glared rows: answer="", needsTeacher=true, unreadable=true. Never guess a letter or word for those rows.
-- Sticky-note text and margin scribbles are never answers.
-- Keep the same item count and numbering as the page.`;
+      const lookPrompt = analyzeKeyLookAgainPrompt;
       const look = await grokCall(
         'key',
         [
@@ -2716,14 +2339,6 @@ LOOK-AGAIN pass for this filled key photo:
   return finalized;
 }
 
-const matchKeyPrompt = `You compare one student's worksheet photo to answer-key photos of printed worksheets.
-Return JSON only, no markdown:
-{"assignmentId":null,"confidence":0.0}
-Rules:
-- assignmentId must be one of the ids listed, or null if none is the same printed form.
-- Same printed title, numbering, and blanks = a match even if the student wrote in the blanks.
-- Different worksheets (HW 16 vs 17) are not a match.
-- Do not invent an id. Prefer null when unsure.`;
 
 async function matchKey(body) {
   const imageUrl = String(body.imageUrl ?? '');
@@ -2733,72 +2348,35 @@ async function matchKey(body) {
 
   const loaded = await loadImageForGrok(imageUrl);
   const probe = await pageSignature(loaded.bytes);
-  const scored = keys
-    .map((row) => {
-      const id = String(row?.id ?? '');
-      const title = String(row?.title ?? '');
-      const phash = typeof row?.phash === 'string' ? row.phash : '';
-      const layout = Array.isArray(row?.layout) ? row.layout.map((n) => Number(n)) : [];
-      const header = String(row?.header ?? '');
-      const hashScore = phash && probe.phash ? 1 - hammingHex(phash, probe.phash) / 64 : 0;
-      const layoutScore = layout.length && probe.layout.length ? 1 - meanAbsDiff(layout, probe.layout) : 0;
-      const headerScore = tokenOverlap(header, probe.header);
-      const score = hashScore * 0.45 + layoutScore * 0.35 + headerScore * 0.2;
-      return { id, title, score, hashScore, layoutScore, headerScore, imageUrl: row?.imageUrl ?? null };
-    })
-    .filter((row) => row.id)
-    .sort((a, b) => b.score - a.score);
-
-  if (!scored.length) return { assignmentId: null, confidence: 0, scores: [] };
-
-  const best = scored[0];
-  const second = scored[1];
-  const lead = second ? best.score - second.score : best.score;
-  if (best.score >= 0.62 && lead >= 0.08) {
-    return { assignmentId: best.id, confidence: best.score, scores: scored.slice(0, 4) };
-  }
-
-  const shortlist = scored.filter((row) => row.score >= 0.42).slice(0, 3);
-  if (!shortlist.length) {
-    return { assignmentId: null, confidence: best.score, scores: scored.slice(0, 4) };
-  }
+  const plan = planKeyMatch(keys, probe);
+  if (plan.result) return plan.result;
 
   const withPhotos = [];
-  for (const row of shortlist) {
+  for (const row of plan.shortlist) {
     if (!row.imageUrl) continue;
     try {
-      withPhotos.push({
-        ...row,
-        prepared: await prepareImageForGrok(String(row.imageUrl)),
-      });
+      withPhotos.push({ ...row, prepared: await prepareImageForGrok(String(row.imageUrl)) });
     } catch {
       // Hash score still counts; skip vision for this key.
     }
   }
-  if (!withPhotos.length) {
-    return {
-      assignmentId: best.score >= 0.55 ? best.id : null,
-      confidence: best.score,
-      scores: scored.slice(0, 4),
-    };
-  }
+  if (!withPhotos.length) return hashOnlyKeyMatch(plan.best, plan.scores);
 
-  const listed = withPhotos.map((row) => `${row.id} — ${row.title}`).join('\n');
   const content = [
     { type: 'input_image', image_url: loaded.dataUrl, detail: imageDetailFor('cheap') },
     ...withPhotos.map((row) => ({ type: 'input_image', image_url: row.prepared, detail: 'low' })),
     {
       type: 'input_text',
-      text: `${matchKeyPrompt}\n\nCandidate keys (in the same order as the images after the student page):\n${listed}`,
+      text: `${matchKeyPrompt}\n\nCandidate keys (in the same order as the images after the student page):\n${matchKeyCandidateText(withPhotos)}`,
     },
   ];
   const payload = await grokCall('match-key', [{ role: 'user', content }], {}, { functionName: 'match-key' });
-  const parsed = extractJson(outputText(payload));
-  const allowed = new Set(withPhotos.map((row) => row.id));
-  const picked = typeof parsed.assignmentId === 'string' && allowed.has(parsed.assignmentId) ? parsed.assignmentId : null;
-  const confidence =
-    typeof parsed.confidence === 'number' ? parsed.confidence : picked ? Math.max(best.score, 0.7) : 0;
-  return { assignmentId: picked, confidence, scores: scored.slice(0, 4) };
+  return finalizeKeyPick(
+    extractJson(outputText(payload)),
+    withPhotos.map((row) => row.id),
+    plan.best,
+    plan.scores,
+  );
 }
 
 async function pageSignature(bytes) {
@@ -2810,64 +2388,15 @@ async function pageSignature(bytes) {
       .resize(32, 32, { fit: 'fill' })
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const cells = [];
-    for (let gy = 0; gy < 8; gy += 1) {
-      for (let gx = 0; gx < 8; gx += 1) {
-        let sum = 0;
-        let count = 0;
-        for (let y = gy * 4; y < gy * 4 + 4; y += 1) {
-          for (let x = gx * 4; x < gx * 4 + 4; x += 1) {
-            sum += data[y * info.width + x];
-            count += 1;
-          }
-        }
-        cells.push(count ? sum / count / 255 : 0);
-      }
-    }
-    const mean = cells.reduce((a, b) => a + b, 0) / cells.length;
-    let bits = 0n;
-    for (let i = 0; i < 64; i += 1) {
-      if (cells[i] >= mean) bits |= 1n << BigInt(63 - i);
-    }
-    return { phash: bits.toString(16).padStart(16, '0'), layout: cells, header: '' };
+    return signatureFromGrey32(data, info.width);
   } catch (err) {
     console.warn(`[ai-dev] page signature skipped: ${err instanceof Error ? err.message : err}`);
-    return { phash: '', layout: [], header: '' };
+    return { ...EMPTY_SIGNATURE };
   }
 }
 
-function hammingHex(a, b) {
-  const left = BigInt(`0x${a || '0'}`);
-  const right = BigInt(`0x${b || '0'}`);
-  let xor = left ^ right;
-  let count = 0;
-  while (xor) {
-    xor &= xor - 1n;
-    count += 1;
-  }
-  return count;
-}
 
-function meanAbsDiff(a, b) {
-  const n = Math.min(a.length, b.length);
-  if (!n) return 1;
-  let sum = 0;
-  for (let i = 0; i < n; i += 1) {
-    const left = Number.isFinite(a[i]) ? a[i] : 0;
-    const right = Number.isFinite(b[i]) ? b[i] : 0;
-    sum += Math.abs(left - right);
-  }
-  return sum / n;
-}
 
-function tokenOverlap(a, b) {
-  const left = new Set(String(a).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2));
-  const right = new Set(String(b).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2));
-  if (!left.size || !right.size) return 0;
-  let hit = 0;
-  for (const token of left) if (right.has(token)) hit += 1;
-  return hit / Math.max(left.size, right.size);
-}
 
 const imagePrepCache = new Map();
 
