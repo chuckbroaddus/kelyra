@@ -20,7 +20,13 @@ export type AiJob =
   | 'match-key'
   | 'speech'
   | 'portrait'
-  | 'lesson-outline';
+  | 'lesson-outline'
+  | 'ride_lpr'
+  | 'ingest'
+  | 'interview';
+
+/** Gemini media resolution. Mirrors xAI `detail` (low / high) for the Gemini path. */
+export type MediaResolution = 'low' | 'medium' | 'high';
 
 const RATES: Record<string, { input: number; output: number }> = {
   'grok-4.6': { input: 2, output: 6 },
@@ -48,6 +54,44 @@ export function imageDetailFor(pass: AiPass = 'cheap'): 'low' | 'high' {
 export function reasoningEffortFor(model: string, pass: AiPass = 'cheap'): 'low' | 'high' | undefined {
   if (model !== FLAGSHIP_MODEL) return undefined;
   return pass === 'look-again' ? 'high' : 'low';
+}
+
+/**
+ * Gemini image resolution per job: low (≈280 tokens) for intent classify, high for plates,
+ * handwriting/grading docs and homework. An explicit `detail: 'high'` image in the payload
+ * (e.g. classify-capture vehicle path) always wins. Unspecified → provider default.
+ */
+export function mediaResolutionFor(job: AiJob, pass: AiPass = 'cheap', payload?: unknown): MediaResolution | undefined {
+  if (pass === 'look-again' || payloadWantsHighDetail(payload)) return 'high';
+  if (job === 'ride_lpr' || job === 'ingest' || job === 'homework' || job === 'key' || job === 'match-key') return 'high';
+  if (job === 'classify') return 'low';
+  return undefined;
+}
+
+function payloadWantsHighDetail(payload: unknown, depth = 0): boolean {
+  if (!payload || typeof payload !== 'object' || depth > 4) return false;
+  if (Array.isArray(payload)) return payload.some((item) => payloadWantsHighDetail(item, depth + 1));
+  const row = payload as { type?: unknown; detail?: unknown; content?: unknown };
+  if (row.type === 'input_image' && row.detail === 'high') return true;
+  return payloadWantsHighDetail(row.content, depth + 1);
+}
+
+/** Per-call model timeout (ms). One retry may follow, so worst case is about 2x. */
+export function modelTimeoutMsFor(job: AiJob, pass: AiPass = 'cheap'): number {
+  if (pass === 'look-again') return 60_000;
+  switch (job) {
+    case 'ingest':
+    case 'lesson-outline':
+      return 45_000;
+    case 'homework':
+    case 'review':
+    case 'ask':
+      return 30_000;
+    case 'interview':
+      return 15_000;
+    default:
+      return 20_000;
+  }
 }
 
 export function estimateUsd(model: string, inputTokens: number, outputTokens: number): number {
