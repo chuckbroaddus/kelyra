@@ -52,6 +52,7 @@ import { GhostButton } from '@/components/ui/Button';
 import {
   buildPeriodWindow,
   drumCoastPlan,
+  drumFollowFrame,
   drumNearestSteps,
   drumRingSlot,
   drumSnapSteps,
@@ -301,8 +302,14 @@ export function PeriodPager({
   if (seenFrameKey !== frameKey) {
     // Parent anchor moved (our commit, Today, list report): recentre in this render.
     setSeenFrameKey(frameKey);
-    windowCenterRef.current = anchorIndex;
-    setWindowCenter(anchorIndex);
+    // CAL-LIST-DRIVES-DRUM: a list top-day report trails the UI-thread center by
+    // under a day; keep the window the list already drove there (no relabel).
+    const listReport =
+      followPosition != null && Math.abs(anchorIndex - windowCenterRef.current) <= 1;
+    if (!listReport) {
+      windowCenterRef.current = anchorIndex;
+      setWindowCenter(anchorIndex);
+    }
   }
   const updateWindowCenter = useCallback((center: number) => {
     if (windowCenterRef.current === center) return;
@@ -386,17 +393,22 @@ export function PeriodPager({
         grantDragShared.value = grantDragShared.value + shift;
         return;
       }
+      if (follow && followBlockShared.value === 0 && inFlightShared.value === 0) {
+        // CAL-LIST-DRIVES-DRUM: the list owns the drum. A top-day report (JS, may
+        // trail a fast flick) must not move it; re-derive the frame from the list.
+        const frame = drumFollowFrame(follow.value, P);
+        if (frame.length === 2) {
+          anchorPosShared.value = frame[0]!;
+          dragShared.value = frame[1]!;
+        }
+        runOnJS(updateWindowCenter)(Math.round(anchorPosShared.value - dragShared.value / P));
+        return;
+      }
       cancelAnimation(dragShared);
       snapGenerationShared.value += 1;
       inFlightShared.value = 0;
       anchorPosShared.value = pos;
-      if (follow && followBlockShared.value === 0) {
-        const delta = follow.value - pos;
-        const clamped = Number.isFinite(delta) ? Math.max(-2, Math.min(2, delta)) : 0;
-        dragShared.value = -clamped * P;
-      } else {
-        dragShared.value = 0;
-      }
+      dragShared.value = 0;
       if (followBlockShared.value !== 0) followBlockShared.value = 1;
       runOnJS(updateWindowCenter)(Math.round(anchorPosShared.value - dragShared.value / P));
     })(anchorIndex);
@@ -428,24 +440,32 @@ export function PeriodPager({
     [pitch, updateWindowCenter],
   );
 
-  // CAL-DRUM-FOLLOW: drum turns with Day List scroll (forward and back).
+  // CAL-DRUM-FOLLOW / CAL-LIST-DRIVES-DRUM: the Day List scroll drives the drum on
+  // the UI thread. followPosition = fractional day (interpolated between day-section
+  // header offsets); each frame rebases anchorPos to the nearest day and puts the
+  // remainder in drag, so every card slides with the list and keeps its value.
+  // Feedback guard: block 2 = drum drives the list (drivePosition) — ignore follow;
+  // the list in turn writes follow only while drivePosition is NaN.
   useAnimatedReaction(
     () => {
       if (!followPosition) return null;
-      return [followPosition.value - anchorPosShared.value, followBlockShared.value];
+      return [followPosition.value, followBlockShared.value];
     },
     (next) => {
       'worklet';
       if (next == null) return;
-      const delta = next[0];
+      const pos = next[0];
       const block = next[1];
-      if (block === 2) return;
+      if (block === 2 || panLiveShared.value === 1 || inFlightShared.value === 1) return;
       if (block === 1) {
-        if (Math.abs(delta) >= 0.5) return;
+        // Drum just committed a day: wait until the list has landed on it.
+        if (!(Math.abs(pos - anchorPosShared.value) < 0.5)) return;
         followBlockShared.value = 0;
       }
-      const clamped = Math.max(-2, Math.min(2, delta));
-      dragShared.value = -clamped * pitch;
+      const frame = drumFollowFrame(pos, pitch);
+      if (frame.length !== 2) return;
+      anchorPosShared.value = frame[0]!;
+      dragShared.value = frame[1]!;
     },
     [followPosition, pitch],
   );

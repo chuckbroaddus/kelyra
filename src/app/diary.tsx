@@ -88,7 +88,6 @@ import { joinDictation } from '@/lib/media/dictationText';
 import { pickRawPhoto, waitForModalDismiss, webCameraNeeded } from '@/lib/media/pickPhoto';
 import { listRoster } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
-import { useReducedMotion } from '@/lib/ui/reducedMotion';
 
 type Segment = 'journal' | 'ledger';
 type DiaryPhotoView = { id: string; url: string };
@@ -129,7 +128,6 @@ const PLUS_GLYPH = 14;
 
 export default function DiaryScreen() {
   const { colors, scheme } = useTheme();
-  const reduceMotion = useReducedMotion();
   const { profile } = useAuth();
   const chrome = useChrome();
   const router = useRouter();
@@ -1002,7 +1000,7 @@ export default function DiaryScreen() {
           setListJump((n) => n + 1);
         }}
         onJumpToday={jumpToday}
-        followPosition={reduceMotion ? null : listFollow}
+        followPosition={listFollow}
         drivePosition={listDrive}
       />
     </>

@@ -1089,7 +1089,7 @@ export default function CalendarScreen() {
           }
           dayCount={stepperCount}
           onJumpToday={jumpToday}
-          followPosition={dayListMode && !reduceMotion ? dayListFollow : null}
+          followPosition={dayListMode ? dayListFollow : null}
           drivePosition={dayListMode ? dayListDrive : null}
           accessibilityPrevLabel={activeView === 'agenda' ? 'Earlier' : 'Previous'}
           accessibilityNextLabel={activeView === 'agenda' ? 'Later' : 'Next'}
@@ -1411,7 +1411,7 @@ export default function CalendarScreen() {
       <View
         ref={bodyHostRef}
         collapsable={false}
-        style={styles.bodyHost}
+        style={[styles.bodyHost, monthListMode || dayListMode ? styles.bodyHostBounded : null]}
       >
         {zoomDrill ? (
           <CalendarZoomDrill
@@ -1541,6 +1541,16 @@ const styles = StyleSheet.create({
   },
   bodyHost: {
     flexGrow: 1,
+  },
+  /**
+   * CAL-LIST-DRIVES-DRUM: list modes own their scroller — bound the host to the
+   * screen (web: flexGrow alone let the list grow to content height, so it never
+   * scrolled and the drum had nothing to follow).
+   */
+  bodyHostBounded: {
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
   },
   empty: {
     ...type.body,

@@ -596,6 +596,25 @@ export function drumSlotNorm(
 }
 
 /**
+ * CAL-LIST-DRIVES-DRUM: UI-thread frame for a drum the Day List drives.
+ * `followPos` is the list's fractional day (day number + progress through that
+ * day's section). Returns [anchorPos, dragPx]: the frame rebases to the nearest
+ * whole day and the remainder becomes drag, so the visual center equals
+ * followPos exactly. No clamp: the drum never waits for the JS anchor (a clamp
+ * pinned cards on whole slots while the JS anchor lagged a fast flick, so the
+ * cards sat still and only their numbers changed). [] when followPos is not finite.
+ * Closure-free worklet (see drumSnapSteps).
+ */
+export function drumFollowFrame(followPos: number, pitch: number): number[] {
+  'worklet';
+  if (!Number.isFinite(followPos)) return [];
+  const P = pitch > 0 ? pitch : 1;
+  const base = Math.round(followPos);
+  const drag = (base - followPos) * P;
+  return [base, drag === 0 ? 0 : drag];
+}
+
+/**
  * Release coast plan for the `steps` drumSnapSteps picked. Fast flings coast
  * with momentum (quad ease-out whose opening speed equals the release speed);
  * slow releases spring. Closure-free worklet (see drumSnapSteps).

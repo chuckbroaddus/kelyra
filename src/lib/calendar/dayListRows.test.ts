@@ -122,7 +122,7 @@ test('CAL-DRUM-FOLLOW wiring: list feeds follow, pager follows unless drum owns 
   const pane = readFileSync('src/components/calendar/DayListPane.tsx', 'utf8');
   const screen = readFileSync('src/app/calendar.tsx', 'utf8');
   assert.match(pager, /followPosition\?: SharedValue<number> \| null/);
-  assert.match(pager, /dragShared\.value = -clamped \* pitch/);
+  assert.match(pager, /drumFollowFrame\(pos, pitch\)/);
   assert.match(pager, /followBlockShared\.value = 2/);
   assert.match(pane, /useAnimatedScrollHandler/);
   assert.match(pane, /<Reanimated\.FlatList/);
@@ -130,7 +130,7 @@ test('CAL-DRUM-FOLLOW wiring: list feeds follow, pager follows unless drum owns 
   assert.match(pane, /followPosition\.value = pos/);
   assert.match(pager, /fullRadius: followPosition \? 2 : undefined/);
   assert.match(pane, /setFollow\(dayListDayNumber\(target\)\)/);
-  assert.match(screen, /followPosition=\{dayListMode && !reduceMotion \? dayListFollow : null\}/);
+  assert.match(screen, /followPosition=\{dayListMode \? dayListFollow : null\}/);
 });
 
 test('CAL-DRUM-FOLLOW dayListFollowAt is a self-contained worklet matching the layout helper', () => {
@@ -194,4 +194,28 @@ test('JOURNAL-INLINE: itemHeight sizes item rows and shifts later offsets', () =
   assert.equal(layout.headerOffsets[1], DAY_LIST_HEADER_H + 200);
   const plain = buildDayListLayout(days, items, (i) => i.id);
   assert.equal(plain.lengths[1], DAY_LIST_ITEM_H);
+});
+
+test('CAL-LIST-DRIVES-DRUM wiring: list drives drum frame on UI thread, no clamp, no RM gate', () => {
+  const pager = readFileSync('src/components/calendar/PeriodPager.tsx', 'utf8');
+  const screen = readFileSync('src/app/calendar.tsx', 'utf8');
+  const diary = readFileSync('src/app/diary.tsx', 'utf8');
+  const pane = readFileSync('src/components/calendar/DayListPane.tsx', 'utf8');
+  // No ±2 clamp: it pinned cards on whole slots while the JS anchor lagged a flick.
+  assert.doesNotMatch(pager, /Math\.max\(-2, Math\.min\(2/);
+  // Follow reaction keys on the list position itself (not on anchorPos it writes).
+  assert.match(pager, /return \[followPosition\.value, followBlockShared\.value\]/);
+  assert.match(pager, /anchorPosShared\.value = frame\[0\]!;\s*dragShared\.value = frame\[1\]!;/);
+  // Feedback guard both ways.
+  assert.match(pager, /if \(block === 2 \|\| panLiveShared\.value === 1 \|\| inFlightShared\.value === 1\) return;/);
+  assert.match(pane, /if \(followPosition && jumpingShared\.value === 0 && !driving\)/);
+  // Late JS top-day report re-derives from the list instead of resetting drag.
+  assert.match(pager, /const frame = drumFollowFrame\(follow\.value, P\)/);
+  assert.match(pager, /const listReport =/);
+  // Reduce Motion no longer detaches the drum from the list (cards slide; only rotateY drops).
+  assert.doesNotMatch(screen, /!reduceMotion \? dayListFollow/);
+  assert.match(diary, /followPosition=\{listFollow\}/);
+  assert.doesNotMatch(diary, /reduceMotion \? null : listFollow/);
+  // Web: list modes bound the body host so the list scrolls (and can drive the drum).
+  assert.match(screen, /monthListMode \|\| dayListMode \? styles\.bodyHostBounded : null/);
 });

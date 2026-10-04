@@ -772,3 +772,27 @@ test('CAL-3DW mid-spring interrupt continues from visual drag (t_72512eeb)', () 
   const grantBlock = pager.slice(grantIdx, grantIdx + 600);
   assert.match(grantBlock, /grantDragShared\.value =/);
 });
+
+test('CAL-LIST-DRIVES-DRUM drumFollowFrame: visual center equals the list position, fractional drag', async () => {
+  const { drumFollowFrame, drumSlotNorm } = await import('./periodPager.ts');
+  const P = 78;
+  for (const f of [100, 100.25, 100.5, 100.75, 101.4, -3.6, 20734.1]) {
+    const [anchorPos, drag] = drumFollowFrame(f, P);
+    assert.equal(anchorPos, Math.round(f));
+    assert.ok(Math.abs(drag) <= P / 2 + 1e-9);
+    // Center = anchorPos - drag/P = f.
+    assert.ok(Math.abs(anchorPos - drag / P - f) < 1e-9, `center for ${f}`);
+    // Card for day 101 sits at (101 - f) slots — fractional mid-section.
+    assert.ok(Math.abs(drumSlotNorm(101, anchorPos, drag, P) - (101 - f)) < 1e-9);
+  }
+  // Far jumps (a fast flick 50 days past the JS anchor) are not clamped.
+  const [a, d] = drumFollowFrame(150.3, P);
+  assert.equal(a, 150);
+  assert.ok(Math.abs(d - -0.3 * P) < 1e-9);
+  assert.ok(Object.is(drumFollowFrame(7, P)[1], 0));
+  assert.deepEqual(drumFollowFrame(Number.NaN, P), []);
+  const src = readFileSync('src/lib/calendar/periodPager.ts', 'utf8');
+  const body = src.slice(src.indexOf('export function drumFollowFrame'), src.indexOf('/**\n * Release coast plan'));
+  assert.match(body, /'worklet';/);
+  assert.doesNotMatch(body.replace('export function drumFollowFrame', ''), /drum\w+\(/);
+});
