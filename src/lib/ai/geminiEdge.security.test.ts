@@ -27,7 +27,10 @@ test('Edge ai.ts prefers GEMINI_API_KEY → Flash-Lite; keeps xAI path', () => {
     /throw new Error\('XAI_API_KEY is not set'\)/,
   );
 
-  assert.match(ai, /provider === 'gemini'\s*\?\s*GEMINI_FLASH_LITE/);
+  // Per-job routing: the provider no longer pins every job to Flash-Lite.
+  assert.doesNotMatch(ai, /provider === 'gemini'\s*\?\s*GEMINI_FLASH_LITE/);
+  assert.match(ai, /modelChainFor\(provider, input\.job, pass/);
+  assert.match(ai, /isGeminiModelMissing/);
   assert.match(ai, /xaiResponses/);
   assert.match(ai, /functionCalls|functionDeclarations/);
 });

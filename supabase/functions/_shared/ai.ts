@@ -1,7 +1,7 @@
 /**
  * Edge AI adapter (text / vision). Never ship model keys in the Expo app.
  *
- * Prefer GEMINI_API_KEY → Gemini Flash-Lite. Else XAI_API_KEY → xAI Responses.
+ * Prefer GEMINI_API_KEY → Gemini (per-job tier from aiPolicy.ts). Else XAI_API_KEY → xAI Responses.
  * Local development uses Grok CLI OAuth instead — see scripts/ai-dev-server.mjs.
  * Speech-to-text stays on xAI (transcribe/); do not route STT here.
  */
@@ -10,10 +10,10 @@ import { HOMEWORK_GRADING_RULES } from './homeworkGrading.ts';
 import {
   DEFAULT_MONTHLY_CAP_USD,
   FLAGSHIP_MODEL,
-  GEMINI_FLASH_LITE,
   PRACTICE_MODEL,
   estimateUsd,
   mediaResolutionFor,
+  modelChainFor,
   modelFor,
   modelTimeoutMsFor,
   parseUsage,
@@ -623,6 +623,10 @@ function isGeminiOverloaded(err: unknown): boolean {
   return err instanceof AiProviderError && err.provider === 'gemini' && (err.status === 429 || err.status === 503);
 }
 
+function isGeminiModelMissing(err: unknown): boolean {
+  return err instanceof AiProviderError && err.provider === 'gemini' && err.status === 404;
+}
+
 function describeAiError(err: unknown, timeoutMs: number, provider: AiProvider): Error {
   if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
     return new AiProviderError(`AI timed out after ${Math.round(timeoutMs / 1000)}s`, 504, provider);
@@ -679,14 +683,19 @@ export async function callMetered(
     ...(input.extra ?? {}),
   };
 
-  const primary: Attempt = {
-    provider,
-    apiKey,
-    model: provider === 'gemini' ? GEMINI_FLASH_LITE : modelFor(input.job, pass),
-  };
+  // Per-job model from aiPolicy.ts (strong Gemini jobs carry Flash-Lite as their quota fallback).
+  const chain = modelChainFor(provider, input.job, pass, {
+    geminiLite: Deno.env.get('KELYRA_GEMINI_LITE_MODEL'),
+    geminiStrong: Deno.env.get('KELYRA_GEMINI_STRONG_MODEL'),
+  });
+  const primary: Attempt = { provider, apiKey, model: chain[0]! };
   const xaiKey = Deno.env.get('XAI_API_KEY');
   const fallback: Attempt | null =
-    provider === 'gemini' && xaiKey ? { provider: 'xai', apiKey: xaiKey, model: modelFor(input.job, pass) } : null;
+    chain.length > 1
+      ? { provider, apiKey, model: chain[1]! }
+      : provider === 'gemini' && xaiKey
+        ? { provider: 'xai', apiKey: xaiKey, model: modelFor(input.job, pass) }
+        : null;
 
   // Budget check runs alongside the model call; if the school is over cap we abort the call.
   const abort = new AbortController();
@@ -704,9 +713,11 @@ export async function callMetered(
     try {
       payload = await runAttempt(primary, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal);
     } catch (err) {
-      if (abort.signal.aborted || !isRetryable(err)) throw err;
-      // One fast retry. Gemini 429/503 (quota / high demand) goes straight to xAI when a key exists.
-      used = fallback && isGeminiOverloaded(err) ? fallback : primary;
+      const modelMissing = Boolean(fallback) && isGeminiModelMissing(err);
+      if (abort.signal.aborted || !(isRetryable(err) || modelMissing)) throw err;
+      // One fast retry. Gemini 429/503 (quota / high demand) or an unknown strong model goes to
+      // the job's fallback model (strong → Flash-Lite), else to xAI when a key exists.
+      used = fallback && (isGeminiOverloaded(err) || modelMissing) ? fallback : primary;
       console.warn(
         `${input.functionName} ${primary.provider} failed (${err instanceof Error ? err.message.slice(0, 120) : err}); retry via ${used.provider}`,
       );
