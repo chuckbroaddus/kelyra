@@ -471,6 +471,7 @@ export async function geminiGenerate(
   input: unknown,
   extra: Record<string, unknown> = {},
   signal?: AbortSignal,
+  onText?: (delta: string) => void,
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = {
     contents: await geminiContentsFromInput(input),
@@ -500,8 +501,9 @@ export async function geminiGenerate(
   const resolution = GEMINI_MEDIA_RESOLUTION[extra.mediaResolution as MediaResolution];
   if (resolution) generationConfig.mediaResolution = resolution;
   if (Object.keys(generationConfig).length) body.generationConfig = generationConfig;
+  const method = onText ? 'streamGenerateContent?alt=sse' : 'generateContent';
   const response = await fetch(
-    `${geminiBaseUrl}/models/${encodeURIComponent(model)}:generateContent`,
+    `${geminiBaseUrl}/models/${encodeURIComponent(model)}:${method}`,
     {
       method: 'POST',
       headers: {
@@ -519,7 +521,66 @@ export async function geminiGenerate(
       'gemini',
     );
   }
+  if (onText && response.body) return await readGeminiStream(response.body, onText);
   return normalizeGeminiResponse((await response.json()) as Record<string, unknown>);
+}
+
+/**
+ * Gemini SSE (`streamGenerateContent?alt=sse`): forward text deltas as they arrive and fold every
+ * chunk back into one generateContent-shaped response (text merged, function calls +
+ * thoughtSignatures kept) so callers see the same payload as the non-stream path.
+ */
+async function readGeminiStream(
+  body: ReadableStream<Uint8Array>,
+  onText: (delta: string) => void,
+): Promise<Record<string, unknown>> {
+  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+  const parts: Array<Record<string, unknown>> = [];
+  let usageMetadata: unknown = undefined;
+  let buffer = '';
+  const handle = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    const raw = line.slice(5).trim();
+    if (!raw || raw === '[DONE]') return;
+    let chunk: Record<string, unknown>;
+    try {
+      chunk = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return;
+    }
+    if (chunk.usageMetadata) usageMetadata = chunk.usageMetadata;
+    const candidates = Array.isArray(chunk.candidates) ? (chunk.candidates as Array<Record<string, unknown>>) : [];
+    const chunkParts =
+      ((candidates[0]?.content as { parts?: Array<Record<string, unknown>> } | undefined)?.parts) ?? [];
+    for (const part of chunkParts) {
+      const last = parts[parts.length - 1];
+      if (typeof part.text === 'string' && !part.functionCall) {
+        if (part.text) onText(part.text);
+        if (last && typeof last.text === 'string' && !last.functionCall) {
+          last.text = `${last.text}${part.text}`;
+          if (part.thoughtSignature) last.thoughtSignature = part.thoughtSignature;
+          continue;
+        }
+      }
+      parts.push({ ...part });
+    }
+  };
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value;
+    let newline = buffer.indexOf('\n');
+    while (newline >= 0) {
+      handle(buffer.slice(0, newline).replace(/\r$/, ''));
+      buffer = buffer.slice(newline + 1);
+      newline = buffer.indexOf('\n');
+    }
+  }
+  if (buffer) handle(buffer);
+  return normalizeGeminiResponse({
+    candidates: [{ content: { role: 'model', parts } }],
+    ...(usageMetadata ? { usageMetadata } : {}),
+  });
 }
 
 export type FunctionCall = {
@@ -644,6 +705,7 @@ async function runAttempt(
   baseExtra: Record<string, unknown>,
   timeoutMs: number,
   abort: AbortSignal,
+  onText?: (delta: string) => void,
 ): Promise<Record<string, unknown>> {
   const effort = attempt.provider === 'xai' ? reasoningEffortFor(attempt.model, pass) : undefined;
   const extra = {
@@ -651,9 +713,16 @@ async function runAttempt(
     ...baseExtra,
   };
   const signal = AbortSignal.any([abort, AbortSignal.timeout(timeoutMs)]);
-  return attempt.provider === 'gemini'
-    ? await geminiGenerate(attempt.apiKey, attempt.model, payloadInput, extra, signal)
-    : await xaiResponses(attempt.apiKey, attempt.model, payloadInput, extra, signal);
+  if (attempt.provider === 'gemini') {
+    return await geminiGenerate(attempt.apiKey, attempt.model, payloadInput, extra, signal, onText);
+  }
+  const payload = await xaiResponses(attempt.apiKey, attempt.model, payloadInput, extra, signal);
+  // xAI path is not streamed; hand the whole answer over at once.
+  if (onText) {
+    const text = outputText(payload);
+    if (text && !functionCalls(payload).length) onText(text);
+  }
+  return payload;
 }
 
 export async function callMetered(
@@ -670,6 +739,8 @@ export async function callMetered(
     schema?: Record<string, unknown>;
     /** Per-call model timeout; defaults per job (see modelTimeoutMsFor). */
     timeoutMs?: number;
+    /** Stream text deltas (Gemini SSE). A retry only happens if nothing was streamed yet. */
+    onText?: (delta: string) => void;
   },
 ): Promise<Record<string, unknown>> {
   const provider = resolveAiProvider();
@@ -709,12 +780,19 @@ export async function callMetered(
 
   let used = primary;
   let payload: Record<string, unknown>;
+  let streamed = false;
+  const onText = input.onText
+    ? (delta: string) => {
+        streamed = true;
+        input.onText!(delta);
+      }
+    : undefined;
   try {
     try {
-      payload = await runAttempt(primary, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal);
+      payload = await runAttempt(primary, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal, onText);
     } catch (err) {
       const modelMissing = Boolean(fallback) && isGeminiModelMissing(err);
-      if (abort.signal.aborted || !(isRetryable(err) || modelMissing)) throw err;
+      if (abort.signal.aborted || streamed || !(isRetryable(err) || modelMissing)) throw err;
       // One fast retry. Gemini 429/503 (quota / high demand) or an unknown strong model goes to
       // the job's fallback model (strong → Flash-Lite), else to xAI when a key exists.
       used = fallback && (isGeminiOverloaded(err) || modelMissing) ? fallback : primary;
@@ -722,7 +800,7 @@ export async function callMetered(
         `${input.functionName} ${primary.provider} failed (${err instanceof Error ? err.message.slice(0, 120) : err}); retry via ${used.provider}`,
       );
       if (used === primary) await sleep(RETRY_DELAY_MS);
-      payload = await runAttempt(used, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal);
+      payload = await runAttempt(used, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal, onText);
     }
   } catch (err) {
     const overCap = await capCheck;

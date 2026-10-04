@@ -28,58 +28,49 @@ export async function evaluateCaptureMedia(input: {
   audioMime?: string;
   existingAudio?: AssetRow | null;
 }): Promise<CaptureEvaluation> {
-  const photoAssets: AssetRow[] = [];
-  for (const page of input.pages ?? []) {
-    if (page.asset) {
-      photoAssets.push(page.asset);
-      continue;
-    }
-    photoAssets.push(
-      await uploadTeacherAsset({
-        teacherId: input.teacherId,
-        kind: 'photo',
-        uri: page.uri,
-        mimeType: page.mimeType || 'image/jpeg',
-      }),
-    );
-  }
+  // Pages and audio upload together (page order kept).
+  const [photoAssets, audioAsset] = await Promise.all([
+    Promise.all(
+      (input.pages ?? []).map((page) =>
+        page.asset
+          ? Promise.resolve(page.asset)
+          : uploadTeacherAsset({
+              teacherId: input.teacherId,
+              kind: 'photo',
+              uri: page.uri,
+              mimeType: page.mimeType || 'image/jpeg',
+            }),
+      ),
+    ) as Promise<AssetRow[]>,
+    input.existingAudio
+      ? Promise.resolve(input.existingAudio)
+      : input.audioUri
+        ? uploadTeacherAsset({
+            teacherId: input.teacherId,
+            kind: 'audio',
+            uri: input.audioUri,
+            mimeType: input.audioMime ?? 'audio/m4a',
+          })
+        : Promise.resolve(null),
+  ]);
 
-  const audioAsset =
-    input.existingAudio ??
-    (input.audioUri
-      ? await uploadTeacherAsset({
-          teacherId: input.teacherId,
-          kind: 'audio',
-          uri: input.audioUri,
-          mimeType: input.audioMime ?? 'audio/m4a',
-        })
-      : null);
-
-  let transcript: string | null = null;
-  let spokenName: string | null = null;
-  if (audioAsset) {
+  // Speech (transcribe → name) and the paper read are independent: run them side by side.
+  const speechPromise: Promise<{ transcript: string | null; spokenName: string | null }> = (async () => {
+    if (!audioAsset) return { transcript: null, spokenName: null };
     const audioUrl = await signedUrlForAsset('audio', audioAsset.storage_path);
-    if (audioUrl) {
-      const stt = await invokeAi<{ text?: string }>('transcribe-audio', { audioUrl });
-      transcript = stt.text?.trim() || null;
-      if (transcript) spokenName = await interpretSpokenStudentName(transcript);
-    }
-  }
+    if (!audioUrl) return { transcript: null, spokenName: null };
+    const stt = await invokeAi<{ text?: string }>('transcribe-audio', { audioUrl });
+    const text = stt.text?.trim() || null;
+    return { transcript: text, spokenName: text ? await interpretSpokenStudentName(text) : null };
+  })();
 
-  let paperName: string | null = null;
-  let gaps: StoredHomeworkDraft['gaps'] = [];
-  let draftScore: number | null = null;
-  let teacherNote: string | null = null;
-  let costUsd: number | null = null;
-  let otherStudentNames: string[] = [];
-  if (photoAssets.length) {
-    const imageUrls: string[] = [];
-    for (const asset of photoAssets) {
-      const imageUrl = await signedUrlForAsset('photo', asset.storage_path);
-      if (imageUrl) imageUrls.push(imageUrl);
-    }
+  const visionPromise = (async () => {
+    if (!photoAssets.length) return null;
+    const imageUrls = (
+      await Promise.all(photoAssets.map((asset) => signedUrlForAsset('photo', asset.storage_path)))
+    ).filter((url): url is string => Boolean(url));
     if (!imageUrls.length) throw new Error('Could not open those photos.');
-    const vision = await invokeAi<{
+    return invokeAi<{
       studentName?: string | null;
       students?: Array<string | { name?: string }>;
       gaps?: StoredHomeworkDraft['gaps'];
@@ -87,6 +78,17 @@ export async function evaluateCaptureMedia(input: {
       teacherNote?: string | null;
       costUsd?: number | null;
     }>('evaluate-homework', { imageUrls, imageUrl: imageUrls[0] });
+  })();
+
+  const [{ transcript, spokenName }, vision] = await Promise.all([speechPromise, visionPromise]);
+
+  let paperName: string | null = null;
+  let gaps: StoredHomeworkDraft['gaps'] = [];
+  let draftScore: number | null = null;
+  let teacherNote: string | null = null;
+  let costUsd: number | null = null;
+  let otherStudentNames: string[] = [];
+  if (vision) {
     // Placeholder reads ("Name:", "[redacted]") never become a paper name.
     paperName = cleanHomeworkStudentName(vision.studentName);
     otherStudentNames = otherHomeworkStudents(paperName, vision.students);

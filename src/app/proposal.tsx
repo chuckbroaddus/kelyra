@@ -296,12 +296,32 @@ export default function ProposalScreen() {
         }
 
         const keyed = classAssignments.filter((row) => assignmentHasKey(row));
-        const keyUrls = await signedOriginalUrlsForAssetIds(
+        // Key signing no longer blocks classify: classify starts right away; match-key waits on it.
+        const keyUrlsPromise = signedOriginalUrlsForAssetIds(
           keyed.map((row) => row.key_asset_id).filter((id): id is string => Boolean(id)),
         );
+        const spokenSkipsGrade = Boolean(
+          spoken?.skipGrade || spoken?.scoreMark === 'pass' || spoken?.scoreMark === 'fail' || spoken?.numericScore != null,
+        );
+        const evaluateBody = (assignedId: string | null, keyUrls: Map<string, string>) => ({
+          imageUrl: url,
+          imageUrls: [url],
+          rosterNames: names.map((student) => student.display_name),
+          ...evaluateKeyPayload(classAssignments.find((row) => row.id === assignedId) ?? null, keyUrls),
+        });
+        // Homework is already known (spoken "homework" or opened from an assignment): read the
+        // paper in parallel with classify instead of after it.
+        const speculativeAssignmentId = pickedAssignmentId;
+        const speculativeVision: Promise<HomeworkVision | null> | null =
+          !audioOnly && url && !spokenSkipsGrade && !homeworkVisionRan.current &&
+          (spokenType === 'homework' || Boolean(speculativeAssignmentId))
+            ? keyUrlsPromise
+                .then((keyUrls) => invokeAi<HomeworkVision>('evaluate-homework', evaluateBody(speculativeAssignmentId, keyUrls)))
+                .catch(() => null)
+            : null;
         const matchPromise =
           !audioOnly && url && keyed.length
-            ? invokeAi<{ assignmentId?: string | null; confidence?: number }>('match-key', {
+            ? keyUrlsPromise.then((keyUrls) => invokeAi<{ assignmentId?: string | null; confidence?: number }>('match-key', {
                 imageUrl: url,
                 keys: keyed.map((row) => ({
                   id: row.id,
@@ -311,7 +331,7 @@ export default function ProposalScreen() {
                   header: row.key_header,
                   imageUrl: row.key_asset_id ? keyUrls.get(row.key_asset_id) ?? null : null,
                 })),
-              }).catch(() => ({ assignmentId: null as string | null, confidence: 0 }))
+              })).catch(() => ({ assignmentId: null as string | null, confidence: 0 }))
             : Promise.resolve({ assignmentId: null as string | null, confidence: 0 });
 
         if (!audioOnly && !spokenType) setStatus('Studying the photo');
@@ -349,7 +369,7 @@ export default function ProposalScreen() {
                 spokenName: spoken?.transcript?.trim() || null,
               });
 
-        const [result, match] = await Promise.all([classifyPromise, matchPromise]);
+        const [result, match, keyUrls] = await Promise.all([classifyPromise, matchPromise, keyUrlsPromise]);
         if (cancelled) return;
 
         if (!pickedAssignmentId && match.assignmentId) pickedAssignmentId = match.assignmentId;
@@ -389,9 +409,7 @@ export default function ProposalScreen() {
           nextIntent = 'homework';
         }
 
-        const skipGradeVision = Boolean(
-          spoken?.skipGrade || spoken?.scoreMark === 'pass' || spoken?.scoreMark === 'fail' || spoken?.numericScore != null,
-        );
+        const skipGradeVision = spokenSkipsGrade;
         const needHomeworkVision =
           nextIntent === 'homework' &&
           !audioOnly &&
@@ -403,16 +421,19 @@ export default function ProposalScreen() {
         if (needHomeworkVision) {
           homeworkVisionRan.current = true;
           setStatus('Studying the photo');
-          const assigned = classAssignments.find((row) => row.id === pickedAssignmentId) ?? null;
-          vision = await invokeAi<HomeworkVision>('evaluate-homework', {
-            imageUrl: url,
-            imageUrls: [url],
-            rosterNames: names.map((student) => student.display_name),
-            ...evaluateKeyPayload(assigned, keyUrls),
-          }).catch(() => {
-            homeworkVisionRan.current = false;
-            return null;
-          });
+          // Reuse the parallel read when the assignment it used still stands.
+          vision =
+            speculativeVision && speculativeAssignmentId === pickedAssignmentId
+              ? await speculativeVision
+              : null;
+          if (!vision) {
+            vision = await invokeAi<HomeworkVision>('evaluate-homework', evaluateBody(pickedAssignmentId, keyUrls)).catch(
+              () => {
+                homeworkVisionRan.current = false;
+                return null;
+              },
+            );
+          }
           if (vision?.items?.length) setKeyDraftItems(vision.items);
           if (vision?.maxScore != null) setKeyMax(vision.maxScore);
           if (vision?.costUsd != null) setAiCost(vision.costUsd);
