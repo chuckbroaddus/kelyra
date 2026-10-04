@@ -1,0 +1,146 @@
+{
+  "status": 200,
+  "json": {
+    "pageState": "filled",
+    "header": "Earth Science T/F Key",
+    "items": [
+      {
+        "n": 1,
+        "stem": "Earth orbits the Sun.",
+        "answer": "True",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "T",
+          "F"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 2,
+        "stem": "The Moon is a planet.",
+        "answer": "False",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "T",
+          "F"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 3,
+        "stem": "Water freezes at 0°C.",
+        "answer": "True",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "T",
+          "F"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 4,
+        "stem": "Sound travels faster in vacuum.",
+        "answer": "False",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "T",
+          "F"
+        ],
+        "confidence": 1
+      },
+      {
+        "n": 5,
+        "stem": "Metals conduct electricity.",
+        "answer": "True",
+        "points": 1,
+        "needsTeacher": false,
+        "type": "mc",
+        "choices": [
+          "T",
+          "F"
+        ],
+        "confidence": 1
+      }
+    ],
+    "maxScore": 5,
+    "teacherNote": null,
+    "reject": false,
+    "phash": "1fffffffffffffff",
+    "layout": [
+      0.9561274509803922,
+      0.9230392156862746,
+      0.9164215686274509,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 4901
+}

@@ -1,0 +1,68 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 1,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [],
+      "note": null
+    },
+    "latencyMs": 2018
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": null,
+      "students": [],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "3 + 4 x 2 =",
+          "expected": "11",
+          "seen": "11",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "(3 + 4) x 2 =",
+          "expected": "14",
+          "seen": "14",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "10 - 6 ÷ 2 =",
+          "expected": "7",
+          "seen": "7",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2208
+  }
+}

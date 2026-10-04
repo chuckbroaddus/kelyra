@@ -1,0 +1,88 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.98,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "draftScore": 6,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "1. Main idea",
+          "value": "The river flooded the town"
+        },
+        {
+          "label": "2. Evidence",
+          "value": "water rose overnight"
+        },
+        {
+          "label": "3. Theme",
+          "value": "community helps"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Alex Rivera",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1820
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Main idea: ____________________________",
+          "expected": "The river flooded the town",
+          "seen": "The river flooded the town",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Evidence: ____________________________",
+          "expected": "water rose overnight",
+          "seen": "water rose overnight",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Theme: ____________________________",
+          "expected": "community helps",
+          "seen": "community helps",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2679
+  }
+}

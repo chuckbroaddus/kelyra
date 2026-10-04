@@ -1,0 +1,94 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "riley",
+      "studentGuessName": "Riley Brooks",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Date",
+          "value": "9/29"
+        },
+        {
+          "label": "Period",
+          "value": "P2"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Riley Brooks",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2253
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Area of a 5 cm by 3 cm rectangle",
+          "expected": "15 cm²",
+          "seen": "15 cm²",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Perimeter of a 5 cm by 3 cm rectangle",
+          "expected": "16 cm",
+          "seen": "16 cm",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Area of a square with side 4 in",
+          "expected": "16 in²",
+          "seen": "16 in²",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "Area of a triangle, base 6 m, height 4 m",
+          "expected": "12 m²",
+          "seen": "24 m²",
+          "credit": 0,
+          "of": 1,
+          "gap": "Triangle area formula (base × height / 2)",
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0019,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2947
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.98,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "Main idea"
+        },
+        {
+          "label": "Evidence"
+        },
+        {
+          "label": "Theme"
+        }
+      ],
+      "fields": [
+        {
+          "label": "Name",
+          "value": "Alex Rivera"
+        },
+        {
+          "label": "Date",
+          "value": "9/30/2026"
+        },
+        {
+          "label": "Period",
+          "value": "P3"
+        },
+        {
+          "label": "Main idea",
+          "value": "The river flooded the town"
+        },
+        {
+          "label": "Evidence",
+          "value": "water rose overnight"
+        },
+        {
+          "label": "Theme",
+          "value": "community helps"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Alex Rivera",
+          "confidence": 0.98
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1905
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": "Great job on the reading response!",
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Main idea",
+          "expected": "The river flooded the town",
+          "seen": "The river flooded the town",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Evidence",
+          "expected": "water rose overnight",
+          "seen": "water rose overnight",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Theme",
+          "expected": "community helps",
+          "seen": "community helps",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0014,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3026
+  }
+}

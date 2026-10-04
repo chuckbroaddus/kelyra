@@ -1,0 +1,105 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.98,
+      "studentGuessId": null,
+      "studentGuessName": "Alex Rivera",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Alex Rivera",
+          "confidence": 0.98
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2148
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 83,
+      "teacherNote": null,
+      "studentName": "Alex Rivera",
+      "students": [
+        "Alex Rivera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "3x + 2x",
+          "expected": "5x",
+          "seen": "5x",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "4y - y",
+          "expected": "3y",
+          "seen": "3y",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "2(a + 3) = 2a + 6",
+          "expected": "2a+6",
+          "seen": "2a + 6",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "5m + 3 - 2m",
+          "expected": "3m + 3",
+          "seen": "3m + 3",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 5,
+          "question": "6k - 6k = 0",
+          "expected": "0",
+          "seen": "0",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 6,
+          "question": "3(2b - 1) = 6b - 1",
+          "expected": "6b-3",
+          "seen": "6b - 1",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0019,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3036
+  }
+}

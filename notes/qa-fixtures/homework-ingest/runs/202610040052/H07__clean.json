@@ -1,0 +1,104 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "alex",
+      "studentGuessName": "Alexx Riviera",
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "Geometry Basics"
+        }
+      ],
+      "fields": [
+        {
+          "label": "Name",
+          "value": "Alexx Riviera"
+        },
+        {
+          "label": "Date",
+          "value": "9/30/2026"
+        },
+        {
+          "label": "Period",
+          "value": "P3"
+        },
+        {
+          "label": "1. A triangle has",
+          "value": "3"
+        },
+        {
+          "label": "2. A square has",
+          "value": "4"
+        },
+        {
+          "label": "3. Sum of triangle angles",
+          "value": "180"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Alexx Riviera",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 3478
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Alexx Riviera",
+      "students": [
+        "Alexx Riviera"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "A triangle has _____ sides",
+          "expected": "3",
+          "seen": "3",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "A square has _____ right angles",
+          "expected": "4",
+          "seen": "4",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Sum of triangle angles _____",
+          "expected": "180",
+          "seen": "180",
+          "credit": 2,
+          "of": 2,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2581
+  }
+}

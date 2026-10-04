@@ -1,0 +1,27 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "answer_key",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": null,
+      "studentGuessName": null,
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [],
+      "note": null
+    },
+    "latencyMs": 2244
+  },
+  "evaluate": {
+    "status": 504,
+    "json": {
+      "error": "AI timed out after 30s"
+    },
+    "latencyMs": 30832
+  }
+}

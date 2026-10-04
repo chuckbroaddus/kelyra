@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "not_roster",
+    "rejected": true,
+    "low_confidence": false,
+    "names": [],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 1903
+}

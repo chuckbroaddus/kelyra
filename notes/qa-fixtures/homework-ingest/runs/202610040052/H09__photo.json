@@ -1,0 +1,60 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.95,
+      "studentGuessId": null,
+      "studentGuessName": "Taylor Kim",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Taylor Kim",
+          "confidence": 0.95
+        },
+        {
+          "name": "Jamie Ortiz",
+          "confidence": 0.95
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1875
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Taylor Kim",
+      "students": [
+        "Taylor Kim",
+        "Jamie Ortiz"
+      ],
+      "multiStudent": true,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Taylor: 6 x 7 =",
+          "expected": "42",
+          "seen": "42",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0013,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 3043
+  }
+}

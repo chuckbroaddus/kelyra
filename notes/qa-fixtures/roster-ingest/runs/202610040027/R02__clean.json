@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Maya Chen",
+        "student_id": "88201",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Eli Foster",
+        "student_id": "88214",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Sofia Garcia",
+        "student_id": "88222",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Jordan Kim",
+        "student_id": "88231",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Camila Lopez",
+        "student_id": "88240",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Noah Wright",
+        "student_id": "88255",
+        "grade": "9",
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2459
+}

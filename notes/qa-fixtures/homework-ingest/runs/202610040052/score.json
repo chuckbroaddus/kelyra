@@ -1,0 +1,3626 @@
+{
+  "stamp": "202610040052",
+  "target": "edge",
+  "partial_quota_stop": false,
+  "latency_ms": {
+    "classify": {
+      "n": 49,
+      "p50": 2080,
+      "p90": 2826,
+      "mean": 2202,
+      "max": 3478
+    },
+    "evaluate": {
+      "n": 49,
+      "p50": 2679,
+      "p90": 3817,
+      "mean": 3526,
+      "max": 30832
+    }
+  },
+  "overall_accuracy": 0.9918367346938775,
+  "homework_accuracy": 0.9909090909090907,
+  "negative_accuracy": 1,
+  "clean_accuracy": 0.982608695652174,
+  "photo_accuracy": 1,
+  "record_match_rate": 1,
+  "hallucinations": 0,
+  "buckets": {
+    "clean": {
+      "n": 14,
+      "field_accuracy": 0.9857142857142858,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 0.9285714285714286,
+      "score_null": 0,
+      "score_strict": 0.9285714285714286,
+      "score_loose_25": 0.9285714285714286,
+      "missing_drafts": 0,
+      "score_100_when_lower": 0
+    },
+    "photo_mild": {
+      "n": 10,
+      "field_accuracy": 1,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 1,
+      "score_null": 0,
+      "score_strict": 1,
+      "score_loose_25": 1,
+      "missing_drafts": 0,
+      "score_100_when_lower": 0
+    },
+    "rough": {
+      "n": 14,
+      "field_accuracy": 1,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 1,
+      "score_null": 0,
+      "score_strict": 1,
+      "score_loose_25": 1,
+      "missing_drafts": 0,
+      "score_100_when_lower": 0
+    },
+    "handwritten": {
+      "n": 11,
+      "field_accuracy": 0.9818181818181819,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 0.9090909090909091,
+      "score_null": 0,
+      "score_strict": 0.9090909090909091,
+      "score_loose_25": 1,
+      "missing_drafts": 0,
+      "score_100_when_lower": 1
+    },
+    "handwritten_new": {
+      "n": 6,
+      "field_accuracy": 0.9666666666666667,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 0.8333333333333334,
+      "score_null": 0,
+      "score_strict": 0.8333333333333334,
+      "score_loose_25": 1,
+      "missing_drafts": 0,
+      "score_100_when_lower": 1
+    },
+    "negatives": {
+      "n": 5,
+      "field_accuracy": 1,
+      "record_match_rate": 1,
+      "hallucinations": 0,
+      "student_ok": 1,
+      "score_ok": 1,
+      "score_null": 5,
+      "score_strict": 1,
+      "score_loose_25": 1,
+      "missing_drafts": 0,
+      "score_100_when_lower": 0
+    }
+  },
+  "multi_student_detected": "3/3",
+  "field_totals": {
+    "correct": 243,
+    "wrong": 2,
+    "hallucinated": 0,
+    "total": 245
+  },
+  "documents": [
+    {
+      "id": "H01",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alex Rivera",
+          "Alex Rivera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 80,
+          "actual": 80,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "two-step equations"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1863,
+      "evaluate_latency_ms": 2545
+    },
+    {
+      "id": "H01",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alex Rivera",
+          "Alex Rivera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 80,
+          "actual": 80,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "two-step equations"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2153,
+      "evaluate_latency_ms": 2520
+    },
+    {
+      "id": "H02",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Jordan Chen",
+          "Jordan Chen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jordan Chen",
+          "actual": "Jordan Chen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2582,
+      "evaluate_latency_ms": 2250
+    },
+    {
+      "id": "H03",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Sam Patel",
+          "Sam Patel"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Sam Patel",
+          "actual": "Sam Patel",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 3282,
+      "evaluate_latency_ms": 1988
+    },
+    {
+      "id": "H03",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Sam",
+          "Sam Patel"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Sam Patel",
+          "actual": "Sam Patel",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1828,
+      "evaluate_latency_ms": 2393
+    },
+    {
+      "id": "H04",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "integer multiplication signs"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1835,
+      "evaluate_latency_ms": 2623
+    },
+    {
+      "id": "H04",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": true,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "integer multiplication signs"
+          ],
+          "actual": [
+            {
+              "label": "integer addition and subtraction",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2200,
+      "evaluate_latency_ms": 2759
+    },
+    {
+      "id": "H05",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 0.8,
+      "record_match": true,
+      "counts": {
+        "correct": 4,
+        "total": 5,
+        "wrong": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 0,
+          "ok": false,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": false,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1824,
+      "evaluate_latency_ms": 2627
+    },
+    {
+      "id": "H05",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2394,
+      "evaluate_latency_ms": 2041
+    },
+    {
+      "id": "H06",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2018,
+      "evaluate_latency_ms": 2208
+    },
+    {
+      "id": "H07",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alexx Riviera",
+          "Alexx Riviera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alexx Riviera",
+          "actual": "Alexx Riviera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 3478,
+      "evaluate_latency_ms": 2581
+    },
+    {
+      "id": "H07",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alexx Riviera",
+          "Alexx Riviera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alexx Riviera",
+          "actual": "Alexx Riviera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2826,
+      "evaluate_latency_ms": 2620
+    },
+    {
+      "id": "H08",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Morgan Ellis",
+          "Morgan Ellis"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Morgan Ellis",
+          "actual": "Morgan Ellis",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1924,
+      "evaluate_latency_ms": 2263
+    },
+    {
+      "id": "H09",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": true,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Taylor Kim",
+          "Jamie Ortiz",
+          "Taylor Kim",
+          "Jamie Ortiz"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Taylor Kim",
+          "actual": "Taylor Kim",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2423,
+      "evaluate_latency_ms": 2136
+    },
+    {
+      "id": "H09",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": true,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": true,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Taylor Kim",
+          "Jamie Ortiz",
+          "Taylor Kim",
+          "Jamie Ortiz"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Taylor Kim",
+          "actual": "Taylor Kim",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1875,
+      "evaluate_latency_ms": 3043
+    },
+    {
+      "id": "H10",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alex Rivera",
+          "Alex Rivera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1905,
+      "evaluate_latency_ms": 3026
+    },
+    {
+      "id": "H10",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alex Rivera",
+          "Alex Rivera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1820,
+      "evaluate_latency_ms": 2679
+    },
+    {
+      "id": "H11",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Jordan Chen",
+          "Jordan Chen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jordan Chen",
+          "actual": "Jordan Chen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 40,
+          "actual": 50,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "states of matter completeness"
+          ],
+          "actual": [
+            {
+              "label": "states of matter and phase change properties",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1829,
+      "evaluate_latency_ms": 2590
+    },
+    {
+      "id": "H12",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Sam Patel",
+          "Sam Patel"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Sam Patel",
+          "actual": "Sam Patel",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1973,
+      "evaluate_latency_ms": 3391
+    },
+    {
+      "id": "H13",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2557,
+      "evaluate_latency_ms": 2572
+    },
+    {
+      "id": "H13",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1946,
+      "evaluate_latency_ms": 2401
+    },
+    {
+      "id": "H14",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 67,
+          "actual": 67,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "percent of a number"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1715,
+      "evaluate_latency_ms": 3062
+    },
+    {
+      "id": "H14",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 67,
+          "actual": 67,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "percent of a number"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2142,
+      "evaluate_latency_ms": 3481
+    },
+    {
+      "id": "H15",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Taylor",
+          "Taylor"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Taylor",
+          "actual": "Taylor",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1920,
+      "evaluate_latency_ms": 2170
+    },
+    {
+      "id": "H16",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Jamie Ortiz",
+          "Jamie Ortiz"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jamie Ortiz",
+          "actual": "Jamie Ortiz",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 90,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1899,
+      "evaluate_latency_ms": 2313
+    },
+    {
+      "id": "H16",
+      "kind": "homework",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Jamie Ortiz",
+          "Jamie Ortiz"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jamie Ortiz",
+          "actual": "Jamie Ortiz",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 90,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1784,
+      "evaluate_latency_ms": 2358
+    },
+    {
+      "id": "H17",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Morgan Ellis",
+          "Morgan Ellis"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Morgan Ellis",
+          "actual": "Morgan Ellis",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2154,
+      "evaluate_latency_ms": 2732
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "syllabus",
+          "actual": "syllabus",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": true,
+          "actual": true,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2531,
+      "evaluate_latency_ms": 2051
+    },
+    {
+      "id": "N01",
+      "kind": "negative",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "syllabus",
+          "actual": "syllabus",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": true,
+          "actual": true,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2058,
+      "evaluate_latency_ms": 2916
+    },
+    {
+      "id": "N02",
+      "kind": "negative",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "unsure",
+          "actual": "unsure",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": true,
+          "actual": true,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2689,
+      "evaluate_latency_ms": 1745
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "clean",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "answer_key",
+          "actual": "answer_key",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": true,
+          "actual": true,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1839,
+      "evaluate_latency_ms": 2100
+    },
+    {
+      "id": "N03",
+      "kind": "negative",
+      "variant": "photo",
+      "hand": false,
+      "rough": false,
+      "effects": [],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "answer_key",
+          "actual": "answer_key",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown"
+        },
+        {
+          "path": "draftScore",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "unknown",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": true,
+          "actual": true,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 504,
+      "classify_latency_ms": 2244,
+      "evaluate_latency_ms": 30832
+    },
+    {
+      "id": "H18",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "perspective",
+        "glare",
+        "clutter"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Jordan Chen",
+          "Jordan Chen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jordan Chen",
+          "actual": "Jordan Chen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 80,
+          "actual": 80,
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "simplifying ratios / fractions"
+          ],
+          "actual": [
+            {
+              "label": "simplifying fractions",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2010,
+      "evaluate_latency_ms": 3788
+    },
+    {
+      "id": "H19",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "rotation",
+        "motion-blur",
+        "low-light-noise-jpeg"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "area of a triangle"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2253,
+      "evaluate_latency_ms": 2947
+    },
+    {
+      "id": "H20",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "faint-pencil",
+        "eraser-smudge",
+        "defocus",
+        "hand-shadow"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "absent"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 3179,
+      "evaluate_latency_ms": 3817
+    },
+    {
+      "id": "H21",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "crop-top",
+        "rotation",
+        "clutter"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": []
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": null,
+          "ok": true,
+          "hallucinated": false,
+          "status": "absent"
+        },
+        {
+          "path": "draftScore",
+          "expected": 80,
+          "actual": 80,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "dividing decimals"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2904,
+      "evaluate_latency_ms": 4099
+    },
+    {
+      "id": "H22",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "crumpled-creases",
+        "low-light-noise-jpeg",
+        "crop-bottom"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Sam Patel",
+          "Sam Patel"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Sam Patel",
+          "actual": "Sam Patel",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "zero exponent"
+          ],
+          "actual": [
+            {
+              "label": "exponent rules",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1902,
+      "evaluate_latency_ms": 3387
+    },
+    {
+      "id": "H23",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "overlap-two-students",
+        "perspective",
+        "hand-shadow"
+      ],
+      "diag": {
+        "multiStudent_expected": true,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Taylor Kim",
+          "Jordan Chen",
+          "Taylor",
+          "Jordan"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Taylor Kim",
+          "actual": "Taylor",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 83,
+          "actual": 83,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "multiplication facts (8s/7s)"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2525,
+      "evaluate_latency_ms": 3005
+    },
+    {
+      "id": "H24",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "curled-page",
+        "perspective",
+        "hand-shadow",
+        "handwritten"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Alex Rivera",
+          "Alex Rivera"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Alex Rivera",
+          "actual": "Alex Rivera",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 83,
+          "actual": 83,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "distributive property"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2148,
+      "evaluate_latency_ms": 3036
+    },
+    {
+      "id": "H25",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "folded-creases",
+        "glare",
+        "heavy-jpeg"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Jamie",
+          "Jamie Ortiz"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jamie Ortiz",
+          "actual": "Jamie Ortiz",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "comma after introductory word"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2009,
+      "evaluate_latency_ms": 2410
+    },
+    {
+      "id": "H26",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "defocus",
+        "low-light-noise-jpeg"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Morgan Ellis",
+          "Morgan Ellis"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Morgan Ellis",
+          "actual": "Morgan Ellis",
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2120,
+      "evaluate_latency_ms": 2833
+    },
+    {
+      "id": "H27",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "flash-glare",
+        "vignette",
+        "perspective"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Taylor"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": null,
+          "actual": "Taylor",
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain"
+        },
+        {
+          "path": "draftScore",
+          "expected": 67,
+          "actual": 67,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "weather instruments"
+          ],
+          "actual": [
+            {
+              "label": "weather tools",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2533,
+      "evaluate_latency_ms": 3088
+    },
+    {
+      "id": "H28",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "rotation",
+        "low-light-noise-jpeg",
+        "pen-marks"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 67,
+          "actual": 67,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "spelling: ie/ei and double letters"
+          ],
+          "actual": [
+            {
+              "label": "spelling correction",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2080,
+      "evaluate_latency_ms": 3203
+    },
+    {
+      "id": "H29",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": false,
+      "rough": true,
+      "effects": [
+        "eraser-smudge",
+        "faint-pencil",
+        "perspective",
+        "hand-shadow"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Riley Brooks",
+          "Riley Brooks"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Riley Brooks",
+          "actual": "Riley Brooks",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "uncertain",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "elapsed time crossing the hour"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 1918,
+      "evaluate_latency_ms": 2654
+    },
+    {
+      "id": "H30",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "cross-outs",
+        "margin-answer-arrow"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Sam Patel",
+          "Sam Patel"
+        ]
+      },
+      "field_accuracy": 0.8,
+      "record_match": true,
+      "counts": {
+        "correct": 4,
+        "total": 5,
+        "wrong": 1,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Sam Patel",
+          "actual": "Sam Patel",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 100,
+          "ok": false,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "subtraction with regrouping"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2268,
+      "evaluate_latency_ms": 3303
+    },
+    {
+      "id": "H31",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "slant"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "Morgan Ellis",
+          "Morgan Ellis"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Morgan Ellis",
+          "actual": "Morgan Ellis",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 100,
+          "actual": 100,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2114,
+      "evaluate_latency_ms": 2731
+    },
+    {
+      "id": "H32",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "handwritten",
+        "rotation",
+        "low-light-noise-jpeg"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Taylor",
+          "Taylor K."
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Taylor K.",
+          "actual": "Taylor K.",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 80,
+          "actual": 80,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "addition with regrouping"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2074,
+      "evaluate_latency_ms": 11154
+    },
+    {
+      "id": "H33",
+      "kind": "homework",
+      "variant": "clean",
+      "hand": true,
+      "rough": false,
+      "effects": [
+        "handwritten",
+        "cross-outs",
+        "abbrev-name"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": true,
+        "names_seen": [
+          "Jamie",
+          "Jamie O."
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Jamie O.",
+          "actual": "Jamie O.",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "equivalent fractions"
+          ],
+          "actual": [
+            {
+              "label": "equivalent fractions",
+              "sortOrder": 1
+            }
+          ],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2331,
+      "evaluate_latency_ms": 2797
+    },
+    {
+      "id": "H34",
+      "kind": "homework",
+      "variant": "rough",
+      "hand": true,
+      "rough": true,
+      "effects": [
+        "handwritten",
+        "crumpled-creases",
+        "glare",
+        "perspective"
+      ],
+      "diag": {
+        "multiStudent_expected": false,
+        "multiStudent_detected": false,
+        "names_seen": [
+          "casey Nguyen",
+          "Casey Nguyen"
+        ]
+      },
+      "field_accuracy": 1,
+      "record_match": true,
+      "counts": {
+        "correct": 5,
+        "total": 5,
+        "wrong": 0,
+        "hallucinated": 0
+      },
+      "fields": [
+        {
+          "path": "intent",
+          "expected": "homework",
+          "actual": "homework",
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "studentName",
+          "expected": "Casey Nguyen",
+          "actual": "Casey Nguyen",
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed"
+        },
+        {
+          "path": "draftScore",
+          "expected": 75,
+          "actual": 75,
+          "ok": true,
+          "hallucinated": false,
+          "status": "proposed",
+          "loose": true,
+          "missing": false
+        },
+        {
+          "path": "gaps",
+          "expected": [
+            "inches to feet conversion"
+          ],
+          "actual": [],
+          "ok": true,
+          "hallucinated": false
+        },
+        {
+          "path": "reject",
+          "expected": false,
+          "actual": false,
+          "ok": true,
+          "hallucinated": false
+        }
+      ],
+      "classify_status": 200,
+      "evaluate_status": 200,
+      "classify_latency_ms": 2038,
+      "evaluate_latency_ms": 5512
+    }
+  ]
+}

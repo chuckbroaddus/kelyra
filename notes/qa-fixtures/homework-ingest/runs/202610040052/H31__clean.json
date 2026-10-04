@@ -1,0 +1,96 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "morgan",
+      "studentGuessName": "Morgan Ellis",
+      "draftScore": null,
+      "gaps": [],
+      "fields": [
+        {
+          "label": "Subject",
+          "value": "Science"
+        },
+        {
+          "label": "Title",
+          "value": "States of Matter"
+        },
+        {
+          "label": "1",
+          "value": "Name the 3 states: solid, liquid, gas"
+        },
+        {
+          "label": "2",
+          "value": "Ice turning to water is called melting"
+        },
+        {
+          "label": "3",
+          "value": "Water vapor is a gas"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Morgan Ellis",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 2114
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 100,
+      "teacherNote": null,
+      "studentName": "Morgan Ellis",
+      "students": [
+        "Morgan Ellis"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "Name the 3 states: solid, liquid, gas",
+          "expected": "solid, liquid, gas",
+          "seen": "solid, liquid, gas",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "Ice turning to water is called melting",
+          "expected": "melting",
+          "seen": "melting",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "Water vapor is a gas",
+          "expected": "gas",
+          "seen": "a gas",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0016,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2731
+  }
+}

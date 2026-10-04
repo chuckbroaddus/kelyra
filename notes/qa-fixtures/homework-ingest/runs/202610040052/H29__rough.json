@@ -1,0 +1,102 @@
+{
+  "classify": {
+    "status": 200,
+    "json": {
+      "intent": "homework",
+      "parentGuessName": null,
+      "confidence": 0.99,
+      "studentGuessId": "riley",
+      "studentGuessName": "Riley Brooks",
+      "draftScore": null,
+      "gaps": [
+        {
+          "label": "Elapsed Time"
+        }
+      ],
+      "fields": [
+        {
+          "label": "Name",
+          "value": "Riley Brooks"
+        },
+        {
+          "label": "Date",
+          "value": "9/29"
+        },
+        {
+          "label": "Per",
+          "value": "P2"
+        }
+      ],
+      "other_plates_seen": [],
+      "vehicle_reject_reason": null,
+      "names": [
+        {
+          "name": "Riley Brooks",
+          "confidence": 0.99
+        }
+      ],
+      "note": null
+    },
+    "latencyMs": 1918
+  },
+  "evaluate": {
+    "status": 200,
+    "json": {
+      "gaps": [],
+      "draftScore": 75,
+      "teacherNote": null,
+      "studentName": "Riley Brooks",
+      "students": [
+        "Riley Brooks"
+      ],
+      "multiStudent": false,
+      "maxScore": 100,
+      "items": [
+        {
+          "n": 1,
+          "question": "2:00 to 2:45 is how long?",
+          "expected": "45 min",
+          "seen": "45 min",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 2,
+          "question": "9:30 + 20 minutes =",
+          "expected": "9:50",
+          "seen": "9:50",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 3,
+          "question": "11:40 + 30 minutes =",
+          "expected": "12:10",
+          "seen": "12:10",
+          "credit": 1,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        },
+        {
+          "n": 4,
+          "question": "7:15 - 25 minutes =",
+          "expected": "6:50",
+          "seen": "6:40",
+          "credit": 0,
+          "of": 1,
+          "gap": null,
+          "confidence": "high"
+        }
+      ],
+      "costUsd": 0.0019,
+      "model": "gemini-3.5-flash-lite",
+      "pass": "cheap"
+    },
+    "latencyMs": 2654
+  }
+}

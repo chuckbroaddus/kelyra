@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Live assign ingest evaluation against local ai:dev (analyze-answer-key + classify-capture).
+ * Live assign ingest evaluation (analyze-answer-key + classify-capture).
+ *   EVAL_TARGET=edge (default) → Supabase Edge;  EVAL_TARGET=dev → local ai:dev.
  *   node scripts/eval-assign-ingest.mjs
+ * Records latencyMs per call; stops on a Gemini daily-quota error.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { resolveAiTarget, latencyStats, isDailyQuotaError } from './lib/eval-target.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -340,7 +343,7 @@ async function signIn(env) {
     body: JSON.stringify({ handle: persona.handle, password: persona.password }),
   });
   const handlePayload = await handleRes.json().catch(() => null);
-  const aiDev = env.EXPO_PUBLIC_AI_DEV_URL || 'http://127.0.0.1:8787';
+  const aiDev = resolveAiTarget(env, { legacyUrl: env.EXPO_PUBLIC_AI_DEV_URL }).base;
   if (handleRes.ok && handlePayload?.access_token) {
     const sb = createClient(url, anon, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -376,12 +379,14 @@ async function signIn(env) {
   return { sb, session: data.session, url, anon, aiDev };
 }
 
+let quotaHit = false;
 async function invokeAi(auth, route, body) {
   const maxAttempts = Number(process.env.EVAL_ASSIGN_MAX_ATTEMPTS || 5);
   const paceMs = Number(process.env.EVAL_ASSIGN_PACE_MS || 4000);
   const backoff = Number(process.env.EVAL_ASSIGN_BACKOFF_MS || 45000);
   let last;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const t0 = performance.now();
     try {
       const res = await fetch(`${auth.aiDev.replace(/\/$/, '')}/${route}`, {
         method: 'POST',
@@ -399,7 +404,11 @@ async function invokeAi(auth, route, body) {
       } catch {
         json = { error: 'non-json', raw: text.slice(0, 400) };
       }
-      last = { status: res.status, json };
+      last = { status: res.status, json, latencyMs: Math.round(performance.now() - t0) };
+      if (isDailyQuotaError(text)) {
+        quotaHit = true;
+        return last;
+      }
       const msg = JSON.stringify(json).toLowerCase();
       if (res.status === 429 || /resource.?exhausted|rate.?limit|quota/i.test(msg)) {
         if (attempt < maxAttempts) {
@@ -438,8 +447,9 @@ async function main() {
   const rescoreOnly = process.env.EVAL_ASSIGN_RESCORE_ONLY === '1';
 
   let auth = null;
-  const aiDev = env.EXPO_PUBLIC_AI_DEV_URL || 'http://127.0.0.1:8787';
-  if (!rescoreOnly) {
+  const target = resolveAiTarget(env, { legacyUrl: env.EXPO_PUBLIC_AI_DEV_URL });
+  const aiDev = target.base;
+  if (!rescoreOnly && target.kind === 'dev') {
     try {
       const h = await fetch(`${aiDev.replace(/\/$/, '')}/health`);
       if (!h.ok) throw new Error('ai:dev health not ok');
@@ -447,13 +457,13 @@ async function main() {
       console.error('ai:dev not reachable at', aiDev, '- start: npm run ai:dev');
       process.exit(2);
     }
-    auth = await signIn(env);
   }
+  if (!rescoreOnly) auth = await signIn(env);
   const manifest = JSON.parse(fs.readFileSync(path.join(CORPUS, 'MANIFEST.json'), 'utf8'));
   console.log('run', stamp, 'cases', manifest.cases.length);
   fs.writeFileSync(
     path.join(runDir, 'context.json'),
-    JSON.stringify({ stamp, aiDev, case_count: manifest.cases.length }, null, 2),
+    JSON.stringify({ stamp, target: target.kind, aiDev, case_count: manifest.cases.length }, null, 2),
   );
 
   const perDoc = [];
@@ -513,6 +523,10 @@ async function main() {
         process.stdout.write(`… ${entry.id} ${v.variant} `);
         const imageUrl = toDataUrl(v.file);
         const keyRes = await invokeAi(auth, 'analyze-answer-key', { imageUrl });
+        if (quotaHit) {
+          console.warn('\nGemini daily quota hit — stopping (partial run). Resume later with EVAL_RESUME_STAMP=' + stamp);
+          break;
+        }
         const note =
           entry.kind === 'lesson_plan'
             ? 'lesson plan'
@@ -530,6 +544,10 @@ async function main() {
           classify: clsRes,
         };
         fs.writeFileSync(outPath, JSON.stringify(bundle, null, 2));
+        if (quotaHit) {
+          console.warn('\nGemini daily quota hit — stopping (partial run). Resume later with EVAL_RESUME_STAMP=' + stamp);
+          break;
+        }
       }
 
       const keyJson = bundle.key?.json || {};
@@ -553,15 +571,24 @@ async function main() {
         fields: scored.fields,
         key_http: bundle.key?.status,
         classify_http: bundle.classify?.status,
+        key_latency_ms: bundle.key?.latencyMs ?? null,
+        classify_latency_ms: bundle.classify?.latencyMs ?? null,
       });
-      console.log((scored.accuracy * 100).toFixed(0) + '%');
+      console.log((scored.accuracy * 100).toFixed(0) + '%', `${bundle.key?.latencyMs ?? '-'}ms/${bundle.classify?.latencyMs ?? '-'}ms`);
     }
+    if (quotaHit) break;
   }
 
   const avg = (rows) => (rows.length ? rows.reduce((s, r) => s + r.field_accuracy, 0) / rows.length : 0);
   const hall = allFieldRows.filter((r) => r.hallucinated).length;
   const score = {
     stamp,
+    target: rescoreOnly ? 'rescore' : target.kind,
+    partial_quota_stop: quotaHit,
+    latency_ms: {
+      analyze_answer_key: latencyStats(perDoc.map((d) => d.key_latency_ms)),
+      classify: latencyStats(perDoc.map((d) => d.classify_latency_ms)),
+    },
     overall_accuracy: avg(perDoc),
     assignment_accuracy: avg(perDoc.filter((d) => d.kind === 'assignment_key')),
     lesson_accuracy: avg(perDoc.filter((d) => d.kind === 'lesson_plan' || d.kind === 'lesson_materials')),
@@ -595,6 +622,7 @@ async function main() {
     'halluc',
     hall,
   );
+  console.log('latency', JSON.stringify(score.latency_ms));
 }
 
 main().catch((err) => {

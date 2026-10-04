@@ -1,0 +1,92 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Mireille Dutta",
+        "student_id": "703",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Nikolai Brandt",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Odessa Fairbanks",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Pascal Ibekwe",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Rhea Castillo",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Stellan Moore",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Tamsin Oduya",
+        "student_id": "7031",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Ulises Navarro",
+        "student_id": "7032",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Verity Shaw",
+        "student_id": "7032",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Wolfgang Tieu",
+        "student_id": "7032",
+        "grade": null,
+        "period": "4",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 4137
+}

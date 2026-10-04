@@ -1,0 +1,76 @@
+{
+  "status": 200,
+  "json": {
+    "document_kind_guess": "class_roster",
+    "rejected": false,
+    "low_confidence": false,
+    "names": [
+      {
+        "name": "Yasmin Ortiz",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Brody Klein",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Cora Ellis",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Drew Nakamura",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Elise Fontaine",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Felix Huang",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Greta Lind",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      },
+      {
+        "name": "Hugo Marquez",
+        "student_id": null,
+        "grade": null,
+        "period": "1",
+        "parent_contact": null,
+        "confident": true
+      }
+    ],
+    "model": "gemini-3.5-flash-lite"
+  },
+  "latencyMs": 2902
+}
