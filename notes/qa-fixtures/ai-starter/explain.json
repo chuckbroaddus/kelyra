@@ -1,0 +1,219 @@
+{
+  "suite": "explain",
+  "fn": "explain-capture",
+  "job": "ask",
+  "persona": "parent",
+  "note": "parent seat = ephemeral draft (no DB write); real capture id is the authz anchor, imageUrl carries the fixture",
+  "cases": [
+    {
+      "id": "E01",
+      "fixture": "homework-ingest/H01/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "equation",
+          "solve",
+          "variable",
+          "x"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Rivera"
+        ]
+      }
+    },
+    {
+      "id": "E02",
+      "fixture": "homework-ingest/H02/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "fraction",
+          "denominator",
+          "numerator"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Chen"
+        ]
+      }
+    },
+    {
+      "id": "E03",
+      "fixture": "homework-ingest/H03/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "vocabulary",
+          "word",
+          "definition",
+          "context"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Patel"
+        ]
+      }
+    },
+    {
+      "id": "E04",
+      "fixture": "homework-ingest/H04/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "integer",
+          "negative",
+          "sign"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Nguyen"
+        ]
+      }
+    },
+    {
+      "id": "E05",
+      "fixture": "homework-ingest/H05/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "slope",
+          "rise",
+          "run"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Brooks"
+        ]
+      }
+    },
+    {
+      "id": "E06",
+      "fixture": "homework-ingest/H06/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "order of operations",
+          "parenthes",
+          "pemdas",
+          "multiply"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:"
+      }
+    },
+    {
+      "id": "E07",
+      "fixture": "homework-ingest/H07/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "angle",
+          "geometry",
+          "triangle",
+          "shape",
+          "area",
+          "perimeter"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Riviera"
+        ]
+      }
+    },
+    {
+      "id": "E08",
+      "fixture": "homework-ingest/H08/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "word problem",
+          "step",
+          "equation"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Ellis"
+        ]
+      }
+    },
+    {
+      "id": "E09",
+      "fixture": "homework-ingest/H09/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "warm",
+          "partner"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Kim"
+        ]
+      }
+    },
+    {
+      "id": "E10",
+      "fixture": "homework-ingest/H10/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "reading",
+          "text",
+          "evidence",
+          "response"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Rivera"
+        ]
+      }
+    },
+    {
+      "id": "E11",
+      "fixture": "homework-ingest/H11/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "science",
+          "hypothesis",
+          "cell",
+          "energy"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Chen"
+        ]
+      }
+    },
+    {
+      "id": "E12",
+      "fixture": "homework-ingest/H12/clean.png",
+      "checks": {
+        "stepsMin": 3,
+        "stepsMax": 8,
+        "textIncludesAny": [
+          "solve",
+          "x",
+          "equation"
+        ],
+        "textExcludesRegex": "\\b\\d{1,3}\\s*(%|/\\s*100)\\b|\\bdraft ?score\\b|\\bgrade:",
+        "textExcludes": [
+          "Patel"
+        ]
+      }
+    }
+  ],
+  "classId": "d1715000-0000-4000-a000-000000000301",
+  "anchorCaptureId": "1d937e5a-09f8-4ad5-a7dd-9b7bc11386ba"
+}
