@@ -27,7 +27,10 @@ export type AiJob =
   | 'match-key'
   | 'speech'
   | 'portrait'
-  | 'lesson-outline';
+  | 'lesson-outline'
+  | 'ride_lpr'
+  | 'ingest'
+  | 'interview';
 
 const RATES: Record<string, { input: number; output: number }> = {
   'grok-4.6': { input: 2, output: 6 },

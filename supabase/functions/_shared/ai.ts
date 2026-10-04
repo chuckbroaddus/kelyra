@@ -13,11 +13,14 @@ import {
   GEMINI_FLASH_LITE,
   PRACTICE_MODEL,
   estimateUsd,
+  mediaResolutionFor,
   modelFor,
+  modelTimeoutMsFor,
   parseUsage,
   reasoningEffortFor,
   type AiJob,
   type AiPass,
+  type MediaResolution,
 } from './aiPolicy.ts';
 import { isAllowedAskImageUrl } from './askImageUrl.ts';
 
@@ -81,11 +84,55 @@ export function requireXaiKey(): string {
   throw new Error('GEMINI_API_KEY or XAI_API_KEY is not set');
 }
 
+/** Provider error with the HTTP status, so callers can retry / fall back on 429 / 5xx. */
+export class AiProviderError extends Error {
+  readonly status: number;
+  readonly provider: AiProvider;
+  constructor(message: string, status: number, provider: AiProvider) {
+    super(message);
+    this.status = status;
+    this.provider = provider;
+  }
+}
+
+/** Keys on `extra` that only steer this adapter; never forwarded raw to a vendor. */
+const ADAPTER_ONLY_KEYS = new Set([
+  'mediaResolution',
+  'jsonSchema',
+  'schemaName',
+  'responseMimeType',
+  'response_mime_type',
+  'maxOutputTokens',
+  'timeoutMs',
+]);
+
+function xaiBody(model: string, input: unknown, extra: Record<string, unknown>): Record<string, unknown> {
+  const body: Record<string, unknown> = { store: false, model, input };
+  for (const [key, value] of Object.entries(extra)) {
+    if (!ADAPTER_ONLY_KEYS.has(key)) body[key] = value;
+  }
+  const maxOut = Number(extra.max_output_tokens ?? extra.maxOutputTokens);
+  if (Number.isFinite(maxOut) && maxOut > 0) body.max_output_tokens = Math.round(maxOut);
+  const schema = extra.jsonSchema;
+  if (schema && typeof schema === 'object' && !body.tools) {
+    body.text = {
+      format: {
+        type: 'json_schema',
+        name: String(extra.schemaName ?? 'result'),
+        schema,
+        strict: false,
+      },
+    };
+  }
+  return body;
+}
+
 export async function xaiResponses(
   apiKey: string,
   model: string,
   input: unknown,
   extra: Record<string, unknown> = {},
+  signal?: AbortSignal,
 ): Promise<Record<string, unknown>> {
   const response = await fetch(`${xaiBaseUrl}/responses`, {
     method: 'POST',
@@ -93,10 +140,11 @@ export async function xaiResponses(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ store: false, model, input, ...extra }),
+    body: JSON.stringify(xaiBody(model, input, extra)),
+    signal,
   });
   if (!response.ok) {
-    throw new Error(`Grok failed: ${response.status} ${await response.text()}`);
+    throw new AiProviderError(`Grok failed: ${response.status} ${await response.text()}`, response.status, 'xai');
   }
   return (await response.json()) as Record<string, unknown>;
 }
@@ -110,6 +158,30 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+const IMAGE_FETCH_TIMEOUT_MS = 15_000;
+const IMAGE_CACHE_TTL_MS = 120_000;
+const IMAGE_CACHE_MAX = 32;
+/** Per-isolate cache so a retry / second pass never re-downloads + re-encodes the same page. */
+const imagePartCache = new Map<string, { at: number; part: Promise<Record<string, unknown>> }>();
+
+function cachedImagePart(
+  imageUrl: string,
+  load: () => Promise<Record<string, unknown>>,
+): Promise<Record<string, unknown>> {
+  const now = Date.now();
+  const hit = imagePartCache.get(imageUrl);
+  if (hit && now - hit.at < IMAGE_CACHE_TTL_MS) return hit.part;
+  const part = load();
+  imagePartCache.set(imageUrl, { at: now, part });
+  part.catch(() => imagePartCache.delete(imageUrl));
+  while (imagePartCache.size > IMAGE_CACHE_MAX) {
+    const oldest = imagePartCache.keys().next().value;
+    if (oldest === undefined) break;
+    imagePartCache.delete(oldest);
+  }
+  return part;
+}
+
 async function inlineImagePart(imageUrl: string): Promise<Record<string, unknown>> {
   // Same SSRF allowlist as Ask hydrate: data: or this project's storage https only.
   if (!isAllowedAskImageUrl(imageUrl)) {
@@ -119,13 +191,18 @@ async function inlineImagePart(imageUrl: string): Promise<Record<string, unknown
   if (dataUrl) {
     return { inlineData: { mimeType: dataUrl[1] || 'image/jpeg', data: dataUrl[2] } };
   }
-  const response = await fetch(imageUrl, { redirect: 'error' });
-  if (!response.ok) {
-    throw new Error(`Could not fetch image for Gemini: ${response.status}`);
-  }
-  const mime = response.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  return { inlineData: { mimeType: mime, data: bytesToBase64(bytes) } };
+  return await cachedImagePart(imageUrl, async () => {
+    const response = await fetch(imageUrl, {
+      redirect: 'error',
+      signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      throw new Error(`Could not fetch image for Gemini: ${response.status}`);
+    }
+    const mime = response.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return { inlineData: { mimeType: mime, data: bytesToBase64(bytes) } };
+  });
 }
 
 function parseJsonObject(raw: unknown): Record<string, unknown> {
@@ -162,20 +239,21 @@ async function contentPartsFromXai(
     }
     return [];
   }
-  const parts: Array<Record<string, unknown>> = [];
+  // Download every page at once (order preserved) — never one image after another.
+  const pending: Array<Promise<Record<string, unknown> | null>> = [];
   for (const item of content) {
     const row = item as { type?: string; text?: string; image_url?: string };
     if (!row || typeof row !== 'object') continue;
     if (row.type === 'input_image' && typeof row.image_url === 'string') {
-      parts.push(await inlineImagePart(row.image_url));
+      pending.push(inlineImagePart(row.image_url));
       continue;
     }
     if (row.type === 'input_text' || row.type === 'text' || typeof row.text === 'string') {
       const text = String(row.text ?? '').trim();
-      if (text) parts.push({ text });
+      if (text) pending.push(Promise.resolve({ text }));
     }
   }
-  return parts;
+  return (await Promise.all(pending)).filter((part): part is Record<string, unknown> => Boolean(part));
 }
 
 /** Exported for static/regression coverage of Ask multi-round tool mapping. */
@@ -381,11 +459,18 @@ function normalizeGeminiResponse(raw: Record<string, unknown>): Record<string, u
   };
 }
 
+const GEMINI_MEDIA_RESOLUTION: Record<MediaResolution, string> = {
+  low: 'MEDIA_RESOLUTION_LOW',
+  medium: 'MEDIA_RESOLUTION_MEDIUM',
+  high: 'MEDIA_RESOLUTION_HIGH',
+};
+
 export async function geminiGenerate(
   apiKey: string,
   model: string,
   input: unknown,
   extra: Record<string, unknown> = {},
+  signal?: AbortSignal,
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = {
     contents: await geminiContentsFromInput(input),
@@ -407,6 +492,13 @@ export async function geminiGenerate(
         ? extra.response_mime_type.trim()
         : '';
   if (mime) generationConfig.responseMimeType = mime;
+  const schema = extra.jsonSchema;
+  if (schema && typeof schema === 'object' && !tools) {
+    generationConfig.responseMimeType = 'application/json';
+    generationConfig.responseJsonSchema = schema;
+  }
+  const resolution = GEMINI_MEDIA_RESOLUTION[extra.mediaResolution as MediaResolution];
+  if (resolution) generationConfig.mediaResolution = resolution;
   if (Object.keys(generationConfig).length) body.generationConfig = generationConfig;
   const response = await fetch(
     `${geminiBaseUrl}/models/${encodeURIComponent(model)}:generateContent`,
@@ -417,10 +509,15 @@ export async function geminiGenerate(
         'x-goog-api-key': apiKey,
       },
       body: JSON.stringify(body),
+      signal,
     },
   );
   if (!response.ok) {
-    throw new Error(`Gemini failed: ${response.status} ${await response.text()}`);
+    throw new AiProviderError(
+      `Gemini failed: ${response.status} ${await response.text()}`,
+      response.status,
+      'gemini',
+    );
   }
   return normalizeGeminiResponse((await response.json()) as Record<string, unknown>);
 }
@@ -436,16 +533,123 @@ export type FunctionCall = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MeterClient = any;
 
+type CapRow = { usd: number; cap: number };
+
+function capFromRpc(data: unknown): CapRow | null {
+  const row = (Array.isArray(data) ? data[0] : data) as { usd?: unknown; cap_usd?: unknown } | null;
+  if (!row) return null;
+  const capRaw = row.cap_usd;
+  return {
+    usd: Number(row.usd ?? 0),
+    cap: capRaw == null || capRaw === '' ? DEFAULT_MONTHLY_CAP_USD : Number(capRaw),
+  };
+}
+
+function overCapMessage(cap: number): string {
+  return `This school is over its monthly AI budget ($${cap}).`;
+}
+
 export async function assertUnderAiCap(supabase: MeterClient): Promise<void> {
   const { data, error } = await supabase.rpc('ai_spend_this_month');
   if (error) return;
-  const row = Array.isArray(data) ? data[0] : data;
-  const spent = Number(row?.usd ?? 0);
-  const capRaw = row?.cap_usd;
-  const cap = capRaw == null || capRaw === '' ? DEFAULT_MONTHLY_CAP_USD : Number(capRaw);
-  if (Number.isFinite(cap) && cap > 0 && spent >= cap) {
-    throw new Error(`This school is over its monthly AI budget ($${cap}).`);
+  const row = capFromRpc(data);
+  if (row && Number.isFinite(row.cap) && row.cap > 0 && row.usd >= row.cap) {
+    throw new Error(overCapMessage(row.cap));
   }
+}
+
+/**
+ * Budget pre-check, memoized per request client: an Ask loop / multi-call ingest pays the
+ * RPC once, and it runs alongside the model call instead of in front of it.
+ */
+const capChecks = new WeakMap<object, Promise<CapRow | null>>();
+function capCheckFor(supabase: MeterClient): Promise<CapRow | null> {
+  if (supabase && typeof supabase === 'object') {
+    const hit = capChecks.get(supabase);
+    if (hit) return hit;
+  }
+  const check = Promise.resolve()
+    .then(() => supabase.rpc('ai_spend_this_month'))
+    .then(({ data, error }: { data: unknown; error: unknown }) => (error ? null : capFromRpc(data)))
+    .catch(() => null);
+  if (supabase && typeof supabase === 'object') capChecks.set(supabase, check);
+  return check;
+}
+
+/** Keep the isolate alive for background work (Supabase Edge Runtime); plain promise elsewhere. */
+export function runInBackground(work: Promise<unknown>): void {
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+  const guarded = work.catch((err) => console.warn('background task failed', err instanceof Error ? err.message : err));
+  if (runtime?.waitUntil) runtime.waitUntil(guarded);
+}
+
+function meterUsage(
+  supabase: MeterClient,
+  row: { functionName: string; model: string; captureId?: string | null; inputTokens: number; outputTokens: number; usd: number },
+): Promise<void> {
+  return (async () => {
+    // Meter is best-effort and off the critical path. Never fail the teacher draft for a log insert.
+    const [{ data: userData }, { data: schoolId }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.rpc('my_school_id'),
+    ]);
+    if (typeof schoolId === 'string' && schoolId) {
+      await supabase.from('ai_usage').insert({
+        school_id: schoolId,
+        teacher_id: userData?.user?.id ?? null,
+        function: row.functionName,
+        model: row.model,
+        capture_id: row.captureId ?? null,
+        input_tokens: row.inputTokens,
+        output_tokens: row.outputTokens,
+        usd: row.usd,
+      });
+    }
+  })();
+}
+
+const RETRY_DELAY_MS = 250;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isRetryable(err: unknown): boolean {
+  if (err instanceof AiProviderError) return err.status === 429 || err.status >= 500;
+  if (err instanceof Error) {
+    return err.name === 'TimeoutError' || err.name === 'AbortError' || /network|connection|timed out|fetch failed/i.test(err.message);
+  }
+  return false;
+}
+
+function isGeminiOverloaded(err: unknown): boolean {
+  return err instanceof AiProviderError && err.provider === 'gemini' && (err.status === 429 || err.status === 503);
+}
+
+function describeAiError(err: unknown, timeoutMs: number, provider: AiProvider): Error {
+  if (err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+    return new AiProviderError(`AI timed out after ${Math.round(timeoutMs / 1000)}s`, 504, provider);
+  }
+  return err instanceof Error ? err : new Error(String(err));
+}
+
+type Attempt = { provider: AiProvider; apiKey: string; model: string };
+
+async function runAttempt(
+  attempt: Attempt,
+  job: AiJob,
+  pass: AiPass,
+  payloadInput: unknown,
+  baseExtra: Record<string, unknown>,
+  timeoutMs: number,
+  abort: AbortSignal,
+): Promise<Record<string, unknown>> {
+  const effort = attempt.provider === 'xai' ? reasoningEffortFor(attempt.model, pass) : undefined;
+  const extra = {
+    ...(effort ? { reasoning_effort: effort } : {}),
+    ...baseExtra,
+  };
+  const signal = AbortSignal.any([abort, AbortSignal.timeout(timeoutMs)]);
+  return attempt.provider === 'gemini'
+    ? await geminiGenerate(attempt.apiKey, attempt.model, payloadInput, extra, signal)
+    : await xaiResponses(attempt.apiKey, attempt.model, payloadInput, extra, signal);
 }
 
 export async function callMetered(
@@ -458,43 +662,79 @@ export async function callMetered(
     captureId?: string | null;
     payload: unknown;
     extra?: Record<string, unknown>;
+    /** Structured output: JSON Schema for the reply (Gemini responseJsonSchema / xAI json_schema). */
+    schema?: Record<string, unknown>;
+    /** Per-call model timeout; defaults per job (see modelTimeoutMsFor). */
+    timeoutMs?: number;
   },
 ): Promise<Record<string, unknown>> {
-  await assertUnderAiCap(supabase);
   const provider = resolveAiProvider();
   const pass = input.pass ?? 'cheap';
-  const model = provider === 'gemini' ? GEMINI_FLASH_LITE : modelFor(input.job, pass);
-  const effort = provider === 'xai' ? reasoningEffortFor(model, pass) : undefined;
-  const extra = {
-    ...(effort ? { reasoning_effort: effort } : {}),
+  const timeoutMs = input.timeoutMs ?? modelTimeoutMsFor(input.job, pass);
+  const resolution =
+    (input.extra?.mediaResolution as MediaResolution | undefined) ?? mediaResolutionFor(input.job, pass, input.payload);
+  const baseExtra: Record<string, unknown> = {
+    ...(resolution ? { mediaResolution: resolution } : {}),
+    ...(input.schema ? { jsonSchema: input.schema, schemaName: input.functionName.replace(/[^a-z0-9_]/gi, '_') } : {}),
     ...(input.extra ?? {}),
   };
-  const payload =
-    provider === 'gemini'
-      ? await geminiGenerate(apiKey, model, input.payload, extra)
-      : await xaiResponses(apiKey, model, input.payload, extra);
-  const usage = parseUsage(payload);
-  const usd = estimateUsd(model, usage.inputTokens, usage.outputTokens);
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const { data: schoolId } = await supabase.rpc('my_school_id');
-    if (typeof schoolId === 'string' && schoolId) {
-      await supabase.from('ai_usage').insert({
-        school_id: schoolId,
-        teacher_id: userData.user?.id ?? null,
-        function: input.functionName,
-        model,
-        capture_id: input.captureId ?? null,
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-        usd,
-      });
+
+  const primary: Attempt = {
+    provider,
+    apiKey,
+    model: provider === 'gemini' ? GEMINI_FLASH_LITE : modelFor(input.job, pass),
+  };
+  const xaiKey = Deno.env.get('XAI_API_KEY');
+  const fallback: Attempt | null =
+    provider === 'gemini' && xaiKey ? { provider: 'xai', apiKey: xaiKey, model: modelFor(input.job, pass) } : null;
+
+  // Budget check runs alongside the model call; if the school is over cap we abort the call.
+  const abort = new AbortController();
+  const capCheck = capCheckFor(supabase).then((row) => {
+    if (row && Number.isFinite(row.cap) && row.cap > 0 && row.usd >= row.cap) {
+      abort.abort(new Error(overCapMessage(row.cap)));
+      return overCapMessage(row.cap);
     }
-  } catch {
-    // Meter is best-effort. Never fail the teacher draft for a log insert.
+    return null;
+  });
+
+  let used = primary;
+  let payload: Record<string, unknown>;
+  try {
+    try {
+      payload = await runAttempt(primary, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal);
+    } catch (err) {
+      if (abort.signal.aborted || !isRetryable(err)) throw err;
+      // One fast retry. Gemini 429/503 (quota / high demand) goes straight to xAI when a key exists.
+      used = fallback && isGeminiOverloaded(err) ? fallback : primary;
+      console.warn(
+        `${input.functionName} ${primary.provider} failed (${err instanceof Error ? err.message.slice(0, 120) : err}); retry via ${used.provider}`,
+      );
+      if (used === primary) await sleep(RETRY_DELAY_MS);
+      payload = await runAttempt(used, input.job, pass, input.payload, baseExtra, timeoutMs, abort.signal);
+    }
+  } catch (err) {
+    const overCap = await capCheck;
+    if (overCap) throw new Error(overCap);
+    throw describeAiError(err, timeoutMs, used.provider);
   }
+  const overCap = await capCheck;
+  if (overCap) throw new Error(overCap);
+
+  const usage = parseUsage(payload);
+  const usd = estimateUsd(used.model, usage.inputTokens, usage.outputTokens);
+  runInBackground(
+    meterUsage(supabase, {
+      functionName: input.functionName,
+      model: used.model,
+      captureId: input.captureId,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      usd,
+    }),
+  );
   payload.__kelyraUsd = usd;
-  payload.__kelyraModel = model;
+  payload.__kelyraModel = used.model;
   return payload;
 }
 
