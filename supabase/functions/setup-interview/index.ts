@@ -115,9 +115,10 @@ User: ${userText || chipId}`;
 
     try {
       const payload = await callMetered(supabase, apiKey, {
-        job: 'classify',
+        job: 'interview',
         functionName: 'setup-interview',
         payload: [{ role: 'user', content: [{ type: 'input_text', text: userPrompt }] }],
+        extra: { responseMimeType: 'application/json', max_output_tokens: 1024 },
       });
       const parsed = extractJson(outputText(payload)) as Record<string, unknown>;
       // Draft-only — never publish from this function.
@@ -131,6 +132,7 @@ User: ${userText || chipId}`;
         status: 'proposed',
       });
     } catch (err) {
+      // Real failure status (was 200); the app falls back to its local parser on any error.
       return Response.json({
         ok: false,
         mode: 'model_error',
@@ -142,7 +144,7 @@ User: ${userText || chipId}`;
           navigation: null,
         },
         status: 'proposed',
-      });
+      }, { status: 502 });
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Interview turn failed';

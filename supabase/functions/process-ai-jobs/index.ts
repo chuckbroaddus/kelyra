@@ -4,6 +4,9 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+/** Max drafts in flight per batch (keeps vendor rate limits + Edge CPU sane). */
+const JOB_CONCURRENCY = 4;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors() });
@@ -30,35 +33,41 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(20);
     if (error) throw error;
-    const results: Array<{ id: string; ok: boolean; error?: string }> = [];
-    for (const job of jobs ?? []) {
+    const rows = jobs ?? [];
+    const results: Array<{ id: string; ok: boolean; error?: string }> = new Array(rows.length);
+    const runJob = async (job: (typeof rows)[number]) => {
       await supabase.from('ai_jobs').update({ status: 'running' }).eq('id', job.id);
       let failed = false;
       let failMessage: string | undefined;
-      if (job.kind === 'submission_review') {
-        if (!job.submission_id) {
-          failed = true;
-          failMessage = 'submission_id required';
+      try {
+        if (job.kind === 'submission_review') {
+          if (!job.submission_id) {
+            failed = true;
+            failMessage = 'submission_id required';
+          } else {
+            const res = await supabase.functions.invoke('review-submission', {
+              body: { submissionId: job.submission_id, queued: true },
+            });
+            failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
+            failMessage = failed
+              ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed')
+              : undefined;
+          }
         } else {
-          const res = await supabase.functions.invoke('review-submission', {
-            body: { submissionId: job.submission_id, queued: true },
+          if (job.capture_id) {
+            await supabase.from('captures').update({ ai_status: 'running' }).eq('id', job.capture_id);
+          }
+          const res = await supabase.functions.invoke('analyze-homework', {
+            body: { captureId: job.capture_id, pass: job.pass === 'look-again' ? 'look-again' : 'cheap' },
           });
           failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
           failMessage = failed
             ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed')
             : undefined;
         }
-      } else {
-        if (job.capture_id) {
-          await supabase.from('captures').update({ ai_status: 'running' }).eq('id', job.capture_id);
-        }
-        const res = await supabase.functions.invoke('analyze-homework', {
-          body: { captureId: job.capture_id, pass: job.pass === 'look-again' ? 'look-again' : 'cheap' },
-        });
-        failed = Boolean(res.error || (res.data as { error?: string } | null)?.error);
-        failMessage = failed
-          ? String(res.error?.message ?? (res.data as { error?: string })?.error ?? 'failed')
-          : undefined;
+      } catch (err) {
+        failed = true;
+        failMessage = err instanceof Error ? err.message : 'failed';
       }
       await supabase
         .from('ai_jobs')
@@ -68,8 +77,18 @@ Deno.serve(async (req) => {
           finished_at: new Date().toISOString(),
         })
         .eq('id', job.id);
-      results.push({ id: job.id, ok: !failed, error: failed ? 'failed' : undefined });
-    }
+      return { id: job.id as string, ok: !failed, error: failed ? 'failed' : undefined };
+    };
+
+    // Small worker pool: a batch of 20 drafts runs ~4 at a time instead of strictly one by one.
+    let next = 0;
+    const workers = Array.from({ length: Math.min(JOB_CONCURRENCY, rows.length) }, async () => {
+      while (next < rows.length) {
+        const index = next++;
+        results[index] = await runJob(rows[index]!);
+      }
+    });
+    await Promise.all(workers);
     return json({ ok: true, processed: results.length, results });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'batch failed' }, 500);

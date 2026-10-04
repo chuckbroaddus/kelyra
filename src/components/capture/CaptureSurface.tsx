@@ -949,9 +949,16 @@ export function CaptureSurface({ preset = mainCapturePreset }: CaptureSurfacePro
           let readMultipleVehicles = false;
           const readRiders: string[] = [];
           const readPickups: string[] = [];
-          for (const page of pages.filter((p) => p.mimeType.startsWith('image/'))) {
-            const storagePath = await uploadRidePhoto(assetOwnerId, page.uri, page.mimeType);
-            const lpr = await invokeRideLpr(storagePath);
+          // Front + back photos upload and read at the same time (results applied in page order).
+          const lprReads = await Promise.all(
+            pages
+              .filter((p) => p.mimeType.startsWith('image/'))
+              .map(async (page) => invokeRideLpr(await uploadRidePhoto(assetOwnerId, page.uri, page.mimeType))),
+          );
+          const readFailure = lprReads.length && lprReads.every((r) => r.error) ? lprReads[0]!.error : null;
+          if (readFailure) setError(readFailure);
+          for (const lpr of lprReads) {
+            if (lpr.error) continue;
             readKind = lpr.document_kind ?? readKind;
             readTag = lpr.tag_number || readTag;
             if (isMultipleVehiclesRead(lpr)) readMultipleVehicles = true;

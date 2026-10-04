@@ -5,19 +5,21 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { isAllowedAskImageUrl } from '../_shared/askImageUrl.ts';
-import { imageDetailFor } from '../_shared/aiPolicy.ts';
 import { isAllowedPath } from '../_shared/ingestAllowedPaths.ts';
 import {
   normalizeProposalFields,
   schoolProposalHasCore,
 } from '../_shared/ingestNormalize.ts';
 import {
-  buildHandwritingTranscribePrompt,
   buildSchoolPolicyIngestPrompt,
   buildSchoolPolicyRetryPrompt,
   buildSyllabusIngestPrompt,
 } from '../_shared/ingestPrompts.ts';
 import type { IngestField, IngestProposal, IngestWarning } from '../_shared/ingestProposalTypes.ts';
+
+/** Folded-in transcript step for the (rare) retry pass — replaces the old separate OCR call. */
+const TRANSCRIBE_FIRST =
+  'Before extracting, put a "transcript" string (full readable page text in reading order, typed or handwritten; "" if unreadable) as the FIRST key of the JSON, then extract ONLY facts the transcript supports. Quotes must still match the page.';
 
 function clamp01(n: unknown): number {
   const x = typeof n === 'number' ? n : Number(n);
@@ -125,9 +127,11 @@ async function callModel(
   content: Array<Record<string, unknown>>,
 ): Promise<Record<string, unknown>> {
   const payload = await callMetered(supabase, apiKey, {
-    job: 'classify',
+    job: 'ingest',
     functionName: 'ingest-grading-doc',
     payload: [{ role: 'user', content }],
+    // JSON mode only (no strict schema): the proposal shape is wide and kind-specific.
+    extra: { responseMimeType: 'application/json', max_output_tokens: 8192 },
   });
   const parsed = extractJson(outputText(payload));
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
@@ -195,8 +199,10 @@ Deno.serve(async (req) => {
       if (!taught) return json({ error: 'You can only ingest a syllabus for a class you teach.' }, 403);
     } else {
       if (!schoolId) return json({ error: 'school_id required for school_policy ingest' }, 400);
-      const { data: isAdmin } = await supabase.rpc('is_school_admin');
-      const { data: mySchool } = await supabase.rpc('my_school_id');
+      const [{ data: isAdmin }, { data: mySchool }] = await Promise.all([
+        supabase.rpc('is_school_admin'),
+        supabase.rpc('my_school_id'),
+      ]);
       if (!isAdmin || mySchool !== schoolId) {
         return json({ error: 'Office administrators only for school policy ingest.' }, 403);
       }
@@ -213,9 +219,9 @@ Deno.serve(async (req) => {
         ? buildSyllabusIngestPrompt({ class_id: classId, source_id: sourceId })
         : buildSchoolPolicyIngestPrompt({ school_id: schoolId, source_id: sourceId });
 
-    let jobId: string | null = null;
-    try {
-      const { data: job } = await supabase
+    // Job row insert runs alongside the model call (it only needs to exist before the final update).
+    const jobIdPromise: Promise<string | null> = Promise.resolve(
+      supabase
         .from('ingest_jobs')
         .insert({
           kind,
@@ -226,15 +232,16 @@ Deno.serve(async (req) => {
           status: 'running',
         })
         .select('id')
-        .maybeSingle();
-      jobId = job?.id ?? null;
-    } catch {
-      jobId = null;
-    }
+        .maybeSingle(),
+    )
+      .then(({ data: job }) => (job?.id as string | undefined) ?? null)
+      .catch(() => null);
+    let jobId: string | null = null;
 
+    // Handwriting / grading docs read at high detail (Gemini: MEDIA_RESOLUTION_HIGH via job 'ingest').
     const imageContent: Array<Record<string, unknown>> = [];
     for (const url of imageUrls.slice(0, 20)) {
-      imageContent.push({ type: 'input_image', image_url: url, detail: imageDetailFor('cheap') });
+      imageContent.push({ type: 'input_image', image_url: url, detail: 'high' });
     }
     const pathNote =
       'Storage paths (page order):\n' +
@@ -242,33 +249,12 @@ Deno.serve(async (req) => {
 
     const apiKey = requireXaiKey();
     try {
-      // Two-pass for images: transcribe first (handwriting / low quality), then extract.
-      let transcriptNote = '';
-      if (imageContent.length > 0) {
-        try {
-          const trParsed = await callModel(supabase, apiKey, [
-            ...imageContent,
-            { type: 'input_text', text: buildHandwritingTranscribePrompt() },
-          ]);
-          const transcript =
-            typeof trParsed.transcript === 'string' ? trParsed.transcript.trim() : '';
-          const quality = typeof trParsed.quality === 'string' ? trParsed.quality : '';
-          if (transcript) {
-            transcriptNote =
-              `\nWorking transcript (${quality || 'unknown'} quality) — extract ONLY facts supported below; quotes must still match the page:\n` +
-              transcript.slice(0, 8000);
-          } else if (quality === 'unreadable') {
-            transcriptNote =
-              '\nTranscript empty / unreadable. Prefer empty fields + block warning over guesses.';
-          }
-        } catch {
-          // transcription optional — fall through to single-pass extract
-        }
-      }
-
+      // One call per document: extract straight from the pages (the prompt already says to
+      // transcribe silently first). The transcript pass only runs as a fallback when a
+      // syllabus extract comes back thin, and then it is folded into that single retry.
       let parsed = await callModel(supabase, apiKey, [
         ...imageContent,
-        { type: 'input_text', text: prompt + '\n' + pathNote + transcriptNote },
+        { type: 'input_text', text: prompt + '\n' + pathNote },
       ]);
       let proposal = skeletonProposal(kind, sourceId, parsed);
 
@@ -280,7 +266,7 @@ Deno.serve(async (req) => {
         });
         parsed = await callModel(supabase, apiKey, [
           ...imageContent,
-          { type: 'input_text', text: retryPrompt + '\n' + pathNote + transcriptNote },
+          { type: 'input_text', text: retryPrompt + '\n' + pathNote + '\n' + TRANSCRIBE_FIRST },
         ]);
         proposal = skeletonProposal(kind, sourceId, parsed);
         proposal.warnings = [
@@ -310,8 +296,7 @@ Deno.serve(async (req) => {
         kind === 'syllabus' &&
         !blockedEmpty &&
         proposal.fields.filter((f) => f.value != null).length < 4 &&
-        imageContent.length > 0 &&
-        transcriptNote
+        imageContent.length > 0
       ) {
         parsed = await callModel(supabase, apiKey, [
           ...imageContent,
@@ -321,7 +306,8 @@ Deno.serve(async (req) => {
               prompt +
               '\n' +
               pathNote +
-              transcriptNote +
+              '\n' +
+              TRANSCRIBE_FIRST +
               '\nSTRICT handwriting pass: Use the transcript. Emit every category/late/missing/retake/narrative fact the transcript supports with verbatim quotes. Map missing-work floor → syllabus.missing_rule. Map "replaces the old" → syllabus.retake method replace. If the transcript is clearly not a syllabus, empty fields[] + block not_a_syllabus — do not invent.',
           },
         ]);
@@ -353,12 +339,14 @@ Deno.serve(async (req) => {
         }
       }
 
+      jobId = await jobIdPromise;
       if (jobId) {
         await supabase.from('ingest_jobs').update({ status: 'proposed', proposal }).eq('id', jobId);
       }
       return json({ ok: true, job_id: jobId, proposal });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not read this document.';
+      jobId = jobId ?? (await jobIdPromise);
       const proposal = skeletonProposal(
         kind,
         sourceId,

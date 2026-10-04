@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
+import { AiProviderError, callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
+import { RIDE_LPR_SCHEMA } from '../_shared/aiSchemas.ts';
 import { CLOSEST_VEHICLE_RULES } from '../_shared/closestVehicle.ts';
 import { withCors } from '../_shared/cors.ts';
 import { emptyResult, shapeRideLprResult } from '../_shared/rideLprResult.ts';
@@ -85,14 +86,20 @@ async function handleRideLpr(req: Request): Promise<Response> {
           ],
         },
       ],
+      schema: RIDE_LPR_SCHEMA as unknown as Record<string, unknown>,
+      extra: { max_output_tokens: 512 },
     });
     return Response.json(shapeRideLprResult(extractJson(outputText(payload))));
   } catch (err) {
+    // Real failure status (was 200 + unreadable): 429 quota, 504 timeout, 502 other model errors.
+    // Body keeps the empty-result shape so callers can still read `error`.
+    const status =
+      err instanceof AiProviderError ? (err.status === 429 ? 429 : err.status === 504 ? 504 : 502) : 502;
     return Response.json(
       emptyResult({
         error: err instanceof Error ? err.message : 'LPR failed',
       }),
-      { status: 200 },
+      { status },
     );
   }
 }
