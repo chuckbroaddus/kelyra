@@ -5,9 +5,14 @@
  * Never mounts month hanging grids or week day strips on the drum (grids stay in calendar body).
  * P0 ContentPolicy: fling ±3 clear; beyond → opacity-dim silhouette (no BlurView / CSS blur).
  * Plate geometry is always compact (showCenterExtras / motionCompact kept for API compat).
+ * CAL-DRUM-PH: labels are DrumFocusText + DrumBlob slots — on the drum (DrumFocusProvider)
+ * a fast flick swaps them for the variant C placeholder (pre-blurred blob + shimmer); off
+ * the drum they render as plain Text / nothing.
  */
 import { memo, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { DrumBlob, DrumFocusText } from '@/components/calendar/DrumPlaceholder';
 
 import type { PeriodTileModel } from '@/lib/calendar/periodPager';
 import {
@@ -150,13 +155,14 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
       <View style={styles.hero} accessibilityLabel={label} accessibilityElementsHidden>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text
+          <DrumBlob variant="year" />
+          <DrumFocusText
             style={[styles.yearText, styles.yearTextPlate, styles.silhouetteYearText]}
             numberOfLines={1}
             allowFontScaling={false}
           >
             {yearLabel}
-          </Text>
+          </DrumFocusText>
         </View>
       </View>
     );
@@ -171,22 +177,23 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <View style={styles.page}>
           <View style={styles.wrapHeader} />
           <View style={styles.monthBody}>
-            <Text
+            <DrumBlob variant="body" />
+            <DrumFocusText
               style={[styles.monthBodyText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {monthName}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text
+            <DrumFocusText
               style={[styles.wrapFooterText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -204,31 +211,33 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.wrapHeader}>
-            <Text
+            <DrumBlob variant="band" />
+            <DrumFocusText
               style={[styles.wrapHeaderText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {header}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.weekBody}>
-            <Text
+            <DrumBlob variant="body" />
+            <DrumFocusText
               style={[styles.weekBodyText, styles.silhouetteSoftText]}
               numberOfLines={2}
               allowFontScaling={false}
             >
               {range}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text
+            <DrumFocusText
               style={[styles.wrapFooterText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -242,31 +251,33 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.wrapHeader}>
-            <Text
+            <DrumBlob variant="band" />
+            <DrumFocusText
               style={[styles.wrapHeaderText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {header}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.dayBody}>
-            <Text
+            <DrumBlob variant="body" />
+            <DrumFocusText
               style={[styles.dayNumeral, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {dayNum}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text
+            <DrumFocusText
               style={[styles.wrapFooterText, styles.silhouetteSoftText]}
               numberOfLines={1}
               allowFontScaling={false}
             >
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -278,9 +289,9 @@ function SilhouetteLeaf({ tile }: { tile: PeriodTileModel }) {
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.wrapHeader} />
-          <Text style={styles.silhouetteCaption} numberOfLines={2} allowFontScaling={false}>
+          <DrumFocusText style={styles.silhouetteCaption} numberOfLines={2} allowFontScaling={false}>
             {hint}
-          </Text>
+          </DrumFocusText>
         </View>
       </View>
     );
@@ -313,14 +324,15 @@ function PeriodLeafImpl({
       <View style={styles.hero} accessibilityLabel={tile.centerCaption}>
         <MetalTabs />
         <View style={[styles.page, styles.yearPage]}>
-          <Text
+          <DrumBlob variant="year" />
+          <DrumFocusText
             style={[styles.yearText, styles.yearTextPlate]}
             numberOfLines={1}
             allowFontScaling={false}
             ellipsizeMode="clip"
           >
             {label}
-          </Text>
+          </DrumFocusText>
         </View>
       </View>
     );
@@ -338,14 +350,15 @@ function PeriodLeafImpl({
           {/* Same header/footer bands as week/day; month name centered; year in footer. */}
           <View style={styles.wrapHeader} />
           <View style={styles.monthBody}>
-            <Text style={styles.monthBodyText} numberOfLines={1} allowFontScaling={false}>
+            <DrumBlob variant="body" />
+            <DrumFocusText style={styles.monthBodyText} numberOfLines={1} allowFontScaling={false}>
               {body}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+            <DrumFocusText style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -362,19 +375,21 @@ function PeriodLeafImpl({
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.wrapHeader}>
-            <Text style={styles.wrapHeaderText} numberOfLines={1}>
+            <DrumBlob variant="band" />
+            <DrumFocusText style={styles.wrapHeaderText} numberOfLines={1}>
               {header}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.weekBody}>
-            <Text style={styles.weekBodyText} numberOfLines={2} allowFontScaling={false}>
+            <DrumBlob variant="body" />
+            <DrumFocusText style={styles.weekBodyText} numberOfLines={2} allowFontScaling={false}>
               {body}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+            <DrumFocusText style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -390,19 +405,21 @@ function PeriodLeafImpl({
         <MetalTabs />
         <View style={styles.page}>
           <View style={styles.wrapHeader}>
-            <Text style={styles.wrapHeaderText} numberOfLines={1}>
+            <DrumBlob variant="band" />
+            <DrumFocusText style={styles.wrapHeaderText} numberOfLines={1}>
               {header}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.dayBody}>
-            <Text style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
+            <DrumBlob variant="body" />
+            <DrumFocusText style={styles.dayNumeral} numberOfLines={1} allowFontScaling={false}>
               {dayNum}
-            </Text>
+            </DrumFocusText>
           </View>
           <View style={styles.wrapFooter}>
-            <Text style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
+            <DrumFocusText style={styles.wrapFooterText} numberOfLines={1} allowFontScaling={false}>
               {footer}
-            </Text>
+            </DrumFocusText>
           </View>
         </View>
       </View>
@@ -416,9 +433,10 @@ function PeriodLeafImpl({
       <MetalTabs />
       <View style={styles.page}>
         <View style={styles.wrapHeader}>
-          <Text style={styles.wrapHeaderText} numberOfLines={2}>
+          <DrumBlob variant="band" />
+          <DrumFocusText style={styles.wrapHeaderText} numberOfLines={2}>
             {wrapLine}
-          </Text>
+          </DrumFocusText>
         </View>
         <View style={styles.wrapBodyEmpty} />
       </View>

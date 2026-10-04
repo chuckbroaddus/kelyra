@@ -13,6 +13,9 @@
  * RM: drop rotateY/perspective; keep 1:1 drag, scale, opacity, short snap, taps, hierarchy.
  * CAL-P6-1A: full-band stage claim on start (LTR+RTL, beats iOS left-edge pop); commit on snap only.
  * CAL-3DW-08: side hits live outside scale so screen hit ≥56×56 at |d|=2.
+ * CAL-DRUM-PH (variant C): a fast flick (> ~8 periods/s) turns every card into the
+ * placeholder card (pre-blurred blob + shimmer, no live blur); under ~6/s the cards
+ * focus back in center first. UI-thread speed driver — DrumPlaceholder.tsx.
  */
 import {
   Component,
@@ -47,6 +50,10 @@ import Reanimated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import {
+  DrumFocusProvider,
+  useDrumPlaceholderDriver,
+} from '@/components/calendar/DrumPlaceholder';
 import { PeriodLeaf, type PeriodLeafRole } from '@/components/calendar/PeriodLeaf';
 import { GhostButton } from '@/components/ui/Button';
 import {
@@ -495,6 +502,14 @@ export function PeriodPager({
     [drivePosition, pitch],
   );
 
+  // CAL-DRUM-PH: drum speed → placeholder / center-first focus (UI thread).
+  const placeholderDriver = useDrumPlaceholderDriver({
+    anchorPos: anchorPosShared,
+    drag: dragShared,
+    pitch,
+    reduceMotion,
+  });
+
   const onFail = useCallback(() => setFailed(true), []);
 
   // Failed leaf → FallbackToolbar (no drum). Drop any held stack-gesture gate.
@@ -774,6 +789,9 @@ export function PeriodPager({
       parkedOffset: parked,
       flinging,
       distanceFromOrigin,
+      // CAL-DRUM-PH: the speed-driven placeholder card replaces the old fling dim,
+      // so every card stays full while flinging (rest policy still dims far cards).
+      clearRadius: Number.POSITIVE_INFINITY,
       // CAL-DRUM-FOLLOW: list can park the drum mid-turn, pulling ±2 beside
       // center — keep it full (not the gray silhouette).
       fullRadius: followPosition ? 2 : undefined,
@@ -792,14 +810,16 @@ export function PeriodPager({
       },
     };
     const leaf = (
-      <PeriodLeaf
-        tile={tile}
-        role={role}
-        showCenterExtras={isCenter && showCenterExtras}
-        motionCompact={flinging || !showCenterExtras}
-        contentMode={contentMode}
-        width={WHEEL_HERO_WIDTH}
-      />
+      <DrumFocusProvider driver={placeholderDriver} index={index}>
+        <PeriodLeaf
+          tile={tile}
+          role={role}
+          showCenterExtras={isCenter && showCenterExtras}
+          motionCompact={flinging || !showCenterExtras}
+          contentMode={contentMode}
+          width={WHEEL_HERO_WIDTH}
+        />
+      </DrumFocusProvider>
     );
     // Native: scale SoT leaf into the compact row box (chrome stays proportional).
     const visual =
