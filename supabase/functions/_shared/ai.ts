@@ -6,7 +6,6 @@
  * Speech-to-text stays on xAI (transcribe/); do not route STT here.
  */
 
-import { HOMEWORK_GRADING_RULES } from './homeworkGrading.ts';
 import {
   DEFAULT_MONTHLY_CAP_USD,
   FLAGSHIP_MODEL,
@@ -39,38 +38,8 @@ export function resolveAiProvider(): AiProvider {
   throw new Error('GEMINI_API_KEY or XAI_API_KEY is not set');
 }
 
-export const homeworkPrompt = `You are helping a K-12 teacher review one student's work.
-Look only at the photo. Return JSON only, no markdown:
-{"gaps":[{"label":"short skill name","sortOrder":1}],"draftScore":null,"teacherNote":"one short sentence or null","items":[{"n":1,"question":"printed question as written","expected":"your own answer","seen":"what the student wrote","credit":1,"of":1,"confidence":"high"}]}
-Rules:
-- 1 to 3 gaps only when work shows a real skill miss. Labels are short, like "two-digit regrouping" or "thesis clarity". Correct complete work may use gaps:[].
-- items: one row per question you can see. draftScore is a percentage 0-100 (it is recomputed from item credits). null if you cannot grade.
-- If the image is blank, unreadable, a syllabus/policy sheet, a teacher answer key, or not student work, return {"gaps":[],"draftScore":null,"teacherNote":null,"items":[]}
-- Do not invent a student name or extra biography. Do not emit the example row above as if it were this page.
-${HOMEWORK_GRADING_RULES}`;
 
-export function practicePrompt(skillLabel: string): string {
-  return `You write short paper practice items for one K-12 skill: ${skillLabel}.
-Return JSON only, no markdown:
-{"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"optional short key"}]}
-Rules:
-- 4 to 6 items.
-- Age-appropriate. No student names. No images.
-- Prompts are one or two sentences.`;
-}
 
-export const submissionReviewPrompt = `You are helping a K-12 teacher review one student's submitted work.
-Return JSON only, no markdown:
-{"summary":"one or two sentences","draftScore":null,"teacherNote":"short Glow/Grow or null","gaps":[{"label":"short skill name","sortOrder":1}],"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"short key"}]}
-Rules:
-- summary is what they turned in, not a biography.
-- draftScore is 0-100 when you can grade the work, otherwise null.
-- 0 to 3 gaps. Labels are short, like "two-digit regrouping". Empty if there is no skill gap worth follow-up.
-- If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
-- If there is no gap, items must be [].
-- Keep any teacher-typed gap labels and practice questions listed below. You may add more, not delete theirs.
-- Age-appropriate. No student names. No images.
-- For lessons, skipped items, extra tries, answers that were wrong first then corrected, and hints can show a skill gap even when the last answer is right. Prefer a gap when those cluster. Do not invent a gap from clean first-try work.`;
 
 /**
  * Text/vision key for Edge jobs. Prefer GEMINI_API_KEY; fall back to XAI_API_KEY.

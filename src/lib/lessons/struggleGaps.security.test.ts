@@ -67,7 +67,7 @@ test('queued review seeds prior from stem drafts and never wipe-to-empty', () =>
 });
 
 test('Edge + client prompts include lesson struggle line', () => {
-  const shared = read('supabase/functions/_shared/ai.ts');
+  const shared = read('supabase/functions/_shared/aiPrompts.ts');
   const client = read('src/lib/practice/review.ts');
   const line =
     /For lessons, skipped items, extra tries, answers that were wrong first then corrected, and hints/;
