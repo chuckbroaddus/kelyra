@@ -19,7 +19,7 @@ Return JSON only, no markdown:
 {"summary":"one or two sentences","draftScore":null,"teacherNote":"short Glow/Grow or null","gaps":[{"label":"short skill name","sortOrder":1}],"items":[{"id":"item-1","prompt":"one sentence the student can answer on paper","answerKey":"short key"}]}
 Rules:
 - summary is what they turned in, not a biography.
-- draftScore is 0-100 when you can grade the work, otherwise null.
+- draftScore is 0-100 when you can grade the work, otherwise null. When items list Expected answers, count how many Student answers match Expected first (blank = wrong); draftScore = round(100 × correct ÷ items). Never score above that count.
 - 0 to 3 gaps. Labels are short, like "two-digit regrouping". Empty if there is no skill gap worth follow-up.
 - If there is at least one gap, items must be 4 to 6 short follow-up practice questions for the first gap.
 - If there is no gap, items must be [].

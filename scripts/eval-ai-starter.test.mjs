@@ -22,3 +22,12 @@ test('starter rubric: explain must stay ephemeral', () => {
   });
   assert.equal(checks.find((c) => c.name === 'ephemeral (no write)').pass, false);
 });
+
+test('review rubric applies the review-submission keyed score guard', async () => {
+  const { parseWorkText } = await import('./eval-ai-starter.mjs');
+  const work = 'Assignment: R\nKind: practice\n\n1. 47 + 38\n   Expected: 85\n   Student: 75\n2. 23 + 14\n   Expected: 37\n   Student: 37';
+  assert.deepEqual(parseWorkText(work).answers, { 'item-1': '75', 'item-2': '37' });
+  const reply = '{"summary":"s","draftScore":90,"gaps":[{"label":"regrouping"}],"items":[]}';
+  const checks = runChecks('review', { scoreMax: 60 }, { status: 200, json: { text: reply } }, { work });
+  assert.equal(checks.find((c) => c.name === 'scoreMax').pass, true);
+});

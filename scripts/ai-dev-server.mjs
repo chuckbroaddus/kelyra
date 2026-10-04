@@ -46,6 +46,7 @@ import {
 } from '../supabase/functions/_shared/aiPrompts.ts';
 import { homeworkPrompt } from '../supabase/functions/_shared/homeworkPrompts.ts';
 import { finalizeRosterExtract } from '../supabase/functions/_shared/rosterExtract.ts';
+import { keyedScore, reconcileDraftScore } from '../supabase/functions/_shared/reviewScore.ts';
 import { finalizeSpeechIntent } from '../supabase/functions/_shared/speechIntent.ts';
 import {
   evaluatePromptText,
@@ -534,6 +535,7 @@ async function reviewSubmission(supabase, body) {
     () => ac.abort(),
   );
   const incoming = parseSubmissionReview(extractJson(outputText(payload)));
+  incoming.draftScore = reconcileDraftScore(incoming.draftScore, keyedScore(items, answers));
   if (
     !incoming.summary &&
     !incoming.gaps.length &&
