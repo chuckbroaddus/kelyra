@@ -75,6 +75,7 @@ import {
 } from '../supabase/functions/_shared/askHomeworkRefuse.ts';
 import { formatTutorBriefForAsk, parseTutorBriefSafe } from '../supabase/functions/_shared/tutorBrief.ts';
 import { canPublish } from '../supabase/functions/_shared/publishLessonPackPolicy.ts';
+import { buildExplainPrompt, redactExplainDraft } from '../supabase/functions/_shared/explainPrivacy.ts';
 import {
   homeworkPageAssetIdsForModel,
   isHomeworkPageImageMime,
@@ -2109,16 +2110,54 @@ async function explainCapture(supabase, body) {
   const keyed = Boolean(keyItems) || Boolean(extract);
   if (imageUrl && !isAllowedAskImageUrl(imageUrl)) throw new Error("Image URL is not allowed.");
 
-  const prompt = `You write a TEACHER Explain draft for one student capture.
-Return JSON only. Pedagogy DRAFT only — never a grade.`;
-  const contextBits = [
-    `capture_id=${captureId}`,
-    capture.student_id ? "student bound" : "student unassigned",
-    keyed ? "keyed path" : "freeform path",
-    keyItems ? `key_items=${JSON.stringify(keyItems).slice(0, 4000)}` : null,
-    extract ? `extract_marks=${JSON.stringify(extract).slice(0, 4000)}` : null,
-  ].filter(Boolean).join("\n");
-  const content = [{ type: "input_text", text: `${prompt}\n\nContext:\n${contextBits}` }];
+  let studentDisplayName = null;
+  if (capture.student_id) {
+    try {
+      const { data: studentRow } = await supabase
+        .from("students")
+        .select("display_name")
+        .eq("id", capture.student_id)
+        .maybeSingle();
+      studentDisplayName = String(studentRow?.display_name ?? "").trim() || null;
+    } catch {
+      studentDisplayName = null;
+    }
+  }
+  let classmateNames = [];
+  try {
+    const { data: enrolled } = await supabase
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", classId);
+    const ids = (enrolled ?? [])
+      .map((row) => String(row?.student_id ?? ""))
+      .filter((id) => id && id !== capture.student_id);
+    if (ids.length) {
+      const { data: classmates } = await supabase
+        .from("students")
+        .select("display_name")
+        .in("id", ids);
+      classmateNames = (classmates ?? [])
+        .map((row) => String(row?.display_name ?? "").trim())
+        .filter((name) => name.length > 1)
+        .slice(0, 80);
+    }
+  } catch {
+    classmateNames = [];
+  }
+
+  const prompt = buildExplainPrompt({
+    captureId,
+    studentBound: Boolean(capture.student_id),
+    studentFirstName: studentDisplayName ? firstNameOnly(studentDisplayName) : null,
+    keyed,
+    keyItems,
+    extract,
+    assignment_title: capture.assignment_title ?? null,
+    assignment_unit: capture.assignment_unit ?? null,
+    assignment_section: capture.assignment_section ?? null,
+  });
+  const content = [{ type: "input_text", text: prompt }];
   if (imageUrl) {
     content.unshift({
       type: "input_image",
@@ -2133,13 +2172,16 @@ Return JSON only. Pedagogy DRAFT only — never a grade.`;
   const parsed = extractJson(outputText(payload)) || {};
   const stepsRaw = Array.isArray(parsed.steps) ? parsed.steps : [];
   const steps = stepsRaw.map((s) => String(s ?? "").trim()).filter(Boolean).slice(0, 12);
-  const draft = {
+  const draft = redactExplainDraft({
     schema_version: 1,
     capture_id: captureId,
     source: parsed.source === "keyed" || keyed ? "keyed" : "freeform",
     steps: steps.length ? steps : ["Review the work with the student and note the first missed skill."],
     reteach: typeof parsed.reteach === "string" && parsed.reteach.trim() ? parsed.reteach.trim() : null,
-  };
+  }, {
+    studentName: studentDisplayName,
+    otherStudentNames: classmateNames,
+  });
   if (profile.role === "teacher") {
     const { data: parked, error: parkError } = await supabase.rpc("park_explain_draft", {
       p_capture_id: captureId,
