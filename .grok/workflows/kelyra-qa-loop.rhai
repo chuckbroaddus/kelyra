@@ -486,7 +486,6 @@ fn impl_opts(label, resume_id, schema, type_name) {
     let opts = #{
         label: label,
         agent_type: type_name,
-        model: "grok-4.5",
         capability_mode: "all",
         isolation_worktree: false,
         output_schema: schema,
@@ -501,7 +500,6 @@ fn qa_opts(label, schema, type_name) {
     #{
         label: label,
         agent_type: type_name,
-        model: "grok-4.5",
         capability_mode: "read-only",
         output_schema: schema,
     }
@@ -511,7 +509,6 @@ fn verify_opts(schema) {
     #{
         label: "[verify] typecheck and tests",
         agent_type: "general-purpose",
-        model: "grok-4.5",
         capability_mode: "execute",
         output_schema: schema,
     }
@@ -672,7 +669,7 @@ let impl_type = "kelyra-implementer";
 let qa_type = "kelyra-qa";
 
 phase("Implement");
-log("Implementing in the current working tree (kelyra-implementer, grok-4.5)");
+log("Implementing in the current working tree (kelyra-implementer, default model)");
 let impl_res = agent(impl_initial_prompt(request_json), impl_opts("[kelyra-implementer] implement", (), impl_schema, impl_type));
 if !agent_ok(impl_res) && unknown_subagent_type(impl_res) {
     log("kelyra-implementer is not a registered agent type; falling back to general-purpose with the same persona prompt");
@@ -692,7 +689,7 @@ let looping = true;
 while looping {
     if step == "qa" {
         phase("QA");
-        log("Read-only QA (kelyra-qa, grok-4.5)");
+        log("Read-only QA (kelyra-qa, default model)");
         let qa_res = agent(qa_prompt(request_json, encode(impl_out)), qa_opts("[kelyra-qa] review", qa_schema, qa_type));
         if !agent_ok(qa_res) && unknown_subagent_type(qa_res) {
             log("kelyra-qa is not a registered agent type; falling back to general-purpose with the same persona prompt");
@@ -772,7 +769,7 @@ while looping {
         } else {
             security_ran = true;
             phase("Security");
-            log("Read-only security QA (kelyra-qa, grok-4.5)");
+            log("Read-only security QA (kelyra-qa, default model)");
             let sec_res = agent(security_prompt(request_json, encode(impl_out), encode(last_security_blocking)), qa_opts("[kelyra-qa] security review", qa_schema, qa_type));
             if !agent_ok(sec_res) {
                 log("Security QA failed; retrying once");
