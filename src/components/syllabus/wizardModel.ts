@@ -39,6 +39,8 @@ export type SyllabusCategoryDraft = {
   active: boolean;
   group?: 'formative' | 'summative' | null;
   default_include_in_average: boolean;
+  default_score_scheme?: string;
+  suggested_work_kinds?: string[];
   min_grades_per_term?: number | null;
   rules: CategoryRules;
   drop_highest_n?: number;
@@ -100,6 +102,8 @@ export function defaultPolicies(): SyllabusPolicies {
 }
 
 export function emptyCategory(label: string, key: string, sort_order: number): SyllabusCategoryDraft {
+  const process = key === 'participation' || key === 'behavior' || key === 'effort';
+  const esnu = key === 'behavior' || key === 'effort';
   return {
     key,
     label,
@@ -108,6 +112,12 @@ export function emptyCategory(label: string, key: string, sort_order: number): S
     active: true,
     group: null,
     default_include_in_average: false,
+    default_score_scheme: esnu
+      ? 'esnu'
+      : process || key === 'memory_verse' || key === 'reading_log'
+        ? 'complete_incomplete'
+        : 'numeric',
+    suggested_work_kinds: [key],
     min_grades_per_term: null,
     rules: { drop_lowest_n: 0, replace_lowest_with_makeup: { enabled: false, max_replacements: 1 } },
     drop_highest_n: 0,

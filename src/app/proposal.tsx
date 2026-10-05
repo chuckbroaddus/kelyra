@@ -1162,7 +1162,12 @@ export default function ProposalScreen() {
                 : undefined
             }
           />
-          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Kind</Text>
+          <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>
+            Kind of work
+          </Text>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Optional. Labels this capture in Needs. You still Approve before it is a grade. AI may suggest; you confirm.
+          </Text>
           <ChipRow>
             {GRADE_KINDS.map((kind) => (
               <Chip
@@ -1204,6 +1209,36 @@ export default function ProposalScreen() {
                 setDirty(true);
               }}
             />
+            <Chip
+              label="Complete"
+              selected={scoreMark === 'complete'}
+              onPress={() => {
+                setScoreMark('complete');
+                setScore('100');
+                setDirty(true);
+              }}
+            />
+            <Chip
+              label="Incomplete"
+              selected={scoreMark === 'incomplete'}
+              onPress={() => {
+                setScoreMark('incomplete');
+                setScore('0');
+                setDirty(true);
+              }}
+            />
+            {(['E', 'S', 'N', 'U'] as const).map((mark) => (
+              <Chip
+                key={mark}
+                label={mark}
+                selected={scoreMark === mark}
+                onPress={() => {
+                  setScoreMark(mark);
+                  setScore('');
+                  setDirty(true);
+                }}
+              />
+            ))}
           </ChipRow>
           {scoreMark === 'numeric' ? (
             <TextField
@@ -1217,7 +1252,7 @@ export default function ProposalScreen() {
             />
           ) : (
             <Text style={[type.meta, { color: colors.mute }]}>
-              {formatScoreMark(scoreMark, null)} is not averaged with number grades.
+              {formatScoreMark(scoreMark, null)} is not averaged with number grades unless this column counts.
             </Text>
           )}
           {keyDraftItems.length ? (

@@ -3,6 +3,7 @@
  * Blank when syllabus is not published with weights.
  */
 
+import type { ScoreMark } from './marks.ts';
 import {
   computeSyllabusAverage,
   type AverageAssignment,
@@ -26,7 +27,7 @@ export type TeacherOverallAssignment = {
 export type TeacherOverallCell = {
   assignmentId: string;
   approvedScore: number | null;
-  scoreMark?: 'numeric' | 'pass' | 'fail' | null;
+  scoreMark?: ScoreMark | null;
   status?: string | null;
   approved?: boolean;
 };

@@ -1,6 +1,8 @@
 import { buildAssignmentTree, type BookNode } from '@/lib/assignments/tree';
 import { asSubmissionStatus, isAwaitingGrade, isGraded, submissionStatusLabel } from '@/lib/assignments/status';
-import { formatScoreMark, numericScoreForAverage, parseGradeTerm, type ScoreMark } from '@/lib/grade/marks';
+import { formatScoreMark, numericScoreForAverage, parseGradeTerm, parseScoreMark, type ScoreMark } from '@/lib/grade/marks';
+
+export { parseScoreMark };
 import { computeTeacherStudentOveralls } from '@/lib/grade/teacherOveralls';
 import {
   computeSyllabusAverage,
@@ -81,7 +83,7 @@ export async function loadGradebook(classId: string): Promise<Gradebook> {
       cells[cellKey(row.assignment_id, row.student_id)] = {
         status: row.status,
         score: row.approved_score,
-        scoreMark: row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
+        scoreMark: parseScoreMark(row.score_mark),
         submissionId: row.id,
         kind: assignment?.kind ?? null,
         answers: row.answers,
@@ -161,7 +163,7 @@ function mapGradebookRows(
       cells[cellKey(row.assignment_id, student.id)] = {
         status: row.status ?? null,
         score: row.approved_score ?? null,
-        scoreMark: row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
+        scoreMark: parseScoreMark(row.score_mark),
         submissionId: row.submission_id ?? null,
         kind: asKind(row.kind),
         // Family RPC never returns answers; student path may keep lesson labels.

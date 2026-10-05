@@ -1,32 +1,64 @@
-export type ScoreMark = 'numeric' | 'pass' | 'fail';
-export type GradeKind =
-  | 'homework'
-  | 'quiz'
-  | 'test'
-  | 'midterm'
-  | 'final'
-  | 'project'
-  | 'presentation'
-  | 'participation'
-  | 'behavior'
-  | 'other';
+import {
+  WORK_KINDS,
+  parseSpokenWorkKind,
+  parseWorkKind,
+  workKindLabel,
+  type WorkKind,
+} from './workKinds.ts';
 
-export const GRADE_KINDS: Array<{ key: GradeKind; label: string }> = [
-  { key: 'homework', label: 'Homework' },
-  { key: 'quiz', label: 'Quiz' },
-  { key: 'test', label: 'Test' },
-  { key: 'midterm', label: 'Mid-term' },
-  { key: 'final', label: 'Final' },
-  { key: 'project', label: 'Project' },
-  { key: 'presentation', label: 'Presentation' },
-  { key: 'participation', label: 'Class participation' },
-  { key: 'behavior', label: 'Behavior' },
-  { key: 'other', label: 'Other' },
-];
+/** Cell mark codes. Non-numeric marks never invent a grade until Approve. */
+export type ScoreMark =
+  | 'numeric'
+  | 'pass'
+  | 'fail'
+  | 'complete'
+  | 'incomplete'
+  | 'E'
+  | 'S'
+  | 'N'
+  | 'U'
+  | 'checklist';
+
+/** @deprecated Prefer WorkKind from workKinds.ts. Kept for legacy category keys. */
+export type GradeKind =
+  | WorkKind
+  | 'midterm'
+  | 'final';
+
+/** Syllabus seed + filter chips: canonical work kinds (includes Christian presets). */
+export const GRADE_KINDS: Array<{ key: GradeKind; label: string }> = WORK_KINDS.map((row) => ({
+  key: row.key,
+  label: row.label,
+}));
 
 export type WeightBand = 'none' | 'daily' | 'major' | 'custom';
 export type GradeTerm = 'q1' | 'q2' | 'q3' | 'q4' | 's1' | 's2' | 'year';
-export type ScoreScheme = 'numeric' | 'pass_fail' | 'either';
+
+/** How a column is marked. complete/incomplete, ESNU, checklist join numeric / P-F. */
+export type ScoreScheme =
+  | 'numeric'
+  | 'pass_fail'
+  | 'either'
+  | 'complete_incomplete'
+  | 'esnu'
+  | 'checklist';
+
+export const SCORE_SCHEMES: Array<{ key: ScoreScheme; label: string }> = [
+  { key: 'numeric', label: 'Number' },
+  { key: 'pass_fail', label: 'Pass/Fail' },
+  { key: 'either', label: 'Either' },
+  { key: 'complete_incomplete', label: 'Complete/Incomplete' },
+  { key: 'esnu', label: 'E / S / N / U' },
+  { key: 'checklist', label: 'Checklist' },
+];
+
+/** Schemes that never feed a numeric average unless mapped (still optional include). */
+export const NON_NUMERIC_SCORE_SCHEMES = new Set<ScoreScheme>([
+  'pass_fail',
+  'complete_incomplete',
+  'esnu',
+  'checklist',
+]);
 
 export const WEIGHT_BANDS: Array<{ key: WeightBand; label: string }> = [
   { key: 'none', label: 'No weight' },
@@ -125,24 +157,73 @@ export function matchesGradeTermFilter(row: { term?: string | null }, filter: st
 }
 
 export function gradeKindLabel(kind: GradeKind | string | null | undefined): string {
-  return GRADE_KINDS.find((row) => row.key === kind)?.label ?? 'Grade';
+  return workKindLabel(kind) !== 'Other' || GRADE_KINDS.some((row) => row.key === kind)
+    ? workKindLabel(kind)
+    : GRADE_KINDS.find((row) => row.key === kind)?.label ?? 'Grade';
 }
 
 export function formatScoreMark(mark: ScoreMark | null | undefined, score: number | null | undefined): string {
   if (mark === 'pass') return 'Pass';
   if (mark === 'fail') return 'Fail';
+  if (mark === 'complete') return 'Complete';
+  if (mark === 'incomplete') return 'Incomplete';
+  if (mark === 'E' || mark === 'S' || mark === 'N' || mark === 'U') return mark;
+  if (mark === 'checklist') {
+    if (score != null && Number.isFinite(score)) return `${Math.round(score)}% skills`;
+    return 'Checklist';
+  }
   if (score != null && Number.isFinite(score)) return String(score);
   return '';
 }
 
-/** Pass / Fail never enter a numeric average. */
+const SCORE_MARK_SET = new Set<ScoreMark>([
+  'numeric',
+  'pass',
+  'fail',
+  'complete',
+  'incomplete',
+  'E',
+  'S',
+  'N',
+  'U',
+  'checklist',
+]);
+
+export function parseScoreMark(value: string | null | undefined): ScoreMark {
+  if (value && SCORE_MARK_SET.has(value as ScoreMark)) return value as ScoreMark;
+  return 'numeric';
+}
+
+/**
+ * Map an approved cell into a 0–100 for weighted averages.
+ * Pass/Fail never enter. Complete=100, Incomplete=0.
+ * ESNU: E=100, S=85, N=70, U=50 (only when the column counts in the average).
+ * Checklist uses approved_score as percent of skills met.
+ */
 export function numericScoreForAverage(
   mark: ScoreMark | null | undefined,
   score: number | null | undefined,
 ): number | null {
+  if (mark === 'pass' || mark === 'fail') return null;
+  if (mark === 'complete') return 100;
+  if (mark === 'incomplete') return 0;
+  if (mark === 'E') return 100;
+  if (mark === 'S') return 85;
+  if (mark === 'N') return 70;
+  if (mark === 'U') return 50;
+  if (mark === 'checklist') {
+    if (score == null || !Number.isFinite(score)) return null;
+    return score;
+  }
   if (mark && mark !== 'numeric') return null;
-  if (score == null || !Number.isFinite(score)) return null;
-  return score;
+  if (score != null && Number.isFinite(score)) return score;
+  return null;
+}
+
+/** True when this scheme's marks are excluded from averages unless mapped (P/F always out). */
+export function scoreSchemeCountsInAverage(scheme: ScoreScheme | string | null | undefined): boolean {
+  if (scheme === 'pass_fail') return false;
+  return true;
 }
 
 export function parseScoreInput(value: string): { mark: ScoreMark; score: number | null } {
@@ -150,9 +231,36 @@ export function parseScoreInput(value: string): { mark: ScoreMark; score: number
   if (!text) return { mark: 'numeric', score: null };
   if (/^(pass|passed|p)$/.test(text)) return { mark: 'pass', score: null };
   if (/^(fail|failed|f)$/.test(text)) return { mark: 'fail', score: null };
+  if (/^(complete|done)$/.test(text) || text === 'c') return { mark: 'complete', score: 100 };
+  if (text === 'incomplete' || text === 'inc') return { mark: 'incomplete', score: 0 };
+  if (/^e$/.test(text) || /^excellent$/.test(text)) return { mark: 'E', score: 100 };
+  if (/^s$/.test(text) || /^satisfactory$/.test(text)) return { mark: 'S', score: 85 };
+  if (/^n$/.test(text) || /^needs/.test(text)) return { mark: 'N', score: 70 };
+  if (/^u$/.test(text) || /^unsatisfactory$/.test(text)) return { mark: 'U', score: 50 };
   const n = Number(text);
   if (Number.isFinite(n) && n >= 0 && n <= 100) return { mark: 'numeric', score: n };
   return { mark: 'numeric', score: null };
+}
+
+export type ChecklistSkill = { id: string; label: string };
+export type ChecklistSkillMark = 'E' | 'S' | 'N' | 'U' | 'complete' | 'incomplete' | 'met' | 'not_met' | null;
+
+/** Percent of checklist skills met (met/complete/E/S count; N/U/incomplete/not_met do not). */
+export function checklistPercent(
+  skills: ChecklistSkill[],
+  marks: Record<string, ChecklistSkillMark | undefined> | null | undefined,
+): number | null {
+  if (!skills.length) return null;
+  let met = 0;
+  let scored = 0;
+  for (const skill of skills) {
+    const m = marks?.[skill.id] ?? null;
+    if (m == null) continue;
+    scored += 1;
+    if (m === 'met' || m === 'complete' || m === 'E' || m === 'S') met += 1;
+  }
+  if (!scored) return null;
+  return Math.round((met / skills.length) * 1000) / 10;
 }
 
 export function looksLikeSkipGrade(text: string): boolean {
@@ -162,17 +270,7 @@ export function looksLikeSkipGrade(text: string): boolean {
 }
 
 export function parseSpokenGradeKind(text: string): GradeKind | null {
-  const t = text.toLowerCase();
-  if (/\b(class )?participation|participate|participating\b/.test(t)) return 'participation';
-  if (/\bpresentation|presenting\b/.test(t)) return 'presentation';
-  if (/\bbehavior|conduct|citizenship\b/.test(t)) return 'behavior';
-  if (/\bmid[-\s]?term\b/.test(t)) return 'midterm';
-  if (/\bfinal\b/.test(t)) return 'final';
-  if (/\bunit test|chapter test|\btest\b/.test(t)) return 'test';
-  if (/\bquiz|exit ticket\b/.test(t)) return 'quiz';
-  if (/\bproject\b/.test(t)) return 'project';
-  if (/\bhomework|worksheet|packet|hw\b/.test(t)) return 'homework';
-  return null;
+  return parseSpokenWorkKind(text);
 }
 
 export function weightSummary(input: {

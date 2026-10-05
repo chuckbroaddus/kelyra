@@ -194,6 +194,7 @@ export type AssignmentRow = {
   max_score: number | null;
   created_at: string;
   category?: string;
+  work_kind?: string;
   weight_band?: string;
   weight_percent?: number | null;
   term?: string;
@@ -225,6 +226,7 @@ export type AssignmentRow = {
   beat_start?: string | null;
   beat_end?: string | null;
   help_mode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+  checklist_skills?: Array<{ id: string; label: string }>;
   calendar_visibility?: 'hidden' | 'published' | null;
   calendar_published_at?: string | null;
   calendar_published_by?: string | null;
@@ -254,7 +256,18 @@ export type SubmissionRow = {
   help_used?: Record<string, Record<string, number>> | null;
   draft_score: number | null;
   approved_score: number | null;
-  score_mark?: 'numeric' | 'pass' | 'fail';
+  score_mark?:
+    | 'numeric'
+    | 'pass'
+    | 'fail'
+    | 'complete'
+    | 'incomplete'
+    | 'E'
+    | 'S'
+    | 'N'
+    | 'U'
+    | 'checklist';
+  checklist_marks?: Record<string, string | null> | null;
   model_draft?: Record<string, unknown> | null;
   submitted_at: string | null;
   approved_at: string | null;
@@ -407,8 +420,19 @@ export type CaptureRow = {
   model_draft: Record<string, unknown> | null;
   draft_score: number | null;
   approved_score: number | null;
-  score_mark?: 'numeric' | 'pass' | 'fail';
+  score_mark?:
+    | 'numeric'
+    | 'pass'
+    | 'fail'
+    | 'complete'
+    | 'incomplete'
+    | 'E'
+    | 'S'
+    | 'N'
+    | 'U'
+    | 'checklist';
   grade_kind?: string;
+  work_kind_hint?: string | null;
   teacher_note: string | null;
   parent_sentence: string | null;
   created_at: string;
@@ -731,7 +755,17 @@ export type Database = {
           draft_score?: number | null;
           approved_score?: number | null;
           approved_at?: string | null;
-          score_mark?: 'numeric' | 'pass' | 'fail';
+          score_mark?:
+            | 'numeric'
+            | 'pass'
+            | 'fail'
+            | 'complete'
+            | 'incomplete'
+            | 'E'
+            | 'S'
+            | 'N'
+            | 'U'
+            | 'checklist';
           model_draft?: Record<string, unknown> | null;
         },
         Partial<Omit<SubmissionRow, 'id' | 'assignment_id' | 'student_id' | 'created_at'>>
