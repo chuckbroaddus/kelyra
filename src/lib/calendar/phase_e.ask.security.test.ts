@@ -53,7 +53,21 @@ test('Phase E askTools: search uses listCalendarItems; draft parks CR-A; refuse 
   const draftStart = tools.indexOf('calendar_draft_event:');
   assert.ok(searchStart > 0 && draftStart > searchStart);
   const search = tools.slice(searchStart, draftStart);
-  const draft = tools.slice(draftStart, draftStart + 4500);
+  // Brace-bound the tool — a fixed +4500 slice bled into PARENT_SEAT_DENIED_TOOLS.
+  let depth = 0;
+  let draftEnd = draftStart;
+  const braceAt = tools.indexOf('{', draftStart);
+  for (let j = braceAt; j < tools.length; j++) {
+    if (tools[j] === '{') depth++;
+    else if (tools[j] === '}') {
+      depth--;
+      if (depth === 0) {
+        draftEnd = j + 1;
+        break;
+      }
+    }
+  }
+  const draft = tools.slice(draftStart, draftEnd);
   const searchRun = search.slice(search.indexOf('run:'));
   const draftRun = draft.slice(draft.indexOf('run:'));
   assert.match(searchRun, /listCalendarItems/);

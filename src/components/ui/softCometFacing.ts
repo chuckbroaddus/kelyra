@@ -5,7 +5,7 @@
  *
  * HTML Soft v8b host remains design SoT only; WebView Soft is abandoned.
  */
-import { COMET_ORBIT, LETTER_INK, SOFT_MOTION } from './softLetterScale';
+import { COMET_ORBIT, LETTER_INK, SOFT_MOTION } from './softLetterScale.ts';
 
 /** Trail bead count — thick enough for ~40px chrome. */
 export const BEAD_N = 14;

@@ -162,9 +162,12 @@ test('MULT-01 setActiveClassId clears Ask ground; chrome refreshes on classId', 
   assert.match(auth, /clearAskGroundOnActiveClassChange/);
   assert.match(auth, /active_class_id !== classId/);
   assert.doesNotMatch(auth, /setAskJustChatting/);
-  // P3 E1: clear runs outside the setTeacher updater (updater stays pure).
-  const clearIdx = auth.indexOf('clearAskGroundOnActiveClassChange()');
-  const updaterIdx = auth.indexOf('setTeacher((current)');
+  // Scope to setActiveClassId — an earlier setTeacher((current) in the file is unrelated.
+  const fnStart = auth.indexOf('const setActiveClassId');
+  assert.ok(fnStart > 0);
+  const fn = auth.slice(fnStart, auth.indexOf('const value = useMemo', fnStart));
+  const clearIdx = fn.indexOf('clearAskGroundOnActiveClassChange()');
+  const updaterIdx = fn.indexOf('setTeacher((current)');
   assert.ok(clearIdx > 0 && updaterIdx > 0 && clearIdx < updaterIdx);
   const chrome = read('src/components/ask/AskAssignmentGround.tsx');
   assert.match(chrome, /prevClassIdRef/);
@@ -183,7 +186,8 @@ test('P2 E1 hamburger class switch: setActiveClassId before refreshChrome/go', (
   );
   const setId = press.indexOf('setActiveClassId(klass.id)');
   const refresh = press.indexOf('chromeState.refreshChrome()');
-  const go = press.indexOf('go(teacherSeat');
+  // eb61ff23: go(`/admin/class/${klass.id}`, true) — not go(teacherSeat…).
+  const go = press.indexOf('go(`/admin/class/${klass.id}`');
   assert.ok(setId >= 0 && refresh >= 0 && go >= 0);
   assert.ok(setId < refresh && setId < go);
   assert.match(press, /void setActiveClass\(teacher\.id, klass\.id\)/);

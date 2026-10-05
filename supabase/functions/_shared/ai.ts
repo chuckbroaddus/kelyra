@@ -613,27 +613,100 @@ export function runInBackground(work: Promise<unknown>): void {
   if (runtime?.waitUntil) runtime.waitUntil(guarded);
 }
 
-function meterUsage(
+/** Chrome seat recorded on ai_usage (parent/student/office/teacher). */
+export type AiMeterSeat = 'teacher' | 'parent' | 'student' | 'office';
+
+/** Map profiles.role / my_role() onto ai_usage.seat. */
+export function seatFromSchoolRole(role: string | null | undefined): AiMeterSeat | null {
+  if (role === 'teacher') return 'teacher';
+  if (role === 'parent') return 'parent';
+  if (role === 'student') return 'student';
+  if (role === 'superintendent' || role === 'administrator') return 'office';
+  return null;
+}
+
+/** Insert payload for public.ai_usage. teacher_id only when the caller has a teachers row. */
+export function buildAiUsageInsert(input: {
+  schoolId: string;
+  userId: string | null;
+  isTeacher: boolean;
+  seat: AiMeterSeat | null;
+  functionName: string;
+  model: string;
+  captureId?: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  usd: number;
+}): {
+  school_id: string;
+  user_id: string | null;
+  teacher_id: string | null;
+  seat: AiMeterSeat | null;
+  function: string;
+  model: string;
+  capture_id: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  usd: number;
+} {
+  const userId = input.userId;
+  return {
+    school_id: input.schoolId,
+    user_id: userId,
+    // FK is public.teachers(id) — never put a non-teacher auth uid here.
+    teacher_id: input.isTeacher && userId ? userId : null,
+    seat: input.seat,
+    function: input.functionName,
+    model: input.model,
+    capture_id: input.captureId ?? null,
+    input_tokens: input.inputTokens,
+    output_tokens: input.outputTokens,
+    usd: input.usd,
+  };
+}
+
+/**
+ * Best-effort meter insert. Always sets user_id; teacher_id only for real teachers.
+ * Off the critical path — never throw to the AI caller; log insert failures instead of
+ * silently writing a fake teacher_id that would fail the FK for parents/students/office.
+ */
+export function meterUsage(
   supabase: MeterClient,
   row: { functionName: string; model: string; captureId?: string | null; inputTokens: number; outputTokens: number; usd: number },
 ): Promise<void> {
   return (async () => {
-    // Meter is best-effort and off the critical path. Never fail the teacher draft for a log insert.
-    const [{ data: userData }, { data: schoolId }] = await Promise.all([
-      supabase.auth.getUser(),
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id ?? null;
+    if (!userId) return;
+
+    const [{ data: schoolId }, { data: role }, teacherRes] = await Promise.all([
       supabase.rpc('my_school_id'),
+      supabase.rpc('my_role'),
+      supabase.from('teachers').select('id').eq('id', userId).maybeSingle(),
     ]);
-    if (typeof schoolId === 'string' && schoolId) {
-      await supabase.from('ai_usage').insert({
-        school_id: schoolId,
-        teacher_id: userData?.user?.id ?? null,
-        function: row.functionName,
+    if (typeof schoolId !== 'string' || !schoolId) return;
+
+    const teacherRow = teacherRes?.data as { id?: string } | null | undefined;
+    const isTeacher = Boolean(teacherRow?.id);
+    const roleText = typeof role === 'string' ? role : null;
+    const seat = seatFromSchoolRole(roleText) ?? (isTeacher ? 'teacher' : null);
+
+    const { error } = await supabase.from('ai_usage').insert(
+      buildAiUsageInsert({
+        schoolId,
+        userId,
+        isTeacher,
+        seat,
+        functionName: row.functionName,
         model: row.model,
-        capture_id: row.captureId ?? null,
-        input_tokens: row.inputTokens,
-        output_tokens: row.outputTokens,
+        captureId: row.captureId,
+        inputTokens: row.inputTokens,
+        outputTokens: row.outputTokens,
         usd: row.usd,
-      });
+      }),
+    );
+    if (error) {
+      console.warn('ai_usage meter insert failed', (error as { message?: string }).message ?? error);
     }
   })();
 }

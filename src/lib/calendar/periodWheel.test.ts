@@ -253,7 +253,8 @@ test('PeriodLeaf P1: fixed plate — no MonthHangingGrid/WeekDayStrip; contentMo
   assert.match(leaf, /weekBody/);
   assert.match(leaf, /monthFooterYear/);
   assert.doesNotMatch(leaf, /monthTallHeader|monthHeaderYear/);
-  assert.match(leaf, /Red header on week plate — start month/);
+  // Comment wording now covers week/multiday plates.
+  assert.match(leaf, /Red header on week\/multiday plate — start month/);
   assert.match(leaf, /Footer on month plate — year/);
   assert.match(leaf, /Body on month plate — month name/);
   assert.match(leaf, /dayBody/);

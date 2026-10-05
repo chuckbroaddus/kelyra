@@ -77,16 +77,16 @@ test('syllabus screen: template icon right of capture; no chips/title/back/live 
   assert.doesNotMatch(ui, /Start from a school template<\/Text>/);
   assert.doesNotMatch(ui, /ChipRow|from '@\/components\/ui\/Chip'/);
   assert.doesNotMatch(ui, /sample grades update/);
-  assert.match(ui, /name=\"capture\"/);
-  assert.match(ui, /name=\"syllabusTemplate\"/);
-  assert.match(ui, /styles\.iconPair/);
-  assert.match(ui, /syllabus-templates/);
+  // Capture + template icons live on SyllabusWizard action tray (icon: 'capture' / 'syllabusTemplate').
+  assert.match(wizard, /icon: 'capture'/);
+  assert.match(wizard, /icon: 'syllabusTemplate'/);
+  assert.match(wizard, /syllabus-templates/);
   assert.match(ui, /takeSyllabusTemplateHandoff/);
   assert.match(ui, /applyTemplateToDraft/);
 
-  // Capture appears before template icon in source.
-  const cap = ui.indexOf('name="capture"');
-  const tpl = ui.indexOf('name="syllabusTemplate"');
+  // Capture appears before template icon in wizard source.
+  const cap = wizard.indexOf("icon: 'capture'");
+  const tpl = wizard.indexOf("icon: 'syllabusTemplate'");
   assert.ok(cap >= 0 && tpl > cap);
 
   assert.doesNotMatch(wizard, /What the rules do/);

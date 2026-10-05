@@ -139,10 +139,10 @@ test('UI: published syllabus blocks silent draft save; live edits use Publish co
   const ui = read('src/app/class/[id]/syllabus.tsx');
   const wizard = read('src/components/syllabus/SyllabusWizard.tsx');
 
-  // Save draft still exists in the wizard chrome, but the screen refuses a silent
-  // live write while published — teacher must Publish (with confirm).
+  // Save draft label lives in WizardActionTray; SyllabusWizard wires canSaveDraft.
   // AVG T-S7: Save draft is lenient (canSaveDraft); Publish stays canFinishReview.
-  assert.match(wizard, /'Save draft'/);
+  const tray = read('src/components/wizard/WizardActionTray.tsx');
+  assert.match(tray, /'Save draft'/);
   assert.match(wizard, /!canSaveDraft\(draft\)/);
   assert.match(wizard, /SyllabusWizardNav/);
   assert.match(ui, /onSaveDraft=\{\(\) => void onSaveDraft\(\)\}/);

@@ -15,7 +15,8 @@ function read(rel: string): string {
 
 test('SEC-01: ChromeProvider resolves seat before isTeacherRole force', () => {
   const src = read('src/lib/chrome/ChromeProvider.tsx');
-  assert.match(src, /resolveStaffChromeRole\(profile,/);
+  // 5dbb0420: call is multiline — resolveStaffChromeRole(\n profile,\n effectiveChromeSeatPreference(...)
+  assert.match(src, /resolveStaffChromeRole\(\s*profile,/);
   assert.doesNotMatch(src, /if \(isTeacherRole\(profile\)\) return 'teacher'/);
   assert.match(src, /setChromeSeat/);
   assert.match(src, /canChooseSeat/);

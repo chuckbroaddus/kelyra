@@ -52,7 +52,9 @@ test('ASK-01/02/05: class name chip on teacher Ask; one /ask; office Ask unchang
   const ask = read('src/app/ask.tsx');
   assert.match(ask, /chrome\.role === 'teacher' && chrome\.className/);
   assert.match(ask, /Working in \$\{chrome\.className\}/);
-  assert.match(ask, /classId: chrome\.classId/);
+  // 5dbb0420: seat-scoped askClassId derived from chrome.classId (not inline chrome.classId).
+  assert.match(ask, /askClassId = askRole === 'teacher' \|\| office \? chrome\.classId : null/);
+  assert.match(ask, /classId: askClassId/);
   assert.doesNotMatch(ask, /EXPO_PUBLIC_/);
 
   const classTabs = read('src/lib/chrome/classTabs.ts');
