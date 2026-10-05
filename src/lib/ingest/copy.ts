@@ -64,7 +64,42 @@ export const INGEST_COPY = {
   splitFailed: 'Page processing failed.',
   splitPhoneWaiting: 'Pages are ready. Open Kelyra on a computer to split this scan.',
   splitRosterMismatch: 'Packet count does not match the roster — check blanks and splits.',
+
+  // DRIVE-NEEDS I3 / NR-A — Needs Attention pre-split rows.
+  waitingToSplit: 'Waiting to split',
+  fromGoogleDrive: 'From Google Drive',
+  fromFolder: 'From folder',
+  fromThisDevice: 'From this device',
+  fromScan: 'From Scan',
+  dismiss: 'Dismiss',
+  dismissBody: 'Remove this staged stack? Nothing has been filed yet.',
+  pagesCount: (n: number) => (n === 1 ? '1 page' : `${n} pages`),
+  stackFallbackTitle: 'Stack',
+
+  // DRIVE-NEEDS I4 / SC-A — full-screen Split stack from Needs.
+  splitStack: 'Split stack',
+  classLabel: 'Class',
+  backToNeeds: 'Back to Needs',
+  classRequiredBeforeConfirm: 'Choose a class before confirming the split.',
 } as const;
+
+/** NR-A source label from ingest_batches.source_kind. */
+export function waitingSplitSourceLabel(sourceKind: string | null | undefined): string {
+  switch ((sourceKind ?? '').trim()) {
+    case 'google_drive':
+      return INGEST_COPY.fromGoogleDrive;
+    case 'scan':
+      return INGEST_COPY.fromScan;
+    case 'mobile_foreground_folder':
+      return INGEST_COPY.fromThisDevice;
+    case 'agent_folder':
+    case 'session_dir':
+    case 'upload':
+      return INGEST_COPY.fromFolder;
+    default:
+      return INGEST_COPY.fromFolder;
+  }
+}
 
 /** True when error_message looks like poppler/exec tool noise (never show to teachers). */
 export function looksLikeIngestToolNoise(message: string): boolean {

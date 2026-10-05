@@ -15,7 +15,8 @@ export type BadgeVariant =
   | 'completed'
   | 'graded'
   | 'done'
-  | 'turned';
+  | 'turned'
+  | 'waiting_split';
 
 const labels: Record<BadgeVariant, string> = {
   draft: 'Review',
@@ -29,6 +30,7 @@ const labels: Record<BadgeVariant, string> = {
   graded: 'Graded',
   done: 'Done',
   turned: 'Turned in',
+  waiting_split: 'Waiting to split',
 };
 
 export function captureBadge(status: string): BadgeVariant {
@@ -60,6 +62,7 @@ export function Badge({ variant }: { variant: BadgeVariant }) {
     graded: { backgroundColor: colors.goodSoft, color: colors.good },
     done: { backgroundColor: colors.goodSoft, color: colors.good },
     turned: { backgroundColor: colors.warnSoft, color: colors.warn },
+    waiting_split: { backgroundColor: colors.warnSoft, color: colors.warn },
   };
   const tone = tones[variant];
   return (

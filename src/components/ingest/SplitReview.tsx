@@ -54,6 +54,11 @@ type Props = {
    * (waiting → split_review). Do not reset/close the binder session.
    */
   onRetryRemainder?: () => void | Promise<void>;
+  /**
+   * SC-A Needs entry — title Split stack, Back to Needs.
+   * Capture / CE-A binder leave this unset. Back must not abandon.
+   */
+  entrySource?: 'needs' | null;
 };
 
 /** Always RFC4122 UUID — ingest_packets.id is uuid (no pkt- timestamp fallback). */
@@ -80,10 +85,12 @@ export function SplitReview({
   onClose,
   onConfirmed,
   onRetryRemainder,
+  entrySource = null,
 }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
   const phoneGate = Platform.OS !== 'web';
+  const fromNeeds = entrySource === 'needs';
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -350,13 +357,27 @@ export function SplitReview({
     }
   };
 
+  /** DN-REV-03: Back to Needs must not abandon / mint — just leave the desk. */
+  const handleClose = () => {
+    if (busy) return;
+    onClose();
+  };
+
   return (
-    <FormSheet visible={visible} title={INGEST_COPY.splitTitle} onClose={() => !busy && onClose()}>
+    <FormSheet
+      visible={visible}
+      title={fromNeeds ? INGEST_COPY.splitStack : INGEST_COPY.splitTitle}
+      closeLabel={fromNeeds ? INGEST_COPY.backToNeeds : 'Cancel'}
+      onClose={handleClose}
+    >
       {phoneGate ? (
         <View style={styles.gaps}>
           <Text style={[type.body, { color: colors.ink }]}>{INGEST_COPY.splitPhoneWaiting}</Text>
           <Text style={[type.meta, { color: colors.mute }]}>{INGEST_COPY.phoneGate}</Text>
-          <GhostButton label="Close" onPress={onClose} />
+          <GhostButton
+            label={fromNeeds ? INGEST_COPY.backToNeeds : 'Close'}
+            onPress={handleClose}
+          />
         </View>
       ) : null}
 
@@ -502,11 +523,19 @@ export function SplitReview({
             disabled={!confirmEnabled}
             onPress={() => void handleConfirm()}
           />
-          <GhostButton
-            label={INGEST_COPY.splitCancel}
-            disabled={busy}
-            onPress={() => void handleAbandon()}
-          />
+          {fromNeeds ? (
+            <GhostButton
+              label={INGEST_COPY.backToNeeds}
+              disabled={busy}
+              onPress={handleClose}
+            />
+          ) : (
+            <GhostButton
+              label={INGEST_COPY.splitCancel}
+              disabled={busy}
+              onPress={() => void handleAbandon()}
+            />
+          )}
         </View>
       ) : null}
     </FormSheet>
