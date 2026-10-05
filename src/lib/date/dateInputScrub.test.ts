@@ -18,8 +18,8 @@ function walkTsx(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/** Journal composer date — owned by fix/journal-date-drum (separate PR). */
-const EXCLUDED_TEXT_DATE_SITES = new Set(['src/app/diary.tsx']);
+/** Journal composer date converted in 721b5f21 / #276 — no longer a TextField holdout. */
+const EXCLUDED_TEXT_DATE_SITES = new Set<string>();
 
 /** Time-only TextFields are out of scope for the drum scrub. */
 const TIME_ONLY_LABELS = ['Start time', 'End time (optional)'];
@@ -127,12 +127,10 @@ test('scrub: no TextField/TextInput date-entry labels outside exclusions', () =>
 });
 
 test('inventory anchors: journal Date still separate PR; time-only excluded', () => {
+  // 721b5f21 / #276: diary entry date uses shared DateInput (label "Date").
   const diary = read('src/app/diary.tsx');
-  assert.match(diary, /label="Date \(YYYY-MM-DD\)"/);
-  assert.equal(
-    elementKindBefore(diary, diary.indexOf('label="Date (YYYY-MM-DD)"')),
-    'TextField',
-  );
+  assert.match(diary, /label="Date"/);
+  assert.equal(elementKindBefore(diary, diary.indexOf('label="Date"')), 'DateInput');
 
   const composer = read('src/components/calendar/EventComposer.tsx');
   assert.equal(elementKindBefore(composer, composer.indexOf('label="Start time"')), 'TextField');

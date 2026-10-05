@@ -142,9 +142,10 @@ test('first-tab snap guards: contentWidth is ref-only; scroll omits contentWidth
   assert.match(pills, /contentWidth \/ tabs\[\]|mid-morph cannot re-scroll|must not re-scroll/);
   assert.match(pills, /personTabScrollTabWidth/);
   assert.match(pills, /personTabPillWidthRange/);
-  // Animated maxWidth + width fought leading-pill reflow — width alone.
+  // Animated maxWidth + width fought leading-pill reflow — width alone (non-distribute).
+  // 63fff992: distribute mode uses fixed 100% width for equal flex slots.
   assert.doesNotMatch(pills, /maxWidth:\s*pillWidth/);
-  assert.match(pills, /width:\s*pillWidth/);
+  assert.match(pills, /width:\s*distribute \? \('100%' as unknown as number\) : pillWidth/);
 });
 
 test('expo iOS first-tab snap: leading scroll motion + no-op skip + no clipped subviews', () => {
@@ -158,9 +159,9 @@ test('expo iOS first-tab snap: leading scroll motion + no-op skip + no clipped s
   assert.match(pills, /scrollOffsetRef/);
   assert.match(pills, /scrolledValueRef/);
   assert.match(pills, /removeClippedSubviews=\{false\}/);
-  // Scroll effect deps are value/rowWidth/reduce only — metrics via refs.
+  // Scroll effect deps: value/rowWidth/reduce (+ distribute after 63fff992) — metrics via refs.
   assert.match(pills, /tabsRef/);
   assert.match(pills, /scrollMetricsRef/);
-  assert.match(pills, /\[value, rowWidth, reduce\]/);
+  assert.match(pills, /\[value, rowWidth, reduce, distribute\]/);
   assert.doesNotMatch(pills, /\[value, rowWidth, reduce, tabs,/);
 });

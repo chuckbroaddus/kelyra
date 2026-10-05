@@ -13,5 +13,9 @@ test('NoticePopup shows the animated K Working line while working (one Modal)', 
 
 test('Create account shows Working while the account is being created', () => {
   const src = read('PeopleAdmin.tsx');
-  assert.match(src, /working=\{busy \? 'Creating account…' : null\}/);
+  // Processing-photo arm shares the same NoticePopup working line.
+  assert.match(
+    src,
+    /working=\{busy \? 'Creating account…' : processingPhoto \? 'Processing photo…' : null\}/,
+  );
 });

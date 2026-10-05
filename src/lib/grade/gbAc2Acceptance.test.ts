@@ -63,7 +63,8 @@ test('§11.9 locked late is read-only in teacher wizard UI', () => {
   assert.match(body, /lateLocked/);
   assert.match(body, /disabled=\{lateLocked\}/);
   assert.match(body, /editable=\{!lateLocked\}/);
-  assert.match(body, /LockNote draft=\{draft\} field="late"/);
+  // a9a440af: LockedField wraps late controls (LockNote field="late" retired).
+  assert.match(body, /LockedField locked=\{lateLocked\}/);
   let d = createEmptyWizardDraft('c1');
   d = patchDraft(
     d,
@@ -133,10 +134,11 @@ test('§11.17 I\'m not sure → Texas 6-week editable', () => {
 });
 
 test('§11.18 narrow help opens as FormSheet', () => {
+  // 4b2e037f: Syllabus TopicHelp chrome (Hit/Pop) replaced FormSheet help.
   const ui = read('src/app/school/grading-policy/index.tsx');
-  assert.match(ui, /FormSheet/);
-  assert.match(ui, /narrow/);
-  assert.match(ui, /width <= 400/);
+  assert.match(ui, /TopicHelpHit/);
+  assert.match(ui, /TopicHelpPop/);
+  assert.match(ui, /useTopicHelp/);
 });
 
 test('§11.21 hamburger School + published grading policy hub', () => {

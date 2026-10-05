@@ -45,8 +45,9 @@ test('Q3 home: teachers have no Create class; office only', () => {
 });
 
 test('Q3 Ask create_class is office-gated; matrix teachers cannot create', () => {
+  // fe059c70: allowed() is if (!isAskToolAllowed(...)) return false — gate still first.
   const ask = read('src/lib/ai/askTools.ts');
-  assert.match(ask, /return isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
+  assert.match(ask, /if \(!isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)\) return false/);
   assert.match(ask, /Only the office can create a class/);
   const policy = read('src/lib/ai/askToolPolicy.ts');
   assert.match(

@@ -58,13 +58,14 @@ import {
   type GpaProfile,
   type TranscriptRow,
 } from './gpa/gpa.ts';
+// Import pure posting math — posting/index.ts also re-exports conductMarksApi (@/ alias breaks node --test).
 import {
   applyOverride,
   buildTermGrade,
   defaultCreditPolicy,
   postPeriod,
   type PostingTermRollup,
-} from './posting/index.ts';
+} from './posting/posting.ts';
 import { letterFor, makeScaleFromTemplate } from './scale/scale.ts';
 
 const root = process.cwd();
@@ -615,7 +616,8 @@ test('SRS 11.15 total-points hides weights; weighted save blocked unless weights
 test('SRS 11.16 help.excused removes earned+possible and shows 98/120 vs 98/130', () => {
   const topic = getBundledHelpTopic('help.excused');
   assert.ok(topic);
-  assert.match(topic!.meaning, /earned and possible/i);
+  // 5d765bef / #341: plain-language “points earned and the points possible”.
+  assert.match(topic!.meaning, /points earned and the points possible/i);
   assert.match(topic!.example, /98\/120/);
   assert.match(topic!.example, /98\/130/);
   assert.match(topic!.body, /98\/120/);

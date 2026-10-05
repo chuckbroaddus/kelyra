@@ -39,18 +39,21 @@ test('WK-SOT refcount pairs, clamps at 0, notifies subscribers', () => {
 });
 
 test('WK Soft WorkingMark has no pencil geometry; SoftMark Soft face + modes', () => {
+  // a95d1ae4: SoftMark.tsx re-exports SoftMarkShared (letter + modes live there).
   const working = read('src/components/ui/WorkingMark.tsx');
   const soft = read('src/components/ui/SoftMark.tsx');
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
   const mark = read('src/components/ui/KelyraMark.tsx');
   assert.doesNotMatch(working, /pencil|F4C430|eraser|ferrule/);
   assert.match(working, /SoftMark/);
   assert.match(working, /mode="working"/);
   assert.match(working, /driveChromeK/);
   assert.match(working, /useGlobalProcessingActive\(driveChromeK\)/);
-  assert.match(soft, /kelyra\.png/);
-  assert.doesNotMatch(soft, /kelyra-soft\.png/);
-  assert.match(soft, /mode === 'working'/);
-  assert.match(soft, /useReducedMotion/);
+  assert.match(soft, /SoftMarkShared/);
+  assert.match(shared, /kelyra\.png/);
+  assert.doesNotMatch(shared, /kelyra-soft\.png/);
+  assert.match(shared, /mode === 'working'/);
+  assert.match(shared, /useReducedMotion/);
   assert.match(mark, /useChromeKWorking/);
   assert.match(mark, /kelyra\.png/);
   assert.match(mark, /SoftMark/);

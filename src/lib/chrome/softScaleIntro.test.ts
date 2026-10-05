@@ -84,13 +84,14 @@ test('SoftMark SoftMode static|working + ORBIT_PAD + absolute -pad host (no cent
   assert.ok(SOFT_INTRO.blinkMs >= 60);
   assert.ok(SOFT_INTRO.cometMs >= 300);
   assert.ok(SOFT_INTRO.outroMs >= 150);
-  // t_7dc9b8f1: SoftMarkShared must wire intro morph (not void-discard timings)
-  assert.match(shared, /SOFT_INTRO\.faceMs/);
-  assert.match(shared, /SOFT_INTRO\.blinkMs/);
+  // Face grow/blink moved to softFaceIntro (rAF clock); SoftMarkShared keeps cometIn timings.
+  const faceIntro = read('src/components/ui/softFaceIntro.ts');
+  assert.match(faceIntro, /SOFT_INTRO\.faceMs/);
+  assert.match(faceIntro, /SOFT_INTRO\.blinkMs/);
+  assert.match(shared, /softFaceIntro/);
   assert.match(shared, /SOFT_INTRO\.cometMs/);
   assert.match(shared, /SOFT_INTRO\.outroMs/);
   assert.doesNotMatch(shared, /void SOFT_INTRO/);
-  assert.match(shared, /Animated\.timing\(faceGrow/);
   assert.match(shared, /Animated\.timing\(cometIn/);
 });
 
