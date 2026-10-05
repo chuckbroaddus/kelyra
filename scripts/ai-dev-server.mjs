@@ -2544,15 +2544,34 @@ async function assertUnderCap(supabase) {
   }
 }
 
+function seatFromSchoolRole(role) {
+  if (role === 'teacher') return 'teacher';
+  if (role === 'parent') return 'parent';
+  if (role === 'student') return 'student';
+  if (role === 'superintendent' || role === 'administrator') return 'office';
+  return null;
+}
+
 async function logAiUsage(supabase, row) {
   if (!supabase || !row.usd) return;
   try {
-    const { data: schoolId } = await supabase.rpc('my_school_id');
     const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id ?? null;
+    if (!userId) return;
+    const [{ data: schoolId }, { data: role }, teacherRes] = await Promise.all([
+      supabase.rpc('my_school_id'),
+      supabase.rpc('my_role'),
+      supabase.from('teachers').select('id').eq('id', userId).maybeSingle(),
+    ]);
     if (!schoolId) return;
-    await supabase.from('ai_usage').insert({
+    const isTeacher = Boolean(teacherRes?.data?.id);
+    const seat = seatFromSchoolRole(typeof role === 'string' ? role : null) ?? (isTeacher ? 'teacher' : null);
+    const { error } = await supabase.from('ai_usage').insert({
       school_id: schoolId,
-      teacher_id: userData.user?.id ?? null,
+      user_id: userId,
+      // FK is public.teachers(id) — never put a non-teacher auth uid here.
+      teacher_id: isTeacher ? userId : null,
+      seat,
       function: row.functionName,
       model: row.model,
       capture_id: row.captureId,
@@ -2560,6 +2579,7 @@ async function logAiUsage(supabase, row) {
       output_tokens: row.outputTokens,
       usd: row.usd,
     });
+    if (error) console.warn('ai_usage meter insert failed', error.message ?? error);
   } catch {
     // Meter is best-effort.
   }

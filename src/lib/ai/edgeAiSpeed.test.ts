@@ -17,11 +17,23 @@ function fakeSupabase(opts: { spent?: number; cap?: number; meterDelayMs?: numbe
     rpc: async (name: string) => {
       log.push(`rpc:${name}`);
       if (name === 'ai_spend_this_month') return { data: [{ usd: opts.spent ?? 0, cap_usd: opts.cap ?? 50 }], error: null };
+      if (name === 'my_role') return { data: 'teacher', error: null };
       await new Promise((r) => setTimeout(r, opts.meterDelayMs ?? 0));
       return { data: 'school-1', error: null };
     },
     auth: { getUser: async () => ({ data: { user: { id: 'u1' } } }) },
-    from: () => ({ insert: async () => { log.push('insert'); return { error: null }; } }),
+    from: (table: string) => {
+      if (table === 'teachers') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: { id: 'u1' }, error: null }),
+            }),
+          }),
+        };
+      }
+      return { insert: async () => { log.push('insert'); return { error: null }; } };
+    },
   };
 }
 
