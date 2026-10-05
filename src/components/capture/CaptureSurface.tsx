@@ -2823,34 +2823,34 @@ export function CaptureSurface({ preset = mainCapturePreset }: CaptureSurfacePro
       {asking ? <WorkingLine text="Asking AI…" /> : null}
       {status ? <Text style={[styles.status, { color: colors.mute }]}>{status}</Text> : null}
       {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-      {teachSeat && showClassStack && teacher?.id ? (
-        <ClassStackBinder
-          visible={stackOpen}
-          onClose={() => setStackOpen(false)}
-          teacherId={assetOwnerId}
-          classes={chrome.classes}
-          initialClassId={chromeClassId}
-          teachSeat={teachSeat}
-        />
-      ) : null}
       {split && stickyCta ? stickyCta : null}
     </View>
   );
 
-  if (split) {
-    return (
-      <View style={[styles.split, { backgroundColor: colors.bg }]}>
-        <View style={styles.left}>{previewBlock}</View>
-        <View style={styles.right}>
-          <Screen scroll maxWidth={480}>
-            {composerBlock}
-          </Screen>
-        </View>
-      </View>
-    );
-  }
+  // Host binder beside the surface (not inside composer ScrollView) so CE-A → Split
+  // review Modals are not remounted by split-layout toggles and stack above chrome.
+  const stackBinder =
+    teachSeat && showClassStack && assetOwnerId ? (
+      <ClassStackBinder
+        visible={stackOpen}
+        onClose={() => setStackOpen(false)}
+        teacherId={assetOwnerId}
+        classes={chrome.classes}
+        initialClassId={chromeClassId}
+        teachSeat={teachSeat}
+      />
+    ) : null;
 
-  return (
+  const surface = split ? (
+    <View style={[styles.split, { backgroundColor: colors.bg }]}>
+      <View style={styles.left}>{previewBlock}</View>
+      <View style={styles.right}>
+        <Screen scroll maxWidth={480}>
+          {composerBlock}
+        </Screen>
+      </View>
+    </View>
+  ) : (
     <Screen
       keyboard
       sticky={sticky}
@@ -2862,6 +2862,13 @@ export function CaptureSurface({ preset = mainCapturePreset }: CaptureSurfacePro
       {previewBlock}
       {composerBlock}
     </Screen>
+  );
+
+  return (
+    <>
+      {surface}
+      {stackBinder}
+    </>
   );
 }
 
