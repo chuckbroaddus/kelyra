@@ -396,10 +396,15 @@ export function ClassStackBinder({
   const showPartial = !phoneGate && teachSeat && phase === 'partial';
   const showFailed = !phoneGate && teachSeat && phase === 'failed';
 
+  // Exclusive mount: do not keep binder FormSheet mounted with visible=false while
+  // SplitReview flips visible=true — RN-web dual-Modal slide handoff can drop both sheets.
+  const showSplit = phase === 'split' && Boolean(batchId) && teachSeat;
+
   return (
     <>
+      {showSplit ? null : (
       <FormSheet
-        visible={visible && phase !== 'split'}
+        visible={visible}
         title={INGEST_COPY.binderTitle}
         onClose={handleClose}
       >
@@ -591,10 +596,11 @@ export function ClassStackBinder({
           </View>
         ) : null}
       </FormSheet>
+      )}
 
-      {batchId && teachSeat ? (
+      {showSplit && batchId ? (
         <SplitReview
-          visible={visible && phase === 'split'}
+          visible={visible}
           batchId={batchId}
           onClose={() => {
             reset();
