@@ -23,6 +23,10 @@ test('ASSIGN-INGEST: rejected key surfaces the model reason with a Not an answer
 });
 
 test('ASSIGN-INGEST: ai:dev strips an echoed answer off a filled-key stem', () => {
-  assert.match(aiDev, /STEM vs ANSWER: stem is the printed question only/);
-  assert.match(aiDev, /stem\.endsWith\(answer\)/);
+  // b4031f94: STEM rules live in shared aiPrompts + anskeySanitize; ai:dev calls finalizeAnswerKeyAnalysis.
+  const prompts = fs.readFileSync(path.join(root, 'supabase/functions/_shared/aiPrompts.ts'), 'utf8');
+  const sanitize = fs.readFileSync(path.join(root, 'supabase/functions/_shared/anskeySanitize.mjs'), 'utf8');
+  assert.match(prompts, /STEM vs ANSWER: stem is the printed question only/);
+  assert.match(sanitize, /stem\.endsWith\(answer\)/);
+  assert.match(aiDev, /finalizeAnswerKeyAnalysis/);
 });

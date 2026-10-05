@@ -339,8 +339,10 @@ test('CE-A chrome: drawer Calendar + quiet Desk link; not 6th tray', () => {
   assert.match(drawer, /go\('\/calendar'\)/);
   assert.match(desk, /Open Calendar/);
   assert.match(desk, /Calendar/);
-  assert.doesNotMatch(tray, /calendar/i);
-  assert.doesNotMatch(tray, /\/calendar/);
+  // 6298e8b5 / PR #135 CT-A: Calendar is a tray tab (still 5 teacher keys — not a 6th).
+  assert.match(tray, /key: 'calendar'/);
+  assert.match(tray, /href: '\/calendar'/);
+  assert.equal((tray.match(/key: 'calendar'/g) || []).length >= 1, true);
 });
 
 test('Phase A cap 500 + window window on list_calendar_items', () => {
@@ -507,8 +509,9 @@ test('CAL-R3 VW-R3-C views + DP-A teacher badge; family never hidden titles (S2-
 });
 
 test('Phase B CE-A: no 6th tray; Desk Today/This week unchanged product', () => {
+  // 6298e8b5 CT-A: calendar tray is intentional; teacher stays at 5 tabs (see altitudeLocks).
   const tray = read('src/lib/chrome/trayTabs.ts');
-  assert.doesNotMatch(tray, /calendar/i);
+  assert.match(tray, /key: 'calendar'/);
   const desk = read('src/app/class/[id]/index.tsx');
   assert.match(desk, /DeskSpanTabs/);
   assert.match(desk, /pane === 'today'|pane === 'week'/);

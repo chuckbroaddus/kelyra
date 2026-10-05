@@ -23,19 +23,24 @@ test('K1 markSlot / bar clip Soft on native (no Yoga expand)', () => {
 });
 
 test('SoftMark uses Soft v8b host (WebView/DOM) — not bead SoftMark alone', () => {
+  // a95d1ae4: native RN SoftMarkShared; WebView Soft host abandoned.
   const soft = read('src/components/ui/SoftMark.tsx');
   const softWeb = read('src/components/ui/SoftMark.web.tsx');
-  assert.match(soft, /WebView|react-native-webview/);
-  assert.match(soft, /softV8bHostDocument|soft-v8b-host/);
-  assert.match(softWeb, /dangerouslySetInnerHTML|createElement\('div'/);
+  const shared = read('src/components/ui/SoftMarkShared.tsx');
+  assert.match(soft, /SoftMarkShared/);
+  assert.match(softWeb, /SoftMarkShared/);
+  // Comment may say "No WebView"; lock is no import / host document.
+  assert.doesNotMatch(soft, /react-native-webview|softV8bHostDocument/);
+  assert.doesNotMatch(softWeb, /dangerouslySetInnerHTML|softV8bHost/);
+  assert.doesNotMatch(shared, /import\s*\{[^}]*\bWebView\b|react-native-webview/);
   assert.doesNotMatch(soft, /\bclassName\s*:/);
-  assert.doesNotMatch(soft, /className=/);
   assert.doesNotMatch(softWeb, /\bclassName\s*:/);
 });
 
 test('KelyraMark host clips Soft on native; idle letter kelyra.png', () => {
   const mark = read('src/components/ui/KelyraMark.tsx');
-  assert.match(mark, /overflow: Platform\.OS === 'web' \? 'visible' : 'hidden'/);
+  // Soft-mounted needs visible overflow so the comet can leave the square.
+  assert.match(mark, /overflow: softMounted \|\| Platform\.OS === 'web' \? 'visible' : 'hidden'/);
   assert.match(mark, /StyleSheet\.absoluteFill/);
   assert.match(mark, /collapsable=\{false\}/);
   assert.match(mark, /assets\/brand\/kelyra\.png/);

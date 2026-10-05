@@ -85,8 +85,9 @@ test('Q8 Ask: link_parent_student office gate runs before capability-null fail-o
     policy,
     /link_parent_student:\s*\{\s*capability:\s*'accounts\.link_parent',\s*need:\s*null,\s*officeOnly:\s*true/,
   );
+  // fe059c70: allowed() is if (!isAskToolAllowed(...)) return false — gate still first.
   const ask = read('src/lib/ai/askTools.ts');
-  assert.match(ask, /return isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)/);
+  assert.match(ask, /if \(!isAskToolAllowed\(spec\.def\.name, ctx\.profile, ctx\.grants\)\) return false/);
 });
 
 test('Q8 Ask: link_parent_student run fails closed for non-office; no parents.invite OR', () => {

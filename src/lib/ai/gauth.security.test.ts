@@ -52,7 +52,11 @@ test('GAUTH-S1-02 explain.manage teacher own; parent linked-child own; student/o
     matrix,
     /id:\s*'explain\.manage'[\s\S]*?superintendent:\s*'none'[\s\S]*?administrator:\s*'none'[\s\S]*?teacher:\s*'own'[\s\S]*?parent:\s*'own'[\s\S]*?student:\s*'none'/,
   );
-  assert.doesNotMatch(matrix, /id:\s*'explain\.manage'[\s\S]*?assignments\.manage/);
+  // 807e5cda: calendar.write help cites assignments.manage later in CAPABILITIES — scope to this row.
+  const rowStart = matrix.indexOf("id: 'explain.manage'");
+  assert.ok(rowStart > 0);
+  const row = matrix.slice(rowStart, matrix.indexOf('},', rowStart) + 2);
+  assert.doesNotMatch(row, /assignments\.manage/);
   assert.equal(grants['explain.manage']?.teacher, 'own');
   assert.equal(grants['explain.manage']?.student, 'none');
   assert.equal(grants['explain.manage']?.parent, 'own');

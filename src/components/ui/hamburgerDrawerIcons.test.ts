@@ -30,6 +30,10 @@ const GLYPH_BY_LABEL: Record<string, string> = {
   Assignments: 'work',
   Feeds: 'post',
   People: 'person',
+  // 51dd572e / c50ba988: GB-07 policy + GB-17 transfer-in + School hub rows.
+  'Grading and Reporting Policy': 'grades',
+  'Transfer-in grade': 'grades',
+  School: 'manage',
 };
 
 function readDrawer(): string {
@@ -80,7 +84,8 @@ function glyphOf(site: string): string | null {
 test('HI-01: every DrawerRow call site has a right-of-label icon', () => {
   const src = readDrawer();
   const sites = drawerRowCallSites(src);
-  assert.equal(sites.length, 29, `expected 29 DrawerRow call sites, got ${sites.length}`);
+  // 51dd572e / c50ba988: GB-07 + transfer-in + School hub added DrawerRows (was 29).
+  assert.equal(sites.length, 35, `expected 35 DrawerRow call sites, got ${sites.length}`);
 
   const def = src.slice(src.indexOf('function DrawerRow('));
   const bodyMatch = def.match(/<Text[\s\S]*?\{label\}[\s\S]*?<\/Text>\s*\{leading\}/);
