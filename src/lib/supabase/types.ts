@@ -1259,6 +1259,18 @@ export type Database = {
         Args: { p_batch_id: string };
         Returns: Record<string, unknown>;
       };
+      list_ingest_waiting_split: {
+        Args: Record<string, never>;
+        Returns: Record<string, unknown>[];
+      };
+      bind_ingest_batch_class: {
+        Args: {
+          p_batch_id: string;
+          p_class_id: string;
+          p_assignment_id?: string | null;
+        };
+        Returns: Record<string, unknown>;
+      };
 
       add_teacher_to_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };
       remove_teacher_from_class: { Args: { p_class_id: string; p_teacher_id: string }; Returns: undefined };

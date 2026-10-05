@@ -59,17 +59,21 @@ test('S1 inbox: first paint does not wait on roster / thumbs / refreshTeacher wh
   const loadEnd = inbox.indexOf('useFocusEffect', loadAt);
   const loadBody = inbox.slice(loadAt, loadEnd);
   assert.doesNotMatch(loadBody, /listRoster/);
-  // refreshTeacher only inside true-cold unknown classId branch (PERF-01).
-  assert.match(loadBody, /if \(!resolvedId\)\s*\{[\s\S]*?await refreshTeacher\(\)/);
-  assert.doesNotMatch(loadBody, /await refreshTeacher\(\);\s*(?:\/\/[^\n]*\n\s*)*(?:const|let|var|setClassId|setRoster|listInbox)/);
+  // Back to Needs hang fix: never await refreshTeacher in load (identity thrash).
+  assert.doesNotMatch(loadBody, /await\s+refreshTeacher\s*\(/);
+  assert.doesNotMatch(loadBody, /refreshTeacher/);
   assert.match(inbox, /Promise\.all\(\[\s*listInbox\(resolvedId/);
 });
 
 test('S1 empty ≠ loading: WorkingLine / empty gated on rowsReady', () => {
   const inbox = read('src/app/inbox.tsx');
   assert.match(inbox, /rowsReady/);
-  assert.match(inbox, /showWorking = !rowsReady && items\.length === 0 && turned\.length === 0/);
-  assert.match(inbox, /showEmpty = rowsReady && !status && items\.length === 0 && turned\.length === 0/);
+  assert.match(
+    inbox,
+    /showWorking =\s*!rowsReady && waiting\.length === 0 && items\.length === 0 && turned\.length === 0/,
+  );
+  assert.match(inbox, /showEmpty =\s*rowsReady &&/);
+  assert.match(inbox, /waiting\.length === 0/);
   assert.match(inbox, /showWorking \? <WorkingLine/);
   assert.match(inbox, /showEmpty \?/);
   assert.doesNotMatch(inbox, /\bloaded\b/);

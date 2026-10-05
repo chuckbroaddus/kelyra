@@ -13,7 +13,8 @@ import {
 export type IngestBatchRow = {
   id: string;
   teacher_id: string;
-  class_id: string;
+  /** Null until SC-A bind / Confirm for Needs-first sources (DRIVE-NEEDS). */
+  class_id: string | null;
   assignment_id: string | null;
   pages_per_student: number;
   ignore_blank_backs: boolean;
@@ -27,7 +28,14 @@ export type IngestBatchRow = {
   split_draft_version?: number;
   roster_count?: number | null;
   teacher_confirmed_split?: boolean;
+  source_kind?: string;
+  source_binding_id?: string | null;
   created_at: string;
+};
+
+/** NR-A row: waiting-split batch + primary filename when known. */
+export type WaitingSplitRow = IngestBatchRow & {
+  filename: string | null;
 };
 
 export type IngestFileRow = {
@@ -131,6 +139,59 @@ export async function abandonIngestBatch(batchId: string): Promise<IngestBatchRo
   return data as IngestBatchRow;
 }
 
+/**
+ * DRIVE-NEEDS I3 / NR-A: teacher-wide pre-Confirm waiting-split batches.
+ * Teach-only RPC — Parent/Student get not_teacher.
+ */
+export async function listIngestWaitingSplit(): Promise<WaitingSplitRow[]> {
+  const { data, error } = await requireSupabase().rpc('list_ingest_waiting_split');
+  if (error) throw mapRpcError(error);
+  const batches = (data ?? []) as IngestBatchRow[];
+  if (!batches.length) return [];
+
+  const ids = batches.map((b) => b.id);
+  const { data: fileRows, error: fileErr } = await requireSupabase()
+    .from('ingest_files')
+    .select('batch_id, sort_index, original_filename')
+    .in('batch_id', ids)
+    .order('sort_index', { ascending: true });
+  if (fileErr) throw mapRpcError(fileErr);
+
+  const filenameByBatch = new Map<string, string>();
+  for (const row of (fileRows ?? []) as Array<{
+    batch_id: string;
+    sort_index: number;
+    original_filename: string;
+  }>) {
+    if (!filenameByBatch.has(row.batch_id) && row.original_filename) {
+      filenameByBatch.set(row.batch_id, row.original_filename);
+    }
+  }
+
+  return batches.map((batch) => ({
+    ...batch,
+    filename: filenameByBatch.get(batch.id) ?? null,
+  }));
+}
+
+/**
+ * DRIVE-NEEDS I4 / SC-A: bind class (+ optional assignment) on a pre-Confirm batch.
+ * Must not Confirm, mint captures, or invent students — live bind_ingest_batch_class.
+ */
+export async function bindIngestBatchClass(input: {
+  batchId: string;
+  classId: string;
+  assignmentId?: string | null;
+}): Promise<IngestBatchRow> {
+  const { data, error } = await requireSupabase().rpc('bind_ingest_batch_class', {
+    p_batch_id: input.batchId,
+    p_class_id: input.classId,
+    p_assignment_id: input.assignmentId ?? null,
+  });
+  if (error) throw mapRpcError(error);
+  return data as IngestBatchRow;
+}
+
 /** I5: partial → retry_remainder so the worker resumes skipped rasterized indexes. */
 export async function retryIngestRemainder(batchId: string): Promise<IngestBatchRow> {
   const { data, error } = await requireSupabase().rpc('retry_ingest_remainder', {
@@ -208,7 +269,7 @@ export async function fetchIngestSplitReview(batchId: string): Promise<IngestSpl
         .select('id, batch_id, ordinal, page_ids, blank, capture_id, status, error_code')
         .eq('batch_id', batchId)
         .order('ordinal', { ascending: true }),
-      countClassRoster(batch.class_id),
+      batch.class_id ? countClassRoster(batch.class_id) : Promise.resolve(0),
     ]);
 
   if (pageErr) throw mapRpcError(pageErr);

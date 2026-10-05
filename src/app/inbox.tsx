@@ -23,7 +23,12 @@ import {
 } from '@/lib/captures/api';
 import { deleteCapture } from '@/lib/captures/delete';
 import { useChrome } from '@/lib/chrome/ChromeProvider';
-import { INGEST_COPY } from '@/lib/ingest/copy';
+import {
+  abandonIngestBatch,
+  listIngestWaitingSplit,
+  type WaitingSplitRow,
+} from '@/lib/ingest/api';
+import { INGEST_COPY, waitingSplitSourceLabel } from '@/lib/ingest/copy';
 import { resolveCaptureClass } from '@/lib/classes/api';
 import { formatWhen } from '@/lib/format';
 import { markNoteOnly, processQueuedDrafts } from '@/lib/gaps/api';
@@ -32,24 +37,34 @@ import { submissionReviewPath } from '@/lib/practice/review';
 import { listRoster, type RosterStudent } from '@/lib/students/api';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 
+type DeskEntry =
+  | { kind: 'waiting'; row: WaitingSplitRow; at: string }
+  | { kind: 'capture'; item: InboxItem; at: string }
+  | { kind: 'turned'; item: TurnedInItem; at: string };
+
 export default function InboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const chrome = useChrome();
   const { contextTab, classId: chromeClassId, refreshNeedsBadge } = chrome;
   const teachSeat = chrome.role === 'teacher';
-  const { teacher, refreshTeacher, setActiveClassId } = useAuth();
+  const { teacher, setActiveClassId } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [turned, setTurned] = useState<TurnedInItem[]>([]);
+  const [waiting, setWaiting] = useState<WaitingSplitRow[]>([]);
   const [roster, setRoster] = useState<RosterStudent[]>([]);
   const [classId, setClassId] = useState('');
   const [status, setStatus] = useState<string | null>(null);
-  /** Lists settled for active class — empty ≠ loading (PERF-07/08). */
+  /**
+   * Desk settled enough to clear WorkingLine (PERF-07/08 + Back to Needs).
+   * Set true as soon as teacher-wide waiting-split returns — class lists may fill later.
+   */
   const [rowsReady, setRowsReady] = useState(false);
   const [picking, setPicking] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [pending, setPending] = useState<InboxItem | null>(null);
   const [notePending, setNotePending] = useState<InboxItem | null>(null);
+  const [dismissPending, setDismissPending] = useState<WaitingSplitRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [rosterLoading, setRosterLoading] = useState(false);
@@ -82,19 +97,47 @@ export default function InboxScreen() {
   );
 
   const load = useCallback(async () => {
-    if (!teacher) return;
+    // Back to Needs remounts with rowsReady=false — never leave WorkingLine stuck.
+    if (!teacher) {
+      setRowsReady(true);
+      return;
+    }
     const gen = ++loadGen.current;
     try {
-      // PERF-01/02: use existing teacher/chrome classId; do not refreshTeacher every focus.
+      // NR-A: teacher-wide waiting-split first — desk must not wait on class resolve.
+      // Do not re-fetch the auth teacher row here: a new object identity retriggers this
+      // focus load callback and leaves the pencil spinning after Back to Needs.
+      let waitingRows: WaitingSplitRow[] = [];
+      if (teachSeat) {
+        try {
+          waitingRows = await listIngestWaitingSplit();
+        } catch {
+          waitingRows = [];
+        }
+      }
+      if (gen !== loadGen.current) return;
+      setWaiting(waitingRows);
+      // Show waiting rows immediately; class-scoped inbox fills in below.
+      setRowsReady(true);
+      setStatus(null);
+
+      // PERF-01/02: use existing teacher/chrome classId; do not re-fetch auth teacher on focus.
       let resolvedId = (chromeClassId || teacher.active_class_id || '').trim();
       if (!resolvedId) {
-        // True cold unknown classId — resolve once.
-        await refreshTeacher();
-        if (gen !== loadGen.current) return;
-        const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
-        if (gen !== loadGen.current) return;
-        resolvedId = klass.id;
-        setActiveClassId(klass.id);
+        try {
+          const klass = await resolveCaptureClass(teacher.id, teacher.active_class_id, chromeClassId);
+          if (gen !== loadGen.current) return;
+          resolvedId = klass.id;
+          setActiveClassId(klass.id);
+        } catch (classErr) {
+          // Pre-split rows still show without an active class.
+          setItems([]);
+          setTurned([]);
+          if (!waitingRows.length) {
+            setStatus(classErr instanceof Error ? classErr.message : 'Could not load inbox');
+          }
+          return;
+        }
       } else if (teacher.active_class_id !== resolvedId) {
         setActiveClassId(resolvedId);
       }
@@ -105,11 +148,11 @@ export default function InboxScreen() {
         rowsClassIdRef.current = '';
         setItems([]);
         setTurned([]);
+        // Waiting rows already painted — pencil stays off when waiting.length > 0.
         setRowsReady(false);
         setPicking(null);
         setPending(null);
         setNotePending(null);
-        setStatus(null);
       }
       setClassId(resolvedId);
       if (rosterForClass.current && rosterForClass.current !== resolvedId) {
@@ -125,8 +168,8 @@ export default function InboxScreen() {
       rowsClassIdRef.current = resolvedId;
       setItems(captures);
       setTurned(completed);
+      // classChanged may have cleared rowsReady — restore once lists settle (QG-02 empty ≠ loading).
       setRowsReady(true);
-      setStatus(null);
 
       // PERF-06: thumbs after first WorkRow-capable paint.
       void signInboxThumbs(captures).then((withThumbs) => {
@@ -139,7 +182,7 @@ export default function InboxScreen() {
       setStatus(err instanceof Error ? err.message : 'Could not load inbox');
       setRowsReady(true);
     }
-  }, [teacher, chromeClassId, refreshTeacher, setActiveClassId]);
+  }, [teacher, chromeClassId, teachSeat, setActiveClassId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -194,13 +237,64 @@ export default function InboxScreen() {
     }
   };
 
-  const showWorking = !rowsReady && items.length === 0 && turned.length === 0;
-  const showEmpty = rowsReady && !status && items.length === 0 && turned.length === 0;
+  const visibleWaiting = teachSeat && (chip === 'all' || !chip) ? waiting : [];
+  const deskEntries = useMemo((): DeskEntry[] => {
+    const entries: DeskEntry[] = [
+      ...visibleWaiting.map((row) => ({ kind: 'waiting' as const, row, at: row.created_at })),
+      ...visible.map((item) => ({ kind: 'capture' as const, item, at: item.created_at })),
+      ...visibleTurned.map((item) => ({
+        kind: 'turned' as const,
+        item,
+        at: item.submittedAt,
+      })),
+    ];
+    entries.sort((a, b) => {
+      const byTime = b.at.localeCompare(a.at);
+      if (byTime !== 0) return byTime;
+      const aId = a.kind === 'waiting' ? a.row.id : a.item.id;
+      const bId = b.kind === 'waiting' ? b.row.id : b.item.id;
+      return aId.localeCompare(bId);
+    });
+    return entries;
+  }, [visibleWaiting, visible, visibleTurned]);
+
+  const showWorking =
+    !rowsReady && waiting.length === 0 && items.length === 0 && turned.length === 0;
+  const showEmpty =
+    rowsReady &&
+    !status &&
+    waiting.length === 0 &&
+    items.length === 0 &&
+    turned.length === 0;
 
   const photoFor = (studentId: string) => roster.find((row) => row.id === studentId)?.photoUrl;
   const turnedCopy = (item: TurnedInItem) => {
     const work = item.kind === 'lesson' ? item.title : practiceTitle(item.title);
     return `Completed ${work}`;
+  };
+  const waitingMeta = (row: WaitingSplitRow): string => {
+    const parts = [waitingSplitSourceLabel(row.source_kind)];
+    if (row.page_count != null && row.page_count > 0) {
+      parts.push(INGEST_COPY.pagesCount(row.page_count));
+    }
+    parts.push(formatWhen(row.created_at));
+    return parts.join(' · ');
+  };
+
+  const onDismissWaiting = async (row: WaitingSplitRow) => {
+    setBusy(true);
+    setStatus(null);
+    try {
+      await abandonIngestBatch(row.id);
+      setDismissPending(null);
+      setWaiting((prev) => prev.filter((b) => b.id !== row.id));
+      refreshNeedsBadge();
+      await load();
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not dismiss stack');
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!teacher) {
@@ -235,7 +329,95 @@ export default function InboxScreen() {
           ) : null}
         </View>
       ) : null}
-      {visible.map((item) => {
+      {deskEntries.map((entry) => {
+        if (entry.kind === 'waiting') {
+          const row = entry.row;
+          return (
+            <WorkRow
+              key={`waiting:${row.id}`}
+              title={row.filename?.trim() || INGEST_COPY.stackFallbackTitle}
+              meta={waitingMeta(row)}
+              avatarName="?"
+              unknown
+              badge="waiting_split"
+              onPress={() => router.push(`/split-stack?batch=${encodeURIComponent(row.id)}`)}
+              pills={[
+                {
+                  key: 'split',
+                  label: INGEST_COPY.splitStack,
+                  kind: 'primary',
+                  onPress: () => router.push(`/split-stack?batch=${encodeURIComponent(row.id)}`),
+                },
+                {
+                  key: 'dismiss',
+                  label: INGEST_COPY.dismiss,
+                  kind: 'ghost',
+                  onPress: () => setDismissPending(row),
+                },
+              ]}
+              trailing={[
+                {
+                  key: 'split',
+                  label: INGEST_COPY.splitStack,
+                  tone: 'brand',
+                  autoCommit: false,
+                  onPress: () => router.push(`/split-stack?batch=${encodeURIComponent(row.id)}`),
+                },
+              ]}
+              leading={[
+                {
+                  key: 'dismiss',
+                  label: INGEST_COPY.dismiss,
+                  tone: 'danger',
+                  autoCommit: false,
+                  onPress: () => setDismissPending(row),
+                },
+              ]}
+            />
+          );
+        }
+        if (entry.kind === 'turned') {
+          const item = entry.item;
+          return (
+            <WorkRow
+              key={item.id}
+              title={item.studentName}
+              status={turnedCopy(item)}
+              meta={formatWhen(item.submittedAt)}
+              avatarName={item.studentName}
+              photoUrl={photoFor(item.studentId)}
+              badge={practiceBadge(item.status)}
+              onPress={() => {
+                if (!classId) return;
+                router.push(submissionReviewPath(classId, item.id) as never);
+              }}
+              pills={[
+                {
+                  key: 'open',
+                  label: 'Review',
+                  kind: 'primary',
+                  onPress: () => {
+                    if (!classId) return;
+                    router.push(submissionReviewPath(classId, item.id) as never);
+                  },
+                },
+              ]}
+              trailing={[
+                {
+                  key: 'open',
+                  label: 'Review',
+                  tone: 'brand',
+                  autoCommit: false,
+                  onPress: () => {
+                    if (!classId) return;
+                    router.push(submissionReviewPath(classId, item.id) as never);
+                  },
+                },
+              ]}
+            />
+          );
+        }
+        const item = entry.item;
         const unassigned = !item.student_id;
         return (
           <WorkRow
@@ -325,44 +507,6 @@ export default function InboxScreen() {
           />
         );
       })}
-      {visibleTurned.map((item) => (
-        <WorkRow
-          key={item.id}
-          title={item.studentName}
-          status={turnedCopy(item)}
-          meta={formatWhen(item.submittedAt)}
-          avatarName={item.studentName}
-          photoUrl={photoFor(item.studentId)}
-          badge={practiceBadge(item.status)}
-          onPress={() => {
-            if (!classId) return;
-            router.push(submissionReviewPath(classId, item.id) as never);
-          }}
-          pills={[
-            {
-              key: 'open',
-              label: 'Review',
-              kind: 'primary',
-              onPress: () => {
-                if (!classId) return;
-                router.push(submissionReviewPath(classId, item.id) as never);
-              },
-            },
-          ]}
-          trailing={[
-            {
-              key: 'open',
-              label: 'Review',
-              tone: 'brand',
-              autoCommit: false,
-              onPress: () => {
-                if (!classId) return;
-                router.push(submissionReviewPath(classId, item.id) as never);
-              },
-            },
-          ]}
-        />
-      ))}
       {status ? <Text style={[styles.error, { color: colors.danger }]}>{status}</Text> : null}
       <FormSheet visible={Boolean(picking)} title="Who is this?" onClose={() => setPicking(null)}>
             {rosterLoading && roster.length === 0 ? <WorkingLine /> : null}
@@ -425,6 +569,18 @@ export default function InboxScreen() {
               setStatus(err instanceof Error ? err.message : 'Could not delete');
             })
             .finally(() => setBusy(false));
+        }}
+      />
+      <ConfirmSheet
+        visible={Boolean(dismissPending)}
+        title={INGEST_COPY.dismiss}
+        body={INGEST_COPY.dismissBody}
+        confirmLabel={INGEST_COPY.dismiss}
+        busy={busy}
+        onCancel={() => setDismissPending(null)}
+        onConfirm={() => {
+          if (!dismissPending) return;
+          void onDismissWaiting(dismissPending);
         }}
       />
     </Screen>

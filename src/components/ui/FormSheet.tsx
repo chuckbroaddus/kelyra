@@ -11,10 +11,12 @@ type Props = {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Override the header dismiss label (SC-A Back to Needs). */
+  closeLabel?: string;
 };
 
 /** Full-screen / iOS page sheet. No overlay on top of the list — taps and scroll work on phone. */
-export function FormSheet({ visible, title, onClose, children }: Props) {
+export function FormSheet({ visible, title, onClose, children, closeLabel = 'Cancel' }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -32,7 +34,7 @@ export function FormSheet({ visible, title, onClose, children }: Props) {
           <Text style={[styles.title, { color: colors.ink }]} numberOfLines={1}>
             {title}
           </Text>
-          <GhostButton align="left" label="Cancel" onPress={onClose} />
+          <GhostButton align="left" label={closeLabel} onPress={onClose} />
         </View>
         <ScrollView
           keyboardShouldPersistTaps="handled"

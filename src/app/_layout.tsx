@@ -38,6 +38,7 @@ function ThemedRoot() {
           <Stack.Screen name="sign-in" />
           <Stack.Screen name="capture" />
           <Stack.Screen name="inbox" />
+          <Stack.Screen name="split-stack" />
           <Stack.Screen name="join" />
           <Stack.Screen name="todo" />
           <Stack.Screen name="parent" />
