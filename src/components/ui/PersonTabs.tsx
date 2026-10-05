@@ -429,6 +429,40 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
     // stay in refs so mid-morph cannot re-scroll (first-tab snap on Expo Go iOS).
   }, [value, rowWidth, reduce, distribute]);
 
+  const measureLabels = tabs.map((tab) => (
+    // Off-screen + after the scroller: label-text probes must not hit these ghosts
+    // (they used to sit on the first tab and steal "Alert" clicks → kind stayed post).
+    <View
+      key={`measure:${tab.key}`}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={styles.measureBox}
+    >
+      <Text
+        accessible={false}
+        importantForAccessibility="no"
+        onLayout={(event) => {
+          const width = event.nativeEvent.layout.width;
+          if (width <= 0) return;
+          setTitleByKey((current) =>
+            Math.abs((current[tab.key] ?? 0) - width) < 0.5 ? current : { ...current, [tab.key]: width },
+          );
+        }}
+        style={[
+          styles.label,
+          styles.measureText,
+          Platform.OS === 'web'
+            ? ({ width: 'max-content', maxWidth: 'none', whiteSpace: 'nowrap' } as unknown as TextStyle)
+            : null,
+          { color: colors.brand },
+        ]}
+      >
+        {tab.label}
+      </Text>
+    </View>
+  ));
+
   return (
     <View
       style={[
@@ -438,31 +472,6 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
         { borderBottomColor: colors.line },
       ]}
     >
-      {tabs.map((tab) => (
-        <Text
-          key={`measure:${tab.key}`}
-          pointerEvents="none"
-          accessible={false}
-          importantForAccessibility="no"
-          onLayout={(event) => {
-            const width = event.nativeEvent.layout.width;
-            if (width <= 0) return;
-            setTitleByKey((current) =>
-              Math.abs((current[tab.key] ?? 0) - width) < 0.5 ? current : { ...current, [tab.key]: width },
-            );
-          }}
-          style={[
-            styles.label,
-            styles.measure,
-            Platform.OS === 'web'
-              ? ({ width: 'max-content', maxWidth: 'none', whiteSpace: 'nowrap' } as unknown as TextStyle)
-              : null,
-            { color: colors.brand },
-          ]}
-        >
-          {tab.label}
-        </Text>
-      ))}
       <ScrollView
         ref={scroller}
         horizontal
@@ -501,6 +510,7 @@ export function PersonTabs({ tabs, value, onChange, trailing, stacked, compact, 
           />
         ))}
       </ScrollView>
+      {measureLabels}
       {trailing}
     </View>
   );
@@ -574,12 +584,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     lineHeight: 18,
   },
-  measure: {
+  measureBox: {
     position: 'absolute',
-    opacity: 0,
-    left: 0,
+    // Park far off-screen so label-text click probes never land on the Post tab.
+    left: -10000,
     top: 0,
+    opacity: 0,
     zIndex: -1,
+    alignItems: 'flex-start',
+  },
+  measureText: {
     flexShrink: 0,
   },
   glyph: {
