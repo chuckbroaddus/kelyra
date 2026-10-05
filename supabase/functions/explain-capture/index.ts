@@ -2,12 +2,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { callMetered, extractJson, outputText, requireXaiKey } from '../_shared/ai.ts';
 import { isAllowedAskImageUrl } from '../_shared/askImageUrl.ts';
-import { imageDetailFor } from '../_shared/aiPolicy.ts';
-
-const EXPLAIN_PROMPT = `You write a TEACHER Explain draft for one student capture.
-Return JSON only, schema_version 1: {"schema_version":1,"source":"keyed|freeform","steps":["step"],"reteach":"note"}
-Hard rules: pedagogy DRAFT only never a grade; prefer key+extract when keyed; no invented totals; first names only; 3-8 steps.`;
-
+import { firstNameOnly, imageDetailFor } from '../_shared/aiPolicy.ts';
+import { buildExplainPrompt, redactExplainDraft } from '../_shared/explainPrivacy.ts';
 
 type ExplainDraft = {
   schema_version: 1;
@@ -39,6 +35,56 @@ function json(body: unknown, status = 200) {
       "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     },
   });
+}
+
+/** Best-effort bound student display_name; never throws. */
+async function loadStudentDisplayName(
+  supabase: ReturnType<typeof createClient>,
+  studentId: string | null | undefined,
+): Promise<string | null> {
+  if (!studentId) return null;
+  try {
+    const { data, error } = await supabase
+      .from("students")
+      .select("display_name")
+      .eq("id", studentId)
+      .maybeSingle();
+    if (error || !data) return null;
+    const name = String((data as { display_name?: string | null }).display_name ?? "").trim();
+    return name || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Best-effort classmate names for the privacy guard only; never throws or fails Explain. */
+async function loadClassmateNames(
+  supabase: ReturnType<typeof createClient>,
+  classId: string,
+  boundStudentId: string | null | undefined,
+): Promise<string[]> {
+  try {
+    const { data: enrolled, error: enrErr } = await supabase
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", classId);
+    if (enrErr || !enrolled?.length) return [];
+    const ids = enrolled
+      .map((row) => String((row as { student_id?: string }).student_id ?? ""))
+      .filter((id) => id && id !== boundStudentId);
+    if (!ids.length) return [];
+    const { data: students, error: stuErr } = await supabase
+      .from("students")
+      .select("display_name")
+      .in("id", ids);
+    if (stuErr || !students?.length) return [];
+    return students
+      .map((row) => String((row as { display_name?: string | null }).display_name ?? "").trim())
+      .filter((name) => name.length > 1)
+      .slice(0, 80);
+  } catch {
+    return [];
+  }
 }
 
 
@@ -103,6 +149,9 @@ Deno.serve(async (req) => {
       key_items: unknown;
       extract: unknown;
       seat: string;
+      assignment_title?: string | null;
+      assignment_unit?: string | null;
+      assignment_section?: string | null;
     };
     if (!capture?.id) return json({ error: "Capture not found." }, 404);
     if (capture.class_id !== classId) {
@@ -129,17 +178,25 @@ Deno.serve(async (req) => {
       if (imageUrl && !isAllowedAskImageUrl(imageUrl)) imageUrl = "";
     }
 
+    const studentDisplayName = await loadStudentDisplayName(supabase, capture.student_id);
+    const classmateNames = await loadClassmateNames(supabase, classId, capture.student_id);
+    const studentFirstName = studentDisplayName ? firstNameOnly(studentDisplayName) : null;
+
     const apiKey = requireXaiKey();
-    const contextBits = [
-      "capture_id=" + captureId,
-      capture.student_id ? "student bound" : "student unassigned",
-      keyed ? "keyed path" : "freeform path",
-      keyItems ? "key_items=" + JSON.stringify(keyItems).slice(0, 4000) : null,
-      extract ? "extract_marks=" + JSON.stringify(extract).slice(0, 4000) : null,
-    ].filter(Boolean).join("\n");
+    const prompt = buildExplainPrompt({
+      captureId,
+      studentBound: Boolean(capture.student_id),
+      studentFirstName,
+      keyed,
+      keyItems,
+      extract,
+      assignment_title: capture.assignment_title ?? null,
+      assignment_unit: capture.assignment_unit ?? null,
+      assignment_section: capture.assignment_section ?? null,
+    });
 
     const content: Array<Record<string, unknown>> = [
-      { type: "input_text", text: EXPLAIN_PROMPT + "\n\nContext:\n" + contextBits },
+      { type: "input_text", text: prompt },
     ];
     if (imageUrl) {
       content.unshift({
@@ -155,7 +212,10 @@ Deno.serve(async (req) => {
       payload: [{ role: "user", content }],
     });
     const parsed = extractJson(outputText(payload)) as Record<string, unknown>;
-    const draft = normalizeExplainDraft(parsed, captureId, keyed);
+    const draft = redactExplainDraft(normalizeExplainDraft(parsed, captureId, keyed), {
+      studentName: studentDisplayName,
+      otherStudentNames: classmateNames,
+    });
 
     if (profile.role === "teacher") {
       const { data: parked, error: parkError } = await supabase.rpc("park_explain_draft", {
