@@ -31,6 +31,7 @@ import { usePushedTitle } from '@/lib/chrome/ChromeProvider';
 import { assignLesson, listLessonPacks, updateLessonAssignment } from '@/lib/lessons/api';
 import { useAssignmentHeaderChrome } from '@/lib/lessons/chrome';
 import { parseGradeTerm } from '@/lib/grade/marks';
+import { parseWorkKind } from '@/lib/grade/workKinds';
 import { packKey, parsePackKey } from '@/lib/lessons/protocol';
 import { followUpTitle, getFollowUpDraft, setFollowUpDraft } from '@/lib/practice/followUp';
 import {
@@ -196,6 +197,9 @@ export default function AssignmentEditScreen() {
         );
         setValue({
           workKind: nextKind,
+          gradeWorkKind: parseWorkKind(
+            (row as { work_kind?: string }).work_kind ?? row.category ?? 'homework',
+          ),
           packKey: nextPackKey,
           title: row.title,
           category: (row.category as AssignmentFormValue['category']) ?? 'homework',
@@ -224,7 +228,17 @@ export default function AssignmentEditScreen() {
               ? true
               : row.calendar_visibility === 'hidden'
                 ? false
-                : defaultCalendarPublished(row.category ?? 'homework'),
+                : defaultCalendarPublished(
+                    (row as { work_kind?: string }).work_kind ?? row.category ?? 'homework',
+                  ),
+          checklistSkills: Array.isArray((row as { checklist_skills?: unknown }).checklist_skills)
+            ? ((row as { checklist_skills: Array<{ id?: string; label?: string }> }).checklist_skills
+                .map((s, i) => ({
+                  id: String(s.id || `skill_${i + 1}`),
+                  label: String(s.label || ''),
+                }))
+                .filter((s) => s.label))
+            : [],
         });
         setReady(true);
       })

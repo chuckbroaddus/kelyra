@@ -11,7 +11,11 @@ import {
   type SyllabusCategoryInput,
   type SyllabusPolicies,
 } from '@/lib/grade/syllabusAverage';
-import { GRADE_KINDS, type GradeKind } from '@/lib/grade/marks';
+import { GRADE_KINDS, parseScoreMark, type GradeKind, type ScoreMark } from '@/lib/grade/marks';
+
+function parseScoreMarkCell(value: string | null | undefined): ScoreMark {
+  return parseScoreMark(value);
+}
 import {
   buildSyllabusVersionSnapshot,
   defaultSyllabusV2Fields,
@@ -56,6 +60,10 @@ export type SyllabusCategoryDraft = {
   active: boolean;
   group?: 'formative' | 'summative' | null;
   default_include_in_average: boolean;
+  /** Default mark scheme for new work in this category. */
+  default_score_scheme?: string;
+  /** Work kinds that prefer this category. */
+  suggested_work_kinds?: string[];
   min_grades_per_term?: number | null;
   rules: CategoryRules;
   drop_highest_n?: number;
@@ -202,6 +210,8 @@ export function defaultPolicies(): SyllabusPolicies {
 }
 
 export function emptyCategory(label: string, key: string, sort_order: number): SyllabusCategoryDraft {
+  const process = key === 'participation' || key === 'behavior' || key === 'effort';
+  const esnu = key === 'behavior' || key === 'effort';
   return {
     key,
     label,
@@ -210,6 +220,14 @@ export function emptyCategory(label: string, key: string, sort_order: number): S
     active: true,
     group: null,
     default_include_in_average: false,
+    default_score_scheme: esnu
+      ? 'esnu'
+      : process
+        ? 'complete_incomplete'
+        : key === 'memory_verse' || key === 'reading_log'
+          ? 'complete_incomplete'
+          : 'numeric',
+    suggested_work_kinds: [key],
     min_grades_per_term: null,
     rules: { drop_lowest_n: 0, replace_lowest_with_makeup: { enabled: false, max_replacements: 1 } },
     drop_highest_n: 0,
@@ -224,7 +242,12 @@ export function seedCategoriesFromGradeKinds(existingKeys: Set<string> = new Set
   const used = new Set(existingKeys);
   return GRADE_KINDS.filter((row) => !used.has(row.key)).map((row, index) => {
     used.add(row.key);
-    return emptyCategory(row.label, row.key, index);
+    const cat = emptyCategory(row.label, row.key, index);
+    // Participation / behavior / effort: average off by default (teacher can turn on).
+    if (row.key === 'participation' || row.key === 'behavior' || row.key === 'effort') {
+      cat.default_include_in_average = false;
+    }
+    return cat;
   });
 }
 
@@ -311,8 +334,15 @@ function asSyllabus(row: Record<string, unknown> | null | undefined, classId: st
 }
 
 function asCategory(row: Record<string, unknown>): SyllabusCategoryDraft {
-  const rules = (row.rules as CategoryRules) ?? {};
+  const rules = (row.rules as CategoryRules & {
+    default_score_scheme?: string;
+    suggested_work_kinds?: string[];
+  }) ?? {};
   const flags = row.never_drop_flags;
+  const schemeFromCol = row.default_score_scheme != null ? String(row.default_score_scheme) : null;
+  const kindsFromCol = Array.isArray(row.suggested_work_kinds)
+    ? (row.suggested_work_kinds as unknown[]).map(String)
+    : null;
   return {
     id: row.id ? String(row.id) : undefined,
     key: String(row.key ?? 'other'),
@@ -322,6 +352,14 @@ function asCategory(row: Record<string, unknown>): SyllabusCategoryDraft {
     active: row.active !== false,
     group: (row.group as SyllabusCategoryDraft['group']) ?? null,
     default_include_in_average: row.default_include_in_average === true,
+    default_score_scheme:
+      schemeFromCol ||
+      (typeof rules.default_score_scheme === 'string' ? rules.default_score_scheme : undefined) ||
+      emptyCategory(String(row.label ?? 'Other'), String(row.key ?? 'other'), 0).default_score_scheme,
+    suggested_work_kinds:
+      kindsFromCol ||
+      (Array.isArray(rules.suggested_work_kinds) ? rules.suggested_work_kinds.map(String) : undefined) ||
+      [String(row.key ?? 'other')],
     min_grades_per_term: row.min_grades_per_term == null ? null : Number(row.min_grades_per_term),
     rules: {
       drop_lowest_n: Number(rules.drop_lowest_n ?? 0),
@@ -470,7 +508,12 @@ function payloadFromEditor(input: {
         group: c.group ?? null,
         default_include_in_average: c.default_include_in_average === true,
         min_grades_per_term: c.min_grades_per_term ?? null,
-        rules: c.rules ?? {},
+        rules: {
+          ...(c.rules ?? {}),
+          // Persist scheme until SQL columns are applied + replace fn updated.
+          default_score_scheme: c.default_score_scheme ?? 'numeric',
+          suggested_work_kinds: c.suggested_work_kinds ?? [c.key],
+        },
         drop_highest_n: Math.max(0, Number(c.drop_highest_n ?? 0)),
         keep_highest_n: c.keep_highest_n ?? null,
         droppable: c.droppable !== false,
@@ -629,8 +672,7 @@ function mapExplain(
   const approvedCells: AverageCell[] = (data.cells ?? []).map((row) => ({
     assignmentId: row.assignment_id,
     approvedScore: row.approved_score,
-    scoreMark:
-      row.score_mark === 'pass' || row.score_mark === 'fail' ? row.score_mark : 'numeric',
+    scoreMark: parseScoreMarkCell(row.score_mark),
     approvedAt: row.approved_at,
     status: row.status,
     rawPoints: row.raw_points == null ? null : Number(row.raw_points),
@@ -810,7 +852,13 @@ export async function listParentChildClasses(
 
 export function categoryOptionsForAssign(
   categories: SyllabusCategoryDraft[],
-): Array<{ key: string; label: string; weight_percent: number; default_include_in_average: boolean }> {
+): Array<{
+  key: string;
+  label: string;
+  weight_percent: number;
+  default_include_in_average: boolean;
+  default_score_scheme?: string | null;
+}> {
   return categories
     .filter((c) => c.active)
     .sort((a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label))
@@ -819,6 +867,7 @@ export function categoryOptionsForAssign(
       label: c.label,
       weight_percent: c.weight_percent,
       default_include_in_average: c.default_include_in_average,
+      default_score_scheme: c.default_score_scheme ?? null,
     }));
 }
 

@@ -309,6 +309,25 @@ function CategoryCard({
         colors={colors}
         onValueChange={(default_include_in_average) => onPatch({ default_include_in_average })}
       />
+      <Text style={[type.meta, { color: colors.mute, marginTop: 8 }]}>Default mark for new work</Text>
+      {(
+        [
+          ['numeric', 'Number'],
+          ['pass_fail', 'Pass/Fail'],
+          ['complete_incomplete', 'Complete / Incomplete'],
+          ['esnu', 'E / S / N / U'],
+          ['checklist', 'Checklist'],
+        ] as const
+      ).map(([key, label]) => (
+        <RadioOption
+          key={key}
+          label={label}
+          selected={(row.default_score_scheme ?? 'numeric') === key}
+          disabled={locked}
+          colors={colors}
+          onPress={() => onPatch({ default_score_scheme: key })}
+        />
+      ))}
       {!locked ? <GhostButton align="left" label="Delete category" onPress={onDelete} /> : null}
     </View>
   );

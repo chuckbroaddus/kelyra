@@ -16,13 +16,24 @@ import { addDaysISO, toISODate, todayISO } from '@/lib/date/iso';
 import {
   GRADE_KINDS,
   GRADE_TERMS,
+  SCORE_SCHEMES,
   WEIGHT_BANDS,
   defaultGradeTermForDate,
+  type ChecklistSkill,
   type GradeKind,
   type GradeTerm,
   type ScoreScheme,
   type WeightBand,
 } from '@/lib/grade/marks';
+import {
+  WORK_KINDS,
+  defaultCategoryForWorkKind,
+  defaultIncludeInAverageForWorkKind,
+  defaultScoreSchemeForWorkKind,
+  mapWorkKindToSyllabusCategory,
+  parseWorkKind,
+  type WorkKind,
+} from '@/lib/grade/workKinds';
 import { EMPTY_CATALOG_COPY } from '@/lib/lessons/allowlist';
 import { packKey } from '@/lib/lessons/protocol';
 import type { LessonPackRow } from '@/lib/supabase/types';
@@ -33,6 +44,8 @@ export type AssignmentWorkKind = 'planned' | 'lesson';
 
 export type AssignmentFormValue = {
   workKind: AssignmentWorkKind;
+  /** Canonical work kind (homework, pop quiz, memory verse, …). */
+  gradeWorkKind: WorkKind;
   packKey: string;
   title: string;
   category: GradeKind | string;
@@ -58,6 +71,8 @@ export type AssignmentFormValue = {
   helpMode: 'off' | 'hints' | 'steps_after_try' | 'check_work';
   /** Assign ≠ publish. When due is set: family calendar visibility. */
   showOnFamilyCalendar: boolean;
+  /** Kindergarten / early-elementary skill list when scoreScheme is checklist. */
+  checklistSkills: ChecklistSkill[];
 };
 
 export type SyllabusCategoryOption = {
@@ -65,16 +80,25 @@ export type SyllabusCategoryOption = {
   label: string;
   weight_percent: number;
   default_include_in_average: boolean;
+  default_score_scheme?: ScoreScheme | string | null;
 };
 
 export function emptyAssignmentForm(seed?: {
   title?: string;
   category?: string;
+  gradeWorkKind?: string;
   includeInAverage?: boolean;
+  scoreScheme?: ScoreScheme;
 }): AssignmentFormValue {
-  const category = seed?.category?.trim() || 'homework';
+  const gradeWorkKind = parseWorkKind(seed?.gradeWorkKind ?? seed?.category ?? 'homework');
+  const category = seed?.category?.trim() || defaultCategoryForWorkKind(gradeWorkKind);
+  const scoreScheme = seed?.scoreScheme ?? defaultScoreSchemeForWorkKind(gradeWorkKind);
+  const includeDefault =
+    seed?.includeInAverage ??
+    (scoreScheme === 'pass_fail' ? false : defaultIncludeInAverageForWorkKind(gradeWorkKind));
   return {
     workKind: 'planned',
+    gradeWorkKind,
     packKey: '',
     title: seed?.title ?? '',
     category,
@@ -82,9 +106,8 @@ export function emptyAssignmentForm(seed?: {
     weightBand: 'none',
     weightPercent: '',
     term: defaultGradeTermForDate(new Date()),
-    scoreScheme: 'numeric',
-    // Legacy planned default true; syllabus category default / lesson path pass false explicitly.
-    includeInAverage: seed?.includeInAverage ?? true,
+    scoreScheme,
+    includeInAverage: includeDefault,
     isMakeup: false,
     keyKind: 'none',
     keyNotes: '',
@@ -99,7 +122,8 @@ export function emptyAssignmentForm(seed?: {
     unit: '',
     section: '',
     helpMode: 'off',
-    showOnFamilyCalendar: defaultCalendarPublished(category),
+    showOnFamilyCalendar: defaultCalendarPublished(gradeWorkKind),
+    checklistSkills: [],
   };
 }
 
@@ -170,9 +194,32 @@ export function AssignmentForm({
         key: row.key,
         label: row.label,
         weight_percent: 0,
-        default_include_in_average: false,
+        default_include_in_average: defaultIncludeInAverageForWorkKind(row.key),
+        default_score_scheme: defaultScoreSchemeForWorkKind(row.key),
       }));
   const selectedKind = kindOptions.find((row) => row.key === value.category);
+
+  const applyWorkKind = (kind: WorkKind) => {
+    const mapped = syllabusPublished
+      ? mapWorkKindToSyllabusCategory(kind, kindOptions) ?? defaultCategoryForWorkKind(kind)
+      : defaultCategoryForWorkKind(kind);
+    const cat = kindOptions.find((row) => row.key === mapped);
+    const scheme =
+      (cat?.default_score_scheme as ScoreScheme | undefined) ?? defaultScoreSchemeForWorkKind(kind);
+    const include =
+      scheme === 'pass_fail'
+        ? false
+        : cat
+          ? cat.default_include_in_average === true
+          : defaultIncludeInAverageForWorkKind(kind);
+    patch({
+      gradeWorkKind: kind,
+      category: mapped,
+      scoreScheme: scheme,
+      includeInAverage: include,
+      showOnFamilyCalendar: defaultCalendarPublished(kind),
+    });
+  };
 
   return (
     <View style={styles.wrap}>
@@ -190,6 +237,20 @@ export function AssignmentForm({
           disabled={lockWorkKind}
           onPress={() => patch({ workKind: 'planned' })}
         />
+      </ChipRow>
+      <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Kind of work</Text>
+      <Text style={[type.meta, { color: colors.mute }]}>
+        Suggests a grade-book category. You can refile below. Memory verse and Bible quiz are included.
+      </Text>
+      <ChipRow>
+        {WORK_KINDS.map((kind) => (
+          <Chip
+            key={kind.key}
+            label={kind.label}
+            selected={value.gradeWorkKind === kind.key}
+            onPress={() => applyWorkKind(kind.key)}
+          />
+        ))}
       </ChipRow>
       {studentLockedName ? (
         <Text style={[type.meta, { color: colors.mute }]}>Assigned to {studentLockedName} only.</Text>
@@ -296,14 +357,17 @@ export function AssignmentForm({
             key={kind.key}
             label={kind.label}
             selected={value.category === kind.key}
-            onPress={() =>
+            onPress={() => {
+              const scheme =
+                (kind.default_score_scheme as ScoreScheme | undefined) ?? value.scoreScheme;
               patch({
                 category: kind.key,
+                scoreScheme: scheme,
                 includeInAverage:
-                  value.scoreScheme === 'pass_fail' ? false : kind.default_include_in_average === true,
-                showOnFamilyCalendar: defaultCalendarPublished(kind.key),
-              })
-            }
+                  scheme === 'pass_fail' ? false : kind.default_include_in_average === true,
+                showOnFamilyCalendar: defaultCalendarPublished(value.gradeWorkKind || kind.key),
+              });
+            }}
           />
         ))}
       </ChipRow>
@@ -346,7 +410,8 @@ export function AssignmentForm({
             Family calendar
           </Text>
           <Text style={[type.meta, { color: colors.mute }]}>
-            Assigning work does not publish the due date. Quiz and test kinds default hidden.
+            Assigning work does not publish the due date. Quiz, pop quiz, and test kinds default hidden —
+            you choose per item.
           </Text>
           <ChipRow>
             <Chip
@@ -389,10 +454,65 @@ export function AssignmentForm({
       </ChipRow>
       <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Mark</Text>
       <ChipRow>
-        <Chip label="Number" selected={value.scoreScheme === 'numeric'} onPress={() => patch({ scoreScheme: 'numeric' })} />
-        <Chip label="Pass/Fail" selected={value.scoreScheme === 'pass_fail'} onPress={() => patch({ scoreScheme: 'pass_fail' })} />
-        <Chip label="Either" selected={value.scoreScheme === 'either'} onPress={() => patch({ scoreScheme: 'either' })} />
+        {SCORE_SCHEMES.map((scheme) => (
+          <Chip
+            key={scheme.key}
+            label={scheme.label}
+            selected={value.scoreScheme === scheme.key}
+            onPress={() =>
+              patch({
+                scoreScheme: scheme.key,
+                includeInAverage:
+                  scheme.key === 'pass_fail' ? false : value.includeInAverage,
+              })
+            }
+          />
+        ))}
       </ChipRow>
+      {value.scoreScheme === 'checklist' ? (
+        <>
+          <Text style={[type.meta, { color: colors.mute }]}>
+            Early-elementary skill list. Mark each skill when you grade. Nothing is a grade until you Approve.
+          </Text>
+          {value.checklistSkills.map((skill, index) => (
+            <View key={skill.id} style={styles.item}>
+              <TextField
+                label={`Skill ${index + 1}`}
+                placeholder="Counts to 20"
+                value={skill.label}
+                onChangeText={(label) =>
+                  patch({
+                    checklistSkills: value.checklistSkills.map((row, rowIndex) =>
+                      rowIndex === index ? { ...row, label } : row,
+                    ),
+                  })
+                }
+              />
+              <GhostButton
+                align="left"
+                label="Remove skill"
+                onPress={() =>
+                  patch({
+                    checklistSkills: value.checklistSkills.filter((_, rowIndex) => rowIndex !== index),
+                  })
+                }
+              />
+            </View>
+          ))}
+          <GhostButton
+            align="left"
+            label="Add skill"
+            onPress={() =>
+              patch({
+                checklistSkills: [
+                  ...value.checklistSkills,
+                  { id: `skill_${value.checklistSkills.length + 1}`, label: '' },
+                ],
+              })
+            }
+          />
+        </>
+      ) : null}
       {syllabusPublished ? null : (
         <>
           <Text style={[type.section, { color: colors.mute, textTransform: 'uppercase' }]}>Weight</Text>
@@ -611,6 +731,7 @@ export function plannedAssignmentInput(
     classId,
     title: value.title,
     category: value.category,
+    workKind: value.gradeWorkKind,
     dueAt: dueAtFromDate(value.dueDate),
     weightBand: value.weightBand,
     weightPercent: value.weightPercent.trim() ? Number(value.weightPercent) : null,
@@ -631,6 +752,7 @@ export function plannedAssignmentInput(
     section: value.section,
     helpMode: value.helpMode ?? 'off',
     studentId: studentId ?? null,
+    checklistSkills: value.scoreScheme === 'checklist' ? value.checklistSkills : [],
     calendarVisibility: value.dueDate.trim()
       ? value.showOnFamilyCalendar
         ? 'published'

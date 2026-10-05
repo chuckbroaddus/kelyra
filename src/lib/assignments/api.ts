@@ -1,5 +1,13 @@
 import { deriveKeyKind, keySummary, normalizeKeyItems, type AnswerKeyItem, type AnswerKeyKind } from '@/lib/assignments/keys';
-import { gradeKindLabel, type GradeKind, type GradeTerm, type ScoreScheme, type WeightBand } from '@/lib/grade/marks';
+import {
+  gradeKindLabel,
+  type ChecklistSkill,
+  type GradeKind,
+  type GradeTerm,
+  type ScoreScheme,
+  type WeightBand,
+} from '@/lib/grade/marks';
+import { parseWorkKind, type WorkKind } from '@/lib/grade/workKinds';
 import { listRoster } from '@/lib/students/api';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { AssignmentRow, SubmissionRow } from '@/lib/supabase/types';
@@ -16,6 +24,8 @@ export type AssignmentInput = {
   studentId?: string | null;
   title: string;
   category?: GradeKind | string;
+  /** Canonical work kind (picker). Distinct from syllabus category. */
+  workKind?: WorkKind | string;
   dueAt?: string | null;
   weightBand?: WeightBand;
   weightPercent?: number | null;
@@ -35,6 +45,7 @@ export type AssignmentInput = {
   unit?: string | null;
   section?: string | null;
   helpMode?: 'off' | 'hints' | 'steps_after_try' | 'check_work';
+  checklistSkills?: ChecklistSkill[];
   /** Assign ≠ publish. Null = leave DB default / unchanged. */
   calendarVisibility?: 'hidden' | 'published' | null;
 };
@@ -87,7 +98,11 @@ export async function getAssignment(assignmentId: string): Promise<AssignmentRow
 
 export async function createAssignment(input: AssignmentInput): Promise<AssignmentRow> {
   const row = { ...buildRow(input), kind: 'planned' as const };
-  const { data, error } = await requireSupabase().from('assignments').insert(row).select('*').single();
+  const { data, error } = await requireSupabase()
+    .from('assignments')
+    .insert(row as never)
+    .select('*')
+    .single();
   if (error) {
     const slim = {
       class_id: input.classId,
@@ -95,11 +110,11 @@ export async function createAssignment(input: AssignmentInput): Promise<Assignme
       kind: 'planned' as const,
       due_at: input.dueAt ?? null,
     };
-    let retry = await requireSupabase().from('assignments').insert(slim).select('*').single();
+    let retry = await requireSupabase().from('assignments').insert(slim as never).select('*').single();
     if (retry.error) {
       retry = await requireSupabase()
         .from('assignments')
-        .insert({ ...slim, kind: 'capture' })
+        .insert({ ...slim, kind: 'capture' } as never)
         .select('*')
         .single();
     }
@@ -115,7 +130,7 @@ export async function updateAssignment(assignmentId: string, input: AssignmentIn
   const row = buildRow(input);
   const { data, error } = await requireSupabase()
     .from('assignments')
-    .update(row)
+    .update(row as never)
     .eq('id', assignmentId)
     .select('*')
     .single();
@@ -201,12 +216,23 @@ function buildRow(input: AssignmentInput) {
     input.includeInAverage ?? (input.scoreScheme === 'pass_fail' ? false : true);
   const items = normalizeKeyItems(input.keyItems ?? []);
   const keyKind = input.keyKind ?? deriveKeyKind(Boolean(input.keyAssetId), items);
+  const workKind = parseWorkKind(input.workKind ?? input.category ?? 'homework');
+  const checklist =
+    input.scoreScheme === 'checklist'
+      ? (input.checklistSkills ?? [])
+          .map((s, i) => ({
+            id: String(s.id || `skill_${i + 1}`).slice(0, 64),
+            label: String(s.label || '').trim().slice(0, 120),
+          }))
+          .filter((s) => s.label)
+      : [];
   return {
     class_id: input.classId,
     title: input.title.trim(),
     due_at: input.dueAt ?? null,
     max_score: input.maxScore ?? null,
     category: input.category ?? 'homework',
+    work_kind: workKind,
     weight_band: input.weightBand ?? 'none',
     weight_percent: input.weightBand === 'custom' ? input.weightPercent ?? null : null,
     term: input.term ?? 'year',
@@ -225,6 +251,7 @@ function buildRow(input: AssignmentInput) {
     unit: input.unit?.trim() || null,
     section: input.section?.trim() || null,
     help_mode: input.helpMode ?? 'off',
+    checklist_skills: checklist,
     ...(input.calendarVisibility === 'hidden' || input.calendarVisibility === 'published'
       ? { calendar_visibility: input.calendarVisibility }
       : {}),

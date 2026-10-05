@@ -1,9 +1,26 @@
-/** PM lock: quiz/test/midterm/final default hidden; homework/practice/lesson published when due set. */
-const HIDDEN_KINDS = new Set(['quiz', 'test', 'midterm', 'final']);
+/** PM lock: quiz/test/exam/pop quiz default hidden; homework/practice published when due set.
+ * Pop quiz: teacher chooses per item (default hidden like other quizzes — not forced forever). */
+import { defaultCalendarPublishedForWorkKind } from '../grade/workKinds.ts';
+
+const HIDDEN_KINDS = new Set([
+  'quiz',
+  'pop_quiz',
+  'test',
+  'exam',
+  'midterm',
+  'final',
+  'bible_quiz',
+]);
 
 export function defaultCalendarPublished(category: string | null | undefined): boolean {
   const key = (category ?? 'homework').trim().toLowerCase();
-  return !HIDDEN_KINDS.has(key);
+  if (HIDDEN_KINDS.has(key)) return false;
+  // Prefer work-kind table when known
+  try {
+    return defaultCalendarPublishedForWorkKind(key);
+  } catch {
+    return true;
+  }
 }
 
 export type CalendarVisibility = 'hidden' | 'published';
