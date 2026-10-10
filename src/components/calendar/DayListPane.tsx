@@ -687,6 +687,7 @@ export function DayListPane<T = CalendarItem>({
           if (!motionRef.current.dragging) settle();
         }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPad }]}
+        testID="cal-day-list"
         accessibilityLabel="Day activity list"
       />
       {error ? <Text style={[styles.errorBar, { color: colors.mute }]}>{error}</Text> : null}

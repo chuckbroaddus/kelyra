@@ -11,5 +11,6 @@ Each file is one place a person can reach. The `Drive` line is copied onto the s
 | Ask | `Drive: /ask click=[aria-label=Ask]` |
 | Pickup restriction | `Drive: /admin/ride click=[aria-label="Clear restriction"]` |
 | Open Capture | `Drive: / click=[aria-label=Open Capture]` |
+| Calendar drum | `Drive: /calendar click=[aria-label=Calendar]` |
 | Phone sign-in | Not a Drive click. The splash Sign in button reveals the form. The second Sign in submits. |
 | Splash centering | `Drive: /sign-in click=[aria-label=Kelyra]` |

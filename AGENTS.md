@@ -41,4 +41,6 @@ Loop children (implementer, QA, verify, security) must never call `ask_user_ques
 
 Verify/typecheck in the loop must not treat unrelated dirty-tree files as blocking, and must not edit them to make `tsc` green (I3, 2026-09-13). When wiring an existing RPC with “do not apply SQL”, match the live function body and unique constraints; do not invent a second client-side persist protocol.
 
+Before a PR is called ready or merged, `npm test` (every `src/**/*.test.ts` via `node --test`) must pass along with `npm run typecheck`. A failure that is already on `origin/main` is listed by file in the PR, never ignored.
+
 Do not git commit or push unless the user explicitly asks.
