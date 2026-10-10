@@ -893,6 +893,7 @@ export function PeriodPager({
       <GestureDetector gesture={panGesture}>
         <View
           style={[plateStyle, hostPerspectiveStyle]}
+          testID="cal-drum"
           accessibilityLabel={`Period wheel ${window.current.centerCaption}`}
           onLayout={(e) => {
             stageWidthRef.current = e.nativeEvent.layout.width;
