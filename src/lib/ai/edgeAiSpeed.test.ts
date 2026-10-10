@@ -44,6 +44,19 @@ function geminiOk(text = '{"ok":true}') {
   );
 }
 
+// AbortSignal.timeout() uses an unref'd timer, so while a fake fetch is "hung"
+// nothing keeps Node's event loop alive and node:test cancels the file. Hold a
+// ref'd keep-alive timer for the duration of the hung-call cases (test-only;
+// ai.ts behavior is unchanged).
+async function withKeepAlive<T>(fn: () => Promise<T>): Promise<T> {
+  const keepAlive = setInterval(() => {}, 1_000);
+  try {
+    return await fn();
+  } finally {
+    clearInterval(keepAlive);
+  }
+}
+
 function installFetch(handler: (url: string, init: RequestInit | undefined, n: number) => Promise<Response>) {
   const calls: Call[] = [];
   const t0 = Date.now();
@@ -68,7 +81,7 @@ test('Gemini 429 falls back to xAI once (no billing change, same job model)', as
   assert.equal(out.__kelyraModel, 'grok-4.20-0309-non-reasoning');
 });
 
-test('timeout aborts a hung model call and retries once', async () => {
+test('timeout aborts a hung model call and retries once', () => withKeepAlive(async () => {
   const calls = installFetch((url, init, n) =>
     n === 1
       ? new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal!.reason)))
@@ -84,15 +97,15 @@ test('timeout aborts a hung model call and retries once', async () => {
   assert.equal(calls.length, 2);
   assert.ok(Date.now() - started < 2000, 'must not hang');
   assert.equal(out.output_text, '{"ok":true}');
-});
+}));
 
-test('two hung attempts surface a clear timeout error', async () => {
+test('two hung attempts surface a clear timeout error', () => withKeepAlive(async () => {
   installFetch((_url, init) => new Promise((_, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal!.reason))));
   await assert.rejects(
     callMetered(fakeSupabase(), 'g-key', { job: 'classify', functionName: 'x', payload: 'hi', timeoutMs: 80 }),
     /timed out/,
   );
-});
+}));
 
 test('400 is not retried', async () => {
   const calls = installFetch(async () => new Response('bad', { status: 400 }));
